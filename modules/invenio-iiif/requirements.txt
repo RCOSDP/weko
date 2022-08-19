@@ -209,6 +209,7 @@ invenio-search==1.1.0
 invenio-search-ui==1.0.0a9
 invenio-theme==1.0.0b4
 invenio-csl-rest==1.0.0a1
+pytest-invenio==1.0.6
 #
 # requirements-weko-modules.txt
 #

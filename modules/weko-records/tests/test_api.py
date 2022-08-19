@@ -26,7 +26,7 @@ from elasticsearch.exceptions import RequestError
 from invenio_records.api import Record
 from weko_deposit.api import WekoDeposit
 from weko_index_tree.models import Index
-from mock import patch
+from mock import patch,MagicMock
 import uuid
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -35,7 +35,10 @@ from weko_records.api import FeedbackMailList, FilesMetadata, ItemLink, \
     ItemTypes, Mapping, SiteLicense, RecordBase
 from weko_records.models import ItemTypeName, SiteLicenseInfo, \
     SiteLicenseIpAddress
+from jsonschema.validators import Draft4Validator
+from datetime import datetime
 
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_recordbase -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 
 def test_recordbase(app, db):
     class MockClass():
@@ -44,6 +47,8 @@ def test_recordbase(app, db):
             self.version_id=version_id
             self.created=created
             self.updated=updated
+            self.schema=""
+
     data = dict(
         id=1,
         version_id=10,
@@ -58,10 +63,145 @@ def test_recordbase(app, db):
     assert result["version_id"] == 10
     assert result["created"] == "yesterday"
     assert result["updated"] == "now"
+    assert record.validate(validator=Draft4Validator)==None
+    
+    schema = {
+    'type': 'object',
+    'properties': {
+    'id': { 'type': 'integer' },
+    'version_id': { 'type': 'integer' },
+    'created': {'type': 'string' },
+    'updated': { 'type': 'string' },    
+    },
+    'required': ['id']
+    }
+    data = dict(
+        id=1,
+        version_id=10,
+        created="yesterday",
+        updated="now"
+    )
+    data['$schema']=schema
+    test_model = MagicMock()
+    test_model.__getitem__.side_effect = data.__getitem__
+    record = RecordBase(data)
+    record.model = test_model
+    assert record.validate(validator=Draft4Validator) == None    
+    assert record.replace_refs()=={'id': 1, 'version_id': 10, 'created': 'yesterday', 'updated': 'now', '$schema': {'type': 'object', 'properties': {'id': {'type': 'integer'}, 'version_id': {'type': 'integer'}, 'created': {'type': 'string'}, 'updated': {'type': 'string'}}, 'required': ['id']}}
 
-def test_itemtypenames(app, db):
-    item_type_name = ItemTypeNames.update({'a': [{'id': 1}]})
+    # schema = {
+    # 'type': 'object',
+    # 'properties': {
+    # 'id': { 'type': 'integer' },
+    # 'version_id': { 'type': 'integer' },
+    # 'created': {'type': 'string' },
+    # 'updated': { 'type': 'string' },    
+    # },
+    # 'required': ['id']
+    # }
+    # schema['$ref'] = "#/definitions/dog"
+    # schema["definitions"]={"dog": {"properties" :{"lang": {"type": "string","enum": ["ja","en"]}}}}
+    # data = dict(
+    #     id=1,
+    #     version_id=10,
+    #     created="yesterday",
+    #     updated="now",
+    #     lang="ja"
+    # )
+    # data['$schema']=schema
+    # test_model = MagicMock()
+    # test_model.__getitem__.side_effect = data.__getitem__
+    # record = RecordBase(data)
+    # record.model = test_model
+    # assert record.validate(validator=Draft4Validator) == None
 
+    # schema = {
+    # 'type': 'object',
+    # 'properties': {
+    # 'id': { 'type': 'integer' },
+    # 'version_id': { 'type': 'integer' },
+    # 'created': {'type': 'string' },
+    # 'updated': { 'type': 'string' },    
+    # },
+    # 'required': ['id']
+    # }
+    # data = dict(
+    #     id=1,
+    #     version_id=10,
+    #     created="yesterday",
+    #     updated="now",
+    #     lang="ja"
+    # )
+    # data['$schema']=schema
+    # data['$ref'] = "http://localhost"
+    # test_model = MagicMock()
+    # test_model.__getitem__.side_effect = data.__getitem__
+    # record = RecordBase(data)
+    # record.model = test_model
+    # assert record.validate(validator=Draft4Validator) == None
+    # assert record.replace_refs()=={'id': 1, 'version_id': 10, 'created': 'yesterday', 'updated': 'now', '$schema': {'type': 'object', 'properties': {'id': {'type': 'integer'}, 'version_id': {'type': 'integer'}, 'created': {'type': 'string'}, 'updated': {'type': 'string'}}, 'required': ['id']}}
+
+    
+
+# class RecordBase(dict):
+#     """Base class for Record and RecordBase."""
+#     def __init__(self, data, model=None):
+#     def id(self):
+#     def revision_id(self):
+#     def created(self):
+#     def updated(self):
+#     def validate(self, **kwargs):
+#             A :class:`jsonschema.IValidator` class used for record validation.
+#     def replace_refs(self):
+#     def dumps(self, **kwargs):
+
+# class ItemTypeNames(RecordBase):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypenames -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_itemtypenames(item_type,item_type2):
+    # def get_record(cls, id_, with_deleted=False):
+    item_type_name = ItemTypeNames.get_record(1)
+    assert item_type_name.id == 1
+    assert item_type_name.name == "test"
+    assert item_type_name.has_site_license == True
+    assert item_type_name.is_active== True
+    assert isinstance(item_type_name.created,datetime)
+    assert isinstance(item_type_name.updated,datetime)
+
+    # def update(cls, obj):
+    item_type_name = ItemTypeNames.get_record(2)
+    item_type_name.name = "test2 updated"
+    ItemTypeNames.update(item_type_name)
+    item_type_name = ItemTypeNames.get_record(2)
+    assert item_type_name.id == 2
+    assert item_type_name.name == "test2 updated"
+
+    # def delete(self, force=False):
+    ItemTypeNames.delete(item_type_name)
+    assert item_type_name.id == 2
+    item_type_name = ItemTypeNames.get_record(2)
+    assert item_type_name is None
+    item_type_name = ItemTypeNames.get_record(2, with_deleted=True)
+    assert item_type_name.id == 2
+    assert item_type_name.name == "test2 updated"
+    assert item_type_name.has_site_license == True
+    assert item_type_name.is_active== False
+    assert isinstance(item_type_name.created,datetime)
+    assert isinstance(item_type_name.updated,datetime)
+
+    # def get_all_by_id(cls, ids, with_deleted=False):
+    lst = ItemTypeNames.get_all_by_id(ids=[1,2])
+    assert len(lst)==1
+    lst = ItemTypeNames.get_all_by_id(ids=[1,2], with_deleted=True)
+    assert len(lst)==2
+
+    # def restore(self):
+    item_type_name = ItemTypeNames.get_record(2, with_deleted=True)
+    ItemTypeNames.restore(item_type_name)
+    item_type_name = ItemTypeNames.get_record(2)
+    assert item_type_name.id == 2
+    assert item_type_name.name == "test2 updated"
+    assert item_type_name.has_site_license == True
+    assert item_type_name.is_active== True
 
 def test_itemtypes(app, db):
     _item_type_name = ItemTypeName(name='test')
@@ -742,3 +882,131 @@ def test_item_link(app, db, location):
     ])
 
     ItemLink.get_item_link_info_output_xml(deposit.get('id'))
+
+
+
+
+# class ItemTypes(RecordBase):
+#     def create(cls, item_type_name=None, name=None, schema=None, form=None,
+#             An instance of the class :class:`jsonschema.FormatChecker`, which
+#             A :class:`jsonschema.IValidator` class that will be used to
+#     def update(cls, id_=0, name=None, schema=None, form=None, render=None,
+#     def update_item_type(cls, form, id_, name, render, result, schema):
+#     def __update_item_type(cls, id_, schema, form, render):
+#     def __update_metadata(
+#         def __diff(list1, list2):
+#         def __del_data(_json, diff_keys):
+#         def __get_delete_mapping_key(item_type_mapping, _delete_list):
+#         def __update_es_data(_es_data, _delete_list):
+#         def __update_db(db_records, _delete_list):
+#         def __update_record_metadata(_record_ids, _delete_list):
+#         def __update_item_metadata(_record_ids, _delete_list):
+#     def __get_records_by_item_type_name(cls, item_type_name):
+#     def get_record(cls, id_, with_deleted=False):
+#     def get_records(cls, ids, with_deleted=False):
+#     def get_by_id(cls, id_, with_deleted=False):
+#     def get_by_name_id(cls, name_id, with_deleted=False):
+#     def get_records_by_name_id(cls, name_id, with_deleted=False):
+#     def get_latest(cls, with_deleted=False):
+#     def get_latest_with_item_type(cls, with_deleted=False):
+#     def get_latest_custorm_harvesting(cls, with_deleted=False,
+#     def get_all(cls, with_deleted=False):
+#     def patch(self, patch):
+#     def commit(self, **kwargs):
+#             An instance of the class :class:`jsonschema.FormatChecker`, which
+#             A :class:`jsonschema.IValidator` class that will be used to
+#     def delete(self, force=False):
+#     def revert(self, revision_id):
+#     def restore(self):
+#     def revisions(self):
+# class ItemTypeEditHistory(object):
+#     def create_or_update(cls, id=0, item_type_id=None, user_id=None,
+#     def get_by_item_type_id(cls, item_type_id):
+# class Mapping(RecordBase):
+#     def create(cls, item_type_id=None, mapping=None):
+#             An instance of the class :class:`jsonschema.FormatChecker`, which
+#             # A :class:`jsonschema.IValidator` class that will be used to
+#     def get_record(cls, item_type_id, with_deleted=False):
+#     def get_records(cls, ids, with_deleted=False):
+#     def patch(self, patch):
+#     def commit(self, **kwargs):
+#             An instance of the class :class:`jsonschema.FormatChecker`, which
+#             A :class:`jsonschema.IValidator` class that will be used to
+#     def delete(self, force=False):
+#     def revert(self, revision_id):
+#     def revisions(self):
+#     def get_mapping_by_item_type_ids(cls, item_type_ids: list) -> list:
+# class ItemTypeProps(RecordBase):
+#     def create(cls, property_id=None, name=None, schema=None, form_single=None,
+#     def get_record(cls, property_id):
+#     def helper_remove_empty_required(cls, data):
+#     def get_records(cls, ids):
+#     def revisions(self):
+# class ItemsMetadata(RecordBase):
+#     def create(cls, data, id_=None, **kwargs):
+#             An instance of the class :class:`jsonschema.FormatChecker`, which
+#             A :class:`jsonschema.IValidator` class that will be used to
+#     def get_record(cls, id_, with_deleted=False):
+#     def __custom_item_metadata(cls, item_metadata: dict):
+#     def __replace_fqdn_of_file_metadata(cls, item_metadata: Union[list, dict]):
+#     def get_records(cls, ids, with_deleted=False):
+#     def get_by_item_type_id(cls, item_type_id, with_deleted=False):
+#     def get_registered_item_metadata(cls, item_type_id):
+#     def get_by_object_id(cls, object_id):
+#     def patch(self, patch):
+#     def commit(self, **kwargs):
+#             An instance of the class :class:`jsonschema.FormatChecker`, which
+#             A :class:`jsonschema.IValidator` class that will be used to
+#     def delete(self, force=False):
+#     def revert(self, revision_id):
+#     def revisions(self):
+# class FilesMetadata(RecordBase):
+#     def create(cls, data, id_=None, **kwargs):
+#             An instance of the class :class:`jsonschema.FormatChecker`, which
+#             A :class:`jsonschema.IValidator` class that will be used to
+#     def get_record(cls, id_, with_deleted=False):
+#     def get_records(cls, ids, with_deleted=False):
+#     def patch(self, patch):
+#     def update_data(id, jsn):
+#     def commit(self, **kwargs):
+#             An instance of the class :class:`jsonschema.FormatChecker`, which
+#             A :class:`jsonschema.IValidator` class that will be used to
+#     def delete(self, force=False):
+#     def revert(self, revision_id):
+#     def revisions(self):
+# class RecordRevision(RecordBase):
+#     def __init__(self, model):
+# class SiteLicense(RecordBase):
+#     def get_records(cls):
+#     def update(cls, obj):
+#         def get_addr(lst, id_):
+# class RevisionsIterator(object):
+#     def __init__(self, model):
+#     def __len__(self):
+#     def __iter__(self):
+#     def next(self):
+#     def __next__(self):
+#     def __getitem__(self, revision_id):
+#     def __contains__(self, revision_id):
+# class WekoRecord(Record):
+#     def get_record(cls, pid, id_, with_deleted=False):
+#     def pid(self):
+#     def depid(self):
+# class FeedbackMailList(object):
+#     def update(cls, item_id, feedback_maillist):
+#     def update_by_list_item_id(cls, item_ids, feedback_maillist):
+#     def get_mail_list_by_item_id(cls, item_id):
+#     def delete(cls, item_id):
+#     def delete_without_commit(cls, item_id):
+#     def delete_by_list_item_id(cls, item_ids):
+# class ItemLink(object):
+#     def __init__(self, recid: str):
+#     def get_item_link_info(cls, recid):
+#     def __get_titles_key(item_type_mapping):
+#     def __get_titles(cls, record):
+#     def get_item_link_info_output_xml(cls, recid):
+#         def get_url(pid_value):
+#     def update(self, items):
+#     def bulk_create(self, dst_items):
+#     def bulk_update(self, dst_items):
+#     def bulk_delete(self, dst_item_ids):

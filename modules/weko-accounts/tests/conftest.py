@@ -26,7 +26,15 @@ import tempfile
 import pytest
 from flask import Flask
 from flask_babelex import Babel
-
+from weko_accounts import WekoAccounts
+from weko_accounts.views import blueprint
+from invenio_access import InvenioAccess
+from invenio_admin import InvenioAdmin
+from invenio_i18n import InvenioI18N
+from invenio_accounts import InvenioAccounts
+from flask_menu import Menu
+from invenio_db import InvenioDB
+from flask_mail import Mail
 
 @pytest.yield_fixture()
 def instance_path():
@@ -45,6 +53,16 @@ def base_app(instance_path):
         TESTING=True,
     )
     Babel(app_)
+    InvenioI18N(app_)
+    InvenioDB(app_)
+    Mail(app_)
+    Menu(app_)
+    InvenioDB(app_)
+    InvenioAccounts(app_)
+    InvenioAccess(app_)
+    InvenioAdmin(app_)
+    WekoAccounts(app_)
+    app_.register_blueprint(blueprint)
     return app_
 
 

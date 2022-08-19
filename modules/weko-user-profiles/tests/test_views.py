@@ -25,10 +25,10 @@
 
 from flask import url_for
 from flask_security import url_for_security
-from helpers import login, sign_up
+from tests.helpers import login, sign_up
 from invenio_accounts.models import User
 from invenio_db import db
-from test_validators import test_usernames
+from tests.test_validators import test_usernames
 
 from weko_user_profiles import WekoUserProfiles
 from weko_user_profiles.models import UserProfile

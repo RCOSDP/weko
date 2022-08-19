@@ -31,7 +31,7 @@ from weko_search_ui.utils import (
     represents_int,
     validation_date_property,
     DefaultOrderedDict,
-    defaultify
+    defaultify,
     handle_get_all_sub_id_and_name
 )
 from invenio_i18n.ext import InvenioI18N, current_i18n
@@ -327,7 +327,7 @@ def test_read_stats_csv(app,mocker_itemtype):
             res = read_stats_csv(csv_file_path,csv_file_name,file_type)
             assert res["error"] == data["error"]
             assert res["error_code"] == data["error_code"]
-            assert res["data_list"] == data["csv_data"]
+            assert res["data_list"] == data["data_list"]
             assert res["item_type_schema"] == data["item_type_schema"]
 
             assert read_stats_csv(csv_file_path,csv_file_name,'csv') == data

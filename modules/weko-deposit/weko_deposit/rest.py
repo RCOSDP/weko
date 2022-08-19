@@ -22,6 +22,7 @@
 
 import json
 import sys
+from wsgiref.util import request_uri
 
 import redis
 from redis import sentinel
@@ -152,7 +153,7 @@ def create_blueprint(app, endpoints):
             view_func=publish,
             methods=['PUT'],
         )
-
+    
     return blueprint
 
 
