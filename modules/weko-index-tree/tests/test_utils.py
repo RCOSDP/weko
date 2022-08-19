@@ -100,7 +100,7 @@ def test_filter_index_list_by_role(indices, users):
                                     and date.today() >= index.public_date.date()
                             )):
                         canView = True
-            assert canView
+        assert canView
 
 
 # def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
