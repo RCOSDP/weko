@@ -135,7 +135,6 @@ def base_app(instance_path):
     return app_
 
 
-
 @pytest.yield_fixture()
 def app(base_app):
     """Flask application fixture."""
@@ -200,6 +199,7 @@ def users(app, db):
         generaluser = create_test_user(email='generaluser@test.org')
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
+        noroleuser = create_test_user(email='noroleuser@test.org')
     else:
         user = User.query.filter_by(email='user@test.org').first()
         contributor = User.query.filter_by(email='contributor@test.org').first()
@@ -209,7 +209,8 @@ def users(app, db):
         generaluser = User.query.filter_by(email='generaluser@test.org')
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
-
+        noroleuser = create_test_user(email='noroleuser@test.org')
+        
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -234,6 +235,7 @@ def users(app, db):
     ds.add_role_to_user(originalroleuser, originalrole)
     ds.add_role_to_user(originalroleuser2, originalrole)
     ds.add_role_to_user(originalroleuser2, repoadmin_role)
+    ds.add_role_to_user(user, general_role)
     
     # Assign access authorization
     with db.session.begin_nested():
@@ -243,12 +245,13 @@ def users(app, db):
         db.session.add_all(action_users)
 
     return [
-        {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
-        {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
-        {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
-        {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
-        {'email': generaluser.email, 'id': generaluser.id, 'obj': sysadmin},
-        {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
-        {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
-        {'email': user.email, 'id': user.id, 'obj': user},
+        {'email': noroleuser.email, 'id': noroleuser.id, 'obj': noroleuser, 'isAdmin': False},
+        {'email': contributor.email, 'id': contributor.id, 'obj': contributor, 'isAdmin': False},
+        {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin, 'isAdmin': True},
+        {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin, 'isAdmin': True},
+        {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin, 'isAdmin': True},
+        {'email': generaluser.email, 'id': generaluser.id, 'obj': sysadmin, 'isAdmin': True},
+        {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser, 'isAdmin': False},
+        {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2, 'isAdmin': False},
+        {'email': user.email, 'id': user.id, 'obj': user, 'isAdmin': False},
     ]
