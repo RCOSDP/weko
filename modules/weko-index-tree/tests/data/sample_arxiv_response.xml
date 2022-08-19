@@ -1,0 +1,38 @@
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
+    <responseDate>2015-08-06T08:31:19Z</responseDate>
+    <request identifier="oai:arXiv.org:1507.03011" metadataPrefix="arXiv" verb="GetRecord">http://export.arxiv.org/oai2</request>
+    <GetRecord>
+        <record>
+            <header>
+                <identifier>oai:arXiv.org:1507.03011</identifier>
+                <datestamp>2015-07-14</datestamp>
+                <setSpec>physics:astro-ph</setSpec>
+            </header>
+            <metadata>
+                <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ http://arxiv.org/OAI/arXiv.xsd">
+                    <id>1507.03011</id>
+                    <created>2015-07-10</created>
+                    <authors>
+                        <author>
+                            <keyname>Young</keyname>
+                            <forenames>J. E.</forenames>
+                        </author>
+                        <author>
+                            <keyname>de Naray</keyname>
+                            <forenames>Rachel Kuzio</forenames>
+                        </author>
+                        <author>
+                            <keyname>Wang</keyname>
+                            <forenames>Sharon X.</forenames>
+                        </author>
+                    </authors>
+                    <title>The Distribution of Star Formation and Metals in the Low Surface\n  Brightness Galaxy UGC 628</title>
+                    <categories>astro-ph.GA</categories>
+                    <comments>13 pages, 7 figures</comments>
+                    <license>http://arxiv.org/licenses/nonexclusive-distrib/1.0/</license>
+                    <abstract>We introduce the MUSCEL Program (MUltiwavelength observations of the\nStructure, Chemistry and Evolution of LSB galaxies), a project aimed at\ndetermining the star-formation histories of low surface brightness galaxies.\nMUSCEL utilizes ground-based optical spectra and space-based UV and IR\nphotometry to fully constrain the star-formation histories of our targets with\nthe aim of shedding light on the processes that led low surface brightness\ngalaxies down a different evolutionary path from that followed by high surface\nbrightness galaxies, such as our Milky Way. Here we present the\nspatially-resolved optical spectra of UGC 628, observed with the VIRUS-P IFU at\nthe 2.7-m Harlen J. Smith Telescope at the McDonald Observatory, and utilize\nemission-line diagnostics to determine the rate and distribution of star\nformation as well as the gas-phase metallicity and metallicity gradient. We\nfind highly clustered star formation throughout UGC 628, excluding the core\nregions, and a log(O/H) metallicity around -4.2, with more metal rich regions\nnear the edges of the galactic disk. Based on the emission-line diagnostics\nalone, the current mode of star formation, slow and concentrated in the outer\ndisk, appears to have dominated for quite some time, although there are clear\nsigns of a much older stellar population formed in a more standard inside-out\nfashion.\n</abstract>
+                </arXiv>
+            </metadata>
+        </record>
+    </GetRecord>
+</OAI-PMH>

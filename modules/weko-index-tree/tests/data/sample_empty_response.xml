@@ -1,0 +1,7 @@
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
+  <responseDate>2016-06-02T19:13:02Z</responseDate>
+  <request verb="ListRecords" until="2015-01-17" from="2015-01-17" metadataPrefix="arXiv" set="physics:hep-lat">http://export.arxiv.org/oai2</request>
+  <error code="noRecordsMatch">
+    No records match the paramaters specified for this selective harvesting request.
+  </error>
+</OAI-PMH>

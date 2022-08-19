@@ -56,6 +56,13 @@ def test_get_user_roles(users):
 
 
 # def get_user_groups():
+def test_get_user_groups(users):
+    for user in users:
+        if user['obj'].groups:
+            assert len(user['obj'].groups) != 0
+        else:
+            assert len(user['obj'].groups) == 0
+
 
 
 # def check_roles(user_role, roles):
@@ -69,8 +76,33 @@ def test_check_roles(users):
 
 
 # def check_groups(user_group, groups):
+def test_check_groups(users):
+    for user in users:
+        if user['hasGroup']:
+            assert len(user['obj'].groups) > 0
+        else:
+            assert len(user['obj'].groups) == 0
+
+
 # def filter_index_list_by_role(index_list):
 #     def _check(index_data, roles, groups):
+def test_filter_index_list_by_role(indices, users):
+    for user in users:
+        canView = False
+        if user['obj'].roles:
+                canView = True
+        else:
+            for index in indices:
+                if index.browsing_role or index.browsing_group:
+                    if index.public_state and (
+                            index.public_date is None
+                            or (isinstance(index.public_date, datetime)
+                                    and date.today() >= index.public_date.date()
+                            )):
+                        canView = True
+            assert canView
+
+
 # def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
 # def get_index_id_list(indexes, id_list=None):
 # def get_publish_index_id_list(indexes, id_list=None):
@@ -113,14 +145,5 @@ def test_check_roles(users):
     @param index_id:
     @return:
     """
-    records = check_doi_in_index_and_child_index(index_id, recursively)
-    result = []
-    for record in records:
-        item_id = record.get('_source', {}).get('control_number', 0)
-        if len(record.get('_source', {}).get('path', [])):
-            result.append(item_id)
-
-    return result
-
 
 # def get_editing_items_in_index(index_id, recursively=False):

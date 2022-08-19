@@ -48,7 +48,9 @@ from invenio_pidrelations import InvenioPIDRelations
 from invenio_records import InvenioRecords
 from invenio_search import InvenioSearch
 from sqlalchemy_utils.functions import create_database, database_exists
+from invenio_oaiharvester.models import HarvestSettings
 
+from weko_index_tree.models import Index
 from weko_groups import WekoGroups
 from weko_workflow import WekoWorkflow
 from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
@@ -244,14 +246,39 @@ def users(app, db):
         ]
         db.session.add_all(action_users)
 
+    # Create test group
+    from weko_groups.models import Group
+    g = Group.create(name="test")
+
+    # Add user to test group
+    g.add_member(originalroleuser)
+    g.add_member(originalroleuser2)
+
     return [
-        {'email': noroleuser.email, 'id': noroleuser.id, 'obj': noroleuser, 'isAdmin': False},
-        {'email': contributor.email, 'id': contributor.id, 'obj': contributor, 'isAdmin': False},
-        {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin, 'isAdmin': True},
-        {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin, 'isAdmin': True},
-        {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin, 'isAdmin': True},
-        {'email': generaluser.email, 'id': generaluser.id, 'obj': sysadmin, 'isAdmin': True},
-        {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser, 'isAdmin': False},
-        {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2, 'isAdmin': False},
-        {'email': user.email, 'id': user.id, 'obj': user, 'isAdmin': False},
+        {'email': noroleuser.email, 'id': noroleuser.id, 'obj': noroleuser, 'isAdmin': False, 'hasGroup': False},
+        {'email': contributor.email, 'id': contributor.id, 'obj': contributor, 'isAdmin': False, 'hasGroup': False},
+        {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin, 'isAdmin': True, 'hasGroup': False},
+        {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin, 'isAdmin': True, 'hasGroup': False},
+        {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin, 'isAdmin': True, 'hasGroup': False},
+        {'email': generaluser.email, 'id': generaluser.id, 'obj': sysadmin, 'isAdmin': True, 'hasGroup': False},
+        {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser, 'isAdmin': False, 'hasGroup': True},
+        {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2, 'isAdmin': False, 'hasGroup': True},
+        {'email': user.email, 'id': user.id, 'obj': user, 'isAdmin': False, 'hasGroup': False},
     ]
+
+@pytest.fixture
+def sample_jpcoar_list_xml():
+    raw_cs_xml = open(os.path.join(
+        os.path.dirname(__file__),
+        "data/sample_oai_dc_response.xml"
+    )).read()
+    return raw_cs_xml
+
+@pytest.fixture
+def indices(app):
+    # Create a test Indices
+    with app.app_context():
+        testIndexOne = Index(index_name="testIndexOne",browsing_role="Contributor",public_state=True)
+        testIndexTwo = Index(index_name="testIndexTwo",browsing_group="test")
+        testIndexThree = Index(index_name="testIndexThree")
+        return [testIndexOne, testIndexTwo, testIndexThree]
