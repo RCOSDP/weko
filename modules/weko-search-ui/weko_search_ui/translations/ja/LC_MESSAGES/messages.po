@@ -811,3 +811,7 @@ msgstr "全件エクスポートの処理をキャンセルしてよいですか
 msgid "Execute"
 msgstr "実行"
 
+msgid "Your role cannot register items in this index."
+msgstr "ロールの権限が足りずこのインデックスにアイテム登録ができません。"
+
+
