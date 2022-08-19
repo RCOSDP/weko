@@ -45,7 +45,8 @@ def check_import_items_task(file_path, is_change_identifier: bool, host_url,
         host_url, headers=[("Accept-Language", lang)]
     ):
         check_result = check_import_items(file_path, is_change_identifier,
-                                          all_index_permission, can_edit_indexes)
+                                          all_index_permission=all_index_permission,
+                                          can_edit_indexes=can_edit_indexes)
     # remove zip file
     shutil.rmtree("/".join(file_path.split("/")[:-1]))
     data_path = check_result.get("data_path", "")

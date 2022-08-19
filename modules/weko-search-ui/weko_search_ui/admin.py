@@ -340,7 +340,7 @@ class ItemImportView(BaseView):
                     break
                 else:
                     role_ids.append(role.id)
-        if role_ids and len(can_edit_indexes) == 1 and can_edit_indexes[0] != 0:
+        if role_ids:
             from invenio_communities.models import Community
             comm_data = Community.query.filter(
                 Community.id_role.in_(role_ids)
