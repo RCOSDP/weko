@@ -85,8 +85,10 @@ def get_list_username():
 
     Query database to get all available username
     return: list of username
+    TODO: 
     """
     current_user_id = current_user.get_id()
+    current_app.logger.error(current_user)
     user_index = 1
     result = list()
     while True:
@@ -371,7 +373,22 @@ def parse_ranking_results(index_info,
                           pid_key=None,
                           search_key=None,
                           date_key=None):
-    """Parse the raw stats results to be usable by the view."""
+    """Parse the raw stats results to be usable by the view.
+
+    Args:
+        index_info (_type_): {'1660555749031': {'index_name': 'IndexA', 'parent': '0', 'public_date': None, 'harvest_public_state': True, 'browsing_role': ['3', '-98', '-99']}}
+        results (_type_): {'took': 7, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': 2, 'max_score': None, 'hits': [{'_index': 'tenant1-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': 'a64f4db8-b7d7-4cdf-a679-2b0e73f854c4', '_score': None, '_source': {'_created': '2022-08-20T06:05:56.806896+00:00', '_updated': '2022-08-20T06:06:24.602226+00:00', 'type': ['conference paper'], 'title': ['ff'], 'control_number': '3', '_oai': {'id': 'oai:weko3.example.org:00000003', 'sets': ['1660555749031']}, '_item_metadata': {'_oai': {'id': 'oai:weko3.example.org:00000003', 'sets': ['1660555749031']}, 'path': ['1660555749031'], 'owner': '1', 'title': ['ff'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}, 'item_title': 'ff', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-08-20', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'control_number': '3'}, 'itemtype': 'デフォルトアイテムタイプ（フル）', 'publish_date': '2022-08-20', 'author_link': [], 'weko_shared_id': -1, 'weko_creator_id': '1', 'relation_version_is_last': True, 'path': ['1660555749031'], 'publish_status': '0'}, 'sort': [1660953600000]}, {'_index': 'tenant1-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': '3cc6099a-4208-4528-80ce-eee7fe4296b7', '_score': None, '_source': {'_created': '2022-08-17T17:00:43.877778+00:00', '_updated': '2022-08-17T17:01:08.615488+00:00', 'type': ['conference paper'], 'title': ['2'], 'control_number': '1', '_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1660555749031']}, '_item_metadata': {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1660555749031']}, 'path': ['1660555749031'], 'owner': '1', 'title': ['2'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-18'}, 'item_title': '2', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-08-18', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': '2', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'control_number': '1'}, 'itemtype': 'デフォルトアイテムタイプ（フル）', 'publish_date': '2022-08-18', 'author_link': [], 'weko_shared_id': -1, 'weko_creator_id': '1', 'relation_version_is_last': True, 'path': ['1660555749031'], 'publish_status': '0'}, 'sort': [1660780800000]}]}}
+        display_rank (_type_): 10
+        list_name (str, optional): _description_. Defaults to 'all'.
+        title_key (str, optional): _description_. Defaults to 'title'.
+        count_key (_type_, optional): _description_. Defaults to None.
+        pid_key (_type_, optional): _description_. Defaults to None.
+        search_key (_type_, optional): _description_. Defaults to None.
+        date_key (_type_, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: [{'date': '2022-08-20', 'title': 'ff', 'url': '../records/3'}, {'date': '2022-08-18', 'title': '2', 'url': '../records/1'}]
+    """
     ranking_list = []
     if pid_key:
         url = '../records/{0}'
@@ -426,6 +443,7 @@ def parse_ranking_results(index_info,
                 ranking_list.append(t)
             if len(ranking_list) == display_rank:
                 break
+
     return ranking_list
 
 
@@ -474,16 +492,14 @@ def validate_form_input_data(
 
     :param result: result dictionary.
     :param item_id: item type identifier.
-    :param data: form input data
+    :param data: form input data 
     :param activity_id: activity id
     """
+    # current_app.logger.error("result: {}".format(result))
+    # current_app.logger.error("item_id: {}".format(item_id))
+    # current_app.logger.error("data: {}".format(data))
     item_type = ItemTypes.get_by_id(item_id)
     json_schema = item_type.schema.copy()
-
-    # current_app.logger.debug("json_schema")
-    # current_app.logger.debug(json_schema)
-    # current_app.logger.debug("data")
-    # current_app.logger.debug(data)
 
     # Remove excluded item in json_schema
     remove_excluded_items_in_json_schema(item_id, json_schema)
@@ -773,6 +789,10 @@ def make_stats_csv(item_type_id, recids, list_item_role):
         ret             -- Key properties
         ret_label       -- Label properties
         records.attr_output -- Record data
+    Rises:
+        KeyError: 'EMAIL_DISPLAY_FLG'
+        KeyError: 'WEKO_RECORDS_UI_LICENSE_DICT'
+        NameError: name '_' is not defined
 
     """
     from weko_records_ui.views import escape_newline, escape_str
@@ -1276,11 +1296,19 @@ def write_csv_files(item_types_data, export_path, list_item_role):
     @param list_item_role:
     @return:
     """
+    current_app.logger.debug("item_types_data:{}".format(item_types_data))
+
     for item_type_id in item_types_data:
+        
+        current_app.logger.debug("item_type_id:{}".format(item_type_id))
+        current_app.logger.debug("item_types_data[item_type_id]['recids']:{}".format(item_types_data[item_type_id]['recids']))
+        current_app.logger.debug("list_item_role:{}".format(list_item_role))
         headers, records = make_stats_csv(
             item_type_id,
             item_types_data[item_type_id]['recids'],
             list_item_role)
+        current_app.logger.debug("headers:{}".format(headers))
+        current_app.logger.debug("records:{}".format(records))
         keys, labels, is_systems, options = headers
         item_types_data[item_type_id]['recids'].sort()
         item_types_data[item_type_id]['keys'] = keys
@@ -2395,10 +2423,13 @@ def get_ranking(settings):
 
 
 def __sanitize_string(s: str):
-    """Sanitize string.
+    """Sanitize control characters without '\x09', '\x0a', '\x0d' and '0x7f'.
 
-    :param s:
-    :return:
+    Args:
+        s (str): target string
+
+    Returns:
+        str: sanitized string
     """
     s = s.strip()
     sanitize_str = ""
@@ -2409,10 +2440,11 @@ def __sanitize_string(s: str):
 
 
 def sanitize_input_data(data):
-    """Sanitize the input data.
+    """Sanitize control characters without '\x09', '\x0a', '\x0d' and '0x7f'.
 
-    :param data: input data.
-    """
+    Args:
+        data (dict or list): target dict or list
+    """    
     if isinstance(data, dict):
         for k, v in data.items():
             if isinstance(v, str):

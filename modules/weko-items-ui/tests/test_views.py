@@ -2,137 +2,697 @@ import json
 import pytest
 from mock import patch
 from invenio_accounts.testutils import login_user_via_session
+from flask import Flask, json, jsonify, url_for, session
+from unittest.mock import MagicMock
+from weko_items_ui.views import iframe_index,iframe_save_model,default_view_method,to_links_js,check_ranking_show
+from weko_workflow.models import Activity
+from datetime import datetime
+
+# def index(item_type_id=0):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_index_acl_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_index_acl_nologin(client,db_sessionlifetime):   
+    res =  client.get('http://test_server/items/')
+    assert res.status_code == 302
+    assert res.location == url_for('security.login', next="/items/",_external=True)
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_index_acl -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize('id, status_code', [
+    (0, 302),
+    (1, 302),
+    (2, 302),
+    (3, 302),
+    (4, 403),
+    (5, 403),
+    (6, 302),
+    (7, 403),
+])
+def test_index_acl(client,db_register, users,id, status_code):
+    login_user_via_session(client=client, email=users[id]['email'])
+    res = client.get('http://test_server/items/')
+    assert res.status_code == status_code
+    if res.status_code == 302:
+        assert res.location == 'http://test_server/items/1'
+    else:
+        assert res.location == None
+    
+    with patch('flask.templating._render', return_value=''):
+        res = client.get('http://test_server/items/{}'.format(db_register['item_type'].id))
+        assert res.status_code == 200
+
+#.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_index_noitemtype -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_index_noitemtype(client, users):
+    login_user_via_session(client=client, email=users[0]['email'])
+    res = client.get('http://test_server/items/')
+    assert res.status_code == 400
+
+#.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_index_exception -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@patch("weko_items_ui.views.index",MagicMock(side_effect=Exception()))
+def test_index_exception(client,users, mocker):
+    login_user_via_session(client=client, email=users[0]['email'])
+    res = client.get('http://test_server/items/')
+    assert res.status_code == 400
+
+    
+# def iframe_index(item_type_id=0):
+
+#.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_index_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp 
+def test_iframe_index_acl_nologin(client,db_sessionlifetime):  
+    url = url_for('weko_items_ui.iframe_index')
+    res =  client.get(url)
+    assert res.status_code == 302
+    assert res.location == url_for('security.login', next="/items/iframe",_external=True)
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_index_acl -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 403),
+    (5, 403),
+    (6, 200),
+    (7, 403),
+])
+def test_iframe_index_acl(app,client,users,db_register,id, status_code):
+    login_user_via_session(client=client, email=users[id]['email'])
+    url = "{}/1".format(url_for('weko_items_ui.iframe_index'))
+    with patch('flask.templating._render', return_value=''):
+        res = client.get(url)
+        assert res.status_code == status_code
 
 
-user_results1 = [
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_index_noitemtypeid -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize('id, status_code', [
+    (0, 404),
+])
+def test_iframe_index_noitemtypeid(app,client,db_register, users,id, status_code):
+    login_user_via_session(client=client, email=users[id]['email'])
+    url = "{}".format(url_for('weko_items_ui.iframe_index'))
+    with patch('flask.templating._render', return_value=''):
+        res = client.get(url)
+        assert res.status_code == status_code
+    
+    url = "{}/0".format(url_for('weko_items_ui.iframe_index'))
+    with patch('flask.templating._render', return_value=''):
+        res = client.get(url)
+        assert res.status_code == status_code
+    
+    url = "{}/hoge".format(url_for('weko_items_ui.iframe_index'))
+    with patch('flask.templating._render', return_value=''):
+        res = client.get(url)
+        assert res.status_code == status_code
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_index -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+])
+def test_iframe_index(app,db,client,users,db_register,id, status_code):
+    login_user_via_session(client=client, email=users[id]['email'])
+    url = "{}/1".format(url_for('weko_items_ui.iframe_index'))
+    with open('tests/data/temp_data.json', 'r') as f:
+        tmp_item = json.dumps(json.load(f))
+
+    with patch('weko_workflow.api.WorkActivity.get_activity_metadata',return_value=tmp_item):
+        with patch('flask.templating._render', return_value=''):
+            with client.session_transaction() as session:
+                session['activity_info'] = {'activity_id': 'A-20220818-00001', 'action_id': 3, 'action_version': '1.0.1', 'action_status': 'M', 'commond': ''}
+            res = client.get(url)
+            assert res.status_code == status_code
+
+# def test_iframe_index(app,client,db_register, users):
+    # with app.test_request_context():
+        # login_user_via_session(client=client, email=users[0]['email'])
+        # session['activity_info'] = {'activity_id': 'A-20220818-00001', 'action_id': 3, 'action_version': '1.0.1', 'action_status': 'M', 'commond': ''}
+        # assert iframe_index(1)==""
+    
+    # with patch("flask.session",return_value={'activity_id': 'A-20220818-00001', 'action_id': 3, 'action_version': '1.0.1', 'action_status': 'M', 'commond': ''}):
+    #     with patch("weko_workflow.api.WorkActivity.get_activity_metadata",return_value = "{'metainfo': {'pubdate': '2022-08-19', 'item_1617186331708': [{'subitem_1551255647225': 'aa', 'subitem_1551255648112': 'ja'}], 'item_1617186385884': [{}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{}], 'affiliationNames': [{}]}], 'creatorAlternatives': [{}], 'creatorMails': [{}], 'creatorNames': [{}], 'familyNames': [{}], 'givenNames': [{}], 'nameIdentifiers': [{}]}], 'item_1617186499011': [{}], 'item_1617186609386': [{}], 'item_1617186626617': [{}], 'item_1617186643794': [{}], 'item_1617186660861': [{}], 'item_1617186702042': [{}], 'item_1617186783814': [{}], 'item_1617186859717': [{}], 'item_1617186882738': [{'subitem_geolocation_place': [{}]}], 'item_1617186901218': [{'subitem_1522399412622': [{}], 'subitem_1522399651758': [{}]}], 'item_1617186920753': [{}], 'item_1617186941041': [{}], 'item_1617187112279': [{}], 'item_1617187187528': [{'subitem_1599711633003': [{}], 'subitem_1599711660052': [{}], 'subitem_1599711758470': [{}], 'subitem_1599711788485': [{}]}], 'item_1617349709064': [{'contributorAffiliations': [{'contributorAffiliationNameIdentifiers': [{}], 'contributorAffiliationNames': [{}]}], 'contributorAlternatives': [{}], 'contributorMails': [{}], 'contributorNames': [{}], 'familyNames': [{}], 'givenNames': [{}], 'nameIdentifiers': [{}]}], 'item_1617353299429': [{'subitem_1523320863692': [{}]}], 'item_1617605131499': [{'date': [{}], 'fileDate': [{}], 'filesize': [{}]}], 'item_1617610673286': [{'nameIdentifiers': [{}], 'rightHolderNames': [{}]}], 'item_1617620223087': [{}], 'item_1617944105607': [{'subitem_1551256015892': [{}], 'subitem_1551256037922': [{}]}], 'item_1617187056579': {'bibliographic_titles': [{}]}, 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1}, 'files': [], 'endpoints': {'initialization': '/api/deposits/items'}}"):
+    #         res = client.get("/items/iframe/1")
+    #         assert res.status_code == 200
+
+
+
+    
+
+
+@patch("weko_items_ui.views.iframe_index",MagicMock(side_effect=Exception()))
+def test_index_exception(client,users, mocker):
+    login_user_via_session(client=client, email=users[0]['email'])
+    url = url_for('/items/iframe',_external=True)
+    res = client.get(url)
+    assert res.status_code == 400
+
+
+# def iframe_save_model():
+
+#.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_save_model_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp 
+def test_iframe_save_model_nologin(client,db_sessionlifetime):  
+    url = url_for('weko_items_ui.iframe_save_model',_external=True)
+    res =  client.post(url)
+    assert res.status_code == 302
+    assert res.location == url_for('security.login', next="/items/iframe/model/save",_external=True)
+
+
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_save_model_acl -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize('id, status_code', [
     (0, 200),
     (1, 200),
     (2, 200),
     (3, 200),
     (4, 200),
-]
-
-@pytest.mark.parametrize('id, status_code', user_results1)
-def test_check_restricted_content_login(client_api, users, id, status_code):
-    login_user_via_session(client=client_api, email=users[id]["email"])
-    res = client_api.post("/api/check_restricted_content",
-                      data=json.dumps({"record_ids":[]}),
-                      content_type="application/json")
+    (5, 200),
+    (6, 200),
+    (7, 200),
+])
+def test_iframe_save_model_acl(app,client,db_register, users,id, status_code):
+    login_user_via_session(client=client, email=users[id]['email'])
+    url = url_for('weko_items_ui.iframe_save_model',_external=True)
+    res =  client.post(url)
     assert res.status_code == status_code
 
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_save_model_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+])
+def test_iframe_save_model_error(app,client,db_register, users,id, status_code):
+    login_user_via_session(client=client, email=users[id]['email'])
+    url = url_for('weko_items_ui.iframe_save_model',_external=True)
+    data = "{'metainfo': {'pubdate': '2022-08-19', 'item_1617186331708': [{'subitem_1551255647225': 'aa', 'subitem_1551255648112': 'ja'}], 'item_1617186385884': [{}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{}], 'affiliationNames': [{}]}], 'creatorAlternatives': [{}], 'creatorMails': [{}], 'creatorNames': [{}], 'familyNames': [{}], 'givenNames': [{}], 'nameIdentifiers': [{}]}], 'item_1617186499011': [{}], 'item_1617186609386': [{}], 'item_1617186626617': [{}], 'item_1617186643794': [{}], 'item_1617186660861': [{}], 'item_1617186702042': [{}], 'item_1617186783814': [{}], 'item_1617186859717': [{}], 'item_1617186882738': [{'subitem_geolocation_place': [{}]}], 'item_1617186901218': [{'subitem_1522399412622': [{}], 'subitem_1522399651758': [{}]}], 'item_1617186920753': [{}], 'item_1617186941041': [{}], 'item_1617187112279': [{}], 'item_1617187187528': [{'subitem_1599711633003': [{}], 'subitem_1599711660052': [{}], 'subitem_1599711758470': [{}], 'subitem_1599711788485': [{}]}], 'item_1617349709064': [{'contributorAffiliations': [{'contributorAffiliationNameIdentifiers': [{}], 'contributorAffiliationNames': [{}]}], 'contributorAlternatives': [{}], 'contributorMails': [{}], 'contributorNames': [{}], 'familyNames': [{}], 'givenNames': [{}], 'nameIdentifiers': [{}]}], 'item_1617353299429': [{'subitem_1523320863692': [{}]}], 'item_1617605131499': [{'date': [{}], 'fileDate': [{}], 'filesize': [{}]}], 'item_1617610673286': [{'nameIdentifiers': [{}], 'rightHolderNames': [{}]}], 'item_1617620223087': [{}], 'item_1617944105607': [{'subitem_1551256015892': [{}], 'subitem_1551256037922': [{}]}], 'item_1617187056579': {'bibliographic_titles': [{}]}, 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1}, 'files': [], 'endpoints': {'initialization': '/api/deposits/items'}}"
+    res =  client.post(url,json=data)
+    assert res.status_code == status_code
+    assert res.data==b'{"code":1,"msg":"Model save error"}\n'
 
-def test_check_restricted_content_guest(client_api, users):
-    res = client_api.post("/api/check_restricted_content",
-                      data=json.dumps({"record_ids":[]}),
-                      content_type="application/json")
-    assert res.status_code == 200
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_save_model -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+])
+def test_iframe_save_model(app,client,db_register, users,id, status_code):
+    app.config['PRESERVE_CONTEXT_ON_EXCEPTION']=False
+    app.config['TESTING'] = True
+    login_user_via_session(client=client, email=users[id]['email'])
+    url = url_for('weko_items_ui.iframe_save_model',_external=True)
+    data = "{'metainfo': {'pubdate': '2022-08-19', 'item_1617186331708': [{'subitem_1551255647225': 'aa', 'subitem_1551255648112': 'ja'}], 'item_1617186385884': [{}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{}], 'affiliationNames': [{}]}], 'creatorAlternatives': [{}], 'creatorMails': [{}], 'creatorNames': [{}], 'familyNames': [{}], 'givenNames': [{}], 'nameIdentifiers': [{}]}], 'item_1617186499011': [{}], 'item_1617186609386': [{}], 'item_1617186626617': [{}], 'item_1617186643794': [{}], 'item_1617186660861': [{}], 'item_1617186702042': [{}], 'item_1617186783814': [{}], 'item_1617186859717': [{}], 'item_1617186882738': [{'subitem_geolocation_place': [{}]}], 'item_1617186901218': [{'subitem_1522399412622': [{}], 'subitem_1522399651758': [{}]}], 'item_1617186920753': [{}], 'item_1617186941041': [{}], 'item_1617187112279': [{}], 'item_1617187187528': [{'subitem_1599711633003': [{}], 'subitem_1599711660052': [{}], 'subitem_1599711758470': [{}], 'subitem_1599711788485': [{}]}], 'item_1617349709064': [{'contributorAffiliations': [{'contributorAffiliationNameIdentifiers': [{}], 'contributorAffiliationNames': [{}]}], 'contributorAlternatives': [{}], 'contributorMails': [{}], 'contributorNames': [{}], 'familyNames': [{}], 'givenNames': [{}], 'nameIdentifiers': [{}]}], 'item_1617353299429': [{'subitem_1523320863692': [{}]}], 'item_1617605131499': [{'date': [{}], 'fileDate': [{}], 'filesize': [{}]}], 'item_1617610673286': [{'nameIdentifiers': [{}], 'rightHolderNames': [{}]}], 'item_1617620223087': [{}], 'item_1617944105607': [{'subitem_1551256015892': [{}], 'subitem_1551256037922': [{}]}], 'item_1617187056579': {'bibliographic_titles': [{}]}, 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1}, 'files': [], 'endpoints': {'initialization': '/api/deposits/items'}}"
+    res =  client.post(url,json=data)
+    session['activity_info'] = {'activity_id': 'A-20220818-00001', 'action_id': 3, 'action_version': '1.0.1', 'action_status': 'M', 'commond': ''}
+    assert res.data==""    
+
+# def iframe_success():
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_success -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_iframe_success(client,db_sessionlifetime):
+    url = url_for('weko_items_ui.iframe_success',_external=True)
+    res = client.get(url)
+    assert res.status_code==200
+
+# def iframe_error():
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_error -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_iframe_error(client,db_sessionlifetime):
+    url = url_for('weko_items_ui.iframe_error',_external=True)
+    res = client.get(url)
+    assert res.status_code==200
+
+# def get_json_schema(item_type_id=0, activity_id=""):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_json_schema -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_json_schema_acl_nologin(client,db_register):
+    url = url_for('weko_items_ui.get_json_schema',item_type_id=1,_external=True)
+    res = client.get(url)
+    assert res.status_code == 302
 
 
-user_results2 = [
-    (0, 403),
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
     (1, 200),
     (2, 200),
     (3, 200),
     (4, 200),
-]
+    (5, 200),
+    (6, 200),
+    (7, 200),
+])
+def test_get_json_schema_acl(client,users,db_register,id,status_code):
+    login_user_via_session(client=client, email=users[id]['email'])
+    url = url_for('weko_items_ui.get_json_schema',item_type_id=1,_external=True)
+    res = client.get(url)
+    assert res.status_code == status_code
 
+# def get_schema_form(item_type_id=0, activity_id=''):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_schema_form_acl_nologin -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_schema_form_acl_nologin(client,db_register):
+    url = url_for('weko_items_ui.get_schema_form',item_type_id=1,_external=True)
+    res = client.get(url)
+    assert res.status_code == 302
 
-@pytest.mark.parametrize('id, status_code', user_results2)
-def test_prepare_edit_item_login(client_api, users, id, status_code):
-    login_user_via_session(client=client_api, email=users[id]["email"])
-    res = client_api.post("/api/prepare_edit_item",
-                          data=json.dumps({}),
-                          content_type="application/json")
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_schema_form_acl -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+    (7, 200),
+])
+def test_get_schema_form_acl(client,users,db_register,id,status_code):
+    login_user_via_session(client=client, email=users[id]['email'])
+    url = url_for('weko_items_ui.get_schema_form',item_type_id=1,_external=True)
+    res = client.get(url)
     assert res.status_code == status_code
 
 
-def test_prepare_edit_item_guest(client_api, users):
-    res = client_api.post("/api/prepare_edit_item",
-                          data=json.dumps({}),
-                          content_type="application/json")
+# def items_index(pid_value='0'):
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_items_index_acl_nologin -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_items_index_acl_nologin(client,db_records):
+    url = url_for('weko_items_ui.items_index',pid_value=1,_external=True)
+    res = client.get(url)
     assert res.status_code == 302
 
+    res = client.put(url)
+    assert res.status_code == 302
 
-@pytest.mark.parametrize('id, status_code', user_results2)
-def test_validate_login(client_api, users, id, status_code):
-    login_user_via_session(client=client_api, email=users[id]["email"])
-    with patch("weko_items_ui.views.validate_form_input_data",return_value=""):
-        res = client_api.post("/api/validate",
-                          data=json.dumps({}),
-                          content_type="application/json")
+    res = client.post(url)
+    assert res.status_code == 302
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_items_index_acl -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 403),
+    (5, 403),
+    (6, 200),
+    (7, 403),
+])
+def test_items_index_acl(client,db_records,users,id,status_code):
+    login_user_via_session(client=client, email=users[id]['email'])
+    depid, record, item = db_records[0]
+    url = url_for('weko_items_ui.items_index',pid_value=depid.id,_external=True)
+    with patch('flask.templating._render', return_value=''):
+        res = client.get(url)
+        assert res.status_code == status_code
+    
+    # TODO POST, PUT
+    # headers = {'content-type': 'application/json'}
+    # res = client.put(url,data=json.dumps("{}"),headers=headers)
+    # assert res.status_code == status_code
+    # assert res.data==""
+
+    # res = client.post(url)
+    # assert res.status_code == status_code
+    # assert res.data==""
+
+# def iframe_items_index(pid_value='0'):
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_items_index_acl_nologin -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_iframe_items_index_acl_nologin(client,db_records):
+    url = url_for('weko_items_ui.iframe_items_index',pid_value=1,_external=True)
+    res = client.get(url)
+    assert res.status_code == 302
+    
+    res = client.put(url)
+    assert res.status_code == 302
+
+    res = client.post(url)
+    assert res.status_code == 302
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_items_index_acl -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+    # (1, 200),
+    # (2, 200),
+    # (3, 200),
+    # (4, 403),
+    # (5, 403),
+    # (6, 200),
+    # (7, 403),
+])
+# not work
+def test_iframe_items_index_acl(app,client,db_records,users,id,status_code):
+    login_user_via_session(client=client, email=users[id]['email'])
+    app.config['PRESERVE_CONTEXT_ON_EXCEPTION']=False
+    app.config['TESTING'] = True
+    depid, record, item = db_records[0]
+    url = url_for('weko_items_ui.iframe_items_index',pid_value=depid.id,_external=True)
+    with patch('flask.templating._render', return_value=''):
+        with client.session_transaction() as session:
+            activity = Activity(activity_id='1',workflow_id=1, flow_id=1,
+                    action_id=1, activity_login_user=1,
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=6)
+            session['itemlogin_activity'] = activity
+            res = client.get(url)
+            assert res.status_code == status_code
+    
+    # TODO POST, PUT
+    # headers = {'content-type': 'application/json'}
+    # res = client.put(url,data=json.dumps("{}"),headers=headers)
+    # assert res.status_code == status_code
+    # assert res.data==""
+
+    # res = client.post(url)
+    # assert res.status_code == status_code
+    # assert res.data==""
+
+
+# def default_view_method(pid, record, template=None):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_default_view_method -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_default_view_method(app,db_records):
+    depid, record, item = db_records[0]
+    with app.test_request_context():
+        with patch('flask.templating._render', return_value=''):
+            assert default_view_method(depid.id,record)==""
+
+# def to_links_js(pid):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_to_links_js -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_to_links_js(app,db_records):
+    depid, record, item = db_records[0]
+    assert to_links_js(depid)=={'self': '/api/deposits/1', 'ret': 'http://test_server/items/', 'index': '/api/deposits/redirect/1', 'r': '/items/index/1', 'iframe_tree': '/items/iframe/index/1', 'iframe_tree_upgrade': '/items/iframe/index/1.1'}
+
+# def index_upload():
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_index_upload_acl_nologin -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_index_upload_acl_nologin(client,db_sessionlifetime):
+    url = url_for('weko_items_ui.index_upload',_external=True)
+    res = client.get(url)
+    assert res.status_code == 302
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_index_upload_acl -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+    (7, 200),
+])
+def test_index_upload_acl(client,db_sessionlifetime,users,id,status_code):
+    login_user_via_session(client=client, email=users[id]['email'])
+    url = url_for('weko_items_ui.index_upload',_external=True)
+    with patch('flask.templating._render', return_value=''):
+        res = client.get(url)
         assert res.status_code == status_code
 
+# def get_search_data(data_type=''):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_search_data_acl_nologin -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_search_data_acl_nologin(client_api,db_sessionlifetime):
+    res = client_api.get('/api/items/get_search_data/username')
+    assert res.status_code == 302
+    res = client_api.get('/api/items/get_search_data/email')
+    assert res.status_code == 302
 
-def test_validate_guest(client_api, users):
-    with patch("weko_items_ui.views.validate_form_input_data",return_value=""):
-        res = client_api.post("/api/validate",
-                          data=json.dumps({}),
-                          content_type="application/json")
-        assert res.status_code == 302
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_search_data_acl -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+    (7, 200),
+])
+def test_get_search_data_acl(client_api,db_sessionlifetime,users,id,status_code):
+    login_user_via_session(client=client_api, email=users[id]['email'])
+    res = client_api.get('/api/items/get_search_data/username')
+    assert res.status_code == status_code
+    res = client_api.get('/api/items/get_search_data/email')
+    assert res.status_code == status_code
 
+# def validate_user_email_and_index():
+#.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_validate_user_email_and_index_login -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 
-@pytest.mark.parametrize('id, status_code', user_results2)
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+    (7, 200),
+])
 def test_validate_user_email_and_index_login(client_api, users, id, status_code):
     login_user_via_session(client=client_api, email=users[id]["email"])
     with patch("weko_items_ui.views.validate_user_mail_and_index",return_value=""):
-        res = client_api.post("/api/validate_email_and_index",
+        res = client_api.post("/api/items/validate_email_and_index",
                           data=json.dumps({}),
                           content_type="application/json")
         assert res.status_code == status_code
+        
 
 
 def test_validate_user_email_and_index_guest(client_api, users):
     with patch("weko_items_ui.views.validate_user_mail_and_index",return_value=""):
-        res = client_api.post("/api/validate_email_and_index",
+        res = client_api.post("/api/items/validate_email_and_index",
                           data=json.dumps({}),
                           content_type="application/json")
         assert res.status_code == 302
 
-
-@pytest.mark.parametrize('id, status_code', user_results2)
+# def validate_user_info():
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_validate_user_info_login -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+    (7, 200),
+])
 def test_validate_user_info_login(client_api, users, id, status_code):
     login_user_via_session(client=client_api, email=users[id]["email"])
-    res = client_api.post("/api/validate_user_info",
+    res = client_api.post("/api/items/validate_user_info",
                       data=json.dumps({"username":"", "email":""}),
                       content_type="application/json")
     assert res.status_code == status_code
 
 
 def test_validate_user_info_guest(client_api, users):
-    res = client_api.post("/api/validate_user_info",
+    res = client_api.post("/api/items/validate_user_info",
                       data=json.dumps({"username":"", "email":""}),
                       content_type="application/json")
     assert res.status_code == 302
 
-
-# def index(item_type_id=0):
-# def iframe_index(item_type_id=0):
-# def iframe_save_model():
-# def iframe_success():
-# def iframe_error():
-# def get_json_schema(item_type_id=0, activity_id=""):
-# def get_schema_form(item_type_id=0, activity_id=''):
-# def items_index(pid_value='0'):
-# def iframe_items_index(pid_value='0'):
-# def default_view_method(pid, record, template=None):
-# def to_links_js(pid):
-# def index_upload():
-# def get_search_data(data_type=''):
-# def validate_user_email_and_index():
-# def validate_user_info():
 # def get_user_info(owner, shared_user_id):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_user_info_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_user_info_acl_nologin(client_api,db_sessionlifetime):
+    url = url_for('weko_items_ui_api.get_user_info',owner=1,shared_user_id=1,_external=True)
+    res = client_api.get(url)
+    assert res.status_code == 200
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_user_info_acl -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+    (7, 200),
+])
+def test_get_user_info_acl(client_api,db_sessionlifetime,users, id, status_code):
+    login_user_via_session(client=client_api, email=users[id]["email"])
+    url = url_for('weko_items_ui_api.get_user_info',owner=1,shared_user_id=1,_external=True)
+    res = client_api.get(url)
+    assert res.status_code == status_code
+
 # def get_current_login_user_id():
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_current_login_user_id_acl -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_current_login_user_id_acl_nologin(client_api,db_sessionlifetime):
+    url = url_for('weko_items_ui_api.get_current_login_user_id',_external=True)
+    res = client_api.get(url)
+    assert res.status_code == 200
+
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+    (7, 200),
+])
+def test_get_current_login_user_id_acl(client_api,db_sessionlifetime,users, id, status_code):
+    login_user_via_session(client=client_api, email=users[id]["email"])
+    url = url_for('weko_items_ui_api.get_current_login_user_id',_external=True)
+    res = client_api.get(url)
+    assert res.status_code == status_code
+
 # def prepare_edit_item():
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+    (7, 200),
+])
+def test_prepare_edit_item_login(client_api, users, id, status_code):
+    login_user_via_session(client=client_api, email=users[id]["email"])
+    res = client_api.post("/api/items/prepare_edit_item",
+                          data=json.dumps({}),
+                          content_type="application/json")
+    assert res.status_code == status_code
+
+
+def test_prepare_edit_item_guest(client_api, users):
+    res = client_api.post("/api/items/prepare_edit_item",
+                          data=json.dumps({}),
+                          content_type="application/json")
+    assert res.status_code == 302
+
 # def ranking():
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_ranking_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_ranking_acl_nologin(client,db_sessionlifetime):
+    url = url_for('weko_items_ui.ranking',_external=True)
+    res = client.get(url)
+    assert res.status_code == 200
+
+
 # def check_ranking_show():
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_check_ranking_show -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_check_ranking_show():
+    mock = MagicMock(id=0,is_show=True,new_item_period=14,statistical_period=365,display_rank=10,rankings={'new_items': True, 'most_reviewed_items': True, 'most_downloaded_items': True, 'most_searched_keywords': True, 'created_most_items_user': True})
+    with patch("weko_admin.models.RankingSettings.get",return_value=mock):
+        assert check_ranking_show()==""
+    
+    mock = MagicMock(id=0,is_show=False,new_item_period=14,statistical_period=365,display_rank=10,rankings={'new_items': True, 'most_reviewed_items': True, 'most_downloaded_items': True, 'most_searched_keywords': True, 'created_most_items_user': True})
+    with patch("weko_admin.models.RankingSettings.get",return_value=mock):
+        assert check_ranking_show()=="hide"
+
+
 # def check_restricted_content():
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+    (7, 200),
+])
+def test_check_restricted_content_login(client_api, users, id, status_code):
+    login_user_via_session(client=client_api, email=users[id]["email"])
+    res = client_api.post("/api/items/check_restricted_content",
+                      data=json.dumps({"record_ids":[]}),
+                      content_type="application/json")
+    assert res.status_code == status_code
+
+
+def test_check_restricted_content_guest(client_api, users):
+    res = client_api.post("/api/items/check_restricted_content",
+                      data=json.dumps({"record_ids":[]}),
+                      content_type="application/json")
+    assert res.status_code == 200
+
 # def validate_bibtex_export():
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_validate_bibtex_export_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_validate_bibtex_export_acl_nologin(client, users):
+    url = url_for('weko_items_ui.validate_bibtex_export',_external=True)
+    res = client.post(url,data=json.dumps({"record_ids":[]}),content_type="application/json")
+    assert res.status_code == 200
+
 # def export():
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_export_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_export_acl_nologin(client, users):
+    url = url_for('weko_items_ui.export',_external=True)
+    res = client.get(url)
+    assert res.status_code == 200
+
+
 # def validate():
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+    (7, 200),
+])
+def test_validate_login(client_api, users, id, status_code):
+    login_user_via_session(client=client_api, email=users[id]["email"])
+    url = url_for('weko_items_ui_api.validate',_external=True)
+    with patch("weko_items_ui.views.validate_form_input_data",return_value=""):
+        res = client_api.post(url,
+                          data=json.dumps({}),
+                          content_type="application/json")
+        assert res.status_code == status_code
+
+
+def test_validate_guest(client_api, users):
+    url = url_for('weko_items_ui_api.validate',_external=True)
+    with patch("weko_items_ui.views.validate_form_input_data",return_value=""):
+        res = client_api.post(url,
+                          data=json.dumps({}),
+                          content_type="application/json")
+        assert res.status_code == 302
+
 # def check_validation_error_msg(activity_id):
+def test_check_validation_error_msg_acl_nologin(client_api):
+    url = url_for('weko_items_ui_api.check_validation_error_msg',_external=True)
+    res=client_api.get(url)
+    assert res.status_code==304
+
 # def corresponding_activity_list():
+#.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_corresponding_activity_list_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_corresponding_activity_list_acl_nologin(client,db_sessionlifetime):
+    url = url_for('weko_items_ui.corresponding_activity_list',_external=True)
+    res=client.get(url)
+    assert res.status_code==304
+
+
 # def get_authors_prefix_settings():
+#.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_authors_prefix_settings_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_authors_prefix_settings_acl_nologin(client_api,db_sessionlifetime):
+    url = url_for('weko_items_ui_api.get_authors_prefix_settings',_external=True)
+    res=client_api.get(url)
+    assert res.status_code==304
+
+
 # def get_authors_affiliation_settings():
+#.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_authors_affiliation_settings_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_authors_affiliation_settings_acl_nologin(client_api,db_sessionlifetime):
+    url = url_for('weko_items_ui_api.get_authors_affiliation_settings',_external=True)
+    res=client_api.get(url)
+    assert res.status_code==304
+
+
 # def session_validate():
+#.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_session_validate_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_session_validate_acl_nologin(client,db_sessionlifetime):
+    url = url_for('weko_items_ui.session_validate',_external=True)
+    res=client.get(url)
+    assert res.status_code==304
+
+
+
 # def check_record_doi(pid_value='0'):
+#.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_check_record_doi_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_check_record_doi_acl_nologin(client,db_sessionlifetime):
+    url = url_for('weko_items_ui.check_record_doi',_external=True)
+    res=client.get(url)
+    assert res.status_code==304
+
+
 # def check_record_doi_indexes(pid_value='0'):
+#.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_check_record_doi_indexes_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_check_record_doi_indexes_acl_nologin(client,db_sessionlifetime):
+    url = url_for('weko_items_ui.check_record_doi_indexes',_external=True)
+    res=client.get(url)
+    assert res.status_code==304

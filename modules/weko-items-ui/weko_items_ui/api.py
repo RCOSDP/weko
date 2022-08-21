@@ -42,13 +42,13 @@ def item_login(item_type_id: int = 0):
     record = {}
     schema_form = ''
     template_url = 'weko_items_ui/iframe/item_edit.html'
-
     try:
         item_type = ItemTypes.get_by_id(item_type_id) \
             if ItemTypes.get_by_id(item_type_id) \
             else 'weko_items_ui/iframe/error.html'
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
+        
 
         if session.get('activity_info'):
             activity_id = session['activity_info'].get('activity_id')
@@ -79,7 +79,7 @@ def item_login(item_type_id: int = 0):
                 allow_multi_thumbnail = option.get('multiple')
     except Exception as e:
         template_url = 'weko_items_ui/iframe/error.html'
-        current_app.logger.debug(str(e))
+        current_app.logger.error(e)
 
     return template_url, need_file, need_billing_file, \
         record, json_schema, schema_form, \

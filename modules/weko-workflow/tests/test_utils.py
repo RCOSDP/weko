@@ -3,7 +3,7 @@ from mock import patch
 from werkzeug.datastructures import MultiDict
 
 from weko_workflow.config import WEKO_WORKFLOW_FILTER_PARAMS
-from weko_workflow.utils import filter_all_condition,filter_condition, get_url_root
+from weko_workflow.utils import filter_all_condition, filter_condition, get_url_root
 
 # def get_current_language():
 # def get_term_and_condition_content(item_type_name):
@@ -80,14 +80,16 @@ def test_filter_all_condition(app, mocker):
 
 # def filter_condition(json, name, condition):
 
+
 def test_filter_condition():
     json = {}
-    filter_condition(json,"name","condition") 
-    assert json== {'name': ['condition']}
+    filter_condition(json, "name", "condition")
+    assert json == {"name": ["condition"]}
 
-    json = {"name":["condition"]}
-    filter_condition(json,"name","condition") 
-    assert json== {'name': ['condition', 'condition']}
+    json = {"name": ["condition"]}
+    filter_condition(json, "name", "condition")
+    assert json == {"name": ["condition", "condition"]}
+
 
 # def get_actionid(endpoint):
 # def convert_record_to_item_metadata(record_metadata):
@@ -103,19 +105,18 @@ def test_filter_condition():
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_url_root --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_url_root(app):
-    app.config['THEME_SITEURL']='https://weko3.ir.rcos.nii.ac.jp'
-    app.config['SERVER_NAME']='TEST_SERVER'
+    app.config["THEME_SITEURL"] = "https://weko3.ir.rcos.nii.ac.jp"
+    app.config["SERVER_NAME"] = "TEST_SERVER"
     with app.app_context():
-        assert get_url_root()=='https://weko3.ir.rcos.nii.ac.jp/'
-        app.config['THEME_SITEURL']='https://weko3.ir.rcos.nii.ac.jp/'
-        assert get_url_root()=='https://weko3.ir.rcos.nii.ac.jp/'
+        assert get_url_root() == "https://weko3.ir.rcos.nii.ac.jp/"
+        app.config["THEME_SITEURL"] = "https://weko3.ir.rcos.nii.ac.jp/"
+        assert get_url_root() == "https://weko3.ir.rcos.nii.ac.jp/"
 
-    app.config['THEME_SITEURL']='https://weko3.ir.rcos.nii.ac.jp'
-    app.config['SERVER_NAME']='TEST_SERVER'
+    app.config["THEME_SITEURL"] = "https://weko3.ir.rcos.nii.ac.jp"
+    app.config["SERVER_NAME"] = "TEST_SERVER"
     with app.test_request_context():
-        assert get_url_root()=='http://TEST_SERVER/'
+        assert get_url_root() == "http://TEST_SERVER/"
 
-    
 
 # def get_record_by_root_ver(pid_value):
 # def get_disptype_and_ver_in_metainfo(metadata):
