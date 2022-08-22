@@ -8,7 +8,6 @@
 
 """OAI-PMH 2.0 response generator."""
 import copy
-import pickle
 import traceback
 from datetime import MINYEAR, datetime, timedelta
 
@@ -336,12 +335,12 @@ def is_pubdate_in_future(record):
     """Check pubdate of workflow is in future."""
     adt = record.get('publish_date')
     pdt = to_utc(datetime.strptime(adt, '%Y-%m-%d'))
-    return pdt > datetime.utcnow() 
+    return pdt > datetime.today()
 
 
 def is_private_index(record):
     """Check index of workflow is private."""
-    paths = pickle.loads(pickle.dumps(record.get('path'), -1))
+    paths = copy.deepcopy(record.get('path'))
     return not Indexes.is_public_state_and_not_in_future(paths)
 
 
@@ -443,7 +442,7 @@ def getrecord(**kwargs):
     e_metadata = SubElement(e_record,
                             etree.QName(NS_OAIPMH, 'metadata'))
 
-    etree_record = pickle.loads(pickle.dumps(record, -1))
+    etree_record = copy.deepcopy(record)
 
     if not etree_record.get('system_identifier_doi', None):
         etree_record['system_identifier_doi'] = get_identifier(record)
@@ -556,6 +555,8 @@ def listrecords(**kwargs):
 
     identify = OaiIdentify.get_all()
     if not identify or not identify.outPutSetting:
+        current_app.logger.debug(
+            "identify.outPutSetting: {}".format(identify.outPutSetting))
         return error(get_error_code_msg(), **kwargs)
 
     index_state = get_index_state()
@@ -631,7 +632,7 @@ def listrecords(**kwargs):
                 )
                 e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
                                                               'metadata'))
-                etree_record = pickle.loads(pickle.dumps(record, -1))
+                etree_record = copy.deepcopy(record)
                 if not etree_record.get('system_identifier_doi', None):
                     etree_record['system_identifier_doi'] = get_identifier(
                         record)
