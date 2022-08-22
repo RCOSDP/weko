@@ -49,6 +49,7 @@ from invenio_records import InvenioRecords
 from invenio_search import InvenioSearch
 from sqlalchemy_utils.functions import create_database, database_exists
 from invenio_oaiharvester.models import HarvestSettings
+from invenio_access.models import ActionUsers, ActionRoles
 
 from weko_index_tree.models import Index
 from weko_groups import WekoGroups
@@ -236,7 +237,6 @@ def users(app, db):
     ds.add_role_to_user(generaluser, general_role)
     ds.add_role_to_user(originalroleuser, originalrole)
     ds.add_role_to_user(originalroleuser2, originalrole)
-    ds.add_role_to_user(originalroleuser2, repoadmin_role)
     ds.add_role_to_user(user, general_role)
     
     # Assign access authorization
@@ -245,6 +245,58 @@ def users(app, db):
             ActionUsers(action='superuser-access', user=sysadmin)
         ]
         db.session.add_all(action_users)
+        action_roles = [
+            ActionRoles(action='superuser-access', role=sysadmin_role),
+            ActionRoles(action='admin-access', role=repoadmin_role),
+            ActionRoles(action='schema-access', role=repoadmin_role),
+            ActionRoles(action='index-tree-access', role=repoadmin_role),
+            ActionRoles(action='indextree-journal-access', role=repoadmin_role),
+            ActionRoles(action='item-type-access', role=repoadmin_role),
+            ActionRoles(action='item-access', role=repoadmin_role),
+            ActionRoles(action='files-rest-bucket-update', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-delete', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-delete-version', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-read', role=repoadmin_role),
+            ActionRoles(action='search-access', role=repoadmin_role),
+            ActionRoles(action='detail-page-acces', role=repoadmin_role),
+            ActionRoles(action='download-original-pdf-access', role=repoadmin_role),
+            ActionRoles(action='author-access', role=repoadmin_role),
+            ActionRoles(action='items-autofill', role=repoadmin_role),
+            ActionRoles(action='stats-api-access', role=repoadmin_role),
+            ActionRoles(action='read-style-action', role=repoadmin_role),
+            ActionRoles(action='update-style-action', role=repoadmin_role),
+            ActionRoles(action='detail-page-acces', role=repoadmin_role),
+
+            ActionRoles(action='admin-access', role=comadmin_role),
+            ActionRoles(action='index-tree-access', role=comadmin_role),
+            ActionRoles(action='indextree-journal-access', role=comadmin_role),
+            ActionRoles(action='item-access', role=comadmin_role),
+            ActionRoles(action='files-rest-bucket-update', role=comadmin_role),
+            ActionRoles(action='files-rest-object-delete', role=comadmin_role),
+            ActionRoles(action='files-rest-object-delete-version', role=comadmin_role),
+            ActionRoles(action='files-rest-object-read', role=comadmin_role),
+            ActionRoles(action='search-access', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='download-original-pdf-access', role=comadmin_role),
+            ActionRoles(action='author-access', role=comadmin_role),
+            ActionRoles(action='items-autofill', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+
+            ActionRoles(action='item-access', role=contributor_role),
+            ActionRoles(action='files-rest-bucket-update', role=contributor_role),
+            ActionRoles(action='files-rest-object-delete', role=contributor_role),
+            ActionRoles(action='files-rest-object-delete-version', role=contributor_role),
+            ActionRoles(action='files-rest-object-read', role=contributor_role),
+            ActionRoles(action='search-access', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='download-original-pdf-access', role=contributor_role),
+            ActionRoles(action='author-access', role=contributor_role),
+            ActionRoles(action='items-autofill', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+        ]
+        db.session.add_all(action_roles)
 
     # Create test group
     from weko_groups.models import Group
@@ -278,7 +330,17 @@ def sample_jpcoar_list_xml():
 def indices(app):
     # Create a test Indices
     with app.app_context():
-        testIndexOne = Index(index_name="testIndexOne",browsing_role="Contributor",public_state=True)
-        testIndexTwo = Index(index_name="testIndexTwo",browsing_group="test")
-        testIndexThree = Index(index_name="testIndexThree")
-        return [testIndexOne, testIndexTwo, testIndexThree]
+        testIndexOne = Index(index_name="testIndexOne",browsing_role="Contributor",public_state=True,id=11)
+        testIndexTwo = Index(index_name="testIndexTwo",browsing_group="test",public_state=True,id=22)
+        testIndexThree = Index(index_name="testIndexThree",public_state=True,id=33)
+        testIndexThreeChild = Index(index_name="testIndexThreeChild",parent="testIndexThree",public_state=True,id=44)
+        testIndexMore = Index(index_name="testIndexMore",parent="testIndexThree",public_state=True,id='more')
+        testIndexPrivate = Index(index_name="testIndexPrivate",public_state=False,id='55')
+        return [
+            testIndexOne,
+            testIndexTwo,
+            testIndexThree,
+            testIndexThreeChild,
+            testIndexMore,
+            testIndexPrivate
+        ]
