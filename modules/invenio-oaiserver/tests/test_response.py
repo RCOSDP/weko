@@ -9,7 +9,7 @@
 """test cases."""
 import pytest
 import datetime
-from datetime import datetime,timedelta,timezone
+from datetime import timedelta, timezone
 from mock import patch
 from flask_babelex import Babel
 
@@ -184,10 +184,6 @@ def test_getrecord(app, records, item_type, mock_execute, mocker):
                     '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
                     namespaces=NAMESPACES)
                 assert identifier == [str(records[3][0])]
-                datestamp = res.xpath(
-                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:datestamp/text()',
-                    namespaces=NAMESPACES)
-                assert datestamp == [datetime_to_datestamp(records[3][0].updated)]
                 assert len(res.xpath('/x:OAI-PMH/x:GetRecord/x:record/x:metadata',
                                         namespaces=NAMESPACES)) == 1
 
@@ -274,10 +270,6 @@ def test_getrecord_header_deleted(app,records,item_type,mock_execute,mocker):
                     '/x:OAI-PMH/x:GetRecord/x:record/x:header[@status="deleted"]',
                     namespaces=NAMESPACES)
                 assert len(header) == 1
-                datestamp = res.xpath(
-                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:datestamp/text()',
-                    namespaces=NAMESPACES)
-                assert datestamp == [datetime_to_datestamp(records[3][0].updated)]
 
 
 def test_listrecords(app,records,item_type,mock_execute,mocker):
