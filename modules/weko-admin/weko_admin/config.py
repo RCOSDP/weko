@@ -125,6 +125,9 @@ WEKO_ADMIN_REPORT_DELIVERY_SCHED = {
 WEKO_ADMIN_CACHE_PREFIX = 'admin_cache_{name}_{user_id}'
 """Redis cache."""
 
+WEKO_ADMIN_OUTPUT_FORMAT = 'tsv'
+"""Output file format."""
+
 WEKO_ADMIN_REPORT_HEADERS = {
     'file_download': _('No. Of File Downloads'),
     'file_preview': _('No. Of File Previews'),

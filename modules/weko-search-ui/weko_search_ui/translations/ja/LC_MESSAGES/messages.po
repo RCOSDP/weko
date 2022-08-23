@@ -67,9 +67,9 @@ msgstr "指定されたファイル{}の形式はインポートに対応して�
 
 #: weko_search_ui/utils.py:497
 msgid ""
-"The CSV file was not found in the specified file {}. Check if the "
+"The tsv/csv file was not found in the specified file {}. Check if the "
 "directory structure is correct."
-msgstr "指定されたファイル{}にCSVファイルが見つかりませんでした。ディレクトリ構成が正しいか確認してください。"
+msgstr "指定されたファイル{}にtsv/csvファイルが見つかりませんでした。ディレクトリ構成が正しいか確認してください。"
 
 #: weko_search_ui/utils.py:560
 msgid ""
@@ -107,7 +107,7 @@ msgstr "次の項目指定されたアイテムタイプに存在しないため
 msgid ""
 "The {} file could not be read. Make sure the file format is {} and that"
 " the file is UTF-8 encoded."
-msgstr "{}ファイルを読み込めませんでした。ファイル形式がCSVであること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
+msgstr "{}ファイルを読み込めませんでした。ファイル形式が{}であること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
 
 #: weko_search_ui/utils.py:713
 msgid "Please specify item ID by half-width number."

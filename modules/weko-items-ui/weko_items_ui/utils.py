@@ -730,21 +730,25 @@ def recursive_update_schema_form_with_condition(
 
 
 def package_export_file(item_type_data):
-    """Export CSV Files.
+    """Export TSV/CSV Files.
 
     Arguments:
         item_type_data  -- schema's Item Type
 
     Returns:
-        return          -- CSV file
+        return          -- TSV/CSV file
 
     """
-    csv_output = StringIO()
+    file_output = StringIO()
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv')
+    file_delimiter = '\t' if file_format == 'tsv' else ','
     jsonschema_url = item_type_data.get('root_url') + item_type_data.get(
         'jsonschema')
 
-    csv_writer = csv.writer(csv_output, delimiter=',', lineterminator='\n')
-    csv_writer.writerow(['#ItemType',
+    file_writer = csv.writer(file_output,
+                             delimiter=file_delimiter,
+                             lineterminator='\n')
+    file_writer.writerow(['#ItemType',
                          item_type_data.get('name'),
                          jsonschema_url])
 
@@ -752,35 +756,40 @@ def package_export_file(item_type_data):
     labels = item_type_data['labels']
     is_systems = item_type_data['is_systems']
     options = item_type_data['options']
-    csv_metadata_writer = csv.DictWriter(csv_output,
-                                         fieldnames=keys,
-                                         delimiter=',', lineterminator='\n')
-    csv_metadata_label_writer = csv.DictWriter(csv_output,
-                                               fieldnames=labels,
-                                               delimiter=',', lineterminator='\n')
-    csv_metadata_is_system_writer = csv.DictWriter(csv_output,
-                                                   fieldnames=is_systems,
-                                                   delimiter=',', lineterminator='\n')
-    csv_metadata_option_writer = csv.DictWriter(csv_output,
-                                                fieldnames=options,
-                                                delimiter=',', lineterminator='\n')
-    csv_metadata_data_writer = csv.writer(csv_output,
-                                          delimiter=',', lineterminator='\n')
-    csv_metadata_writer.writeheader()
-    csv_metadata_label_writer.writeheader()
-    csv_metadata_is_system_writer.writeheader()
-    csv_metadata_option_writer.writeheader()
+    file_metadata_writer = csv.DictWriter(file_output,
+                                          fieldnames=keys,
+                                          delimiter=file_delimiter,
+                                          lineterminator='\n')
+    file_metadata_label_writer = csv.DictWriter(file_output,
+                                                fieldnames=labels,
+                                                delimiter=file_delimiter,
+                                                lineterminator='\n')
+    file_metadata_is_system_writer = csv.DictWriter(file_output,
+                                                    fieldnames=is_systems,
+                                                    delimiter=file_delimiter,
+                                                    lineterminator='\n')
+    file_metadata_option_writer = csv.DictWriter(file_output,
+                                                 fieldnames=options,
+                                                 delimiter=file_delimiter,
+                                                 lineterminator='\n')
+    file_metadata_data_writer = csv.writer(file_output,
+                                           delimiter=file_delimiter,
+                                           lineterminator='\n')
+    file_metadata_writer.writeheader()
+    file_metadata_label_writer.writeheader()
+    file_metadata_is_system_writer.writeheader()
+    file_metadata_option_writer.writeheader()
     for recid in item_type_data.get('recids'):
-        csv_metadata_data_writer.writerow(
+        file_metadata_data_writer.writerow(
             [recid, item_type_data.get('root_url') + 'records/' + str(recid)]
             + item_type_data['data'].get(recid)
         )
 
-    return csv_output
+    return file_output
 
 
-def make_stats_csv(item_type_id, recids, list_item_role):
-    """Prepare CSV data for each Item Types.
+def make_stats_file(item_type_id, recids, list_item_role):
+    """Prepare TSV/CSV data for each Item Types.
 
     Arguments:
         item_type_id    -- ItemType ID
@@ -803,7 +812,7 @@ def make_stats_csv(item_type_id, recids, list_item_role):
         list_item_role.get(item_type_id))
     if no_permission_show_hide and item_type and item_type.get('table_row'):
         for name_hide in list_hide:
-            item_type['table_row'] = hide_table_row_for_csv(
+            item_type['table_row'] = hide_table_row(
                 item_type.get('table_row'), name_hide)
 
     table_row_properties = item_type['table_row_map']['schema'].get(
@@ -1288,8 +1297,8 @@ def write_bibtex_files(item_types_data, export_path):
                 file.write(output)
 
 
-def write_csv_files(item_types_data, export_path, list_item_role):
-    """Write CSV data to files.
+def write_files(item_types_data, export_path, list_item_role):
+    """Write TSV/CSV data to files.
 
     @param item_types_data:
     @param export_path:
@@ -1297,13 +1306,14 @@ def write_csv_files(item_types_data, export_path, list_item_role):
     @return:
     """
     current_app.logger.debug("item_types_data:{}".format(item_types_data))
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv')
 
     for item_type_id in item_types_data:
         
         current_app.logger.debug("item_type_id:{}".format(item_type_id))
         current_app.logger.debug("item_types_data[item_type_id]['recids']:{}".format(item_types_data[item_type_id]['recids']))
         current_app.logger.debug("list_item_role:{}".format(list_item_role))
-        headers, records = make_stats_csv(
+        headers, records = make_stats_file(
             item_type_id,
             item_types_data[item_type_id]['recids'],
             list_item_role)
@@ -1317,11 +1327,12 @@ def write_csv_files(item_types_data, export_path, list_item_role):
         item_types_data[item_type_id]['options'] = options
         item_types_data[item_type_id]['data'] = records
         item_type_data = item_types_data[item_type_id]
-        with open('{}/{}.csv'.format(export_path,
-                                     item_type_data.get('name')),
+        with open('{}/{}.{}'.format(export_path,
+                                    item_type_data.get('name'),
+                                    file_format),
                   'w', encoding="utf-8-sig") as file:
-            csv_output = package_export_file(item_type_data)
-            file.write(csv_output.getvalue())
+            file_output = package_export_file(item_type_data)
+            file.write(file_output.getvalue())
 
 
 def check_item_type_name(name):
@@ -1397,7 +1408,7 @@ def export_items(post_data):
         if export_format == 'BIBTEX':
             write_bibtex_files(item_types_data, export_path)
         else:
-            write_csv_files(item_types_data, export_path, list_item_role)
+            write_files(item_types_data, export_path, list_item_role)
 
         # Create bag
         bagit.make_bag(export_path)
@@ -2144,7 +2155,7 @@ def get_options_and_order_list(item_type_id, item_type_mapping=None,
     return meta_options, item_type_mapping
 
 
-def hide_table_row_for_csv(table_row, hide_key):
+def hide_table_row(table_row, hide_key):
     """Get Options by item type id.
 
     :param hide_key:
@@ -2598,9 +2609,9 @@ def get_ignore_item(_item_type_id, item_type_mapping=None,
     return ignore_list
 
 
-def make_stats_csv_with_permission(item_type_id, recids,
+def make_stats_file_with_permission(item_type_id, recids,
                                    records_metadata, permissions):
-    """Prepare CSV data for each Item Types.
+    """Prepare TSV/CSV data for each Item Types.
 
     Arguments:
         item_type_id    -- ItemType ID
