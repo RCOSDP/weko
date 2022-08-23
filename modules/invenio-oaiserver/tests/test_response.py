@@ -119,8 +119,6 @@ def test_getrecord(app, records, item_type, mock_execute, mocker):
               'jpcoar': 'https://github.com/JPCOAR/schema/blob/master/1.0/',
               'dcterms': 'http://purl.org/dc/terms/', 'datacite': 'https://schema.datacite.org/meta/kernel-4/',
               'rioxxterms': 'http://www.rioxx.net/schema/v2.0/rioxxterms/'}}
-        mock_today = datetime.datetime(2022,8,8,0,0,0,0)
-        mocker.patch("datetime.datetime",**{"now.return_value":mock_today})
         mocker.patch("invenio_oaiserver.response.to_utc",side_effect=lambda x:x)
         mocker.patch("weko_index_tree.utils.get_user_groups",return_value=[])
         mocker.patch("weko_index_tree.utils.check_roles",return_value=True)
@@ -242,8 +240,6 @@ def test_getrecord_header_deleted(app,records,item_type,mock_execute,mocker):
               'dcndl': 'http://ndl.go.jp/dcndl/terms/', 'oaire': 'http://namespace.openaire.eu/schema/oaire/',
               'jpcoar': 'https://github.com/JPCOAR/schema/blob/master/1.0/', 'dcterms': 'http://purl.org/dc/terms/',
               'datacite': 'https://schema.datacite.org/meta/kernel-4/', 'rioxxterms': 'http://www.rioxx.net/schema/v2.0/rioxxterms/'}}
-        mock_today = datetime.datetime(2022,8,8,0,0,0,0)
-        mocker.patch("datetime.datetime",**{"now.return_value":mock_today})
         mocker.patch("invenio_oaiserver.response.to_utc",side_effect=lambda x:x)
         mocker.patch("weko_index_tree.utils.get_user_groups",return_value=[])
         mocker.patch("weko_index_tree.utils.check_roles",return_value=True)
@@ -357,8 +353,6 @@ def test_listrecords(app,records,item_type,mock_execute,mocker):
             'dcndl': 'http://ndl.go.jp/dcndl/terms/', 'oaire': 'http://namespace.openaire.eu/schema/oaire/',
             'jpcoar': 'https://github.com/JPCOAR/schema/blob/master/1.0/', 'dcterms': 'http://purl.org/dc/terms/',
             'datacite': 'https://schema.datacite.org/meta/kernel-4/', 'rioxxterms': 'http://www.rioxx.net/schema/v2.0/rioxxterms/'}}
-        mock_today = datetime.datetime(2022,8,8,0,0,0,0)
-        mocker.patch("datetime.datetime",**{"now.return_value":mock_today})
         mocker.patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=oaiset)
         mocker.patch("invenio_oaiserver.response.to_utc",side_effect=lambda x:x)
         mocker.patch("weko_index_tree.utils.get_user_groups",return_value=[])
