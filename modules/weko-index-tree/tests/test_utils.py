@@ -19,10 +19,13 @@ from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_search import RecordsSearch
 from simplekv.memory.redisstore import RedisStore
+from invenio_accounts.testutils import login_user_via_session, login_user_via_view
+
+from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
 from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
 from weko_redis.redis import RedisConnection
-from invenio_accounts.testutils import login_user_via_session
+
 
 # from .config import WEKO_INDEX_TREE_STATE_PREFIX
 # from .errors import IndexBaseRESTError, IndexDeletedRESTError
@@ -126,7 +129,7 @@ def test_get_index_id_list(indices):
             index_id_list.append(index.id)
 
     assert 'more' not in index_id_list
-    assert len(index_id_list) == 4
+    assert len(index_id_list) == 5
  
 
 # def get_publish_index_id_list(indexes, id_list=None):
@@ -160,59 +163,54 @@ def test_get_publish_index_id_list(indices):
 
 
 # def get_index_id(activity_id):
-def test_get_index_id(activity_id):
-    """Get index ID base on activity id"""
-    from weko_workflow.api import WorkActivity, WorkFlow
+def test_get_index_id(users, db_register):
+    from weko_workflow.api import WorkFlow
+    from weko_index_tree.api import Indexes
 
-    activity = WorkActivity()
-    activity_detail = activity.get_activity_detail(activity_id)
-
+    activity = db_register['activity']
+    activity_id = activity.activity_id
+    
     workflow = WorkFlow()
-    workflow_detail = workflow.get_workflow_by_id(
-        activity_detail.workflow_id)
-
+    workflow_detail = workflow.get_workflow_by_id(activity_id)
+    
     index_tree_id = workflow_detail.index_tree_id
 
-    print(dir(activity))
-    print('\n')
-    print(dir(workflow))
-
     if index_tree_id:
-        from .api import Indexes
         index_result = Indexes.get_index(index_tree_id)
         if not index_result:
             index_tree_id = None
     else:
         index_tree_id = None
-    
-    raise BaseException
+
+    assert index_tree_id
 
 
 # def sanitize(s):
 
 
 # def count_items(indexes_aggr):
-"""
-    Count public and private items of a target index based on index state.
+def test_count_items(users, db_register):
+    from weko_index_tree.models import Index
 
-    Args:
-        indexes_aggr ([type]): [description]
+    def get_index_public_state(index_id):
+        index = Index.get_index_by_id(index_id)
+        return index.public_state
+    
+    private_count = 0
+    public_count = 0
 
-    Returns:
-        [type]: [description]
+    all_indices = Index().get_all()
 
-    """
-    pub_items = 0
-    pri_items = 0
+    for idx in all_indices:
+        if get_index_public_state(idx['id']):
+            public_count += 1
+    
+    # This 'index_private' is not saved in db.session and is directly from conftest.py
+    if db_register['indices']['index_private']:
+        private_count += 1
 
-    for agg in indexes_aggr:
-        if agg.get('public_state'):
-            pub_items += agg['doc_count'] - agg['no_available']
-            pri_items += agg['no_available']
-        else:
-            pri_items += agg['doc_count']
-
-    return pri_items, pub_items
+    assert private_count
+    assert public_count
 
 
 # def recorrect_private_items_count(agp):
@@ -229,7 +227,16 @@ def test_get_index_id(activity_id):
 #     def _get_record_index_list():
 #     def _get_parent_lst():
 # def check_doi_in_index_and_child_index(index_id, recursively=True):
+
+
 # def __get_redis_store():
+def test___get_redis_store(redis_connect):
+    if redis_connect:
+        assert redis_connect
+    else:
+        assert not redis_connect
+
+
 # def lock_all_child_index(index_id: str, value: str):
 # def unlock_index(index_key):
 # def validate_before_delete_index(index_id):
