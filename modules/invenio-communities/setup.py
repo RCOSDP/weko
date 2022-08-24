@@ -152,8 +152,6 @@ setup(
             'invenio_communities.admin:community_adminview',
             'invenio_communities_requests = '
             'invenio_communities.admin:request_adminview',
-            'invenio_communities_featured = '
-            'invenio_communities.admin:featured_adminview',
         ],
         'invenio_assets.bundles': [
             'invenio_communities_js = invenio_communities.bundles:js',

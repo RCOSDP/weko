@@ -1090,13 +1090,13 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'identifier',
     'widgetitem',
     'widgetdesign',
-    'community',
     'items/custom_sort',
     'items/search',
     'indexedit',
     'indexjournal',
     'report',
-    'itemexportsettings'
+    'itemexportsettings',
+    'items/import'
 ]
 """Classes Community Administrator can access."""
 
@@ -1131,7 +1131,6 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'itemtypesregister',
     'itemtypesmapping',
     'itemtypes/mapping',
-    'items/import',
     'items/bulk-export',
     'feedbackmail',
     'sitelicensesendmail',
@@ -1141,6 +1140,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'site_info',
     'location',
     'facet-search',
+    'community',
     'restricted_access'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
