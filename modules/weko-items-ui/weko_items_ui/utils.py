@@ -1598,6 +1598,7 @@ def get_files_from_metadata(record):
     @param record:
     @return:
     """
+    current_app.logger.error("record: {}".format(record))
     files = OrderedDict()
     for key in record:
         meta_data = record.get(key)
@@ -1608,11 +1609,20 @@ def get_files_from_metadata(record):
                 if f.get("version_id"):
                     files[f["version_id"]] = f
             break
+    current_app.logger.error("files: {}".format(files))
     return files
 
 
 def to_files_js(record):
-    """List files in a deposit."""
+    """List files in a deposit.
+
+    Args:
+        record (WekoDeposit): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    current_app.logger.error("type: {}".format(type(record))) 
     res = []
     files = record.files or []
     files_content_dict = {}
@@ -1625,7 +1635,7 @@ def to_files_js(record):
     # Get files form meta_data, so that you can append any extra info to files
     # (which not contained by file_bucket) such as license below
     files_from_meta = get_files_from_metadata(record)
-
+    
     # get file with order similar metadata
     files_content = []
     for _k, f in files_from_meta.items():
@@ -2471,6 +2481,7 @@ def save_title(activity_id, request_data):
     item_type_id = db_activity.workflow.itemtype.id
     if item_type_id:
         item_type_mapping = Mapping.get_record(item_type_id)
+        current_app.logger.error(item_type_mapping)
         key, key_child = get_key_title_in_item_type_mapping(item_type_mapping)
     if key and key_child:
         title = get_title_in_request(request_data, key, key_child)

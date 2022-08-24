@@ -476,7 +476,9 @@ def iframe_items_index(pid_value='0'):
             root_record = None
             files = []
             if pid_value and '.' in pid_value:
+                print("pid_value:{}".format(pid_value))
                 root_record, files = get_record_by_root_ver(pid_value)
+                print("root_record:{}".format(root_record))
                 if root_record and root_record.get('title'):
                     session['itemlogin_item']['title'] = \
                         root_record['title'][0]

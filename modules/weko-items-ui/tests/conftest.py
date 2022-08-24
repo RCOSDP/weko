@@ -76,6 +76,7 @@ from invenio_records import InvenioRecords
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from weko_deposit import WekoDeposit
 from invenio_records_rest import InvenioRecordsREST
+from invenio_jsonschemas import InvenioJSONSchemas
 
 from weko_records_ui import WekoRecordsUI
 from weko_theme import WekoTheme
@@ -83,6 +84,12 @@ from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime 
 from tests.helpers import json_data, create_record
 from werkzeug.local import LocalProxy
+
+from invenio_files_rest.models import Location
+from invenio_files_rest import InvenioFilesREST
+from weko_search_ui import WekoSearchUI,WekoSearchREST
+from weko_index_tree import WekoIndexTree
+from weko_records import WekoRecords
 
 
 # from sqlalchemy.engine import Engine
@@ -123,13 +130,15 @@ def base_app(instance_path):
                                          'Repository Administrator'],
         WEKO_PERMISSION_ROLE_COMMUNITY=['Community Administrator'],
         THEME_SITEURL = 'https://localhost',
-         WEKO_THEME_DEFAULT_COMMUNITY="Root Index",
+        WEKO_THEME_DEFAULT_COMMUNITY="Root Index",
         #  WEKO_ITEMS_UI_BASE_TEMPLATE = 'weko_items_ui/base.html',
         #  WEKO_ITEMS_UI_INDEX_TEMPLATE= 'weko_items_ui/item_index.html',
         CACHE_TYPE = 'redis' ,
         ACCOUNTS_SESSION_REDIS_DB_NO = 1,
         CACHE_REDIS_HOST = os.environ.get('INVENIO_REDIS_HOST'),
         REDIS_PORT = '6379',
+        WEKO_BUCKET_QUOTA_SIZE = 50 * 1024 * 1024 * 1024,
+        WEKO_MAX_FILE_SIZE = 50 * 1024 * 1024 * 1024,
     )
     Babel(app_)
     InvenioI18N(app_)
@@ -144,6 +153,8 @@ def base_app(instance_path):
     InvenioPIDRelations(app_)
     InvenioRecords(app_)
     InvenioRecordsREST(app_)
+    InvenioFilesREST(app_)
+    InvenioJSONSchemas(app_)
     # InvenioStats(app_)
     
     InvenioAdmin(app_)
@@ -152,10 +163,16 @@ def base_app(instance_path):
     WekoWorkflow(app_)
     WekoAdmin(app_)
     WekoTheme(app_)
-    WekoItemsUI(app_)
+    WekoRecordsUI(app_)
     InvenioCommunities(app_)
     InvenioAssets(app_)
-
+    
+    # WekoSearchREST(app_)
+    WekoIndexTree(app_)
+    WekoRecords(app_)
+    # ext = WekoSearchUI(app_)
+    # ext.init_config(app_)
+    WekoItemsUI(app_)
     # app_.register_blueprint(invenio_accounts_blueprint)
     # app_.register_blueprint(weko_theme_blueprint)
     # app_.register_blueprint(weko_items_ui_blueprint)
@@ -384,7 +401,13 @@ def db_register(app, db):
     return {'item_type_name':item_type_name,'item_type':item_type}
 
 @pytest.fixture()
-def db_records(db):
+def db_records(db,instance_path):
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name='local', uri=instance_path, default=True)
+        db.session.add(loc)
+    db.session.commit()
+
     record_data = json_data("data/test_records.json")
     item_data = json_data("data/test_items.json")
     record_num = len(record_data)
@@ -392,10 +415,11 @@ def db_records(db):
     for d in range(record_num):
         result.append(create_record(record_data[d], item_data[d]))
     db.session.commit()
+
     yield result
 
 @pytest.fixture()
-def db_register2(app, db):
+def db_register2(app, db,db_register,users):
     action_datas=dict()
     with open('tests/data/actions.json', 'r') as f:
         action_datas = json.load(f)
@@ -414,8 +438,8 @@ def db_register2(app, db):
             actionstatus_db.append(ActionStatus(**data))
         db.session.add_all(actionstatus_db)
     
-    flow_id = str(uuid.uuid4())
-    flow_define = FlowDefine(flow_id=flow_id,flow_name='Registration Flow',flow_user=1)
+    flow_id = uuid.uuid4()
+    flow_define = FlowDefine(flow_id=flow_id,flow_name='Registration Flow',flow_user=1,flow_status="A")
     flow_action1 = FlowAction(status='N',
                      flow_id=flow_id,
                      action_id=1,
@@ -442,13 +466,34 @@ def db_register2(app, db):
                      action_condition='',
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
-                     send_mail_setting={})    
+                     send_mail_setting={})
+    
+    workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test workflow1',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=1,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    activity = Activity(activity_id='A-00000000-00000',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=6)
+
     with db.session.begin_nested():
         db.session.add(flow_define)
         db.session.add(flow_action1)
         db.session.add(flow_action2)
         db.session.add(flow_action3)
-        
+        db.session.add(workflow)
+        db.session.add(activity)
+
     return {'flow_define':flow_define}
 
 
