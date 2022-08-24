@@ -370,7 +370,7 @@ def make_stats_file(raw_stats, file_type, year, month):
     sub_header_row = current_app.config['WEKO_ADMIN_REPORT_SUB_HEADERS'].get(
         file_type)
     file_output = StringIO()
-    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv')
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
     file_delimiter = '\t' if file_format == 'tsv' else ','
     writer = csv.writer(file_output, delimiter=file_delimiter,
                         lineterminator="\n")

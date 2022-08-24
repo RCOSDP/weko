@@ -1034,7 +1034,7 @@ def handle_check_exist_record(list_record) -> list:
 
 def make_file_by_line(lines):
     """Make TSV/CSV file."""
-    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv')
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
     file_output = StringIO()
     if file_format == 'csv':
         writer = csv.writer(file_output, delimiter=",", lineterminator="\n")
@@ -1047,7 +1047,7 @@ def make_file_by_line(lines):
 
 def make_stats_file(raw_stats, list_name):
     """Make TSV/CSV report file for stats."""
-    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv')
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
     file_output = StringIO()
     if file_format == 'csv':
         writer = csv.writer(file_output, delimiter=",", lineterminator="\n")
@@ -2984,7 +2984,7 @@ def export_all(root_url, user_id, data):
         user_id=user_id
     )
     _timezone = current_app.config["STATS_WEKO_DEFAULT_TIMEZONE"]
-    _file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv')
+    _file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
     def _itemtype_name(name):
         """Check a list of allowed characters in filenames."""

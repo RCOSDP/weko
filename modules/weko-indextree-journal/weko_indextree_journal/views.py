@@ -63,7 +63,7 @@ def export_journals():
         journals = Journals.get_all_journals()
         results = [obj.__dict__ for obj in journals]
         data = numpy.asarray(results)
-        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv')
+        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         file_delimiter = '\t' if file_format == 'tsv' else ','
         file_name = 'journal.{}'.format(file_format)
         numpy.savetxt(file_name, data, delimiter=file_delimiter)

@@ -144,7 +144,7 @@ def export_authors():
 
         # write file data to a stream
         file_io = io.StringIO()
-        if current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv') == 'csv':
+        if current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower() == 'csv':
             writer = csv.writer(file_io, delimiter=',',
                                 quotechar='"', quoting=csv.QUOTE_MINIMAL,
                                 lineterminator='\n')

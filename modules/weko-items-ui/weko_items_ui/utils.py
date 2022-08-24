@@ -740,7 +740,7 @@ def package_export_file(item_type_data):
 
     """
     file_output = StringIO()
-    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv')
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
     file_delimiter = '\t' if file_format == 'tsv' else ','
     jsonschema_url = item_type_data.get('root_url') + item_type_data.get(
         'jsonschema')
@@ -1306,7 +1306,7 @@ def write_files(item_types_data, export_path, list_item_role):
     @return:
     """
     current_app.logger.debug("item_types_data:{}".format(item_types_data))
-    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv')
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
     for item_type_id in item_types_data:
         

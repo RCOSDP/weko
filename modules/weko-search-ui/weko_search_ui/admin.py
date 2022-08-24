@@ -323,7 +323,7 @@ class ItemImportView(BaseView):
         return self.render(
             WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
             workflows=json.dumps(workflows_js),
-            file_format=current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv')
+            file_format=current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         )
 
     @expose("/check", methods=["POST"])
@@ -375,7 +375,7 @@ class ItemImportView(BaseView):
         """Download report check result."""
         data = request.get_json()
         now = str(datetime.date(datetime.now()))
-        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv')
+        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
         file_name = "check_{}.{}".format(now, file_format)
         if data:
@@ -493,7 +493,7 @@ class ItemImportView(BaseView):
         data = request.get_json()
         now = str(datetime.date(datetime.now()))
 
-        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv')
+        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         file_name = "List_Download {}.{}".format(now, file_format)
         if data:
             output_file = make_stats_file(data.get("list_result"), WEKO_IMPORT_LIST_NAME)
@@ -518,7 +518,7 @@ class ItemImportView(BaseView):
     @expose("/export_template", methods=["POST"])
     def export_template(self):
         """Download item type template."""
-        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv')
+        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         file_name = None
         output_file = None
         data = request.get_json()
