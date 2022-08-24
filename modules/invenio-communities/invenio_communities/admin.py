@@ -118,16 +118,9 @@ class CommunityModelView(ModelView):
         if field.data:
             field.data = field.data.lower()
 
-    def _validate_input_title(self, field):
-        if field.data.strip() == '':
-            raise ValidationError('Title can not be blank.')
-
     form_args = {
         'id': {
             'validators': [_validate_input_id]
-        },
-        'title': {
-            'validators': [_validate_input_title]
         }
     }
 
@@ -225,6 +218,20 @@ class CommunityModelView(ModelView):
         return query
 
 
+class FeaturedCommunityModelView(ModelView):
+    """ModelView for the FeaturedCommunity."""
+
+    can_create = True
+    can_edit = True
+    can_delete = True
+    can_view_details = True
+    column_display_all_relations = True
+    column_list = (
+        'community',
+        'start_date',
+    )
+
+
 class InclusionRequestModelView(ModelView):
     """ModelView of the InclusionRequest."""
 
@@ -249,5 +256,11 @@ community_adminview = dict(
 request_adminview = dict(
     model=InclusionRequest,
     modelview=InclusionRequestModelView,
+    category=_('Communities'),
+)
+
+featured_adminview = dict(
+    model=FeaturedCommunity,
+    modelview=FeaturedCommunityModelView,
     category=_('Communities'),
 )

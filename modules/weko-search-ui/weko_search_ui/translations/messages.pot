@@ -66,7 +66,7 @@ msgstr ""
 
 #: weko_search_ui/utils.py:497
 msgid ""
-"The CSV file was not found in the specified file {}. Check if the "
+"The tsv/csv file was not found in the specified file {}. Check if the "
 "directory structure is correct."
 msgstr ""
 

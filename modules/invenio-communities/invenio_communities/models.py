@@ -187,7 +187,7 @@ class Community(db.Model, Timestamp):
     )
     """Owner of the community."""
 
-    title = db.Column(db.String(length=255), nullable=False)
+    title = db.Column(db.String(length=255), nullable=False, default='')
     """Title of the community."""
 
     description = db.Column(db.Text, nullable=False, default='')

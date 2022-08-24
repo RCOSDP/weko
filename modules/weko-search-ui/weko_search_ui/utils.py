@@ -597,7 +597,7 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
             ).format(filename)
         elif isinstance(ex, FileNotFoundError):
             error = _(
-                "The CSV file was not found in the specified file {}."
+                "The csv/tsv file was not found in the specified file {}."
                 + " Check if the directory structure is correct."
             ).format(filename)
         elif isinstance(ex, UnicodeDecodeError):
@@ -616,20 +616,20 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
     return result
 
 
-def unpackage_import_file(data_path: str, file_name: str, file_type: str, force_new=False):
+def unpackage_import_file(data_path: str, file_name: str, file_format: str, force_new=False):
     """Getting record data from CSV/TSV file.
 
     :argument
         data_path -- Path of csv file.
         file_name -- CSV/TSV file name.
-        file_type -- File type.
+        file_format -- File format.
         force_new -- Force to new item.
     :return
         return -- List records.
 
     """
     file_path = "{}/{}".format(data_path, file_name)
-    data = read_stats_csv(file_path, file_name, file_type)
+    data = read_stats_file(file_path, file_name, file_format)
     # current_app.logger.debug("data: {}".format(data))
     list_record = data.get("data_list")
     # current_app.logger.debug('list_record1: {}'.format(list_record))
@@ -687,13 +687,13 @@ def getEncode(filepath):
     return enc
 
 
-def read_stats_csv(file_path: str, file_name: str, file_type: str) -> dict:
-    """Read importing CSV file.
+def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
+    """Read importing TSV/CSV file.
 
     :argument
         file_path -- file's url.
         file_name -- file name.
-        file_type -- file type.
+        file_format -- file format.
     :return
         return       -- PID object if exist.
 
@@ -708,7 +708,7 @@ def read_stats_csv(file_path: str, file_name: str, file_type: str) -> dict:
     # /tmp/weko_import_20220320003752/data/items.csv
     enc = getEncode(file_path)
     with open(file_path, "r", newline="", encoding=enc) as file:
-        if file_type == 'csv':
+        if file_format == 'csv':
             file_reader = csv.reader(file, dialect="excel", delimiter=",")
         else:     # tsv
             file_reader = csv.reader(file, delimiter='\t')
@@ -719,7 +719,7 @@ def read_stats_csv(file_path: str, file_name: str, file_type: str) -> dict:
                         {
                             "error_msg": _(
                                 "There is an error in the format of the"
-                                + " first line of the header of the {}".format(file_type.upper())
+                                + " first line of the header of the {}".format(file_format.upper())
                                 + " file."
                             )
                         }
@@ -738,7 +738,7 @@ def read_stats_csv(file_path: str, file_name: str, file_type: str) -> dict:
                             {
                                 "error_msg": _(
                                     "The item type ID specified in"
-                                    + " the {} file does not exist.".format(file_type.upper())
+                                    + " the {} file does not exist.".format(file_format.upper())
                                 )
                             }
                         )
@@ -814,7 +814,7 @@ def read_stats_csv(file_path: str, file_name: str, file_type: str) -> dict:
 
                     if not data_parse_metadata:
                         raise Exception(
-                            {"error_msg": _("Cannot read {} file correctly.".format(file_type.upper()))}
+                            {"error_msg": _("Cannot read {} file correctly.".format(file_format.upper()))}
                         )
                     if isinstance(check_item_type, dict):
                         item_type_name = check_item_type.get("name")
@@ -843,8 +843,8 @@ def read_stats_csv(file_path: str, file_name: str, file_type: str) -> dict:
                     data_list.append(item_data)
         except UnicodeDecodeError as ex:
             ex.reason = _(
-                "The {} file could not be read. Make sure the file".format(file_type.upper())
-                + " format is {} and that the file is".format(file_type.upper())
+                "The {} file could not be read. Make sure the file".format(file_format.upper())
+                + " format is {} and that the file is".format(file_format.upper())
                 + " UTF-8 encoded."
             ).format(file_name)
             raise ex
@@ -1035,21 +1035,27 @@ def handle_check_exist_record(list_record) -> list:
     return result
 
 
-def make_csv_by_line(lines):
-    """Make CSV file."""
-    csv_output = StringIO()
-    writer = csv.writer(csv_output, delimiter=",", lineterminator="\n")
+def make_file_by_line(lines):
+    """Make TSV/CSV file."""
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+    file_output = StringIO()
+    if file_format == 'csv':
+        writer = csv.writer(file_output, delimiter=",", lineterminator="\n")
+    else:
+        writer = csv.writer(file_output, delimiter="\t", lineterminator="\n")
     writer.writerows(lines)
 
-    return csv_output
+    return file_output
 
 
-def make_stats_csv(raw_stats, list_name):
-    """Make CSV report file for stats."""
-    csv_output = StringIO()
-
-    writer = csv.writer(csv_output, delimiter=",", lineterminator="\n")
-
+def make_stats_file(raw_stats, list_name):
+    """Make TSV/CSV report file for stats."""
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+    file_output = StringIO()
+    if file_format == 'csv':
+        writer = csv.writer(file_output, delimiter=",", lineterminator="\n")
+    else:
+        writer = csv.writer(file_output, delimiter="\t", lineterminator="\n")
     writer.writerow(list_name)
     for item in raw_stats:
         term = []
@@ -1057,7 +1063,7 @@ def make_stats_csv(raw_stats, list_name):
             term.append(item.get(name))
         writer.writerow(term)
 
-    return csv_output
+    return file_output
 
 
 def create_deposit(item_id):
@@ -2930,11 +2936,11 @@ def handle_get_all_id_in_item_type(item_type_id):
 
 
 def handle_check_consistence_with_mapping(mapping_ids, keys):
-    """Check consistence between csv and mapping.
+    """Check consistence between tsv/csv and mapping.
 
     :argument
         mapping_ids - {list} list id from mapping.
-        keys - {list} data from line 2 of csv file.
+        keys - {list} data from line 2 of tsv/csv file.
     :return
         ids - {list} ids is not consistent.
     """
@@ -2978,7 +2984,7 @@ def export_all(root_url, user_id, data):
         post_data is the data items
     :return: JSON, BIBTEX
     """
-    from weko_items_ui.utils import make_stats_csv_with_permission, package_export_file
+    from weko_items_ui.utils import make_stats_file_with_permission, package_export_file
 
     _cache_prefix = current_app.config["WEKO_ADMIN_CACHE_PREFIX"]
     _msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_MSG"]
@@ -2992,13 +2998,14 @@ def export_all(root_url, user_id, data):
         user_id=user_id
     )
     _timezone = current_app.config["STATS_WEKO_DEFAULT_TIMEZONE"]
+    _file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
     def _itemtype_name(name):
         """Check a list of allowed characters in filenames."""
         return re.sub(r'[\/:*"<>|\s]', "_", name)
 
-    def _write_csv_files(item_datas, export_path):
-        """Write CSV data to files.
+    def _write_files(item_datas, export_path):
+        """Write TSV/CSV data to files.
 
         @param item_datas:
         @param export_path:
@@ -3011,7 +3018,7 @@ def export_all(root_url, user_id, data):
             hide_meta_data_for_role=lambda a: True,
             current_language=lambda: True,
         )
-        headers, records = make_stats_csv_with_permission(
+        headers, records = make_stats_file_with_permission(
             item_datas["item_type_id"],
             item_datas["recids"],
             item_datas["data"],
@@ -3026,10 +3033,10 @@ def export_all(root_url, user_id, data):
         item_datas["data"] = records
         item_type_data = item_datas
 
-        csv_full_path = "{}/{}.csv".format(export_path, item_type_data.get("name"))
-        with open(csv_full_path, "w", encoding="utf-8-sig") as file:
-            csv_output = package_export_file(item_type_data)
-            file.write(csv_output.getvalue())
+        file_full_path = "{}/{}.{}".format(export_path, item_type_data.get("name"), _file_format)
+        with open(file_full_path, "w", encoding="utf-8-sig") as file:
+            file_output = package_export_file(item_type_data)
+            file.write(file_output.getvalue())
 
     def _get_item_type_list(item_type_id):
         """Get item type list."""
@@ -3123,15 +3130,16 @@ def export_all(root_url, user_id, data):
                         item_datas["name"] = "{}.part{}".format(
                             item_datas["name"], file_part
                         )
-                        _write_csv_files(item_datas, export_path)
+                        _write_files(item_datas, export_path)
                         reset_redis_cache(
                             _run_msg_key,
-                            "The latest csv file was created on {}.".format(
+                            "The latest {} file was created on {}.".format(
+                                _file_format,
                                 datetime.now(pytz.timezone(_timezone)).strftime("%Y/%m/%d %H:%M:%S"))
                             + " Number of retries: {} times.".format(retrys)
                         )
                         current_app.logger.info(
-                            "{}.csv has been created.".format(item_datas["name"])
+                            "{}.{} has been created.".format(item_datas["name"], _file_format)
                         )
                         item_datas = {}
                         file_part += 1
@@ -3164,16 +3172,17 @@ def export_all(root_url, user_id, data):
                         item_datas["name"], file_part
                     )
                 # Create export info file
-                _write_csv_files(item_datas, export_path)
+                _write_files(item_datas, export_path)
                 reset_redis_cache(
                     _run_msg_key,
-                    "The latest csv file was created on {}.".format(
+                    "The latest {} file was created on {}.".format(
+                        _file_format,
                         datetime.now(pytz.timezone(_timezone)).strftime("%Y/%m/%d %H:%M:%S"))
                     + " Number of retries: {} times.".format(retrys)
                 )
                 item_types.remove(it)
                 current_app.logger.info(
-                    "{}.csv has been created.".format(item_datas["name"])
+                    "{}.{} has been created.".format(item_datas["name"], _file_format)
                 )
                 current_app.logger.info(
                     "Processed {} items of item type {}.".format(
