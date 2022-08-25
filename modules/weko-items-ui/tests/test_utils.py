@@ -18,7 +18,8 @@ from weko_items_ui.utils import (
     make_stats_file,
     save_title,
     to_files_js,
-    get_files_from_metadata
+    get_files_from_metadata,
+    validate_bibtex
 )
 from invenio_accounts.testutils import login_user_via_session
 import pytest
@@ -1039,7 +1040,13 @@ def test_is_schema_include_key():
 # def set_validation_message(item, cur_lang):
 # def translate_validation_message(item_property, cur_lang):
 # def get_workflow_by_item_type_id(item_type_name_id, item_type_id):
+
 # def validate_bibtex(record_ids):
+#.tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_validate_bibtex -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_validate_bibtex(app,db,db_records,db_register,db_oaischema):
+    app.config.update(OAISERVER_XSL_URL=None)
+    assert validate_bibtex([1])==""
+
 # def make_bibtex_data(record_ids):
 # def translate_schema_form(form_element, cur_lang):
 # def get_ranking(settings):

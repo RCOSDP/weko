@@ -476,9 +476,7 @@ def iframe_items_index(pid_value='0'):
             root_record = None
             files = []
             if pid_value and '.' in pid_value:
-                print("pid_value:{}".format(pid_value))
                 root_record, files = get_record_by_root_ver(pid_value)
-                print("root_record:{}".format(root_record))
                 if root_record and root_record.get('title'):
                     session['itemlogin_item']['title'] = \
                         root_record['title'][0]
@@ -1236,11 +1234,16 @@ def check_record_doi(pid_value='0'):
 def check_record_doi_indexes(pid_value='0'):
     """Check restrict DOI and Indexes.
 
-    :param pid_value: pid_value.
-    :return:
-    """
+    Args:
+        pid_value (str, optional): _description_. Defaults to '0'.
+
+    Returns:
+        _type_: _description_
+    Rises:
+        invenio_pidstore.errors.PIDDoesNotExistError
+    """    
     doi = int(request.args.get('doi', '0'))
-    record = WekoRecord.get_record_by_pid(pid_value)
+    record = WekoRecord.get_record_by_pid(pid_value)    
     if (record.pid_doi or doi > 0) and \
             not check_index_permissions(record=record, is_check_doi=True):
         return jsonify({

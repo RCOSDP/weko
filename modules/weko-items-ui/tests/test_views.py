@@ -1,5 +1,6 @@
 import json
 import pytest
+from collections import Iterable, OrderedDict
 from mock import patch
 from invenio_accounts.testutils import login_user_via_session
 from flask import Flask, json, jsonify, url_for, session
@@ -156,11 +157,11 @@ def test_iframe_index(app,db,client,users,db_register,id, status_code):
 
     
 
-
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_index_exception -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 @patch("weko_items_ui.views.iframe_index",MagicMock(side_effect=Exception()))
-def test_index_exception2(client,users, mocker):
+def test_iframe_index_exception(client,users, mocker):
     login_user_via_session(client=client, email=users[0]['email'])
-    url = url_for('/items/iframe',_external=True)
+    url = "{}/1".format(url_for('weko_items_ui.iframe_index'))
     res = client.get(url)
     assert res.status_code == 400
 
@@ -572,8 +573,9 @@ def test_prepare_edit_item_guest(client_api, users):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_ranking_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_ranking_acl_nologin(client,db_sessionlifetime):
     url = url_for('weko_items_ui.ranking',_external=True)
-    res = client.get(url)
-    assert res.status_code == 200
+    with patch('flask.templating._render', return_value=''):
+        res = client.get(url)
+        assert res.status_code == 200
 
 
 # def check_ranking_show():
@@ -615,14 +617,14 @@ def test_check_restricted_content_guest(client_api, users):
 
 # def validate_bibtex_export():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_validate_bibtex_export_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_validate_bibtex_export_acl_nologin(client, users):
+def test_validate_bibtex_export_acl_nologin(app,client, users,db_records,db_oaischema):
     url = url_for('weko_items_ui.validate_bibtex_export',_external=True)
-    res = client.post(url,data=json.dumps({"record_ids":[]}),content_type="application/json")
+    res = client.post(url,data=json.dumps({"record_ids":[1]}),content_type="application/json")
     assert res.status_code == 200
 
 # def export():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_export_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_export_acl_nologin(client, users):
+def test_export_acl_nologin(client, users,db_oaischema):
     url = url_for('weko_items_ui.export',_external=True)
     with patch('flask.templating._render', return_value=''):
         res = client.get(url)
@@ -659,17 +661,18 @@ def test_validate_guest(client_api, users):
         assert res.status_code == 302
 
 # def check_validation_error_msg(activity_id):
-def test_check_validation_error_msg_acl_nologin(client_api):
-    url = url_for('weko_items_ui_api.check_validation_error_msg',_external=True)
+#.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_check_validation_error_msg_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_check_validation_error_msg_acl_nologin(client_api,db_sessionlifetime):
+    url = url_for('weko_items_ui_api.check_validation_error_msg',activity_id="A-00000000-00000",external=True)
     res=client_api.get(url)
-    assert res.status_code==304
+    assert res.status_code==302
 
 # def corresponding_activity_list():
 #.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_corresponding_activity_list_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_corresponding_activity_list_acl_nologin(client,db_sessionlifetime):
     url = url_for('weko_items_ui.corresponding_activity_list',_external=True)
     res=client.get(url)
-    assert res.status_code==304
+    assert res.status_code==302
 
 
 # def get_authors_prefix_settings():
@@ -677,7 +680,7 @@ def test_corresponding_activity_list_acl_nologin(client,db_sessionlifetime):
 def test_get_authors_prefix_settings_acl_nologin(client_api,db_sessionlifetime):
     url = url_for('weko_items_ui_api.get_authors_prefix_settings',_external=True)
     res=client_api.get(url)
-    assert res.status_code==304
+    assert res.status_code==200
 
 
 # def get_authors_affiliation_settings():
@@ -685,7 +688,7 @@ def test_get_authors_prefix_settings_acl_nologin(client_api,db_sessionlifetime):
 def test_get_authors_affiliation_settings_acl_nologin(client_api,db_sessionlifetime):
     url = url_for('weko_items_ui_api.get_authors_affiliation_settings',_external=True)
     res=client_api.get(url)
-    assert res.status_code==304
+    assert res.status_code==200
 
 
 # def session_validate():
@@ -699,15 +702,51 @@ def test_session_validate_acl_nologin(app,client,db_sessionlifetime):
 
 # def check_record_doi(pid_value='0'):
 #.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_check_record_doi_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_check_record_doi_acl_nologin(client,db_sessionlifetime):
-    url = url_for('weko_items_ui.check_record_doi',_external=True)
-    res=client.get(url)
-    assert res.status_code==304
+def test_check_record_doi_acl_nologin(client_api,db_sessionlifetime):
+    url = url_for('weko_items_ui_api.check_record_doi',pid_value='1',_external=True)
+    res=client_api.get(url)
+    assert res.status_code==302
 
 
 # def check_record_doi_indexes(pid_value='0'):
 #.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_check_record_doi_indexes_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_check_record_doi_indexes_acl_nologin(client,db_sessionlifetime):
-    url = url_for('weko_items_ui_api.check_record_doi_indexes',_external=True)
-    res=client.get(url)
-    assert res.status_code==304
+def test_check_record_doi_indexes_acl_nologin(client_api,db_sessionlifetime):
+    url = url_for('weko_items_ui_api.check_record_doi_indexes',pid_value=0,_external=True)
+    res=client_api.get(url)
+    assert res.status_code==302
+
+
+#.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_check_record_doi_indexes_acl -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+    (7, 200),
+])
+def test_check_record_doi_indexes_acl(client_api,users, db_records, db_sessionlifetime,id, status_code):
+    login_user_via_session(client=client_api, email=users[id]["email"])
+    url = url_for('weko_items_ui_api.check_record_doi_indexes',pid_value=1,_external=True)
+    res=client_api.get(url)
+    assert res.status_code==status_code
+
+#.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_check_record_doi_indexes -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+
+@pytest.mark.parametrize('id, status_code', [
+    (0, 200),
+])
+def test_check_record_doi_indexes(client_api,users, db_records, db_sessionlifetime,id, status_code):
+    login_user_via_session(client=client_api, email=users[id]["email"])
+    url = url_for('weko_items_ui_api.check_record_doi_indexes',pid_value=1,_external=True)
+    res=client_api.get(url)
+    assert res.status_code==status_code
+    assert res.data ==  b'{"code":0}\n'
+    res=client_api.get("{}?doi=1".format(url))
+    assert res.status_code==status_code
+    assert res.data ==  b'{"code":0}\n'
+
+
