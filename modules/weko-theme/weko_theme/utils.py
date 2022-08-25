@@ -283,7 +283,6 @@ class MainScreenInitDisplaySetting:
                     "q": init_disp_index,
                     "size": display_number,
                     "timestamp": time.time(),
-                    "is_search": 1,
                 },
                 "journal_info": get_journal_info(init_disp_index),
                 "allow_item_exporting": export_settings.allow_item_exporting,
