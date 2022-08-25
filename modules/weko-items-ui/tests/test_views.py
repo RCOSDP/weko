@@ -7,6 +7,8 @@ from unittest.mock import MagicMock
 from weko_items_ui.views import iframe_index,iframe_save_model,default_view_method,to_links_js,check_ranking_show
 from weko_workflow.models import Activity
 from datetime import datetime
+from invenio_i18n.babel import set_locale
+
 
 # def index(item_type_id=0):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_index_acl_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -688,10 +690,10 @@ def test_get_authors_affiliation_settings_acl_nologin(client_api,db_sessionlifet
 
 # def session_validate():
 #.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_session_validate_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_session_validate_acl_nologin(client,db_sessionlifetime):
+def test_session_validate_acl_nologin(app,client,db_sessionlifetime):
     url = url_for('weko_items_ui.session_validate',_external=True)
-    res=client.get(url)
-    assert res.status_code==304
+    res=client.post(url)
+    assert res.status_code==200
 
 
 
@@ -706,6 +708,6 @@ def test_check_record_doi_acl_nologin(client,db_sessionlifetime):
 # def check_record_doi_indexes(pid_value='0'):
 #.tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_check_record_doi_indexes_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_check_record_doi_indexes_acl_nologin(client,db_sessionlifetime):
-    url = url_for('weko_items_ui.check_record_doi_indexes',_external=True)
+    url = url_for('weko_items_ui_api.check_record_doi_indexes',_external=True)
     res=client.get(url)
     assert res.status_code==304

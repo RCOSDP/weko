@@ -121,7 +121,7 @@ def base_app(instance_path):
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
-        SERVER_NAME='TEST_SERVER',
+        SERVER_NAME='test_server',
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -140,7 +140,7 @@ def base_app(instance_path):
         WEKO_BUCKET_QUOTA_SIZE = 50 * 1024 * 1024 * 1024,
         WEKO_MAX_FILE_SIZE = 50 * 1024 * 1024 * 1024,
     )
-    Babel(app_)
+    # Babel(app_)
     InvenioI18N(app_)
     InvenioTheme(app_)
     InvenioREST(app_)
@@ -500,6 +500,5 @@ def db_register2(app, db,db_register,users):
 @pytest.fixture()
 def db_sessionlifetime(app, db):
     session_lifetime = SessionLifetime(lifetime=60,is_delete=False)
-    
     with db.session.begin_nested():
         db.session.add(session_lifetime)
