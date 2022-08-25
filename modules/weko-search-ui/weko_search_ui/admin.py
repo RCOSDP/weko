@@ -83,8 +83,8 @@ from .utils import (
     get_tree_items,
     handle_get_all_sub_id_and_name,
     handle_workflow,
-    make_stats_csv,
-    make_csv_by_line,
+    make_stats_file,
+    make_file_by_line,
 )
 
 _signals = Namespace()
@@ -321,7 +321,9 @@ class ItemImportView(BaseView):
         workflows_js = [get_content_workflow(item) for item in workflows]
 
         return self.render(
-            WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, workflows=json.dumps(workflows_js)
+            WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
+            workflows=json.dumps(workflows_js),
+            file_format=current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         )
 
     @expose("/check", methods=["POST"])
@@ -330,6 +332,24 @@ class ItemImportView(BaseView):
         data = request.form
         file = request.files["file"] if request.files else None
 
+        role_ids = []
+        can_edit_indexes = []
+        if current_user and current_user.is_authenticated:
+            for role in current_user.roles:
+                if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
+                    role_ids = []
+                    can_edit_indexes = [0]
+                    break
+                else:
+                    role_ids.append(role.id)
+        if role_ids:
+            from invenio_communities.models import Community
+            comm_data = Community.query.filter(
+                Community.id_role.in_(role_ids)
+            ).all()
+            for comm in comm_data:
+                can_edit_indexes += [i.cid for i in Indexes.get_self_list(comm.root_node_id)]
+            can_edit_indexes = list(set(can_edit_indexes))
         if data and file:
             temp_path = (
                 tempfile.gettempdir()
@@ -346,6 +366,8 @@ class ItemImportView(BaseView):
                     data.get("is_change_identifier") == "true",
                     request.host_url,
                     current_i18n.language,
+                    False,
+                    can_edit_indexes
                 ),
             )
         return jsonify(code=1, check_import_task_id=task.task_id)
@@ -373,21 +395,22 @@ class ItemImportView(BaseView):
         """Download report check result."""
         data = request.get_json()
         now = str(datetime.date(datetime.now()))
+        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
-        file_name = "check_" + now + ".csv"
+        file_name = "check_{}.{}".format(now, file_format)
         if data:
-            csv_file = make_stats_csv(
+            output_file = make_stats_file(
                 data.get("list_result"), WEKO_IMPORT_CHECK_LIST_NAME
             )
             return Response(
-                csv_file.getvalue(),
-                mimetype="text/csv",
+                output_file.getvalue(),
+                mimetype="text/{}".format(file_format),
                 headers={"Content-disposition": "attachment; filename=" + file_name},
             )
         else:
             return Response(
                 [],
-                mimetype="text/csv",
+                mimetype="text/{}".format(file_format),
                 headers={"Content-disposition": "attachment; filename=" + file_name},
             )
 
@@ -490,18 +513,19 @@ class ItemImportView(BaseView):
         data = request.get_json()
         now = str(datetime.date(datetime.now()))
 
-        file_name = "List_Download " + now + ".csv"
+        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+        file_name = "List_Download {}.{}".format(now, file_format)
         if data:
-            csv_file = make_stats_csv(data.get("list_result"), WEKO_IMPORT_LIST_NAME)
+            output_file = make_stats_file(data.get("list_result"), WEKO_IMPORT_LIST_NAME)
             return Response(
-                csv_file.getvalue(),
-                mimetype="text/csv",
+                output_file.getvalue(),
+                mimetype="text/{}".format(file_format),
                 headers={"Content-disposition": "attachment; filename=" + file_name},
             )
         else:
             return Response(
                 [],
-                mimetype="text/csv",
+                mimetype="text/{}".format(file_format),
                 headers={"Content-disposition": "attachment; filename=" + file_name},
             )
 
@@ -514,16 +538,17 @@ class ItemImportView(BaseView):
     @expose("/export_template", methods=["POST"])
     def export_template(self):
         """Download item type template."""
+        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         file_name = None
-        csv_file = None
+        output_file = None
         data = request.get_json()
         if data:
             item_type_id = int(data.get("item_type_id", 0))
             if item_type_id > 0:
                 item_type = ItemTypes.get_by_id(id_=item_type_id, with_deleted=True)
                 if item_type:
-                    file_name = "{}({}).csv".format(
-                        item_type.item_type_name.name, item_type.id
+                    file_name = "{}({}).{}".format(
+                        item_type.item_type_name.name, item_type.id, file_format
                     )
                     item_type_line = [
                         "#ItemType",
@@ -638,7 +663,7 @@ class ItemImportView(BaseView):
                                 options_line.append(
                                     ", ".join(list(set(root_option + _option)))
                                 )
-                    csv_file = make_csv_by_line(
+                    output_file = make_file_by_line(
                         [
                             item_type_line,
                             ids_line,
@@ -649,13 +674,13 @@ class ItemImportView(BaseView):
                     )
         return Response(
             []
-            if not csv_file
+            if not output_file
             else codecs.BOM_UTF8.decode("utf8")
             + codecs.BOM_UTF8.decode()
-            + csv_file.getvalue(),
-            mimetype="text/csv",
+            + output_file.getvalue(),
+            mimetype="text/{}".format(file_format),
             headers={
-                "Content-type": "text/csv; charset=utf-8",
+                "Content-type": "text/{}; charset=utf-8".format(file_format),
                 "Content-disposition": "attachment; "
                 + (
                     "filename=" if not file_name else urlencode({"filename": file_name})

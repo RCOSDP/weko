@@ -485,7 +485,8 @@ def parse_to_json_form(data: list, item_path_not_existed=[], include_empty=False
     return result
 
 
-def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
+def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
+                       all_index_permission=True, can_edit_indexes=[]):
     """Validation importing zip file.
 
     :argument
@@ -493,6 +494,8 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
         file_content -- content file's name.
         is_change_identifier -- Change Identifier Mode.
         is_gakuninrdm -- Is call by gakuninrdm api.
+        all_index_permission -- All indexes can be import.
+        can_edit_indexes -- Editable index list.
     :return
         return       -- PID object if exist.
 
@@ -562,7 +565,7 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
         # [{'pos_index': ['Index A'], 'publish_status': 'public', 'feedback_mail': ['wekosoftware@nii.ac.jp'], 'edit_mode': 'Keep', 'metadata': {'pubdate': '2021-03-19', 'item_1617186331708': [{'subitem_1551255647225': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'en_conference paperITEM00000001(public_open_access_simple)', 'subitem_1551255648112': 'en'}], 'item_1617186385884': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617349709064': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617186476635': {'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}, 'item_1617351524846': {'subitem_1523260933860': 'Unknown'}, 'item_1617186499011': [{'subitem_1522650717957': 'ja', 'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}], 'item_1617610673286': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}], 'item_1617186609386': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}], 'item_1617186626617': [{'subitem_description': 'Description\nDescription<br/>Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要\n概要\n概要\n概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}], 'item_1617186643794': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}], 'item_1617186660861': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_1617349808926': {'subitem_1523263171732': 'Version'}, 'item_1617265215918': {'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, 'item_1617186783814': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}], 'item_1617353299429': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}], 'item_1617186859717': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}], 'item_1617186882738': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}], 'item_1617186901218': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}], 'item_1617186920753': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}], 'item_1617186941041': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}], 'item_1617186959569': {'subitem_1551256328147': '1'}, 'item_1617186981471': {'subitem_1551256294723': '111'}, 'item_1617186994930': {'subitem_1551256248092': '12'}, 'item_1617187024783': {'subitem_1551256198917': '1'}, 'item_1617187045071': {'subitem_1551256185532': '3'}, 'item_1617187112279': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}], 'item_1617187136212': {'subitem_1551256096004': '2021-06-30'}, 'item_1617944105607': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}], 'item_1617187187528': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}], 'item_1617605131499': [{'accessrole': 'open_access', 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'displaytype': 'simple', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'format': 'text/plain'}, {'filename': ''}], 'item_1617620223087': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}]}, 'file_path': ['file00000001/1KB.pdf', ''], 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'item_type_id': 15, '$schema': 'https://localhost:8443/items/jsonschema/15', 'identifier_key': 'item_1617186819068', 'errors': None, 'status': 'new', 'id': None, 'item_title': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)'}]
         handle_check_id(list_record)
 
-        handle_check_and_prepare_index_tree(list_record)
+        handle_check_and_prepare_index_tree(list_record, all_index_permission, can_edit_indexes)
         # current_app.logger.debug("list_record5: {}".format(list_record))
         # [{'pos_index': ['Index A'], 'publish_status': 'public', 'feedback_mail': ['wekosoftware@nii.ac.jp'], 'edit_mode': 'Keep', 'metadata': {'pubdate': '2021-03-19', 'item_1617186331708': [{'subitem_1551255647225': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'en_conference paperITEM00000001(public_open_access_simple)', 'subitem_1551255648112': 'en'}], 'item_1617186385884': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617349709064': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617186476635': {'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}, 'item_1617351524846': {'subitem_1523260933860': 'Unknown'}, 'item_1617186499011': [{'subitem_1522650717957': 'ja', 'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}], 'item_1617610673286': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}], 'item_1617186609386': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}], 'item_1617186626617': [{'subitem_description': 'Description\nDescription<br/>Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要\n概要\n概要\n概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}], 'item_1617186643794': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}], 'item_1617186660861': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_1617349808926': {'subitem_1523263171732': 'Version'}, 'item_1617265215918': {'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, 'item_1617186783814': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}], 'item_1617353299429': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}], 'item_1617186859717': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}], 'item_1617186882738': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}], 'item_1617186901218': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}], 'item_1617186920753': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}], 'item_1617186941041': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}], 'item_1617186959569': {'subitem_1551256328147': '1'}, 'item_1617186981471': {'subitem_1551256294723': '111'}, 'item_1617186994930': {'subitem_1551256248092': '12'}, 'item_1617187024783': {'subitem_1551256198917': '1'}, 'item_1617187045071': {'subitem_1551256185532': '3'}, 'item_1617187112279': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}], 'item_1617187136212': {'subitem_1551256096004': '2021-06-30'}, 'item_1617944105607': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}], 'item_1617187187528': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}], 'item_1617605131499': [{'accessrole': 'open_access', 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'displaytype': 'simple', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'format': 'text/plain'}, {'filename': ''}], 'item_1617620223087': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}], 'path': [1031]}, 'file_path': ['file00000001/1KB.pdf', ''], 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'item_type_id': 15, '$schema': 'https://localhost:8443/items/jsonschema/15', 'identifier_key': 'item_1617186819068', 'errors': None, 'status': 'new', 'id': None, 'item_title': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)'}]
         handle_check_and_prepare_publish_status(list_record)
@@ -594,7 +597,7 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
             ).format(filename)
         elif isinstance(ex, FileNotFoundError):
             error = _(
-                "The CSV file was not found in the specified file {}."
+                "The csv/tsv file was not found in the specified file {}."
                 + " Check if the directory structure is correct."
             ).format(filename)
         elif isinstance(ex, UnicodeDecodeError):
@@ -613,20 +616,20 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
     return result
 
 
-def unpackage_import_file(data_path: str, file_name: str, file_type: str, force_new=False):
+def unpackage_import_file(data_path: str, file_name: str, file_format: str, force_new=False):
     """Getting record data from CSV/TSV file.
 
     :argument
         data_path -- Path of csv file.
         file_name -- CSV/TSV file name.
-        file_type -- File type.
+        file_format -- File format.
         force_new -- Force to new item.
     :return
         return -- List records.
 
     """
     file_path = "{}/{}".format(data_path, file_name)
-    data = read_stats_csv(file_path, file_name, file_type)
+    data = read_stats_file(file_path, file_name, file_format)
     # current_app.logger.debug("data: {}".format(data))
     list_record = data.get("data_list")
     # current_app.logger.debug('list_record1: {}'.format(list_record))
@@ -684,13 +687,13 @@ def getEncode(filepath):
     return enc
 
 
-def read_stats_csv(file_path: str, file_name: str, file_type: str) -> dict:
-    """Read importing CSV file.
+def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
+    """Read importing TSV/CSV file.
 
     :argument
         file_path -- file's url.
         file_name -- file name.
-        file_type -- file type.
+        file_format -- file format.
     :return
         return       -- PID object if exist.
 
@@ -705,7 +708,7 @@ def read_stats_csv(file_path: str, file_name: str, file_type: str) -> dict:
     # /tmp/weko_import_20220320003752/data/items.csv
     enc = getEncode(file_path)
     with open(file_path, "r", newline="", encoding=enc) as file:
-        if file_type == 'csv':
+        if file_format == 'csv':
             file_reader = csv.reader(file, dialect="excel", delimiter=",")
         else:     # tsv
             file_reader = csv.reader(file, delimiter='\t')
@@ -716,7 +719,7 @@ def read_stats_csv(file_path: str, file_name: str, file_type: str) -> dict:
                         {
                             "error_msg": _(
                                 "There is an error in the format of the"
-                                + " first line of the header of the {}".format(file_type.upper())
+                                + " first line of the header of the {}".format(file_format.upper())
                                 + " file."
                             )
                         }
@@ -735,7 +738,7 @@ def read_stats_csv(file_path: str, file_name: str, file_type: str) -> dict:
                             {
                                 "error_msg": _(
                                     "The item type ID specified in"
-                                    + " the {} file does not exist.".format(file_type.upper())
+                                    + " the {} file does not exist.".format(file_format.upper())
                                 )
                             }
                         )
@@ -811,7 +814,7 @@ def read_stats_csv(file_path: str, file_name: str, file_type: str) -> dict:
 
                     if not data_parse_metadata:
                         raise Exception(
-                            {"error_msg": _("Cannot read {} file correctly.".format(file_type.upper()))}
+                            {"error_msg": _("Cannot read {} file correctly.".format(file_format.upper()))}
                         )
                     if isinstance(check_item_type, dict):
                         item_type_name = check_item_type.get("name")
@@ -840,8 +843,8 @@ def read_stats_csv(file_path: str, file_name: str, file_type: str) -> dict:
                     data_list.append(item_data)
         except UnicodeDecodeError as ex:
             ex.reason = _(
-                "The {} file could not be read. Make sure the file".format(file_type.upper())
-                + " format is {} and that the file is".format(file_type.upper())
+                "The {} file could not be read. Make sure the file".format(file_format.upper())
+                + " format is {} and that the file is".format(file_format.upper())
                 + " UTF-8 encoded."
             ).format(file_name)
             raise ex
@@ -1032,21 +1035,27 @@ def handle_check_exist_record(list_record) -> list:
     return result
 
 
-def make_csv_by_line(lines):
-    """Make CSV file."""
-    csv_output = StringIO()
-    writer = csv.writer(csv_output, delimiter=",", lineterminator="\n")
+def make_file_by_line(lines):
+    """Make TSV/CSV file."""
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+    file_output = StringIO()
+    if file_format == 'csv':
+        writer = csv.writer(file_output, delimiter=",", lineterminator="\n")
+    else:
+        writer = csv.writer(file_output, delimiter="\t", lineterminator="\n")
     writer.writerows(lines)
 
-    return csv_output
+    return file_output
 
 
-def make_stats_csv(raw_stats, list_name):
-    """Make CSV report file for stats."""
-    csv_output = StringIO()
-
-    writer = csv.writer(csv_output, delimiter=",", lineterminator="\n")
-
+def make_stats_file(raw_stats, list_name):
+    """Make TSV/CSV report file for stats."""
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+    file_output = StringIO()
+    if file_format == 'csv':
+        writer = csv.writer(file_output, delimiter=",", lineterminator="\n")
+    else:
+        writer = csv.writer(file_output, delimiter="\t", lineterminator="\n")
     writer.writerow(list_name)
     for item in raw_stats:
         term = []
@@ -1054,7 +1063,7 @@ def make_stats_csv(raw_stats, list_name):
             term.append(item.get(name))
         writer.writerow(term)
 
-    return csv_output
+    return file_output
 
 
 def create_deposit(item_id):
@@ -1643,11 +1652,13 @@ def handle_check_and_prepare_publish_status(list_record):
             item["errors"] = item["errors"] + [error] if item.get("errors") else [error]
 
 
-def handle_check_and_prepare_index_tree(list_record):
+def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_edit_indexes):
     """Check index existed and prepare index tree data.
 
     :argument
         list_record -- {list} list record import.
+        all_index_permission -- {bool} All indexes can be import.
+        can_edit_indexes -- {list} Editable index list.
     :return
 
     """
@@ -1698,6 +1709,15 @@ def handle_check_and_prepare_index_tree(list_record):
                     errors.append(msg_not_exist.format("IndexID"))
                 else:
                     result = index.id
+        if result and not all_index_permission:
+            msg_can_not_edit = _("Your role cannot register items in this index.")
+            if not can_edit_indexes:
+                errors.append(msg_can_not_edit)
+                result = None
+            elif can_edit_indexes[0] != 0:
+                if result not in can_edit_indexes:
+                    errors.append(msg_can_not_edit)
+                    result = None
 
         return result
 
@@ -2916,11 +2936,11 @@ def handle_get_all_id_in_item_type(item_type_id):
 
 
 def handle_check_consistence_with_mapping(mapping_ids, keys):
-    """Check consistence between csv and mapping.
+    """Check consistence between tsv/csv and mapping.
 
     :argument
         mapping_ids - {list} list id from mapping.
-        keys - {list} data from line 2 of csv file.
+        keys - {list} data from line 2 of tsv/csv file.
     :return
         ids - {list} ids is not consistent.
     """
@@ -2964,7 +2984,7 @@ def export_all(root_url, user_id, data):
         post_data is the data items
     :return: JSON, BIBTEX
     """
-    from weko_items_ui.utils import make_stats_csv_with_permission, package_export_file
+    from weko_items_ui.utils import make_stats_file_with_permission, package_export_file
 
     _cache_prefix = current_app.config["WEKO_ADMIN_CACHE_PREFIX"]
     _msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_MSG"]
@@ -2978,13 +2998,14 @@ def export_all(root_url, user_id, data):
         user_id=user_id
     )
     _timezone = current_app.config["STATS_WEKO_DEFAULT_TIMEZONE"]
+    _file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
     def _itemtype_name(name):
         """Check a list of allowed characters in filenames."""
         return re.sub(r'[\/:*"<>|\s]', "_", name)
 
-    def _write_csv_files(item_datas, export_path):
-        """Write CSV data to files.
+    def _write_files(item_datas, export_path):
+        """Write TSV/CSV data to files.
 
         @param item_datas:
         @param export_path:
@@ -2997,7 +3018,7 @@ def export_all(root_url, user_id, data):
             hide_meta_data_for_role=lambda a: True,
             current_language=lambda: True,
         )
-        headers, records = make_stats_csv_with_permission(
+        headers, records = make_stats_file_with_permission(
             item_datas["item_type_id"],
             item_datas["recids"],
             item_datas["data"],
@@ -3012,10 +3033,10 @@ def export_all(root_url, user_id, data):
         item_datas["data"] = records
         item_type_data = item_datas
 
-        csv_full_path = "{}/{}.csv".format(export_path, item_type_data.get("name"))
-        with open(csv_full_path, "w", encoding="utf-8-sig") as file:
-            csv_output = package_export_file(item_type_data)
-            file.write(csv_output.getvalue())
+        file_full_path = "{}/{}.{}".format(export_path, item_type_data.get("name"), _file_format)
+        with open(file_full_path, "w", encoding="utf-8-sig") as file:
+            file_output = package_export_file(item_type_data)
+            file.write(file_output.getvalue())
 
     def _get_item_type_list(item_type_id):
         """Get item type list."""
@@ -3109,15 +3130,16 @@ def export_all(root_url, user_id, data):
                         item_datas["name"] = "{}.part{}".format(
                             item_datas["name"], file_part
                         )
-                        _write_csv_files(item_datas, export_path)
+                        _write_files(item_datas, export_path)
                         reset_redis_cache(
                             _run_msg_key,
-                            "The latest csv file was created on {}.".format(
+                            "The latest {} file was created on {}.".format(
+                                _file_format,
                                 datetime.now(pytz.timezone(_timezone)).strftime("%Y/%m/%d %H:%M:%S"))
                             + " Number of retries: {} times.".format(retrys)
                         )
                         current_app.logger.info(
-                            "{}.csv has been created.".format(item_datas["name"])
+                            "{}.{} has been created.".format(item_datas["name"], _file_format)
                         )
                         item_datas = {}
                         file_part += 1
@@ -3150,16 +3172,17 @@ def export_all(root_url, user_id, data):
                         item_datas["name"], file_part
                     )
                 # Create export info file
-                _write_csv_files(item_datas, export_path)
+                _write_files(item_datas, export_path)
                 reset_redis_cache(
                     _run_msg_key,
-                    "The latest csv file was created on {}.".format(
+                    "The latest {} file was created on {}.".format(
+                        _file_format,
                         datetime.now(pytz.timezone(_timezone)).strftime("%Y/%m/%d %H:%M:%S"))
                     + " Number of retries: {} times.".format(retrys)
                 )
                 item_types.remove(it)
                 current_app.logger.info(
-                    "{}.csv has been created.".format(item_datas["name"])
+                    "{}.{} has been created.".format(item_datas["name"], _file_format)
                 )
                 current_app.logger.info(
                     "Processed {} items of item type {}.".format(

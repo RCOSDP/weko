@@ -35,7 +35,7 @@ from invenio_theme import InvenioTheme
 from invenio_theme.views import blueprint as invenio_theme_blueprint
 from invenio_assets import InvenioAssets
 from invenio_access import InvenioAccess
-from invenio_access.models import ActionUsers
+from invenio_access.models import ActionUsers,ActionRoles
 from invenio_accounts.testutils import create_test_user
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
@@ -63,10 +63,12 @@ from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
-
+from tests.helpers import json_data, create_record
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy import event
+from invenio_files_rest.models import Location
+from invenio_files_rest import InvenioFilesREST
 
 # @event.listens_for(Engine, "connect")
 # def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -301,6 +303,7 @@ def base_app(instance_path):
     # InvenioTheme(app_)
     InvenioAccess(app_)
     InvenioAccounts(app_)
+    InvenioFilesREST(app_)
     InvenioCache(app_)
     InvenioDB(app_)
     InvenioStats(app_)
@@ -354,7 +357,6 @@ def client(app):
     with app.test_client() as client:
         yield client
 
-
 @pytest.fixture()
 def users(app, db):
     """Create users."""
@@ -407,10 +409,62 @@ def users(app, db):
     # Assign access authorization
     with db.session.begin_nested():
         action_users = [
-            ActionUsers(action='superuser-access', user=sysadmin)
+            ActionUsers(action='superuser-access', user=sysadmin),
         ]
         db.session.add_all(action_users)
+        action_roles = [
+            ActionRoles(action='superuser-access', role=sysadmin_role),
+            ActionRoles(action='admin-access', role=repoadmin_role),
+            ActionRoles(action='schema-access', role=repoadmin_role),
+            ActionRoles(action='index-tree-access', role=repoadmin_role),
+            ActionRoles(action='indextree-journal-access', role=repoadmin_role),
+            ActionRoles(action='item-type-access', role=repoadmin_role),
+            ActionRoles(action='item-access', role=repoadmin_role),
+            ActionRoles(action='files-rest-bucket-update', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-delete', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-delete-version', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-read', role=repoadmin_role),
+            ActionRoles(action='search-access', role=repoadmin_role),
+            ActionRoles(action='detail-page-acces', role=repoadmin_role),
+            ActionRoles(action='download-original-pdf-access', role=repoadmin_role),
+            ActionRoles(action='author-access', role=repoadmin_role),
+            ActionRoles(action='items-autofill', role=repoadmin_role),
+            ActionRoles(action='stats-api-access', role=repoadmin_role),
+            ActionRoles(action='read-style-action', role=repoadmin_role),
+            ActionRoles(action='update-style-action', role=repoadmin_role),
+            ActionRoles(action='detail-page-acces', role=repoadmin_role),
 
+            ActionRoles(action='admin-access', role=comadmin_role),
+            ActionRoles(action='index-tree-access', role=comadmin_role),
+            ActionRoles(action='indextree-journal-access', role=comadmin_role),
+            ActionRoles(action='item-access', role=comadmin_role),
+            ActionRoles(action='files-rest-bucket-update', role=comadmin_role),
+            ActionRoles(action='files-rest-object-delete', role=comadmin_role),
+            ActionRoles(action='files-rest-object-delete-version', role=comadmin_role),
+            ActionRoles(action='files-rest-object-read', role=comadmin_role),
+            ActionRoles(action='search-access', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='download-original-pdf-access', role=comadmin_role),
+            ActionRoles(action='author-access', role=comadmin_role),
+            ActionRoles(action='items-autofill', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+
+            ActionRoles(action='item-access', role=contributor_role),
+            ActionRoles(action='files-rest-bucket-update', role=contributor_role),
+            ActionRoles(action='files-rest-object-delete', role=contributor_role),
+            ActionRoles(action='files-rest-object-delete-version', role=contributor_role),
+            ActionRoles(action='files-rest-object-read', role=contributor_role),
+            ActionRoles(action='search-access', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='download-original-pdf-access', role=contributor_role),
+            ActionRoles(action='author-access', role=contributor_role),
+            ActionRoles(action='items-autofill', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+        ]
+        db.session.add_all(action_roles)
+        
     return [
         {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
         {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
@@ -421,6 +475,8 @@ def users(app, db):
         {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
         {'email': user.email, 'id': user.id, 'obj': user},
     ]
+
+
 
 @pytest.fixture()
 def db_register(app, db):
@@ -515,6 +571,24 @@ def db_register(app, db):
     
     # return {'flow_define':flow_define,'item_type_name':item_type_name,'item_type':item_type,'flow_action':flow_action,'workflow':workflow,'activity':activity}
     return {'flow_define':flow_define,'item_type':item_type,'workflow':workflow}
+
+@pytest.fixture()
+def db_records(db,instance_path):
+    record_data = json_data("data/test_records.json")
+    item_data = json_data("data/test_items.json")
+    record_num = len(record_data)
+    result = []
+    for d in range(record_num):
+        result.append(create_record(record_data[d], item_data[d]))
+    db.session.commit()
+
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name='local', uri=instance_path, default=True)
+        db.session.add(loc)
+    db.session.commit()
+
+    yield result
 
 
 @pytest.fixture()

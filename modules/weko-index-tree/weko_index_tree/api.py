@@ -181,6 +181,7 @@ class Indexes(object):
                 if not index:
                     return
 
+                data.pop("can_edit", False)
                 for k, v in data.items():
                     if isinstance(getattr(index, k), int):
                         if isinstance(v, str) and len(v) == 0:
@@ -405,6 +406,33 @@ class Indexes(object):
                 return ret
 
             try:
+                role_ids = []
+                if current_user and current_user.is_authenticated:
+                    for role in current_user.roles:
+                        if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
+                            ret['is_ok'] = True
+                            role_ids = []
+                            break
+                        else:
+                            ret['is_ok'] = False
+                            role_ids.append(role.id)
+                if not ret['is_ok'] and role_ids:
+                    can_edit_list = []
+                    from invenio_communities.models import Community
+                    comm_data = Community.query.filter(
+                        Community.id_role.in_(role_ids)
+                    ).all()
+                    for comm in comm_data:
+                        can_edit_list += [i.cid for i in cls.get_self_list(comm.root_node_id)]
+                    can_edit_list = list(set(can_edit_list))
+                    if int(parent) not in can_edit_list or \
+                            int(pre_parent) not in can_edit_list or \
+                            int(index_id) not in can_edit_list:
+                        ret['is_ok'] = False
+                        ret['msg'] = _('You can not move the index.')
+                        return ret
+
+                ret['is_ok'] = True
                 new_position = int(data.get('position'))
                 if int(parent) == 0:
                     parent_info = cls.get_root_index_count()

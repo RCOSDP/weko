@@ -37,13 +37,16 @@ from .utils import (
 
 
 @shared_task
-def check_import_items_task(file_path, is_change_identifier: bool, host_url, lang="en"):
+def check_import_items_task(file_path, is_change_identifier: bool, host_url,
+                            lang="en", all_index_permission=True, can_edit_indexes=[]):
     """Check import items."""
     result = {"start_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     with current_app.test_request_context(
         host_url, headers=[("Accept-Language", lang)]
     ):
-        check_result = check_import_items(file_path, is_change_identifier)
+        check_result = check_import_items(file_path, is_change_identifier,
+                                          all_index_permission=all_index_permission,
+                                          can_edit_indexes=can_edit_indexes)
     # remove zip file
     shutil.rmtree("/".join(file_path.split("/")[:-1]))
     data_path = check_result.get("data_path", "")

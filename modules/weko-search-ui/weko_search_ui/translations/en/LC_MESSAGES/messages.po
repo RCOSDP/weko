@@ -68,7 +68,7 @@ msgstr ""
 
 #: weko_search_ui/utils.py:497
 msgid ""
-"The CSV file was not found in the specified file {}. Check if the "
+"The tsv/csv file was not found in the specified file {}. Check if the "
 "directory structure is correct."
 msgstr ""
 
@@ -816,3 +816,7 @@ msgstr ""
 
 msgid "DOI granting item(s) are including in the deletion items.<br/>DOI granting item(s) cannot be deleted without withdrawing the DOI.<br/>Do you want to continue deleting items that are not grant DOI?"
 msgstr ""
+
+msgid "Your role cannot register items in this index."
+msgstr ""
+
