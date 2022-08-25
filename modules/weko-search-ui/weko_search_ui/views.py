@@ -114,7 +114,7 @@ def search():
     sort_options, display_number = SearchSetting.get_results_setting()
 
     ts = time.time()
-    disply_setting = dict(size=display_number, timestamp=ts)
+    disply_setting = dict(size=display_number, timestamp=ts,is_search = 1)
 
     detail_condition = get_search_detail_keyword("")
 
