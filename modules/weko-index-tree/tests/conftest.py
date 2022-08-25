@@ -56,7 +56,12 @@ from invenio_oaiharvester.models import HarvestSettings
 from invenio_access.models import ActionUsers, ActionRoles
 from invenio_stats import InvenioStats
 from invenio_admin import InvenioAdmin
+from invenio_search import RecordsSearch
+from invenio_pidstore import InvenioPIDStore, current_pidstore
+from invenio_records_rest.utils import PIDConverter
+from invenio_records.models import RecordMetadata
 
+from weko_search_ui import WekoSearchUI, WekoSearchREST
 from weko_redis.redis import RedisConnection
 from weko_admin.models import SessionLifetime 
 from weko_records.models import ItemTypeName, ItemType
@@ -93,6 +98,7 @@ def base_app(instance_path):
         CACHE_REDIS_HOST="redis",
         REDIS_PORT='6379',
         SERVER_NAME='TEST_SERVER',
+        INDEX_IMG='indextree/36466818-image.jpg',
         # SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
         #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
         SQLALCHEMY_DATABASE_URI=os.environ.get(
@@ -293,7 +299,34 @@ def base_app(instance_path):
         WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE="",
         WEKO_ITEMS_UI_MULTIPLE_APPROVALS=True,
         WEKO_THEME_DEFAULT_COMMUNITY="Root Index",
+        WEKO_SEARCH_REST_ENDPOINTS = dict(
+            recid=dict(
+                pid_type='recid',
+                pid_minter='recid',
+                pid_fetcher='recid',
+                search_class=RecordsSearch,
+                # search_index=SEARCH_UI_SEARCH_INDEX,
+                search_index="tenant1-weko",
+                search_type='item-v1.0.0',
+                search_factory_imp='weko_search_ui.query.weko_search_factory',
+                # record_class='',
+                record_serializers={
+                    'application/json': ('invenio_records_rest.serializers'
+                                        ':json_v1_response'),
+                },
+                search_serializers={
+                    'application/json': ('weko_records.serializers'
+                                        ':json_v1_search'),
+                },
+                index_route='/index/',
+                links_factory_imp='weko_search_ui.links:default_links_factory',
+                default_media_type='application/json',
+                max_result_window=10000,
+            ),
+        ),
     )
+    app_.url_map.converters['pid'] = PIDConverter
+
     FlaskCeleryExt(app_)
     Menu(app_)
     Babel(app_)
@@ -312,6 +345,8 @@ def base_app(instance_path):
     InvenioMail(app_)
     InvenioStats(app_)
     InvenioAdmin(app_)
+    InvenioPIDStore(app_)
+    WekoSearchUI(app_)
     WekoWorkflow(app_)
     WekoGroups(app_)
 
@@ -521,9 +556,9 @@ def indices(app):
 
 
 @pytest.fixture
-def redis_connect(app, db):
+def redis_connect(app):
     redis_connection = RedisConnection()
-    return redis_connection.connection(db, kv=True)
+    return redis_connection
 
 
 @pytest.fixture()
@@ -647,3 +682,70 @@ def db_register2(app, db):
     
     with db.session.begin_nested():
         db.session.add(session_lifetime)
+
+
+def json_data(filename):
+    with open(filename, "r") as f:
+        return json.load(f)
+
+
+@pytest.fixture()
+def records(redis_connect, db):
+    datastore = redis_connect.connection(db, kv=True)
+
+    with db.session.begin_nested():
+        index_one = Index(
+            public_state=True,
+            index_name='index_one',
+            index_link_name='link_one',
+            index_link_enabled=True
+        )
+
+        index_two = Index(
+            public_state=True,
+            index_name='index_two',
+            index_link_name='link_two',
+            index_link_enabled=True
+        )
+
+        datastore.put('index_one', json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=5)
+        datastore.put('lock_index_index_two', json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=5)
+
+        id1 = uuid.UUID('b7bdc3ad-4e7d-4299-bd87-6d79a250553f')
+        rec1 = RecordMetadata(
+            id=id1,
+            json=json_data("tests/data/record01.json"),
+            version_id=1
+        )
+
+        id2 = uuid.UUID('362e800c-08a2-425d-a2b6-bcae7d5c3701')
+        rec2 = RecordMetadata(
+            id=id2,
+            json=json_data("tests/data/record02.json"),
+            version_id=2
+        )
+
+        id3 = uuid.UUID('3ead53d0-8e4a-489e-bb6c-d88433a029c2')
+        rec3 = RecordMetadata(
+            id=id3,
+            json=json_data("tests/data/record03.json"),
+            version_id=3
+        )
+
+        db.session.add(rec1)
+        db.session.add(rec2)
+        db.session.add(rec3)
+        db.session.add(index_one)
+    
+    return {
+        'indices': [
+            index_one,
+            index_two,
+        ],
+        'records': [
+            {"id": id1, "record": rec1},
+            {"id": id2, "record": rec2},
+            {"id": id3, "record": rec3},
+        ]
+    }
+    

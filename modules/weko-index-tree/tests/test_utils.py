@@ -34,6 +34,26 @@ from weko_redis.redis import RedisConnection
 
 # def get_index_link_list(pid=0):
 #     def _get_index_link(res, tree):
+def test_get_index_link_list(records):
+    def _get_index_link(res, index):
+            if index.index_link_enabled:
+                res.append((index.id, index.index_link_name))
+            if index.have_children(index.id):
+                _get_index_link(res, index.parent)
+
+    from weko_index_tree.models import Index
+
+    indices_id_list = [idx['id'] for idx in Index.get_all()]
+
+    for index_id in indices_id_list:
+        num = Index.get_index_by_id(index_id)
+        
+        res = []
+        _get_index_link(res, num)    
+        
+        assert res
+        
+
 # def is_index_tree_updated():
 # def cached_index_tree_json(timeout=50, key_prefix='index_tree_json'):
 #     def caching(f):
@@ -230,17 +250,64 @@ def test_count_items(users, db_register):
 
 
 # def __get_redis_store():
-def test___get_redis_store(redis_connect):
-    if redis_connect:
+def test___get_redis_store(redis_connect, db):
+    if redis_connect.connection(db, kv=True):
         assert redis_connect
     else:
         assert not redis_connect
 
 
 # def lock_all_child_index(index_id: str, value: str):
+
+
 # def unlock_index(index_key):
+def test_unlock_index(redis_connect, db, records):
+    
+    def unlock_index(key):
+        unlock_result = None
+        locked_key = f"lock_index_{key}"
+        datastore = redis_connect.connection(db, kv=True)
+
+        if datastore.redis.exists(locked_key):
+            datastore.delete(locked_key)
+            unlock_result = True
+        else:
+            unlock_result = False
+        
+        return unlock_result
+
+    unlock_check = False
+
+    for index in records['indices']:
+        if unlock_index(index.index_name):
+            unlock_check = True
+            assert unlock_check
+        else:
+            assert not unlock_check
+
+
+
 # def validate_before_delete_index(index_id):
+
+
 # def is_index_locked(index_id):
+def test_is_index_locked(redis_connect, db, records):
+
+    def is_exists_key_in_redis_and_is_locked(key):
+        locked_key = f"lock_index_{key}"
+        datastore = redis_connect.connection(db, kv=True)
+        return datastore.redis.exists(locked_key)
+
+    result = False
+
+    for index in records['indices']:
+        if is_exists_key_in_redis_and_is_locked(index.index_name):
+            result = True
+            assert result
+        else:
+            assert not result
+
+
 # def perform_delete_index(index_id, record_class, action: str):
 #         record_class (Indexes): Record object.
 #             res = record_class.get_self_path(index_id)
