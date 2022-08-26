@@ -21,6 +21,7 @@ from invenio_search import RecordsSearch
 from simplekv.memory.redisstore import RedisStore
 from invenio_accounts.testutils import login_user_via_session, login_user_via_view
 
+from weko_index_tree.models import Index
 from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
 from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
@@ -40,8 +41,6 @@ def test_get_index_link_list(records):
                 res.append((index.id, index.index_link_name))
             if index.have_children(index.id):
                 _get_index_link(res, index.parent)
-
-    from weko_index_tree.models import Index
 
     indices_id_list = [idx['id'] for idx in Index.get_all()]
 
@@ -210,7 +209,6 @@ def test_get_index_id(users, db_register):
 
 # def count_items(indexes_aggr):
 def test_count_items(users, db_register):
-    from weko_index_tree.models import Index
 
     def get_index_public_state(index_id):
         index = Index.get_index_by_id(index_id)
@@ -246,7 +244,42 @@ def test_count_items(users, db_register):
 #     def _convert_index_path(list_index):
 #     def _get_record_index_list():
 #     def _get_parent_lst():
+
+
 # def check_doi_in_index_and_child_index(index_id, recursively=True):
+def test_check_doi_in_index_and_child_index(redis_connect, db, records):
+    indices_id_list = [idx['id'] for idx in Index.get_all()]
+    child_idx_list = [x for x in records['indices'] if x.parent]
+
+    parent_id = int(indices_id_list[0])
+    
+    child_index = Index(
+        public_state=True,
+        index_name='child_index',
+        parent=parent_id
+    )
+
+    child_idx_list.append(child_index)
+
+    qs1 = "relation_version_is_last"
+    qs2 = "publish_status"
+    records = records['search_query_result']['hits']['hits']
+
+    source_check_records = []
+    metadata_check_records = []
+
+    for source_check in records:
+        print(source_check['_source'][qs1])
+        print(source_check['_source'][qs2])
+        if source_check['_source'][qs1] == True and source_check['_source'][qs2] == '0':
+            source_check_records.append(source_check)
+
+    for metadata_check in records:
+        if metadata_check['_source']['_item_metadata'][qs1] == True and metadata_check['_source']['_item_metadata'][qs2] == '0':
+            metadata_check_records.append(metadata_check)
+
+    assert source_check_records
+    assert metadata_check_records
 
 
 # def __get_redis_store():
@@ -258,6 +291,27 @@ def test___get_redis_store(redis_connect, db):
 
 
 # def lock_all_child_index(index_id: str, value: str):
+def test_lock_all_child_index(redis_connect, db, records):
+    indices_id_list = [idx['id'] for idx in Index.get_all()]
+    child_list = [x for x in records['indices'] if x.parent]
+
+    parent_id = int(indices_id_list[0])
+    
+    child_index = Index(
+        public_state=True,
+        index_name='child_index',
+        parent=parent_id
+    )
+
+    child_list.append(child_index)
+    
+    datastore = redis_connect.connection(db, kv=True)
+    lock_key_prefix = "lock_index_"
+    locked_index_key = f'{lock_key_prefix}{child_list[0].index_name}'
+    
+    datastore.put(locked_index_key, json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=5)
+
+    assert datastore.redis.exists(f'{lock_key_prefix}{child_index.index_name}')
 
 
 # def unlock_index(index_key):
@@ -284,7 +338,6 @@ def test_unlock_index(redis_connect, db, records):
             assert unlock_check
         else:
             assert not unlock_check
-
 
 
 # def validate_before_delete_index(index_id):

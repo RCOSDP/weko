@@ -736,6 +736,8 @@ def records(redis_connect, db):
         db.session.add(rec2)
         db.session.add(rec3)
         db.session.add(index_one)
+        
+        search_query_result = json_data("tests/data/search_result.json")
     
     return {
         'indices': [
@@ -746,6 +748,7 @@ def records(redis_connect, db):
             {"id": id1, "record": rec1},
             {"id": id2, "record": rec2},
             {"id": id3, "record": rec3},
-        ]
+        ],
+        'search_query_result': search_query_result
     }
     
