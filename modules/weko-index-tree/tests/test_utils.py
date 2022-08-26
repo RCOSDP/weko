@@ -269,8 +269,6 @@ def test_check_doi_in_index_and_child_index(redis_connect, db, records):
     metadata_check_records = []
 
     for source_check in records:
-        print(source_check['_source'][qs1])
-        print(source_check['_source'][qs2])
         if source_check['_source'][qs1] == True and source_check['_source'][qs2] == '0':
             source_check_records.append(source_check)
 
