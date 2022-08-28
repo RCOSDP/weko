@@ -3,7 +3,12 @@ from mock import patch
 from werkzeug.datastructures import MultiDict
 
 from weko_workflow.config import WEKO_WORKFLOW_FILTER_PARAMS
-from weko_workflow.utils import filter_all_condition, filter_condition, get_url_root,get_record_by_root_ver
+from weko_workflow.utils import (
+    filter_all_condition,
+    filter_condition,
+    get_record_by_root_ver,
+    get_url_root,
+)
 
 # def get_current_language():
 # def get_term_and_condition_content(item_type_name):
@@ -120,15 +125,63 @@ def test_get_url_root(app):
 
 # def get_record_by_root_ver(pid_value):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_record_by_root_ver -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_get_record_by_root_ver(app,db_records):
-    app.config.update(DEPOSIT_DEFAULT_STORAGE_CLASS = 'S',
-   )
+def test_get_record_by_root_ver(app, db_records):
+    app.config.update(
+        DEPOSIT_DEFAULT_STORAGE_CLASS="S",
+    )
     record, files = get_record_by_root_ver("1")
 
     assert files == []
-    assert record == ({'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1']}, 'path': ['1'], 'owner': '1', 'recid': '1', 'title': ['title'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}, '_buckets': {'deposit': '3e99cfca-098b-42ed-b8a0-20ddd09b3e02'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'title', 'author_link': [], 'item_type_id': '1', 'publish_date': '2022-08-20', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'title', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True}, [])
+    assert record == (
+        {
+            "_oai": {"id": "oai:weko3.example.org:00000001", "sets": ["1"]},
+            "path": ["1"],
+            "owner": "1",
+            "recid": "1",
+            "title": ["title"],
+            "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-08-20"},
+            "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02"},
+            "_deposit": {
+                "id": "1",
+                "pid": {"type": "depid", "value": "1", "revision_id": 0},
+                "owner": "1",
+                "owners": [1],
+                "status": "published",
+                "created_by": 1,
+                "owners_ext": {
+                    "email": "wekosoftware@nii.ac.jp",
+                    "username": "",
+                    "displayname": "",
+                },
+            },
+            "item_title": "title",
+            "author_link": [],
+            "item_type_id": "1",
+            "publish_date": "2022-08-20",
+            "publish_status": "0",
+            "weko_shared_id": -1,
+            "item_1617186331708": {
+                "attribute_name": "Title",
+                "attribute_value_mlt": [
+                    {"subitem_1551255647225": "title", "subitem_1551255648112": "ja"}
+                ],
+            },
+            "item_1617258105262": {
+                "attribute_name": "Resource Type",
+                "attribute_value_mlt": [
+                    {
+                        "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+                        "resourcetype": "conference paper",
+                    }
+                ],
+            },
+            "relation_version_is_last": True,
+        },
+        [],
+    )
 
-#({'_buckets': {'deposit': '3e99cfca-098b-42ed-b8a0-20ddd09b3e02'},'_deposit': {'created_by': 1,'id': '1','owner': '1','owners': [1],'owners_ext': {'displayname': '','email': 'wekosoftware@nii.ac.jp','username': ''},'pid': {'revision_id': 0, 'type': 'depid', 'value': '1'},'status': 'published'},'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1']},'author_link': [],'item_1617186331708': {'attribute_name': 'Title','attribute_value_mlt': [{'subitem_1551255647225': 'title','subitem_1551255648112': 'ja'}]},'item_1617258105262': {'attribute_name': 'Resource Type','attribute_value_mlt': [{'resourcetype': 'conference paper','resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]},'item_title': 'title','item_type_id': '1','owner': '1','path': ['1'],'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'},'publish_date': '2022-08-20','publish_status': '0','recid': '1','relation_version_is_last': True,'title': ['title'],'weko_shared_id': -1},[])
+
+# ({'_buckets': {'deposit': '3e99cfca-098b-42ed-b8a0-20ddd09b3e02'},'_deposit': {'created_by': 1,'id': '1','owner': '1','owners': [1],'owners_ext': {'displayname': '','email': 'wekosoftware@nii.ac.jp','username': ''},'pid': {'revision_id': 0, 'type': 'depid', 'value': '1'},'status': 'published'},'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1']},'author_link': [],'item_1617186331708': {'attribute_name': 'Title','attribute_value_mlt': [{'subitem_1551255647225': 'title','subitem_1551255648112': 'ja'}]},'item_1617258105262': {'attribute_name': 'Resource Type','attribute_value_mlt': [{'resourcetype': 'conference paper','resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]},'item_title': 'title','item_type_id': '1','owner': '1','path': ['1'],'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'},'publish_date': '2022-08-20','publish_status': '0','recid': '1','relation_version_is_last': True,'title': ['title'],'weko_shared_id': -1},[])
 
 
 # def get_disptype_and_ver_in_metainfo(metadata):

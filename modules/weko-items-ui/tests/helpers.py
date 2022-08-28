@@ -1,5 +1,6 @@
 import json
 import copy
+from unittest.mock import Mock
 import uuid
 from os.path import dirname, join
 
@@ -10,6 +11,11 @@ from weko_records.api import ItemsMetadata, WekoRecord
 from weko_deposit.pidstore import weko_deposit_minter
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from weko_deposit.api import WekoDeposit
+from invenio_search import current_search
+import pytest
+from mock import patch
+from unittest.mock import MagicMock
+from invenio_pidrelations.models import PIDRelation
 
 def json_data(filename):
     with open(join(dirname(__file__),filename), "r") as f:
@@ -28,11 +34,21 @@ def create_record(record_data, item_data):
         
         recid = PersistentIdentifier.create('recid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
         depid = PersistentIdentifier.create('depid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        rel = PIDRelation.create(recid,depid,3)
+        db.session.add(rel)
+        parent = None
+        doi = None
         if not ('.' in record_data["recid"]):
             parent = PersistentIdentifier.create('parent', "parent:{}".format(record_data["recid"]),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            rel = PIDRelation.create(parent,recid,2,0)
+            db.session.add(rel)
             doi = PersistentIdentifier.create('doi', " https://doi.org/10.xyz/{}".format((str(record_data["recid"])).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-        
+        else:
+            parent = PersistentIdentifier.get('parent','parent:{}'.format((str(record_data["recid"])).split('.')[0]))
+            rel = PIDRelation.create(parent,recid,2,(str(record_data["recid"])).split('.')[1])
+            db.session.add(rel)
+            
         record = WekoRecord.create(record_data, id_=rec_uuid)
         item = ItemsMetadata.create(item_data, id_=rec_uuid)
     
-    return depid, record, item
+    return depid, recid,parent,doi,record, item

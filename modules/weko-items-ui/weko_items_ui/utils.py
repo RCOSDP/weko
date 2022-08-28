@@ -49,6 +49,7 @@ from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import RecordBase
+from invenio_accounts.models import User
 from invenio_search import RecordsSearch
 from invenio_stats.utils import QueryItemRegReportHelper, \
     QueryRecordViewReportHelper, QuerySearchReportHelper
@@ -88,19 +89,16 @@ def get_list_username():
     TODO: 
     """
     current_user_id = current_user.get_id()
-    current_app.logger.error(current_user)
-    user_index = 1
-    result = list()
-    while True:
-        try:
-            if not int(current_user_id) == user_index:
-                user_info = UserProfile.get_by_userid(user_index)
-                result.append(user_info.get_username)
-            user_index = user_index + 1
-        except Exception as e:
-            current_app.logger.error(e)
-            break
+    current_app.logger.debug("current_user:{}".format(current_user))
+    from weko_user_profiles.models import UserProfile
 
+    users = UserProfile.query.filter(UserProfile.user_id != current_user_id).all()
+    result = list()
+    for user in users:
+        username = user.get_username
+        if username:
+            result.append(username)
+    
     return result
 
 
@@ -112,21 +110,26 @@ def get_list_email():
     """
     current_user_id = current_user.get_id()
     result = list()
-    try:
-        metadata = MetaData()
-        metadata.reflect(bind=db.engine)
-        table_name = 'accounts_user'
+    users = User.query.filter(User.id != current_user_id).all()
+    for user in users:
+        email = user.email
+        if email:
+            result.append(email)
+    # try:
+    #     metadata = MetaData()
+    #     metadata.reflect(bind=db.engine)
+    #     table_name = 'accounts_user'
 
-        user_table = Table(table_name, metadata)
-        record = db.session.query(user_table)
+    #     user_table = Table(table_name, metadata)
+    #     record = db.session.query(user_table)
 
-        data = record.all()
+    #     data = record.all()
 
-        for item in data:
-            if not int(current_user_id) == item[0]:
-                result.append(item[1])
-    except Exception as e:
-        result = str(e)
+    #     for item in data:
+    #         if not int(current_user_id) == item[0]:
+    #             result.append(item[1])
+    # except Exception as e:
+    #     result = str(e)
 
     return result
 
@@ -330,7 +333,7 @@ def find_hidden_items(item_id_list, idx_paths=None):
     Find items that should not be visible by the current user.
 
     parameter:
-        item_id_list: list of items ID to be checked.
+        item_id_list: list of uuid of items to be checked.
         idx_paths: List of index paths.
     return: List of items ID that the user cannot access.
     """
@@ -550,6 +553,10 @@ def update_json_schema_with_required_items(node: dict, json_data: dict):
     :param node: json schema return from def parse_node_str_to_json_schema
     :param json_data: The json schema
     """
+
+    # current_app.logger.error("node:{}".format(node))
+    # current_app.logger.error("json_data:{}".format(json_data))
+
     if not node.get('child'):
         if not json_data.get('required'):
             json_data['required'] = []
@@ -732,13 +739,13 @@ def recursive_update_schema_form_with_condition(
 def package_export_file(item_type_data):
     """Export TSV/CSV Files.
 
-    Arguments:
-        item_type_data  -- schema's Item Type
+    Args:
+        item_type_data (_type_): schema's Item Type
 
     Returns:
-        return          -- TSV/CSV file
-
+        _io.StringIO: TSV/CSV file
     """
+    # current_app.logger.error("item_type_data:{}".format(item_type_data))
     file_output = StringIO()
     file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
     file_delimiter = '\t' if file_format == 'tsv' else ','
@@ -785,6 +792,7 @@ def package_export_file(item_type_data):
             + item_type_data['data'].get(recid)
         )
 
+    # current_app.logger.error("file_output: {}".format(file_output.getvalue()))
     return file_output
 
 
@@ -1286,6 +1294,9 @@ def write_bibtex_files(item_types_data, export_path):
     @param export_path:
     @return:
     """
+    # current_app.logger.error("item_types_data:{}".format(item_types_data))
+    # current_app.logger.error("export_path:{}".format(export_path))
+    
     for item_type_id in item_types_data:
         item_type_data = item_types_data[item_type_id]
         output = make_bibtex_data(item_type_data['recids'])
@@ -1609,7 +1620,7 @@ def get_files_from_metadata(record):
     @param record:
     @return:
     """
-    current_app.logger.error("record: {}".format(record))
+    current_app.logger.debug("record: {}".format(record))
     files = OrderedDict()
     for key in record:
         meta_data = record.get(key)
@@ -1620,7 +1631,7 @@ def get_files_from_metadata(record):
                 if f.get("version_id"):
                     files[f["version_id"]] = f
             break
-    current_app.logger.error("files: {}".format(files))
+    current_app.logger.debug("files: {}".format(files))
     return files
 
 
@@ -1633,7 +1644,7 @@ def to_files_js(record):
     Returns:
         _type_: _description_
     """
-    current_app.logger.error("type: {}".format(type(record))) 
+    current_app.logger.debug("type: {}".format(type(record))) 
     res = []
     files = record.files or []
     files_content_dict = {}
@@ -2220,6 +2231,7 @@ def set_validation_message(item, cur_lang):
     :param cur_lang: current language.
     :return: item, set validationMessage attribute for item.
     """
+    # current_app.logger.error("item:{}".format(item))
     i18n = 'validationMessage_i18n'
     message_attr = 'validationMessage'
     if i18n in item and cur_lang:
@@ -2233,6 +2245,9 @@ def translate_validation_message(item_property, cur_lang):
     :param cur_lang: .
     :return: .
     """
+    # current_app.logger.error("item_property:{}".format(item_property))
+    # current_app.logger.error("cur_lang:{}".format(cur_lang))
+    
     items_attr = 'items'
     properties_attr = 'properties'
     if isExistKeyInDict(items_attr, item_property):
@@ -2492,7 +2507,7 @@ def save_title(activity_id, request_data):
     item_type_id = db_activity.workflow.itemtype.id
     if item_type_id:
         item_type_mapping = Mapping.get_record(item_type_id)
-        current_app.logger.error(item_type_mapping)
+        current_app.logger.debug("item_type_mapping:{}".format(item_type_mapping))
         key, key_child = get_key_title_in_item_type_mapping(item_type_mapping)
     if key and key_child:
         title = get_title_in_request(request_data, key, key_child)
@@ -2624,15 +2639,30 @@ def make_stats_file_with_permission(item_type_id, recids,
                                    records_metadata, permissions):
     """Prepare TSV/CSV data for each Item Types.
 
+    Args:
+        item_type_id (_type_): ItemType ID
+        recids (_type_): List records ID
+        records_metadata (_type_): _description_
+        permissions (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """                                   
+    """
+
     Arguments:
-        item_type_id    -- ItemType ID
-        recids          -- List records ID
+        item_type_id    -- 
+        recids          -- 
     Returns:
         ret             -- Key properties
         ret_label       -- Label properties
         records.attr_output -- Record data
 
     """
+    # current_app.logger.error("item_type_id:{}".format(item_type_id))
+    # current_app.logger.error("recids:{}".format(recids))
+    # current_app.logger.error("records_metadata:{}".format(records_metadata))
+    # current_app.logger.error("permissions:{}".format(permissions))
     from weko_records_ui.utils import check_items_settings, hide_by_email
     from weko_records_ui.views import escape_newline, escape_str
 
@@ -3093,11 +3123,17 @@ def check_item_is_being_edit(
         activity=None):
     """Check an item is being edit.
 
-    @param recid:
-    @param post_workflow:
-    @param activity:
-    @return: True: editing, False: available
+    Args:
+        recid (PersistentIdentifier): _description_
+        post_workflow (Activity, optional): _description_. Defaults to None.
+        activity (activity:<weko_workflow.api.WorkActivity, optional): _description_. Defaults to None.
+
+    Returns:
+        bool: True: editing, False: available
     """
+    # current_app.logger.error("recid:{}".format(recid))
+    # current_app.logger.error("post_workflow:{}".format(post_workflow))
+    # current_app.logger.error("activity:{}".format(activity))
     if not activity:
         activity = WorkActivity()
     if not post_workflow:
@@ -3143,9 +3179,12 @@ def check_item_is_being_edit(
 def check_item_is_deleted(recid):
     """Check an item is deleted.
 
-    @param recid:
-    @return: True: deleted, False: available
-    """
+    Args:
+        recid (str): recid or object_uuid of recid
+
+    Returns:
+        bool: True: deleted, False: available
+    """    
     pid = PersistentIdentifier.query.filter_by(
         pid_type='recid', pid_value=recid).first()
     if not pid:
@@ -3156,7 +3195,15 @@ def check_item_is_deleted(recid):
 
 def permission_ranking(result, pid_value_permissions, display_rank, list_name,
                        pid_value):
-    """Permission ranking."""
+    """Permission ranking.
+
+    Args:
+        result (_type_): _description_
+        pid_value_permissions (_type_): _description_
+        display_rank (_type_): _description_
+        list_name (_type_): _description_
+        pid_value (_type_): _description_
+    """                       
     list_result = list()
     for data in result.get(list_name, []):
         if data.get(pid_value, '') in pid_value_permissions:

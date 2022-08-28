@@ -24,6 +24,7 @@ from flask import Flask, json, url_for
 
 from weko_items_ui import WekoItemsUI
 
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_weko_items_ui.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 
 def test_version():
     """Test version import."""
@@ -49,9 +50,9 @@ def test_view(app):
     WekoItemsUI(app)
     with app.test_client() as client:
         res = client.get("/items/jsonschema/0")
-        assert res.status_code == 200
+        assert res.status_code == 302
         res = client.get("/items/schemaform/0")
-        assert res.status_code == 200
+        assert res.status_code == 302
 
 
 def test_prepare_edit_item(app):
@@ -60,10 +61,10 @@ def test_prepare_edit_item(app):
     app.register_blueprint(blueprint_api)
     
     with app.test_request_context():
-        url = url_for('weko_items_ui.prepare_edit_item')
+        url = url_for('weko_items_ui_api.prepare_edit_item')
     # WekoItemsUI(app)
     with app.test_client() as client:
         res = client.post(url, json={})
         json_response = json.loads(res.get_data())
-        assert json_response.get('code') == 0
-        assert json_response.get('msg') == 'success'
+        assert json_response.get('code') == -1
+        assert json_response.get('msg') == 'An error has occurred.'

@@ -6,7 +6,7 @@ from weko_items_ui.api import item_login
 
 # def item_login(item_type_id: int = 0):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_api.py::test_item_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_item_login(app,client,db_register):
+def test_item_login(app,client,db_itemtype):
     with open('tests/data/temp_data.json', 'r') as f:
         temp_data = json.dumps(json.load(f))
     
