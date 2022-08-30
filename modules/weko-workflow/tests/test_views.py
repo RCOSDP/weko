@@ -23,7 +23,7 @@ import threading
 from unittest.mock import MagicMock
 import pytest
 from mock import patch
-from flask import Flask, json, jsonify, url_for
+from flask import Flask, json, jsonify, url_for, session
 from invenio_db import db
 from sqlalchemy import func
 
@@ -34,7 +34,7 @@ from flask_security import login_user
 from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
 from invenio_accounts.testutils import login_user_via_session as login
 from weko_workflow.views import previous_action
-
+from weko_records_ui.models import FilePermission
 def response_data(response):
     return json.loads(response.data)
 # def test_index_acl_nologin(client):
@@ -332,131 +332,130 @@ def response_data(response):
 #                return_value=(roles, action_users)):
 #         res = client.post(url, json=input)
 #         assert res.status_code == status_code
-
-
-def test_previous_action_acl_nologin(client):
-    """Test of previous action."""
-    url = url_for('weko_workflow.previous_action', activity_id='1',
-                  action_id=1, req=1)
-    input = {}
-
-    res = client.post(url, json=input)
-    assert res.status_code == 302
-    print("location:{}".format(res.location))
-    assert res.location == url_for('security.login',next="/workflow/activity/action/1/1/rejectOrReturn/1",_external=True)
-
-
-@pytest.mark.parametrize('users_index, status_code, status_code_role', [
-    (0, 200, 403),
-    (1, 200, 0),
-    (2, 200, 0),
-    (3, 200, 0),
-    (4, 200, 403),
-    (5, 200, 403),
-    (6, 200, 0),
-])
-def test_previous_action_acl_users(client, users, db_register, users_index, status_code, status_code_role):
-    """Test of previous action."""
-    login(client=client, email=users[users_index]['email'])
-    url = url_for('weko_workflow.previous_action', activity_id='1',
-                  action_id=1, req=1)
-    input = {}
-
-    roles = {
-        'allow': [],
-        'deny': []
-    }
-    action_users = {
-        'allow': [],
-        'deny': []
-    }
-
-    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-               return_value=(roles, action_users)):
-        res = client.post(url, json=input)
-        assert res.status_code == status_code
-    roles = {
-        'allow': [],
-        'deny': []
-    }
-    action_users = {
-        'allow': [],
-        'deny': [users[users_index]["id"]]
-    }
-    url = url_for('weko_workflow.previous_action', 
-                activity_id='2',
-                action_id=1, req=1)
-
-    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-               return_value=(roles, action_users)):
-        res = client.post(url, json=input)
-        data = response_data(res)
-        assert res.status_code == status_code
-        assert data["code"] == status_code_role
-
-@pytest.mark.parametrize('users_index, status_code', [
-    (0, 200),
-    (1, 200),
-    (2, 200),
-    (3, 200),
-    (4, 200),
-    (5, 200),
-    (6, 200),
-])
-def test_previous_action(client, users, db_register, users_index, status_code):
-    login(client=client, email=users[users_index]['email'])
-    input = {"action_version":"1.0.0", "commond":"this is test comment."}
-    
-    # req=1
-    url = url_for('weko_workflow.previous_action', 
-                  activity_id='2', action_id=1, req=1)
-    res = client.post(url, json=input)
-    data = response_data(res)
-    assert res.status_code==status_code
-    assert data["code"] == 0
-    assert data["msg"] == "success"
-    
-    # req=0
-    url = url_for('weko_workflow.previous_action',
-                  activity_id='2', action_id=3, req=0)
-    res = client.post(url, json=input)
-    data = response_data(res)
-    assert res.status_code==status_code
-    assert data["code"] == 0
-    assert data["msg"] == "success"
-    
-    # req=-1
-    res = previous_action(activity_id="2", action_id=1, req=-1)
-    data = response_data(res)
-    assert data["code"] == 0
-    assert data["msg"] == "success"
-    
-    # not pre_action
-    url = url_for('weko_workflow.previous_action',
-                  activity_id='2', action_id=3, req=0)
-    with patch("weko_workflow.views.Flow.get_previous_flow_action", return_value=None):
-        res = client.post(url, json=input)
-        data = response_data(res)
-        assert data["code"] == 0
-        assert data["msg"] == "success"
-    
-
-    # code=-1
-    url = url_for('weko_workflow.previous_action',
-                  activity_id='2', action_id=3, req=0)
-    with patch("weko_workflow.views.WorkActivityHistory.create_activity_history", return_value=None):
-        res = client.post(url, json=input)
-        data = response_data(res)
-        assert data["code"] == -1
-        assert data["msg"] == "error"
-    
-    # code=-2
-    with patch("weko_workflow.views.WorkActivity.upt_activity_action_status", return_value=False):
-        res = client.post(url, json=input)
-        data = response_data(res)
-        assert data["code"] == -2
-        assert data["msg"] == ""
-
+# 
+# 
+# def test_previous_action_acl_nologin(client):
+#     """Test of previous action."""
+#     url = url_for('weko_workflow.previous_action', activity_id='1',
+#                   action_id=1, req=1)
+#     input = {}
+# 
+#     res = client.post(url, json=input)
+#     assert res.status_code == 302
+#     assert res.location == url_for('security.login',next="/workflow/activity/action/1/1/rejectOrReturn/1",_external=True)
+# 
+# 
+# @pytest.mark.parametrize('users_index, status_code, status_code_role', [
+#     (0, 200, 403),
+#     (1, 200, 0),
+#     (2, 200, 0),
+#     (3, 200, 0),
+#     (4, 200, 403),
+#     (5, 200, 403),
+#     (6, 200, 0),
+# ])
+# def test_previous_action_acl_users(client, users, db_register, users_index, status_code, status_code_role):
+#     """Test of previous action."""
+#     login(client=client, email=users[users_index]['email'])
+#     url = url_for('weko_workflow.previous_action', activity_id='1',
+#                   action_id=1, req=1)
+#     input = {}
+# 
+#     roles = {
+#         'allow': [],
+#         'deny': []
+#     }
+#     action_users = {
+#         'allow': [],
+#         'deny': []
+#     }
+# 
+#     with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+#                return_value=(roles, action_users)):
+#         res = client.post(url, json=input)
+#         assert res.status_code == status_code
+#     roles = {
+#         'allow': [],
+#         'deny': []
+#     }
+#     action_users = {
+#         'allow': [],
+#         'deny': [users[users_index]["id"]]
+#     }
+#     url = url_for('weko_workflow.previous_action', 
+#                 activity_id='2',
+#                 action_id=1, req=1)
+# 
+#     with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+#                return_value=(roles, action_users)):
+#         res = client.post(url, json=input)
+#         data = response_data(res)
+#         assert res.status_code == status_code
+#         assert data["code"] == status_code_role
+# 
+# @pytest.mark.parametrize('users_index, status_code', [
+#     (0, 200),
+#     (1, 200),
+#     (2, 200),
+#     (3, 200),
+#     (4, 200),
+#     (5, 200),
+#     (6, 200),
+# ])
+# def test_previous_action(client, users, db_register, users_index, status_code):
+#     login(client=client, email=users[users_index]['email'])
+#     input = {"action_version":"1.0.0", "commond":"this is test comment."}
+#     
+#     # req=1
+#     url = url_for('weko_workflow.previous_action', 
+#                   activity_id='2', action_id=1, req=1)
+#     res = client.post(url, json=input)
+#     data = response_data(res)
+#     assert res.status_code==status_code
+#     assert data["code"] == 0
+#     assert data["msg"] == "success"
+#     
+#     # req=0
+#     url = url_for('weko_workflow.previous_action',
+#                   activity_id='2', action_id=3, req=0)
+#     res = client.post(url, json=input)
+#     data = response_data(res)
+#     assert res.status_code==status_code
+#     assert data["code"] == 0
+#     assert data["msg"] == "success"
+#     
+#     # req=-1
+#     res = previous_action(activity_id="2", action_id=1, req=-1)
+#     data = response_data(res)
+#     assert data["code"] == 0
+#     assert data["msg"] == "success"
+#     
+#     # not pre_action
+#     url = url_for('weko_workflow.previous_action',
+#                   activity_id='2', action_id=3, req=0)
+#     with patch("weko_workflow.views.Flow.get_previous_flow_action", return_value=None):
+#         res = client.post(url, json=input)
+#         data = response_data(res)
+#         assert data["code"] == 0
+#         assert data["msg"] == "success"
+#     
+# 
+#     # code=-1
+#     url = url_for('weko_workflow.previous_action',
+#                   activity_id='2', action_id=3, req=0)
+#     with patch("weko_workflow.views.WorkActivityHistory.create_activity_history", return_value=None):
+#         res = client.post(url, json=input)
+#         data = response_data(res)
+#         assert data["code"] == -1
+#         assert data["msg"] == "error"
+#     
+#     # code=-2
+#     with patch("weko_workflow.views.WorkActivity.upt_activity_action_status", return_value=False):
+#         res = client.post(url, json=input)
+#         data = response_data(res)
+#         assert data["code"] == -2
+#         assert data["msg"] == ""
+# 
 # def test_next_action_nologin(client, db_register,db_register2):
 #     """Test of next action."""
 #     url = url_for('weko_workflow.next_action', activity_id='1',
@@ -500,7 +499,9 @@ def test_previous_action(client, users, db_register, users_index, status_code):
 #         assert res.status_code == status_code
 # 
 # 
-# def test_cancel_action_nologin(client):
+
+
+# def test_cancel_action_acl_nologin(client):
 #     """Test of cancel action."""
 #     url = url_for('weko_workflow.cancel_action',
 #                   activity_id='1', action_id=1)
@@ -508,20 +509,19 @@ def test_previous_action(client, users, db_register, users_index, status_code):
 # 
 #     res = client.post(url, json=input)
 #     assert res.status_code == 302
-#     # TODO check that the path changed
-#     # assert res.url == url_for('security.login')
+#     assert res.location == url_for('security.login', next="/workflow/activity/action/1/1/cancel",_external=True)
 # 
 # 
-# @pytest.mark.parametrize('users_index, status_code', [
-#     (0, 200),
-#     (1, 200),
-#     (2, 200),
-#     (3, 200),
-#     (4, 200),
-#     (5, 200),
-#     (6, 200),
+# @pytest.mark.parametrize('users_index, status_code, status_code_role', [
+#     (0, 200, 403),
+#     (1, 200, 0),
+#     (2, 200, 0),
+#     (3, 200, 0),
+#     (4, 200, 403),
+#     (5, 200, 403),
+#     (6, 200, 0),
 # ])
-# def test_cancel_action_users(client, users, db_register, users_index, status_code):
+# def test_cancel_action_acl_users(client, users, db_register, users_index, status_code, status_code_role):
 #     """Test of cancel action."""
 #     login(client=client, email=users[users_index]['email'])
 #     url = url_for('weko_workflow.cancel_action',
@@ -538,12 +538,70 @@ def test_previous_action(client, users, db_register, users_index, status_code):
 # 
 #     with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
 #                return_value=(roles, action_users)):
-#         with patch('weko_workflow.views.WorkActivity.upt_activity_action_status',
-#                    return_value={}):
-#             with patch('weko_workflow.views.WorkActivity.quit_activity',
-#                        return_value=None):
-#                 res = client.post(url, json=input)
-#                 assert res.status_code == status_code
+#         res = client.post(url, json=input)
+#         assert res.status_code == status_code
+#     
+#     roles = {
+#         'allow': [],
+#         'deny': []
+#     }
+#     action_users = {
+#         'allow': [],
+#         'deny': [users[users_index]["id"]]
+#     }
+#     url = url_for('weko_workflow.cancel_action', 
+#                 activity_id='2',action_id=1)
+# 
+#     with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+#                return_value=(roles, action_users)):
+#         res = client.post(url, json=input)
+#         data = response_data(res)
+#         assert res.status_code == status_code
+#         assert data["code"] == status_code_role
+# 
+# def test_cancel_action_acl_guestlogin(guest,db_register):
+#     input = {'action_version': 1, 'commond': 1}
+#     url = url_for('weko_workflow.cancel_action',
+#                   activity_id="1", action_id=1)
+#     roles = {
+#         'allow': [],
+#         'deny': []
+#     }
+#     action_users = {
+#         'allow': [],
+#         'deny': []
+#     }
+# 
+#     with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+#                return_value=(roles, action_users)):
+#         res = guest.post(url, json=input)
+#         assert res.status_code == 200
+
+@pytest.mark.parametrize('users_index, status_code', [
+    #(0, 200),
+    #(1, 200),
+    (2, 200),
+    #(3, 200),
+    #(4, 200),
+    #(5, 200),
+    #(6, 200),
+])
+def test_cancel_action(client, users, db_register, users_index, status_code):
+    login(client=client, email=users[users_index]['email'])
+    input = {
+        "action_version":"1.0.0",
+        "commond":"this is test comment.",
+        "pid_value":"1.1"
+        }
+    FilePermission.init_file_permission(users[users_index]["id"],"1.1","test_file","1")
+    url = url_for('weko_workflow.cancel_action',
+                  activity_id='1', action_id=1)
+    
+    res = client.post(url, json=input)
+    data = response_data(res)
+    assert res.status_code == status_code
+    assert data["code"] == 0
+    assert data["msg"] == "not"
 # 
 # 
 # def test_send_mail_nologin(client):

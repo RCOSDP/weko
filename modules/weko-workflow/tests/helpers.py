@@ -9,7 +9,7 @@ from invenio_records import Record
 from weko_records.api import ItemsMetadata
 from weko_deposit.pidstore import weko_deposit_minter
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
-
+from invenio_pidrelations.models import PIDRelation
 def json_data(filename):
     with open(join(dirname(__file__),filename), "r") as f:
         return json.load(f)
@@ -22,14 +22,15 @@ def create_record(record_data, item_data):
         item_data = copy.deepcopy(item_data)
         rec_uuid = uuid.uuid4()
         
-        PersistentIdentifier.create('recid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        recid = PersistentIdentifier.create('recid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
         depid = PersistentIdentifier.create('depid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
         if "item_1617186819068" in record_data:
             doi_url = "https://doi.org/"+record_data["item_1617186819068"]["attribute_value_mlt"][0]["subitem_identifier_reg_text"]
             doi = PersistentIdentifier.create('doi',doi_url,object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
         if '.' in record_data["recid"]:
-            PersistentIdentifier.create('parent', "parent:{}".format(record_data["recid"]),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            recid_p = PersistentIdentifier.create('parent', "parent:{}".format(record_data["recid"]),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            PIDRelation.create(recid_p, recid,2)
         record = Record.create(record_data, id_=rec_uuid)
         item = ItemsMetadata.create(item_data, id_=rec_uuid)
-        
-    return depid, record, item
+        print("recid:{}".format(recid))
+    return recid, depid, record, item
