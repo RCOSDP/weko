@@ -1,7 +1,22 @@
+from weko_index_tree.utils import \
+get_index_link_list, \
+is_index_tree_updated, \
+get_user_roles, \
+get_user_groups, \
+check_roles, \
+check_groups, \
+filter_index_list_by_role, \
+get_index_id_list, \
+get_publish_index_id_list, \
+get_admin_coverpage_setting, \
+get_elasticsearch_records_data_by_indexes
+
+from invenio_accounts.testutils import login_user_via_session, client_authenticated
+######
 import json
 import pytest
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from functools import wraps
 from operator import itemgetter
 
@@ -13,20 +28,20 @@ from flask import Markup, current_app, session
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
-from flask_login import current_user
+from flask_login import current_user, login_user, LoginManager
 from invenio_cache import current_cache
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_search import RecordsSearch
 from simplekv.memory.redisstore import RedisStore
 from invenio_accounts.testutils import login_user_via_session, login_user_via_view
+from invenio_records.models import RecordMetadata
 
 from weko_index_tree.models import Index
 from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
 from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
 from weko_redis.redis import RedisConnection
-from weko_index_tree import utils
 
 
 # from .config import WEKO_INDEX_TREE_STATE_PREFIX
@@ -34,30 +49,15 @@ from weko_index_tree import utils
 # from .models import Index
 
 
-# def get_index_link_list(pid=0):
+#*** def get_index_link_list(pid=0):
 #     def _get_index_link(res, tree):
-def test_get_index_link_list(records):
-    def _get_index_link(res, index):
-            if index.index_link_enabled:
-                res.append((index.id, index.index_link_name))
-            if index.have_children(index.id):
-                _get_index_link(res, index.parent)
-
-    indices_id_list = [idx['id'] for idx in Index.get_all()]
-
-    for index_id in indices_id_list:
-        num = Index.get_index_by_id(index_id)
-        
-        res = []
-        _get_index_link(res, num)    
-        
-        assert res
+def test_get_index_link_list(i18n_app, records):
+    assert get_index_link_list(records['records'][0]['record'].json['_deposit']['pid']['value'])
         
 
 # def is_index_tree_updated():
 def test_is_index_tree_updated(app):
-    current_app = app
-    assert current_app.config['WEKO_INDEX_TREE_UPDATED']
+    assert is_index_tree_updated()
 
 
 # def cached_index_tree_json(timeout=50, key_prefix='index_tree_json'):
@@ -70,115 +70,75 @@ def test_is_index_tree_updated(app):
 #     def get_children(parent_index_id):
 
 
-# def get_user_roles():
+#*** def get_user_roles():
 #     def _check_admin():
-def test_get_user_roles(users):
-    for user in users:
-        def _check_admin(c_user):
-            result = False
-            for role in c_user.roles:
-                if 'Administrator' in str(role):
-                    result = True
-            return result
-    
-        if _check_admin(user['obj']):
-            assert user['isAdmin']
-        else:
-            assert not user['isAdmin']
-    
+def test_get_user_roles(i18n_app, client_rest, users):
+    login_user_via_session(client=client_rest, email=users[0]['email'])
+
+    # User not authenticated
+    assert not get_user_roles()
 
 
-# def get_user_groups():
-def test_get_user_groups(users):
-    for user in users:
-        if user['obj'].groups:
-            assert len(user['obj'].groups) != 0
-        else:
-            assert len(user['obj'].groups) == 0
+#*** def get_user_groups():
+def test_get_user_groups(i18n_app, client_rest, users):
+    login_user_via_session(client=client_rest, email=users[6]['email'])
+
+    # User not authenticated
+    assert not get_user_groups()
 
 
-
-# def check_roles(user_role, roles):
+#*** def check_roles(user_role, roles):
 def test_check_roles(users):
-    testKeyWordEmail = "noroleuser@test.org"
-    for user in users:
-        if user['obj'].roles:
-            assert user['email'] != testKeyWordEmail
-        else:
-            assert user['email'] == testKeyWordEmail
+    user_role = [role.name for role in users[-1]['obj'].roles]
+    roles = (',').join(user_role)
+
+    assert check_roles(user_role, roles)
 
 
-# def check_groups(user_group, groups):
+#*** def check_groups(user_group, groups):
 def test_check_groups(users):
-    for user in users:
-        if user['hasGroup']:
-            assert len(user['obj'].groups) > 0
-        else:
-            assert len(user['obj'].groups) == 0
+    user_group = users
+    groups = Group.get_group_list()
+
+    # User not authenticated
+    assert not check_groups(user_group, groups)
 
 
-# def filter_index_list_by_role(index_list):
+#*** def filter_index_list_by_role(index_list):
 #     def _check(index_data, roles, groups):
-def test_filter_index_list_by_role(indices, users):
-    for user in users:
-        result = []
-        for index in indices:
-            if index.browsing_role in user['obj'].roles or \
-                    index.browsing_group in [x.group.name for x in user['obj'].groups]:
-                if index.public_state and (
-                        index.public_date is None
-                        or (isinstance(index.public_date, datetime)
-                                and date.today() >= index.public_date.date()
-                        )):
-                    result.append(index)
-        if "contributor" in user['email'] or user["hasGroup"]:
-            assert len(result) != 0
-        else:
-            assert len(result) == 0
+def test_filter_index_list_by_role(indices, users, db):
+    # Create test group
+    from weko_groups.models import Group
+    g1 = Group.create(name="group_test1").add_member(users[-1]['obj'])
+    g2 = Group.create(name="group_test2").add_member(users[-1]['obj'])
+    db.session.add(g1)
+    db.session.add(g2)
+
+    for index in indices:    
+        from weko_index_tree.models import Index
+        db.session.add(index)
+        assert filter_index_list_by_role(index)
 
 
 # def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
 
 
-# def get_index_id_list(indexes, id_list=None):
-def test_get_index_id_list(indices):
-    index_id_list = []
-    for index in indices:
-        if index.id == 'more':
-            continue
+### def get_index_id_list(indexes, id_list=None):
+def test_get_index_id_list(indices, db):
+    index_list = [indices['index_dict']]
+    assert get_index_id_list(index_list)
+    
+    index_list[0]['id'] = 'more'
+    assert not get_index_id_list(index_list)
 
-        if index.parent is not None:
-            if index.parent != '' and index.parent != '0':
-                index_id_list.append(f"{index.parent}/{index.id}")
-        else:
-            index_id_list.append(index.id)
-
-    assert 'more' not in index_id_list
-    assert len(index_id_list) == 5
- 
 
 # def get_publish_index_id_list(indexes, id_list=None):
-def test_get_publish_index_id_list(indices):
-    published_index_id_list = []
-    not_published_index_id_list = []
-
-    for index in indices:
-        if index.public_state:
-            if index.id == 'more':
-                continue
-
-            if index.parent is not None:
-                if index.parent != '' and index.parent != '0':
-                    published_index_id_list.append(f"{index.parent}/{index.id}")
-            else:
-                published_index_id_list.append(index.id)
-        else:
-            not_published_index_id_list.append(index.id)
-
-    assert 'more' not in published_index_id_list
-    assert 'more' not in not_published_index_id_list
-    assert len(published_index_id_list) == 4
-    assert len(not_published_index_id_list) == 1
+def test_get_publish_index_id_list(indices, db):
+    index_list = [indices['index_dict']]
+    assert get_publish_index_id_list(index_list)
+    
+    index_list[0]['id'] = 'more'
+    assert not get_publish_index_id_list(index_list)
 
 
 # def reduce_index_by_more(tree, more_ids=None):
@@ -186,42 +146,20 @@ def test_get_publish_index_id_list(indices):
 
 # def get_admin_coverpage_setting():
 def test_get_admin_coverpage_setting(pdfcoverpage):
-    from weko_records_ui.models import PDFCoverPageSettings
-
-    isAvailable = 'disable'
-        
-    setting = PDFCoverPageSettings.find(1)
-    
-    if setting:
-        isAvailable = setting.avail
-
-    assert isAvailable == 'enable'
+    assert get_admin_coverpage_setting
 
 
 # def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
-def test_get_elasticsearch_records_data_by_indexes(records):
-    from weko_search_ui.query import item_search_factory
+def test_get_elasticsearch_records_data_by_indexes(i18n_app, records):
+    from weko_index_tree.api import Indexes
     
-    search_results = records['search_query_result']
+    idx_tree_ids = [idx.cid for idx in Indexes.get_recursive_tree(records['indices'][0].id)]
+    current_date = date.today()
+    start_date = (current_date - timedelta(days=1)).strftime("%Y-%m-%d")
+    end_date = current_date.strftime("%Y-%m-%d")
 
-    records_search = RecordsSearch()
-    records_search = records_search.with_preference_param().params(version=False)
-    records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
-
-    result = None
-
-    search_instance, _qs_kwargs = item_search_factory(
-        None,
-        records_search,
-        start_date,
-        end_date,
-        index_ids,
-        True
-    )
-    search_result = search_instance.execute()
-    result = search_result.to_dict()
-
-    raise BaseException
+    assert get_elasticsearch_records_data_by_indexes(idx_tree_ids, start_date, end_date)
+    
 
 # def generate_path(index_ids):
 

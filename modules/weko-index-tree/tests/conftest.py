@@ -32,6 +32,7 @@ from flask import Flask
 from flask_babelex import Babel, lazy_gettext as _
 from flask_celeryext import FlaskCeleryExt
 from flask_menu import Menu
+from flask_login import current_user, login_user, LoginManager
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user, login_user_via_session
@@ -61,6 +62,9 @@ from invenio_pidstore import InvenioPIDStore, current_pidstore
 from invenio_records_rest.utils import PIDConverter
 from invenio_records.models import RecordMetadata
 
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISSION_ROLE_COMMUNITY, EMAIL_DISPLAY_FLG
+from weko_groups.models import Group
+from weko_records_ui.models import PDFCoverPageSettings
 from weko_search_ui import WekoSearchUI, WekoSearchREST
 from weko_redis.redis import RedisConnection
 from weko_admin.models import SessionLifetime 
@@ -92,23 +96,30 @@ def base_app(instance_path):
     app_ = Flask('testapp', instance_path=instance_path)
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
+        WEKO_INDEX_TREE_UPDATED=True,
         TESTING=True,
         CACHE_REDIS_URL='redis://redis:6379/0',
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
         REDIS_PORT='6379',
         SERVER_NAME='TEST_SERVER',
+        LOGIN_DISABLED=False,
         INDEX_IMG='indextree/36466818-image.jpg',
         # SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
         #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SEARCH_ELASTIC_HOSTS=os.environ.get(
+            'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
+        JSONSCHEMAS_HOST='inveniosoftware.org',
         ACCOUNTS_USERINFO_HEADERS=True,
-        WEKO_PERMISSION_SUPER_ROLE_USER=['System Administrator',
-                                         'Repository Administrator'],
-        WEKO_PERMISSION_ROLE_COMMUNITY=['Community Administrator'],
-        THEME_SITEURL = 'https://localhost',
+        I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
+        WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
+        WEKO_PERMISSION_ROLE_COMMUNITY=WEKO_PERMISSION_ROLE_COMMUNITY,
+        EMAIL_DISPLAY_FLG=EMAIL_DISPLAY_FLG,
+        THEME_SITEURL="https://localhost",
+        SEARCH_UI_SEARCH_INDEX='tenant1',
         WEKO_RECORDS_UI_LICENSE_DICT=[
             {
                 'name': _('write your own license'),
@@ -324,6 +335,20 @@ def base_app(instance_path):
                 max_result_window=10000,
             ),
         ),
+        WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
+            tid=dict(
+                record_class='weko_index_tree.api:Indexes',
+                index_route='/tree/index/<int:index_id>',
+                tree_route='/tree',
+                item_tree_route='/tree/<string:pid_value>',
+                index_move_route='/tree/move/<int:index_id>',
+                default_media_type='application/json',
+                create_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
+                read_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
+                update_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
+                delete_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
+            )
+        )
     )
     app_.url_map.converters['pid'] = PIDConverter
 
@@ -373,6 +398,24 @@ def db(app):
 
 
 @pytest.yield_fixture()
+def current_user_login(app):
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+    
+    login_user()
+
+
+@pytest.yield_fixture()
+def i18n_app(app):
+    with app.test_request_context(headers=[('Accept-Language','en')]):
+        yield app
+
+
+@pytest.yield_fixture()
 def client_rest(app):
     app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
     with app.test_client() as client:
@@ -399,7 +442,7 @@ def location(app):
 
 
 @pytest.fixture()
-def user():
+def user(app, db):
     """Create a example user."""
     return create_test_user(email='test@test.org')
 
@@ -453,7 +496,10 @@ def users(app, db):
     ds.add_role_to_user(generaluser, general_role)
     ds.add_role_to_user(originalroleuser, originalrole)
     ds.add_role_to_user(originalroleuser2, originalrole)
-    ds.add_role_to_user(user, general_role)
+    ds.add_role_to_user(user, sysadmin_role)
+    ds.add_role_to_user(user, repoadmin_role)
+    ds.add_role_to_user(user, contributor_role)
+    ds.add_role_to_user(user, comadmin_role)
     
     # Assign access authorization
     with db.session.begin_nested():
@@ -514,47 +560,38 @@ def users(app, db):
         ]
         db.session.add_all(action_roles)
 
-    # Create test group
-    from weko_groups.models import Group
-    g = Group.create(name="test")
-
-    # Add user to test group
-    g.add_member(originalroleuser)
-    g.add_member(originalroleuser2)
-
     return [
-        {'email': noroleuser.email, 'id': noroleuser.id, 'obj': noroleuser, 'isAdmin': False, 'hasGroup': False},
-        {'email': contributor.email, 'id': contributor.id, 'obj': contributor, 'isAdmin': False, 'hasGroup': False},
-        {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin, 'isAdmin': True, 'hasGroup': False},
-        {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin, 'isAdmin': True, 'hasGroup': False},
-        {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin, 'isAdmin': True, 'hasGroup': False},
-        {'email': generaluser.email, 'id': generaluser.id, 'obj': sysadmin, 'isAdmin': True, 'hasGroup': False},
-        {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser, 'isAdmin': False, 'hasGroup': True},
-        {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2, 'isAdmin': False, 'hasGroup': True},
-        {'email': user.email, 'id': user.id, 'obj': user, 'isAdmin': False, 'hasGroup': False},
+        {'email': noroleuser.email, 'id': noroleuser.id, 'obj': noroleuser},
+        {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
+        {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
+        {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
+        {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
+        {'email': generaluser.email, 'id': generaluser.id, 'obj': sysadmin},
+        {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
+        {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
+        {'email': user.email, 'id': user.id, 'obj': user},
     ]
 
 
 @pytest.fixture
-def indices(app):
-    # Create a test Indices
-    with app.app_context():
-        testIndexOne = Index(index_name="testIndexOne",browsing_role="Contributor",public_state=True,id=11)
-        testIndexTwo = Index(index_name="testIndexTwo",browsing_group="test",public_state=True,id=22)
-        testIndexThree = Index(index_name="testIndexThree",public_state=True,id=33)
-        testIndexThreeChild = Index(index_name="testIndexThreeChild",parent="testIndexThree",public_state=True,id=44)
+def indices(app, db):
+    with db.session.begin_nested():
+        # Create a test Indices
+        testIndexOne = Index(index_name="testIndexOne",browsing_role="Contributor",public_state=True,id='11')
+        testIndexTwo = Index(index_name="testIndexTwo",browsing_group="group_test1",public_state=True,id='22')
+        testIndexThree = Index(index_name="testIndexThree",parent='testIndexOne',browsing_role="Contributor",public_state=True,id='33')
+        testIndexThreeChild = Index(index_name="testIndexThreeChild",parent="testIndexThree",public_state=True,id='44')
         testIndexMore = Index(index_name="testIndexMore",parent="testIndexThree",public_state=True,id='more')
         testIndexPrivate = Index(index_name="testIndexPrivate",public_state=False,id='55')
-        return [
-            testIndexOne,
-            testIndexTwo,
-            testIndexThree,
-            testIndexThreeChild,
-            testIndexMore,
-            testIndexPrivate
-        ]
 
+        db.session.add(testIndexThree)
 
+    return {
+        'index_dict': dict(testIndexThree),
+        'index_non_dict': testIndexThree,
+    }
+        
+    
 @pytest.fixture
 def redis_connect(app):
     redis_connection = RedisConnection()
@@ -751,4 +788,18 @@ def records(redis_connect, db):
         ],
         'search_query_result': search_query_result
     }
-    
+
+@pytest.fixture()
+def pdfcoverpage(app, db):
+    with db.session.begin_nested():
+        pdf_cover_sample = PDFCoverPageSettings(
+            avail='enable',
+            header_display_type='string',
+            header_output_string='test',
+            header_output_image='test',
+            header_display_position='center'
+        )
+
+        db.session.add(pdf_cover_sample)
+
+    return pdf_cover_sample

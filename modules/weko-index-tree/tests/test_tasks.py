@@ -6,15 +6,10 @@ from flask import current_app
 from invenio_db import db
 from invenio_oaiserver.models import OAISet
 
-
 # def update_oaiset_setting(index_info, data):
-def test_update_oaiset_setting(sample_jpcoar_list_xml, db):
+@shared_task(ignore_result=True)
+def update_oaiset_setting(index_info, data):
     """Create/Update oai set setting."""
-    print(sample_jpcoar_list_xml)
-    print("\n")
-    print(db)
-    raise BaseException
-    """
     try:
         pub_state = data["public_state"] and data["harvest_public_state"]
         if int(data["parent"]) == 0:
@@ -49,6 +44,22 @@ def test_update_oaiset_setting(sample_jpcoar_list_xml, db):
     except Exception as ex:
         current_app.logger.debug(ex)
         db.session.rollback()
-    """
+
 
 # def delete_oaiset_setting(id_list):
+@shared_task(ignore_result=True)
+def delete_oaiset_setting(id_list):
+    """Delete oai set setting."""
+    try:
+        e = 0
+        batch = 100
+        while e <= len(id_list):
+            s = e
+            e = e + batch
+            db.session.query(OAISet).filter(
+                OAISet.id.in_(id_list[s:e])). \
+                delete(synchronize_session='fetch')
+        db.session.commit()
+    except Exception as ex:
+        current_app.logger.debug(ex)
+        db.session.rollback()
