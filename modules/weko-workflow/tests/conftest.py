@@ -57,7 +57,7 @@ from weko_admin.models import SessionLifetime
 from weko_admin.views import blueprint as weko_admin_blueprint
 from weko_records.models import ItemTypeName, ItemType
 from weko_workflow import WekoWorkflow
-from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
+from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction
 from weko_workflow.views import blueprint as weko_workflow_blueprint
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
@@ -95,7 +95,7 @@ def base_app(instance_path):
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
-        SERVER_NAME='TEST_SERVER',
+        SERVER_NAME='TEST_SERVER.localdomain',
         # SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
         #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
         SQLALCHEMY_DATABASE_URI=os.environ.get(
@@ -479,7 +479,7 @@ def users(app, db):
 
 
 @pytest.fixture()
-def db_register(app, db):
+def db_register(app, db,db_records, users):
     action_datas=dict()
     with open('tests/data/actions.json', 'r') as f:
         action_datas = json.load(f)
@@ -501,17 +501,20 @@ def db_register(app, db):
     flow_define = FlowDefine(flow_id=uuid.uuid4(),
                              flow_name='Registration Flow',
                              flow_user=1)
-
+    with db.session.begin_nested():
+        db.session.add(flow_define)
     item_type_name = ItemTypeName(name='テストアイテムタイプ',
                                   has_site_license=True,
                                   is_active=True)
-
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
     item_type = ItemType(name_id=1,harvesting_type=True,
                          schema={'type':'test schema'},
                          form={'type':'test form'},
                          render={'type':'test render'},
                          tag=1,version_id=1,is_deleted=False)
-    
+    with db.session.begin_nested():
+        db.session.add(item_type)
     flow_action1 = FlowAction(status='N',
                      flow_id=flow_define.flow_id,
                      action_id=1,
@@ -539,7 +542,10 @@ def db_register(app, db):
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={})
-
+    with db.session.begin_nested():
+        db.session.add(flow_action1)
+        db.session.add(flow_action2)
+        db.session.add(flow_action3)
     workflow = WorkFlow(flows_id=uuid.uuid4(),
                         flows_name='test workflow1',
                         itemtype_id=1,
@@ -557,18 +563,44 @@ def db_register(app, db):
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
                     title='test', shared_user_id=-1, extra_info={},
-                    action_order=6)
-    
+                    action_order=1,
+                    )
+    activity_item1 = Activity(activity_id='2',item_id=db_records[0][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item1', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+
     with db.session.begin_nested():
-        db.session.add(flow_define)
-        db.session.add(item_type_name)
-        db.session.add(item_type)
-        db.session.add(flow_action1)
-        db.session.add(flow_action2)
-        db.session.add(flow_action3)
         db.session.add(workflow)
         db.session.add(activity)
-    
+        db.session.add(activity_item1)
+    activity_action1_item1 = ActivityAction(activity_id=activity_item1.activity_id,
+                                            action_id=1,action_status="M",
+                                            action_handler=1, action_order=1)
+    activity_action2_item1 = ActivityAction(activity_id=activity_item1.activity_id,
+                                            action_id=3,action_status="M",
+                                            action_handler=1, action_order=2)
+    activity_action3_item1 = ActivityAction(activity_id=activity_item1.activity_id,
+                                            action_id=5,action_status="M",
+                                            action_handler=1, action_order=3)
+    with db.session.begin_nested():
+        db.session.add(activity_action1_item1)
+        db.session.add(activity_action2_item1)
+        db.session.add(activity_action3_item1)
+    #with db.session.begin_nested():
+    #    db.session.add(flow_define)
+    #    db.session.add(item_type_name)
+    #    db.session.add(item_type)
+    #    db.session.add(flow_action1)
+    #    db.session.add(flow_action2)
+    #    db.session.add(flow_action3)
+    #    db.session.add(workflow)
+    #    db.session.add(activity)
     # return {'flow_define':flow_define,'item_type_name':item_type_name,'item_type':item_type,'flow_action':flow_action,'workflow':workflow,'activity':activity}
     return {'flow_define':flow_define,'item_type':item_type,'workflow':workflow}
 
