@@ -28,7 +28,7 @@ import uuid
 from datetime import datetime
 
 import pytest
-from flask import Flask
+from flask import Flask, session, url_for
 from flask_babelex import Babel, lazy_gettext as _
 from flask_menu import Menu
 from invenio_theme import InvenioTheme
@@ -69,6 +69,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import event
 from invenio_files_rest.models import Location
 from invenio_files_rest import InvenioFilesREST
+from invenio_pidrelations import InvenioPIDRelations
 
 # @event.listens_for(Engine, "connect")
 # def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -296,6 +297,7 @@ def base_app(instance_path):
         WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE="",
         WEKO_ITEMS_UI_MULTIPLE_APPROVALS=True,
         WEKO_THEME_DEFAULT_COMMUNITY="Root Index",
+        DEPOSIT_DEFAULT_STORAGE_CLASS = 'S'
     )
     app_.testing = True
     Babel(app_)
@@ -309,6 +311,7 @@ def base_app(instance_path):
     InvenioStats(app_)
     InvenioAssets(app_)
     InvenioAdmin(app_)
+    InvenioPIDRelations(app_)
     # InvenioCommunities(app_)
     # WekoAdmin(app_)
     # WekoTheme(app_)
@@ -356,6 +359,13 @@ def client(app):
     """
     with app.test_client() as client:
         yield client
+@pytest.yield_fixture()
+def guest(client):
+    with client.session_transaction() as sess:
+        sess['guest_token'] = "test_guest_token"
+        sess['guest_email'] = "guest@test.org"
+        sess['guest_url'] = url_for("weko_workflow.display_guest_activity",file_name="test_file")
+    yield client
 
 @pytest.fixture()
 def users(app, db):
@@ -475,7 +485,6 @@ def users(app, db):
         {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
         {'email': user.email, 'id': user.id, 'obj': user},
     ]
-
 
 
 @pytest.fixture()
