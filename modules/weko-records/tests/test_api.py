@@ -21,9 +21,11 @@
 """Module tests."""
 
 from re import T
+from tkinter import W
 import pytest
 from elasticsearch.exceptions import RequestError
 from invenio_records.api import Record
+from invenio_records.errors import MissingModelError
 from weko_deposit.api import WekoDeposit
 from weko_index_tree.models import Index
 from mock import patch,MagicMock
@@ -33,13 +35,13 @@ from sqlalchemy.exc import SQLAlchemyError
 from weko_records.api import FeedbackMailList, FilesMetadata, ItemLink, \
     ItemsMetadata, ItemTypeEditHistory, ItemTypeNames, ItemTypeProps, \
     ItemTypes, Mapping, SiteLicense, RecordBase
-from weko_records.models import ItemTypeName, SiteLicenseInfo, \
-    SiteLicenseIpAddress
+from weko_records.models import ItemType, ItemTypeName, \
+    SiteLicenseInfo, SiteLicenseIpAddress
 from jsonschema.validators import Draft4Validator
 from datetime import datetime
 
+# class RecordBase(dict):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_recordbase -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-
 def test_recordbase(app, db):
     class MockClass():
         def __init__(self, id, version_id, created, updated):
@@ -57,7 +59,15 @@ def test_recordbase(app, db):
     )
     test_model = MockClass(**data)
     record = RecordBase(data)
+    assert record.id == None
+    assert record.revision_id == None
+    assert record.created == None
+    assert record.updated == None
     record.model = test_model
+    assert record.id == 1
+    assert record.revision_id == 9
+    assert record.created == "yesterday"
+    assert record.updated == "now"
     result = record.dumps()
     assert result["id"] == 1
     assert result["version_id"] == 10
@@ -89,75 +99,12 @@ def test_recordbase(app, db):
     assert record.validate(validator=Draft4Validator) == None    
     assert record.replace_refs()=={'id': 1, 'version_id': 10, 'created': 'yesterday', 'updated': 'now', '$schema': {'type': 'object', 'properties': {'id': {'type': 'integer'}, 'version_id': {'type': 'integer'}, 'created': {'type': 'string'}, 'updated': {'type': 'string'}}, 'required': ['id']}}
 
-    # schema = {
-    # 'type': 'object',
-    # 'properties': {
-    # 'id': { 'type': 'integer' },
-    # 'version_id': { 'type': 'integer' },
-    # 'created': {'type': 'string' },
-    # 'updated': { 'type': 'string' },    
-    # },
-    # 'required': ['id']
-    # }
-    # schema['$ref'] = "#/definitions/dog"
-    # schema["definitions"]={"dog": {"properties" :{"lang": {"type": "string","enum": ["ja","en"]}}}}
-    # data = dict(
-    #     id=1,
-    #     version_id=10,
-    #     created="yesterday",
-    #     updated="now",
-    #     lang="ja"
-    # )
-    # data['$schema']=schema
-    # test_model = MagicMock()
-    # test_model.__getitem__.side_effect = data.__getitem__
-    # record = RecordBase(data)
-    # record.model = test_model
-    # assert record.validate(validator=Draft4Validator) == None
-
-    # schema = {
-    # 'type': 'object',
-    # 'properties': {
-    # 'id': { 'type': 'integer' },
-    # 'version_id': { 'type': 'integer' },
-    # 'created': {'type': 'string' },
-    # 'updated': { 'type': 'string' },    
-    # },
-    # 'required': ['id']
-    # }
-    # data = dict(
-    #     id=1,
-    #     version_id=10,
-    #     created="yesterday",
-    #     updated="now",
-    #     lang="ja"
-    # )
-    # data['$schema']=schema
-    # data['$ref'] = "http://localhost"
-    # test_model = MagicMock()
-    # test_model.__getitem__.side_effect = data.__getitem__
-    # record = RecordBase(data)
-    # record.model = test_model
-    # assert record.validate(validator=Draft4Validator) == None
-    # assert record.replace_refs()=={'id': 1, 'version_id': 10, 'created': 'yesterday', 'updated': 'now', '$schema': {'type': 'object', 'properties': {'id': {'type': 'integer'}, 'version_id': {'type': 'integer'}, 'created': {'type': 'string'}, 'updated': {'type': 'string'}}, 'required': ['id']}}
-
-    
-
-# class RecordBase(dict):
-#     """Base class for Record and RecordBase."""
-#     def __init__(self, data, model=None):
-#     def id(self):
-#     def revision_id(self):
-#     def created(self):
-#     def updated(self):
-#     def validate(self, **kwargs):
-#             A :class:`jsonschema.IValidator` class used for record validation.
-#     def replace_refs(self):
-#     def dumps(self, **kwargs):
-
 # class ItemTypeNames(RecordBase):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypenames -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_itemtypenames(item_type,item_type2):
+def test_itemtypenames(app, db, item_type, item_type2):
+    _item_type_name_3 = ItemTypeName(name='test3')
+    with db.session.begin_nested():
+        db.session.add(_item_type_name_3)
     # def get_record(cls, id_, with_deleted=False):
     item_type_name = ItemTypeNames.get_record(1)
     assert item_type_name.id == 1
@@ -189,13 +136,27 @@ def test_itemtypenames(item_type,item_type2):
     assert isinstance(item_type_name.updated,datetime)
 
     # def get_all_by_id(cls, ids, with_deleted=False):
-    lst = ItemTypeNames.get_all_by_id(ids=[1,2])
+    lst = ItemTypeNames.get_all_by_id(ids=[1,2,3])
+    assert len(lst)==2
+    lst = ItemTypeNames.get_all_by_id(ids=[1,2,3], with_deleted=True)
+    assert len(lst)==3
+
+    # def delete(self, force=True):
+    item_type_name = ItemTypeNames.get_record(3)
+    assert item_type_name.id == 3
+    ItemTypeNames.delete(item_type_name, force=True)
+    item_type_name = ItemTypeNames.get_record(3)
+    assert item_type_name is None
+    item_type_name = ItemTypeNames.get_record(3, with_deleted=True)
+    assert item_type_name is None
+    lst = ItemTypeNames.get_all_by_id(ids=[1,2,3])
     assert len(lst)==1
-    lst = ItemTypeNames.get_all_by_id(ids=[1,2], with_deleted=True)
+    lst = ItemTypeNames.get_all_by_id(ids=[1,2,3], with_deleted=True)
     assert len(lst)==2
 
     # def restore(self):
     item_type_name = ItemTypeNames.get_record(2, with_deleted=True)
+    assert item_type_name.id == 2
     ItemTypeNames.restore(item_type_name)
     item_type_name = ItemTypeNames.get_record(2)
     assert item_type_name.id == 2
@@ -203,8 +164,15 @@ def test_itemtypenames(item_type,item_type2):
     assert item_type_name.has_site_license == True
     assert item_type_name.is_active== True
 
-def test_itemtypes(app, db):
+# class ItemTypes(RecordBase):
+#     def create(cls, item_type_name=None, name=None, schema=None, form=None, render=None, tag=1):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_create -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_itemtypes_create(app, db):
     _item_type_name = ItemTypeName(name='test')
+
+    _form = {
+        'items': []
+    }
 
     _render = {
         'meta_list': {},
@@ -222,481 +190,598 @@ def test_itemtypes(app, db):
         'properties': {},
     }
 
+    # there is not param "name"
+    with pytest.raises(Exception) as e:
+        item_type = ItemTypes.create()
+    assert e.type==ValueError
+    assert str(e.value)=="Item type name cannot be empty."
+
+    # create item type
     item_type = ItemTypes.create(
         name='test',
         item_type_name=_item_type_name,
         schema=_schema,
+        form=_form,
         render=_render,
         tag=1
     )
+    assert item_type=={'properties': {}}
+    assert item_type.model.item_type_name.name=='test'
+    assert item_type.model.schema=={'properties': {}}
+    assert item_type.model.form=={'items': []}
+    assert item_type.model.render=={'meta_list': {}, 'table_row_map': {'schema': {'properties': {'item_1': {}}}}, 'table_row': ['1']}
+    assert item_type.model.tag==1
 
-    record = ItemTypes.update(
-        id_=item_type.id,
-        name='test',
-        schema=_schema,
-        form={},
-        render=_render
+    # item type name is exist
+    with pytest.raises(Exception) as e:
+        item_type = ItemTypes.create(
+            name='test'
+        )
+    assert e.type==ValueError
+    assert str(e.value)=="Item type name is already in use."
+
+    # create item type with only param "name"
+    item_type = ItemTypes.create(
+        name='test2'
     )
+    assert item_type=={}
+    assert item_type.model.item_type_name.name=='test2'
+    assert item_type.model.schema=={}
+    assert item_type.model.form=={}
+    assert item_type.model.render=={}
+    assert item_type.model.tag==1
 
-    record = ItemTypes.update(
-        id_=item_type.id,
-        name='test',
-        schema=_schema,
-        form={},
-        render=_render
-    )
+# class ItemTypes(RecordBase):
+#     def update(cls, id_=0, name=None, schema=None, form=None, render=None, tag=1):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_itemtypes_update(app, db):
+    _form = {
+        'items': []
+    }
 
-    ItemTypes.get_record(record.id)
-    ItemTypes.get_records([record.id])
-    ItemTypes.get_by_id(record.id)
+    _render = {
+        'meta_list': {},
+        'table_row_map': {
+            'schema': {
+                'properties': {
+                    'item_1': {}
+                }
+            }
+        },
+        'table_row': ['1']
+    }
 
-    ItemTypes.get_records_by_name_id(_item_type_name.id)
-    ItemTypes.get_latest()
-    ItemTypes.get_latest_with_item_type()
-    ItemTypes.get_latest_custorm_harvesting()
-    ItemTypes.get_all()
+    _schema = {
+        'properties': {},
+    }
 
-    record.commit()
-    if len(record.revisions) > 1:
-        record.revert(len(record.revisions) - 1)
+    # update without param
+    with pytest.raises(Exception) as e:
+        item_type = ItemTypes.update()
+    assert e.type==AssertionError
 
-def test_itemtypes_update(app, db, location, mocker):
-    # create new record
-    mock_create = mocker.patch("weko_records.api.ItemTypes.create")
-    ItemTypes.update(id_=-1, name="test")
-    mock_create.assert_called_once()
-    
-    # the record to be updated does not exist
-    with pytest.raises(ValueError):
-        ItemTypes.update(id_=1,name="test")
+    # update with only param name and render
+    item_type = ItemTypes.update(name="test", render=_render)
+    assert item_type=={}
+    assert item_type.model.item_type_name.name=='test'
+    assert item_type.model.schema=={}
+    assert item_type.model.form=={}
+    assert item_type.model.render=={'meta_list': {}, 'table_row_map': {'schema': {'properties': {'item_1': {}}}}, 'table_row': ['1']}
+    assert item_type.model.tag==1
 
+    # update
+    item_type = ItemTypes.update(id_=1, name="test1", schema=_schema, form=_form, render=_render)
+    assert item_type=={}
+    assert item_type.model.item_type_name.name=='test1'
+    assert item_type.model.schema=={'properties': {}}
+    assert item_type.model.form=={'items': []}
+    assert item_type.model.render=={'meta_list': {}, 'table_row_map': {'schema': {'properties': {'item_1': {}}}}, 'table_row': ['1']}
+    assert item_type.model.tag==1
+
+    # id does not exist
+    with pytest.raises(Exception) as e:
+        item_type = ItemTypes.update(id_=10, name="test1")
+    assert e.type==ValueError
+    assert str(e.value)=="Invalid id."
+
+# class ItemTypes(RecordBase):
+#     def update_item_type(cls, form, id_, name, render, result, schema):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_itemtypes_update_item_type(app, db, location, mocker):
-    _item_type_name = ItemTypeName(name='test')
+    _form = {
+        'items': []
+    }
+
+    _render = {
+        'meta_list': {},
+        'table_row_map': {
+            'mapping': {
+                'pubdate': {}
+            },
+            'schema': {
+                'properties': {
+                    'item_1': {}
+                }
+            }
+        },
+        'table_row': ['1']
+    }
+
+    _render_2 = {
+        'meta_list': {},
+        'table_row_map': {
+            'mapping': {
+                'pubdate': {}
+            },
+            'schema': {
+                'properties': {
+                    'item_1': {}
+                }
+            }
+        },
+        'table_row': ['2']
+    }
+
+    _schema = {
+        'properties': {},
+    }
+
     _item_type_name_exist = ItemTypeName(name='exist title')
     with db.session.begin_nested():
         db.session.add(_item_type_name_exist)
-    _render = {
-        'meta_list': {},
-        'table_row_map': {
-            'schema': {
-                'properties': {
-                    'item_1': {}
-                }
-            }
-        },
-        'table_row': ['1']
-    }
 
-    _render_2 = {
-        'meta_list': {},
-        'table_row_map': {
-            'schema': {
-                'properties': {
-                    'item_1': {}
-                }
-            }
-        },
-        'table_row': ['2']
-    }
-
-    _schema = {
-        'properties': {},
-    }
-
-    item_type = ItemTypes.create(
+    ItemTypes.create(
         name='test',
-        item_type_name=_item_type_name,
         schema=_schema,
+        form=_form,
         render=_render,
         tag=1
     )
-    # Change the name
-    record = ItemTypes.update(
-        id_=item_type.id,
-        name='test2',
-        schema=_schema,
-        form={},
-        render=_render
-    )
+    item_type = ItemTypes.get_by_id(1)
 
-    # Alliance exists
-    with pytest.raises(ValueError):
-        record = ItemTypes.update(
-            id_=item_type.id,
+    with pytest.raises(Exception) as e:
+        record = ItemTypes.update_item_type(
+            form=_form,
+            id_=1,
             name='exist title',
-            schema=_schema,
-            form={},
-            render=_render
+            render=_render,
+            result=item_type,
+            schema=_schema
         )
+    assert e.type==ValueError
+    assert str(e.value)=="Invalid name."
 
     app.config['WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'] = False
-    record = ItemTypes.update(
-        id_=item_type.id,
-        name='test2',
-        schema=_schema,
-        form={},
-        render=_render
-    )
-
-    # check_to_upgrade_version is True
-    with patch("weko_records.utils.check_to_upgrade_version", return_value=True):
-        with patch("weko_records.api.ItemTypes.create"):
-            record = ItemTypes.update(
-                id_=item_type.id,
-                name="new item",
-                schema=_schema,
-                form={},
-                render=_render_2
-            )
-
-    # with pytest.raises(RequestError):
-    record = ItemTypes.update(
-        id_=item_type.id,
+    record = ItemTypes.update_item_type(
+        form=_form,
+        id_=1,
         name='test',
-        schema=_schema,
-        form={},
-        render=_render_2
+        render=_render_2,
+        result=item_type,
+        schema=_schema
     )
+    assert record=={'properties': {}}
+    assert record.model.item_type_name.name=='test'
+    assert record.model.schema=={'properties': {}}
+    assert record.model.form=={'items': []}
+    assert record.model.render=={'meta_list': {}, 'table_row_map': {'schema': {'properties': {'item_1': {}}}}, 'table_row': ['2']}
+    assert record.model.tag==1
 
-
-@pytest.fixture()
-def update_metadata_data(app, db):
-    _render1 = {
-        'meta_list': {},
-        'table_row_map': {
-            'schema': {
-                'properties': {
-                    'item_1': {}
-                }
-            }
-        },
-        'table_row': ['pub_date','system_file','2','3']
-    }
-    _render2 = {
-        'meta_list': {},
-        'table_row_map': {
-            'schema': {
-                'properties': {
-                    'item_1': {}
-                }
-            }
-        },
-        'table_row':['2', '3', '4']
-    }
-    _schema={
-        'properties':{},
-    }
-    _mapping={
-        "pubdate":{
-        },
-        "system_file":{
-            "jpcoar_mapping": {
-                "URL":{},
-                "date":{},
-                "extent":{}
-                
-            }
-        }
-    }
-    _item_type_name = ItemTypeName(name='test')
-    _item_type_name2 = ItemTypeName(name="test2")
-    item_type = ItemTypes.create(
-        name="test",
-        item_type_name=_item_type_name,
-        schema=_schema,
-        render=_render1,
-        tag=1
-    )
-    item_type2 = ItemTypes.create(
-        name="test2",
-        item_type_name=_item_type_name2,
-        schema=_schema,
-        render=_render1,
-        tag=1
-    )
-    _item_type_mapping= Mapping.create(
-        item_type_id=item_type.id,
-        mapping=_mapping)
-    app.config['WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED']=False
-    return {
-        "item_type_name":[_item_type_name,_item_type_name2],
-        "item_type":[item_type, item_type2],
-        "schema":_schema,
-        "render":[_render1, _render2]
-        }
-
-
-@pytest.mark.parametrize("dummy_data",[
-    {"hits":{"hits":
-                [{"_id":"",
-                    "_source":{
-                        "_item_metadata":{
-                            "item_type_id":"","system_file":{}
-                        },
-                        "URL":{},
-                        "date":{}
-                    }
-                },
-                {"_id":"not_item_type",
-                    "_source":{
-                        "item_metadata":{
-                            "item_type_id":"xxxxx"
-                        }
-                    }
-                }]}
-    },
-    {"hits":{"hits":
-                [{"_id":"",
-                    "_source":{
-                        "_item_metadata":{
-                            "item_type_id":"",
-                            },
-                        }
-                },
-                {"_id":"not_item_type",
-                    "_source":{
-                        "item_metadata":{
-                            "item_type_id":"xxxxx"
-                        }
-                    }
-                }]}
-    }
-])
-def test_itemtypes_update_metadata(app, db, mock_execute, records, update_metadata_data, mocker, dummy_data):
-
-    item_type=update_metadata_data["item_type"][0]
-    _schema=update_metadata_data["schema"]
-    _render2=update_metadata_data["render"][1]
-    
-    dummy_data["hits"]["hits"][0]["_id"]=records[0][0].object_uuid
-    dummy_data["hits"]["hits"][0]["_source"]["_item_metadata"]["item_type_id"] = str(item_type.id)
-
-    app.config['WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED']=False
-    mocker.patch("weko_records.api.RecordsSearch.execute", return_value=mock_execute(dummy_data))
-    record = ItemTypes.update(
-        id_=item_type.id,
-        name="test",
-        schema=_schema,
-        form={},
-        render=_render2
-    )
-
-
-def test_itemtypes_update_metadata_diff_itemtype(app, db, mock_execute, update_metadata_data, mocker):
-    item_type2 = update_metadata_data["item_type"][1]
-    item_type=update_metadata_data["item_type"][0]
-    _schema=update_metadata_data["schema"]
-    _render2=update_metadata_data["render"][1]
-    dummy_data = {
-        "hits":{
-            "hits":[
-                {
-                    "_id":"test data",
-                    "_item_metadata":{
-                        "item_type_id":str(item_type2.id)
-                    }
-                }
-            ]
-        }
-    }
-
-    mocker.patch("weko_records.api.RecordsSearch.execute", return_value=mock_execute(dummy_data))
-    record = ItemTypes.update(
-        id_=item_type.id,
-        name="test",
-        schema=_schema,
-        form={},
-        render=_render2
-    )
-
-
-def test_itemtypes_update_metadata_sqlerror(app, db, records, mock_execute, update_metadata_data, mocker):
-    item_type=update_metadata_data["item_type"][0]
-    _schema=update_metadata_data["schema"]
-    _render2=update_metadata_data["render"][1]
-    dummy_data = {
-        "hits":{
-            "hits":
-                [
-                    {
-                        "_id":records[0][0].object_uuid,
-                        "_source":{
-                            "_item_metadata":{
-                                "item_type_id":str(item_type.id),
-                                "system_file":{}
-                            },
-                            "URL":{},
-                            "date":{}
-                            
-                        }
-                    },
-                    {
-                        "_id":"not_item_type",
-                        "_source":{
-                            "item_metadata":{
-                                "item_type_id":"xxxxx"
-                            }
-                        }
-                    }
-                ]
-        }
-    }
-    mocker.patch("weko_records.api.RecordsSearch.execute", return_value=mock_execute(dummy_data))
-    with patch("weko_records.api.db.session.commit", side_effect=SQLAlchemyError):
-        with pytest.raises(SQLAlchemyError):
-            record = ItemTypes.update(
-                id_=item_type.id,
-                name="test",
-                schema=_schema,
-                form={},
-                render=_render2
-            )
-
-
-def test_itemtypes_update_metadata_record0(app, db, mock_execute, update_metadata_data, mocker):
-    item_type=update_metadata_data["item_type"][0]
-    _schema=update_metadata_data["schema"]
-    _render2=update_metadata_data["render"][1]
-    dummy_data = {
-        "hits":{
-            "hits":
-                [
-                    {
-                        "_id":uuid.uuid4(),
-                        "_source":{
-                            "_item_metadata":{
-                                "item_type_id":str(item_type.id),
-                                "system_file":{}
-                            },
-                            "URL":{},
-                            "date":{}
-                            
-                        }
-                    }
-                ]
-        }
-    }
-    mocker.patch("weko_records.api.RecordsSearch.execute", return_value=mock_execute(dummy_data))
-    record = ItemTypes.update(
-        id_=item_type.id,
-        name="test",
-        schema=_schema,
-        form={},
-        render=_render2
-    )
-
-
-def test_itemtypes_update_metadata_item0(app, db, records, mock_execute, update_metadata_data, mocker):
-    item_type=update_metadata_data["item_type"][0]
-    item_type=update_metadata_data["item_type"][0]
-    _schema=update_metadata_data["schema"]
-    _render2=update_metadata_data["render"][1]
-
-    dummy_data = {
-        "hits":{
-            "hits":
-                [
-                    {
-                        "_id":records[0][0].object_uuid,
-                        "_source":{
-                            "_item_metadata":{
-                                "item_type_id":str(item_type.id),
-                                "system_file":{}
-                            },
-                            "URL":{},
-                            "date":{}
-                            
-                        }
-                    }
-                ]
-        }
-    }
-    app.config['WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED']=False
-    mocker.patch("weko_records.api.RecordsSearch.execute", return_value=mock_execute(dummy_data))
-    record = ItemTypes.update(
-        id_=item_type.id,
-        name="test",
-        schema=_schema,
-        form={},
-        render=_render2
-    )
-
-
-def test_itemtypes_delete(app, db):
-    _item_type_name = ItemTypeName(name='test')
-
-    _render = {
-        'meta_list': {},
-        'table_row_map': {
-            'schema': {
-                'properties': {
-                    'item_1': {}
-                }
-            }
-        },
-        'table_row': ['1']
-    }
-
-    _render_2 = {
-        'meta_list': {},
-        'table_row_map': {
-            'schema': {
-                'properties': {
-                    'item_1': {}
-                }
-            }
-        },
-        'table_row': ['2']
-    }
-
-    _schema = {
-        'properties': {},
-    }
-
-    item_type = ItemTypes.create(
-        name='test',
-        item_type_name=_item_type_name,
-        schema=_schema,
+    app.config['WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'] = True
+    record = ItemTypes.update_item_type(
+        form=_form,
+        id_=1,
+        name='test3',
         render=_render,
-        tag=1
+        result=item_type,
+        schema=_schema
     )
+    assert record=={'properties': {}}
+    assert record.model.item_type_name.name=='test3'
+    assert record.model.schema=={'properties': {}}
+    assert record.model.form=={'items': []}
+    assert record.model.render=={'meta_list': {}, 'table_row_map': {'schema': {'properties': {'item_1': {}}}}, 'table_row': ['1']}
+    assert record.model.tag==1
 
-    item_type.delete()
-    item_type.restore()
-
-
-def test_item_type_history(app, db, user):
-    _item_type_name = ItemTypeName(name='test')
-
-    _render = {
-        'meta_list': {},
-        'table_row_map': {
-            'schema': {
-                'properties': {
-                    'item_1': {}
-                }
-            }
-        },
-        'table_row': ['1']
-    }
-
-    item_type = ItemTypes.create(
-        name='test',
-        item_type_name=_item_type_name,
-        schema={},
+    record = ItemTypes.update_item_type(
+        form=_form,
+        id_=1,
+        name='test4',
         render=_render,
-        tag=1
+        result=item_type,
+        schema=_schema
     )
+    assert record=={'properties': {}}
+    assert record.model.item_type_name.name=='test4'
+    assert record.model.schema=={'properties': {}}
+    assert record.model.form=={'items': []}
+    assert record.model.render=={'meta_list': {}, 'table_row_map': {'schema': {'properties': {'item_1': {}}}}, 'table_row': ['1']}
+    assert record.model.tag==1
+
+
+# def ItemTypes.__update_item_type
+# def ItemTypes.__update_metadata
+# def ItemTypes.__get_records_by_item_type_name
+
+# class ItemTypes(RecordBase):
+#     def get_record(cls, id_, with_deleted=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_record -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_record(app, db):
+    ItemTypes.create(name='test')
+    it = ItemTypes.create(name='test2')
+    ItemTypes.delete(it)
+
+    item_type = ItemTypes.get_record(1)
+    assert item_type=={}
+    assert item_type.model.item_type_name.name=='test'
+    assert item_type.model.schema=={}
+    assert item_type.model.form=={}
+    assert item_type.model.render=={}
+    assert item_type.model.tag==1
+
+    item_type = ItemTypes.get_record(2, False)
+    assert item_type==None
+    item_type = ItemTypes.get_record(2, True)
+    assert item_type=={}
+    assert item_type.model.item_type_name.name=='test2'
+    assert item_type.model.schema=={}
+    assert item_type.model.form=={}
+    assert item_type.model.render=={}
+    assert item_type.model.tag==1
+
+# class ItemTypes(RecordBase):
+#     def get_records(cls, ids, with_deleted=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_records -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_records(app, db):
+    ItemTypes.create(name='test')
+    it = ItemTypes.create(name='test2')
+    ItemTypes.delete(it)
+
+    item_types = ItemTypes.get_records([1, 2], False)
+    assert len(item_types)==1
+    assert item_types[0]=={}
+    assert item_types[0].model.item_type_name.name=='test'
+    assert item_types[0].model.schema=={}
+    assert item_types[0].model.form=={}
+    assert item_types[0].model.render=={}
+    assert item_types[0].model.tag==1
+
+    item_types = ItemTypes.get_records([1, 2], True)
+    assert len(item_types)==2
+    assert item_types[0]=={}
+    assert item_types[0].model.item_type_name.name=='test'
+    assert item_types[0].model.schema=={}
+    assert item_types[0].model.form=={}
+    assert item_types[0].model.render=={}
+    assert item_types[0].model.tag==1
+    assert item_types[1]=={}
+    assert item_types[1].model.item_type_name.name=='test2'
+    assert item_types[1].model.schema=={}
+    assert item_types[1].model.form=={}
+    assert item_types[1].model.render=={}
+    assert item_types[1].model.tag==1
+
+# class ItemTypes(RecordBase):
+#     def get_by_id(cls, id_, with_deleted=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_by_id -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_by_id(app, db):
+    ItemTypes.create(name='test')
+    it = ItemTypes.create(name='test2')
+    ItemTypes.delete(it)
+
+    item_type = ItemTypes.get_by_id(1)
+    assert item_type.item_type_name.name=='test'
+    assert item_type.schema=={}
+    assert item_type.form=={}
+    assert item_type.render=={}
+    assert item_type.tag==1
+
+    item_type = ItemTypes.get_by_id(2, False)
+    assert item_type==None
+    item_type = ItemTypes.get_by_id(2, True)
+    assert item_type.item_type_name.name=='test2'
+    assert item_type.schema=={}
+    assert item_type.form=={}
+    assert item_type.render=={}
+    assert item_type.tag==1
+
+# class ItemTypes(RecordBase):
+#     def get_by_name_id(cls, name_id, with_deleted=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_by_id -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_by_name_id(app, db):
+    ItemTypes.create(name='test')
+    it = ItemTypes.create(name='test2')
+    ItemTypes.delete(it)
+
+    item_types = ItemTypes.get_by_name_id(1)
+    assert len(item_types)==1
+    assert item_types[0].item_type_name.name=='test'
+    assert item_types[0].schema=={}
+    assert item_types[0].form=={}
+    assert item_types[0].render=={}
+    assert item_types[0].tag==1
+
+    item_types = ItemTypes.get_by_name_id(2, False)
+    assert len(item_types)==0
+    item_types = ItemTypes.get_by_name_id(2, True)
+    assert len(item_types)==1
+    assert item_types[0].item_type_name.name=='test2'
+    assert item_types[0].schema=={}
+    assert item_types[0].form=={}
+    assert item_types[0].render=={}
+    assert item_types[0].tag==1
+
+# class ItemTypes(RecordBase):
+#     def get_records_by_name_id(cls, name_id, with_deleted=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_records_by_name_id -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_records_by_name_id(app, db):
+    ItemTypes.create(name='test')
+    it = ItemTypes.create(name='test2')
+    ItemTypes.delete(it)
+
+    item_types = ItemTypes.get_records_by_name_id(1)
+    assert len(item_types)==1
+    assert item_types[0]=={}
+    assert item_types[0].model.item_type_name.name=='test'
+    assert item_types[0].model.schema=={}
+    assert item_types[0].model.form=={}
+    assert item_types[0].model.render=={}
+    assert item_types[0].model.tag==1
+
+    item_types = ItemTypes.get_records_by_name_id(2, False)
+    assert len(item_types)==0
+    item_types = ItemTypes.get_records_by_name_id(2, True)
+    assert len(item_types)==1
+    assert item_types[0]=={}
+    assert item_types[0].model.item_type_name.name=='test2'
+    assert item_types[0].model.schema=={}
+    assert item_types[0].model.form=={}
+    assert item_types[0].model.render=={}
+    assert item_types[0].model.tag==1
+
+# class ItemTypes(RecordBase):
+#     def get_latest(cls, with_deleted=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_latest -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_latest(app, db):
+    ItemTypes.create(name='test')
+    it = ItemTypes.create(name='test2')
+    ItemTypes.delete(it)
+
+    # need to fix
+    item_type_names = ItemTypes.get_latest(False)
+    assert len(item_type_names)==1
+    assert item_type_names[0].id == 1
+    assert item_type_names[0].name == "test"
+    assert item_type_names[0].has_site_license == True
+    assert item_type_names[0].is_active== True
+    assert isinstance(item_type_names[0].created,datetime)
+    assert isinstance(item_type_names[0].updated,datetime)
+
+    # need to fix
+    item_type_names = ItemTypes.get_latest(True)
+    assert len(item_type_names)==2
+    assert item_type_names[0].id == 1
+    assert item_type_names[0].name == "test"
+    assert item_type_names[0].has_site_license == True
+    assert item_type_names[0].is_active== True
+    assert isinstance(item_type_names[0].created,datetime)
+    assert isinstance(item_type_names[0].updated,datetime)
+    assert item_type_names[1].id == 2
+    assert item_type_names[1].name == "test2"
+    assert item_type_names[1].has_site_license == True
+    assert item_type_names[1].is_active== True
+    assert isinstance(item_type_names[1].created,datetime)
+    assert isinstance(item_type_names[1].updated,datetime)
+
+# class ItemTypes(RecordBase):
+#     get_latest_with_item_type(cls, with_deleted=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_latest_with_item_type -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_latest_with_item_type(app, db):
+    ItemTypes.create(name='test')
+    it = ItemTypes.create(name='test2')
+    ItemTypes.delete(it)
+
+    item_types = ItemTypes.get_latest_with_item_type(False)
+    assert len(item_types)==1
+    assert item_types[0].name == "test"
+    assert item_types[0].id == 1
+    assert item_types[0].harvesting_type == False
+    assert item_types[0].is_deleted == False
+    assert item_types[0].tag == 1
+
+    item_types = ItemTypes.get_latest_with_item_type(True)
+    assert len(item_types)==2
+    assert item_types[0].name == "test"
+    assert item_types[0].id == 1
+    assert item_types[0].harvesting_type == False
+    assert item_types[0].is_deleted == False
+    assert item_types[0].tag == 1
+    assert item_types[1].name == "test2"
+    assert item_types[1].id == 2
+    assert item_types[1].harvesting_type == False
+    assert item_types[1].is_deleted == True
+    assert item_types[1].tag == 1
+
+# class ItemTypes(RecordBase):
+#     get_latest_custorm_harvesting(cls, with_deleted=False, harvesting_type=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_latest_custorm_harvesting -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_latest_custorm_harvesting(app, db):
+    ItemTypes.create(name='test')
+    ItemTypes.create(name='test2')
+    it3 = ItemTypes.create(name='test3')
+    it4 = ItemTypes.create(name='test4')
+    ItemTypes.delete(it3)
+    ItemTypes.delete(it4)
+    with db.session.begin_nested():
+        it2 = ItemTypes.get_by_id(2, True)
+        it2.harvesting_type = True
+        db.session.merge(it2)
+        it4 = ItemTypes.get_by_id(4, True)
+        it4.harvesting_type = True
+        db.session.merge(it4)
+    db.session.commit()
+
+    item_type_names = ItemTypes.get_latest_custorm_harvesting(False, False)
+    assert len(item_type_names)==1
+    assert item_type_names[0].id == 1
+    assert item_type_names[0].name == "test"
+    assert item_type_names[0].has_site_license == True
+    assert item_type_names[0].is_active== True
+    assert isinstance(item_type_names[0].created,datetime)
+    assert isinstance(item_type_names[0].updated,datetime)
+
+    item_type_names = ItemTypes.get_latest_custorm_harvesting(False, True)
+    assert len(item_type_names)==1
+    assert item_type_names[0].id == 2
+    assert item_type_names[0].name == "test2"
+    assert item_type_names[0].has_site_license == True
+    assert item_type_names[0].is_active== True
+    assert isinstance(item_type_names[0].created,datetime)
+    assert isinstance(item_type_names[0].updated,datetime)
+
+    # need to fix
+    item_type_names = ItemTypes.get_latest_custorm_harvesting(True, False)
+    assert len(item_type_names)==4
+    assert item_type_names[0].id == 1
+    assert item_type_names[0].name == "test"
+    assert item_type_names[0].has_site_license == True
+    assert item_type_names[0].is_active== True
+    assert isinstance(item_type_names[0].created,datetime)
+    assert isinstance(item_type_names[0].updated,datetime)
+
+    # need to fix
+    item_type_names = ItemTypes.get_latest_custorm_harvesting(True, True)
+    assert len(item_type_names)==4
+    assert item_type_names[0].id == 4
+    assert item_type_names[0].name == "test4"
+    assert item_type_names[0].has_site_license == True
+    assert item_type_names[0].is_active== True
+    assert isinstance(item_type_names[0].created,datetime)
+    assert isinstance(item_type_names[0].updated,datetime)
+
+# class ItemTypes(RecordBase):
+#     def get_all(cls, with_deleted=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_all -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_all(app, db):
+    ItemTypes.create(name='test')
+    it = ItemTypes.create(name='test2')
+    ItemTypes.delete(it)
+
+    item_types = ItemTypes.get_all(False)
+    assert len(item_types)==1
+    assert item_types[0].item_type_name.name=='test'
+    assert item_types[0].schema=={}
+    assert item_types[0].form=={}
+    assert item_types[0].render=={}
+    assert item_types[0].tag==1
+
+    item_types = ItemTypes.get_all(True)
+    assert len(item_types)==2
+    assert item_types[0].id==1
+    assert item_types[0].name_id==1
+    assert item_types[0].item_type_name.name=='test'
+    assert item_types[0].schema=={}
+    assert item_types[0].form=={}
+    assert item_types[0].render=={}
+    assert item_types[0].tag==1
+    assert item_types[0].is_deleted==False
+    assert item_types[1].id==2
+    assert item_types[1].name_id==2
+    assert item_types[1].item_type_name.name=='test2'
+    assert item_types[1].schema=={}
+    assert item_types[1].form=={}
+    assert item_types[1].render=={}
+    assert item_types[1].tag==1
+    assert item_types[1].is_deleted==True
+
+# def ItemTypes.patch
+# def ItemTypes.commit
+
+# class ItemTypes(RecordBase):
+#     def delete(self, force=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_delete(app, db):
+    it = ItemTypes.create(name='test')
+    it2 = ItemTypes.create(name='test2')
+    it3 = ItemTypes.create(name='test3')
+
+    it.model = None
+    with pytest.raises(Exception) as e:
+        ItemTypes.delete(it, False)
+    assert e.type==MissingModelError
+
+    it2 = ItemTypes.delete(it2, False)
+    assert it2=={}
+    assert it2.model.item_type_name.name=='test2'
+    assert it2.model.schema=={}
+    assert it2.model.form=={}
+    assert it2.model.render=={}
+    assert it2.model.tag==1
+    assert it2.model.is_deleted==True
+
+    # ItemTypes.delete(it3, True)
+    # to do something
+
+# def ItemTypes.revert
+
+# class ItemTypes(RecordBase):
+#     def restore(self):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_restore -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_restore(app, db):
+    it = ItemTypes.create(name='test')
+    it2 = ItemTypes.create(name='test2')
+
+    it.model = None
+    with pytest.raises(Exception) as e:
+        ItemTypes.restore(it)
+    assert e.type==MissingModelError
+
+    ItemTypes.delete(it2, False)
+    it2 = ItemTypes.restore(it2)
+    assert it2=={}
+    assert it2.model.item_type_name.name=='test2'
+    assert it2.model.schema=={}
+    assert it2.model.form=={}
+    assert it2.model.render=={}
+    assert it2.model.tag==1
+    assert it2.model.is_deleted==False
+
+# def ItemTypes.revisions
+
+# class ItemTypeEditHistory(RecordBase):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_edit_history -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_type_edit_history(app, db, user):
+    item_type = ItemTypes.create(name='test')
 
     record = ItemTypeEditHistory.create_or_update(
         id=0,
-        item_type_id=item_type.id,
-        user_id=user.id)
+        item_type_id=1,
+        user_id=user.id,
+        notes={}
+    )
+    assert record.id==1
+    assert record.item_type_id==1
+    assert record.user_id==1
+    assert record.notes=={}
 
-    record = ItemTypeEditHistory.get_by_item_type_id(item_type.id)
+    record = ItemTypeEditHistory.create_or_update(
+        id=0,
+        item_type_id=1,
+        user_id=user.id,
+        notes={'msg': 'test'}
+    )
+    assert record.id==2
+    assert record.item_type_id==1
+    assert record.user_id==1
+    assert record.notes=={'msg': 'test'}
 
+    # record = ItemTypeEditHistory.get_by_item_type_id(item_type.id)
+    # to do something
 
-def test_mapping(app, db, item_type):
+# class Mapping(RecordBase):
+#     def create(cls, item_type_id=None, mapping=None):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_create -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_mapping_create(app, db, item_type):
     mapping = Mapping.create(
         item_type_id=item_type.id,
         mapping={})
