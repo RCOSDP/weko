@@ -997,7 +997,50 @@ def check_authority_action(activity_id='0', action_id=0,
 @login_required_customize
 @check_authority
 def next_action(activity_id='0', action_id=0):
-    """Next action."""
+    """そのアクションにおける処理を行い、アクティビティの状態を更新する。
+
+    Args:
+        activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得. Defaults to '0'.
+        action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
+
+    Returns:
+        dict: json data
+    
+    ---
+    post:
+        description: "next action"
+        security:
+            - login_required_customize: []
+            - check_authority: []
+        request_Body:
+            required: true
+            content:
+                application/json:
+                    schema:
+                        object
+                    example: {"action_version": "1.0.0", "commond": "this is test comment", "temporary_save": 0}
+        parameters:
+            - in: path
+              name: activity_id
+              description: 対象のアクティビティID
+              schema:
+                type: string
+            - in: path
+              name: action_id
+              description: 現在のアクションID
+              schema:
+                type: int
+        response:
+            200:
+                description: "success"
+                content:
+                    application/json:
+                        schema:
+                            object
+                        example: jsonify(code=0, msg="success")
+            500:
+                description: "シグナルを送信する際にエラーが発生した場合"
+    """
     work_activity = WorkActivity()
     history = WorkActivityHistory()
     activity_detail = work_activity.get_activity_detail(activity_id)
@@ -1397,7 +1440,61 @@ def next_action(activity_id='0', action_id=0):
 @login_required
 @check_authority
 def previous_action(activity_id='0', action_id=0, req=0):
-    """Previous action."""
+    """reqに従い次のアクションを決定し、アクティビティの状態を更新する
+
+    Args:
+        activity_id (str, optional): 対象アクティビティID.パスパラメータから取得. Defaults to '0'.
+        action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
+        req (int, optional): 次のアクションの種類.パスパラメータから取得. Defaults to 0.
+                             0:1つ前のフローアクション
+                             -1: アイテム登録アクション
+                             それ以外: 2つ目のアクション
+
+    Returns:
+        dict: json data
+    
+    ---
+    
+    post:
+        description: "previous_action"
+        secirity:
+            - login_require: []
+            - check_authority: []
+        requestBody:
+            required: true
+            content:
+                application/json:
+                    schema:
+                        object
+                    example: {"action_version":"1.0.0", "commond": "test comment"}
+        parameters:
+            - in: path
+              name: activity_id
+              description: 対象のアクティビティID
+              schema:
+                type: string
+            - in: path
+              name: action_id
+              description: 現在のアクションID
+              schema:
+                type: int
+            - in: path
+              name: req
+              description: 次のアクションの種類. 
+                           0:1つ前のフローアクション
+                           -1: アイテム登録アクション
+                           それ以外: 2つ目のアクション.
+              schema:
+                type: int
+        response:
+            200:
+                description: "success"
+                content:
+                    application/json:
+                        schema:
+                            object
+                        example: {"code": 0, msg=_("success")}
+    """
     post_data = request.get_json()
     # A-20220808-00001
     #current_app.logger.error("previous:activity_id:{}".format(activity_id))
@@ -1546,7 +1643,49 @@ def get_journal(method, value):
 @login_required_customize
 @check_authority
 def cancel_action(activity_id='0', action_id=0):
-    """Next action."""
+    """アクティビティIDで与えられたアクティビティをキャンセルする
+
+    Args:
+        activity_id (str, optional): 対象アクティビティID.パスパラメータから取得. Defaults to '0'.
+        action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
+
+    Returns:
+        dict: json data
+
+    ---
+    
+    post:
+        description: "cancel action"
+        secirity:
+            - login_required_customize: []
+            - check_authority: []
+        requestBody:
+            required: true
+            content:
+                application/json:
+                    schema:
+                        object
+                    example: {"action_version": "1.0.0", "commond": "this is test comment", "pid_value":1}
+        parameters:
+            - in: path
+              name: activity_id
+              description: 対象のアクティビティID
+              schema:
+                type: string
+            - in: path
+              name: action_id
+              description: 現在のアクションID
+              schema:
+                type: int
+        response:
+            200:
+                description: "success"
+                content:
+                    application/json:
+                        schema:
+                            object
+                        example: {"code": 0, msg=_("success"), data={"redirect":"/workflow/activity/detail/1}}
+    """
     post_json = request.get_json()
     work_activity = WorkActivity()
     # Clear deposit
