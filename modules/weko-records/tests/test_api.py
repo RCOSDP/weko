@@ -31,6 +31,7 @@ from weko_index_tree.models import Index
 from mock import patch,MagicMock
 import uuid
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm.exc import NoResultFound
 
 from weko_records.api import FeedbackMailList, FilesMetadata, ItemLink, \
     ItemsMetadata, ItemTypeEditHistory, ItemTypeNames, ItemTypeProps, \
@@ -398,10 +399,10 @@ def test_itemtypes_update_item_type(app, db, location, mocker):
     assert record.model.render=={'meta_list': {}, 'table_row_map': {'schema': {'properties': {'item_1': {}}}}, 'table_row': ['1']}
     assert record.model.tag==1
 
-
-# def ItemTypes.__update_item_type
-# def ItemTypes.__update_metadata
-# def ItemTypes.__get_records_by_item_type_name
+# class ItemTypes(RecordBase):
+#     def __update_item_type(cls, id_, schema, form, render):
+#     def __update_metadata(cls, item_type_id, item_type_name, old_render, new_render):
+#     def __get_records_by_item_type_name(cls, item_type_name):
 
 # class ItemTypes(RecordBase):
 #     def get_record(cls, id_, with_deleted=False):
@@ -694,8 +695,9 @@ def test_get_all(app, db):
     assert item_types[1].tag==1
     assert item_types[1].is_deleted==True
 
-# def ItemTypes.patch
-# def ItemTypes.commit
+# class ItemTypes(RecordBase):
+#     def patch(self, patch):
+#     def commit(self, **kwargs):
 
 # class ItemTypes(RecordBase):
 #     def delete(self, force=False):
@@ -719,10 +721,11 @@ def test_delete(app, db):
     assert it2.model.tag==1
     assert it2.model.is_deleted==True
 
-    # ItemTypes.delete(it3, True)
-    # to do something
+    it3 = ItemTypes.delete(it3, True)
+    assert it3==None
 
-# def ItemTypes.revert
+# class ItemTypes(RecordBase):
+#     def revert(self, revision_id):
 
 # class ItemTypes(RecordBase):
 #     def restore(self):
@@ -746,12 +749,13 @@ def test_restore(app, db):
     assert it2.model.tag==1
     assert it2.model.is_deleted==False
 
-# def ItemTypes.revisions
+# class ItemTypes(RecordBase):
+#     def revisions(self):
 
 # class ItemTypeEditHistory(RecordBase):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_edit_history -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_item_type_edit_history(app, db, user):
-    item_type = ItemTypes.create(name='test')
+    ItemTypes.create(name='test')
 
     record = ItemTypeEditHistory.create_or_update(
         id=0,
@@ -775,292 +779,470 @@ def test_item_type_edit_history(app, db, user):
     assert record.user_id==1
     assert record.notes=={'msg': 'test'}
 
-    # record = ItemTypeEditHistory.get_by_item_type_id(item_type.id)
-    # to do something
+    records = ItemTypeEditHistory.get_by_item_type_id(1)
+    assert len(records)==2
+    assert records[0].id==1
+    assert records[0].item_type_id==1
+    assert records[0].user_id==1
+    assert records[0].notes=={}
+    assert records[1].id==2
+    assert records[1].item_type_id==1
+    assert records[1].user_id==1
+    assert records[1].notes=={'msg': 'test'}
 
 # class Mapping(RecordBase):
 #     def create(cls, item_type_id=None, mapping=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_create -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_mapping_create(app, db, item_type):
-    mapping = Mapping.create(
-        item_type_id=item_type.id,
-        mapping={})
+def test_mapping_create(app, db):
+    mapping = Mapping.create()
+    assert mapping.id==1
+    assert mapping.model.item_type_id==None
+    assert mapping.model.mapping=={}
 
-    record = Mapping.get_record(item_type.id)
+    mapping = Mapping.create(1, {'mapping': 'test'})
+    assert mapping.id==2
+    assert mapping.model.item_type_id==1
+    assert mapping.model.mapping=={'mapping': 'test'}
 
-    with pytest.raises(AttributeError):
-        records = Mapping.get_records([item_type.id])
+# class Mapping(RecordBase):
+#     def get_record(cls, item_type_id, with_deleted=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_get_record -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_mapping_get_record(app, db):
+    Mapping.create(1, {'mapping': 'test'})
+    Mapping.create(2)
 
-    mapping.patch({})
+    mapping = Mapping.get_record(0)
+    assert mapping==None
+    mapping = Mapping.get_record(1)
+    assert mapping.id==1
+    assert mapping.model.item_type_id==1
+    assert mapping.model.mapping=={'mapping': 'test'}
+    mapping = Mapping.get_record(2, False)
+    assert mapping=={}
+    mapping = Mapping.get_record(2, True)
+    assert mapping.id==2
+    assert mapping.model.item_type_id==2
+    assert mapping.model.mapping=={}
 
-    mapping.revisions
+    mappings = Mapping.get_records([0], False)
+    assert len(mappings)==0
+    mappings = Mapping.get_records([1, 2], False)
+    assert len(mappings)==1
+    assert mappings[0].id==1
+    assert mappings[0].model.item_type_id==1
+    assert mappings[0].model.mapping=={'mapping': 'test'}
+    mappings = Mapping.get_records([1, 2], True)
+    assert len(mappings)==2
+    assert mappings[0].id==1
+    assert mappings[0].model.item_type_id==1
+    assert mappings[0].model.mapping=={'mapping': 'test'}
+    assert mappings[1].id==2
+    assert mappings[1].model.item_type_id==2
+    assert mappings[1].model.mapping=={}
 
-    mappings = Mapping.get_mapping_by_item_type_ids([item_type.id])
+# class Mapping(RecordBase):
+#     def patch(self, patch):
+#     def commit(self, **kwargs):
 
+# class Mapping(RecordBase):
+#     def delete(self, force=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_mapping_delete(app, db):
+    mapping1 = Mapping.create(1)
+    mapping2 = Mapping.create(2)
+    mapping3 = Mapping.create(3)
 
-def test_mapping_delete(app, db, item_type):
-    mapping = Mapping.create(
-        item_type_id=item_type.id,
-        mapping={}
-    )
+    mapping1.model = None
+    with pytest.raises(Exception) as e:
+        Mapping.delete(mapping1)
+    assert e.type==MissingModelError
 
-    mapping.delete()
+    mapping2 = Mapping.delete(mapping2, False)
+    assert mapping2.id==2
+    assert mapping2.model.item_type_id==2
+    assert mapping2.model.mapping=={}
 
+    mapping3 = Mapping.delete(mapping3, True)
+    assert mapping2==None
 
-def test_item_type_props(app, db, item_type):
-    prop = ItemTypeProps.create(
+# class Mapping(RecordBase):
+#     def revert(self, revision_id):
+#     def revisions(self):
+
+# class Mapping(RecordBase):
+#     def get_mapping_by_item_type_ids(cls, item_type_ids: list) -> list:
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_get_mapping_by_item_type_ids -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_mapping_get_mapping_by_item_type_ids(app, db):
+    Mapping.create(1)
+    Mapping.create(2)
+
+    mappings = Mapping.get_mapping_by_item_type_ids([0])
+    assert len(mappings)==0
+    mappings = Mapping.get_mapping_by_item_type_ids([1, 2])
+    assert len(mappings)==2
+    assert mappings[0].id==2
+    assert mappings[0].model.item_type_id==2
+    assert mappings[0].model.mapping=={}
+    assert mappings[1].id==1
+    assert mappings[1].model.item_type_id==1
+    assert mappings[1].model.mapping=={}
+
+# class ItemTypeProps(RecordBase):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_props -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_type_props(app, db):
+    # create
+    prop1 = ItemTypeProps.create()
+    assert prop1.id==1
+    assert prop1.model.name==''
+    assert prop1.model.schema=={}
+    assert prop1.model.form=={}
+    assert prop1.model.forms=={}
+    assert prop1.model.delflg==False
+    assert prop1.model.sort==None
+    prop1 = ItemTypeProps.create(
         property_id=1,
-        name='test',
-        schema={},
-        form_single={},
-        form_array={}
+        name='prop1',
+        schema={'item1': {}},
+        form_single={'key': 'item1'},
+        form_array=[{'key': 'item1'}]
     )
+    assert prop1.id==1
+    assert prop1.model.name=='prop1'
+    assert prop1.model.schema=={'item1': {}}
+    assert prop1.model.form=={'key': 'item1'}
+    assert prop1.model.forms==[{'key': 'item1'}]
+    assert prop1.model.delflg==False
+    assert prop1.model.sort==None
 
-    new_prop = ItemTypeProps.create(
-        property_id=1,
-        name='test',
-        schema={},
-        form_single={},
-        form_array={}
-    )
+    # get_record
+    record = ItemTypeProps.get_record(0)
+    assert record==None
+    record = ItemTypeProps.get_record(1)
+    assert record.id==1
+    assert record.model.name=='prop1'
+    assert record.model.schema=={'item1': {}}
+    assert record.model.form=={'key': 'item1'}
+    assert record.model.forms==[{'key': 'item1'}]
+    assert record.model.delflg==False
+    assert record.model.sort==None
 
-    record = ItemTypeProps.get_record(new_prop.id)
-
-    ItemTypeProps.helper_remove_empty_required({
+    # helper_remove_empty_required
+    data = {
         'required': None,
         'properties': {
             'test': {
                 'items': None
-            }
+            },
+            'required': None
         }
-    })
-
-    with pytest.raises(TypeError):
-        records = ItemTypeProps.get_records([new_prop.id])
-
-    prop.revisions
-
-
-def test_itemsmetadata(app, db, item_type):
-    record = ItemsMetadata.create(data={
-            'version_id': {},
-            'url': {
-                'url': '',
-            }
-        }, _id=0, item_type_id=item_type.id)
-
-    item_metadata = ItemsMetadata.get_record(record.id)
-
-    ItemsMetadata.get_records([record.id])
-
-    ItemsMetadata.get_by_item_type_id(item_type.id)
-
-    ItemsMetadata.get_registered_item_metadata(item_type.id)
-
-    ItemsMetadata.get_by_object_id(item_metadata.id)
-
-    record.revisions
-    record.commit()
-    record.delete()
-
-
-def test_files_metadata(app, db):
-    record = FilesMetadata.create(data={}, pid=1, con=b'abc')
-
-    FilesMetadata.get_record(record.model.pid)
-
-    FilesMetadata.get_records(record.model.pid)
-
-    record.commit()
-
-    record.delete()
-
-
-def test_site_license(app, db):
-    site_license_address = SiteLicenseIpAddress(
-        organization_no=1,
-        start_ip_address='1.1.1.1',
-        finish_ip_address='0.0.0.0',
-    )
-    site_license = SiteLicenseInfo(
-        organization_name='text',
-        addresses=[site_license_address]
-    )
-
-    records = SiteLicense.get_records()
-
-    item_type_name = ItemTypeName(name='test')
-
-    SiteLicense.update({
-        'item_type': item_type_name.name,
-        'site_license': [
-            {
-                'receive_mail_flag': 'T',
-                'organization_name': 'T',
-                'mail_address': 'T',
-                'domain_name': 'T',
-                'addresses': [{
-                    'start_ip_address': '1',
-                    'finish_ip_address': '0'
-                }]
-            }
-        ]
-    })
-
-
-def test_feedback_mail_list(app, db, location):
-    app.config['WEKO_BUCKET_QUOTA_SIZE'] = 50 * 1024 * 1024 * 1024
-    app.config['WEKO_MAX_FILE_SIZE'] = 50 * 1024 * 1024 * 1024
-    app.config['FILES_REST_DEFAULT_STORAGE_CLASS'] = 'S'
-    app.config['FILES_REST_STORAGE_CLASS_LIST'] = {
-        'S': 'Standard',
-        'A': 'Archive',
     }
-    app.config['DEPOSIT_DEFAULT_JSONSCHEMA'] = 'deposits/'
-    'deposit-v1.0.0.json'
+    ItemTypeProps.helper_remove_empty_required(data)
+    assert data=={'properties': {'test': {'items': None}}}
 
-    deposit = WekoDeposit.create({})
-    db.session.commit()
+    # get_records
+    records = ItemTypeProps.get_record([0])
+    assert len(records)==0
+    records = ItemTypeProps.get_record([])
+    assert len(records)==1
+    assert records[0].id==1
+    assert records[0].model.name=='prop1'
+    assert records[0].model.schema=={'item1': {}}
+    assert records[0].model.form=={'key': 'item1'}
+    assert records[0].model.forms==[{'key': 'item1'}]
+    assert records[0].model.delflg==False
+    assert records[0].model.sort==None
+    records = ItemTypeProps.get_record([1])
+    assert len(records)==1
+    assert records[0].id==1
+    assert records[0].model.name=='prop1'
+    assert records[0].model.schema=={'item1': {}}
+    assert records[0].model.form=={'key': 'item1'}
+    assert records[0].model.forms==[{'key': 'item1'}]
+    assert records[0].model.delflg==False
+    assert records[0].model.sort==None
 
-    FeedbackMailList.update_by_list_item_id([deposit.id], [])
+    #     def revisions(self):
 
-    FeedbackMailList.get_mail_list_by_item_id([deposit.id])
-
-    FeedbackMailList.delete_by_list_item_id([deposit.id])
-
-
-def test_item_link(app, db, location):
-    app.config['WEKO_BUCKET_QUOTA_SIZE'] = 50 * 1024 * 1024 * 1024
-    app.config['WEKO_MAX_FILE_SIZE'] = 50 * 1024 * 1024 * 1024
-    app.config['FILES_REST_DEFAULT_STORAGE_CLASS'] = 'S'
-    app.config['FILES_REST_STORAGE_CLASS_LIST'] = {
-        'S': 'Standard',
-        'A': 'Archive',
-    }
-    app.config['DEPOSIT_DEFAULT_JSONSCHEMA'] = 'deposits/'
-    'deposit-v1.0.0.json'
-
-    deposit = WekoDeposit.create({})
-    db.session.commit()
-
-    item_link = ItemLink(deposit.pid.pid_value)
-
-    ItemLink.get_item_link_info(deposit.get('id'))
-
-    item_link.bulk_create([{
-        'item_id': 2,
-        'sele_id': 0
-    }])
-
-    item_link.update([
-        {
-            'item_id': 2,
-            'sele_id': 1
-        }
-    ])
-
-    item_link.update([
-        {
-            'item_id': 3,
-            'sele_id': 0
-        }
-    ])
-
-    ItemLink.get_item_link_info_output_xml(deposit.get('id'))
-
-
-
-
-# class ItemTypes(RecordBase):
-#     def create(cls, item_type_name=None, name=None, schema=None, form=None,
-#             An instance of the class :class:`jsonschema.FormatChecker`, which
-#             A :class:`jsonschema.IValidator` class that will be used to
-#     def update(cls, id_=0, name=None, schema=None, form=None, render=None,
-#     def update_item_type(cls, form, id_, name, render, result, schema):
-#     def __update_item_type(cls, id_, schema, form, render):
-#     def __update_metadata(
-#         def __diff(list1, list2):
-#         def __del_data(_json, diff_keys):
-#         def __get_delete_mapping_key(item_type_mapping, _delete_list):
-#         def __update_es_data(_es_data, _delete_list):
-#         def __update_db(db_records, _delete_list):
-#         def __update_record_metadata(_record_ids, _delete_list):
-#         def __update_item_metadata(_record_ids, _delete_list):
-#     def __get_records_by_item_type_name(cls, item_type_name):
-#     def get_record(cls, id_, with_deleted=False):
-#     def get_records(cls, ids, with_deleted=False):
-#     def get_by_id(cls, id_, with_deleted=False):
-#     def get_by_name_id(cls, name_id, with_deleted=False):
-#     def get_records_by_name_id(cls, name_id, with_deleted=False):
-#     def get_latest(cls, with_deleted=False):
-#     def get_latest_with_item_type(cls, with_deleted=False):
-#     def get_latest_custorm_harvesting(cls, with_deleted=False,
-#     def get_all(cls, with_deleted=False):
-#     def patch(self, patch):
-#     def commit(self, **kwargs):
-#             An instance of the class :class:`jsonschema.FormatChecker`, which
-#             A :class:`jsonschema.IValidator` class that will be used to
-#     def delete(self, force=False):
-#     def revert(self, revision_id):
-#     def restore(self):
-#     def revisions(self):
-# class ItemTypeEditHistory(object):
-#     def create_or_update(cls, id=0, item_type_id=None, user_id=None,
-#     def get_by_item_type_id(cls, item_type_id):
-# class Mapping(RecordBase):
-#     def create(cls, item_type_id=None, mapping=None):
-#             An instance of the class :class:`jsonschema.FormatChecker`, which
-#             # A :class:`jsonschema.IValidator` class that will be used to
-#     def get_record(cls, item_type_id, with_deleted=False):
-#     def get_records(cls, ids, with_deleted=False):
-#     def patch(self, patch):
-#     def commit(self, **kwargs):
-#             An instance of the class :class:`jsonschema.FormatChecker`, which
-#             A :class:`jsonschema.IValidator` class that will be used to
-#     def delete(self, force=False):
-#     def revert(self, revision_id):
-#     def revisions(self):
-#     def get_mapping_by_item_type_ids(cls, item_type_ids: list) -> list:
-# class ItemTypeProps(RecordBase):
-#     def create(cls, property_id=None, name=None, schema=None, form_single=None,
-#     def get_record(cls, property_id):
-#     def helper_remove_empty_required(cls, data):
-#     def get_records(cls, ids):
-#     def revisions(self):
 # class ItemsMetadata(RecordBase):
 #     def create(cls, data, id_=None, **kwargs):
-#             An instance of the class :class:`jsonschema.FormatChecker`, which
-#             A :class:`jsonschema.IValidator` class that will be used to
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_metadata_create -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_type_metadata_create(app, db):
+    _uuid2 = uuid.uuid4()
+    _uuid3 = uuid.uuid4()
+    _data = {'item1': None}
+
+    record1 = ItemsMetadata.create(data={'item1': None})
+    _id = str(record1.id)
+    assert record1=={'item1': None}
+    assert str(type(record1.id))=="<class 'uuid.UUID'>"
+    assert record1.model.item_type_id==None
+    assert record1.model.json=={'item1': None}
+    assert record1.model.version_id==1
+    record2 = ItemsMetadata.create(data=_data, id_=_uuid2)
+    assert record2=={'item1': None}
+    assert record2.id==_uuid2
+    assert record2.model.item_type_id==None
+    assert record2.model.json=={'item1': None}
+    assert record2.model.version_id==1
+    record3 = ItemsMetadata.create(data=_data, id_=_uuid3, item_type_id=1)
+    assert record3=={'item1': None}
+    assert record3.id==_uuid3
+    assert record3.model.item_type_id==1
+    assert record3.model.json=={'item1': None}
+    assert record3.model.version_id==1
+
+# class ItemsMetadata(RecordBase):
 #     def get_record(cls, id_, with_deleted=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_metadata_get_record -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_type_metadata_get_record(app, db):
+    _uuid1 = uuid.uuid4()
+    _uuid2 = uuid.uuid4()
+    _uuid3 = uuid.uuid4()
+    _data = {'item1': None}
+    record2 = ItemsMetadata.create(data=_data, id_=_uuid2, item_type_id=1)
+    record3 = ItemsMetadata.create(data=_data, id_=_uuid3, item_type_id=1)
+    ItemsMetadata.delete(record3, False)
+
+    with pytest.raises(Exception) as e:
+        ItemsMetadata.get_record(_uuid1)
+    assert e.type==NoResultFound
+    assert str(e.value)=="No row was found for one()"
+    record2 = ItemsMetadata.get_record(_uuid2)
+    assert record2=={'item1': None}
+    assert record2.id==_uuid2
+    assert record2.model.item_type_id==1
+    assert record2.model.json=={'item1': None}
+    assert record2.model.version_id==1
+    with pytest.raises(Exception) as e:
+        ItemsMetadata.get_record(str(_uuid3), False)
+    assert e.type==NoResultFound
+    assert str(e.value)=="No row was found for one()"
+    record3 = ItemsMetadata.get_record(str(_uuid3), True)
+    assert record3=={}
+    assert record3.id==_uuid2
+    assert record3.model.item_type_id==1
+    assert record3.model.json==None
+    assert record3.model.version_id==2
+
+# class ItemsMetadata(RecordBase):
 #     def __custom_item_metadata(cls, item_metadata: dict):
 #     def __replace_fqdn_of_file_metadata(cls, item_metadata: Union[list, dict]):
+
+# class ItemsMetadata(RecordBase):
 #     def get_records(cls, ids, with_deleted=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_metadata_get_records -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_type_metadata_get_records(app, db):
+    _uuid1 = uuid.uuid4()
+    _uuid2 = uuid.uuid4()
+    _uuid3 = uuid.uuid4()
+    _data = {'item1': None}
+    ItemsMetadata.create(data=_data, id_=_uuid2, item_type_id=1)
+    record3 = ItemsMetadata.create(data=_data, id_=_uuid3, item_type_id=1)
+    ItemsMetadata.delete(record3, False)
+
+    records = ItemsMetadata.get_records([str(_uuid1)])
+    assert len(records)==0
+    records = ItemsMetadata.get_records([str(_uuid2), str(_uuid3)], False)
+    assert len(records)==1
+    assert records[0]=={'item1': None}
+    assert records[0].id==_uuid2
+    assert records[0].model.item_type_id==1
+    assert records[0].model.json=={'item1': None}
+    assert records[0].model.version_id==1
+    records = ItemsMetadata.get_records([str(_uuid2), str(_uuid3)], True)
+    assert len(records)==2
+
+# class ItemsMetadata(RecordBase):
 #     def get_by_item_type_id(cls, item_type_id, with_deleted=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_metadata_get_by_item_type_id -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_type_metadata_get_by_item_type_id(app, db):
+    _uuid1 = uuid.uuid4()
+    _uuid2 = uuid.uuid4()
+    _data = {'item1': None}
+    ItemsMetadata.create(data=_data, id_=_uuid1, item_type_id=1)
+    record2 = ItemsMetadata.create(data=_data, id_=_uuid2, item_type_id=1)
+    ItemsMetadata.delete(record2, False)
+
+    records = ItemsMetadata.get_by_item_type_id(1, False)
+    assert len(records)==1
+    assert records[0].id==_uuid1
+    assert records[0].item_type_id==1
+    assert records[0].json=={'item1': None}
+    assert records[0].version_id==1
+    records = ItemsMetadata.get_by_item_type_id(1, True)
+    assert len(records)==2
+
+# class ItemsMetadata(RecordBase):
 #     def get_registered_item_metadata(cls, item_type_id):
+
+# class ItemsMetadata(RecordBase):
 #     def get_by_object_id(cls, object_id):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_metadata_get_by_object_id -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_type_metadata_get_by_object_id(app, db):
+    _uuid1 = uuid.uuid4()
+    _uuid2 = uuid.uuid4()
+    _uuid3 = uuid.uuid4()
+    _data = {'item1': None}
+    record2 = ItemsMetadata.create(data=_data, id_=_uuid2, item_type_id=1)
+    record3 = ItemsMetadata.create(data=_data, id_=_uuid3, item_type_id=1)
+    ItemsMetadata.delete(record3, False)
+
+    record1 = ItemsMetadata.get_by_object_id(str(_uuid1))
+    assert record1==None
+    record2 = ItemsMetadata.get_by_object_id(str(_uuid2))
+    assert record2.id==_uuid2
+    assert record2.item_type_id==1
+    assert record2.json=={'item1': None}
+    assert record2.version_id==1
+    record3 = ItemsMetadata.get_by_object_id(str(_uuid3))
+    assert record3.id==_uuid3
+    assert record3.item_type_id==1
+    assert record3.json==None
+    assert record3.version_id==2
+
+# class ItemsMetadata(RecordBase):
 #     def patch(self, patch):
 #     def commit(self, **kwargs):
-#             An instance of the class :class:`jsonschema.FormatChecker`, which
-#             A :class:`jsonschema.IValidator` class that will be used to
+
+# class ItemsMetadata(RecordBase):
 #     def delete(self, force=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_metadata_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_type_metadata_delete(app, db):
+    _uuid1 = uuid.uuid4()
+    _uuid2 = uuid.uuid4()
+    _uuid3 = uuid.uuid4()
+    _data = {'item1': None}
+    record1 = ItemsMetadata.create(data=_data, id_=_uuid1, item_type_id=1)
+    record2 = ItemsMetadata.create(data=_data, id_=_uuid2, item_type_id=1)
+    record3 = ItemsMetadata.create(data=_data, id_=_uuid3, item_type_id=1)
+
+    record1.model = None
+    with pytest.raises(Exception) as e:
+        ItemsMetadata.delete(record1)
+    assert e.type==MissingModelError
+    record2 = ItemsMetadata.delete(record2, False)
+    assert record2=={'item1': None}
+    assert record2.id==_uuid2
+    assert record2.model.item_type_id==1
+    assert record2.model.json==None
+    assert record2.model.version_id==2
+    record3 = ItemsMetadata.delete(record3, True)
+    assert record3==None
+
+# class ItemsMetadata(RecordBase):
 #     def revert(self, revision_id):
 #     def revisions(self):
+
 # class FilesMetadata(RecordBase):
 #     def create(cls, data, id_=None, **kwargs):
-#             An instance of the class :class:`jsonschema.FormatChecker`, which
-#             A :class:`jsonschema.IValidator` class that will be used to
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_files_metadata_create -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_files_metadata_create(app, db):
+    record = FilesMetadata.create(data={})
+    assert record.id==1
+    assert record.model.pid==None
+    assert record.model.contents==None
+    assert record.model.json=={}
+    assert record.model.version_id==1
+
+    record = FilesMetadata.create(data={'data': 'test'}, id_=3, pid=1, con=bytes('test content', 'utf-8'))
+    assert record.id==2
+    assert record.model.pid==1
+    assert record.model.contents==b'test content'
+    assert record.model.json=={'data': 'test'}
+    assert record.model.version_id==1
+
+# class FilesMetadata(RecordBase):
 #     def get_record(cls, id_, with_deleted=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_files_metadata_get_record -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_files_metadata_get_record(app, db):
+    FilesMetadata.create(data={'data': 'test'}, pid=1, con=bytes('test content', 'utf-8'))
+    FilesMetadata.create(data={})
+    
+    record = FilesMetadata.get_record(1)
+    assert record.id==1
+    assert record.model.pid==1
+    assert record.model.contents==b'test content'
+    assert record.model.json=={'data': 'test'}
+    assert record.model.version_id==1
+
+    with pytest.raises(Exception) as e:
+        FilesMetadata.get_record(None, False)
+    assert e.type==NoResultFound
+    assert str(e.value)=="No row was found for one()"
+    record = FilesMetadata.get_record(None, True)
+    assert record.id==2
+    assert record.model.pid==None
+    assert record.model.contents==None
+    assert record.model.json=={}
+    assert record.model.version_id==1
+
+# class FilesMetadata(RecordBase):
 #     def get_records(cls, ids, with_deleted=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_files_metadata_get_records -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_files_metadata_get_records(app, db):
+    FilesMetadata.create(data={'data': 'test'}, pid=1, con=bytes('test content', 'utf-8'))
+    FilesMetadata.create(data={}, pid=2)
+
+    records = FilesMetadata.get_records([1, 2], False)
+    assert len(records)==1
+    assert records[0].id==1
+    assert records[0].model.pid==1
+    assert records[0].model.contents==b'test content'
+    assert records[0].model.json=={'data': 'test'}
+    assert records[0].model.version_id==1
+    records = FilesMetadata.get_records([1, 2], True)
+    assert len(records)==2
+
+# class FilesMetadata(RecordBase):
 #     def patch(self, patch):
+
+# class FilesMetadata(RecordBase):
 #     def update_data(id, jsn):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_files_metadata_update_data -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_files_metadata_update_data(app, db):
+    FilesMetadata.create(data={}, pid=1, con=bytes('test content', 'utf-8'))
+
+    FilesMetadata.update_data(1, {'data': 'test'})
+    record = FilesMetadata.get_record(1)
+    assert record.id==1
+    assert record.model.pid==1
+    assert record.model.contents==b'test content'
+    assert record.model.json=={'data': 'test'}
+    assert record.model.version_id==1
+
+# class FilesMetadata(RecordBase):
 #     def commit(self, **kwargs):
-#             An instance of the class :class:`jsonschema.FormatChecker`, which
-#             A :class:`jsonschema.IValidator` class that will be used to
+
+# class FilesMetadata(RecordBase):
 #     def delete(self, force=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_files_metadata_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_files_metadata_delete(app, db):
+    record1 = FilesMetadata.create(data={'data': 'test'}, pid=1, con=bytes('test content', 'utf-8'))
+    record2 = FilesMetadata.create(data={'data': 'test'}, pid=2, con=bytes('test content', 'utf-8'))
+    record3 = FilesMetadata.create(data={'data': 'test'}, pid=3, con=bytes('test content', 'utf-8'))
+
+    record1.model = None
+    with pytest.raises(Exception) as e:
+        FilesMetadata.delete(record1)
+    assert e.type==MissingModelError
+
+    record2 = FilesMetadata.delete(record2, False)
+    assert record2.id==2
+    assert record2.model.pid==2
+    assert record2.model.contents==b'test content'
+    assert record2.model.json==None
+    assert record2.model.version_id==2
+
+    record3 = FilesMetadata.delete(record3, True)
+    assert record3==None
+
+# class FilesMetadata(RecordBase):
 #     def revert(self, revision_id):
 #     def revisions(self):
 # class RecordRevision(RecordBase):
 #     def __init__(self, model):
+# class SiteLicense(RecordBase):
+#     def get_records(cls):
 # class SiteLicense(RecordBase):
 #     def get_records(cls):
 #     def update(cls, obj):
