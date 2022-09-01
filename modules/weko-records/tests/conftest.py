@@ -51,7 +51,7 @@ from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISS
 from weko_admin.models import AdminSettings
 
 from weko_records import WekoRecords
-from weko_records.api import ItemTypes
+from weko_records.api import ItemTypes, Mapping
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
 from weko_records.models import ItemTypeName, SiteLicenseInfo, FeedbackMailList
 
@@ -167,20 +167,47 @@ def item_type(app, db):
         'table_row_map': {
             'schema': {
                 'properties': {
-                    'item_1': {}
+                    'item_1': {
+                        'type': 'string',
+                        'title': 'item_1',
+                        'format': 'text'
+                    }
                 }
             }
         },
         'table_row': ['1']
     }
 
+    _schema = {
+        'properties': {
+            'item_1': {
+                'type': 'string',
+                'title': 'item_1',
+                'format': 'text'
+            }
+        }
+    }
+
     return ItemTypes.create(
         name='test',
         item_type_name=_item_type_name,
-        schema={},
+        schema=_schema,
         render=_render,
         tag=1
     )
+
+@pytest.fixture()
+def item_type_mapping(app, db):
+    _mapping = {
+        'item_1': {
+            'jpcoar_mapping': {
+                'item': {
+                    '@value': 'interim'
+                }
+            }
+        }
+    }
+    return Mapping.create(1, _mapping)
 
 @pytest.fixture()
 def item_type2(app, db):
@@ -191,21 +218,47 @@ def item_type2(app, db):
         'table_row_map': {
             'schema': {
                 'properties': {
-                    'item_1': {}
+                    'item_1': {
+                        'type': 'string',
+                        'title': 'item_1',
+                        'format': 'text'
+                    }
                 }
             }
         },
         'table_row': ['1']
     }
 
+    _schema = {
+        'properties': {
+            'item_1': {
+                'type': 'string',
+                'title': 'item_1',
+                'format': 'text'
+            }
+        }
+    }
+
     return ItemTypes.create(
         name='test2',
         item_type_name=_item_type_name,
-        schema={},
+        schema=_schema,
         render=_render,
         tag=1
     )
 
+@pytest.fixture()
+def item_type_mapping2(app, db):
+    _mapping = {
+        'item_1': {
+            'jpcoar_mapping': {
+                'item': {
+                    '@value': 'interim'
+                }
+            }
+        }
+    }
+    return Mapping.create(2, _mapping)
 
 @pytest.fixture()
 def mock_execute():
@@ -251,3 +304,27 @@ def site_license_info(app, db):
     with db.session.begin_nested():
         db.session.add(record)
     return record
+
+@pytest.fixture
+def identifiers():
+    identifier = ['oai:weko3.example.org:00000965']
+    return identifiers
+
+@pytest.fixture
+def k_v():
+    k_v = [{'id': 'date_range1', 'mapping': [], 'contents': '', 'inputType': 'dateRange', 'input_Type': 'range', 'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}, '12': {'path': {'gte': '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211', 'lte': '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211'}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'date_EN_1', 'ja': 'date_JA_1'}, 'useable_status': True, 'default_display': True}, {"id": "text3", "mapping": [], "contents": "", "inputVal": "", "inputType": "text", "input_Type": "text", "item_value":  {"1": {"path": "", "path_type": "json"}, "12": {"path": "$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890", "path_type": "json"}, "20": {"path": "$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890", "path_type": "json"}}, "mappingFlg": False, "mappingName": "", "contents_value": {"en": "Summary", "ja": "概要"}, "useable_status": True, "default_display": True}
+           ]
+    return k_v
+
+@pytest.fixture
+def jsonpath():
+    return ['$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108', '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211',
+    '$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890',
+    '$.item_1551264846237.attribute_value_mlt[1:3].subitem_1551255577890']
+
+@pytest.fixture
+def meta():
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data", "meta00.json")
+    with open(filepath, encoding="utf-8") as f:
+            input_data = json.load(f)
+    return input_data
