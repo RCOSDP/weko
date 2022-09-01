@@ -1013,8 +1013,6 @@ def test_check_record_doi_indexes_acl_nologin(client_api, db_sessionlifetime):
 
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_check_record_doi_indexes_acl -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-
-
 @pytest.mark.parametrize(
     "id, status_code",
     [
@@ -1040,8 +1038,6 @@ def test_check_record_doi_indexes_acl(
 
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_check_record_doi_indexes -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-
-
 @pytest.mark.parametrize(
     "id, status_code",
     [
@@ -1057,7 +1053,7 @@ def test_check_record_doi_indexes(
     )
     res = client_api.get(url)
     assert res.status_code == status_code
-    assert res.data == b'{"code":0}\n'
+    assert res.data == b'{"code":-1}\n'
     res = client_api.get("{}?doi=1".format(url))
     assert res.status_code == status_code
-    assert res.data == b'{"code":0}\n'
+    assert res.data == b'{"code":-1}\n'

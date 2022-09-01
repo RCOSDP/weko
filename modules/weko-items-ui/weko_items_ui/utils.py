@@ -581,14 +581,13 @@ def update_json_schema_by_activity_id(json_data, activity_id):
     redis_connection = RedisConnection()
     sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
     if not sessionstore.redis.exists(
-        'updated_json_schema_{}'.format(activity_id)) \
-        and not sessionstore.get(
-            'updated_json_schema_{}'.format(activity_id)):
+        'updated_json_schema_{}'.format(activity_id)) or not sessionstore.get(
+        'updated_json_schema_{}'.format(activity_id)):
         return None
     session_data = sessionstore.get(
         'updated_json_schema_{}'.format(activity_id))
     error_list = json.loads(session_data.decode('utf-8'))
-
+    #current_app.logger.error("error_list:{}".format(error_list))
     if error_list:
         for item in error_list['required']:
             node = parse_node_str_to_json_schema(item)
@@ -613,7 +612,7 @@ def update_schema_form_by_activity_id(schema_form, activity_id):
     sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
     if not sessionstore.redis.exists(
         'updated_json_schema_{}'.format(activity_id)) \
-        and not sessionstore.get(
+        or not sessionstore.get(
             'updated_json_schema_{}'.format(activity_id)):
         return None
     session_data = sessionstore.get(
@@ -1317,13 +1316,14 @@ def write_files(item_types_data, export_path, list_item_role):
     @return:
     """
     current_app.logger.debug("item_types_data:{}".format(item_types_data))
+    current_app.logger.debug("export_path:{}".format(export_path))
+    current_app.logger.debug("list_item_role:{}".format(list_item_role))
     file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
     for item_type_id in item_types_data:
         
         current_app.logger.debug("item_type_id:{}".format(item_type_id))
         current_app.logger.debug("item_types_data[item_type_id]['recids']:{}".format(item_types_data[item_type_id]['recids']))
-        current_app.logger.debug("list_item_role:{}".format(list_item_role))
         headers, records = make_stats_file(
             item_type_id,
             item_types_data[item_type_id]['recids'],
@@ -1360,6 +1360,7 @@ def export_items(post_data):
 
     :return: JSON, BIBTEX
     """
+    current_app.logger.debug("post_data:{}".format(post_data))
     include_contents = True if \
         post_data.get('export_file_contents_radio') == 'True' else False
     export_format = post_data['export_format_radio']
@@ -1465,7 +1466,20 @@ def _export_item(record_id,
                  include_contents,
                  tmp_path=None,
                  records_data=None):
-    """Exports files for record according to view permissions."""
+    """Exports files for record according to view permissions.
+
+    Args:
+        record_id (_type_): _description_
+        export_format (_type_): _description_
+        include_contents (bool): _description_
+        tmp_path (_type_, optional): _description_. Defaults to None.
+        records_data (dict, optional): _description_. Defaults to None.
+    """
+    # current_app.logger.error("record_id:{}".format(record_id))
+    # current_app.logger.error("export_format:{}".format(export_format))
+    # current_app.logger.error("include_contents:{}".format(include_contents))
+    # current_app.logger.error("tmp_path:{}".format(tmp_path))
+    # current_app.logger.error("records_data:{}".format(records_data))
     def del_hide_sub_metadata(keys, metadata):
         """Delete hide metadata."""
         if isinstance(metadata, dict):
@@ -1549,7 +1563,7 @@ def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,
         replace_license (bool): Replace license flag.
     """
     from weko_records_ui.utils import hide_item_metadata, replace_license_free
-
+    # current_app.logger.error("record_metadata:{}".format(record_metadata))
     # Hide private metadata
     if hide_item:
         hide_item_metadata(record_metadata)
@@ -1903,6 +1917,7 @@ def validate_user_mail_and_index(request_data):
     :param request_data:
     :return:
     """
+    # current_app.logger.error("request_data:{}".format(request_data))
     users = request_data.get('user_to_check', [])
     keys = request_data.get('user_key_to_check', [])
     auto_set_index_action = request_data.get('auto_set_index_action', False)
@@ -1994,6 +2009,7 @@ def hide_meta_data_for_role(record):
 
     # Admin users
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+
     roles = current_user.roles if current_user else []
     for role in list(roles):
         if role.name in supers:
@@ -2362,6 +2378,7 @@ def get_ranking(settings):
     :param settings: ranking setting.
     :return:
     """
+    current_app.logger.error("settings:{}".format(settings))
     index_info = Indexes.get_browsing_info()
     # get statistical period
     end_date_original = date.today()  # - timedelta(days=1)
@@ -2507,7 +2524,7 @@ def save_title(activity_id, request_data):
     item_type_id = db_activity.workflow.itemtype.id
     if item_type_id:
         item_type_mapping = Mapping.get_record(item_type_id)
-        current_app.logger.debug("item_type_mapping:{}".format(item_type_mapping))
+        # current_app.logger.debug("item_type_mapping:{}".format(item_type_mapping))
         key, key_child = get_key_title_in_item_type_mapping(item_type_mapping)
     if key and key_child:
         title = get_title_in_request(request_data, key, key_child)
@@ -2662,6 +2679,7 @@ def make_stats_file_with_permission(item_type_id, recids,
     # current_app.logger.error("item_type_id:{}".format(item_type_id))
     # current_app.logger.error("recids:{}".format(recids))
     # current_app.logger.error("records_metadata:{}".format(records_metadata))
+    # current_app.logger.error("records_metadata:{}".format(type(records_metadata)))
     # current_app.logger.error("permissions:{}".format(permissions))
     from weko_records_ui.utils import check_items_settings, hide_by_email
     from weko_records_ui.views import escape_newline, escape_str

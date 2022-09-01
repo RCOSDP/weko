@@ -25,10 +25,13 @@ import os
 import shutil
 import tempfile
 import uuid
+import time
 from datetime import datetime
 from os.path import dirname, exists, join
 import copy
 import pytest
+from kombu import Exchange, Queue
+from mock import patch
 from click.testing import CliRunner
 from flask import Blueprint, Flask
 from flask_assets import assets
@@ -54,6 +57,8 @@ from invenio_deposit.config import (
     DEPOSIT_DEFAULT_STORAGE_CLASS,
     DEPOSIT_RECORDS_UI_ENDPOINTS,
     DEPOSIT_REST_ENDPOINTS,
+    DEPOSIT_DEFAULT_JSONSCHEMA,
+    DEPOSIT_JSONSCHEMAS_PREFIX,
 )
 from invenio_deposit.ext import InvenioDeposit, InvenioDepositREST
 from invenio_files_rest import InvenioFilesREST
@@ -64,13 +69,14 @@ from invenio_indexer import InvenioIndexer
 from invenio_jsonschemas import InvenioJSONSchemas
 from invenio_oaiserver import InvenioOAIServer
 from invenio_pidrelations import InvenioPIDRelations
+from celery.messaging import establish_connection
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore import InvenioPIDStore
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from invenio_records import InvenioRecords
 from invenio_records_rest import InvenioRecordsREST
 from invenio_rest import InvenioREST
-from invenio_search import InvenioSearch, RecordsSearch
+from invenio_search import InvenioSearch, RecordsSearch, current_search, current_search_client
 from invenio_stats import InvenioStats
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 from invenio_theme import InvenioTheme
@@ -80,12 +86,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy_utils.functions import create_database, database_exists
 from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
-from weko_admin.models import SessionLifetime
+from weko_admin.models import SessionLifetime,RankingSettings
 from weko_deposit import WekoDeposit
-from weko_deposit.config import DEPOSIT_RECORDS_API
+from weko_deposit.api import WekoIndexer
+from weko_deposit.config import DEPOSIT_RECORDS_API,WEKO_DEPOSIT_ITEMS_CACHE_PREFIX
 from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
 from weko_index_tree.api import Indexes
-from weko_index_tree.config import WEKO_INDEX_TREE_REST_ENDPOINTS
+from weko_index_tree.config import WEKO_INDEX_TREE_REST_ENDPOINTS,WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER
 from weko_records import WekoRecords
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records_ui import WekoRecordsUI
@@ -93,12 +100,14 @@ from weko_records_ui.config import WEKO_RECORDS_UI_LICENSE_DICT
 from weko_schema_ui import WekoSchemaUI
 from weko_schema_ui.models import OAIServerSchema
 from weko_search_ui import WekoSearchREST, WekoSearchUI
-from weko_search_ui.config import WEKO_SEARCH_REST_ENDPOINTS,RECORDS_REST_SORT_OPTIONS
+from weko_search_ui.config import WEKO_SEARCH_REST_ENDPOINTS,RECORDS_REST_SORT_OPTIONS,INDEXER_DEFAULT_DOCTYPE,INDEXER_FILE_DOC_TYPE
 from weko_theme import WekoTheme
 from weko_theme.views import blueprint as weko_theme_blueprint
 from weko_user_profiles.models import UserProfile
-from weko_user_profiles.config import WEKO_USERPROFILES_ROLES
+from weko_user_profiles.config import WEKO_USERPROFILES_ROLES,WEKO_USERPROFILES_GENERAL_ROLE
+from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX
 from weko_workflow import WekoWorkflow
+from weko_authors.models import AuthorsPrefixSettings,Authors,AuthorsAffiliationSettings
 from weko_workflow.models import (
     Action,
     ActionStatus,
@@ -115,6 +124,7 @@ from tests.helpers import create_record, json_data
 from weko_items_ui import WekoItemsUI
 from weko_items_ui.views import blueprint as weko_items_ui_blueprint
 from weko_items_ui.views import blueprint_api as weko_items_ui_blueprint_api
+from weko_groups import WekoGroups
 
 from invenio_pidrelations.config import PIDRELATIONS_RELATION_TYPES
 
@@ -172,7 +182,7 @@ def base_app(instance_path):
         WEKO_BUCKET_QUOTA_SIZE=50 * 1024 * 1024 * 1024,
         WEKO_MAX_FILE_SIZE=50 * 1024 * 1024 * 1024,
         SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
-        SEARCH_INDEX_PREFIX="{}-".format(os.environ.get("SEARCH_INDEX_PREFIX")),
+        SEARCH_INDEX_PREFIX="{}-".format('test'),
         SEARCH_CLIENT_CONFIG=dict(timeout=60, max_retries=5),
         OAISERVER_ID_PREFIX="oai:inveniosoftware.org:recid/",
         OAISERVER_RECORD_INDEX="_all",
@@ -192,10 +202,10 @@ def base_app(instance_path):
         DEPOSIT_RECORDS_UI_ENDPOINTS=DEPOSIT_RECORDS_UI_ENDPOINTS,
         DEPOSIT_REST_ENDPOINTS=DEPOSIT_REST_ENDPOINTS,
         DEPOSIT_DEFAULT_STORAGE_CLASS=DEPOSIT_DEFAULT_STORAGE_CLASS,
-        WEKO_SEARCH_REST_ENDPOINTS=WEKO_SEARCH_REST_ENDPOINTS,
+        
         WEKO_RECORDS_UI_LICENSE_DICT=WEKO_RECORDS_UI_LICENSE_DICT,
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format(
-            os.environ.get("SEARCH_INDEX_PREFIX")
+            'test'
         ),
         WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
         WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS=WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS,
@@ -207,7 +217,22 @@ def base_app(instance_path):
         PIDRELATIONS_RELATION_TYPES=PIDRELATIONS_RELATION_TYPES,
         WEKO_USERPROFILES_ROLES=WEKO_USERPROFILES_ROLES,
         EMAIL_DISPLAY_FLG = True,
+        SEARCH_UI_SEARCH_INDEX="test-weko",
+        WEKO_USERPROFILES_GENERAL_ROLE=WEKO_USERPROFILES_GENERAL_ROLE,
+        CACHE_REDIS_DB = 0,
+        WEKO_DEPOSIT_ITEMS_CACHE_PREFIX=WEKO_DEPOSIT_ITEMS_CACHE_PREFIX,
+        INDEXER_DEFAULT_DOCTYPE=INDEXER_DEFAULT_DOCTYPE,
+        INDEXER_FILE_DOC_TYPE=INDEXER_FILE_DOC_TYPE,
+        WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER=WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER,
+        DEPOSIT_DEFAULT_JSONSCHEMA=DEPOSIT_DEFAULT_JSONSCHEMA,
+        DEPOSIT_JSONSCHEMAS_PREFIX=DEPOSIT_JSONSCHEMAS_PREFIX,
+        WEKO_SEARCH_REST_ENDPOINTS=WEKO_SEARCH_REST_ENDPOINTS,
+        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
     )
+    
+    app_.config['WEKO_SEARCH_REST_ENDPOINTS']['recid']['search_index']='test-weko'
+    # tmp = app_.config['RECORDS_REST_SORT_OPTIONS']['tenant1-weko']
+    # app_.config['RECORDS_REST_SORT_OPTIONS']['test-weko']=tmp
     # Babel(app_)
     InvenioI18N(app_)
     InvenioAssets(app_)
@@ -224,25 +249,27 @@ def base_app(instance_path):
     # InvenioPIDRelations(app_)
     InvenioRecords(app_)
     # InvenioRecordsREST(app_)
-    # InvenioFilesREST(app_)
-    # InvenioJSONSchemas(app_)
+    InvenioFilesREST(app_)
+    InvenioJSONSchemas(app_)
     # InvenioOAIServer(app_)
 
-    InvenioSearch(app_)
+    search = InvenioSearch(app_)
+ 
     # WekoSchemaUI(app_)
     InvenioStats(app_)
 
     # InvenioAdmin(app_)
-    # Menu(app_)
-    # WekoRecords(app_)
-    # WekoDeposit(app_)
+    Menu(app_)
+    WekoRecords(app_)
+    WekoDeposit(app_)
     WekoWorkflow(app_)
+    WekoGroups(app_)
     # WekoAdmin(app_)
     # WekoTheme(app_)
     # WekoRecordsUI(app_)
     # InvenioCommunities(app_)
 
-    # InvenioIndexer(app_)
+    InvenioIndexer(app_)
     # WekoSearchREST(app_)
     # WekoIndexTree(app_)
     # WekoIndexTreeREST(app_)
@@ -265,7 +292,9 @@ def base_app(instance_path):
 
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
     current_assets.collect.collect()
+
     return app_
+
 
 
 @pytest.yield_fixture()
@@ -280,6 +309,7 @@ def client_api(app):
     app.register_blueprint(weko_items_ui_blueprint_api, url_prefix="/api/items")
     with app.test_client() as client:
         yield client
+
 
 
 @pytest.yield_fixture()
@@ -306,6 +336,29 @@ def db(app):
     yield db_
     db_.session.remove()
     db_.drop_all()
+
+@pytest.fixture()
+def esindex(app,db_records):
+    with open("tests/data/mappings/item-v1.0.0.json","r") as f:
+        mapping = json.load(f)
+
+    search = LocalProxy(lambda: app.extensions["invenio-search"])
+
+    with app.test_request_context():
+        search.client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
+        search.client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
+        # print(current_search_client.indices.get_alias())
+    
+    for depid, recid, parent, doi, record, item in db_records:
+        search.client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
+    
+
+    yield search
+
+    with app.test_request_context():
+        search.client.indices.delete_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
+        search.client.indices.delete(index=app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
+        
 
 
 @pytest.fixture()
@@ -416,25 +469,44 @@ def users(app, db):
         ds.add_role_to_user(originalroleuser, originalrole)
         ds.add_role_to_user(originalroleuser2, originalrole)
         ds.add_role_to_user(originalroleuser2, repoadmin_role)
+        
 
     return [
-        {"email": contributor.email, "id": contributor.id, "obj": copy.deepcopy(contributor)},
-        {"email": repoadmin.email, "id": repoadmin.id, "obj": copy.deepcopy(repoadmin)},
-        {"email": sysadmin.email, "id": sysadmin.id, "obj": copy.deepcopy(sysadmin)},
-        {"email": comadmin.email, "id": comadmin.id, "obj": copy.deepcopy(comadmin)},
-        {"email": generaluser.email, "id": generaluser.id, "obj": copy.deepcopy(sysadmin)},
+        {"email": contributor.email, "id": contributor.id, "obj": contributor},
+        {"email": repoadmin.email, "id": repoadmin.id, "obj": repoadmin},
+        {"email": sysadmin.email, "id": sysadmin.id, "obj": sysadmin},
+        {"email": comadmin.email, "id": comadmin.id, "obj": comadmin},
+        {"email": generaluser.email, "id": generaluser.id, "obj": sysadmin},
         {
             "email": originalroleuser.email,
             "id": originalroleuser.id,
-            "obj": copy.deepcopy(originalroleuser),
+            "obj": originalroleuser,
         },
         {
             "email": originalroleuser2.email,
             "id": originalroleuser2.id,
-            "obj": copy.deepcopy(originalroleuser2),
+            "obj": originalroleuser2,
         },
-        {"email": user.email, "id": user.id, "obj": copy.deepcopy(user)},
+        {"email": user.email, "id": user.id, "obj": user},
     ]
+    # return [
+    #     {"email": contributor.email, "id": contributor.id, "obj": copy.deepcopy(contributor)},
+    #     {"email": repoadmin.email, "id": repoadmin.id, "obj": copy.deepcopy(repoadmin)},
+    #     {"email": sysadmin.email, "id": sysadmin.id, "obj": copy.deepcopy(sysadmin)},
+    #     {"email": comadmin.email, "id": comadmin.id, "obj": copy.deepcopy(comadmin)},
+    #     {"email": generaluser.email, "id": generaluser.id, "obj": copy.deepcopy(sysadmin)},
+    #     {
+    #         "email": originalroleuser.email,
+    #         "id": originalroleuser.id,
+    #         "obj": copy.deepcopy(originalroleuser),
+    #     },
+    #     {
+    #         "email": originalroleuser2.email,
+    #         "id": originalroleuser2.id,
+    #         "obj": copy.deepcopy(originalroleuser2),
+    #     },
+    #     {"email": user.email, "id": user.id, "obj": copy.deepcopy(user)},
+    # ]
 
 
 @pytest.fixture()
@@ -529,10 +601,7 @@ def db_itemtype(app, db):
 
 
 @pytest.fixture()
-def db_records(db, instance_path):
-
-
-
+def db_records(db,instance_path,users):
     with db.session.begin_nested():
         Location.query.delete()
         loc = Location(name="local", uri=instance_path, default=True)
@@ -552,16 +621,18 @@ def db_records(db, instance_path):
             'parent': 0,
             'value': 'IndexA',
         }
-
-    Indexes.create(0, index_metadata)
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        Indexes.create(0, index_metadata)
     index_metadata = {
             'id': 2,
             'parent': 0,
             'value': 'IndexB',
         }
-    Indexes.create(0, index_metadata)
-        
+    
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        Indexes.create(0, index_metadata)
 
+ 
     yield result
 
 
@@ -715,3 +786,62 @@ def db_activity(db, db_records, db_itemtype, db_workflow, users):
         db.session.add(rel)
 
     return {"activity": activity, "recid": recid}
+
+
+@pytest.fixture()
+def db_author(db):
+    prefix1 = AuthorsPrefixSettings(name="WEKO",scheme="WEKO",url="")
+    prefix2 = AuthorsPrefixSettings(name="ORCID",scheme="ORCID",url="https://orcid.org/##")
+    prefix3 = AuthorsPrefixSettings(name="CiNii",scheme="CiNii",url="https://ci.nii.ac.jp/author/##")
+    prefix4 = AuthorsPrefixSettings(name="KAKEN2",scheme="KAKEN2",url="https://nrid.nii.ac.jp/nrid/##")
+    prefix5 = AuthorsPrefixSettings(name="ROR",scheme="ROR",url="https://ror.org/##")
+
+    affiliation_prefix1 =AuthorsAffiliationSettings(name="ISNI",scheme="ISNI",url="http://www.isni.org/isni/##")
+    affiliation_prefix2 =AuthorsAffiliationSettings(name="GRID",scheme="GRID",url="https://www.grid.ac/institutes/#")
+    affiliation_prefix3 =AuthorsAffiliationSettings(name="Ringgold",scheme="Ringgold",url="")
+    affiliation_prefix4 =AuthorsAffiliationSettings(name="kakenhi",scheme="kakenhi",url="")
+
+    author_json = {"affiliationInfo": [{"affiliationNameInfo": [{"affiliationName": "xxx", "affiliationNameLang": "ja", "affiliationNameShowFlg": "true"}], "identifierInfo": [{"affiliationId": "xxx", "affiliationIdType": "1", "identifierShowFlg": "true"}]}], "authorIdInfo": [{"authorId": "1", "authorIdShowFlg": "true", "idType": "1"}, {"authorId": "xxxx", "authorIdShowFlg": "true", "idType": "2"}], "authorNameInfo": [{"familyName": "LAST", "firstName": "FIRST", "fullName": "LAST FIRST", "language": "en", "nameFormat": "familyNmAndNm", "nameShowFlg": "true"}], "emailInfo": [{"email": "hoge@hoge"}], "gather_flg": 0, "id": {"_id": "sBXZ7oIBMJ49WnxY8sLQ", "_index": "tenant1-authors-author-v1.0.0", "_primary_term": 4, "_seq_no": 0, "_shards": {"failed": 0, "successful": 1, "total": 2}, "_type": "author-v1.0.0", "_version": 1, "result": "created"}, "is_deleted": "false", "pk_id": "1"}
+    author1 = Authors(json=author_json)
+
+
+    with db.session.begin_nested():
+        db.session.add(prefix1)
+        db.session.add(prefix2)
+        db.session.add(prefix3)
+        db.session.add(prefix4)
+        db.session.add(prefix5)
+        db.session.add(affiliation_prefix1)
+        db.session.add(affiliation_prefix2)
+        db.session.add(affiliation_prefix3)
+        db.session.add(affiliation_prefix4)
+        db.session.add(author1)
+    
+    return {"author_prefix":[prefix1,prefix2,prefix3,prefix4,prefix5],"affiliation_prefix":[affiliation_prefix1,affiliation_prefix2,affiliation_prefix3,affiliation_prefix4],"author":[author1]}
+
+@pytest.fixture()
+def db_ranking(db):
+    ranking_settings = RankingSettings(is_show=True,new_item_period=12,statistical_period=365,display_rank=10,rankings={"new_items": True, "most_reviewed_items": True, "most_downloaded_items": True, "most_searched_keywords": True, "created_most_items_user": True})
+    with db.session.begin_nested():
+        db.session.add(ranking_settings)
+
+    return {"settings":ranking_settings}
+
+# @pytest.fixture(autouse=True)
+# def slow_down_tests():
+#     yield
+#     time.sleep(1)
+
+
+# @pytest.fixture()
+# def queue(app):
+#     """Get queue object for testing bulk operations."""
+#     queue = app.config["INDEXER_MQ_QUEUE"]
+
+#     with app.app_context():
+#         with establish_connection() as c:
+#             q = queue(c)
+#             q.declare()
+#             q.purge()
+
+#     return queue

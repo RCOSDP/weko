@@ -23,6 +23,7 @@
 import pickle
 from datetime import date, datetime
 from functools import partial
+from socketserver import DatagramRequestHandler
 
 from flask import current_app, json
 from flask_babelex import gettext as _
@@ -89,7 +90,7 @@ class Indexes(object):
 
             data["coverpage_state"] = False
             data["recursive_coverpage_check"] = False
-
+            
             group_list = ''
             groups = Group.query.all()
             for group in groups:
@@ -101,6 +102,7 @@ class Indexes(object):
             data["browsing_group"] = group_list
             data["contribute_group"] = group_list
 
+            
             if int(pid) == 0:
                 pid_info = cls.get_root_index_count()
                 data["position"] = 0 if not pid_info else \
@@ -141,7 +143,6 @@ class Indexes(object):
 
                 else:
                     return
-
             _add_index(data)
         except IntegrityError as ie:
             if 'uix_position' in ''.join(ie.args):

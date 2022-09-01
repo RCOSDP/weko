@@ -10,7 +10,8 @@ from invenio_records import Record
 from weko_records.api import ItemsMetadata, WekoRecord
 from weko_deposit.pidstore import weko_deposit_minter
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
-from weko_deposit.api import WekoDeposit
+from weko_deposit.api import WekoDeposit, WekoIndexer
+from invenio_search import InvenioSearch, RecordsSearch, current_search, current_search_client
 from invenio_search import current_search
 import pytest
 from mock import patch
@@ -29,9 +30,6 @@ def create_record(record_data, item_data):
         item_data = copy.deepcopy(item_data)
         rec_uuid = uuid.uuid4()
 
-        # dep = WekoDeposit.create(record_data,recid=record_data["recid"])
-        # dep.commit()
-        
         recid = PersistentIdentifier.create('recid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
         depid = PersistentIdentifier.create('depid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
         rel = PIDRelation.create(recid,depid,3)
@@ -49,6 +47,10 @@ def create_record(record_data, item_data):
             db.session.add(rel)
             
         record = WekoRecord.create(record_data, id_=rec_uuid)
+        deposit = WekoDeposit(record, record.model)
+
+        deposit.commit()
+
         item = ItemsMetadata.create(item_data, id_=rec_uuid)
     
     return depid, recid,parent,doi,record, item

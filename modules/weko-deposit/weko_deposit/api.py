@@ -682,7 +682,7 @@ class WekoDeposit(Deposit):
             self['$schema'] = current_app.extensions['invenio-jsonschemas']. \
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
         self.is_edit = True
-
+        
         deposit = super(WekoDeposit, self).publish(pid, id_)
         # update relation version current to ES
         recid = PersistentIdentifier.query.filter_by(
