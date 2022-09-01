@@ -1,23 +1,31 @@
 [
     {
+      "recid": "1",
       "year": 2015,
       "stars": 4,
-      "title": "Back to the Future",
+      "title": ["Back to the Future"],
+      "item_title": "Back to the Future",
       "system_file":"exists"
     },
     {
+      "recid": "2",
       "year": 2042,
       "stars": 3,
-      "title": "Back to the Past"
+      "title": ["Back to the Past"],
+      "item_title":"Back to the Past"
     },
     {
+      "recid": "3",
       "year": 1985,
       "stars": 4,
-      "title": "The Hitchhiker's Guide to the Galaxy"
+      "title": ["The Hitchhiker's Guide to the Galaxy"],
+      "item_title": "The Hitchhiker's Guide to the Galaxy"
     },
     {
+      "recid": "4",
       "year": 4242,
       "stars": 5,
-      "title": "Unknown film"
+      "title": ["Unknown film"],
+      "item_title": "Unknown film"
     }
 ]

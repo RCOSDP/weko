@@ -23,6 +23,7 @@
 import os
 import sys
 import shutil
+import uuid
 import tempfile
 
 import pytest
@@ -52,7 +53,7 @@ from weko_admin.models import AdminSettings
 from weko_records import WekoRecords
 from weko_records.api import ItemTypes
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
-from weko_records.models import ItemTypeName
+from weko_records.models import ItemTypeName, SiteLicenseInfo, FeedbackMailList
 
 from tests.helpers import json_data, create_record
 
@@ -237,3 +238,16 @@ def admin_settings(app, db):
     
     with db.session.begin_nested():
         db.session.add(setting)
+
+
+@pytest.fixture()
+def site_license_info(app, db):
+    record = SiteLicenseInfo(
+        organization_id=1,
+        organization_name='test',
+        domain_name='domain',
+        mail_address='nii@nii.co.jp',
+        receive_mail_flag=False)
+    with db.session.begin_nested():
+        db.session.add(record)
+    return record

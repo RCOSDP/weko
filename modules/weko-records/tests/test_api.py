@@ -35,7 +35,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from weko_records.api import FeedbackMailList, FilesMetadata, ItemLink, \
     ItemsMetadata, ItemTypeEditHistory, ItemTypeNames, ItemTypeProps, \
-    ItemTypes, Mapping, SiteLicense, RecordBase
+    ItemTypes, Mapping, SiteLicense, RecordBase, WekoRecord
 from weko_records.models import ItemType, ItemTypeName, \
     SiteLicenseInfo, SiteLicenseIpAddress
 from jsonschema.validators import Draft4Validator
@@ -1241,12 +1241,59 @@ def test_files_metadata_delete(app, db):
 #     def revisions(self):
 # class RecordRevision(RecordBase):
 #     def __init__(self, model):
+
 # class SiteLicense(RecordBase):
 #     def get_records(cls):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_site_license_get_records -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_site_license_get_records(app, db, site_license_info):
+    records = SiteLicense.get_records()
+    assert len(records)==1
+    assert records[0]['organization_name']=='test'
+    assert records[0]['domain_name']=='domain'
+    assert records[0]['mail_address']=='nii@nii.co.jp'
+    assert records[0]['addresses']==[]
+
 # class SiteLicense(RecordBase):
-#     def get_records(cls):
 #     def update(cls, obj):
-#         def get_addr(lst, id_):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_site_license_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_site_license_update(app, db, site_license_info):
+    _none_obj = {}
+    _no_data_obj = {
+        'item_type': {},
+        'site_license': []
+    }
+    _test_obj = {
+        'item_type': {},
+        'site_license': [
+            {
+                'mail_address': 'nii@nii.co.jp',
+                'receive_mail_flag': True,
+                'organization_name': 'test1',
+                'domain_name': 'domain1',
+                'addresses': [
+                    {
+                        'start_ip_address': [0, 0, 0, 0],
+                        'finish_ip_address': [255, 255, 255, 255]
+                    }
+                ]
+            }
+        ]
+    }
+
+    SiteLicense.update(_none_obj)
+    records = SiteLicense.get_records()
+    assert len(records)==1
+    SiteLicense.update(_no_data_obj)
+    records = SiteLicense.get_records()
+    assert len(records)==0
+    SiteLicense.update(_test_obj)
+    records = SiteLicense.get_records()
+    assert len(records)==1
+    assert records[0]['organization_name']=='test1'
+    assert records[0]['domain_name']=='domain1'
+    assert records[0]['mail_address']=='nii@nii.co.jp'
+    assert records[0]['addresses']==[{'finish_ip_address': '255.255.255.255', 'start_ip_address': '0.0.0.0'}]
+
 # class RevisionsIterator(object):
 #     def __init__(self, model):
 #     def __len__(self):
@@ -1255,25 +1302,217 @@ def test_files_metadata_delete(app, db):
 #     def __next__(self):
 #     def __getitem__(self, revision_id):
 #     def __contains__(self, revision_id):
+
 # class WekoRecord(Record):
 #     def get_record(cls, pid, id_, with_deleted=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_wekorecord_get_record -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_wekorecord_get_record(app, db, records):
+    FilesMetadata.create(data={'data': 'test'}, pid=1, con=bytes('test content', 'utf-8'))
+
+    r = WekoRecord.get_record(1, records[0][0].object_uuid)
+    assert len(r)==1
+    assert r[0].id==1
+    assert r[0].model.pid==1
+    assert r[0].model.contents==b'test content'
+    assert r[0].model.json=={'data': 'test'}
+    assert r[0].model.version_id==1
+
+# class WekoRecord(Record):
 #     def pid(self):
 #     def depid(self):
+
 # class FeedbackMailList(object):
 #     def update(cls, item_id, feedback_maillist):
 #     def update_by_list_item_id(cls, item_ids, feedback_maillist):
 #     def get_mail_list_by_item_id(cls, item_id):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_feedback_mail_list_create_and_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_feedback_mail_list_create_and_update(app, db):
+    _item_id1 = uuid.uuid4()
+    _item_id2 = uuid.uuid4()
+    _feedback_maillist1 = []
+    _feedback_maillist2 = ['nii2@nii.co.jp']
+    _feedback_maillist3 = ['nii3@nii.co.jp']
+
+    flag = FeedbackMailList.update(1, _feedback_maillist1)
+    assert flag==False
+    record0 = FeedbackMailList.get_mail_list_by_item_id(1)
+    assert record0==[]
+    record1 = FeedbackMailList.get_mail_list_by_item_id(_item_id1)
+    assert record1==[]
+    flag = FeedbackMailList.update(_item_id1, _feedback_maillist1)
+    record1 = FeedbackMailList.get_mail_list_by_item_id(_item_id1)
+    assert flag==True
+    assert record1==[]
+    flag = FeedbackMailList.update(_item_id1, _feedback_maillist2)
+    record1 = FeedbackMailList.get_mail_list_by_item_id(_item_id1)
+    assert flag==True
+    assert record1==['nii2@nii.co.jp']
+    FeedbackMailList.update_by_list_item_id([_item_id1, _item_id2], _feedback_maillist3)
+    record1 = FeedbackMailList.get_mail_list_by_item_id(_item_id1)
+    record2 = FeedbackMailList.get_mail_list_by_item_id(_item_id2)
+    assert record1==['nii3@nii.co.jp']
+    assert record2==['nii3@nii.co.jp']
+
+# class FeedbackMailList(object):
 #     def delete(cls, item_id):
 #     def delete_without_commit(cls, item_id):
 #     def delete_by_list_item_id(cls, item_ids):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_feedback_mail_list_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_feedback_mail_list_delete(app, db):
+    _item_id1 = uuid.uuid4()
+    _item_id2 = uuid.uuid4()
+    _item_id3 = uuid.uuid4()
+    _item_id4 = uuid.uuid4()
+    _feedback_maillist = ['nii@nii.co.jp']
+    FeedbackMailList.update_by_list_item_id([_item_id1, _item_id2, _item_id3, _item_id4], _feedback_maillist)
+
+    flag = FeedbackMailList.delete(1)
+    assert flag==False
+    flag = FeedbackMailList.delete(_item_id1)
+    record1 = FeedbackMailList.get_mail_list_by_item_id(_item_id1)
+    assert flag==True
+    assert record1==[]
+    FeedbackMailList.delete_without_commit(_item_id2)
+    record2 = FeedbackMailList.get_mail_list_by_item_id(_item_id2)
+    assert record2==[]
+    FeedbackMailList.delete_by_list_item_id([_item_id3, _item_id4])
+    record3 = FeedbackMailList.get_mail_list_by_item_id(_item_id3)
+    record4 = FeedbackMailList.get_mail_list_by_item_id(_item_id4)
+    assert record3==[]
+    assert record4==[]
+
+
 # class ItemLink(object):
 #     def __init__(self, recid: str):
-#     def get_item_link_info(cls, recid):
 #     def __get_titles_key(item_type_mapping):
 #     def __get_titles(cls, record):
-#     def get_item_link_info_output_xml(cls, recid):
-#         def get_url(pid_value):
+
+# class ItemLink(object):
 #     def update(self, items):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_link_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_link_update(app, db, records):
+    _uuid = str(records[0][0].object_uuid)
+    _items1 = [
+        {
+            'item_id': '1',
+            'sele_id': 'URI'
+        },
+        {
+            'item_id': '2',
+            'sele_id': 'URI'
+        }
+    ]
+    _items2 = [
+        {
+            'item_id': '2',
+            'sele_id': 'DOI'
+        },
+        {
+            'item_id': '3',
+            'sele_id': 'HDL'
+        }
+    ]
+    ItemLink.update(ItemLink(_uuid), _items1)
+    r = ItemLink.get_item_link_info(_uuid)
+    assert len(r)==2
+    assert r[0]['item_links']=='1'
+    assert r[0]['item_title']==records[0][1]['item_title']
+    assert r[0]['value']=='URI'
+    assert r[1]['item_links']=='2'
+    assert r[1]['item_title']==records[1][1]['item_title']
+    assert r[1]['value']=='URI'
+    ItemLink.update(ItemLink(_uuid), _items2)
+    r = ItemLink.get_item_link_info(_uuid)
+    assert len(r)==2
+    assert r[0]['item_links']=='2'
+    assert r[0]['item_title']==records[1][1]['item_title']
+    assert r[0]['value']=='DOI'
+    assert r[1]['item_links']=='3'
+    assert r[1]['item_title']==records[2][1]['item_title']
+    assert r[1]['value']=='HDL'
+
+# class ItemLink(object):
+#     def get_item_link_info(cls, recid):
 #     def bulk_create(self, dst_items):
+#     def get_item_link_info_output_xml(cls, recid):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_link_bulk_create -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_link_bulk_create(app, db, records):
+    _uuid = str(records[0][0].object_uuid)
+    _items = [
+        {
+            'item_id': '1',
+            'sele_id': 'URI'
+        }
+    ]
+    ItemLink.bulk_create(ItemLink(_uuid), _items)
+    r = ItemLink.get_item_link_info(_uuid)
+    assert len(r)==1
+    assert r[0]['item_links']=='1'
+    assert r[0]['item_title']==records[0][1]['item_title']
+    assert r[0]['value']=='URI'
+    # need fix
+    with pytest.raises(Exception) as e:
+        ItemLink.get_item_link_info_output_xml(_uuid)
+    #assert len(r)==1
+    #assert r[0]['reference_type']=='URI'
+
+# class ItemLink(object):
 #     def bulk_update(self, dst_items):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_link_bulk_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_link_bulk_update(app, db, records):
+    _uuid = str(records[0][0].object_uuid)
+    _items1 = [
+        {
+            'item_id': '1',
+            'sele_id': 'URI'
+        }
+    ]
+    _items2 = [
+        {
+            'item_id': '1',
+            'sele_id': 'URI'
+        },
+        {
+            'item_id': '2',
+            'sele_id': 'DOI'
+        }
+    ]
+    ItemLink.bulk_create(ItemLink(_uuid), _items1)
+
+    ItemLink.bulk_update(ItemLink(_uuid), _items2)
+    r = ItemLink.get_item_link_info(_uuid)
+    assert len(r)==2
+    assert r[0]['item_links']=='1'
+    assert r[0]['item_title']==records[0][1]['item_title']
+    assert r[0]['value']=='URI'
+    assert r[1]['item_links']=='2'
+    assert r[1]['item_title']==records[1][1]['item_title']
+    assert r[1]['value']=='DOI'
+
+# class ItemLink(object):
 #     def bulk_delete(self, dst_item_ids):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_link_bulk_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_link_bulk_delete(app, db, records):
+    _uuid = str(records[0][0].object_uuid)
+    _items = [
+        {
+            'item_id': '1',
+            'sele_id': 'URI'
+        },
+        {
+            'item_id': '2',
+            'sele_id': 'DOI'
+        },
+        {
+            'item_id': '3',
+            'sele_id': 'HDL'
+        }
+    ]
+    ItemLink.bulk_create(ItemLink(_uuid), _items)
+
+    ItemLink.bulk_delete(ItemLink(_uuid), ['1', '2'])
+    r = ItemLink.get_item_link_info(_uuid)
+    assert len(r)==1
+    assert r[0]['item_links']=='3'
+    assert r[0]['item_title']==records[2][1]['item_title']
+    assert r[0]['value']=='HDL'
