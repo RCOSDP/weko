@@ -38,7 +38,7 @@ import redis
 from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, flash, redirect, request, send_file, \
-    url_for
+    url_for,jsonify
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
@@ -1366,14 +1366,17 @@ def export_items(post_data):
     export_format = post_data['export_format_radio']
     record_ids = json.loads(post_data['record_ids'])
     invalid_record_ids = json.loads(post_data['invalid_record_ids'])
-    invalid_record_ids = [int(i) for i in invalid_record_ids]
+    if isinstance(invalid_record_ids,dict) or isinstance(invalid_record_ids,list):
+        invalid_record_ids = [int(i) for i in invalid_record_ids]
+    else:
+        invalid_record_ids = [invalid_record_ids]
     # Remove all invalid records
     record_ids = set(record_ids) - set(invalid_record_ids)
     record_metadata = json.loads(post_data['record_metadata'])
     if len(record_ids) > _get_max_export_items():
         return abort(400)
     elif len(record_ids) == 0:
-        return '', 204
+        return '',204
 
     result = {'items': []}
     temp_path = tempfile.TemporaryDirectory(
