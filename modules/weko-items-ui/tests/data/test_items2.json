@@ -1,9 +1,9 @@
 [
     {
-        "id": "6",
+        "id": "7",
         "pid": {
             "type": "depid",
-            "value": "6",
+            "value": "7",
             "revision_id": 0
         },
         "lang": "ja",
@@ -19,7 +19,7 @@
         "created_by": 1,
         "owners_ext": {
             "email": "repoadmin@test.org",
-            "displayname": "tomo_kanuma"
+            "displayname": "test"
         },
         "deleted_items": [
             "item_1532070986701",

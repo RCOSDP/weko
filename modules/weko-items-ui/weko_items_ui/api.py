@@ -49,7 +49,6 @@ def item_login(item_type_id: int = 0):
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
         
-
         if session.get('activity_info'):
             activity_id = session['activity_info'].get('activity_id')
         if activity_id:
@@ -57,6 +56,7 @@ def item_login(item_type_id: int = 0):
             metadata = activity.get_activity_metadata(activity_id)
             if metadata:
                 item_json = json.loads(metadata)
+                
                 if 'metainfo' in item_json:
                     record = item_json.get('metainfo')
                 if 'files' in item_json:

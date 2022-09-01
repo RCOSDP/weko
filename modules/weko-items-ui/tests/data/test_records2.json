@@ -8,7 +8,7 @@
             "1"
         ],
         "owner": "1",
-        "recid": "6",
+        "recid": "7",
         "title": [
             "タイトル"
         ],
@@ -20,10 +20,10 @@
             "deposit": "6410dc5f-9ffb-4a17-9820-260f77bb8995"
         },
         "_deposit": {
-            "id": "6",
+            "id": "7",
             "pid": {
                 "type": "depid",
-                "value": "6",
+                "value": "7",
                 "revision_id": 0
             },
             "owner": "1",
@@ -31,7 +31,7 @@
                 1
             ],
             "status": "published",
-            "created_by": 10
+            "created_by": 1
         },
         "item_title": "タイトル",
         "author_link": [],
