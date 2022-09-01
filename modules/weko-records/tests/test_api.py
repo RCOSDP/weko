@@ -400,8 +400,8 @@ def test_itemtypes_update_item_type(app, db, location, mocker):
 
 # class ItemTypes(RecordBase):
 #     def get_record(cls, id_, with_deleted=False):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_record -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_get_record(app, db):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_get_record -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_itemtypes_get_record(app, db):
     ItemTypes.create(name='test')
     it = ItemTypes.create(name='test2')
     ItemTypes.delete(it)
@@ -426,8 +426,8 @@ def test_get_record(app, db):
 
 # class ItemTypes(RecordBase):
 #     def get_records(cls, ids, with_deleted=False):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_records -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_get_records(app, db):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_get_records -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_itemtypes_get_records(app, db):
     ItemTypes.create(name='test')
     it = ItemTypes.create(name='test2')
     ItemTypes.delete(it)
@@ -458,8 +458,8 @@ def test_get_records(app, db):
 
 # class ItemTypes(RecordBase):
 #     def get_by_id(cls, id_, with_deleted=False):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_by_id -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_get_by_id(app, db):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_get_by_id -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_itemtypes_get_by_id(app, db):
     ItemTypes.create(name='test')
     it = ItemTypes.create(name='test2')
     ItemTypes.delete(it)
@@ -482,8 +482,8 @@ def test_get_by_id(app, db):
 
 # class ItemTypes(RecordBase):
 #     def get_by_name_id(cls, name_id, with_deleted=False):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_by_id -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_get_by_name_id(app, db):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_get_by_name_id -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_itemtypes_get_by_name_id(app, db):
     ItemTypes.create(name='test')
     it = ItemTypes.create(name='test2')
     ItemTypes.delete(it)
@@ -508,8 +508,8 @@ def test_get_by_name_id(app, db):
 
 # class ItemTypes(RecordBase):
 #     def get_records_by_name_id(cls, name_id, with_deleted=False):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_records_by_name_id -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_get_records_by_name_id(app, db):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_get_records_by_name_id -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_itemtypes_get_records_by_name_id(app, db):
     ItemTypes.create(name='test')
     it = ItemTypes.create(name='test2')
     ItemTypes.delete(it)
@@ -536,8 +536,8 @@ def test_get_records_by_name_id(app, db):
 
 # class ItemTypes(RecordBase):
 #     def get_latest(cls, with_deleted=False):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_latest -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_get_latest(app, db):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_get_latest -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_itemtypes_get_latest(app, db):
     ItemTypes.create(name='test')
     it = ItemTypes.create(name='test2')
     ItemTypes.delete(it)
@@ -570,8 +570,8 @@ def test_get_latest(app, db):
 
 # class ItemTypes(RecordBase):
 #     get_latest_with_item_type(cls, with_deleted=False):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_latest_with_item_type -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_get_latest_with_item_type(app, db):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_get_latest_with_item_type -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_itemtypes_get_latest_with_item_type(app, db):
     ItemTypes.create(name='test')
     it = ItemTypes.create(name='test2')
     ItemTypes.delete(it)
@@ -599,8 +599,8 @@ def test_get_latest_with_item_type(app, db):
 
 # class ItemTypes(RecordBase):
 #     get_latest_custorm_harvesting(cls, with_deleted=False, harvesting_type=False):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_latest_custorm_harvesting -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_get_latest_custorm_harvesting(app, db):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_get_latest_custorm_harvesting -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_itemtypes_get_latest_custorm_harvesting(app, db):
     ItemTypes.create(name='test')
     ItemTypes.create(name='test2')
     it3 = ItemTypes.create(name='test3')
@@ -644,8 +644,8 @@ def test_get_latest_custorm_harvesting(app, db):
 
 # class ItemTypes(RecordBase):
 #     def get_all(cls, with_deleted=False):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_all -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_get_all(app, db):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_get_all -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_itemtypes_get_all(app, db):
     ItemTypes.create(name='test')
     it = ItemTypes.create(name='test2')
     ItemTypes.delete(it)
@@ -683,8 +683,8 @@ def test_get_all(app, db):
 
 # class ItemTypes(RecordBase):
 #     def delete(self, force=False):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_delete(app, db):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_itemtypes_delete(app, db):
     it = ItemTypes.create(name='test')
     it2 = ItemTypes.create(name='test2')
     it3 = ItemTypes.create(name='test3')
@@ -712,8 +712,8 @@ def test_delete(app, db):
 
 # class ItemTypes(RecordBase):
 #     def restore(self):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_restore -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_restore(app, db):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_restore -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_itemtypes_restore(app, db):
     it = ItemTypes.create(name='test')
     it2 = ItemTypes.create(name='test2')
 
@@ -1449,7 +1449,7 @@ def test_item_link_bulk_create(app, db, records):
     assert r[0]['item_links']=='1'
     assert r[0]['item_title']==records[0][1]['item_title']
     assert r[0]['value']=='URI'
-    # need fix
+    # need to fix
     with pytest.raises(Exception) as e:
         ItemLink.get_item_link_info_output_xml(_uuid)
     #assert len(r)==1
