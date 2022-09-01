@@ -3049,9 +3049,9 @@ def make_stats_file_with_permission(item_type_id, recids,
         labels = []
         for recid in recids:
             records.cur_recid = recid
-            print("item.get(type):{}".format(item.get('type')))
-            print("item_key:{}".format(item_key))
-            print("records.attr_data[item_key]: {}".format(records.attr_data[item_key]))
+            # print("item.get(type):{}".format(item.get('type')))
+            # print("item_key:{}".format(item_key))
+            # print("records.attr_data[item_key]: {}".format(records.attr_data[item_key]))
             if item.get('type') == 'array':
                 key, label, data = records.get_subs_item(
                     item_key,
@@ -3082,7 +3082,7 @@ def make_stats_file_with_permission(item_type_id, recids,
                     keys = [item_key]
                 if not labels:
                     labels = [item.get('title')]
-                data = records.attr_data[item_key].get(recid) or ['']
+                data = records.attr_data[item_key].get(recid) or {}
                 records.attr_output[recid].extend(
                     data.get("attribute_value", ""))
 
