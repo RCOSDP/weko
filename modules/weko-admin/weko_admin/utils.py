@@ -509,6 +509,8 @@ def reset_redis_cache(cache_key, value, ttl=None):
 
 
 def is_exists_key_in_redis(key):
+    print(current_app.config['CACHE_REDIS_DB'])
+    print(key)
     """Check key exist in redis."""
     try:
         redis_connection = RedisConnection()

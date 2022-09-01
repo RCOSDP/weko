@@ -799,7 +799,6 @@ def check_doi_in_index_and_child_index(index_id, recursively=True):
         child_idx = Indexes.get_child_list_recursive(index_id)
     else:
         child_idx = [index_id]
-
     query_string = "relation_version_is_last:true AND publish_status:0"
     search = RecordsSearch(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
@@ -813,7 +812,6 @@ def check_doi_in_index_and_child_index(index_id, recursively=True):
         Bool(filter=must_query)
     )
     records = search.execute().to_dict().get('hits', {}).get('hits', [])
-
     return records
 
 

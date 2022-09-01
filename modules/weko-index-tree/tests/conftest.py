@@ -24,7 +24,7 @@ import shutil
 import tempfile
 import json
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 import pytest
 from mock import patch
@@ -38,6 +38,7 @@ from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user, login_user_via_session
 from invenio_access.models import ActionUsers
 from invenio_access import InvenioAccess
+from invenio_access.models import ActionUsers, ActionRoles
 from invenio_assets import InvenioAssets
 from invenio_cache import InvenioCache
 from invenio_db import InvenioDB
@@ -48,13 +49,15 @@ from invenio_indexer import InvenioIndexer
 from invenio_jsonschemas import InvenioJSONSchemas
 from invenio_mail import InvenioMail
 from invenio_oaiserver import InvenioOAIServer
+from invenio_oaiserver.models import OAISet
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_records import InvenioRecords
 from invenio_search import InvenioSearch
 from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from simplekv.memory.redisstore import RedisStore
 from invenio_oaiharvester.models import HarvestSettings
-from invenio_access.models import ActionUsers, ActionRoles
+
+
 from invenio_stats import InvenioStats
 from invenio_admin import InvenioAdmin
 from invenio_search import RecordsSearch
@@ -62,20 +65,23 @@ from invenio_pidstore import InvenioPIDStore, current_pidstore
 from invenio_records_rest.utils import PIDConverter
 from invenio_records.models import RecordMetadata
 
+from weko_records import WekoRecords
+from weko_records.api import ItemTypes
+from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
+from weko_records.models import ItemTypeName, ItemType
+from weko_records_ui.models import PDFCoverPageSettings
 from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISSION_ROLE_COMMUNITY, EMAIL_DISPLAY_FLG
 from weko_groups.models import Group
-from weko_records_ui.models import PDFCoverPageSettings
-from weko_search_ui import WekoSearchUI, WekoSearchREST
-from weko_redis.redis import RedisConnection
-from weko_admin.models import SessionLifetime 
-from weko_records.models import ItemTypeName, ItemType
-from weko_index_tree.models import Index
 from weko_groups import WekoGroups
 from weko_workflow import WekoWorkflow
+from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
+from weko_index_tree.models import Index
 from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
 from weko_index_tree.views import blueprint_api
 from weko_index_tree.rest import create_blueprint
-from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
+from weko_search_ui import WekoSearchUI, WekoSearchREST
+from weko_redis.redis import RedisConnection
+from weko_admin.models import SessionLifetime
 
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
@@ -115,6 +121,7 @@ def base_app(instance_path):
         JSONSCHEMAS_HOST='inveniosoftware.org',
         ACCOUNTS_USERINFO_HEADERS=True,
         I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
+        WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX="lock_index_",
         WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
         WEKO_PERMISSION_ROLE_COMMUNITY=WEKO_PERMISSION_ROLE_COMMUNITY,
         EMAIL_DISPLAY_FLG=EMAIL_DISPLAY_FLG,
@@ -577,14 +584,15 @@ def users(app, db):
 def indices(app, db):
     with db.session.begin_nested():
         # Create a test Indices
-        testIndexOne = Index(index_name="testIndexOne",browsing_role="Contributor",public_state=True,id='11')
-        testIndexTwo = Index(index_name="testIndexTwo",browsing_group="group_test1",public_state=True,id='22')
-        testIndexThree = Index(index_name="testIndexThree",parent='testIndexOne',browsing_role="Contributor",public_state=True,id='33')
-        testIndexThreeChild = Index(index_name="testIndexThreeChild",parent="testIndexThree",public_state=True,id='44')
+        testIndexOne = Index(index_name="testIndexOne",browsing_role="Contributor",public_state=True,id=11)
+        testIndexTwo = Index(index_name="testIndexTwo",browsing_group="group_test1",public_state=True,id=22)
+        testIndexThree = Index(index_name="testIndexThree",parent='testIndexOne',browsing_role="Contributor",public_state=True,id=33,public_date=datetime.today() - timedelta(days=1))
+        testIndexThreeChild = Index(index_name="testIndexThreeChild",parent="testIndexThree",public_state=True,id=44)
         testIndexMore = Index(index_name="testIndexMore",parent="testIndexThree",public_state=True,id='more')
-        testIndexPrivate = Index(index_name="testIndexPrivate",public_state=False,id='55')
+        testIndexPrivate = Index(index_name="testIndexPrivate",public_state=False,id=55)
 
         db.session.add(testIndexThree)
+        db.session.add(testIndexThreeChild)
 
     return {
         'index_dict': dict(testIndexThree),
@@ -594,7 +602,7 @@ def indices(app, db):
     
 @pytest.fixture
 def redis_connect(app):
-    redis_connection = RedisConnection()
+    redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
     return redis_connection
 
 
@@ -727,26 +735,24 @@ def json_data(filename):
 
 
 @pytest.fixture()
-def records(redis_connect, db):
-    datastore = redis_connect.connection(db, kv=True)
-
+def records(db):
     with db.session.begin_nested():
-        index_one = Index(
-            public_state=True,
-            index_name='index_one',
-            index_link_name='link_one',
-            index_link_enabled=True
-        )
+        # index_one = Index(
+        #     public_state=True,
+        #     index_name='index_one',
+        #     index_link_name='link_one',
+        #     index_link_enabled=True
+        # )
 
-        index_two = Index(
-            public_state=True,
-            index_name='index_two',
-            index_link_name='link_two',
-            index_link_enabled=True
-        )
+        # index_two = Index(
+        #     public_state=True,
+        #     index_name='index_two',
+        #     index_link_name='link_two',
+        #     index_link_enabled=True
+        # )
 
-        datastore.put('index_one', json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=5)
-        datastore.put('lock_index_index_two', json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=5)
+        # datastore.put('index_one', json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=5)
+        # datastore.put('lock_index_index_two', json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=5)
 
         id1 = uuid.UUID('b7bdc3ad-4e7d-4299-bd87-6d79a250553f')
         rec1 = RecordMetadata(
@@ -772,15 +778,10 @@ def records(redis_connect, db):
         db.session.add(rec1)
         db.session.add(rec2)
         db.session.add(rec3)
-        db.session.add(index_one)
         
         search_query_result = json_data("tests/data/search_result.json")
     
     return {
-        'indices': [
-            index_one,
-            index_two,
-        ],
         'records': [
             {"id": id1, "record": rec1},
             {"id": id2, "record": rec2},
@@ -788,6 +789,7 @@ def records(redis_connect, db):
         ],
         'search_query_result': search_query_result
     }
+
 
 @pytest.fixture()
 def pdfcoverpage(app, db):
@@ -803,3 +805,86 @@ def pdfcoverpage(app, db):
         db.session.add(pdf_cover_sample)
 
     return pdf_cover_sample
+
+
+@pytest.fixture()
+def item_type(app, db):
+    _item_type_name = ItemTypeName(name='test')
+
+    _render = {
+        'meta_list': {},
+        'table_row_map': {
+            'schema': {
+                'properties': {
+                    'item_1': {}
+                }
+            }
+        },
+        'table_row': ['1']
+    }
+
+    return ItemTypes.create(
+        name='test',
+        item_type_name=_item_type_name,
+        schema={},
+        render=_render,
+        tag=1
+    )
+
+
+@pytest.fixture()
+def item_type2(app, db):
+    _item_type_name = ItemTypeName(name='test2')
+
+    _render = {
+        'meta_list': {},
+        'table_row_map': {
+            'schema': {
+                'properties': {
+                    'item_1': {}
+                }
+            }
+        },
+        'table_row': ['1']
+    }
+
+    return ItemTypes.create(
+        name='test2',
+        item_type_name=_item_type_name,
+        schema={},
+        render=_render,
+        tag=1
+    )
+
+
+@pytest.fixture()
+def mock_execute():
+    def factory(data):
+        if isinstance(data, str):
+            data = json_data(data)
+        dummy = response.Response(Search(), data)
+        return dummy
+    return factory
+
+
+@pytest.fixture()
+def records2(db):
+    record_data = json_data("data/test_records.json")
+    item_data = json_data("data/test_items.json")
+    record_num = len(record_data)
+    result = []
+    for d in range(record_num):
+        result.append(create_record(record_data[d], item_data[d]))
+    db.session.commit()
+    yield result
+
+
+@pytest.fixture()
+def count_json_data():
+    data = [{
+        "public_state": True,
+        "doc_count": 99,
+        "no_available": 9
+    }]
+    return data
+

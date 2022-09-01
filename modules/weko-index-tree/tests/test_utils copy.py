@@ -9,7 +9,10 @@ filter_index_list_by_role, \
 get_index_id_list, \
 get_publish_index_id_list, \
 get_admin_coverpage_setting, \
-get_elasticsearch_records_data_by_indexes
+get_elasticsearch_records_data_by_indexes, \
+get_index_id, \
+count_items
+
 
 from invenio_accounts.testutils import login_user_via_session, client_authenticated
 ######
@@ -51,12 +54,15 @@ from weko_redis.redis import RedisConnection
 
 #*** def get_index_link_list(pid=0):
 #     def _get_index_link(res, tree):
+# Needs pid
 def test_get_index_link_list(i18n_app, records):
+    
     assert get_index_link_list(records['records'][0]['record'].json['_deposit']['pid']['value'])
         
 
-# def is_index_tree_updated():
+#+++ def is_index_tree_updated():
 def test_is_index_tree_updated(app):
+
     assert is_index_tree_updated()
 
 
@@ -72,6 +78,7 @@ def test_is_index_tree_updated(app):
 
 #*** def get_user_roles():
 #     def _check_admin():
+# Needs current_user
 def test_get_user_roles(i18n_app, client_rest, users):
     login_user_via_session(client=client_rest, email=users[0]['email'])
 
@@ -80,6 +87,7 @@ def test_get_user_roles(i18n_app, client_rest, users):
 
 
 #*** def get_user_groups():
+# Needs current_user
 def test_get_user_groups(i18n_app, client_rest, users):
     login_user_via_session(client=client_rest, email=users[6]['email'])
 
@@ -88,6 +96,7 @@ def test_get_user_groups(i18n_app, client_rest, users):
 
 
 #*** def check_roles(user_role, roles):
+# Needs current_user
 def test_check_roles(users):
     user_role = [role.name for role in users[-1]['obj'].roles]
     roles = (',').join(user_role)
@@ -96,6 +105,7 @@ def test_check_roles(users):
 
 
 #*** def check_groups(user_group, groups):
+# Needs current_user
 def test_check_groups(users):
     user_group = users
     groups = Group.get_group_list()
@@ -106,6 +116,7 @@ def test_check_groups(users):
 
 #*** def filter_index_list_by_role(index_list):
 #     def _check(index_data, roles, groups):
+# Needs current_user
 def test_filter_index_list_by_role(indices, users, db):
     # Create test group
     from weko_groups.models import Group
@@ -117,39 +128,44 @@ def test_filter_index_list_by_role(indices, users, db):
     for index in indices:    
         from weko_index_tree.models import Index
         db.session.add(index)
+
         assert filter_index_list_by_role(index)
 
 
 # def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
 
 
-### def get_index_id_list(indexes, id_list=None):
+#+++ def get_index_id_list(indexes, id_list=None):
 def test_get_index_id_list(indices, db):
     index_list = [indices['index_dict']]
+
     assert get_index_id_list(index_list)
     
     index_list[0]['id'] = 'more'
+
     assert not get_index_id_list(index_list)
 
 
-# def get_publish_index_id_list(indexes, id_list=None):
+#+++ def get_publish_index_id_list(indexes, id_list=None):
 def test_get_publish_index_id_list(indices, db):
     index_list = [indices['index_dict']]
+
     assert get_publish_index_id_list(index_list)
     
     index_list[0]['id'] = 'more'
+
     assert not get_publish_index_id_list(index_list)
 
 
 # def reduce_index_by_more(tree, more_ids=None):
 
 
-# def get_admin_coverpage_setting():
+#+++ def get_admin_coverpage_setting():
 def test_get_admin_coverpage_setting(pdfcoverpage):
-    assert get_admin_coverpage_setting
+    assert get_admin_coverpage_setting()
 
 
-# def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
+#*** def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
 def test_get_elasticsearch_records_data_by_indexes(i18n_app, records):
     from weko_index_tree.api import Indexes
     
@@ -164,54 +180,22 @@ def test_get_elasticsearch_records_data_by_indexes(i18n_app, records):
 # def generate_path(index_ids):
 
 
-# def get_index_id(activity_id):
-def test_get_index_id(users, db_register):
-    from weko_workflow.api import WorkFlow
-    from weko_index_tree.api import Indexes
+#+++ def get_index_id(activity_id):
+def test_get_index_id(i18n_app, users, db_register):
+    activity_id = db_register['activity'].activity_id
 
-    activity = db_register['activity']
-    activity_id = activity.activity_id
-    
-    workflow = WorkFlow()
-    workflow_detail = workflow.get_workflow_by_id(activity_id)
-    
-    index_tree_id = workflow_detail.index_tree_id
-
-    if index_tree_id:
-        index_result = Indexes.get_index(index_tree_id)
-        if not index_result:
-            index_tree_id = None
-    else:
-        index_tree_id = None
-
-    assert index_tree_id
+    assert get_index_id(activity_id)
 
 
 # def sanitize(s):
 
 
-# def count_items(indexes_aggr):
-def test_count_items(users, db_register):
+#+++ def count_items(indexes_aggr):
+def test_count_items(count_json_data):
+    indexes_aggr = count_json_data
 
-    def get_index_public_state(index_id):
-        index = Index.get_index_by_id(index_id)
-        return index.public_state
-    
-    private_count = 0
-    public_count = 0
+    assert count_items(indexes_aggr)
 
-    all_indices = Index().get_all()
-
-    for idx in all_indices:
-        if get_index_public_state(idx['id']):
-            public_count += 1
-    
-    # This 'index_private' is not saved in db.session and is directly from conftest.py
-    if db_register['indices']['index_private']:
-        private_count += 1
-
-    assert private_count
-    assert public_count
 
 
 # def recorrect_private_items_count(agp):
