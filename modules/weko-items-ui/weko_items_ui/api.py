@@ -23,7 +23,6 @@ from weko_workflow.api import WorkActivity
 
 from .utils import is_schema_include_key
 
-
 def item_login(item_type_id: int = 0):
     """Return information that item register need.
 
