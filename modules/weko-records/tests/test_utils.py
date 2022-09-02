@@ -9,9 +9,52 @@ from tests.helpers import json_data
 
 from weko_admin.models import AdminSettings
 
-from weko_records.utils import json_loader, convert_date_range_value, convert_range_value, \
-    copy_value_json_path, copy_values_json_path, makeDateRangeValue, remove_weko2_special_character, \
-        sort_meta_data_by_options
+from weko_records.utils import (
+    json_loader,
+    copy_field_test,
+    convert_range_value,
+    convert_date_range_value,
+    makeDateRangeValue,
+    get_value_from_dict,
+    get_values_from_dict,
+    copy_value_xml_path,
+    copy_value_json_path,
+    copy_values_json_path,
+    set_timestamp,
+    sort_records,
+    sort_op,
+    find_items,
+    get_all_items,
+    get_all_items2,
+    to_orderdict,
+    get_options_and_order_list,
+    sort_meta_data_by_options,
+    get_keywords_data_load,
+    is_valid_openaire_type,
+    check_has_attribute_value,
+    get_attribute_value_all_items,
+    check_input_value,
+    remove_key,
+    remove_keys,
+    remove_multiple,
+    check_to_upgrade_version,
+    remove_weko2_special_character,
+    selected_value_by_language,
+    check_info_in_metadata,
+    get_value_and_lang_by_key,
+    get_value_by_selected_lang,
+    get_show_list_author,
+    format_creates,
+    get_creator,
+    get_creator_by_languages,
+    get_affiliation,
+    get_author_has_language,
+    add_author,
+    convert_bibliographic,
+    add_biographic,
+    custom_record_medata_for_export,
+    replace_fqdn,
+    replace_fqdn_of_file_metadata)
 from weko_records.api import ItemTypes, Mapping
 from weko_records.models import ItemTypeName
 
@@ -80,68 +123,112 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, records
     assert is_edit==False
 
 # def copy_field_test(dc, map, jrc, iid=None):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_copy_field_test -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_copy_field_test(app, meta, k_v):
+    _jrc = {}
+    copy_field_test(meta[0], k_v, _jrc)
+    assert _jrc=={
+        'date_range1': [{'gte': '2000-01-01', 'lte': '2021-03-30'}],
+        'text3': ['概要', 'その他', 'materials: text']
+    }
 
 # def convert_range_value(start, end=None):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_convert_range_value -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_convert_range_value():
-    assert convert_range_value('1', '2') == {'gte': '1', 'lte': '2'}
+    assert convert_range_value('1')=={'gte': '1', 'lte': '1'}
+    assert convert_range_value(None, '2')=={'gte': '2', 'lte': '2'}
+    assert convert_range_value('1', '2')=={'gte': '1', 'lte': '2'}
 
 # def convert_date_range_value(start, end=None):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_convert_date_range_value -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_convert_date_range_value():
-    assert convert_date_range_value('1762-01-26/1762-02-23') == {'gte': '1762-01-26',
-                                                                 'lte': '1762-02-23'}
-    assert convert_date_range_value('2000-01-01/2021-03-30') == {'gte': '2000-01-01',
-                                                                 'lte': '2021-03-30'}
-    assert convert_date_range_value(' 1762-01-26/1762-02-23 ') == {'gte': '1762-01-26',
-                                                                   'lte': '1762-02-23'}
-    assert convert_date_range_value('2000-01/2021-03') == {'gte': '2000-01',
-                                                           'lte': '2021-03'}
-    assert convert_date_range_value('2000/2021') == {'gte': '2000',
-                                                     'lte': '2021'}
-    assert convert_date_range_value('2000-01-01') == {'gte': '2000-01-01',
-                                                      'lte': '2000-01-01'}
-    assert convert_date_range_value('2000-01') == {'gte': '2000-01',
-                                                   'lte': '2000-01'}
-    assert convert_date_range_value('2000') == {'gte': '2000',
-                                                'lte': '2000'}
-    assert convert_date_range_value('2000-01-01', '2000-12-01') == {'gte': '2000-01-01',
-                                                                    'lte': '2000-12-01'}
-    assert convert_date_range_value(None, '2000-12-01') == {'gte': '2000-12-01',
-                                                            'lte': '2000-12-01'}
     assert convert_date_range_value(
-        '1979-01-01/1960-01-01') == {'gte': '1960-01-01', 'lte': '1979-01-01'}
+        '1762-01-26/1762-02-23')=={'gte': '1762-01-26', 'lte': '1762-02-23'}
     assert convert_date_range_value(
-        '1979-1-1/1960-1-1') == {'gte': '1960-1-1', 'lte': '1979-1-1'}
+        '2000-01-01/2021-03-30')=={'gte': '2000-01-01', 'lte': '2021-03-30'}
+    assert convert_date_range_value(
+        ' 1762-01-26/1762-02-23 ')=={'gte': '1762-01-26', 'lte': '1762-02-23'}
+    assert convert_date_range_value(
+        '2000-01/2021-03')=={'gte': '2000-01', 'lte': '2021-03'}
+    assert convert_date_range_value(
+        '2000/2021')=={'gte': '2000', 'lte': '2021'}
+    assert convert_date_range_value(
+        '2000-01-01')=={'gte': '2000-01-01', 'lte': '2000-01-01'}
+    assert convert_date_range_value(
+        '2000-01')=={'gte': '2000-01', 'lte': '2000-01'}
+    assert convert_date_range_value(
+        '2000')=={'gte': '2000', 'lte': '2000'}
+    assert convert_date_range_value(
+        '2000-01-01', '2000-12-01')=={'gte': '2000-01-01', 'lte': '2000-12-01'}
+    assert convert_date_range_value(
+        None, '2000-12-01')=={'gte': '2000-12-01', 'lte': '2000-12-01'}
+    assert convert_date_range_value(
+        '1979-01-01/1960-01-01')=={'gte': '1960-01-01', 'lte': '1979-01-01'}
+    assert convert_date_range_value(
+        '1979-1-1/1960-1-1')=={'gte': '1960-1-1', 'lte': '1979-1-1'}
     assert convert_date_range_value('2021/12/1')=={'gte': '2021-12-1', 'lte': '2021-12-1'}
 
 # def makeDateRangeValue(start, end):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_makeDateRangeValue -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_makeDateRangeValue():
-    assert makeDateRangeValue('1979', '1960') == {
-        'gte': '1960', 'lte': '1979'}
-    assert makeDateRangeValue('1979-01-01', '1960-01-01') == {
-        'gte': '1960-01-01', 'lte': '1979-01-01'}
-    assert makeDateRangeValue('1979-01', '1960-01') == {
-        'gte': '1960-01', 'lte': '1979-01'}
-    assert makeDateRangeValue('1979-01-01', '1979-12-30') == {
-        'gte': '1979-01-01', 'lte': '1979-12-30'}
-    assert makeDateRangeValue('1979-01-01', '1979-01-01') == {
-        'gte': '1979-01-01', 'lte': '1979-01-01'}
-    assert makeDateRangeValue('1979/01/01', '1979/12/30') == {
-        'gte': '1979-01-01', 'lte': '1979-12-30'}
-    assert makeDateRangeValue('0000-00-00', '0000-00-00') == None
+    assert makeDateRangeValue(
+        '1979', '1960')=={'gte': '1960', 'lte': '1979'}
+    assert makeDateRangeValue(
+        '1979-01-01', '1960-01-01')=={'gte': '1960-01-01', 'lte': '1979-01-01'}
+    assert makeDateRangeValue(
+        '1979-01', '1960-01')=={'gte': '1960-01', 'lte': '1979-01'}
+    assert makeDateRangeValue(
+        '1979-01-01', '1979-12-30')=={'gte': '1979-01-01', 'lte': '1979-12-30'}
+    assert makeDateRangeValue(
+        '1979-01-01', '1979-01-01')=={'gte': '1979-01-01', 'lte': '1979-01-01'}
+    assert makeDateRangeValue(
+        '1979/01/01', '1979/12/30')=={'gte': '1979-01-01', 'lte': '1979-12-30'}
+    assert makeDateRangeValue(
+        '0000-00-00', '0000-00-00') == None
 
 # def get_value_from_dict(dc, path, path_type, iid=None):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_value_from_dict -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_value_from_dict(app, meta, jsonpath):
+    assert get_value_from_dict(meta[0], jsonpath[0]) == [
+        '寄与者', 'Contributor']
+    assert get_value_from_dict(meta[0], jsonpath[1]) == [
+        '2000-01-01/2021-03-30']
+    assert get_value_from_dict(meta[0], jsonpath[2]) == [
+        '概要', 'その他', 'materials: text']
+    assert get_value_from_dict(meta[0], jsonpath[3]) == [
+        'その他', 'materials: text']
+
 # def get_values_from_dict(dc, path, path_type, iid=None):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_values_from_dict -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_values_from_dict(app, meta, jsonpath):
+    assert get_values_from_dict(meta[0], jsonpath[0]) == [
+        '寄与者', 'Contributor']
+    assert get_values_from_dict(meta[0], jsonpath[1]) == [
+        '2000-01-01/2021-03-30']
+    assert get_values_from_dict(meta[0], jsonpath[2]) == [
+        '概要', 'その他', 'materials: text']
+    assert get_values_from_dict(meta[0], jsonpath[3]) == [
+        'その他', 'materials: text']
+
 # def copy_value_xml_path(dc, xml_path, iid=None):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_copy_value_xml_path -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_copy_value_xml_path(meta):
+    copy_value_xml_path(meta[0], '')
 
 # def copy_value_json_path(meta, jsonpath):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_copy_value_json_path -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_copy_value_json_path(meta, jsonpath):
-    assert copy_value_json_path(meta[0], jsonpath[0]) == ['寄与者','Contributor']
-    assert copy_value_json_path(
-        meta[0], jsonpath[1]) == ['2000-01-01/2021-03-30']
-    assert copy_value_json_path(
-        meta[0], jsonpath[2]) == ['概要', 'その他', 'materials: text']
+    assert copy_value_json_path(meta[0], jsonpath[0]) == [
+        '寄与者', 'Contributor']
+    assert copy_value_json_path(meta[0], jsonpath[1]) == [
+        '2000-01-01/2021-03-30']
+    assert copy_value_json_path(meta[0], jsonpath[2]) == [
+        '概要', 'その他', 'materials: text']
+    assert copy_value_json_path(meta[0], jsonpath[3]) == [
+        'その他', 'materials: text']
 
 # def copy_values_json_path(meta, jsonpath):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_copy_values_json_path -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_copy_values_json_path(meta, jsonpath):
     assert copy_values_json_path(meta[0], jsonpath[0]) == [
         '寄与者', 'Contributor']

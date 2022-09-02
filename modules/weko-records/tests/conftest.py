@@ -24,6 +24,7 @@ import os
 import sys
 import shutil
 import uuid
+import json
 import tempfile
 
 import pytest
@@ -312,19 +313,80 @@ def identifiers():
 
 @pytest.fixture
 def k_v():
-    k_v = [{'id': 'date_range1', 'mapping': [], 'contents': '', 'inputType': 'dateRange', 'input_Type': 'range', 'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}, '12': {'path': {'gte': '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211', 'lte': '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211'}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'date_EN_1', 'ja': 'date_JA_1'}, 'useable_status': True, 'default_display': True}, {"id": "text3", "mapping": [], "contents": "", "inputVal": "", "inputType": "text", "input_Type": "text", "item_value":  {"1": {"path": "", "path_type": "json"}, "12": {"path": "$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890", "path_type": "json"}, "20": {"path": "$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890", "path_type": "json"}}, "mappingFlg": False, "mappingName": "", "contents_value": {"en": "Summary", "ja": "概要"}, "useable_status": True, "default_display": True}
-           ]
+    k_v = [
+        {
+            'id': 'date_range1',
+            'mapping': [],
+            'contents': '',
+            'inputType': 'dateRange',
+            'input_Type': 'range',
+            'item_value': {
+                '1': {
+                    'path': {'gte': '', 'lte': ''},
+                    'path_type': {'gte': 'json', 'lte': 'json'}
+                }, 
+                '12': {
+                    'path': {
+                        'gte': '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211',
+                        'lte': '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211'
+                    },
+                    'path_type': {'gte': 'json', 'lte': 'json'}
+                }
+            },
+            'mappingFlg': False,
+            'inputVal_to': '',
+            'mappingName': '',
+            'inputVal_from': '',
+            'contents_value': {'en': 'date_EN_1', 'ja': 'date_JA_1'},
+            'useable_status': True,
+            'default_display': True
+        },
+        {
+            "id": "text3",
+            "mapping": [],
+            "contents": "",
+            "inputVal": "",
+            "inputType": "text",
+            "input_Type": "text",
+            "item_value":  {
+                "1": {
+                    "path": "",
+                    "path_type": "json"
+                },
+                "12": {
+                    "path": "$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890",
+                    "path_type": "json"
+                },
+                "20": {
+                    "path": "$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890",
+                    "path_type": "json"
+                }
+            },
+            "mappingFlg": False,
+            "mappingName": "",
+            "contents_value": {"en": "Summary", "ja": "概要"},
+            "useable_status": True,
+            "default_display": True
+        }
+    ]
     return k_v
 
 @pytest.fixture
 def jsonpath():
-    return ['$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108', '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211',
-    '$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890',
-    '$.item_1551264846237.attribute_value_mlt[1:3].subitem_1551255577890']
+    return [
+        '$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108',
+        '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211',
+        '$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890',
+        '$.item_1551264846237.attribute_value_mlt[1:3].subitem_1551255577890'
+    ]
 
 @pytest.fixture
 def meta():
-    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data", "meta00.json")
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "data",
+        "meta00.json"
+    )
     with open(filepath, encoding="utf-8") as f:
             input_data = json.load(f)
     return input_data
