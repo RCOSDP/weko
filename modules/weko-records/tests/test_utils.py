@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from collections import OrderedDict
+from datetime import datetime
 import json
 import pytest
 import os
@@ -189,57 +190,66 @@ def test_makeDateRangeValue():
 # def get_value_from_dict(dc, path, path_type, iid=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_value_from_dict -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_get_value_from_dict(app, meta, jsonpath):
-    assert get_value_from_dict(meta[0], jsonpath[0]) == [
-        '寄与者', 'Contributor']
-    assert get_value_from_dict(meta[0], jsonpath[1]) == [
-        '2000-01-01/2021-03-30']
-    assert get_value_from_dict(meta[0], jsonpath[2]) == [
-        '概要', 'その他', 'materials: text']
-    assert get_value_from_dict(meta[0], jsonpath[3]) == [
-        'その他', 'materials: text']
+    assert get_value_from_dict(meta[0], jsonpath[0], 'json')=='寄与者'
+    assert get_value_from_dict(meta[0], jsonpath[1], 'json')=='2000-01-01/2021-03-30'
+    assert get_value_from_dict(meta[0], jsonpath[2], 'json')=='概要'
+    assert get_value_from_dict(meta[0], jsonpath[3], 'json')=='その他'
 
 # def get_values_from_dict(dc, path, path_type, iid=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_values_from_dict -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_get_values_from_dict(app, meta, jsonpath):
-    assert get_values_from_dict(meta[0], jsonpath[0]) == [
-        '寄与者', 'Contributor']
-    assert get_values_from_dict(meta[0], jsonpath[1]) == [
-        '2000-01-01/2021-03-30']
-    assert get_values_from_dict(meta[0], jsonpath[2]) == [
-        '概要', 'その他', 'materials: text']
-    assert get_values_from_dict(meta[0], jsonpath[3]) == [
-        'その他', 'materials: text']
+    assert get_values_from_dict(
+        meta[0], jsonpath[0], 'json')==['寄与者', 'Contributor']
+    assert get_values_from_dict(
+        meta[0], jsonpath[1], 'json')==['2000-01-01/2021-03-30']
+    assert get_values_from_dict(
+        meta[0], jsonpath[2], 'json')==['概要', 'その他', 'materials: text']
+    assert get_values_from_dict(
+        meta[0], jsonpath[3], 'json')==['その他', 'materials: text']
 
 # def copy_value_xml_path(dc, xml_path, iid=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_copy_value_xml_path -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_copy_value_xml_path(meta):
-    copy_value_xml_path(meta[0], '')
+    res = copy_value_xml_path(meta[0], '')
+    assert res==None
 
 # def copy_value_json_path(meta, jsonpath):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_copy_value_json_path -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_copy_value_json_path(meta, jsonpath):
-    assert copy_value_json_path(meta[0], jsonpath[0]) == [
-        '寄与者', 'Contributor']
-    assert copy_value_json_path(meta[0], jsonpath[1]) == [
-        '2000-01-01/2021-03-30']
-    assert copy_value_json_path(meta[0], jsonpath[2]) == [
-        '概要', 'その他', 'materials: text']
-    assert copy_value_json_path(meta[0], jsonpath[3]) == [
-        'その他', 'materials: text']
+    assert copy_value_json_path(
+        meta[0], jsonpath[0])==['寄与者', 'Contributor']
+    assert copy_value_json_path(
+        meta[0], jsonpath[1])==['2000-01-01/2021-03-30']
+    assert copy_value_json_path(
+        meta[0], jsonpath[2])==['概要', 'その他', 'materials: text']
+    assert copy_value_json_path(
+        meta[0], jsonpath[3])==['その他', 'materials: text']
 
 # def copy_values_json_path(meta, jsonpath):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_copy_values_json_path -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_copy_values_json_path(meta, jsonpath):
-    assert copy_values_json_path(meta[0], jsonpath[0]) == [
-        '寄与者', 'Contributor']
-    assert copy_values_json_path(meta[0], jsonpath[1]) == [
-        '2000-01-01/2021-03-30']
-    assert copy_values_json_path(meta[0], jsonpath[2]) == [
-        '概要', 'その他', 'materials: text']
-    assert copy_values_json_path(meta[0], jsonpath[3]) == [
-        'その他', 'materials: text']
+    assert copy_values_json_path(
+        meta[0], jsonpath[0])==['寄与者', 'Contributor']
+    assert copy_values_json_path(
+        meta[0], jsonpath[1])==['2000-01-01/2021-03-30']
+    assert copy_values_json_path(
+        meta[0], jsonpath[2])==['概要', 'その他', 'materials: text']
+    assert copy_values_json_path(
+        meta[0], jsonpath[3])==['その他', 'materials: text']
 
 # def set_timestamp(jrc, created, updated):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_set_timestamp -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_set_timestamp():
+    _jrc = {}
+    _created = datetime.strptime('2000-01-01', '%Y-%m-%d')
+    _updated = datetime.strptime('2000-12-31', '%Y-%m-%d')
+    set_timestamp(_jrc, _created, _updated)
+    assert _jrc=={'_created': '2000-01-01T00:00:00+00:00', '_updated': '2000-12-31T00:00:00+00:00'}
+    set_timestamp(_jrc, None, _updated)
+    assert _jrc=={'_created': None, '_updated': '2000-12-31T00:00:00+00:00'}
+    set_timestamp(_jrc, _created, None)
+    assert _jrc=={'_created': '2000-01-01T00:00:00+00:00', '_updated': None}
+
 # def sort_records(records, form):
 # def sort_op(record, kd, form):
 # def find_items(form):
