@@ -2,9 +2,14 @@ import json
 import pytest
 from flask import current_app
 from mock import patch
-from invenio_accounts.testutils import login_user_via_session
 
+from invenio_accounts.testutils import login_user_via_session
 from invenio_records_rest.config import RECORDS_REST_ENDPOINTS
+
+from weko_index_tree.rest import (
+    need_record_permission,
+    create_blueprint  
+)
 
 
 user_results_index = [
@@ -53,6 +58,10 @@ def test_tree_action_guest(client_rest, users):
 #         record_class = obj_or_import_string(
 #             options.get('record_class'), default=Indexes)
 #             record_class=record_class,
+def test_create_blueprint(i18n_app, app):
+    endpoints = app.config['WEKO_SEARCH_REST_ENDPOINTS']
+    assert create_blueprint(app, endpoints)
+
 
 # class IndexActionResource(ContentNegotiatedMethodView):
 #     def __init__(self, ctx, record_serializers=None,

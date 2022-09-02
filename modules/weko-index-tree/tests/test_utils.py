@@ -1,23 +1,30 @@
-from weko_index_tree.utils import \
-get_index_link_list, \
-is_index_tree_updated, \
-get_user_roles, \
-get_user_groups, \
-check_roles, \
-check_groups, \
-filter_index_list_by_role, \
-get_index_id_list, \
-get_publish_index_id_list, \
-get_admin_coverpage_setting, \
-get_elasticsearch_records_data_by_indexes, \
-get_index_id, \
-count_items, \
-check_doi_in_index_and_child_index, \
-__get_redis_store, \
-lock_all_child_index, \
-unlock_index, \
-is_index_locked
-
+from weko_index_tree.utils import (
+    get_index_link_list,
+    is_index_tree_updated,
+    get_user_roles,
+    get_user_groups,
+    check_roles,
+    check_groups,
+    filter_index_list_by_role,
+    get_index_id_list,
+    get_publish_index_id_list,
+    get_admin_coverpage_setting,
+    get_elasticsearch_records_data_by_indexes,
+    get_index_id,
+    count_items,
+    check_doi_in_index_and_child_index,
+    __get_redis_store,
+    lock_all_child_index,
+    unlock_index,
+    is_index_locked,
+    validate_before_delete_index,
+    perform_delete_index,
+    get_doi_items_in_index,
+    cached_index_tree_json,
+    reset_tree,
+    get_tree_json,
+    get_editing_items_in_index
+)
 
 from invenio_accounts.testutils import login_user_via_session, client_authenticated
 ######
@@ -44,7 +51,9 @@ from invenio_search import RecordsSearch
 from simplekv.memory.redisstore import RedisStore
 from invenio_accounts.testutils import login_user_via_session, login_user_via_view
 from invenio_records.models import RecordMetadata
+from invenio_deposit.api import Deposit
 
+from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
 from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
 from weko_admin.utils import is_exists_key_in_redis
@@ -67,18 +76,24 @@ from weko_redis.redis import RedisConnection
 
 #+++ def is_index_tree_updated():
 def test_is_index_tree_updated(app):
-
     assert is_index_tree_updated()
 
 
-# def cached_index_tree_json(timeout=50, key_prefix='index_tree_json'):
-#     def caching(f):
-#         def wrapper(*args, **kwargs):
-# def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
+#+++ def cached_index_tree_json(timeout=50, key_prefix='index_tree_json'):
+def test_cached_index_tree_json(i18n_app):
+    assert cached_index_tree_json()
+
+
+#+++ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
+def test_reset_tree(i18n_app, users, indices, records):
+    tree = Indexes.get_browsing_tree_ignore_more(pid=0)
+    
+    # Doesn't return anything
+    assert reset_tree(tree) == None
+
+
 # def get_tree_json(index_list, root_id):
-#     def get_user_list_expand():
-#     def generate_index_dict(index_element, is_root):
-#     def get_children(parent_index_id):
+    # assert get_tree_json(index_list, root_id)
 
 
 #*** def get_user_roles():
@@ -112,7 +127,6 @@ def test_check_roles(users):
 #*** def check_groups(user_group, groups):
 # Needs current_user
 def test_check_groups(i18n_app, users, db):
-    from weko_groups.models import Group
     g1 = Group.create(name="group_test1").add_member(users[-1]['obj'])
     g2 = Group.create(name="group_test2").add_member(users[-1]['obj'])
 
@@ -179,8 +193,6 @@ def test_get_admin_coverpage_setting(pdfcoverpage):
 
 #*** def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
 def test_get_elasticsearch_records_data_by_indexes(i18n_app, records, indices):
-    from weko_index_tree.api import Indexes
-    
     idx_tree_ids = [idx.cid for idx in Indexes.get_recursive_tree(indices['index_non_dict'].id)]
     current_date = date.today()
     start_date = (current_date - timedelta(days=1)).strftime("%Y-%m-%d")
@@ -226,10 +238,10 @@ def test_count_items(count_json_data):
 
 
 #*** def check_doi_in_index_and_child_index(index_id, recursively=True):
-def test_check_doi_in_index_and_child_index(i18n_app, indices, mock_execute):
-    index_id = indices['index_dict']['id']
+# def test_check_doi_in_index_and_child_index(i18n_app, indices, esindex):
+#     index_id = indices['index_dict']['id']
 
-    assert len(check_doi_in_index_and_child_index(index_id, recursively=False)) == 0
+#     assert len(check_doi_in_index_and_child_index(index_id, recursively=True)) == 0
 
 
 #+++ def __get_redis_store():
@@ -260,7 +272,11 @@ def test_unlock_index(i18n_app, indices):
     assert datastore.redis.exists(locked_key_non_dict) == False
 
 
-# def validate_before_delete_index(index_id):
+#+++ def validate_before_delete_index(index_id):
+def test_validate_before_delete_index(i18n_app, indices):
+    index_id = indices['index_non_dict'].id
+
+    assert validate_before_delete_index(index_id)
 
 
 #+++ def is_index_locked(index_id):
@@ -274,15 +290,24 @@ def test_is_index_locked(i18n_app, indices, redis_connect):
     assert is_index_locked(key)
 
 
-# def perform_delete_index(index_id, record_class, action: str):
-#         record_class (Indexes): Record object.
-#             res = record_class.get_self_path(index_id)
-#                 result = record_class. \
-# def get_doi_items_in_index(index_id, recursively=False):
-    """Check if any item in the index is locked by import process.
+#+++ def perform_delete_index(index_id, record_class, action: str):
+def test_perform_delete_index(i18n_app, indices, records):
+    record_list = RecordMetadata.query.all()
+    index_id = indices['index_non_dict'].id
+    
+    assert perform_delete_index(index_id, record_list[0], "all")
 
-    @param index_id:
-    @return:
-    """
 
-# def get_editing_items_in_index(index_id, recursively=False):
+#*** def get_doi_items_in_index(index_id, recursively=False):
+def test_get_doi_items_in_index(i18n_app, indices, esindex):
+    index_id = indices['index_non_dict'].id
+
+    assert not get_doi_items_in_index(index_id, recursively=False)
+
+
+#*** def test_get_editing_items_in_index(index_id, recursively=False):
+def test_get_editing_items_in_index(i18n_app, indices, esindex):
+    index_id = indices['index_non_dict'].id
+
+    assert not get_editing_items_in_index(index_id)
+
