@@ -67,16 +67,18 @@ def item_login(item_type_id: int = 0):
                     endpoints = item_json.get('endpoints')
 
         need_file, need_billing_file = is_schema_include_key(item_type.schema)
-
+        
         if 'subitem_thumbnail' in json.dumps(item_type.schema):
             need_thumbnail = True
             key = [i[0].split('.')[0] for i in find_items(item_type.form)
                    if 'subitem_thumbnail' in i[0]]
+            
             option = item_type.render.get('meta_list', {}). \
                 get(key[0].split('[')[0], {}).get('option')
             if option:
                 allow_multi_thumbnail = option.get('multiple')
     except Exception as e:
+        print(e)
         template_url = 'weko_items_ui/iframe/error.html'
         current_app.logger.error(e)
 
