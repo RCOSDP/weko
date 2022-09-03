@@ -23,6 +23,10 @@
 from flask import Flask, json, url_for
 
 from weko_items_ui import WekoItemsUI
+from weko_items_ui.config import WEKO_ITEMS_UI_BASE_TEMPLATE
+from weko_items_ui.proxies import current_weko_items_ui
+from weko_theme.config import BASE_PAGE_TEMPLATE
+from weko_items_ui.ext import _WekoItemsUIState
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_weko_items_ui.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 
@@ -43,6 +47,23 @@ def test_init():
     assert 'weko-items-ui' not in app.extensions
     ext.init_app(app)
     assert 'weko-items-ui' in app.extensions
+
+    app = Flask('testapp')
+    app.config.update(BASE_PAGE_TEMPLATE=BASE_PAGE_TEMPLATE)
+    WekoItemsUI(app)
+    assert 'weko-items-ui' in app.extensions
+
+
+    app = Flask('testapp')
+    app.config.update(WEKO_ITEMS_UI_BASE_TEMPLATE=WEKO_ITEMS_UI_BASE_TEMPLATE)
+    ext = WekoItemsUI(app)
+    assert 'weko-items-ui' in app.extensions
+
+
+    with app.test_request_context():
+        assert 'weko-items-ui' in current_weko_items_ui.app.extensions
+    
+    
 
 
 def test_view(app):

@@ -559,7 +559,7 @@ def db_userprofile(app, db):
 
 @pytest.fixture()
 def db_itemtype2(app, db):
-    item_type_name = ItemTypeName(
+    item_type_name = ItemTypeName(id=2,
         name="テストアイテムタイプ2", has_site_license=True, is_active=True
     )
     item_type_schema = dict()
@@ -578,7 +578,7 @@ def db_itemtype2(app, db):
     with open("tests/data/itemtype1_mapping.json", "r") as f:
         item_type_mapping = json.load(f)
 
-    item_type = ItemType(
+    item_type = ItemType(id=2,
         name_id=2,
         harvesting_type=True,
         schema=item_type_schema,
@@ -589,7 +589,7 @@ def db_itemtype2(app, db):
         is_deleted=False,
     )
 
-    item_type_mapping = ItemTypeMapping(item_type_id=2, mapping=item_type_mapping)
+    item_type_mapping = ItemTypeMapping(id=2,item_type_id=2, mapping=item_type_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)
@@ -600,7 +600,7 @@ def db_itemtype2(app, db):
 
 @pytest.fixture()
 def db_itemtype3(app, db):
-    item_type_name = ItemTypeName(
+    item_type_name = ItemTypeName(id=3,
         name="テストアイテムタイプ3", has_site_license=True, is_active=True
     )
     item_type_schema = dict()
@@ -620,6 +620,7 @@ def db_itemtype3(app, db):
         item_type_mapping = json.load(f)
 
     item_type = ItemType(
+        id=3,
         name_id=3,
         harvesting_type=True,
         schema=item_type_schema,
@@ -630,7 +631,7 @@ def db_itemtype3(app, db):
         is_deleted=False,
     )
 
-    item_type_mapping = ItemTypeMapping(item_type_id=3, mapping=item_type_mapping)
+    item_type_mapping = ItemTypeMapping(id=3,item_type_id=3, mapping=item_type_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)
@@ -641,7 +642,7 @@ def db_itemtype3(app, db):
 
 @pytest.fixture()
 def db_itemtype4(app, db):
-    item_type_name = ItemTypeName(
+    item_type_name = ItemTypeName(id=4,
         name="テストアイテムタイプ4", has_site_license=True, is_active=True
     )
     item_type_schema = dict()
@@ -661,6 +662,7 @@ def db_itemtype4(app, db):
         item_type_mapping = json.load(f)
 
     item_type = ItemType(
+        id=4,
         name_id=4,
         harvesting_type=True,
         schema=item_type_schema,
@@ -671,7 +673,7 @@ def db_itemtype4(app, db):
         is_deleted=False,
     )
 
-    item_type_mapping = ItemTypeMapping(item_type_id=4, mapping=item_type_mapping)
+    item_type_mapping = ItemTypeMapping(id=4,item_type_id=4, mapping=item_type_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)
@@ -682,7 +684,7 @@ def db_itemtype4(app, db):
 
 @pytest.fixture()
 def db_itemtype5(app, db):
-    item_type_name = ItemTypeName(
+    item_type_name = ItemTypeName(id=5,
         name="テストアイテムタイプ5", has_site_license=True, is_active=True
     )
     item_type_schema = dict()
@@ -702,6 +704,7 @@ def db_itemtype5(app, db):
         item_type_mapping = json.load(f)
 
     item_type = ItemType(
+        id=5,
         name_id=5,
         harvesting_type=True,
         schema=item_type_schema,
@@ -712,7 +715,7 @@ def db_itemtype5(app, db):
         is_deleted=False,
     )
 
-    item_type_mapping = ItemTypeMapping(item_type_id=5, mapping=item_type_mapping)
+    item_type_mapping = ItemTypeMapping(id=5,item_type_id=5, mapping=item_type_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)
@@ -721,113 +724,9 @@ def db_itemtype5(app, db):
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
 
-
-@pytest.fixture()
-def db_itemtype100(app, db):
-    item_type_schema = dict()
-    with open("tests/data/itemtype_schema.json", "r") as f:
-        item_type_schema = json.load(f)
-    item_type_form = dict()
-    with open("tests/data/itemtype_form.json", "r") as f:
-        item_type_form = json.load(f)
-    item_type_render = dict()
-    with open("tests/data/itemtype_render.json", "r") as f:
-        item_type_render = json.load(f)
-    item_type_mapping = dict()
-    with open("tests/data/itemtype_mapping.json", "r") as f:
-        item_type_mapping = json.load(f)
-    
-    # no render
-    item_type_name100 = ItemTypeName(
-        id=100,name="テストアイテムタイプ100", has_site_license=True, is_active=True
-    )
-    item_type100 = ItemType(
-        id=100,
-        name_id=100,
-        harvesting_type=True,
-        schema=item_type_schema,
-        form=item_type_form,
-        render=dict(),
-        tag=1,
-        version_id=1,
-        is_deleted=False,
-    )
-
-    item_type_mapping100 = ItemTypeMapping(id=100,item_type_id=100, mapping=item_type_mapping)
-
-    # no form
-    item_type_name101 = ItemTypeName(
-        id=101,name="テストアイテムタイプ101", has_site_license=True, is_active=True
-    )
-    item_type101 = ItemType(
-        id=101,
-        name_id=101,
-        harvesting_type=True,
-        schema=item_type_schema,
-        form=dict(),
-        render=item_type_render,
-        tag=1,
-        version_id=1,
-        is_deleted=False,
-    )
-    item_type_mapping101 = ItemTypeMapping(id=101,item_type_id=101, mapping=item_type_mapping)
-
-    # no schema
-    item_type_name102 = ItemTypeName(
-        id=102,name="テストアイテムタイプ102", has_site_license=True, is_active=True
-    )
-    item_type102 = ItemType(
-        id=102,
-        name_id=102,
-        harvesting_type=True,
-        schema=dict(),
-        form=item_type_form,
-        render=item_type_render,
-        tag=1,
-        version_id=1,
-        is_deleted=False,
-    )
-    item_type_mapping102 = ItemTypeMapping(id=102,item_type_id=102, mapping=item_type_mapping)
-
-
-    item_type_name103 = ItemTypeName(
-        id=103,name="テストアイテムタイプ103", has_site_license=True, is_active=True
-    )
-    key=['hoge[]', 'item_1662046377046[]', 'item_1662046377046[]']
-    item_type_render['meta_list'] = key
-    item_type103 = ItemType(
-        id=103,
-        name_id=103,
-        harvesting_type=True,
-        schema=item_type_schema,
-        form=item_type_form,
-        render=item_type_render,
-        tag=1,
-        version_id=1,
-        is_deleted=False,
-    )
-    item_type_mapping103 = ItemTypeMapping(id=103,item_type_id=103, mapping=item_type_mapping)
-
-
-    with db.session.begin_nested():
-        db.session.add(item_type_name100)
-        db.session.add(item_type100)
-        db.session.add(item_type_mapping100)
-        db.session.add(item_type_name101)
-        db.session.add(item_type101)
-        db.session.add(item_type_mapping101)
-        db.session.add(item_type_name102)
-        db.session.add(item_type102)
-        db.session.add(item_type_mapping102)
-        db.session.add(item_type_name103)
-        db.session.add(item_type103)
-        db.session.add(item_type_mapping103)
-    
-
-
 @pytest.fixture()
 def db_itemtype(app, db):
-    item_type_name = ItemTypeName(
+    item_type_name = ItemTypeName(id=1,
         name="テストアイテムタイプ", has_site_license=True, is_active=True
     )
     item_type_schema = dict()
@@ -847,6 +746,7 @@ def db_itemtype(app, db):
         item_type_mapping = json.load(f)
 
     item_type = ItemType(
+        id=1,
         name_id=1,
         harvesting_type=True,
         schema=item_type_schema,
@@ -857,7 +757,7 @@ def db_itemtype(app, db):
         is_deleted=False,
     )
 
-    item_type_mapping = ItemTypeMapping(item_type_id=1, mapping=item_type_mapping)
+    item_type_mapping = ItemTypeMapping(id=1,item_type_id=1, mapping=item_type_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)
