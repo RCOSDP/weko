@@ -1260,7 +1260,7 @@ def check_record_doi_indexes(pid_value='0'):
         invenio_pidstore.errors.PIDDoesNotExistError
     """    
     doi = int(request.args.get('doi', '0'))
-    record = WekoRecord.get_record_by_pid(pid_value)    
+    record = WekoRecord.get_record_by_pid(pid_value)
     if (record.pid_doi or doi > 0) and \
             not check_index_permissions(record=record, is_check_doi=True):
         return jsonify({

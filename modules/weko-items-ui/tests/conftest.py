@@ -22,6 +22,7 @@
 
 import json
 import os
+from re import T
 import shutil
 import tempfile
 import uuid
@@ -92,6 +93,7 @@ from weko_deposit.api import WekoIndexer
 from weko_deposit.config import DEPOSIT_RECORDS_API,WEKO_DEPOSIT_ITEMS_CACHE_PREFIX
 from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
 from weko_index_tree.api import Indexes
+from weko_index_tree.models import Index
 from weko_index_tree.config import WEKO_INDEX_TREE_REST_ENDPOINTS,WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER
 from weko_records import WekoRecords
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
@@ -787,18 +789,49 @@ def db_records(db,instance_path,users):
     index_metadata = {
             'id': 1,
             'parent': 0,
-            'value': 'IndexA',
+            'value': 'Index(public_state = True,harvest_public_state = True)'
         }
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
-        Indexes.create(0, index_metadata)
+        ret = Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(1)
+        index.public_state = True
+        index.harvest_public_state = True
+    
     index_metadata = {
             'id': 2,
             'parent': 0,
-            'value': 'IndexB',
+            'value': 'Index(public_state = True,harvest_public_state = False)',
         }
     
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(2)
+        index.public_state = True
+        index.harvest_public_state = False
+    
+    index_metadata = {
+            'id': 3,
+            'parent': 0,
+            'value': 'Index(public_state = False,harvest_public_state = True)',
+    }
+    
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(3)
+        index.public_state = False
+        index.harvest_public_state = True
+    
+    index_metadata = {
+            'id': 4,
+            'parent': 0,
+            'value': 'Index(public_state = False,harvest_public_state = False)',
+    }
+    
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(4)
+        index.public_state = False
+        index.harvest_public_state = False
 
  
     yield result
