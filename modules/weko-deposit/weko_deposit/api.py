@@ -138,9 +138,19 @@ class WekoIndexer(RecordIndexer):
     def upload_metadata(self, jrc, item_id, revision_id, skip_files=False):
         """Upload the item data to ElasticSearch.
 
-        :param jrc:
-        :param item_id: item id.
+        Args:
+            jrc (_type_): _description_
+            item_id (uuid.UUID): _description_
+            revision_id (int): _description_
+            skip_files (bool, optional): _description_. Defaults to False.
         """
+        # current_app.logger.error("jrc:{}".format(jrc))
+        # current_app.logger.error("type(jrc):{}".format(type(jrc)))
+        # current_app.logger.error("item_id:{}".format(item_id))
+        # current_app.logger.error("type(item_id:{}".format(type(item_id)))
+        # current_app.logger.error("revision_id:{}".format(revision_id))
+        # current_app.logger.error("type(revision_id:{}".format(type(revision_id)))
+        # current_app.logger.error("skip_files:{}".format(skip_files))
         es_info = dict(id=str(item_id),
                        index=self.es_index,
                        doc_type=self.es_doc_type)
@@ -167,6 +177,9 @@ class WekoIndexer(RecordIndexer):
         :param body:
         :param parent_id: Parent item id.
         """
+        # current_app.logger.error("body:{}".format(body))
+        # current_app.logger.error("parent_id:{}".format(parent_id))
+        
         for lst in body:
             try:
                 self.client.delete(id=str(lst),
