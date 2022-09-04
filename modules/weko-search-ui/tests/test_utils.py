@@ -1,7 +1,15 @@
+# -*- coding: utf-8 -*-
+#
+#
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::xxxx -vv --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+
+
 import pytest
+import unittest
+from mock import MagicMock, patch, PropertyMock
+from invenio_pidstore.errors import PIDDoesNotExistError
 import json
 import os
-
 from flask import session, url_for,current_app
 
 from weko_records.api import ItemTypes
@@ -13,13 +21,18 @@ from weko_search_ui.utils import (
     check_import_items,
     unpackage_import_file,
     read_stats_csv,
+    handle_check_exist_record,
     handle_check_date,
+    handle_check_doi,
     get_list_key_of_iso_date,
     handle_validate_item_import,
     get_item_type,handle_fill_system_item,
     get_system_data_uri,
     represents_int,
-    validation_date_property
+    validation_date_property,
+    DefaultOrderedDict,
+    defaultify,
+    handle_get_all_sub_id_and_name
 )
 from invenio_i18n.ext import InvenioI18N, current_i18n
 from invenio_i18n.babel import set_locale
@@ -28,8 +41,8 @@ from weko_search_ui.config import (
     WEKO_SYS_USER,
     WEKO_IMPORT_SYSTEM_ITEMS,
     VERSION_TYPE_URI,
-ACCESS_RIGHT_TYPE_URI,
-RESOURCE_TYPE_URI
+    ACCESS_RIGHT_TYPE_URI,
+    RESOURCE_TYPE_URI
 )
 
 from unittest.mock import patch, Mock, MagicMock
@@ -225,7 +238,7 @@ def test_get_content_workflow():
     result["flow_id"] = item.flow_id
     result["flow_name"] = item.flow_define.flow_name
     result["item_type_name"] = item.itemtype.item_type_name.name
-    
+
     assert get_content_workflow(item) == result
 
 # def set_nested_item(data_dict, map_list, val):
@@ -263,16 +276,16 @@ def test_unpackage_import_file(app,mocker,mocker_itemtype):
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file/result.json")
     with open(filepath,encoding="utf-8") as f:
         result = json.load(f)
-    
+
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file/result_force_new.json")
     with open(filepath,encoding="utf-8") as f:
         result_force_new = json.load(f)
-    
+
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file")
     with app.test_request_context():
         with set_locale('en'):
-            assert unpackage_import_file(path,'items.csv',False)==result
-            assert unpackage_import_file(path,'items.csv',True)==result_force_new
+            assert unpackage_import_file(path,'items.csv','csv',False)==result
+            assert unpackage_import_file(path,'items.csv','csv',True)==result_force_new
 
 
 # def getEncode(filepath):
@@ -290,9 +303,9 @@ def test_getEncode():
         # {"file":"utf32be_bom_lf_items.csv","enc":"utf-32"},
         # {"file":"utf32le_bom_lf_items.csv","enc":"utf-32"},
          {"file":"big5.txt","enc":""},
-        
+
     ]
-    
+
     for f in csv_files:
         filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv",f['file'])
         print(filepath)
@@ -305,12 +318,30 @@ def test_read_stats_csv(app,mocker_itemtype):
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv","data.json")
     csv_file_name = "utf8_lf_items.csv"
     csv_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv",csv_file_name)
+    file_type = "csv"
     with open(filepath,encoding="utf-8") as f:
         data = json.load(f)
 
     with app.test_request_context():
         with set_locale('en'):
-            assert read_stats_csv(csv_file_path,csv_file_name) == data
+            res = read_stats_csv(csv_file_path,csv_file_name,file_type)
+            assert res["error"] == data["error"]
+            assert res["error_code"] == data["error_code"]
+            assert res["data_list"] == data["data_list"]
+            assert res["item_type_schema"] == data["item_type_schema"]
+
+            assert read_stats_csv(csv_file_path,csv_file_name,'csv') == data
+
+
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "tsv","data.json")
+    tsv_file_name = "utf8_lf_items.tsv"
+    tsv_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "tsv",tsv_file_name)
+    with open(filepath,encoding="utf-8") as f:
+        data = json.load(f)
+
+    with app.test_request_context():
+        with set_locale('en'):
+            assert read_stats_csv(tsv_file_path,tsv_file_name,'tsv') == data
 
 # def handle_convert_validate_msg_to_jp(message: str):
 # def handle_validate_item_import(list_record, schema) -> list:
@@ -338,7 +369,7 @@ def test_represents_int():
     assert represents_int("a") == False
     assert represents_int("30") == True
     assert represents_int("31.1") == False
-    
+
 
 # def get_item_type(item_type_id=0) -> dict:
 def test_get_item_type(mocker_itemtype):
@@ -356,8 +387,84 @@ def test_get_item_type(mocker_itemtype):
 
     assert get_item_type(0) == {}
 
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_exist_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_exist_record(app):
+    case =  unittest.TestCase()
+    # case 1 import new items
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record.json")
+    with open(filepath,encoding="utf-8") as f:
+        list_record = json.load(f)
 
-# def handle_check_exist_record(list_record) -> list:
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record_result.json")
+    with open(filepath,encoding="utf-8") as f:
+        result = json.load(f)
+
+    case.assertCountEqual(handle_check_exist_record(list_record),result)
+
+    # case 2 import items with id
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record1.json")
+    with open(filepath,encoding="utf-8") as f:
+        list_record = json.load(f)
+
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record_result1.json")
+    with open(filepath,encoding="utf-8") as f:
+        result = json.load(f)
+
+    with app.test_request_context():
+        with set_locale('en'):
+            case.assertCountEqual(handle_check_exist_record(list_record),result)
+
+    # case 3 import items with id and uri
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record2.json")
+    with open(filepath,encoding="utf-8") as f:
+        list_record = json.load(f)
+
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record_result2.json")
+    with open(filepath,encoding="utf-8") as f:
+        result = json.load(f)
+
+    with app.test_request_context():
+        with set_locale('en'):
+            with patch("weko_deposit.api.WekoRecord.get_record_by_pid") as m:
+                m.return_value.pid.is_deleted.return_value = False
+                m.return_value.get.side_effect = [1,2,3,4,5,6,7,8,9,10]
+                case.assertCountEqual(handle_check_exist_record(list_record),result)
+
+    # case 4 import new items with doi_ra
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record3.json")
+    with open(filepath,encoding="utf-8") as f:
+        list_record = json.load(f)
+
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record3_result.json")
+    with open(filepath,encoding="utf-8") as f:
+        result = json.load(f)
+
+    with app.test_request_context():
+        with set_locale('en'):
+            case.assertCountEqual(handle_check_exist_record(list_record),result)
+
+    # with open(filepath,encoding="utf-8", mode='wt') as f:
+    #      json.dump(result,f,ensure_ascii=False)
+    # for item in list_record:
+    #     item['uri'] = "http://localhost/records/"+str(item['id'])
+    # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record2.json")
+    # with open(filepath,encoding="utf-8", mode='wt') as f:
+    #     json.dump(list_record,f,ensure_ascii=False)
+    # i = 1
+    # for record in list_record:
+    #     record['id'] = i
+    #     i=i+1
+
+    # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record1.json")
+    # with open(filepath,encoding="utf-8", mode='wt') as f:
+    #       json.dump(list_record,f,ensure_ascii=False)
+
+
+    # with open(filepath,encoding="utf-8", mode='wt') as f:
+    #      result = handle_check_exist_record(list_record)
+    #      json.dump(result,f,ensure_ascii=False)
+
+
 # def make_csv_by_line(lines):
 # def make_stats_csv(raw_stats, list_name):
 # def create_deposit(item_id):
@@ -378,7 +485,20 @@ def test_get_item_type(mocker_itemtype):
 # def handle_check_cnri(list_record):
 # def handle_check_doi_indexes(list_record):
 # def handle_check_doi_ra(list_record):
-# def handle_check_doi(list_record):
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_doi(app):
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "list_records.json")
+    with open(filepath,encoding="utf-8") as f:
+        list_record = json.load(f)
+    assert handle_check_doi(list_record)==None
+
+    # case new items with doi_ra
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_doi.json")
+    with open(filepath,encoding="utf-8") as f:
+        list_record = json.load(f)
+    assert handle_check_doi(list_record)==None
+
 # def register_item_handle(item):
 # def prepare_doi_setting():
 # def get_doi_prefix(doi_ra):
@@ -469,7 +589,7 @@ def test_handle_fill_system_item(app,test_list_records,mocker):
         item_type_mapping = json.load(f)
     mocker.patch("weko_records.serializers.utils.get_mapping",return_value=item_map)
     mocker.patch("weko_records.api.Mapping.get_record",return_value=item_type_mapping)
-    
+
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records/list_records_fill_system.json")
     with open(filepath,encoding="utf-8") as f:
         list_record = json.load(f)
@@ -490,7 +610,7 @@ def test_handle_fill_system_item(app,test_list_records,mocker):
         item2['metadata']['item_1617265215918']['subitem_1522305645492']=a
         item2['metadata']['item_1617265215918']['subitem_1600292170262']=""
         items.append(item2)
-    
+
     for a in ACCESS_RIGHT_TYPE_URI:
         item = copy.deepcopy(list_record[0])
         item['metadata']['item_1617265215918']['subitem_1522305645492']="VoR"
@@ -504,7 +624,7 @@ def test_handle_fill_system_item(app,test_list_records,mocker):
         item2['metadata']['item_1617186476635']['subitem_1522299639480']=a
         item2['metadata']['item_1617186476635']['subitem_1600958577026']=""
         items.append(item2)
-        
+
     for a in RESOURCE_TYPE_URI:
         item = copy.deepcopy(list_record[0])
         item['metadata']['item_1617265215918']['subitem_1522305645492']="VoR"
@@ -518,18 +638,18 @@ def test_handle_fill_system_item(app,test_list_records,mocker):
         item2['metadata']['item_1617258105262']['resourcetype']=a
         item2['metadata']['item_1617258105262']['resourceuri']=""
         items.append(item2)
-    
+
     # with open("items.json","w") as f:
     #     json.dump(items,f)
-    
+
     # with open("items_result.json","w") as f:
     #     json.dump(items_result,f)
-    
+
 
     # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items.json")
     # with open(filepath,encoding="utf-8") as f:
     #     items = json.load(f)
-    
+
     # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items_result.json")
     # with open(filepath,encoding="utf-8") as f:
     #     items_result = json.load(f)
@@ -543,7 +663,38 @@ def test_handle_fill_system_item(app,test_list_records,mocker):
 # def get_thumbnail_key(item_type_id=0):
 # def handle_check_thumbnail_file_type(thumbnail_paths):
 # def handle_check_metadata_not_existed(str_keys, item_type_id=0):
-# def handle_get_all_sub_id_and_name(items, root_id=None, root_name=None, form=[]):
+
+
+@pytest.mark.parametrize(
+    "items,root_id,root_name,form,ids,names",[
+        pytest.param({'interim': {'type': 'string'}},'.metadata.item_1657196790737[0]','text[0]',[{'key': 'item_1657196790737[].interim', 'type': 'text', 'notitle': True}],['.metadata.item_1657196790737[0].interim'],['text[0].None']),
+        pytest.param({'interim': {'enum': [None, 'op1', 'op2', 'op3', 'op4'], 'type': ['null', 'string'], 'title': 'list', 'title_i18n': {'en': '', 'ja': ''}}},
+        '.metadata.item_1657204077414[0]',
+        'list[0]',[{'key': 'item_1657204077414[].interim', 'type': 'select', 'title': 'list', 'notitle': True, 'titleMap': [{'name': 'op1', 'value': 'op1'}, {'name': 'op2', 'value': 'op2'}, {'name': 'op3', 'value': 'op3'}, {'name': 'op4', 'value': 'op4'}], 'title_i18n': {'en': '', 'ja': ''}}]
+        ,['.metadata.item_1657204026946.interim[0]'],['check.check[0]']),
+        pytest.param({'interim': {'enum': [None, 'op1', 'op2', 'op3', 'op4'], 'type': ['null', 'string'], 'title': 'list', 'format': 'select'}},
+'.metadata.item_1657204070640','list',[{'key': 'item_1657204070640.interim', 'type': 'select', 'title': 'list', 'titleMap': [{'name': 'op1', 'value': 'op1'}, {'name': 'op2', 'value': 'op2'}, {'name': 'op3', 'value': 'op3'}, {'name': 'op4', 'value': 'op4'}], 'title_i18n': {'en': '', 'ja': ''}}]
+,['.metadata.item_1657204036771[0].interim[0]'],['checjk[0].checjk[0]']),
+pytest.param({'interim': {'type': 'array', 'items': {'enum': ['op1', 'op2', 'op3', 'op4'], 'type': 'string'}, 'title': 'check', 'format': 'checkboxes', 'title_i18n': {'en': '', 'ja': ''}}},
+'.metadata.item_1657204026946','check',[{'key': 'item_1657204026946.interim', 'type': 'template', 'title': 'check', 'titleMap': [{'name': 'op1', 'value': 'op1'}, {'name': 'op2', 'value': 'op2'}, {'name': 'op3', 'value': 'op3'}, {'name': 'op4', 'value': 'op4'}], 'title_i18n': {'en': '', 'ja': ''}, 'templateUrl': '/static/templates/weko_deposit/checkboxes.html'}]
+,['.metadata.item_1657204043063.interim'],['rad.rad']),
+pytest.param({'interim': {'type': 'array', 'items': {'enum': ['op1', 'op2', 'op3', 'op4'], 'type': 'string'}, 'title': 'checjk', 'format': 'checkboxes', 'title_i18n': {'en': '', 'ja': ''}}},
+'.metadata.item_1657204036771[0]','check[0]',[{'key': 'item_1657204036771[].interim', 'type': 'template', 'title': 'checjk', 'notitle': True, 'titleMap': [{'name': 'op1', 'value': 'op1'}, {'name': 'op2', 'value': 'op2'}, {'name': 'op3', 'value': 'op3'}, {'name': 'op4', 'value': 'op4'}], 'title_i18n': {'en': '', 'ja': ''}, 'templateUrl': '/static/templates/weko_deposit/checkboxes.html'}]
+,['.metadata.item_1657204049138[0].interim'],['rd[0].rd']),
+pytest.param({'interim': {'enum': ['op1', 'op2', 'op3', 'op4'], 'type': ['null', 'string'], 'title': 'rad', 'format': 'radios'}},
+'.metadata.item_1657204043063',
+'rad',[{'key': 'item_1657204043063.interim', 'type': 'radios', 'title': 'rad', 'titleMap': [{'name': 'op1', 'value': 'op1'}, {'name': 'op2', 'value': 'op2'}, {'name': 'op3', 'value': 'op3'}, {'name': 'op4', 'value': 'op4'}], 'title_i18n': {'en': '', 'ja': ''}}]
+,['.metadata.item_1657204070640.interim'],['list.list']),
+pytest.param({'interim': {'enum': ['op1', 'op2', 'op3', 'op4'], 'type': ['null', 'string'], 'title': 'rd', 'title_i18n': {'en': '', 'ja': ''}}},
+'.metadata.item_1657204049138[0]','rd[0]',[{'key': 'item_1657204049138[].interim', 'type': 'radios', 'title': 'rd', 'notitle': True, 'titleMap': [{'name': 'op1', 'value': 'op1'}, {'name': 'op2', 'value': 'op2'}, {'name': 'op3', 'value': 'op3'}, {'name': 'op4', 'value': 'op4'}], 'title_i18n': {'en': '', 'ja': ''}}]
+,['.metadata.item_1657204077414[0].interim'],['list[0].list']
+)
+]
+)
+def test_handle_get_all_sub_id_and_name(app,items,root_id,root_name,form,ids,names):
+    with app.app_context():
+        assert ids,names == handle_get_all_sub_id_and_name(items,root_id,root_name,form)
+
 # def handle_get_all_id_in_item_type(item_type_id):
 # def handle_check_consistence_with_mapping(mapping_ids, keys):
 # def handle_check_duplication_item_id(ids: list):
@@ -562,3 +713,28 @@ def test_handle_fill_system_item(app,test_list_records,mocker):
 # def get_data_by_property(item_metadata, item_map, mapping_key):
 # def get_filenames_from_metadata(metadata):
 # def handle_check_filename_consistence(file_paths, meta_filenames):
+
+def test_DefaultOrderDict_deepcopy():
+    import copy
+
+    data={
+        "key0":"value0",
+        "key1":"value1",
+        "key2":{
+            "key2.0":"value2.0",
+            "key2.1":"value2.1"
+            }
+        }
+    dict1 = defaultify(data)
+    dict2 = copy.deepcopy(dict1)
+
+    for i, d in enumerate(dict2):
+        if i in [0, 1] :
+            assert d == "key" + str(i)
+            assert dict2[d] == "value" + str(i)
+        else:
+            assert d == "key" + str(i)
+            assert isinstance(dict2[d], DefaultOrderedDict)
+            for s, dd in enumerate(dict2[d]):
+                assert dd == "key{}.{}".format(i,s)
+                assert dict2[d][dd] == "value{}.{}".format(i,s)

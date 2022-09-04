@@ -627,7 +627,10 @@ def get_file_info_list(record):
             size_num = file_size_value.split(' ')[0]
             size_unit = file_size_value.split(' ')[1]
             unit_num = defined_unit.get(size_unit.lower(), 0)
-            file_size_value = float(size_num) * unit_num
+            try:
+                file_size_value = float(size_num) * unit_num
+            except:
+                file_size_value = -1
         return file_size_value
 
     def set_message_for_file(p_file):
@@ -644,7 +647,7 @@ def get_file_info_list(record):
                 if adt is None:
                     adt = dt.date.max
                 pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
-                if pdt > dt.today():
+                if pdt > dt.utcnow():
                     message = "Download is available from {}/{}/{}."
                     p_file['future_date_message'] = _(message).format(
                         pdt.year, pdt.month, pdt.day)
@@ -679,11 +682,7 @@ def get_file_info_list(record):
                     # Check Opendate is future date.
                     set_message_for_file(f)
                     # Check show preview area.
-                    # If f is uploaded in this system => show 'Preview' area.
-                    # remove port number from url_root
-                    o = urlparse(request.url_root)
-                    base_url = "{}/record/{}/files/{}".format(
-                        o.hostname,
+                    base_url = "/record/{}/files/{}".format(
                         record.get('recid'),
                         f.get("filename")
                     )
@@ -695,8 +694,8 @@ def get_file_info_list(record):
                     if base_url in url:
                         is_display_file_preview = True
 
-                    # current_app.logger.debug("base_url: {0}".format(base_url))
-                    # current_app.logger.debug("url: {0}".format(url))
+                    #current_app.logger.error("base_url: {0}".format(base_url))
+                    #current_app.logger.error("url: {0}".format(url))
                     # current_app.logger.debug(
                     #     "is_display_file_preview: {0}".format(is_display_file_preview))
 

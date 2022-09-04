@@ -14,7 +14,7 @@ import json
 from copy import deepcopy
 
 import pytest
-from helpers import get_json
+from tests.helpers import get_json
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from marshmallow import Schema, fields

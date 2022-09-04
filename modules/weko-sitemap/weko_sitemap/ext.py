@@ -21,6 +21,7 @@ from invenio_cache import current_cache
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
+from weko_records.models import ItemMetadata
 from sqlalchemy import Float, Integer, cast, not_
 
 from . import config
@@ -111,7 +112,8 @@ class WekoSitemap(Sitemap):
              .join(RecordMetadata,
                    RecordMetadata.id == PersistentIdentifier.object_uuid)
              .filter(PersistentIdentifier.status == PIDStatus.REGISTERED,
-                     PersistentIdentifier.pid_type == 'parent')
+                     PersistentIdentifier.pid_type == 'recid',
+                     PersistentIdentifier.pid_value.ilike('%.1'))
              .order_by(PersistentIdentifier.id)
              .limit(current_app.config['WEKO_SITEMAP_TOTAL_MAX_URL_COUNT']))
 
@@ -119,7 +121,7 @@ class WekoSitemap(Sitemap):
             yield {
                 'loc': url_for('invenio_records_ui.recid',
                                pid_value=(recid.pid_value).replace(
-                                   'parent:', ''),
+                                   '.1', ''),
                                _external=True),
                 # W3C Datetime format YYYY-MM-DDThh:mmTZD
                 'lastmod': format_datetime(

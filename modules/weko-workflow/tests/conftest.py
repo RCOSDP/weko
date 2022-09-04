@@ -23,30 +23,62 @@
 import os
 import shutil
 import tempfile
+import json
+import uuid
+from datetime import datetime
 
 import pytest
 from flask import Flask
 from flask_babelex import Babel, lazy_gettext as _
 from flask_menu import Menu
+from invenio_theme import InvenioTheme
+from invenio_theme.views import blueprint as invenio_theme_blueprint
+from invenio_assets import InvenioAssets
 from invenio_access import InvenioAccess
-from invenio_access.models import ActionUsers
+from invenio_access.models import ActionUsers,ActionRoles
 from invenio_accounts.testutils import create_test_user
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
 from invenio_accounts.views.settings import blueprint \
     as invenio_accounts_blueprint
+from invenio_i18n import InvenioI18N
 from invenio_cache import InvenioCache
+from invenio_admin import InvenioAdmin
+from invenio_admin.views import blueprint as invenio_admin_blueprint
 from invenio_db import InvenioDB, db as db_
 from invenio_stats import InvenioStats
+from invenio_communities import InvenioCommunities
+from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
+from invenio_communities.models import Community 
 # from weko_records_ui import WekoRecordsUI
 from weko_theme import WekoTheme
+from weko_admin import WekoAdmin
+from weko_admin.models import SessionLifetime 
+from weko_admin.views import blueprint as weko_admin_blueprint
+from weko_records.models import ItemTypeName, ItemType
 from weko_workflow import WekoWorkflow
-from weko_workflow.models import Activity
+from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
 from weko_workflow.views import blueprint as weko_workflow_blueprint
+from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
+from tests.helpers import json_data, create_record
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import Session
+from sqlalchemy import event
+from invenio_files_rest.models import Location
+from invenio_files_rest import InvenioFilesREST
 
+# @event.listens_for(Engine, "connect")
+# def set_sqlite_pragma(dbapi_connection, connection_record):
+#     cursor = dbapi_connection.cursor()
+#     cursor.execute("PRAGMA foreign_keys=OFF;")
+#     cursor.close()
+
+# @event.listens_for(Session, 'after_begin')
+# def receive_after_begin(session, transaction, connection):
+#     connection.execute("PRAGMA foreign_keys=OFF;")
 
 @pytest.yield_fixture()
 def instance_path():
@@ -63,14 +95,17 @@ def base_app(instance_path):
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
+        SERVER_NAME='TEST_SERVER',
+        # SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+        #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         ACCOUNTS_USERINFO_HEADERS=True,
         WEKO_PERMISSION_SUPER_ROLE_USER=['System Administrator',
                                          'Repository Administrator'],
         WEKO_PERMISSION_ROLE_COMMUNITY=['Community Administrator'],
-        # THEME_SITEURL = 'https://localhost',
+        THEME_SITEURL = 'https://localhost',
         WEKO_RECORDS_UI_LICENSE_DICT=[
             {
                 'name': _('write your own license'),
@@ -259,20 +294,34 @@ def base_app(instance_path):
             },
         ],
         WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE="",
+        WEKO_ITEMS_UI_MULTIPLE_APPROVALS=True,
+        WEKO_THEME_DEFAULT_COMMUNITY="Root Index",
     )
     app_.testing = True
     Babel(app_)
-    Menu(app_)
+    InvenioI18N(app_)
+    # InvenioTheme(app_)
     InvenioAccess(app_)
     InvenioAccounts(app_)
+    InvenioFilesREST(app_)
     InvenioCache(app_)
     InvenioDB(app_)
     InvenioStats(app_)
-    WekoTheme(app_)
+    InvenioAssets(app_)
+    InvenioAdmin(app_)
+    # InvenioCommunities(app_)
+    # WekoAdmin(app_)
+    # WekoTheme(app_)
     WekoWorkflow(app_)
     # WekoRecordsUI(app_)
-    app_.register_blueprint(invenio_accounts_blueprint)
+    # app_.register_blueprint(invenio_theme_blueprint)
+    app_.register_blueprint(invenio_communities_blueprint)
+    # app_.register_blueprint(invenio_admin_blueprint)
+    # app_.register_blueprint(invenio_accounts_blueprint)
+    # app_.register_blueprint(weko_theme_blueprint)
+    # app_.register_blueprint(weko_admin_blueprint)
     app_.register_blueprint(weko_workflow_blueprint)
+    
     return app_
 
 
@@ -291,69 +340,263 @@ def db(app):
     db_.create_all()
     yield db_
     db_.session.remove()
+    db_.drop_all()
     # drop_database(str(db_.engine.url))
 
 
 @pytest.yield_fixture()
 def client(app):
-    """Get test client."""
+    """make a test client.
+
+    Args:
+        app (Flask): flask app.
+
+    Yields:
+        FlaskClient: test client
+    """
     with app.test_client() as client:
         yield client
-
 
 @pytest.fixture()
 def users(app, db):
     """Create users."""
     ds = app.extensions['invenio-accounts'].datastore
-    user_count = User.query.filter_by(email='test@test.org').count()
+    user_count = User.query.filter_by(email='user@test.org').count()
     if user_count != 1:
-        user = create_test_user(email='test@test.org')
-        contributor = create_test_user(email='test2@test.org')
-        comadmin = create_test_user(email='test3@test.org')
-        repoadmin = create_test_user(email='test4@test.org')
-        sysadmin = create_test_user(email='test5@test.org')
-
+        user = create_test_user(email='user@test.org')
+        contributor = create_test_user(email='contributor@test.org')
+        comadmin = create_test_user(email='comadmin@test.org')
+        repoadmin = create_test_user(email='repoadmin@test.org')
+        sysadmin = create_test_user(email='sysadmin@test.org')
+        generaluser = create_test_user(email='generaluser@test.org')
+        originalroleuser = create_test_user(email='originalroleuser@test.org')
+        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
     else:
-        user = User.query.filter_by(email='test@test.org').first()
-        contributor = User.query.filter_by(email='test2@test.org').first()
-        comadmin = User.query.filter_by(email='test3@test.org').first()
-        repoadmin = User.query.filter_by(email='test4@test.org').first()
-        sysadmin = User.query.filter_by(email='test5@test.org').first()
+        user = User.query.filter_by(email='user@test.org').first()
+        contributor = User.query.filter_by(email='contributor@test.org').first()
+        comadmin = User.query.filter_by(email='comadmin@test.org').first()
+        repoadmin = User.query.filter_by(email='repoadmin@test.org').first()
+        sysadmin = User.query.filter_by(email='sysadmin@test.org').first()
+        generaluser = User.query.filter_by(email='generaluser@test.org')
+        originalroleuser = create_test_user(email='originalroleuser@test.org')
+        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
 
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
-        r1 = ds.create_role(name='System Administrator')
-        r2 = ds.create_role(name='Repository Administrator')
-        r3 = ds.create_role(name='Contributor')
-        r4 = ds.create_role(name='Community Administrator')
-
+        sysadmin_role = ds.create_role(name='System Administrator')
+        repoadmin_role = ds.create_role(name='Repository Administrator')
+        contributor_role = ds.create_role(name='Contributor')
+        comadmin_role = ds.create_role(name='Community Administrator')
+        general_role = ds.create_role(name='General')
+        originalrole = ds.create_role(name='Original Role')
     else:
-        r1 = Role.query.filter_by(name='System Administrator').first()
-        r2 = Role.query.filter_by(name='Repository Administrator').first()
-        r3 = Role.query.filter_by(name='Contributor').first()
-        r4 = Role.query.filter_by(name='Community Administrator').first()
+        sysadmin_role = Role.query.filter_by(name='System Administrator').first()
+        repoadmin_role = Role.query.filter_by(name='Repository Administrator').first()
+        contributor_role = Role.query.filter_by(name='Contributor').first()
+        comadmin_role = Role.query.filter_by(name='Community Administrator').first()
+        general_role = Role.query.filter_by(name='General').first()
+        originalrole = Role.query.filter_by(name='Original Role').first()
 
-    ds.add_role_to_user(sysadmin, r1)
-    ds.add_role_to_user(repoadmin, r2)
-    ds.add_role_to_user(contributor, r3)
-    ds.add_role_to_user(comadmin, r4)
-
+    ds.add_role_to_user(sysadmin, sysadmin_role)
+    ds.add_role_to_user(repoadmin, repoadmin_role)
+    ds.add_role_to_user(contributor, contributor_role)
+    ds.add_role_to_user(comadmin, comadmin_role)
+    ds.add_role_to_user(generaluser, general_role)
+    ds.add_role_to_user(originalroleuser, originalrole)
+    ds.add_role_to_user(originalroleuser2, originalrole)
+    ds.add_role_to_user(originalroleuser2, repoadmin_role)
+    
     # Assign access authorization
     with db.session.begin_nested():
         action_users = [
-            ActionUsers(action='superuser-access', user=sysadmin)
+            ActionUsers(action='superuser-access', user=sysadmin),
         ]
         db.session.add_all(action_users)
+        action_roles = [
+            ActionRoles(action='superuser-access', role=sysadmin_role),
+            ActionRoles(action='admin-access', role=repoadmin_role),
+            ActionRoles(action='schema-access', role=repoadmin_role),
+            ActionRoles(action='index-tree-access', role=repoadmin_role),
+            ActionRoles(action='indextree-journal-access', role=repoadmin_role),
+            ActionRoles(action='item-type-access', role=repoadmin_role),
+            ActionRoles(action='item-access', role=repoadmin_role),
+            ActionRoles(action='files-rest-bucket-update', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-delete', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-delete-version', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-read', role=repoadmin_role),
+            ActionRoles(action='search-access', role=repoadmin_role),
+            ActionRoles(action='detail-page-acces', role=repoadmin_role),
+            ActionRoles(action='download-original-pdf-access', role=repoadmin_role),
+            ActionRoles(action='author-access', role=repoadmin_role),
+            ActionRoles(action='items-autofill', role=repoadmin_role),
+            ActionRoles(action='stats-api-access', role=repoadmin_role),
+            ActionRoles(action='read-style-action', role=repoadmin_role),
+            ActionRoles(action='update-style-action', role=repoadmin_role),
+            ActionRoles(action='detail-page-acces', role=repoadmin_role),
 
+            ActionRoles(action='admin-access', role=comadmin_role),
+            ActionRoles(action='index-tree-access', role=comadmin_role),
+            ActionRoles(action='indextree-journal-access', role=comadmin_role),
+            ActionRoles(action='item-access', role=comadmin_role),
+            ActionRoles(action='files-rest-bucket-update', role=comadmin_role),
+            ActionRoles(action='files-rest-object-delete', role=comadmin_role),
+            ActionRoles(action='files-rest-object-delete-version', role=comadmin_role),
+            ActionRoles(action='files-rest-object-read', role=comadmin_role),
+            ActionRoles(action='search-access', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='download-original-pdf-access', role=comadmin_role),
+            ActionRoles(action='author-access', role=comadmin_role),
+            ActionRoles(action='items-autofill', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+
+            ActionRoles(action='item-access', role=contributor_role),
+            ActionRoles(action='files-rest-bucket-update', role=contributor_role),
+            ActionRoles(action='files-rest-object-delete', role=contributor_role),
+            ActionRoles(action='files-rest-object-delete-version', role=contributor_role),
+            ActionRoles(action='files-rest-object-read', role=contributor_role),
+            ActionRoles(action='search-access', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='download-original-pdf-access', role=contributor_role),
+            ActionRoles(action='author-access', role=contributor_role),
+            ActionRoles(action='items-autofill', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+        ]
+        db.session.add_all(action_roles)
+        
     return [
-        {'email': user.email, 'id': user.id,
-         'obj': user},
-        {'email': contributor.email, 'id': contributor.id,
-         'obj': contributor},
-        {'email': comadmin.email, 'id': comadmin.id,
-         'obj': comadmin},
-        {'email': repoadmin.email, 'id': repoadmin.id,
-         'obj': repoadmin},
-        {'email': sysadmin.email, 'id': sysadmin.id,
-         'obj': sysadmin},
+        {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
+        {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
+        {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
+        {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
+        {'email': generaluser.email, 'id': generaluser.id, 'obj': sysadmin},
+        {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
+        {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
+        {'email': user.email, 'id': user.id, 'obj': user},
     ]
+
+
+
+@pytest.fixture()
+def db_register(app, db):
+    action_datas=dict()
+    with open('tests/data/actions.json', 'r') as f:
+        action_datas = json.load(f)
+    actions_db = list()
+    with db.session.begin_nested():
+        for data in action_datas:
+            actions_db.append(Action(**data))
+        db.session.add_all(actions_db)
+    
+    actionstatus_datas = dict()
+    with open('tests/data/action_status.json') as f:
+        actionstatus_datas = json.load(f)
+    actionstatus_db = list()
+    with db.session.begin_nested():
+        for data in actionstatus_datas:
+            actionstatus_db.append(ActionStatus(**data))
+        db.session.add_all(actionstatus_db)
+    
+    flow_define = FlowDefine(flow_id=uuid.uuid4(),
+                             flow_name='Registration Flow',
+                             flow_user=1)
+
+    item_type_name = ItemTypeName(name='テストアイテムタイプ',
+                                  has_site_license=True,
+                                  is_active=True)
+
+    item_type = ItemType(name_id=1,harvesting_type=True,
+                         schema={'type':'test schema'},
+                         form={'type':'test form'},
+                         render={'type':'test render'},
+                         tag=1,version_id=1,is_deleted=False)
+    
+    flow_action1 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=1,
+                     action_version='1.0.0',
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    flow_action2 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=3,
+                     action_version='1.0.0',
+                     action_order=2,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    flow_action3 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=5,
+                     action_version='1.0.0',
+                     action_order=3,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+
+    workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test workflow1',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=1,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+
+    activity = Activity(activity_id='1',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=6)
+    
+    with db.session.begin_nested():
+        db.session.add(flow_define)
+        db.session.add(item_type_name)
+        db.session.add(item_type)
+        db.session.add(flow_action1)
+        db.session.add(flow_action2)
+        db.session.add(flow_action3)
+        db.session.add(workflow)
+        db.session.add(activity)
+    
+    # return {'flow_define':flow_define,'item_type_name':item_type_name,'item_type':item_type,'flow_action':flow_action,'workflow':workflow,'activity':activity}
+    return {'flow_define':flow_define,'item_type':item_type,'workflow':workflow}
+
+@pytest.fixture()
+def db_records(db,instance_path):
+    record_data = json_data("data/test_records.json")
+    item_data = json_data("data/test_items.json")
+    record_num = len(record_data)
+    result = []
+    for d in range(record_num):
+        result.append(create_record(record_data[d], item_data[d]))
+    db.session.commit()
+
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name='local', uri=instance_path, default=True)
+        db.session.add(loc)
+    db.session.commit()
+
+    yield result
+
+
+@pytest.fixture()
+def db_register2(app, db):
+    session_lifetime = SessionLifetime(lifetime=60,is_delete=False)
+    
+    with db.session.begin_nested():
+        db.session.add(session_lifetime)
+
+
+    

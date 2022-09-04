@@ -14,8 +14,8 @@
   </ol>
 </div>
 <div ng-if="vm.invenioSearchResults.aggregations.hasOwnProperty('path') && vm.invenioSearchResults.aggregations.path.buckets[0].length < 2" >
-  <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')" style="padding-bottom: 10px; display: flex">
-    <img ng-if="$last" ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index"
+  <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img') || (vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 1 && !journal_info) || vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 2" style="padding-bottom: 10px; display: flex">
+    <img ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')" ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index"
          ng-src="{{vm.invenioSearchResults.aggregations.path.buckets[0][0].img}}" class="img-thumbnail ng-hide" id="thumbnail_img"
          alt={{vm.invenioSearchResults.aggregations.path.buckets[0][0]['path_name_dict'][index_path]}}>
     <span ng-if="(vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 1 && !journal_info) || vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 2" style="padding: 0 10px">

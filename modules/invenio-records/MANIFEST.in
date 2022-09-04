@@ -23,3 +23,6 @@ recursive-include docs *.bat *.py *.rst Makefile
 recursive-include examples *.html *.py *.sh
 recursive-include invenio_records *.html *.mo *.po *.pot *.xml *.py
 recursive-include tests *.xml *.py
+
+# added by check-manifest
+include *.properties

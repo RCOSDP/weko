@@ -22,6 +22,7 @@ from flask import current_app
 from invenio_search import current_search_client
 from pytz import utc
 from weko_admin.api import is_restricted_user
+from weko_admin.utils import get_redis_cache, reset_redis_cache, is_exists_key_in_redis
 
 from .models import StatsEvents
 from .utils import get_anonymization_salt, get_geoip, obj_or_import_string
@@ -196,11 +197,18 @@ class EventsIndexer(object):
                         break
                 if msg is None:
                     continue
+                
+                # msg:
+                # {'timestamp': '2022-07-28T05:06:38.082518', 'record_id': '1857c219-6ff1-45c0-8e3c-85e1fb15305c', 'record_name': 'ja_conference paperITEM00000010(public_open_access_open_access_simple)', 'record_index_list': [{'index_id': '1658073625012', 'index_name': 'IndexB', 'index_name_en': 'IndexB'}, {'index_id': '1658883231990', 'index_name': 'IndexA', 'index_name_en': 'IndexA'}], 'pid_type': 'recid', 'pid_value': '10', 'referrer': 'https://localhost:8443/?page=1&size=20&sort=controlnumber', 'cur_user_id': 'guest', 'remote_addr': '10.0.2.2', 'site_license_flag': False, 'site_license_name': '', 'is_restricted': False, 'is_robot': False, 'country': None, 'visitor_id': '7d9fad5b86c69dce8f011e041be8852f2ab8a41ad8c46c290c7c82ce', 'unique_session_id': '7d9fad5b86c69dce8f011e041be8852f2ab8a41ad8c46c290c7c82ce', 'unique_id': '033103b8-2793-3d95-8c8f-d06abfda7ce4', 'hostname': '_gateway'}
+                # suffix: %Y
+                # double_click_window: 30
                 suffix = arrow.get(msg.get('timestamp')).strftime(self.suffix)
                 ts = parser.parse(msg.get('timestamp'))
+                
                 # Truncate timestamp to keep only seconds. This is to improve
                 # elasticsearch performances.
                 ts = ts.replace(microsecond=0)
+                
                 msg['timestamp'] = ts.isoformat()
                 # apply timestamp windowing in order to group events too close
                 # in time
@@ -214,7 +222,7 @@ class EventsIndexer(object):
                 rtn_data = dict(
                     _id=hash_id(ts.isoformat(), msg),
                     _op_type='index',
-                    _index='{0}-{1}'.format(self.index, suffix),
+                    _index='{0}'.format(self.index),
                     _type=self.doctype,
                     _source=msg,
                 )

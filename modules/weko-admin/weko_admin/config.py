@@ -122,8 +122,11 @@ WEKO_ADMIN_REPORT_DELIVERY_SCHED = {
 }
 """Default report email delivery schedule."""
 
-WEKO_ADMIN_CACHE_PREFIX = 'admin_cache_{name}'
+WEKO_ADMIN_CACHE_PREFIX = 'admin_cache_{name}_{user_id}'
 """Redis cache."""
+
+WEKO_ADMIN_OUTPUT_FORMAT = 'tsv'
+"""Output file format."""
 
 WEKO_ADMIN_REPORT_HEADERS = {
     'file_download': _('No. Of File Downloads'),
@@ -1090,13 +1093,13 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'identifier',
     'widgetitem',
     'widgetdesign',
-    'community',
     'items/custom_sort',
     'items/search',
     'indexedit',
     'indexjournal',
     'report',
-    'itemexportsettings'
+    'itemexportsettings',
+    'items/import'
 ]
 """Classes Community Administrator can access."""
 
@@ -1131,7 +1134,6 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'itemtypesregister',
     'itemtypesmapping',
     'itemtypes/mapping',
-    'items/import',
     'items/bulk-export',
     'feedbackmail',
     'sitelicensesendmail',
@@ -1141,6 +1143,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'site_info',
     'location',
     'facet-search',
+    'community',
     'restricted_access'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""

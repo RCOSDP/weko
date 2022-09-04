@@ -179,6 +179,10 @@
         null,
         "Index is deleted successfully."
     ],
+    "Del_failure": [
+        null,
+        "You can not delete the index."
+    ],
     "Add_Update_Success": [
         null,
         "Index is updated successfully."

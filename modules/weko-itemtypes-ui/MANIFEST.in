@@ -63,3 +63,6 @@ recursive-include weko_itemtypes_ui *.js
 include pytest.ini
 include tox.ini
 recursive-include weko_itemtypes_ui *.less
+
+# added by check-manifest
+include *.properties

@@ -1,41 +1,18 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2017 CERN.
+# Copyright (C) 2017-2022 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """Pytest configuration."""
 
-from __future__ import absolute_import, print_function
-
-import os
-import shutil
-import tempfile
-from functools import wraps
+from unittest.mock import patch
 
 import pytest
 from flask import Flask
 from kombu import Exchange
-from mock import patch
-from pkg_resources import EntryPoint
 
 MOCK_MQ_EXCHANGE = Exchange(
     'test_events',
@@ -74,11 +51,12 @@ def test_queues_entrypoints(app):
 
     It yields a list like [{name: queue_name, exchange: conf}, ...].
     """
+    from pkg_resources import EntryPoint
+
     data = []
     result = []
     for idx in range(5):
         queue_name = 'queue{}'.format(idx)
-        from pkg_resources import EntryPoint
         entrypoint = EntryPoint(queue_name, queue_name)
         conf = dict(name=queue_name, exchange=MOCK_MQ_EXCHANGE)
         entrypoint.load = lambda conf=conf: (lambda: [conf])
@@ -87,8 +65,7 @@ def test_queues_entrypoints(app):
 
     entrypoints = mock_iter_entry_points_factory(data)
 
-    with patch('pkg_resources.iter_entry_points',
-               entrypoints):
+    with patch('pkg_resources.iter_entry_points', entrypoints):
         try:
             yield result
         finally:
@@ -113,6 +90,7 @@ def app():
     from invenio_queues import InvenioQueues
     app_ = Flask('testapp')
     app_.config.update(
+        QUEUES_BROKER_URL='memory://',
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
     )

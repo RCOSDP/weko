@@ -20,7 +20,7 @@
 
 """Configuration for weko-search-ui."""
 
-import copy
+import pickle
 
 from invenio_records_rest.config import RECORDS_REST_ENDPOINTS
 from invenio_records_rest.facets import terms_filter
@@ -99,7 +99,7 @@ WEKO_OPENSEARCH_SYSTEM_DESCRIPTION = (
 )
 WEKO_OPENSEARCH_IMAGE_URL = "static/favicon.ico"
 
-RECORDS_REST_ENDPOINTS = copy.deepcopy(RECORDS_REST_ENDPOINTS)
+RECORDS_REST_ENDPOINTS = pickle.loads(pickle.dumps(RECORDS_REST_ENDPOINTS, -1))
 RECORDS_REST_ENDPOINTS["recid"][
     "search_factory_imp"
 ] = "weko_search_ui.query.es_search_factory"
@@ -111,7 +111,7 @@ RECORDS_REST_ENDPOINTS["recid"]["search_index"] = "{}-weko".format(index_prefix)
 RECORDS_REST_ENDPOINTS["recid"]["search_type"] = "item-v1.0.0"
 
 # Opensearch endpoint
-RECORDS_REST_ENDPOINTS["opensearch"] = copy.deepcopy(RECORDS_REST_ENDPOINTS["recid"])
+RECORDS_REST_ENDPOINTS["opensearch"] = pickle.loads(pickle.dumps(RECORDS_REST_ENDPOINTS["recid"], -1))
 RECORDS_REST_ENDPOINTS["opensearch"][
     "search_factory_imp"
 ] = "weko_search_ui.query.opensearch_factory"
@@ -652,6 +652,19 @@ RESOURCE_TYPE_URI = {
     "technical documentation": "http://purl.org/coar/resource_type/c_71bd",
     "workflow": "http://purl.org/coar/resource_type/c_393c",
     "other": "http://purl.org/coar/resource_type/c_1843",
+    "aggregated data": "http://purl.org/coar/resource_type/ACF7-8YT9",
+    "clinical trial data": "http://purl.org/coar/resource_type/c_cb28",
+    "compiled data": "http://purl.org/coar/resource_type/FXF3-D3G7",
+    "encoded data": "http://purl.org/coar/resource_type/AM6W-6QAW",
+    "experimental data": "http://purl.org/coar/resource_type/63NG-B465",
+    "genomic data": "http://purl.org/coar/resource_type/A8F1-NPV9",
+    "geospatial data": "http://purl.org/coar/resource_type/2H0M-X761",
+    "laboratory notebook": "http://purl.org/coar/resource_type/H41Y-FW7B",
+    "measurement and test data": "http://purl.org/coar/resource_type/DD58-GFSX",
+    "observational data": "http://purl.org/coar/resource_type/FF4C-28RK",
+    "recorded data": "http://purl.org/coar/resource_type/CQMR-7K63",
+    "simulation data": "http://purl.org/coar/resource_type/W2XT-7017",
+    "survey data": "http://purl.org/coar/resource_type/NHD0-W6SY",
 }
 WEKO_IMPORT_VALIDATE_MESSAGE = {
     "%r is too long": "%rの数が上限数を超えています。",
@@ -668,11 +681,17 @@ WEKO_SEARCH_UI_BULK_EXPORT_URI = "URI_EXPORT_ALL"
 WEKO_SEARCH_UI_BULK_EXPORT_MSG = "MSG_EXPORT_ALL"
 """Template for the Admin Bulk Export page."""
 
+WEKO_SEARCH_UI_TO_NUMBER_FORMAT = "99999999999999.99"
+"""The format of to_number function."""
+
+WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG = "RUN_MSG_EXPORT_ALL"
+"""Bulk export running message."""
+
 WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
 """Template for the Admin Bulk Export page."""
 
 WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 1000
-"""The number of items exported to csv file each once."""
+"""The number of items exported to tsv/csv file each once."""
 
 WEKO_SEARCH_UI_BULK_EXPORT_RETRY = 5
 """Number of export retries."""

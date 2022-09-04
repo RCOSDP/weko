@@ -48,3 +48,10 @@ recursive-include examples *.py
 recursive-include examples *.sh
 recursive-include tests *.py
 recursive-include weko_accounts *.html
+
+# added by check-manifest
+include *.properties
+include tox.ini
+recursive-include examples *.txt
+recursive-include weko_accounts *.css
+recursive-include weko_accounts *.js

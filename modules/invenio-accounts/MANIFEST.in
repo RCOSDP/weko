@@ -33,3 +33,7 @@ recursive-include invenio_accounts *.html
 recursive-include invenio_accounts *.po *.pot *.mo
 recursive-include invenio_accounts *.py
 recursive-include tests *.py
+
+# added by check-manifest
+include *.properties
+include tox.ini

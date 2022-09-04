@@ -1,5 +1,5 @@
 CREATE INDEX idx_pid_provider_pidstore_pid ON pidstore_pid (pid_provider);
-CREATE INDEX idx_pos_pidstore_pid ON pidstore_pid (pid_type, object_uuid, status,);
+CREATE INDEX idx_pos_pidstore_pid ON pidstore_pid (pid_type, object_uuid, status);
 CREATE INDEX idx_item_type_id_item_type_mapping ON item_type_mapping (item_type_id);
 CREATE INDEX idx_created_item_type_mapping ON item_type_mapping (created);
 CREATE INDEX idx_isvalid_oaiserver_schema ON oaiserver_schema (isvalid);

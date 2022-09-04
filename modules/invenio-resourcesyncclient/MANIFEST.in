@@ -39,3 +39,6 @@ recursive-include invenio_resourcesyncclient *.html
 recursive-include invenio_resourcesyncclient *.js
 recursive-include invenio_resourcesyncclient *.py
 recursive-include tests *.py
+
+# added by check-manifest
+include *.properties

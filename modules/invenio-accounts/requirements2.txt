@@ -102,3 +102,4 @@ wrapt==1.14.0
 WTForms==3.0.0
 zipp==3.6.0
 -e ../invenio-db
+-e ../weko-redis

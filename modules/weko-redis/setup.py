@@ -79,9 +79,7 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
-        'flask.commands': [
-            'weko_redis = weko_redis',
-        ]
+#        'flask.commands': []
     },
     extras_require=extras_require,
     install_requires=install_requires,

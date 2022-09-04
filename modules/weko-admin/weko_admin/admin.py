@@ -315,8 +315,8 @@ class ReportView(BaseView):
             current_app.logger.error("Unexpected error: {}".format(e))
         return abort(400)
 
-    @expose('/stats_file_csv', methods=['POST'])
-    def get_file_stats_csv(self):
+    @expose('/stats_file_output', methods=['POST'])
+    def get_file_stats_output(self):
         """Get file download/preview stats report."""
         stats_json = json.loads(request.form.get('report'))
         year = request.form.get('year')

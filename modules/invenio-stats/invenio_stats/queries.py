@@ -11,7 +11,7 @@
 import json
 from datetime import datetime
 
-import copy
+import pickle
 import dateutil.parser
 import six
 from elasticsearch_dsl import Search
@@ -380,7 +380,7 @@ class ESTermsQuery(ESQuery):
                     for metric in self.metric_fields:
                         res_count[metric] = temp_res['aggregations'][metric]
                 count += len(temp_res['aggregations']['my_buckets']['buckets'])
-                res_list += copy.deepcopy(temp_res['aggregations']['my_buckets']['buckets'])
+                res_list += pickle.loads(pickle.dumps(temp_res['aggregations']['my_buckets']['buckets'], -1))
             query_result['aggregations'] = {'buckets': res_list}
             for metric in self.metric_fields:
                 query_result['aggregations'][metric] = res_count[metric]

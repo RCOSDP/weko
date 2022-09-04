@@ -1,6 +1,11 @@
 $(document).ready(function () {
     let bucket_id = document.getElementById("bucket_id").innerText;
-    let file_key = document.getElementById("file_key").innerText;
+    let file_key = ''
+    try {
+        file_key = document.getElementById("file_key").innerText;
+    } catch(e) {
+        file_key = encodeURIComponent(document.getElementById("file_url").innerText.replaceAll('/', '{URL_SLASH}'));
+    }
 
     statsurl = '/api/stats/' + bucket_id + '/' + file_key
     $.ajax({
