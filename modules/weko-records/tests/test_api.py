@@ -933,15 +933,15 @@ def test_item_type_props(app, db):
     with pytest.raises(Exception) as e:
         records = ItemTypeProps.get_records([0])
     #assert len(records)==0
-    #records = ItemTypeProps.get_records([])
-    #assert len(records)==1
-    #assert records[0].id==1
-    #assert records[0].model.name=='prop1'
-    #assert records[0].model.schema=={'item1': {}}
-    #assert records[0].model.form=={'key': 'item1'}
-    #assert records[0].model.forms==[{'key': 'item1'}]
-    #assert records[0].model.delflg==False
-    #assert records[0].model.sort==None
+    records = ItemTypeProps.get_records([])
+    assert len(records)==1
+    assert records[0].id==1
+    assert records[0].model.name=='prop1'
+    assert records[0].model.schema=={'item1': {}}
+    assert records[0].model.form=={'key': 'item1'}
+    assert records[0].model.forms==[{'key': 'item1'}]
+    assert records[0].model.delflg==False
+    assert records[0].model.sort==None
     #records = ItemTypeProps.get_records([1])
     #assert len(records)==1
     #assert records[0].id==1

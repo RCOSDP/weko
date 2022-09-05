@@ -164,6 +164,7 @@ def item_type(app, db):
     _item_type_name = ItemTypeName(name='test')
 
     _render = {
+        'meta_fix': {},
         'meta_list': {},
         'table_row_map': {
             'schema': {
@@ -215,6 +216,7 @@ def item_type2(app, db):
     _item_type_name = ItemTypeName(name='test2')
 
     _render = {
+        'meta_fix': {},
         'meta_list': {},
         'table_row_map': {
             'schema': {
