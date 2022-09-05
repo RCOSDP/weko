@@ -25,6 +25,7 @@ from copy import deepcopy
 from datetime import date, datetime
 from functools import partial
 
+from redis.exceptions import RedisError
 from flask import current_app, json
 from flask_babelex import gettext as _
 from flask_login import current_user
@@ -540,7 +541,7 @@ class Indexes(object):
                 datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
                 v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME')).decode("UTF-8")
                 tree = json.loads(str(v, encoding='utf-8'))
-            except:
+            except RedisError:
                 tree = cls.get_index_tree(pid)
                 save_index_trees_to_redis(tree)
         else:
@@ -564,7 +565,7 @@ class Indexes(object):
                 datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
                 v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME')).decode("UTF-8")
                 tree = json.loads(str(v, encoding='utf-8'))
-            except:
+            except RedisError:
                 tree = cls.get_index_tree(pid)
                 save_index_trees_to_redis(tree)
         else:
