@@ -260,9 +260,21 @@ def index():
 
 @blueprint.route('/iframe/success', methods=['GET'])
 def iframe_success():
-    """Renders an item register view.
-
-    :return: The rendered template.
+    """アイテム登録ビューをレンダリングする
+    セッションに保存されているデータから画面表示に必要な情報を取得し、
+    レンダリングする。
+    
+    Returns:
+        Response: rendering template
+    
+    ---
+    get:
+        description: "render template"
+        response:
+            200:
+                description: "render_template"
+                content:
+                    text/html
     """
     files_thumbnail = None
     # get session value
