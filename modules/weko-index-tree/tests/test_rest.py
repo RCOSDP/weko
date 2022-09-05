@@ -34,6 +34,10 @@ user_results_tree = [
 
 
 # def need_record_permission(factory_name):
+def test_need_record_permission(i18n_app):
+    assert need_record_permission('read_permission_factory')
+
+
 #     def need_record_permission_builder(f):
 #         def need_record_permission_decorator(self, *args,
 @pytest.mark.parametrize('id, status_code', user_results_tree)

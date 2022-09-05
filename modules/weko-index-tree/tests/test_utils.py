@@ -23,7 +23,9 @@ from weko_index_tree.utils import (
     cached_index_tree_json,
     reset_tree,
     get_tree_json,
-    get_editing_items_in_index
+    get_editing_items_in_index,
+    reduce_index_by_more,
+    reduce_index_by_role
 )
 
 from invenio_accounts.testutils import login_user_via_session, client_authenticated
@@ -66,12 +68,13 @@ from weko_redis.redis import RedisConnection
 # from .models import Index
 
 
-#*** def get_index_link_list(pid=0):
+#+++ def get_index_link_list(pid=0):
 #     def _get_index_link(res, tree):
 # Needs pid
-# def test_get_index_link_list(i18n_app, records):
-    
-#     assert not get_index_link_list(records['records'][0]['record'].json['_deposit']['pid']['value'])
+def test_get_index_link_list(i18n_app, indices):
+    pid = indices['index_dict']['id']
+
+    assert not get_index_link_list(pid)
         
 
 #+++ def is_index_tree_updated():
@@ -88,7 +91,7 @@ def test_cached_index_tree_json(i18n_app):
 def test_reset_tree(i18n_app, users, indices, records):
     tree = Indexes.get_browsing_tree_ignore_more(pid=0)
     
-    # Doesn't return anything
+    # Doesn't return anything and will pass if there are no errors
     assert reset_tree(tree) == None
 
 
@@ -155,6 +158,22 @@ def test_filter_index_list_by_role(i18n_app, indices, users, db):
 
 
 # def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
+def test_reduce_index_by_role(i18n_app, indices, users, db_records, esindex, db):
+    g1 = Group.create(name="group_test1").add_member(users[-1]['obj'])
+    g2 = Group.create(name="group_test2").add_member(users[-1]['obj'])
+    db.session.add(g1)
+    db.session.add(g2)
+    groups = [v for k,v in Group.get_group_list().items()]
+
+    roles = [role.name for role in users[-1]['obj'].roles]
+    roles.append('contribute_role')
+
+    tree = Indexes.get_browsing_tree_ignore_more(33)
+
+    # Doesn't return anything and will pass if there are no errors
+    assert not reduce_index_by_role(tree, roles, groups)
+
+
 
 
 #+++ def get_index_id_list(indexes, id_list=None):
@@ -183,7 +202,12 @@ def test_get_publish_index_id_list(indices, db):
     assert not get_publish_index_id_list(index_list)
 
 
-# def reduce_index_by_more(tree, more_ids=None):
+#+++ def reduce_index_by_more(tree, more_ids=None):
+def test_reduce_index_by_more(i18n_app, db_records, esindex, indices):
+    tree = Indexes.get_browsing_tree_ignore_more(44)
+
+    # Doesn't return anything and will pass if there are no errors
+    assert not reduce_index_by_more(tree)
 
 
 #+++ def get_admin_coverpage_setting():
@@ -191,14 +215,14 @@ def test_get_admin_coverpage_setting(pdfcoverpage):
     assert get_admin_coverpage_setting()
 
 
-#*** def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
-def test_get_elasticsearch_records_data_by_indexes(i18n_app, records, indices):
+#+++ def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
+def test_get_elasticsearch_records_data_by_indexes(i18n_app, db_records, esindex, indices):
     idx_tree_ids = [idx.cid for idx in Indexes.get_recursive_tree(indices['index_non_dict'].id)]
     current_date = date.today()
     start_date = (current_date - timedelta(days=1)).strftime("%Y-%m-%d")
     end_date = current_date.strftime("%Y-%m-%d")
 
-    assert get_elasticsearch_records_data_by_indexes(idx_tree_ids, start_date, end_date) is None
+    assert get_elasticsearch_records_data_by_indexes(idx_tree_ids, start_date, end_date)
     
 
 # def generate_path(index_ids):
@@ -237,11 +261,14 @@ def test_count_items(count_json_data):
 #     def _get_parent_lst():
 
 
-#*** def check_doi_in_index_and_child_index(index_id, recursively=True):
-# def test_check_doi_in_index_and_child_index(i18n_app, indices, esindex):
-#     index_id = indices['index_dict']['id']
+# *** def check_doi_in_index_and_child_index(index_id, recursively=True):
+# def test_check_doi_in_index_and_child_index(i18n_app, indices, esindex, db_records, records2):
+def test_check_doi_in_index_and_child_index(i18n_app, indices, esindex):
+    # index_id = indices['index_dict']['id']
+    index_id = 44
 
-#     assert len(check_doi_in_index_and_child_index(index_id, recursively=True)) == 0
+    # Test 1
+    assert len(check_doi_in_index_and_child_index(index_id, recursively=True)) == 0
 
 
 #+++ def __get_redis_store():
@@ -299,15 +326,22 @@ def test_perform_delete_index(i18n_app, indices, records):
 
 
 #*** def get_doi_items_in_index(index_id, recursively=False):
-def test_get_doi_items_in_index(i18n_app, indices, esindex):
+def test_get_doi_items_in_index(i18n_app, indices, esindex, db_records):
     index_id = indices['index_non_dict'].id
 
+    # Test 1
     assert not get_doi_items_in_index(index_id, recursively=False)
+
+    # Test 2
+    # assert get_doi_items_in_index(index_id, recursively=False)
 
 
 #*** def test_get_editing_items_in_index(index_id, recursively=False):
-def test_get_editing_items_in_index(i18n_app, indices, esindex):
+def test_get_editing_items_in_index(i18n_app, indices, esindex, db_records):
     index_id = indices['index_non_dict'].id
 
+    # Test 1
     assert not get_editing_items_in_index(index_id)
 
+    # Test 2
+    # assert get_doi_items_in_index(index_id, recursively=False)
