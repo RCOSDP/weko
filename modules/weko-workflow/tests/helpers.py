@@ -5,7 +5,8 @@ from os.path import dirname, join
 
 from invenio_db import db
 from invenio_pidstore import current_pidstore
-from invenio_records import Record
+# from invenio_records import Record
+from invenio_records_files.api import Record
 from weko_records.api import ItemsMetadata
 from weko_deposit.pidstore import weko_deposit_minter
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
