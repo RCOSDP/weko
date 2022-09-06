@@ -10,6 +10,7 @@ from mock import patch
 from tests.helpers import json_data
 
 from invenio_accounts import testutils
+from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings
 from weko_records.utils import (
     json_loader,
@@ -252,16 +253,175 @@ def test_set_timestamp():
     assert _jrc=={'_created': '2000-01-01T00:00:00+00:00', '_updated': None}
 
 # def sort_records(records, form):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_sort_records -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_sort_records():
+    _form = [
+        {
+            'key': 'item_1',
+            'title': 'item_1_title',
+            'title_i18n': {
+                'ja': 'ja_item_1_title',
+                'en': 'en_item_1_title'
+            }
+        },
+        {
+            'key': 'item_2',
+            'title': 'item_2_title',
+            'title_i18n': {
+                'ja': 'ja_item_2_title',
+                'en': 'en_item_2_title'
+            }
+        }
+    ]
+    _records1 = {
+        '$schema': 'http://nii.co.jp/1',
+        'item_2': 'item_2_value',
+        'item_1': {'key1': 'value1'}
+    }
+    _records2 = [
+        {
+            'item_2': 'item_2_value',
+            'item_1': 'item_1_value'
+        }
+    ]
+
+    res = sort_records(_records1, _form)
+    assert res==_records1
+    res = sort_records(_records2, _form)
+    assert res==_records2
+
 # def sort_op(record, kd, form):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_sort_op -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_sort_op():
+    _form = [
+        {
+            'key': 'item_1',
+            'title': 'item_1_title',
+            'title_i18n': {
+                'ja': 'ja_item_1_title',
+                'en': 'en_item_1_title'
+            }
+        },
+        {
+            'key': 'item_2',
+            'title': 'item_2_title',
+            'title_i18n': {
+                'ja': 'ja_item_2_title',
+                'en': 'en_item_2_title'
+            }
+        }
+    ]
+    _record1 = {
+        '$schema': 'http://nii.co.jp/1',
+        'old_item_1': 'item_1_value'
+    }
+    _record2 = [
+        {
+            'item_2': 'item_2_value',
+            'item_1': 'item_1_value'
+        }
+    ]
+    _record3 = {
+        '$schema': 'http://nii.co.jp/1',
+        'old_item_2': {'key2': 'item_2_value'},
+        'old_item_1': {'key1': 'item_1_value'}
+    }
+    _kd = {'item_1': 'old_item_1', 'item_2': 'old_item_2'}
+
+    with pytest.raises(Exception) as e:
+        sort_op(_record1, _kd, _form)
+    assert e.type==TypeError
+    res = sort_op(_record2, _kd, _form)
+    assert res==_record2
+    res = sort_op(_record3, _kd, _form)
+    assert res=={'old_item_2': {'index': 2, 'key2': 'item_2_value'},
+    'old_item_1': {'index': 1, 'key1': 'item_1_value'}}
+
 # def find_items(form):
 #     def find_key(node):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_find_items -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_find_items():
+    _form = [
+        {
+            'key': 'item_1',
+            'title': 'item_1_title',
+            'title_i18n': {
+                'ja': 'ja_item_1_title',
+                'en': 'en_item_1_title'
+            }
+        }
+    ]
+    res = find_items(_form)
+    assert res==[['item_1', 'item_1_title', 'en_item_1_title', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False, }, '']]
+
+
 # def get_all_items(nlst, klst, is_get_name=False):
 #     def get_name(key):
 #     def get_items(nlst):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_all_items -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_all_items():
+    _nlst = [
+        {
+            'subitem_1': 'en_value',
+            'subitem_1_lang': 'en'
+        },
+        {
+            'subitem_1': 'ja_value',
+            'subitem_1_lang': 'ja'
+        }
+    ]
+    _klst = [['item_1.subitem_1', 'item_1_title', 'en_item_1_title', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False, }, ''],
+    ['item_1.subitem_1_lang', 'item_1_lang', 'en_item_1_lang', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False, }, '']]
+
+    res = get_all_items(_nlst, _klst)
+    assert res==[[{'item_1.subitem_1': 'en_value', 'item_1.subitem_1_lang': 'en'}], [{'item_1.subitem_1': 'ja_value', 'item_1.subitem_1_lang': 'ja'}]]
+
+
 # def get_all_items2(nlst, klst):
 #     def get_items(nlst):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_all_items2 -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_all_items2():
+    _nlst = [
+        {
+            'subitem_1': 'en_value',
+            'subitem_1_lang': 'en'
+        },
+        {
+            'subitem_1': 'ja_value',
+            'subitem_1_lang': 'ja'
+        }
+    ]
+    _klst = [['item_1.subitem_1', 'item_1_title', 'en_item_1_title', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False, }, ''],
+    ['item_1.subitem_1_lang', 'item_1_lang', 'en_item_1_lang', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False, }, '']]
+
+    res = get_all_items2(_nlst, _klst)
+    assert res==[{'subitem_1': 'en_value'}, {'subitem_1_lang': 'en'},
+    {'subitem_1': 'ja_value'}, {'subitem_1_lang': 'ja'}]
+
 # def to_orderdict(alst, klst, is_full_key=False):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_to_orderdict -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_to_orderdict():
+    _alst = [
+        {
+            'subitem_1': 'en_value',
+            'subitem_1_lang': 'en'
+        },
+        {
+            'subitem_1': 'ja_value',
+            'subitem_1_lang': 'ja'
+        }
+    ]
+    _klst = [['item_1.subitem_1', 'item_1_title', 'en_item_1_title', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False, }, '']]
+
+    to_orderdict(_alst, _klst)
+    assert _alst==_alst
+
 # def get_options_and_order_list(item_type_id, ojson=None):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_options_and_order_list -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_options_and_order_list(app, db, item_type):
+    solst, meta_options = get_options_and_order_list(1)
+    assert solst==[]
+    assert meta_options=={}
 
 # async def sort_meta_data_by_options(
 params=[
@@ -395,6 +555,15 @@ def test_get_keywords_data_load(app, db, item_type, item_type2):
     assert res==[('test', 1), ('test2', 2)]
 
 # def is_valid_openaire_type(resource_type, communities):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_is_valid_openaire_type -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_is_valid_openaire_type(app, db):
+    # need to fix
+    with pytest.raises(Exception) as e:
+        is_valid_openaire_type({'openaire_subtype': ''}, [])
+    assert e.type==NameError
+    assert str(e.value)=="name 'current_openaire' is not defined"
+    res = is_valid_openaire_type({}, [])
+    assert res==True
 
 # def check_has_attribute_value(node):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_check_has_attribute_value -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -412,6 +581,23 @@ def test_check_has_attribute_value(app):
 #     def get_value(data):
 #     def to_sort_dict(alst, klst):
 #     def set_attribute_value(nlst):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_attribute_value_all_items -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_attribute_value_all_items(app):
+    _nlst = [
+        {
+            'subitem_1': 'en_value',
+            'subitem_1_lang': 'en'
+        },
+        {
+            'subitem_1': 'ja_value',
+            'subitem_1_lang': 'ja'
+        }
+    ]
+    _klst = [['item_1.subitem_1', 'item_1_title', 'en_item_1_title', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False, }, ''],
+    ['item_1.subitem_1_lang', 'item_1_lang', 'en_item_1_lang', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False, }, '']]
+
+    res = get_attribute_value_all_items('item_1', _nlst, _klst)
+    assert res==[[[[{'en_item_1_title': 'en_value'}], [{'en_item_1_lang': 'en'}]]], [[[{'en_item_1_title': 'ja_value'}], [{'en_item_1_lang': 'ja'}]]]]
 
 # def check_input_value(old, new):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_check_input_value -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -467,6 +653,45 @@ def test_remove_multiple():
     'item_2': [{'subitem_1': {'title': 'subtitle_1'}, 'subitem_2': {'title': 'subtitle_2'}}]}}
 
 # def check_to_upgrade_version(old_render, new_render):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_check_to_upgrade_version -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_check_to_upgrade_version(app):
+    _old_render = {
+        'meta_fix': {},
+        'meta_list': {},
+        'table_row_map': {
+            'schema': {
+                'properties': {
+                    'item_1': {
+                        'type': 'string',
+                        'title': 'item_1',
+                        'format': 'text'
+                    }
+                }
+            }
+        },
+        'table_row': ['1']
+    }
+    _new_render = {
+        'meta_fix': {},
+        'meta_list': {},
+        'table_row_map': {
+            'schema': {
+                'properties': {
+                    'item_2': {
+                        'type': 'string',
+                        'title': 'item_2',
+                        'format': 'text'
+                    }
+                }
+            }
+        },
+        'table_row': ['2']
+    }
+
+    res = check_to_upgrade_version(_old_render, _old_render)
+    assert res==False
+    res = check_to_upgrade_version(_old_render, _new_render)
+    assert res==True
 
 # def remove_weko2_special_character(s: str):
 def test_remove_weko2_special_character():
@@ -594,7 +819,150 @@ def test_get_value_by_selected_lang(app):
     assert res=='id_test'
 
 # def get_show_list_author(solst_dict_array, hide_email_flag, author_key, creates):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_show_list_author -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_show_list_author(i18n_app):
+    _solst_dict_array = [
+        {
+            'key': 'create.creatorNames[].creatorName',
+            'option': {
+                'show_list': True,
+                'hide': False
+            },
+            'parent_option': {
+                'show_list': True,
+                'hide': False
+            }
+        },
+        {
+            'key': 'create.creatorNames[].creatorNameLang',
+            'option': {
+                'show_list': False,
+                'hide': True
+            },
+            'parent_option': {
+                'show_list': False,
+                'hide': True
+            }
+        },
+        {
+            'key': 'create.creatorMails[].creatorMail',
+            'option': {
+                'show_list': True,
+                'hide': False
+            },
+            'parent_option': {
+                'show_list': True,
+                'hide': False
+            }
+        },
+        {
+            'key': 'create.familyNames[].familyName',
+            'option': {
+                'show_list': True,
+                'hide': False
+            },
+            'parent_option': {
+                'show_list': True,
+                'hide': False
+            }
+        },
+        {
+            'key': 'create.familyNames[].familyNameLang',
+            'option': {
+                'show_list': False,
+                'hide': True
+            },
+            'parent_option': {
+                'show_list': False,
+                'hide': True
+            }
+        }
+    ]
+    _author_key = 'create'
+    _creates = [{
+        'creatorNames': [
+            {
+                'creatorName': 'ja_name',
+                'creatorNameLang': 'ja'
+            },
+            {
+                'creatorName': 'en_name',
+                'creatorNameLang': 'en'
+            },
+            {
+                'creatorName': 'no_lang_name'
+            }
+        ],
+        'familyNames': [
+            {
+                'familyName': 'no_lang_fname',
+            },
+            {
+                'familyName': 'en_fname',
+                'familyNameLang': 'en'
+            }
+        ],
+        'creatorMails': [{
+            'creatorMail': 'nii@mail.co.jp'
+        }]
+    }]
+
+    res = get_show_list_author(_solst_dict_array, False, _author_key, _creates)
+    assert res=={'creatorName': ['en_name'], 'familyName': ['en_fname']}
+
 # def format_creates(creates, hide_creator_keys):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_format_creates -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_format_creates(i18n_app):
+    _creates = [{
+        'creatorNames': [
+            {
+                'creatorName': 'ja_name',
+                'creatorNameLang': 'ja'
+            },
+            {
+                'creatorName': 'en_name',
+                'creatorNameLang': 'en'
+            },
+            {
+                'creatorName': 'no_lang_name'
+            }
+        ],
+        'familyNames': [
+            {
+                'familyName': 'no_lang_fname',
+            },
+            {
+                'familyName': 'en_fname',
+                'familyNameLang': 'en'
+            }
+        ],
+        'creatorAlternatives': [
+            {
+                'creatorAlternative': 'en_al',
+                'al_lang': 'en'
+            },
+            {
+                'creatorAlternative': 'ja_al',
+                'al_lang': 'ja'
+            }
+        ],
+        'creatorAffiliations': [{
+            'affiliationNames': [
+                {
+                    'affiliationName': 'en_af',
+                    'af_lang': 'en'
+                },
+                {
+                    'affiliationName': 'ja_af',
+                    'af_lang': 'ja'
+                }
+            ]
+        }]
+    }]
+    _hide_creator_keys = ['familyNames']
+    
+    res = format_creates(_creates, _hide_creator_keys)
+    assert res=={'creatorName': ['en_name'], 'affiliationName': ['en_af'], 'creatorAlternative': ['en_al']}
 
 # def get_creator(create, result_end, hide_creator_keys, current_lang):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_creator -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -602,30 +970,30 @@ def test_get_creator(app):
     _create = {
         'creatorNames': [
             {
-                'creatorName': 'value_1',
+                'creatorName': 'ja_name',
                 'creatorNameLang': 'ja'
             },
             {
-                'creatorName': 'value_2',
+                'creatorName': 'en_name',
                 'creatorNameLang': 'en'
             },
             {
-                'creatorName': 'value_3'
+                'creatorName': 'no_lang_name'
             }
         ],
         'familyNames': [
             {
-                'familyName': 'value_4',
+                'familyName': 'no_lang_fname',
             },
             {
-                'familyName': 'value_5',
+                'familyName': 'en_fname',
                 'familyNameLang': 'en'
             }
         ]
     }
     _hide_creator_keys = ['familyNames']
     res = get_creator(_create, {}, _hide_creator_keys, 'en')
-    assert res=={'creatorName': ['value_2']}
+    assert res=={'creatorName': ['en_name']}
 
 # def get_creator_by_languages(creates_key, create):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_creator_by_languages -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -638,40 +1006,70 @@ def test_get_creator_by_languages(app):
         'item_1': [
             {
                 'subitem_id': 1,
-                'subitem_value': 'value_1',
+                'subitem_value': 'ja_value_1',
                 'subitem_lang': 'ja'
             },
             {
                 'subitem_id': 1,
-                'subitem_value': 'value_2',
+                'subitem_value': 'en_value_1',
                 'subitem_lang': 'en'
             },
             {
                 'subitem_id': 1,
-                'subitem_value': 'value_3'
+                'subitem_value': 'no_lang_value_1'
             }
         ],
         'item_2': [
             {
                 'subitem_id': 2,
-                'subitem_value': 'value_4',
+                'subitem_value': 'no_lang_value_2',
             },
             {
                 'subitem_id': 2,
-                'subitem_value': 'value_5',
+                'subitem_value': 'en_value_2',
                 'subitem_lang': 'en'
             }
         ]
     }
     res = get_creator_by_languages(_creates_key, _create)
     assert res=={
-        'ja': {'item_1': 'value_1'},
-        'en': {'item_1': 'value_2', 'item_2': 'value_5'},
-        'None Language': {'item_1': 'value_3', 'item_2': 'value_4'}}
-
+        'ja': {'item_1': 'ja_value_1'},
+        'en': {'item_1': 'en_value_1', 'item_2': 'en_value_2'},
+        'None Language': {'item_1': 'no_lang_value_1', 'item_2': 'no_lang_value_2'}}
 
 # def get_affiliation(affiliations, result_end, current_lang, affiliation_key):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_affiliation -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_affiliation(app):
+    _affiliations = [{
+        'affiliationNames': [
+            {
+                'affiliationName': 'en_af',
+                'af_lang': 'en'
+            },
+            {
+                'affiliationName': 'ja_af',
+                'af_lang': 'ja'
+            }
+        ]
+    }]
+    res = get_affiliation(_affiliations, {}, 'en', ['affiliationName', 'af_lang'])
+    assert res=={'affiliationName': ['en_af']}
+
 # def get_author_has_language(creator, result_end, current_lang, map_keys):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_author_has_language -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_author_has_language(app):
+    _create = [
+        {
+            'affiliationName': 'en_af',
+            'af_lang': 'en'
+        },
+        {
+            'affiliationName': 'ja_af',
+            'af_lang': 'ja'
+        }
+    ]
+    res = get_author_has_language(_create, {}, 'en', ['affiliationName', 'af_lang'])
+    assert res=={'affiliationName': ['en_af']}
 
 # def add_author(author_data, stt_key, is_specify_newline_array, s, value, data_result, is_specify_newline, is_hide, is_show_list):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_add_author -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -711,7 +1109,7 @@ def test_convert_bibliographic():
     res = convert_bibliographic(_biblio)
     assert res=='title1, key name1, key name2, title2, key name3'
 
-# def add_biographic(
+# def add_biographic(sys_bibliographic, bibliographic_key, s, stt_key, data_result, 
 
 # def custom_record_medata_for_export(record_metadata: dict):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_custom_record_medata_for_export -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
