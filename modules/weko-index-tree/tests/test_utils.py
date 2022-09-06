@@ -25,7 +25,15 @@ from weko_index_tree.utils import (
     get_tree_json,
     get_editing_items_in_index,
     reduce_index_by_more,
-    reduce_index_by_role
+    reduce_index_by_role,
+    recorrect_private_items_count,
+    sanitize,
+    check_doi_in_index,
+    get_record_in_es_of_index,
+    check_doi_in_list_record_es,
+    check_restrict_doi_with_indexes,
+    check_has_any_item_in_index_is_locked,
+    check_index_permissions
 )
 
 from invenio_accounts.testutils import login_user_via_session, client_authenticated
@@ -68,13 +76,17 @@ from weko_redis.redis import RedisConnection
 # from .models import Index
 
 
-#+++ def get_index_link_list(pid=0):
+#*** def get_index_link_list(pid=0):
 #     def _get_index_link(res, tree):
-# Needs pid
-def test_get_index_link_list(i18n_app, indices):
-    pid = indices['index_dict']['id']
+def test_get_index_link_list(i18n_app, db_records, indices):
+    pid = 44
+    tree = Indexes.get_browsing_tree_ignore_more(pid)
 
-    assert not get_index_link_list(pid)
+    # Test 1
+    assert not get_index_link_list()
+
+    # Test 2
+    # assert get_index_link_list(pid)
         
 
 #+++ def is_index_tree_updated():
@@ -89,14 +101,16 @@ def test_cached_index_tree_json(i18n_app):
 
 #+++ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
 def test_reset_tree(i18n_app, users, indices, records):
-    tree = Indexes.get_browsing_tree_ignore_more(pid=0)
+    pid = 44    
+    tree = Indexes.get_browsing_tree_ignore_more(pid)
     
     # Doesn't return anything and will pass if there are no errors
     assert reset_tree(tree) == None
 
 
-# def get_tree_json(index_list, root_id):
-    # assert get_tree_json(index_list, root_id)
+#*** def get_tree_json(index_list, root_id):
+def test_get_tree_json(db_records, indices):
+    assert get_tree_json([indices['index_non_dict']], 0)
 
 
 #*** def get_user_roles():
@@ -157,8 +171,8 @@ def test_filter_index_list_by_role(i18n_app, indices, users, db):
     assert len(filter_index_list_by_role([indices['index_non_dict']])) == 0
 
 
-# def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
-def test_reduce_index_by_role(i18n_app, indices, users, db_records, esindex, db):
+#+++ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
+def test_reduce_index_by_role(i18n_app, indices, users, db_records, db):
     g1 = Group.create(name="group_test1").add_member(users[-1]['obj'])
     g2 = Group.create(name="group_test2").add_member(users[-1]['obj'])
     db.session.add(g1)
@@ -172,8 +186,6 @@ def test_reduce_index_by_role(i18n_app, indices, users, db_records, esindex, db)
 
     # Doesn't return anything and will pass if there are no errors
     assert not reduce_index_by_role(tree, roles, groups)
-
-
 
 
 #+++ def get_index_id_list(indexes, id_list=None):
@@ -203,7 +215,7 @@ def test_get_publish_index_id_list(indices, db):
 
 
 #+++ def reduce_index_by_more(tree, more_ids=None):
-def test_reduce_index_by_more(i18n_app, db_records, esindex, indices):
+def test_reduce_index_by_more(i18n_app, db_records, indices):
     tree = Indexes.get_browsing_tree_ignore_more(44)
 
     # Doesn't return anything and will pass if there are no errors
@@ -216,7 +228,7 @@ def test_get_admin_coverpage_setting(pdfcoverpage):
 
 
 #+++ def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
-def test_get_elasticsearch_records_data_by_indexes(i18n_app, db_records, esindex, indices):
+def test_get_elasticsearch_records_data_by_indexes(i18n_app, db_records, indices):
     idx_tree_ids = [idx.cid for idx in Indexes.get_recursive_tree(indices['index_non_dict'].id)]
     current_date = date.today()
     start_date = (current_date - timedelta(days=1)).strftime("%Y-%m-%d")
@@ -235,7 +247,9 @@ def test_get_index_id(i18n_app, users, db_register):
     assert get_index_id(activity_id)
 
 
-# def sanitize(s):
+#+++ def sanitize(s):
+def test_sanitize():
+    assert sanitize("abc\n")
 
 
 #+++ def count_items(indexes_aggr):
@@ -245,25 +259,59 @@ def test_count_items(count_json_data):
     assert count_items(indexes_aggr)
 
 
+#+++  def recorrect_private_items_count(agp):
+def test_recorrect_private_items_count(i18n_app, records):
+    agp = records['aggregations']['path']['buckets']
 
-# def recorrect_private_items_count(agp):
-# def check_doi_in_index(index_id):
-# def get_record_in_es_of_index(index_id, recursively=True):
-# def check_doi_in_list_record_es(index_id):
-# def check_restrict_doi_with_indexes(index_ids):
-# def check_has_any_item_in_index_is_locked(index_id):
-# def check_index_permissions(record=None, index_id=None, index_path_list=None,
-#     def _check_index_permission(index_data) -> bool:
-#     def _check_index_permission_for_doi(index_data) -> bool:
-#     def _check_for_index_groups(_index_groups):
-#     def _convert_index_path(list_index):
-#     def _get_record_index_list():
-#     def _get_parent_lst():
+    # Doesn't return anything and will pass if there are no errors
+    assert not recorrect_private_items_count(agp)
+
+
+#+++ def check_doi_in_index(index_id):
+def test_check_doi_in_index(i18n_app, indices, db_records):
+    assert check_doi_in_index(33)
+
+#*** def get_record_in_es_of_index(index_id, recursively=True):
+# def test_get_record_in_es_of_index(i18n_app, indices, db_records, esindex):
+#     assert get_record_in_es_of_index(33)
+
+
+#*** def check_doi_in_list_record_es(index_id):
+# def test_check_doi_in_list_record_es(i18n_app, indices, esindex):
+#    assert check_doi_in_list_record_es(33)
+
+
+#+++ def check_restrict_doi_with_indexes(index_ids):
+def test_check_restrict_doi_with_indexes(i18n_app, indices, db_records):
+    assert check_restrict_doi_with_indexes([33,44])
+
+
+#*** def check_has_any_item_in_index_is_locked(index_id):
+def test_check_has_any_item_in_index_is_locked(i18n_app, indices, db_records):
+    assert check_has_any_item_in_index_is_locked(33)
+
+
+#+++ def check_index_permissions(record=None, index_id=None, index_path_list=None, is_check_doi=False) -> bool
+def test_check_index_permissions(i18n_app, indices, db_records):
+    # for depid, recid, parent, doi, record, item in db_records:
+    record = db_records[0][4]
+    index_id = 33
+    index_path_list = [33]
+    
+    # Test 1
+    assert not check_index_permissions()
+
+    # Test 2
+    assert check_index_permissions(
+        record=record,
+        index_id=index_id,
+        index_path_list=index_path_list
+    )
 
 
 # *** def check_doi_in_index_and_child_index(index_id, recursively=True):
 # def test_check_doi_in_index_and_child_index(i18n_app, indices, esindex, db_records, records2):
-def test_check_doi_in_index_and_child_index(i18n_app, indices, esindex):
+def test_check_doi_in_index_and_child_index(i18n_app, indices, db_records):
     # index_id = indices['index_dict']['id']
     index_id = 44
 
@@ -326,22 +374,22 @@ def test_perform_delete_index(i18n_app, indices, records):
 
 
 #*** def get_doi_items_in_index(index_id, recursively=False):
-def test_get_doi_items_in_index(i18n_app, indices, esindex, db_records):
-    index_id = indices['index_non_dict'].id
+# def test_get_doi_items_in_index(i18n_app, indices, esindex, db_records):
+#     index_id = indices['index_non_dict'].id
 
-    # Test 1
-    assert not get_doi_items_in_index(index_id, recursively=False)
+    ## Test 1
+    # assert not get_doi_items_in_index(index_id, recursively=False)
 
-    # Test 2
+    ## Test 2
     # assert get_doi_items_in_index(index_id, recursively=False)
 
 
 #*** def test_get_editing_items_in_index(index_id, recursively=False):
-def test_get_editing_items_in_index(i18n_app, indices, esindex, db_records):
-    index_id = indices['index_non_dict'].id
+# def test_get_editing_items_in_index(i18n_app, indices, esindex, db_records):
+    # index_id = indices['index_non_dict'].id
 
     # Test 1
-    assert not get_editing_items_in_index(index_id)
+    # assert not get_editing_items_in_index(index_id)
 
     # Test 2
     # assert get_doi_items_in_index(index_id, recursively=False)

@@ -12,9 +12,11 @@ from weko_index_tree.models import Index
 
 # def update_oaiset_setting(index_info, data):
 def test_update_oaiset_setting(i18n_app, indices, db_oaischema):
-    index_info = Indexes.get_path_name([indices['index_dict']["id"]])
-    x = Indexes.get_full_path()
+    # index_info = Indexes.get_path_name([indices['index_dict']["id"]])
+    index_info = Indexes.get_path_name([33])
     data = indices['index_dict']
+    print(index_info)
+    raise BaseException
 
     # test 1
     update_oaiset_setting(index_info, data)
@@ -26,7 +28,7 @@ def test_update_oaiset_setting(i18n_app, indices, db_oaischema):
 # def delete_oaiset_setting(id_list):
 def test_delete_oaiset_setting(i18n_app, indices, db_oaischema):
     id_list = [Index.get_all()[0]['id']]
-    
+
     # test 1
     delete_oaiset_setting(id_list)
 
