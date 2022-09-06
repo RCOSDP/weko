@@ -15,8 +15,7 @@ def test_update_oaiset_setting(i18n_app, indices, db_oaischema):
     index_info = Indexes.get_path_name([indices['index_dict']["id"]])
     x = Indexes.get_full_path()
     data = indices['index_dict']
-    print(index_info)
-    raise BaseException
+
     # test 1
     update_oaiset_setting(index_info, data)
 
@@ -27,8 +26,9 @@ def test_update_oaiset_setting(i18n_app, indices, db_oaischema):
 # def delete_oaiset_setting(id_list):
 def test_delete_oaiset_setting(i18n_app, indices, db_oaischema):
     id_list = [Index.get_all()[0]['id']]
+    
     # test 1
     delete_oaiset_setting(id_list)
 
     # test 2
-    delete_oaiset_setting(id_list)
+    # delete_oaiset_setting(id_list)
