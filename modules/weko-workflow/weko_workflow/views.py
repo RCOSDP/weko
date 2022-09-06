@@ -32,7 +32,8 @@ from functools import wraps
 
 import redis
 from redis import sentinel
-from weko_workflow.schema.marshmallow import ActivitySchema,ResponseMessageSchema
+from weko_workflow.schema.marshmallow import ActionSchema, \
+    ActivitySchema,ResponseMessageSchema,CancelSchema
 from marshmallow.exceptions import ValidationError
 
 from flask import Blueprint, abort, current_app, has_request_context, \
@@ -1397,8 +1398,86 @@ def next_action(activity_id='0', action_id=0):
 @login_required
 @check_authority
 def previous_action(activity_id='0', action_id=0, req=0):
-    """Previous action."""
-    post_data = request.get_json()
+    """reqに従い次のアクションを決定し、アクティビティの状態を更新する
+    Args:
+        activity_id (str, optional): 対象アクティビティID.パスパラメータから取得. Defaults to '0'.
+        action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
+        req (int, optional): 次のアクションの種類.パスパラメータから取得. Defaults to 0.
+                             0:1つ前のフローアクション
+                             -1: アイテム登録アクション
+                             それ以外: 2つ目のアクション
+    Returns:
+        dict: json data validated by ResponseMessageSchema. 
+    
+    Raises:
+        marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
+    
+    TODO:
+        引数チェック
+        絶対にエラーを起こすデフォルト値は必要なのか
+    ---
+    
+    post:
+        description: "previous_action"
+        secirity:
+            - login_require: []
+            - check_authority: []
+        requestBody:
+            required: true
+            content:
+                application/json:
+                    schema:
+                        ActionSchema
+                    example: {"action_version":"1.0.0", "commond": "test comment"}
+        parameters:
+            - in: path
+              name: activity_id
+              description: 対象のアクティビティID
+              schema:
+                type: string
+            - in: path
+              name: action_id
+              description: 現在のアクションID
+              schema:
+                type: int
+            - in: path
+              name: req
+              description: 次のアクションの種類. 
+                           0:1つ前のフローアクション
+                           -1: アイテム登録アクション
+                           それ以外: 2つ目のアクション.
+              schema:
+                type: int
+        response:
+            200:
+                description: "success"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example: {"code": 0, msg="success"}
+            400:
+                description: "parameter error"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example: {"code": -1,"msg":"parameter error"}
+            500:
+                description: "server error"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example: {"code": -1, "msg": "server error"}
+
+    """
+    try:
+        post_data = ActionSchema().load(request.get_json())
+    except ValidationError as err:
+        res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
+        return jsonify(res.data), 400
+    post_data = post_data.data
     # A-20220808-00001
     #current_app.logger.error("previous:activity_id:{}".format(activity_id))
     # 7
@@ -1419,14 +1498,21 @@ def previous_action(activity_id='0', action_id=0, req=0):
     history = WorkActivityHistory()
     # next action
     activity_detail = work_activity.get_activity_by_id(activity_id)
+    if not activity_detail:
+        res = ResponseMessageSchema().load({"code":-1, "msg":"can not get activity detail"})
+        return jsonify(res.data), 500
     action_order = activity_detail.action_order
     flow = Flow()
     rtn = history.create_activity_history(activity, action_order)
     if rtn is None:
-        return jsonify(code=-1, msg=_('error'))
+        res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
+        return jsonify(res.data), 500
     current_flow_action = flow.\
         get_flow_action_detail(
             activity_detail.flow_define.flow_id, action_id, action_order)
+    if not current_flow_action:
+        res = ResponseMessageSchema().load({"code":-1, "msg":"can not get flow action detail"})
+        return jsonify(res.data), 500
     action_mails_setting = {
         "previous": current_flow_action.send_mail_setting
         if current_flow_action.send_mail_setting else {},
@@ -1479,8 +1565,10 @@ def previous_action(activity_id='0', action_id=0, req=0):
             action_status=ActionStatusPolicy.ACTION_DOING,
             action_order=previous_action_order)
         if not flag:
-            return jsonify(code=-2, msg='')
-    return jsonify(code=0, msg=_('success'))
+            res = ResponseMessageSchema().load({'code':-2,'msg':""})
+            return jsonify(res.data), 500
+    res = ResponseMessageSchema().load({'code':0,'msg':_('success')})
+    return jsonify(res.data), 200
 
 
 @blueprint.route('/journal/list', methods=['GET'])
@@ -1546,12 +1634,74 @@ def get_journal(method, value):
 @login_required_customize
 @check_authority
 def cancel_action(activity_id='0', action_id=0):
-    """Next action."""
-    post_json = request.get_json()
+    """アクティビティIDで与えられたアクティビティをキャンセルする
+    Args:
+        activity_id (str, optional): 対象アクティビティID.パスパラメータから取得. Defaults to '0'.
+        action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
+    Returns:
+        dict: json data validated by ResponseMessageSchema
+    ---
+    
+    Raises:
+        marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
+    post:
+        description: "cancel action"
+        secirity:
+            - login_required_customize: []
+            - check_authority: []
+        requestBody:
+            required: true
+            content:
+                application/json:
+                    schema:
+                        CancelSchema
+                    example: {"action_version": "1.0.0", "commond": "this is test comment", "pid_value":1}
+        parameters:
+            - in: path
+              name: activity_id
+              description: 対象のアクティビティID
+              schema:
+                type: string
+            - in: path
+              name: action_id
+              description: 現在のアクションID
+              schema:
+                type: int
+        response:
+            200:
+                description: "success"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example: {"code": 0, msg=_("success"), data={"redirect":"/workflow/activity/detail/1}}
+            400:
+                description: "parameter error"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example: {"code": -1,"msg":"parameter error"}
+            500:
+                description: "server error"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example: {"code": -1, "msg": "server error"}
+    """
+    try:
+        post_json = CancelSchema().load(request.get_json())
+    except ValidationError as err:
+        res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
+        return jsonify(res.data), 400
+    post_data = post_data.data
     work_activity = WorkActivity()
     # Clear deposit
     activity_detail = work_activity.get_activity_by_id(activity_id)
-
+    if not activity_detail:
+        res = ResponseMessageSchema().load({"code":-1, "msg":"can not get activity detail"})
+        return jsonify(res.data), 500
     activity = dict(
         activity_id=activity_id,
         action_id=action_id,
@@ -1570,6 +1720,9 @@ def cancel_action(activity_id='0', action_id=0):
                 activity_detail)
             if pid_value:
                 pid = PersistentIdentifier.get('recid', pid_value)
+                if not pid:
+                    res = ResponseMessageSchema().load({"code":-1, "msg":"can not get PersistIdentifier"})
+                    return jsonify(res.data), 500
                 cancel_item_id = pid.object_uuid
         if cancel_item_id:
             cancel_record = WekoDeposit.get_record(cancel_item_id)
@@ -1591,7 +1744,11 @@ def cancel_action(activity_id='0', action_id=0):
                             pid_type='recid',
                             object_type='rec',
                             object_uuid=cancel_item_id)
+                        if not cancel_pid:
+                            res = ResponseMessageSchema().load({"code":-1, "msg":"can not get activity detail"})
+                            return jsonify(res.data), 500
                         cancel_pv = PIDVersioning(child=cancel_pid)
+
                         if cancel_pv.exists:
                             parent_pid = deepcopy(cancel_pv.parent)
                             cancel_pv.remove_child(cancel_pid)
@@ -1606,8 +1763,8 @@ def cancel_action(activity_id='0', action_id=0):
                 db.session.rollback()
                 current_app.logger.error(
                     'Unexpected error: {}'.format(sys.exc_info()))
-                return jsonify(code=-1,
-                               msg=sys.exc_info()[0])
+                res = ResponseMessageSchema().load({"code":-1, "msg":str(sys.exc_info()[0])})
+                return jsonify(res.data), 500
 
     work_activity.upt_activity_action_status(
         activity_id=activity_id, action_id=action_id,
@@ -1621,7 +1778,8 @@ def cancel_action(activity_id='0', action_id=0):
             activity_id=activity_id, action_id=action_id,
             action_status=ActionStatusPolicy.ACTION_DOING,
             action_order=activity_detail.action_order)
-        return jsonify(code=-1, msg=_('Error! Cannot process quit activity!'))
+        res = ResponseMessageSchema().load({"code":-1, "msg":'Error! Cannot process quit activity!'})
+        return jsonify(res.data), 500
 
     if session.get("guest_url"):
         url = session.get("guest_url")
@@ -1638,9 +1796,10 @@ def cancel_action(activity_id='0', action_id=0):
     if permission:
         FilePermission.delete_object(permission)
 
-    return jsonify(code=0,
-                   msg=_('success'),
-                   data={'redirect': url})
+    res = ResponseMessageSchema().load(
+        {"code":0, "msg":_("success"),"data":{"redirect":url}}
+        )
+    return jsonify(res.data), 200
 
 
 @blueprint.route(

@@ -13,8 +13,17 @@ class ActivitySchema(Schema):
     class Meta:
         strict = True
 
+class ActionSchema(Schema):
+    action_version = fields.String(allow_none=True)
+    commond = fields.String(allow_none=True)
+    class Meta:
+        strict = True
+
+class CancelSchema(ActionSchema):
+    pid_value = fields.String(allow_none=True)
+
 class ResponseMessageSchema(Schema):
-    code = fields.Integer(required=True,validate=Range(min=-1,max=0))
+    code = fields.Integer(required=True,validate=Range(min=-2,max=0))
     msg = fields.String(required=True)
     data = fields.Dict(allow_none=True)
     class Meta:
