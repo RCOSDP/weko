@@ -121,6 +121,7 @@ class WekoFileObject(FileObject):
             file_size_limit = current_app.config[
                 'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'][
                 file_type] * 1000000
+            print(file_size_limit)
             if file_size > file_size_limit:
                 return False
         return True
@@ -515,6 +516,8 @@ class WekoDeposit(Deposit):
             m.run()
         except UnresolvedConflictsException:
             raise MergeConflict()
+        # current_app.logger.error("m.unified_patches:{}".format(m.unified_patches))
+        # current_app.logger.error("lca:{}".format(lca))
         return self._patch(m.unified_patches, lca)
 
     @staticmethod

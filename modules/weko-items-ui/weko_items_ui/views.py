@@ -481,12 +481,12 @@ def iframe_items_index(pid_value='0'):
             if pid_value and '.' in pid_value:
                 root_record, files = get_record_by_root_ver(pid_value)
                 if root_record and root_record.get('title'):
-                    current_app.logger.error("session['itemlogin_item']:{}".format(session['itemlogin_item']))
+                    # current_app.logger.debug("session['itemlogin_item']:{}".format(session['itemlogin_item']))
                     session['itemlogin_item']['title'] = \
                         root_record['title'][0]
                     files_thumbnail = get_thumbnails(files, None)
             else:
-                current_app.logger.error("session['itemlogin_record']: {}".format(session['itemlogin_record']))
+                # current_app.logger.debug("session['itemlogin_record']: {}".format(session['itemlogin_record']))
                 root_record = session['itemlogin_record']
             if root_record and files and len(root_record) > 0 and \
                     len(files) > 0 and isinstance(root_record, (list, dict)):
@@ -502,14 +502,14 @@ def iframe_items_index(pid_value='0'):
                     thumbnails_org=record_detail_alt.get('files_thumbnail')
                 )
             )
-            current_app.logger.error("session['itemlogin_activity']: {}".format(session['itemlogin_activity']))
-            current_app.logger.error("session['itemlogin_item']: {}".format(session['itemlogin_item']))
-            current_app.logger.error("session['itemlogin_steps']: {}".format(session['itemlogin_steps']))
-            current_app.logger.error("session['itemlogin_action_id']: {}".format(session['itemlogin_action_id']))
-            current_app.logger.error("session['itemlogin_cur_step']: {}".format(session['itemlogin_cur_step']))
-            current_app.logger.error("session['itemlogin_histories']: {}".format(session['itemlogin_histories']))
-            current_app.logger.error("session['itemlogin_res_check']: {}".format(session['itemlogin_res_check']))
-            current_app.logger.error("session['itemlogin_pid']: {}".format(session['itemlogin_pid']))
+            # current_app.logger.debug("session['itemlogin_activity']: {}".format(session['itemlogin_activity']))
+            # current_app.logger.debug("session['itemlogin_item']: {}".format(session['itemlogin_item']))
+            # current_app.logger.debug("session['itemlogin_steps']: {}".format(session['itemlogin_steps']))
+            # current_app.logger.debug("session['itemlogin_action_id']: {}".format(session['itemlogin_action_id']))
+            # current_app.logger.debug("session['itemlogin_cur_step']: {}".format(session['itemlogin_cur_step']))
+            # current_app.logger.debug("session['itemlogin_histories']: {}".format(session['itemlogin_histories']))
+            # current_app.logger.debug("session['itemlogin_res_check']: {}".format(session['itemlogin_res_check']))
+            # current_app.logger.debug("session['itemlogin_pid']: {}".format(session['itemlogin_pid']))
             
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
