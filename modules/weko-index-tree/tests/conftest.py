@@ -146,6 +146,7 @@ def base_app(instance_path):
         DEPOSIT_RECORDS_UI_ENDPOINTS=DEPOSIT_RECORDS_UI_ENDPOINTS,
         DEPOSIT_REST_ENDPOINTS=DEPOSIT_REST_ENDPOINTS,
         DEPOSIT_DEFAULT_STORAGE_CLASS=DEPOSIT_DEFAULT_STORAGE_CLASS,
+        # SEARCH_UI_SEARCH_INDEX=SEARCH_UI_SEARCH_INDEX,
         SEARCH_UI_SEARCH_INDEX="test-weko",
         # SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
         SEARCH_INDEX_PREFIX="{}-".format('test'),
@@ -361,8 +362,9 @@ def base_app(instance_path):
                 pid_minter='recid',
                 pid_fetcher='recid',
                 search_class=RecordsSearch,
-                search_index=SEARCH_UI_SEARCH_INDEX,
-                # search_index="tenant1-weko",
+                # search_index="test-weko",
+                # search_index=SEARCH_UI_SEARCH_INDEX,
+                search_index="tenant1",
                 search_type='item-v1.0.0',
                 search_factory_imp='weko_search_ui.query.weko_search_factory',
                 # record_class='',
@@ -624,37 +626,31 @@ def users(app, db):
     ]
 
 
-@pytest.fixture()
-def esindex(app,db_records):
-    with open("tests/data/mappings/item-v1.0.0.json","r") as f:
-        mapping = json.load(f)
-
-    search = LocalProxy(lambda: app.extensions["invenio-search"])
-
-    with app.test_request_context():
-        search.client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
-        search.client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
-        # print(current_search_client.indices.get_alias())
-    
-    for depid, recid, parent, doi, record, item in db_records:
-        search.client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
-    
-
-    yield search
-
-    with app.test_request_context():
-        search.client.indices.delete_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
-        search.client.indices.delete(index=app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
-
-
 @pytest.fixture
 def indices(app, db):
     with db.session.begin_nested():
         # Create a test Indices
         testIndexOne = Index(index_name="testIndexOne",browsing_role="Contributor",public_state=True,id=11)
         testIndexTwo = Index(index_name="testIndexTwo",browsing_group="group_test1",public_state=True,id=22)
-        testIndexThree = Index(index_name="testIndexThree",parent='testIndexOne',browsing_role="Contributor",public_state=True,id=33,public_date=datetime.today() - timedelta(days=1))
-        testIndexThreeChild = Index(index_name="testIndexThreeChild",browsing_role="Contributor",parent="testIndexThree",index_link_enabled=True,index_link_name="test_link",public_state=True,id=44)
+        testIndexThree = Index(
+            index_name="testIndexThree",
+            browsing_role="Contributor",
+            public_state=True,
+            harvest_public_state=True,
+            id=33,
+            public_date=datetime.today() - timedelta(days=1)
+        )
+        testIndexThreeChild = Index(
+            index_name="testIndexThreeChild",
+            browsing_role="Contributor",
+            parent="testIndexThree",
+            index_link_enabled=True,
+            index_link_name="test_link",
+            public_state=True,
+            harvest_public_state=False,
+            id=44,
+            public_date=datetime.today() - timedelta(days=1)
+        )
         testIndexMore = Index(index_name="testIndexMore",parent="testIndexThree",public_state=True,id='more')
         testIndexPrivate = Index(index_name="testIndexPrivate",public_state=False,id=55)
 
@@ -666,7 +662,38 @@ def indices(app, db):
         'index_non_dict': testIndexThree,
         'index_non_dict_child': testIndexThreeChild,
     }
-        
+
+
+@pytest.fixture()
+def esindex(app,db_records):
+    with open("tests/data/mappings/item-v1.0.0.json","r") as f:
+        mapping = json.load(f)
+
+    search = LocalProxy(lambda: app.extensions["invenio-search"])
+
+    with app.test_request_context():
+        try:
+            search.client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
+            search.client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
+        except:
+            search.client.indices.create("test-weko-items",body=mapping)
+            search.client.indices.put_alias(index="test-weko-items", name="test-weko")
+        # print(current_search_client.indices.get_alias())
+    
+    for depid, recid, parent, doi, record, item in db_records:
+        search.client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
+    
+
+    yield search
+
+    with app.test_request_context():
+        try:
+            search.client.indices.delete_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
+            search.client.indices.delete(index=app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
+        except:
+            search.client.indices.delete_alias(index="test-weko-items", name="test-weko")
+            search.client.indices.delete(index=test-weko-items, ignore=[400, 404])
+
 
 @pytest.fixture()
 def db_records(db, instance_path, users):

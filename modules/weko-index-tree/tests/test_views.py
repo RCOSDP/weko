@@ -1,7 +1,7 @@
 import json
 import pytest
 from mock import patch
-from weko_index_tree.views import set_expand
+from weko_index_tree.views import set_expand, get_rss_data, create_index
 from invenio_accounts.testutils import login_user_via_session
 
 
