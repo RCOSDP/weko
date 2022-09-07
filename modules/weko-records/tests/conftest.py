@@ -46,6 +46,7 @@ from invenio_search import InvenioSearch
 from sqlalchemy_utils.functions import create_database, database_exists
 from weko_deposit import WekoDeposit
 from weko_itemtypes_ui import WekoItemtypesUI
+from weko_index_tree.api import Indexes
 from weko_search_ui import WekoSearchUI
 from weko_records_ui import WekoRecordsUI
 from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISSION_ROLE_COMMUNITY, EMAIL_DISPLAY_FLG
@@ -157,6 +158,17 @@ def location(app):
 def user():
     """Create a example user."""
     return create_test_user(email='test@test.org')
+
+
+@pytest.fixture()
+def db_index():
+    index_metadata = {
+            'id': 1,
+            'parent': 0,
+            'value': 'IndexA',
+        }
+
+    Indexes.create(0, index_metadata)
 
 
 @pytest.fixture()

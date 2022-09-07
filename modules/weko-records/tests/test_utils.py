@@ -424,6 +424,7 @@ def test_get_options_and_order_list(app, db, item_type):
     assert meta_options=={}
 
 # async def sort_meta_data_by_options(
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_sort_meta_data_by_options -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 params=[
     ("data/item_type/item_type_render1.json",
      "data/item_type/item_type_form1.json",
@@ -694,6 +695,7 @@ def test_check_to_upgrade_version(app):
     assert res==True
 
 # def remove_weko2_special_character(s: str):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_remove_weko2_special_character -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_remove_weko2_special_character():
     assert remove_weko2_special_character("HOGE")=="HOGE"
     assert remove_weko2_special_character("HOGE&EMPTY&HOGE")=="HOGEHOGE"

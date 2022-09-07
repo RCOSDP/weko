@@ -1,6 +1,12 @@
 {
   "_source":{
+    "_oai": {
+      "id": "0001"
+    },
+    "itemtype": "test",
     "_item_metadata":{
+      "path": [1],
+      "control_number": "1",
       "item_type_id":"1",
       "item_test1_1":{
         "attribute_name":"Test Item1-1",
