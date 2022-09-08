@@ -679,7 +679,26 @@ def test_itemtypes_get_all(app, db):
 
 # class ItemTypes(RecordBase):
 #     def patch(self, patch):
+
+# class ItemTypes(RecordBase):
 #     def commit(self, **kwargs):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_commit -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_itemtypes_commit(app, db):
+    it = ItemTypes.create(name='test')
+    it2 = ItemTypes.create(name='test2')
+
+    it.model = None
+    with pytest.raises(Exception) as e:
+        ItemTypes.commit(it)
+    assert e.type==MissingModelError
+    it2 = ItemTypes.commit(it2)
+    assert it2=={}
+    assert it2.model.item_type_name.name=='test2'
+    assert it2.model.schema=={}
+    assert it2.model.form=={}
+    assert it2.model.render=={}
+    assert it2.model.tag==1
+    assert it2.model.is_deleted==False
 
 # class ItemTypes(RecordBase):
 #     def delete(self, force=False):
@@ -709,6 +728,19 @@ def test_itemtypes_delete(app, db):
 
 # class ItemTypes(RecordBase):
 #     def revert(self, revision_id):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_revert -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_itemtypes_revert(app, db):
+    it = ItemTypes.create(name='test')
+    it2 = ItemTypes.create(name='test2')
+
+    it.model = None
+    with pytest.raises(Exception) as e:
+        ItemTypes.revert(it, 0)
+    assert e.type==MissingModelError
+    # need to fix
+    with pytest.raises(Exception) as e:
+        ItemTypes.revert(it2, 0)
+    assert e.type==AttributeError
 
 # class ItemTypes(RecordBase):
 #     def restore(self):
@@ -829,7 +861,23 @@ def test_mapping_get_record(app, db):
 
 # class Mapping(RecordBase):
 #     def patch(self, patch):
+
+# class Mapping(RecordBase):
 #     def commit(self, **kwargs):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_commit -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_mapping_commit(app, db):
+    mapping1 = Mapping.create(1)
+    mapping2 = Mapping.create(2)
+
+    mapping1.model = None
+    with pytest.raises(Exception) as e:
+        Mapping.commit(mapping1)
+    assert e.type==MissingModelError
+
+    # need to fix
+    with pytest.raises(Exception) as e:
+        Mapping.commit(mapping2)
+    assert e.type==AttributeError
 
 # class Mapping(RecordBase):
 #     def delete(self, force=False):
@@ -855,6 +903,22 @@ def test_mapping_delete(app, db):
 
 # class Mapping(RecordBase):
 #     def revert(self, revision_id):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_revert -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_mapping_revert(app, db):
+    mapping1 = Mapping.create(1)
+    mapping2 = Mapping.create(2)
+
+    mapping1.model = None
+    with pytest.raises(Exception) as e:
+        Mapping.revert(mapping1, 0)
+    assert e.type==MissingModelError
+
+    # need to fix
+    with pytest.raises(Exception) as e:
+        Mapping.revert(mapping2, 0)
+    assert e.type==AttributeError
+
+# class Mapping(RecordBase):
 #     def revisions(self):
 
 # class Mapping(RecordBase):
@@ -957,8 +1021,8 @@ def test_item_type_props(app, db):
 
 # class ItemsMetadata(RecordBase):
 #     def create(cls, data, id_=None, **kwargs):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_metadata_create -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_item_type_metadata_create(app, db):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_metadata_create -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_metadata_create(app, db):
     _uuid2 = uuid.uuid4()
     _uuid3 = uuid.uuid4()
     _data = {'item1': None}
@@ -985,8 +1049,8 @@ def test_item_type_metadata_create(app, db):
 
 # class ItemsMetadata(RecordBase):
 #     def get_record(cls, id_, with_deleted=False):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_metadata_get_record -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_item_type_metadata_get_record(app, db):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_metadata_get_record -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_metadata_get_record(app, db):
     _uuid1 = uuid.uuid4()
     _uuid2 = uuid.uuid4()
     _uuid3 = uuid.uuid4()
@@ -1024,8 +1088,8 @@ def test_item_type_metadata_get_record(app, db):
 
 # class ItemsMetadata(RecordBase):
 #     def get_records(cls, ids, with_deleted=False):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_metadata_get_records -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_item_type_metadata_get_records(app, db):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_metadata_get_records -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_metadata_get_records(app, db):
     _uuid1 = uuid.uuid4()
     _uuid2 = uuid.uuid4()
     _uuid3 = uuid.uuid4()
@@ -1048,8 +1112,8 @@ def test_item_type_metadata_get_records(app, db):
 
 # class ItemsMetadata(RecordBase):
 #     def get_by_item_type_id(cls, item_type_id, with_deleted=False):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_metadata_get_by_item_type_id -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_item_type_metadata_get_by_item_type_id(app, db):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_metadata_get_by_item_type_id -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_metadata_get_by_item_type_id(app, db):
     _uuid1 = uuid.uuid4()
     _uuid2 = uuid.uuid4()
     _data = {'item1': None}
@@ -1071,8 +1135,8 @@ def test_item_type_metadata_get_by_item_type_id(app, db):
 
 # class ItemsMetadata(RecordBase):
 #     def get_by_object_id(cls, object_id):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_metadata_get_by_object_id -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_item_type_metadata_get_by_object_id(app, db):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_metadata_get_by_object_id -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_metadata_get_by_object_id(app, db):
     _uuid1 = uuid.uuid4()
     _uuid2 = uuid.uuid4()
     _uuid3 = uuid.uuid4()
@@ -1096,12 +1160,32 @@ def test_item_type_metadata_get_by_object_id(app, db):
 
 # class ItemsMetadata(RecordBase):
 #     def patch(self, patch):
+
+# class ItemsMetadata(RecordBase):
 #     def commit(self, **kwargs):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_metadata_commit -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_metadata_commit(app, db):
+    _uuid1 = uuid.uuid4()
+    _uuid2 = uuid.uuid4()
+    _data = {'item1': None}
+    record1 = ItemsMetadata.create(data=_data, id_=_uuid1, item_type_id=1)
+    record2 = ItemsMetadata.create(data=_data, id_=_uuid2, item_type_id=1)
+
+    record1.model = None
+    with pytest.raises(Exception) as e:
+        ItemsMetadata.commit(record1)
+    assert e.type==MissingModelError
+    record2 = ItemsMetadata.commit(record2)
+    assert record2=={'item1': None}
+    assert record2.id==_uuid2
+    assert record2.model.item_type_id==1
+    assert record2.model.json=={'item1': None}
+    assert record2.model.version_id==2
 
 # class ItemsMetadata(RecordBase):
 #     def delete(self, force=False):
-# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_metadata_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_item_type_metadata_delete(app, db):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_metadata_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_metadata_delete(app, db):
     _uuid1 = uuid.uuid4()
     _uuid2 = uuid.uuid4()
     _uuid3 = uuid.uuid4()
@@ -1126,6 +1210,26 @@ def test_item_type_metadata_delete(app, db):
 
 # class ItemsMetadata(RecordBase):
 #     def revert(self, revision_id):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_metadata_revert -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_item_metadata_revert(app, db):
+    _uuid1 = uuid.uuid4()
+    _uuid2 = uuid.uuid4()
+    _data = {'item1': None}
+    record1 = ItemsMetadata.create(data=_data, id_=_uuid1, item_type_id=1)
+    record2 = ItemsMetadata.create(data=_data, id_=_uuid2, item_type_id=1)
+
+    record1.model = None
+    with pytest.raises(Exception) as e:
+        ItemsMetadata.revert(record1, 0)
+    assert e.type==MissingModelError
+    record2 = ItemsMetadata.revert(record2, 0)
+    assert record2=={'item1': None}
+    assert record2.id==_uuid2
+    assert record2.model.item_type_id==1
+    assert record2.model.json=={'item1': None}
+    assert record2.model.version_id==2
+
+# class ItemsMetadata(RecordBase):
 #     def revisions(self):
 
 # class FilesMetadata(RecordBase):
@@ -1211,6 +1315,22 @@ def test_files_metadata_update_data(app, db):
 
 # class FilesMetadata(RecordBase):
 #     def commit(self, **kwargs):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_files_metadata_commit -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_files_metadata_commit(app, db):
+    record1 = FilesMetadata.create(data={'data': 'test'}, pid=1, con=bytes('test content', 'utf-8'))
+    record2 = FilesMetadata.create(data={'data': 'test'}, pid=2, con=bytes('test content', 'utf-8'))
+
+    record1.model = None
+    with pytest.raises(Exception) as e:
+        FilesMetadata.commit(record1)
+    assert e.type==MissingModelError
+
+    record2 = FilesMetadata.commit(record2)
+    assert record2.id==2
+    assert record2.model.pid==2
+    assert record2.model.contents==b'test content'
+    assert record2.model.json=={'data': 'test'}
+    assert record2.model.version_id==2
 
 # class FilesMetadata(RecordBase):
 #     def delete(self, force=False):
@@ -1238,6 +1358,24 @@ def test_files_metadata_delete(app, db):
 
 # class FilesMetadata(RecordBase):
 #     def revert(self, revision_id):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_files_metadata_revert -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_files_metadata_revert(app, db):
+    record1 = FilesMetadata.create(data={'data': 'test'}, pid=1, con=bytes('test content', 'utf-8'))
+    record2 = FilesMetadata.create(data={'data': 'test'}, pid=2, con=bytes('test content', 'utf-8'))
+
+    record1.model = None
+    with pytest.raises(Exception) as e:
+        FilesMetadata.revert(record1, 0)
+    assert e.type==MissingModelError
+
+    record2 = FilesMetadata.revert(record2, 0)
+    assert record2.id==2
+    assert record2.model.pid==2
+    assert record2.model.contents==b'test content'
+    assert record2.model.json=={'data': 'test'}
+    assert record2.model.version_id==2
+
+# class FilesMetadata(RecordBase):
 #     def revisions(self):
 # class RecordRevision(RecordBase):
 #     def __init__(self, model):

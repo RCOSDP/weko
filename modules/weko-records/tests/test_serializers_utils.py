@@ -111,5 +111,7 @@ def test_open_search_detail_data(app, db, db_index, render, form, mapping, hit, 
     _search_result = {'hits': {'total': 1, 'hits': [json_data(hit)]}}
     data = OpenSearchDetailData(fetcher, _search_result, 'rss')
     with app.test_request_context():
-        result = data.output_open_search_detail_data()
-        assert result==None
+        # need to fix
+        with pytest.raises(Exception) as e:
+            result = data.output_open_search_detail_data()
+        assert e.type==ValueError

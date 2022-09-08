@@ -1,10 +1,16 @@
 {
   "_source":{
+    "_created": "2021-09-01",
+    "_updated": "2021-10-26",
     "_oai": {
       "id": "0001"
     },
     "itemtype": "test",
     "_item_metadata":{
+      "pubdate": {
+        "attribute_name": "PubDate",
+        "attribute_value": "2021-10-26"
+      },
       "path": [1],
       "control_number": "1",
       "item_type_id":"1",
