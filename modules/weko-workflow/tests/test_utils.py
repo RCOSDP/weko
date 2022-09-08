@@ -1,3 +1,4 @@
+from unittest.mock import MagicMock
 import pytest
 from mock import patch
 from werkzeug.datastructures import MultiDict
@@ -8,13 +9,74 @@ from weko_workflow.utils import (
     filter_condition,
     get_record_by_root_ver,
     get_url_root,
+    register_hdl,
+    IdentifierHandle
 )
+from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
+from weko_workflow.models import Activity
 
 # def get_current_language():
 # def get_term_and_condition_content(item_type_name):
 # def get_identifier_setting(community_id):
 # def saving_doi_pidstore(item_id,
+
 # def register_hdl(activity_id):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_register_hdl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_register_hdl(app,db_records,db_itemtype):
+    depid, recid,parent,doi,record, item = db_records[0]
+    assert recid.pid_value=="1"
+    activity_id='A-00000800-00000'
+    act = Activity(
+                activity_id=activity_id,
+                item_id=record.id,
+            )
+    with patch("weko_workflow.api.WorkActivity.get_activity_detail",return_value=act):
+        with patch("weko_handle.api.Handle.register_handle",return_value="handle:00.000.12345/0000000001"):
+            with app.test_request_context():
+                register_hdl(activity_id)
+                pid = IdentifierHandle(parent.object_uuid).check_pidstore_exist(pid_type='hdl')
+                assert pid[0].object_uuid == parent.object_uuid
+                pid = IdentifierHandle(recid.object_uuid).check_pidstore_exist(pid_type='hdl')
+                assert pid[0].object_uuid == recid.object_uuid
+    
+    depid, recid,parent,doi,record, item = db_records[1]
+    assert recid.pid_value=="1.1"
+    activity_id='A-00000800-00000'
+    act = Activity(
+                activity_id=activity_id,
+                item_id=record.id,
+            )
+    with patch("weko_workflow.api.WorkActivity.get_activity_detail",return_value=act):
+        with patch("weko_handle.api.Handle.register_handle",return_value="handle:00.000.12345/0000000001"):
+            with app.test_request_context():
+                register_hdl(activity_id)
+                pid = IdentifierHandle(parent.object_uuid).check_pidstore_exist(pid_type='hdl')
+                assert pid[0].object_uuid == parent.object_uuid
+                pid = IdentifierHandle(recid.object_uuid).check_pidstore_exist(pid_type='hdl')
+                assert pid == []
+    
+    depid, recid,parent,doi,record, item = db_records[2]
+    assert recid.pid_value=="1.0"
+    activity_id='A-00000800-00000'
+    act = Activity(
+                activity_id=activity_id,
+                item_id=record.id,
+            )
+    with patch("weko_workflow.api.WorkActivity.get_activity_detail",return_value=act):
+        with patch("weko_handle.api.Handle.register_handle",return_value="handle:00.000.12345/0000000001"):
+            with app.test_request_context():
+                register_hdl(activity_id)
+                # register_hdl uses parent object_uuid.
+                pid = IdentifierHandle(parent.object_uuid).check_pidstore_exist(pid_type='hdl')
+                assert pid[0].object_uuid == parent.object_uuid
+                # register_hdl does not use recid object_uuid.
+                pid = IdentifierHandle(recid.object_uuid).check_pidstore_exist(pid_type='hdl')
+                assert pid==[]
+    
+
+                
+
+
 # def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
 # def register_hdl_by_handle(hdl, item_uuid, item_uri):
 # def item_metadata_validation(item_id, identifier_type, record=None,
@@ -132,56 +194,7 @@ def test_get_record_by_root_ver(app, db_records):
     record, files = get_record_by_root_ver("1")
 
     assert files == []
-    assert record == (
-        {
-            "_oai": {"id": "oai:weko3.example.org:00000001", "sets": ["1"]},
-            "path": ["1"],
-            "owner": "1",
-            "recid": "1",
-            "title": ["title"],
-            "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-08-20"},
-            "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02"},
-            "_deposit": {
-                "id": "1",
-                "pid": {"type": "depid", "value": "1", "revision_id": 0},
-                "owner": "1",
-                "owners": [1],
-                "status": "published",
-                "created_by": 1,
-                "owners_ext": {
-                    "email": "wekosoftware@nii.ac.jp",
-                    "username": "",
-                    "displayname": "",
-                },
-            },
-            "item_title": "title",
-            "author_link": [],
-            "item_type_id": "1",
-            "publish_date": "2022-08-20",
-            "publish_status": "0",
-            "weko_shared_id": -1,
-            "item_1617186331708": {
-                "attribute_name": "Title",
-                "attribute_value_mlt": [
-                    {"subitem_1551255647225": "title", "subitem_1551255648112": "ja"}
-                ],
-            },
-            "item_1617258105262": {
-                "attribute_name": "Resource Type",
-                "attribute_value_mlt": [
-                    {
-                        "resourceuri": "http://purl.org/coar/resource_type/c_5794",
-                        "resourcetype": "conference paper",
-                    }
-                ],
-            },
-            "relation_version_is_last": True,
-        },
-        [],
-    )
-
-
-# ({'_buckets': {'deposit': '3e99cfca-098b-42ed-b8a0-20ddd09b3e02'},'_deposit': {'created_by': 1,'id': '1','owner': '1','owners': [1],'owners_ext': {'displayname': '','email': 'wekosoftware@nii.ac.jp','username': ''},'pid': {'revision_id': 0, 'type': 'depid', 'value': '1'},'status': 'published'},'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1']},'author_link': [],'item_1617186331708': {'attribute_name': 'Title','attribute_value_mlt': [{'subitem_1551255647225': 'title','subitem_1551255648112': 'ja'}]},'item_1617258105262': {'attribute_name': 'Resource Type','attribute_value_mlt': [{'resourcetype': 'conference paper','resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]},'item_title': 'title','item_type_id': '1','owner': '1','path': ['1'],'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'},'publish_date': '2022-08-20','publish_status': '0','recid': '1','relation_version_is_last': True,'title': ['title'],'weko_shared_id': -1},[])
+    assert record == {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1']}, 'path': ['1'], 'owner': '1', 'recid': '1', 'title': ['title'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}, '_buckets': {'deposit': '3e99cfca-098b-42ed-b8a0-20ddd09b3e02'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'title', 'author_link': [], 'item_type_id': '1', 'publish_date': '2022-08-20', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'title', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True}
 
 
 # def get_disptype_and_ver_in_metainfo(metadata):
