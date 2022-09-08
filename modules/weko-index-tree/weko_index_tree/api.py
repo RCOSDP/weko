@@ -539,9 +539,12 @@ class Indexes(object):
             try:
                 redis_connection = RedisConnection()
                 datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
-                v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME')).decode("UTF-8")
-                tree = json.loads(str(v, encoding='utf-8'))
+                v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language).decode("UTF-8")
+                tree = json.loads(str(v))
             except RedisError:
+                tree = cls.get_index_tree(pid)
+                save_index_trees_to_redis(tree)
+            except KeyError:
                 tree = cls.get_index_tree(pid)
                 save_index_trees_to_redis(tree)
         else:
@@ -563,9 +566,12 @@ class Indexes(object):
             try:
                 redis_connection = RedisConnection()
                 datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
-                v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME')).decode("UTF-8")
-                tree = json.loads(str(v, encoding='utf-8'))
+                v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language).decode("UTF-8")
+                tree = json.loads(str(v))
             except RedisError:
+                tree = cls.get_index_tree(pid)
+                save_index_trees_to_redis(tree)
+            except KeyError:
                 tree = cls.get_index_tree(pid)
                 save_index_trees_to_redis(tree)
         else:

@@ -249,7 +249,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             paths = []
         import pickle
         agp = rd["aggregations"]["path"]["buckets"]
-        rd["aggregations"]["aggregations"] = pickle.loads(pickle.dumps(agp))
+        rd["aggregations"]["aggregations"] = pickle.loads(pickle.dumps(agp, 1))
         nlst = []
         items_count = dict()
         public_indexes = Indexes.get_public_indexes_list()
