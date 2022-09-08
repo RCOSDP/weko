@@ -1126,7 +1126,7 @@ def display_oaiset_path(record_metadata):
     record_metadata['_oai']['sets'] = index_paths
 
 
-def get_google_scholar_meta(record):
+def get_google_scholar_meta(record, all_index=None):
     """
     _get_google_scholar_meta [make a google scholar metadata]
 
@@ -1151,11 +1151,19 @@ def get_google_scholar_meta(record):
 
     if '_oai' not in record and 'id' not in record['_oai']:
         return
-    recstr = etree.tostring(
-        getrecord(
-            identifier=record['_oai'].get('id'),
-            metadataPrefix='jpcoar',
-            verb='getrecord'))
+    if all_index:
+        recstr = etree.tostring(
+            getrecord(
+                identifier=record['_oai'].get('id'),
+                metadataPrefix='jpcoar',
+                verb='getrecord',
+                all_index=all_index))
+    else:
+        recstr = etree.tostring(
+            getrecord(
+                identifier=record['_oai'].get('id'),
+                metadataPrefix='jpcoar',
+                verb='getrecord'))
     et = etree.fromstring(recstr)
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     if mtdata is None:
@@ -1218,7 +1226,7 @@ def get_google_scholar_meta(record):
     return res
 
 
-def get_google_detaset_meta(record):
+def get_google_detaset_meta(record, all_index=None):
     """
     _get_google_detaset_meta [summary]
 
@@ -1242,12 +1250,19 @@ def get_google_detaset_meta(record):
 
     if '_oai' not in record and 'id' not in record['_oai']:
         return
-        
-    recstr = etree.tostring(
-        getrecord(
-            identifier=record['_oai'].get('id'),
-            metadataPrefix='jpcoar',
-            verb='getrecord'))
+    if all_index:
+        recstr = etree.tostring(
+            getrecord(
+                identifier=record['_oai'].get('id'),
+                metadataPrefix='jpcoar',
+                verb='getrecord',
+                all_index=all_index))
+    else:
+        recstr = etree.tostring(
+            getrecord(
+                identifier=record['_oai'].get('id'),
+                metadataPrefix='jpcoar',
+                verb='getrecord'))
     et = etree.fromstring(recstr)
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     if mtdata is None:

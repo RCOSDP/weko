@@ -471,9 +471,9 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         record["relation"] = res
     else:
         record["relation"] = {}
-
-    google_scholar_meta = get_google_scholar_meta(record)
-    google_dataset_meta = get_google_detaset_meta(record)
+    all_index = Indexes.get_all_indexes()
+    google_scholar_meta = get_google_scholar_meta(record, all_index)
+    google_dataset_meta = get_google_detaset_meta(record, all_index)
 
     current_lang = current_i18n.language \
         if hasattr(current_i18n, 'language') else None

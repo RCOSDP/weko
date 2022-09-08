@@ -379,7 +379,7 @@ def is_exists_doi(param_record):
     return False
 
 
-def getrecord(**kwargs):
+def getrecord(all_index=None,**kwargs):
     """Create OAI-PMH response for verb GetRecord."""
     # current_app.logger.debug("kwargs:{0}".format(kwargs))
     # kwargs:{'metadataPrefix': 'jpcoar_1.0', 'identifier': 'oai:weko3.example.org:00000003', 'verb': 'GetRecord'}
@@ -396,7 +396,10 @@ def getrecord(**kwargs):
     e_tree, e_getrecord = verb(**kwargs)
     e_record = SubElement(e_getrecord, etree.QName(NS_OAIPMH, 'record'))
 
-    index_state = get_index_state()
+    if all_index:
+        index_state = get_index_state(all_index)
+    else:
+        index_state = get_index_state()
     path_list = record.get('path') if 'path' in record else []
     _is_output = is_output_harvest(path_list, index_state)
     current_app.logger.debug("_is_output:{}".format(_is_output))

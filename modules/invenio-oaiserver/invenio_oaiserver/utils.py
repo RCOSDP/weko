@@ -209,9 +209,12 @@ def handle_license_free(record_metadata):
     return record_metadata
 
 
-def get_index_state():
+def get_index_state(all_index=None):
     index_state = {}
-    ids = Indexes.get_all_indexes()
+    if all_index:
+        ids = all_index
+    else:
+        ids = Indexes.get_all_indexes()
     for index in ids:
         index_id = str(index.id)
         if not index.harvest_public_state:
