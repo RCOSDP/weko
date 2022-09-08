@@ -1,5 +1,6 @@
 import json
 import pytest
+from flask import current_app, make_response, request
 from mock import patch
 from weko_index_tree.views import set_expand, get_rss_data, create_index
 from invenio_accounts.testutils import login_user_via_session
@@ -17,7 +18,8 @@ user_results = [
 
 
 # def get_rss_data():
-
+def test_get_rss_data(i18n_app, client_api, users, esindex):
+    assert get_rss_data()
 
 # def set_expand():
 @pytest.mark.parametrize('id, status_code', user_results)

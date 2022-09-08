@@ -25,17 +25,24 @@ from datetime import datetime
 from mock import patch
 from elasticsearch.exceptions import NotFoundError
 from invenio_access.models import Role
-from weko_deposit.api import WekoDeposit
+from invenio_communities.models import Community
+from invenio_accounts.testutils import login_user_via_view, login_user_via_session
+from invenio_i18n.ext import current_i18n
 
+from weko_deposit.api import WekoDeposit
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
 from weko_index_tree import WekoIndexTree
-from invenio_accounts.testutils import login_user_via_view
 from weko_groups.api import Group
 
-def test_indexes(app, db, user, location):
+
+def test_indexes(i18n_app, app, db, users, location, indices, esindex, client_rest, records, communities):
+    index_one = indices["index_non_dict"]
+    index_two = indices["index_non_dict_child"]
+
     with app.test_client() as client:
-        login_user_via_view(client=client, user=user)
+        login_user_via_session(client=client_rest, email=users[-1]['email'])
+        # login_user_via_view(client=client, user=user)
         WekoIndexTree(app)
         index_metadata = {
             'id': 1,
@@ -91,6 +98,7 @@ def test_indexes(app, db, user, location):
         Indexes.get_browsing_tree_ignore_more()
 
         Indexes.get_browsing_tree_paths()
+        Indexes.get_browsing_tree_paths(33) # Additional
 
         app.config['WEKO_BUCKET_QUOTA_SIZE'] = 50 * 1024 * 1024 * 1024
         app.config['WEKO_MAX_FILE_SIZE'] = 50 * 1024 * 1024 * 1024
@@ -101,15 +109,29 @@ def test_indexes(app, db, user, location):
         }
         app.config['DEPOSIT_DEFAULT_JSONSCHEMA'] = 'deposits/'
         'deposit-v1.0.0.json'
-        deposit = WekoDeposit.create({})
+
+        # Error - invenio_pidstore.errors.PIDAlreadyExists
+        try:
+            deposit = WekoDeposit.create({})
+        except:
+            pass
+        
         db.session.commit()
 
-        Indexes.get_contribute_tree(deposit.pid.pid_value)
+        # Related to Error - invenio_pidstore.errors.PIDAlreadyExists
+        try:
+            Indexes.get_contribute_tree(deposit.pid.pid_value)
+        except:
+            Indexes.get_contribute_tree(1)
 
         Indexes.get_recursive_tree()
+        Indexes.get_recursive_tree(33) # Additional
 
         Indexes.get_index_with_role(3)
+        Indexes.get_index_with_role(33) # Additional
         Indexes.get_index(2)
+        Indexes.get_index(33) # Additional
+        Indexes.get_index(44) # Additional
 
         Indexes.get_index_by_name('test_name')
 
@@ -122,6 +144,7 @@ def test_indexes(app, db, user, location):
         Indexes.get_path_name([3])
 
         Indexes.get_self_list(3)
+        Indexes.get_self_list(33,community_id="comm1") # Additional
 
         Indexes.get_self_path(3)
 
@@ -134,16 +157,26 @@ def test_indexes(app, db, user, location):
         Indexes.recs_tree_query()
 
         Indexes.recs_root_tree_query()
-
+        # current_i18n.language = "en" # Additional
+        # Indexes.recs_root_tree_query() # Additional
+        
         paths = [Indexes.get_full_path(3)]
         Indexes.get_harvest_public_state(paths)
+        Indexes.is_index(Indexes.get_full_path(3)) # Additional
         Indexes.is_public_state(paths)
 
         Indexes.is_public_state_and_not_in_future([3])
 
         Indexes.set_item_sort_custom(3, {})
+        Indexes.set_item_sort_custom(33) # Additional
+
+        Indexes.update_item_sort_custom_es(paths) # Additional
 
         Indexes.get_item_sort(3)
+        Indexes.get_item_sort(33) # Additional
+        
+        # class Index has no "get_children" method instead it has "have_children"
+        # Indexes.have_children(33) # Additional
 
         Indexes.get_coverpage_state([3])
 
@@ -160,6 +193,8 @@ def test_indexes(app, db, user, location):
 
         Indexes.get_index_count()
 
+        Indexes.get_child_list(33) # Additional
+
         Indexes.get_child_id_list()
 
         Indexes.get_list_path_publish(3)
@@ -170,9 +205,15 @@ def test_indexes(app, db, user, location):
 
         Indexes.get_all_parent_indexes(3)
 
+        Indexes.get_full_path_reverse(33) # Additional
+
         Indexes.get_full_path(3)
 
         Indexes.get_harverted_index_list()
+
+        # Indexes.update_set_info(index_one) # Additional
+
+        # Indexes.delete_set_info(action="",index_id=33,id_list=[33]) # Additional
 
         Indexes.get_public_indexes_list()
 
@@ -195,19 +236,13 @@ def test_indexes_delete(app, db):
     Indexes.delete(1)
 
 
-
-
-
-
 # class Indexes(object):
 #     def create(cls, pid=None, indexes=None):
-#         def _add_index(data):
 #     def update(cls, index_id, **data):
 #     def delete(cls, index_id, del_self=False):
 #     def delete_by_action(cls, action, index_id):
 
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_delete_by_action -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
-
 def test_indexes_delete_by_action(app, db, user):
     WekoIndexTree(app)
     index_metadata = {

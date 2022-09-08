@@ -70,6 +70,7 @@ from invenio_pidstore import InvenioPIDStore, current_pidstore
 from invenio_records_rest.utils import PIDConverter
 from invenio_records.models import RecordMetadata
 from invenio_deposit.api import Deposit
+from invenio_communities.models import Community
 from werkzeug.local import LocalProxy
 from tests.helpers import create_record, json_data
 
@@ -464,7 +465,7 @@ def current_user_login(app):
 
 @pytest.yield_fixture()
 def i18n_app(app):
-    with app.test_request_context(headers=[('Accept-Language','en')]):
+    with app.test_request_context(headers=[('Accept-Language','ja')]):
         yield app
 
 
@@ -1175,3 +1176,22 @@ def db_oaischema(app, db):
     )
     with db.session.begin_nested():
         db.session.add(oaischema)
+
+
+@pytest.fixture()
+def communities(app, db, user, indices):
+    """Create some example communities."""
+    user1 = db_.session.merge(user)
+    ds = app.extensions['invenio-accounts'].datastore
+    r = ds.create_role(name='superuser', description='1234')
+    ds.add_role_to_user(user1, r)
+    ds.commit()
+    db.session.commit()
+
+    comm0 = Community.create(community_id='comm1', role_id=r.id,
+                             id_user=user1.id, title='Title1',
+                             description='Description1',
+                             root_node_id=33)
+    db.session.add(comm0)
+
+    return comm0
