@@ -211,7 +211,7 @@ class WekoIndexer(RecordIndexer):
             index=self.es_index,
             doc_type=self.es_doc_type,
             id=str(version.get('id')),
-            body=body
+            body=body, ignore=[400, 404]
         )
 
     def update_path(self, record, update_revision=True,
@@ -276,10 +276,10 @@ class WekoIndexer(RecordIndexer):
             )
 
     def index(self, record):
-        """Index a record.
+        """Index a record(fake function).
 
         :param record: Record instance.
-        """
+        """       
         self.get_es_index()
 
     def delete(self, record):
@@ -380,12 +380,17 @@ class WekoIndexer(RecordIndexer):
     def update_feedback_mail_list(self, feedback_mail):
         """Update feedback mail info.
 
-        :param feedback_mail: mail list in json format.
-        :return: _feedback_mail_id.
-        """
+        Args:
+            feedback_mail (_type_): feedback_mail: mail list in json format. {'id': UUID('05fd7cbd-6aad-4c76-a62e-7947868cccf6'), 'mail_list': [{'email': 'wekosoftware@nii.ac.jp', 'author_id': ''}]}
+
+        Returns:
+            _type_: _feedback_mail_id
+        """        
+        # current_app.logger.debug("feedback_mail:{}".format(feedback_mail));
         self.get_es_index()
         pst = 'feedback_mail_list'
         body = {'doc': {pst: feedback_mail.get('mail_list')}}
+        
         return self.client.update(
             index=self.es_index,
             doc_type=self.es_doc_type,
@@ -395,9 +400,11 @@ class WekoIndexer(RecordIndexer):
 
     def update_author_link(self, author_link):
         """Update author_link info."""
+        # current_app.logger.error("author_link:{}".format(author_link));
         self.get_es_index()
         pst = 'author_link'
         body = {'doc': {pst: author_link.get('author_link')}}
+        
         return self.client.update(
             index=self.es_index,
             doc_type=self.es_doc_type,
@@ -407,6 +414,7 @@ class WekoIndexer(RecordIndexer):
 
     def update_jpcoar_identifier(self, dc, item_id):
         """Update JPCOAR meta data item."""
+        # current_app.logger.error("dc:{}".format(dc));
         self.get_es_index()
         body = {'doc': {'_item_metadata': dc}}
         return self.client.update(
@@ -421,6 +429,7 @@ class WekoIndexer(RecordIndexer):
 
         :param updated_data: Records data.
         """
+        # current_app.logger.error("updated_data:{}".format(updated_data));
         for record in updated_data:
             es_data = dict(
                 _id=str(record.get('_id')),
@@ -467,6 +476,8 @@ class WekoDeposit(Deposit):
         Returns:
             dict: item_metadata from item_id in instance "ex :OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-06-03'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test1', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), ('item_title', 'test1'), ('item_type_id', '15'), ('control_number', '1.1'), ('author_link', []), ('weko_shared_id', -1), ('owner', '1'), ('publish_date', '2022-06-03'), ('title', ['test1']), ('relation_version_is_last', True), ('path', ['1557820086539']), ('publish_status', '0')])" 
 
+        Raises:
+            sqlalchemy.orm.exc.NoResultFound
         """
         return ItemsMetadata.get_record(self.id).dumps()
 
@@ -712,6 +723,7 @@ class WekoDeposit(Deposit):
             relations_ver['is_last'] = relations_ver.get('index') == 0
             self.indexer.update_relation_version_is_last(relations_ver)
 
+        # current_app.logger.error("deposit:{}".format(deposit))
         return deposit
 
     @classmethod
@@ -823,9 +835,14 @@ class WekoDeposit(Deposit):
         self['_deposit']['status'] = 'draft'
         if len(args) > 1:
             dc, deleted_items = self.convert_item_metadata(args[0], args[1])
-        else:
+            super(WekoDeposit, self).update(dc)
+        elif len(args)==1:
             dc, deleted_items = self.convert_item_metadata(args[0])
-        super(WekoDeposit, self).update(dc)
+            super(WekoDeposit, self).update(dc)
+        else:
+            super(WekoDeposit, self).update()
+
+        
         #if deleted_items:
         #    for key in deleted_items:
         #        if key in self:
@@ -958,6 +975,7 @@ class WekoDeposit(Deposit):
                     self.indexer.upload_metadata(self.jrc,
                                                  self.pid.object_uuid,
                                                  self.revision_id)
+                    print("upload")
                 except TransportError as err:
                     err_passing_config = current_app.config.get(
                         'WEKO_DEPOSIT_ES_PARSING_ERROR_PROCESS_ENABLE')
