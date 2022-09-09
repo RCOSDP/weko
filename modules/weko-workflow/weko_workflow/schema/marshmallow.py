@@ -22,6 +22,23 @@ class ActionSchema(Schema):
 class CancelSchema(ActionSchema):
     pid_value = fields.String(allow_none=True)
 
+class NextSchema(ActionSchema):
+    temporary_save = fields.Integer(allow_none=True)
+
+class NextItemLinkSchema(NextSchema):
+    link_data = fields.List(fields.Dict(),required=True)
+
+class NextIdentifierSchema(NextSchema):
+    identifier_grant = fields.String(required=True)
+    identifier_grant_jalc_doi_suffix = fields.String(allow_none=True)
+    identifier_grant_jalc_doi_link = fields.String(required=True)
+    identifier_grant_jalc_cr_doi_suffix = fields.String(allow_none=True)
+    identifier_grant_jalc_cr_doi_link = fields.String(required=True)
+    identifier_grant_jalc_dc_doi_suffix = fields.String(allow_none=True)
+    identifier_grant_jalc_dc_doi_link = fields.String(required=True)
+    identifier_grant_ndl_jalc_doi_suffix = fields.String(allow_none=True)
+    identifier_grant_ndl_jalc_doi_link = fields.String(required=True)
+    
 class ResponseMessageSchema(Schema):
     code = fields.Integer(required=True,validate=Range(min=-2,max=0))
     msg = fields.String(required=True)
