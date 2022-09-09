@@ -265,12 +265,12 @@ def iframe_success():
     レンダリングする。
     
     Returns:
-        Response: rendering template
+        Response: アイテム登録ビュー
     
     ---
     get:
         description: "render template"
-        response:
+        responses:
             200:
                 description: "render_template"
                 content:
@@ -1016,7 +1016,7 @@ def next_action(activity_id='0', action_id=0):
         action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
 
     Returns:
-        dict: json data
+        dict: 成否判定のコードとメッセージを含むjson data
     
     ---
     post:
@@ -1042,7 +1042,7 @@ def next_action(activity_id='0', action_id=0):
               description: 現在のアクションID
               schema:
                 type: int
-        response:
+        responses:
             200:
                 description: "success"
                 content:
@@ -1458,19 +1458,19 @@ def previous_action(activity_id='0', action_id=0, req=0):
         activity_id (str, optional): 対象アクティビティID.パスパラメータから取得. Defaults to '0'.
         action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
         req (int, optional): 次のアクションの種類.パスパラメータから取得. Defaults to 0.
-                             0:1つ前のフローアクション
+                             0: 1つ前のフローアクション
                              -1: アイテム登録アクション
                              それ以外: 2つ目のアクション
 
     Returns:
-        dict: json data
+        dict: 成否判定のコードとメッセージを含むjson data
     
     ---
     
     post:
         description: "previous_action"
-        secirity:
-            - login_require: []
+        security:
+            - login_required: []
             - check_authority: []
         requestBody:
             required: true
@@ -1478,7 +1478,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
                 application/json:
                     schema:
                         object
-                    example: {"action_version":"1.0.0", "commond": "test comment"}
+                    example: {"action_version": "1.0.0", "commond": "test comment"}
         parameters:
             - in: path
               name: activity_id
@@ -1492,20 +1492,20 @@ def previous_action(activity_id='0', action_id=0, req=0):
                 type: int
             - in: path
               name: req
-              description: 次のアクションの種類. 
-                           0:1つ前のフローアクション
+              description: 次のアクションの種類
+                           0: 1つ前のフローアクション
                            -1: アイテム登録アクション
-                           それ以外: 2つ目のアクション.
+                           それ以外: 2つ目のアクション
               schema:
                 type: int
-        response:
+        responses:
             200:
                 description: "success"
                 content:
                     application/json:
                         schema:
                             object
-                        example: {"code": 0, msg=_("success")}
+                        example: {"code": 0, "msg": _("success")}
     """
     post_data = request.get_json()
     # A-20220808-00001
@@ -1662,13 +1662,13 @@ def cancel_action(activity_id='0', action_id=0):
         action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
 
     Returns:
-        dict: json data
+        dict: 成否判定のコードとメッセージ、リダイレクト先のURLを含むjson data
 
     ---
     
     post:
         description: "cancel action"
-        secirity:
+        security:
             - login_required_customize: []
             - check_authority: []
         requestBody:
@@ -1677,7 +1677,7 @@ def cancel_action(activity_id='0', action_id=0):
                 application/json:
                     schema:
                         object
-                    example: {"action_version": "1.0.0", "commond": "this is test comment", "pid_value":1}
+                    example: {"action_version": "1.0.0", "commond": "this is test comment.", "pid_value": "1"}
         parameters:
             - in: path
               name: activity_id
@@ -1689,14 +1689,14 @@ def cancel_action(activity_id='0', action_id=0):
               description: 現在のアクションID
               schema:
                 type: int
-        response:
+        responses:
             200:
                 description: "success"
                 content:
                     application/json:
                         schema:
                             object
-                        example: {"code": 0, msg=_("success"), data={"redirect":"/workflow/activity/detail/1}}
+                        example: {"code": 0, "msg": _("success"), "data": {"redirect": "/workflow/activity/detail/1"}}
     """
     post_json = request.get_json()
     work_activity = WorkActivity()
