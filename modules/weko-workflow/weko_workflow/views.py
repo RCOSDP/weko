@@ -1044,6 +1044,7 @@ def check_authority_action(activity_id='0', action_id=0,
 @check_authority
 def next_action(activity_id='0', action_id=0):
     """そのアクションにおける処理を行い、アクティビティの状態を更新する。
+    
     Args:
         activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得. Defaults to '0'.
         action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
@@ -1059,7 +1060,7 @@ def next_action(activity_id='0', action_id=0):
         security:
             - login_required_customize: []
             - check_authority: []
-        request_Body:
+        requestBody:
             required: true
             content:
                 application/json:
@@ -1303,18 +1304,18 @@ def next_action(activity_id='0', action_id=0):
             journal=post_json.get('journal')
         )
 
-    last_idt_setting = work_activity.get_action_identifier_grant(
-        activity_id=activity_id,
-        action_id=get_actionid('identifier_grant'))
+
     if action_endpoint == 'approval' and item_id:
+        last_idt_setting = work_activity.get_action_identifier_grant(
+            activity_id=activity_id,
+            action_id=get_actionid('identifier_grant'))
         if not post_json.get('temporary_save') and last_idt_setting \
             and last_idt_setting.get('action_identifier_select') \
                 and last_idt_setting.get('action_identifier_select') > 0:
-            _pid = current_pid.pid_value
-            if pid_without_ver:
-                _pid = pid_without_ver.pid_value
+
+            _pid = pid_without_ver.pid_value
             record_without_version = item_id
-            if deposit and pid_without_ver and not recid:
+            if not recid:
                 record_without_version = pid_without_ver.object_uuid
 
             current_app.logger.debug(
@@ -1331,7 +1332,7 @@ def next_action(activity_id='0', action_id=0):
                 "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3))
         if action_feedbackmail:
             item_ids = [item_id]
-            if not recid and pid_without_ver:
+            if not recid:
                 if ".0" in current_pid.pid_value:
                     pv = PIDVersioning(child=pid_without_ver)
                     if not pv:
@@ -1364,25 +1365,9 @@ def next_action(activity_id='0', action_id=0):
             else:
                 FeedbackMailList.delete_by_list_item_id(item_ids)
 
-        if deposit:
-            deposit.update_feedback_mail()
+        deposit.update_feedback_mail()
 
     if action_endpoint == 'item_link' and item_id:
-        try:
-            current_pid = PersistentIdentifier.get_by_object(
-                pid_type='recid',
-                object_type='rec',
-                object_uuid=item_id
-            )
-        except PIDDoesNotExistError:
-            res = ResponseMessageSchema().load({"code":-1, "msg":"can not get PersistentIdentifier"})
-            return jsonify(res.data), 500
-
-        if not pid_without_ver:
-            pid_without_ver = get_record_without_version(current_pid)
-            if not pid_without_ver:
-                res = ResponseMessageSchema().load({"code":-1, "msg":"can not get pid_without_ver"})
-                return jsonify(res.data), 500
 
         item_link = ItemLink(current_pid.pid_value)
         relation_data = post_json.get('link_data')
@@ -1458,7 +1443,7 @@ def next_action(activity_id='0', action_id=0):
 
             if item_id:
                 record_without_version = item_id
-                if deposit and pid_without_ver and not recid:
+                if not recid:
                     record_without_version = pid_without_ver.object_uuid
                 saving_doi_pidstore(item_id, record_without_version, post_json,
                                     int(identifier_select), False, True)
@@ -1497,58 +1482,54 @@ def next_action(activity_id='0', action_id=0):
         comment='',
         action_order=action_order
     )
-    flow = Flow()
-    next_flow_action = flow.get_next_flow_action(
-        activity_detail.flow_define.flow_id, action_id, action_order)
-    if next_flow_action and len(next_flow_action) > 0:
-        next_action_endpoint = next_flow_action[0].action.action_endpoint
-        if 'end_action' == next_action_endpoint:
-            new_activity_id = None
-            if deposit:
-                new_activity_id = handle_finish_workflow(deposit,
-                                                         current_pid,
-                                                         recid)
-                if not new_activity_id:
-                    res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
-                    return jsonify(res.data), 500
 
-            # Remove to file permission
-            permission = FilePermission.find_by_activity(activity_id)
-            if permission:
-                FilePermission.delete_object(permission)
+    if 'end_action' == next_action_endpoint:
+        new_activity_id = None
+        new_activity_id = handle_finish_workflow(deposit,
+                                                 current_pid,
+                                                 recid)
+        if not new_activity_id:
+            res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
+            return jsonify(res.data), 500
 
-            activity.update(
-                action_id=next_action_id,
-                action_version=next_flow_action[0].action_version,
-                item_id=new_activity_id,
-                action_order=next_action_order
-            )
-            work_activity.end_activity(activity)
-            # Call signal to push item data to ES.
-            try:
-                if '.' not in current_pid.pid_value and has_request_context():
-                    user_id = activity_detail.activity_login_user if \
-                        activity and activity_detail.activity_login_user else -1
-                    item_created.send(
-                        current_app._get_current_object(),
-                        user_id=user_id,
-                        item_id=current_pid,
-                        item_title=activity_detail.title
-                    )
-            except BaseException:
-                abort(500, 'MAPPING_ERROR')
-        else:
-            flag = work_activity.upt_activity_action(
-                activity_id=activity_id, action_id=next_action_id,
-                action_status=ActionStatusPolicy.ACTION_DOING,
-                action_order=next_action_order)
-            flag &= work_activity.upt_activity_action_status(
-                activity_id=activity_id, action_id=next_action_id,
-                action_status=ActionStatusPolicy.ACTION_DOING,
-                action_order=next_action_order)
-            if not flag:
-                res = ResponseMessageSchema().load({"code":-2, "msg":""})
-                return jsonify(res.data), 500
+        # Remove to file permission
+        permission = FilePermission.find_by_activity(activity_id)
+        if permission:
+            FilePermission.delete_object(permission)
+
+        activity.update(
+            action_id=next_action_id,
+            action_version=next_flow_action[0].action_version,
+            item_id=new_activity_id,
+            action_order=next_action_order
+        )
+        work_activity.end_activity(activity)
+        # Call signal to push item data to ES.
+        try:
+            if '.' not in current_pid.pid_value and has_request_context():
+                user_id = activity_detail.activity_login_user if \
+                    activity and activity_detail.activity_login_user else -1
+                item_created.send(
+                    current_app._get_current_object(),
+                    user_id=user_id,
+                    item_id=current_pid,
+                    item_title=activity_detail.title
+                )
+        except BaseException:
+            abort(500, 'MAPPING_ERROR')
+    else:
+        flag = work_activity.upt_activity_action(
+            activity_id=activity_id, action_id=next_action_id,
+            action_status=ActionStatusPolicy.ACTION_DOING,
+            action_order=next_action_order)
+        flag &= work_activity.upt_activity_action_status(
+            activity_id=activity_id, action_id=next_action_id,
+            action_status=ActionStatusPolicy.ACTION_DOING,
+            action_order=next_action_order)
+        if not flag:
+            res = ResponseMessageSchema().load({"code":-2, "msg":""})
+            return jsonify(res.data), 500
+
     # delete session value
     if session.get('itemlogin_id'):
         del session['itemlogin_id']
@@ -1831,10 +1812,12 @@ def cancel_action(activity_id='0', action_id=0):
         action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
     Returns:
         dict: json data validated by ResponseMessageSchema
-    ---
     
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
+    
+    ---
+    
     post:
         description: "cancel action"
         secirity:
