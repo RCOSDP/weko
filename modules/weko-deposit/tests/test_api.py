@@ -38,7 +38,8 @@ from invenio_records.errors import MissingModelError
 from invenio_records_rest.errors import PIDResolveRESTError
 from invenio_records_files.models import RecordsBuckets
 from invenio_records_files.api import Record
-from invenio_files_rest.models import Bucket, ObjectVersion        
+from invenio_files_rest.models import Bucket, ObjectVersion
+from invenio_records.api import RecordRevision
 from six import BytesIO
 from weko_records.utils import get_options_and_order_list
 from elasticsearch import Elasticsearch
@@ -107,7 +108,11 @@ class TestWekoFileObject:
         obj = ObjectVersion.create(bucket=bucket, key=key, stream=stream)
         with app.test_request_context():
             file = WekoFileObject(obj,{})
-            assert file.info()['key']==key
+            assert file.info()=={'bucket': '{}'.format(file.bucket.id), 'checksum': 'sha256:936a185caaa266bb9cbe981e9e05cb78cd732b0b3280eb944412bb6f8f8f07af', 'key': 'hello.txt', 'size': 10, 'version_id': '{}'.format(file.version_id)}
+            file.filename=key
+            file['filename']=key
+            assert file.info()=={'bucket': '{}'.format(file.bucket.id), 'checksum': 'sha256:936a185caaa266bb9cbe981e9e05cb78cd732b0b3280eb944412bb6f8f8f07af', 'key': 'hello.txt', 'size': 10, 'version_id': '{}'.format(file.version_id), 'filename': 'hello'}
+
     
     #  def file_preview_able(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoFileObject::test_file_preview_able -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -175,10 +180,6 @@ class TestWekoIndexer:
         with pytest.raises(NotFoundError):
             indexer.get_metadata_by_item_id(record.pid)
 
-
-
-
-
     # def update_publish_status(self, record):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_update_publish_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
     def test_update_publish_status(self,app,es_records):
@@ -206,14 +207,12 @@ class TestWekoIndexer:
         record = records[0]['record']
         assert indexer.update_path(record, update_revision=False,update_oai=False, is_deleted=False)=={'_index': 'test-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': '{}'.format(record.id), '_version': 3, 'result': 'updated', '_shards': {'total': 2, 'successful': 1, 'failed': 0}, '_seq_no': 9, '_primary_term': 1}
 
-
     # def index(self, record):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
     def test_index(self,es_records):
         indexer, records = es_records
         record = records[0]['record']
         indexer.index(record)
-
 
     # def delete(self, record):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_delete -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -263,7 +262,7 @@ class TestWekoIndexer:
         record = records[0]['record']
         record_data = records[0]['record_data']
         ret = indexer.get_metadata_by_item_id(record.id)
-        assert ret=={'_index': 'test-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': '{}'.format(record.id), '_version': 2, '_seq_no': 0, '_primary_term': 1, 'found': True, '_source': {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['2']}, 'path': ['2'], 'owner': '1', 'recid': '1', 'title': ['title'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}, '_buckets': {'deposit': '3e99cfca-098b-42ed-b8a0-20ddd09b3e02'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'draft', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'title', 'author_link': [], 'item_type_id': '1', 'publish_date': '2022-08-20', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'title', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://weko3.example.org/record/1/files/hoge.pdf'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'application/pdf', 'filename': 'hoge.pdf', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_access', 'version_id': 'e131046c-291f-4065-b4b4-ca3bf1fac6e3', 'mimetype': 'application/pdf', 'file': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=='}]}}}
+        assert ret['_index']=='test-weko-item-v1.0.0'
 
     #     def update_feedback_mail_list(self, feedback_mail):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_update_feedback_mail_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -316,7 +315,7 @@ class TestWekoDeposit:
     def test_item_metadata(self,app,es_records):
         indexer, records = es_records
         deposit = records[0]['deposit']
-        assert deposit.item_metadata=={'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'title', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/1', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}
+        assert deposit.item_metadata=={'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'title', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/1', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}
 
         deposit = WekoDeposit({})
         from sqlalchemy.orm.exc import NoResultFound
@@ -335,9 +334,8 @@ class TestWekoDeposit:
     def test_merge_with_published(self,app,es_records):
         indexer, records = es_records
         dep = records[0]['deposit']
-        record_data= records[0]['record_data']
         ret = dep.merge_with_published()
-        assert ret==record_data
+        assert isinstance(ret,RecordRevision)==True
     
     # def _patch(diff_result, destination, in_place=False):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test__patch -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -618,7 +616,7 @@ class TestWekoDeposit:
         deposit = record['deposit']
         record_data = record['record_data']
         ret = deposit.update_item_by_task()
-        assert ret==record_data
+        assert ret==deposit
 
     # def delete_es_index_attempt(self, pid):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_delete_es_index_attempt -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -658,7 +656,7 @@ class TestWekoDeposit:
         indexer, records = es_records
         record = records[0]
         deposit = record['deposit']
-        assert deposit.clean_unuse_file_contents()==None
+        assert deposit.clean_unuse_file_contents(1,"ea368cb1-c017-4b4a-85ea-ec642ba6df97",uuid.uuid4())==None
 
     # def merge_data_to_record_without_version(self, pid, keep_version=False,
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_merge_data_to_record_without_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -686,7 +684,12 @@ class TestWekoDeposit:
         indexer, records = es_records
         record = records[0]
         deposit = record['deposit']
-        assert deposit.delete_content_files()==""
+        
+        ret = indexer.get_metadata_by_item_id(deposit.id)
+        # 正しくない手法だが、Elasticsearchの結果を前提としている
+        deposit.jrc = copy.deepcopy(ret['_source'])
+        deposit.delete_content_files()
+        assert deposit.jrc==ret['_source']
 
 # class WekoRecord(Record):
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -771,37 +774,58 @@ class TestWekoRecord:
     def test_get_titles(self,app,es_records,db_itemtype,db_oaischema):
         record = WekoRecord({})
         with app.test_request_context():
-            with pytest.raises(OperationalError):
+            with pytest.raises(TypeError):
                 assert record.get_titles==""
         indexer, results = es_records
         result = results[0]
         record = result['record']
-        assert record.item_type_id==""
-        assert record.get_titles==""
+        assert record['item_type_id']=="1"
+
+
+
+        with app.test_request_context():
+            assert record.get_titles=="title"
+        
+        with app.test_request_context(headers=[("Accept-Language", "en")]):
+            assert record.get_titles=="title"
+
+        app.config['BABEL_DEFAULT_LOCALE'] = 'ja'
+        #from flask_babelex import refresh; refresh()
+        with app.test_request_context():
+            assert record.get_titles=="タイトル"
+
+        app.config['BABEL_DEFAULT_LOCALE'] = 'fr'
+        #from flask_babelex import refresh; refresh()
+        with app.test_request_context():
+            assert record.get_titles=="title"
+
 
     #     def items_show_list(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_items_show_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-    def test_items_show_list(self,app,es_records):
+    def test_items_show_list(self,app,es_records,users,db_itemtype,db_admin_settings):
         record = WekoRecord({})
         with app.test_request_context():
-            assert record.items_show_list()==""
+            with pytest.raises(AttributeError):
+                assert record.items_show_list==""
         indexer, results = es_records
         result = results[0]
         record = result['record']
-        assert record.items_show_list()==""
+        with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+            assert record.items_show_list==[{'attribute_name': 'PubDate', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'PubDate'}, {'attribute_name': 'Title', 'attribute_name_i18n': 'Title', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Title': 'タイトル'}], [{'Language': 'ja'}]]], [[[{'Title': 'title'}], [{'Language': 'en'}]]]]}, {'attribute_name': 'Resource Type', 'attribute_name_i18n': 'Resource Type', 'attribute_type': None, 'attribute_value_mlt': [[[[{'Resource Type': 'conference paper'}], [{'Resource Type Identifier': 'http://purl.org/coar/resource_type/c_5794'}]]]]}, {'attribute_name': 'File', 'attribute_name_i18n': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [[[[{'dateType': 'Available', 'item_1617605131499[].date[0].dateValue': '2022-09-07'}]], [{'item_1617605131499[].url': 'https://weko3.example.org/record/1/files/hello.txt'}], [[{'item_1617605131499[].filesize[].value': '146 KB'}]], {'version_id': '{}'.format(record.files['hello.txt'].version_id), 'mimetype': 'application/pdf', 'file': 'SGVsbG8sIFdvcmxk', 'item_1617605131499[].filename': 'hello.txt', 'item_1617605131499[].format': 'plain/text', 'item_1617605131499[].accessrole': 'open_access'}]]}]
 
 
     #     def display_file_info(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_display_file_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-    def test_display_file_info(self,app,es_records):
+    def test_display_file_info(self,app,es_records,db_itemtype):
         record = WekoRecord({})
         with app.test_request_context():
             with pytest.raises(AttributeError):
-                assert record.display_file_info()==""
+                assert record.display_file_info==""
         indexer, results = es_records
         result = results[0]
         record = result['record']
-        assert record.display_file_info()==""
+        with app.test_request_context():
+            assert record.display_file_info==[{'attribute_name': 'PubDate', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'PubDate', 'attribute_value_mlt': [[[[{'PubDate': '2022-08-20'}]]]]}, {'attribute_name': 'File', 'attribute_name_i18n': 'File', 'attribute_type': 'file', 'attribute_value_mlt': []}]
 
     #     def __remove_special_character_of_weko2(self, metadata):
     #     def _get_creator(meta_data, hide_email_flag):
@@ -835,9 +859,13 @@ class TestWekoRecord:
 
     #     def is_future_open_date(self, file_metadata):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_is_future_open_date -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-    def test_is_future_open_date(self):
+    def test_is_future_open_date(self,es_records):
         record = WekoRecord({})
-        assert record.is_future_open_date({})==""
+        assert record.is_future_open_date(record,{})==True
+        assert record.is_future_open_date(record,{'url': {'url': 'https://weko3.example.org/record/1/files/hello.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_access', 'version_id': 'e131046c-291f-4065-b4b4-ca3bf1fac6e3', 'mimetype': 'application/pdf', 'file': 'SGVsbG8sIFdvcmxk'})==False
+        
+
+
 
     #     def pid_doi(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_pid_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -881,24 +909,28 @@ class TestWekoRecord:
     def test_get_record_by_pid(self,es_records):
         indexer, records = es_records
         record = records[0]['record']
-        record_data = records[0]['record_data']
-        
-        assert WekoRecord.get_record_by_pid(1)==record_data
+        recid = records[0]['recid']
+        rec = WekoRecord.get_record_by_pid(1)
+        assert isinstance(rec,WekoRecord)
+        assert rec.pid_recid==recid
+
 
     #     def get_record_by_uuid(cls, uuid):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_get_record_by_uuid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
     def test_get_record_by_uuid(self,es_records):
         indexer, records = es_records
         record = records[0]['record']
-        record_data = records[0]['record_data']
-        assert WekoRecord.get_record_by_uuid(record.id)==record_data
+        recid = records[0]['recid']
+        rec =  WekoRecord.get_record_by_uuid(record.id)
+        assert isinstance(rec,WekoRecord)==True
+        assert rec.pid_recid == recid
 
     #     def get_record_cvs(cls, uuid):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_get_record_cvs -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
     def test_get_record_cvs(self,es_records):
         indexer, records = es_records
         record = records[0]['record']
-        assert WekoRecord.get_record_cvs(record.id)==""
+        assert WekoRecord.get_record_cvs(record.id)==False
 
     #     def _get_pid(self, pid_type):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test__get_pid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -918,7 +950,7 @@ class TestWekoRecord:
         record2 = records[2]['record']
         record.update_item_link(record2.pid.pid_value)
         item_link = ItemLink.get_item_link_info(recid.pid_value)
-        assert item_link==""
+        assert item_link==[]
 
 
     #     def get_file_data(self):

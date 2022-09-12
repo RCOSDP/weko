@@ -24,7 +24,7 @@ import inspect
 import sys
 import uuid
 from collections import OrderedDict
-from datetime import datetime, timezone
+from datetime import datetime, timezone,date
 from typing import NoReturn, Union
 
 import redis
@@ -1943,6 +1943,7 @@ class WekoRecord(Record):
             _type_: _description_
         Raises:
             sqlalchemy.exc.OperationalError
+            TypeError
         """
         item_type_mapping = Mapping.get_record(self.get('item_type_id'))
         parent_key, title_key, language_key = self.__get_titles_key(
@@ -1964,7 +1965,16 @@ class WekoRecord(Record):
 
     @property
     def items_show_list(self):
-        """Return the item show list."""
+        """Return the item show list.
+
+        Returns:
+            _type_: _description_
+        Raises:
+            AttributeError: 'NoneType' object has no attribute 'is_authenticated'
+            AttributeError: 'NoneType' object has no attribute 'model'
+            KeyError: 'WEKO_PERMISSION_SUPER_ROLE_USER'
+            KeyError: 'WEKO_PERMISSION_ROLE_COMMUNITY'
+        """        
         items = []
         settings = AdminSettings.get('items_display_settings')
         hide_email_flag = not settings.items_display_email
@@ -2228,7 +2238,7 @@ class WekoRecord(Record):
         date_value = self.get_open_date_value(file_metadata)
         _format = '%Y-%m-%d'
         if date_value is None:
-            date_value = datetime.date.max
+            date_value = str(date.max)
         dt = datetime.strptime(date_value, _format)
         # Compare open_date with current date.
         is_future = dt.date() > today
