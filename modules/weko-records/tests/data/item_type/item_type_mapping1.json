@@ -21,7 +21,7 @@
   },
   "item_test1_3":{
     "jpcoar_mapping":{
-      "test1_3":{
+      "sourceTitle":{
         "@value":"test_value1",
         "@attributes":{
           "test":""
@@ -69,6 +69,34 @@
             "objectType": "url.objectType"
           }
         }
+      }
+    }
+  },
+  "item_test5_creator":{
+    "jpcoar_mapping":{
+      "creator":{
+        "creatorName": {
+          "@value": "creatorNames.creatorName",
+          "@attributes": {
+            "xml:lang": "creatorName.creatorNameLang"
+          }
+        }
+      }
+    }
+  },
+  "item_test6_bibliographic":{
+    "jpcoar_mapping":{
+      "volume":{
+        "@value": "bibliographic_volume"
+      },
+      "issue": {
+        "@value": "bibliographic_issue"
+      },
+      "pageStart": {
+        "@value": "bibliographic_pageStart"
+      },
+      "pageEnd": {
+        "@value": "bibliographic_pageEnd"
       }
     }
   },

@@ -1,5 +1,8 @@
 {
+  "_id": "1",
+  "_version": "1",
   "_source":{
+    "pid": "1",
     "_created": "2021-09-01",
     "_updated": "2021-10-26",
     "_oai": {
@@ -165,7 +168,11 @@
                 "bibliographic_titleLang":"en",
                 "bibliographic_title":"this is test bibliographic title"
               }
-            ]
+            ],
+            "bibliographic_volume": "10",
+            "bibliographic_issue": "7",
+            "bibliographic_pageStart": "1",
+            "bibliographic_pageEnd": "11"
           }
         ]
       },
@@ -193,7 +200,9 @@
         }
       }
     },
-    "file":"",
+    "file": {
+      "URI": [{"value": "http://localhost/records/1/file"}]
+    },
     "title":[
       "this is dummy title",
       "this is test item title"
