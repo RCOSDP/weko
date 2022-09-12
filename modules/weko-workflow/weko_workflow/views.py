@@ -33,7 +33,8 @@ from functools import wraps
 import redis
 from redis import sentinel
 from weko_workflow.schema.marshmallow import ActionSchema, \
-    ActivitySchema,ResponseMessageSchema,CancelSchema
+    ActivitySchema,ResponseMessageSchema,CancelSchema,PasswdSchema, LockSchema,\
+    ResponseLockSchema
 from weko_workflow.schema.utils import get_schema_action, type_null_check
 from marshmallow.exceptions import ValidationError
 
@@ -1994,28 +1995,52 @@ def cancel_action(activity_id='0', action_id=0):
     methods=['POST'])
 @login_required_customize
 @check_authority
-def withdraw_confirm(activity_id='0', action_id='0'):
+def withdraw_confirm(activity_id='0', action_id=0):
     """Check weko user info.
 
     :return:
     """
     try:
-        post_json = request.get_json()
+        try:
+            type_null_check(activity_id, str)
+            type_null_check(action_id, int)
+        except ValueError:
+            current_app.logger.error("argument error")
+            res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
+            return jsonify(res.data), 500
+        
+        try:
+            post_json = PasswdSchema().load(request.get_json())
+        except ValidationError as err:
+            current_app.logger.error(str(err))
+            res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
+            return jsonify(res.data), 400
+        post_json = post_json.data
+        
         password = post_json.get('passwd', None)
         if not password:
-            return jsonify(code=-1,
-                           msg=_('Password not provided'))
+            res = ResponseMessageSchema({"code":-1,"msg":_('Password not provided')})
+            return jsonify(res.data), 200
         wekouser = ShibUser()
         if password == 'DELETE':
             # if wekouser.check_weko_user(current_user.email, password):
             activity = WorkActivity()
-            item_id = activity.get_activity_detail(activity_id).item_id
+            activity_detail = activity.get_activity_detail(activity_id)
+            if not activity_detail:
+                current_app.logger.error("can not get activity detail info")
+                res = ResponseMessageSchema({"code":-1,"msg":"can not get activity detail info"})
+                return jsonify(res.data), 200
+            item_id = activity_detail.item_id
             identifier_actionid = get_actionid('identifier_grant')
             identifier = activity.get_action_identifier_grant(
                 activity_id,
                 identifier_actionid)
             identifier_handle = IdentifierHandle(item_id)
-
+            if not isinstance(identifier, dict):
+                current_app.logger.error("bad identifier data")
+                res = ResponseMessageSchema({"code":-1,"msg":"bad identifier data"})
+                return jsonify(res.data), 200
+            
             if identifier_handle.delete_pidstore_doi():
                 identifier['action_identifier_select'] = \
                     current_app.config.get(
@@ -2025,10 +2050,15 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                         activity_id,
                         identifier_actionid,
                         identifier)
-                    current_pid = PersistentIdentifier.get_by_object(
-                        pid_type='recid',
-                        object_type='rec',
-                        object_uuid=item_id)
+                    try:
+                        current_pid = PersistentIdentifier.get_by_object(
+                            pid_type='recid',
+                            object_type='rec',
+                            object_uuid=item_id)
+                    except PIDDoesNotExistError:
+                        current_app.logger.error("can not get PersistentIdentifier")
+                        res = ResponseMessageSchema().load({"code":-1,"msg":"can not get PersistentIdentifier"})
+                        return jsonify(res.data), 200
                     recid = get_record_identifier(current_pid.pid_value)
                     if not recid:
                         pid_without_ver = get_record_without_version(
@@ -2051,18 +2081,18 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                 else:
                     url = url_for('weko_workflow.display_activity',
                                   activity_id=activity_id)
-                return jsonify(
-                    code=0,
-                    msg=_('success'),
-                    data={'redirect': url}
-                )
+                res = ResponseMessageSchema().load({"code":0,"msg":_("success"),"data":{"redirect":url}})
+                return jsonify(res.data), 200
             else:
-                return jsonify(code=-1, msg=_('DOI Persistent is not exist.'))
+                res = ResponseMessageSchema().load({"code":-1,"msg":_('DOI Persistent is not exist.')})
+                return jsonify(res.data), 200
         else:
-            return jsonify(code=-1, msg=_('Invalid password'))
+            res = ResponseMessageSchema().load({"code":-1, "msg":_('Invalid password')})
+            return jsonify(res.data), 200
     except ValueError:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
-    return jsonify(code=-1, msg=_('Error!'))
+    res = ResponseMessageSchema().load({"code":-1, "msg":_('Error!')})
+    return jsonify(res.data), 200
 
 
 @blueprint.route('/findDOI', methods=['POST'])
@@ -2139,7 +2169,7 @@ def get_feedback_maillist(activity_id='0'):
 
 @blueprint.route('/activity/lock/<string:activity_id>', methods=['POST'])
 @login_required
-def lock_activity(activity_id=0):
+def lock_activity(activity_id="0"):
     """Lock activity."""
     def is_approval_user(activity_id):
         workflow_activity_action = ActivityAction.query.filter_by(
@@ -2151,9 +2181,22 @@ def lock_activity(activity_id=0):
             if action_handler:
                 return int(current_user.get_id()) == int(action_handler)
         return False
+    
+    try:
+        type_null_check(activity_id, str)
+    except ValueError:
+        current_app.logger.error("argument error")
+        res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
+        return jsonify(res.data), 500
+    
     cache_key = 'workflow_locked_activity_{}'.format(activity_id)
     timeout = current_app.permanent_session_lifetime.seconds
-    data = request.form.to_dict()
+    try:
+        data = LockSchema().load(request.form.to_dict())
+    except ValidationError as err:
+        res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
+        return jsonify(res.data), 400
+    data = data.data
     locked_value = data.get('locked_value')
     cur_locked_val = str(get_cache_data(cache_key)) or str()
     err = ''
@@ -2179,14 +2222,11 @@ def lock_activity(activity_id=0):
 
     locked_by_email, locked_by_username = get_account_info(
         locked_value.split('-')[0])
-    return jsonify(
-        code=200,
-        msg='' if err else _('Success'),
-        err=err or '',
-        locked_value=locked_value,
-        locked_by_email=locked_by_email,
-        locked_by_username=locked_by_username
-    )
+    
+    res = ResponseLockSchema().load({"code":200,"msg":"" if err else _("Success"),
+                                     "locked_value":locked_value,"locked_by_email":locked_by_email,
+                                     "locked_by_username":locked_by_username})
+    return jsonify(res.data), 200
 
 
 @blueprint.route('/activity/unlock/<string:activity_id>', methods=['POST'])

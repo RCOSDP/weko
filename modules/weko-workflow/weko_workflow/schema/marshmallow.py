@@ -39,9 +39,32 @@ class NextIdentifierSchema(NextSchema):
     identifier_grant_ndl_jalc_doi_suffix = fields.String(allow_none=True)
     identifier_grant_ndl_jalc_doi_link = fields.String(required=True)
     
-class ResponseMessageSchema(Schema):
-    code = fields.Integer(required=True,validate=Range(min=-2,max=0))
+class ResponseSchema(Schema):
+    code = fields.Integer(required=True, validate=Range(min=-2, max=0))
     msg = fields.String(required=True)
+    class Meta:
+        strict = True
+class ResponseMessageSchema(ResponseSchema):
     data = fields.Dict(allow_none=True)
+
+class ResponseErrorSchema(ResponseSchema):
+    err = fields.String(allow_none=True)
+
+
+class ResponseLockSchema(ResponseErrorSchema):
+    locked_value = fields.String()
+    locked_by_email = fields.Email(allow_none=True)
+    locked_by_username = fields.String(allow_none=True)
+
+        
+class PasswdSchema(Schema):
+    passwd = fields.String(required=True)
+    
+    class Meta:
+        strict = True
+
+class LockSchema(Schema):
+    locked_value = fields.String(required=True)
+    
     class Meta:
         strict = True
