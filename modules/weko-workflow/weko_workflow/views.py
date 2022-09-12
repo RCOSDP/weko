@@ -265,7 +265,7 @@ def iframe_success():
     レンダリングする。
     
     Returns:
-        Response: アイテム登録ビュー
+        str: アイテム登録ビュー
     
     ---
     get:
