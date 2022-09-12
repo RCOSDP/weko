@@ -18,8 +18,9 @@ user_results = [
 
 
 # def get_rss_data():
-def test_get_rss_data(i18n_app, client_api, users, esindex):
+def test_get_rss_data(app, i18n_app, indices, es, mock_user_ctx, client_request_args):
     assert get_rss_data()
+
 
 # def set_expand():
 @pytest.mark.parametrize('id, status_code', user_results)

@@ -27,12 +27,27 @@ import uuid
 from datetime import date, datetime, timedelta
 
 import pytest
-from mock import patch
+from mock import Mock, patch
 from flask import Flask
 from flask_babelex import Babel, lazy_gettext as _
 from flask_celeryext import FlaskCeleryExt
 from flask_menu import Menu
 from flask_login import current_user, login_user, LoginManager
+from werkzeug.local import LocalProxy
+from tests.helpers import create_record, json_data
+
+from invenio_deposit.config import (
+    DEPOSIT_DEFAULT_STORAGE_CLASS,
+    DEPOSIT_RECORDS_UI_ENDPOINTS,
+    DEPOSIT_REST_ENDPOINTS,
+    DEPOSIT_DEFAULT_JSONSCHEMA,
+    DEPOSIT_JSONSCHEMAS_PREFIX,
+)
+from invenio_stats.contrib.event_builders import (
+    build_file_unique_id,
+    build_record_unique_id,
+    file_download_event_builder
+)
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user, login_user_via_session
@@ -56,13 +71,6 @@ from invenio_search import InvenioSearch
 from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from simplekv.memory.redisstore import RedisStore
 from invenio_oaiharvester.models import HarvestSettings
-from invenio_deposit.config import (
-    DEPOSIT_DEFAULT_STORAGE_CLASS,
-    DEPOSIT_RECORDS_UI_ENDPOINTS,
-    DEPOSIT_REST_ENDPOINTS,
-    DEPOSIT_DEFAULT_JSONSCHEMA,
-    DEPOSIT_JSONSCHEMAS_PREFIX,
-)
 from invenio_stats import InvenioStats
 from invenio_admin import InvenioAdmin
 from invenio_search import RecordsSearch
@@ -71,8 +79,8 @@ from invenio_records_rest.utils import PIDConverter
 from invenio_records.models import RecordMetadata
 from invenio_deposit.api import Deposit
 from invenio_communities.models import Community
-from werkzeug.local import LocalProxy
-from tests.helpers import create_record, json_data
+from invenio_search import current_search_client, current_search
+from invenio_queues.proxies import current_queues
 
 from weko_schema_ui.models import OAIServerSchema
 from weko_index_tree.api import Indexes
@@ -452,21 +460,19 @@ def db(app):
 
 
 @pytest.yield_fixture()
-def current_user_login(app):
-    login_manager = LoginManager()
-    login_manager.init_app(app)
-    
-    @login_manager.user_loader
-    def load_user(user_id):
-        return User.query.get(int(user_id))
-    
-    login_user()
-
-
-@pytest.yield_fixture()
 def i18n_app(app):
-    with app.test_request_context(headers=[('Accept-Language','ja')]):
+    with app.test_request_context(
+        headers=[('Accept-Language','ja')]):
         yield app
+
+
+    # args=[
+    #         ('index_id', 33),
+    #         ('page', 1),
+    #         ('count', 20),
+    #         ('term', 14),
+    #         ('lang', 'en'),
+    #     ]
 
 
 @pytest.yield_fixture()
@@ -481,6 +487,20 @@ def client_api(app):
     app.register_blueprint(blueprint_api, url_prefix='/api')
     with app.test_client() as client:
         yield client
+
+
+@pytest.yield_fixture()
+def client_request_args(app):
+    app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
+    with app.test_client() as client:
+        r = client.get('/', query_string={
+            'index_id': '33',
+            'page': 1,
+            'count': 20,
+            'term': 14,
+            'lang': 'en'
+            })
+        yield r
 
 
 @pytest.fixture()
@@ -1195,3 +1215,102 @@ def communities(app, db, user, indices):
     db.session.add(comm0)
 
     return comm0
+
+
+@pytest.fixture()
+def mock_users():
+    """Create mock users."""
+    mock_auth_user = Mock()
+    mock_auth_user.get_id = lambda: '123'
+    mock_auth_user.is_authenticated = True
+
+    mock_anon_user = Mock()
+    mock_anon_user.is_authenticated = False
+    return {
+        'anonymous': mock_anon_user,
+        'authenticated': mock_auth_user
+    }
+
+
+@pytest.yield_fixture()
+def mock_user_ctx(mock_users):
+    """Run in a mock authenticated user context."""
+    with patch('invenio_stats.utils.current_user',
+               mock_users['authenticated']):
+        yield
+
+
+@pytest.yield_fixture()
+def es(app):
+    """Provide elasticsearch access, create and clean indices.
+
+    Don't create template so that the test or another fixture can modify the
+    enabled events.
+    """
+    current_search_client.indices.delete(index='*')
+    current_search_client.indices.delete_template('*')
+    list(current_search.create())
+    try:
+        yield current_search_client
+    finally:
+        current_search_client.indices.delete(index='*')
+        current_search_client.indices.delete_template('*')
+
+
+def generate_events(
+        app,
+        index_id='33',
+        page=1,
+        count=20,
+        term=14,
+        lang='en',
+        ):
+    """Queued events for processing tests."""
+    current_queues.declare()
+
+    def _unique_ts_gen():
+        ts = 0
+        while True:
+            ts += 1
+            yield ts
+
+    def generator_list():
+        unique_ts = _unique_ts_gen()
+
+        def build_event(is_robot=False):
+            ts = next(unique_ts)
+            return dict(
+                timestamp=datetime.datetime.combine(
+                    entry_date,
+                    datetime.time(minute=ts % 60,
+                                    second=ts % 60)).
+                isoformat(),
+                index_id='33',
+                page=1,
+                count=20,
+                term=14,
+                lang='en',
+            )
+
+            yield build_event(True)
+
+    mock_queue = Mock()
+    mock_queue.consume.return_value = generator_list()
+    # mock_queue.routing_key = 'stats-file-download'
+    mock_queue.routing_key = 'generate-sample'
+
+    EventsIndexer(
+        mock_queue,
+        preprocessors=[
+            build_file_unique_id
+        ],
+        double_click_window=0
+    ).run()
+    current_search_client.indices.refresh(index='*')
+
+
+@pytest.yield_fixture()
+def generate_request(app, es, mock_user_ctx, request):
+    """Parametrized pre indexed sample events."""
+    generate_events(app=app, **request.param)
+    yield
