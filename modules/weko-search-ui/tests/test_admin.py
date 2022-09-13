@@ -2,6 +2,8 @@ import pytest
 import codecs
 import io
 import csv
+from flask import url_for
+
 from invenio_accounts.testutils import login_user_via_session
 
 # class ItemManagementBulkDelete(BaseView):
@@ -38,7 +40,7 @@ def compare_csv(data1, data2):
         f.seek(0)
         csv_data = [row for row in csv.reader(f)]
         return csv_data
-    
+
     csv1 = _str2csv(data1)
     csv2 = _str2csv(data2)
     for i, row in enumerate(csv1):
@@ -53,19 +55,20 @@ def compare_csv(data1, data2):
                     return False
     return True
 
+
 def test_export_template(app, client, admin_view, users, item_type):
-    
+
     url="/admin/items/import/export_template"
 
     # data = {}
-    
+
     # with app.test_client() as client:
     login_user_via_session(client=client, email=users[4]["email"])
-    
+
     # no data test
     res = client.post(url, json={})
     assert res.get_data(as_text=True) == ""
-    
+
     # not item_type_id test
     data = {
         "item_type_id":-1
@@ -90,7 +93,7 @@ def test_export_template(app, client, admin_view, users, item_type):
         io_obj = io.StringIO(result)
     # assert res.get_data(as_text=True) == codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue()
     assert compare_csv(res.get_data(as_text=True),codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue())
-    
+
 
     # nomal test1
     # exist thumbnail with items
@@ -106,3 +109,19 @@ def test_export_template(app, client, admin_view, users, item_type):
         io_obj = io.StringIO(result)
     # assert res.get_data(as_text=True) == codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue()
     assert compare_csv(res.get_data(as_text=True), codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue())
+
+
+user_results = [
+    (0,403),
+    (1,403),
+    (2,403),
+    (3,200),
+    (4,200),
+]
+
+@pytest.mark.parametrize('id, status_code', user_results)
+def test_import_items_login(app, client, admin_view, users, id, status_code):
+    login_user_via_session(client=client, email=users[id]['email'])
+    url="/admin/items/import/import"
+    res = client.post(url)
+    assert res.status_code == status_code
