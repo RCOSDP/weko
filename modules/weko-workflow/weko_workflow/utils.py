@@ -66,11 +66,13 @@ from weko_user_profiles.config import \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
 from werkzeug.utils import import_string
+from weko_deposit.pidstore import get_record_without_version
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST, \
     WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST
+
 
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow
@@ -222,11 +224,17 @@ def register_hdl(activity_id):
     :return cnri_pidstore: HDL pidstore object or None
     """
     activity = WorkActivity().get_activity_detail(activity_id)
-    item_uuid = activity.item_id
+    # https://nii.backlog.jp/view/WEKO3_APP-84
+    current_pid = PersistentIdentifier.get_by_object(pid_type='recid',
+                                                 object_type='rec',
+                                                 object_uuid=activity.item_id)
+    pid_without_ver = get_record_without_version(current_pid)
+    item_uuid  = pid_without_ver.object_uuid
+    # item_uuid = activity.item_id
     current_app.logger.debug(
         "register_hdl: {0} {1}".format(activity_id, item_uuid))
     record = WekoRecord.get_record(item_uuid)
-
+    
     if record.pid_cnri:
         current_app.logger.info('This record was registered HDL!')
         return
@@ -238,7 +246,6 @@ def register_hdl(activity_id):
 
     weko_handle = Handle()
     handle = weko_handle.register_handle(location=record_url)
-
     if handle:
         handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
         identifier = IdentifierHandle(item_uuid)
@@ -263,7 +270,7 @@ def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
 
     weko_handle = Handle()
     handle = weko_handle.register_handle(location=record_url)
-
+    
     if handle:
         handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
         identifier = IdentifierHandle(item_uuid)

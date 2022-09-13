@@ -1,0 +1,280 @@
+{
+    "metainfo": {
+        "$schema": "1",
+        "created_by": 1,
+        "deleted_items": [],
+        "edit_mode": "keep",
+        "id": "6",
+        "item_1617186331708": [
+            {
+                "subitem_1551255647225": "title",
+                "subitem_1551255648112": "ja"
+            }
+        ],
+        "item_1617258105262": {
+            "resourcetype": "dataset",
+            "resourceuri": "http: //purl.org/coar/resource_type/c_ddb1"
+        },
+        "item_1617605131499": [
+            {
+                "accessrole": "open_access",
+                "date": [
+                    {
+                        "dateType": "Available",
+                        "dateValue": "2022-09-01"
+                    }
+                ],
+                "displaytype": "preview",
+                "filename": "001.jpg",
+                "filesize": [
+                    {
+                        "value": "2.7 MB"
+                    }
+                ],
+                "format": "image/jpeg",
+                "licensetype": "license_0",
+                "mimetype": "image/jpeg",
+                "url": {
+                    "url": "https://weko3.example.org/record/27/files/001.jpg"
+                },
+                "version_id": "59740100-4a25-48e9-85f0-5d18a31ae5ca",
+                "fileDate": [
+                    {}
+                ],
+                "provide": [
+                    {}
+                ]
+            }
+        ],
+        "item_1662046377046": {
+            "subitem_thumbnail": [
+                {
+                    "thumbnail_label": "003.jpg",
+                    "thumbnail_url": "/api/files/f1003493-9e0b-4703-9dff-1aac3f2c1cac/003.jpg?versionId=bdbc640b-9245-4be1-a364-fcf2dd00885d"
+                }
+            ]
+        },
+        "lang": "ja",
+        "owner": "1",
+        "owners": [
+            1
+        ],
+        "pid": {
+            "revision_id": 0,
+            "type": "depid",
+            "value": "6.0"
+        },
+        "pubdate": "2022-09-02",
+        "shared_user_id": -1,
+        "status": "published",
+        "title": "title",
+        "weko_shared_id": -1,
+        "item_1617186385884": [
+            {}
+        ],
+        "item_1617186419668": [
+            {
+                "creatorAffiliations": [
+                    {
+                        "affiliationNameIdentifiers": [
+                            {}
+                        ],
+                        "affiliationNames": [
+                            {}
+                        ]
+                    }
+                ],
+                "creatorAlternatives": [
+                    {}
+                ],
+                "creatorMails": [
+                    {}
+                ],
+                "creatorNames": [
+                    {}
+                ],
+                "familyNames": [
+                    {}
+                ],
+                "givenNames": [
+                    {}
+                ],
+                "nameIdentifiers": [
+                    {}
+                ]
+            }
+        ],
+        "item_1617186499011": [
+            {}
+        ],
+        "item_1617186609386": [
+            {}
+        ],
+        "item_1617186626617": [
+            {}
+        ],
+        "item_1617186643794": [
+            {}
+        ],
+        "item_1617186660861": [
+            {}
+        ],
+        "item_1617186702042": [
+            {}
+        ],
+        "item_1617186783814": [
+            {}
+        ],
+        "item_1617186859717": [
+            {}
+        ],
+        "item_1617186882738": [
+            {
+                "subitem_geolocation_place": [
+                    {}
+                ]
+            }
+        ],
+        "item_1617186901218": [
+            {
+                "subitem_1522399412622": [
+                    {}
+                ],
+                "subitem_1522399651758": [
+                    {}
+                ]
+            }
+        ],
+        "item_1617186920753": [
+            {}
+        ],
+        "item_1617186941041": [
+            {}
+        ],
+        "item_1617187112279": [
+            {}
+        ],
+        "item_1617187187528": [
+            {
+                "subitem_1599711633003": [
+                    {}
+                ],
+                "subitem_1599711660052": [
+                    {}
+                ],
+                "subitem_1599711758470": [
+                    {}
+                ],
+                "subitem_1599711788485": [
+                    {}
+                ]
+            }
+        ],
+        "item_1617349709064": [
+            {
+                "contributorAffiliations": [
+                    {
+                        "contributorAffiliationNameIdentifiers": [
+                            {}
+                        ],
+                        "contributorAffiliationNames": [
+                            {}
+                        ]
+                    }
+                ],
+                "contributorAlternatives": [
+                    {}
+                ],
+                "contributorMails": [
+                    {}
+                ],
+                "contributorNames": [
+                    {}
+                ],
+                "familyNames": [
+                    {}
+                ],
+                "givenNames": [
+                    {}
+                ],
+                "nameIdentifiers": [
+                    {}
+                ]
+            }
+        ],
+        "item_1617353299429": [
+            {
+                "subitem_1523320863692": [
+                    {}
+                ]
+            }
+        ],
+        "item_1617610673286": [
+            {
+                "nameIdentifiers": [
+                    {}
+                ],
+                "rightHolderNames": [
+                    {}
+                ]
+            }
+        ],
+        "item_1617620223087": [
+            {}
+        ],
+        "item_1617944105607": [
+            {
+                "subitem_1551256015892": [
+                    {}
+                ],
+                "subitem_1551256037922": [
+                    {}
+                ]
+            }
+        ],
+        "item_1617187056579": {
+            "bibliographic_titles": [
+                {}
+            ]
+        }
+    },
+    "files": [
+        {
+            "checksum": "sha256:bf407728f9b183ef1e4a0d182273ab026cce12adaf56ac6ba1ecba84bb089d92",
+            "completed": true,
+            "displaytype": "",
+            "filename": "001.jpg",
+            "is_show": false,
+            "is_thumbnail": false,
+            "key": "001.jpg",
+            "licensetype": "",
+            "links": {
+                "self": "/api/files/f1003493-9e0b-4703-9dff-1aac3f2c1cac/001.jpg?versionId=59740100-4a25-48e9-85f0-5d18a31ae5ca"
+            },
+            "mimetype": "image/jpeg",
+            "progress": 100,
+            "size": 2802530,
+            "version_id": "59740100-4a25-48e9-85f0-5d18a31ae5ca"
+        },
+        {
+            "checksum": "sha256:2451662739c05a2a14e46712801f34059f91b6ea04358a9d3f7c2024f72489d5",
+            "completed": true,
+            "displaytype": "",
+            "filename": "003.jpg",
+            "is_show": false,
+            "is_thumbnail": true,
+            "key": "003.jpg",
+            "licensetype": "",
+            "links": {
+                "self": "/api/files/f1003493-9e0b-4703-9dff-1aac3f2c1cac/003.jpg?versionId=bdbc640b-9245-4be1-a364-fcf2dd00885d"
+            },
+            "mimetype": "image/jpeg",
+            "progress": 100,
+            "size": 589892,
+            "version_id": "bdbc640b-9245-4be1-a364-fcf2dd00885d"
+        }
+    ],
+    "endpoints": {
+        "initialization": "/api/deposits/redirect/6.0"
+    }
+}
