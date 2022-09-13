@@ -555,6 +555,15 @@ def test_next_action(client, users, db_register_fullaction, db_records, users_in
     assert data["code"] == 0
     assert data["msg"] == "success"
     
+    # action: end
+    url = url_for("weko_workflow.next_action",
+                  activity_id="2", action_id=2)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    assert res.status_code == 200
+    assert data["code"] == 0
+    assert data["msg"] == "success"
+    
     # action: item register
     input = {"temporary_save":0}
     
@@ -572,7 +581,7 @@ def test_next_action(client, users, db_register_fullaction, db_records, users_in
     assert res.status_code == status_code
     assert data["code"] == 0
     assert data["msg"] == "success"
-    #### raise except
+    ####x raise except
     err_msg = "test update error"
     with patch("weko_workflow.views.ItemLink.update",return_value=err_msg):
         res = client.post(url, json=input)
@@ -580,15 +589,6 @@ def test_next_action(client, users, db_register_fullaction, db_records, users_in
         assert res.status_code == status_code
         assert data["code"] == -1
         assert data["msg"] == err_msg
-    ### not exist pid_without_ver, not exist link_data
-    input = {
-        "temporary_save":0
-    }
-    res = client.post(url, json=input)
-    data = response_data(res)
-    assert res.status_code == status_code
-    assert data["code"] == 0
-    assert data["msg"] == "success"
     ## temporary_save = 1
     input = {
         "temporary_save":1,
@@ -604,23 +604,7 @@ def test_next_action(client, users, db_register_fullaction, db_records, users_in
     
     # action: identifier grant
     ## exist identifier_select
-    ### temporary_save = 0
-    #### select NotGrant
-    input = {
-        "temporary_save":0,
-        "identifier_grant":"0",
-        "identifier_grant_jalc_doi_suffix":"",
-        "identifier_grant_jalc_cr_doi_suffix":"",
-        "identifier_grant_jalc_dc_doi_suffix":"",
-        "identifier_grant_ndl_jalc_doi_suffix":""
-    }
-    
-    #### select identifier
-    ##### raise doi error
-    
-    ##### exist doi error list
-    
-    ### temporary_save = 1
+    ###x temporary_save = 1
     input = {
         "temporary_save":1,
         "identifier_grant_jalc_doi_suffix":"",
@@ -633,10 +617,68 @@ def test_next_action(client, users, db_register_fullaction, db_records, users_in
     assert res.status_code == status_code
     assert data["code"] == 0
     assert data["msg"] == "success"
+    ### temporary_save = 0
+    #### select NotGrant
+    input = {
+        "temporary_save":0,
+        "identifier_grant":"0",
+        "identifier_grant_jalc_doi_suffix":"",
+        "identifier_grant_jalc_cr_doi_suffix":"",
+        "identifier_grant_jalc_dc_doi_suffix":"",
+        "identifier_grant_ndl_jalc_doi_suffix":""
+    }
+    ##### item_id != pid_without_ver(item_idにバージョンがある)
+    ###### not _old_v
+    ###### _old_v & _old_v != _new_v
+    ###### _old_v & _old_v = _new_v
+    ##### item_id == pid_without_ver(item_idにバージョンがない。初めて)
+    ###### _value
+    ###### not _value
+    #### select not Not_Grant
+    #####x error_list is str
+    #####x error_list
+    ##### error_list is not str and error_list=False
+    ###### item_id
+    ####### deposit and pid_without_ver and not recid
+    ####### not (deposit and pid_without_ver and not recid)
+    ###### not item_id
     
-    ## not exist identifier_select
+
+    
+    ## not exist identifier_select & not temporary_save
+    ### _value and _type
+    ####x error_list is str
+    ####x error_list is not str & error_list = True
+    #### error_list is not str & error_list = False
+    ### not (_value and _type)
     
     
+    #x not rtn
+    
+    # rnt
+    
+    #x not flag
+    
+    # next_flow_action and len(next_flow_action)>0
+    ## next_action is end_action
+    ### deposit
+    ###x not new_activity_id
+    ### exist new_activity_id
+    
+    ### permission
+    ### not permission
+    
+    ### "." not in current_pid
+    ### "." in current_pid
+    ### raise BaseException
+    
+    
+    ## next_action is not end_action
+    ###x not flag
+    ### flag
+    # not(next_flow_action and len(next_flow_action)>0)
+    
+    # action: oa policy
 # def test_cancel_action_acl_nologin(client):
 #     """Test of cancel action."""
 #     url = url_for('weko_workflow.cancel_action',
