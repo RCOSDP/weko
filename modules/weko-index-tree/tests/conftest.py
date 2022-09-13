@@ -81,6 +81,13 @@ from invenio_deposit.api import Deposit
 from invenio_communities.models import Community
 from invenio_search import current_search_client, current_search
 from invenio_queues.proxies import current_queues
+from invenio_files_rest.permissions import bucket_listmultiparts_all, \
+    bucket_read_all, bucket_read_versions_all, bucket_update_all, \
+    location_update_all, multipart_delete_all, multipart_read_all, \
+    object_delete_all, object_delete_version_all, object_read_all, \
+    object_read_version_all
+from invenio_files_rest.models import Bucket
+from invenio_db.utils import drop_alembic_version_table
 
 from weko_schema_ui.models import OAIServerSchema
 from weko_index_tree.api import Indexes
@@ -120,9 +127,16 @@ def base_app(instance_path):
     """Flask application fixture."""
     app_ = Flask('testapp', instance_path=instance_path)
     app_.config.update(
+        ACCOUNTS_JWT_ENABLE=True,
         SECRET_KEY='SECRET_KEY',
         WEKO_INDEX_TREE_UPDATED=True,
         TESTING=True,
+        FILES_REST_DEFAULT_QUOTA_SIZE = None,
+        FILES_REST_DEFAULT_STORAGE_CLASS = 'S',
+        FILES_REST_STORAGE_CLASS_LIST = {
+            'S': 'Standard',
+            'A': 'Archive',
+        },
         CACHE_REDIS_URL='redis://redis:6379/0',
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
@@ -407,7 +421,14 @@ def base_app(instance_path):
                 update_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
                 delete_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
             )
-        )
+        ),
+        WEKO_INDEX_TREE_STYLE_OPTIONS = {
+            'id': 'weko',
+            'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
+        },
+        WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_edit_setting.html',
+        WEKO_INDEX_TREE_LIST_API = "/api/tree",
+        WEKO_INDEX_TREE_API = "/api/tree/index/",
     )
     app_.url_map.converters['pid'] = PIDConverter
 
@@ -449,20 +470,21 @@ def app(base_app):
 
 @pytest.yield_fixture()
 def db(app):
-    """Database fixture."""
+    """Get setup database."""
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
     db_.create_all()
     yield db_
     db_.session.remove()
     db_.drop_all()
-    # drop_database(str(db_.engine.url))
+    drop_alembic_version_table()
 
 
 @pytest.yield_fixture()
 def i18n_app(app):
     with app.test_request_context(
         headers=[('Accept-Language','ja')]):
+        app.extensions['invenio-oauth2server'] = 1
         yield app
 
 
@@ -498,7 +520,9 @@ def client_request_args(app):
             'page': 1,
             'count': 20,
             'term': 14,
-            'lang': 'en'
+            'lang': 'en',
+            'parent_id': 33,
+            'index_info': {}
             })
         yield r
 
@@ -1314,3 +1338,90 @@ def generate_request(app, es, mock_user_ctx, request):
     """Parametrized pre indexed sample events."""
     generate_events(app=app, **request.param)
     yield
+
+
+@pytest.yield_fixture()
+def dummy_location(db):
+    """File system location."""
+    tmppath = tempfile.mkdtemp()
+
+    loc = Location(
+        name='testloc',
+        uri=tmppath,
+        default=True
+    )
+    db.session.add(loc)
+    db.session.commit()
+
+    yield loc
+
+    shutil.rmtree(tmppath)
+
+
+@pytest.fixture()
+def bucket(db, dummy_location):
+    """File system location."""
+    b1 = Bucket.create()
+    db.session.commit()
+    return b1
+
+
+@pytest.yield_fixture()
+def permissions(db, bucket):
+    """Permission for users."""
+    users = {
+        None: None,
+    }
+
+    for user in [
+            'auth', 'location', 'bucket',
+            'objects', 'objects-read-version']:
+        users[user] = create_test_user(
+            email='{0}@invenio-software.org'.format(user),
+            password='pass1',
+            active=True
+        )
+
+    location_perms = [
+        location_update_all,
+        bucket_read_all,
+        bucket_read_versions_all,
+        bucket_update_all,
+        bucket_listmultiparts_all,
+        object_read_all,
+        object_read_version_all,
+        object_delete_all,
+        object_delete_version_all,
+        multipart_read_all,
+        multipart_delete_all,
+    ]
+
+    bucket_perms = [
+        bucket_read_all,
+        object_read_all,
+        bucket_update_all,
+        object_delete_all,
+        multipart_read_all,
+    ]
+
+    objects_perms = [
+        object_read_all,
+    ]
+
+    for perm in location_perms:
+        db.session.add(ActionUsers(
+            action=perm.value,
+            user=users['location']))
+    for perm in bucket_perms:
+        db.session.add(ActionUsers(
+            action=perm.value,
+            argument=str(bucket.id),
+            user=users['bucket']))
+    for perm in objects_perms:
+        db.session.add(ActionUsers(
+            action=perm.value,
+            argument=str(bucket.id),
+            user=users['objects']))
+    db.session.commit()
+
+    yield users

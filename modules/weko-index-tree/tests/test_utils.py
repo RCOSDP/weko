@@ -41,7 +41,7 @@ from invenio_accounts.testutils import login_user_via_session, client_authentica
 ######
 import json
 import pytest
-
+from mock import patch
 from datetime import date, datetime, timedelta
 from functools import wraps
 from operator import itemgetter
@@ -78,15 +78,16 @@ from weko_redis.redis import RedisConnection
 
 
 #*** def get_index_link_list(pid=0):
-def test_get_index_link_list(i18n_app, indices, esindex):
-    pid = 44
-    tree = Indexes.get_browsing_tree_ignore_more(pid)
-    
-    # Test 1
-    assert not get_index_link_list()
+def test_get_index_link_list(i18n_app, users, indices, esindex):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        pid = 44
+        tree = Indexes.get_browsing_tree_ignore_more(pid)
+        
+        # Test 1
+        assert not get_index_link_list()
 
-    # Test 2
-    # assert get_index_link_list(pid)
+        # Test 2
+        assert get_index_link_list(pid)
         
 
 #+++ def is_index_tree_updated():
@@ -113,35 +114,41 @@ def test_reset_tree(i18n_app, users, indices, records):
 #     assert get_tree_json([indices['index_non_dict']], 0)
 
 
-#*** def get_user_roles():
-# Needs current_user
+#+++ def get_user_roles():
 def test_get_user_roles(i18n_app, client_rest, users):
-    login_user_via_session(client=client_rest, email=users[0]['email'])
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        assert get_user_roles()[0]
 
     # User not authenticated
     assert get_user_roles()[0] == False
 
 
-#*** def get_user_groups():
-# Needs current_user
-def test_get_user_groups(i18n_app, client_rest, users):
-    login_user_via_session(client=client_rest, email=users[6]['email'])
+#+++ def get_user_groups():
+def test_get_user_groups(i18n_app, client_rest, users, db):
+    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
+        from weko_groups.models import Group
 
+        g1 = Group.create(name="group_test1").add_member(users[-1]['obj'])
+        g2 = Group.create(name="group_test2").add_member(users[-1]['obj'])
+        db.session.add(g1)
+        db.session.add(g2)
+
+        assert get_user_groups()
     # User not authenticated
     assert len(get_user_groups()) == 0
 
 
-#*** def check_roles(user_role, roles):
-# Needs current_user
+#+++ def check_roles(user_role, roles):
 def test_check_roles(users):
-    user_role = [role.name for role in users[-1]['obj'].roles]
-    roles = (',').join(user_role)
+    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
+    
+        user_role = [role.name for role in users[-1]['obj'].roles]
+        roles = (',').join(user_role)
 
-    assert check_roles(user_role, roles)
+        assert check_roles(user_role, roles)
 
 
-#*** def check_groups(user_group, groups):
-# Needs current_user
+#+++ def check_groups(user_group, groups):
 def test_check_groups(i18n_app, users, db):
     g1 = Group.create(name="group_test1").add_member(users[-1]['obj'])
     g2 = Group.create(name="group_test2").add_member(users[-1]['obj'])
@@ -151,21 +158,25 @@ def test_check_groups(i18n_app, users, db):
 
     user_group = ["group_test1", "group_test2"]
     groups = [v for k,v in Group.get_group_list().items()]
+    
+    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
+        assert check_groups(user_group, groups)
 
     assert check_groups(user_group, groups) == False
 
 
-#*** def filter_index_list_by_role(index_list):
+#+++ def filter_index_list_by_role(index_list):
 #     def _check(index_data, roles, groups):
-# Needs current_user
 def test_filter_index_list_by_role(i18n_app, indices, users, db):
-    # Create test group
-    from weko_groups.models import Group
-    g1 = Group.create(name="group_test1").add_member(users[-1]['obj'])
-    g2 = Group.create(name="group_test2").add_member(users[-1]['obj'])
+    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
+        from weko_groups.models import Group
+        g1 = Group.create(name="group_test1").add_member(users[-1]['obj'])
+        g2 = Group.create(name="group_test2").add_member(users[-1]['obj'])
 
-    db.session.add(g1)
-    db.session.add(g2)
+        db.session.add(g1)
+        db.session.add(g2)
+
+        assert len(filter_index_list_by_role([indices['index_non_dict']])) > 0
 
     assert len(filter_index_list_by_role([indices['index_non_dict']])) == 0
 
@@ -324,7 +335,7 @@ def test_check_index_permissions(i18n_app, indices, db_records):
 
 # *** def check_doi_in_index_and_child_index(index_id, recursively=True):
 # def test_check_doi_in_index_and_child_index(i18n_app, indices, esindex, db_records, records2):
-def test_check_doi_in_index_and_child_index(i18n_app, indices, esindex):
+def test_check_doi_in_index_and_child_index(i18n_app, users, indices, esindex):
     # Test 1
     assert len(check_doi_in_index_and_child_index(33, recursively=True)) == 0
 
@@ -387,18 +398,20 @@ def test_perform_delete_index(i18n_app, indices, records):
 
 
 #*** def get_doi_items_in_index(index_id, recursively=False):
-def test_get_doi_items_in_index(i18n_app, indices, esindex, records):
+def test_get_doi_items_in_index(i18n_app, users, indices, esindex, records):
     # Test 1
     assert not get_doi_items_in_index(44, recursively=False)
 
     # Test 2
-    # assert get_doi_items_in_index(44, recursively=False)
+    # with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
+    #     assert get_doi_items_in_index(44, recursively=False)
 
 
 #*** def test_get_editing_items_in_index(index_id, recursively=False):
-def test_get_editing_items_in_index(i18n_app, indices, esindex, db_records, records):
+def test_get_editing_items_in_index(i18n_app, users, indices, esindex, db_records, records):
     # Test 1
     assert not get_editing_items_in_index(44)
 
     # Test 2
-    # assert get_doi_items_in_index(44)
+    # with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
+    #     assert get_doi_items_in_index(44)
