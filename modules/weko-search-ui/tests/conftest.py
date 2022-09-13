@@ -33,6 +33,7 @@ from flask import Flask, current_app
 from flask import session, url_for
 from flask_babelex import Babel
 from flask_admin import Admin
+from flask_menu import Menu
 from elasticsearch_dsl import response, Search
 
 from invenio_accounts import InvenioAccounts
@@ -56,6 +57,7 @@ from invenio_search import InvenioSearch
 from weko_records.models import ItemTypeName, ItemType
 from weko_index_tree import WekoIndexTree
 from weko_index_tree.models import Index
+from weko_admin import WekoAdmin
 from weko_admin.models import FacetSearchSetting
 
 from weko_search_ui import WekoSearchUI, WekoSearchREST
@@ -123,10 +125,16 @@ def base_app(instance_path):
         # SEARCH_UI_SEARCH_INDEX = "{}-weko".format(index_prefix),
         SEARCH_UI_SEARCH_INDEX = "tenant1-weko",
         WEKO_SEARCH_TYPE_INDEX="index",
-        WEKO_SEARCH_TYPE_KEYWORD = "keyword"
+        WEKO_SEARCH_TYPE_KEYWORD = "keyword",
+        CACHE_REDIS_URL="redis://redis:6379/0",
+        CACHE_REDIS_DB=0,
+        CACHE_REDIS_HOST="redis",
+        REDIS_PORT="6379",
+
     )
     app_.url_map.converters['pid'] = PIDConverter
-    
+
+    Menu(app_)
     Babel(app_)
     InvenioDB(app_)
     InvenioI18N(app_)
@@ -138,6 +146,7 @@ def base_app(instance_path):
     InvenioSearch(app_)
     WekoIndexTree(app_)
     WekoSearchUI(app_)
+    WekoAdmin(app_)
     app_.register_blueprint(create_blueprint_from_app(app_))
 
     return app_
@@ -154,7 +163,8 @@ def admin_view(app):
     admin = Admin(app, name="Test")
     view_class_ItemImportView = item_management_import_adminview["view_class"]
     admin.add_view(view_class_ItemImportView(**item_management_import_adminview["kwargs"]))
-    
+
+
 @pytest.yield_fixture()
 def client(app):
     with app.test_client() as client:
@@ -228,13 +238,13 @@ def item_type(db):
     item_type_name2 = ItemTypeName(name="デフォルトアイテムタイプ（フル）3",
                                   has_site_license=True,
                                   is_active=True)
-    
+
     item_type17 = ItemType(id=17,name_id=1,harvesting_type=False,
                          schema=json_data("tests/item_type/17_schema.json"),
                          form=json_data("tests/item_type/17_form.json"),
                          render=json_data("tests/item_type/17_render.json"),
                          tag=1,version_id=58,is_deleted=False)
-    
+
     item_type18 = ItemType(id=18,name_id=2,harvesting_type=False,
                          schema=json_data("tests/item_type/18_schema.json"),
                          form=json_data("tests/item_type/18_form.json"),
@@ -245,7 +255,7 @@ def item_type(db):
         db.session.add(item_type_name2)
         db.session.add(item_type17)
         db.session.add(item_type18)
-    
+
     return {"item_type_name1":item_type_name1,
             "item_type_name2":item_type_name2,
             "item_type17":item_type17,
@@ -275,7 +285,7 @@ def record(db):
         db.session.add(rec3)
     # with db.session.begin_nested():
     #     db.session.add(rec)
-    
+
     return [{"id":id1, "record": rec1},{"id":id2,"record":rec2},{"id":id3,"record":rec3}]
 
 @pytest.fixture()
@@ -296,7 +306,7 @@ def index(db):
         indexes.append(Index(**datas[index]))
     with db.session.begin_nested():
         db.session.add_all(indexes)
-        
+
 @pytest.fixture()
 def mock_es_execute():
     def _dummy_response(data):
