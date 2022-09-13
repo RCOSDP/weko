@@ -16,8 +16,6 @@ from weko_records.serializers.entry import WekoFeedEntry
 # .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_entry.py::test_weko_feed_entry -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_weko_feed_entry():
     feed_entry = WekoFeedEntry()
-    # contributor
-    assert feed_entry.contributor({"item_contibutor": {"contributorNames":[{"contributorName":"takeshi", "contributorNameLang":"en"}]}})==None
     # pubDate
     with pytest.raises(Exception) as e:
         feed_entry.pubDate(datetime(2021, 10, 1))
