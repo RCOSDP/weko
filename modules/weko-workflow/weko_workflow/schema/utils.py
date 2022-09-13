@@ -1,6 +1,8 @@
 from ..api import Action
 
-from .marshmallow import ActionSchema, NextSchema, NextItemLinkSchema, NextIdentifierSchema
+from .marshmallow import ActionSchema, NextSchema, NextItemLinkSchema, \
+    NextIdentifierSchema, NextOAPolicySchema
+
 def get_schema_action(action_id):
     """アクションIDから対応するスキーマを返す
     
@@ -19,15 +21,12 @@ def get_schema_action(action_id):
     Args:
         action_id (int): アクションID
 
-    Raises:
-        Exception: アクションが取得できない場合に発生
-
     Returns:
         schema: アクションに対応するスキーマ
     """
     action = Action().get_action_detail(action_id)
     if not action:
-        raise Exception("can not get action")
+        return None
     action_endpoint = action.action_endpoint
     
     if action_endpoint in ["begin_action", "end_action", "approval"]:
@@ -38,6 +37,8 @@ def get_schema_action(action_id):
         return NextItemLinkSchema()
     elif action_endpoint == "identifier_grant":
         return NextIdentifierSchema()
+    elif action_endpoint == "oa_policy":
+        return NextOAPolicySchema()
     else:
         return ActionSchema()
 
@@ -47,11 +48,12 @@ def type_null_check(target, type):
     Args:
         target (object): 対象オブジェクト
         type (type): 型
+        
+    Returns:
 
-    Raises:
-        ValueError: targetがNoneである、もしくは型がtype出ない場合発生する
     """
     
     if not isinstance(target, type) or \
         target == None:
-        raise ValueError("{target} is None or not {type}.".format(target=target, type=type)) 
+        return False
+    return True 

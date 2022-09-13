@@ -1086,7 +1086,7 @@ def next_action(activity_id='0', action_id=0):
             content:
                 application/json:
                     schema:
-                        ActionSchema, NextSchema, NextItemLinkSchema, NextIdentifierSchema
+                        ActionSchema, NextSchema, NextItemLinkSchema, NextIdentifierSchema, NextOAPolicySchema
                     example: {"action_version": "1.0.0", "commond": "this is test comment", "temporary_save": 0}
         parameters:
             - in: path
