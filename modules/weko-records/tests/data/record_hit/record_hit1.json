@@ -76,32 +76,90 @@
             "url":{
               "label":"open and exist label"
             },
-            "accessrole":"open_restricted"
+            "accessrole":"open_restricted",
+            "format": "application/pdf" 
           },
           {
             "url":{
               "test":"open and not exist label"
             },
-            "accessrole":"open_restricted"
+            "accessrole":"open_restricted",
+            "format": "application/pdf" 
           },
           {
             "url":{
               "url":"not label, but version_id"
             },
             "version_id":"1.0",
-            "filename":"test.txt"
+            "filename":"test.txt",
+            "format": "application/pdf" 
           },
           {
             "url":{
               "label":"not file url"
             },
             "version_id":"1.0",
-            "filename":"test_not_extension"
+            "filename":"test_not_extension",
+            "format": "application/pdf" 
           },
           {
             "url":{
               "test":"not open and not label"
-            }
+            },
+            "format": "application/pdf" 
+          }
+        ]
+      },
+      "item_resource_type": {
+        "attribute_name": "Resource Type",
+        "attribute_value_mlt": [{
+          "resourcetype": "test type",
+          "resourceuri": "http://nii.co.jp/resource_type/01"
+        }]
+      },
+      "item_description": {
+        "attribute_name": "Description",
+        "attribute_value_mlt": [{
+          "subitem_description_value": "test description",
+          "subitem_description_lang": "en"
+        }]
+      },
+      "item_date": {
+        "attribute_name": "Date",
+        "attribute_value_mlt": [
+          {
+            "subitem_date_value": "2021-10-26",
+            "subitem_date_type": "Available"
+          },
+          {
+            "subitem_date_value": "2021-10-26",
+            "subitem_date_type": "Issued"
+          }
+        ]
+      },
+      "item_publisher":{
+        "attribute_name":"Publisher",
+        "attribute_value_mlt":[
+          {
+            "subitem_publisher": "takeshi",
+            "subitem_publisherLang":"en"
+          }
+        ]
+      },
+      "item_source_ids":{
+        "attribute_name":"Source Identifier",
+        "attribute_value_mlt":[
+          {
+            "subitem_source_id": "123",
+            "subitem_source_id_type":"ISSN"
+          }
+        ]
+      },
+      "item_version":{
+        "attribute_name":"Version",
+        "attribute_value_mlt":[
+          {
+            "subitem_version": "1.0.0"
           }
         ]
       },

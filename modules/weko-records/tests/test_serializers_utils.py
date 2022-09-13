@@ -89,7 +89,7 @@ params=[
      "data/item_type/item_type_mapping1.json",
      "data/record_hit/record_hit1.json",
      True)]
-@pytest.mark.parametrize("render, form, mapping, hit, licence",params)
+@pytest.mark.parametrize("render, form, mapping, hit, licence", params)
 def test_open_search_detail_data(app, db, db_index, render, form, mapping, hit, licence):
     def fetcher(obj_uuid, data):
         assert obj_uuid in ['a', 'b']

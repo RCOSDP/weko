@@ -21,7 +21,7 @@
   },
   "item_test1_3":{
     "jpcoar_mapping":{
-      "sourceTitle":{
+      "test1_3":{
         "@value":"test_value1",
         "@attributes":{
           "test":""
@@ -68,6 +68,49 @@
             "label": "url.label",
             "objectType": "url.objectType"
           }
+        },
+        "mimeType": {
+          "@value": "format"
+        }
+      }
+    }
+  },
+  "item_resource_type":{
+    "jpcoar_mapping":{
+      "type":{
+        "@value": "resourcetype",
+        "@attributes": {
+          "rdf:resource": "resourceuri"
+        }
+      }
+    }
+  },
+  "item_description":{
+    "jpcoar_mapping":{
+      "description":{
+        "@value": "subitem_description_value",
+        "@attributes": {
+          "xml:lang": "subitem_description_lang"
+        }
+      }
+    }
+  },
+  "item_date":{
+    "jpcoar_mapping":{
+      "date":{
+        "@value": "subitem_date_value",
+        "@attributes": {
+          "dateType": "subitem_date_type"
+        }
+      }
+    }
+  },
+  "item_publisher":{
+    "jpcoar_mapping":{
+      "publisher":{
+        "@value": "subitem_publisher",
+        "@attributes": {
+          "xml:lang": "subitem_publisherLang"
         }
       }
     }
@@ -86,17 +129,14 @@
   },
   "item_test6_bibliographic":{
     "jpcoar_mapping":{
-      "volume":{
-        "@value": "bibliographic_volume"
-      },
-      "issue": {
-        "@value": "bibliographic_issue"
-      },
-      "pageStart": {
-        "@value": "bibliographic_pageStart"
-      },
-      "pageEnd": {
-        "@value": "bibliographic_pageEnd"
+      "volume": "bibliographic_volume",
+      "pageStart": "bibliographic_pageStart",
+      "pageEnd": "bibliographic_pageEnd",
+      "sourceTitle": {
+        "@value": "bibliographic_titles.bibliographic_title",
+        "@attributes": {
+          "xml:lang": "bibliographic_titles.bibliographic_titleLang"
+        }
       }
     }
   },
