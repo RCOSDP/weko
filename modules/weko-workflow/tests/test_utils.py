@@ -274,3 +274,25 @@ def test_get_record_by_root_ver(app, db_records):
 # def prepare_doi_link_workflow(item_id, doi_input):
 # def get_pid_value_by_activity_detail(activity_detail):
 # def check_doi_validation_not_pass(item_id, activity_id,
+
+def test_get_index_id():
+    """Get index ID base on activity id"""
+    # from weko_workflow.api import WorkActivity, WorkFlow
+
+    # activity = WorkActivity()
+    # activity_detail = activity.get_activity_detail(activity_id)
+
+    # workflow = WorkFlow()
+    # workflow_detail = workflow.get_workflow_by_id(
+    #     activity_detail.workflow_id)
+
+    # index_tree_id = workflow_detail.index_tree_id
+
+    # if index_tree_id:
+    #     from .api import Indexes
+    #     index_result = Indexes.get_index(index_tree_id)
+    #     if not index_result:
+    #         index_tree_id = None
+    # else:
+    #     index_tree_id = None
+    raise BaseException
