@@ -3,7 +3,7 @@
 from collections import OrderedDict
 from datetime import datetime
 import json
-from tkinter import W
+# from tkinter import W
 import pytest
 import os
 from mock import patch

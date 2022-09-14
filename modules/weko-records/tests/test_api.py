@@ -21,7 +21,7 @@
 """Module tests."""
 
 from re import T
-from tkinter import W
+# from tkinter import W
 import pytest
 from elasticsearch.exceptions import RequestError
 from invenio_records.api import Record
