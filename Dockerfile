@@ -55,6 +55,7 @@ WORKDIR /code
 RUN adduser --uid 1000 --disabled-password --gecos '' invenio
 USER invenio
 COPY --chown=invenio:invenio scripts /code/scripts
+COPY --chown=invenio:invenio scripts /code/tools
 COPY --chown=invenio:invenio modules /code/modules
 COPY --chown=invenio:invenio packages.txt /code/packages.txt
 COPY --chown=invenio:invenio packages-invenio.txt /code/packages-invenio.txt
