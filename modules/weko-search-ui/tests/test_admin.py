@@ -1,7 +1,9 @@
 import pytest
+from mock import patch
 import codecs
 import io
 import csv
+import json
 from flask import url_for
 
 from invenio_accounts.testutils import login_user_via_session
@@ -122,6 +124,54 @@ user_results = [
 @pytest.mark.parametrize('id, status_code', user_results)
 def test_import_items_login(app, client, admin_view, users, id, status_code):
     login_user_via_session(client=client, email=users[id]['email'])
-    url="/admin/items/import/import"
-    res = client.post(url)
+    url = "/admin/items/import/import"
+    input = {}
+
+    res = client.post(url, json=input)
     assert res.status_code == status_code
+
+
+def test_import_items_guest(client, db_sessionlifetime, admin_view):
+    url = "/admin/items/import/import"
+    input = {}
+
+    res = client.post(url, json=input)
+    assert res.status_code == 302
+    assert res.location == url_for("security.login", next="/admin/items/import/import", _external=True)
+
+
+@pytest.mark.parametrize('id, status_code', user_results)
+def test_download_import_login(app, client, admin_view, users, id, status_code):
+    login_user_via_session(client=client, email=users[id]['email'])
+    url = "/admin/items/import/export_import"
+    input = {}
+
+    res = client.post(url, json=input)
+    assert res.status_code == status_code
+
+
+def test_download_import_guest(client, db_sessionlifetime, admin_view):
+    url = "/admin/items/import/export_import"
+    input = {}
+
+    res = client.post(url, json=input)
+    assert res.status_code == 302
+    assert res.location == url_for("security.login", next="/admin/items/import/import", _external=True)
+
+
+def test_import_items(app, client, admin_view, users, db_register):
+    login_user_via_session(client=client, email=users[4]['email'])
+    url = "/admin/items/import/import"
+
+    list_records_data = dict()
+    with open("tests/data/list_records/list_records.json", "r") as f:
+        list_records_data = json.load(f)
+    input = {"data_path": "/tmp/weko_import_20220819045602",
+             "list_record": list_records_data}
+
+    with patch("weko_search_ui.admin.chord"):
+        res = client.post(url, json=input)
+        data = json.loads(res.get_data(as_text=True))
+        assert data["status"] == "success"
+        assert data["data"]["tasks"] is not None
+        assert data["data"]["import_start_time"] is not None

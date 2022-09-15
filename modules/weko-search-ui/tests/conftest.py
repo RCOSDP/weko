@@ -27,6 +27,7 @@ import tempfile
 import os
 import json
 import uuid
+from datetime import datetime
 
 import pytest
 from flask import Flask, current_app
@@ -59,10 +60,12 @@ from weko_index_tree import WekoIndexTree
 from weko_index_tree.models import Index
 from weko_admin import WekoAdmin
 from weko_admin.models import FacetSearchSetting
+from weko_admin.models import SessionLifetime
 
 from weko_search_ui import WekoSearchUI, WekoSearchREST
 from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX
 from weko_search_ui.admin import item_management_import_adminview
+from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
 
 @pytest.yield_fixture()
 def instance_path():
@@ -129,8 +132,7 @@ def base_app(instance_path):
         CACHE_REDIS_URL="redis://redis:6379/0",
         CACHE_REDIS_DB=0,
         CACHE_REDIS_HOST="redis",
-        REDIS_PORT="6379",
-
+        REDIS_PORT="6379"
     )
     app_.url_map.converters['pid'] = PIDConverter
 
@@ -158,6 +160,7 @@ def app(base_app):
     with base_app.app_context():
         yield base_app
 
+
 @pytest.yield_fixture()
 def admin_view(app):
     admin = Admin(app, name="Test")
@@ -176,6 +179,7 @@ def client_rest(app):
     WekoSearchREST(app)
     with app.test_client() as client:
         yield client
+
 
 @pytest.fixture()
 def db(app):
@@ -298,6 +302,7 @@ def facet_search_setting(db):
     with db.session.begin_nested():
         db.session.add_all(settings)
 
+
 @pytest.fixture()
 def index(db):
     datas = json_data("tests/data/index.json")
@@ -307,6 +312,7 @@ def index(db):
     with db.session.begin_nested():
         db.session.add_all(indexes)
 
+
 @pytest.fixture()
 def mock_es_execute():
     def _dummy_response(data):
@@ -315,3 +321,106 @@ def mock_es_execute():
         dummy=response.Response(Search(), data)
         return dummy
     return _dummy_response
+
+
+@pytest.fixture()
+def db_sessionlifetime(app, db):
+    session_lifetime = SessionLifetime(lifetime=60, is_delete=False)
+    with db.session.begin_nested():
+        db.session.add(session_lifetime)
+
+
+@pytest.fixture()
+def db_register(app, db,users):
+    action_datas=dict()
+    with open('../weko-workflow/tests/data/actions.json', 'r') as f:
+        action_datas = json.load(f)
+    actions_db = list()
+    with db.session.begin_nested():
+        for data in action_datas:
+            actions_db.append(Action(**data))
+        db.session.add_all(actions_db)
+
+    actionstatus_datas = dict()
+    with open('../weko-workflow/tests/data/action_status.json') as f:
+        actionstatus_datas = json.load(f)
+    actionstatus_db = list()
+    with db.session.begin_nested():
+        for data in actionstatus_datas:
+            actionstatus_db.append(ActionStatus(**data))
+        db.session.add_all(actionstatus_db)
+
+    flow_define = FlowDefine(flow_id=uuid.uuid4(),
+                             flow_name='Registration Flow',
+                             flow_user=1)
+
+    item_type_name = ItemTypeName(name='テストアイテムタイプ',
+                                  has_site_license=True,
+                                  is_active=True)
+
+    item_type = ItemType(name_id=1,harvesting_type=True,
+                         schema={'type':'test schema'},
+                         form={'type':'test form'},
+                         render={'type':'test render'},
+                         tag=1,version_id=1,is_deleted=False)
+
+    flow_action1 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=1,
+                     action_version='1.0.0',
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    flow_action2 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=3,
+                     action_version='1.0.0',
+                     action_order=2,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    flow_action3 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=5,
+                     action_version='1.0.0',
+                     action_order=3,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+
+    workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test workflow1',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=1,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+
+    activity = Activity(activity_id='1',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=6)
+
+    with db.session.begin_nested():
+        db.session.add(flow_define)
+        db.session.add(item_type_name)
+        db.session.add(item_type)
+        db.session.add(flow_action1)
+        db.session.add(flow_action2)
+        db.session.add(flow_action3)
+        db.session.add(workflow)
+        db.session.add(activity)
+
+    # return {'flow_define':flow_define,'item_type_name':item_type_name,'item_type':item_type,'flow_action':flow_action,'workflow':workflow,'activity':activity}
+    return {'flow_define':flow_define,'item_type':item_type,'workflow':workflow}
+    # return {'flow_define':flow_define, 'workflow':workflow}
