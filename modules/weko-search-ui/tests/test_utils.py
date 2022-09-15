@@ -20,7 +20,6 @@ from weko_search_ui.utils import (
     validation_file_open_date,
     check_import_items,
     unpackage_import_file,
-    read_stats_csv,
     handle_check_exist_record,
     handle_check_date,
     handle_check_doi,
@@ -311,37 +310,6 @@ def test_getEncode():
         print(filepath)
         assert getEncode(filepath) == f['enc']
 
-
-# def read_stats_csv(csv_file_path: str, csv_file_name: str) -> dict:
-
-def test_read_stats_csv(app,mocker_itemtype):
-    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv","data.json")
-    csv_file_name = "utf8_lf_items.csv"
-    csv_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv",csv_file_name)
-    file_type = "csv"
-    with open(filepath,encoding="utf-8") as f:
-        data = json.load(f)
-
-    with app.test_request_context():
-        with set_locale('en'):
-            res = read_stats_csv(csv_file_path,csv_file_name,file_type)
-            assert res["error"] == data["error"]
-            assert res["error_code"] == data["error_code"]
-            assert res["data_list"] == data["data_list"]
-            assert res["item_type_schema"] == data["item_type_schema"]
-
-            assert read_stats_csv(csv_file_path,csv_file_name,'csv') == data
-
-
-    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "tsv","data.json")
-    tsv_file_name = "utf8_lf_items.tsv"
-    tsv_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "tsv",tsv_file_name)
-    with open(filepath,encoding="utf-8") as f:
-        data = json.load(f)
-
-    with app.test_request_context():
-        with set_locale('en'):
-            assert read_stats_csv(tsv_file_path,tsv_file_name,'tsv') == data
 
 # def handle_convert_validate_msg_to_jp(message: str):
 # def handle_validate_item_import(list_record, schema) -> list:
