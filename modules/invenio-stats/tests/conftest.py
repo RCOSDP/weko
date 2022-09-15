@@ -244,6 +244,7 @@ def base_app(instance_path, mock_gethostbyaddr):
         OAUTH2SERVER_CLIENT_SECRET_SALT_LEN=60,
         OAUTH2SERVER_TOKEN_PERSONAL_SALT_LEN=60,
         OAUTH2_CACHE_TYPE="simple",
+        SEARCH_INDEX_PREFIX='test',
         STATS_MQ_EXCHANGE=Exchange(
             'test_events',
             type='direct',
@@ -272,7 +273,7 @@ def base_app(instance_path, mock_gethostbyaddr):
     InvenioOAuth2Server(app_)
     InvenioOAuth2ServerREST(app_)
     InvenioMARC21(app_)
-    InvenioSearch(app_, entry_point_group=None, client=MockEs())
+    InvenioSearch(app_, entry_point_group=None, client=Elasticsearch("http://elasticsearch:9200"))
 
     return app_
 
@@ -296,13 +297,16 @@ def db(app):
     db_.session.remove()
     db_.drop_all()
 
+
 class MockEs():
     def __init__(self,**keywargs):
         self.indices = self.MockIndices()
         self.es = Elasticsearch()
+
     @property
     def transport(self):
         return self.es.transport
+
     class MockIndices():
         def __init__(self,**keywargs):
             self.mapping = dict()
@@ -641,7 +645,9 @@ def _create_file_download_event(timestamp,
                                 size=9000,
                                 file_key='test.pdf',
                                 visitor_id=100,
-                                user_id=None):
+                                user_id=None,
+                                remote_addr='192.168.0.1',
+                                unique_session_id='S0000000000000000000000000000001'):
     """Create a file_download event content."""
     doc = dict(
         timestamp=datetime.datetime(*timestamp).isoformat(),
@@ -652,6 +658,8 @@ def _create_file_download_event(timestamp,
         size=size,
         visitor_id=visitor_id,
         user_id=user_id,
+        remote_addr=remote_addr,
+        unique_session_id=unique_session_id,
     )
     return build_file_unique_id(doc)
 
@@ -661,7 +669,9 @@ def _create_record_view_event(timestamp,
                               pid_type='recid',
                               pid_value='1',
                               visitor_id=100,
-                              user_id=None):
+                              user_id=None,
+                              remote_addr='192.168.0.1',
+                              unique_session_id='S0000000000000000000000000000001'):
     """Create a file_download event content."""
     doc = dict(
         timestamp=datetime.datetime(*timestamp).isoformat(),
@@ -671,6 +681,8 @@ def _create_record_view_event(timestamp,
         pid_value=pid_value,
         visitor_id=visitor_id,
         user_id=user_id,
+        remote_addr=remote_addr,
+        unique_session_id=unique_session_id,
     )
     return build_record_unique_id(doc)
 
