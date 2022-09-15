@@ -4,9 +4,11 @@ import codecs
 import io
 import csv
 import json
-from flask import url_for
+from flask import url_for, current_app
+from datetime import datetime
 
 from invenio_accounts.testutils import login_user_via_session
+
 
 # class ItemManagementBulkDelete(BaseView):
 #     def index(self):
@@ -85,7 +87,7 @@ def test_export_template(app, client, admin_view, users, item_type):
     res = client.post(url, json=data)
     assert res.get_data(as_text=True) == ""
 
-    # nomal test1
+    # normal test1
     data = {
         "item_type_id":17
     }
@@ -97,7 +99,7 @@ def test_export_template(app, client, admin_view, users, item_type):
     assert compare_csv(res.get_data(as_text=True),codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue())
 
 
-    # nomal test1
+    # normal test1
     # exist thumbnail with items
     # exist item not in form item
     # exist item in meta_system
@@ -175,3 +177,33 @@ def test_import_items(app, client, admin_view, users, db_register):
         assert data["status"] == "success"
         assert data["data"]["tasks"] is not None
         assert data["data"]["import_start_time"] is not None
+
+
+def test_download_import(app, client, admin_view, users, db_register):
+    login_user_via_session(client=client, email=users[4]['email'])
+    url = "/admin/items/import/export_import"
+
+    input = {"list_result": [
+		{
+			'No':1,
+			'Start Date':'2022-08-25 04:54:19',
+			'End Date':'2022-08-25 04:54:37',
+			'Item Id':'',
+			'Action':'End',
+			'Work Flow Status':'Done'
+		},
+		{
+			'No':2,
+			'Start Date':'2022-08-25 04:54:36',
+			'End Date':'2022-08-25 04:55:21',
+			'Item Id':'',
+			'Action':'End',
+			'Work Flow Status':'Done'
+		}]}
+    now = str(datetime.date(datetime.now()))
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+
+    res = client.post(url, json=input)
+
+    assert res.mimetype == "text/{}".format(file_format)
+    assert res.headers["Content-disposition"] == "attachment; filename=List_Download {}.{}".format(now, file_format)
