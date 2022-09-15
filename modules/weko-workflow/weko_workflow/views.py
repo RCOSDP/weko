@@ -20,6 +20,7 @@
 
 """Blueprint for weko-workflow."""
 
+from email.headerregistry import ContentTypeHeader
 import json
 import os
 import re
@@ -32,7 +33,7 @@ from functools import wraps
 
 import redis
 from redis import sentinel
-from weko_workflow.schema.marshmallow import ActivitySchema,ResponseMessageSchema
+from weko_workflow.schema.marshmallow import ActivitySchema, LockedValueSchema, ResponseMessageSchema, ResponseSchema, SaveActivitySchema,GetFeedbackMailListSchema,SaveActivityResponseSchema
 from marshmallow.exceptions import ValidationError
 
 from flask import Blueprint, abort, current_app, has_request_context, \
@@ -1761,11 +1762,42 @@ def save_feedback_maillist(activity_id='0', action_id='0'):
                  methods=['GET'])
 @login_required
 def get_feedback_maillist(activity_id='0'):
-    """Get feedback_mail's list base on Activity Identifier.
+    """アクティビティに設定されているフィードバックメール送信先の情報を取得して返す
 
-    :param activity_id: Acitivity Identifier.
-    :return: Return code and mail list in json format.
+    Args:
+       activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得. Defaults to '0'.
+    
+    Returns:
+        dict: 設定されているフィードバックメール送信先を示すjson data
+
+    Raises:
+        marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
+    ---
+    get:
+        description: "get feedback maillist"
+        security:
+            - login_required: []
+        responses:
+            200:
+                description: "success"
+                content:
+                    application/json:
+                        schema:
+                            GetFeedbackMailListSchema
+                        example: {"code":1,"msg":_('Success'),"data":mail_list}
+            500:
+                description: "arguments error"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example: {"code": -1, "msg": "arguments error"}
     """
+    try:
+        type_null_check(activity_id, str)
+    except ValueError as err:
+        res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
+        return jsonify(res.data), 500
     try:
         work_activity = WorkActivity()
         action_feedbackmail = work_activity.get_action_feedbackmail(
@@ -1774,6 +1806,8 @@ def get_feedback_maillist(activity_id='0'):
                 "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3))
         if action_feedbackmail:
             mail_list = action_feedbackmail.feedback_maillist
+            if not isinstance(mail_list, list):
+                res = ResponseMessageSchema().load({"code":-1,"msg":"mail_list is not list"})
             for mail in mail_list:
                 if mail.get('author_id'):
                     email = Authors.get_first_email_by_id(
@@ -1782,14 +1816,15 @@ def get_feedback_maillist(activity_id='0'):
                         mail['email'] = email
                     else:
                         mail_list.remove(mail)
-            return jsonify(code=1,
-                           msg=_('Success'),
-                           data=mail_list)
+            res = GetFeedbackMailListSchema().load({'code':1,'msg':_('Success'),'data':mail_list})
+            return jsonify(res.data), 200
         else:
-            return jsonify(code=0, msg=_('Empty!'))
+            res = ResponseMessageSchema().load({'code':0,'msg':''})
+            return jsonify(res.data), 200
     except Exception:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
-    return jsonify(code=-1, msg=_('Error'))
+    res = ResponseMessageSchema().load({'code':-1,'msg':_('Error')})
+    return jsonify(res.data), 500
 
 
 @blueprint.route('/activity/lock/<string:activity_id>', methods=['POST'])
@@ -1846,24 +1881,119 @@ def lock_activity(activity_id=0):
 
 @blueprint.route('/activity/unlock/<string:activity_id>', methods=['POST'])
 @login_required
-def unlock_activity(activity_id=0):
-    """Unlock activity."""
+def unlock_activity(activity_id="0"):
+    """キャッシュデータを削除することによりロックを解除する。
+
+    Args:
+        activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得. Defaults to '0'.
+
+    Returns:
+        dict: ロック解除が出来たかを示すjson data
+
+    Raises:
+        marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
+    ---
+    post:
+        description: "unlock activity"
+        security:
+            - login_required: []
+        requestBody:
+            required: false
+            content:
+                text/plain:
+                    schema:
+                        LockedValueSchema
+                    example: '{"locked_value":"1-1661748792565"}'
+        parameters:
+            - in: path
+              name: activity_id
+              description: 対象のアクティビティID
+              schema:
+                type: string
+        responses:
+            200:
+                description: "success"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example: {"code":200,"msg":"Unlock success"}
+            400:
+                description: "validation error"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example: {"code": -1,"msg":"validation error"}
+            500:
+                description: "arg error"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example: {"code": -1, "msg": "arguments error"}
+    """
+    try:
+        type_null_check(activity_id, str)
+    except ValueError as err:
+        res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
+        return jsonify(res.data), 500
     cache_key = 'workflow_locked_activity_{}'.format(activity_id)
-    data = json.loads(request.data.decode("utf-8"))
-    locked_value = str(data.get('locked_value'))
+    try:
+        data = LockedValueSchema().load(json.loads(request.data.decode("utf-8")))
+    except ValidationError as err:
+        res = ResponseMessageSchema().load({'code':-1, 'msg':str(err)})
+        return jsonify(res.data), 400
+    locked_value = str(data.data.get('locked_value'))
     msg = None
     # get lock activity from cache
     cur_locked_val = str(get_cache_data(cache_key)) or str()
     if cur_locked_val and cur_locked_val == locked_value:
         delete_cache_data(cache_key)
         msg = _('Unlock success')
-    return jsonify(code=200, msg=msg or _('Not unlock'))
+    res = ResponseMessageSchema().load({'code':200,'msg':msg or _('Not unlock')})
+    return jsonify(res.data), 200
 
 
 @blueprint.route('/check_approval/<string:activity_id>', methods=['GET'])
 @login_required
 def check_approval(activity_id='0'):
-    """Check approval."""
+    """アクティビティに対して承認の確認が必要であるかの判定をして、その結果を返す
+    
+    Args:
+        activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得. Defaults to '0'.
+
+    Returns:
+        dict: 承認の確認が必要かの判定結果を示すjson data
+
+    Raises:
+        marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
+    ---
+    get:
+        description: "check approval"
+        security:
+            - login_required: []
+        responses: 
+            200:
+                description: "success"
+                content:
+                    application/json:
+                        schema:
+                            CheckApprovalSchema        
+                        example: {"check_handle": -1, "check_continue": -1, "error": 1 }
+            500:
+                description: "arguments error"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example: {"code": -1, "msg": "arguments error"}
+    """
+    try:
+        type_null_check(activity_id, str)
+    except ValueError as err:
+        res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
+        return jsonify(res.data), 500
     response = {
         'check_handle': -1,
         'check_continue': -1,
@@ -1874,7 +2004,8 @@ def check_approval(activity_id='0'):
     except Exception:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         response['error'] = -1
-    return jsonify(response)
+    res = CheckApprovalSchema().load(response)
+    return jsonify(res.data), 200
 
 
 @blueprint.route('/send_mail/<string:activity_id>/<string:mail_template>',
@@ -1900,22 +2031,57 @@ def send_mail(activity_id='0', mail_template=''):
 @blueprint.route('/save_activity_data', methods=['POST'])
 @login_required_customize
 def save_activity():
-    """Save activity.
+    """アイテムデータの新規登録、編集の完了後にアイテムデータの更新をする
 
-    @return:
+    Returns:
+        dict: アイテムデータの更新が成功したか示すjson data
+    
+    Raises:
+        marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
+    ---
+    post:
+        description: "save activity"
+        security:
+            - login_required_customize: []
+        requestBody:
+            required: false
+            content:
+                application/json:
+                    schema:
+                        SaveActivitySchema   
+                    example: {"activity_id": "A-20220830-00001", "title": "title", "shared_user_id": -1} 
+        responses:
+            200:
+                description: "success"
+                content:
+                    application/json:
+                        schema:
+                            SaveActivityResponseSchema
+                        example: {"success": True, "msg": ""}
+            400:
+                description: "arguments error"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example: {"code": -1,"msg":"arguments error"}
     """
     response = {
         "success": True,
         "msg": ""
     }
     try:
-        data = request.get_json()
-        save_activity_data(data)
+        try:
+            data = SaveActivitySchema().load(request.get_json())
+        except ValidationError as err:
+            res = ResponseMessageSchema().load({'code':-1, 'msg':"arguments error"})
+            return jsonify(res.data), 400
+        save_activity_data(data.data)
     except Exception as error:
         response['success'] = False
         response["msg"] = str(error)
-
-    return jsonify(response), 200
+    res = SaveActivityResponseSchema().load(response)
+    return jsonify(res.data), 200
 
 
 @blueprint.route('/usage-report', methods=['GET'])
