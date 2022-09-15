@@ -49,11 +49,12 @@ def type_null_check(target, type):
         target (object): 対象オブジェクト
         type (type): 型
         
-    Returns:
+    Returns: 
+        bool: Noneでなく、targetの方がtypeである場合True,それ以外の場合False
 
     """
     
-    if not isinstance(target, type) or \
-        target == None:
+    if target == None or \
+        not isinstance(target, type):
         return False
     return True 

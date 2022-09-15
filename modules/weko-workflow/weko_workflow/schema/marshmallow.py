@@ -26,7 +26,7 @@ class NextSchema(ActionSchema):
     temporary_save = fields.Integer(allow_none=True)
 
 class NextItemLinkSchema(NextSchema):
-    link_data = fields.List(fields.Dict(),required=True)
+    link_data = fields.List(fields.Dict(),allow_none=True)
 
 class NextIdentifierSchema(NextSchema):
     identifier_grant = fields.String(required=True)
@@ -38,7 +38,9 @@ class NextIdentifierSchema(NextSchema):
     identifier_grant_jalc_dc_doi_link = fields.String(required=True)
     identifier_grant_ndl_jalc_doi_suffix = fields.String(allow_none=True)
     identifier_grant_ndl_jalc_doi_link = fields.String(required=True)
-    
+
+class NextOAPolicySchema(NextSchema):
+    journal = fields.Dict(allow_none=True)
 class ResponseSchema(Schema):
     code = fields.Integer(required=True, validate=Range(min=-2, max=0))
     msg = fields.String(required=True)
@@ -51,7 +53,9 @@ class ResponseErrorSchema(ResponseSchema):
     err = fields.String(allow_none=True)
 
 
-class ResponseLockSchema(ResponseErrorSchema):
+class ResponseLockSchema(Schema):
+    code = fields.Integer(required=True)
+    msg = fields.String()
     locked_value = fields.String()
     locked_by_email = fields.Email(allow_none=True)
     locked_by_username = fields.String(allow_none=True)
