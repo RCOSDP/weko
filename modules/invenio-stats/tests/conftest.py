@@ -232,6 +232,9 @@ def base_app(instance_path, mock_gethostbyaddr):
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
         CELERY_TASK_EAGER_PROPAGATES=True,
         CELERY_RESULT_BACKEND='cache',
+        CACHE_REDIS_URL="redis://redis:6379/0",
+        CACHE_REDIS_DB=0,
+        CACHE_REDIS_HOST="redis",
         QUEUES_BROKER_URL="amqp://guest:guest@rabbitmq:5672//",
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite://'),
@@ -244,7 +247,7 @@ def base_app(instance_path, mock_gethostbyaddr):
         OAUTH2SERVER_CLIENT_SECRET_SALT_LEN=60,
         OAUTH2SERVER_TOKEN_PERSONAL_SALT_LEN=60,
         OAUTH2_CACHE_TYPE="simple",
-        SEARCH_INDEX_PREFIX='test',
+        SEARCH_INDEX_PREFIX='test'
         STATS_MQ_EXCHANGE=Exchange(
             'test_events',
             type='direct',
@@ -341,14 +344,14 @@ def es(app):
     Don't create template so that the test or another fixture can modify the
     enabled events.
     """
-    current_search_client.indices.delete(index='*')
-    current_search_client.indices.delete_template('*')
+    current_search_client.indices.delete(index='test-*')
+    current_search_client.indices.delete_template('test-*')
     list(current_search.create())
     try:
         yield current_search_client
     finally:
-        current_search_client.indices.delete(index='*')
-        current_search_client.indices.delete_template('*')
+        current_search_client.indices.delete(index='test-*')
+        current_search_client.indices.delete_template('test-*')
 
 
 @pytest.yield_fixture()
@@ -592,7 +595,7 @@ def generate_events(app, file_number=5, event_number=100, robot_event_number=0,
         ],
         double_click_window=0
     ).run()
-    current_search_client.indices.refresh(index='*')
+    current_search_client.indices.refresh(index='test-*')
 
 
 @pytest.yield_fixture()
@@ -609,7 +612,7 @@ def aggregated_events(app, es, mock_user_ctx, request):
         pass
     generate_events(app=app, **request.param)
     aggregate_events(['file-download-agg'])
-    current_search_client.indices.flush(index='*')
+    current_search_client.indices.flush(index='test-*')
     yield
 
 
