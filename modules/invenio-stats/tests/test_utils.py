@@ -8,6 +8,7 @@
 
 """Test utility functions."""
 
+from tkinter import W
 import pytest
 
 from mock import patch
@@ -140,18 +141,138 @@ def test_is_valid_access(app):
 #     def get(cls, **kwargs):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_file_reports_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_query_file_reports_helper(app):
-    res = QueryFileReportsHelper.get(year='2022', month='10', event='file_download')
-    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
-    res = QueryFileReportsHelper.get(year='2022', month='10', event='billing_file_download')
-    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
-    res = QueryFileReportsHelper.get(year='2022', month='10', event='file_using_per_user')
-    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
-    res = QueryFileReportsHelper.get(year='2022', month='10', event='test')
+    # calc_per_group_counts
+    res = QueryFileReportsHelper.calc_per_group_counts('test1, test1, test2', {}, 1)
+    assert res=={'test1': 2, 'test2': 1}
+
+    # Calculation
+    _res = {
+        'buckets': [
+            {
+                'file_key': 'test1.pdf',
+                'index_list': 'index1',
+                'count': 1,
+                'site_license_flag': 1,
+                'userrole': 'guest',
+                'user_group_names': 'test1, test2'
+            },
+            {
+                'file_key': 'test2.pdf',
+                'index_list': 'index2',
+                'count': 2,
+                'site_license_flag': 0,
+                'userrole': 'Contributor',
+                'user_group_names': 'test2, test3'
+            },
+            {
+                'file_key': 'test3.pdf',
+                'index_list': 'index3',
+                'count': 3,
+                'site_license_flag': 0,
+                'userrole': 'System Administrator',
+                'user_group_names': 'test3'
+            }
+        ]
+    }
+    _data_list = []
+    _all_group = set()
+    QueryFileReportsHelper.Calculation(_res, _data_list, _all_group)
+    assert _data_list==[
+        {'admin': 0, 'file_key': 'test1.pdf', 'group_counts': {'test1': 1, 'test2': 1}, 'index_list': 'index1', 'login': 0, 'no_login': 1, 'reg': 0, 'site_license': 1, 'total': 1},
+        {'admin': 0, 'file_key': 'test2.pdf', 'group_counts': {'test2': 2, 'test3': 2}, 'index_list': 'index2', 'login': 2, 'no_login': 0, 'reg': 2, 'site_license': 0, 'total': 2},
+        {'admin': 3, 'file_key': 'test3.pdf', 'group_counts': {'test3': 3}, 'index_list': 'index3', 'login': 3, 'no_login': 0, 'reg': 0, 'site_license': 0, 'total': 3}]
+    assert _all_group=={'test3', 'test1', 'test2'}
+
+    _res = {
+        'get-file-download-per-user-report': {
+            'buckets': [
+                {
+                    'cur_user_id': 1,
+                    'count': 2
+                },
+                {
+                    'cur_user_id': 2,
+                    'count': 3
+                },
+                {
+                    'cur_user_id': 3,
+                    'count': 4
+                }
+            ]
+        },
+        'get-file-preview-per-user-report': {
+            'buckets': [
+                {
+                    'cur_user_id': 1,
+                    'count': 5
+                },
+                {
+                    'cur_user_id': 4,
+                    'count': 1
+                }
+            ]
+        }
+    }
+    _data_list = {}
+    QueryFileReportsHelper.Calculation(_res, _data_list)
+    assert _data_list=={
+        1: {'cur_user_id': 1, 'total_download': 2, 'total_preview': 5},
+        2: {'cur_user_id': 2, 'total_download': 3},
+        3: {'cur_user_id': 3, 'total_download': 4},
+        4: {'cur_user_id': 4, 'total_preview': 1}}
+
+    # get_file_stats_report
+    res = QueryFileReportsHelper.get_file_stats_report(event='file_downlaod', year=2022, month=10)   
+    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+    res = QueryFileReportsHelper.get_file_stats_report(event='file_preview', year=2022, month=10)
+    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+    res = QueryFileReportsHelper.get_file_stats_report(event='billing_file_download', year=2022, month=10) 
+    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+
+    # get_file_per_using_report
+    res = QueryFileReportsHelper.get_file_per_using_report(year=2022, month=10)
+    assert res=={'all': {}, 'date': '2022-10'}
+
+    # get
+    res = QueryFileReportsHelper.get(year=2022, month=10, event='file_download')
+    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+    res = QueryFileReportsHelper.get(year=2022, month=10, event='billing_file_download')
+    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+    res = QueryFileReportsHelper.get(year=2022, month=10, event='file_using_per_user')
+    assert res=={'all': {}, 'date': '2022-10'}
+    res = QueryFileReportsHelper.get(year=2022, month=10, event='test')
     assert res==[]
+
 
 # class QuerySearchReportHelper(object):
 #     def parse_bucket_response(cls, raw_res, pretty_result):
 #     def get(cls, **kwargs):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_search_report_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_query_search_report_helper(app):
+    # parse_bucket_response
+    _raw_res = {
+        'field': 'name1',
+        'buckets': [
+            {
+                'key': 3,
+                'field': 'name2',
+                'buckets': [
+                    {
+                        'key': 2
+                    }
+                ]
+            }
+        ]
+    }
+    res = QuerySearchReportHelper.parse_bucket_response(_raw_res, {})
+    assert res=={'name1': 3, 'name2': 2}
+
+    # get
+    res = QuerySearchReportHelper.get(
+        year=2022, month=10, start_date='2022-10-01', end_date='2022-10-31')
+    assert res=={'all': []}
+
+
 # class QueryCommonReportsHelper(object):
 #     def get_common_params(cls, **kwargs):
 #     def get(cls, **kwargs):
@@ -161,15 +282,102 @@ def test_query_file_reports_helper(app):
 #         def Calculation(query_list, res, site_license_list, other_list,
 #     def get_item_create_ranking(cls, **kwargs):
 #         def Calculation(res, result):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_common_reports_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_query_common_reports_helper(app):
+    # get_common_params
+    res = QueryCommonReportsHelper.get_common_params(
+        year=2022, month=10, start_date='2022-10-01', end_date='2022-10-10')
+    assert res==('2022-10-01-2022-10-10', {'agg_size': 0, 'agg_sort': {'_term': 'desc'}, 'end_date': '2022-10-10T23:59:59', 'start_date': '2022-10-01'})
+    res = QueryCommonReportsHelper.get_common_params(year=2022, month=10)
+    assert res==('2022-10', {'end_date': '2022-10-31T23:59:59', 'start_date': '2022-10-01'})
+    res = QueryCommonReportsHelper.get_common_params(year=2022, month=-1)
+    assert res==('all', {'interval': 'day'})
+
+    # get
+    res = QueryCommonReportsHelper.get(event='top_page_access')
+    assert res=={'all': {}, 'date': ''}
+    res = QueryCommonReportsHelper.get(event='site_access')
+    assert res=={'date': '', 'institution_name': [], 'other': [{}], 'site_license': [{}]}
+    res = QueryCommonReportsHelper.get(event='item_create')
+    assert res=={'all': [], 'date': ''}
+    res = QueryCommonReportsHelper.get(event='')
+    assert res==[]
+
+
 # class QueryRecordViewPerIndexReportHelper(object):
 #     def build_query(cls, start_date, end_date, after_key=None):
 #     def parse_bucket_response(cls, aggs, result):
 #     def get(cls, **kwargs):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_record_view_per_index_report_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_query_record_view_per_index_report_helper(app):
+    # parse_bucket_response
+    _aggs = {
+        'my_buckets': {
+            'buckets': [
+                {
+                    'key': {
+                        'record_index_list.index_name': 'name1'
+                    },
+                    'doc_count': 2
+                },
+                {
+                    'key': {
+                        'record_index_list.index_name': 'name2'
+                    },
+                    'doc_count': 3
+                }
+                ,
+                {
+                    'key': {
+                        'record_index_list.index_name': 'name1'
+                    },
+                    'doc_count': 4
+                }
+            ]
+        }
+    }
+    _result = {'all': []}
+    res = QueryRecordViewPerIndexReportHelper.parse_bucket_response(_aggs, _result)
+    assert res==9
+    assert _result=={'all': [{'index_name': 'name1', 'view_count': 2}, {'index_name': 'name2', 'view_count': 3}, {'index_name': 'name1', 'view_count': 4}]}
+
+    # get
+    res = QueryRecordViewPerIndexReportHelper.get(year=2022, month=10)
+    assert res=={}
+
+
 # class QueryRecordViewReportHelper(object):
 #     def Calculation(cls, res, data_list):
 #     def get_title(cls, lst_id):
 #     def correct_record_title(cls, lst_data):
 #     def get(cls, **kwargs):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_record_view_report_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_record_view_report_helper(app, db):
+    # Calculation
+    _res = {
+        'buckets': [
+            {
+                'record_id': 1,
+                'record_name': 'test name1',
+                'record_index_names': 'test index1',
+                'count': 2,
+                'pid_value': 1,
+                'cur_user_id': 1
+            },
+            {
+                'record_id': 2,
+                'record_name': 'test name2',
+                'record_index_names': 'test index1',
+                'count': 1,
+                'pid_value': 2,
+                'cur_user_id': 1
+            }
+        ]
+    }
+    _data_list = []
+    QueryRecordViewReportHelper.Calculation(_res, _data_list)
+    assert _data_list==None
+
 # class QueryItemRegReportHelper(object):
 #     def get(cls, **kwargs):
 #     def merge_items_results(cls, results):

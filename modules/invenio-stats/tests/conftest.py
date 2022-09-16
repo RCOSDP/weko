@@ -30,7 +30,7 @@ import invenio_oauth2server.views.server  # noqa
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import response, Search
 from sqlalchemy_utils.functions import create_database, database_exists
-from kombu import Exchange
+from kombu import Exchange, Queue
 from flask import Flask, appcontext_pushed, g
 from flask.cli import ScriptInfo
 from flask_celeryext import FlaskCeleryExt
@@ -44,6 +44,7 @@ from invenio_db import db as db_
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Bucket, Location, ObjectVersion
 from invenio_marc21 import InvenioMARC21
+from invenio_indexer import InvenioIndexer
 from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
 from invenio_oauth2server.models import Token
 from invenio_pidstore import InvenioPIDStore
@@ -58,6 +59,7 @@ from invenio_stats import InvenioStats
 from invenio_stats.contrib.event_builders import build_file_unique_id, \
     build_record_unique_id, file_download_event_builder
 from invenio_stats.contrib.registrations import register_queries
+from invenio_stats.config import STATS_EVENTS, STATS_AGGREGATIONS, STATS_QUERIES
 from invenio_stats.processors import EventsIndexer
 from invenio_stats.tasks import aggregate_events
 from invenio_stats.views import blueprint
@@ -214,7 +216,6 @@ def instance_path():
 @pytest.fixture()
 def base_app(instance_path, mock_gethostbyaddr):
     """Flask application fixture without InvenioStats."""
-    from invenio_stats.config import STATS_EVENTS
     app_ = Flask('testapp', instance_path=instance_path)
     stats_events = {
         'file-download': deepcopy(STATS_EVENTS['file-download']),
@@ -247,7 +248,7 @@ def base_app(instance_path, mock_gethostbyaddr):
         OAUTH2SERVER_CLIENT_SECRET_SALT_LEN=60,
         OAUTH2SERVER_TOKEN_PERSONAL_SALT_LEN=60,
         OAUTH2_CACHE_TYPE="simple",
-        SEARCH_INDEX_PREFIX='test'
+        SEARCH_INDEX_PREFIX='test-',
         STATS_MQ_EXCHANGE=Exchange(
             'test_events',
             type='direct',
@@ -256,12 +257,16 @@ def base_app(instance_path, mock_gethostbyaddr):
         ),
         SECRET_KEY='asecretkey',
         SERVER_NAME='localhost',
-        STATS_QUERIES={'bucket-file-download-histogram': {},
-                       'bucket-file-download-total': {},
-                       'test-query': {},
-                       'test-query2': {}},
+        STATS_QUERIES={
+            'get-file-download-per-user-report': {},
+            'get-file-preview-per-user-report': {},
+            'bucket-file-download-histogram': {},
+            'bucket-file-download-total': {},
+            'test-query': {},
+            'test-query2': {}},
         STATS_EVENTS=stats_events,
-        STATS_AGGREGATIONS={'file-download-agg': {}}
+        STATS_AGGREGATIONS={'file-download-agg': {}},
+        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"})
     ))
     FlaskCeleryExt(app_)
     InvenioAccess(app_)
@@ -273,6 +278,7 @@ def base_app(instance_path, mock_gethostbyaddr):
     InvenioPIDStore(app_)
     InvenioCache(app_)
     InvenioQueues(app_)
+    InvenioIndexer(app_)
     InvenioOAuth2Server(app_)
     InvenioOAuth2ServerREST(app_)
     InvenioMARC21(app_)
@@ -344,14 +350,35 @@ def es(app):
     Don't create template so that the test or another fixture can modify the
     enabled events.
     """
+    with open("invenio_stats/contrib/file_download/v6/file-download-v1.json", "r") as f:
+        file_download_mapping = json.load(f)
+    with open("invenio_stats/contrib/record_view/v6/record-view-v1.json", "r") as f:
+        record_view_mapping = json.load(f)
+    with open("invenio_stats/contrib/aggregations/aggr_file_download/v6/aggr-file-download-v1.json", "r") as f:
+        aggr_file_download_mapping = json.load(f)
+    with open("invenio_stats/contrib/aggregations/aggr_record_view/v6/aggr-record-view-v1.json", "r") as f:
+        aggr_record_view_mapping = json.load(f)
     current_search_client.indices.delete(index='test-*')
-    current_search_client.indices.delete_template('test-*')
-    list(current_search.create())
+    current_search_client.indices.create(
+        index='{}events-stats-file-download-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
+        body=file_download_mapping, ignore=[400, 404]
+    )
+    current_search_client.indices.create(
+        index='{}events-stats-record-view-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
+        body=record_view_mapping, ignore=[400, 404]
+    )
+    current_search_client.indices.create(
+        index='{}stats-file-download-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
+        body=aggr_record_view_mapping, ignore=[400, 404]
+    )
+    current_search_client.indices.create(
+        index='{}stats-record-view-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
+        body=record_view_mapping, ignore=[400, 404]
+    )
     try:
         yield current_search_client
     finally:
         current_search_client.indices.delete(index='test-*')
-        current_search_client.indices.delete_template('test-*')
 
 
 @pytest.yield_fixture()
