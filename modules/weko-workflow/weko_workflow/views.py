@@ -1058,6 +1058,7 @@ def next_action(activity_id='0', action_id=0):
     activity_detail = work_activity.get_activity_detail(activity_id)
     action_order = activity_detail.action_order
     post_json = request.get_json()
+    print("post_json:{}".format(post_json))
     # A-20220808-00001
     # A-20220808-00001
     # A-20220808-00001
@@ -1097,16 +1098,20 @@ def next_action(activity_id='0', action_id=0):
     deposit = None
     pid_without_ver = None
     current_pid = None
+    print("activity_detail:{a},item_id:{b}".format(a=activity_detail,b=activity_detail.item_id))
     if activity_detail and activity_detail.item_id:
         item_id = activity_detail.item_id
         current_pid = PersistentIdentifier.get_by_object(pid_type='recid',
                                                          object_type='rec',
                                                          object_uuid=item_id)
+        print("current_pid:{a},pid:{b}".format(a=current_pid,b=current_pid.pid_value))
         recid = get_record_identifier(current_pid.pid_value)
+        print("recid:{}".format(recid))
         deposit = WekoDeposit.get_record(item_id)
+        print("deposit:{}".format(deposit))
         if deposit:
             pid_without_ver = get_record_without_version(current_pid)
-
+    print("without_ver:{}".format(pid_without_ver))
     current_app.logger.debug("action_endpoint: {0}, current_pid: {1}, item_id: {2}".format(
         action_endpoint, current_pid, pid_without_ver.pid_value))
     record = WekoRecord.get_record_by_pid(pid_without_ver.pid_value)
@@ -1309,7 +1314,9 @@ def next_action(activity_id='0', action_id=0):
                 _old_idt = IdentifierHandle(pid_without_ver.object_uuid)
                 _new_idt = IdentifierHandle(item_id)
                 _old_v, _old_t = _old_idt.get_idt_registration_data()
+                print("old_v:{a},old_t:{b}".format(a=_old_v,b=_old_t))
                 _new_v, _new_t = _new_idt.get_idt_registration_data()
+                print("new_v:{a},new_t:{b}".format(a=_new_v,b=_new_t))
                 if not _old_v:
                     _new_idt.remove_idt_registration_metadata()
                 elif _old_v != _new_v:
@@ -1319,6 +1326,7 @@ def next_action(activity_id='0', action_id=0):
             else:
                 _identifier = IdentifierHandle(item_id)
                 _value, _type = _identifier.get_idt_registration_data()
+                
                 if _value:
                     _identifier.remove_idt_registration_metadata()
         else:
@@ -1341,7 +1349,9 @@ def next_action(activity_id='0', action_id=0):
                                     int(identifier_select), False, True)
     elif 'identifier_grant' == action_endpoint \
             and not post_json.get('temporary_save'):
+        print("ini")
         _value, _type = IdentifierHandle(item_id).get_idt_registration_data()
+        print("_value:{a},_type:{b}".format(a=_value,b=_type))
         if _value and _type:
             error_list = check_doi_validation_not_pass(
                 item_id, activity_id, IDENTIFIER_GRANT_SELECT_DICT[_type[0]],
@@ -1409,6 +1419,7 @@ def next_action(activity_id='0', action_id=0):
                         item_title=activity_detail.title
                     )
             except BaseException:
+                print("in error signal")
                 abort(500, 'MAPPING_ERROR')
         else:
             flag = work_activity.upt_activity_action(

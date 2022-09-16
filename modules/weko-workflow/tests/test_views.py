@@ -23,7 +23,8 @@ import threading
 from unittest.mock import MagicMock
 import pytest
 from mock import patch
-from flask import Flask, json, jsonify, url_for, session
+from flask import Flask, json, jsonify, url_for, session,make_response
+from flask_babelex import gettext as _
 from invenio_db import db
 from sqlalchemy import func
 from datetime import datetime
@@ -542,9 +543,17 @@ def response_data(response):
     #(5, 200),
     #(6, 200),
 ])
-def test_next_action(client, users, db_register_fullaction, db_records, users_index, status_code):
+def test_next_action(client, db, users, db_register_fullaction, db_records, users_index, status_code, mocker):
+    def update_activity_order(activity_id, action_id, action_order):
+        with db.session.begin_nested():
+            activity=Activity.query.filter_by(activity_id=activity_id).one_or_none()
+            activity.action_id=action_id
+            activity.action_order=action_order
+            db.session.merge(activity)
+        db.session.commit()
     login(client=client, email=users[users_index]["email"])
-    
+    mocker.patch("weko_workflow.views.IdentifierHandle.remove_idt_registration_metadata",return_value=None)
+    mocker.patch("weko_workflow.views.IdentifierHandle.update_idt_registration_metadata",return_value=None)
     # action: start
     input = {}
     url = url_for("weko_workflow.next_action",
@@ -556,6 +565,7 @@ def test_next_action(client, users, db_register_fullaction, db_records, users_in
     assert data["msg"] == "success"
     
     # action: end
+    update_activity_order("2",2,7)
     url = url_for("weko_workflow.next_action",
                   activity_id="2", action_id=2)
     res = client.post(url, json=input)
@@ -565,23 +575,64 @@ def test_next_action(client, users, db_register_fullaction, db_records, users_in
     assert data["msg"] == "success"
     
     # action: item register
-    input = {"temporary_save":0}
+    
+    ## template_save = 1
+    ### not in journal
+    update_activity_order("2",3,2)
+    input = {"temporary_save":1}
+    url = url_for("weko_workflow.next_action",
+                  activity_id="2", action_id=3)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    assert res.status_code == 200
+    assert data["code"] == 0
+    assert data["msg"] == "success"
+    
+    # action: oa policy
+    ## temporary_save = 1
+    ### in journal
+    update_activity_order("2",6,3)
+    input = {"temporary_save":1,
+             "journal":{"issn":"test issn"}}
+    url = url_for("weko_workflow.next_action",
+                  activity_id="2", action_id=6)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    assert res.status_code == 200
+    assert data["code"] == 0
+    assert data["msg"] == "success"
+    
+    ## temporary_save = 0
+    update_activity_order("2",6,3)
+    input = {"temporary_save":0,
+             "journal":{"issn":"test issn"}}
+    url = url_for("weko_workflow.next_action",
+                  activity_id="2", action_id=6)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    assert res.status_code == 200
+    assert data["code"] == 0
+    assert data["msg"] == "success"
     
     # action: item link
     ## temporary_save = 0
     ### exist pid_without_ver, exist link_data
+    update_activity_order("2",5,4)
     input = {
         "temporary_save":0,
         "link_data":[
-            {"item_id":"1","item_title":"test item1","sale_id":"relateTo"}
+            {"item_id":"1","item_title":"test item1","sele_id":"relateTo"}
         ]
     }
+    url = url_for("weko_workflow.next_action",
+                  activity_id="2", action_id=5)
     res = client.post(url, json=input)
     data = response_data(res)
     assert res.status_code == status_code
     assert data["code"] == 0
     assert data["msg"] == "success"
     ####x raise except
+    update_activity_order("2",5,4)
     err_msg = "test update error"
     with patch("weko_workflow.views.ItemLink.update",return_value=err_msg):
         res = client.post(url, json=input)
@@ -590,11 +641,10 @@ def test_next_action(client, users, db_register_fullaction, db_records, users_in
         assert data["code"] == -1
         assert data["msg"] == err_msg
     ## temporary_save = 1
+    update_activity_order("2",5,4)
     input = {
         "temporary_save":1,
-        "link_data":[
-            {"item_id":"1","item_title":"test item1","sale_id":"relateTo"}
-        ]
+        "link_data":[]
     }
     res = client.post(url, json=input)
     data = response_data(res)
@@ -605,13 +655,17 @@ def test_next_action(client, users, db_register_fullaction, db_records, users_in
     # action: identifier grant
     ## exist identifier_select
     ###x temporary_save = 1
+    update_activity_order("2",7,5)
     input = {
         "temporary_save":1,
+        "identifier_grant":"1",
         "identifier_grant_jalc_doi_suffix":"",
         "identifier_grant_jalc_cr_doi_suffix":"",
         "identifier_grant_jalc_dc_doi_suffix":"",
         "identifier_grant_ndl_jalc_doi_suffix":""
     }
+    url = url_for("weko_workflow.next_action",
+            activity_id="2", action_id=7)
     res = client.post(url, json=input)
     data = response_data(res)
     assert res.status_code == status_code
@@ -627,6 +681,12 @@ def test_next_action(client, users, db_register_fullaction, db_records, users_in
         "identifier_grant_jalc_dc_doi_suffix":"",
         "identifier_grant_ndl_jalc_doi_suffix":""
     }
+    update_activity_order("2",7,5)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    assert res.status_code == status_code
+    assert data["code"] == 0
+    assert data["msg"] == "success"
     ##### item_id != pid_without_ver(item_idにバージョンがある)
     ###### not _old_v
     ###### _old_v & _old_v != _new_v
@@ -636,8 +696,43 @@ def test_next_action(client, users, db_register_fullaction, db_records, users_in
     ###### not _value
     #### select not Not_Grant
     #####x error_list is str
+    input = {
+        "temporary_save":0,
+        "identifier_grant":"1",
+        "identifier_grant_jalc_doi_suffix":"",
+        "identifier_grant_jalc_cr_doi_suffix":"",
+        "identifier_grant_jalc_dc_doi_suffix":"",
+        "identifier_grant_ndl_jalc_doi_suffix":""
+    }
+    test_msg = _('Cannot register selected DOI for current Item Type of this '
+                 'item.')
+    with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=test_msg):
+        update_activity_order("2",7,5)
+        res = client.post(url,json=input)
+        data = response_data(res)
+        assert res.status_code == status_code
+        assert data["code"] == -1
+        assert data["msg"] == test_msg
+        
     #####x error_list
+    mock_previous_action = mocker.patch("weko_workflow.views.previous_action",return_value=make_response())
+    with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=True):
+        update_activity_order("2",7,5)
+        res = client.post(url,json=input)
+        assert res.status_code == status_code
+        mock_previous_action.assert_called_with(
+            activity_id="2",
+            action_id=7,
+            req=-1
+        )
     ##### error_list is not str and error_list=False
+    with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=False):
+        update_activity_order("2",7,5)
+        res = client.post(url, json=input)
+        data = response_data(res)
+        assert res.status_code == status_code
+        assert data["code"] == 0
+        assert data["msg"] == "success"
     ###### item_id
     ####### deposit and pid_without_ver and not recid
     ####### not (deposit and pid_without_ver and not recid)
@@ -646,13 +741,49 @@ def test_next_action(client, users, db_register_fullaction, db_records, users_in
 
     
     ## not exist identifier_select & not temporary_save
+    input = {
+        "temporary_save":0,
+        "identifier_grant_jalc_doi_suffix":"",
+        "identifier_grant_jalc_cr_doi_suffix":"",
+        "identifier_grant_jalc_dc_doi_suffix":"",
+        "identifier_grant_ndl_jalc_doi_suffix":""
+    }
     ### _value and _type
     ####x error_list is str
+    with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=test_msg):
+        update_activity_order("2",7,5)
+        res = client.post(url, json=input)
+        data = response_data(res)
+        assert res.status_code == status_code
+        assert data["code"] ==-1
+        assert data["msg"] == test_msg
     ####x error_list is not str & error_list = True
+    with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=True):
+        update_activity_order("2",7,5)
+        res = client.post(url, json=input)
+        assert res.status_code == status_code
+        mock_previous_action.assert_called_with(
+            activity_id="2",
+            action_id=7,
+            req=-1
+        )
     #### error_list is not str & error_list = False
+    with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=False):
+        update_activity_order("2",7,5)
+        res = client.post(url, json=input)
+        data = response_data(res)
+        assert res.status_code == status_code
+        assert data["code"] == 0
+        assert data["msg"] == "success"
     ### not (_value and _type)
-    
-    
+    url = url_for("weko_workflow.next_action",
+                  activity_id="3", action_id=7)
+    update_activity_order("3",7,5)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    assert res.status_code == status_code
+    assert data["code"]==0
+    assert data["msg"] == "success"
     #x not rtn
     
     # rnt

@@ -57,6 +57,8 @@ from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime 
 from weko_admin.views import blueprint as weko_admin_blueprint
 from weko_records.models import ItemTypeName, ItemType
+from weko_records.api import Mapping
+from weko_user_profiles import WekoUserProfiles
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction
 from weko_workflow.views import blueprint as weko_workflow_blueprint
@@ -299,7 +301,11 @@ def base_app(instance_path):
         WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE="",
         WEKO_ITEMS_UI_MULTIPLE_APPROVALS=True,
         WEKO_THEME_DEFAULT_COMMUNITY="Root Index",
-        DEPOSIT_DEFAULT_STORAGE_CLASS = 'S'
+        DEPOSIT_DEFAULT_STORAGE_CLASS = 'S',
+        WEKO_USERPROFILES_ROLES=[
+            'Administrator','General','Graduated Student','Student'
+        ],
+        WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST = []
     )
     app_.testing = True
     Babel(app_)
@@ -517,12 +523,16 @@ def item_type(db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
     item_type = ItemType(name_id=1,harvesting_type=True,
-                         schema={'type':'test schema'},
-                         form={'type':'test form'},
-                         render={'type':'test render'},
+                         schema=json_data("data/item_type/15_schema.json"),
+                         form=json_data("data/item_type/15_form.json"),
+                         render=json_data("data/item_type/15_render.json"),
                          tag=1,version_id=1,is_deleted=False)
     with db.session.begin_nested():
         db.session.add(item_type)
+    mappin = Mapping.create(
+        item_type.id,
+        mapping = json_data("data/item_type/item_type_mapping.json")
+    )
     return item_type
 
 @pytest.fixture()
@@ -629,7 +639,7 @@ def db_records(db, location):
     result = []
     for d in range(record_num):
         result.append(create_record(record_data[d], item_data[d]))
-    db.session.commit()
+        db.session.commit()
     
     yield result
 
@@ -661,8 +671,9 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
     with db.session.begin_nested():
         db.session.add(flow_define)
     
-    # setting flow action(start, item register, item link, identifier grant, approval, end)
+    # setting flow action(start, item register, oa policy, item link, identifier grant, approval, end)
     flow_actions = list()
+    # start
     flow_actions.append(FlowAction(status='N',
                      flow_id=flow_define.flow_id,
                      action_id=1,
@@ -672,6 +683,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={}))
+    # item register
     flow_actions.append(FlowAction(status='N',
                      flow_id=flow_define.flow_id,
                      action_id=3,
@@ -681,38 +693,52 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={}))
+    # oa policy 
     flow_actions.append(FlowAction(status='N',
                      flow_id=flow_define.flow_id,
-                     action_id=5,
+                     action_id=6,
                      action_version='1.0.0',
                      action_order=3,
                      action_condition='',
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={}))
+    # item link
     flow_actions.append(FlowAction(status='N',
                      flow_id=flow_define.flow_id,
-                     action_id=7,
+                     action_id=5,
                      action_version='1.0.0',
                      action_order=4,
                      action_condition='',
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={}))
+    # identifier grant
     flow_actions.append(FlowAction(status='N',
                      flow_id=flow_define.flow_id,
-                     action_id=4,
+                     action_id=7,
                      action_version='1.0.0',
                      action_order=5,
                      action_condition='',
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={}))
+    # approval
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=4,
+                     action_version='1.0.0',
+                     action_order=6,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # end
     flow_actions.append(FlowAction(status='N',
                      flow_id=flow_define.flow_id,
                      action_id=2,
                      action_version='1.0.0',
-                     action_order=6,
+                     action_order=7,
                      action_condition='',
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
@@ -739,7 +765,16 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                 title='test', shared_user_id=-1, extra_info={},
                 action_order=1,
                 )
-    activity_item1 = Activity(activity_id='2',item_id=db_records[0][2].id,workflow_id=1, flow_id=flow_define.id,
+    activity_item1 = Activity(activity_id='2',item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item1', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    activity_item2 = Activity(activity_id='3',item_id=db_records[2][2].id,workflow_id=1, flow_id=flow_define.id,
                     action_id=1, activity_login_user=users[3]["id"],
                     activity_update_user=1,
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
@@ -752,6 +787,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
         db.session.add(workflow)
         db.session.add(activity)
         db.session.add(activity_item1)
+        db.session.add(activity_item2)
     
     # setting activity_action in activity existed item
     for flow_action in flow_actions:
@@ -760,6 +796,17 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
             if not action.action_endpoint == 'approval' else -1
         activity_action = ActivityAction(
             activity_id=activity_item1.activity_id,
+            action_id=flow_action.action_id,
+            action_status="F",
+            action_handler=action_handler,
+            action_order=flow_action.action_order
+        )
+        db.session.add(activity_action)
+        
+        action_handler = activity_item2.activity_login_user \
+            if not action.action_endpoint == "approval" else -1
+        activity_action = ActivityAction(
+            activity_id=activity_item2.activity_id,
             action_id=flow_action.action_id,
             action_status="F",
             action_handler=action_handler,
