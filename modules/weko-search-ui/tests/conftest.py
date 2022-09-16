@@ -213,6 +213,7 @@ def base_app(instance_path):
         WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS = False,
         WEKO_ADMIN_MANAGEMENT_OPTIONS=WEKO_ADMIN_MANAGEMENT_OPTIONS,
         WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS=WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS,
+        WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info',
         WEKO_RECORDS_UI_LICENSE_DICT=[
             {
                 'name': _('write your own license'),
@@ -400,6 +401,8 @@ def base_app(instance_path):
                     '-NonCommercial-ShareAlike 4.0 International License.'
             },
         ],
+        WEKO_SEARCH_UI_BULK_EXPORT_TASK = "KEY_EXPORT_ALL",
+        WEKO_ADMIN_CACHE_PREFIX = 'admin_cache_{name}_{user_id}',
         WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE = "schemas/schemaform.json",
         WEKO_OPENSEARCH_SYSTEM_SHORTNAME = "WEKO",
         WEKO_OPENSEARCH_SYSTEM_DESCRIPTION = (
@@ -409,6 +412,7 @@ def base_app(instance_path):
         WEKO_THEME_DEFAULT_COMMUNITY = 'Root Index',
         WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE="",
         WEKO_ITEMS_UI_MULTIPLE_APPROVALS=True,
+        WEKO_THEME_ADMIN_ITEM_MANAGEMENT_TEMPLATE = 'weko_theme/admin/item_management_display.html',
         WEKO_SEARCH_REST_ENDPOINTS = dict(
             recid=dict(
                 pid_type='recid',
@@ -550,7 +554,7 @@ def client_request_args(app):
             'index_info': {},
             'community': 'comm1',
             'item_link': '1',
-            'search_type': WEKO_SEARCH_TYPE_DICT["FULL_TEXT"]
+            'search_type': WEKO_SEARCH_TYPE_DICT["FULL_TEXT"],
             })
         yield r
 
