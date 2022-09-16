@@ -1,3 +1,6 @@
+from email.policy import strict
+from importlib.metadata import requires
+from typing_extensions import Required
 from marshmallow import Schema, fields 
 from marshmallow.validate import Range
 
@@ -52,14 +55,14 @@ class ResponseMessageSchema(ResponseSchema):
 class ResponseErrorSchema(ResponseSchema):
     err = fields.String(allow_none=True)
 
-
 class ResponseLockSchema(Schema):
     code = fields.Integer(required=True)
     msg = fields.String()
     locked_value = fields.String()
     locked_by_email = fields.Email(allow_none=True)
     locked_by_username = fields.String(allow_none=True)
-
+    class Meta:
+        strict = True
         
 class PasswdSchema(Schema):
     passwd = fields.String(required=True)
@@ -70,5 +73,32 @@ class PasswdSchema(Schema):
 class LockSchema(Schema):
     locked_value = fields.String(required=True)
     
+class LockedValueSchema(Schema):
+    locked_value = fields.String(required=True)
+    class Meta:
+        strict = True
+    
+class GetFeedbackMailListSchema(ResponseSchema):
+    data = fields.List(fields.Dict(),allow_none=True)    
+    
+class SaveActivitySchema(Schema):
+    activity_id = fields.String(required=True)
+    title = fields.String(required=True)
+    shared_user_id = fields.Integer(required=True,validate=Range(min=-1))
+    approval1 = fields.String(allow_none=True)
+    approval2 = fields.String(allow_none=True)
+    class Meta:
+        strict = True
+
+class CheckApprovalSchema(Schema):
+    check_handle = fields.Integer(required=True,validate=Range(min=-1,max=1))
+    check_continue = fields.Integer(required=True,validate=Range(min=-1,max=1))
+    err = fields.Integer(required=True,validate=Range(min=-1,max=1))
+    class Meta:
+        strict = True
+
+class SaveActivityResponseSchema(Schema):
+    succses = fields.String(required=True)
+    msg = fields.String(required=True)
     class Meta:
         strict = True
