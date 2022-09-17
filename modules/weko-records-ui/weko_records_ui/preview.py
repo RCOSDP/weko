@@ -30,7 +30,7 @@ from invenio_previewer.proxies import current_previewer
 
 def preview(pid, record, template=None, **kwargs):
     """Preview file for given record.
-
+    
     Plug this method into your ``RECORDS_UI_ENDPOINTS`` configuration:
 
     .. code-block:: python
@@ -43,7 +43,15 @@ def preview(pid, record, template=None, **kwargs):
                 record_class='invenio_records_files.api:Record',
             )
         )
+    
+    Args:
+        pid (invenio_pidstore.models.PersistentIdentifier): _description_
+        record (weko_deposit.api.WekoRecord): _description_
+        template (str, optional): _description_. Defaults to None.
+        **kwargs (dict): 
     """
+    print("request: {}".format(request.args))
+    print("request.view_args: {}".format(request.view_args))
     # Get file from record
     fileobj = current_previewer.record_file_factory(
         pid, record, request.view_args.get(
