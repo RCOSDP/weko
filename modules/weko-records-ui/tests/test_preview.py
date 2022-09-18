@@ -14,10 +14,78 @@ def test_preview(app,records):
 
     indexer, results = records
     record = results[0]['record']
+    filename = results[0]['filename']
+    recid = results[0]['recid']
     template = 'invenio_records_ui/detail.html'
-    with app.test_request_context('/record/1/file_preview/hello.txt?allow_aggs=True'):
-        assert preview(record.pid,record,template)
 
+    with app.test_request_context('/record/{}/file_preview/{}?allow_aggs=True'.format(recid.pid_value,filename)):
+        assert "<title>Preview</title>" in preview(record.pid,record,template)
+    
+    with app.test_request_context('/record/{}/file_preview/{}?allow_aggs=False'.format(recid.pid_value,filename)):
+        assert "<title>Preview</title>" in preview(record.pid,record,template)
+    
+    with app.test_request_context('/record/{}/file_preview/{}'.format(recid.pid_value,filename)):
+        assert "<title>Preview</title>" in preview(record.pid,record,template)
+    
+    with app.test_request_context('/record/{}/file_preview/'.format(recid.pid_value)):
+        with pytest.raises(AttributeError):
+            assert preview(record.pid,record,template)==""
+
+    with app.test_request_context():
+        assert "<title>Preview</title>" in preview(record.pid,record,template)
+    
+    indexer, results = records
+    record = results[1]['record']
+    filename = results[1]['filename']
+    recid = results[1]['recid']
+    template = 'invenio_records_ui/detail.html'
+
+    with app.test_request_context('/record/{}/file_preview/{}?allow_aggs=True'.format(recid.pid_value,filename)):
+        with patch("flask.templating._render", return_value=""):
+            assert preview(record.pid,record,template)==""
+    
+    with app.test_request_context('/record/{}/file_preview/{}?allow_aggs=False'.format(recid.pid_value,filename)):
+        with patch("flask.templating._render", return_value=""):
+            assert preview(record.pid,record,template)==""
+    
+    with app.test_request_context('/record/{}/file_preview/{}'.format(recid.pid_value,filename)):
+        with patch("flask.templating._render", return_value=""):
+            assert preview(record.pid,record,template)==""
+    
+    with app.test_request_context('/record/{}/file_preview/'.format(recid.pid_value)):
+        with pytest.raises(AttributeError):
+            assert preview(record.pid,record,template)==""
+
+    with app.test_request_context():
+        with patch("flask.templating._render", return_value=""):
+            assert preview(record.pid,record,template)==""
+    
+    indexer, results = records
+    record = results[2]['record']
+    filename = results[2]['filename']
+    recid = results[2]['recid']
+    template = 'invenio_records_ui/detail.html'
+
+    with app.test_request_context('/record/{}/file_preview/{}?allow_aggs=True'.format(recid.pid_value,filename)):
+        with patch("flask.templating._render", return_value=""):
+            assert preview(record.pid,record,template)==""
+    
+    with app.test_request_context('/record/{}/file_preview/{}?allow_aggs=False'.format(recid.pid_value,filename)):
+        with patch("flask.templating._render", return_value=""):
+            assert preview(record.pid,record,template)==""
+    
+    with app.test_request_context('/record/{}/file_preview/{}'.format(recid.pid_value,filename)):
+        with patch("flask.templating._render", return_value=""):
+            assert preview(record.pid,record,template)==""
+    
+    with app.test_request_context('/record/{}/file_preview/'.format(recid.pid_value)):
+        with pytest.raises(AttributeError):
+            assert preview(record.pid,record,template)==""
+
+    with app.test_request_context():
+        with patch("flask.templating._render", return_value=""):
+            assert preview(record.pid,record,template)==""
+    
 
 # def children_to_list(node):
 # def zip_preview(file):

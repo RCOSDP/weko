@@ -50,8 +50,6 @@ def preview(pid, record, template=None, **kwargs):
         template (str, optional): _description_. Defaults to None.
         **kwargs (dict): 
     """
-    print("request: {}".format(request.args))
-    print("request.view_args: {}".format(request.view_args))
     # Get file from record
     fileobj = current_previewer.record_file_factory(
         pid, record, request.view_args.get(

@@ -22,6 +22,8 @@
 
 import copy
 import json
+from os.path import dirname, exists, join
+import mimetypes
 import os
 import shutil
 import tempfile
@@ -53,14 +55,19 @@ from invenio_files_rest.views import blueprint as invenio_files_rest_blueprint
 from invenio_i18n import InvenioI18N
 from invenio_indexer import InvenioIndexer
 from invenio_jsonschemas import InvenioJSONSchemas
+from invenio_oaiserver import InvenioOAIServer
+from invenio_oaiserver.views.server import blueprint as invenio_oaiserver_blueprint
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidrelations.models import PIDRelation
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidstore import InvenioPIDStore
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from invenio_previewer import InvenioPreviewer
 from invenio_records import InvenioRecords
 from invenio_records_files.models import RecordsBuckets
 from invenio_records_rest.utils import PIDConverter
+from invenio_records_ui import InvenioRecordsUI
 from invenio_search import InvenioSearch
 from invenio_search_ui import InvenioSearchUI
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
@@ -68,6 +75,7 @@ from simplekv.memory.redisstore import RedisStore
 from six import BytesIO
 from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from weko_admin import WekoAdmin
+from weko_admin.models import SessionLifetime,RankingSettings
 from weko_admin.models import AdminSettings
 from weko_deposit import WekoDeposit, WekoDepositREST
 from weko_deposit.api import WekoDeposit as aWekoDeposit
@@ -99,10 +107,13 @@ from weko_schema_ui.config import (
     WEKO_SCHEMA_DDI_SCHEMA_NAME,
     WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
 )
+from weko_schema_ui import WekoSchemaUI
 from weko_schema_ui.models import OAIServerSchema
+from werkzeug.local import LocalProxy
 
-# from weko_records_ui import WekoRecordsUI
-# from weko_records_ui import WekoRecordsUI
+from weko_records_ui import WekoRecordsUI,WekoRecordsCitesREST
+from weko_records_ui.views import blueprint as weko_records_ui_blueprint
+from weko_records_ui.config import WEKO_RECORDS_UI_CITES_REST_ENDPOINTS,RECORDS_UI_EXPORT_FORMATS,WEKO_PERMISSION_ROLE_COMMUNITY
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import WEKO_SEARCH_MAX_RESULT
 from weko_theme import WekoTheme
@@ -119,8 +130,10 @@ def instance_path():
 @pytest.fixture()
 def base_app(instance_path):
     """Flask application fixture."""
-    app_ = Flask("testapp", instance_path=instance_path)
+    app_ = Flask("testapp", instance_path=instance_path,static_folder=join(instance_path, "static"))
     app_.url_map.converters["pid"] = PIDConverter
+    WEKO_INDEX_TREE_REST_ENDPOINTS = copy.deepcopy(_WEKO_INDEX_TREE_REST_ENDPOINTS)
+    WEKO_INDEX_TREE_REST_ENDPOINTS["tid"]["index_route"] = "/tree/index/<int:index_id>"
     # initialize InvenioDeposit first in order to detect any invalid dependency
     WEKO_DEPOSIT_REST_ENDPOINTS = copy.deepcopy(DEPOSIT_REST_ENDPOINTS)
     WEKO_DEPOSIT_REST_ENDPOINTS["depid"][
@@ -170,6 +183,7 @@ def base_app(instance_path):
             "widths": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"],
         },
         WEKO_INDEX_TREE_UPATED=True,
+        WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
         I18N_LANGUAGE=[("ja", "Japanese"), ("en", "English")],
         SERVER_NAME="TEST_SERVER",
         SEARCH_ELASTIC_HOSTS="elasticsearch",
@@ -177,6 +191,8 @@ def base_app(instance_path):
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME=WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
         WEKO_SCHEMA_DDI_SCHEMA_NAME=WEKO_SCHEMA_DDI_SCHEMA_NAME,
         RECORDS_UI_ENDPOINTS = RECORDS_UI_ENDPOINTS,
+        WEKO_RECORDS_UI_CITES_REST_ENDPOINTS=WEKO_RECORDS_UI_CITES_REST_ENDPOINTS,
+        RECORDS_UI_EXPORT_FORMATS=RECORDS_UI_EXPORT_FORMATS,
         WEKO_PERMISSION_ROLE_USER=[
             "System Administrator",
             "Repository Administrator",
@@ -188,6 +204,8 @@ def base_app(instance_path):
             "System Administrator",
             "Repository Administrator",
         ],
+        WEKO_PERMISSION_ROLE_COMMUNITY=WEKO_PERMISSION_ROLE_COMMUNITY,
+        OAISERVER_XSL_URL = None,
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
@@ -201,9 +219,11 @@ def base_app(instance_path):
     InvenioFilesREST(app_)
     InvenioJSONSchemas(app_)
     InvenioIndexer(app_)
+    InvenioOAIServer(app_)
     InvenioPIDStore(app_)
     InvenioPreviewer(app_)
     InvenioRecords(app_)
+    InvenioRecordsUI(app_)
     # client = Elasticsearch(['localhost:%s'%server.port])
     # InvenioSearch(app_, client=client)
     InvenioSearch(app_)
@@ -212,20 +232,26 @@ def base_app(instance_path):
     InvenioI18N(app_)
     WekoRecords(app_)
     WekoItemsUI(app_)
-    # WekoRecordsUI(app_)
+    WekoRecordsUI(app_)
+    # WekoRecordsCitesREST(app_)
     WekoAdmin(app_)
     WekoSearchUI(app_)
     WekoTheme(app_)
     WekoGroups(app_)
     WekoIndexTree(app_)
     WekoIndexTreeREST(app_)
+    WekoSchemaUI(app_)
     Menu(app_)
-    # app_.register_blueprint(blueprint)
+    app_.register_blueprint(weko_records_ui_blueprint)
     app_.register_blueprint(invenio_files_rest_blueprint)  # invenio_files_rest
+    app_.register_blueprint(invenio_oaiserver_blueprint)
     # rest_blueprint = create_blueprint(app_, WEKO_DEPOSIT_REST_ENDPOINTS)
     # app_.register_blueprint(rest_blueprint)
     WekoDeposit(app_)
     WekoDepositREST(app_)
+
+    current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
+    current_assets.collect.collect()
     return app_
 
 
@@ -562,6 +588,11 @@ def oaischema(app, db):
         db.session.add(jpcoar_mapping)
         db.session.add(jpcoar_v1_mapping)
 
+@pytest.fixture()
+def db_sessionlifetime(app, db):
+    session_lifetime = SessionLifetime(lifetime=60, is_delete=False)
+    with db.session.begin_nested():
+        db.session.add(session_lifetime)
 
 @pytest.fixture()
 def records(app, db, indextree, location, itemtypes, oaischema):
@@ -569,213 +600,295 @@ def records(app, db, indextree, location, itemtypes, oaischema):
     indexer.get_es_index()
     results = []
     with app.test_request_context():
-        for i in range(1, 10):
-            record_data = {
-                "_oai": {
-                    "id": "oai:weko3.example.org:000000{:02d}".format(i),
-                    "sets": ["{}".format((i % 2) + 1)],
-                },
-                "path": ["{}".format((i % 2) + 1)],
-                "owner": "1",
-                "recid": "{}".format(i),
-                "title": ["title"],
-                "pubdate": {
-                    "attribute_name": "PubDate",
-                    "attribute_value": "2022-08-20",
-                },
-                "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02"},
-                "_deposit": {
-                    "id": "{}".format(i),
-                    "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0},
-                    "owner": "1",
-                    "owners": [1],
-                    "status": "draft",
-                    "created_by": 1,
-                    "owners_ext": {
-                        "email": "wekosoftware@nii.ac.jp",
-                        "username": "",
-                        "displayname": "",
-                    },
-                },
-                "item_title": "title",
-                "author_link": [],
-                "item_type_id": "1",
-                "publish_date": "2022-08-20",
-                "publish_status": "0",
-                "weko_shared_id": -1,
-                "item_1617186331708": {
-                    "attribute_name": "Title",
-                    "attribute_value_mlt": [
-                        {
-                            "subitem_1551255647225": "タイトル",
-                            "subitem_1551255648112": "ja",
-                        },
-                        {
-                            "subitem_1551255647225": "title",
-                            "subitem_1551255648112": "en",
-                        },
-                    ],
-                },
-                "item_1617258105262": {
-                    "attribute_name": "Resource Type",
-                    "attribute_value_mlt": [
-                        {
-                            "resourceuri": "http://purl.org/coar/resource_type/c_5794",
-                            "resourcetype": "conference paper",
-                        }
-                    ],
-                },
-                "relation_version_is_last": True,
-                "item_1617605131499": {
-                    "attribute_name": "File",
-                    "attribute_type": "file",
-                    "attribute_value_mlt": [
-                        {
-                            "url": {
-                                "url": "https://weko3.example.org/record/{}/files/hello.txt".format(
-                                    i
-                                )
-                            },
-                            "date": [
-                                {"dateType": "Available", "dateValue": "2022-09-07"}
-                            ],
-                            "format": "plain/text",
-                            "filename": "hello.txt",
-                            "filesize": [{"value": "146 KB"}],
-                            "accessrole": "open_access",
-                            "version_id": "",
-                            "mimetype": "application/pdf",
-                            "file": "",
-                        }
-                    ],
-                },
-            }
+        i=1
+        with open("tests/data/helloworld.pdf","rb") as f:
+            stream = BytesIO(f.read())
+            filename="helloworld.pdf"
+            mimetype="application/pdf"
+            results.append(make_record(db, indexer, i, stream,filename,mimetype))
 
-            item_data = {
+        i=2
+        with open("tests/data/helloworld.docx","rb") as f:
+            stream = BytesIO(f.read())
+            filename="helloworld.docx"
+            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            results.append(make_record(db, indexer, i, stream,filename,mimetype))
+ 
+        i=3
+        with open("tests/data/helloworld.zip","rb") as f:
+            stream = BytesIO(f.read())
+            filename="helloworld.zip"
+            mimetype="application/zip"
+            results.append(make_record(db, indexer, i, stream,filename,mimetype))
+
+    time.sleep(3)
+    # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
+    # print(es.cat.indices())
+    return indexer, results
+
+def make_record(db, indexer, i,stream,filename,mimetype):
+    record_data = {
+            "_oai": {
+                "id": "oai:weko3.example.org:000000{:02d}".format(i),
+                "sets": ["{}".format((i % 2) + 1)],
+            },
+            "path": ["{}".format((i % 2) + 1)],
+            "owner": "1",
+            "recid": "{}".format(i),
+            "title": ["title"],
+            "pubdate": {
+                "attribute_name": "PubDate",
+                "attribute_value": "2022-08-20",
+            },
+            "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02"},
+            "_deposit": {
                 "id": "{}".format(i),
                 "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0},
-                "lang": "ja",
                 "owner": "1",
-                "title": "title",
                 "owners": [1],
-                "status": "published",
-                "$schema": "/items/jsonschema/1",
-                "pubdate": "2022-08-20",
+                "status": "draft",
                 "created_by": 1,
                 "owners_ext": {
                     "email": "wekosoftware@nii.ac.jp",
                     "username": "",
                     "displayname": "",
                 },
-                "shared_user_id": -1,
-                "item_1617186331708": [
-                    {"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},
-                    {"subitem_1551255647225": "title", "subitem_1551255648112": "en"},
-                ],
-                "item_1617258105262": {
-                    "resourceuri": "http://purl.org/coar/resource_type/c_5794",
-                    "resourcetype": "conference paper",
-                },
-            }
-
-            rec_uuid = uuid.uuid4()
-
-            recid = PersistentIdentifier.create(
-                "recid",
-                str(i),
-                object_type="rec",
-                object_uuid=rec_uuid,
-                status=PIDStatus.REGISTERED,
-            )
-            depid = PersistentIdentifier.create(
-                "depid",
-                str(i),
-                object_type="rec",
-                object_uuid=rec_uuid,
-                status=PIDStatus.REGISTERED,
-            )
-            rel = PIDRelation.create(recid, depid, 3)
-            db.session.add(rel)
-            parent = None
-            doi = None
-            parent = PersistentIdentifier.create(
-                "parent",
-                "parent:{}".format(i),
-                object_type="rec",
-                object_uuid=rec_uuid,
-                status=PIDStatus.REGISTERED,
-            )
-            rel = PIDRelation.create(parent, recid, 2, 0)
-            db.session.add(rel)
-            if i % 2 == 1:
-                doi = PersistentIdentifier.create(
-                    "doi",
-                    "https://doi.org/10.xyz/{}".format((str(i)).zfill(10)),
-                    object_type="rec",
-                    object_uuid=rec_uuid,
-                    status=PIDStatus.REGISTERED,
-                )
-                hdl = PersistentIdentifier.create(
-                    "hdl",
-                    "https://hdl.handle.net/0000/{}".format((str(i)).zfill(10)),
-                    object_type="rec",
-                    object_uuid=rec_uuid,
-                    status=PIDStatus.REGISTERED,
-                )
-
-            record = WekoRecord.create(record_data, id_=rec_uuid)
-            # from six import BytesIO
-            import base64
-            bucket = Bucket.create()
-            record_buckets = RecordsBuckets.create(record=record.model, bucket=bucket)
-            stream = BytesIO(b"Hello, World")
-            record.files["hello.txt"] = stream
-            obj = ObjectVersion.create(bucket=bucket.id, key="hello.txt", stream=stream)
-            record["item_1617605131499"]["attribute_value_mlt"][0]["file"] = (
-                base64.b64encode(stream.getvalue())
-            ).decode("utf-8")
-            deposit = aWekoDeposit(record, record.model)
-            deposit.commit()
-            record["item_1617605131499"]["attribute_value_mlt"][0]["version_id"] = str(
-                obj.version_id
-            )
-
-            record_data["content"] = [
-                {
-                    "date": [{"dateValue": "2021-07-12", "dateType": "Available"}],
-                    "accessrole": "open_access",
-                    "displaytype": "simple",
-                    "filename": "hello.txt",
-                    "attachment": {},
-                    "format": "text/plain",
-                    "mimetype": "text/plain",
-                    "filesize": [{"value": "1 KB"}],
-                    "version_id": "{}".format(obj.version_id),
-                    "url": {
-                        "url": "http://localhost/record/{}/files/hello.txt".format(i)
+            },
+            "item_title": "title",
+            "author_link": [],
+            "item_type_id": "1",
+            "publish_date": "2022-08-20",
+            "publish_status": "0",
+            "weko_shared_id": -1,
+            "item_1617186331708": {
+                "attribute_name": "Title",
+                "attribute_value_mlt": [
+                    {
+                        "subitem_1551255647225": "タイトル",
+                        "subitem_1551255648112": "ja",
                     },
-                    "file": (base64.b64encode(stream.getvalue())).decode("utf-8"),
-                }
-            ]
-            indexer.upload_metadata(record_data, rec_uuid, 1, False)
-            item = ItemsMetadata.create(item_data, id_=rec_uuid)
+                    {
+                        "subitem_1551255647225": "title",
+                        "subitem_1551255648112": "en",
+                    },
+                ],
+            },
+            "item_1617258105262": {
+                "attribute_name": "Resource Type",
+                "attribute_value_mlt": [
+                    {
+                        "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+                        "resourcetype": "conference paper",
+                    }
+                ],
+            },
+            "relation_version_is_last": True,
+            "item_1617605131499": {
+                "attribute_name": "File",
+                "attribute_type": "file",
+                "attribute_value_mlt": [
+                    {
+                        "url": {
+                            "url": "https://weko3.example.org/record/{0}/files/{1}".format(
+                                i,filename
+                            )
+                        },
+                        "date": [
+                            {"dateType": "Available", "dateValue": "2022-09-07"}
+                        ],
+                        "format": "{}".format(mimetype),
+                        "filename": "{}".format(filename),
+                        "filesize": [{"value": "146 KB"}],
+                        "accessrole": "open_access",
+                        "version_id": "",
+                        "mimetype": "{}".format(mimetype),
+                        "file": "",
+                    }
+                ],
+            },
+        }
 
-            results.append(
-                {
-                    "depid": depid,
-                    "recid": recid,
-                    "parent": parent,
-                    "doi": doi,
-                    "hdl": hdl,
-                    "record": record,
-                    "record_data": record_data,
-                    "item": item,
-                    "item_data": item_data,
-                    "deposit": deposit,
-                }
+    item_data = {
+            "id": "{}".format(i),
+            "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0},
+            "lang": "ja",
+            "owner": "1",
+            "title": "title",
+            "owners": [1],
+            "status": "published",
+            "$schema": "/items/jsonschema/1",
+            "pubdate": "2022-08-20",
+            "created_by": 1,
+            "owners_ext": {
+                "email": "wekosoftware@nii.ac.jp",
+                "username": "",
+                "displayname": "",
+            },
+            "shared_user_id": -1,
+            "item_1617186331708": [
+                {"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},
+                {"subitem_1551255647225": "title", "subitem_1551255648112": "en"},
+            ],
+            "item_1617258105262": {
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+                "resourcetype": "conference paper",
+            },
+        }
+
+    rec_uuid = uuid.uuid4()
+
+    recid = PersistentIdentifier.create(
+            "recid",
+            str(i),
+            object_type="rec",
+            object_uuid=rec_uuid,
+            status=PIDStatus.REGISTERED,
+        )
+    depid = PersistentIdentifier.create(
+            "depid",
+            str(i),
+            object_type="rec",
+            object_uuid=rec_uuid,
+            status=PIDStatus.REGISTERED,
+        )
+    parent = None
+    doi = None
+    hdl=None
+    recid_v1 = PersistentIdentifier.create(
+            "recid",
+            str(i+0.1),
+            object_type="rec",
+            object_uuid=rec_uuid,
+            status=PIDStatus.REGISTERED,
+        )
+    rec_uuid2 = uuid.uuid4()
+    depid_v1 = PersistentIdentifier.create(
+            "depid",
+            str(i+0.1),
+            object_type="rec",
+            object_uuid=rec_uuid2,
+            status=PIDStatus.REGISTERED,
+        )
+    parent = PersistentIdentifier.create(
+            "parent",
+            "parent:{}".format(i),
+            object_type="rec",
+            object_uuid=rec_uuid2,
+            status=PIDStatus.REGISTERED,
+        )
+    
+
+    h1 = PIDVersioning(parent=parent)
+    h1.insert_child(child=recid)
+    h1.insert_child(child=recid_v1)
+    RecordDraft.link(recid,depid)
+    RecordDraft.link(recid_v1,depid_v1)
+    
+    if i % 2 == 1:
+        doi = PersistentIdentifier.create(
+                "doi",
+                "https://doi.org/10.xyz/{}".format((str(i)).zfill(10)),
+                object_type="rec",
+                object_uuid=rec_uuid,
+                status=PIDStatus.REGISTERED,
+            )
+        hdl = PersistentIdentifier.create(
+                "hdl",
+                "https://hdl.handle.net/0000/{}".format((str(i)).zfill(10)),
+                object_type="rec",
+                object_uuid=rec_uuid,
+                status=PIDStatus.REGISTERED,
             )
 
-    time.sleep(3)
-    # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
-    # print(es.cat.indices())
-    return indexer, results
+    record = WekoRecord.create(record_data, id_=rec_uuid)
+        # from six import BytesIO
+    import base64
+    bucket = Bucket.create()
+    record_buckets = RecordsBuckets.create(record=record.model, bucket=bucket)
+
+            
+        # stream = BytesIO(b"Hello, World")
+    record.files[filename] = stream
+    obj = ObjectVersion.create(bucket=bucket.id, key=filename, stream=stream)
+    record["item_1617605131499"]["attribute_value_mlt"][0]["file"] = (
+            base64.b64encode(stream.getvalue())
+        ).decode("utf-8")
+    deposit = aWekoDeposit(record, record.model)
+    deposit.commit()
+    record["item_1617605131499"]["attribute_value_mlt"][0]["version_id"] = str(
+            obj.version_id
+        )
+
+    record_data["content"] = [
+            {
+                "date": [{"dateValue": "2021-07-12", "dateType": "Available"}],
+                "accessrole": "open_access",
+                "displaytype": "simple",
+                "filename": filename,
+                "attachment": {},
+                "format": mimetype,
+                "mimetype": mimetype,
+                "filesize": [{"value": "1 KB"}],
+                "version_id": "{}".format(obj.version_id),
+                "url": {
+                    "url": "http://localhost/record/{0}/files/{1}".format(i,filename)
+                },
+                "file": (base64.b64encode(stream.getvalue())).decode("utf-8"),
+            }
+        ]
+    indexer.upload_metadata(record_data, rec_uuid, 1, False)
+    item = ItemsMetadata.create(item_data, id_=rec_uuid)
+
+
+    record_v1 = WekoRecord.create(record_data, id_=rec_uuid2)
+    # from six import BytesIO
+    import base64
+    bucket_v1 = Bucket.create()
+    record_buckets = RecordsBuckets.create(record=record_v1.model, bucket=bucket_v1)
+    # stream = BytesIO(b"Hello, World")
+    record_v1.files[filename] = stream
+    obj_v1 = ObjectVersion.create(bucket=bucket_v1.id, key=filename, stream=stream)
+    record_v1["item_1617605131499"]["attribute_value_mlt"][0]["file"] = (
+            base64.b64encode(stream.getvalue())
+        ).decode("utf-8")
+    deposit_v1 = aWekoDeposit(record_v1, record_v1.model)
+    deposit_v1.commit()
+    record_v1["item_1617605131499"]["attribute_value_mlt"][0]["version_id"] = str(
+            obj_v1.version_id
+        )
+
+    record_data_v1 = copy.deepcopy(record_data)
+    record_data_v1["content"] = [
+            {
+                "date": [{"dateValue": "2021-07-12", "dateType": "Available"}],
+                "accessrole": "open_access",
+                "displaytype": "simple",
+                "filename": filename,
+                "attachment": {},
+                "format": mimetype,
+                "mimetype": mimetype,
+                "filesize": [{"value": "1 KB"}],
+                "version_id": "{}".format(obj_v1.version_id),
+                "url": {
+                    "url": "http://localhost/record/{0}/files/{1}".format(i,filename)
+                },
+                "file": (base64.b64encode(stream.getvalue())).decode("utf-8"),
+            }
+        ]
+    indexer.upload_metadata(record_data_v1, rec_uuid2, 1, False)
+    item_v1 = ItemsMetadata.create(item_data, id_=rec_uuid2)
+
+    return {
+                "depid": depid,
+                "recid": recid,
+                "parent": parent,
+                "doi": doi,
+                "hdl": hdl,
+                "record": record,
+                "record_data": record_data,
+                "item": item,
+                "item_data": item_data,
+                "deposit": deposit,
+                "filename":filename,
+                "mimetype":mimetype,
+            }
