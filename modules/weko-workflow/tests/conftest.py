@@ -56,11 +56,11 @@ from weko_theme import WekoTheme
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime 
 from weko_admin.views import blueprint as weko_admin_blueprint
-from weko_records.models import ItemTypeName, ItemType
+from weko_records.models import ItemTypeName, ItemType,FeedbackMailList
 from weko_records.api import Mapping
 from weko_user_profiles import WekoUserProfiles
 from weko_workflow import WekoWorkflow
-from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction
+from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, FlowActionRole
 from weko_workflow.views import blueprint as weko_workflow_blueprint
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
@@ -305,7 +305,8 @@ def base_app(instance_path):
         WEKO_USERPROFILES_ROLES=[
             'Administrator','General','Graduated Student','Student'
         ],
-        WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST = []
+        WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST = [],
+        WEKO_HANDLE_ALLOW_REGISTER_CNRI=True
     )
     app_.testing = True
     Babel(app_)
@@ -602,11 +603,20 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     title='test item1', shared_user_id=-1, extra_info={},
                     action_order=1,
                     )
-
+    activity_item2 = Activity(activity_id='3',item_id=db_records[4][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item1', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
     with db.session.begin_nested():
         db.session.add(workflow)
         db.session.add(activity)
         db.session.add(activity_item1)
+        db.session.add(activity_item2)
     activity_action1_item1 = ActivityAction(activity_id=activity_item1.activity_id,
                                             action_id=1,action_status="M",
                                             action_handler=1, action_order=1)
@@ -616,10 +626,23 @@ def db_register(app, db, db_records, users, action_data, item_type):
     activity_action3_item1 = ActivityAction(activity_id=activity_item1.activity_id,
                                             action_id=5,action_status="M",
                                             action_handler=1, action_order=3)
+    activity_action1_item2 = ActivityAction(activity_id=activity_item2.activity_id,
+                                            action_id=1,action_status="M",
+                                            action_handler=1, action_order=1)
+    activity_action2_item2 = ActivityAction(activity_id=activity_item2.activity_id,
+                                            action_id=3,action_status="M",
+                                            action_handler=1, action_order=2)
+    activity_action3_item2 = ActivityAction(activity_id=activity_item2.activity_id,
+                                            action_id=5,action_status="M",
+                                            action_handler=1, action_order=3)
+
     with db.session.begin_nested():
         db.session.add(activity_action1_item1)
         db.session.add(activity_action2_item1)
         db.session.add(activity_action3_item1)
+        db.session.add(activity_action1_item2)
+        db.session.add(activity_action2_item2)
+        db.session.add(activity_action3_item2)
     return {'flow_define':flow_define,'item_type':item_type,'workflow':workflow}
 
 @pytest.fixture()
@@ -765,7 +788,8 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                 title='test', shared_user_id=-1, extra_info={},
                 action_order=1,
                 )
-    activity_item1 = Activity(activity_id='2',item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
+    # identifier登録あり
+    activity_item1 = Activity(activity_id='2',item_id=db_records[2][2].id,workflow_id=1, flow_id=flow_define.id,
                     action_id=1, activity_login_user=users[3]["id"],
                     activity_update_user=1,
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
@@ -774,13 +798,24 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                     title='test item1', shared_user_id=-1, extra_info={},
                     action_order=1,
                     )
-    activity_item2 = Activity(activity_id='3',item_id=db_records[2][2].id,workflow_id=1, flow_id=flow_define.id,
+    # identifier登録なし
+    activity_item2 = Activity(activity_id='3',item_id=db_records[4][2].id,workflow_id=1, flow_id=flow_define.id,
                     action_id=1, activity_login_user=users[3]["id"],
                     activity_update_user=1,
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
                     title='test item1', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    # ゲスト作成アクティビティ
+    activity_item3 = Activity(activity_id='4',item_id=db_records[5][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item1', shared_user_id=-1, extra_info={"guest_mail":"guest@test.org"},
                     action_order=1,
                     )
     with db.session.begin_nested():
@@ -788,7 +823,26 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
         db.session.add(activity)
         db.session.add(activity_item1)
         db.session.add(activity_item2)
-    
+        db.session.add(activity_item3)
+        
+    feedbackmail_action1 = ActionFeedbackMail(
+        activity_id=activity_item1.id,
+        action_id=3,
+        feedback_maillist=[{"email":"test@test.org"}]
+        )
+    feedbackmail_action2 = ActionFeedbackMail(
+        activity_id=activity_item2.id,
+        action_id=3,
+        feedback_maillist=[]
+    )
+    feedbackmail = FeedbackMailList(
+        item_id=activity_item2.item_id,
+        mail_list=[{"email":"test@test.org"}]
+    )
+    with db.session.begin_nested():
+        db.session.add(feedbackmail_action1)
+        db.session.add(feedbackmail_action2)
+        db.session.add(feedbackmail)
     # setting activity_action in activity existed item
     for flow_action in flow_actions:
         action = action_data[0][flow_action.action_id-1]
@@ -813,3 +867,10 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
             action_order=flow_action.action_order
         )
         db.session.add(activity_action)
+    flow_action_role = FlowActionRole(
+        flow_action_id=flow_actions[5].id,
+        action_role=None,
+        action_user=1
+    )
+    with db.session.begin_nested():
+        db.session.add(flow_action_role)
