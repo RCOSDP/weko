@@ -36,6 +36,7 @@ from flask_menu import Menu
 from flask_login import current_user, login_user, LoginManager
 from werkzeug.local import LocalProxy
 from tests.helpers import create_record, json_data
+# from moto import mock_s3
 
 from invenio_deposit.config import (
     DEPOSIT_DEFAULT_STORAGE_CLASS,
@@ -186,6 +187,10 @@ def base_app(instance_path):
         DEPOSIT_REST_ENDPOINTS=DEPOSIT_REST_ENDPOINTS,
         DEPOSIT_DEFAULT_STORAGE_CLASS=DEPOSIT_DEFAULT_STORAGE_CLASS,
         RECORDS_REST_SORT_OPTIONS=RECORDS_REST_SORT_OPTIONS,
+        RECORDS_REST_DEFAULT_LOADERS = {
+            'application/json': lambda: request.get_json(),
+            'application/json-patch+json': lambda: request.get_json(force=True),
+        },
         # SEARCH_UI_SEARCH_INDEX=SEARCH_UI_SEARCH_INDEX,
         SEARCH_UI_SEARCH_INDEX="test-weko",
         # SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
@@ -214,6 +219,7 @@ def base_app(instance_path):
         WEKO_ADMIN_MANAGEMENT_OPTIONS=WEKO_ADMIN_MANAGEMENT_OPTIONS,
         WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS=WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS,
         WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info',
+        WEKO_ITEMS_UI_EXPORT_TMP_PREFIX = 'weko_export_',
         WEKO_RECORDS_UI_LICENSE_DICT=[
             {
                 'name': _('write your own license'),
@@ -401,6 +407,8 @@ def base_app(instance_path):
                     '-NonCommercial-ShareAlike 4.0 International License.'
             },
         ],
+        WEKO_SEARCH_UI_BULK_EXPORT_URI = "URI_EXPORT_ALL",
+        WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3,
         WEKO_SEARCH_UI_BULK_EXPORT_TASK = "KEY_EXPORT_ALL",
         WEKO_ADMIN_CACHE_PREFIX = 'admin_cache_{name}_{user_id}',
         WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE = "schemas/schemaform.json",
@@ -554,6 +562,7 @@ def client_request_args(app):
             'index_info': {},
             'community': 'comm1',
             'item_link': '1',
+            'is_search': 1,
             'search_type': WEKO_SEARCH_TYPE_DICT["FULL_TEXT"],
             })
         yield r
@@ -1458,12 +1467,12 @@ def dummy_location(db):
     shutil.rmtree(tmppath)
 
 
-@pytest.fixture()
-def bucket(db, dummy_location):
-    """File system location."""
-    b1 = Bucket.create()
-    db.session.commit()
-    return b1
+# @pytest.fixture()
+# def bucket(db, dummy_location):
+#     """File system location."""
+#     b1 = Bucket.create()
+#     db.session.commit()
+#     return b1
 
 
 @pytest.yield_fixture()
@@ -1734,3 +1743,98 @@ def db_workflow(app, db, db_itemtype, users):
         "flow_action2": flow_action2,
         "flow_action3": flow_action3,
     }
+
+
+@pytest.fixture()
+def bucket(db, location):
+    """File system location."""
+    bucket = Bucket.create(location)
+    db.session.commit()
+    return bucket
+
+
+@pytest.fixture()
+def testfile(db, bucket):
+    """File system location."""
+    obj = ObjectVersion.create(bucket, 'testfile', stream=BytesIO(b'atest'))
+    db.session.commit()
+    return obj
+
+
+@pytest.fixture()
+def filerecord(db):
+    """Record fixture."""
+    rec_uuid = uuid.uuid4()
+    provider = RecordIdProvider.create(
+        object_type='rec', object_uuid=rec_uuid)
+    filerecord = Record.create({
+        'control_number': provider.pid.pid_value,
+        'title': 'TestDefault',
+    }, id_=rec_uuid)
+    db.session.commit()
+    return filerecord
+
+
+@pytest.fixture()
+def record_with_file(db, filerecord, testfile):
+    """Record with a test file."""
+    rb = RecordsBuckets(record_id=filerecord.id, bucket_id=testfile.bucket_id)
+    db.session.add(rb)
+    filerecord.update(dict(
+        _files=[dict(
+            bucket=str(testfile.bucket_id),
+            key=testfile.key,
+            size=testfile.file.size,
+            checksum=str(testfile.file.checksum),
+            version_id=str(testfile.version_id),
+        ), ]
+    ))
+    filerecord.commit()
+    db.session.commit()
+    return filerecord
+
+
+@pytest.fixture()
+def celery(app):
+    """Get queueobject for testing bulk operations."""
+    return app.extensions['flask-celeryext'].celery
+
+
+# @pytest.fixture(scope='function')
+# def s3_bucket(app):
+#     """S3 bucket fixture."""
+#     with mock_s3():
+#         session = boto3.Session(
+#             aws_access_key_id=app.config.get('S3_ACCCESS_KEY_ID'),
+#             aws_secret_access_key=app.config.get(
+#                 'S3_SECRECT_ACCESS_KEY'),
+#         )
+#         s3 = session.resource('s3')
+#         bucket = s3.create_bucket(Bucket='test_invenio_s3')
+
+#         yield bucket
+
+#         for obj in bucket.objects.all():
+#             obj.delete()
+#         bucket.delete()
+
+
+# @pytest.fixture(scope='function')
+# def s3fs_testpath(s3_bucket):
+#     """S3 test path."""
+#     return 's3://{}/path/to/data'.format(s3_bucket.name)
+
+
+# @pytest.fixture
+# def file_instance_mock(s3fs_testpath):
+#     """Mock of a file instance."""
+#     class FileInstance(object):
+#         def __init__(self, **kwargs):
+#             for k, v in kwargs.items():
+#                 setattr(self, k, v)
+
+#     return FileInstance(
+#         id='deadbeef-65bd-4d9b-93e2-ec88cc59aec5',
+#         uri=s3fs_testpath,
+#         size=4,
+#         updated=None)
