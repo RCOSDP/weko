@@ -8,46 +8,62 @@
 
 """Test view functions."""
 import json
+import uuid
 
+from invenio_accounts.testutils import login_user_via_session
 from flask import url_for
+from invenio_stats.views import (
+    WekoQuery,
+    StatsQueryResource,
+    QueryRecordViewCount,
+    QueryFileStatsCount,
+    QueryItemRegReport,
+    QueryRecordViewReport,
+    QueryRecordViewPerIndexReport,
+    QueryFileReports,
+    QueryCommonReports,
+    QueryCeleryTaskReport,
+    QuerySearchReport
+)
 
+CONTRIBUTOR = 0
+REPO_ADMIN = 1
+SYSTEM_ADMIN = 2
+COM_ADMIN = 3
 
-def test_post_request(app, db, query_entrypoints,
-                      users, custom_permission_factory,
-                      sample_histogram_query_data):
+# class WekoQuery(ContentNegotiatedMethodView):
+
+# class StatsQueryResource(WekoQuery):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_views.py::test_stats_query_resource -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_stats_query_resource(client, db, query_entrypoints,
+                              role_users, custom_permission_factory,
+                              sample_histogram_query_data):
     """Test post request to stats API."""
-    with app.test_client() as client:
-        headers = [('Content-Type', 'application/json'),
-                   ('Accept', 'application/json')]
-        sample_histogram_query_data['mystat']['stat'] = 'test-query'
-        resp = client.post(
-            url_for('invenio_stats.stat_query',
-                    access_token=users['authorized'].allowed_token),
-            headers=headers,
-            data=json.dumps(sample_histogram_query_data))
-
-
-def test_unauthorized_request(app, query_entrypoints,
-                              custom_permission_factory,
-                              sample_histogram_query_data, users):
-    """Test rejecting unauthorized requests."""
-
-    def client_req(user):
-        with app.test_client() as client:
-            headers = [('Content-Type', 'application/json'),
-                       ('Accept', 'application/json')]
-            resp = client.post(
-                url_for('invenio_stats.stat_query',
-                        access_token=user.allowed_token if user else None),
-                headers=headers,
-                data=json.dumps(sample_histogram_query_data))
-            return resp.status_code
-
+    headers = [('Content-Type', 'application/json'),
+                ('Accept', 'application/json')]
     sample_histogram_query_data['mystat']['stat'] = 'test-query'
-    # assert client_req(users['unauthorized']) == 403
-    # assert client_req(None) == 401
-    # assert client_req(users['authorized']) == 200
+    login_user_via_session(client=client, email=role_users[SYSTEM_ADMIN]["email"])
+    # need to fix
+    resp = client.post(
+        url_for('invenio_stats.stat_query'),
+        headers=headers,
+        data=json.dumps(sample_histogram_query_data))
+    assert resp.status_code==400
 
-    # assert custom_permission_factory.query_name == 'test-query'
-    # assert custom_permission_factory.params == \
-    #     sample_histogram_query_data['mystat']['params']
+
+# class QueryRecordViewCount(WekoQuery):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_views.py::test_query_record_view_count -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_query_record_view_count(client, db, records):
+    _uuid = str(records[0][0].object_uuid)
+    resp = client.get(
+        url_for('invenio_stats.get_record_view_count', record_id=_uuid))
+    assert resp.status_code==200
+
+# class QueryFileStatsCount(WekoQuery):
+# class QueryItemRegReport(WekoQuery):
+# class QueryRecordViewReport(WekoQuery):
+# class QueryRecordViewPerIndexReport(WekoQuery):
+# class QueryFileReports(WekoQuery):
+# class QueryCommonReports(WekoQuery):
+# class QueryCeleryTaskReport(WekoQuery):
+# class QuerySearchReport(ContentNegotiatedMethodView):
