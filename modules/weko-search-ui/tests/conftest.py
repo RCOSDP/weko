@@ -29,6 +29,7 @@ from datetime import date, datetime, timedelta
 
 import pytest
 from mock import Mock, patch
+from pytest_mock import mocker
 from flask import Flask
 from flask_babelex import Babel, lazy_gettext as _
 from flask_celeryext import FlaskCeleryExt
@@ -128,6 +129,8 @@ from weko_index_tree.models import IndexStyle
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy import event
+
+FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
 
 @pytest.yield_fixture()
@@ -412,6 +415,20 @@ def base_app(instance_path):
         WEKO_SEARCH_UI_BULK_EXPORT_TASK = "KEY_EXPORT_ALL",
         WEKO_ADMIN_CACHE_PREFIX = 'admin_cache_{name}_{user_id}',
         WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE = "schemas/schemaform.json",
+        WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS = dict(
+            tid=dict(
+                record_class='weko_indextree_journal.api:Journals',
+                admin_indexjournal_route='/admin/indexjournal/<int:journal_id>',
+                journal_route='/admin/indexjournal',
+                # item_tree_journal_route='/tree/journal/<int:pid_value>',
+                # journal_move_route='/tree/journal/move/<int:index_id>',
+                default_media_type='application/json',
+                create_permission_factory_imp='weko_indextree_journal.permissions:indextree_journal_permission',
+                read_permission_factory_imp='weko_indextree_journal.permissions:indextree_journal_permission',
+                update_permission_factory_imp='weko_indextree_journal.permissions:indextree_journal_permission',
+                delete_permission_factory_imp='weko_indextree_journal.permissions:indextree_journal_permission',
+            )
+        ),
         WEKO_OPENSEARCH_SYSTEM_SHORTNAME = "WEKO",
         WEKO_OPENSEARCH_SYSTEM_DESCRIPTION = (
             "WEKO - NII Scholarly and Academic Information Navigator"
@@ -1594,7 +1611,7 @@ def db_activity(db, db_records2, db_itemtype, db_workflow, users):
         db.session.add(activity)
         db.session.add(rel)
 
-    return {"activity": activity, "recid": recid}
+    return {"activity": activity, "recid": recid, "item": item}
 
 
 @pytest.fixture()
@@ -1792,6 +1809,150 @@ def record_with_file(db, filerecord, testfile):
     filerecord.commit()
     db.session.commit()
     return filerecord
+
+
+@pytest.fixture()
+def test_records():
+    results = []
+    #
+    results.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "records", "successRecord00.json"),
+            "output": "",
+        }
+    )
+    results.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "records", "successRecord01.json"),
+            "output": "",
+        }
+    )
+    results.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "records", "successRecord02.json"),
+            "output": "",
+        }
+    )
+    # 存在しない日付が設定されている
+    results.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "records", "noExistentDate00.json"),
+            "output": "Please specify Open Access Date with YYYY-MM-DD.",
+        }
+    )
+    # 日付がYYYY-MM-DD でない
+    results.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "records", "wrongDateFormat00.json"),
+            "output": "Please specify Open Access Date with YYYY-MM-DD.",
+        }
+    )
+    results.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "records", "wrongDateFormat01.json"),
+            "output": "Please specify Open Access Date with YYYY-MM-DD.",
+        }
+    )
+    results.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "records", "wrongDateFormat02.json"),
+            "output": "Please specify Open Access Date with YYYY-MM-DD.",
+        }
+    )
+
+    return results
+
+
+@pytest.fixture()
+def test_list_records():
+    tmp = []
+    results = []
+    tmp.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "list_records", "list_records.json"),
+            "output": os.path.join(
+                FIXTURE_DIR, "list_records", "list_records_result.json"
+            ),
+        }
+    )
+    tmp.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "list_records", "list_records00.json"),
+            "output": os.path.join(
+                FIXTURE_DIR, "list_records", "list_records00_result.json"
+            ),
+        }
+    )
+    tmp.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "list_records", "list_records01.json"),
+            "output": os.path.join(
+                FIXTURE_DIR, "list_records", "list_records01_result.json"
+            ),
+        }
+    )
+    tmp.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "list_records", "list_records02.json"),
+            "output": os.path.join(
+                FIXTURE_DIR, "list_records", "list_records02_result.json"
+            ),
+        }
+    )
+
+    tmp.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "list_records", "list_records03.json"),
+            "output": os.path.join(
+                FIXTURE_DIR, "list_records", "list_records03_result.json"
+            ),
+        }
+    )
+
+    for t in tmp:
+        with open(t.get("input"), encoding="utf-8") as f:
+            input_data = json.load(f)
+        with open(t.get("output"), encoding="utf-8") as f:
+            output_data = json.load(f)
+        results.append({"input": input_data, "output": output_data})
+    return results
+
+
+@pytest.fixture()
+def test_importdata():
+    files = [os.path.join(FIXTURE_DIR,'import00.zip')
+    ]
+    return files
+
+
+@pytest.fixture()
+def mocker_itemtype(mocker):
+    item_type = Mock()
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "item_type/15_render.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        render = json.load(f)
+    item_type.render = render
+
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "item_type/15_schema.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        schema = json.load(f)
+    item_type.schema = schema
+
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "item_type/15_form.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        form = json.load(f)
+    item_type.form = form
+
+    item_type.item_type_name.name="デフォルトアイテムタイプ（フル）"
+    item_type.item_type_name.item_type.first().id=15
+
+    mocker.patch("weko_records.api.ItemTypes.get_by_id", return_value=item_type)
 
 
 @pytest.fixture()
