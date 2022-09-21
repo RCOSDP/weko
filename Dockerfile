@@ -55,6 +55,7 @@ WORKDIR /code
 RUN adduser --uid 1000 --disabled-password --gecos '' invenio
 USER invenio
 COPY --chown=invenio:invenio scripts /code/scripts
+COPY --chown=invenio:invenio scripts /code/tools
 COPY --chown=invenio:invenio modules /code/modules
 COPY --chown=invenio:invenio packages.txt /code/packages.txt
 COPY --chown=invenio:invenio packages-invenio.txt /code/packages-invenio.txt
@@ -67,6 +68,7 @@ RUN chmod +x /code/scripts/create-instance.sh;/code/scripts/create-instance.sh
 
 FROM stage_4 AS stage_5
 # Create Weko instance2:
+USER invenio
 WORKDIR /code
 COPY --chown=invenio:invenio scripts/instance.cfg /code/scripts/instance.cfg
 RUN chmod +x /code/scripts/create-instance2.sh;/code/scripts/create-instance2.sh
@@ -84,21 +86,22 @@ RUN echo "source /home/invenio/.virtualenvs/invenio/bin/virtualenvwrapper.sh" >>
 
 # CMD ["/bin/bash", "-c", "gunicorn invenio_app.wsgi --workers=4 --worker-class=meinheld.gmeinheld.MeinheldWorker -b 0.0.0.0:5000 "]
 #CMD ["/bin/bash","-c","uwsgi --ini /code/scripts/uwsgi.ini"]
+CMD ["/bin/bash", "-c", "invenio run -h 0.0.0.0"]
 
-FROM python:3.6-slim-buster as product-base
-RUN apt-get -y update --allow-releaseinfo-change;apt-get -y --no-install-recommends install sudo curl rlwrap screen vim gnupg libpcre3 libffi6 libfreetype6 libmsgpackc2 libssl1.1 libtiff5 libxml2 libxslt1.1 libzip4 nodejs libpq5 default-jre libreoffice-java-common libreoffice fonts-ipafont fonts-ipaexfont
-COPY --from=build-env /usr/bin /usr/bin
-COPY --from=build-env /usr/lib/node_modules /usr/lib/node_modules
-RUN adduser --uid 1000 --disabled-password --gecos '' invenio
-USER invenio
-WORKDIR /code
-COPY --from=build-env --chown=invenio:invenio /code /code
-COPY --from=build-env --chown=invenio:invenio /home/invenio/.virtualenvs /home/invenio/.virtualenvs
+# FROM python:3.6-slim-buster as product-base
+# RUN apt-get -y update --allow-releaseinfo-change;apt-get -y --no-install-recommends install curl rlwrap screen vim gnupg libpcre3 libffi6 libfreetype6 libmsgpackc2 libssl1.1 libtiff5 libxml2 libxslt1.1 libzip4 nodejs libpq5 default-jre libreoffice-java-common libreoffice fonts-ipafont fonts-ipaexfont git
+# COPY --from=build-env /usr/bin /usr/bin
+# COPY --from=build-env /usr/lib/node_modules /usr/lib/node_modules
+# RUN adduser --uid 1000 --disabled-password --gecos '' invenio
+# USER invenio
+# WORKDIR /code
+# COPY --from=build-env --chown=invenio:invenio /code /code
+# COPY --from=build-env --chown=invenio:invenio /home/invenio/.virtualenvs /home/invenio/.virtualenvs
 #RUN mv /home/invenio/.virtualenvs/invenio/var/instance/static /home/invenio/.virtualenvs/invenio/var/instance/static.org
 # CMD ["/bin/bash"]
-CMD ["/bin/bash", "-c", "invenio run -h 0.0.0.0"]
-# FROM python:3.6-slim-buster as product-env
+# CMD ["/bin/bash", "-c", "invenio run -h 0.0.0.0"]
 
+# FROM python:3.6-slim-buster as product-env
 # # Configure Weko instance:
 # ENV INVENIO_WEB_HOST=127.0.0.1
 # ENV INVENIO_WEB_INSTANCE=invenio

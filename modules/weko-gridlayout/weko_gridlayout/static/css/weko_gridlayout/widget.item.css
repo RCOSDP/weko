@@ -66,3 +66,8 @@
     overflow: auto;
 }
 
+/* 課題 #32415 */
+/* overwrite cursor: move with cursor: default */
+.trumbowyg-editor img {
+    cursor: default !important;
+}

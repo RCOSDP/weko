@@ -23,7 +23,12 @@
 from flask import Flask, json, url_for
 
 from weko_items_ui import WekoItemsUI
+from weko_items_ui.config import WEKO_ITEMS_UI_BASE_TEMPLATE
+from weko_items_ui.proxies import current_weko_items_ui
+from weko_theme.config import BASE_PAGE_TEMPLATE
+from weko_items_ui.ext import _WekoItemsUIState
 
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_weko_items_ui.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 
 def test_version():
     """Test version import."""
@@ -43,25 +48,44 @@ def test_init():
     ext.init_app(app)
     assert 'weko-items-ui' in app.extensions
 
+    app = Flask('testapp')
+    app.config.update(BASE_PAGE_TEMPLATE=BASE_PAGE_TEMPLATE)
+    WekoItemsUI(app)
+    assert 'weko-items-ui' in app.extensions
+
+
+    app = Flask('testapp')
+    app.config.update(WEKO_ITEMS_UI_BASE_TEMPLATE=WEKO_ITEMS_UI_BASE_TEMPLATE)
+    ext = WekoItemsUI(app)
+    assert 'weko-items-ui' in app.extensions
+
+
+    with app.test_request_context():
+        assert 'weko-items-ui' in current_weko_items_ui.app.extensions
+    
+    
+
 
 def test_view(app):
     """Test view."""
     WekoItemsUI(app)
     with app.test_client() as client:
         res = client.get("/items/jsonschema/0")
-        assert res.status_code == 200
+        assert res.status_code == 302
         res = client.get("/items/schemaform/0")
-        assert res.status_code == 200
+        assert res.status_code == 302
 
 
 def test_prepare_edit_item(app):
+    from weko_items_ui.views import blueprint_api
     app.login_manager._login_disabled = True
-    WekoItemsUI(app)
+    app.register_blueprint(blueprint_api)
+    
     with app.test_request_context():
-        url = url_for('weko_items_ui.prepare_edit_item')
-
+        url = url_for('weko_items_ui_api.prepare_edit_item')
+    # WekoItemsUI(app)
     with app.test_client() as client:
         res = client.post(url, json={})
         json_response = json.loads(res.get_data())
-        assert json_response.get('code') == 0
-        assert json_response.get('msg') == 'success'
+        assert json_response.get('code') == -1
+        assert json_response.get('msg') == 'An error has occurred.'

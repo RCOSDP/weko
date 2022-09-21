@@ -51,6 +51,9 @@ class SchemaConverter:
         if not rootname:
             abort(400, "Error creating Schema: Invalid root name used")
 
+        current_app.logger.error("schemafile:{}".format(schemafile))
+        current_app.logger.error("rootname:{}".format(rootname))
+
         self.rootname = rootname
         self.schema, self.namespaces, self.target_namespace = \
             self.create_schema(schemafile)
@@ -929,6 +932,19 @@ class SchemaTree:
                         for i in v:
                             remove_hide_data(i, parentkey + "." + k)
 
+        def replace_resource_type_for_jpcoar_v1(atr_vm_item):
+            # current_app.logger.debug('atr_vm_item:{0}'.format(atr_vm_item))
+            # atr_vm_item:{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}
+            if 'resourcetype' in atr_vm_item and \
+                    'resourceuri' in atr_vm_item and \
+                    atr_vm_item['resourcetype'] in current_app.config[
+                        'WEKO_SCHEMA_JPCOAR_V1_RESOURCE_TYPE_REPLACE']:
+                new_type = current_app.config[
+                    'WEKO_SCHEMA_JPCOAR_V1_RESOURCE_TYPE_REPLACE'][atr_vm_item['resourcetype']]
+                atr_vm_item['resourcetype'] = new_type
+                atr_vm_item['resourceuri'] = current_app.config[
+                    'RESOURCE_TYPE_URI'][new_type]
+
         vlst = []
         for key_item_parent, value_item_parent in sorted(self._record.items()):
             if isinstance(value_item_parent, dict):
@@ -971,6 +987,9 @@ class SchemaTree:
                     for atr_vm_item in atr_vm:
                         if self._ignore_list_all:
                             remove_hide_data(atr_vm_item, key_item_parent)
+                        if self._schema_name == current_app.config[
+                                'WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME']:
+                            replace_resource_type_for_jpcoar_v1(atr_vm_item)
                         vlst_child = get_mapping_value(mpdic, atr_vm_item,
                                                        key_item_parent,
                                                        atr_name)
@@ -1460,7 +1479,7 @@ class SchemaTree:
                     count_name += _max_len_name
                 else:
                     if _value[jpcoar_affname].get(self._v):
-                        _value[jpcoar_affname][self._v][0] = [[]]
+                        _value[jpcoar_affname][self._v] = [[]]
 
                 len_idtf = _child[jpcoar_nameidt]
                 if len_idtf > 0:
@@ -1816,8 +1835,10 @@ def cache_schema(schema_name, delete=False):
                 dstore['namespaces'] = rec.model.namespaces.copy()
                 dstore['schema'] = json.loads(
                     rec.model.xsd, object_pairs_hook=OrderedDict)
+                # why use clear()?
                 rec.model.namespaces.clear()
                 del rec
+                
                 return dstore
         except BaseException:
             return None
@@ -1834,7 +1855,7 @@ def cache_schema(schema_name, delete=False):
             object_pairs_hook=OrderedDict)
         if delete:
             datastore.delete(cache_key)
-    except BaseException:
+    except BaseException as ex:
         try:
             schema = get_schema()
             if schema:
@@ -1903,6 +1924,7 @@ def delete_schema(pid):
 def get_oai_metadata_formats(app):
     """Get oai metadata formats."""
     oad = app.config.get('OAISERVER_METADATA_FORMATS', {}).copy()
+    
     if isinstance(oad, dict):
         try:
             obj = WekoSchema.get_all()
@@ -1933,4 +1955,5 @@ def get_oai_metadata_formats(app):
                                 oad[schema_name]['namespace'] = ns
                         if lst.schema_location:
                             oad[schema_name]['schema'] = lst.schema_location
+    
     return oad

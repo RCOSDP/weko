@@ -12,7 +12,7 @@ from __future__ import absolute_import, print_function
 
 import pytest
 from flask import json, url_for
-from testutils import login_user
+from tests.testutils import login_user
 
 from invenio_files_rest.models import Bucket
 

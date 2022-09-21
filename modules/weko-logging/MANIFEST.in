@@ -48,3 +48,7 @@ include babel.ini
 
 # added by check-manifest
 recursive-include weko_logging *.pot
+
+# added by check-manifest
+include *.properties
+include tox.ini

@@ -177,9 +177,14 @@ def subitem_recs(schema, keys, value, metadata):
                     })
                 elif isinstance(metadata.get(_v[0]), list):
                     for item in metadata.get(_v[0]):
-                        subitems.append({
-                            item_key: item.get(_v[1], "")
-                        })
+                        if isinstance(item, str):
+                                subitems.append({
+                                item_key: item
+                            })
+                        else:
+                            subitems.append({
+                                item_key: item.get(_v[1], "")
+                            })
                 elif isinstance(metadata.get(_v[0]), OrderedDict):
                     subitems.append({
                         item_key: metadata.get(_v[0], {}).get(_v[1], "")

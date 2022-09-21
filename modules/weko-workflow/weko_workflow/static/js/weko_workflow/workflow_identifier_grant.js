@@ -179,8 +179,43 @@ require([
     }
   }
 
+  $('#btnContinue').on('click', function () {
+    let activity_id = $("#activity_id").text().trim();
+    let action_id = $("#hide-actionId").text().trim();
+    let cancel_uri = '/workflow/activity/action/' + activity_id + '/' + action_id + '/cancel'
+    let cancel_data = {
+      commond: 'Auto cancel because workflow setting be changed.',
+      action_version: '',
+      pid_value: ''
+    };
+    $.ajax({
+      method: 'POST',
+      url: cancel_uri,
+      async: true,
+      contentType: 'application/json',
+      dataType: 'json',
+      data: JSON.stringify(cancel_data),
+      success: function (data, textStatus) {
+        if (data && data.code == 0) {
+          document.location.href = '/workflow';
+        } else {
+          alert(data.msg);
+        }
+      },
+      error: function (textStatus, errorThrown) {
+        alert('Server error.');
+      }
+    });
+  });
+
   // send
   function sendQuitAction(actionButton) {
+    let post_uri = data_global.post_uri;
+    if (!post_uri) {
+      let error_msg = $('#AutoCancelMsg').text();
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+    }
     $.ajax({
       url: data_global.post_uri,
       method: 'POST',
@@ -195,6 +230,10 @@ require([
           } else {
             document.location.reload(true);
           }
+        } else if (-2 == data.code) {
+          let error_msg = $('#AutoCancelMsg').text();
+          $('#cancelModalBody').text(error_msg);
+          $('#cancelModal').modal('show');
         } else {
           endLoading(actionButton);
           if (data.msg) {

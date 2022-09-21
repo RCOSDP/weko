@@ -51,6 +51,6 @@ def test_view(app):
     """
     WekoAccounts(app)
     with app.test_client() as client:
-        res = client.get("/weko/")
+        res = client.get("/weko")
         assert res.status_code == 200
         assert 'Welcome to WEKO-Accounts' in str(res.data)

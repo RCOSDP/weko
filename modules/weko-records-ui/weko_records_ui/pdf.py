@@ -124,7 +124,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     def get_pid_object(pid_value):
         pid_object = PersistentIdentifier.get('recid', pid_value)
         pv = PIDVersioning(child=pid_object)
-        latest_pid = PIDVersioning(parent=pv.parent).get_children(
+        latest_pid = PIDVersioning(parent=pv.parent, child=pid_object).get_children(
             pid_status=PIDStatus.REGISTERED).filter(
             PIDRelation.relation_type == 2).order_by(
             PIDRelation.index.desc()).first()

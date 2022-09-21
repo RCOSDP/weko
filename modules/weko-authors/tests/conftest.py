@@ -62,9 +62,12 @@ def base_app(instance_path):
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
+        SERVER_NAME='app',
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #    'SQLALCHEMY_DATABASE_URI',
+        #    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
         SQLALCHEMY_DATABASE_URI=os.environ.get(
-           'SQLALCHEMY_DATABASE_URI',
-           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
+            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         INDEX_IMG='indextree/36466818-image.jpg',
         SEARCH_UI_SEARCH_INDEX='tenant1-weko',
@@ -101,6 +104,7 @@ def db(app):
     db_.create_all()
     yield db_
     db_.session.remove()
+    db_.drop_all()
     # drop_database(str(db_.engine.url))
 
 
@@ -190,9 +194,10 @@ def id_prefix(client, users):
 
 @pytest.fixture()
 def create_author(db):
-    def _create_author(data):
+    def _create_author(data, next_id):
         with db.session.begin_nested():
-            new_id = Authors.get_sequence(db.session)
+            # new_id = Authors.get_sequence(db.session)
+            new_id = next_id
             data["id"] = str(new_id)
             data["pk_id"] = str(new_id)
             author = Authors(id=new_id, json=data)
@@ -201,6 +206,8 @@ def create_author(db):
 
     # Return new author's id
     return _create_author
+
+
 def user():
     """Create a example user."""
     return create_test_user(email='test@test.org')

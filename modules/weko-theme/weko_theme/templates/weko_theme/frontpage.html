@@ -86,6 +86,7 @@
     </div>
   </div>
   <div class="row row-4" style="height: 100%">
+    {% if (display_index_tree or (current_user.is_authenticated and config.WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER)) or display_facet_search %}
     <div class="col-sm-{{ width }} col-md-{{ width }} col-lg-{{ width }}">
       {% if display_index_tree or (current_user.is_authenticated and config.WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER) %}
         {% include "weko_theme/body_index.html" %}
@@ -94,8 +95,9 @@
         {% include "weko_search_ui/body_facet_search.html" %}
       {% endif %}
     </div>
+    {% endif %}
     {%-if not community_id %}
-      <div class="col-sm-{{ 12-width|int }} col-md-{{ 12-width|int }} col-lg-{{ 12-width|int }}">
+      <div {% if (display_index_tree or (current_user.is_authenticated and config.WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER)) or display_facet_search %}class="col-sm-{{ 12-width|int }} col-md-{{ 12-width|int }} col-lg-{{ 12-width|int }}"{% else %}class="col-sm-12 col-md-12 col-lg-12"{% endif %}>
       {% set display_seting  = settings | get_init_display_setting() %}
         {% if display_seting.init_display_setting == '0' %}
           {% set sort_option = display_seting.sort_option %}

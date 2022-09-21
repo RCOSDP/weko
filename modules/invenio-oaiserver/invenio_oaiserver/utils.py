@@ -63,6 +63,7 @@ def serializer(metadata_prefix):
     """
     metadataFormats = get_oai_metadata_formats(current_app)
     serializer_ = metadataFormats[metadata_prefix]['serializer']
+
     if isinstance(serializer_, tuple):
         return partial(import_string(serializer_[0]), **serializer_[1])
     return import_string(serializer_)

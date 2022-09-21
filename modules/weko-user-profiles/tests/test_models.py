@@ -27,7 +27,7 @@ import pytest
 from invenio_accounts.models import User
 from invenio_db import db
 from sqlalchemy.exc import IntegrityError
-from test_validators import test_usernames
+from tests.test_validators import test_usernames
 
 from weko_user_profiles import UserProfile, WekoUserProfiles
 

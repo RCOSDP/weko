@@ -47,7 +47,7 @@ blueprint_rss = Blueprint(
 )
 
 blueprint_api = Blueprint(
-    'weko_gridlayout',
+    'weko_gridlayout_api',
     __name__,
     url_prefix='/admin',
     template_folder='templates',

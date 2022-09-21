@@ -10,6 +10,7 @@
 from ast import literal_eval as make_tuple
 from datetime import datetime
 from itertools import islice, zip_longest
+from typing_extensions import Self
 
 from celery import shared_task, task
 from celery.utils.log import get_task_logger
@@ -68,6 +69,7 @@ def update_sitemap(start_time=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S'),
         flask_sitemap = current_app.extensions['weko-sitemap']
         size = current_app.config['SITEMAP_MAX_URL_COUNT']
         args = [iter(flask_sitemap._generate_all_item_urls())] * size
+
         run = zip_longest(*args)
         try:
             urlset = next(run)

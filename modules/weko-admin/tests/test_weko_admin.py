@@ -47,16 +47,15 @@ def test_init():
     assert 'weko-admin' in app.extensions
 
 
-def test_view(app):
+def test_view(app, db):
     """
     Test view.
 
     :param app: The flask application.
     """
-    with app.test_request_context():
-        hello_url = url_for('weko_admin.lifetime')
-
+    WekoAdmin(app)
     with app.test_client() as client:
+        hello_url = url_for('weko_admin.lifetime')
         res = client.get(hello_url)
         code = res.status_code
         assert code == 200 or code == 301 or code == 302
@@ -64,14 +63,13 @@ def test_view(app):
             assert 'lifetimeRadios' in str(res.data)
 
 
-def test_set_lifetime(app):
+def test_set_lifetime(app, db):
     """Test set lifetime."""
     valid_time = (15, 30, 45, 60, 180, 360, 720, 1440)
     set_time = random.choice(valid_time)
-    with app.test_request_context():
-        hello_url = url_for('weko_admin.set_lifetime', minutes=set_time)
-
+    WekoAdmin(app)
     with app.test_client() as client:
+        hello_url = url_for('weko_admin.set_lifetime', minutes=set_time)
         res = client.get(hello_url)
         assert res.status_code == 200
         assert 'Session lifetime was updated' in str(res.data)

@@ -29,8 +29,10 @@ xslt_dublincore_oai = resource_filename(
     'weko_records', 'xslts/toDc_oai_v2.xsl')
 xslt_junii2 = resource_filename(
     'weko_records', 'xslts/toJunii2_v2.xsl')
-xslt_jpcoar = resource_filename(
+xslt_jpcoar_v1 = resource_filename(
     'weko_records', 'xslts/toJpcoar_v1.xsl')
+xslt_jpcoar = resource_filename(
+    'weko_records', 'xslts/toJpcoar_v2.xsl')
 xslt_ddi = resource_filename(
     'weko_records', 'xslts/toDdi_v1.xsl')
 
@@ -38,7 +40,8 @@ xslt_ddi = resource_filename(
 Junii2_v2 = WekoXMLSerializer(xslt_filename=xslt_junii2)
 
 #: Jpcoar serializer.
-Jpcoar_v1 = WekoXMLSerializer(xslt_filename=xslt_jpcoar)
+Jpcoar_v1 = WekoXMLSerializer(xslt_filename=xslt_jpcoar_v1)
+Jpcoar_v2 = WekoXMLSerializer(xslt_filename=xslt_jpcoar)
 
 #: dublincore serializer.
 dublincore_v2 = WekoXMLSerializer(xslt_filename=xslt_dublincore_oai)
@@ -50,6 +53,7 @@ ddi_v1 = WekoXMLSerializer(xslt_filename=xslt_dublincore_oai)
 # ===========================
 oaipmh_junii2_v2 = Junii2_v2.serialize_oaipmh
 oaipmh_jpcoar_v1 = Jpcoar_v1.serialize_oaipmh
+oaipmh_jpcoar_v2 = Jpcoar_v2.serialize_oaipmh
 oaipmh_dublincore_v2 = dublincore_v2.serialize_oaipmh
 oaipmh_ddi_v1 = ddi_v1.serialize_oaipmh
 

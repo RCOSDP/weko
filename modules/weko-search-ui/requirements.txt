@@ -251,3 +251,4 @@ invenio-csl-rest==1.0.0a1
 -e ../weko-items-autofill
 -e ../weko-sitemap
 -e ../invenio-iiif
+-e ../weko-redis

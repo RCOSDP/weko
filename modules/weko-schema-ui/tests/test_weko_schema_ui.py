@@ -22,7 +22,7 @@
 
 from flask import Flask
 
-# from weko_schema_ui import WekoSchemaUI
+from weko_schema_ui import WekoSchemaUI
 
 
 def test_version():
@@ -33,15 +33,15 @@ def test_version():
 
 def test_init(app):
     """Test extension initialization."""
-    # app = Flask('testapp')
-    ext = WekoSchemaUI(app)
-    assert 'weko-schema-ui' in app.extensions
+    app_1 = Flask('testapp')
+    ext = WekoSchemaUI(app_1)
+    assert 'weko-schema-ui' in app_1.extensions
 
-    # app = Flask('testapp')
+    app_2 = Flask('testapp')
     ext = WekoSchemaUI()
-    assert 'weko-schema-ui' not in app.extensions
-    ext.init_app(app)
-    assert 'weko-schema-ui' in app.extensions
+    assert 'weko-schema-ui' not in app_2.extensions
+    ext.init_app(app_2)
+    assert 'weko-schema-ui' in app_2.extensions
 
 
 def test_view(app):

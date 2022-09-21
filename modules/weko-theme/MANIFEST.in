@@ -53,3 +53,6 @@ recursive-include weko_theme *.ico
 recursive-include weko_theme *.js
 recursive-include weko_theme *.png
 recursive-include weko_theme *.scss
+
+# added by check-manifest
+include *.properties

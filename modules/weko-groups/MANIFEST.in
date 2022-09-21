@@ -49,3 +49,10 @@ recursive-include weko_groups *.html
 recursive-include weko_groups *.js
 recursive-include weko_groups *.less
 recursive-include tests *.py
+
+# added by check-manifest
+include *.properties
+include tox.ini
+recursive-include examples *.sh
+recursive-include examples *.txt
+recursive-include weko_groups *.py

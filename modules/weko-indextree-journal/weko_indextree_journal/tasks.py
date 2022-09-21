@@ -155,8 +155,11 @@ def export_journal_task(p_path):
                     convert_none_to_blank(item.num_last_vol_online))
                 journal_data.append(
                     convert_none_to_blank(item.num_last_issue_online))
+                site_url = current_app.config['THEME_SITEURL'] 
+                if not site_url.endswith('/'):
+                    site_url = site_url + '/'
                 journal_data.append(
-                    current_app.config['THEME_SITEURL'] + convert_none_to_blank(
+                   site_url + convert_none_to_blank(
                         item.title_url))
                 journal_data.append(convert_none_to_blank(item.first_author))
                 journal_data.append(convert_none_to_blank(item.title_id))
