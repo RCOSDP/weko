@@ -351,6 +351,7 @@ def test_previous_action_nologin(client):
     # assert res.url == url_for('security.login')
 
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_previous_action_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
@@ -360,11 +361,12 @@ def test_previous_action_nologin(client):
     (5, 200),
     (6, 200),
 ])
-def test_previous_action_users(client, users, db_register, users_index, status_code):
+def test_previous_action_users(client, users, db_workflow, db_records,users_index, status_code):
     """Test of previous action."""
     login(client=client, email=users[users_index]['email'])
-    url = url_for('weko_workflow.previous_action', activity_id='1',
-                  action_id=2, req=1)
+    flow_define = db_workflow['flow_define']
+    url = url_for('weko_workflow.previous_action', activity_id='A-00000000-00000',
+                  action_id=3, req=1)
     input = {}
 
     roles = {

@@ -75,6 +75,8 @@ from .utils import _get_max_export_items, check_item_is_being_edit, \
 from .config import WEKO_ITEMS_UI_FORM_TEMPLATE,WEKO_ITEMS_UI_ERROR_TEMPLATE
 from weko_theme.config import WEKO_THEME_DEFAULT_COMMUNITY
 
+from sqlalchemy.exc import StatementError
+
 blueprint = Blueprint(
     'weko_items_ui',
     __name__,
@@ -462,6 +464,7 @@ def iframe_items_index(pid_value='0'):
             workflow = WorkFlow()
             workflow_detail = workflow.get_workflow_by_id(
             cur_activity.workflow_id)
+            
             if workflow_detail and workflow_detail.index_tree_id:
                 index_id = get_index_id(cur_activity.activity_id)
                 update_index_tree_for_record(pid_value, index_id)
@@ -476,14 +479,14 @@ def iframe_items_index(pid_value='0'):
             root_record = None
             files = []
             if pid_value and '.' in pid_value:
-                print("pid_value:{}".format(pid_value))
                 root_record, files = get_record_by_root_ver(pid_value)
-                print("root_record:{}".format(root_record))
                 if root_record and root_record.get('title'):
+                    # current_app.logger.debug("session['itemlogin_item']:{}".format(session['itemlogin_item']))
                     session['itemlogin_item']['title'] = \
                         root_record['title'][0]
                     files_thumbnail = get_thumbnails(files, None)
             else:
+                # current_app.logger.debug("session['itemlogin_record']: {}".format(session['itemlogin_record']))
                 root_record = session['itemlogin_record']
             if root_record and files and len(root_record) > 0 and \
                     len(files) > 0 and isinstance(root_record, (list, dict)):
@@ -499,7 +502,15 @@ def iframe_items_index(pid_value='0'):
                     thumbnails_org=record_detail_alt.get('files_thumbnail')
                 )
             )
-
+            # current_app.logger.debug("session['itemlogin_activity']: {}".format(session['itemlogin_activity']))
+            # current_app.logger.debug("session['itemlogin_item']: {}".format(session['itemlogin_item']))
+            # current_app.logger.debug("session['itemlogin_steps']: {}".format(session['itemlogin_steps']))
+            # current_app.logger.debug("session['itemlogin_action_id']: {}".format(session['itemlogin_action_id']))
+            # current_app.logger.debug("session['itemlogin_cur_step']: {}".format(session['itemlogin_cur_step']))
+            # current_app.logger.debug("session['itemlogin_histories']: {}".format(session['itemlogin_histories']))
+            # current_app.logger.debug("session['itemlogin_res_check']: {}".format(session['itemlogin_res_check']))
+            # current_app.logger.debug("session['itemlogin_pid']: {}".format(session['itemlogin_pid']))
+            
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,
@@ -555,7 +566,11 @@ def iframe_items_index(pid_value='0'):
         current_app.logger.error('KeyError: {}'.format(ex))
     except AttributeError as ex:
         current_app.logger.error('AttributeError: {}'.format(ex))
+        import traceback
+        current_app.logger.error(traceback.format_exc())
     except BadRequest as ex:
+        current_app.logger.error('BadRequest: {}'.format(ex))
+    except StatementError as ex:
         current_app.logger.error('BadRequest: {}'.format(ex))
     except BaseException:
         current_app.logger.error(
@@ -1236,9 +1251,14 @@ def check_record_doi(pid_value='0'):
 def check_record_doi_indexes(pid_value='0'):
     """Check restrict DOI and Indexes.
 
-    :param pid_value: pid_value.
-    :return:
-    """
+    Args:
+        pid_value (str, optional): _description_. Defaults to '0'.
+
+    Returns:
+        _type_: _description_
+    Rises:
+        invenio_pidstore.errors.PIDDoesNotExistError
+    """    
     doi = int(request.args.get('doi', '0'))
     record = WekoRecord.get_record_by_pid(pid_value)
     if (record.pid_doi or doi > 0) and \

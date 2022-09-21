@@ -557,7 +557,7 @@ def listrecords(**kwargs):
     identify = OaiIdentify.get_all()
     if not identify or not identify.outPutSetting:
         current_app.logger.debug(
-            "identify.outPutSetting: {}".format(identify.outPutSetting))
+            "No identify.outPutSetting")
         return error(get_error_code_msg(), **kwargs)
 
     index_state = get_index_state()
