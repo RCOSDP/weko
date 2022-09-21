@@ -1,10 +1,21 @@
+from unittest.mock import MagicMock
 import pytest
+import io
 from flask import Flask, json, jsonify, session, url_for
 from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
 from mock import patch
 from weko_deposit.api import WekoRecord
-
+from werkzeug.exceptions import NotFound
+from weko_workflow.models import (
+    Action,
+    ActionStatus,
+    ActionStatusPolicy,
+    Activity,
+    FlowAction,
+    FlowDefine,
+    WorkFlow,
+)
 from weko_records_ui.views import (
     check_permission,
     citation,
@@ -15,6 +26,7 @@ from weko_records_ui.views import (
     pid_value_version,
     publish,
     restore,
+    check_file_permission,
     record_from_pid,
     default_view_method,
     url_to_link,
@@ -25,6 +37,11 @@ from weko_records_ui.views import (
     set_pdfcoverpage_header,
     parent_view_method,
     doi_ish_view_method,
+    check_file_permission_period,
+    get_file_permission,
+    check_content_file_clickable,
+    get_usage_workflow,
+    get_workflow_detail,
 )
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -144,8 +161,7 @@ def test_export_acl(client, records, users, id, status_code):
         "invenio_records_ui.recid_export", pid_value=1, format="json", _external=True
     )
     res = client.post(url)
-    assert res.status_code == status_code
-    assert res.location == "http://test_server/records/1"
+    assert res.status_code == 405
 
     url = url_for(
         "invenio_records_ui.recid_export", pid_value=1, format="bibtex", _external=True
@@ -270,60 +286,254 @@ def test_check_permission(app, records, users):
 
 
 # def check_file_permission(record, fjson):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_url_to_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_check_file_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, result",
+    [
+        (0, True),
+        (1, True),
+        (2, True),
+        (3, True),
+        (4, True),
+        (5, True),
+        (6, True),
+        (7, True),
+    ],
+)
+def test_check_file_permission(app,records,users,id,result):
+    indexer, results = records
+    record = results[0]["record"]
+    assert isinstance(record,WekoRecord)==True
+    with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+        assert check_file_permission(record,record['item_1617605131499'])==result
+
 
 # def check_file_permission_period(record, fjson):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_url_to_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_check_file_permission_period -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, result",
+    [
+        (0, True),
+        # (1, True),
+        # (2, True),
+        # (3, True),
+        # (4, True),
+        # (5, True),
+        # (6, True),
+        # (7, True),
+    ],
+)
+def test_check_file_permission_period(app,records,users,id,result):
+    indexer, results = records
+    record = results[0]["record"]
+    assert isinstance(record,WekoRecord)==True
+    with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+        assert check_file_permission_period(record,record['item_1617605131499'])==result
 
 # def get_file_permission(record, fjson):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_url_to_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, result",
+    [
+        (0, None),
+        # (1, True),
+        # (2, True),
+        # (3, True),
+        # (4, True),
+        # (5, True),
+        # (6, True),
+        # (7, True),
+    ],
+)
+def test_get_file_permission(app,records,users,id,result):
+    indexer, results = records
+    record = results[0]["record"]
+    assert isinstance(record,WekoRecord)==True
+    with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+        assert get_file_permission(record,record['item_1617605131499'])==result
 
 # def check_content_file_clickable(record, fjson):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_url_to_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_check_content_file_clickable -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, result",
+    [
+        (0, False),
+        # (1, True),
+        # (2, True),
+        # (3, True),
+        # (4, True),
+        # (5, True),
+        # (6, True),
+        # (7, True),
+    ],
+)
+def test_check_content_file_clickable(app,records,users,id,result):
+    indexer, results = records
+    record = results[0]["record"]
+    assert isinstance(record,WekoRecord)==True
+    with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+        assert check_content_file_clickable(record,record['item_1617605131499'])==result
 
 # def get_usage_workflow(file_json):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_url_to_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_usage_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_usage_workflow(app,workflows):
+    assert False
 
 # def get_workflow_detail(workflow_id):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_url_to_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_workflow_detail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_workflow_detail(app,workflows):
+    wf = workflows['workflow']
+    ret = get_workflow_detail(wf.id)
+    assert isinstance(wf,WorkFlow)
+
+    with pytest.raises(NotFound):
+        ret = get_workflow_detail(0)
+    
 
 # def default_view_method(pid, record, filename=None, template=None, **kwargs):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 #     """Display default view.
 #     def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
-def test_default_view_method(app,records):
+def test_default_view_method(app,records,itemtypes):
     indexer, results = records
     record = results[0]["record"]
+    recid = results[0]["recid"]
     with app.test_request_context():
-        assert default_view_method(record.pid,record)==""
+        assert default_view_method(recid,record)==""
 
 # def doi_ish_view_method(parent_pid_value=0, version=0):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_doi_ish_view_method -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_doi_ish_view_method(app,records):
-    with app.test_request_context():
-        assert doi_ish_view_method(parent_pid_value=1)==""
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_doi_ish_view_method_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_doi_ish_view_method_acl_guest(app,client,records):
+    url = url_for("weko_records_ui.doi_ish_view_method", parent_pid_value=1, _external=True)
+    res = client.get(url)
+    assert res.status_code == 302
+    assert res.location == 'http://test_server/login/?next=%2Fr%2F1'
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_doi_ish_view_method_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, result",
+    [
+        (0, False),
+        # (1, True),
+        # (2, True),
+        # (3, True),
+        # (4, True),
+        # (5, True),
+        # (6, True),
+        # (7, True),
+    ],
+)
+def test_doi_ish_view_method_acl(app,client,records,users,id,result):
+    login_user_via_session(client=client, email=users[id]["email"])
+    url = url_for("weko_records_ui.doi_ish_view_method", parent_pid_value=1, _external=True)
+    res = client.get(url)
+    assert res.status_code == 302
+    assert res.location == 'http://test_server/records/1.1'
 
 # def parent_view_method(pid_value=0):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_parent_view_method -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_parent_view_method(app,records):
-    with app.test_request_context():
-        assert parent_view_method(1)==""
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_parent_view_method_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_parent_view_method_acl_guest(app,client,records):
+    url = url_for("weko_records_ui.parent_view_method", pid_value=1, _external=True)
+    res = client.get(url)
+    assert res.status_code == 302
+    assert res.location == 'http://test_server/login/?next=%2Frecords%2Fparent%3A1'
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_parent_view_method_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, result",
+    [
+        (0, False),
+        # (1, True),
+        # (2, True),
+        # (3, True),
+        # (4, True),
+        # (5, True),
+        # (6, True),
+        # (7, True),
+    ],
+)
+def test_parent_view_method_acl(app,client,records,users,id,result):
+    login_user_via_session(client=client, email=users[id]["email"])
+    url = url_for("weko_records_ui.parent_view_method", pid_value=1, _external=True)
+    res = client.get(url)
+    assert res.status_code == 302
+    assert res.location == 'http://test_server/records/1.1'
 
 
 # def set_pdfcoverpage_header():
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_set_pdfcoverpage_header -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_set_pdfcoverpage_header(app):
-    with app.test_request_context():
-        assert set_pdfcoverpage_header()==""
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_set_pdfcoverpage_header_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_set_pdfcoverpage_header_acl_guest(app,client,records):
+    url = url_for("weko_records_ui.set_pdfcoverpage_header",_external=True)
+    res = client.get(url)
+    assert res.status_code == 308
+    assert res.location == 'http://test_server/admin/pdfcoverpage/'
 
+    res = client.post(url)
+    assert res.status_code == 302
+    assert res.location == 'http://test_server/login/?next=%2Frecords%2Fparent%3A1'
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_set_pdfcoverpage_header_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, result",
+    [
+        (0, False),
+        # (1, True),
+        # (2, True),
+        # (3, True),
+        # (4, True),
+        # (5, True),
+        # (6, True),
+        # (7, True),
+    ],
+)
+def test_set_pdfcoverpage_header_acl(app,client,records,users,id,result):
+    login_user_via_session(client=client, email=users[id]["email"])
+    url = url_for("weko_records_ui.set_pdfcoverpage_header",_external=True)
+    res = client.get(url)
+    assert res.status_code == 308
+    assert res.location == 'http://test_server/admin/pdfcoverpage/'
+
+    data = {'availability':'enable', 'header-display':'string', 'header-output-string':'Weko Univ', 'header-display-position':'center', 'pdfcoverpage_form': '',
+    'header-output-image': (io.BytesIO(b"some initial text data"), 'test.png')}
+    res = client.post(url,data=data)
+    assert res.status_code == 302
+    assert res.location == 'http://test_server/login/?next=%2Frecords%2Fparent%3A1'
+
+    data = {'availability':'enable', 'header-display':'image', 'header-output-string':'Weko Univ', 'header-display-position':'center', 'pdfcoverpage_form': '',
+    'header-output-image': (io.BytesIO(b"some initial text data"), 'test.png')}
+    res = client.post(url,data=data)
+    assert res.status_code == 302
+    assert res.location == 'http://test_server/login/?next=%2Frecords%2Fparent%3A1'
 
 #     def handle_over_max_file_size(error):
 # def file_version_update():
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_file_version_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_file_version_update(app):
-    with app.test_request_context():
-        assert file_version_update()==""
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_file_version_update_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_file_version_update_acl_guest(client, records):
+    url = url_for("weko_records_ui.file_version_update",_external=True)
+    res = client.put(url)
+    assert res.status_code == 302
+    assert res.location == 'http://test_server/login/?next=%2Ffile_version%2Fupdate'
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_file_version_update_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, status_code",
+    [
+        (0, 200),
+        # (1, 302),
+        # (2, 302),
+        # (3, 302),
+        # (4, 302),
+        # (5, 302),
+        # (6, 302),
+        # (7, 302),
+    ],
+)
+def test_file_version_update_acl(client, records, users, id, status_code):
+    login_user_via_session(client=client, email=users[id]["email"])
+    url = url_for("weko_records_ui.file_version_update",_external=True)
+    res = client.put(url)
+    assert res.status_code == 302
+    assert res.location == 'http://test_server/login/?next=%2Ffile_version%2Fupdate'
 
 
 # def citation(record, pid, style=None, ln=None):
@@ -425,15 +635,6 @@ def test_init_permission_acl(client, records, users, id, status_code):
     )
     res = client.post(url)
     assert res.status_code == status_code
-   
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_init_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_init_permission(app,records):
-    indexer, results = records
-    recid = results[0]["recid"]
-    with app.test_request_context():
-        res = init_permission(recid)
-        assert res == ""
 
 
 # def escape_str(s):
