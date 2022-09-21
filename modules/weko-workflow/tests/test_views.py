@@ -742,8 +742,32 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     assert data["msg"] == "success"
     ##### item_id != pid_without_ver(item_idにバージョンがある)
     ###### not _old_v
+    # input = {
+    #     "temporary_save":0,
+    #     "identifier_grant":"0",
+    #     "identifier_grant_jalc_doi_suffix":"",
+    #     "identifier_grant_jalc_cr_doi_suffix":"",
+    #     "identifier_grant_jalc_dc_doi_suffix":"",
+    #     "identifier_grant_ndl_jalc_doi_suffix":""
+    # }
+    # update_activity_order("6",7,5)
+    # url = url_for("weko_workflow.next_action",
+    #         activity_id="6", action_id=7)
+    # res = client.post(url, json=input)
+    # data = response_data(res)
+    # assert res.status_code == status_code
+    # assert data["code"] == 0
+    # assert data["msg"] == "success"
     ###### _old_v & _old_v != _new_v
     ###### _old_v & _old_v = _new_v
+    # update_activity_order("7",7,5)
+    # url = url_for("weko_workflow.next_action",
+    #         activity_id="7", action_id=7)
+    # res = client.post(url, json=input)
+    # data = response_data(res)
+    # assert res.status_code == status_code
+    # assert data["code"] == 0
+    # assert data["msg"] == "success"
     ##### item_id == pid_without_ver(item_idにバージョンがない。初めて)
     ###### _value
     ###### not _value
@@ -780,7 +804,7 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
         )
     ##### error_list is not str and error_list=False
     with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=False):
-        update_activity_order("2",7,5)
+        update_activity_order("5",7,5)
         res = client.post(url, json=input)
         data = response_data(res)
         assert res.status_code == status_code
@@ -789,10 +813,20 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     ###### item_id
     ####### deposit and pid_without_ver and not recid
     ####### not (deposit and pid_without_ver and not recid)
+    with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=False):
+        url = url_for("weko_workflow.next_action",
+            activity_id="5", action_id=7)
+        update_activity_order("5",7,5)
+        res = client.post(url, json=input)
+        data = response_data(res)
+        assert res.status_code == status_code
+        assert data["code"] == 0
+        assert data["msg"] == "success"
     ###### not item_id
     
 
-    
+    url = url_for("weko_workflow.next_action",
+            activity_id="2", action_id=7)
     ## not exist identifier_select & not temporary_save
     input = {
         "temporary_save":0,
@@ -863,16 +897,16 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
             assert data["code"] == -2
             assert data["msg"] == ""
 
-        ## can not create_onetime_download_url
-
-        with patch("weko_workflow.views.create_onetime_download_url_to_guest",return_value=None):
+        ## can create_onetime_download_url
+        onetime_download = {"tile_url":"test_file"}
+        with patch("weko_workflow.views.create_onetime_download_url_to_guest",return_value=onetime_download):
             update_activity_order("2",4,6)
             res = client.post(url, json=input)
             data = response_data(res)
             assert res.status_code == status_code
             assert data["code"] == 0
             assert data["msg"] == _("success")
-
+        
         ## exist feedbackmail
         ### exist feedbackmail exist maillist
         update_activity_order("2",4,6)

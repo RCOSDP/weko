@@ -62,7 +62,7 @@ from weko_records.api import Mapping
 from weko_records_ui.models import FilePermission
 from weko_user_profiles import WekoUserProfiles
 from weko_workflow import WekoWorkflow
-from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, FlowActionRole
+from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, FlowActionRole,ActionIdentifier
 from weko_workflow.views import blueprint as weko_workflow_blueprint
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
@@ -857,6 +857,11 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
         action_id=3,
         feedback_maillist=[]
     )
+    feedbackmail_action3 = ActionFeedbackMail(
+        activity_id=activity_item4.id,
+        action_id=3,
+        feedback_maillist=[]
+    )
     feedbackmail = FeedbackMailList(
         item_id=activity_item2.item_id,
         mail_list=[{"email":"test@test.org"}]
@@ -864,6 +869,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
     with db.session.begin_nested():
         db.session.add(feedbackmail_action1)
         db.session.add(feedbackmail_action2)
+        db.session.add(feedbackmail_action3)
         db.session.add(feedbackmail)
     db.session.commit()
     
@@ -926,4 +932,17 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
     )
     with db.session.begin_nested():
         db.session.add(flow_action_role)
+    db.session.commit()
+    
+    action_identifier=ActionIdentifier(
+        activity_id=activity_item3.id,
+        action_id=7,
+        action_identifier_select=1,
+        action_identifier_jalc_doi="",
+        action_identifier_jalc_cr_doi="",
+        action_identifier_jalc_dc_doi="",
+        action_identifier_ndl_jalc_doi=""
+    )
+    with db.session.begin_nested():
+        db.session.add(action_identifier)
     db.session.commit()
