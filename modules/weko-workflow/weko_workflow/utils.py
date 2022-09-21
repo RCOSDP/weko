@@ -801,11 +801,8 @@ class MappingData(object):
     def __init__(self, item_id=None, record=None):
         """Initilize pagination."""
         self.record = WekoRecord.get_record(item_id) if item_id else record
-        print("record:{}".format(self.record))
         item_type = self.get_data_item_type()
-        print("item_type:{}".format(item_type))
         item_type_mapping = Mapping.get_record(item_type.id)
-        print("item_type_mapping:{}".format(item_type_mapping))
         self.item_map = get_full_mapping(item_type_mapping, "jpcoar_mapping")
 
     def get_data_item_type(self):
@@ -825,7 +822,6 @@ class MappingData(object):
         result = OrderedDict()
 
         property_keys = self.item_map.get(mapping_key)
-        print("property_keys:{}".format(property_keys))
         if not property_keys:
             current_app.logger.error(
                 mapping_key + ' jpcoar:mapping is not correct')
@@ -838,13 +834,11 @@ class MappingData(object):
                 if hide_sub_keys and key.replace('[]', '') in hide_sub_keys:
                     continue
                 attribute = self.record.get(split_key[0])
-                print("attribute:{}".format(attribute))
                 if attribute and len(split_key) > 1:
                     data_result = get_item_value_in_deep(
                         attribute.get('attribute_value_mlt'),
                         split_key[1:]
                     )
-                    print("data_result:{}".format(data_result))
                     if data_result:
                         for value in data_result:
                             data.append(value)
@@ -862,7 +856,6 @@ class MappingData(object):
         :return: properties key and data.
         """
         data_info = self.get_data_by_mapping(mapping_key, True)
-        print("data_info:{}".format(data_info))
         return next(iter(data_info.items())) if data_info else (None, None)
 
     def get_first_property_by_mapping(self, mapping_key, ignore_empty=False):
@@ -1074,20 +1067,17 @@ class IdentifierHandle(object):
             None
 
         """
-        print("in update idt")
         key_value = self.metadata_mapping.get_first_property_by_mapping(
             "identifierRegistration.@value")
-        print("get key_value")
         key_type = self.metadata_mapping.get_first_property_by_mapping(
             "identifierRegistration.@attributes.identifierType")
-        print("get key_type")
         self.commit(key_id=key_value.split('.')[0],
                     key_val=key_value.split('.')[1],
                     key_typ=key_type.split('.')[1],
                     atr_nam='Identifier Registration',
                     atr_val=input_value,
                     atr_typ=input_type)
-        print("commit")
+
     def get_idt_registration_data(self):
         """Get Identifier Registration data.
 
@@ -1128,15 +1118,11 @@ class IdentifierHandle(object):
         try:
             with db.session.begin_nested():
                 rec = RecordMetadata.query.filter_by(id=self.item_uuid).first()
-                print("rec:{}".format(rec))
                 deposit = WekoDeposit(rec.json, rec)
-                print("deposit:{}".format(deposit))
                 index = {'index': deposit.get('path', []),
                          'actions': deposit.get('publish_status')}
                 deposit.update(index, self.item_metadata)
-                print("update")
                 deposit.commit()
-                print("commit")
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
