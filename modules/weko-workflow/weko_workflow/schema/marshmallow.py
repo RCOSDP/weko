@@ -61,7 +61,12 @@ class ResponseLockSchema(Schema):
     locked_by_username = fields.String(allow_none=True)
     class Meta:
         strict = True
-        
+
+class ResponseUnlockSchema(Schema):
+    code = fields.Integer(required=True)
+    msg = fields.String()
+
+
 class PasswdSchema(Schema):
     passwd = fields.String(required=True)
     
@@ -91,12 +96,12 @@ class SaveActivitySchema(Schema):
 class CheckApprovalSchema(Schema):
     check_handle = fields.Integer(required=True,validate=Range(min=-1,max=1))
     check_continue = fields.Integer(required=True,validate=Range(min=-1,max=1))
-    err = fields.Integer(required=True,validate=Range(min=-1,max=1))
+    error = fields.Integer(required=True,validate=Range(min=-1,max=1))
     class Meta:
         strict = True
 
 class SaveActivityResponseSchema(Schema):
-    succses = fields.String(required=True)
+    success = fields.Boolean(required=True)
     msg = fields.String(required=True)
     class Meta:
         strict = True
