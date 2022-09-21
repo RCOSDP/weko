@@ -191,6 +191,7 @@ def db(app):
     db_.session.remove()
     db_.drop_all()
 
+
 @pytest.fixture()
 def users(app, db):
     """Create users."""
@@ -216,6 +217,7 @@ def users(app, db):
             ActionUsers(action='superuser-access', user=sysadmin)
         ]
         db.session.add_all(action_users)
+    db.session.commit()
 
     return [
         {'email': user.email, 'id': user.id,
@@ -259,6 +261,7 @@ def item_type(db):
         db.session.add(item_type_name2)
         db.session.add(item_type17)
         db.session.add(item_type18)
+    db.session.commit()
 
     return {"item_type_name1":item_type_name1,
             "item_type_name2":item_type_name2,
@@ -287,6 +290,7 @@ def record(db):
         db.session.add(rec1)
         db.session.add(rec2)
         db.session.add(rec3)
+    db.session.commit()
     # with db.session.begin_nested():
     #     db.session.add(rec)
 
@@ -301,6 +305,7 @@ def facet_search_setting(db):
         settings.append(FacetSearchSetting(**datas[setting]))
     with db.session.begin_nested():
         db.session.add_all(settings)
+    db.session.commit()
 
 
 @pytest.fixture()
@@ -311,6 +316,7 @@ def index(db):
         indexes.append(Index(**datas[index]))
     with db.session.begin_nested():
         db.session.add_all(indexes)
+    db.session.commit()
 
 
 @pytest.fixture()
@@ -328,6 +334,7 @@ def db_sessionlifetime(app, db):
     session_lifetime = SessionLifetime(lifetime=60, is_delete=False)
     with db.session.begin_nested():
         db.session.add(session_lifetime)
+    db.session.commit()
 
 
 @pytest.fixture()
@@ -340,6 +347,7 @@ def db_register(app, db,users):
         for data in action_datas:
             actions_db.append(Action(**data))
         db.session.add_all(actions_db)
+    db.session.commit()
 
     actionstatus_datas = dict()
     with open('../weko-workflow/tests/data/action_status.json') as f:
@@ -349,6 +357,7 @@ def db_register(app, db,users):
         for data in actionstatus_datas:
             actionstatus_db.append(ActionStatus(**data))
         db.session.add_all(actionstatus_db)
+    db.session.commit()
 
     flow_define = FlowDefine(flow_id=uuid.uuid4(),
                              flow_name='Registration Flow',
@@ -420,6 +429,7 @@ def db_register(app, db,users):
         db.session.add(flow_action3)
         db.session.add(workflow)
         db.session.add(activity)
+    db.session.commit()
 
     # return {'flow_define':flow_define,'item_type_name':item_type_name,'item_type':item_type,'flow_action':flow_action,'workflow':workflow,'activity':activity}
     return {'flow_define':flow_define,'item_type':item_type,'workflow':workflow}

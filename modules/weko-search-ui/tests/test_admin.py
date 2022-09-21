@@ -118,7 +118,7 @@ def test_export_template(app, client, admin_view, users, item_type):
 user_results = [
     (0,403),
     (1,403),
-    (2,403),
+    (2,200),
     (3,200),
     (4,200),
 ]
@@ -138,8 +138,7 @@ def test_import_items_guest(client, db_sessionlifetime, admin_view):
     input = {}
 
     res = client.post(url, json=input)
-    assert res.status_code == 302
-    assert res.location == url_for("security.login", next="/admin/items/import/import", _external=True)
+    assert res.status_code == 403
 
 
 @pytest.mark.parametrize('id, status_code', user_results)
@@ -157,8 +156,7 @@ def test_download_import_guest(client, db_sessionlifetime, admin_view):
     input = {}
 
     res = client.post(url, json=input)
-    assert res.status_code == 302
-    assert res.location == url_for("security.login", next="/admin/items/import/import", _external=True)
+    assert res.status_code == 403
 
 
 def test_import_items(app, client, admin_view, users, db_register):
