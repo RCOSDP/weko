@@ -16,6 +16,8 @@ from invenio_search import current_search, current_search_client
 from invenio_search.utils import schema_to_index
 from weko_search_ui.config import INDEXER_DEFAULT_INDEX
 
+from flask import current_app
+
 from .models import OAISet
 from .proxies import current_oaiserver
 from .query import query_string_parser

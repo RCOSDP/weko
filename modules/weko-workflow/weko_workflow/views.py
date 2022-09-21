@@ -134,7 +134,7 @@ def regex_replace(s, pattern, replace):
 
     Returns:
         _type_: _description_
-    """    
+    """
     return re.sub(pattern, replace, s)
 
 
@@ -159,7 +159,7 @@ def index():
               type: string
           - name: tab
             in: query
-            description: Specify tab name to initial open(todo or all or wait)  
+            description: Specify tab name to initial open(todo or all or wait)
             schema:
               type: string
         responses:
@@ -167,8 +167,8 @@ def index():
             description: render result of weko_workflow/activity_list.html
             content:
                 text/html
-    """    
-    
+    """
+
     if not current_user or not current_user.roles:
         return abort(403)
 
@@ -267,10 +267,10 @@ def iframe_success():
     """アイテム登録ビューをレンダリングする
     セッションに保存されているデータから画面表示に必要な情報を取得し、
     レンダリングする。
-    
+
     Returns:
         str: render result of weko_workflow/item_login_success.html
-    
+
     ---
     get:
         description: "render template"
@@ -419,7 +419,7 @@ def new_activity():
             content:
                 text/html
 
-    """    
+    """
     workflow = WorkFlow()
     workflows = workflow.get_workflow_list()
     workflows = workflow.get_workflows_by_roles(workflows)
@@ -457,11 +457,11 @@ def init_activity():
     Args:
 
     Returns:
-        dict: json data validated by ResponseMessageSchema. 
-    
+        dict: json data validated by ResponseMessageSchema.
+
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
-    
+
     ---
     post:
       description: "init activity"
@@ -510,8 +510,8 @@ def init_activity():
     except ValidationError as err:
         res = ResponseMessageSchema().load({'code':-1,'msg':str(err)})
         return jsonify(res.data), 400
-    
-    activity = WorkActivity()    
+
+    activity = WorkActivity()
     try:
         if 'community' in request.args:
             rtn = activity.init_activity(
@@ -521,7 +521,7 @@ def init_activity():
         if rtn is None:
             res = ResponseMessageSchema().load({'code':-1,'msg':'can not make activity_id'})
             return jsonify(res.data), 500
-        
+
         url = url_for('weko_workflow.display_activity',
                       activity_id=rtn.activity_id)
         if 'community' in request.args and request.args.get('community') != 'undefined':
@@ -540,7 +540,7 @@ def init_activity():
         current_app.logger.error("Unexpected error: {}".format(ex))
         db.session.rollback()
         res = ResponseMessageSchema().load({'code':-1,'msg':"Unexpected error: {}".format(ex)})
-        return jsonify(res.data),500 
+        return jsonify(res.data),500
 
     res = ResponseMessageSchema().load({'code':0,'msg':'success','data':{'redirect': url}})
 
@@ -682,16 +682,16 @@ def display_guest_activity(file_name=""):
 @login_required
 def display_activity(activity_id="0"):
     """各アクティビティのビューをレンダリングする
-    
+
     各アクティビティの画面表示に必要な情報を取得し、
     レンダリングする。
-    
+
     Args:
         activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得. Defaults to '0'.
-        
+
     Returns:
         str: render result of weko_workflow/activity_detail.html
-        
+
     ---
     get:
         description: "render template"
@@ -742,13 +742,13 @@ def display_activity(activity_id="0"):
                 content:
                     text/html
     """
-    
+
     check_flg = type_null_check(activity_id, str)
     if not check_flg:
         current_app.logger.error("display_activity: argument error")
         return render_template("weko_theme/error.html",
                 error="can not get data required for rendering")
-    
+
     activity = WorkActivity()
     if "?" in activity_id:
         activity_id = activity_id.split("?")[0]
@@ -892,7 +892,7 @@ def display_activity(activity_id="0"):
             return render_template("weko_theme/error.html",
                     error="can not get data required for rendering")
 
-    
+
     # if 'approval' == action_endpoint:
     if item:
         try:
@@ -907,7 +907,7 @@ def display_activity(activity_id="0"):
                     error="can not get data required for rendering")
 
         except PIDDeletedError:
-            current_app.loger.debug("PIDDeletedError: {}".format(sys.exc_info()))
+            current_app.logger.debug("PIDDeletedError: {}".format(sys.exc_info()))
             abort(404)
         except PIDDoesNotExistError:
             current_app.logger.debug("PIDDoesNotExistError: {}".format(sys.exc_info()))
@@ -1186,17 +1186,17 @@ def check_authority_action(activity_id='0', action_id=0,
 @check_authority
 def next_action(activity_id='0', action_id=0):
     """そのアクションにおける処理を行い、アクティビティの状態を更新する。
-    
+
     Args:
         activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得. Defaults to '0'.
         action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
-    
+
     Returns:
         object: 成否判定のコードとメッセージを含むjson dataをレスポンスボディにもつResponse.json data validated by ResponseMessageSchema
         
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
-    
+
     TODO:
         400,500 を受け取った際のjsの挙動設計。postに400,500を返すとあるがjsの整備がまだなのですべて200で返す
 
@@ -1247,14 +1247,14 @@ def next_action(activity_id='0', action_id=0):
                             ResponseMessageSchema
                         example: {"code": -2, "msg": ""}
     """
-    
+
     check_flg = type_null_check(activity_id, str)
     check_flg &= type_null_check(action_id, int)
     if not check_flg:
         current_app.logger.error("next_action: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
         return jsonify(res.data)
-    
+
     work_activity = WorkActivity()
     history = WorkActivityHistory()
     activity_detail = work_activity.get_activity_detail(activity_id)
@@ -1263,7 +1263,7 @@ def next_action(activity_id='0', action_id=0):
         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get activity detail"})
         return jsonify(res.data)
     action_order = activity_detail.action_order
-    
+
     try:
         schema = get_schema_action(action_id)
         if schema is None:
@@ -1276,7 +1276,7 @@ def next_action(activity_id='0', action_id=0):
         res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
         return jsonify(res.data)
     post_json = schema_load.data
-    
+
     # A-20220808-00001
     # A-20220808-00001
     # A-20220808-00001
@@ -1710,7 +1710,7 @@ def next_action(activity_id='0', action_id=0):
 @check_authority
 def previous_action(activity_id='0', action_id=0, req=0):
     """reqに従い次のアクションを決定し、アクティビティの状態を更新する
-    
+
     Args:
         activity_id (str, optional): 対象アクティビティID.パスパラメータから取得. Defaults to '0'.
         action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
@@ -1723,11 +1723,11 @@ def previous_action(activity_id='0', action_id=0, req=0):
     
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
-    
+
     TODO:
         400,500 を受け取った際のjsの挙動設計。postに400,500を返すとあるがjsの整備がまだなのですべて200で返す
     ---
-    
+
     post:
         description: "previous_action"
         security:
@@ -1753,7 +1753,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
                 type: int
             - in: path
               name: req
-              description: 次のアクションの種類. 
+              description: 次のアクションの種類.
                            0: 1つ前のフローアクション
                            -1: アイテム登録アクション
                            それ以外: 2つ目のアクション.
@@ -1783,7 +1783,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
                         example: {"code": -1, "msg": "server error"}
 
     """
-    
+
     check_flg = type_null_check(activity_id, str)
     check_flg &= type_null_check(action_id, int)
     check_flg &= type_null_check(req, int)
@@ -1960,19 +1960,19 @@ def cancel_action(activity_id='0', action_id=0):
     Args:
         activity_id (str, optional): 対象アクティビティID.パスパラメータから取得. Defaults to '0'.
         action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
-        
+
     Returns:
         object: 成否判定のコードとメッセージ、リダイレクト先のURLを含むjson dataをレスポンスボディにもつResponse.
               json data validated by ResponseMessageSchema
-    
+
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
-    
+
     TODO:
         400,500 を受け取った際のjsの挙動設計。postに400,500を返すとあるがjsの整備がまだなのですべて200で返す
 
     ---
-    
+
     post:
         description: "cancel action"
         security:
@@ -2019,21 +2019,21 @@ def cancel_action(activity_id='0', action_id=0):
                             ResponseMessageSchema
                         example: {"code": -1, "msg": "server error"}
     """
-    
+
     check_flg = type_null_check(activity_id, str)
     check_flg &= type_null_check(action_id, str)
     if not check_flg:
         current_app.logger.error("cancel_action: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
         return jsonify(res.data)
-    
+
     try:
         schema_load = CancelSchema().load(request.get_json())
     except ValidationError as err:
         current_app.logger.error("cancel_action: "+str(err))
         res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
         return jsonify(res.data)
-    
+
     post_json = schema_load.data
     work_activity = WorkActivity()
     # Clear deposit
@@ -2042,7 +2042,7 @@ def cancel_action(activity_id='0', action_id=0):
         current_app.logger.error("cancel_action: can not get activity_detail")
         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get activity detail"})
         return jsonify(res.data)
-    
+
     activity = dict(
         activity_id=activity_id,
         action_id=action_id,
@@ -2162,7 +2162,7 @@ def withdraw_confirm(activity_id='0', action_id=0):
     
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
-    
+
     TODO:
         400,500 を受け取った際のjsの挙動設計。postに400,500を返すとあるがjsの整備がまだなのですべて200で返す
     ---
@@ -2208,7 +2208,7 @@ def withdraw_confirm(activity_id='0', action_id=0):
             current_app.logger.error("withdraw_confirm: argument error")
             res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
             return jsonify(res.data)
-        
+
         try:
             schema_load = PasswdSchema().load(request.get_json())
         except ValidationError as err:
@@ -2216,7 +2216,7 @@ def withdraw_confirm(activity_id='0', action_id=0):
             res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
             return jsonify(res.data)
         post_json = schema_load.data
-        
+
         password = post_json.get('passwd', None)
         if password is None:
             res = ResponseMessageSchema({"code":-1,"msg":_('Password not provided')})
@@ -2240,7 +2240,7 @@ def withdraw_confirm(activity_id='0', action_id=0):
                 current_app.logger.error("withdraw_confirm: bad identifier data")
                 res = ResponseMessageSchema({"code":-1,"msg":"bad identifier data"})
                 return jsonify(res.data)
-            
+
             if identifier_handle.delete_pidstore_doi():
                 identifier['action_identifier_select'] = \
                     current_app.config.get(
@@ -2340,7 +2340,7 @@ def get_feedback_maillist(activity_id='0'):
 
     Args:
        activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得. Defaults to '0'.
-    
+
     Returns:
         dict: 設定されているフィードバックメール送信先を示すjson data
 
@@ -2405,13 +2405,13 @@ def get_feedback_maillist(activity_id='0'):
 @login_required
 def lock_activity(activity_id="0"):
     """アクティビティの操作者を確認し、操作可能者以外の場合ロックする
-    
+
     ワークフローに関するアクティビティの操作が、操作可能者以外により
     行われないようセッション管理し、ロックする
-    
+
     Args:
         activity_id (str, optional): 対象アクティビティID.パスパラメータから取得. Defaults to '0'.
-        
+
     Returns:
         object: アクティビティの状態を示すjson dataをレスポンスボディに含むResponse.json data validated by ResponseMessageSchema
     
@@ -2462,14 +2462,14 @@ def lock_activity(activity_id="0"):
             if action_handler:
                 return int(current_user.get_id()) == int(action_handler)
         return False
-    
-    
+
+
     check_flg = type_null_check(activity_id, str)
     if not check_flg:
         current_app.logger.error("lock_activity: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
         return jsonify(res.data)
-    
+
     cache_key = 'workflow_locked_activity_{}'.format(activity_id)
     timeout = current_app.permanent_session_lifetime.seconds
     try:
@@ -2504,7 +2504,7 @@ def lock_activity(activity_id="0"):
 
     locked_by_email, locked_by_username = get_account_info(
         locked_value.split('-')[0])
-    
+
     res = ResponseLockSchema().load({"code":200,"msg":"" if err else _("Success"),
                                      "locked_value":locked_value,"locked_by_email":locked_by_email,
                                      "locked_by_username":locked_by_username})
@@ -2591,7 +2591,7 @@ def unlock_activity(activity_id="0"):
 @login_required
 def check_approval(activity_id='0'):
     """アクティビティに対して承認の確認が必要であるかの判定をして、その結果を返す
-    
+
     Args:
         activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得. Defaults to '0'.
 
@@ -2605,13 +2605,13 @@ def check_approval(activity_id='0'):
         description: "check approval"
         security:
             - login_required: []
-        responses: 
+        responses:
             200:
                 description: "success"
                 content:
                     application/json:
                         schema:
-                            CheckApprovalSchema        
+                            CheckApprovalSchema
                         example: {"check_handle": -1, "check_continue": -1, "error": 1 }
             500:
                 description: "arguments error"
@@ -2667,7 +2667,7 @@ def save_activity():
 
     Returns:
         dict: アイテムデータの更新が成功したか示すjson data
-    
+
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
     ---
@@ -2680,8 +2680,8 @@ def save_activity():
             content:
                 application/json:
                     schema:
-                        SaveActivitySchema   
-                    example: {"activity_id": "A-20220830-00001", "title": "title", "shared_user_id": -1} 
+                        SaveActivitySchema
+                    example: {"activity_id": "A-20220830-00001", "title": "title", "shared_user_id": -1}
         responses:
             200:
                 description: "success"

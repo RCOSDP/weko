@@ -1835,8 +1835,10 @@ def cache_schema(schema_name, delete=False):
                 dstore['namespaces'] = rec.model.namespaces.copy()
                 dstore['schema'] = json.loads(
                     rec.model.xsd, object_pairs_hook=OrderedDict)
+                # why use clear()?
                 rec.model.namespaces.clear()
                 del rec
+                
                 return dstore
         except BaseException:
             return None
@@ -1853,7 +1855,7 @@ def cache_schema(schema_name, delete=False):
             object_pairs_hook=OrderedDict)
         if delete:
             datastore.delete(cache_key)
-    except BaseException:
+    except BaseException as ex:
         try:
             schema = get_schema()
             if schema:
