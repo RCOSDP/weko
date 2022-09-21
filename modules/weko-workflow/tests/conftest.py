@@ -57,7 +57,6 @@ from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime 
 from weko_admin.views import blueprint as weko_admin_blueprint
 from weko_records.models import ItemTypeName, ItemType
-from weko_authors.models import Authors
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import ActionFeedbackMail, Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction
 from weko_workflow.views import blueprint as weko_workflow_blueprint
@@ -73,6 +72,7 @@ from invenio_files_rest.models import Location, Bucket
 from invenio_files_rest import InvenioFilesREST
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_records_files.api import RecordsBuckets
+from weko_authors.models import Authors
 
 # @event.listens_for(Engine, "connect")
 # def set_sqlite_pragma(dbapi_connection, connection_record):

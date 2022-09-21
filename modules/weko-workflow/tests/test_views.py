@@ -41,6 +41,7 @@ from weko_records_ui.models import FilePermission
 def response_data(response):
     return json.loads(response.data)
 
+
 def test_index_acl_nologin(client):
     """_summary_
 
@@ -263,6 +264,37 @@ def test_find_doi_users(client, users, users_index, status_code):
 
     res = client.post(url, json=input)
     assert res.status_code == status_code
+
+
+def test_save_activity_nologin(client):
+    """Test of save activity."""
+    url = url_for('weko_workflow.save_activity')
+    input = {}
+
+    res = client.post(url, json=input)
+    assert res.status_code == 302
+    # TODO check that the path changed
+    # assert res.url == url_for('security.login')
+
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+])
+def test_save_activity_users(client, users, users_index, status_code):
+    """Test of save activity."""
+    login(client=client, email=users[users_index]['email'])
+    url = url_for('weko_workflow.save_activity')
+    input = {}
+
+    res = client.post(url, json=input)
+    assert res.status_code == status_code
+
 
 def test_save_feedback_maillist_nologin(client):
     """Test of save feedback maillist."""
@@ -783,6 +815,7 @@ def test_save_activity_acl_guestlogin(guest):
 
     res = guest.post(url, json=input)
     assert res.status_code == 200
+
 
 def test_withdraw_confirm_nologin(client):
     """Test of withdraw confirm."""
