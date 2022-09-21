@@ -51,6 +51,7 @@ from invenio_stats import InvenioStats
 from invenio_communities import InvenioCommunities
 from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_communities.models import Community 
+from invenio_jsonschemas import InvenioJSONSchemas
 # from weko_records_ui import WekoRecordsUI
 from weko_theme import WekoTheme
 from weko_admin import WekoAdmin
@@ -58,6 +59,7 @@ from weko_admin.models import SessionLifetime
 from weko_admin.views import blueprint as weko_admin_blueprint
 from weko_records.models import ItemTypeName, ItemType,FeedbackMailList
 from weko_records.api import Mapping
+from weko_records_ui.models import FilePermission
 from weko_user_profiles import WekoUserProfiles
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, FlowActionRole
@@ -321,6 +323,7 @@ def base_app(instance_path):
     InvenioAssets(app_)
     InvenioAdmin(app_)
     InvenioPIDRelations(app_)
+    InvenioJSONSchemas(app_)
     # InvenioCommunities(app_)
     # WekoAdmin(app_)
     # WekoTheme(app_)
@@ -368,6 +371,7 @@ def client(app):
     """
     with app.test_client() as client:
         yield client
+
 @pytest.yield_fixture()
 def guest(client):
     with client.session_transaction() as sess:
@@ -483,7 +487,7 @@ def users(app, db):
             ActionRoles(action='detail-page-acces', role=contributor_role),
         ]
         db.session.add_all(action_roles)
-        
+    db.session.commit()
     return [
         {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
         {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
@@ -506,6 +510,7 @@ def action_data(db):
         for data in action_datas:
             actions_db.append(Action(**data))
         db.session.add_all(actions_db)
+    db.session.commit()
     
     actionstatus_datas = dict()
     with open('tests/data/action_status.json') as f:
@@ -515,6 +520,7 @@ def action_data(db):
         for data in actionstatus_datas:
             actionstatus_db.append(ActionStatus(**data))
         db.session.add_all(actionstatus_db)
+    db.session.commit()
     return actions_db, actionstatus_db
 @pytest.fixture()
 def item_type(db):
@@ -534,6 +540,7 @@ def item_type(db):
         item_type.id,
         mapping = json_data("data/item_type/item_type_mapping.json")
     )
+    db.session.commit()
     return item_type
 
 @pytest.fixture()
@@ -635,7 +642,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
     activity_action3_item2 = ActivityAction(activity_id=activity_item2.activity_id,
                                             action_id=5,action_status="M",
                                             action_handler=1, action_order=3)
-
+    
     with db.session.begin_nested():
         db.session.add(activity_action1_item1)
         db.session.add(activity_action2_item1)
@@ -643,6 +650,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
         db.session.add(activity_action1_item2)
         db.session.add(activity_action2_item2)
         db.session.add(activity_action3_item2)
+    db.session.commit()
     return {'flow_define':flow_define,'item_type':item_type,'workflow':workflow}
 
 @pytest.fixture()
@@ -693,6 +701,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                              flow_user=1)
     with db.session.begin_nested():
         db.session.add(flow_define)
+    db.session.commit()
     
     # setting flow action(start, item register, oa policy, item link, identifier grant, approval, end)
     flow_actions = list()
@@ -768,6 +777,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                      send_mail_setting={}))
     with db.session.begin_nested():
         db.session.add_all(flow_actions)
+    db.session.commit()
     
     # setting workflow, activity(not exist item, exist item)
     workflow = WorkFlow(flows_id=uuid.uuid4(),
@@ -818,12 +828,24 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                     title='test item1', shared_user_id=-1, extra_info={"guest_mail":"guest@test.org"},
                     action_order=1,
                     )
+    # item_idが"."を含まない
+    activity_item4 = Activity(activity_id='5',item_id=db_records[0][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item1', shared_user_id=-1, extra_info={"guest_mail":"guest@test.org"},
+                    action_order=1,
+                    )
     with db.session.begin_nested():
         db.session.add(workflow)
         db.session.add(activity)
         db.session.add(activity_item1)
         db.session.add(activity_item2)
         db.session.add(activity_item3)
+        db.session.add(activity_item4)
+    db.session.commit()
         
     feedbackmail_action1 = ActionFeedbackMail(
         activity_id=activity_item1.id,
@@ -843,6 +865,15 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
         db.session.add(feedbackmail_action1)
         db.session.add(feedbackmail_action2)
         db.session.add(feedbackmail)
+    db.session.commit()
+    
+    permissions = list()
+    for i in range(len(users)):
+        permissions.append(FilePermission(users[i]["id"],"1.1","test_file","2",None,-1))
+    with db.session.begin_nested():
+        db.session.add_all(permissions)
+    db.session.commit()
+    
     # setting activity_action in activity existed item
     for flow_action in flow_actions:
         action = action_data[0][flow_action.action_id-1]
@@ -867,6 +898,27 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
             action_order=flow_action.action_order
         )
         db.session.add(activity_action)
+        
+        action_handler = activity_item2.activity_login_user \
+            if not action.action_endpoint == "approval" else -1
+        activity_action = ActivityAction(
+            activity_id=activity_item3.activity_id,
+            action_id=flow_action.action_id,
+            action_status="F",
+            action_handler=action_handler,
+            action_order=flow_action.action_order
+        )
+        db.session.add(activity_action)
+        action_handler = activity_item3.activity_login_user \
+            if not action.action_endpoint == "approval" else -1
+        activity_action = ActivityAction(
+            activity_id=activity_item4.activity_id,
+            action_id=flow_action.action_id,
+            action_status="F",
+            action_handler=action_handler,
+            action_order=flow_action.action_order
+        )
+        db.session.add(activity_action)
     flow_action_role = FlowActionRole(
         flow_action_id=flow_actions[5].id,
         action_role=None,
@@ -874,3 +926,4 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
     )
     with db.session.begin_nested():
         db.session.add(flow_action_role)
+    db.session.commit()
