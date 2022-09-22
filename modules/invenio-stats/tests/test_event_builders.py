@@ -1,4 +1,3 @@
-from tkinter import W
 import pytest
 import tempfile
 from datetime import datetime
