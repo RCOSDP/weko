@@ -92,7 +92,7 @@ test_patterns =[
     ]
 @pytest.mark.parametrize("params, facet_file, links, paths, rd_file, execute", test_patterns)
 def test_IndexSearchResource_get(client_rest, users, item_type, record, facet_search_setting, index, mock_es_execute,
-                                 params, facet_file, links, paths, rd_file, execute):
+                                 params, facet_file, links, paths, rd_file, execute, admin_view):
     sname = current_app.config["SERVER_NAME"]
 
     facet = json_data("tests/data/search/"+facet_file)
