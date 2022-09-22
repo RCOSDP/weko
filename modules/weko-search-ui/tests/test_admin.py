@@ -115,35 +115,41 @@ def test_export_template(app, client, admin_view, users, item_type):
     assert compare_csv(res.get_data(as_text=True), codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue())
 
 
-user_results = [
-    (-1,403),# guest(no login)
-    (0,403),
-    (1,403),
-    (2,200),
-    (3,200),
-    (4,200),
+user_list = [
+    -1,# guest(no login)
+    0, 1, 2, 3, 4 # users' id
 ]
 
-@pytest.mark.parametrize('id, status_code', user_results)
-def test_import_items_access(app, client, admin_view, db_sessionlifetime, users, id, status_code):
+@pytest.mark.parametrize('id', user_list)
+def test_import_items_access(app, client, admin_view, db_sessionlifetime, users, id):
     if id != -1:
         login_user_via_session(client=client, email=users[id]['email'])
     url = "/admin/items/import/import"
     input = {}
 
     res = client.post(url, json=input)
-    assert res.status_code == status_code
+    # check not authorized users
+    if id in (-1, 0, 1):
+        assert res.status_code == 403
+    # check authorized users
+    if id in (2, 3, 4):
+        assert res.status_code != 403
 
 
-@pytest.mark.parametrize('id, status_code', user_results)
-def test_download_import_access(app, client, admin_view, users, id, status_code):
+@pytest.mark.parametrize('id', user_list)
+def test_download_import_access(app, client, admin_view, users, id):
     if id != -1:
         login_user_via_session(client=client, email=users[id]['email'])
     url = "/admin/items/import/export_import"
     input = {}
 
     res = client.post(url, json=input)
-    assert res.status_code == status_code
+    # check not authorized users
+    if id in (-1, 0, 1):
+        assert res.status_code == 403
+    # check authorized users
+    if id in (2, 3, 4):
+        assert res.status_code != 403
 
 
 def test_import_items_with_listrecords_without_import_task_data(app, client, admin_view, users, db_register):
@@ -160,7 +166,7 @@ def test_import_items_with_listrecords_without_import_task_data(app, client, adm
         res = client.post(url, json=input)
         data = json.loads(res.get_data(as_text=True))
         assert data["status"] == "success"
-        assert data["data"]["tasks"] is not None
+        assert data["data"]["tasks"] == []
         assert data["data"]["import_start_time"] is not None
 
 
