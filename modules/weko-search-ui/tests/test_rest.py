@@ -11,7 +11,7 @@ from tests.conftest import json_data
 
 
 from invenio_records_rest.errors import MaxResultWindowRESTError
-def test_IndexSearchResource_post_guest(client_rest, users):
+def test_IndexSearchResource_post_guest(client_rest, users, admin_view):
     res = client_rest.post("/index/",
                            data=json.dumps({}),
                            content_type="application/json")
@@ -67,7 +67,7 @@ path2 = dict(
     harvest_public_state=True,
 )
 
-        
+
 test_patterns =[
     ({},
      "facet_not_post_filters.json",
@@ -84,15 +84,15 @@ test_patterns =[
      "execute_result01_02_03.json"
      ),
     ({"size":1,"page":2,"q":"1557820086539","Access":"open access"},
-     "facet.json", 
+     "facet.json",
      {"next":"?page=3&q=1557820086539&size=1","prev":"?page=1&q=1557820086539&size=1","self":"?page=2&q=1557820086539&size=1"},
      [[mock_path(**path2),mock_path(**path1)]], # path not in agp
      "rd_result01_02_03.json",
      "execute_result01_02_03.json")
     ]
 @pytest.mark.parametrize("params, facet_file, links, paths, rd_file, execute", test_patterns)
-def test_IndexSearchResource_get(client_rest, users, item_type, record, facet_search_setting, index, mock_es_execute, 
-                                 params, facet_file, links, paths, rd_file, execute):
+def test_IndexSearchResource_get(client_rest, users, item_type, record, facet_search_setting, index, mock_es_execute,
+                                 params, facet_file, links, paths, rd_file, execute, admin_view):
     sname = current_app.config["SERVER_NAME"]
 
     facet = json_data("tests/data/search/"+facet_file)
@@ -108,7 +108,7 @@ def test_IndexSearchResource_get(client_rest, users, item_type, record, facet_se
                 assert result == rd
 
 
-def test_IndexSearchResource_get_Exception(client_rest, users, item_type, record, facet_search_setting, index, mock_es_execute):
+def test_IndexSearchResource_get_Exception(client_rest, users, item_type, record, facet_search_setting, index, mock_es_execute, admin_view):
     sname = current_app.config["SERVER_NAME"]
 
     facet = json_data("tests/data/search/facet.json")
@@ -125,7 +125,7 @@ def test_IndexSearchResource_get_Exception(client_rest, users, item_type, record
                     rd["links"] = links
                     assert result == rd
 
-def test_IndexSearchResource_get_MaxResultWindowRESTError(client_rest):
+def test_IndexSearchResource_get_MaxResultWindowRESTError(client_rest, db_sessionlifetime, admin_view):
     #MaxResultWindowRESTError発生
     param = {"size":1000,"page":1000}
     with patch("weko_admin.utils.get_facet_search_query", return_value={}):

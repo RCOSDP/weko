@@ -1,8 +1,14 @@
 import pytest
+from mock import patch
 import codecs
 import io
 import csv
+import json
+from flask import url_for, current_app
+from datetime import datetime
+
 from invenio_accounts.testutils import login_user_via_session
+
 
 # class ItemManagementBulkDelete(BaseView):
 #     def index(self):
@@ -38,7 +44,7 @@ def compare_csv(data1, data2):
         f.seek(0)
         csv_data = [row for row in csv.reader(f)]
         return csv_data
-    
+
     csv1 = _str2csv(data1)
     csv2 = _str2csv(data2)
     for i, row in enumerate(csv1):
@@ -53,19 +59,20 @@ def compare_csv(data1, data2):
                     return False
     return True
 
+
 def test_export_template(app, client, admin_view, users, item_type):
-    
+
     url="/admin/items/import/export_template"
 
     # data = {}
-    
+
     # with app.test_client() as client:
     login_user_via_session(client=client, email=users[4]["email"])
-    
+
     # no data test
     res = client.post(url, json={})
     assert res.get_data(as_text=True) == ""
-    
+
     # not item_type_id test
     data = {
         "item_type_id":-1
@@ -80,7 +87,7 @@ def test_export_template(app, client, admin_view, users, item_type):
     res = client.post(url, json=data)
     assert res.get_data(as_text=True) == ""
 
-    # nomal test1
+    # normal test1
     data = {
         "item_type_id":17
     }
@@ -90,9 +97,9 @@ def test_export_template(app, client, admin_view, users, item_type):
         io_obj = io.StringIO(result)
     # assert res.get_data(as_text=True) == codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue()
     assert compare_csv(res.get_data(as_text=True),codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue())
-    
 
-    # nomal test1
+
+    # normal test1
     # exist thumbnail with items
     # exist item not in form item
     # exist item in meta_system
@@ -106,3 +113,82 @@ def test_export_template(app, client, admin_view, users, item_type):
         io_obj = io.StringIO(result)
     # assert res.get_data(as_text=True) == codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue()
     assert compare_csv(res.get_data(as_text=True), codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue())
+
+
+user_results = [
+    (-1,403),# guest(no login)
+    (0,403),
+    (1,403),
+    (2,200),
+    (3,200),
+    (4,200),
+]
+
+@pytest.mark.parametrize('id, status_code', user_results)
+def test_import_items_access(app, client, admin_view, db_sessionlifetime, users, id, status_code):
+    if id != -1:
+        login_user_via_session(client=client, email=users[id]['email'])
+    url = "/admin/items/import/import"
+    input = {}
+
+    res = client.post(url, json=input)
+    assert res.status_code == status_code
+
+
+@pytest.mark.parametrize('id, status_code', user_results)
+def test_download_import_access(app, client, admin_view, users, id, status_code):
+    if id != -1:
+        login_user_via_session(client=client, email=users[id]['email'])
+    url = "/admin/items/import/export_import"
+    input = {}
+
+    res = client.post(url, json=input)
+    assert res.status_code == status_code
+
+
+def test_import_items_with_listrecords_without_import_task_data(app, client, admin_view, users, db_register):
+    login_user_via_session(client=client, email=users[4]['email'])
+    url = "/admin/items/import/import"
+
+    list_records_data = dict()
+    with open("tests/data/list_records/list_records.json", "r") as f:
+        list_records_data = json.load(f)
+    input = {"data_path": "/tmp/weko_import_20220819045602",
+             "list_record": list_records_data}
+
+    with patch("weko_search_ui.admin.chord"):
+        res = client.post(url, json=input)
+        data = json.loads(res.get_data(as_text=True))
+        assert data["status"] == "success"
+        assert data["data"]["tasks"] is not None
+        assert data["data"]["import_start_time"] is not None
+
+
+def test_download_import(app, client, admin_view, users, db_register):
+    login_user_via_session(client=client, email=users[4]['email'])
+    url = "/admin/items/import/export_import"
+
+    input = {"list_result": [
+		{
+			'No':1,
+			'Start Date':'2022-08-25 04:54:19',
+			'End Date':'2022-08-25 04:54:37',
+			'Item Id':'',
+			'Action':'End',
+			'Work Flow Status':'Done'
+		},
+		{
+			'No':2,
+			'Start Date':'2022-08-25 04:54:36',
+			'End Date':'2022-08-25 04:55:21',
+			'Item Id':'',
+			'Action':'End',
+			'Work Flow Status':'Done'
+		}]}
+    now = str(datetime.date(datetime.now()))
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+
+    res = client.post(url, json=input)
+
+    assert res.mimetype == "text/{}".format(file_format)
+    assert res.headers["Content-disposition"] == "attachment; filename=List_Download {}.{}".format(now, file_format)
