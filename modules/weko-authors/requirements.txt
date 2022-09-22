@@ -3,7 +3,7 @@ alembic==0.9.6
 amqp>=2.6.0
 angular-gettext-babel==0.3
 aniso8601==8.0.0
-arrow==0.12.1
+arrow==0.15.1
 asn1crypto==0.23.0
 Babel==2.5.1
 bagit==1.7.0
