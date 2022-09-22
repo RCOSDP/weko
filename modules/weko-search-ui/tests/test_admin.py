@@ -146,7 +146,7 @@ def test_download_import_access(app, client, admin_view, users, id, status_code)
     assert res.status_code == status_code
 
 
-def test_import_items_with_listrecords_without_import_task(app, client, admin_view, users, db_register):
+def test_import_items_with_listrecords_without_import_task_data(app, client, admin_view, users, db_register):
     login_user_via_session(client=client, email=users[4]['email'])
     url = "/admin/items/import/import"
 
