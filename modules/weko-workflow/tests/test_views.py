@@ -552,11 +552,11 @@ def test_unlock_activity_nologin(client):
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
-    # (2, 200),
-    # (3, 200),
-    # (4, 200),
-    # (5, 200),
-    # (6, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_unlock_activity_users(client, users, users_index, status_code):
     """Test of unlock activity."""
@@ -566,16 +566,16 @@ def test_unlock_activity_users(client, users, users_index, status_code):
 
     with patch('weko_workflow.views.get_cache_data', return_value=""):
         res = client.post(url, json=input)
-        assert res.status_code != 302
+        assert res.status_code == status_code
 
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
-    # (2, 200),
-    # (3, 200),
-    # (4, 200),
-    # (5, 200),
-    # (6, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_unlock_activity(client, users, db_register, users_index, status_code):
     login(client=client, email=users[users_index]['email'])
@@ -611,11 +611,11 @@ def test_check_approval_nologin(client):
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
-    # (2, 200),
-    # (3, 200),
-    # (4, 200),
-    # (5, 200),
-    # (6, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_check_approval_users(client, users, users_index, status_code):
     """Test of check approval."""
@@ -633,11 +633,11 @@ def test_check_approval_users(client, users, users_index, status_code):
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
-    # (2, 200),
-    # (3, 200),
-    # (4, 200),
-    # (5, 200),
-    # (6, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_check_approval(client, users, db_register, users_index, status_code):
     login(client=client, email=users[users_index]['email'])
@@ -674,11 +674,11 @@ def test_get_feedback_maillist_nologin(client):
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
-    # (2, 200),
-    # (3, 200),
-    # (4, 200),
-    # (5, 200),
-    # (6, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_get_feedback_maillist_users(client, users, users_index, status_code):
     """Test of get feedback maillist."""
@@ -686,15 +686,15 @@ def test_get_feedback_maillist_users(client, users, users_index, status_code):
     url = url_for('weko_workflow.get_feedback_maillist', activity_id='1')
 
     res = client.get(url)
-    assert res.status_code != 302
+    assert res.status_code == status_code
 
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
-    # (2, 200),
-    # (4, 200),
-    # (5, 200),
-    # (6, 200),
+    (2, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_get_feedback_maillist(client, users, db_register, users_index, status_code):
     login(client=client, email=users[users_index]['email'])
@@ -752,35 +752,36 @@ def test_save_activity_nologin(client):
 
     res = client.post(url, json=input)
     assert res.status_code == 302
+    assert res.location == url_for('security.login',next="/workflow/save_activity_data",_external=True)
     # TODO check that the path changed
     # assert res.url == url_for('security.login')
 
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
-    # (2, 200),
-    # (3, 200),
-    # (4, 200),
-    # (5, 200),
-    # (6, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_save_activity_users(client, users, users_index, status_code):
     """Test of save activity."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.save_activity')
     input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
-
-    res = client.post(url, json=input)
-    assert res.status_code != 302
+    with patch('weko_workflow.views.save_activity_data'):
+        res = client.post(url, json=input)
+        assert res.status_code == status_code
 
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
-    # (2, 200),
-    # (3, 200),
-    # (4, 200),
-    # (5, 200),
-    # (6, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_save_activity(client, users, db_register, users_index, status_code):
     login(client=client, email=users[users_index]['email'])
