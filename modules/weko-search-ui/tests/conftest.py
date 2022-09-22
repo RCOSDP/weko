@@ -223,6 +223,7 @@ def base_app(instance_path):
         WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS=WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS,
         WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info',
         WEKO_ITEMS_UI_EXPORT_TMP_PREFIX = 'weko_export_',
+        WEKO_SEARCH_UI_IMPORT_TMP_PREFIX = 'weko_import_',
         WEKO_RECORDS_UI_LICENSE_DICT=[
             {
                 'name': _('write your own license'),
@@ -434,6 +435,7 @@ def base_app(instance_path):
             "WEKO - NII Scholarly and Academic Information Navigator"
         ),
         WEKO_OPENSEARCH_IMAGE_URL = "static/favicon.ico",
+        WEKO_ADMIN_OUTPUT_FORMAT = 'tsv',
         WEKO_THEME_DEFAULT_COMMUNITY = 'Root Index',
         WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE="",
         WEKO_ITEMS_UI_MULTIPLE_APPROVALS=True,
@@ -1961,41 +1963,13 @@ def celery(app):
     return app.extensions['flask-celeryext'].celery
 
 
-# @pytest.fixture(scope='function')
-# def s3_bucket(app):
-#     """S3 bucket fixture."""
-#     with mock_s3():
-#         session = boto3.Session(
-#             aws_access_key_id=app.config.get('S3_ACCCESS_KEY_ID'),
-#             aws_secret_access_key=app.config.get(
-#                 'S3_SECRECT_ACCESS_KEY'),
-#         )
-#         s3 = session.resource('s3')
-#         bucket = s3.create_bucket(Bucket='test_invenio_s3')
-
-#         yield bucket
-
-#         for obj in bucket.objects.all():
-#             obj.delete()
-#         bucket.delete()
+@pytest.fixture()
+def record_with_metadata():
+    data = json_data("data/list_records/list_records_new_item_doira.json")
+    return data
 
 
-# @pytest.fixture(scope='function')
-# def s3fs_testpath(s3_bucket):
-#     """S3 test path."""
-#     return 's3://{}/path/to/data'.format(s3_bucket.name)
-
-
-# @pytest.fixture
-# def file_instance_mock(s3fs_testpath):
-#     """Mock of a file instance."""
-#     class FileInstance(object):
-#         def __init__(self, **kwargs):
-#             for k, v in kwargs.items():
-#                 setattr(self, k, v)
-
-#     return FileInstance(
-#         id='deadbeef-65bd-4d9b-93e2-ec88cc59aec5',
-#         uri=s3fs_testpath,
-#         size=4,
-#         updated=None)
+@pytest.fixture()
+def item_render():
+    data = json_data("data/itemtype1_render.json")
+    return data
