@@ -21,7 +21,7 @@ chardet==3.0.4
 citeproc-py==0.5.1
 citeproc-py-styles==0.1.2
 click>=6.7
-cookiecutter==1.6.0
+cookiecutter==2.1.1
 counter-robots==2018.6
 cryptography==2.1.4
 datacite==1.0.1
