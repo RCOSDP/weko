@@ -116,6 +116,7 @@ def test_export_template(app, client, admin_view, users, item_type):
 
 
 user_results = [
+    (-1,403),# guest(no login)
     (0,403),
     (1,403),
     (2,200),
@@ -124,26 +125,20 @@ user_results = [
 ]
 
 @pytest.mark.parametrize('id, status_code', user_results)
-def test_import_items_login(app, client, admin_view, users, id, status_code):
-    login_user_via_session(client=client, email=users[id]['email'])
+def test_import_items_access(app, client, admin_view, db_sessionlifetime, users, id, status_code):
+    if id != -1:
+        login_user_via_session(client=client, email=users[id]['email'])
     url = "/admin/items/import/import"
     input = {}
 
     res = client.post(url, json=input)
     assert res.status_code == status_code
-
-
-def test_import_items_guest(client, db_sessionlifetime, admin_view):
-    url = "/admin/items/import/import"
-    input = {}
-
-    res = client.post(url, json=input)
-    assert res.status_code == 403
 
 
 @pytest.mark.parametrize('id, status_code', user_results)
-def test_download_import_login(app, client, admin_view, users, id, status_code):
-    login_user_via_session(client=client, email=users[id]['email'])
+def test_download_import_access(app, client, admin_view, users, id, status_code):
+    if id != -1:
+        login_user_via_session(client=client, email=users[id]['email'])
     url = "/admin/items/import/export_import"
     input = {}
 
@@ -151,15 +146,7 @@ def test_download_import_login(app, client, admin_view, users, id, status_code):
     assert res.status_code == status_code
 
 
-def test_download_import_guest(client, db_sessionlifetime, admin_view):
-    url = "/admin/items/import/export_import"
-    input = {}
-
-    res = client.post(url, json=input)
-    assert res.status_code == 403
-
-
-def test_import_items(app, client, admin_view, users, db_register):
+def test_import_items_with_listrecords_without_import_task(app, client, admin_view, users, db_register):
     login_user_via_session(client=client, email=users[4]['email'])
     url = "/admin/items/import/import"
 
