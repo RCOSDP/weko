@@ -51,6 +51,7 @@ from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
 from invenio_oauth2server.models import Token
 from invenio_pidstore import InvenioPIDStore
 from invenio_pidstore.minters import recid_minter
+from invenio_pidrelations.config import PIDRELATIONS_RELATION_TYPES
 from invenio_queues import InvenioQueues
 from invenio_queues.proxies import current_queues
 from invenio_records import InvenioRecords
@@ -276,6 +277,7 @@ def base_app(instance_path, mock_gethostbyaddr):
         ),
         SECRET_KEY='asecretkey',
         SERVER_NAME='localhost',
+        PIDRELATIONS_RELATION_TYPES=PIDRELATIONS_RELATION_TYPES,
         STATS_QUERIES=STATS_QUERIES,
         STATS_EVENTS=stats_events,
         STATS_AGGREGATIONS={'file-download-agg': {}},
@@ -610,12 +612,21 @@ def objects(bucket):
     for key, content in [
             ('LICENSE', b'license file'),
             ('README.rst', b'readme file')]:
-        objs.append(
-            ObjectVersion.create(
+        obj = ObjectVersion.create(
                 bucket, key, stream=BytesIO(content),
                 size=len(content)
             )
-        )
+        obj.userrole = 'guest'
+        obj.site_license_name = ''
+        obj.site_license_flag = False
+        obj.index_list = []
+        obj.userid = 0
+        obj.item_id = 1
+        obj.item_title = 'test title'
+        obj.is_billing_item = False
+        obj.billing_file_price = 0
+        obj.user_group_list = []
+        objs.append(obj)
 
     yield objs
 
@@ -695,7 +706,8 @@ def mock_event_queue(app, mock_datetime, request_headers, objects,
             app.test_request_context(headers=request_headers['user']):
         events = [
             build_file_unique_id(
-                file_download_event_builder({}, app, objects[0])
+                file_download_event_builder({'unique_session_id': 'S0000000000000000000000000000001'},
+                                            app, objects[0])
             ) for idx in range(100)
         ]
         mock_queue.consume.return_value = iter(events)

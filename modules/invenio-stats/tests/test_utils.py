@@ -8,7 +8,6 @@
 
 """Test utility functions."""
 
-from tkinter import W
 import pytest
 import uuid
 
