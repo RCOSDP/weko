@@ -29,7 +29,7 @@ from datetime import datetime
 
 import pytest
 from mock import patch
-from flask import Flask
+from flask import Flask, session, url_for
 from flask_babelex import Babel, lazy_gettext as _
 from flask_menu import Menu
 from invenio_theme import InvenioTheme
@@ -51,8 +51,6 @@ from invenio_stats import InvenioStats
 from invenio_communities import InvenioCommunities
 from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_communities.models import Community 
-from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
-from werkzeug.local import LocalProxy
 # from weko_records_ui import WekoRecordsUI
 from weko_theme import WekoTheme
 from weko_admin import WekoAdmin
@@ -61,7 +59,7 @@ from weko_admin.views import blueprint as weko_admin_blueprint
 from weko_records.models import ItemTypeName, ItemType
 from weko_workflow import WekoWorkflow
 from weko_search_ui import WekoSearchUI
-from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
+from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, ActionFeedbackMail, ActivityAction, FlowDefine, FlowAction
 from weko_workflow.views import blueprint as weko_workflow_blueprint
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
@@ -82,6 +80,8 @@ from weko_schema_ui.models import OAIServerSchema
 from weko_index_tree.config import WEKO_INDEX_TREE_REST_ENDPOINTS,WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER
 from weko_user_profiles.models import UserProfile
 from weko_user_profiles.config import WEKO_USERPROFILES_ROLES,WEKO_USERPROFILES_GENERAL_ROLE
+from invenio_records_files.api import RecordsBuckets
+from weko_authors.models import Authors
 
 # @event.listens_for(Engine, "connect")
 # def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -115,15 +115,6 @@ def base_app(instance_path):
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         ACCOUNTS_USERINFO_HEADERS=True,
-        INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
-        SEARCH_UI_SEARCH_INDEX="{}-weko".format("test"),
-        INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
-        INDEXER_DEFAULT_DOC_TYPE="item-v1.0.0",
-        INDEXER_FILE_DOC_TYPE="content",
-                WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
-        WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER=WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER,
-     INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
-   
         WEKO_PERMISSION_SUPER_ROLE_USER=['System Administrator',
                                          'Repository Administrator'],
         WEKO_PERMISSION_ROLE_COMMUNITY=['Community Administrator'],
@@ -315,8 +306,6 @@ def base_app(instance_path):
                     '-NonCommercial-ShareAlike 4.0 International License.'
             },
         ],
-        WEKO_USERPROFILES_ROLES=WEKO_USERPROFILES_ROLES,
-        WEKO_USERPROFILES_GENERAL_ROLE=WEKO_USERPROFILES_GENERAL_ROLE,
         WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE="",
         WEKO_ITEMS_UI_MULTIPLE_APPROVALS=True,
         WEKO_THEME_DEFAULT_COMMUNITY="Root Index",
@@ -339,7 +328,6 @@ def base_app(instance_path):
     # WekoAdmin(app_)
     # WekoTheme(app_)
     WekoWorkflow(app_)
-    WekoSearchUI(app_)
     # WekoRecordsUI(app_)
     # app_.register_blueprint(invenio_theme_blueprint)
     app_.register_blueprint(invenio_communities_blueprint)
@@ -383,29 +371,6 @@ def client(app):
     """
     with app.test_client() as client:
         yield client
-
-@pytest.fixture()
-def esindex(app,db_records):
-    with open("tests/data/mappings/item-v1.0.0.json","r") as f:
-        mapping = json.load(f)
-
-    search = LocalProxy(lambda: app.extensions["invenio-search"])
-
-    with app.test_request_context():
-        search.client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
-        search.client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
-        # print(current_search_client.indices.get_alias())
-    
-    for depid, recid, parent, doi, record, item in db_records:
-        search.client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
-    
-
-    yield search
-
-    with app.test_request_context():
-        search.client.indices.delete_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
-        search.client.indices.delete(index=app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
-        
 
 @pytest.fixture()
 def users(app, db):
@@ -831,9 +796,8 @@ def db_records(db,instance_path,users):
     item_data = json_data("data/test_items.json")
     record_num = len(record_data)
     result = []
-    with db.session.begin_nested():
-        for d in range(record_num):
-            result.append(create_record(record_data[d], item_data[d]))
+    for d in range(record_num):
+        result.append(create_record(record_data[d], item_data[d]))
     db.session.commit()
 
     index_metadata = {
@@ -894,5 +858,12 @@ def db_register2(app, db):
     with db.session.begin_nested():
         db.session.add(session_lifetime)
 
-
+@pytest.fixture()
+def location(app, db, instance_path):
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name='local', uri=instance_path, default=True)
+        db.session.add(loc)
+    db.session.commit()
+    return loc
     
