@@ -36,7 +36,7 @@ from .errors import IndexAddedRESTError, IndexNotFoundRESTError, \
     IndexUpdatedRESTError, InvalidDataRESTError
 from .models import Index
 from .utils import check_doi_in_index, check_index_permissions, \
-    is_index_locked, perform_delete_index
+    is_index_locked, perform_delete_index, save_index_trees_to_redis
 
 
 def need_record_permission(factory_name):
@@ -231,6 +231,9 @@ class IndexActionResource(ContentNegotiatedMethodView):
                 raise IndexAddedRESTError()
             status = 201
             msg = 'Index created successfully.'
+
+            tree = self.record_class.get_index_tree()
+            save_index_trees_to_redis(tree)
         return make_response(
             jsonify({'status': status, 'message': msg, 'errors': errors}),
             status)
@@ -275,6 +278,11 @@ class IndexActionResource(ContentNegotiatedMethodView):
                 raise IndexUpdatedRESTError()
             msg = 'Index updated successfully.'
 
+            #roles = get_account_role()
+            #for role in roles:
+            tree = self.record_class.get_index_tree()
+            save_index_trees_to_redis(tree)
+
         return make_response(jsonify(
             {'status': status, 'message': msg, 'errors': errors,
              'delete_flag': delete_flag}), status)
@@ -287,6 +295,9 @@ class IndexActionResource(ContentNegotiatedMethodView):
 
         action = request.values.get('action', 'all')
         msg, errors = perform_delete_index(index_id, self.record_class, action)
+
+        tree = self.record_class.get_index_tree()
+        save_index_trees_to_redis(tree)
 
         return make_response(jsonify(
             {'status': 200, 'message': msg, 'errors': errors}), 200)
@@ -403,5 +414,7 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
             status = 201
             msg = _('Index moved successfully.')
 
+            tree = self.record_class.get_index_tree()
+            save_index_trees_to_redis(tree)
         return make_response(
             jsonify({'status': status, 'message': msg}), status)

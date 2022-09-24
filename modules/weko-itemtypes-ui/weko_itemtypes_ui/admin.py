@@ -543,6 +543,7 @@ class ItemTypeMappingView(BaseView):
         :param ItemTypeID: Item type ID. (Default: 0)
         :return: The rendered template.
         """
+        current_app.logger.error("ItemTypeID:{}".format(ItemTypeID))
         try:
             lists = ItemTypes.get_latest()  # ItemTypes.get_all()
             if lists is None or len(lists) == 0:
@@ -653,6 +654,9 @@ class ItemTypeMappingView(BaseView):
                 jpcoar_lists[item.schema_name] = json.loads(item.xsd)
 
             item_type_mapping = Mapping.get_record(ItemTypeID)
+            
+           
+
             return self.render(
                 current_app.config['WEKO_ITEMTYPES_UI_ADMIN_MAPPING_TEMPLATE'],
                 lists=lists,
@@ -680,6 +684,7 @@ class ItemTypeMappingView(BaseView):
             return jsonify(msg=_('Header Error'))
 
         data = request.get_json()
+        # current_app.logger.debug("data:{}".format(data))
         item_type = ItemTypes.get_by_id(data.get('item_type_id'))
         meta_system = item_type.render.get('meta_system')
         mapping_type = data.get('mapping_type')

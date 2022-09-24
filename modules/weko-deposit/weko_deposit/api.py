@@ -24,7 +24,7 @@ import inspect
 import sys
 import uuid
 from collections import OrderedDict
-from datetime import datetime, timezone
+from datetime import datetime, timezone,date
 from typing import NoReturn, Union
 
 import redis
@@ -210,7 +210,7 @@ class WekoIndexer(RecordIndexer):
             index=self.es_index,
             doc_type=self.es_doc_type,
             id=str(version.get('id')),
-            body=body
+            body=body, ignore=[400, 404]
         )
 
     def update_path(self, record, update_revision=True,
@@ -275,10 +275,10 @@ class WekoIndexer(RecordIndexer):
             )
 
     def index(self, record):
-        """Index a record.
+        """Index a record(fake function).
 
         :param record: Record instance.
-        """
+        """       
         self.get_es_index()
 
     def delete(self, record):
@@ -379,12 +379,17 @@ class WekoIndexer(RecordIndexer):
     def update_feedback_mail_list(self, feedback_mail):
         """Update feedback mail info.
 
-        :param feedback_mail: mail list in json format.
-        :return: _feedback_mail_id.
-        """
+        Args:
+            feedback_mail (_type_): feedback_mail: mail list in json format. {'id': UUID('05fd7cbd-6aad-4c76-a62e-7947868cccf6'), 'mail_list': [{'email': 'wekosoftware@nii.ac.jp', 'author_id': ''}]}
+
+        Returns:
+            _type_: _feedback_mail_id
+        """        
+        # current_app.logger.debug("feedback_mail:{}".format(feedback_mail));
         self.get_es_index()
         pst = 'feedback_mail_list'
         body = {'doc': {pst: feedback_mail.get('mail_list')}}
+        
         return self.client.update(
             index=self.es_index,
             doc_type=self.es_doc_type,
@@ -394,9 +399,11 @@ class WekoIndexer(RecordIndexer):
 
     def update_author_link(self, author_link):
         """Update author_link info."""
+        # current_app.logger.error("author_link:{}".format(author_link));
         self.get_es_index()
         pst = 'author_link'
         body = {'doc': {pst: author_link.get('author_link')}}
+        
         return self.client.update(
             index=self.es_index,
             doc_type=self.es_doc_type,
@@ -406,6 +413,7 @@ class WekoIndexer(RecordIndexer):
 
     def update_jpcoar_identifier(self, dc, item_id):
         """Update JPCOAR meta data item."""
+        # current_app.logger.error("dc:{}".format(dc));
         self.get_es_index()
         body = {'doc': {'_item_metadata': dc}}
         return self.client.update(
@@ -420,6 +428,7 @@ class WekoIndexer(RecordIndexer):
 
         :param updated_data: Records data.
         """
+        # current_app.logger.error("updated_data:{}".format(updated_data));
         for record in updated_data:
             es_data = dict(
                 _id=str(record.get('_id')),
@@ -466,6 +475,8 @@ class WekoDeposit(Deposit):
         Returns:
             dict: item_metadata from item_id in instance "ex :OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-06-03'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test1', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), ('item_title', 'test1'), ('item_type_id', '15'), ('control_number', '1.1'), ('author_link', []), ('weko_shared_id', -1), ('owner', '1'), ('publish_date', '2022-06-03'), ('title', ['test1']), ('relation_version_is_last', True), ('path', ['1557820086539']), ('publish_status', '0')])" 
 
+        Raises:
+            sqlalchemy.orm.exc.NoResultFound
         """
         return ItemsMetadata.get_record(self.id).dumps()
 
@@ -515,6 +526,8 @@ class WekoDeposit(Deposit):
             m.run()
         except UnresolvedConflictsException:
             raise MergeConflict()
+        # current_app.logger.error("m.unified_patches:{}".format(m.unified_patches))
+        # current_app.logger.error("lca:{}".format(lca))
         return self._patch(m.unified_patches, lca)
 
     @staticmethod
@@ -709,6 +722,7 @@ class WekoDeposit(Deposit):
             relations_ver['is_last'] = relations_ver.get('index') == 0
             self.indexer.update_relation_version_is_last(relations_ver)
 
+        # current_app.logger.error("deposit:{}".format(deposit))
         return deposit
 
     @classmethod
@@ -820,9 +834,14 @@ class WekoDeposit(Deposit):
         self['_deposit']['status'] = 'draft'
         if len(args) > 1:
             dc, deleted_items = self.convert_item_metadata(args[0], args[1])
-        else:
+            super(WekoDeposit, self).update(dc)
+        elif len(args)==1:
             dc, deleted_items = self.convert_item_metadata(args[0])
-        super(WekoDeposit, self).update(dc)
+            super(WekoDeposit, self).update(dc)
+        else:
+            super(WekoDeposit, self).update()
+
+        
         #if deleted_items:
         #    for key in deleted_items:
         #        if key in self:
@@ -1009,6 +1028,7 @@ class WekoDeposit(Deposit):
         
         Raises:
            PIDInvalidAction(): Invalid operation on persistent identifier in current state. 
+           AttributeError: 
         """
         deposit = None
         try:
@@ -1157,7 +1177,8 @@ class WekoDeposit(Deposit):
 
         Returns:
             file_data(list): item_filedata "ex: [{'version_id': 'b27b05d9-e19f-47fb-b6f5-7f031b1ef8fe', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'format': 'text/plain', 'date': [{'dateValue': '2022-06-07', 'dateType': 'Available'}], 'accessrole': 'open_access', 'url': {'url': 'https://192.168.56.48/record/34/files/tagmanifest-sha256.txt'}}]" 
-
+        Raises:
+            sqlalchemy.exc.OperationalError:
         """
         file_data = []
         data = self.data or self.item_metadata
@@ -1794,7 +1815,13 @@ class WekoRecord(Record):
 
     @property
     def pid_recid(self):
-        """Return an instance of record PID."""
+        """Return an instance of record PID.
+
+        Returns:
+            PersistentIdentifier: record PID
+        Raises:
+            AttributeError
+        """
         pid = self.record_fetcher(self.id, self)
         obj = PersistentIdentifier.get('recid', pid.pid_value)
         return obj
@@ -1803,8 +1830,12 @@ class WekoRecord(Record):
     def hide_file(self):
         """Whether the file property is hidden.
 
+        Returns:
+            _type_: _description_
+        Raises:
+            AttributeError
         Note: This function just works fine if file property has value.
-        """
+        """        
         hide_file = False
         item_type_id = self.get('item_type_id')
         solst, meta_options = get_options_and_order_list(item_type_id)
@@ -1822,7 +1853,14 @@ class WekoRecord(Record):
 
     @property
     def navi(self):
-        """Return the path name."""
+        """Return the path name.
+
+        Returns:
+            _type_: _description_
+        Raises:
+            sqlalchemy.exc.OperationalError
+
+        """        
         navs = Indexes.get_path_name(self.get('path', []))
 
         community = request.args.get('community', None)
@@ -1837,13 +1875,26 @@ class WekoRecord(Record):
 
     @property
     def item_type_info(self):
-        """Return the information of item type."""
+        """Return the information of item type.
+
+        Returns:
+            _type_: _description_
+        Raises:
+            AttributeError
+        """        
         item_type = ItemTypes.get_by_id(self.get('item_type_id'))
         return '{}({})'.format(item_type.item_type_name.name, item_type.tag)
 
     @staticmethod
     def switching_language(data):
-        """Switching language."""
+        """Switching language.
+
+        Args:
+            data (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """        
         current_lang = current_i18n.language
         for value in data:
             if value.get('language', '') == current_lang:
@@ -1888,8 +1939,11 @@ class WekoRecord(Record):
     def get_titles(self):
         """Get titles of record.
 
-        :param record:
-        :return:
+        Returns:
+            _type_: _description_
+        Raises:
+            sqlalchemy.exc.OperationalError
+            TypeError
         """
         item_type_mapping = Mapping.get_record(self.get('item_type_id'))
         parent_key, title_key, language_key = self.__get_titles_key(
@@ -1911,7 +1965,16 @@ class WekoRecord(Record):
 
     @property
     def items_show_list(self):
-        """Return the item show list."""
+        """Return the item show list.
+
+        Returns:
+            _type_: _description_
+        Raises:
+            AttributeError: 'NoneType' object has no attribute 'is_authenticated'
+            AttributeError: 'NoneType' object has no attribute 'model'
+            KeyError: 'WEKO_PERMISSION_SUPER_ROLE_USER'
+            KeyError: 'WEKO_PERMISSION_ROLE_COMMUNITY'
+        """        
         items = []
         settings = AdminSettings.get('items_display_settings')
         hide_email_flag = not settings.items_display_email
@@ -1935,6 +1998,7 @@ class WekoRecord(Record):
             mlt = val.get('attribute_value_mlt')
             if mlt is not None:
                 mlt = copy.deepcopy(mlt)
+
                 self.__remove_special_character_of_weko2(mlt)
                 nval = dict()
                 nval['attribute_name'] = val.get('attribute_name')
@@ -1956,6 +2020,7 @@ class WekoRecord(Record):
                     is_author = nval['attribute_type'] == 'creator'
                     is_thumbnail = any(
                         'subitem_thumbnail' in data for data in mlt)
+                    
                     sys_bibliographic = _FormatSysBibliographicInformation(
                         copy.deepcopy(mlt),
                         copy.deepcopy(solst)
@@ -2075,6 +2140,7 @@ class WekoRecord(Record):
 
     @staticmethod
     def _get_creator(meta_data, hide_email_flag):
+        current_app.logger.debug("meta_data:{}".format(meta_data))
         creators = []
         if meta_data:
             for creator_data in meta_data:
@@ -2172,7 +2238,7 @@ class WekoRecord(Record):
         date_value = self.get_open_date_value(file_metadata)
         _format = '%Y-%m-%d'
         if date_value is None:
-            date_value = datetime.date.max
+            date_value = str(date.max)
         dt = datetime.strptime(date_value, _format)
         # Compare open_date with current date.
         is_future = dt.date() > today
@@ -2180,7 +2246,13 @@ class WekoRecord(Record):
 
     @property
     def pid_doi(self):
-        """Return pid_value of doi identifier."""
+        """Return pid_value of doi identifier.
+
+        Returns:
+            _type_: _description_
+        Raises:
+            AttributeError
+        """        
         return self._get_pid('doi')
 
     @property
@@ -2194,7 +2266,7 @@ class WekoRecord(Record):
         pid_ver = PIDVersioning(child=self.pid_recid)
         if pid_ver:
             # Get pid parent of draft record
-            if ".0" in self.pid_recid.pid_value:
+            if ".0" in str(self.pid_recid.pid_value):
                 pid_ver.relation_type = 3
                 return pid_ver.parents.one_or_none()
             return pid_ver.parents.one_or_none()
@@ -2277,6 +2349,7 @@ class _FormatSysCreator:
         :param creator:Creator data
         :param languages: language list
         """
+        # current_app.logger.error("creator:{}".format(creator))
         self.creator = creator
         self.current_language = current_i18n.language
         self.no_language_key = "NoLanguage"
@@ -2352,11 +2425,15 @@ class _FormatSysCreator:
                                    creator_list_temp: list = None) -> NoReturn:
         """Format creator to show on popup.
 
-        :param creators: Creators information.
-        :param language: Language.
-        :param creator_list: Creator list.
-        :param creator_list_temp: Creator temporary list.
-        """
+        Args:
+            creators (Union[list, dict]): Creators information.
+            language (any): Language.
+            creator_list (list): Creator list.
+            creator_list_temp (list, optional):  Creator temporary list. Defaults to None.
+
+        Returns:
+            NoReturn: _description_
+        """                                   
         def _run_format_affiliation(affiliation_max, affiliation_min,
                                     languages,
                                     creator_lists,
@@ -2483,7 +2560,7 @@ class _FormatSysCreator:
                         self._merge_creator_data(v, merged_data)
                         creator_temp[k] = merged_data
                 creator_list.append(creator_temp)
-
+        
         # Format creators
         formatted_creator_list = []
         self._format_creator_on_creator_popup(creator_list,
@@ -2668,6 +2745,9 @@ class _FormatSysBibliographicInformation:
         :param bibliographic_meta_data_lst: bibliographic meta data list
         :param props_lst: Property list
         """
+        # current_app.logger.error("bibliographic_meta_data_lst:{}".format(bibliographic_meta_data_lst))
+        # current_app.logger.error("props_lst:{}".format(props_lst))
+        
         self.bibliographic_meta_data_lst = bibliographic_meta_data_lst
         self.props_lst = props_lst
 
