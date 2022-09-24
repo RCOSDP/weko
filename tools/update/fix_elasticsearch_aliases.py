@@ -8,11 +8,14 @@ alias_name = "{}-weko".format(prefix)
 indices = con.cat.indices(index='{}-weko*'.format(prefix), h='index',s='creation.date.string').splitlines()
 for index in indices:
     con.indices.put_alias(index=index, name=alias_name)
+con.indices.put_alias(index=index, name=alias_name,body={"is_write_index":True})
+
 
 alias_name = "{}-authors".format(prefix)
 indices = con.cat.indices(index='{}-authors*'.format(prefix), h='index',s='creation.date.string').splitlines()
 for index in indices:
     con.indices.put_alias(index=index, name=alias_name)
+con.indices.put_alias(index=index, name=alias_name,body={"is_write_index":True})
 
 alias_name = "{}-events-stats-celery-task".format(prefix)
 indices = con.cat.indices(index='{}-events-stats-celery-task*'.format(prefix), h='index',s='creation.date.string').splitlines()
