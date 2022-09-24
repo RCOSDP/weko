@@ -270,23 +270,24 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                         if path.path == agp[k].get("key"):
                             p = path
                             break
-                    agp[k]["name"] = p.name if p.name and lang == "ja" else p.name_en
-                    agp[k]["date_range"] = dict()
-                    comment = p.comment
-                    agp[k]["comment"] = (comment,)
-                    result = agp.pop(k)
-                    result["comment"] = comment
-                    current_idx = result
-                    for _path in is_perm_paths:
-                        if (
-                            _path.startswith(str(p.path) + "/") or _path == p.path
-                        ) and items_count.get(str(_path.split("/")[-1])):
-                            _child_indexes.append(items_count[str(_path.split("/")[-1])])
-                    private_count, public_count = count_items(_child_indexes)
-                    current_idx["date_range"]["pub_cnt"] = public_count
-                    current_idx["date_range"]["un_pub_cnt"] = private_count
-                    nlst.append(current_idx)
-                    break
+                    if hasattr(p,"name"):
+                        agp[k]["name"] = p.name if p.name and lang == "ja" else p.name_en
+                        agp[k]["date_range"] = dict()
+                        comment = p.comment
+                        agp[k]["comment"] = (comment,)
+                        result = agp.pop(k)
+                        result["comment"] = comment
+                        current_idx = result
+                        for _path in is_perm_paths:
+                            if (
+                                _path.startswith(str(p.path) + "/") or _path == p.path
+                            ) and items_count.get(str(_path.split("/")[-1])):
+                                _child_indexes.append(items_count[str(_path.split("/")[-1])])
+                        private_count, public_count = count_items(_child_indexes)
+                        current_idx["date_range"]["pub_cnt"] = public_count
+                        current_idx["date_range"]["un_pub_cnt"] = private_count
+                        nlst.append(current_idx)
+                        break
             for p in paths:
                 current_idx = {}
                 _child_indexes = []
