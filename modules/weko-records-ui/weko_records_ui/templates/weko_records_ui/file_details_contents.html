@@ -145,10 +145,10 @@
                       {%- endif -%}
                     {%- endif -%}
                     <!-- demo -->
-
-                    <div id="bucket_id" class="hide">{{ record._buckets['deposit'] }}</div>
                     <div id="file_key" class="hide">{{ file.key }}</div>
                   {%- endfor -%}
+                  <div id="bucket_id" class="hide">{{ record._buckets['deposit'] }}</div>
+                  <div id="file_url" class="hide">{{ file_url }}</div>
                 </tbody>
               </table>
             </div>

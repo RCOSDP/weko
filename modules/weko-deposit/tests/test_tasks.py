@@ -22,10 +22,31 @@
 
 import pytest
 from elasticsearch.exceptions import NotFoundError
+from mock import patch, MagicMock
 
 from weko_deposit.tasks import update_items_by_authorInfo
 
 
+class MockRecordsSearch:
+    class MockQuery:
+        class MockExecute:
+            def __init__(self):
+                pass
+            def to_dict(self):
+                raise NotFoundError
+        def __init__(self):
+            pass
+        def execute(self):
+            return self.MockExecute()
+    def __init__(self, index=None):
+        pass
+    
+    def update_from_dict(self,query=None):
+        return self.MockQuery()
+
+
 def test_update_authorInfo(app, db):
-    with pytest.raises(NotFoundError):
-        update_items_by_authorInfo([], {})
+    mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
+    with patch('weko_deposit.tasks.RecordsSearch', mock_recordssearch):
+        with pytest.raises(NotFoundError):
+            update_items_by_authorInfo([], {})

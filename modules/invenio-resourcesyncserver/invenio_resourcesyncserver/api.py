@@ -44,7 +44,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from weko_deposit.api import ItemTypes, WekoRecord
 from weko_index_tree.api import Indexes
 from weko_items_ui.utils import _export_item, check_item_type_name, \
-    make_stats_csv, package_export_file
+    make_stats_file, package_export_file
 
 from .config import INVENIO_CAPABILITY_URL, VALIDATE_MESSAGE, WEKO_ROOT_INDEX
 from .models import ChangeListIndexes, ResourceListIndexes
@@ -533,7 +533,7 @@ class ResourceListHandler(object):
 
             # Create export info file
             for item_type_id in item_types_data:
-                headers, records = make_stats_csv(
+                headers, records = make_stats_file(
                     item_type_id,
                     item_types_data[item_type_id]['recids'],
                     list_item_role)
@@ -546,11 +546,14 @@ class ResourceListHandler(object):
                 item_types_data[item_type_id]['data'] = records
                 item_type_data = item_types_data[item_type_id]
 
-                with open('{}/{}.csv'.format(export_path,
-                                             item_type_data.get('name')),
+                with open('{}/{}.{}'.format(export_path,
+                                            item_type_data.get('name'),
+                                            current_app.config.get(
+                                                'WEKO_ADMIN_OUTPUT_FORMAT', 'tsv')
+                                                .lower()),
                           'w') as file:
-                    csvs_output = package_export_file(item_type_data)
-                    file.write(csvs_output.getvalue())
+                    output_file = package_export_file(item_type_data)
+                    file.write(output_file.getvalue())
 
             if self.resource_dump_manifest:
                 with open('{}/{}.xml'.format(export_path,
@@ -1205,7 +1208,7 @@ class ChangeListHandler(object):
 
             # Create export info file
             for item_type_id in item_types_data:
-                headers, records = make_stats_csv(
+                headers, records = make_stats_file(
                     item_type_id,
                     item_types_data[item_type_id]['recids'],
                     list_item_role)
@@ -1218,11 +1221,14 @@ class ChangeListHandler(object):
                 item_types_data[item_type_id]['data'] = records
                 item_type_data = item_types_data[item_type_id]
 
-                with open('{}/{}.csv'.format(export_path,
-                                             item_type_data.get('name')),
+                with open('{}/{}.{}'.format(export_path,
+                                            item_type_data.get('name'),
+                                            current_app.config.get(
+                                                'WEKO_ADMIN_OUTPUT_FORMAT', 'tsv')
+                                                .lower()),
                           'w') as file:
-                    csvs_output = package_export_file(item_type_data)
-                    file.write(csvs_output.getvalue())
+                    output_file = package_export_file(item_type_data)
+                    file.write(output_file.getvalue())
 
             # Create bag
             if self.change_dump_manifest:

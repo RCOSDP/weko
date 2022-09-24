@@ -57,3 +57,16 @@ recursive-include examples *.py
 recursive-include examples *.sh
 recursive-include tests *.py
 recursive-include weko_records_ui *.html
+
+# added by check-manifest
+include *.properties
+include tox.ini
+recursive-include weko_records_ui *.css
+recursive-include weko_records_ui *.jpg
+recursive-include weko_records_ui *.js
+recursive-include weko_records_ui *.json
+recursive-include weko_records_ui *.pkl
+recursive-include weko_records_ui *.png
+recursive-include weko_records_ui *.svg
+recursive-include weko_records_ui *.ttf
+recursive-include weko_records_ui *.txt

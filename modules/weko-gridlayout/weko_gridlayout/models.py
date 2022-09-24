@@ -400,8 +400,11 @@ class WidgetDesignSetting(db.Model):
     def select_by_repository_id(cls, repository_id):
         """Get widget setting value by repository id.
 
-        :param repository_id: Identifier of the repository
-        :return: Widget setting
+        Args:
+            repository_id (str): Identifier of the repository
+
+        Returns:
+            dict: {'repository_id':'','':'settings'}
         """
         query_result = cls.query.filter_by(
             repository_id=str(repository_id)).one_or_none()

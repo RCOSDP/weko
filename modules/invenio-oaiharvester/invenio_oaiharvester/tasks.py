@@ -152,7 +152,7 @@ def event_counter(event_name, counter):
         counter[event_name] = 1
 
 
-def process_item(record, harvesting, counter):
+def process_item(record, harvesting, counter, request_info):
     """Process item."""
     event_counter('processed_items', counter)
     event = ItemEvents.INIT
@@ -186,7 +186,7 @@ def process_item(record, harvesting, counter):
         dep = WekoDeposit.get_record(hvstid.object_uuid)
         indexes = dep.get("path", []).copy()
         event = ItemEvents.UPDATE
-    elif mapper.is_deleted():
+    elif mapper.is_deleted():    # skip deleted item if item is not registered
         return
     else:
         dep = WekoDeposit.create({})
@@ -208,7 +208,7 @@ def process_item(record, harvesting, counter):
        indexes == dep['path'] and harvesting.update_style == '1':
         return
 
-    if mapper.is_deleted():
+    if mapper.is_deleted():    # delete item if item is already registered
         soft_delete(recid.pid_value)
         event = ItemEvents.DELETE
     else:
@@ -328,6 +328,8 @@ def process_item(record, harvesting, counter):
 
     if event == ItemEvents.CREATE:
         event_counter('created_items', counter)
+        from weko_search_ui.utils import send_item_created_event_to_es
+        send_item_created_event_to_es(dep, request_info)
     elif event == ItemEvents.UPDATE:
         event_counter('updated_items', counter)
     elif event == ItemEvents.DELETE:
@@ -376,7 +378,7 @@ def is_harvest_running(id, task_id):
 
 
 @ shared_task
-def run_harvesting(id, start_time, user_data):
+def run_harvesting(id, start_time, user_data, request_info):
     """Run harvest."""
     def dump(setting):
         setting_json = {}
@@ -449,7 +451,7 @@ def run_harvesting(id, start_time, user_data):
                                     0, 'Processing records'))
             for record in records:
                 try:
-                    process_item(record, harvesting, counter)
+                    process_item(record, harvesting, counter, request_info)
                 except Exception as ex:
                     current_app.logger.debug(traceback.format_exc())
                     current_app.logger.error(

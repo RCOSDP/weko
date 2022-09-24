@@ -55,9 +55,9 @@ flask-shell-ipython==0.4.1
 Flask-SQLAlchemy==2.3.2
 flask-talisman==0.4.1
 Flask-WTF==0.14.3
-flask-sitemap==0.1.0
+flask-sitemap==0.4.0
 Flask-IIIF==0.6.1
-Flask-DebugToolbar==0.11.0
+Flask-DebugToolbar==0.13.1
 fs==0.5.4
 future==0.16.0
 html5lib==1.0.1
@@ -82,7 +82,8 @@ jsonpath_ng==1.5.2
 jupyter-client==5.2.2
 jupyter-core==4.4.0
 jsonpath-ng == 1.5.2
-kombu==4.6.10
+#kombu==4.6.10
+-e git+https://github.com/RCOSDP/kombu.git@fix-queue-type#egg=kombu
 limits==1.2.1
 lxml==4.1.1
 Mako==1.0.7
@@ -103,7 +104,7 @@ parso==0.1.0
 passlib==1.7.1
 pexpect==4.3.0
 pickleshare==0.7.4
-pluggy==0.11.0
+pluggy==0.13.1
 poyo==0.4.1
 prompt-toolkit==1.0.15
 psycopg2==2.7.3.2
@@ -178,3 +179,4 @@ netaddr==0.8.0
 # raven==6.10.0
 marshmallow-sqlalchemy==0.23.1
 flask-marshmallow==0.14.0
+sword3common==0.1.1

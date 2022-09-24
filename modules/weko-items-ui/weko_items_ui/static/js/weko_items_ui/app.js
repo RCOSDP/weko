@@ -1588,6 +1588,45 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             case 'manuscript':
               resourceuri = "http://purl.org/coar/resource_type/c_0040";
               break;
+            case 'aggregated data':
+              resourceuri = "http://purl.org/coar/resource_type/ACF7-8YT9";
+              break;
+            case 'clinical trial data':
+              resourceuri = "http://purl.org/coar/resource_type/c_cb28";
+              break;
+            case 'compiled data':
+              resourceuri = "http://purl.org/coar/resource_type/FXF3-D3G7";
+              break;
+            case 'encoded data':
+              resourceuri = "http://purl.org/coar/resource_type/AM6W-6QAW";
+              break;
+            case 'experimental data':
+              resourceuri = "http://purl.org/coar/resource_type/63NG-B465";
+              break;
+            case 'genomic data':
+              resourceuri = "http://purl.org/coar/resource_type/A8F1-NPV9";
+              break;
+            case 'geospatial data':
+              resourceuri = "http://purl.org/coar/resource_type/2H0M-X761";
+              break;
+            case 'laboratory notebook':
+              resourceuri = "http://purl.org/coar/resource_type/H41Y-FW7B";
+              break;
+            case 'measurement and test data':
+              resourceuri = "http://purl.org/coar/resource_type/DD58-GFSX";
+              break;
+            case 'observational data':
+              resourceuri = "http://purl.org/coar/resource_type/FF4C-28RK";
+              break;
+            case 'recorded data':
+              resourceuri = "http://purl.org/coar/resource_type/CQMR-7K63";
+              break;
+            case 'simulation data':
+              resourceuri = "http://purl.org/coar/resource_type/W2XT-7017";
+              break;
+            case 'survey data':
+              resourceuri = "http://purl.org/coar/resource_type/NHD0-W6SY";
+              break;
             default:
               resourceuri = "";
           }

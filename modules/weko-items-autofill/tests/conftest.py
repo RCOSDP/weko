@@ -31,7 +31,7 @@ from invenio_db import db as db_
 from invenio_search import RecordsSearch
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 
-from weko_items_autofill.views import blueprint_api
+
 
 
 @pytest.fixture(scope='module')
@@ -91,6 +91,7 @@ def app(base_app):
 
 @pytest.yield_fixture()
 def client_api(app):
+    from weko_items_autofill.views import blueprint_api
     app.register_blueprint(blueprint_api)
     print(app.url_map)
     with app.test_client() as client:

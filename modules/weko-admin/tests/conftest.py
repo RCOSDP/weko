@@ -60,9 +60,9 @@ def instance_path():
 @pytest.fixture()
 def base_app(instance_path, request):
     """Flask application fixture."""
-    instance_path = tempfile.mkdtemp()
     app_ = Flask('test_weko_admin_app', instance_path=instance_path)
     app_.config.update(
+        SERVER_NAME='TEST_SERVER',
         ACCOUNTS_USE_CELERY=False,
         LOGIN_DISABLED=False,
         SECRET_KEY='testing_key',
@@ -91,22 +91,23 @@ def base_app(instance_path, request):
     WekoWorkflow(app_)
     WekoRecords(app_)
     WekoRecordsUI(app_)
-    app_.register_blueprint(blueprint_api, url_prefix='/api/admin')
     yield app_
 
 
-@pytest.fixture()
+@pytest.yield_fixture()
 def app(base_app):
     """Flask application fixture."""
     with base_app.app_context():
-        return base_app
+        yield base_app
 
 
 @pytest.yield_fixture()
 def db(app):
-    if not database_exists(str(db_.engine.url)) and \
-            app.config['SQLALCHEMY_DATABASE_URI'] != 'sqlite://':
-        create_database(db_.engine.url)
+    # if not database_exists(str(db_.engine.url)) and \
+    #         app.config['SQLALCHEMY_DATABASE_URI'] != 'sqlite://':
+    #     create_database(db_.engine.url)
+    if not database_exists(str(db_.engine.url)):
+        create_database(str(db_.engine.url))
     db_.create_all()
     yield db_
     db_.session.remove()
@@ -152,6 +153,7 @@ def _database_setup(app, request):
 @pytest.yield_fixture()
 def client(app):
     """Get test client."""
+    app.register_blueprint(blueprint_api, url_prefix='/api/admin')
     with app.test_client() as client:
         yield client
 

@@ -20,6 +20,7 @@
 
 """Item API."""
 import copy
+import pickle
 import re
 import time
 import xml.etree.ElementTree as ET
@@ -994,7 +995,7 @@ async def sort_meta_data_by_options(
                 )
                 if mlt_bibliographic:
                     sys_bibliographic = _FormatSysBibliographicInformation(
-                        copy.deepcopy(mlt_bibliographic), copy.deepcopy(solst)
+                        pickle.loads(pickle.dumps(mlt_bibliographic, -1)), pickle.loads(pickle.dumps(solst, -1))
                     )
                     stt_key, data_result, is_specify_newline_array = add_biographic(
                         sys_bibliographic,
@@ -1135,8 +1136,8 @@ async def sort_meta_data_by_options(
         parent_option, child_option = {}, {}
         for item in solst_dict_array:
             if "." in item.get("key") and item.get("title") == "Title":
-                parent_option = item.get("parent_option")
-                child_option = item.get("option")
+                parent_option = item.get("parent_option",{}) if item.get("parent_option") else {}
+                child_option = item.get("option",{}) if item.get("option") else {}
                 break
         show_list = (
             parent_option.get("show_list")
@@ -1152,8 +1153,8 @@ async def sort_meta_data_by_options(
         return option
 
     try:
-        src_default = copy.deepcopy(record_hit["_source"].get("_item_metadata"))
-        _item_metadata = copy.deepcopy(record_hit["_source"])
+        src_default = pickle.loads(pickle.dumps(record_hit["_source"].get("_item_metadata"), -1))
+        _item_metadata = pickle.loads(pickle.dumps(record_hit["_source"], -1))
         src = record_hit["_source"]["_item_metadata"]
         item_type_id = record_hit["_source"].get("item_type_id") or src.get(
             "item_type_id"

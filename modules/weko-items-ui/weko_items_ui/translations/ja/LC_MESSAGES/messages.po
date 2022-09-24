@@ -240,7 +240,6 @@ msgid "Aggregation Period"
 msgstr "統計期間"
 
 #: weko_items_ui/templates/weko_items_ui/ranking_body.html:30
-#, fuzzy
 msgid "Most Viewed Items"
 msgstr "最も閲覧されたアイテム"
 
