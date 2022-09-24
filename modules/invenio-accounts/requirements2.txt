@@ -53,7 +53,7 @@ isort==5.10.1
 itsdangerous==2.0.1
 Jinja2==3.0.3
 kombu==5.1.0
-Mako==1.1.6
+Mako==1.2.2
 MarkupSafe==2.0.1
 maxminddb==2.2.0
 maxminddb-geolite2==2018.703
