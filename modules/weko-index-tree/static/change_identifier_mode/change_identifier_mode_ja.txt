@@ -1,0 +1,1 @@
+/code/modules/weko-search-ui/weko_search_ui/static/change_identifier_mode/change_identifier_mode_ja.txt

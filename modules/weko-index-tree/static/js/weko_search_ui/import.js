@@ -1,0 +1,1 @@
+/code/modules/weko-search-ui/weko_search_ui/static/js/weko_search_ui/import.js
