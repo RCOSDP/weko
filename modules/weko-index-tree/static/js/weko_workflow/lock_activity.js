@@ -1,1 +1,0 @@
-/code/modules/weko-workflow/weko_workflow/static/js/weko_workflow/lock_activity.js

@@ -1,1 +1,0 @@
-/code/modules/weko-index-tree/.tox/c1/lib/python3.6/site-packages/invenio_i18n/static/js/invenio_i18n/angularLangSelector.js

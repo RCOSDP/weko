@@ -1,1 +1,0 @@
-/code/modules/weko-workflow/weko_workflow/static/js/weko_workflow/admin/flow_detail.js

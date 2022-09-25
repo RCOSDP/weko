@@ -1,1 +1,0 @@
-/code/modules/weko-groups/weko_groups/static/js/groups/init.js

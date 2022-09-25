@@ -1,1 +1,0 @@
-/code/modules/weko-index-tree/.tox/c1/lib/python3.6/site-packages/flask_admin/static/admin/js/bs2_modal.js
