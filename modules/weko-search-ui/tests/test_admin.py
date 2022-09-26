@@ -6,6 +6,7 @@ import csv
 import json
 from flask import url_for, current_app
 from datetime import datetime
+from marshmallow.exceptions import ValidationError
 
 from invenio_accounts.testutils import login_user_via_session
 
@@ -120,6 +121,8 @@ user_list = [
     0, 1, 2, 3, 4 # users' id
 ]
 
+accessible_user_list = [2, 3, 4]
+
 @pytest.mark.parametrize('id', user_list)
 def test_import_items_access(app, client, admin_view, db_sessionlifetime, users, id):
     if id != -1:
@@ -152,26 +155,9 @@ def test_download_import_access(app, client, admin_view, users, id):
         assert res.status_code != 403
 
 
-def test_import_items_with_listrecords_without_import_task_data(app, client, admin_view, users, db_register):
-    login_user_via_session(client=client, email=users[4]['email'])
-    url = "/admin/items/import/import"
-
-    list_records_data = dict()
-    with open("tests/data/list_records/list_records.json", "r") as f:
-        list_records_data = json.load(f)
-    input = {"data_path": "/tmp/weko_import_20220819045602",
-             "list_record": list_records_data}
-
-    with patch("weko_search_ui.admin.chord"):
-        res = client.post(url, json=input)
-        data = json.loads(res.get_data(as_text=True))
-        assert data["status"] == "success"
-        assert data["data"]["tasks"] == []
-        assert data["data"]["import_start_time"] is not None
-
-
-def test_download_import(app, client, admin_view, users, db_register):
-    login_user_via_session(client=client, email=users[4]['email'])
+@pytest.mark.parametrize('id', accessible_user_list)
+def test_download_import(app, client, admin_view, users, db_register, id):
+    login_user_via_session(client=client, email=users[id]['email'])
     url = "/admin/items/import/export_import"
 
     input = {"list_result": [
@@ -198,3 +184,64 @@ def test_download_import(app, client, admin_view, users, db_register):
 
     assert res.mimetype == "text/{}".format(file_format)
     assert res.headers["Content-disposition"] == "attachment; filename=List_Download {}.{}".format(now, file_format)
+
+
+type_check = [
+    None, "str", [], [{"errors": "test errors"}]
+]
+
+@pytest.mark.parametrize('id', accessible_user_list)
+@pytest.mark.parametrize('type_check', type_check)
+def test_import_items_list_record_type_check(app, client, admin_view, users, db_register, id, type_check):
+    login_user_via_session(client=client, email=users[id]['email'])
+    url = "/admin/items/import/import"
+    input = {"data_path": "/tmp/weko_import_20220819045602",
+             "list_record": type_check}
+
+    res = client.post(url, json=input)
+    data = json.loads(res.get_data(as_text=True))
+    assert data["status"] == "success"
+    assert data["data"]["tasks"] == []
+    assert data["data"]["import_start_time"] == ""
+
+
+@pytest.mark.parametrize('id', accessible_user_list)
+def test_import_items_exception(app, client, admin_view, users, db_register, id):
+    login_user_via_session(client=client, email=users[id]['email'])
+    url = "/admin/items/import/import"
+    input = {}
+
+    with patch("weko_search_ui.admin.ImportItemsSchema", side_effect=ValidationError("test ValidationError")):
+        res = client.post(url, json=input)
+    data = json.loads(res.get_data(as_text=True))
+    assert data["code"] == -1
+    assert data["msg"] == "test ValidationError"
+    assert res.status_code == 400
+
+    # check import_task.parent.results
+    list_records_data = dict()
+    with open("tests/data/list_records/list_records.json", "r") as f:
+        list_records_data = json.load(f)
+    input = {"data_path": "/tmp/weko_import_20220819045602",
+             "list_record": list_records_data}
+
+    with patch("weko_search_ui.admin.chord"):
+        res = client.post(url, json=input)
+        data = json.loads(res.get_data(as_text=True))
+        assert data["code"] == -1
+        assert data["msg"] == "argument error"
+        assert res.status_code == 500
+
+
+@pytest.mark.parametrize('id', accessible_user_list)
+def test_download_import_exception(app, client, admin_view, users, db_register, id):
+    login_user_via_session(client=client, email=users[id]['email'])
+    url = "/admin/items/import/export_import"
+    input = {}
+
+    with patch("weko_search_ui.admin.DownloadImportSchema", side_effect=ValidationError("test ValidationError")):
+        res = client.post(url, json=input)
+    data = json.loads(res.get_data(as_text=True))
+    assert data["code"] == -1
+    assert data["msg"] == "test ValidationError"
+    assert res.status_code == 400
