@@ -274,10 +274,11 @@ def check_permission(record):
 def check_file_permission(record, fjson):
     """Check File Download Permission.
 
-    :param record
-    :param fjson
-    :return: result
-    """
+    Args:
+        record (weko_deposit.api.WekoRecord): _description_
+        fjson (dict): _description_
+    
+    """    
     return check_file_download_permission(record, fjson)
 
 

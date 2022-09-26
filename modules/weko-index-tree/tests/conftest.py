@@ -125,7 +125,7 @@ def instance_path():
 @pytest.fixture()
 def base_app(instance_path):
     """Flask application fixture."""
-    app_ = Flask('testapp', instance_path=instance_path)
+    app_ = Flask('testapp', instance_path=instance_path,static_folder=join(instance_path, "static"))
     app_.config.update(
         ACCOUNTS_JWT_ENABLE=True,
         SECRET_KEY='SECRET_KEY',
