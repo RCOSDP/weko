@@ -19,16 +19,14 @@
 # MA 02111-1307, USA.
 
 """Module of weko-index-tree utils."""
-
+import os
 from datetime import date, datetime
 from functools import wraps
 from operator import itemgetter
 
-import redis
-from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import Bool, Exists, Q, QueryString
-from flask import Markup, current_app, session
+from flask import Markup, current_app, session, json
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
@@ -300,6 +298,8 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                 contribute_role = lst.pop('contribute_role')
                 public_state = lst.pop('public_state')
                 public_date = lst.pop('public_date')
+                if isinstance(public_date, str):
+                    public_date = str_to_datetime(public_date, "%Y-%m-%dT%H:%M:%S")
                 brw_role = lst.pop('browsing_role')
 
                 contribute_group = lst.pop('contribute_group')
@@ -799,7 +799,6 @@ def check_doi_in_index_and_child_index(index_id, recursively=True):
         child_idx = Indexes.get_child_list_recursive(index_id)
     else:
         child_idx = [index_id]
-
     query_string = "relation_version_is_last:true AND publish_status:0"
     search = RecordsSearch(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
@@ -813,7 +812,6 @@ def check_doi_in_index_and_child_index(index_id, recursively=True):
         Bool(filter=must_query)
     )
     records = search.execute().to_dict().get('hits', {}).get('hits', [])
-
     return records
 
 
@@ -996,3 +994,25 @@ def get_editing_items_in_index(index_id, recursively=False):
             result.append(item_id)
 
     return result
+
+def save_index_trees_to_redis(tree):
+    """save inde_tree to redis for roles
+    
+    """
+    def default(o):
+        if hasattr(o, "isoformat"):
+            return o.isoformat()
+        else:
+            return str(o)
+    redis = __get_redis_store()
+    try:
+        v = bytes(json.dumps(tree, default=default), encoding='utf-8')
+        redis.put("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language,v)
+    except ConnectionError:
+        current_app.logger.error("Fail save index_tree to redis")
+
+def str_to_datetime(str_dt, format):
+    try:
+        return datetime.strptime(str_dt, format)
+    except ValueError:
+        return None
