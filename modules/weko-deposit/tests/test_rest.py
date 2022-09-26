@@ -34,7 +34,7 @@ from invenio_accounts.testutils import login_user_via_session
 #    }
 
 
-# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_publish_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_publish_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 def test_publish_guest(client, deposit):
     """
     Test of publish.
@@ -51,7 +51,7 @@ def test_publish_guest(client, deposit):
     # assert res.url == url_for('security.login')
 
 
-# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_publish_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_publish_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 @pytest.mark.parametrize('index, status_code', [
     (0, 200),
     (1, 200),
@@ -77,7 +77,7 @@ def test_publish_users(client, users, deposit, index, status_code):
     assert res.status_code == status_code
 
 
-# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_depid_item_put_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_depid_item_put_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 
 def test_depid_item_put_guest(client, deposit):
     """
@@ -103,7 +103,7 @@ def test_depid_item_put_guest(client, deposit):
     # TODO check that the path changed
     # assert res.url == url_for('security.login')
 
-# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_depid_item_put_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_depid_item_put_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 @pytest.mark.parametrize('index, status_code', [
     (0, 200),
     (1, 200),
@@ -130,7 +130,7 @@ def test_depid_item_put_users(client, users, deposit, index, status_code):
                      content_type='application/json')
     assert res.status_code == status_code
 
-# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_depid_item_post_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_depid_item_post_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 def test_depid_item_post_guest(client, deposit):
     """
     Test of depid_item post.
@@ -149,7 +149,7 @@ def test_depid_item_post_guest(client, deposit):
     # TODO check that the path changed
     # assert res.url == url_for('security.login')
 
-# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_depid_item_post_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_depid_item_post_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 @pytest.mark.parametrize('index, status_code', [
     (0, 201),
     (1, 201),

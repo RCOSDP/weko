@@ -43,12 +43,9 @@
   {%- if 'JSON' in fmt['title'] %}
   <li><a href="{{ url_for('invenio_records_ui.recid_export', pid_value=pid.pid_value, format=slug) }}">{{fmt['title']}}</a></li>
   {%- endif %}
-<!-- hide for JDCat 2021-07-14 -->
-<!--
-{%- if 'BIBTEX' in fmt['title'] %}
+  {%- if 'BIBTEX' in fmt['title'] %}
   <li><a href="{{ url_for('invenio_records_ui.recid_export', pid_value=pid.pid_value, format=slug) }}">{{fmt['title']}}</a></li>
   {%- endif %}
--->
   {%- endfor %}
 </ul>
 {%- endif %}

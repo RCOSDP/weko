@@ -26,3 +26,4 @@ metrix
 **/.tox
 **/.eggs
 **/.pytest_cache
+**/tests

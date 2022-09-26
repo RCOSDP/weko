@@ -24,6 +24,7 @@ from copy import deepcopy
 
 from flask import current_app
 from flask_login import current_user
+from weko_itemtypes_ui.config import DISABLE_DUPLICATION_CHECK
 
 
 def remove_xsd_prefix(jpcoar_lists):
@@ -273,6 +274,10 @@ def check_duplicate_mapping(
     @param item_type:
     @return:
     """
+    
+    if current_app.config.get('DISABLE_DUPLICATION_CHECK',DISABLE_DUPLICATION_CHECK):
+        return []
+    
     def process_overlap():
         """Process partial overlap if any."""
         for overlap_val in lst_overlap:
@@ -302,13 +307,22 @@ def check_duplicate_mapping(
                 continue
             item_des_in_sys = item_des_key in meta_system
             item_src_in_sys = item_src_key in meta_system
+            
             lst_overlap = list(
                 set(lst_values_src).intersection(lst_values_des))
             if lst_overlap:
-                item_src_name = item_type.schema.get('properties').get(
-                    item_src_key).get('title')
-                item_des_name = item_type.schema.get('properties').get(
-                    item_des_key).get('title')
+                properties = item_type.schema.get('properties')
+                if item_src_key in properties:
+                    item_src_name = item_type.schema.get('properties').get(
+                        item_src_key).get('title')
+                else:
+                    continue
+                if item_des_key in properties:
+                    item_des_name = item_type.schema.get('properties').get(
+                        item_des_key).get('title')
+                else:
+                    continue
+
                 if (item_des_in_sys and item_src_in_sys) \
                         or [item_src_name, item_des_name] in lst_duplicate:
                     continue

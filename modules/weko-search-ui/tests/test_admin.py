@@ -4,38 +4,158 @@ import codecs
 import io
 import csv
 import json
-from flask import url_for, current_app
+from flask import url_for, current_app, make_response, request
 from datetime import datetime
+
+import os
+from flask_login import current_user
 
 from invenio_accounts.testutils import login_user_via_session
 
+from weko_search_ui.admin import (
+    ItemManagementBulkDelete,
+    ItemManagementCustomSort,
+    ItemManagementBulkSearch,
+    ItemImportView,
+    ItemBulkExport
+)
+
 
 # class ItemManagementBulkDelete(BaseView):
-#     def index(self):
-#     def check(self):
+#     def index(self): ~ ERROR
+def test_ItemManagementBulkDelete_index(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemManagementBulkDelete()
+        assert test.index()
+
+#     def check(self): ~ GOOD
+def test_ItemManagementBulkDelete_check(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemManagementBulkDelete()
+        assert test.check()
+
+
 # class ItemManagementCustomSort(BaseView):
-#     def index(self):
-#     def save_sort(self):
+#     def index(self): ~ ERROR
+def test_ItemManagementCustomSort_index(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemManagementCustomSort()
+        assert test.index()
+
+#     def save_sort(self): ~ GOOD
+def test_ItemManagementCustomSort_save_sort(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemManagementCustomSort()
+        assert test.save_sort()
+
+
 # class ItemManagementBulkSearch(BaseView):
-#     def index(self):
-#     def is_visible():
+#     def index(self): ~ ERROR
+def test_ItemManagementBulkSearch_index(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemManagementBulkSearch()
+        assert test.index()
+
+#     def is_visible(): ~ GOOD
+def test_ItemManagementBulkSearch_is_visible(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemManagementBulkSearch()
+        assert not test.is_visible()
+
+
 # class ItemImportView(BaseView):
-#     def index(self):
-#     def check(self) -> jsonify:
-#     def get_check_status(self) -> jsonify:
-#     def download_check(self):
-#     def import_items(self) -> jsonify:
-#     def get_status(self):
-#     def download_import(self):
-#     def get_disclaimer_text(self):
-#     def export_template(self):
-#     def check_import_available(self):
+#     def index(self): ~ ERROR
+def test_ItemImportView_index(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemImportView()
+        assert test.index()
+
+#     def check(self) -> jsonify: ~ UnboundLocalError: local variable 'task' referenced before assignment
+def test_ItemImportView_check(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemImportView()
+        assert test.check()
+
+#     def get_check_status(self) -> jsonify: ~ GOOD
+def test_ItemImportView_get_check_status(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemImportView()
+        assert test.get_check_status()
+
+#     def download_check(self): ~ GOOD
+def test_ItemImportView_download_check(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemImportView()
+        assert test.download_check()
+
+#     def import_items(self) -> jsonify: ~ GOOD
+def test_ItemImportView_import_items(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemImportView()
+        assert test.import_items()
+
+#     def get_status(self): ~ GOOD
+def test_ItemImportView_get_status(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemImportView()
+        assert test.get_status()
+
+#     def download_import(self): ~ GOOD
+def test_ItemImportView_download_import(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemImportView()
+        assert test.download_import()
+
+#     def get_disclaimer_text(self): ~ GOOD
+def test_ItemImportView_get_disclaimer_text(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemImportView()
+        assert test.get_disclaimer_text()
+
+#     def export_template(self): ~ GOOD
+def test_ItemImportView_export_template(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemImportView()
+        assert test.export_template()
+
+#     def check_import_available(self): ~ GETS STUCK
+# def test_ItemImportView_check_import_available(i18n_app, users, client_request_args, db_records2):
+#     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+#         test = ItemImportView()
+#         assert test.check_import_available()
+
+
 # class ItemBulkExport(BaseView):
-#     def index(self):
-#     def export_all(self):
-#     def check_export_status(self):
-#     def cancel_export(self):
-#     def download(self):
+#     def index(self): ~ AttributeError: 'NoneType' object has no attribute 'base_template'
+def test_ItemBulkExport_index(i18n_app, users, client_request_args, db_records2):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        test = ItemBulkExport()
+        assert test.index()
+
+#     def export_all(self): ~ GETS STUCK
+# def test_ItemBulkExport_export_all(i18n_app, users, client_request_args, db_records2):
+#     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+#         test = ItemBulkExport()
+#         assert test.export_all()
+
+#     def check_export_status(self): ~ GETS STUCK
+# def test_ItemBulkExport_check_export_status(i18n_app, users, client_request_args, db_records2):
+#     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+#         test = ItemBulkExport()
+#         assert test.check_export_status()
+
+#     def cancel_export(self): ~ GETS STUCK
+# def test_ItemBulkExport_cancel_export(i18n_app, users, client_request_args, db_records2):
+#     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+#         test = ItemBulkExport()
+#         assert test.cancel_export()
+
+#     def download(self): ~ GETS STUCK
+# def test_ItemBulkExport_download(i18n_app, users, client_request_args, db_records2):
+#     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+#         test = ItemBulkExport()
+#         assert test.cancel_export()
+
 
 def compare_csv(data1, data2):
     def _str2csv(data):
