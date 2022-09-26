@@ -104,11 +104,6 @@ if [ "${INVENIO_WORKER_HOST}" = "" ]; then
     echo "[ERROR] Example: export INVENIO_WORKER_HOST=192.168.50.15"
     exit 1
 fi
-if [ "${SEARCH_INDEX_PREFIX}" = "" ]; then
-    echo "[ERROR] Please set environment variable SEARCH_INDEX_PREFIX before runnning this script."
-    echo "[ERROR] Example: export SEARCH_INDEX_PREFIX=tenant1"
-    exit 1
-fi
 
 # load virtualenvrapper:
 # shellcheck source=/dev/null
@@ -167,7 +162,6 @@ curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/_ingest/pipeline/item-fi
 }'
 # sphinxdoc-pipeline-registration-end
 
-# elasticsearch-ilm-setting-begin
 curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/_ilm/policy/weko_stats_policy' -H 'Content-Type: application/json' -d '
 {
   "policy":{
@@ -181,28 +175,27 @@ curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/_ilm/policy/weko_stats_p
       }
     }
   }
-}'
-event_list=('celery-task' 'item-create' 'top-view' 'record-view' 'file-download' 'file-preview' 'search')
-for event_name in ${event_list[@]}
-do
-  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'-000001' -H 'Content-Type: application/json' -d '
-  {
-    "aliases": {
-      "'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'": {
-        "is_write_index": true
-      }
+}
+'
+
+curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/tenant1-events-stats-search-000001' -H 'Content-Type: application/json' -d '
+{
+  "aliases": {
+    "tenant1-events-stats-search": {
+      "is_write_index": true
     }
-  }'
-  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'-000001' -H 'Content-Type: application/json' -d '
-  {
-    "aliases": {
-      "'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'": {
-        "is_write_index": true
-      }
+  }
+}
+'
+curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/tenant1-stats-search-000001' -H 'Content-Type: application/json' -d '
+{
+  "aliases": {
+    "tenant1-stats-search": {
+      "is_write_index": true
     }
-  }'
-done
-# elasticsearch-ilm-setting-end
+  }
+}
+'
 
 # sphinxdoc-populate-with-demo-records-begin
 #${INVENIO_WEB_INSTANCE} demo init
