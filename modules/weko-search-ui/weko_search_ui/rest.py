@@ -186,6 +186,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
 
         page = request.values.get("page", 1, type=int)
         size = request.values.get("size", 20, type=int)
+        is_search = request.values.get("is_search", 0 ,type=int ) #toppage and search_page is 1
         community_id = request.values.get("community")
         params = {}
         facets = get_facet_search_query()
@@ -243,6 +244,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             paths = Indexes.get_self_list(q, community_id)
         except BaseException:
             paths = []
+        import pickle
         agp = rd["aggregations"]["path"]["buckets"]
         rd["aggregations"]["aggregations"] = pickle.loads(pickle.dumps(agp, -1))
         nlst = []
@@ -258,21 +260,39 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             }
 
         is_perm_paths = qs_kwargs.get("is_perm_paths", [])
-        for p in paths:
-            m = 0
-            current_idx = {}
+        if is_search == 1:
             for k in range(len(agp)):
-                if p.path == agp[k].get("key"):
-                    agp[k]["name"] = p.name if p.name and lang == "ja" else p.name_en
-                    agp[k]["date_range"] = dict()
-                    comment = p.comment
-                    agp[k]["comment"] = (comment,)
-                    result = agp.pop(k)
-                    result["comment"] = comment
-                    current_idx = result
-                    m = 1
-                    break
-            if m == 0:
+                if q == agp[k].get("key"):
+                    current_idx = {}
+                    _child_indexes = [] 
+                    p = {}
+                    for path in paths:
+                        if path.path == agp[k].get("key"):
+                            p = path
+                            break
+                    if hasattr(p,"name"):
+                        agp[k]["name"] = p.name if p.name and lang == "ja" else p.name_en
+                        agp[k]["date_range"] = dict()
+                        comment = p.comment
+                        agp[k]["comment"] = (comment,)
+                        result = agp.pop(k)
+                        result["comment"] = comment
+                        current_idx = result
+                        for _path in is_perm_paths:
+                            if (
+                                _path.startswith(str(p.path) + "/") or _path == p.path
+                            ) and items_count.get(str(_path.split("/")[-1])):
+                                _child_indexes.append(items_count[str(_path.split("/")[-1])])
+                        private_count, public_count = count_items(_child_indexes)
+                        current_idx["date_range"]["pub_cnt"] = public_count
+                        current_idx["date_range"]["un_pub_cnt"] = private_count
+                        nlst.append(current_idx)
+                        break
+            for p in paths:
+                current_idx = {}
+                _child_indexes = []
+                if p.path == q:
+                    continue
                 index_id = p.cid
                 index_info = Indexes.get_index(index_id=index_id)
                 rss_status = index_info.rss_status
@@ -285,16 +305,53 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     "comment": p.comment,
                 }
                 current_idx = nd
-            _child_indexes = []
-            for _path in is_perm_paths:
-                if (
-                    _path.startswith(str(p.path) + "/") or _path == p.path
-                ) and items_count.get(str(_path.split("/")[-1])):
-                    _child_indexes.append(items_count[str(_path.split("/")[-1])])
-            private_count, public_count = count_items(_child_indexes)
-            current_idx["date_range"]["pub_cnt"] = public_count
-            current_idx["date_range"]["un_pub_cnt"] = private_count
-            nlst.append(current_idx)
+                for _path in is_perm_paths:
+                    if (
+                        _path.startswith(str(p.path) + "/") or _path == p.path
+                    ) and items_count.get(str(_path.split("/")[-1])):
+                        _child_indexes.append(items_count[str(_path.split("/")[-1])])
+                private_count, public_count = count_items(_child_indexes)
+                current_idx["date_range"]["pub_cnt"] = public_count
+                current_idx["date_range"]["un_pub_cnt"] = private_count
+                nlst.append(current_idx)
+        else:
+            for p in paths:
+                m = 0
+                current_idx = {}
+                for k in range(len(agp)):
+                    if p.path == agp[k].get("key"):
+                        agp[k]["name"] = p.name if p.name and lang == "ja" else p.name_en
+                        agp[k]["date_range"] = dict()
+                        comment = p.comment
+                        agp[k]["comment"] = (comment,)
+                        result = agp.pop(k)
+                        result["comment"] = comment
+                        current_idx = result
+                        m = 1
+                        break
+                if m == 0:
+                    index_id = p.cid
+                    index_info = Indexes.get_index(index_id=index_id)
+                    rss_status = index_info.rss_status
+                    nd = {
+                        "doc_count": 0,
+                        "key": p.path,
+                        "name": p.name if p.name and lang == "ja" else p.name_en,
+                        "date_range": {"pub_cnt": 0, "un_pub_cnt": 0},
+                        "rss_status": rss_status,
+                        "comment": p.comment,
+                    }
+                    current_idx = nd
+                _child_indexes = []
+                for _path in is_perm_paths:
+                    if (
+                        _path.startswith(str(p.path) + "/") or _path == p.path
+                    ) and items_count.get(str(_path.split("/")[-1])):
+                        _child_indexes.append(items_count[str(_path.split("/")[-1])])
+                private_count, public_count = count_items(_child_indexes)
+                current_idx["date_range"]["pub_cnt"] = public_count
+                current_idx["date_range"]["un_pub_cnt"] = private_count
+                nlst.append(current_idx)
         agp.clear()
         # process index tree image info
         if len(nlst):

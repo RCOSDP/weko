@@ -45,6 +45,7 @@ from invenio_admin import InvenioAdmin
 from invenio_assets import InvenioAssets
 from invenio_db import InvenioDB, db as db_
 from invenio_cache import InvenioCache
+from weko_user_profiles.models import UserProfile
 from invenio_deposit import InvenioDeposit
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.views import blueprint as invenio_files_rest_blueprint
@@ -86,6 +87,7 @@ from weko_deposit import WekoDeposit, WekoDepositREST
 from weko_records.utils import get_options_and_order_list
 from weko_deposit.api import WekoRecord,_FormatSysBibliographicInformation
 from weko_deposit.views import blueprint
+from weko_deposit.storage import WekoFileStorage
 from weko_deposit.api import WekoDeposit as aWekoDeposit, WekoIndexer
 from weko_deposit.config import (
     WEKO_BUCKET_QUOTA_SIZE,
@@ -275,6 +277,15 @@ def location(app, db):
 
     shutil.rmtree(tmppath)
 
+@pytest.fixture()
+def wekofs_testpath(location):
+    """Temporary path for WekoFileStorage."""
+    return os.path.join(location.uri, 'subpath/data')
+
+@pytest.fixture()
+def wekofs(location, wekofs_testpath):
+    """Instance of WekoFileStorage."""
+    return WekoFileStorage(wekofs_testpath)
 
 @pytest.fixture()
 def bucket(db, location):
@@ -690,3 +701,15 @@ def db_admin_settings(db):
     db.session.commit()
 
 
+@pytest.fixture()
+def db_userprofile(app, db,users):
+    profiles = {}
+    with db.session.begin_nested(): 
+        user = users[1]['obj']
+        p = UserProfile()
+        p.user_id = user.id
+        p._username = (user.email).split("@")[0]
+        p._displayname = p._username
+        profiles[user.email] = p
+        db.session.add(p)
+    return profiles
