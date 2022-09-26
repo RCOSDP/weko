@@ -34,7 +34,8 @@ import redis
 from redis import sentinel
 from weko_workflow.schema.marshmallow import ActionSchema, \
     ActivitySchema, ResponseMessageSchema, CancelSchema, PasswdSchema, LockSchema,\
-    ResponseLockSchema, LockedValueSchema, GetFeedbackMailListSchema, SaveActivityResponseSchema
+    ResponseLockSchema, LockedValueSchema, GetFeedbackMailListSchema, SaveActivityResponseSchema,\
+    SaveActivitySchema, CheckApprovalSchema,ResponseUnlockSchema
 from weko_workflow.schema.utils import get_schema_action, type_null_check
 from marshmallow.exceptions import ValidationError
 
@@ -755,8 +756,7 @@ def display_activity(activity_id="0"):
     action_endpoint, action_id, activity_detail, cur_action, histories, item, \
         steps, temporary_comment, workflow_detail = \
         get_activity_display_info(activity_id)
-    if not (action_endpoint and action_id and activity_detail and cur_action and histories and \
-        steps and workflow_detail):
+    if any([s is None for s in [action_endpoint, action_id, activity_detail, cur_action, histories, steps, workflow_detail]]):
         current_app.logger.error("display_activity: can not get activity display info")
         return render_template("weko_theme/error.html",
                 error="can not get data required for rendering")
@@ -874,7 +874,7 @@ def display_activity(activity_id="0"):
             json_schema = (json_schema + "/{}").format(activity_id)
             schema_form = (schema_form + "/{}").format(activity_id)
 
-        if not (json_schema and schema_form):
+        if any([v is None for v in [json_schema, schema_form]]):
             current_app.logger.error("display_activity: can not get json_schema,schema_form")
             return render_template("weko_theme/error.html",
                     error="can not get data required for rendering")
@@ -901,7 +901,7 @@ def display_activity(activity_id="0"):
             files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
 
             links = base_factory(recid)
-            if not links:
+            if not isinstance(links, dict):
                 current_app.logger.error("display_activity: can not get links")
                 return render_template("weko_theme/error.html",
                     error="can not get data required for rendering")
@@ -918,7 +918,7 @@ def display_activity(activity_id="0"):
     res_check = check_authority_action(str(activity_id), int(action_id),
                                        is_auto_set_index_action,
                                        activity_detail.action_order)
-    if not res_check or res_check not in [0,1]:
+    if not isinstance(res_check, int) or res_check not in [0,1]:
         current_app.logger.error("display_activity: bad value for res_check")
         return render_template("weko_theme/error.html",
                 error="can not get data required for rendering")
@@ -958,13 +958,13 @@ def display_activity(activity_id="0"):
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
-    if render_widgets is None or not isinstance(render_widgets, bool):
+    if not isinstance(render_widgets, bool):
         current_app.logger.error("display_activity: bad value for render_widgets")
         return render_template("weko_theme/error.html",
                 error="can not get data required for rendering")
 
     list_license = get_list_licence()
-    if list_license is None or not isinstance(list_license, list):
+    if not isinstance(list_license, list):
         current_app.logger.error("display_activity: bad value for list_licences")
         return render_template("weko_theme/error.html",
                 error="can not get data required for rendering")
@@ -978,7 +978,7 @@ def display_activity(activity_id="0"):
     record_detail_alt = get_main_record_detail(
         activity_id, activity_detail, action_endpoint, item,
         approval_record, files, files_thumbnail)
-    if not record_detail_alt:
+    if not isinstance(record_detail_alt, dict):
         current_app.logger.error("display_activity: bad value for record_detail_alt")
         return render_template("weko_theme/error.html",
                     error="can not get data required for rendering")
@@ -1192,8 +1192,8 @@ def next_action(activity_id='0', action_id=0):
         action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
 
     Returns:
-        dict: 成否判定のコードとメッセージを含むjson data.json data validated by ResponseMessageSchema
-
+        object: 成否判定のコードとメッセージを含むjson dataをレスポンスボディにもつResponse.json data validated by ResponseMessageSchema
+        
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
 
@@ -1258,7 +1258,7 @@ def next_action(activity_id='0', action_id=0):
     work_activity = WorkActivity()
     history = WorkActivityHistory()
     activity_detail = work_activity.get_activity_detail(activity_id)
-    if not activity_detail:
+    if activity_detail is None:
         current_app.logger.error("next_action: can not get activity_detail")
         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get activity detail"})
         return jsonify(res.data)
@@ -1266,7 +1266,7 @@ def next_action(activity_id='0', action_id=0):
 
     try:
         schema = get_schema_action(action_id)
-        if not schema:
+        if schema is None:
             current_app.logger.error("next_action: can not get schema by action_id")
             res = ResponseMessageSchema().load({"code":-2, "msg":"can not get schema by action_id"})
             return jsonify(res.data)
@@ -1299,7 +1299,7 @@ def next_action(activity_id='0', action_id=0):
     )
 
     action = Action().get_action_detail(action_id)
-    if not action:
+    if action is None:
         current_app.logger.error("next_action: can not get action")
         res = ResponseMessageSchema().load({"code":-2, "msg":"can not get action"})
         return jsonify(res.data)
@@ -1336,7 +1336,7 @@ def next_action(activity_id='0', action_id=0):
         deposit = WekoDeposit.get_record(item_id)
         if deposit:
             pid_without_ver = get_record_without_version(current_pid)
-    if not pid_without_ver:
+    if pid_without_ver is None:
         current_app.logger.error("next_action: can not get pid_without_ver")
         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get pid_without_ver"})
         return jsonify(res.data)
@@ -1344,7 +1344,7 @@ def next_action(activity_id='0', action_id=0):
     current_app.logger.debug("action_endpoint: {0}, current_pid: {1}, item_id: {2}".format(
         action_endpoint, current_pid, pid_without_ver.pid_value))
     record = WekoRecord.get_record_by_pid(pid_without_ver.pid_value)
-    if not record:
+    if record is None:
         current_app.logger.error("next_action: can not get record")
         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get record"})
         return jsonify(res.data)
@@ -1356,7 +1356,7 @@ def next_action(activity_id='0', action_id=0):
     flow = Flow()
     next_flow_action = flow.get_next_flow_action(
         activity_detail.flow_define.flow_id, action_id, action_order)
-    if not next_flow_action and len(next_flow_action) > 0:
+    if not isinstance(next_flow_action, list) or len(next_flow_action) <= 0:
         current_app.logger.error("next_action: can not get next_flow_action")
         res = ResponseMessageSchema().load({"code":-2,"msg":"can not get next_flow_action"})
         return jsonify(res.data)
@@ -1368,7 +1368,7 @@ def next_action(activity_id='0', action_id=0):
     if 'approval' in [action_endpoint, next_action_endpoint]:
         current_flow_action = flow.get_flow_action_detail(
             activity_detail.flow_define.flow_id, action_id, action_order)
-        if not current_flow_action:
+        if current_flow_action is None:
             current_app.logger.error("next_action: can not get current_flow_action")
             res = ResponseMessageSchema().load({"code":-1, "msg":"can not get curretn_flow_action"})
             return jsonify(res.data)
@@ -1376,7 +1376,7 @@ def next_action(activity_id='0', action_id=0):
             activity_id, next_action_id,
             next_action_order)
 
-        if not next_action_detail:
+        if next_action_detail is None:
             current_app.logger.error("next_action: can not get next_action_detail")
             res = ResponseMessageSchema().load({"code":-2, "msg":"can not get next_action_detail"})
             return jsonify(res.data)
@@ -1413,7 +1413,7 @@ def next_action(activity_id='0', action_id=0):
                     current_flow_action.action_roles[0].action_user:
                 next_action_handler = current_flow_action.action_roles[
                     0].action_user
-                if not next_action_handler:
+                if next_action_handler is None:
                     current_app.logger.error("next_action: can not get next_action_handler")
                     res = ResponseMessageSchema().load({"code":-2, "msg":"can not get next_action_handler"})
                     return jsonify(res.data)
@@ -1482,14 +1482,14 @@ def next_action(activity_id='0', action_id=0):
             if not recid:
                 if ".0" in current_pid.pid_value:
                     pv = PIDVersioning(child=pid_without_ver)
-                    if not pv:
+                    if pv is None:
                         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get pv"})
                         return jsonify(res.data)
                     last_ver = PIDVersioning(parent=pv.parent,child=pid_without_ver).get_children(
                         pid_status=PIDStatus.REGISTERED
                     ).filter(PIDRelation.relation_type == 2).order_by(
                         PIDRelation.index.desc()).first()
-                    if not last_ver:
+                    if ast_ver is None:
                         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get last_ver"})
                         return jsonify(res.data)
                     item_ids.append(last_ver.object_uuid)
@@ -1498,7 +1498,7 @@ def next_action(activity_id='0', action_id=0):
                         'recid',
                         '{}.0'.format(pid_without_ver.pid_value)
                     )
-                    if not draft_pid:
+                    if draft_pid is None:
                         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get pid_without_ver"})
                         return jsonify(res.data)
                     item_ids.append(draft_pid.object_uuid)
@@ -1635,7 +1635,7 @@ def next_action(activity_id='0', action_id=0):
         new_activity_id = handle_finish_workflow(deposit,
                                                  current_pid,
                                                  recid)
-        if not new_activity_id:
+        if new_activity_id is None:
             res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
             return jsonify(res.data)
 
@@ -1719,8 +1719,8 @@ def previous_action(activity_id='0', action_id=0, req=0):
                              -1: アイテム登録アクション
                              それ以外: 2つ目のアクション
     Returns:
-        dict: 成否判定のコードとメッセージを含むjson data.json data validated by ResponseMessageSchema.
-
+        object: 成否判定のコードとメッセージを含むjson dataをレスポンスボディにもつResponse.json data validated by ResponseMessageSchema. 
+    
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
 
@@ -1962,7 +1962,7 @@ def cancel_action(activity_id='0', action_id=0):
         action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
 
     Returns:
-        dict: 成否判定のコードとメッセージ、リダイレクト先のURLを含むjson data.
+        object: 成否判定のコードとメッセージ、リダイレクト先のURLを含むjson dataをレスポンスボディにもつResponse.
               json data validated by ResponseMessageSchema
 
     Raises:
@@ -2054,13 +2054,13 @@ def cancel_action(activity_id='0', action_id=0):
 
     # Clear deposit
     cancel_item_id = activity_detail.item_id
-    if not cancel_item_id:
+    if cancel_item_id is None:
         pid_value = post_json.get('pid_value') if post_json.get(
             'pid_value') else get_pid_value_by_activity_detail(
             activity_detail)
         if pid_value:
             pid = PersistentIdentifier.get('recid', pid_value)
-            if not pid:
+            if pid is None:
                 current_app.logger.error("cancel_action: can not get PersistIdentifier")
                 res = ResponseMessageSchema().load({"code":-1, "msg":"can not get PersistIdentifier"})
                 return jsonify(res.data)
@@ -2158,8 +2158,8 @@ def withdraw_confirm(activity_id='0', action_id=0):
         action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
 
     Returns:
-        json data: ユーザー情報の確認結果とリダイレクト先URLのjson data. validated by ResponseMessageSchema
-
+        object: ユーザー情報の確認結果とリダイレクト先URLのjson dataをレスポンスボディにもつResponse. validated by ResponseMessageSchema
+    
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
 
@@ -2218,7 +2218,7 @@ def withdraw_confirm(activity_id='0', action_id=0):
         post_json = schema_load.data
 
         password = post_json.get('passwd', None)
-        if not password:
+        if password is None:
             res = ResponseMessageSchema({"code":-1,"msg":_('Password not provided')})
             return jsonify(res.data)
         wekouser = ShibUser()
@@ -2226,7 +2226,7 @@ def withdraw_confirm(activity_id='0', action_id=0):
             # if wekouser.check_weko_user(current_user.email, password):
             activity = WorkActivity()
             activity_detail = activity.get_activity_detail(activity_id)
-            if not activity_detail:
+            if activity_detail is None:
                 current_app.logger.error("withdraw_confirm: can not get activity detail info")
                 res = ResponseMessageSchema({"code":-1,"msg":"can not get activity detail info"})
                 return jsonify(res.data)
@@ -2236,7 +2236,7 @@ def withdraw_confirm(activity_id='0', action_id=0):
                 activity_id,
                 identifier_actionid)
             identifier_handle = IdentifierHandle(item_id)
-            if not isinstance(identifier, dict):
+            if not isinstance(identifier, dict) or "action_identifier_select" in identifier:
                 current_app.logger.error("withdraw_confirm: bad identifier data")
                 res = ResponseMessageSchema({"code":-1,"msg":"bad identifier data"})
                 return jsonify(res.data)
@@ -2260,7 +2260,7 @@ def withdraw_confirm(activity_id='0', action_id=0):
                         res = ResponseMessageSchema().load({"code":-1,"msg":"can not get PersistentIdentifier"})
                         return jsonify(res.data)
                     recid = get_record_identifier(current_pid.pid_value)
-                    if not recid:
+                    if recid is None:
                         pid_without_ver = get_record_without_version(
                             current_pid)
                         record_without_ver_activity_id = \
@@ -2413,8 +2413,8 @@ def lock_activity(activity_id="0"):
         activity_id (str, optional): 対象アクティビティID.パスパラメータから取得. Defaults to '0'.
 
     Returns:
-        json data: アクティビティの状態を示すjson data.json data validated by ResponseMessageSchema
-
+        object: アクティビティの状態を示すjson dataをレスポンスボディに含むResponse.json data validated by ResponseMessageSchema
+    
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
 
@@ -2583,7 +2583,7 @@ def unlock_activity(activity_id="0"):
     if cur_locked_val and cur_locked_val == locked_value:
         delete_cache_data(cache_key)
         msg = _('Unlock success')
-    res = ResponseMessageSchema().load({'code':200,'msg':msg or _('Not unlock')})
+    res = ResponseUnlockSchema().load({'code':200,'msg':msg or _('Not unlock')})
     return jsonify(res.data), 200
 
 
