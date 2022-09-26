@@ -222,7 +222,7 @@ class EventsIndexer(object):
                 rtn_data = dict(
                     _id=hash_id(ts.isoformat(), msg),
                     _op_type='index',
-                    _index='{0}'.format(self.index),
+                    _index='{0}-{1}'.format(self.index, suffix),
                     _type=self.doctype,
                     _source=msg,
                 )

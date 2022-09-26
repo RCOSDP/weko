@@ -288,7 +288,7 @@ class StatAggregator(object):
             return None
         return parser.parse(result[0]['timestamp'])
 
-    def agg_iter(self, lower_limit=None, upper_limit=None, manual=False):
+    def agg_iter(self, lower_limit=None, upper_limit=None):
         """Aggregate and return dictionary to be indexed in ES."""
         logger = get_task_logger(__name__)
 
@@ -356,33 +356,29 @@ class StatAggregator(object):
                             aggregation_data
                         )
 
-                index_name = '{0}-stats-{1}'.\
-                             format(self.search_index_prefix, self.event)
+                index_name = '{0}-stats-{1}-{2}'.\
+                             format(self.search_index_prefix, self.event,
+                                    interval_date.strftime(
+                                        self.index_name_suffix))
                 logger.debug("index_name: {}".format(index_name))
-
-                if manual:
-                    res = Search(using=self.client,
-                                index=self.event_index).\
-                        filter('term', unique_id=aggregation['key']).\
-                        execute()
-                    
-                    if res.hits.total > 0:
-                        index_name = res.hits.hits[0]['_index']
-
+                self.indices.add(index_name)
                 rtn_data = dict(
-                    _id='{0}'.format(aggregation['key']),
+                    _id='{0}-{1}'.
+                        format(aggregation['key'],
+                               interval_date.strftime(
+                                   self.doc_id_suffix)),
                     _index=index_name,
                     _type=self.aggregation_doc_type,
                     _source=aggregation_data
                 )
-                self.indices.add(index_name)
+
                 if current_app.config['STATS_WEKO_DB_BACKUP_AGGREGATION']:
                     # Save stats aggregation into Database.
                     StatsAggregation.save(rtn_data, delete=True)
 
                 yield rtn_data
 
-    def run(self, start_date=None, end_date=None, update_bookmark=True, manual=False):
+    def run(self, start_date=None, end_date=None, update_bookmark=True):
         """Calculate statistics aggregations."""
         # If no events have been indexed there is nothing to aggregate
         if not Index(self.event_index, using=self.client).exists():
@@ -408,7 +404,7 @@ class StatAggregator(object):
         while upper_limit <= datetime.datetime.utcnow():
             self.indices = set()
             bulk(self.client,
-                 self.agg_iter(lower_limit, upper_limit, manual),
+                 self.agg_iter(lower_limit, upper_limit),
                  stats_only=True,
                  chunk_size=50)
             # Flush all indices which have been modified
