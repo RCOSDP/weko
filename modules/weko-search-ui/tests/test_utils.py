@@ -405,20 +405,100 @@ def test_make_file_by_line(i18n_app):
 
 
 # def make_stats_file(raw_stats, list_name):
+def test_make_stats_file(i18n_app):
+    raw_stats = [
+        {'a': 1},
+        {'b': 2},
+        {'c': 3},
+    ]
+
+    list_name = [
+        'a',
+        'b',
+        'c'
+    ]
+
+    assert make_stats_file(raw_stats, list_name)
+
+
 # def create_deposit(item_id):
+def test_create_deposit(i18n_app, location, indices):
+    assert create_deposit(33)
+
+
 # def clean_thumbnail_file(deposit, root_path, thumbnail_path):
+def test_clean_thumbnail_file(i18n_app, deposit):
+    deposit = deposit
+    root_path = '/'
+    thumbnail_path = '/'
+
+    # Doesn't return a value
+    assert not clean_thumbnail_file(deposit, root_path, thumbnail_path)
+
 # def up_load_file(record, root_path, deposit, allow_upload_file_content, old_files):
+def test_up_load_file(i18n_app, deposit, db_activity):
+    record = db_activity['record']
+    root_path = '/'
+    deposit = deposit
+    allow_upload_file_content = True
+    old_files = {}
+
+    # Doesn't return a value
+    assert not up_load_file(record, root_path, deposit, allow_upload_file_content, old_files)
+
+
 # def get_file_name(file_path):
-# def register_item_metadata(item, root_path, is_gakuninrdm=False):
+def test_get_file_name(i18n_app):
+    assert get_file_name("test/test/test")
+
+
+# def register_item_metadata(item, root_path, is_gakuninrdm=False): ERROR ~ sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such function: concat
+"""
+Error file: invenio_files_rest/utils.py
+Error function:
+def find_and_update_location_size():
+    ret = db.session.query(
+        Location.id,
+        sa.func.sum(FileInstance.size),
+        Location.size
+    ).filter(
+        FileInstance.uri.like(sa.func.concat(Location.uri, '%'))
+    ).group_by(Location.id)
+
+    for row in ret:
+        if row[1] != row[2]:
+            with db.session.begin_nested():
+                loc = db.session.query(Location).filter(
+                    Location.id == row[0]).one()
+                loc.size = row[1]
+"""
+def test_register_item_metadata(i18n_app, deposit, es_records, location):
+    item = es_records['results'][0]['item']
+    root_path = os.path.dirname(os.path.abspath(__file__))
+    
+    assert register_item_metadata(item, root_path, is_gakuninrdm=False)
+
+
 # def update_publish_status(item_id, status):
+def test_update_publish_status(i18n_app, es_records):
+    item_id = 1
+    status = None
+
+    # Doesn't return a value
+    assert not update_publish_status(item_id, status)
+
+
 # def handle_workflow(item: dict):
+def test_handle_workflow(i18n_app, es_records):
+    item = es_records['recid']
+
+    assert handle_workflow(item)
 
 
 # def create_work_flow(item_type_id):
 def test_create_work_flow(i18n_app, db_itemtype, db_workflow):
     # Doesn't return any value
     assert not create_work_flow(db_itemtype['item_type'].id)
-
 
 
 # def create_flow_define():
@@ -428,6 +508,10 @@ def test_create_flow_define(i18n_app, db_activity):
 
 
 # def send_item_created_event_to_es(item, request_info):
+# def test_send_item_created_event_to_es(i18n_app):
+
+    # Doesn't return anything
+    # assert not send_item_created_event_to_es()
 
 
 # def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False): ERROR = TypeError: handle_remove_es_metadata() missing 2 required positional arguments: 'bef_metadata' and 'bef_las...

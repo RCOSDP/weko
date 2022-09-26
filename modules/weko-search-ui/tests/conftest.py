@@ -26,7 +26,7 @@ import json
 import uuid
 from os.path import join
 from datetime import date, datetime, timedelta
-
+from time import sleep
 import pytest
 from mock import Mock, patch
 from pytest_mock import mocker
@@ -37,6 +37,7 @@ from flask_menu import Menu
 from flask_login import current_user, login_user, LoginManager
 from werkzeug.local import LocalProxy
 from tests.helpers import create_record, json_data
+from six import BytesIO
 # from moto import mock_s3
 
 from invenio_deposit.config import (
@@ -89,17 +90,18 @@ from invenio_files_rest.permissions import bucket_listmultiparts_all, \
     location_update_all, multipart_delete_all, multipart_read_all, \
     object_delete_all, object_delete_version_all, object_read_all, \
     object_read_version_all
-from invenio_files_rest.models import Bucket
+from invenio_files_rest.models import Bucket, Location, ObjectVersion
 from invenio_db.utils import drop_alembic_version_table
 from invenio_records_rest.config import RECORDS_REST_SORT_OPTIONS
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from invenio_pidrelations.models import PIDRelation
 
+from weko_deposit.config import WEKO_BUCKET_QUOTA_SIZE, WEKO_MAX_FILE_SIZE
 from weko_admin.models import FacetSearchSetting
 from weko_schema_ui.models import OAIServerSchema
 from weko_index_tree.api import Indexes
 from weko_records import WekoRecords
-from weko_records.api import ItemTypes
+from weko_records.api import ItemTypes, ItemsMetadata, WekoRecord
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records_ui.models import PDFCoverPageSettings
@@ -125,6 +127,7 @@ from weko_redis.redis import RedisConnection
 from weko_admin.models import SessionLifetime
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS, WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
 from weko_index_tree.models import IndexStyle
+from weko_deposit.api import WekoDeposit, WekoRecord, WekoIndexer
 
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
@@ -194,6 +197,7 @@ def base_app(instance_path):
             'application/json': lambda: request.get_json(),
             'application/json-patch+json': lambda: request.get_json(force=True),
         },
+        FILES_REST_OBJECT_KEY_MAX_LEN = 255,
         # SEARCH_UI_SEARCH_INDEX=SEARCH_UI_SEARCH_INDEX,
         SEARCH_UI_SEARCH_INDEX="test-weko",
         # SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
@@ -218,6 +222,7 @@ def base_app(instance_path):
         THEME_FRONTPAGE_TEMPLATE = 'weko_theme/frontpage.html',
         BASE_EDIT_TEMPLATE = 'weko_theme/edit.html',
         BASE_PAGE_TEMPLATE = 'weko_theme/page.html',
+        FILES_REST_DEFAULT_MAX_FILE_SIZE=None,
         WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS = False,
         WEKO_ADMIN_MANAGEMENT_OPTIONS=WEKO_ADMIN_MANAGEMENT_OPTIONS,
         WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS=WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS,
@@ -431,6 +436,8 @@ def base_app(instance_path):
             )
         ),
         WEKO_OPENSEARCH_SYSTEM_SHORTNAME = "WEKO",
+        WEKO_BUCKET_QUOTA_SIZE = WEKO_BUCKET_QUOTA_SIZE,
+        WEKO_MAX_FILE_SIZE = WEKO_MAX_FILE_SIZE,
         WEKO_OPENSEARCH_SYSTEM_DESCRIPTION = (
             "WEKO - NII Scholarly and Academic Information Navigator"
         ),
@@ -554,6 +561,13 @@ def i18n_app(app):
 
 
 @pytest.yield_fixture()
+def client(app):
+    """Get test client."""
+    with app.test_client() as client:
+        yield client
+
+
+@pytest.yield_fixture()
 def client_rest(app):
     app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
     with app.test_client() as client:
@@ -588,14 +602,14 @@ def client_request_args(app):
 
 
 @pytest.fixture()
-def location(app):
+def location(app, db):
     """Create default location."""
     tmppath = tempfile.mkdtemp()
-    with db_.session.begin_nested():
+    with db.session.begin_nested():
         Location.query.delete()
         loc = Location(name='local', uri=tmppath, default=True)
-        db_.session.add(loc)
-    db_.session.commit()
+        db.session.add(loc)
+    db.session.commit()
     return location
 
 
@@ -868,52 +882,6 @@ def db_records2(db, instance_path, users):
         index.public_state = True
         index.harvest_public_state = True
     
-    # index_metadata = {
-    #         'id': 2,
-    #         'parent': 0,
-    #         'value': 'Index(public_state = True,harvest_public_state = False)',
-    #     }
-    
-    # with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
-    #     # Indexes.create(0, index_metadata)
-    #     index_two = Index(id=index_metadata['id'],index_name="index_two")
-    #     db.session.add(index_two)
-    #     db.session.commit()
-    #     index = Index.get_index_by_id(2)
-    #     index.public_state = True
-    #     index.harvest_public_state = False
-    
-    # index_metadata = {
-    #         'id': 3,
-    #         'parent': 0,
-    #         'value': 'Index(public_state = False,harvest_public_state = True)',
-    # }
-    
-    # with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
-    #     # Indexes.create(0, index_metadata)
-    #     index_three = Index(id=index_metadata['id'],index_name="index_three")
-    #     db.session.add(index_three)
-    #     db.session.commit()
-    #     index = Index.get_index_by_id(3)
-    #     index.public_state = False
-    #     index.harvest_public_state = True
-    
-    # index_metadata = {
-    #         'id': 4,
-    #         'parent': 0,
-    #         'value': 'Index(public_state = False,harvest_public_state = False)',
-    # }
-    
-    # with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
-    #     # Indexes.create(0, index_metadata)
-    #     index_four = Index(id=index_metadata['id'],index_name="index_four")
-    #     db.session.add(index_four)
-    #     db.session.commit()
-    #     index = Index.get_index_by_id(4)
-    #     index.public_state = False
-    #     index.harvest_public_state = False
-
- 
     yield result
 
 
@@ -1076,7 +1044,7 @@ def records(db):
         
         search_query_result = json_data("data/search_result.json")
 
-    return(search_query_result)
+    return search_query_result
 
 
 @pytest.fixture()
@@ -1613,7 +1581,7 @@ def db_activity(db, db_records2, db_itemtype, db_workflow, users):
         db.session.add(activity)
         db.session.add(rel)
 
-    return {"activity": activity, "recid": recid, "item": item}
+    return {"activity": activity, "recid": recid, "item": item, "record": record}
 
 
 @pytest.fixture()
@@ -1973,3 +1941,142 @@ def record_with_metadata():
 def item_render():
     data = json_data("data/itemtype1_render.json")
     return data
+
+
+@pytest.yield_fixture()
+def es(app):
+    """Elasticsearch fixture."""
+    try:
+        list(current_search.create())
+    # except RequestError:
+    except:
+        list(current_search.delete(ignore=[404]))
+        list(current_search.create(ignore=[400]))
+    current_search_client.indices.refresh()
+    yield current_search_client
+    list(current_search.delete(ignore=[404]))
+
+
+@pytest.fixture()
+def deposit(app, es, users, location, db):
+    """New deposit with files."""
+    record = {
+        'title': 'fuu'
+    }
+    with app.test_request_context():
+        datastore = app.extensions['security'].datastore
+        login_user(datastore.find_user(email=users[0]['email']))
+        deposit = Deposit.create(record)
+        deposit.commit()
+        db.session.commit()
+    sleep(2)
+    return deposit
+
+
+@pytest.fixture()
+def db_index(client, users):
+    index_metadata = {
+        "id": 1,
+        "parent": 0,
+        "value": "Index(public_state = True,harvest_public_state = True)",
+    }
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        ret = Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(1)
+        # index.public_state = True
+        # index.harvest_public_state = True
+
+    index_metadata = {
+        "id": 2,
+        "parent": 0,
+        "value": "Index(public_state = True,harvest_public_state = False)",
+    }
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(2)
+        # index.public_state = True
+        # index.harvest_public_state = False
+
+    index_metadata = {
+        "id": 3,
+        "parent": 0,
+        "value": "Index(public_state = False,harvest_public_state = True)",
+    }
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(3)
+        # index.public_state = False
+        # index.harvest_public_state = True
+
+    index_metadata = {
+        "id": 4,
+        "parent": 0,
+        "value": "Index(public_state = False,harvest_public_state = False)",
+    }
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(4)
+        # index.public_state = False
+        # index.harvest_public_state = False
+
+
+@pytest.fixture()
+def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
+    indexer = WekoIndexer()
+    indexer.get_es_index()
+    results = []
+    with app.test_request_context():
+        for i in range(1, 10):
+            record_data =  {"_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]}, "path": ["{}".format((i % 2) + 1)], "recid": "{}".format(i), "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-08-20"}, "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02"}, "_deposit": {"id": "{}".format(i), "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "owner": "1", "owners": [1], "status": "draft", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}}, "item_title": "title", "author_link": [], "item_type_id": "1", "publish_date": "2022-08-20", "publish_status": "0", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}]}, "relation_version_is_last": True, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://weko3.example.org/record/{}/files/hello.txt'.format(i)}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_access', 'version_id': '', 'mimetype': 'application/pdf',"file": "",}]}}
+ 
+            item_data = {"id": "{}".format(i), "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "lang": "ja", "owner": "1", "title": "title", "owners": [1], "item_type_id": 1, "status": "published", "$schema": "/items/jsonschema/1", "item_title": "item_title", "metadata": record_data, "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_id": -1, "item_1617186331708": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}}
+   
+            rec_uuid = uuid.uuid4()
+
+            recid = PersistentIdentifier.create('recid', str(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            depid = PersistentIdentifier.create('depid', str(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            rel = PIDRelation.create(recid,depid,3)
+            db.session.add(rel)
+            parent = None
+            doi = None
+            parent = PersistentIdentifier.create('parent', "parent:{}".format(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            rel = PIDRelation.create(parent,recid,2,0)
+            db.session.add(rel)
+            if(i%2==1):
+                doi = PersistentIdentifier.create('doi', "https://doi.org/10.xyz/{}".format((str(i)).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+                hdl = PersistentIdentifier.create('hdl', "https://hdl.handle.net/0000/{}".format((str(i)).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            
+            record = WekoRecord.create(record_data, id_=rec_uuid)
+            # from six import BytesIO
+            from invenio_files_rest.models import Bucket
+            from invenio_records_files.models import RecordsBuckets
+            import base64
+            bucket = Bucket.create()
+            record_buckets = RecordsBuckets.create(record=record.model, bucket=bucket)
+            stream = BytesIO(b'Hello, World')
+            # record.files['hello.txt'] = stream
+            # obj=ObjectVersion.create(bucket=bucket.id, key='hello.txt', stream=stream)
+            record['item_1617605131499']['attribute_value_mlt'][0]['file'] = (base64.b64encode(stream.getvalue())).decode('utf-8')
+            deposit = WekoDeposit(record, record.model)
+            deposit.commit()
+            # record['item_1617605131499']['attribute_value_mlt'][0]['version_id'] = str(obj.version_id)
+            record['item_1617605131499']['attribute_value_mlt'][0]['version_id'] = '1'
+            
+            record_data['content']= [{"date":[{"dateValue":"2021-07-12","dateType":"Available"}],"accessrole":"open_access","displaytype" : "simple","filename" : "hello.txt","attachment" : {},"format" : "text/plain","mimetype" : "text/plain","filesize" : [{"value" : "1 KB"}],"version_id" : "{}".format('1'),"url" : {"url":"http://localhost/record/{}/files/hello.txt".format(i)},"file":(base64.b64encode(stream.getvalue())).decode('utf-8')}]
+            indexer.upload_metadata(record_data, rec_uuid, 1, False)
+            item = ItemsMetadata.create(item_data, id_=rec_uuid)
+            
+            results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit})
+
+    sleep(3)
+    # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
+    # print(es.cat.indices())
+    return {
+        "indexer": indexer,
+        "results": results
+    }
+
