@@ -2152,7 +2152,7 @@
 						<line hits="1" number="81"/>
 						<line hits="1" number="82"/>
 						<line hits="1" number="85"/>
-						<line hits="0" number="90"/>
+						<line hits="1" number="90"/>
 						<line hits="0" number="93"/>
 						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="96,97" number="95"/>
 						<line hits="0" number="96"/>

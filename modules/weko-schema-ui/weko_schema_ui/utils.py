@@ -30,6 +30,8 @@ from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
 
+from flask import current_app
+
 from .schema import SchemaTree
 
 MISSING = object()

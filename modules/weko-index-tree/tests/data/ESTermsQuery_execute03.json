@@ -1,0 +1,31 @@
+{
+  "took": 18,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 0,
+    "max_score": 0.0,
+    "hits": []
+  },
+  "aggregations": {
+    "country": {
+      "doc_count_error_upper_bound": 0,
+      "sum_other_doc_count": 0,
+      "buckets": []
+    },
+    "count": { "value": 0.0 },
+    "top_hit": {
+      "hits": {
+        "total": 0,
+        "max_score": null,
+        "hits": []
+      }
+    },
+    "unique_count": { "value": 0.0 }
+  }
+}

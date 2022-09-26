@@ -22,14 +22,42 @@ from invenio_stats.aggregations import StatAggregator, filter_robots, BookmarkAP
 from invenio_stats.processors import EventsIndexer
 from invenio_stats.tasks import aggregate_events, process_events
 
+# def filter_robots(query):
+# def filter_restricted(query):
+# def format_range_dt(dt, interval):
 
+# class BookmarkAPI:
+#     def __init__(self, client, agg_type, agg_interval):
+#     def _ensure_index_exists(func):
+#         def wrapped(self, *args, **kwargs):
+#     def set_bookmark(self, value):
+#     def get_bookmark(self):
+#     def list_bookmarks(self, start_date=None, end_date=None, limit=None):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_aggregations.py::test_BookmarkAPI -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_BookmarkAPI(app):
+    bookmark_api = BookmarkAPI(current_search_client,
+                               'file-download-agg',
+                               'day')
+    result = {"mappings":bookmark_api.MAPPINGS["mappings"]["aggregation-bookmark"]}
+    assert bookmark_api.MAPPINGS_ES7 == result
+
+# class StatAggregator(object):
+#     def __init__(self, name, event, client=None,
+#     def aggregation_doc_type(self):
+#     def _get_oldest_event_timestamp(self):
+#     def agg_iter(self, lower_limit=None, upper_limit=None, manual=False):
+#     def run(self, start_date=None, end_date=None, update_bookmark=True, manual=False):
+#     def list_bookmarks(self, start_date=None, end_date=None, limit=None):
+#     def delete(self, start_date=None, end_date=None):
+#         def _delete_actions():
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_aggregations.py::test_wrong_intervals -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_wrong_intervals(app):
     """Test aggregation with aggregation_interval > index_interval."""
     with pytest.raises(ValueError):
         StatAggregator('test-agg', 'test', current_search_client,
                        aggregation_interval='month', index_interval='day')
 
-
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_aggregations.py::test_get_bookmark -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 @pytest.mark.parametrize('indexed_events',
                          [dict(file_number=1,
                                event_number=1,
@@ -37,7 +65,7 @@ def test_wrong_intervals(app):
                                start_date=datetime.date(2021, 1, 1),
                                end_date=datetime.date(2021, 1, 7))],
                          indirect=['indexed_events'])
-def test_get_bookmark(app, indexed_events):
+def test_get_bookmark(app, evnet_queues, indexed_events):
     """Test bookmark reading."""
     stat_agg = StatAggregator(name='file-download-agg',
                               client=current_search_client,
@@ -45,8 +73,9 @@ def test_get_bookmark(app, indexed_events):
                               aggregation_field='file_id',
                               aggregation_interval='day')
     stat_agg.run()
-    assert stat_agg.get_bookmark() == datetime.datetime(2017, 1, 8)
-
+    current_search.flush_and_refresh(index='*')
+    assert stat_agg.bookmark_api.get_bookmark() == \
+        datetime.datetime(2021, 1, 8)
 
 # def test_overwriting_aggregations(app, mock_event_queue, es_with_templates):
 #     """Check that the StatAggregator correctly starts from bookmark.
@@ -295,11 +324,3 @@ def test_get_bookmark(app, indexed_events):
 #     assert results[0].count == 12  # 3 views over 4 differnet hour slices
 #     assert results[0].unique_count == 4  # 4 different hour slices accessed
 #     assert results[0].volume == 9000 * 12
-
-
-def test_BookmarkAPI(app):
-    bookmark_api = BookmarkAPI(current_search_client,
-                               'file-download-agg',
-                               'day')
-    result = {"mappings":bookmark_api.MAPPINGS["mappings"]["aggregation-bookmark"]}
-    assert bookmark_api.MAPPINGS_ES7 == result
