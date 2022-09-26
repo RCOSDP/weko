@@ -87,6 +87,8 @@ def create_record(record_data, item_data):
         rec_uuid = uuid.uuid4()
         recid = PersistentIdentifier.create('recid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
         depid = PersistentIdentifier.create('depid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        rel = PIDRelation.create(recid,depid,3)
+        db.session.add(rel)
         parent=None
         doi = None
         if "item_1617186819068" in record_data:
@@ -101,7 +103,8 @@ def create_record(record_data, item_data):
             PIDRelation.create(recid_p.parent, recid,2)
         else:
             parent = PersistentIdentifier.create('parent', "parent:{}".format(record_data["recid"]),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            PIDRelation.create(parent, recid,2)
+            rel = PIDRelation.create(parent, recid,2,0)
+            db.session.add(rel)
             RecordIdentifier.next()
         record = Record.create(record_data, id_=rec_uuid)
         item = ItemsMetadata.create(item_data, id_=rec_uuid)

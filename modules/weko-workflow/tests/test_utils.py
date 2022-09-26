@@ -22,56 +22,56 @@ from weko_workflow.models import Activity
 
 # def register_hdl(activity_id):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_register_hdl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-#def test_register_hdl(app,db_records,db_itemtype):
-#    recid,depid,record,item,parent,doi = db_records[0]
-#    assert recid.pid_value=="1"
-#    activity_id='A-00000800-00000'
-#    act = Activity(
-#                activity_id=activity_id,
-#                item_id=record.id,
-#            )
-#    with patch("weko_workflow.api.WorkActivity.get_activity_detail",return_value=act):
-#        with patch("weko_handle.api.Handle.register_handle",return_value="handle:00.000.12345/0000000001"):
-#            with app.test_request_context():
-#                register_hdl(activity_id)
-#                pid = IdentifierHandle(parent.object_uuid).check_pidstore_exist(pid_type='hdl')
-#                assert pid[0].object_uuid == parent.object_uuid
-#                pid = IdentifierHandle(recid.object_uuid).check_pidstore_exist(pid_type='hdl')
-#                assert pid[0].object_uuid == recid.object_uuid
-#    
-#    depid, recid,parent,doi,record, item = db_records[1]
-#    assert recid.pid_value=="1.0"
-#    activity_id='A-00000800-00000'
-#    act = Activity(
-#                activity_id=activity_id,
-#                item_id=record.id,
-#            )
-#    with patch("weko_workflow.api.WorkActivity.get_activity_detail",return_value=act):
-#        with patch("weko_handle.api.Handle.register_handle",return_value="handle:00.000.12345/0000000001"):
-#            with app.test_request_context():
-#                register_hdl(activity_id)
-#                pid = IdentifierHandle(parent.object_uuid).check_pidstore_exist(pid_type='hdl')
-#                assert pid[0].object_uuid == parent.object_uuid
-#                pid = IdentifierHandle(recid.object_uuid).check_pidstore_exist(pid_type='hdl')
-#                assert pid == []
-#    
-#    depid, recid,parent,doi,record, item = db_records[2]
-#    assert recid.pid_value=="1.1"
-#    activity_id='A-00000800-00000'
-#    act = Activity(
-#                activity_id=activity_id,
-#                item_id=record.id,
-#            )
-#    with patch("weko_workflow.api.WorkActivity.get_activity_detail",return_value=act):
-#        with patch("weko_handle.api.Handle.register_handle",return_value="handle:00.000.12345/0000000001"):
-#            with app.test_request_context():
-#                register_hdl(activity_id)
-#                # register_hdl uses parent object_uuid.
-#                pid = IdentifierHandle(parent.object_uuid).check_pidstore_exist(pid_type='hdl')
-#                assert pid[0].object_uuid == parent.object_uuid
-#                # register_hdl does not use recid object_uuid.
-#                pid = IdentifierHandle(recid.object_uuid).check_pidstore_exist(pid_type='hdl')
-#                assert pid==[]
+def test_register_hdl(app,db_records,db_itemtype):
+    recid,depid,record,item,parent,doi = db_records[0]
+    assert recid.pid_value=="1"
+    activity_id='A-00000800-00000'
+    act = Activity(
+                activity_id=activity_id,
+                item_id=record.id,
+            )
+    with patch("weko_workflow.api.WorkActivity.get_activity_detail",return_value=act):
+        with patch("weko_handle.api.Handle.register_handle",return_value="handle:00.000.12345/0000000001"):
+            with app.test_request_context():
+                register_hdl(activity_id)
+                pid = IdentifierHandle(parent.object_uuid).check_pidstore_exist(pid_type='hdl')
+                assert pid[0].object_uuid == parent.object_uuid
+                pid = IdentifierHandle(recid.object_uuid).check_pidstore_exist(pid_type='hdl')
+                assert pid[0].object_uuid == recid.object_uuid
+    
+    recid,depid, record, item,parent,doi = db_records[1]
+    assert recid.pid_value=="1.0"
+    activity_id='A-00000800-00000'
+    act = Activity(
+                activity_id=activity_id,
+                item_id=record.id,
+            )
+    with patch("weko_workflow.api.WorkActivity.get_activity_detail",return_value=act):
+        with patch("weko_handle.api.Handle.register_handle",return_value="handle:00.000.12345/0000000001"):
+            with app.test_request_context():
+                register_hdl(activity_id)
+                pid = IdentifierHandle(parent.object_uuid).check_pidstore_exist(pid_type='hdl')
+                assert pid[0].object_uuid == parent.object_uuid
+                pid = IdentifierHandle(recid.object_uuid).check_pidstore_exist(pid_type='hdl')
+                assert pid == []
+    
+    recid,depid, record, item,parent,doi = db_records[2]
+    assert recid.pid_value=="1.1"
+    activity_id='A-00000800-00000'
+    act = Activity(
+                activity_id=activity_id,
+                item_id=record.id,
+            )
+    with patch("weko_workflow.api.WorkActivity.get_activity_detail",return_value=act):
+        with patch("weko_handle.api.Handle.register_handle",return_value="handle:00.000.12345/0000000001"):
+            with app.test_request_context():
+                register_hdl(activity_id)
+                # register_hdl uses parent object_uuid.
+                pid = IdentifierHandle(parent.object_uuid).check_pidstore_exist(pid_type='hdl')
+                assert pid[0].object_uuid == parent.object_uuid
+                # register_hdl does not use recid object_uuid.
+                pid = IdentifierHandle(recid.object_uuid).check_pidstore_exist(pid_type='hdl')
+                assert pid==[]
     
 
                 
@@ -115,47 +115,47 @@ from weko_workflow.models import Activity
 # def filter_all_condition(all_args):
 
 
-#def test_filter_all_condition(app, mocker):
-#    dic = MultiDict()
-#    for key in WEKO_WORKFLOW_FILTER_PARAMS:
-#        dic.add("{}_0".format(key), "{}_0".format(key))
-#    for key in WEKO_WORKFLOW_FILTER_PARAMS:
-#        dic.add("{}_1".format(key), "{}_1".format(key))
-#    dic.add("dummy_0", "dummy2")
-#    print(dic)
-#    with app.test_request_context():
-#        # mocker.patch("flask.request.args.get", side_effect=dic)
-#        assert filter_all_condition(dic) == {
-#            "createdfrom": ["createdfrom_0", "createdfrom_1"],
-#            "createdto": ["createdto_0", "createdto_1"],
-#            "workflow": ["workflow_0", "workflow_1"],
-#            "user": ["user_0", "user_1"],
-#            "item": ["item_0", "item_1"],
-#            "status": ["status_0", "status_1"],
-#            "tab": ["tab_0", "tab_1"],
-#            "sizewait": ["sizewait_0", "sizewait_1"],
-#            "sizetodo": ["sizetodo_0", "sizetodo_1"],
-#            "sizeall": ["sizeall_0", "sizeall_1"],
-#            "pagesall": ["pagesall_0", "pagesall_1"],
-#            "pagestodo": ["pagestodo_0", "pagestodo_1"],
-#            "pageswait": ["pageswait_0", "pageswait_1"],
-#        }
-#
-#        # mocker.patch("flask.request.args.get", side_effect=MultiDict())
-#        assert filter_all_condition(MultiDict()) == {}
+def test_filter_all_condition(app, mocker):
+    dic = MultiDict()
+    for key in WEKO_WORKFLOW_FILTER_PARAMS:
+        dic.add("{}_0".format(key), "{}_0".format(key))
+    for key in WEKO_WORKFLOW_FILTER_PARAMS:
+        dic.add("{}_1".format(key), "{}_1".format(key))
+    dic.add("dummy_0", "dummy2")
+    print(dic)
+    with app.test_request_context():
+        # mocker.patch("flask.request.args.get", side_effect=dic)
+        assert filter_all_condition(dic) == {
+            "createdfrom": ["createdfrom_0", "createdfrom_1"],
+            "createdto": ["createdto_0", "createdto_1"],
+            "workflow": ["workflow_0", "workflow_1"],
+            "user": ["user_0", "user_1"],
+            "item": ["item_0", "item_1"],
+            "status": ["status_0", "status_1"],
+            "tab": ["tab_0", "tab_1"],
+            "sizewait": ["sizewait_0", "sizewait_1"],
+            "sizetodo": ["sizetodo_0", "sizetodo_1"],
+            "sizeall": ["sizeall_0", "sizeall_1"],
+            "pagesall": ["pagesall_0", "pagesall_1"],
+            "pagestodo": ["pagestodo_0", "pagestodo_1"],
+            "pageswait": ["pageswait_0", "pageswait_1"],
+        }
+
+        # mocker.patch("flask.request.args.get", side_effect=MultiDict())
+        assert filter_all_condition(MultiDict()) == {}
 
 
 # def filter_condition(json, name, condition):
 
 
-#def test_filter_condition():
-#    json = {}
-#    filter_condition(json, "name", "condition")
-#    assert json == {"name": ["condition"]}
-#
-#    json = {"name": ["condition"]}
-#    filter_condition(json, "name", "condition")
-#    assert json == {"name": ["condition", "condition"]}
+def test_filter_condition():
+    json = {}
+    filter_condition(json, "name", "condition")
+    assert json == {"name": ["condition"]}
+
+    json = {"name": ["condition"]}
+    filter_condition(json, "name", "condition")
+    assert json == {"name": ["condition", "condition"]}
 
 
 # def get_actionid(endpoint):
@@ -171,30 +171,30 @@ from weko_workflow.models import Activity
 # def check_existed_doi(doi_link):
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_url_root --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-#def test_get_url_root(app):
-#    app.config["THEME_SITEURL"] = "https://weko3.ir.rcos.nii.ac.jp"
-#    app.config["SERVER_NAME"] = "TEST_SERVER"
-#    with app.app_context():
-#        assert get_url_root() == "https://weko3.ir.rcos.nii.ac.jp/"
-#        app.config["THEME_SITEURL"] = "https://weko3.ir.rcos.nii.ac.jp/"
-#        assert get_url_root() == "https://weko3.ir.rcos.nii.ac.jp/"
-#
-#    app.config["THEME_SITEURL"] = "https://weko3.ir.rcos.nii.ac.jp"
-#    app.config["SERVER_NAME"] = "TEST_SERVER"
-#    with app.test_request_context():
-#        assert get_url_root() == "http://TEST_SERVER/"
+def test_get_url_root(app):
+    app.config["THEME_SITEURL"] = "https://weko3.ir.rcos.nii.ac.jp"
+    app.config["SERVER_NAME"] = "TEST_SERVER"
+    with app.app_context():
+        assert get_url_root() == "https://weko3.ir.rcos.nii.ac.jp/"
+        app.config["THEME_SITEURL"] = "https://weko3.ir.rcos.nii.ac.jp/"
+        assert get_url_root() == "https://weko3.ir.rcos.nii.ac.jp/"
+
+    app.config["THEME_SITEURL"] = "https://weko3.ir.rcos.nii.ac.jp"
+    app.config["SERVER_NAME"] = "TEST_SERVER"
+    with app.test_request_context():
+        assert get_url_root() == "http://TEST_SERVER/"
 
 
 # def get_record_by_root_ver(pid_value):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_record_by_root_ver -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-#def test_get_record_by_root_ver(app, db_records):
-#    app.config.update(
-#        DEPOSIT_DEFAULT_STORAGE_CLASS="S",
-#    )
-#    record, files = get_record_by_root_ver("1")
-#
-#    assert files == []
-#    assert record == {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1']}, 'path': ['1'], 'owner': '1', 'recid': '1', 'title': ['title'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}, '_buckets': {'deposit': '3e99cfca-098b-42ed-b8a0-20ddd09b3e02'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'title', 'author_link': [], 'item_type_id': '1', 'publish_date': '2022-08-20', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'title', 'subitem_1551255648112': 'ja'}]}, "item_1617186819068": {"attribute_name": "Identifier Registration","attribute_value_mlt": [{"subitem_identifier_reg_text" :"test/0000000001","subitem_identifier_reg_type": "JaLC"}]},'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True}
+def test_get_record_by_root_ver(app, db_records):
+    app.config.update(
+        DEPOSIT_DEFAULT_STORAGE_CLASS="S",
+    )
+    record, files = get_record_by_root_ver("1")
+
+    assert files == []
+    assert record == {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1']}, 'path': ['1'], 'owner': '1', 'recid': '1', 'title': ['title'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}, '_buckets': {'deposit': '3e99cfca-098b-42ed-b8a0-20ddd09b3e02'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'title', 'author_link': [], 'item_type_id': '1', 'publish_date': '2022-08-20', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'title', 'subitem_1551255648112': 'ja'}]}, "item_1617186819068": {"attribute_name": "Identifier Registration","attribute_value_mlt": [{"subitem_identifier_reg_text" :"test/0000000001","subitem_identifier_reg_type": "JaLC"}]},'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True}
 
 
 # def get_disptype_and_ver_in_metainfo(metadata):
