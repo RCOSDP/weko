@@ -89,6 +89,15 @@
         }
       ]
     },
+    "item_1617186819068": {
+      "attribute_name": "Identifier Registration",
+      "attribute_value_mlt": [
+        {
+          "subitem_identifier_reg_text" :"test/0000000001",
+          "subitem_identifier_reg_type": "JaLC"
+        }
+      ]
+    },
     "relation_version_is_last": true
   },
   {
@@ -132,7 +141,7 @@
       "attribute_name": "Identifier Registration",
       "attribute_value_mlt": [
         {
-          "subitem_identifier_reg_text": "<Empty>/0000000001",
+          "subitem_identifier_reg_text": "test_2/0000000001",
           "subitem_identifier_reg_type": "JaLC"
         }
       ]
@@ -178,6 +187,15 @@
         {
           "resourceuri": "http://purl.org/coar/resource_type/c_5794",
           "resourcetype": "conference paper"
+        }
+      ]
+    },
+    "item_1617186819068": {
+      "attribute_name": "Identifier Registration",
+      "attribute_value_mlt": [
+        {
+          "subitem_identifier_reg_text" :"",
+          "subitem_identifier_reg_type": ""
         }
       ]
     },

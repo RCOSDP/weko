@@ -18,7 +18,7 @@ from unittest.mock import MagicMock
 from invenio_pidrelations.models import PIDRelation
 from invenio_records_files.api import Record
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect, RecordIdentifier
-
+from invenio_pidstore.errors import PIDDoesNotExistError
 
 def json_data(filename):
     with open(join(dirname(__file__),filename), "r") as f:
@@ -87,18 +87,23 @@ def create_record(record_data, item_data):
         rec_uuid = uuid.uuid4()
         recid = PersistentIdentifier.create('recid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
         depid = PersistentIdentifier.create('depid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        parent=None
+        doi = None
         if "item_1617186819068" in record_data:
             doi_url = "https://doi.org/"+record_data["item_1617186819068"]["attribute_value_mlt"][0]["subitem_identifier_reg_text"]
-            doi = PersistentIdentifier.create('doi',doi_url,object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            try:
+                PersistentIdentifier.get("doi",doi_url)
+            except PIDDoesNotExistError:
+                doi = PersistentIdentifier.create('doi',doi_url,object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
         if '.' in record_data["recid"]:
             parent = PersistentIdentifier.get("recid",int(float(record_data["recid"])))
             recid_p = PIDRelation.get_child_relations(parent).one_or_none()
             PIDRelation.create(recid_p.parent, recid,2)
         else:
-            recid_p = PersistentIdentifier.create('parent', "parent:{}".format(record_data["recid"]),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            PIDRelation.create(recid_p, recid,2)
+            parent = PersistentIdentifier.create('parent', "parent:{}".format(record_data["recid"]),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            PIDRelation.create(parent, recid,2)
             RecordIdentifier.next()
         record = Record.create(record_data, id_=rec_uuid)
         item = ItemsMetadata.create(item_data, id_=rec_uuid)
-        print("recid:{}".format(recid))
-    return recid, depid, record, item
+        print(recid)
+    return recid, depid, record, item, parent, doi
