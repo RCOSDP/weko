@@ -362,7 +362,7 @@ class StatAggregator(object):
 
                 if manual:
                     res = Search(using=self.client,
-                                 index=index_name).\
+                                index=self.event_index).\
                         filter('term', unique_id=aggregation['key']).\
                         execute()
                     
