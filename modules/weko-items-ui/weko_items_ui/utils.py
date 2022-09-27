@@ -1180,8 +1180,11 @@ def make_stats_file(item_type_id, recids, list_item_role):
                 if not labels:
                     labels = [item.get('title')]                
                 data = records.attr_data[item_key].get(recid) or {}
-                records.attr_output[recid].extend(
-                    data.get("attribute_value", ""))
+                attr_val = data.get("attribute_value", "")
+                if isinstance(attr_val,str):
+                    records.attr_output[recid].append(attr_val)
+                else:
+                    records.attr_output[recid].extend(attr_val)
 
         new_keys = []
         for key in keys:
@@ -3086,8 +3089,11 @@ def make_stats_file_with_permission(item_type_id, recids,
                 if not labels:
                     labels = [item.get('title')]
                 data = records.attr_data[item_key].get(recid) or {}
-                records.attr_output[recid].extend(
-                    data.get("attribute_value", ""))
+                attr_val = data..get("attribute_value", "")
+                if isinstance(attr_val,str):
+                    records.attr_output[recid].append(attr_val)
+                else:
+                    records.attr_output[recid].extend(attr_val)
 
         new_keys = []
         for key in keys:
