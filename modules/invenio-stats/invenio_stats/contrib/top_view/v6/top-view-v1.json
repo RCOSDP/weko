@@ -3,9 +3,7 @@
   "settings": {
     "index.mapper.dynamic": false,
     "index": {
-      "refresh_interval": "5s",
-      "lifecycle.name": "weko_stats_policy",
-      "lifecycle.rollover_alias": "__SEARCH_INDEX_PREFIX__events-stats-top-view"
+      "refresh_interval": "5s"
     }
   },
   "mappings": {
@@ -60,5 +58,8 @@
         }
       }
     }
+  },
+  "aliases": {
+    "__SEARCH_INDEX_PREFIX__events-stats-top-view": {}
   }
 }

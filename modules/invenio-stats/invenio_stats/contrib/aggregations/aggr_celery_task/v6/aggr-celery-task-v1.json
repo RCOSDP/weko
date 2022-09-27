@@ -3,9 +3,7 @@
   "settings": {
     "index.mapper.dynamic": false,
     "index": {
-      "refresh_interval": "1m",
-      "lifecycle.name": "weko_stats_policy",
-      "lifecycle.rollover_alias": "__SEARCH_INDEX_PREFIX__stats-celery-task"
+      "refresh_interval": "1m"
     }
   },
   "mappings": {
@@ -82,5 +80,8 @@
         }
       }
     }
+  },
+  "aliases": {
+    "__SEARCH_INDEX_PREFIX__stats-celery-task": {}
   }
 }
