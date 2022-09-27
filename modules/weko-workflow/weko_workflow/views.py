@@ -312,6 +312,10 @@ def iframe_success():
     files = []
     if item and item.get('pid') and 'value' in item['pid']:
         record, files = get_record_by_root_ver(item['pid']['value'])
+        if not isinstance(files, list):
+            current_app.logger.error("iframe_success: can not get files")
+            return render_template("weko_theme/error.html",
+                    error="can not get data required for rendering")
         files_thumbnail = get_thumbnails(files, None)
     else:
         if "itemlogin_record" not in session:
@@ -319,20 +323,13 @@ def iframe_success():
             return render_template("weko_theme/error.html",
                     error="can not get data required for rendering")
         record = session['itemlogin_record']
-    if not isinstance(files, list):
-        current_app.logger.error("iframe_success: can not get files")
-        return render_template("weko_theme/error.html",
-                error="can not get data required for rendering")
+    
     ctx = {'community': None}
     if community_id:
         comm = GetCommunity.get_community_by_id(community_id)
         ctx = {'community': comm}
 
     from weko_theme.utils import get_design_layout
-    if "WEKO_THEME_DEFAULT_COMMUNITY" not in current_app.config:
-        current_app.logger.error("iframe_success: WEKO_THEME_DEFAULT_COMMUNITY is not exist in config")
-        return render_template("weko_theme/error.html",
-                error="can not get data required for rendering")
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
@@ -1282,10 +1279,6 @@ def next_action(activity_id='0', action_id=0):
     )
 
     action = Action().get_action_detail(action_id)
-    if action is None:
-        current_app.logger.error("next_action: can not get action")
-        res = ResponseMessageSchema().load({"code":-2, "msg":"can not get action"})
-        return jsonify(res.data), 500
     action_endpoint = action.action_endpoint
 
     current_app.logger.debug('action_endpoint: {0}'.format(action_endpoint))
@@ -1474,14 +1467,10 @@ def next_action(activity_id='0', action_id=0):
                         return jsonify(res.data), 500
                     item_ids.append(last_ver.object_uuid)
                 else:
-                    try:
-                        draft_pid = PersistentIdentifier.get(
-                            'recid',
-                            '{}.0'.format(pid_without_ver.pid_value)
-                        )
-                    except PIDDoesNotExistError:
-                        res = ResponseMessageSchema().load({"code":-1, "msg":"can not get pid_without_ver"})
-                        return jsonify(res.data), 500
+                    draft_pid = PersistentIdentifier.get(
+                        'recid',
+                        '{}.0'.format(pid_without_ver.pid_value)
+                    )
                     item_ids.append(draft_pid.object_uuid)
                 item_ids.append(pid_without_ver.object_uuid)
 
@@ -1502,7 +1491,7 @@ def next_action(activity_id='0', action_id=0):
         if relation_data:
             err = item_link.update(relation_data)
             if err:
-                res = ResponseMessageSchema().load({"code":-1, "msg":_("err")})
+                res = ResponseMessageSchema().load({"code":-1, "msg":_(err)})
                 return jsonify(res.data), 500
         if post_json.get('temporary_save') == 1:
             work_activity.upt_activity_action_comment(
@@ -1570,12 +1559,11 @@ def next_action(activity_id='0', action_id=0):
                     action_id=action_id,
                     req=-1)
 
-            if item_id:
-                record_without_version = item_id
-                if not recid:
-                    record_without_version = pid_without_ver.object_uuid
-                saving_doi_pidstore(item_id, record_without_version, post_json,
-                                    int(identifier_select), False, True)
+            record_without_version = item_id
+            if not recid:
+                record_without_version = pid_without_ver.object_uuid
+            saving_doi_pidstore(item_id, record_without_version, post_json,
+                                int(identifier_select), False, True)
     elif 'identifier_grant' == action_endpoint \
             and not post_json.get('temporary_save'):
         _value, _type = IdentifierHandle(item_id).get_idt_registration_data()
@@ -1584,7 +1572,7 @@ def next_action(activity_id='0', action_id=0):
                 item_id, activity_id, IDENTIFIER_GRANT_SELECT_DICT[_type[0]],
                 pid_without_ver.object_uuid)
             if isinstance(error_list, str):
-                res = ResponseMessageSchema().load({"code":-1, "msg":_("error_list")})
+                res = ResponseMessageSchema().load({"code":-1, "msg":_(error_list)})
                 return jsonify(res.data), 500
             elif error_list:
                 return previous_action(
@@ -1984,7 +1972,7 @@ def cancel_action(activity_id='0', action_id=0):
     """
 
     check_flg = type_null_check(activity_id, str)
-    check_flg &= type_null_check(action_id, str)
+    check_flg &= type_null_check(action_id, int)
     if not check_flg:
         current_app.logger.error("cancel_action: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})

@@ -30,15 +30,15 @@ class NextItemLinkSchema(NextSchema):
     link_data = fields.List(fields.Dict(),allow_none=True)
 
 class NextIdentifierSchema(NextSchema):
-    identifier_grant = fields.String(required=True)
-    identifier_grant_jalc_doi_suffix = fields.String(allow_none=True)
-    identifier_grant_jalc_doi_link = fields.String(required=True)
-    identifier_grant_jalc_cr_doi_suffix = fields.String(allow_none=True)
-    identifier_grant_jalc_cr_doi_link = fields.String(required=True)
-    identifier_grant_jalc_dc_doi_suffix = fields.String(allow_none=True)
-    identifier_grant_jalc_dc_doi_link = fields.String(required=True)
-    identifier_grant_ndl_jalc_doi_suffix = fields.String(allow_none=True)
-    identifier_grant_ndl_jalc_doi_link = fields.String(required=True)
+    identifier_grant = fields.String(allow_none=True)
+    identifier_grant_jalc_doi_suffix = fields.String(required=True)
+    identifier_grant_jalc_doi_link = fields.String(allow_none=True)
+    identifier_grant_jalc_cr_doi_suffix = fields.String(required=True)
+    identifier_grant_jalc_cr_doi_link = fields.String(allow_none=True)
+    identifier_grant_jalc_dc_doi_suffix = fields.String(required=True)
+    identifier_grant_jalc_dc_doi_link = fields.String(allow_none=True)
+    identifier_grant_ndl_jalc_doi_suffix = fields.String(required=True)
+    identifier_grant_ndl_jalc_doi_link = fields.String(allow_none=True)
 
 class NextOAPolicySchema(NextSchema):
     journal = fields.Dict(allow_none=True)
