@@ -180,7 +180,7 @@ def compare_csv(data1, data2):
     return True
 
 
-def test_export_template(app, client, admin_view, users, item_type):
+def test_export_template(app, client, users, item_type):
 
     url="/admin/items/import/export_template"
 
@@ -240,16 +240,24 @@ user_list = [
     0, 1, 2, 3, 4 # users' id
 ]
 
+accessible_user_list = [2, 3, 4]
+
 @pytest.mark.parametrize('id', user_list)
-def test_import_items_access(app, client, admin_view, db_sessionlifetime, users, id):
+def test_import_items_access(app, client, db_sessionlifetime, users, id):
     if id != -1:
         login_user_via_session(client=client, email=users[id]['email'])
     url = "/admin/items/import/import"
     input = {}
 
     res = client.post(url, json=input)
+    # check guest
+    if id == -1:
+        http_host = app.config.get('SERVER_NAME')
+        base_url = 'http://{0}/'.format(http_host)
+        assert res.status_code == 302
+        assert res.location == url_for("security.login", next=base_url+"admin/items/import/import", _external=True)
     # check not authorized users
-    if id in (-1, 0, 1):
+    if id in (0, 1):
         assert res.status_code == 403
     # check authorized users
     if id in (2, 3, 4):
@@ -257,23 +265,32 @@ def test_import_items_access(app, client, admin_view, db_sessionlifetime, users,
 
 
 @pytest.mark.parametrize('id', user_list)
-def test_download_import_access(app, client, admin_view, users, id):
+def test_download_import_access(app, client, users, id):
     if id != -1:
         login_user_via_session(client=client, email=users[id]['email'])
     url = "/admin/items/import/export_import"
     input = {}
 
     res = client.post(url, json=input)
+    # check guest
+    if id == -1:
+        http_host = app.config.get('SERVER_NAME')
+        base_url = 'http://{0}/'.format(http_host)
+        assert res.status_code == 302
+        assert res.location == url_for("security.login",
+            next=base_url+"admin/items/import/export_import",
+            _external=True)
     # check not authorized users
-    if id in (-1, 0, 1):
+    if id in (0, 1):
         assert res.status_code == 403
     # check authorized users
     if id in (2, 3, 4):
         assert res.status_code != 403
 
 
-def test_import_items_with_listrecords_without_import_task_data(app, client, admin_view, users, db_register):
-    login_user_via_session(client=client, email=users[4]['email'])
+@pytest.mark.parametrize('id', accessible_user_list)
+def test_import_items_with_listrecords_without_import_task_data(app, client, users, db_register, id):
+    login_user_via_session(client=client, email=users[id]['email'])
     url = "/admin/items/import/import"
 
     list_records_data = dict()
@@ -290,8 +307,9 @@ def test_import_items_with_listrecords_without_import_task_data(app, client, adm
         assert data["data"]["import_start_time"] is not None
 
 
-def test_download_import(app, client, admin_view, users, db_register):
-    login_user_via_session(client=client, email=users[4]['email'])
+@pytest.mark.parametrize('id', accessible_user_list)
+def test_download_import(app, client, users, db_register, id):
+    login_user_via_session(client=client, email=users[id]['email'])
     url = "/admin/items/import/export_import"
 
     input = {"list_result": [
@@ -318,3 +336,22 @@ def test_download_import(app, client, admin_view, users, db_register):
 
     assert res.mimetype == "text/{}".format(file_format)
     assert res.headers["Content-disposition"] == "attachment; filename=List_Download {}.{}".format(now, file_format)
+
+
+data_check = [
+    [], [{"errors": "test errors"}]
+]
+
+@pytest.mark.parametrize('id', accessible_user_list)
+@pytest.mark.parametrize('data_check', data_check)
+def test_import_items_list_record_data_check(app, client, users, db_register, id, data_check):
+    login_user_via_session(client=client, email=users[id]['email'])
+    url = "/admin/items/import/import"
+    input = {"data_path": "/tmp/weko_import_20220819045602",
+             "list_record": data_check}
+
+    res = client.post(url, json=input)
+    data = json.loads(res.get_data(as_text=True))
+    assert data["status"] == "success"
+    assert data["data"]["tasks"] == []
+    assert data["data"]["import_start_time"] == ""

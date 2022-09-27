@@ -72,7 +72,7 @@ def test_delete_exported_task(i18n_app, users, file_instance_mock, redis_connect
 
     datastore = redis_connect
     datastore.put(cache_key, json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=30)
-    
+
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         # Doesn't return a value
         assert not delete_exported_task("",cache_key)

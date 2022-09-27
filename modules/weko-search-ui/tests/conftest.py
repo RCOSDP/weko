@@ -98,6 +98,7 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from invenio_pidrelations.models import PIDRelation
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 from invenio_search import InvenioSearch
+from invenio_iiif.views import create_blueprint_from_app
 from weko_records.models import ItemTypeName, ItemType
 from weko_index_tree import WekoIndexTree
 from weko_index_tree.models import Index
@@ -177,7 +178,7 @@ def base_app(instance_path):
         WEKO_INDEX_TREE_STATE_PREFIX="index_tree_expand_state",
         REDIS_PORT='6379',
         DEPOSIT_DEFAULT_JSONSCHEMA=DEPOSIT_DEFAULT_JSONSCHEMA,
-        SERVER_NAME='TEST_SERVER',
+        SERVER_NAME='test_server',
         LOGIN_DISABLED=False,
         INDEXER_DEFAULT_DOCTYPE='item-v1.0.0',
         INDEXER_FILE_DOC_TYPE='content',
@@ -194,7 +195,6 @@ def base_app(instance_path):
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         JSONSCHEMAS_HOST='inveniosoftware.org',
         ACCOUNTS_USERINFO_HEADERS=True,
-        I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
         WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX="lock_index_",
         WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
         WEKO_PERMISSION_ROLE_COMMUNITY=WEKO_PERMISSION_ROLE_COMMUNITY,
@@ -210,8 +210,12 @@ def base_app(instance_path):
         },
         # SEARCH_UI_SEARCH_INDEX=SEARCH_UI_SEARCH_INDEX,
         SEARCH_UI_SEARCH_INDEX="test-weko",
+        #SEARCH_UI_SEARCH_INDEX = "tenant1-weko",
+        # SEARCH_UI_SEARCH_INDEX = "{}-weko".format(index_prefix),
         # SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
         SEARCH_INDEX_PREFIX="{}-".format('test'),
+        # SEARCH_INDEX_PREFIX = index_prefix,
+        # SEARCH_INDEX_PREFIX = "tenant1",
         SEARCH_CLIENT_CONFIG=dict(timeout=120, max_retries=10),
         OAISERVER_ID_PREFIX="oai:inveniosoftware.org:recid/",
         OAISERVER_RECORD_INDEX="_all",
@@ -501,28 +505,26 @@ def base_app(instance_path):
             'id': 'weko',
             'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
         },
+        WEKO_SEARCH_TYPE_INDEX = "index",
         WEKO_SEARCH_TYPE_KEYWORD = "keyword",
         WEKO_SEARCH_UI_SEARCH_TEMPLATE = "weko_search_ui/search.html",
         WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_edit_setting.html',
         WEKO_INDEX_TREE_LIST_API = "/api/tree",
         WEKO_INDEX_TREE_API = "/api/tree/index/",
-        WEKO_SEARCH_UI_TO_NUMBER_FORMAT = "99999999999999.99"
-        JSON_AS_ASCII=False,
-        BABEL_DEFAULT_LOCALE="en",
-        BABEL_DEFAULT_LANGUAGE="en",
-        BABEL_DEFAULT_TIMEZONE="Asia/Tokyo",
-        I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
-        I18N_SESSION_KEY="my_session_key",
-        # SEARCH_INDEX_PREFIX=index_prefix,
-        SEARCH_INDEX_PREFIX="tenant1",
-        # SEARCH_UI_SEARCH_INDEX = "{}-weko".format(index_prefix),
-        SEARCH_UI_SEARCH_INDEX = "tenant1-weko",
-        WEKO_SEARCH_TYPE_INDEX="index",
-        WEKO_SEARCH_TYPE_KEYWORD = "keyword",
-        CACHE_REDIS_URL="redis://redis:6379/0",
-        CACHE_REDIS_DB=0,
-        CACHE_REDIS_HOST="redis",
-        REDIS_PORT="6379"
+        WEKO_SEARCH_UI_TO_NUMBER_FORMAT = "99999999999999.99",
+        JSON_AS_ASCII = False,
+        BABEL_DEFAULT_LOCALE = "en",
+        BABEL_DEFAULT_LANGUAGE = "en",
+        BABEL_DEFAULT_TIMEZONE = "Asia/Tokyo",
+        I18N_LANGUAGES = [("ja", "Japanese"), ("en", "English")],
+        I18N_SESSION_KEY = "my_session_key",
+        IIIF_MANIFEST_ENDPOINTS = {
+            "recid": {
+                "pid_type": "recid",
+                "route": "/records/<pid_value>",
+            },
+        },
+        IIIF_API_PREFIX = '/iiif/',
     )
     app_.url_map.converters['pid'] = PIDConverter
 
@@ -583,6 +585,12 @@ def i18n_app(app):
         app.extensions['invenio-oauth2server'] = 1
         app.extensions['invenio-queues'] = 1
         yield app
+
+
+@pytest.yield_fixture()
+def client(app):
+    with app.test_client() as client:
+        yield client
 
 
 @pytest.yield_fixture()
@@ -999,7 +1007,7 @@ def records(db):
         db.session.add(rec2)
         db.session.add(rec3)
     db.session.commit()
-        search_query_result = json_data("data/search_result.json")
+    search_query_result = json_data("data/search_result.json")
 
     return(search_query_result)
 
@@ -1502,6 +1510,52 @@ def facet_search_setting(db):
     db.session.commit()
 
 
+@pytest.fixture()
+def db_itemtype(app, db):
+    item_type_name = ItemTypeName(
+        id=1, name="テストアイテムタイプ", has_site_license=True, is_active=True
+    )
+    item_type_schema = dict()
+    with open("tests/data/itemtype_schema.json", "r") as f:
+        item_type_schema = json.load(f)
+
+    item_type_form = dict()
+    with open("tests/data/itemtype_form.json", "r") as f:
+        item_type_form = json.load(f)
+
+    item_type_render = dict()
+    with open("tests/data/itemtype_render.json", "r") as f:
+        item_type_render = json.load(f)
+
+    item_type_mapping = dict()
+    with open("tests/data/itemtype_mapping.json", "r") as f:
+        item_type_mapping = json.load(f)
+
+    item_type = ItemType(
+        id=1,
+        name_id=1,
+        harvesting_type=True,
+        schema=item_type_schema,
+        form=item_type_form,
+        render=item_type_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_mapping = ItemTypeMapping(id=1, item_type_id=1, mapping=item_type_mapping)
+
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
+        db.session.add(item_type)
+        db.session.add(item_type_mapping)
+
+    return {
+        "item_type_name": item_type_name,
+        "item_type": item_type,
+        "item_type_mapping": item_type_mapping,
+    }
+
 
 @pytest.fixture()
 def db_workflow(app, db, db_itemtype, users):
@@ -1935,3 +1989,83 @@ def db_register(app, db,users):
     # return {'flow_define':flow_define,'item_type_name':item_type_name,'item_type':item_type,'flow_action':flow_action,'workflow':workflow,'activity':activity}
     return {'flow_define':flow_define,'item_type':item_type,'workflow':workflow}
     # return {'flow_define':flow_define, 'workflow':workflow}
+
+
+@pytest.fixture()
+def db_activity(db, db_records, db_itemtype, db_workflow, users):
+    user = users[3]["obj"]
+    depid, recid, parent, doi, record, item = db_records[0]
+    rec_uuid = uuid.uuid4()
+    draft = PersistentIdentifier.create(
+        "recid",
+        "{}.0".format((parent.pid_value).split(":")[1]),
+        object_type="rec",
+        object_uuid=rec_uuid,
+        status=PIDStatus.REGISTERED,
+    )
+    rel = PIDRelation.create(parent, draft, 2)
+    flow_define = db_workflow["flow_define"]
+    workflow = db_workflow["workflow"]
+    activity = Activity(
+        activity_id="A-00000000-00001",
+        workflow_id=workflow.id,
+        flow_id=flow_define.id,
+        action_id=2,
+        activity_login_user=user.id,
+        action_status=ActionStatusPolicy.ACTION_DOING,
+        activity_update_user=user.id,
+        item_id=draft.object_uuid,
+        activity_start=datetime.strptime(
+            "2022/04/14 3:01:53.931", "%Y/%m/%d %H:%M:%S.%f"
+        ),
+        activity_confirm_term_of_use=True,
+        title="test",
+        shared_user_id=-1,
+        extra_info={},
+        action_order=6,
+    )
+    with db.session.begin_nested():
+        db.session.add(activity)
+        db.session.add(rel)
+
+    return {"activity": activity, "recid": recid}
+
+
+@pytest.fixture(scope='function')
+def s3_bucket(appctx):
+    """S3 bucket fixture."""
+    with mock_s3():
+        session = boto3.Session(
+            aws_access_key_id=current_app.config.get('S3_ACCCESS_KEY_ID'),
+            aws_secret_access_key=current_app.config.get(
+                'S3_SECRECT_ACCESS_KEY'),
+        )
+        s3 = session.resource('s3')
+        bucket = s3.create_bucket(Bucket='test_invenio_s3')
+
+        yield bucket
+
+        for obj in bucket.objects.all():
+            obj.delete()
+        bucket.delete()
+
+
+@pytest.fixture(scope='function')
+def s3fs_testpath(s3_bucket):
+    """S3 test path."""
+    return 's3://{}/path/to/data'.format(s3_bucket.name)
+
+
+@pytest.fixture
+def file_instance_mock(s3fs_testpath):
+    """Mock of a file instance."""
+    class FileInstance(object):
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+
+    return FileInstance(
+        id='deadbeef-65bd-4d9b-93e2-ec88cc59aec5',
+        uri=s3fs_testpath,
+        size=4,
+        updated=None)

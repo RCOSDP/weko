@@ -48,5 +48,3 @@ def test_default_search_factory(i18n_app, users, client_request_args, db_records
 
 
 # def feedback_email_search_factory(self, search):
-
-

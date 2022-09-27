@@ -324,7 +324,7 @@ def test_read_stats_file(app,mocker_itemtype):
 
     with app.test_request_context():
         with set_locale('en'):
-            assert read_stats_csv(tsv_file_path,tsv_file_name,'tsv') == data
+            assert read_stats_file(tsv_file_path,tsv_file_name,'tsv') == data
 
 # def handle_convert_validate_msg_to_jp(message: str):
 # def handle_validate_item_import(list_record, schema) -> list:

@@ -64,5 +64,3 @@ def test_get_childinfo(i18n_app, users, indices):
 def test_escape_str(i18n_app, users):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         assert escape_str("str")
-
-
