@@ -162,41 +162,6 @@ curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/_ingest/pipeline/item-fi
 }'
 # sphinxdoc-pipeline-registration-end
 
-curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/_ilm/policy/weko_stats_policy' -H 'Content-Type: application/json' -d '
-{
-  "policy":{
-    "phases":{
-      "hot":{
-        "actions":{
-          "rollover":{
-            "max_size":"50gb"
-          }
-        }
-      }
-    }
-  }
-}
-'
-
-curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/tenant1-events-stats-search-000001' -H 'Content-Type: application/json' -d '
-{
-  "aliases": {
-    "tenant1-events-stats-search": {
-      "is_write_index": true
-    }
-  }
-}
-'
-curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/tenant1-stats-search-000001' -H 'Content-Type: application/json' -d '
-{
-  "aliases": {
-    "tenant1-stats-search": {
-      "is_write_index": true
-    }
-  }
-}
-'
-
 # sphinxdoc-populate-with-demo-records-begin
 #${INVENIO_WEB_INSTANCE} demo init
 # sphinxdoc-populate-with-demo-records-end

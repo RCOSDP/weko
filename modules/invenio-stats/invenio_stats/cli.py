@@ -235,13 +235,12 @@ def _aggregations_process(aggregation_types=None,
         aggregate_events.apply(
             (aggregation_types,),
             dict(start_date=start_date, end_date=end_date,
-                 update_bookmark=update_bookmark, manual=True),
+                 update_bookmark=update_bookmark),
             throw=True)
         click.secho('Aggregations processed successfully.', fg='green')
     else:
         aggregate_events.delay(
-            aggregation_types, start_date=start_date,
-            end_date=end_date, manual=True)
+            aggregation_types, start_date=start_date, end_date=end_date)
         click.secho('Aggregations processing task sent...', fg='yellow')
 
 
