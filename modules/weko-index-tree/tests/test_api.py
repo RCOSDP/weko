@@ -36,186 +36,299 @@ from weko_index_tree import WekoIndexTree
 from weko_groups.api import Group
 
 
+# class Indexes(object):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_indexes(i18n_app, app, db, users, location, indices, esindex, client_rest, records, communities):
     index_one = indices["index_non_dict"]
     index_two = indices["index_non_dict_child"]
 
     with app.test_client() as client:
-        login_user_via_session(client=client_rest, email=users[-1]['email'])
-        # login_user_via_view(client=client, user=user)
-        WekoIndexTree(app)
-        index_metadata = {
-            'id': 1,
-            'parent': 0,
-            'value': 'test_name',
-        }
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            # login_user_via_view(client=client, user=user)
+            WekoIndexTree(app)
+            index_metadata = {
+                'id': 1,
+                'parent': 0,
+                'value': 'test_name1'
+            }
 
-        Indexes.create(0, index_metadata)
-        Indexes.create(1, {
-            'id': 2,
-            'parent': 1,
-            'value': 'test_name',
-        })
-        Indexes.create(2, {
-            'id': 3,
-            'parent': 2,
-            'value': 'test_name',
-        })
-        Indexes.create(1, {
-            'id': 4,
-            'parent': 1,
-            'value': 'test_name',
-        })
+            res = Indexes.create(0, index_metadata)
+            assert res==True
+            res = Indexes.create(1, {
+                'id': 2,
+                'parent': 1,
+                'value': 'test_name2',
+            })
+            assert res==True
+            res = Indexes.create(2, {
+                'id': 3,
+                'parent': 2,
+                'value': 'test_name3',
+            })
+            assert res==True
+            res = Indexes.create(1, {
+                'id': 4,
+                'parent': 1,
+                'value': 'test_name4',
+            })
+            assert res==True
+            res = Indexes.create(1, {
+                'id': 4,
+                'parent': 1,
+                'value': 'test_name4',
+            })
+            assert res==False
+            res = Indexes.create(0)
+            assert res==None
+            res = Indexes.create(0, {'id': None})
+            assert res==None
 
-        Indexes.update(2)
+            index_metadata = {
+                "biblio_flag": False,
+                "browsing_group": {
+                    "allow": [],
+                    "deny": []
+                },
+                "browsing_role": {
+                    "allow": [
+                    {
+                        "id": 3,
+                        "name": "Contributor"
+                    },
+                    {
+                        "id": -98,
+                        "name": "Authenticated User"
+                    },
+                    {
+                        "id": -99,
+                        "name": "Guest"
+                    }
+                    ],
+                    "deny": []
+                },
+                "can_edit": True,
+                "comment": "",
+                "contribute_group": {
+                    "allow": [],
+                    "deny": []
+                },
+                "contribute_role": {
+                    "allow": [
+                    {
+                        "id": 1,
+                        "name": "System Administrator"
+                    },
+                    {
+                        "id": 2,
+                        "name": "Repository Administrator"
+                    },
+                    {
+                        "id": 3,
+                        "name": "Contributor"
+                    },
+                    {
+                        "id": 4,
+                        "name": "Community Administrator"
+                    },
+                    {
+                        "id": -98,
+                        "name": "Authenticated User"
+                    },
+                    {
+                        "id": -99,
+                        "name": "Guest"
+                    }
+                    ],
+                    "deny": []
+                },
+                "coverpage_state": False,
+                "display_format": "1",
+                "display_no": 5,
+                "harvest_public_state": True,
+                "harvest_spec": "",
+                "have_children": False,
+                "id": 1,
+                "image_name": "",
+                "index_link_enabled": False,
+                "index_link_name": "",
+                "index_link_name_english": "test_new_name1",
+                "index_name": "test_new_name1",
+                "index_name_english": "test_new_name1",
+                "more_check": False,
+                "online_issn": "",
+                "owner_user_id": 1,
+                "parent": 0,
+                "position": 0,
+                "public_date": "20181010",
+                "public_state": True,
+                "recursive_browsing_group": True,
+                "recursive_browsing_role": True,
+                "recursive_contribute_group": True,
+                "recursive_contribute_role": True,
+                "recursive_coverpage_check": False,
+                "recursive_public_state": True,
+                "rss_status": True
+            }
+            res = Indexes.update(2)
+            assert res==None
+            res = Indexes.update(0)
+            assert res==None
+            res = Indexes.update(1, **index_metadata)
+            assert res==None
+            res = Indexes.create(1, {
+                'id': 5,
+                'parent': 1,
+                'value': 'test_name5',
+            })
+            assert res==True
 
-        data = {
-            'pre_parent': 2,
-            'parent': 4,
-            'position': 0
-        }
-        Indexes.move(3, **data)
-        Indexes.create(4, {
-            'id': 5,
-            'parent': 4,
-            'value': 'test_name',
-        })
-        data = {
-            'pre_parent': 4,
-            'parent': 4,
-            'position': 5
-        }
-        Indexes.move(3, **data)
+            data = {
+                'pre_parent': 2,
+                'parent': 4,
+                'position': 0
+            }
+            Indexes.move(3, **data)
+            Indexes.create(4, {
+                'id': 5,
+                'parent': 4,
+                'value': 'test_name',
+            })
+            data = {
+                'pre_parent': 4,
+                'parent': 4,
+                'position': 5
+            }
+            Indexes.move(3, **data)
 
-        Indexes.get_index_tree()
+            Indexes.get_index_tree()
 
-        Indexes.get_browsing_info()
+            Indexes.get_browsing_info()
 
-        Indexes.get_browsing_tree()
+            Indexes.get_browsing_tree()
 
-        Indexes.get_more_browsing_tree()
+            Indexes.get_more_browsing_tree()
 
-        Indexes.get_browsing_tree_ignore_more()
+            Indexes.get_browsing_tree_ignore_more()
 
-        Indexes.get_browsing_tree_paths()
-        Indexes.get_browsing_tree_paths(33) # Additional
+            Indexes.get_browsing_tree_paths()
+            Indexes.get_browsing_tree_paths(33) # Additional
 
-        app.config['WEKO_BUCKET_QUOTA_SIZE'] = 50 * 1024 * 1024 * 1024
-        app.config['WEKO_MAX_FILE_SIZE'] = 50 * 1024 * 1024 * 1024
-        app.config['FILES_REST_DEFAULT_STORAGE_CLASS'] = 'S'
-        app.config['FILES_REST_STORAGE_CLASS_LIST'] = {
-            'S': 'Standard',
-            'A': 'Archive',
-        }
-        app.config['DEPOSIT_DEFAULT_JSONSCHEMA'] = 'deposits/'
-        'deposit-v1.0.0.json'
+            app.config['WEKO_BUCKET_QUOTA_SIZE'] = 50 * 1024 * 1024 * 1024
+            app.config['WEKO_MAX_FILE_SIZE'] = 50 * 1024 * 1024 * 1024
+            app.config['FILES_REST_DEFAULT_STORAGE_CLASS'] = 'S'
+            app.config['FILES_REST_STORAGE_CLASS_LIST'] = {
+                'S': 'Standard',
+                'A': 'Archive',
+            }
+            app.config['DEPOSIT_DEFAULT_JSONSCHEMA'] = 'deposits/'
+            'deposit-v1.0.0.json'
 
-        # Error - invenio_pidstore.errors.PIDAlreadyExists
-        try:
-            deposit = WekoDeposit.create({})
-        except:
-            pass
-        
-        db.session.commit()
+            # Error - invenio_pidstore.errors.PIDAlreadyExists
+            try:
+                deposit = WekoDeposit.create({})
+            except:
+                pass
+            
+            db.session.commit()
 
-        # Related to Error - invenio_pidstore.errors.PIDAlreadyExists
-        try:
-            Indexes.get_contribute_tree(deposit.pid.pid_value)
-        except:
-            Indexes.get_contribute_tree(1)
+            # Related to Error - invenio_pidstore.errors.PIDAlreadyExists
+            try:
+                Indexes.get_contribute_tree(deposit.pid.pid_value)
+            except:
+                Indexes.get_contribute_tree(1)
 
-        Indexes.get_recursive_tree()
-        Indexes.get_recursive_tree(33) # Additional
+            Indexes.get_recursive_tree()
+            Indexes.get_recursive_tree(33) # Additional
 
-        Indexes.get_index_with_role(3)
-        Indexes.get_index_with_role(33) # Additional
-        Indexes.get_index(2)
-        Indexes.get_index(33) # Additional
-        Indexes.get_index(44) # Additional
+            Indexes.get_index_with_role(3)
+            Indexes.get_index_with_role(33) # Additional
+            Indexes.get_index(2)
+            Indexes.get_index(33) # Additional
+            Indexes.get_index(44) # Additional
 
-        Indexes.get_index_by_name('test_name')
+            Indexes.get_index_by_name('test_name')
 
-        Indexes.get_index_by_all_name()
+            Indexes.get_index_by_all_name()
 
-        Indexes.get_root_index_count()
+            Indexes.get_root_index_count()
 
-        Indexes.get_path_list([3])
+            Indexes.get_path_list([3])
 
-        Indexes.get_path_name([3])
+            Indexes.get_path_name([3])
 
-        Indexes.get_self_list(3)
-        Indexes.get_self_list(33,community_id="comm1") # Additional
+            Indexes.get_self_list(3)
+            Indexes.get_self_list(33,community_id="comm1") # Additional
 
-        Indexes.get_self_path(3)
+            Indexes.get_self_path(3)
 
-        Indexes.get_child_list_recursive(1)
+            Indexes.get_child_list_recursive(1)
 
-        Indexes.recs_reverse_query()
+            Indexes.recs_reverse_query()
 
-        Indexes.recs_query()
+            Indexes.recs_query()
 
-        Indexes.recs_tree_query()
+            Indexes.recs_tree_query()
 
-        Indexes.recs_root_tree_query()
-        # current_i18n.language = "en" # Additional
-        # Indexes.recs_root_tree_query() # Additional
-        
-        paths = [Indexes.get_full_path(3)]
-        Indexes.get_harvest_public_state(paths)
-        Indexes.is_index(Indexes.get_full_path(3)) # Additional
-        Indexes.is_public_state(paths)
+            Indexes.recs_root_tree_query()
+            # current_i18n.language = "en" # Additional
+            # Indexes.recs_root_tree_query() # Additional
+            
+            paths = [Indexes.get_full_path(3)]
+            Indexes.get_harvest_public_state(paths)
+            Indexes.is_index(Indexes.get_full_path(3)) # Additional
+            Indexes.is_public_state(paths)
 
-        Indexes.is_public_state_and_not_in_future([3])
+            Indexes.is_public_state_and_not_in_future([3])
 
-        Indexes.set_item_sort_custom(3, {})
-        Indexes.set_item_sort_custom(33) # Additional
+            Indexes.set_item_sort_custom(3, {})
+            Indexes.set_item_sort_custom(33) # Additional
 
-        Indexes.update_item_sort_custom_es(paths) # Additional
+            Indexes.update_item_sort_custom_es(paths) # Additional
 
-        Indexes.get_item_sort(3)
-        Indexes.get_item_sort(33) # Additional
-        
-        # class Index has no "get_children" method instead it has "have_children"
-        # Indexes.have_children(33) # Additional
+            Indexes.get_item_sort(3)
+            Indexes.get_item_sort(33) # Additional
+            
+            # class Index has no "get_children" method instead it has "have_children"
+            # Indexes.have_children(33) # Additional
 
-        Indexes.get_coverpage_state([3])
+            Indexes.get_coverpage_state([3])
 
-        Indexes.set_coverpage_state_resc(1, True)
+            Indexes.set_coverpage_state_resc(1, True)
 
-        #Indexes.set_public_state_resc(1, True, '220202')
-        Indexes.set_public_state_resc(1, True, datetime.now())
-        Indexes.set_contribute_role_resc(1, 'Admin')
+            #Indexes.set_public_state_resc(1, True, '220202')
+            Indexes.set_public_state_resc(1, True, datetime.now())
+            Indexes.set_contribute_role_resc(1, 'Admin')
 
-        #Indexes.set_contribute_group_resc(1, [])
-        Indexes.set_contribute_group_resc(1, "1")
+            #Indexes.set_contribute_group_resc(1, [])
+            Indexes.set_contribute_group_resc(1, "1")
 
-        Indexes.set_browsing_role_resc(1, "1")
+            Indexes.set_browsing_role_resc(1, "1")
 
-        Indexes.get_index_count()
+            Indexes.get_index_count()
 
-        Indexes.get_child_list(33) # Additional
+            Indexes.get_child_list(33) # Additional
 
-        Indexes.get_child_id_list()
+            Indexes.get_child_id_list()
 
-        Indexes.get_list_path_publish(3)
+            Indexes.get_list_path_publish(3)
 
-        Indexes.get_public_indexes()
+            Indexes.get_public_indexes()
 
-        Indexes.get_all_indexes()
+            Indexes.get_all_indexes()
 
-        Indexes.get_all_parent_indexes(3)
+            Indexes.get_all_parent_indexes(3)
 
-        Indexes.get_full_path_reverse(33) # Additional
+            Indexes.get_full_path_reverse(33) # Additional
 
-        Indexes.get_full_path(3)
+            Indexes.get_full_path(3)
 
-        Indexes.get_harverted_index_list()
+            Indexes.get_harverted_index_list()
 
-        # Indexes.update_set_info(index_one) # Additional
+            # Indexes.update_set_info(index_one) # Additional
 
-        # Indexes.delete_set_info(action="",index_id=33,id_list=[33]) # Additional
+            # Indexes.delete_set_info(action="",index_id=33,id_list=[33]) # Additional
 
-        Indexes.get_public_indexes_list()
+            Indexes.get_public_indexes_list()
 
 def test_indexes_delete(app, db):
     WekoIndexTree(app)
