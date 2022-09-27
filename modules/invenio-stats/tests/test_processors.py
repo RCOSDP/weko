@@ -258,7 +258,7 @@ def test_double_clicks(app, mock_event_queue, es):
     process_events(['file-download'])
     es.indices.refresh(index='*')
     res = es.search(
-        index='events-stats-file-download-2000-06-01',
+        index='events-stats-file-download-0001',
     )
     assert res['hits']['total'] == 2
 
