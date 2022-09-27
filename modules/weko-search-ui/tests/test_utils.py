@@ -3,6 +3,7 @@ import json
 import copy
 import pytest
 import unittest
+from datetime import datetime
 from mock import patch, MagicMock, Mock
 from flask import current_app, make_response, request
 from flask_login import current_user
@@ -517,6 +518,7 @@ def test_create_flow_define(i18n_app, db_activity):
 # def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False): ERROR = TypeError: handle_remove_es_metadata() missing 2 required positional arguments: 'bef_metadata' and 'bef_las...
 def test_import_items_to_system(i18n_app, db_activity):
     item = dict(db_activity['item'])
+
     assert import_items_to_system(item)
 
 
@@ -551,8 +553,50 @@ def test_handle_check_doi(app):
 
 
 # def register_item_handle(item):
+def test_register_item_handle(i18n_app, es_records):
+    item = es_records['results'][0]['item']
+    
+    # Doesn't return any value
+    assert not register_item_handle(item)
+
+
 # def prepare_doi_setting():
+def test_prepare_doi_setting(i18n_app, communities2, db):
+    from weko_workflow.utils import get_identifier_setting
+    from weko_admin.models import Identifier
+    test_identifier = Identifier(
+        id=1,
+        repository="Root Index",
+        created_userId="user1",
+        created_date=datetime.now(),
+        updated_userId="user1"
+    )
+    db.session.add(test_identifier)
+    db.session.commit()
+
+    assert prepare_doi_setting()
+
+
 # def get_doi_prefix(doi_ra):
+WEKO_IMPORT_DOI_TYPE = ["JaLC", "Crossref", "DataCite", "NDL JaLC"]
+@pytest.mark.parametrize("doi_ra", WEKO_IMPORT_DOI_TYPE)
+def test_get_doi_prefix(i18n_app, communities2, doi_ra, db):
+    from weko_workflow.utils import get_identifier_setting
+    from weko_admin.models import Identifier
+    test_identifier = Identifier(
+        id=1,
+        repository="Root Index",
+        created_userId="user1",
+        created_date=datetime.now(),
+        updated_userId="user1"
+    )
+    db.session.add(test_identifier)
+    db.session.commit()
+
+    assert get_doi_prefix(doi_ra)
+    
+
+
 # def get_doi_link(doi_ra, data):
 # def prepare_doi_link(item_id):
 # def register_item_doi(item):
@@ -615,13 +659,24 @@ def test_get_list_key_of_iso_date():
     assert get_list_key_of_iso_date(df) == result
 
 
-
 # def get_current_language():
+def test_get_current_language(i18n_app):
+    assert get_current_language()
+
+
 # def get_change_identifier_mode_content():
+def test_get_change_identifier_mode_content(i18n_app):
+    assert get_change_identifier_mode_content()
+
+
 # def get_root_item_option(item_id, item, sub_form={"title_i18n": {}}):
 # def get_sub_item_option(key, schemaform):
 # def check_sub_item_is_system(key, schemaform):
+
+
 # def get_lifetime():
+def test_get_lifetime(i18n_app, db_register2):
+    assert get_lifetime()
 
 
 # def get_system_data_uri(key_type, key):
@@ -792,7 +847,7 @@ def test_get_export_status(i18n_app, users):
 
 # def handle_check_item_is_locked(item):
 def test_handle_check_item_is_locked(i18n_app, db_activity):
-    # Doesn't return value
+    # Doesn't return any value
     try:
         assert not handle_check_item_is_locked(db_activity['item'])
     except Exception as e:
@@ -803,11 +858,72 @@ def test_handle_check_item_is_locked(i18n_app, db_activity):
         
 
 # def handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata):
+def test_handle_remove_es_metadata(i18n_app, es_records):
+    item = es_records['results'][0]['item']
+    bef_metadata = {}
+    bef_metadata["_id"] = 9
+    bef_metadata["_version"] = -1
+    bef_metadata["_source"] = {"control_number": 9999}
+    
+    bef_last_ver_metadata = {}
+    bef_last_ver_metadata["_id"] = 8
+    bef_last_ver_metadata["_version"] = 1
+    bef_last_ver_metadata["_source"] = {"control_number": 8888}
+
+    # Doesn't return any value
+    assert not handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
+
+    # Doesn't return any value
+    item['status'] = 'new'
+    assert not handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
+
+    # Doesn't return any value
+    item['status'] = 'upgrade'
+    assert not handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
+
+
 # def check_index_access_permissions(func):
+@check_index_access_permissions
+def test_check_index_access_permissions(i18n_app, client_request_args, users):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+
+        # Test is successful if there are no errors
+        assert True
+
+
 # def handle_check_file_metadata(list_record, data_path):
-# def handle_check_file_path(
+def test_handle_check_file_metadata(i18n_app, record_with_metadata):
+    list_record = [record_with_metadata[0]]
+    data_path = "test/test/test"
+
+    # Doesn't return any value
+    assert not handle_check_file_metadata(list_record, data_path)
+
+
+# def handle_check_file_path(paths, data_path, is_new=False, is_thumbnail=False, is_single_thumbnail=False):
+def test_handle_check_file_path(i18n_app):
+    paths = ["/test"]
+    data_path = "/"
+
+    assert handle_check_file_path(paths, data_path)
+
+
 # def handle_check_file_content(record, data_path):
+def test_handle_check_file_content(i18n_app, record_with_metadata):
+    list_record = record_with_metadata[0]
+    data_path = "test/test/test"
+
+    assert handle_check_file_content(list_record, data_path)
+
+
 # def handle_check_thumbnail(record, data_path):
+def test_handle_check_thumbnail(i18n_app, record_with_metadata):
+    list_record = record_with_metadata[0]
+    data_path = "test/test/test"
+
+    assert handle_check_thumbnail(list_record, data_path)
+
+
 # def get_key_by_property(record, item_map, item_property):
 # def get_data_by_property(item_metadata, item_map, mapping_key):
 
