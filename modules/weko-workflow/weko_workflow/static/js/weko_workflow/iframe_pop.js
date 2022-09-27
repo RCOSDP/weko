@@ -62,7 +62,11 @@ require([
       error: function (jqXHE, status) {
         endLoading(_this);
         $('#action_quit_confirmation').modal('show');
-        $('.modal-body').html('Server error.');
+        if (jqXHE.responseJSON && jqXHE.responseJSON.msg) {
+          $('.modal-body').html(jqXHE.responseJSON.msg);
+        } else {
+          $('.modal-body').html('Server error.');
+        }
         $("#btn_cancel").attr('style', 'display: none;');
         parent.document.location.href = "/workflow/activity/detail/" + $("#activity_id").text().trim();
       }
@@ -106,7 +110,11 @@ require([
       error: function (jqXHE, status) {
         endLoading(_this);
         $('#action_quit_confirmation').modal('show');
-        $('.modal-body').html('Server error.');
+        if (jqXHE.responseJSON && jqXHE.responseJSON.msg) {
+          $('.modal-body').html(jqXHE.responseJSON.msg);
+        } else {
+          $('.modal-body').html('Server error.');
+        }
         $("#btn_cancel").attr('style', 'display: none;');
         parent.document.location.href = "/workflow/activity/detail/" + $("#activity_id").text().trim();
       }
