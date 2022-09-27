@@ -238,8 +238,6 @@ def test_iframe_success(client, db_register,users, db_records,mocker):
             assert mock_args[0] == "weko_theme/error.html"
             assert mock_kwargs["error"] == "can not get data required for rendering"
 
-    # not config WEKO_THEME_DEFAULT_COMMUNITY
-    print(type(current_app.config))
     # can not get action
     item = db_records[0][3]
     session = {
@@ -601,7 +599,7 @@ def test_previous_action_acl_users(client, users, db_register, users_index, stat
         data = response_data(res)
         assert res.status_code != status_code
         assert data["code"] != 403
-
+        
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
@@ -613,7 +611,7 @@ def test_previous_action_acl_users(client, users, db_register, users_index, stat
 ])
 def test_previous_action(client, users, db_register, users_index, status_code):
     login(client=client, email=users[users_index]['email'])
-    
+
     url = url_for("weko_workflow.previous_action",
                   activity_id="2",action_id=1,req=1)
     # argument error
@@ -670,12 +668,13 @@ def test_previous_action(client, users, db_register, users_index, status_code):
 
     # not exist activity_detail
     url = url_for('weko_workflow.previous_action',
-                  activity_id='100', action_id=1, req=1)
-    res = client.post(url, json=input)
-    data = response_data(res)
-    assert res.status_code==500
-    assert data["code"] == -1
-    assert data["msg"] == "can not get activity detail"
+                  activity_id='1', action_id=1, req=1)
+    with patch("weko_workflow.views.WorkActivity.get_activity_by_id",side_effect=[db_register["activities"][0],None]):
+        res = client.post(url, json=input)
+        data = response_data(res)
+        assert res.status_code==500
+        assert data["code"] == -1
+        assert data["msg"] == "can not get activity detail"
     
     # not create activity history
     url = url_for('weko_workflow.previous_action',
@@ -701,8 +700,11 @@ def test_previous_action(client, users, db_register, users_index, status_code):
     with patch("weko_workflow.views.WorkActivity.upt_activity_action_status", return_value=False):
         res = client.post(url, json=input)
         data = response_data(res)
+        assert res.status_code == 500
         assert data["code"] == -2
         assert data["msg"] == ""
+        
+        
 def test_next_action_acl_nologin(client, db_register_fullaction):
     """Test of next action."""
     url = url_for('weko_workflow.next_action', activity_id='1',
@@ -845,25 +847,28 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     
     # can not get activity_detail
     url = url_for("weko_workflow.next_action",
-            activity_id="100", action_id=1)
-    res = client.post(url, json=input)
-    data = response_data(res)
-    assert res.status_code == 500
-    assert data["code"] == -1
-    assert data["msg"] == "can not get activity detail"
+            activity_id="1", action_id=1)
+    with patch("weko_workflow.views.WorkActivity.get_activity_by_id",side_effect=[db_register_fullaction["activities"][0],None]):
+        res = client.post(url, json=input)
+        data = response_data(res)
+        assert res.status_code == 500
+        assert data["code"] == -1
+        assert data["msg"] == "can not get activity detail"
     
     # cannot get schema
     url = url_for("weko_workflow.next_action",
-            activity_id="1", action_id=100)
-    res = client.post(url, json=input)
-    data = response_data(res)
-    assert res.status_code == 500
-    assert data["code"] == -2
-    assert data["msg"] == "can not get schema by action_id"
+            activity_id="1", action_id=1)
+    with patch("weko_workflow.views.get_schema_action",return_value=None):
+        res = client.post(url, json=input)
+        data = response_data(res)
+        assert res.status_code == 500
+        assert data["code"] == -2
+        assert data["msg"] == "can not get schema by action_id"
     
     # request_body error
     url = url_for("weko_workflow.next_action",
             activity_id="2", action_id=7)
+    update_activity_order("2",7,5)
     input = {
         "temporary_save":1,
         "identifier_grant":"1",
@@ -902,7 +907,7 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     ## not exist pid_without_ver
     url = url_for("weko_workflow.next_action",
                   activity_id="1", action_id=3)
-    update_activity_order("2",3,2)
+    update_activity_order("1",3,2)
     res = client.post(url, json=input)
     data = response_data(res)
     assert res.status_code == 500
@@ -1572,13 +1577,13 @@ def test_cancel_action_acl_guestlogin(guest, db_register):
         assert res.status_code != 403
 
 @pytest.mark.parametrize('users_index, status_code', [
-    #(0, 200),
-    #(1, 200),
+    (0, 200),
+    (1, 200),
     (2, 200),
-    #(3, 200),
-    #(4, 200),
-    #(5, 200),
-    #(6, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_cancel_action(client, users, db_register, db_records, add_file, users_index, status_code, mocker):
     login(client=client, email=users[users_index]['email'])
@@ -1609,13 +1614,14 @@ def test_cancel_action(client, users, db_register, db_records, add_file, users_i
         "commond":"this is test comment.",
         "pid_value":"1.1"
         }
-    url = url_for('weko_workflow.cancel_action',
-                  activity_id='100', action_id=1)
-    res = client.post(url, json=input)
-    data = response_data(res)
-    assert res.status_code == 500
-    assert data["code"] == -1
-    assert data["msg"] == "can not get activity detail"
+    with patch("weko_workflow.views.WorkActivity.get_activity_by_id",side_effect=[db_register["activities"][0],None]):
+        url = url_for('weko_workflow.cancel_action',
+                      activity_id='1', action_id=1)
+        res = client.post(url, json=input)
+        data = response_data(res)
+        assert res.status_code == 500
+        assert data["code"] == -1
+        assert data["msg"] == "can not get activity detail"
     
     # not exist item, exist files, exist cancel_pv, exist file_permission
     input = {
