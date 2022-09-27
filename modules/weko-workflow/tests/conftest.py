@@ -781,6 +781,29 @@ def db_register(app, db, db_records, users, action_data, item_type):
         db.session.add(activity_item6_feedbackmail)
     db.session.commit()
 
+    activity_03 = Activity(activity_id='A-00000003-00000', workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item5', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    with db.session.begin_nested():
+        db.session.add(activity_03)
+    
+    activity_action03_1 = ActivityAction(id=4, activity_id=activity_03.activity_id,
+                                            action_id=1,action_status="M",action_comment="",
+                                            action_handler=1, action_order=1)
+    activity_action03_2 = ActivityAction(id=5, activity_id=activity_03.activity_id,
+                                            action_id=3,action_status="F",action_comment="",
+                                            action_handler=0, action_order=2)
+    with db.session.begin_nested():
+        db.session.add(activity_action03_1)
+        db.session.add(activity_action03_2)
+    db.session.commit()
+    
     history = ActivityHistory(
         activity_id=activity.activity_id,
         action_id=activity.action_id,
@@ -1141,4 +1164,5 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
     with db.session.begin_nested():
         db.session.add(action_identifier)
     db.session.commit()
-    return {"flow_actions":flow_actions}
+    return {"flow_actions":flow_actions,
+            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item4,activity_item5,activity_item6]}
