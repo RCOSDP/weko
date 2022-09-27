@@ -22,15 +22,17 @@
 
 from flask import Flask
 
-from weko_records_ui import WekoRecordsUI
+from weko_records_ui import WekoRecordsUI,WekoRecordsCitesREST
+from weko_records_ui.config import WEKO_RECORDS_UI_BASE_TEMPLATE,WEKO_RECORDS_UI_CITES_REST_ENDPOINTS
+from weko_theme.config import BASE_PAGE_TEMPLATE
 
-
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_weko_records_ui.py::test_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_version():
     """Test version import."""
     from weko_records_ui import __version__
     assert __version__
 
-
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_weko_records_ui.py::test_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_init():
     """Test extension initialization."""
     app = Flask('testapp')
@@ -42,3 +44,27 @@ def test_init():
     assert 'weko-records-ui' not in app.extensions
     ext.init_app(app)
     assert 'weko-records-ui' in app.extensions
+
+
+    app = Flask('testapp')
+    app.config["BASE_PAGE_TEMPLATE"] = BASE_PAGE_TEMPLATE
+    ext = WekoRecordsUI()
+    assert 'weko-records-ui' not in app.extensions
+    ext.init_app(app)
+    assert 'weko-records-ui' in app.extensions
+
+
+    app = Flask('testapp')
+    app.config["BASE_PAGE_TEMPLATE"] = BASE_PAGE_TEMPLATE
+    assert "BASE_PAGE_TEMPLATE" in app.config
+    ext = WekoRecordsUI()
+    ext.init_app(app)
+    assert 'weko-records-ui' in app.extensions
+    
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_weko_records_ui.py::test_wekorecordsCitesREST -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_wekorecordsCitesREST():
+    app = Flask('testapp')
+    app.config["WEKO_RECORDS_UI_CITES_REST_ENDPOINTS"]=WEKO_RECORDS_UI_CITES_REST_ENDPOINTS
+    ext = WekoRecordsCitesREST(app)
+    assert 'weko-records-ui-cites-rest' in app.extensions
+    
