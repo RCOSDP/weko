@@ -260,9 +260,21 @@ def index():
 
 @blueprint.route('/iframe/success', methods=['GET'])
 def iframe_success():
-    """Renders an item register view.
-
-    :return: The rendered template.
+    """アイテム登録ビューをレンダリングする
+    セッションに保存されているデータから画面表示に必要な情報を取得し、
+    レンダリングする。
+    
+    Returns:
+        str: アイテム登録ビュー
+    
+    ---
+    get:
+        description: "render template"
+        responses:
+            200:
+                description: "render_template"
+                content:
+                    text/html
     """
     files_thumbnail = None
     # get session value
@@ -997,7 +1009,50 @@ def check_authority_action(activity_id='0', action_id=0,
 @login_required_customize
 @check_authority
 def next_action(activity_id='0', action_id=0):
-    """Next action."""
+    """そのアクションにおける処理を行い、アクティビティの状態を更新する。
+
+    Args:
+        activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得. Defaults to '0'.
+        action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
+
+    Returns:
+        dict: 成否判定のコードとメッセージを含むjson data
+    
+    ---
+    post:
+        description: "next action"
+        security:
+            - login_required_customize: []
+            - check_authority: []
+        request_Body:
+            required: true
+            content:
+                application/json:
+                    schema:
+                        object
+                    example: {"action_version": "1.0.0", "commond": "this is test comment", "temporary_save": 0}
+        parameters:
+            - in: path
+              name: activity_id
+              description: 対象のアクティビティID
+              schema:
+                type: string
+            - in: path
+              name: action_id
+              description: 現在のアクションID
+              schema:
+                type: int
+        responses:
+            200:
+                description: "success"
+                content:
+                    application/json:
+                        schema:
+                            object
+                        example: jsonify(code=0, msg="success")
+            500:
+                description: "シグナルを送信する際にエラーが発生した場合"
+    """
     work_activity = WorkActivity()
     history = WorkActivityHistory()
     activity_detail = work_activity.get_activity_detail(activity_id)
@@ -1051,7 +1106,6 @@ def next_action(activity_id='0', action_id=0):
         deposit = WekoDeposit.get_record(item_id)
         if deposit:
             pid_without_ver = get_record_without_version(current_pid)
-
     current_app.logger.debug("action_endpoint: {0}, current_pid: {1}, item_id: {2}".format(
         action_endpoint, current_pid, pid_without_ver.pid_value))
     record = WekoRecord.get_record_by_pid(pid_without_ver.pid_value)
@@ -1264,6 +1318,7 @@ def next_action(activity_id='0', action_id=0):
             else:
                 _identifier = IdentifierHandle(item_id)
                 _value, _type = _identifier.get_idt_registration_data()
+                
                 if _value:
                     _identifier.remove_idt_registration_metadata()
         else:
@@ -1397,7 +1452,61 @@ def next_action(activity_id='0', action_id=0):
 @login_required
 @check_authority
 def previous_action(activity_id='0', action_id=0, req=0):
-    """Previous action."""
+    """reqに従い次のアクションを決定し、アクティビティの状態を更新する
+
+    Args:
+        activity_id (str, optional): 対象アクティビティID.パスパラメータから取得. Defaults to '0'.
+        action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
+        req (int, optional): 次のアクションの種類.パスパラメータから取得. Defaults to 0.
+                             0: 1つ前のフローアクション
+                             -1: アイテム登録アクション
+                             それ以外: 2つ目のアクション
+
+    Returns:
+        dict: 成否判定のコードとメッセージを含むjson data
+    
+    ---
+    
+    post:
+        description: "previous_action"
+        security:
+            - login_required: []
+            - check_authority: []
+        requestBody:
+            required: true
+            content:
+                application/json:
+                    schema:
+                        object
+                    example: {"action_version": "1.0.0", "commond": "test comment"}
+        parameters:
+            - in: path
+              name: activity_id
+              description: 対象のアクティビティID
+              schema:
+                type: string
+            - in: path
+              name: action_id
+              description: 現在のアクションID
+              schema:
+                type: int
+            - in: path
+              name: req
+              description: 次のアクションの種類
+                           0: 1つ前のフローアクション
+                           -1: アイテム登録アクション
+                           それ以外: 2つ目のアクション
+              schema:
+                type: int
+        responses:
+            200:
+                description: "success"
+                content:
+                    application/json:
+                        schema:
+                            object
+                        example: {"code": 0, "msg": _("success")}
+    """
     post_data = request.get_json()
     # A-20220808-00001
     #current_app.logger.error("previous:activity_id:{}".format(activity_id))
@@ -1548,7 +1657,49 @@ def get_journal(method, value):
 @login_required_customize
 @check_authority
 def cancel_action(activity_id='0', action_id=0):
-    """Next action."""
+    """アクティビティIDで与えられたアクティビティをキャンセルする
+
+    Args:
+        activity_id (str, optional): 対象アクティビティID.パスパラメータから取得. Defaults to '0'.
+        action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
+
+    Returns:
+        dict: 成否判定のコードとメッセージ、リダイレクト先のURLを含むjson data
+
+    ---
+    
+    post:
+        description: "cancel action"
+        security:
+            - login_required_customize: []
+            - check_authority: []
+        requestBody:
+            required: true
+            content:
+                application/json:
+                    schema:
+                        object
+                    example: {"action_version": "1.0.0", "commond": "this is test comment.", "pid_value": "1"}
+        parameters:
+            - in: path
+              name: activity_id
+              description: 対象のアクティビティID
+              schema:
+                type: string
+            - in: path
+              name: action_id
+              description: 現在のアクションID
+              schema:
+                type: int
+        responses:
+            200:
+                description: "success"
+                content:
+                    application/json:
+                        schema:
+                            object
+                        example: {"code": 0, "msg": _("success"), "data": {"redirect": "/workflow/activity/detail/1"}}
+    """
     post_json = request.get_json()
     work_activity = WorkActivity()
     # Clear deposit

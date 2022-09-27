@@ -35,7 +35,7 @@
     },    {
         "action_name":"OA Policy Confirmation",
         "action_desc":"",
-        "action_endpoint":"identifier_grant",
+        "action_endpoint":"oa_policy",
         "action_version":"1.0.0",
         "action_is_need_agree":false
     },

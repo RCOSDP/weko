@@ -42,7 +42,7 @@ def test_saving_doi_pidstore():
 # def register_hdl(activity_id):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_register_hdl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_register_hdl(app,db_records,db_itemtype):
-    depid, recid,parent,doi,record, item = db_records[0]
+    recid,depid,record,item,parent,doi = db_records[0]
     assert recid.pid_value=="1"
     activity_id='A-00000800-00000'
     act = Activity(
@@ -58,8 +58,8 @@ def test_register_hdl(app,db_records,db_itemtype):
                 pid = IdentifierHandle(recid.object_uuid).check_pidstore_exist(pid_type='hdl')
                 assert pid[0].object_uuid == recid.object_uuid
     
-    depid, recid,parent,doi,record, item = db_records[1]
-    assert recid.pid_value=="1.1"
+    recid,depid, record, item,parent,doi = db_records[1]
+    assert recid.pid_value=="1.0"
     activity_id='A-00000800-00000'
     act = Activity(
                 activity_id=activity_id,
@@ -74,8 +74,8 @@ def test_register_hdl(app,db_records,db_itemtype):
                 pid = IdentifierHandle(recid.object_uuid).check_pidstore_exist(pid_type='hdl')
                 assert pid == []
     
-    depid, recid,parent,doi,record, item = db_records[2]
-    assert recid.pid_value=="1.0"
+    recid,depid, record, item,parent,doi = db_records[2]
+    assert recid.pid_value=="1.1"
     activity_id='A-00000800-00000'
     act = Activity(
                 activity_id=activity_id,
@@ -270,7 +270,7 @@ def test_get_record_by_root_ver(app, db_records):
     record, files = get_record_by_root_ver("1")
 
     assert files == []
-    assert record == {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1']}, 'path': ['1'], 'owner': '1', 'recid': '1', 'title': ['title'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}, '_buckets': {'deposit': '3e99cfca-098b-42ed-b8a0-20ddd09b3e02'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'title', 'author_link': [], 'item_type_id': '1', 'publish_date': '2022-08-20', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'title', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True}
+    assert record == {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1']}, 'path': ['1'], 'owner': '1', 'recid': '1', 'title': ['title'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}, '_buckets': {'deposit': '3e99cfca-098b-42ed-b8a0-20ddd09b3e02'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'title', 'author_link': [], 'item_type_id': '1', 'publish_date': '2022-08-20', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'title', 'subitem_1551255648112': 'ja'}]}, "item_1617186819068": {"attribute_name": "Identifier Registration","attribute_value_mlt": [{"subitem_identifier_reg_text" :"test/0000000001","subitem_identifier_reg_type": "JaLC"}]},'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True}
 
 
 # def get_disptype_and_ver_in_metainfo(metadata):
