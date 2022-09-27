@@ -13,4 +13,3 @@ def test_catalog():
         "LC_MESSAGES",
         "{0}.po".format(domain),
     )
-
