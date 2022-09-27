@@ -3089,7 +3089,7 @@ def make_stats_file_with_permission(item_type_id, recids,
                 if not labels:
                     labels = [item.get('title')]
                 data = records.attr_data[item_key].get(recid) or {}
-                attr_val = data..get("attribute_value", "")
+                attr_val = data.get("attribute_value", "")
                 if isinstance(attr_val,str):
                     records.attr_output[recid].append(attr_val)
                 else:
