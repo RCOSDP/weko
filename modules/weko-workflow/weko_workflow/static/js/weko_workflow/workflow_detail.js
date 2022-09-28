@@ -25,8 +25,12 @@ require([
           alert(data.msg);
         }
       },
-      error: function (textStatus, errorThrown) {
-        alert('Server error.');
+      error: function (jqXHR, textStatus, errorThrown) {
+        if (jqXHR.responseJSON && jqXHR.responseJSON.code == -1){
+          alert(jqXHR.responseJSON.msg);
+        }else {
+          alert('Server error.');
+        }
       }
     });
   });
@@ -78,6 +82,7 @@ require([
       },
       error: function (jqXHE, status) {
         endLoading(_this);
+        alert(jqXHE.responseJSON.msg);
       }
     });
   });
@@ -134,7 +139,11 @@ require([
       },
       error: function (jqXHE, status) {
         endLoading(_this);
-        alert('server error');
+        if (jqXHE.responseJSON && jqXHE.responseJSON.msg) {
+          alert(jqXHE.responseJSON.msg);
+        } else {
+          alert('server error');
+        }
         $('#myModal').modal('hide');
       }
     });
@@ -198,7 +207,11 @@ require([
       },
       error: function (jqXHE, status) {
         endLoading(_this);
-        alert('server error');
+        if (jqXHE.responseJSON && jqXHE.responseJSON.msg) {
+          alert(jqXHE.responseJSON.msg);
+        } else {
+          alert('server error');
+        }
         $('#myModal').modal('hide');
       }
     });
@@ -251,7 +264,11 @@ require([
       },
       error: function (jqXHE, status) {
         endLoading(_this);
-        alert('server error');
+        if (jqXHE.responseJSON && jqXHE.responseJSON.msg) {
+          alert(jqXHE.responseJSON.msg);
+        } else {
+          alert('server error');
+        }
       }
     });
   }
@@ -328,8 +345,17 @@ require([
         }
       },
       error: function (jqXHE, status) {
-        endLoading(_this);
-        alert('server error');
+        if (-2 == jqXHE.responseJSON.code) {
+          let error_msg = $('#AutoCancelMsg').text();
+          $('#cancelModalBody').text(error_msg);
+          $('#cancelModal').modal('show');
+        } else if (-1 == jqXHE.responseJSON.code) {
+          endLoading(_this);
+          alert(jqXHE.responseJSON.msg);
+        } else{
+          endLoading(_this);
+          alert('server error');
+        }
       }
     });
   });
@@ -372,8 +398,17 @@ require([
         }
       },
       error: function (jqXHE, status) {
-        endLoading(_this);
-        alert('server error');
+        if (-2 == jqXHE.responseJSON.code) {
+          let error_msg = $('#AutoCancelMsg').text();
+          $('#cancelModalBody').text(error_msg);
+          $('#cancelModal').modal('show');
+        } else if (-1 == jqXHE.responseJSON.code) {
+          endLoading(_this);
+          alert(jqXHE.responseJSON.msg);
+        } else {
+          endLoading(_this);
+          alert('server error');
+        }
       }
     });
   });
