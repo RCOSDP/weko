@@ -325,7 +325,7 @@ def iframe_success():
             return render_template("weko_theme/error.html",
                     error="can not get data required for rendering")
         record = session['itemlogin_record']
-    
+
     ctx = {'community': None}
     if community_id:
         comm = GetCommunity.get_community_by_id(community_id)
@@ -2156,7 +2156,7 @@ def withdraw_confirm(activity_id='0', action_id=0):
             activity_detail = activity.get_activity_detail(activity_id)
             if activity_detail is None:
                 current_app.logger.error("withdraw_confirm: can not get activity detail info")
-                res = ResponseMessageSchema({"code":-1,"msg":"can not get activity detail info"})
+                res = ResponseMessageSchema().load({"code":-1,"msg":"can not get activity detail info"})
                 return jsonify(res.data), 500
             item_id = activity_detail.item_id
             identifier_actionid = get_actionid('identifier_grant')
@@ -2186,10 +2186,6 @@ def withdraw_confirm(activity_id='0', action_id=0):
                 if recid is None:
                     pid_without_ver = get_record_without_version(
                         current_pid)
-                    if pid_without_ver is None:
-                        current_app.logger.error("withdraw_confirm: can not get pid without ver")
-                        res = ResponseMessageSchema().load({"code":-1,"msg":"can not get pid without ver"})
-                        return jsonify(res.data), 500
                     record_without_ver_activity_id = \
                         get_activity_id_of_record_without_version(
                             pid_without_ver)
