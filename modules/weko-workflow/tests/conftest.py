@@ -50,17 +50,17 @@ from invenio_db import InvenioDB, db as db_
 from invenio_stats import InvenioStats
 from invenio_communities import InvenioCommunities
 from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
-from invenio_communities.models import Community 
+from invenio_communities.models import Community
 # from weko_records_ui import WekoRecordsUI
 from weko_theme import WekoTheme
 from weko_admin import WekoAdmin
-from weko_admin.models import SessionLifetime 
+from weko_admin.models import SessionLifetime
 from weko_admin.views import blueprint as weko_admin_blueprint
 from weko_records.models import ItemTypeName, ItemType
 from weko_workflow import WekoWorkflow
 from weko_search_ui import WekoSearchUI
 from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, ActionFeedbackMail, ActivityAction, FlowDefine, FlowAction
-from weko_workflow.views import blueprint as weko_workflow_blueprint
+from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
@@ -336,7 +336,7 @@ def base_app(instance_path):
     # app_.register_blueprint(weko_theme_blueprint)
     # app_.register_blueprint(weko_admin_blueprint)
     app_.register_blueprint(weko_workflow_blueprint)
-    
+
     return app_
 
 
@@ -420,7 +420,7 @@ def users(app, db):
     ds.add_role_to_user(originalroleuser, originalrole)
     ds.add_role_to_user(originalroleuser2, originalrole)
     ds.add_role_to_user(originalroleuser2, repoadmin_role)
-    
+
     # Assign access authorization
     with db.session.begin_nested():
         action_users = [
@@ -479,7 +479,7 @@ def users(app, db):
             ActionRoles(action='detail-page-acces', role=contributor_role),
         ]
         db.session.add_all(action_roles)
-        
+
     return [
         {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
         {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
@@ -594,7 +594,7 @@ def db_register(app, db,users):
         for data in action_datas:
             actions_db.append(Action(**data))
         db.session.add_all(actions_db)
-    
+
     actionstatus_datas = dict()
     with open('tests/data/action_status.json') as f:
         actionstatus_datas = json.load(f)
@@ -603,7 +603,7 @@ def db_register(app, db,users):
         for data in actionstatus_datas:
             actionstatus_db.append(ActionStatus(**data))
         db.session.add_all(actionstatus_db)
-    
+
     flow_define = FlowDefine(flow_id=uuid.uuid4(),
                              flow_name='Registration Flow',
                              flow_user=1)
@@ -617,7 +617,7 @@ def db_register(app, db,users):
                          form={'type':'test form'},
                          render={'type':'test render'},
                          tag=1,version_id=1,is_deleted=False)
-    
+
     flow_action1 = FlowAction(status='N',
                      flow_id=flow_define.flow_id,
                      action_id=1,
@@ -664,7 +664,7 @@ def db_register(app, db,users):
                     activity_confirm_term_of_use=True,
                     title='test', shared_user_id=-1, extra_info={},
                     action_order=6)
-    
+
     with db.session.begin_nested():
         db.session.add(flow_define)
         db.session.add(item_type_name)
@@ -674,7 +674,7 @@ def db_register(app, db,users):
         db.session.add(flow_action3)
         db.session.add(workflow)
         db.session.add(activity)
-    
+
     # return {'flow_define':flow_define,'item_type_name':item_type_name,'item_type':item_type,'flow_action':flow_action,'workflow':workflow,'activity':activity}
     return {'flow_define':flow_define,'item_type':item_type,'workflow':workflow}
 
@@ -810,51 +810,51 @@ def db_records(db,instance_path,users):
         index = Index.get_index_by_id(1)
         index.public_state = True
         index.harvest_public_state = True
-    
+
     index_metadata = {
             'id': 2,
             'parent': 0,
             'value': 'Index(public_state = True,harvest_public_state = False)',
         }
-    
+
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         Indexes.create(0, index_metadata)
         index = Index.get_index_by_id(2)
         index.public_state = True
         index.harvest_public_state = False
-    
+
     index_metadata = {
             'id': 3,
             'parent': 0,
             'value': 'Index(public_state = False,harvest_public_state = True)',
     }
-    
+
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         Indexes.create(0, index_metadata)
         index = Index.get_index_by_id(3)
         index.public_state = False
         index.harvest_public_state = True
-    
+
     index_metadata = {
             'id': 4,
             'parent': 0,
             'value': 'Index(public_state = False,harvest_public_state = False)',
     }
-    
+
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         Indexes.create(0, index_metadata)
         index = Index.get_index_by_id(4)
         index.public_state = False
         index.harvest_public_state = False
 
- 
+
     yield result
 
 
 @pytest.fixture()
 def db_register2(app, db):
     session_lifetime = SessionLifetime(lifetime=60,is_delete=False)
-    
+
     with db.session.begin_nested():
         db.session.add(session_lifetime)
 
@@ -866,4 +866,3 @@ def location(app, db, instance_path):
         db.session.add(loc)
     db.session.commit()
     return loc
-    
