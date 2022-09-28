@@ -2369,9 +2369,9 @@ def get_feedback_maillist(activity_id='0'):
                             ResponseMessageSchema
                         example: {"code": -1, "msg": "arguments error"}
     """
-    try:
-        type_null_check(activity_id, str)
-    except ValueError:
+    check_flg = type_null_check(activity_id, str)
+    if not check_flg:
+        current_app.logger.error("get_feedback_maillist: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
         return jsonify(res.data), 400
     try:
@@ -2569,9 +2569,9 @@ def unlock_activity(activity_id="0"):
                             ResponseMessageSchema
                         example: {"code": -1, "msg": "arguments error"}
     """
-    try:
-        type_null_check(activity_id, str)
-    except ValueError:
+    check_flg = type_null_check(activity_id, str)
+    if not check_flg:
+        current_app.logger.error("unlock_activity: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
         return jsonify(res.data), 400
     cache_key = 'workflow_locked_activity_{}'.format(activity_id)
@@ -2626,9 +2626,9 @@ def check_approval(activity_id='0'):
                             ResponseMessageSchema
                         example: {"code": -1, "msg": "arguments error"}
     """
-    try:
-        type_null_check(activity_id, str)
-    except ValueError:
+    check_flg = type_null_check(activity_id, str)
+    if not check_flg:
+        current_app.logger.error("check_approval: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
         return jsonify(res.data), 400
     response = {
