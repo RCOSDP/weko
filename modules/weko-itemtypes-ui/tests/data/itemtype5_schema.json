@@ -1,0 +1,457 @@
+{
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "required": [
+        "pubdate",
+        "item_1663165432106",
+        "item_1663165623557",
+        "item_1663165658689"
+    ],
+    "properties": {
+        "pubdate": {
+            "type": "string",
+            "title": "PubDate",
+            "format": "datetime"
+        },
+        "system_file": {
+            "type": "object",
+            "title": "File Information",
+            "format": "object",
+            "properties": {
+                "subitem_systemfile_size": {
+                    "type": "string",
+                    "title": "SYSTEMFILE Size",
+                    "format": "text"
+                },
+                "subitem_systemfile_version": {
+                    "type": "string",
+                    "title": "SYSTEMFILE Version",
+                    "format": "text"
+                },
+                "subitem_systemfile_datetime": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "subitem_systemfile_datetime_date": {
+                                "type": "string",
+                                "title": "SYSTEMFILE DateTime Date",
+                                "format": "datetime"
+                            },
+                            "subitem_systemfile_datetime_type": {
+                                "enum": [
+                                    "Accepted",
+                                    "Available",
+                                    "Collected",
+                                    "Copyrighted",
+                                    "Created",
+                                    "Issued",
+                                    "Submitted",
+                                    "Updated",
+                                    "Valid"
+                                ],
+                                "type": "string",
+                                "title": "SYSTEMFILE DateTime Type",
+                                "format": "select"
+                            }
+                        }
+                    },
+                    "title": "SYSTEMFILE DateTime",
+                    "format": "array"
+                },
+                "subitem_systemfile_filename": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "subitem_systemfile_filename_uri": {
+                                "type": "string",
+                                "title": "SYSTEMFILE Filename URI",
+                                "format": "text"
+                            },
+                            "subitem_systemfile_filename_type": {
+                                "enum": [
+                                    "Abstract",
+                                    "Fulltext",
+                                    "Summary",
+                                    "Thumbnail",
+                                    "Other"
+                                ],
+                                "type": "string",
+                                "title": "SYSTEMFILE Filename Type",
+                                "format": "select"
+                            },
+                            "subitem_systemfile_filename_label": {
+                                "type": "string",
+                                "title": "SYSTEMFILE Filename Label",
+                                "format": "text"
+                            }
+                        }
+                    },
+                    "title": "SYSTEMFILE Filename",
+                    "format": "array"
+                },
+                "subitem_systemfile_mimetype": {
+                    "type": "string",
+                    "title": "SYSTEMFILE MimeType",
+                    "format": "text"
+                }
+            },
+            "system_prop": true
+        },
+        "item_1663165432106": {
+            "type": "string",
+            "title": "タイトル（日）",
+            "format": "text"
+        },
+        "item_1663165460557": {
+            "type": "string",
+            "title": "タイトル（ヨミ）",
+            "format": "text"
+        },
+        "item_1663165461658": {
+            "type": "string",
+            "title": "タイトル（他言語）",
+            "format": "text"
+        },
+        "item_1663165498545": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "interim": {
+                        "type": "string"
+                    }
+                }
+            },
+            "title": "著者（日）",
+            "maxItems": 9999,
+            "minItems": 1
+        },
+        "item_1663165499456": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "interim": {
+                        "type": "string"
+                    }
+                }
+            },
+            "title": "著者（ヨミ）",
+            "maxItems": 9999,
+            "minItems": 1
+        },
+        "item_1663165500691": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "interim": {
+                        "type": "string"
+                    }
+                }
+            },
+            "title": "著者（日）",
+            "maxItems": 9999,
+            "minItems": 1
+        },
+        "item_1663165613606": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "interim": {
+                        "type": "string"
+                    }
+                }
+            },
+            "title": "権利情報",
+            "maxItems": 9999,
+            "minItems": 1
+        },
+        "item_1663165620772": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "interim": {
+                        "type": "string"
+                    }
+                }
+            },
+            "title": "主題",
+            "maxItems": 9999,
+            "minItems": 1
+        },
+        "item_1663165621987": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "interim": {
+                        "type": "string"
+                    }
+                }
+            },
+            "title": "出版者",
+            "maxItems": 9999,
+            "minItems": 1
+        },
+        "item_1663165623557": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "subitem_1551255818386"
+                ],
+                "properties": {
+                    "subitem_1551255818386": {
+                        "enum": [
+                            null,
+                            "jpn",
+                            "eng",
+                            "fra",
+                            "ita",
+                            "spa",
+                            "zho",
+                            "rus",
+                            "lat",
+                            "msa",
+                            "epo",
+                            "ara",
+                            "ell",
+                            "kor"
+                        ],
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "title": "Language",
+                        "format": "select",
+                        "currentEnum": [
+                            "jpn",
+                            "eng",
+                            "fra",
+                            "ita",
+                            "spa",
+                            "zho",
+                            "rus",
+                            "lat",
+                            "msa",
+                            "epo",
+                            "ara",
+                            "ell",
+                            "kor"
+                        ]
+                    }
+                }
+            },
+            "title": "言語",
+            "maxItems": 9999,
+            "minItems": 1
+        },
+        "item_1663165658689": {
+            "type": "object",
+            "title": "資源タイプ",
+            "required": [
+                "resourcetype",
+                "resourceuri"
+            ],
+            "properties": {
+                "resourceuri": {
+                    "type": "string",
+                    "title": "資源タイプ識別子",
+                    "format": "text",
+                    "title_i18n": {
+                        "en": "Resource Type Identifier",
+                        "ja": "資源タイプ識別子"
+                    },
+                    "title_i18n_temp": {
+                        "en": "Resource Type Identifier",
+                        "ja": "資源タイプ識別子"
+                    }
+                },
+                "resourcetype": {
+                    "enum": [
+                        null,
+                        "conference paper",
+                        "data paper",
+                        "departmental bulletin paper",
+                        "editorial",
+                        "journal article",
+                        "newspaper",
+                        "periodical",
+                        "review article",
+                        "software paper",
+                        "article",
+                        "book",
+                        "book part",
+                        "cartographic material",
+                        "map",
+                        "conference object",
+                        "conference proceedings",
+                        "conference poster",
+                        "dataset",
+                        "interview",
+                        "image",
+                        "still image",
+                        "moving image",
+                        "video",
+                        "lecture",
+                        "patent",
+                        "internal report",
+                        "report",
+                        "research report",
+                        "technical report",
+                        "policy report",
+                        "report part",
+                        "working paper",
+                        "data management plan",
+                        "sound",
+                        "thesis",
+                        "bachelor thesis",
+                        "master thesis",
+                        "doctoral thesis",
+                        "interactive resource",
+                        "learning object",
+                        "manuscript",
+                        "musical notation",
+                        "research proposal",
+                        "software",
+                        "technical documentation",
+                        "workflow",
+                        "other"
+                    ],
+                    "type": [
+                        "null",
+                        "string"
+                    ],
+                    "title": "資源タイプ",
+                    "format": "select",
+                    "currentEnum": [
+                        "conference paper",
+                        "data paper",
+                        "departmental bulletin paper",
+                        "editorial",
+                        "journal article",
+                        "newspaper",
+                        "periodical",
+                        "review article",
+                        "software paper",
+                        "article",
+                        "book",
+                        "book part",
+                        "cartographic material",
+                        "map",
+                        "conference object",
+                        "conference proceedings",
+                        "conference poster",
+                        "dataset",
+                        "interview",
+                        "image",
+                        "still image",
+                        "moving image",
+                        "video",
+                        "lecture",
+                        "patent",
+                        "internal report",
+                        "report",
+                        "research report",
+                        "technical report",
+                        "policy report",
+                        "report part",
+                        "working paper",
+                        "data management plan",
+                        "sound",
+                        "thesis",
+                        "bachelor thesis",
+                        "master thesis",
+                        "doctoral thesis",
+                        "interactive resource",
+                        "learning object",
+                        "manuscript",
+                        "musical notation",
+                        "research proposal",
+                        "software",
+                        "technical documentation",
+                        "workflow",
+                        "other"
+                    ]
+                }
+            }
+        },
+        "system_identifier_doi": {
+            "type": "object",
+            "title": "Persistent Identifier(DOI)",
+            "format": "object",
+            "properties": {
+                "subitem_systemidt_identifier": {
+                    "type": "string",
+                    "title": "SYSTEMIDT Identifier",
+                    "format": "text"
+                },
+                "subitem_systemidt_identifier_type": {
+                    "enum": [
+                        "DOI",
+                        "HDL",
+                        "URI"
+                    ],
+                    "type": "string",
+                    "title": "SYSTEMIDT Identifier Type",
+                    "format": "select"
+                }
+            },
+            "system_prop": true
+        },
+        "system_identifier_hdl": {
+            "type": "object",
+            "title": "Persistent Identifier(HDL)",
+            "format": "object",
+            "properties": {
+                "subitem_systemidt_identifier": {
+                    "type": "string",
+                    "title": "SYSTEMIDT Identifier",
+                    "format": "text"
+                },
+                "subitem_systemidt_identifier_type": {
+                    "enum": [
+                        "DOI",
+                        "HDL",
+                        "URI"
+                    ],
+                    "type": "string",
+                    "title": "SYSTEMIDT Identifier Type",
+                    "format": "select"
+                }
+            },
+            "system_prop": true
+        },
+        "system_identifier_uri": {
+            "type": "object",
+            "title": "Persistent Identifier(URI)",
+            "format": "object",
+            "properties": {
+                "subitem_systemidt_identifier": {
+                    "type": "string",
+                    "title": "SYSTEMIDT Identifier",
+                    "format": "text"
+                },
+                "subitem_systemidt_identifier_type": {
+                    "enum": [
+                        "DOI",
+                        "HDL",
+                        "URI"
+                    ],
+                    "type": "string",
+                    "title": "SYSTEMIDT Identifier Type",
+                    "format": "select"
+                }
+            },
+            "system_prop": true
+        }
+    },
+    "description": ""
+}

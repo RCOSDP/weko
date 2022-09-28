@@ -1924,6 +1924,7 @@ def delete_schema(pid):
 def get_oai_metadata_formats(app):
     """Get oai metadata formats."""
     oad = app.config.get('OAISERVER_METADATA_FORMATS', {}).copy()
+    
     if isinstance(oad, dict):
         try:
             obj = WekoSchema.get_all()
@@ -1954,4 +1955,5 @@ def get_oai_metadata_formats(app):
                                 oad[schema_name]['namespace'] = ns
                         if lst.schema_location:
                             oad[schema_name]['schema'] = lst.schema_location
+    
     return oad
