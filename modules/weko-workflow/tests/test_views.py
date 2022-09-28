@@ -43,8 +43,11 @@ from invenio_accounts.testutils import login_user_via_session as login
 from weko_workflow.views import unlock_activity, check_approval, get_feedback_maillist, save_activity, previous_action
 from marshmallow.exceptions import ValidationError
 from weko_records_ui.models import FilePermission
+
+
 def response_data(response):
     return json.loads(response.data)
+
 
 def test_index_acl_nologin(client):
     """_summary_
@@ -1726,18 +1729,6 @@ def test_save_activity_guestlogin(guest):
         assert data["msg"] == "test error"
 
 
-def test_withdraw_confirm_nologin(client):
-    """Test of withdraw confirm."""
-    url = url_for('weko_workflow.withdraw_confirm', activity_id='1',
-                  action_id=1)
-    input = {}
-
-    res = client.post(url, json=input)
-    assert res.status_code == 302
-    # TODO check that the path changed
-    # assert res.url == url_for('security.login')
-
-
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
@@ -1826,3 +1817,94 @@ def test_display_activity_users(client, users, db_register, users_index, status_
                 with patch('weko_workflow.views.render_template', mock_render_template):
                     res = client.post(url, json=input)
                     mock_render_template.assert_called()
+
+
+def test_withdraw_confirm_nologin(client):
+    """Test of withdraw confirm."""
+    url = url_for('weko_workflow.withdraw_confirm', activity_id='1',
+                  action_id=1)
+    input = {}
+
+    res = client.post(url, json=input)
+    assert res.location == url_for('security.login',next="/workflow/activity/detail/1/1/withdraw",
+                                    _external=True)
+
+
+@pytest.mark.parametrize('users_index, status_code, is_admin', [
+    (0, 403, False),
+    (1, 403, True),
+    (2, 403, True),
+    (3, 403, True),
+    (4, 403, False),
+    (5, 403, False),
+    (6, 403, True),
+])
+def test_withdraw_confirm_users(client, users, db_register_fullaction, users_index, status_code, is_admin):
+    """Test of withdraw confirm."""
+    login(client=client, email=users[users_index]['email'])
+    url = url_for('weko_workflow.withdraw_confirm',
+                  activity_id='1',
+                  action_id=1)
+    input = {}
+
+    roles = {
+        'allow': [],
+        'deny': []
+    }
+    action_users = {
+        'allow': [],
+        'deny': []
+    }
+    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+               return_value=(roles, action_users)):
+        res = client.post(url, json=input)
+        assert res.status_code != status_code
+
+    action_users = {
+        'allow': [],
+        'deny': [users[users_index]["id"]]
+    }
+    url = url_for('weko_workflow.withdraw_confirm',
+                  activity_id='2',
+                  action_id=1)
+    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+               return_value=(roles, action_users)):
+        res = client.post(url, json=input)
+        data = response_data(res)
+        assert res.status_code != status_code
+        if is_admin:
+            assert data["code"] != 403
+        else:
+            assert data["code"] == 403
+
+    action_users = {
+        'allow': [users[users_index]["id"]],
+        'deny': []
+    }
+    url = url_for('weko_workflow.withdraw_confirm',
+                  activity_id='3',
+                  action_id=1)
+    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+               return_value=(roles, action_users)):
+        res = client.post(url, json=input)
+        data = response_data(res)
+        assert res.status_code != status_code
+        assert data["code"] != 403
+
+
+def test_withdraw_confirm_guestlogin(guest, client, db_register_fullaction):
+    input = {'action_version': 1, 'commond': 1}
+    url = url_for('weko_workflow.withdraw_confirm',
+                  activity_id="1", action_id=1)
+    roles = {
+        'allow': [],
+        'deny': []
+    }
+    action_users = {
+        'allow': [],
+        'deny': []
+    }
+    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+               return_value=(roles, action_users)):
+        res = guest.post(url, json=input)
+        assert res.status_code != 403
