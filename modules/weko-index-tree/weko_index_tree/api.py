@@ -21,10 +21,13 @@
 """API for weko-index-tree."""
 
 import pickle
+import os
+from copy import deepcopy
 from datetime import date, datetime
 from functools import partial
 from socketserver import DatagramRequestHandler
 
+from redis.exceptions import RedisError
 from flask import current_app, json
 from flask_babelex import gettext as _
 from flask_login import current_user
@@ -37,12 +40,13 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import case, func, literal_column
 from weko_groups.api import Group
+from weko_redis.redis import RedisConnection
 
 from .models import Index
 from .utils import cached_index_tree_json, check_doi_in_index, \
     check_restrict_doi_with_indexes, filter_index_list_by_role, \
     get_index_id_list, get_publish_index_id_list, get_tree_json, \
-    get_user_roles, is_index_locked, reset_tree, sanitize
+    get_user_roles, is_index_locked, reset_tree, sanitize, save_index_trees_to_redis
 
 
 class Indexes(object):
@@ -561,7 +565,20 @@ class Indexes(object):
     @classmethod
     def get_browsing_tree(cls, pid=0):
         """Get browsing tree."""
-        tree = cls.get_index_tree(pid)
+        if pid == 0:
+            try:
+                redis_connection = RedisConnection()
+                datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+                v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language).decode("UTF-8")
+                tree = json.loads(str(v))
+            except RedisError:
+                tree = cls.get_index_tree(pid)
+                save_index_trees_to_redis(tree)
+            except KeyError:
+                tree = cls.get_index_tree(pid)
+                save_index_trees_to_redis(tree)
+        else:
+            tree = cls.get_index_tree(pid)
         reset_tree(tree=tree)
         return tree
 
@@ -575,7 +592,20 @@ class Indexes(object):
     @classmethod
     def get_browsing_tree_ignore_more(cls, pid=0):
         """Get browsing tree ignore more."""
-        tree = cls.get_index_tree(pid)
+        if pid == 0:
+            try:
+                redis_connection = RedisConnection()
+                datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+                v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language).decode("UTF-8")
+                tree = json.loads(str(v))
+            except RedisError:
+                tree = cls.get_index_tree(pid)
+                save_index_trees_to_redis(tree)
+            except KeyError:
+                tree = cls.get_index_tree(pid)
+                save_index_trees_to_redis(tree)
+        else:
+            tree = cls.get_index_tree(pid)
         reset_tree(tree=tree, ignore_more=True)
         return tree
 

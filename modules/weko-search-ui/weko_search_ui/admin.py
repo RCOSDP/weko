@@ -34,6 +34,8 @@ from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
+from marshmallow.exceptions import ValidationError
+
 from invenio_files_rest.models import FileInstance
 from invenio_i18n.ext import current_i18n
 from weko_admin.api import TempDirInfo
@@ -50,7 +52,9 @@ from weko_workflow.api import WorkFlow
 from weko_workflow.utils import delete_cache_data, get_cache_data, update_cache_data
 
 from weko_search_ui.api import get_search_detail_keyword
-
+from weko_search_ui.schema.marshmallow import ImportItemsSchema, DownloadImportSchema,\
+    ResponseMessageSchema,ResponseObjectSchema
+from weko_search_ui.schema.utils import type_null_check
 from .config import (
     WEKO_EXPORT_TEMPLATE_BASIC_ID,
     WEKO_EXPORT_TEMPLATE_BASIC_NAME,
@@ -416,8 +420,80 @@ class ItemImportView(BaseView):
 
     @expose("/import", methods=["POST"])
     def import_items(self) -> jsonify:
-        """Import item into System."""
-        data = request.get_json() or {}
+        """アイテムの一括登録の前処理、タスク操作を行う。
+
+        Args:
+            self
+        Returns:
+            object: json dataをレスポンスボディに持つResponseオブジェクト
+        ---
+        post:
+            description: "import items"
+            security:
+                - description:
+                    "weko_admin ext.py のメソッドrole_has_accessで、current_app.configの
+                     設定値WEKO_ADMIN_ACCESS_TABLEに応じたアクセス制限を行う。"
+            requestBody:
+                required: false
+                content:
+                    application/json:
+                        schema:
+                            object
+                        example: {"data_path": "/tmp/weko_import_20220819045602",
+                                  "list_record":
+                                    [{$schema: <weko_url>/items/jsonschema/15,
+                                      edit_mode: "Keep",
+                                      errors: null,
+                                      feedback_mail: ["example@example.org"],
+                                      file_path: ["file00000001/filename.pdf", ""],
+                                      filenames: [{filename: "filename.pdf",
+                                                   id: ".metadata.item_1617605131499[0].filename"},…],
+                                      id: null,
+                                      identifier_key: "item_1617186819068",
+                                      is_change_identifier: false,
+                                      item_title:
+                                        "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+                                      item_type_id: 15,
+                                      item_type_name: "デフォルトアイテムタイプ（フル）",
+                                      metadata:
+                                        {feedback_mail_list: [{author_id: "", email: "example@example.org"}],…},
+                                      pos_index: ["IndexName"],
+                                      publish_status: "public",
+                                      status: "new"}]}
+            responses:
+                200:
+                    description: "success"
+                    content:
+                        application/json:
+                            schema:
+                                object
+                            example:
+                                {"status": "success",
+                                 "data":
+                                    {"tasks": [{"task_id": "e59d7702-2a71-490f-ae8f-e317fc9aa13f", "item_id": None}],
+                                     "import_start_time": "2022-08-24T08:00:09"}}
+                400:
+                    description: "parameter error"
+                    content:
+                        application/json:
+                            schema:
+                            ResponseMessageSchema
+                            example: { "code": -1,"msg":"parameter error"}
+                500:
+                    description: "arguments error"
+                    content:
+                        application/json:
+                            schema:
+                                ResponseMessageSchema
+                            example: {"code": -1, "msg": "arguments error"}
+        """
+        try:
+            import_info = ImportItemsSchema().load(request.get_json())
+        except ValidationError as err:
+            res = ResponseMessageSchema().load({'code':-1,'msg':str(err)})
+            return jsonify(res.data), 400
+
+        data = import_info.data or {}
         data_path = data.get("data_path")
         user_id = current_user.get_id() if current_user else 1
         request_info = {
@@ -436,6 +512,13 @@ class ItemImportView(BaseView):
         ]
         import_start_time = ""
         if list_record:
+            try:
+                type_null_check(data_path, str)
+            except ValueError:
+                current_app.logger.error("argument error")
+                res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
+                return jsonify(res.data), 500
+
             group_tasks = []
             for item in list_record:
                 item["root_path"] = data_path + "/data"
@@ -445,6 +528,13 @@ class ItemImportView(BaseView):
 
             # handle import tasks
             import_task = chord(group_tasks)(remove_temp_dir_task.si(data_path))
+            try:
+                type_null_check(import_task.parent.results, list)
+            except ValueError:
+                current_app.logger.error("argument error")
+                res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
+                return jsonify(res.data), 500
+
             for idx, task in enumerate(import_task.parent.results):
                 tasks.append(
                     {
@@ -456,11 +546,14 @@ class ItemImportView(BaseView):
             import_start_time = datetime.now().strftime("%Y-%m-%dT%H:%M:%S%z")
             update_cache_data("import_start_time", import_start_time, 0)
 
-        response_object = {
-            "status": "success",
-            "data": {"tasks": tasks, "import_start_time": import_start_time},
-        }
-        return jsonify(response_object)
+        res = ResponseObjectSchema().load(
+            {
+                "status": "success",
+                "data": {"tasks": tasks, "import_start_time": import_start_time},
+            }
+        )
+        return jsonify(res.data), 200
+
 
     @expose("/check_status", methods=["POST"])
     def get_status(self):
@@ -509,14 +602,63 @@ class ItemImportView(BaseView):
 
     @expose("/export_import", methods=["POST"])
     def download_import(self):
-        """Download import result."""
-        data = request.get_json()
+        """インポート結果をファイルに出力し、ダウンロードするためのResponseオブジェクトを返す。
+
+        Args:
+            self
+        Returns:
+            object: インポート結果をまとめたファイル形式の文字列をボディに持つResponse
+        ---
+        post:
+            description: "get file contents summarizing result of import items"
+            security:
+                - description:
+                    "weko_admin ext.py のメソッドrole_has_accessで、current_app.configの
+                     設定値WEKO_ADMIN_ACCESS_TABLEに応じたアクセス制限を行う。"
+            requestBody:
+                required: false
+                content:
+                    application/json:
+                        schema:
+                            object
+                        example: {"list_result": [{
+                                    "No":1,
+                                    "Start Date":"2022-09-12 23:04:07",
+                                    "End Date":"2022-09-12 23:04:16",
+                                    "Item Id":"",
+                                    "Action":"End",
+                                    "Work Flow Status":"Done"
+                                }]}
+            responses:
+                200:
+                    description: "success"
+                    content:
+                        text/<file_format> charset=utf-8:
+                            schema:
+                                string
+                            example:
+                                "No,Start Date,End Date,Item Id,Action,Work Flow Status
+                                 1,2022-09-12 23:04:07,2022-09-12 23:04:16,,End,Done"
+                400:
+                    description: "parameter error"
+                    content:
+                    application/json:
+                        schema:
+                        ResponseMessageSchema
+                        example: { "code": -1,"msg":"parameter error"}
+        """
+        try:
+            import_result = DownloadImportSchema().load(request.get_json())
+        except ValidationError as err:
+            res = ResponseMessageSchema().load({'code':-1,'msg':str(err)})
+            return jsonify(res.data), 400
+
         now = str(datetime.date(datetime.now()))
 
         file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         file_name = "List_Download {}.{}".format(now, file_format)
-        if data:
-            output_file = make_stats_file(data.get("list_result"), WEKO_IMPORT_LIST_NAME)
+        if import_result.data:
+            output_file = make_stats_file(import_result.data.get("list_result"), WEKO_IMPORT_LIST_NAME)
             return Response(
                 output_file.getvalue(),
                 mimetype="text/{}".format(file_format),
