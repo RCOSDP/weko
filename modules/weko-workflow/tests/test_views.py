@@ -537,7 +537,7 @@ def test_lock_activity_users(client, users, users_index, status_code):
             assert res.status_code == status_code
 
 
-def test_unlock_activity_nologin(client):
+def test_unlock_activity_acl_nologin(client):
     """Test of unlock activity."""
     url = url_for('weko_workflow.unlock_activity', activity_id='1')
     input = {'locked_value':'1-1661748792565'}
@@ -545,9 +545,6 @@ def test_unlock_activity_nologin(client):
     res = client.post(url, json=input)
     assert res.status_code == 302
     assert res.location == url_for('security.login',next="/workflow/activity/unlock/1",_external=True)
-    # TODO check that the path changed
-    # assert res.url == url_for('security.login')
-
 
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
@@ -558,7 +555,7 @@ def test_unlock_activity_nologin(client):
     (5, 200),
     (6, 200),
 ])
-def test_unlock_activity_users(client, users, users_index, status_code):
+def test_unlock_activity_acl_users(client, users, users_index, status_code):
     """Test of unlock activity."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.unlock_activity', activity_id='1')
@@ -566,7 +563,7 @@ def test_unlock_activity_users(client, users, users_index, status_code):
 
     with patch('weko_workflow.views.get_cache_data', return_value=""):
         res = client.post(url, json=input)
-        assert res.status_code == status_code
+        assert res.status_code !=302
 
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
@@ -582,7 +579,15 @@ def test_unlock_activity(client, users, db_register, users_index, status_code):
     url = url_for('weko_workflow.unlock_activity', activity_id='1')
     input = {'locked_value':'1-1661748792565'}
 
-    #locked_valueが空文字で、cur_locked_valも空文字の場合
+    #check_flgの分岐テスト
+    with patch('weko_workflow.views.type_null_check', return_value=False):
+        res = client.post(url, json=input)
+        data = json.loads(res.data.decode("utf-8"))
+        assert res.status_code== 400
+        assert data["code"] == -1
+        assert data["msg"] == 'arguments error'
+    
+    #cur_locked_valが空文字の場合
     with patch('weko_workflow.views.get_cache_data', return_value=""):
         res = client.post(url, json=input)
         data = json.loads(res.data.decode("utf-8"))
@@ -599,23 +604,15 @@ def test_unlock_activity(client, users, db_register, users_index, status_code):
             assert data["code"] == 200
             assert data["msg"] == 'Unlock success'
 
-    #ValueErrorの分岐テスト
-    with patch('weko_workflow.views.type_null_check', side_effect=ValueError):
-        res = client.post(url, json=input)
-        data = json.loads(res.data.decode("utf-8"))
-        assert res.status_code== 400
-        assert data["code"] == -1
-        assert data["msg"] == 'arguments error'
-
     #ValidationErrorの分岐テスト
-    with patch('weko_workflow.views.LockedValueSchema', side_effect=ValidationError('test error')):
-        res = client.post(url, json=input)
-        data = json.loads(res.data.decode("utf-8"))
-        assert res.status_code== 400
-        assert data["code"] == -1
-        assert data["msg"] == 'test error'
+    input = {}
+    res = client.post(url, json=input)
+    data = json.loads(res.data.decode("utf-8"))
+    assert res.status_code== 400
+    assert data["code"] == -1
+    assert data["msg"] == "{'locked_value': ['Missing data for required field.']}"
 
-def test_check_approval_nologin(client):
+def test_check_approval_acl_nologin(client):
     """Test of check approval."""
     url = url_for('weko_workflow.check_approval', activity_id='1')
 
@@ -632,7 +629,7 @@ def test_check_approval_nologin(client):
     (5, 200),
     (6, 200),
 ])
-def test_check_approval_users(client, users, users_index, status_code):
+def test_check_approval_acl_users(client, users, users_index, status_code):
     """Test of check approval."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.check_approval', activity_id='1')
@@ -643,7 +640,7 @@ def test_check_approval_users(client, users, users_index, status_code):
     }
     with patch('weko_workflow.views.check_continue', return_value=response):
         res = client.get(url)
-        assert res.status_code == status_code
+        assert res.status_code != 302
 
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
@@ -663,9 +660,10 @@ def test_check_approval(client, users, db_register, users_index, status_code):
         'error': 1
     }
     
-    with patch('weko_workflow.views.type_null_check', side_effect=ValueError):
+    #check_flgの分岐テスト
+    with patch('weko_workflow.views.type_null_check', return_value=False):
         res = client.get(url)
-        data = json.loads(res.data.decode("utf-8"))
+        data = response_data(res)
         assert res.status_code== 400
         assert data["code"] == -1
         assert data["msg"] == 'arguments error'
@@ -685,16 +683,8 @@ def test_check_approval(client, users, db_register, users_index, status_code):
         assert data['check_handle'] == -1
         assert data['check_continue'] == -1
         assert data['error'] == 1
-    
-    with patch('weko_workflow.views.check_continue', side_effect=Exception):
-        res = client.get(url)
-        data = response_data(res)
-        assert res.status_code==status_code
-        assert data['check_handle'] == -1
-        assert data['check_continue'] == -1
-        assert data['error'] == -1
 
-def test_get_feedback_maillist_nologin(client):
+def test_get_feedback_maillist_acl_nologin(client):
     """Test of get feedback maillist."""
     url = url_for('weko_workflow.get_feedback_maillist', activity_id='1')
 
@@ -711,18 +701,19 @@ def test_get_feedback_maillist_nologin(client):
     (5, 200),
     (6, 200),
 ])
-def test_get_feedback_maillist_users(client, users, users_index, status_code):
+def test_get_feedback_maillist_acl_users(client, users, users_index, status_code):
     """Test of get feedback maillist."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.get_feedback_maillist', activity_id='1')
 
     res = client.get(url)
-    assert res.status_code == status_code
+    assert res.status_code != 302
 
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
     (2, 200),
+    (3, 200),
     (4, 200),
     (5, 200),
     (6, 200),
@@ -731,7 +722,7 @@ def test_get_feedback_maillist(client, users, db_register, users_index, status_c
     login(client=client, email=users[users_index]['email'])
     
     url = url_for('weko_workflow.get_feedback_maillist', activity_id='1')
-    with patch('weko_workflow.views.type_null_check', side_effect=ValueError):
+    with patch('weko_workflow.views.type_null_check', return_value=False):
         res = client.get(url)
         data = response_data(res)
         assert res.status_code== 400
@@ -786,12 +777,12 @@ def test_get_feedback_maillist(client, users, db_register, users_index, status_c
     url = url_for('weko_workflow.get_feedback_maillist', activity_id='7')
     res = client.get(url)
     data = response_data(res)
-    mail_list = db_register['action_feedback_mail3'].feedback_maillist
+    #mail_list = db_register['action_feedback_mail3'].feedback_maillist
     assert res.status_code==400
     assert data['code'] == -1
     assert data['msg'] == 'mail_list is not list'
 
-def test_save_activity_nologin(client):
+def test_save_activity_acl_nologin(client):
     """Test of save activity."""
     url = url_for('weko_workflow.save_activity')
     input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
@@ -809,7 +800,7 @@ def test_save_activity_nologin(client):
     (5, 200),
     (6, 200),
 ])
-def test_save_activity_users(client, users, users_index, status_code):
+def test_save_activity_acl_users(client, users, users_index, status_code):
     """Test of save activity."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.save_activity')
@@ -817,6 +808,14 @@ def test_save_activity_users(client, users, users_index, status_code):
     with patch('weko_workflow.views.save_activity_data'):
         res = client.post(url, json=input)
         assert res.status_code != 302 
+
+#save_activityは@login_required_customizeなのでguestuserloginのテストも必要
+def test_save_activity_acl_guestlogin(guest):
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    url = url_for('weko_workflow.save_activity')
+
+    res = guest.post(url, json=input)
+    assert res.status_code != 302
 
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
@@ -830,15 +829,15 @@ def test_save_activity_users(client, users, users_index, status_code):
 def test_save_activity(client, users, db_register, users_index, status_code):
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.save_activity')
+    
+    input = {"activity_id":"A-20220921-00001","title":"test"}
+    res = client.post(url, json=input)
+    data = response_data(res)
+    assert res.status_code== 400
+    assert data["code"] == -1
+    assert data["msg"] == "{'shared_user_id': ['Missing data for required field.']}"
+    
     input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
-
-    with patch('weko_workflow.views.SaveActivitySchema', side_effect=ValidationError("test error")):
-        res = client.post(url, json=input)
-        data = response_data(res)
-        assert res.status_code== 400
-        assert data["code"] == -1
-        assert data["msg"] == 'test error'
-
     with patch('weko_workflow.views.save_activity_data'):
         res = client.post(url, json=input)
         data = response_data(res)
@@ -856,15 +855,15 @@ def test_save_activity(client, users, db_register, users_index, status_code):
 #guestuserでの機能テスト
 def test_save_activity_guestlogin(guest):
     url = url_for('weko_workflow.save_activity')
+    
+    input = {"activity_id":"A-20220921-00001","title":"test"}
+    res = guest.post(url, json=input)
+    data = response_data(res)
+    assert res.status_code== 400
+    assert data["code"] == -1
+    assert data["msg"] == "{'shared_user_id': ['Missing data for required field.']}"
+
     input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
-
-    with patch('weko_workflow.views.SaveActivitySchema', side_effect=ValidationError("test error")):
-        res = guest.post(url, json=input)
-        data = response_data(res)
-        assert res.status_code== 400
-        assert data["code"] == -1
-        assert data["msg"] == 'test error'
-
     with patch('weko_workflow.views.save_activity_data'):
         res = guest.post(url, json=input)
         data = response_data(res)
@@ -878,14 +877,6 @@ def test_save_activity_guestlogin(guest):
         assert res.status_code==200
         assert data["success"] == False
         assert data["msg"] == "test error"
-
-#save_activityは@login_required_customizeなのでguestuserloginのテストも必要
-def test_save_activity_acl_guestlogin(guest):
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
-    url = url_for('weko_workflow.save_activity')
-
-    res = guest.post(url, json=input)
-    assert res.status_code != 302
 
 
 def test_withdraw_confirm_nologin(client):
