@@ -26,6 +26,7 @@ import tempfile
 import json
 import uuid
 from datetime import datetime
+from six import BytesIO
 
 import pytest
 from mock import patch
@@ -61,8 +62,10 @@ from weko_admin.views import blueprint as weko_admin_blueprint
 from weko_records.models import ItemTypeName, ItemType
 from weko_workflow import WekoWorkflow
 from weko_search_ui import WekoSearchUI
-from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
+
+from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction, ActivityAction, ActionFeedbackMail
 from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
+
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
@@ -82,6 +85,7 @@ from weko_schema_ui.models import OAIServerSchema
 from weko_index_tree.config import WEKO_INDEX_TREE_REST_ENDPOINTS,WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER
 from weko_user_profiles.models import UserProfile
 from weko_user_profiles.config import WEKO_USERPROFILES_ROLES,WEKO_USERPROFILES_GENERAL_ROLE
+from weko_authors.models import Authors
 
 # @event.listens_for(Engine, "connect")
 # def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -680,7 +684,11 @@ def db_register(app, db,users):
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={})
-
+    with db.session.begin_nested():
+        db.session.add(flow_action1)
+        db.session.add(flow_action2)
+        db.session.add(flow_action3)
+        
     workflow = WorkFlow(flows_id=uuid.uuid4(),
                         flows_name='test workflow1',
                         itemtype_id=1,
@@ -690,7 +698,6 @@ def db_register(app, db,users):
                         open_restricted=False,
                         location_id=None,
                         is_gakuninrdm=False)
-
     activity = Activity(activity_id='1',workflow_id=1, flow_id=flow_define.id,
                     action_id=1, activity_login_user=1,
                     activity_update_user=1,
@@ -698,20 +705,116 @@ def db_register(app, db,users):
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
                     title='test', shared_user_id=-1, extra_info={},
-                    action_order=6)
-    
+                    action_order=1,
+                    )
+    activity_item1 = Activity(activity_id='2',item_id=db_records[0][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item1', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    activity_item2 = Activity(activity_id='3', workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item2', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    activity_item3 = Activity(activity_id='4', workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item3', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    activity_item4 = Activity(activity_id='5', workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item4', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    activity_item5 = Activity(activity_id='6', workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item5', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    activity_item6 = Activity(activity_id='7', workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item5', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
     with db.session.begin_nested():
-        db.session.add(flow_define)
-        db.session.add(item_type_name)
-        db.session.add(item_type)
-        db.session.add(flow_action1)
-        db.session.add(flow_action2)
-        db.session.add(flow_action3)
         db.session.add(workflow)
         db.session.add(activity)
+        db.session.add(activity_item1)
+        db.session.add(activity_item2)
+        db.session.add(activity_item3)
+        db.session.add(activity_item4)
+        db.session.add(activity_item5)
+        db.session.add(activity_item6)
+    db.session.commit()
     
-    # return {'flow_define':flow_define,'item_type_name':item_type_name,'item_type':item_type,'flow_action':flow_action,'workflow':workflow,'activity':activity}
-    return {'flow_define':flow_define,'item_type':item_type,'workflow':workflow}
+    activity_action1_item1 = ActivityAction(activity_id=activity_item1.activity_id,
+                                            action_id=1,action_status="M",
+                                            action_handler=1, action_order=1)
+    activity_action2_item1 = ActivityAction(activity_id=activity_item1.activity_id,
+                                            action_id=3,action_status="M",
+                                            action_handler=1, action_order=2)
+    activity_action3_item1 = ActivityAction(activity_id=activity_item1.activity_id,
+                                            action_id=5,action_status="M",
+                                            action_handler=1, action_order=3)
+    activity_item2_feedbackmail = ActionFeedbackMail(activity_id='3',
+                                action_id=3,
+                                feedback_maillist=None
+                                )
+    activity_item3_feedbackmail = ActionFeedbackMail(activity_id='4',
+                                action_id=3,
+                                feedback_maillist=[{"email": "test@org", "author_id": ""}]
+                                )
+    activity_item4_feedbackmail = ActionFeedbackMail(activity_id='5',
+                                action_id=3,
+                                feedback_maillist=[{"email": "test@org", "author_id": "1"}]
+                                )
+    activity_item5_feedbackmail = ActionFeedbackMail(activity_id='6',
+                                action_id=3,
+                                feedback_maillist=[{"email": "test1@org", "author_id": "2"}]
+                                )
+    activity_item5_Authors = Authors(id=1,json="{\"affiliationInfo\": [{\"affiliationNameInfo\": [{\"affiliationName\": \"\", \"affiliationNameLang\": \"ja\", \"affiliationNameShowFlg\": \"true\"}], \"identifierInfo\": [{\"affiliationId\": \"aaaa\", \"affiliationIdType\": \"1\", \"identifierShowFlg\": \"true\"}]}], \"authorIdInfo\": [{\"authorId\": \"1\", \"authorIdShowFlg\": \"true\", \"idType\": \"1\"}, {\"authorId\": \"1\", \"authorIdShowFlg\": \"true\", \"idType\": \"2\"}], \"authorNameInfo\": [{\"familyName\": \"一\", \"firstName\": \"二\", \"fullName\": \"一　二 \", \"language\": \"ja-Kana\", \"nameFormat\": \"familyNmAndNm\", \"nameShowFlg\": \"true\"}], \"emailInfo\": [{\"email\": \"test@org\"}], \"gather_flg\": 0, \"id\": {\"_id\": \"HZ9iXYMBnq6bEezA2CK3\", \"_index\": \"tenant1-authors-author-v1.0.0\", \"_primary_term\": 29, \"_seq_no\": 0, \"_shards\": {\"failed\": 0, \"successful\": 1, \"total\": 2}, \"_type\": \"author-v1.0.0\", \"_version\": 1, \"result\": \"created\"}, \"is_deleted\": \"false\", \"pk_id\": \"1\"}")                            
+    activity_item6_feedbackmail = ActionFeedbackMail(activity_id='7',
+                                action_id=3,
+                                feedback_maillist={"email": "test1@org", "author_id": "2"}
+                                )
+    with db.session.begin_nested():
+        db.session.add(activity_action1_item1)
+        db.session.add(activity_action2_item1)
+        db.session.add(activity_action3_item1)
+        db.session.add(activity_item2_feedbackmail)
+        db.session.add(activity_item3_feedbackmail)
+        db.session.add(activity_item4_feedbackmail)
+        db.session.add(activity_item5_feedbackmail)
+        db.session.add(activity_item5_Authors)
+        db.session.add(activity_item6_feedbackmail)
+    db.session.commit()
+
+    return {'flow_define':flow_define,'item_type':item_type,'workflow':workflow, 'action_feedback_mail':activity_item3_feedbackmail,'action_feedback_mail1':activity_item4_feedbackmail,'action_feedback_mail2':activity_item5_feedbackmail,'action_feedback_mail3':activity_item6_feedbackmail}
 
 @pytest.fixture()
 def db_workflow(app, db, db_itemtype, users):
