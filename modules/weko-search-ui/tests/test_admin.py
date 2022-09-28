@@ -307,12 +307,11 @@ def test_import_items_with_listrecords_without_import_task_data(app, client, use
         assert data["data"]["import_start_time"] is not None
 
 
-@pytest.mark.parametrize('id', accessible_user_list)
-def test_download_import(app, client, users, db_register, id):
-    login_user_via_session(client=client, email=users[id]['email'])
-    url = "/admin/items/import/export_import"
-
-    input = {"list_result": [
+result_data = [
+    None,
+    [],
+    [{}],
+    [
 		{
 			'No':1,
 			'Start Date':'2022-08-25 04:54:19',
@@ -328,12 +327,20 @@ def test_download_import(app, client, users, db_register, id):
 			'Item Id':'',
 			'Action':'End',
 			'Work Flow Status':'Done'
-		}]}
+		}]
+]
+
+@pytest.mark.parametrize('result_data', result_data)
+@pytest.mark.parametrize('id', accessible_user_list)
+def test_download_import(app, client, users, db_register, id, result_data):
+    login_user_via_session(client=client, email=users[id]['email'])
+    url = "/admin/items/import/export_import"
+
+    input = {"list_result": result_data}
     now = str(datetime.date(datetime.now()))
     file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
     res = client.post(url, json=input)
-
     assert res.mimetype == "text/{}".format(file_format)
     assert res.headers["Content-disposition"] == "attachment; filename=List_Download {}.{}".format(now, file_format)
 

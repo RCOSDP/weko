@@ -2,8 +2,8 @@ from marshmallow import Schema, fields
 from marshmallow.validate import Range
 
 class ImportItemsSchema(Schema):
-    data_path = fields.String(required=False)
-    list_record = fields.List(fields.Dict(), allow_none=True)
+    data_path = fields.String(required=False, allow_none=False)
+    list_record = fields.List(fields.Dict(), allow_none=False)
 
 
 class DownloadImportSchema(Schema):

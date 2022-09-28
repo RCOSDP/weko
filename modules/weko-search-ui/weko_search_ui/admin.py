@@ -487,14 +487,14 @@ class ItemImportView(BaseView):
                                 ResponseMessageSchema
                             example: {"code": -1, "msg": "arguments error"}
         """
-        import_info = {}
         try:
             import_info = ImportItemsSchema().load(request.get_json())
         except ValidationError as err:
             res = ResponseMessageSchema().load({'code':-1,'msg':str(err)})
             return jsonify(res.data), 400
 
-        data_path = import_info.data.get("data_path")
+        data = import_info.data or {}
+        data_path = data.get("data_path")
         user_id = current_user.get_id() if current_user else 1
         request_info = {
             "remote_addr": request.remote_addr,
@@ -508,10 +508,17 @@ class ItemImportView(BaseView):
 
         tasks = []
         list_record = [
-            item for item in import_info.data.get("list_record", []) if not item.get("errors")
+            item for item in data.get("list_record", []) if not item.get("errors")
         ]
         import_start_time = ""
         if list_record:
+            try:
+                type_null_check(data_path, str)
+            except ValueError:
+                current_app.logger.error("argument error")
+                res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
+                return jsonify(res.data), 500
+
             group_tasks = []
             for item in list_record:
                 item["root_path"] = data_path + "/data"
