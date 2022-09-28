@@ -62,8 +62,10 @@ from weko_admin.views import blueprint as weko_admin_blueprint
 from weko_records.models import ItemTypeName, ItemType
 from weko_workflow import WekoWorkflow
 from weko_search_ui import WekoSearchUI
+
 from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction, ActivityAction, ActionFeedbackMail
-from weko_workflow.views import blueprint as weko_workflow_blueprint
+from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
+
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
