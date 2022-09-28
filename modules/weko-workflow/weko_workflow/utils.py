@@ -1078,7 +1078,6 @@ class IdentifierHandle(object):
             "identifierRegistration.@value")
         key_type = self.metadata_mapping.get_first_property_by_mapping(
             "identifierRegistration.@attributes.identifierType")
-
         self.commit(key_id=key_value.split('.')[0],
                     key_val=key_value.split('.')[1],
                     key_typ=key_type.split('.')[1],

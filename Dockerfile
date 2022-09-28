@@ -55,11 +55,13 @@ WORKDIR /code
 RUN adduser --uid 1000 --disabled-password --gecos '' invenio
 USER invenio
 COPY --chown=invenio:invenio scripts /code/scripts
+COPY --chown=invenio:invenio tools /code/tools
 COPY --chown=invenio:invenio modules /code/modules
 COPY --chown=invenio:invenio packages.txt /code/packages.txt
 COPY --chown=invenio:invenio packages-invenio.txt /code/packages-invenio.txt
 COPY --chown=invenio:invenio requirements-weko-modules.txt /code/requirements-weko-modules.txt
 COPY --chown=invenio:invenio invenio /code/invenio
+COPY --chown=invenio:invenio postgresql /code/postgresql
 
 FROM stage_3 AS stage_4
 # Create Weko instance:

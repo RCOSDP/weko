@@ -269,12 +269,13 @@ def iframe_success():
     レンダリングする。
 
     Returns:
-        str: render result of weko_workflow/item_login_success.html
+        str: アイテム登録ビュー
+            render result of weko_workflow/item_login_success.html
 
     ---
     get:
         description: "render template"
-        response:
+        responses:
             200:
                 description: "render_template"
                 content:
@@ -1183,8 +1184,9 @@ def next_action(activity_id='0', action_id=0):
         action_id (int, optional): 現在のアクションID.パスパラメータから取得. Defaults to 0.
 
     Returns:
-        object: 成否判定のコードとメッセージを含むjson dataをレスポンスボディにもつResponse.json data validated by ResponseMessageSchema
-        
+        object: 成否判定のコードとメッセージを含むjson dataをレスポンスボディにもつResponse.
+            json data validated by ResponseMessageSchema
+
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
 
@@ -1552,6 +1554,7 @@ def next_action(activity_id='0', action_id=0):
             else:
                 _identifier = IdentifierHandle(item_id)
                 _value, _type = _identifier.get_idt_registration_data()
+
                 if _value:
                     _identifier.remove_idt_registration_metadata()
         else:
@@ -1698,8 +1701,9 @@ def previous_action(activity_id='0', action_id=0, req=0):
                              -1: アイテム登録アクション
                              それ以外: 2つ目のアクション
     Returns:
-        object: 成否判定のコードとメッセージを含むjson dataをレスポンスボディにもつResponse.json data validated by ResponseMessageSchema. 
-    
+        object: 成否判定のコードとメッセージを含むjson dataをレスポンスボディにもつResponse.
+            json data validated by ResponseMessageSchema.
+
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
 
@@ -2120,7 +2124,7 @@ def withdraw_confirm(activity_id='0', action_id=0):
 
     Returns:
         object: ユーザー情報の確認結果とリダイレクト先URLのjson dataをレスポンスボディにもつResponse. validated by ResponseMessageSchema
-    
+
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
 
@@ -2375,7 +2379,6 @@ def lock_activity(activity_id="0"):
 
     Returns:
         object: アクティビティの状態を示すjson dataをレスポンスボディに含むResponse.json data validated by ResponseMessageSchema
-    
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
 

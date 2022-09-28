@@ -1,0 +1,1045 @@
+[
+  {
+    "key": "is_output",
+    "type": "radios",
+    "titleMap": [
+      {
+        "name": "Output",
+        "value": true
+      },
+      {
+        "name": "Do Not Output",
+        "value": false
+      }
+    ]
+  },
+  {
+    "key": "publication_title",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Title",
+      "ja": "タイトル"
+    }
+  },
+  {
+    "key": "print_identifier",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Print-format identifier",
+      "ja": "プリント版ISSN/プリント版ISBN"
+    }
+  },
+  {
+    "key": "online_identifier",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Online-format identifier",
+      "ja": "eISSN/eISBN"
+    }
+  },
+  {
+    "key": "date_first_issue_online",
+    "condition": "model.is_output && model.publication_type == 'serial'",
+    "required": true,
+    "title_i18n": {
+      "en": "Date of first issue available online",
+      "ja": "最古オンライン巻号の出版年月日"
+    },
+    "type": "template",
+    "format": "yyyy-MM-dd",
+    "templateUrl": "/static/templates/weko_deposit/datepicker_multi_format.html"
+  },
+  {
+    "key": "date_first_issue_online",
+    "condition": "model.is_output && model.publication_type != 'serial'",
+    "title_i18n": {
+      "en": "Date of first issue available online",
+      "ja": "最古オンライン巻号の出版年月日"
+    },
+    "type": "template",
+    "format": "yyyy-MM-dd",
+    "templateUrl": "/static/templates/weko_deposit/datepicker_multi_format.html"
+  },
+  {
+    "key": "num_first_vol_online",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Number of first volume available online",
+      "ja": "提供最古巻"
+    }
+  },
+  {
+    "key": "num_first_issue_online",
+    "type": "text",
+    "condition": "model.is_output && model.num_first_vol_online != ''",
+    "title_i18n": {
+      "en": "Number of first issue available online",
+      "ja": "提供最古号"
+    }
+  },
+  {
+    "key": "num_first_issue_online",
+    "type": "text",
+    "condition": "model.is_output && model.num_first_vol_online == ''",
+    "readonly": true,
+    "title_i18n": {
+      "en": "Number of first issue available online",
+      "ja": "提供最古号"
+    }
+  },
+  {
+    "key": "date_last_issue_online",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Date of last issue available online",
+      "ja": "最新オンライン巻号の出版年月日"
+    },
+    "type": "template",
+    "format": "yyyy-MM-dd",
+    "templateUrl": "/static/templates/weko_deposit/datepicker_multi_format.html"
+  },
+  {
+    "key": "num_last_vol_online",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Number of last volume available online",
+      "ja": "提供最新巻"
+    }
+  },
+  {
+    "key": "num_last_issue_online",
+    "type": "text",
+    "condition": "model.is_output && model.num_last_vol_online != ''",
+    "title_i18n": {
+      "en": "Number of last issue available online",
+      "ja": "提供最新号"
+    }
+  },
+  {
+    "key": "num_last_issue_online",
+    "type": "text",
+    "condition": "model.is_output && model.num_last_vol_online == ''",
+    "readonly": true,
+    "title_i18n": {
+      "en": "Number of last issue available online",
+      "ja": "提供最新号"
+    }
+  },
+  {
+    "key": "embargo_info",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Embargo information",
+      "ja": "エンバーゴ情報"
+    }
+  },
+  {
+    "key": "coverage_depth",
+    "type": "select",
+    "titleMap": [
+      {
+        "name": "Abstract",
+        "value": "abstract"
+      },
+      {
+        "name": "Fulltext",
+        "value": "fulltext"
+      },
+      {
+        "name": "Selected Articles",
+        "value": "selectedArticles"
+      }
+    ],
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Coverage depth",
+      "ja": "カバー範囲"
+    }
+  },
+  {
+    "key": "coverage_notes",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Coverage notes",
+      "ja": "カバー範囲に関する注記"
+    }
+  },
+  {
+    "key": "publisher_name",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Publisher name",
+      "ja": "出版者"
+    }
+  },
+  {
+    "key": "publication_type",
+    "type": "select",
+    "titleMap": [
+      {
+        "name": "Serial",
+        "value": "serial"
+      }
+    ],
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Publication type",
+      "ja": "資料種別"
+    }
+  },
+  {
+    "key": "parent_publication_title_id",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Parent publication identifier",
+      "ja": "シリーズのタイトルID"
+    }
+  },
+  {
+    "key": "preceding_publication_title_id",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Preceding publication identifier",
+      "ja": "変遷前誌のタイトルID"
+    }
+  },
+  {
+    "key": "access_type",
+    "type": "select",
+    "titleMap": [
+      {
+        "name": "Free（無料・オープンアクセス）",
+        "value": "F"
+      },
+      {
+        "name": "Paid（有料）",
+        "value": "P"
+      }
+    ],
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Access type",
+      "ja": "アクセスモデル"
+    }
+  },
+  {
+    "key": "language",
+    "type": "select",
+    "titleMap": [
+      {
+        "value": "jpn",
+        "name": "jpn"
+      },
+      {
+        "value": "eng",
+        "name": "eng"
+      },
+      {
+        "value": "chi",
+        "name": "chi"
+      },
+      {
+        "value": "kor",
+        "name": "kor"
+      },
+      {
+        "value": "aar",
+        "name": "aar"
+      },
+      {
+        "value": "abk",
+        "name": "abk"
+      },
+      {
+        "value": "afr",
+        "name": "afr"
+      },
+      {
+        "value": "aka",
+        "name": "aka"
+      },
+      {
+        "value": "alb",
+        "name": "alb"
+      },
+      {
+        "value": "amh",
+        "name": "amh"
+      },
+      {
+        "value": "ara",
+        "name": "ara"
+      },
+      {
+        "value": "arg",
+        "name": "arg"
+      },
+      {
+        "value": "arm",
+        "name": "arm"
+      },
+      {
+        "value": "asm",
+        "name": "asm"
+      },
+      {
+        "value": "ava",
+        "name": "ava"
+      },
+      {
+        "value": "ave",
+        "name": "ave"
+      },
+      {
+        "value": "aym",
+        "name": "aym"
+      },
+      {
+        "value": "aze",
+        "name": "aze"
+      },
+      {
+        "value": "bak",
+        "name": "bak"
+      },
+      {
+        "value": "bam",
+        "name": "bam"
+      },
+      {
+        "value": "bel",
+        "name": "bel"
+      },
+      {
+        "value": "baq",
+        "name": "baq"
+      },
+      {
+        "value": "ben",
+        "name": "ben"
+      },
+      {
+        "value": "bih",
+        "name": "bih"
+      },
+      {
+        "value": "bis",
+        "name": "bis"
+      },
+      {
+        "value": "bos",
+        "name": "bos"
+      },
+      {
+        "value": "bre",
+        "name": "bre"
+      },
+      {
+        "value": "bul",
+        "name": "bul"
+      },
+      {
+        "value": "bur",
+        "name": "bur"
+      },
+      {
+        "value": "cat",
+        "name": "cat"
+      },
+      {
+        "value": "cha",
+        "name": "cha"
+      },
+      {
+        "value": "che",
+        "name": "che"
+      },
+      {
+        "value": "chu",
+        "name": "chu"
+      },
+      {
+        "value": "chv",
+        "name": "chv"
+      },
+      {
+        "value": "cor",
+        "name": "cor"
+      },
+      {
+        "value": "cos",
+        "name": "cos"
+      },
+      {
+        "value": "cre",
+        "name": "cre"
+      },
+      {
+        "value": "cze",
+        "name": "cze"
+      },
+      {
+        "value": "dan",
+        "name": "dan"
+      },
+      {
+        "value": "div",
+        "name": "div"
+      },
+      {
+        "value": "dut",
+        "name": "dut"
+      },
+      {
+        "value": "dzo",
+        "name": "dzo"
+      },
+      {
+        "value": "epo",
+        "name": "epo"
+      },
+      {
+        "value": "est",
+        "name": "est"
+      },
+      {
+        "value": "ewe",
+        "name": "ewe"
+      },
+      {
+        "value": "fao",
+        "name": "fao"
+      },
+      {
+        "value": "fij",
+        "name": "fij"
+      },
+      {
+        "value": "fin",
+        "name": "fin"
+      },
+      {
+        "value": "fre",
+        "name": "fre"
+      },
+      {
+        "value": "fry",
+        "name": "fry"
+      },
+      {
+        "value": "ful",
+        "name": "ful"
+      },
+      {
+        "value": "geo",
+        "name": "geo"
+      },
+      {
+        "value": "ger",
+        "name": "ger"
+      },
+      {
+        "value": "gla",
+        "name": "gla"
+      },
+      {
+        "value": "gle",
+        "name": "gle"
+      },
+      {
+        "value": "glg",
+        "name": "glg"
+      },
+      {
+        "value": "glv",
+        "name": "glv"
+      },
+      {
+        "value": "gre",
+        "name": "gre"
+      },
+      {
+        "value": "grn",
+        "name": "grn"
+      },
+      {
+        "value": "guj",
+        "name": "guj"
+      },
+      {
+        "value": "hat",
+        "name": "hat"
+      },
+      {
+        "value": "hau",
+        "name": "hau"
+      },
+      {
+        "value": "heb",
+        "name": "heb"
+      },
+      {
+        "value": "her",
+        "name": "her"
+      },
+      {
+        "value": "hin",
+        "name": "hin"
+      },
+      {
+        "value": "hmo",
+        "name": "hmo"
+      },
+      {
+        "value": "hrv",
+        "name": "hrv"
+      },
+      {
+        "value": "hun",
+        "name": "hun"
+      },
+      {
+        "value": "ibo",
+        "name": "ibo"
+      },
+      {
+        "value": "ice",
+        "name": "ice"
+      },
+      {
+        "value": "ido",
+        "name": "ido"
+      },
+      {
+        "value": "iii",
+        "name": "iii"
+      },
+      {
+        "value": "iku",
+        "name": "iku"
+      },
+      {
+        "value": "ile",
+        "name": "ile"
+      },
+      {
+        "value": "ina",
+        "name": "ina"
+      },
+      {
+        "value": "ind",
+        "name": "ind"
+      },
+      {
+        "value": "ipk",
+        "name": "ipk"
+      },
+      {
+        "value": "ita",
+        "name": "ita"
+      },
+      {
+        "value": "jav",
+        "name": "jav"
+      },
+      {
+        "value": "kal",
+        "name": "kal"
+      },
+      {
+        "value": "kan",
+        "name": "kan"
+      },
+      {
+        "value": "kas",
+        "name": "kas"
+      },
+      {
+        "value": "kau",
+        "name": "kau"
+      },
+      {
+        "value": "kaz",
+        "name": "kaz"
+      },
+      {
+        "value": "khm",
+        "name": "khm"
+      },
+      {
+        "value": "kik",
+        "name": "kik"
+      },
+      {
+        "value": "kin",
+        "name": "kin"
+      },
+      {
+        "value": "kir",
+        "name": "kir"
+      },
+      {
+        "value": "kom",
+        "name": "kom"
+      },
+      {
+        "value": "kon",
+        "name": "kon"
+      },
+      {
+        "value": "kua",
+        "name": "kua"
+      },
+      {
+        "value": "kur",
+        "name": "kur"
+      },
+      {
+        "value": "lao",
+        "name": "lao"
+      },
+      {
+        "value": "lat",
+        "name": "lat"
+      },
+      {
+        "value": "lav",
+        "name": "lav"
+      },
+      {
+        "value": "lim",
+        "name": "lim"
+      },
+      {
+        "value": "lin",
+        "name": "lin"
+      },
+      {
+        "value": "lit",
+        "name": "lit"
+      },
+      {
+        "value": "ltz",
+        "name": "ltz"
+      },
+      {
+        "value": "lub",
+        "name": "lub"
+      },
+      {
+        "value": "lug",
+        "name": "lug"
+      },
+      {
+        "value": "mac",
+        "name": "mac"
+      },
+      {
+        "value": "mah",
+        "name": "mah"
+      },
+      {
+        "value": "mal",
+        "name": "mal"
+      },
+      {
+        "value": "mao",
+        "name": "mao"
+      },
+      {
+        "value": "mar",
+        "name": "mar"
+      },
+      {
+        "value": "may",
+        "name": "may"
+      },
+      {
+        "value": "mlg",
+        "name": "mlg"
+      },
+      {
+        "value": "mlt",
+        "name": "mlt"
+      },
+      {
+        "value": "mon",
+        "name": "mon"
+      },
+      {
+        "value": "nau",
+        "name": "nau"
+      },
+      {
+        "value": "nav",
+        "name": "nav"
+      },
+      {
+        "value": "nbl",
+        "name": "nbl"
+      },
+      {
+        "value": "nde",
+        "name": "nde"
+      },
+      {
+        "value": "ndo",
+        "name": "ndo"
+      },
+      {
+        "value": "nep",
+        "name": "nep"
+      },
+      {
+        "value": "nno",
+        "name": "nno"
+      },
+      {
+        "value": "nob",
+        "name": "nob"
+      },
+      {
+        "value": "nor",
+        "name": "nor"
+      },
+      {
+        "value": "nya",
+        "name": "nya"
+      },
+      {
+        "value": "oci",
+        "name": "oci"
+      },
+      {
+        "value": "oji",
+        "name": "oji"
+      },
+      {
+        "value": "ori",
+        "name": "ori"
+      },
+      {
+        "value": "orm",
+        "name": "orm"
+      },
+      {
+        "value": "oss",
+        "name": "oss"
+      },
+      {
+        "value": "pan",
+        "name": "pan"
+      },
+      {
+        "value": "per",
+        "name": "per"
+      },
+      {
+        "value": "pli",
+        "name": "pli"
+      },
+      {
+        "value": "pol",
+        "name": "pol"
+      },
+      {
+        "value": "por",
+        "name": "por"
+      },
+      {
+        "value": "pus",
+        "name": "pus"
+      },
+      {
+        "value": "que",
+        "name": "que"
+      },
+      {
+        "value": "roh",
+        "name": "roh"
+      },
+      {
+        "value": "rum",
+        "name": "rum"
+      },
+      {
+        "value": "run",
+        "name": "run"
+      },
+      {
+        "value": "rus",
+        "name": "rus"
+      },
+      {
+        "value": "sag",
+        "name": "sag"
+      },
+      {
+        "value": "san",
+        "name": "san"
+      },
+      {
+        "value": "sin",
+        "name": "sin"
+      },
+      {
+        "value": "slo",
+        "name": "slo"
+      },
+      {
+        "value": "slv",
+        "name": "slv"
+      },
+      {
+        "value": "sme",
+        "name": "sme"
+      },
+      {
+        "value": "smo",
+        "name": "smo"
+      },
+      {
+        "value": "sna",
+        "name": "sna"
+      },
+      {
+        "value": "snd",
+        "name": "snd"
+      },
+      {
+        "value": "som",
+        "name": "som"
+      },
+      {
+        "value": "sot",
+        "name": "sot"
+      },
+      {
+        "value": "spa",
+        "name": "spa"
+      },
+      {
+        "value": "srd",
+        "name": "srd"
+      },
+      {
+        "value": "srp",
+        "name": "srp"
+      },
+      {
+        "value": "ssw",
+        "name": "ssw"
+      },
+      {
+        "value": "sun",
+        "name": "sun"
+      },
+      {
+        "value": "swa",
+        "name": "swa"
+      },
+      {
+        "value": "swe",
+        "name": "swe"
+      },
+      {
+        "value": "tah",
+        "name": "tah"
+      },
+      {
+        "value": "tam",
+        "name": "tam"
+      },
+      {
+        "value": "tat",
+        "name": "tat"
+      },
+      {
+        "value": "tel",
+        "name": "tel"
+      },
+      {
+        "value": "tgk",
+        "name": "tgk"
+      },
+      {
+        "value": "tgl",
+        "name": "tgl"
+      },
+      {
+        "value": "tha",
+        "name": "tha"
+      },
+      {
+        "value": "tib",
+        "name": "tib"
+      },
+      {
+        "value": "tir",
+        "name": "tir"
+      },
+      {
+        "value": "ton",
+        "name": "ton"
+      },
+      {
+        "value": "tsn",
+        "name": "tsn"
+      },
+      {
+        "value": "tso",
+        "name": "tso"
+      },
+      {
+        "value": "tuk",
+        "name": "tuk"
+      },
+      {
+        "value": "tur",
+        "name": "tur"
+      },
+      {
+        "value": "twi",
+        "name": "twi"
+      },
+      {
+        "value": "uig",
+        "name": "uig"
+      },
+      {
+        "value": "ukr",
+        "name": "ukr"
+      },
+      {
+        "value": "urd",
+        "name": "urd"
+      },
+      {
+        "value": "uzb",
+        "name": "uzb"
+      },
+      {
+        "value": "ven",
+        "name": "ven"
+      },
+      {
+        "value": "vie",
+        "name": "vie"
+      },
+      {
+        "value": "vol",
+        "name": "vol"
+      },
+      {
+        "value": "wel",
+        "name": "wel"
+      },
+      {
+        "value": "wln",
+        "name": "wln"
+      },
+      {
+        "value": "wol",
+        "name": "wol"
+      },
+      {
+        "value": "xho",
+        "name": "xho"
+      },
+      {
+        "value": "yid",
+        "name": "yid"
+      },
+      {
+        "value": "yor",
+        "name": "yor"
+      },
+      {
+        "value": "zha",
+        "name": "zha"
+      },
+      {
+        "value": "zul",
+        "name": "zul"
+      }
+    ],
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Language",
+      "ja": "言語"
+    }
+  },
+  {
+    "key": "title_alternative",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Title alternative",
+      "ja": "その他のタイトル（他の言語でのタイトルなど）"
+    }
+  },
+  {
+    "key": "title_transcription",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Title transcription",
+      "ja": "タイトルヨミ"
+    }
+  },
+  {
+    "key": "ncid",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "NCID",
+      "ja": "NCID"
+    }
+  },
+  {
+    "key": "ndl_callno",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "NDL Call No.",
+      "ja": "NDL請求記号"
+    }
+  },
+  {
+    "key": "ndl_bibid",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "NDL Bibliographic ID",
+      "ja": "NDL書誌ID"
+    }
+  },
+  {
+    "key": "jstage_code",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "J-STAGE CDJOURNAL",
+      "ja": "J-STAGE資料コード（雑誌名の略称）"
+    }
+  },
+  {
+    "key": "ichushi_code",
+    "type": "text",
+    "condition": "model.is_output",
+    "title_i18n": {
+      "en": "Ichushi Code",
+      "ja": "医中誌ジャーナルコード"
+    }
+  }
+]

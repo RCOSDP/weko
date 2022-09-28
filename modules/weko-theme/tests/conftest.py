@@ -19,19 +19,102 @@
 # MA 02111-1307, USA.
 
 """Pytest configuration."""
-
 import os
 import shutil
 import tempfile
+import json
+import uuid
+from os.path import join
+from datetime import date, datetime, timedelta
 
 import pytest
+from mock import Mock, patch
 from flask import Flask
-from flask_babelex import Babel
-from invenio_db import InvenioDB, db
+from flask_babelex import Babel, lazy_gettext as _
+from flask_celeryext import FlaskCeleryExt
+from flask_menu import Menu
+from flask_login import current_user, login_user, LoginManager
+from werkzeug.local import LocalProxy
+from tests.helpers import create_record, json_data
+
+from invenio_deposit.config import (
+    DEPOSIT_DEFAULT_STORAGE_CLASS,
+    DEPOSIT_RECORDS_UI_ENDPOINTS,
+    DEPOSIT_REST_ENDPOINTS,
+    DEPOSIT_DEFAULT_JSONSCHEMA,
+    DEPOSIT_JSONSCHEMAS_PREFIX,
+)
+from invenio_stats.contrib.event_builders import (
+    build_file_unique_id,
+    build_record_unique_id,
+    file_download_event_builder
+)
+from invenio_accounts import InvenioAccounts
+from invenio_accounts.models import User, Role
+from invenio_accounts.testutils import create_test_user, login_user_via_session
+from invenio_access.models import ActionUsers
+from invenio_access import InvenioAccess
+from invenio_access.models import ActionUsers, ActionRoles
+from invenio_assets import InvenioAssets
+from invenio_cache import InvenioCache
+from invenio_db import InvenioDB
+from invenio_db import db as db_
+from invenio_files_rest.models import Location
 from invenio_i18n import InvenioI18N
-from sqlalchemy_utils.functions import create_database, database_exists, \
-    drop_database
-from weko_index_tree import WekoIndexTree
+from invenio_indexer import InvenioIndexer
+from invenio_jsonschemas import InvenioJSONSchemas
+from invenio_mail import InvenioMail
+from invenio_oaiserver import InvenioOAIServer
+from invenio_oaiserver.models import OAISet
+from invenio_pidrelations import InvenioPIDRelations
+from invenio_records import InvenioRecords
+from invenio_search import InvenioSearch
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
+from simplekv.memory.redisstore import RedisStore
+from invenio_oaiharvester.models import HarvestSettings
+from invenio_stats import InvenioStats
+from invenio_admin import InvenioAdmin
+from invenio_search import RecordsSearch
+from invenio_pidstore import InvenioPIDStore, current_pidstore
+from invenio_records_rest.utils import PIDConverter
+from invenio_records.models import RecordMetadata
+from invenio_deposit.api import Deposit
+from invenio_communities.models import Community
+from invenio_search import current_search_client, current_search
+from invenio_queues.proxies import current_queues
+from invenio_files_rest.permissions import bucket_listmultiparts_all, \
+    bucket_read_all, bucket_read_versions_all, bucket_update_all, \
+    location_update_all, multipart_delete_all, multipart_read_all, \
+    object_delete_all, object_delete_version_all, object_read_all, \
+    object_read_version_all
+from invenio_files_rest.models import Bucket
+from invenio_db.utils import drop_alembic_version_table
+from invenio_records_rest.config import RECORDS_REST_SORT_OPTIONS
+
+from weko_schema_ui.models import OAIServerSchema
+from weko_index_tree.api import Indexes
+from weko_records import WekoRecords
+from weko_records.api import ItemTypes
+from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
+from weko_records.models import ItemTypeName, ItemType
+from weko_records_ui.models import PDFCoverPageSettings
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISSION_ROLE_COMMUNITY, EMAIL_DISPLAY_FLG
+from weko_groups import WekoGroups
+from weko_workflow import WekoWorkflow
+from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
+from weko_index_tree.models import Index
+from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
+from weko_index_tree.views import blueprint_api
+from weko_index_tree.rest import create_blueprint
+from weko_search_ui import WekoSearchUI, WekoSearchREST
+from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX
+from weko_redis.redis import RedisConnection
+from weko_admin.models import SessionLifetime
+from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS, WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
+
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import Session
+from sqlalchemy import event
 
 
 @pytest.yield_fixture()
@@ -45,25 +128,347 @@ def instance_path():
 @pytest.fixture()
 def base_app(instance_path):
     """Flask application fixture."""
-    app_ = Flask('testapp', instance_path=instance_path)
+    app_ = Flask('testapp', instance_path=instance_path, static_folder=join(instance_path, "static"),)
+    os.environ['INVENIO_WEB_HOST_NAME']="127.0.0.1"
     app_.config.update(
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'
-        ),
-        SQLALCHEMY_TRACK_MODIFICATIONS=True,
+        ACCOUNTS_JWT_ENABLE=True,
         SECRET_KEY='SECRET_KEY',
+        WEKO_INDEX_TREE_UPDATED=True,
         TESTING=True,
-    )
-    Babel(app_)
-    InvenioI18N(app_)
-    InvenioDB(app_)
-    WekoIndexTree(app_)
+        FILES_REST_DEFAULT_QUOTA_SIZE = None,
+        FILES_REST_DEFAULT_STORAGE_CLASS = 'S',
+        FILES_REST_STORAGE_CLASS_LIST = {
+            'S': 'Standard',
+            'A': 'Archive',
+        },
+        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_DB='0',
+        CACHE_REDIS_HOST="redis",
+        WEKO_INDEX_TREE_STATE_PREFIX="index_tree_expand_state",
+        REDIS_PORT='6379',
+        DEPOSIT_DEFAULT_JSONSCHEMA=DEPOSIT_DEFAULT_JSONSCHEMA,
+        SERVER_NAME='TEST_SERVER',
+        LOGIN_DISABLED=False,
+        INDEXER_DEFAULT_DOCTYPE='item-v1.0.0',
+        INDEXER_FILE_DOC_TYPE='content',
+        INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format(
+            'test'
+        ),
+        INDEX_IMG='indextree/36466818-image.jpg',
+        # SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+        #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SEARCH_ELASTIC_HOSTS=os.environ.get(
+            'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
+        SQLALCHEMY_TRACK_MODIFICATIONS=True,
+        JSONSCHEMAS_HOST='inveniosoftware.org',
+        ACCOUNTS_USERINFO_HEADERS=True,
+        I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
+        WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX="lock_index_",
+        WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
+        WEKO_PERMISSION_ROLE_COMMUNITY=WEKO_PERMISSION_ROLE_COMMUNITY,
+        EMAIL_DISPLAY_FLG=EMAIL_DISPLAY_FLG,
+        THEME_SITEURL="https://localhost",
+        DEPOSIT_RECORDS_UI_ENDPOINTS=DEPOSIT_RECORDS_UI_ENDPOINTS,
+        DEPOSIT_REST_ENDPOINTS=DEPOSIT_REST_ENDPOINTS,
+        DEPOSIT_DEFAULT_STORAGE_CLASS=DEPOSIT_DEFAULT_STORAGE_CLASS,
+        RECORDS_REST_SORT_OPTIONS=RECORDS_REST_SORT_OPTIONS,
+        # SEARCH_UI_SEARCH_INDEX=SEARCH_UI_SEARCH_INDEX,
+        SEARCH_UI_SEARCH_INDEX="test-weko",
+        # SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
+        SEARCH_INDEX_PREFIX="{}-".format('test'),
+        SEARCH_CLIENT_CONFIG=dict(timeout=120, max_retries=10),
+        OAISERVER_ID_PREFIX="oai:inveniosoftware.org:recid/",
+        OAISERVER_RECORD_INDEX="_all",
+        OAISERVER_REGISTER_SET_SIGNALS=True,
+        OAISERVER_METADATA_FORMATS={
+            "jpcoar_1.0": {
+                "serializer": (
+                    "weko_schema_ui.utils:dumps_oai_etree",
+                    {
+                        "schema_type": "jpcoar_v1",
+                    },
+                ),
+                "namespace": "https://irdb.nii.ac.jp/schema/jpcoar/1.0/",
+                "schema": "https://irdb.nii.ac.jp/schema/jpcoar/1.0/jpcoar_scm.xsd",
+            }
+        },
+        THEME_SITENAME = 'WEKO3',
+        THEME_FRONTPAGE_TEMPLATE = 'weko_theme/frontpage.html',
+        BASE_EDIT_TEMPLATE = 'weko_theme/edit.html',
+        BASE_PAGE_TEMPLATE = 'weko_theme/page.html',
+        WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS = False,
+        WEKO_ADMIN_MANAGEMENT_OPTIONS=WEKO_ADMIN_MANAGEMENT_OPTIONS,
+        WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS=WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS,
+        WEKO_RECORDS_UI_LICENSE_DICT=[
+            {
+                'name': _('write your own license'),
+                'value': 'license_free',
+            },
+            # version 0
+            {
+                'name': _(
+                    'Creative Commons CC0 1.0 Universal Public Domain Designation'),
+                'code': 'CC0',
+                'href_ja': 'https://creativecommons.org/publicdomain/zero/1.0/deed.ja',
+                'href_default': 'https://creativecommons.org/publicdomain/zero/1.0/',
+                'value': 'license_12',
+                'src': '88x31(0).png',
+                'src_pdf': 'cc-0.png',
+                'href_pdf': 'https://creativecommons.org/publicdomain/zero/1.0/'
+                            'deed.ja',
+                'txt': 'This work is licensed under a Public Domain Dedication '
+                    'International License.'
+            },
+            # version 3.0
+            {
+                'name': _('Creative Commons Attribution 3.0 Unported (CC BY 3.0)'),
+                'code': 'CC BY 3.0',
+                'href_ja': 'https://creativecommons.org/licenses/by/3.0/deed.ja',
+                'href_default': 'https://creativecommons.org/licenses/by/3.0/',
+                'value': 'license_6',
+                'src': '88x31(1).png',
+                'src_pdf': 'by.png',
+                'href_pdf': 'http://creativecommons.org/licenses/by/3.0/',
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                       ' 3.0 International License.'
+            },
+            {
+                'name': _(
+                    'Creative Commons Attribution-ShareAlike 3.0 Unported '
+                    '(CC BY-SA 3.0)'),
+                'code': 'CC BY-SA 3.0',
+                'href_ja': 'https://creativecommons.org/licenses/by-sa/3.0/deed.ja',
+                'href_default': 'https://creativecommons.org/licenses/by-sa/3.0/',
+                'value': 'license_7',
+                'src': '88x31(2).png',
+                'src_pdf': 'by-sa.png',
+                'href_pdf': 'http://creativecommons.org/licenses/by-sa/3.0/',
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                    '-ShareAlike 3.0 International License.'
+            },
+            {
+                'name': _(
+                    'Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)'),
+                'code': 'CC BY-ND 3.0',
+                'href_ja': 'https://creativecommons.org/licenses/by-nd/3.0/deed.ja',
+                'href_default': 'https://creativecommons.org/licenses/by-nd/3.0/',
+                'value': 'license_8',
+                'src': '88x31(3).png',
+                'src_pdf': 'by-nd.png',
+                'href_pdf': 'http://creativecommons.org/licenses/by-nd/3.0/',
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                    '-NoDerivatives 3.0 International License.'
 
-    with app_.app_context():
-        if str(db.engine.url) != 'sqlite://' and \
-           not database_exists(str(db.engine.url)):
-            create_database(str(db.engine.url))
-        db.create_all()
+            },
+            {
+                'name': _(
+                    'Creative Commons Attribution-NonCommercial 3.0 Unported'
+                    ' (CC BY-NC 3.0)'),
+                'code': 'CC BY-NC 3.0',
+                'href_ja': 'https://creativecommons.org/licenses/by-nc/3.0/deed.ja',
+                'href_default': 'https://creativecommons.org/licenses/by-nc/3.0/',
+                'value': 'license_9',
+                'src': '88x31(4).png',
+                'src_pdf': 'by-nc.png',
+                'href_pdf': 'http://creativecommons.org/licenses/by-nc/3.0/',
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                    '-NonCommercial 3.0 International License.'
+            },
+            {
+                'name': _(
+                    'Creative Commons Attribution-NonCommercial-ShareAlike 3.0 '
+                    'Unported (CC BY-NC-SA 3.0)'),
+                'code': 'CC BY-NC-SA 3.0',
+                'href_ja': 'https://creativecommons.org/licenses/by-nc-sa/3.0/deed.ja',
+                'href_default': 'https://creativecommons.org/licenses/by-nc-sa/3.0/',
+                'value': 'license_10',
+                'src': '88x31(5).png',
+                'src_pdf': 'by-nc-sa.png',
+                'href_pdf': 'http://creativecommons.org/licenses/by-nc-sa/3.0/',
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                    '-NonCommercial-ShareAlike 3.0 International License.'
+            },
+            {
+                'name': _(
+                    'Creative Commons Attribution-NonCommercial-NoDerivs '
+                    '3.0 Unported (CC BY-NC-ND 3.0)'),
+                'code': 'CC BY-NC-ND 3.0',
+                'href_ja': 'https://creativecommons.org/licenses/by-nc-nd/3.0/deed.ja',
+                'href_default': 'https://creativecommons.org/licenses/by-nc-nd/3.0/',
+                'value': 'license_11',
+                'src': '88x31(6).png',
+                'src_pdf': 'by-nc-nd.png',
+                'href_pdf': 'http://creativecommons.org/licenses/by-nc-nd/3.0/',
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                    '-NonCommercial-ShareAlike 3.0 International License.'
+            },
+            # version 4.0
+            {
+                'name': _('Creative Commons Attribution 4.0 International (CC BY 4.0)'),
+                'code': 'CC BY 4.0',
+                'href_ja': 'https://creativecommons.org/licenses/by/4.0/deed.ja',
+                'href_default': 'https://creativecommons.org/licenses/by/4.0/',
+                'value': 'license_0',
+                'src': '88x31(1).png',
+                'src_pdf': 'by.png',
+                'href_pdf': 'http://creativecommons.org/licenses/by/4.0/',
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                    ' 4.0 International License.'
+            },
+            {
+                'name': _(
+                    'Creative Commons Attribution-ShareAlike 4.0 International '
+                    '(CC BY-SA 4.0)'),
+                'code': 'CC BY-SA 4.0',
+                'href_ja': 'https://creativecommons.org/licenses/by-sa/4.0/deed.ja',
+                'href_default': 'https://creativecommons.org/licenses/by-sa/4.0/',
+                'value': 'license_1',
+                'src': '88x31(2).png',
+                'src_pdf': 'by-sa.png',
+                'href_pdf': 'http://creativecommons.org/licenses/by-sa/4.0/',
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                    '-ShareAlike 4.0 International License.'
+            },
+            {
+                'name': _(
+                    'Creative Commons Attribution-NoDerivatives 4.0 International '
+                    '(CC BY-ND 4.0)'),
+                'code': 'CC BY-ND 4.0',
+                'href_ja': 'https://creativecommons.org/licenses/by-nd/4.0/deed.ja',
+                'href_default': 'https://creativecommons.org/licenses/by-nd/4.0/',
+                'value': 'license_2',
+                'src': '88x31(3).png',
+                'src_pdf': 'by-nd.png',
+                'href_pdf': 'http://creativecommons.org/licenses/by-nd/4.0/',
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                    '-NoDerivatives 4.0 International License.'
+            },
+            {
+                'name': _(
+                    'Creative Commons Attribution-NonCommercial 4.0 International'
+                    ' (CC BY-NC 4.0)'),
+                'code': 'CC BY-NC 4.0',
+                'href_ja': 'https://creativecommons.org/licenses/by-nc/4.0/deed.ja',
+                'href_default': 'https://creativecommons.org/licenses/by-nc/4.0/',
+                'value': 'license_3',
+                'src': '88x31(4).png',
+                'src_pdf': 'by-nc.png',
+                'href_pdf': 'http://creativecommons.org/licenses/by-nc/4.0/',
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                    '-NonCommercial 4.0 International License.'
+            },
+            {
+                'name': _(
+                    'Creative Commons Attribution-NonCommercial-ShareAlike 4.0'
+                    ' International (CC BY-NC-SA 4.0)'),
+                'code': 'CC BY-NC-SA 4.0',
+                'href_ja': 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ja',
+                'href_default': 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
+                'value': 'license_4',
+                'src': '88x31(5).png',
+                'src_pdf': 'by-nc-sa.png',
+                'href_pdf': 'http://creativecommons.org/licenses/by-nc-sa/4.0/',
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                    '-NonCommercial-ShareAlike 4.0 International License.'
+            },
+            {
+                'name': _(
+                    'Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 '
+                    'International (CC BY-NC-ND 4.0)'),
+                'code': 'CC BY-NC-ND 4.0',
+                'href_ja': 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja',
+                'href_default': 'https://creativecommons.org/licenses/by-nc-nd/4.0/',
+                'value': 'license_5',
+                'src': '88x31(6).png',
+                'src_pdf': 'by-nc-nd.png',
+                'href_pdf': 'http://creativecommons.org/licenses/by-nc-nd/4.0/',
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                    '-NonCommercial-ShareAlike 4.0 International License.'
+            },
+        ],
+        WEKO_THEME_DEFAULT_COMMUNITY = 'Root Index',
+        WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE="",
+        WEKO_ITEMS_UI_MULTIPLE_APPROVALS=True,
+        WEKO_SEARCH_REST_ENDPOINTS = dict(
+            recid=dict(
+                pid_type='recid',
+                pid_minter='recid',
+                pid_fetcher='recid',
+                search_class=RecordsSearch,
+                # search_index="test-weko",
+                # search_index=SEARCH_UI_SEARCH_INDEX,
+                search_index="tenant1",
+                search_type='item-v1.0.0',
+                search_factory_imp='weko_search_ui.query.weko_search_factory',
+                # record_class='',
+                record_serializers={
+                    'application/json': ('invenio_records_rest.serializers'
+                                        ':json_v1_response'),
+                },
+                search_serializers={
+                    'application/json': ('weko_records.serializers'
+                                        ':json_v1_search'),
+                },
+                index_route='/index/',
+                tree_route='/index',
+                item_tree_route='/index/<string:pid_value>',
+                index_move_route='/index/move/<int:index_id>',
+                links_factory_imp='weko_search_ui.links:default_links_factory',
+                default_media_type='application/json',
+                max_result_window=10000,
+            ),
+        ),
+        WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
+            tid=dict(
+                record_class='weko_index_tree.api:Indexes',
+                index_route='/tree/index/<int:index_id>',
+                tree_route='/tree',
+                item_tree_route='/tree/<string:pid_value>',
+                index_move_route='/tree/move/<int:index_id>',
+                default_media_type='application/json',
+                create_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
+                read_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
+                update_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
+                delete_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
+            )
+        ),
+        WEKO_INDEX_TREE_STYLE_OPTIONS = {
+            'id': 'weko',
+            'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
+        },
+        WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_edit_setting.html',
+        WEKO_INDEX_TREE_LIST_API = "/api/tree",
+        WEKO_INDEX_TREE_API = "/api/tree/index/",
+    )
+    app_.url_map.converters['pid'] = PIDConverter
+
+    FlaskCeleryExt(app_)
+    Menu(app_)
+    Babel(app_)
+    InvenioDB(app_)
+    InvenioAccounts(app_)
+    InvenioAccess(app_)
+    InvenioAssets(app_)
+    InvenioCache(app_)
+    InvenioJSONSchemas(app_)
+    InvenioSearch(app_)
+    InvenioRecords(app_)
+    InvenioIndexer(app_)
+    InvenioI18N(app_)
+    InvenioPIDRelations(app_)
+    InvenioOAIServer(app_)
+    InvenioMail(app_)
+    InvenioStats(app_)
+    InvenioAdmin(app_)
+    InvenioPIDStore(app_)
+    WekoSearchUI(app_)
+    WekoWorkflow(app_)
+    WekoGroups(app_)
+    
+    current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
+    current_assets.collect.collect()
 
     return app_
 
@@ -73,3 +478,955 @@ def app(base_app):
     """Flask application fixture."""
     with base_app.app_context():
         yield base_app
+
+
+@pytest.yield_fixture()
+def db(app):
+    """Get setup database."""
+    if not database_exists(str(db_.engine.url)):
+        create_database(str(db_.engine.url))
+    db_.create_all()
+    yield db_
+    db_.session.remove()
+    db_.drop_all()
+    drop_alembic_version_table()
+
+
+@pytest.yield_fixture()
+def i18n_app(app):
+    with app.test_request_context(
+        headers=[('Accept-Language','ja')]):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        yield app
+
+
+@pytest.yield_fixture()
+def client_rest(app):
+    app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
+    with app.test_client() as client:
+        yield client
+
+
+@pytest.yield_fixture()
+def client_api(app):
+    app.register_blueprint(blueprint_api, url_prefix='/api')
+    with app.test_client() as client:
+        yield client
+
+
+@pytest.yield_fixture()
+def client_request_args(app):
+    app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
+    with app.test_client() as client:
+        r = client.get('/', query_string={
+            'index_id': '33',
+            'page': 1,
+            'count': 20,
+            'term': 14,
+            'lang': 'en',
+            'parent_id': 33,
+            'index_info': {},
+            'community': 'comm1'
+            })
+        yield r
+
+
+@pytest.fixture()
+def location(app):
+    """Create default location."""
+    tmppath = tempfile.mkdtemp()
+    with db_.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name='local', uri=tmppath, default=True)
+        db_.session.add(loc)
+    db_.session.commit()
+    return location
+
+
+@pytest.fixture()
+def user(app, db):
+    """Create a example user."""
+    return create_test_user(email='test@test.org')
+
+
+@pytest.fixture()
+def users(app, db):
+    """Create users."""
+    ds = app.extensions['invenio-accounts'].datastore
+    user_count = User.query.filter_by(email='user@test.org').count()
+    if user_count != 1:
+        user = create_test_user(email='user@test.org')
+        contributor = create_test_user(email='contributor@test.org')
+        comadmin = create_test_user(email='comadmin@test.org')
+        repoadmin = create_test_user(email='repoadmin@test.org')
+        sysadmin = create_test_user(email='sysadmin@test.org')
+        generaluser = create_test_user(email='generaluser@test.org')
+        originalroleuser = create_test_user(email='originalroleuser@test.org')
+        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
+        noroleuser = create_test_user(email='noroleuser@test.org')
+    else:
+        user = User.query.filter_by(email='user@test.org').first()
+        contributor = User.query.filter_by(email='contributor@test.org').first()
+        comadmin = User.query.filter_by(email='comadmin@test.org').first()
+        repoadmin = User.query.filter_by(email='repoadmin@test.org').first()
+        sysadmin = User.query.filter_by(email='sysadmin@test.org').first()
+        generaluser = User.query.filter_by(email='generaluser@test.org')
+        originalroleuser = create_test_user(email='originalroleuser@test.org')
+        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
+        noroleuser = create_test_user(email='noroleuser@test.org')
+        
+    role_count = Role.query.filter_by(name='System Administrator').count()
+    if role_count != 1:
+        sysadmin_role = ds.create_role(name='System Administrator')
+        repoadmin_role = ds.create_role(name='Repository Administrator')
+        contributor_role = ds.create_role(name='Contributor')
+        comadmin_role = ds.create_role(name='Community Administrator')
+        general_role = ds.create_role(name='General')
+        originalrole = ds.create_role(name='Original Role')
+    else:
+        sysadmin_role = Role.query.filter_by(name='System Administrator').first()
+        repoadmin_role = Role.query.filter_by(name='Repository Administrator').first()
+        contributor_role = Role.query.filter_by(name='Contributor').first()
+        comadmin_role = Role.query.filter_by(name='Community Administrator').first()
+        general_role = Role.query.filter_by(name='General').first()
+        originalrole = Role.query.filter_by(name='Original Role').first()
+
+    ds.add_role_to_user(sysadmin, sysadmin_role)
+    ds.add_role_to_user(repoadmin, repoadmin_role)
+    ds.add_role_to_user(contributor, contributor_role)
+    ds.add_role_to_user(comadmin, comadmin_role)
+    ds.add_role_to_user(generaluser, general_role)
+    ds.add_role_to_user(originalroleuser, originalrole)
+    ds.add_role_to_user(originalroleuser2, originalrole)
+    ds.add_role_to_user(user, sysadmin_role)
+    ds.add_role_to_user(user, repoadmin_role)
+    ds.add_role_to_user(user, contributor_role)
+    ds.add_role_to_user(user, comadmin_role)
+    
+    # Assign access authorization
+    with db.session.begin_nested():
+        action_users = [
+            ActionUsers(action='superuser-access', user=sysadmin)
+        ]
+        db.session.add_all(action_users)
+        action_roles = [
+            ActionRoles(action='superuser-access', role=sysadmin_role),
+            ActionRoles(action='admin-access', role=repoadmin_role),
+            ActionRoles(action='schema-access', role=repoadmin_role),
+            ActionRoles(action='index-tree-access', role=repoadmin_role),
+            ActionRoles(action='indextree-journal-access', role=repoadmin_role),
+            ActionRoles(action='item-type-access', role=repoadmin_role),
+            ActionRoles(action='item-access', role=repoadmin_role),
+            ActionRoles(action='files-rest-bucket-update', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-delete', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-delete-version', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-read', role=repoadmin_role),
+            ActionRoles(action='search-access', role=repoadmin_role),
+            ActionRoles(action='detail-page-acces', role=repoadmin_role),
+            ActionRoles(action='download-original-pdf-access', role=repoadmin_role),
+            ActionRoles(action='author-access', role=repoadmin_role),
+            ActionRoles(action='items-autofill', role=repoadmin_role),
+            ActionRoles(action='stats-api-access', role=repoadmin_role),
+            ActionRoles(action='read-style-action', role=repoadmin_role),
+            ActionRoles(action='update-style-action', role=repoadmin_role),
+            ActionRoles(action='detail-page-acces', role=repoadmin_role),
+
+            ActionRoles(action='admin-access', role=comadmin_role),
+            ActionRoles(action='index-tree-access', role=comadmin_role),
+            ActionRoles(action='indextree-journal-access', role=comadmin_role),
+            ActionRoles(action='item-access', role=comadmin_role),
+            ActionRoles(action='files-rest-bucket-update', role=comadmin_role),
+            ActionRoles(action='files-rest-object-delete', role=comadmin_role),
+            ActionRoles(action='files-rest-object-delete-version', role=comadmin_role),
+            ActionRoles(action='files-rest-object-read', role=comadmin_role),
+            ActionRoles(action='search-access', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='download-original-pdf-access', role=comadmin_role),
+            ActionRoles(action='author-access', role=comadmin_role),
+            ActionRoles(action='items-autofill', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+
+            ActionRoles(action='item-access', role=contributor_role),
+            ActionRoles(action='files-rest-bucket-update', role=contributor_role),
+            ActionRoles(action='files-rest-object-delete', role=contributor_role),
+            ActionRoles(action='files-rest-object-delete-version', role=contributor_role),
+            ActionRoles(action='files-rest-object-read', role=contributor_role),
+            ActionRoles(action='search-access', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='download-original-pdf-access', role=contributor_role),
+            ActionRoles(action='author-access', role=contributor_role),
+            ActionRoles(action='items-autofill', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+        ]
+        db.session.add_all(action_roles)
+
+    return [
+        {'email': noroleuser.email, 'id': noroleuser.id, 'obj': noroleuser},
+        {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
+        {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
+        {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
+        {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
+        {'email': generaluser.email, 'id': generaluser.id, 'obj': sysadmin},
+        {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
+        {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
+        {'email': user.email, 'id': user.id, 'obj': user},
+    ]
+
+
+@pytest.fixture
+def indices(app, db):
+    with db.session.begin_nested():
+        # Create a test Indices
+        testIndexOne = Index(index_name="testIndexOne",browsing_role="Contributor",public_state=True,id=11)
+        testIndexTwo = Index(index_name="testIndexTwo",browsing_group="group_test1",public_state=True,id=22)
+        testIndexThree = Index(
+            index_name="testIndexThree",
+            browsing_role="Contributor",
+            public_state=True,
+            harvest_public_state=True,
+            id=33,
+            public_date=datetime.today() - timedelta(days=1)
+        )
+        testIndexThreeChild = Index(
+            index_name="testIndexThreeChild",
+            browsing_role="Contributor",
+            parent="testIndexThree",
+            index_link_enabled=True,
+            index_link_name="test_link",
+            public_state=True,
+            harvest_public_state=False,
+            id=44,
+            public_date=datetime.today() - timedelta(days=1)
+        )
+        testIndexMore = Index(index_name="testIndexMore",parent="testIndexThree",public_state=True,id='more')
+        testIndexPrivate = Index(index_name="testIndexPrivate",public_state=False,id=55)
+
+        db.session.add(testIndexThree)
+        db.session.add(testIndexThreeChild)
+        
+    return {
+        'index_dict': dict(testIndexThree),
+        'index_non_dict': testIndexThree,
+        'index_non_dict_child': testIndexThreeChild,
+    }
+
+
+@pytest.fixture()
+def esindex(app,db_records):
+    with open("tests/data/mappings/item-v1.0.0.json","r") as f:
+        mapping = json.load(f)
+
+    search = LocalProxy(lambda: app.extensions["invenio-search"])
+
+    with app.test_request_context():
+        try:
+            search.client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
+            search.client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
+        except:
+            search.client.indices.create("test-weko-items",body=mapping)
+            search.client.indices.put_alias(index="test-weko-items", name="test-weko")
+        # print(current_search_client.indices.get_alias())
+    
+    for depid, recid, parent, doi, record, item in db_records:
+        search.client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
+    
+
+    yield search
+
+    with app.test_request_context():
+        try:
+            search.client.indices.delete_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
+            search.client.indices.delete(index=app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
+        except:
+            search.client.indices.delete_alias(index="test-weko-items", name="test-weko")
+            search.client.indices.delete(index=test-weko-items, ignore=[400, 404])
+
+
+@pytest.fixture()
+def db_records(db, instance_path, users):
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name="local", uri=instance_path, default=True)
+        db.session.add(loc)
+    db.session.commit()
+
+    record_data = json_data("data/test_records.json")
+    item_data = json_data("data/test_items.json")
+    record_num = len(record_data)
+    result = []
+    with db.session.begin_nested():
+        for d in range(record_num):
+            result.append(create_record(record_data[d], item_data[d]))
+    db.session.commit()
+
+    index_metadata = {
+            'id': 1,
+            'parent': 0,
+            'value': 'IndexA',
+        }
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        Indexes.create(0, index_metadata)
+    index_metadata = {
+            'id': 2,
+            'parent': 0,
+            'value': 'IndexB',
+        }
+    
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        Indexes.create(0, index_metadata)
+
+ 
+    yield result
+
+
+@pytest.fixture
+def redis_connect(app):
+    redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+    return redis_connection
+
+
+@pytest.fixture()
+def db_register(app, db):
+    action_datas=dict()
+    with open('tests/data/actions.json', 'r') as f:
+        action_datas = json.load(f)
+    actions_db = list()
+    with db.session.begin_nested():
+        for data in action_datas:
+            actions_db.append(Action(**data))
+        db.session.add_all(actions_db)
+    
+    actionstatus_datas = dict()
+    with open('tests/data/action_status.json') as f:
+        actionstatus_datas = json.load(f)
+    actionstatus_db = list()
+    with db.session.begin_nested():
+        for data in actionstatus_datas:
+            actionstatus_db.append(ActionStatus(**data))
+        db.session.add_all(actionstatus_db)
+    
+    index = Index(
+        public_state=True
+    )
+
+    index_private = Index(
+        id=999,
+        public_state=False,
+        public_date=datetime.strptime('2099/04/24 0:00:00','%Y/%m/%d %H:%M:%S')
+    )
+
+    flow_define = FlowDefine(flow_id=uuid.uuid4(),
+                             flow_name='Registration Flow',
+                             flow_user=1)
+
+    item_type_name = ItemTypeName(name='test item type',
+                                  has_site_license=True,
+                                  is_active=True)
+
+    item_type = ItemType(name_id=1,harvesting_type=True,
+                         schema={'type':'test schema'},
+                         form={'type':'test form'},
+                         render={'type':'test render'},
+                         tag=1,version_id=1,is_deleted=False)
+    
+    flow_action1 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=1,
+                     action_version='1.0.0',
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    flow_action2 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=3,
+                     action_version='1.0.0',
+                     action_order=2,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    flow_action3 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=5,
+                     action_version='1.0.0',
+                     action_order=3,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+
+    workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test workflow1',
+                        itemtype_id=1,
+                        index_tree_id=1,
+                        flow_id=1,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+
+    activity = Activity(activity_id='1',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=6)
+    
+    with db.session.begin_nested():
+        db.session.add(index)
+        db.session.add(flow_define)
+        db.session.add(item_type_name)
+        db.session.add(item_type)
+        db.session.add(flow_action1)
+        db.session.add(flow_action2)
+        db.session.add(flow_action3)
+        db.session.add(workflow)
+        db.session.add(activity)
+    
+    # return {'flow_define':flow_define,'item_type_name':item_type_name,'item_type':item_type,'flow_action':flow_action,'workflow':workflow,'activity':activity}
+    return {
+        'flow_define': flow_define,
+        'item_type': item_type,
+        'workflow': workflow,
+        'activity': activity,
+        'indices': {
+            'index': index,
+            'index_private': index_private,
+        }
+    }
+
+
+@pytest.fixture()
+def db_register2(app, db):
+    session_lifetime = SessionLifetime(lifetime=60,is_delete=False)
+    
+    with db.session.begin_nested():
+        db.session.add(session_lifetime)
+
+
+@pytest.fixture()
+def records(db):
+    with db.session.begin_nested():
+        id1 = uuid.UUID('b7bdc3ad-4e7d-4299-bd87-6d79a250553f')
+        rec1 = RecordMetadata(
+            id=id1,
+            json=json_data("data/record01.json"),
+            version_id=1
+        )
+
+        id2 = uuid.UUID('362e800c-08a2-425d-a2b6-bcae7d5c3701')
+        rec2 = RecordMetadata(
+            id=id2,
+            json=json_data("data/record02.json"),
+            version_id=2
+        )
+
+        id3 = uuid.UUID('3ead53d0-8e4a-489e-bb6c-d88433a029c2')
+        rec3 = RecordMetadata(
+            id=id3,
+            json=json_data("data/record03.json"),
+            version_id=3
+        )
+
+        db.session.add(rec1)
+        db.session.add(rec2)
+        db.session.add(rec3)
+        
+        search_query_result = json_data("data/search_result.json")
+
+    return(search_query_result)
+
+
+@pytest.fixture()
+def pdfcoverpage(app, db):
+    with db.session.begin_nested():
+        pdf_cover_sample = PDFCoverPageSettings(
+            avail='enable',
+            header_display_type='string',
+            header_output_string='test',
+            header_output_image='test',
+            header_display_position='center'
+        )
+
+        db.session.add(pdf_cover_sample)
+
+    return pdf_cover_sample
+
+
+@pytest.fixture()
+def item_type(app, db):
+    _item_type_name = ItemTypeName(name='test')
+
+    _render = {
+        'meta_list': {},
+        'table_row_map': {
+            'schema': {
+                'properties': {
+                    'item_1': {}
+                }
+            }
+        },
+        'table_row': ['1']
+    }
+
+    return ItemTypes.create(
+        name='test',
+        item_type_name=_item_type_name,
+        schema={},
+        render=_render,
+        tag=1
+    )
+
+
+@pytest.fixture()
+def item_type2(app, db):
+    _item_type_name = ItemTypeName(name='test2')
+
+    _render = {
+        'meta_list': {},
+        'table_row_map': {
+            'schema': {
+                'properties': {
+                    'item_1': {}
+                }
+            }
+        },
+        'table_row': ['1']
+    }
+
+    return ItemTypes.create(
+        name='test2',
+        item_type_name=_item_type_name,
+        schema={},
+        render=_render,
+        tag=1
+    )
+
+
+@pytest.fixture()
+def mock_execute(app):
+    def factory(data):
+        if isinstance(data, str):
+            data = json_data(data)
+        dummy = response.Response(Search(), data)
+        return dummy
+    return factory
+
+
+# @pytest.fixture()
+# def records2(db):
+#     record_data = json_data("data/test_records.json")
+#     item_data = json_data("data/test_items.json")
+#     record_num = len(record_data)
+#     result = []
+#     for d in range(record_num):
+#         result.append(create_record(record_data[d], item_data[d]))
+#     db.session.commit()
+#     yield result
+
+
+@pytest.fixture()
+def count_json_data():
+    data = [{
+        "public_state": True,
+        "doc_count": 99,
+        "no_available": 9
+    }]
+    return data
+
+
+
+    """Test of method which creates OAI-PMH response for verb GetRecord."""
+    with app.app_context():
+        identify = Identify(
+            outPutSetting=True
+        )
+        index_metadata = {
+            "id": 1557819692844,
+            "parent": 0,
+            "position": 0,
+            "index_name": "コンテンツタイプ (Contents Type)",
+            "index_name_english": "Contents Type",
+            "index_link_name": "",
+            "index_link_name_english": "New Index",
+            "index_link_enabled": False,
+            "more_check": False,
+            "display_no": 5,
+            "harvest_public_state": True,
+            "display_format": 1,
+            "image_name": "",
+            "public_state": True,
+            "recursive_public_state": True,
+            "rss_status": False,
+            "coverpage_state": False,
+            "recursive_coverpage_check": False,
+            "browsing_role": "3,-98,-99",
+            "recursive_browsing_role": False,
+            "contribute_role": "1,2,3,4,-98,-99",
+            "recursive_contribute_role": False,
+            "browsing_group": "",
+            "recursive_browsing_group": False,
+            "recursive_contribute_group": False,
+            "owner_user_id": 1,
+            "item_custom_sort": {"2": 1}
+        }
+        index = Index(**index_metadata)
+        mapping = Mapping.create(
+            item_type_id=item_type.id,
+            mapping={}
+        )
+        with db.session.begin_nested():
+            db.session.add(identify)
+            db.session.add(index)
+        dummy_data = {
+            "hits": {
+                "total": 3,
+                "hits": [
+                    {
+                        "_source": {
+                            "_oai": {"id": str(records[0][0])},
+                            "_updated": "2022-01-01T10:10:10"
+                        },
+                        "_id": records[0][2].id,
+                    },
+                    {
+                        "_source": {
+                            "_oai": {"id": str(records[1][0])},
+                            "_updated": "2022-01-01T10:10:10"
+                        },
+                        "_id": records[1][2].id,
+                    },
+                    {
+                        "_source": {
+                            "_oai": {"id": str(records[2][0])},
+                            "_updated": "2022-01-01T10:10:10"
+                        },
+                        "_id": records[2][2].id,
+                    },
+                ]
+            }
+        }
+        kwargs = dict(
+            metadataPrefix="jpcoar_1.0",
+            verb="GetRecord",
+            identifier=str(records[0][0])
+        )
+        ns = {"root_name": "jpcoar", "namespaces":{'': 'https://github.com/JPCOAR/schema/blob/master/1.0/',
+              'dc': 'http://purl.org/dc/elements/1.1/', 'xs': 'http://www.w3.org/2001/XMLSchema',
+              'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'xml': 'http://www.w3.org/XML/1998/namespace',
+              'dcndl': 'http://ndl.go.jp/dcndl/terms/', 'oaire': 'http://namespace.openaire.eu/schema/oaire/',
+              'jpcoar': 'https://github.com/JPCOAR/schema/blob/master/1.0/',
+              'dcterms': 'http://purl.org/dc/terms/', 'datacite': 'https://schema.datacite.org/meta/kernel-4/',
+              'rioxxterms': 'http://www.rioxx.net/schema/v2.0/rioxxterms/'}}
+        mocker.patch("invenio_oaiserver.response.to_utc",side_effect=lambda x:x)
+        mocker.patch("weko_index_tree.utils.get_user_groups",return_value=[])
+        mocker.patch("weko_index_tree.utils.check_roles",return_value=True)
+        mocker.patch("invenio_oaiserver.response.get_identifier",return_value=None)
+        mocker.patch("weko_schema_ui.schema.cache_schema",return_value=ns)
+        with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
+            # return error 1
+            identify = Identify(
+                outPutSetting=False
+            )
+            with patch("invenio_oaiserver.response.OaiIdentify.get_all",return_value=identify):
+                res = getrecord(**kwargs)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+
+            # return error 2
+            with patch("invenio_oaiserver.response.is_output_harvest",return_value=HARVEST_PRIVATE):
+                res = getrecord(**kwargs)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+
+        dummy_data = {
+            "hits": {
+                "total": 1,
+                "hits": [
+                    {
+                        "_source": {
+                            "_oai": {"id": str(records[3][0])},
+                            "_updated": "2022-01-01T10:10:10"
+                        },
+                        "_id": records[3][2].id,
+                    }
+                ]
+            }
+        }
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="GetRecord",
+            identifier=str(records[2][0])
+        )
+        # not etree_record.get("system_identifier_doi")
+        with patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
+            with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
+                res = getrecord(**kwargs)
+                identifier = res.xpath(
+                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
+                    namespaces=NAMESPACES)
+                assert identifier == [str(records[2][0])]
+                datestamp = res.xpath(
+                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:datestamp/text()',
+                    namespaces=NAMESPACES)
+                assert datestamp == [datetime_to_datestamp(records[2][0].updated)]
+
+            kwargs = dict(
+                metadataPrefix='jpcoar_1.0',
+                verb="GetRecord",
+                identifier=str(records[3][0])
+            )
+            # etree_record.get("system_identifier_doi")
+            with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
+                res = getrecord(**kwargs)
+                identifier = res.xpath(
+                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
+                    namespaces=NAMESPACES)
+                assert identifier == [str(records[3][0])]
+                assert len(res.xpath('/x:OAI-PMH/x:GetRecord/x:record/x:metadata',
+                                        namespaces=NAMESPACES)) == 1
+
+
+@pytest.fixture()
+def db_oaischema(app, db):
+    schema_name = "jpcoar_mapping"
+    form_data = {"name": "jpcoar", "file_name": "jpcoar_scm.xsd", "root_name": "jpcoar"}
+    xsd = '{"dc:title": {"type": {"maxOccurs": "unbounded", "minOccurs": 1, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "dcterms:alternative": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:creator": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:creatorName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:familyName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:givenName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:creatorAlternative": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:affiliation": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:affiliationName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}}, "jpcoar:contributor": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "contributorType", "ref": null, "restriction": {"enumeration": ["ContactPerson", "DataCollector", "DataCurator", "DataManager", "Distributor", "Editor", "HostingInstitution", "Producer", "ProjectLeader", "ProjectManager", "ProjectMember", "RegistrationAgency", "RegistrationAuthority", "RelatedPerson", "Researcher", "ResearchGroup", "Sponsor", "Supervisor", "WorkPackageLeader", "Other"]}}]}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:contributorName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:familyName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:givenName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:contributorAlternative": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:affiliation": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:affiliationName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}}, "dcterms:accessRights": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "required", "name": "rdf:resource", "ref": "rdf:resource"}], "restriction": {"enumeration": ["embargoed access", "metadata only access", "open access", "restricted access"]}}}, "rioxxterms:apc": {"type": {"maxOccurs": 1, "minOccurs": 0, "restriction": {"enumeration": ["Paid", "Partially waived", "Fully waived", "Not charged", "Not required", "Unknown"]}}}, "dc:rights": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "rdf:resource", "ref": "rdf:resource"}, {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:rightsHolder": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:rightsHolderName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}, "jpcoar:subject": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}, {"use": "optional", "name": "subjectURI", "ref": null}, {"use": "required", "name": "subjectScheme", "ref": null, "restriction": {"enumeration": ["BSH", "DDC", "LCC", "LCSH", "MeSH", "NDC", "NDLC", "NDLSH", "Sci-Val", "UDC", "Other"]}}]}}, "datacite:description": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}, {"use": "required", "name": "descriptionType", "ref": null, "restriction": {"enumeration": ["Abstract", "Methods", "TableOfContents", "TechnicalInfo", "Other"]}}]}}, "dc:publisher": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "datacite:date": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "dateType", "ref": null, "restriction": {"enumeration": ["Accepted", "Available", "Collected", "Copyrighted", "Created", "Issued", "Submitted", "Updated", "Valid"]}}]}}, "dc:language": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "restriction": {"patterns": ["^[a-z]{3}$"]}}}, "dc:type": {"type": {"maxOccurs": 1, "minOccurs": 1, "attributes": [{"use": "required", "name": "rdf:resource", "ref": "rdf:resource"}], "restriction": {"enumeration": ["conference paper", "data paper", "departmental bulletin paper", "editorial", "journal article", "newspaper", "periodical", "review article", "software paper", "article", "book", "book part", "cartographic material", "map", "conference object", "conference proceedings", "conference poster", "dataset", "aggregated data", "clinical trial data", "compiled data", "encoded data", "experimental data", "genomic data", "geospatial data", "laboratory notebook", "measurement and test data", "observational data", "recorded data", "simulation data", "survey data", "interview", "image", "still image", "moving image", "video", "lecture", "patent", "internal report", "report", "research report", "technical report", "policy report", "report part", "working paper", "data management plan", "sound", "thesis", "bachelor thesis", "master thesis", "doctoral thesis", "interactive resource", "learning object", "manuscript", "musical notation", "research proposal", "software", "technical documentation", "workflow", "other"]}}}, "datacite:version": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "oaire:versiontype": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "required", "name": "rdf:resource", "ref": "rdf:resource"}], "restriction": {"enumeration": ["AO", "SMUR", "AM", "P", "VoR", "CVoR", "EVoR", "NA"]}}}, "jpcoar:identifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "identifierType", "ref": null, "restriction": {"enumeration": ["DOI", "HDL", "URI"]}}]}}, "jpcoar:identifierRegistration": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "required", "name": "identifierType", "ref": null, "restriction": {"enumeration": ["JaLC", "Crossref", "DataCite", "PMID"]}}]}}, "jpcoar:relation": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "relationType", "ref": null, "restriction": {"enumeration": ["isVersionOf", "hasVersion", "isPartOf", "hasPart", "isReferencedBy", "references", "isFormatOf", "hasFormat", "isReplacedBy", "replaces", "isRequiredBy", "requires", "isSupplementTo", "isSupplementedBy", "isIdenticalTo", "isDerivedFrom", "isSourceOf"]}}]}, "jpcoar:relatedIdentifier": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "required", "name": "identifierType", "ref": null, "restriction": {"enumeration": ["ARK", "arXiv", "DOI", "HDL", "ICHUSHI", "ISBN", "J-GLOBAL", "Local", "PISSN", "EISSN", "NAID", "PMID", "PURL", "SCOPUS", "URI", "WOS"]}}]}}, "jpcoar:relatedTitle": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}, "dcterms:temporal": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "datacite:geoLocation": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "datacite:geoLocationPoint": {"type": {"maxOccurs": 1, "minOccurs": 0}, "datacite:pointLongitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 180, "minInclusive": -180}}}, "datacite:pointLatitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 90, "minInclusive": -90}}}}, "datacite:geoLocationBox": {"type": {"maxOccurs": 1, "minOccurs": 0}, "datacite:westBoundLongitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 180, "minInclusive": -180}}}, "datacite:eastBoundLongitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 180, "minInclusive": -180}}}, "datacite:southBoundLatitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 90, "minInclusive": -90}}}, "datacite:northBoundLatitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 90, "minInclusive": -90}}}}, "datacite:geoLocationPlace": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}}}, "jpcoar:fundingReference": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "datacite:funderIdentifier": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "required", "name": "funderIdentifierType", "ref": null, "restriction": {"enumeration": ["Crossref Funder", "GRID", "ISNI", "Other"]}}]}}, "jpcoar:funderName": {"type": {"maxOccurs": "unbounded", "minOccurs": 1, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "datacite:awardNumber": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "optional", "name": "awardURI", "ref": null}]}}, "jpcoar:awardTitle": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}, "jpcoar:sourceIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "identifierType", "ref": null, "restriction": {"enumeration": ["PISSN", "EISSN", "ISSN", "NCID"]}}]}}, "jpcoar:sourceTitle": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:volume": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:issue": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:numPages": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:pageStart": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:pageEnd": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "dcndl:dissertationNumber": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "dcndl:degreeName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "dcndl:dateGranted": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:degreeGrantor": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:degreeGrantorName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}, "jpcoar:conference": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:conferenceName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:conferenceSequence": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:conferenceSponsor": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:conferenceDate": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "optional", "name": "startMonth", "ref": null, "restriction": {"maxInclusive": 12, "minInclusive": 1, "totalDigits": 2}}, {"use": "optional", "name": "endYear", "ref": null, "restriction": {"maxInclusive": 2200, "minInclusive": 1400, "totalDigits": 4}}, {"use": "optional", "name": "startDay", "ref": null, "restriction": {"maxInclusive": 31, "minInclusive": 1, "totalDigits": 2}}, {"use": "optional", "name": "endDay", "ref": null, "restriction": {"maxInclusive": 31, "minInclusive": 1, "totalDigits": 2}}, {"use": "optional", "name": "endMonth", "ref": null, "restriction": {"maxInclusive": 12, "minInclusive": 1, "totalDigits": 2}}, {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}, {"use": "optional", "name": "startYear", "ref": null, "restriction": {"maxInclusive": 2200, "minInclusive": 1400, "totalDigits": 4}}]}}, "jpcoar:conferenceVenue": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:conferencePlace": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:conferenceCountry": {"type": {"maxOccurs": 1, "minOccurs": 0, "restriction": {"patterns": ["^[A-Z]{3}$"]}}}}, "jpcoar:file": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:URI": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "optional", "name": "label", "ref": null}, {"use": "optional", "name": "objectType", "ref": null, "restriction": {"enumeration": ["abstract", "dataset", "fulltext", "software", "summary", "thumbnail", "other"]}}]}}, "jpcoar:mimeType": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:extent": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}}, "datacite:date": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "dateType", "ref": null, "restriction": {"enumeration": ["Accepted", "Available", "Collected", "Copyrighted", "Created", "Issued", "Submitted", "Updated", "Valid"]}}]}}, "datacite:version": {"type": {"maxOccurs": 1, "minOccurs": 0}}}, "custom:system_file": {"type": {"minOccurs": 0, "maxOccurs": "unbounded"}, "jpcoar:URI": {"type": {"minOccurs": 0, "maxOccurs": 1, "attributes": [{"name": "objectType", "ref": null, "use": "optional", "restriction": {"enumeration": ["abstract", "summary", "fulltext", "thumbnail", "other"]}}, {"name": "label", "ref": null, "use": "optional"}]}}, "jpcoar:mimeType": {"type": {"minOccurs": 0, "maxOccurs": 1}}, "jpcoar:extent": {"type": {"minOccurs": 0, "maxOccurs": "unbounded"}}, "datacite:date": {"type": {"minOccurs": 1, "maxOccurs": "unbounded", "attributes": [{"name": "dateType", "ref": null, "use": "required", "restriction": {"enumeration": ["Accepted", "Available", "Collected", "Copyrighted", "Created", "Issued", "Submitted", "Updated", "Valid"]}}]}}, "datacite:version": {"type": {"minOccurs": 0, "maxOccurs": 1}}}}'
+    namespaces = {
+        "": "https://github.com/JPCOAR/schema/blob/master/1.0/",
+        "dc": "http://purl.org/dc/elements/1.1/",
+        "xs": "http://www.w3.org/2001/XMLSchema",
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "xml": "http://www.w3.org/XML/1998/namespace",
+        "dcndl": "http://ndl.go.jp/dcndl/terms/",
+        "oaire": "http://namespace.openaire.eu/schema/oaire/",
+        "jpcoar": "https://github.com/JPCOAR/schema/blob/master/1.0/",
+        "dcterms": "http://purl.org/dc/terms/",
+        "datacite": "https://schema.datacite.org/meta/kernel-4/",
+        "rioxxterms": "http://www.rioxx.net/schema/v2.0/rioxxterms/",
+    }
+    schema_location = "https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd"
+    oaischema = OAIServerSchema(
+        id=uuid.uuid4(),
+        schema_name=schema_name,
+        form_data=form_data,
+        xsd=xsd,
+        namespaces=namespaces,
+        schema_location=schema_location,
+        isvalid=True,
+        is_mapping=False,
+        isfixed=False,
+        version_id=1,
+    )
+    with db.session.begin_nested():
+        db.session.add(oaischema)
+
+
+@pytest.fixture()
+def communities(app, db, user, indices):
+    """Create some example communities."""
+    user1 = db_.session.merge(user)
+    ds = app.extensions['invenio-accounts'].datastore
+    r = ds.create_role(name='superuser', description='1234')
+    ds.add_role_to_user(user1, r)
+    ds.commit()
+    db.session.commit()
+
+    comm0 = Community.create(community_id='comm1', role_id=r.id,
+                             id_user=user1.id, title='Title1',
+                             description='Description1',
+                             root_node_id=33)
+    db.session.add(comm0)
+
+    return comm0
+
+
+@pytest.fixture()
+def mock_users():
+    """Create mock users."""
+    mock_auth_user = Mock()
+    mock_auth_user.get_id = lambda: '123'
+    mock_auth_user.is_authenticated = True
+
+    mock_anon_user = Mock()
+    mock_anon_user.is_authenticated = False
+    return {
+        'anonymous': mock_anon_user,
+        'authenticated': mock_auth_user
+    }
+
+
+@pytest.yield_fixture()
+def mock_user_ctx(mock_users):
+    """Run in a mock authenticated user context."""
+    with patch('invenio_stats.utils.current_user',
+               mock_users['authenticated']):
+        yield
+
+
+@pytest.yield_fixture()
+def es(app):
+    """Provide elasticsearch access, create and clean indices.
+
+    Don't create template so that the test or another fixture can modify the
+    enabled events.
+    """
+    current_search_client.indices.delete(index='*')
+    current_search_client.indices.delete_template('*')
+    list(current_search.create())
+    try:
+        yield current_search_client
+    finally:
+        current_search_client.indices.delete(index='*')
+        current_search_client.indices.delete_template('*')
+
+
+def generate_events(
+        app,
+        index_id='33',
+        page=1,
+        count=20,
+        term=14,
+        lang='en',
+        ):
+    """Queued events for processing tests."""
+    current_queues.declare()
+
+    def _unique_ts_gen():
+        ts = 0
+        while True:
+            ts += 1
+            yield ts
+
+    def generator_list():
+        unique_ts = _unique_ts_gen()
+
+        def build_event(is_robot=False):
+            ts = next(unique_ts)
+            return dict(
+                timestamp=datetime.datetime.combine(
+                    entry_date,
+                    datetime.time(minute=ts % 60,
+                                    second=ts % 60)).
+                isoformat(),
+                index_id='33',
+                page=1,
+                count=20,
+                term=14,
+                lang='en',
+            )
+
+            yield build_event(True)
+
+    mock_queue = Mock()
+    mock_queue.consume.return_value = generator_list()
+    # mock_queue.routing_key = 'stats-file-download'
+    mock_queue.routing_key = 'generate-sample'
+
+    EventsIndexer(
+        mock_queue,
+        preprocessors=[
+            build_file_unique_id
+        ],
+        double_click_window=0
+    ).run()
+    current_search_client.indices.refresh(index='*')
+
+
+@pytest.yield_fixture()
+def generate_request(app, es, mock_user_ctx, request):
+    """Parametrized pre indexed sample events."""
+    generate_events(app=app, **request.param)
+    yield
+
+
+@pytest.yield_fixture()
+def dummy_location(db):
+    """File system location."""
+    tmppath = tempfile.mkdtemp()
+
+    loc = Location(
+        name='testloc',
+        uri=tmppath,
+        default=True
+    )
+    db.session.add(loc)
+    db.session.commit()
+
+    yield loc
+
+    shutil.rmtree(tmppath)
+
+
+@pytest.fixture()
+def bucket(db, dummy_location):
+    """File system location."""
+    b1 = Bucket.create()
+    db.session.commit()
+    return b1
+
+
+@pytest.yield_fixture()
+def permissions(db, bucket):
+    """Permission for users."""
+    users = {
+        None: None,
+    }
+
+    for user in [
+            'auth', 'location', 'bucket',
+            'objects', 'objects-read-version']:
+        users[user] = create_test_user(
+            email='{0}@invenio-software.org'.format(user),
+            password='pass1',
+            active=True
+        )
+
+    location_perms = [
+        location_update_all,
+        bucket_read_all,
+        bucket_read_versions_all,
+        bucket_update_all,
+        bucket_listmultiparts_all,
+        object_read_all,
+        object_read_version_all,
+        object_delete_all,
+        object_delete_version_all,
+        multipart_read_all,
+        multipart_delete_all,
+    ]
+
+    bucket_perms = [
+        bucket_read_all,
+        object_read_all,
+        bucket_update_all,
+        object_delete_all,
+        multipart_read_all,
+    ]
+
+    objects_perms = [
+        object_read_all,
+    ]
+
+    for perm in location_perms:
+        db.session.add(ActionUsers(
+            action=perm.value,
+            user=users['location']))
+    for perm in bucket_perms:
+        db.session.add(ActionUsers(
+            action=perm.value,
+            argument=str(bucket.id),
+            user=users['bucket']))
+    for perm in objects_perms:
+        db.session.add(ActionUsers(
+            action=perm.value,
+            argument=str(bucket.id),
+            user=users['objects']))
+    db.session.commit()
+
+    yield users

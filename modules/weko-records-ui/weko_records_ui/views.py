@@ -274,10 +274,11 @@ def check_permission(record):
 def check_file_permission(record, fjson):
     """Check File Download Permission.
 
-    :param record
-    :param fjson
-    :return: result
-    """
+    Args:
+        record (weko_deposit.api.WekoRecord): _description_
+        fjson (dict): _description_
+    
+    """    
     return check_file_download_permission(record, fjson)
 
 
@@ -364,12 +365,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
         """Get multi-lang rights title."""
         item_key = rights_key.split('.')[0]
-        if meta_options[item_key].get('title'):
-            item_title = meta_options[item_key]['title']
-        if meta_options[item_key]['title_i18n'].get(current_lang, None):
-            item_title = meta_options[item_key]['title_i18n'][current_lang]
-        elif meta_options[item_key]['title_i18n'].get('en', None):
-            item_title = meta_options[item_key]['title_i18n']['en']
+        if item_key in meta_options:
+            if meta_options[item_key].get('title'):
+                item_title = meta_options[item_key]['title']
+            if meta_options[item_key]['title_i18n'].get(current_lang, None):
+                item_title = meta_options[item_key]['title_i18n'][current_lang]
+            elif meta_options[item_key]['title_i18n'].get('en', None):
+                item_title = meta_options[item_key]['title_i18n']['en']
         if rights_values:
             result[item_key] = {
                 'item_title': item_title,
