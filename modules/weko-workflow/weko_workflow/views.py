@@ -668,7 +668,7 @@ def display_guest_activity(file_name=""):
     )
 
 
-@blueprint.route('/activity/detail/<string:activity_id>',
+@workflow_blueprint.route('/activity/detail/<string:activity_id>',
                  methods=['GET', 'POST'])
 @login_required
 def display_activity(activity_id="0"):
@@ -747,8 +747,7 @@ def display_activity(activity_id="0"):
     action_endpoint, action_id, activity_detail, cur_action, histories, item, \
         steps, temporary_comment, workflow_detail = \
         get_activity_display_info(activity_id)
-    if not (action_endpoint and action_id and activity_detail and cur_action and histories and \
-        steps and workflow_detail):
+    if any([s is None for s in [action_endpoint, action_id, activity_detail, cur_action, histories, steps, workflow_detail]]):
         current_app.logger.error("display_activity: can not get activity display info")
         return render_template("weko_theme/error.html",
                 error="can not get data required for rendering")

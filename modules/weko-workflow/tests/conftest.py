@@ -525,7 +525,7 @@ def users(app, db):
         {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
         {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
         {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
-        {'email': generaluser.email, 'id': generaluser.id, 'obj': sysadmin},
+        {'email': generaluser.email, 'id': generaluser.id, 'obj': generaluser},
         {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
         {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
         {'email': user.email, 'id': user.id, 'obj': user},
@@ -675,6 +675,25 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     title='test', shared_user_id=-1, extra_info={},
                     action_order=1,
                     )
+    activity2 = Activity(activity_id='A-00000001-10001',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    action_status = 'M',
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=6)
+
+    activity3 = Activity(activity_id='A-00000001-10002',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    action_status = 'C',
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=6)
     activity_item1 = Activity(activity_id='2',item_id=db_records[2][2].id,workflow_id=1, flow_id=flow_define.id,
                     action_id=1, activity_login_user=users[3]["id"],
                     activity_update_user=1,
@@ -732,6 +751,8 @@ def db_register(app, db, db_records, users, action_data, item_type):
     with db.session.begin_nested():
         db.session.add(workflow)
         db.session.add(activity)
+        db.session.add(activity2)
+        db.session.add(activity3)
         db.session.add(activity_item1)
         db.session.add(activity_item2)
         db.session.add(activity_item3)
@@ -820,6 +841,20 @@ def db_register(app, db, db_records, users, action_data, item_type):
     )
     with db.session.begin_nested():
         db.session.add(history)
+    db.session.commit()
+    doi_identifier = Identifier(id=1, repository='Root Index',jalc_flag= True,jalc_crossref_flag= True,jalc_datacite_flag=True,ndl_jalc_flag=True,
+        jalc_doi='123',jalc_crossref_doi='1234',jalc_datacite_doi='12345',ndl_jalc_doi='123456',suffix='def',
+        created_userId='1',created_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S'),
+        updated_userId='1',updated_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S')
+    )
+    doi_identifier2 = Identifier(id=2, repository='test',jalc_flag= True,jalc_crossref_flag= True,jalc_datacite_flag=True,ndl_jalc_flag=True,
+        jalc_doi=None,jalc_crossref_doi=None,jalc_datacite_doi=None,ndl_jalc_doi=None,suffix=None,
+        created_userId='1',created_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S'),
+        updated_userId='1',updated_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S')
+        )
+    with db.session.begin_nested():
+        db.session.add(doi_identifier)
+        db.session.add(doi_identifier2)
     db.session.commit()
     return {'flow_define':flow_define,
             'item_type':item_type,
@@ -1119,17 +1154,17 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
     db.session.commit()
 
     feedbackmail_action1 = ActionFeedbackMail(
-        activity_id=activity_item1.id,
+        activity_id=activity_item1.activity_id,
         action_id=3,
         feedback_maillist=[{"email":"test@test.org"}]
         )
     feedbackmail_action2 = ActionFeedbackMail(
-        activity_id=activity_item2.id,
+        activity_id=activity_item2.activity_id,
         action_id=3,
         feedback_maillist=[]
     )
     feedbackmail_action3 = ActionFeedbackMail(
-        activity_id=activity_item4.id,
+        activity_id=activity_item4.activity_id,
         action_id=3,
         feedback_maillist=[]
     )
@@ -1184,7 +1219,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
     # db.session.commit()
 
     action_identifier=ActionIdentifier(
-        activity_id=activity_item3.id,
+        activity_id=activity_item3.activity_id,
         action_id=7,
         action_identifier_select=1,
         action_identifier_jalc_doi="",
