@@ -36,6 +36,9 @@ class ComponentExclusionTarget extends React.Component {
         if (response.code) {
           emails = response.data || [];
         }
+      },
+      error: function(jqXHE, status) {
+          alert(jqXHE.responseJSON.msg);
       }
     })
     this.props.bindingValueOfComponent('listEmail', emails);
