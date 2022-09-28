@@ -79,7 +79,7 @@ from weko_theme.views import blueprint as weko_theme_blueprint
 from weko_user_profiles.models import UserProfile
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Action, ActionStatus, Activity, FlowAction, FlowDefine, WorkFlow
-from weko_workflow.views import blueprint as weko_workflow_blueprint
+from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
 from werkzeug.local import LocalProxy
 
 from tests.helpers import create_record, json_data

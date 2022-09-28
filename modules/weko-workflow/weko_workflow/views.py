@@ -107,7 +107,7 @@ from .utils import IdentifierHandle, auto_fill_title, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
     validate_guest_activity_token
 
-blueprint = Blueprint(
+workflow_blueprint = Blueprint(
     'weko_workflow',
     __name__,
     template_folder='templates',
@@ -116,14 +116,14 @@ blueprint = Blueprint(
 )
 
 
-activity_blueprint = Blueprint(
+depositactivity_blueprint = Blueprint(
     'weko_activity_rest',
     __name__,
     url_prefix='/depositactivity',
 )
 
 
-@blueprint.app_template_filter('regex_replace')
+@workflow_blueprint.app_template_filter('regex_replace')
 def regex_replace(s, pattern, replace):
     """
 
@@ -138,7 +138,7 @@ def regex_replace(s, pattern, replace):
     return re.sub(pattern, replace, s)
 
 
-@blueprint.route('/')
+@workflow_blueprint.route('/')
 @login_required
 def index():
     """Render the activity list.
@@ -262,7 +262,7 @@ def index():
     )
 
 
-@blueprint.route('/iframe/success', methods=['GET'])
+@workflow_blueprint.route('/iframe/success', methods=['GET'])
 def iframe_success():
     """アイテム登録ビューをレンダリングする
     セッションに保存されているデータから画面表示に必要な情報を取得し、
@@ -385,7 +385,7 @@ def iframe_success():
                            **ctx)
 
 
-@blueprint.route('/activity/new', methods=['GET'])
+@workflow_blueprint.route('/activity/new', methods=['GET'])
 @login_required
 def new_activity():
     """New activity.
@@ -441,7 +441,7 @@ def new_activity():
 
 
 
-@blueprint.route('/activity/init', methods=['POST'])
+@workflow_blueprint.route('/activity/init', methods=['POST'])
 @login_required
 def init_activity():
     """Return URL of workflow activity made from the request body.
@@ -538,7 +538,7 @@ def init_activity():
     return jsonify(res.data),200
 
 
-@blueprint.route('/activity/list', methods=['GET'])
+@workflow_blueprint.route('/activity/list', methods=['GET'])
 @login_required
 def list_activity():
     """List activity."""
@@ -569,7 +569,7 @@ def list_activity():
     )
 
 
-@blueprint.route('/activity/init-guest', methods=['POST'])
+@workflow_blueprint.route('/activity/init-guest', methods=['POST'])
 def init_activity_guest():
     """Init activity for guest user.
 
@@ -610,7 +610,7 @@ def init_activity_guest():
     return jsonify(msg='Cannot send mail')
 
 
-@blueprint.route('/activity/guest-user/<string:file_name>', methods=['GET'])
+@workflow_blueprint.route('/activity/guest-user/<string:file_name>', methods=['GET'])
 def display_guest_activity(file_name=""):
     """Display activity for guest user.
 
@@ -668,7 +668,7 @@ def display_guest_activity(file_name=""):
     )
 
 
-@blueprint.route('/activity/detail/<string:activity_id>',
+@workflow_blueprint.route('/activity/detail/<string:activity_id>',
                  methods=['GET', 'POST'])
 @login_required
 def display_activity(activity_id="0"):
@@ -1170,7 +1170,7 @@ def check_authority_action(activity_id='0', action_id=0,
     return 1
 
 
-@blueprint.route(
+@workflow_blueprint.route(
     '/activity/action/<string:activity_id>/<int:action_id>',
     methods=['POST'])
 @login_required_customize
@@ -1681,7 +1681,7 @@ def next_action(activity_id='0', action_id=0):
     return jsonify(res.data), 200
 
 
-@blueprint.route(
+@workflow_blueprint.route(
     '/activity/action/<string:activity_id>/<int:action_id>'
     '/rejectOrReturn/<int:req>',
     methods=['POST'])
@@ -1863,7 +1863,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
     return jsonify(res.data), 200
 
 
-@blueprint.route('/journal/list', methods=['GET'])
+@workflow_blueprint.route('/journal/list', methods=['GET'])
 def get_journals():
     """Get journals."""
     key = request.values.get('key')
@@ -1896,7 +1896,7 @@ def get_journals():
     return jsonify(multiple_result)
 
 
-@blueprint.route('/journal/<string:method>/<string:value>', methods=['GET'])
+@workflow_blueprint.route('/journal/<string:method>/<string:value>', methods=['GET'])
 def get_journal(method, value):
     """Get journal."""
     if not method or not value:
@@ -1919,7 +1919,7 @@ def get_journal(method, value):
     return jsonify(result)
 
 
-@blueprint.route(
+@workflow_blueprint.route(
     '/activity/action/<string:activity_id>/<int:action_id>'
     '/cancel',
     methods=['POST'])
@@ -2106,7 +2106,7 @@ def cancel_action(activity_id='0', action_id=0):
     return jsonify(res.data), 200
 
 
-@blueprint.route(
+@workflow_blueprint.route(
     '/activity/detail/<string:activity_id>/<int:action_id>'
     '/withdraw',
     methods=['POST'])
@@ -2256,7 +2256,7 @@ def withdraw_confirm(activity_id='0', action_id=0):
     return jsonify(res.data)
 
 
-@blueprint.route('/findDOI', methods=['POST'])
+@workflow_blueprint.route('/findDOI', methods=['POST'])
 @login_required
 def find_doi():
     """Next action."""
@@ -2264,7 +2264,7 @@ def find_doi():
     return jsonify(check_existed_doi(doi_link.get('doi_link')))
 
 
-@blueprint.route(
+@workflow_blueprint.route(
     '/save_feedback_maillist/<string:activity_id>/<int:action_id>',
     methods=['POST'])
 @login_required
@@ -2293,7 +2293,7 @@ def save_feedback_maillist(activity_id='0', action_id='0'):
     return jsonify(code=-1, msg=_('Error'))
 
 
-@blueprint.route('/get_feedback_maillist/<string:activity_id>',
+@workflow_blueprint.route('/get_feedback_maillist/<string:activity_id>',
                  methods=['GET'])
 @login_required
 def get_feedback_maillist(activity_id='0'):
@@ -2362,7 +2362,7 @@ def get_feedback_maillist(activity_id='0'):
     return jsonify(res.data), 500
 
 
-@blueprint.route('/activity/lock/<string:activity_id>', methods=['POST'])
+@workflow_blueprint.route('/activity/lock/<string:activity_id>', methods=['POST'])
 @login_required
 def lock_activity(activity_id="0"):
     """アクティビティの操作者を確認し、操作可能者以外の場合ロックする
@@ -2472,7 +2472,7 @@ def lock_activity(activity_id="0"):
     return jsonify(res.data)
 
 
-@blueprint.route('/activity/unlock/<string:activity_id>', methods=['POST'])
+@workflow_blueprint.route('/activity/unlock/<string:activity_id>', methods=['POST'])
 @login_required
 def unlock_activity(activity_id="0"):
     """キャッシュデータを削除することによりロックを解除する。
@@ -2548,7 +2548,7 @@ def unlock_activity(activity_id="0"):
     return jsonify(res.data), 200
 
 
-@blueprint.route('/check_approval/<string:activity_id>', methods=['GET'])
+@workflow_blueprint.route('/check_approval/<string:activity_id>', methods=['GET'])
 @login_required
 def check_approval(activity_id='0'):
     """アクティビティに対して承認の確認が必要であるかの判定をして、その結果を返す
@@ -2601,7 +2601,7 @@ def check_approval(activity_id='0'):
     return jsonify(res.data), 200
 
 
-@blueprint.route('/send_mail/<string:activity_id>/<string:mail_template>',
+@workflow_blueprint.route('/send_mail/<string:activity_id>/<string:mail_template>',
                  methods=['POST'])
 @login_required
 def send_mail(activity_id='0', mail_template=''):
@@ -2621,7 +2621,7 @@ def send_mail(activity_id='0', mail_template=''):
     return jsonify(code=1, msg='Success')
 
 
-@blueprint.route('/save_activity_data', methods=['POST'])
+@workflow_blueprint.route('/save_activity_data', methods=['POST'])
 @login_required_customize
 def save_activity():
     """アイテムデータの新規登録、編集の完了後にアイテムデータの更新をする
@@ -2677,7 +2677,7 @@ def save_activity():
     return jsonify(res.data), 200
 
 
-@blueprint.route('/usage-report', methods=['GET'])
+@workflow_blueprint.route('/usage-report', methods=['GET'])
 def usage_report():
     """
     Get usage reports.
@@ -2707,7 +2707,7 @@ def usage_report():
     return jsonify(activities=activities_result)
 
 
-@blueprint.route('/get-data-init', methods=['GET'])
+@workflow_blueprint.route('/get-data-init', methods=['GET'])
 @login_required
 def get_data_init():
     """Init data."""
@@ -2951,7 +2951,7 @@ class ActivityActionResource(ContentNegotiatedMethodView):
         return make_response(message, status)
 
 
-activity_blueprint.add_url_rule(
+depositactivity_blueprint.add_url_rule(
     '/<string:activity_id>',
     view_func=ActivityActionResource.as_view(
         'workflow_activity_action'
@@ -2960,7 +2960,7 @@ activity_blueprint.add_url_rule(
 )
 
 
-activity_blueprint.add_url_rule(
+depositactivity_blueprint.add_url_rule(
     '',
     view_func=ActivityActionResource.as_view(
         'workflow_activity_new'
