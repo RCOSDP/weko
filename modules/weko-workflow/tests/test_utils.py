@@ -57,7 +57,7 @@ def test_register_hdl(app,db_records,db_itemtype):
                 assert pid[0].object_uuid == parent.object_uuid
                 pid = IdentifierHandle(recid.object_uuid).check_pidstore_exist(pid_type='hdl')
                 assert pid[0].object_uuid == recid.object_uuid
-    
+
     recid,depid, record, item,parent,doi = db_records[1]
     assert recid.pid_value=="1.0"
     activity_id='A-00000800-00000'
@@ -73,7 +73,7 @@ def test_register_hdl(app,db_records,db_itemtype):
                 assert pid[0].object_uuid == parent.object_uuid
                 pid = IdentifierHandle(recid.object_uuid).check_pidstore_exist(pid_type='hdl')
                 assert pid == []
-    
+
     recid,depid, record, item,parent,doi = db_records[2]
     assert recid.pid_value=="1.1"
     activity_id='A-00000800-00000'
@@ -91,9 +91,9 @@ def test_register_hdl(app,db_records,db_itemtype):
                 # register_hdl does not use recid object_uuid.
                 pid = IdentifierHandle(recid.object_uuid).check_pidstore_exist(pid_type='hdl')
                 assert pid==[]
-    
 
-                
+
+
 
 
 # def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
