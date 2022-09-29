@@ -137,10 +137,10 @@ require([
           alert(data.msg);
         }
       },
-      error: function (jqXHE, status) {
+      error: function (jqXHR, status) {
         endLoading(_this);
-        if (jqXHE.responseJSON && jqXHE.responseJSON.msg) {
-          alert(jqXHE.responseJSON.msg);
+        if (jqXHR.responseJSON && jqXHR.responseJSON.msg) {
+          alert(jqXHR.responseJSON.msg);
         } else {
           alert('server error');
         }
@@ -205,10 +205,10 @@ require([
           alert(data.msg);
         }
       },
-      error: function (jqXHE, status) {
+      error: function (jqXHR, status) {
         endLoading(_this);
-        if (jqXHE.responseJSON && jqXHE.responseJSON.msg) {
-          alert(jqXHE.responseJSON.msg);
+        if (jqXHR.responseJSON && jqXHR.responseJSON.msg) {
+          alert(jqXHR.responseJSON.msg);
         } else {
           alert('server error');
         }
@@ -262,10 +262,10 @@ require([
           alert(data.msg);
         }
       },
-      error: function (jqXHE, status) {
+      error: function (jqXHR, status) {
         endLoading(_this);
-        if (jqXHE.responseJSON && jqXHE.responseJSON.msg) {
-          alert(jqXHE.responseJSON.msg);
+        if (jqXHR.responseJSON && jqXHR.responseJSON.msg) {
+          alert(jqXHR.responseJSON.msg);
         } else {
           alert('server error');
         }
@@ -344,14 +344,14 @@ require([
           alert(data.msg);
         }
       },
-      error: function (jqXHE, status) {
-        if (-2 == jqXHE.responseJSON.code) {
+      error: function (jqXHR, status) {
+        if (-2 == jqXHR.responseJSON.code) {
           let error_msg = $('#AutoCancelMsg').text();
           $('#cancelModalBody').text(error_msg);
           $('#cancelModal').modal('show');
-        } else if (-1 == jqXHE.responseJSON.code) {
+        } else if (-1 == jqXHR.responseJSON.code) {
           endLoading(_this);
-          alert(jqXHE.responseJSON.msg);
+          alert(jqXHR.responseJSON.msg);
         } else{
           endLoading(_this);
           alert('server error');
@@ -397,14 +397,14 @@ require([
           alert(data.msg);
         }
       },
-      error: function (jqXHE, status) {
-        if (-2 == jqXHE.responseJSON.code) {
+      error: function (jqXHR, status) {
+        if (-2 == jqXHR.responseJSON.code) {
           let error_msg = $('#AutoCancelMsg').text();
           $('#cancelModalBody').text(error_msg);
           $('#cancelModal').modal('show');
-        } else if (-1 == jqXHE.responseJSON.code) {
+        } else if (-1 == jqXHR.responseJSON.code) {
           endLoading(_this);
-          alert(jqXHE.responseJSON.msg);
+          alert(jqXHR.responseJSON.msg);
         } else {
           endLoading(_this);
           alert('server error');
