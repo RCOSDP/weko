@@ -712,8 +712,12 @@ def indices(app, db):
 
 @pytest.fixture
 def test_indices(app, db):
-    def base_index(id, parent, position, public_date=None, coverpage_state=False, browsing_role=None,
-                   contribute_role=None, browsing_group=None, contribute_group=None, online_issn=''):
+    def base_index(id, parent, position, public_date=None, coverpage_state=False, recursive_browsing_role=False,
+                   recursive_contribute_role=False, recursive_browsing_group=False,
+                   recursive_contribute_group=False, online_issn=''):
+        _browsing_role = "3,-98,-99"
+        _contribute_role = "1,2,3,4,-98,-99"
+        _group = "g1,g2"
         return Index(
             id=id,
             parent=parent,
@@ -726,77 +730,30 @@ def test_indices(app, db):
             more_check=False,
             display_no=position,
             harvest_public_state=True,
-            public_state=True if not public_date else False,
+            public_state=True,
             public_date=public_date,
             recursive_public_state=True if not public_date else False,
             coverpage_state=coverpage_state,
             recursive_coverpage_check=True if coverpage_state else False,
-            browsing_role=browsing_role,
-            recursive_browsing_role=True if not browsing_role else False,
-            contribute_role=contribute_role,
-            recursive_contribute_role=True if not contribute_role else False,
-            browsing_group=browsing_group,
-            recursive_browsing_group=True if not browsing_group else False,
-            contribute_group=contribute_group,
-            recursive_contribute_group=True if not contribute_group else False,
+            browsing_role=_browsing_role,
+            recursive_browsing_role=recursive_browsing_role,
+            contribute_role=_contribute_role,
+            recursive_contribute_role=recursive_contribute_role,
+            browsing_group=_group,
+            recursive_browsing_group=recursive_browsing_group,
+            contribute_group=_group,
+            recursive_contribute_group=recursive_contribute_group,
             biblio_flag=True if not online_issn else False,
             online_issn=online_issn
         )
-    _browsing_role = {
-        "allow": [
-        {
-            "id": 3,
-            "name": "Contributor"
-        },
-        {
-            "id": -98,
-            "name": "Authenticated User"
-        },
-        {
-            "id": -99,
-            "name": "Guest"
-        }
-        ],
-        "deny": []
-    }
-    _contribute_role = {
-        "allow": [
-        {
-            "id": 1,
-            "name": "System Administrator"
-        },
-        {
-            "id": 2,
-            "name": "Repository Administrator"
-        },
-        {
-            "id": 3,
-            "name": "Contributor"
-        },
-        {
-            "id": 4,
-            "name": "Community Administrator"
-        },
-        {
-            "id": -98,
-            "name": "Authenticated User"
-        },
-        {
-            "id": -99,
-            "name": "Guest"
-        }
-        ],
-        "deny": []
-    }
-    _group = {
-        "allow": [],
-        "deny": []
-    }
+    
     with db.session.begin_nested():
-        db.session.add(base_index(1, 0, 0, datetime(2022, 1, 1), True, _browsing_role, _contribute_role, _group, _group, '1234-5678'))
+        db.session.add(base_index(1, 0, 0, datetime(2022, 1, 1), True, True, True, True, True, '1234-5678'))
         db.session.add(base_index(2, 0, 1))
+        db.session.add(base_index(3, 0, 2))
         db.session.add(base_index(11, 1, 0))
         db.session.add(base_index(21, 2, 0))
+        db.session.add(base_index(22, 2, 1))
     db.session.commit()
 
 
@@ -1326,7 +1283,7 @@ def communities(app, db, user, indices):
     comm0 = Community.create(community_id='comm1', role_id=r.id,
                              id_user=user1.id, title='Title1',
                              description='Description1',
-                             root_node_id=33)
+                             root_node_id=23)
     db.session.add(comm0)
 
     return comm0

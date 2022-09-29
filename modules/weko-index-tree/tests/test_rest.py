@@ -11,6 +11,15 @@ from weko_index_tree.rest import (
     create_blueprint  
 )
 
+user_tree_action = [
+    (0, 403),
+    (1, 403),
+    (2, 202),
+    (3, 202),
+    (4, 202),
+    (5, 403),
+    (6, 403),
+]
 
 user_results_index = [
     (0, 403),
@@ -18,8 +27,8 @@ user_results_index = [
     (2, 200),
     (3, 200),
     (4, 200),
-    (5, 200),
-    (6, 200),
+    (5, 403),
+    (6, 403),
 ]
 
 user_results_tree = [
@@ -40,7 +49,7 @@ def test_need_record_permission(i18n_app):
 
 #     def need_record_permission_builder(f):
 #         def need_record_permission_decorator(self, *args,
-@pytest.mark.parametrize('id, status_code', user_results_tree)
+@pytest.mark.parametrize('id, status_code', user_tree_action)
 def test_tree_action_login(client_rest, users, id, status_code):
     login_user_via_session(client=client_rest, email=users[id]['email'])
     with patch('weko_index_tree.rest.Indexes.move', return_value={'r':'moved'}):
@@ -55,7 +64,7 @@ def test_tree_action_guest(client_rest, users):
         res = client_rest.put('/tree/move/1',
                               data=json.dumps({'test':'test'}),
                               content_type='application/json')
-        assert res.status_code == 403
+        assert res.status_code == 401
 
 
 # def create_blueprint(app, endpoints):
