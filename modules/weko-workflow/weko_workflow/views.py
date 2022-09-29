@@ -2519,13 +2519,6 @@ def unlock_activity(activity_id="0"):
                             ResponseMessageSchema
                         example: {"code":200,"msg":"Unlock success"}
             400:
-                description: "validation error"
-                content:
-                    application/json:
-                        schema:
-                            ResponseMessageSchema
-                        example: {"code": -1,"msg":"validation error"}
-
                 description: "arguments error"
                 content:
                     application/json:
@@ -2661,12 +2654,12 @@ def save_activity():
                             SaveActivityResponseSchema
                         example: {"success": True, "msg": ""}
             400:
-                description: "arguments error"
+                description: "validation error"
                 content:
                     application/json:
                         schema:
                             ResponseMessageSchema
-                        example: {"code": -1,"msg":"arguments error"}
+                        example: {"code": -1,"msg":"{'shared_user_id': ['Missing data for required field.']}"}
     """
     response = {
         "success": True,
