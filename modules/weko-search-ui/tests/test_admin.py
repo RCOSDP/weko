@@ -289,25 +289,6 @@ def test_download_import_access(app, client, users, id):
         assert res.status_code != 403
 
 
-@pytest.mark.parametrize('id', accessible_user_list)
-def test_import_items_with_listrecords_without_import_task_data(app, client, users, db_register, id):
-    login_user_via_session(client=client, email=users[id]['email'])
-    url = "/admin/items/import/import"
-
-    list_records_data = dict()
-    with open("tests/data/list_records/list_records.json", "r") as f:
-        list_records_data = json.load(f)
-    input = {"data_path": "/tmp/weko_import_20220819045602",
-             "list_record": list_records_data}
-
-    with patch("weko_search_ui.admin.chord"):
-        res = client.post(url, json=input)
-        data = json.loads(res.get_data(as_text=True))
-        assert data["status"] == "success"
-        assert data["data"]["tasks"] == []
-        assert data["data"]["import_start_time"] is not None
-
-
 result_data = [
     None,
     [],
@@ -366,17 +347,31 @@ def test_import_items_list_record_data_check(app, client, users, db_register, id
 
 
 @pytest.mark.parametrize('id', accessible_user_list)
-def test_import_items_exception(app, client, admin_view, users, db_register, id):
+def test_import_items_exception(app, client, users, db_register, id):
     login_user_via_session(client=client, email=users[id]['email'])
     url = "/admin/items/import/import"
     input = {}
 
+    # check import_info
     with patch("weko_search_ui.admin.ImportItemsSchema", side_effect=ValidationError("test ValidationError")):
         res = client.post(url, json=input)
+        data = json.loads(res.get_data(as_text=True))
+        assert data["code"] == -1
+        assert data["msg"] == "test ValidationError"
+        assert res.status_code == 400
+
+    # check data_path
+    list_records_data = dict()
+    with open("tests/data/list_records/list_records.json", "r") as f:
+        list_records_data = json.load(f)
+    input = {"data_path": [],
+             "list_record": list_records_data}
+
+    res = client.post(url, json=input)
     data = json.loads(res.get_data(as_text=True))
     assert data["code"] == -1
-    assert data["msg"] == "test ValidationError"
-    assert res.status_code == 400
+    assert data["msg"] == "argument error"
+    assert res.status_code == 500
 
     # check import_task.parent.results
     list_records_data = dict()
@@ -394,7 +389,7 @@ def test_import_items_exception(app, client, admin_view, users, db_register, id)
 
 
 @pytest.mark.parametrize('id', accessible_user_list)
-def test_download_import_exception(app, client, admin_view, users, db_register, id):
+def test_download_import_exception(app, client, users, db_register, id):
     login_user_via_session(client=client, email=users[id]['email'])
     url = "/admin/items/import/export_import"
     input = {}
