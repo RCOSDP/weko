@@ -1271,22 +1271,20 @@ def db_oaischema(app, db):
 
 
 @pytest.fixture()
-def communities(app, db, user, indices):
+def communities(app, db, users, test_indices):
     """Create some example communities."""
-    user1 = db_.session.merge(user)
-    ds = app.extensions['invenio-accounts'].datastore
-    r = ds.create_role(name='superuser', description='1234')
-    ds.add_role_to_user(user1, r)
-    ds.commit()
+    comm = Community(
+        id='comm1',
+        id_user=users[3]['id'],
+        title='Test Comm Title',
+        root_node_id=1,
+        id_role=users[3]['obj'].roles[0].id
+    )
+    with db.session.begin_nested():
+        db.session.add(comm)
     db.session.commit()
 
-    comm0 = Community.create(community_id='comm1', role_id=r.id,
-                             id_user=user1.id, title='Title1',
-                             description='Description1',
-                             root_node_id=23)
-    db.session.add(comm0)
-
-    return comm0
+    return comm
 
 
 @pytest.fixture()
