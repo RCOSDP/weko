@@ -33,7 +33,7 @@ from invenio_db import db
 from sqlalchemy import func
 from datetime import datetime
 import uuid
-from invenio_pidstore.errors import PIDDoesNotExistError
+from invenio_pidstore.errors import PIDDoesNotExistError,PIDDeletedError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 
 import weko_workflow.utils
@@ -1792,6 +1792,74 @@ def test_lock_activity_users(client, users, users_index, status_code):
     with patch('weko_workflow.views.get_cache_data', return_value=""):
         with patch('weko_workflow.views.update_cache_data'):
             res = client.post(url, json=input)
+            assert res.status_code != 302
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+])
+def test_lock_activity(client, users,db_register, users_index, status_code):
+    """Test of lock activity."""
+    login(client=client, email=users[users_index]['email'])
+
+    #regular
+    url = url_for('weko_workflow.lock_activity', activity_id='A-00000003-00000')
+    input = {'locked_value': '1-1661748792565'}
+
+    with patch('weko_workflow.views.get_cache_data', return_value="1-1661748792565"):
+        with patch('weko_workflow.views.update_cache_data'):
+            res = client.post(url, data=input)
+            assert res.status_code == status_code
+
+    #locked value  is validate error
+    url = url_for('weko_workflow.lock_activity', activity_id='A-00000003-00000')
+    input = {'locked_value': 1661748792565}
+
+    with patch('weko_workflow.views.get_cache_data', return_value="1-1661748792565"):
+        with patch('weko_workflow.views.update_cache_data'):
+            res = client.post(url, data=input)
+            assert res.status_code == status_code
+
+    #lock cache is different
+    url = url_for('weko_workflow.lock_activity', activity_id='A-00000003-00000')
+    input = {'locked_value': '1-1661748792565'}
+
+    with patch('weko_workflow.views.get_cache_data', return_value="1-1661748792568"):
+        with patch('weko_workflow.views.update_cache_data'):
+            res = client.post(url, data=input)
+            assert res.status_code == status_code
+
+    #action_handler is None
+    url = url_for('weko_workflow.lock_activity', activity_id='A-00000003-00000')
+    input = {'locked_value': '1-1661748792565'}
+
+    with patch('weko_workflow.views.get_cache_data', return_value="1-1661748792565"):
+        with patch('weko_workflow.views.update_cache_data'):
+            res = client.post(url, data=input)
+            assert res.status_code == status_code
+    
+    #activity_id is type error
+    url = url_for('weko_workflow.lock_activity', activity_id='A-00000003-00000')
+    input = {'locked_value': '1-1661748792565'}
+
+    with patch('weko_workflow.views.get_cache_data', return_value="1-1661748792565"):
+        with patch('weko_workflow.views.type_null_check',return_value=False):
+            with patch('weko_workflow.views.update_cache_data'):
+                res = client.post(url, data=input)
+                assert res.status_code == status_code
+
+    #request vaidate error
+    url = url_for('weko_workflow.lock_activity', activity_id='A-00000003-00000')
+    input = {'locked_value': '1-1661748792565'}
+
+    with patch('weko_workflow.views.get_cache_data', return_value="1-1661748792565"):
+        with patch('weko_workflow.views.update_cache_data'):
+            res = client.post(url, data=input)
             assert res.status_code == status_code
 
 
@@ -2241,3 +2309,509 @@ def test_display_activity_users(client, users, db_register, users_index, status_
                 with patch('weko_workflow.views.render_template', mock_render_template):
                     res = client.post(url, json=input)
                     mock_render_template.assert_called()
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+])
+def test_display_activity(client, users, db_register, users_index, status_code,mocker,redis_connect):
+    login(client=client, email=users[users_index]['email'])
+
+    workflow_detail = WorkFlow.query.filter_by(id=1).one_or_none()
+    mock_render_template = MagicMock(return_value=jsonify({}))
+
+    activity_detail = Activity.query.filter_by(activity_id='A-00000001-10001').one_or_none()
+    cur_action = activity_detail.action
+    action_endpoint = 'item_login'
+    #action_endpoint = cur_action.action_endpoint
+    action_id = cur_action.id
+    histories = 1
+    item_metadata = {'created':datetime.strptime("2022-09-22 05:09:54.677307", "%Y-%m-%d %H:%M:%S.%f"),'updated':datetime.strptime("2022-09-22 05:09:54.677307", "%Y-%m-%d %H:%M:%S.%f"),
+                    'id':'37075580-8442-4402-beee-05f62e6e1dc2','item_type_id':15,'json': {"id": "1", "pid": {"type": "depid", "value": "1", "revision_id": 0}, "lang": "ja", "owner": "1", "title": "title", "owners": [1], "status": "published", "$schema": "/items/jsonschema/15", "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_id": -1, "item_1617186331708": [{"subitem_1551255647225": "ff", "subitem_1551255648112": "ja"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}}
+                    ,'version_id':3}
+    item = None
+    steps = 1
+    temporary_comment = 1
+
+    test_pid= dict(created=datetime.strptime("2022-09-22 05:09:48.085724", "%Y-%m-%d %H:%M:%S.%f"),updated=datetime.strptime("2022-09-22 05:09:48.085747", "%Y-%m-%d %H:%M:%S.%f"),
+                id=3, pid_type='recid',pid_value='1',pid_provider='',status='R',object_type='rec',object_uuid='37075580-8442-4402-beee-05f62e6e1dc2')
+    test_comm=  dict(created=datetime.strptime("2022-09-22 05:09:48.085724", "%Y-%m-%d %H:%M:%S.%f"),updated=datetime.strptime("2022-09-22 05:09:48.085747", "%Y-%m-%d %H:%M:%S.%f"),
+                id='test',id_role=1,id_user=1,title='test',description='',page='',curation_policy='',community_header='',community_footer='',last_record_accepted=datetime.strptime("2000-01-01 00:00:00", "%Y-%m-%d %H:%M:%S"),
+                logo_ext='',ranking=0,fixed_points=0,deleted_at=None,root_node_id=1557819733276)
+    roles = {
+        'allow': [],
+        'deny': []
+    }
+    action_users = {
+        'allow': [],
+        'deny': []
+    }
+
+    identifier = {'action_identifier_select': '',
+                'action_identifier_jalc_doi': '',
+                'action_identifier_jalc_cr_doi': '',
+                'action_identifier_jalc_dc_doi': '',
+                'action_identifier_ndl_jalc_doi': ''
+                }
+
+
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    need_file = False
+    need_billing_file = False
+    record = {}
+    json_schema = "test"
+    schema_form = "test"
+    item_save_uri = ""
+    files = []
+    endpoints = {}
+    need_thumbnail = False
+    files_thumbnail = []
+    allow_multi_thumbnail = False
+
+    license_list = []
+    record_detail_alt = dict(
+        record=None,
+        files=None,
+        files_thumbnail=None,
+        pid=None)
+
+    mocker.patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+                return_value=(roles, action_users))
+    mocker.patch('weko_workflow.views.WorkActivity.get_action_identifier_grant',return_value=identifier)
+    mocker.patch('weko_workflow.views.check_authority_action',return_value=1)
+    mocker.patch('weko_workflow.views.set_files_display_type',return_value=[])
+    mocker.patch('weko_workflow.views.WorkActivity.get_action_journal')
+    mocker.patch('weko_workflow.views.get_files_and_thumbnail',return_value=(["test1","test2"],files_thumbnail))
+    mocker.patch('weko_workflow.views.get_usage_data')
+    mocker.patch('weko_workflow.views.is_usage_application_item_type')
+    mocker.patch('weko_theme.views.get_design_layout',return_value=(None,True))
+    mocker.patch('weko_workflow.views.RedisConnection.connection',return_value=redis_connect)
+
+    #regular
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = cur_action.action_endpoint
+    item = None
+
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #activity_id is not String
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = cur_action.action_endpoint
+    item = None
+
+    with patch('weko_workflow.views.get_activity_display_info',
+            return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+            steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.type_null_check',return_value=False):
+            with patch('weko_workflow.views.item_login',return_value=(template_url,
+                    need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                    files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+                with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                    with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                        with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                            with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                                with patch('weko_workflow.views.render_template', mock_render_template):
+                                    res = client.post(url, query_string=input)
+                                    mock_render_template.assert_called()
+
+    #activity_id is include "?"
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-?10001')
+    input = {}
+    action_endpoint = cur_action.action_endpoint
+    item = None
+
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #get_activity_display_info is include "None object"
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = None
+
+    with patch('weko_workflow.views.get_activity_display_info',
+            return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+            steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #action_endpoint is identifier_grant and item is not None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'identifier_grant'
+    item = item_metadata
+
+    with patch('weko_workflow.views.get_activity_display_info',
+            return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+            steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #action_endpoint is item_login and activity is None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10002')
+    input = {}
+    action_endpoint = 'item_login'
+
+    with patch('weko_workflow.views.get_activity_display_info',
+            return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+            steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #template_url is None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = None
+
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #Json_schema is None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = None
+
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #action_endpoint is identifier_grant and community is not root index
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {'community': 'test'}
+    action_endpoint = 'identifier_grant'
+    item = item_metadata
+
+    with patch('weko_workflow.views.get_activity_display_info',
+            return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+            steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,dict(test="test"))):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #action_endpoint is identifier_grant and community is not root index
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {'community': 'test'}
+    action_endpoint = 'item_login'
+    item = item_metadata
+
+    with patch('weko_workflow.views.get_activity_display_info',
+            return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+            steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record'):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    
+    #json_schema is not None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+
+    with patch('weko_workflow.views.get_activity_display_info',
+            return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+            steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #item is not None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+    
+    #action_endpoint is item_link
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_link'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.ItemLink.get_item_link_info'):
+            with patch('weko_workflow.views.item_login',return_value=(template_url,
+                    need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                    files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+                with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                    with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                        with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                            with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                                with patch('weko_workflow.views.render_template', mock_render_template):
+                                    res = client.post(url, query_string=input)
+                                    mock_render_template.assert_called()
+
+    #action_endpoint is item_login
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.ItemLink.get_item_link_info'):
+            with patch('weko_workflow.views.item_login',return_value=(template_url,
+                    need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                    files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+                with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                    with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                        with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                            with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                                with patch('weko_workflow.views.render_template', mock_render_template):
+                                    res = client.post(url, query_string=input)
+                                    mock_render_template.assert_called()
+
+
+    #raise PIDDeletedError
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',side_effect=PIDDeletedError('test','test')):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                #mock_render_template.assert_called()
+
+    #raise PIDDoesNotExistError
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',side_effect=PIDDoesNotExistError('test','test')):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #raise Exception
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',side_effect=Exception()):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #approval record is not None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,True)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #license_list is None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_workflow.views.get_list_licence',return_value=None):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+
+    #record_detail_alt is None
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
+    input = {}
+    action_endpoint = 'item_login'
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    json_schema = "test"
+    item = item_metadata
+
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail)):
+        with patch('weko_workflow.views.item_login',return_value=(template_url,
+                need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
+                files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
+            with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+                with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
+                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_workflow.views.get_main_record_detail',return_value=None):
+                            with patch('weko_workflow.views.render_template', mock_render_template):
+                                res = client.post(url, query_string=input)
+                                mock_render_template.assert_called()
+

@@ -55,7 +55,7 @@ from invenio_jsonschemas import InvenioJSONSchemas
 # from weko_records_ui import WekoRecordsUI
 from weko_theme import WekoTheme
 from weko_admin import WekoAdmin
-from weko_admin.models import SessionLifetime
+from weko_admin.models import SessionLifetime,Identifier 
 from weko_admin.views import blueprint as weko_admin_blueprint
 from weko_records.models import ItemTypeName, ItemType,FeedbackMailList,ItemTypeMapping
 from weko_records.api import Mapping
@@ -90,6 +90,7 @@ from weko_user_profiles.models import UserProfile
 from weko_user_profiles.config import WEKO_USERPROFILES_ROLES,WEKO_USERPROFILES_GENERAL_ROLE
 from weko_authors.models import Authors
 from invenio_records_files.api import RecordsBuckets
+from weko_redis.redis import RedisConnection
 
 # @event.listens_for(Engine, "connect")
 # def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -127,6 +128,11 @@ def base_app(instance_path):
                                          'Repository Administrator'],
         WEKO_PERMISSION_ROLE_COMMUNITY=['Community Administrator'],
         THEME_SITEURL = 'https://localhost',
+        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_DB='0',
+        CACHE_REDIS_HOST="redis",
+        REDIS_PORT='6379',
+        ACCOUNTS_SESSION_REDIS_DB_NO = 1,
         WEKO_RECORDS_UI_LICENSE_DICT=[
             {
                 'name': _('write your own license'),
@@ -393,6 +399,12 @@ def guest(client):
         sess['guest_email'] = "guest@test.org"
         sess['guest_url'] = url_for("weko_workflow.display_guest_activity",file_name="test_file")
     yield client
+
+@pytest.fixture
+def redis_connect(app):
+    redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+    redis_connection.put('updated_json_schema_A-00000001-10001',bytes('test', 'utf-8'))
+    return redis_connection
 
 @pytest.fixture()
 def users(app, db):
@@ -1016,6 +1028,25 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                 title='test', shared_user_id=-1, extra_info={},
                 action_order=1,
                 )
+    activity2 = Activity(activity_id='A-00000001-10001',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    action_status = 'M',
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=6)
+
+    activity3 = Activity(activity_id='A-00000001-10002',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    action_status = 'C',
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=6)
     # identifier登録あり
     activity_item1 = Activity(activity_id='2',item_id=db_records[2][2].id,workflow_id=1, flow_id=flow_define.id,
                     action_id=1, activity_login_user=users[3]["id"],
@@ -1079,6 +1110,8 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
     with db.session.begin_nested():
         db.session.add(workflow)
         db.session.add(activity)
+        db.session.add(activity2)
+        db.session.add(activity3)
         db.session.add(activity_item1)
         db.session.add(activity_item2)
         db.session.add(activity_item3)

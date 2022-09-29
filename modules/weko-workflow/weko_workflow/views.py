@@ -69,8 +69,10 @@ from weko_items_ui.api import item_login
 from weko_records.api import FeedbackMailList, ItemLink
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
+from weko_records_ui.utils import get_list_licence
 from weko_records_ui.models import FilePermission
 from weko_search_ui.utils import check_import_items, import_items_to_system
+from weko_theme.utils import get_design_layout
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
@@ -666,7 +668,7 @@ def display_guest_activity(file_name=""):
     )
 
 
-@workflow_blueprint.route('/activity/detail/<string:activity_id>',
+@blueprint.route('/activity/detail/<string:activity_id>',
                  methods=['GET', 'POST'])
 @login_required
 def display_activity(activity_id="0"):
@@ -745,7 +747,8 @@ def display_activity(activity_id="0"):
     action_endpoint, action_id, activity_detail, cur_action, histories, item, \
         steps, temporary_comment, workflow_detail = \
         get_activity_display_info(activity_id)
-    if any([s is None for s in [action_endpoint, action_id, activity_detail, cur_action, histories, steps, workflow_detail]]):
+    if not (action_endpoint and action_id and activity_detail and cur_action and histories and \
+        steps and workflow_detail):
         current_app.logger.error("display_activity: can not get activity display info")
         return render_template("weko_theme/error.html",
                 error="can not get data required for rendering")
@@ -845,16 +848,18 @@ def display_activity(activity_id="0"):
                     error="can not get data required for rendering")
 
         application_item_type = is_usage_application_item_type(activity_detail)
-        if not isinstance(application_item_type, bool):
-            current_app.logger.error("display_activity: can not get application_item_type")
-            return render_template("weko_theme/error.html",
-                    error="can not get data required for rendering")
 
         if not record and item:
             record = item
 
         redis_connection = RedisConnection()
         sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+
+
+        if not (json_schema and schema_form):
+            current_app.logger.error("display_activity: can not get json_schema,schema_form")
+            return render_template("weko_theme/error.html",
+                    error="can not get data required for rendering")
 
         if sessionstore.redis.exists(
             'updated_json_schema_{}'.format(activity_id)) \
@@ -863,37 +868,20 @@ def display_activity(activity_id="0"):
             json_schema = (json_schema + "/{}").format(activity_id)
             schema_form = (schema_form + "/{}").format(activity_id)
 
-        if any([v is None for v in [json_schema, schema_form]]):
-            current_app.logger.error("display_activity: can not get json_schema,schema_form")
-            return render_template("weko_theme/error.html",
-                    error="can not get data required for rendering")
 
         title = auto_fill_title(item_type_name)
         show_autofill_metadata = is_show_autofill_metadata(item_type_name)
-        if not isinstance(show_autofill_metadata,bool):
-            current_app.logger.error("display_activity: can not get is_sho_autofill_metadata")
-            return render_template("weko_theme/error.html",
-                    error="can not get data required for rendering")
-
         is_hidden_pubdate_value = is_hidden_pubdate(item_type_name)
-        if not isinstance(is_hidden_pubdate_value, bool):
-            current_app.logger.error("display_activity: can not get is_hidden_pubdate")
-            return render_template("weko_theme/error.html",
-                    error="can not get data required for rendering")
 
 
     # if 'approval' == action_endpoint:
     if item:
         try:
             # get record data for the first time access to editing item screen
-            recid, approval_record = get_pid_and_record(item.id)
+            recid, approval_record = get_pid_and_record(item.get("id"))
             files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
 
             links = base_factory(recid)
-            if not isinstance(links, dict):
-                current_app.logger.error("display_activity: can not get links")
-                return render_template("weko_theme/error.html",
-                    error="can not get data required for rendering")
 
         except PIDDeletedError:
             current_app.logger.debug("PIDDeletedError: {}".format(sys.exc_info()))
@@ -915,7 +903,7 @@ def display_activity(activity_id="0"):
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         if comm is not None:
-            community_id = comm.id
+            community_id = comm.get("id")
     # be use for index tree and comment page.
     if 'item_login' == action_endpoint or \
             'item_login_application' == action_endpoint or \
@@ -937,33 +925,27 @@ def display_activity(activity_id="0"):
     if user_id:
         from weko_user_profiles.views import get_user_profile_info
         user_profile['results'] = get_user_profile_info(int(user_id))
-    from weko_records_ui.utils import get_list_licence
-    from weko_theme.utils import get_design_layout
 
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
-    if not isinstance(render_widgets, bool):
-        current_app.logger.error("display_activity: bad value for render_widgets")
-        return render_template("weko_theme/error.html",
-                error="can not get data required for rendering")
 
     list_license = get_list_licence()
-    if not isinstance(list_license, list):
+    if list_license is None or not isinstance(list_license, list):
         current_app.logger.error("display_activity: bad value for list_licences")
         return render_template("weko_theme/error.html",
                 error="can not get data required for rendering")
 
 
     if action_endpoint == 'item_link' and recid:
-        item_link = ItemLink.get_item_link_info(recid.pid_value)
+        item_link = ItemLink.get_item_link_info(recid.get("pid_value"))
         ctx['item_link'] = item_link
 
     # Get item link info.
     record_detail_alt = get_main_record_detail(
         activity_id, activity_detail, action_endpoint, item,
         approval_record, files, files_thumbnail)
-    if not isinstance(record_detail_alt, dict):
+    if not record_detail_alt:
         current_app.logger.error("display_activity: bad value for record_detail_alt")
         return render_template("weko_theme/error.html",
                     error="can not get data required for rendering")
@@ -982,11 +964,6 @@ def display_activity(activity_id="0"):
     # Get Auto fill data for Restricted Access Item Type.
     usage_data = get_usage_data(
         workflow_detail.itemtype_id, activity_detail, user_profile)
-    if not isinstance(usage_data,dict):
-        current_app.logger.error("display_activity: bad value for usage_data")
-        return render_template("weko_theme/error.html",
-                error="can not get data required for rendering")
-
     ctx.update(usage_data)
 
     if approval_record and files:
@@ -1001,7 +978,7 @@ def display_activity(activity_id="0"):
     )
     _id = None
     if recid:
-        _id = re.sub("\.[0-9]+", "", recid.pid_value)
+        _id = re.sub("\.[0-9]+", "", recid.get("pid_value"))
 
     return render_template(
         'weko_workflow/activity_detail.html',
