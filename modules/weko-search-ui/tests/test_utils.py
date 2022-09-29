@@ -210,7 +210,20 @@ def test_get_content_workflow():
 
 
 # def set_nested_item(data_dict, map_list, val):
+def test_set_nested_item(i18n_app):
+    data_dict = {'1': {'a': 'aa'}}
+    map_list = ["test"]
+    val = None
+
+    assert set_nested_item(data_dict, map_list, val)
+
+
 # def convert_nested_item_to_list(data_dict, map_list):
+# def test_convert_nested_item_to_list(i18n_app):
+#     data_dict = {'a': 'aa'}
+#     map_list = [1,2,3,4]
+
+#     assert convert_nested_item_to_list(data_dict, map_list)
 
 
 # def define_default_dict():
@@ -231,6 +244,10 @@ def test_handle_generate_key_path():
 
 
 # def parse_to_json_form(data: list, item_path_not_existed=[], include_empty=False):
+def test_parse_to_json_form(i18n_app, record_with_metadata):
+    data = record_with_metadata[0].items()
+
+    assert parse_to_json_form(data)
 
 
 # def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
@@ -297,7 +314,55 @@ def test_getEncode():
 
 
 # def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
+def test_read_stats_file(i18n_app, db_itemtype):
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    file_name_tsv = 'sample_tsv.tsv'
+    file_path_tsv = os.path.join(
+        current_path,
+        'data',
+        'sample_file',
+        file_name_tsv
+    )
+    file_name_csv = 'sample_csv.csv'
+    file_path_csv = os.path.join(
+        current_path,
+        'data',
+        'sample_file',
+        file_name_csv
+    )
+
+    # import csv, re
+    # from weko_records.models import ItemType
+    # from weko_records.api import ItemTypes
+    # enc = getEncode(file_path_tsv)
+    # with open(file_path_tsv, "r", newline="", encoding=enc) as file:
+    #     file_reader = csv.reader(file, delimiter='\t')
+    #     for num, data_row in enumerate(file_reader, start=1):
+    #         item_type_id = data_row[2].split("/")[-1]
+    #         itemtype = ItemTypes.get_by_id(item_type_id) # if you use itemtype.schema y will be None
+    #         x = ItemType.query.filter_by(id=1).first()
+    #         y = get_item_type(int(item_type_id)) # if you use itemtype.schema y will be None
+    #         print('++++++++++++++')
+    #         if y:
+    #             print("y!")
+    #         print(x)
+    #         print(itemtype)
+    #         # print(itemtype.schema)
+    #         # print(itemtype.item_type_name.name)
+    #         # print(item_type_id)
+    #         print('--------')
+    # raise BaseException
+
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        assert read_stats_file(file_path_tsv, file_name_tsv, 'tsv')
+        assert read_stats_file(file_path_csv, file_name_csv, 'csv')
+
+
 # def handle_convert_validate_msg_to_jp(message: str):
+def test_handle_convert_validate_msg_to_jp(i18n_app):
+    message = "test"
+
+    assert handle_convert_validate_msg_to_jp(message)
 
 
 # def handle_validate_item_import(list_record, schema) -> list:
@@ -508,11 +573,18 @@ def test_create_flow_define(i18n_app, db_activity):
     assert not create_flow_define()
 
 
-# def send_item_created_event_to_es(item, request_info):
-# def test_send_item_created_event_to_es(i18n_app):
+# def send_item_created_event_to_es(item, request_info): 20220929
+def test_send_item_created_event_to_es(i18n_app, es_records, client_request_args, users, es):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        item = es_records['results'][0]['item']
+        request_info = {
+            "remote_addr": request.remote_addr,
+            "referrer": request.referrer,
+            "hostname": request.host,
+            "user_id": 1
+        }
 
-    # Doesn't return anything
-    # assert not send_item_created_event_to_es()
+        assert send_item_created_event_to_es(item, request_info)
 
 
 # def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False): ERROR = TypeError: handle_remove_es_metadata() missing 2 required positional arguments: 'bef_metadata' and 'bef_las...
@@ -523,19 +595,73 @@ def test_import_items_to_system(i18n_app, db_activity):
 
 
 # def handle_item_title(list_record):
+def test_handle_item_title(i18n_app, es_records):
+    list_record = es_records['results'][0]['item']
 
-
-# def test_handle_item_title(i18n_app, records):
-#     assert handle_item_title([records['hits']['hits'][0]['_source']['_item_metadata']])
-
+    assert handle_item_title(list_record)
+    
 
 # def handle_check_and_prepare_publish_status(list_record):
-# def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_edit_indexes):
+def test_handle_check_and_prepare_publish_status(i18n_app, record_with_metadata):
+    list_record = [record_with_metadata[0]]
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_publish_status(list_record)
+
+
+# def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_edit_indexes): 20220929
+def test_handle_check_and_prepare_index_tree(i18n_app, record_with_metadata, indices):
+    list_record = [record_with_metadata[0]]
+    can_edit_indexes = [indices['index_dict']]
+
+    # Test 1
+    all_index_permission = False
+    assert not handle_check_and_prepare_index_tree(list_record, all_index_permission, can_edit_indexes)
+
+    # Test 2
+    all_index_permission = True
+    assert not handle_check_and_prepare_index_tree(list_record, all_index_permission, can_edit_indexes)
+
+
 # def handle_check_and_prepare_feedback_mail(list_record):
+def test_handle_check_and_prepare_feedback_mail(i18n_app, record_with_metadata):
+    list_record = [record_with_metadata[0]]
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_feedback_mail(list_record)
+
+
 # def handle_set_change_identifier_flag(list_record, is_change_identifier):
+def test_handle_set_change_identifier_flag(i18n_app, record_with_metadata):
+    list_record = [record_with_metadata[0]]
+    is_change_identifier = True
+
+    # Doesn't return any value
+    assert not handle_set_change_identifier_flag(list_record, is_change_identifier)
+
+
 # def handle_check_cnri(list_record):
+def test_handle_check_cnri(i18n_app, es_records):
+    list_record = [es_records['results'][0]['item']]
+
+    # Doesn't return any value
+    assert not handle_check_cnri(list_record)
+
+
 # def handle_check_doi_indexes(list_record):
+def test_handle_check_doi_indexes(i18n_app, es_records):
+    list_record = [es_records['results'][0]['item']]
+
+    # Doesn't return any value
+    assert not handle_check_doi_indexes(list_record)
+
+
 # def handle_check_doi_ra(list_record):
+def test_handle_check_doi_ra(i18n_app, es_records):
+    list_record = [es_records['results'][0]['item']]
+
+    # Doesn't return any value
+    assert not handle_check_doi_ra(list_record)
 
 
 # def handle_check_doi(list_record):
@@ -596,10 +722,47 @@ def test_get_doi_prefix(i18n_app, communities2, doi_ra, db):
     assert get_doi_prefix(doi_ra)
     
 
-
 # def get_doi_link(doi_ra, data):
+def test_get_doi_link(i18n_app):
+    doi_ra = ["JaLC", "Crossref", "DataCite", "NDL JaLC"]
+    data = {
+        "identifier_grant_jalc_doi_link": doi_ra[0],
+        "identifier_grant_jalc_cr_doi_link": doi_ra[1],
+        "identifier_grant_jalc_dc_doi_link": doi_ra[2],
+        "identifier_grant_ndl_jalc_doi_link": doi_ra[3],
+    }
+
+    assert get_doi_link(doi_ra[0], data)
+    assert get_doi_link(doi_ra[1], data)
+    assert get_doi_link(doi_ra[2], data)
+    assert get_doi_link(doi_ra[3], data)
+
+
 # def prepare_doi_link(item_id):
+def test_prepare_doi_link(i18n_app, communities2, db):
+    from weko_admin.models import Identifier
+    test_identifier = Identifier(
+        id=1,
+        repository="Root Index",
+        created_userId="user1",
+        created_date=datetime.now(),
+        updated_userId="user1"
+    )
+    db.session.add(test_identifier)
+    db.session.commit()
+    item_id = 90
+
+    assert prepare_doi_link(item_id)
+
+
 # def register_item_doi(item):
+def test_register_item_doi(i18n_app, es_records, filerecord):
+    item = es_records['results'][0]['item']
+
+    assert register_item_doi(item)
+
+
+
 # def register_item_update_publish_status(item, status):
 # def handle_doi_required_check(record):
 

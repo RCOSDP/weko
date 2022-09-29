@@ -38,6 +38,8 @@ from flask_login import current_user, login_user, LoginManager
 from werkzeug.local import LocalProxy
 from tests.helpers import create_record, json_data
 from six import BytesIO
+from elasticsearch import Elasticsearch
+from simplekv.memory.redisstore import RedisStore
 # from moto import mock_s3
 
 from invenio_deposit.config import (
@@ -72,8 +74,7 @@ from invenio_oaiserver.models import OAISet
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_records import InvenioRecords
 from invenio_search import InvenioSearch
-from sqlalchemy_utils.functions import create_database, database_exists, drop_database
-from simplekv.memory.redisstore import RedisStore
+from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 from invenio_oaiharvester.models import HarvestSettings
 from invenio_stats import InvenioStats
 from invenio_admin import InvenioAdmin
@@ -132,6 +133,8 @@ from weko_deposit.api import WekoDeposit, WekoRecord, WekoIndexer
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy import event
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
+
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
@@ -230,6 +233,9 @@ def base_app(instance_path):
         WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info',
         WEKO_ITEMS_UI_EXPORT_TMP_PREFIX = 'weko_export_',
         WEKO_SEARCH_UI_IMPORT_TMP_PREFIX = 'weko_import_',
+        WEKO_AUTHORS_ES_INDEX_NAME = "{}-authors".format(index_prefix),
+        WEKO_AUTHORS_ES_DOC_TYPE = "author-v1.0.0",
+        WEKO_HANDLE_ALLOW_REGISTER_CNRI = True,
         WEKO_RECORDS_UI_LICENSE_DICT=[
             {
                 'name': _('write your own license'),
@@ -598,6 +604,9 @@ def client_request_args(app):
             'item_link': '1',
             'is_search': 1,
             'search_type': WEKO_SEARCH_TYPE_DICT["INDEX"],
+            'remote_addr': '0.0.0.0',
+            'referrer': 'test',
+            'host': '127.0.0.1',
             # 'search_type': WEKO_SEARCH_TYPE_DICT["FULL_TEXT"],
             })
         yield r
@@ -1081,10 +1090,13 @@ def item_type(app, db):
         'table_row': ['1']
     }
 
+    with open("tests/data/itemtype_schema.json", "r") as f:
+        item_type_schema = json.load(f)
+
     return ItemTypes.create(
         name='test',
         item_type_name=_item_type_name,
-        schema={},
+        schema=item_type_schema,
         render=_render,
         tag=1
     )
@@ -1381,21 +1393,21 @@ def mock_user_ctx(mock_users):
         yield
 
 
-@pytest.yield_fixture()
-def es(app):
-    """Provide elasticsearch access, create and clean indices.
+# @pytest.yield_fixture()
+# def es(app):
+#     """Provide elasticsearch access, create and clean indices.
 
-    Don't create template so that the test or another fixture can modify the
-    enabled events.
-    """
-    current_search_client.indices.delete(index='*')
-    current_search_client.indices.delete_template('*')
-    list(current_search.create())
-    try:
-        yield current_search_client
-    finally:
-        current_search_client.indices.delete(index='*')
-        current_search_client.indices.delete_template('*')
+#     Don't create template so that the test or another fixture can modify the
+#     enabled events.
+#     """
+#     current_search_client.indices.delete(index='*')
+#     current_search_client.indices.delete_template('*')
+#     list(current_search.create())
+#     try:
+#         yield current_search_client
+#     finally:
+#         current_search_client.indices.delete(index='*')
+#         current_search_client.indices.delete_template('*')
 
 
 def generate_events(
@@ -2094,7 +2106,7 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
             results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit})
 
     sleep(3)
-    # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
+    es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
     # print(es.cat.indices())
     return {
         "indexer": indexer,
