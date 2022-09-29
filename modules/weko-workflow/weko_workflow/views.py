@@ -2697,12 +2697,12 @@ def save_activity():
                             SaveActivityResponseSchema
                         example: {"success": True, "msg": ""}
             400:
-                description: "arguments error"
+                description: "validation error"
                 content:
                     application/json:
                         schema:
                             ResponseMessageSchema
-                        example: {"code": -1,"msg":"arguments error"}
+                        example: {"code": -1,"msg":"{'shared_user_id': ['Missing data for required field.']}"}
     """
     response = {
         "success": True,
