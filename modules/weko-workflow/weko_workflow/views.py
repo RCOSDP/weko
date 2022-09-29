@@ -2555,13 +2555,6 @@ def unlock_activity(activity_id="0"):
                             ResponseMessageSchema
                         example: {"code":200,"msg":"Unlock success"}
             400:
-                description: "validation error"
-                content:
-                    application/json:
-                        schema:
-                            ResponseMessageSchema
-                        example: {"code": -1,"msg":"validation error"}
-
                 description: "arguments error"
                 content:
                     application/json:
