@@ -59,11 +59,11 @@ require([
           $("#btn_cancel").attr('style', 'display: none;');
         }
       },
-      error: function (jqXHE, status) {
+      error: function (jqXHR, status) {
         endLoading(_this);
         $('#action_quit_confirmation').modal('show');
-        if (jqXHE.responseJSON && jqXHE.responseJSON.msg) {
-          $('.modal-body').html(jqXHE.responseJSON.msg);
+        if (jqXHR.responseJSON && jqXHR.responseJSON.msg) {
+          $('.modal-body').html(jqXHR.responseJSON.msg);
         } else {
           $('.modal-body').html('Server error.');
         }
@@ -107,11 +107,11 @@ require([
           $("#btn_cancel").attr('style', 'display: none;');
         }
       },
-      error: function (jqXHE, status) {
+      error: function (jqXHR, status) {
         endLoading(_this);
         $('#action_quit_confirmation').modal('show');
-        if (jqXHE.responseJSON && jqXHE.responseJSON.msg) {
-          $('.modal-body').html(jqXHE.responseJSON.msg);
+        if (jqXHR.responseJSON && jqXHR.responseJSON.msg) {
+          $('.modal-body').html(jqXHR.responseJSON.msg);
         } else {
           $('.modal-body').html('Server error.');
         }

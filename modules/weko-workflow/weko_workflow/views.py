@@ -312,6 +312,10 @@ def iframe_success():
     files = []
     if item and item.get('pid') and 'value' in item['pid']:
         record, files = get_record_by_root_ver(item['pid']['value'])
+        if not isinstance(files, list):
+            current_app.logger.error("iframe_success: can not get files")
+            return render_template("weko_theme/error.html",
+                    error="can not get data required for rendering")
         files_thumbnail = get_thumbnails(files, None)
     else:
         if "itemlogin_record" not in session:
@@ -319,20 +323,13 @@ def iframe_success():
             return render_template("weko_theme/error.html",
                     error="can not get data required for rendering")
         record = session['itemlogin_record']
-    if not isinstance(files, list):
-        current_app.logger.error("iframe_success: can not get files")
-        return render_template("weko_theme/error.html",
-                error="can not get data required for rendering")
+    
     ctx = {'community': None}
     if community_id:
         comm = GetCommunity.get_community_by_id(community_id)
         ctx = {'community': comm}
 
     from weko_theme.utils import get_design_layout
-    if "WEKO_THEME_DEFAULT_COMMUNITY" not in current_app.config:
-        current_app.logger.error("iframe_success: WEKO_THEME_DEFAULT_COMMUNITY is not exist in config")
-        return render_template("weko_theme/error.html",
-                error="can not get data required for rendering")
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
@@ -910,10 +907,6 @@ def display_activity(activity_id="0"):
     res_check = check_authority_action(str(activity_id), int(action_id),
                                        is_auto_set_index_action,
                                        activity_detail.action_order)
-    if not isinstance(res_check, int) or res_check not in [0,1]:
-        current_app.logger.error("display_activity: bad value for res_check")
-        return render_template("weko_theme/error.html",
-                error="can not get data required for rendering")
 
     getargs = request.args
     ctx = {'community': None}
@@ -1282,10 +1275,6 @@ def next_action(activity_id='0', action_id=0):
     )
 
     action = Action().get_action_detail(action_id)
-    if action is None:
-        current_app.logger.error("next_action: can not get action")
-        res = ResponseMessageSchema().load({"code":-2, "msg":"can not get action"})
-        return jsonify(res.data), 500
     action_endpoint = action.action_endpoint
 
     current_app.logger.debug('action_endpoint: {0}'.format(action_endpoint))
@@ -1474,14 +1463,10 @@ def next_action(activity_id='0', action_id=0):
                         return jsonify(res.data), 500
                     item_ids.append(last_ver.object_uuid)
                 else:
-                    try:
-                        draft_pid = PersistentIdentifier.get(
-                            'recid',
-                            '{}.0'.format(pid_without_ver.pid_value)
-                        )
-                    except PIDDoesNotExistError:
-                        res = ResponseMessageSchema().load({"code":-1, "msg":"can not get pid_without_ver"})
-                        return jsonify(res.data), 500
+                    draft_pid = PersistentIdentifier.get(
+                        'recid',
+                        '{}.0'.format(pid_without_ver.pid_value)
+                    )
                     item_ids.append(draft_pid.object_uuid)
                 item_ids.append(pid_without_ver.object_uuid)
 
@@ -1502,7 +1487,7 @@ def next_action(activity_id='0', action_id=0):
         if relation_data:
             err = item_link.update(relation_data)
             if err:
-                res = ResponseMessageSchema().load({"code":-1, "msg":_("err")})
+                res = ResponseMessageSchema().load({"code":-1, "msg":_(err)})
                 return jsonify(res.data), 500
         if post_json.get('temporary_save') == 1:
             work_activity.upt_activity_action_comment(
@@ -1570,12 +1555,11 @@ def next_action(activity_id='0', action_id=0):
                     action_id=action_id,
                     req=-1)
 
-            if item_id:
-                record_without_version = item_id
-                if not recid:
-                    record_without_version = pid_without_ver.object_uuid
-                saving_doi_pidstore(item_id, record_without_version, post_json,
-                                    int(identifier_select), False, True)
+            record_without_version = item_id
+            if not recid:
+                record_without_version = pid_without_ver.object_uuid
+            saving_doi_pidstore(item_id, record_without_version, post_json,
+                                int(identifier_select), False, True)
     elif 'identifier_grant' == action_endpoint \
             and not post_json.get('temporary_save'):
         _value, _type = IdentifierHandle(item_id).get_idt_registration_data()
@@ -1584,7 +1568,7 @@ def next_action(activity_id='0', action_id=0):
                 item_id, activity_id, IDENTIFIER_GRANT_SELECT_DICT[_type[0]],
                 pid_without_ver.object_uuid)
             if isinstance(error_list, str):
-                res = ResponseMessageSchema().load({"code":-1, "msg":_("error_list")})
+                res = ResponseMessageSchema().load({"code":-1, "msg":_(error_list)})
                 return jsonify(res.data), 500
             elif error_list:
                 return previous_action(
@@ -1985,7 +1969,7 @@ def cancel_action(activity_id='0', action_id=0):
     """
 
     check_flg = type_null_check(activity_id, str)
-    check_flg &= type_null_check(action_id, str)
+    check_flg &= type_null_check(action_id, int)
     if not check_flg:
         current_app.logger.error("cancel_action: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
@@ -2128,8 +2112,6 @@ def withdraw_confirm(activity_id='0', action_id=0):
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
 
-    TODO:
-        400,500 を受け取った際のjsの挙動設計。postに400,500を返すとあるがjsの整備がまだなのですべて200で返す
     ---
     post:
         description: "withdraw confirm"
@@ -2163,6 +2145,14 @@ def withdraw_confirm(activity_id='0', action_id=0):
                             ResponseMessageSchema
                         example:
                             {"code": 0, "msg": "success", "data": {"redirect":"/workflow/activity/detail/1"}}
+            500:
+                description: "server error"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example:
+                            {"code": -1, "msg": "argument error"}}
 
 
     """
@@ -2172,20 +2162,17 @@ def withdraw_confirm(activity_id='0', action_id=0):
         if not check_flg:
             current_app.logger.error("withdraw_confirm: argument error")
             res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
-            return jsonify(res.data)
+            return jsonify(res.data), 500
 
         try:
             schema_load = PasswdSchema().load(request.get_json())
         except ValidationError as err:
             current_app.logger.error("withdraw_confirm: "+str(err))
             res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
-            return jsonify(res.data)
+            return jsonify(res.data), 500
         post_json = schema_load.data
 
         password = post_json.get('passwd', None)
-        if password is None:
-            res = ResponseMessageSchema({"code":-1,"msg":_('Password not provided')})
-            return jsonify(res.data)
         wekouser = ShibUser()
         if password == 'DELETE':
             # if wekouser.check_weko_user(current_user.email, password):
@@ -2201,10 +2188,6 @@ def withdraw_confirm(activity_id='0', action_id=0):
                 activity_id,
                 identifier_actionid)
             identifier_handle = IdentifierHandle(item_id)
-            if not isinstance(identifier, dict) or "action_identifier_select" in identifier:
-                current_app.logger.error("withdraw_confirm: bad identifier data")
-                res = ResponseMessageSchema({"code":-1,"msg":"bad identifier data"})
-                return jsonify(res.data)
 
             if identifier_handle.delete_pidstore_doi():
                 identifier['action_identifier_select'] = \
@@ -2223,11 +2206,15 @@ def withdraw_confirm(activity_id='0', action_id=0):
                     except PIDDoesNotExistError:
                         current_app.logger.error("withdraw_confirm: can not get PersistentIdentifier")
                         res = ResponseMessageSchema().load({"code":-1,"msg":"can not get PersistentIdentifier"})
-                        return jsonify(res.data)
+                        return jsonify(res.data), 500
                     recid = get_record_identifier(current_pid.pid_value)
                     if recid is None:
                         pid_without_ver = get_record_without_version(
                             current_pid)
+                        if pid_without_ver is None:
+                            current_app.logger.error("withdraw_confirm: can not get pid without ver")
+                            res = ResponseMessageSchema().load({"code":-1,"msg":"can not get pid without ver"})
+                            return jsonify(res.data), 500
                         record_without_ver_activity_id = \
                             get_activity_id_of_record_without_version(
                                 pid_without_ver)
@@ -2247,17 +2234,17 @@ def withdraw_confirm(activity_id='0', action_id=0):
                     url = url_for('weko_workflow.display_activity',
                                   activity_id=activity_id)
                 res = ResponseMessageSchema().load({"code":0,"msg":_("success"),"data":{"redirect":url}})
-                return jsonify(res.data)
+                return jsonify(res.data), 200
             else:
                 res = ResponseMessageSchema().load({"code":-1,"msg":_('DOI Persistent is not exist.')})
-                return jsonify(res.data)
+                return jsonify(res.data), 200
         else:
             res = ResponseMessageSchema().load({"code":-1, "msg":_('Invalid password')})
-            return jsonify(res.data)
+            return jsonify(res.data), 200
     except ValueError:
         current_app.logger.error("withdraw_confirm: Unexpected error: {}".format(sys.exc_info()))
     res = ResponseMessageSchema().load({"code":-1, "msg":_('Error!')})
-    return jsonify(res.data)
+    return jsonify(res.data), 500
 
 
 @workflow_blueprint.route('/findDOI', methods=['POST'])
@@ -2307,7 +2294,8 @@ def get_feedback_maillist(activity_id='0'):
        activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得. Defaults to '0'.
 
     Returns:
-        dict: 設定されているフィードバックメール送信先を示すjson data
+        object: 設定されているフィードバックメール送信先を示すResponse
+               json data validated by ResponseMessageSchema or GetFeedbackMailListSchema
 
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
@@ -2324,7 +2312,8 @@ def get_feedback_maillist(activity_id='0'):
                         schema:
                             GetFeedbackMailListSchema
                         example: {"code":1,"msg":_('Success'),"data":mail_list}
-            500:
+
+            400:
                 description: "arguments error"
                 content:
                     application/json:
@@ -2332,11 +2321,11 @@ def get_feedback_maillist(activity_id='0'):
                             ResponseMessageSchema
                         example: {"code": -1, "msg": "arguments error"}
     """
-    try:
-        type_null_check(activity_id, str)
-    except ValueError as err:
+    check_flg = type_null_check(activity_id, str)
+    if not check_flg:
+        current_app.logger.error("get_feedback_maillist: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
-        return jsonify(res.data), 500
+        return jsonify(res.data), 400
     try:
         work_activity = WorkActivity()
         action_feedbackmail = work_activity.get_action_feedbackmail(
@@ -2347,6 +2336,7 @@ def get_feedback_maillist(activity_id='0'):
             mail_list = action_feedbackmail.feedback_maillist
             if not isinstance(mail_list, list):
                 res = ResponseMessageSchema().load({"code":-1,"msg":"mail_list is not list"})
+                return jsonify(res.data), 400
             for mail in mail_list:
                 if mail.get('author_id'):
                     email = Authors.get_first_email_by_id(
@@ -2358,12 +2348,12 @@ def get_feedback_maillist(activity_id='0'):
             res = GetFeedbackMailListSchema().load({'code':1,'msg':_('Success'),'data':mail_list})
             return jsonify(res.data), 200
         else:
-            res = ResponseMessageSchema().load({'code':0,'msg':''})
+            res = ResponseMessageSchema().load({'code':0,'msg':'Empty!'})
             return jsonify(res.data), 200
     except Exception:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     res = ResponseMessageSchema().load({'code':-1,'msg':_('Error')})
-    return jsonify(res.data), 500
+    return jsonify(res.data), 400
 
 
 @workflow_blueprint.route('/activity/lock/<string:activity_id>', methods=['POST'])
@@ -2381,9 +2371,6 @@ def lock_activity(activity_id="0"):
         object: アクティビティの状態を示すjson dataをレスポンスボディに含むResponse.json data validated by ResponseMessageSchema
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
-
-    TODO:
-        400,500 を受け取った際のjsの挙動設計。postに400,500を返すとあるがjsの整備がまだなのですべて200で返す
 
     ---
     post:
@@ -2415,6 +2402,14 @@ def lock_activity(activity_id="0"):
                             {"code": 200, "msg": "Success", "err": "",
                             "locked_value": "1-1661748792565", "locked_by_email": "example@example.org",
                             "locked_by_username": ""}
+            500:
+                description: "server error"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example:
+                            {"code":-1,"msg":"argument error"}
     """
     def is_approval_user(activity_id):
         workflow_activity_action = ActivityAction.query.filter_by(
@@ -2432,7 +2427,7 @@ def lock_activity(activity_id="0"):
     if not check_flg:
         current_app.logger.error("lock_activity: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
-        return jsonify(res.data)
+        return jsonify(res.data), 500
 
     cache_key = 'workflow_locked_activity_{}'.format(activity_id)
     timeout = current_app.permanent_session_lifetime.seconds
@@ -2441,7 +2436,7 @@ def lock_activity(activity_id="0"):
     except ValidationError as err:
         current_app.logger.error("lock_activity: "+str(err))
         res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
-        return jsonify(res.data)
+        return jsonify(res.data), 500
     data = schema_load.data
     locked_value = data.get('locked_value')
     cur_locked_val = str(get_cache_data(cache_key)) or str()
@@ -2468,11 +2463,14 @@ def lock_activity(activity_id="0"):
 
     locked_by_email, locked_by_username = get_account_info(
         locked_value.split('-')[0])
-
-    res = ResponseLockSchema().load({"code":200,"msg":"" if err else _("Success"),
+    if locked_by_email is None or locked_by_username is None:
+        current_app.logger.error("lock_activity: can not get locked_by_email or locked_by_username")
+        res = ResponseMessageSchema().load({"code":-1, "msg":"can not get user locked"})
+        return jsonify(res.data), 500
+    res = ResponseLockSchema().load({"code":200,"msg":"" if err else _("Success"),"err":err or "",
                                      "locked_value":locked_value,"locked_by_email":locked_by_email,
                                      "locked_by_username":locked_by_username})
-    return jsonify(res.data)
+    return jsonify(res.data), 200
 
 
 @workflow_blueprint.route('/activity/unlock/<string:activity_id>', methods=['POST'])
@@ -2484,7 +2482,8 @@ def unlock_activity(activity_id="0"):
         activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得. Defaults to '0'.
 
     Returns:
-        dict: ロック解除が出来たかを示すjson data
+        object: ロック解除が出来たかを示すResponse
+               json data validated by ResponseMessageSchema or ResponseUnlockSchema
 
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
@@ -2515,25 +2514,18 @@ def unlock_activity(activity_id="0"):
                             ResponseMessageSchema
                         example: {"code":200,"msg":"Unlock success"}
             400:
-                description: "validation error"
-                content:
-                    application/json:
-                        schema:
-                            ResponseMessageSchema
-                        example: {"code": -1,"msg":"validation error"}
-            500:
-                description: "arg error"
+                description: "arguments error"
                 content:
                     application/json:
                         schema:
                             ResponseMessageSchema
                         example: {"code": -1, "msg": "arguments error"}
     """
-    try:
-        type_null_check(activity_id, str)
-    except ValueError as err:
+    check_flg = type_null_check(activity_id, str)
+    if not check_flg:
+        current_app.logger.error("unlock_activity: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
-        return jsonify(res.data), 500
+        return jsonify(res.data), 400
     cache_key = 'workflow_locked_activity_{}'.format(activity_id)
     try:
         data = LockedValueSchema().load(json.loads(request.data.decode("utf-8")))
@@ -2560,7 +2552,8 @@ def check_approval(activity_id='0'):
         activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得. Defaults to '0'.
 
     Returns:
-        dict: 承認の確認が必要かの判定結果を示すjson data
+        object: 承認の確認が必要かの判定結果を示すResponse
+               json data validated by ResponseMessageSchema or CheckApprovalSchema
 
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
@@ -2577,7 +2570,7 @@ def check_approval(activity_id='0'):
                         schema:
                             CheckApprovalSchema
                         example: {"check_handle": -1, "check_continue": -1, "error": 1 }
-            500:
+            400:
                 description: "arguments error"
                 content:
                     application/json:
@@ -2585,11 +2578,11 @@ def check_approval(activity_id='0'):
                             ResponseMessageSchema
                         example: {"code": -1, "msg": "arguments error"}
     """
-    try:
-        type_null_check(activity_id, str)
-    except ValueError as err:
+    check_flg = type_null_check(activity_id, str)
+    if not check_flg:
+        current_app.logger.error("check_approval: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
-        return jsonify(res.data), 500
+        return jsonify(res.data), 400
     response = {
         'check_handle': -1,
         'check_continue': -1,
@@ -2630,7 +2623,8 @@ def save_activity():
     """アイテムデータの新規登録、編集の完了後にアイテムデータの更新をする
 
     Returns:
-        dict: アイテムデータの更新が成功したか示すjson data
+        object: アイテムデータの更新が成功したか示すResponse
+               json data validated by ResponseMessageSchema or SaveActivityResponseSchema
 
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
@@ -2655,24 +2649,23 @@ def save_activity():
                             SaveActivityResponseSchema
                         example: {"success": True, "msg": ""}
             400:
-                description: "arguments error"
+                description: "validation error"
                 content:
                     application/json:
                         schema:
                             ResponseMessageSchema
-                        example: {"code": -1,"msg":"arguments error"}
+                        example: {"code": -1,"msg":"{'shared_user_id': ['Missing data for required field.']}"}
     """
     response = {
         "success": True,
         "msg": ""
     }
     try:
-        try:
-            data = SaveActivitySchema().load(request.get_json())
-        except ValidationError as err:
-            res = ResponseMessageSchema().load({'code':-1, 'msg':"arguments error"})
-            return jsonify(res.data), 400
+        data = SaveActivitySchema().load(request.get_json())
         save_activity_data(data.data)
+    except ValidationError as err:
+        res = ResponseMessageSchema().load({'code':-1, 'msg':str(err)})
+        return jsonify(res.data), 400
     except Exception as error:
         response['success'] = False
         response["msg"] = str(error)

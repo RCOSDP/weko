@@ -289,8 +289,20 @@ def test_download_import_access(app, client, users, id):
         assert res.status_code != 403
 
 
+@pytest.mark.parametrize('id', accessible_user_list)
+def test_download_import_list_result_None(app, client, users, db_register, id):
+    login_user_via_session(client=client, email=users[id]['email'])
+    url = "/admin/items/import/export_import"
+
+    input = {"list_result": None}
+    now = str(datetime.date(datetime.now()))
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+
+    res = client.post(url, json=input)
+    assert res.status_code != 200
+
+
 result_data = [
-    None,
     [],
     [{}],
     [
