@@ -108,5 +108,4 @@ def create_record(record_data, item_data):
             RecordIdentifier.next()
         record = Record.create(record_data, id_=rec_uuid)
         item = ItemsMetadata.create(item_data, id_=rec_uuid)
-        print(recid)
     return recid, depid, record, item, parent, doi

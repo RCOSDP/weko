@@ -43,7 +43,7 @@ class NextIdentifierSchema(NextSchema):
 class NextOAPolicySchema(NextSchema):
     journal = fields.Dict(allow_none=True)
 class ResponseSchema(Schema):
-    code = fields.Integer(required=True, validate=Range(min=-2, max=0))
+    code = fields.Integer(required=True, validate=Range(min=-2, max=1))
     msg = fields.String(required=True)
     class Meta:
         strict = True
