@@ -2127,8 +2127,6 @@ def withdraw_confirm(activity_id='0', action_id=0):
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
 
-    TODO:
-        400,500 を受け取った際のjsの挙動設計。postに400,500を返すとあるがjsの整備がまだなのですべて200で返す
     ---
     post:
         description: "withdraw confirm"
@@ -2162,8 +2160,14 @@ def withdraw_confirm(activity_id='0', action_id=0):
                             ResponseMessageSchema
                         example:
                             {"code": 0, "msg": "success", "data": {"redirect":"/workflow/activity/detail/1"}}
-
-
+            400:
+                description: "parameter error"
+                content:
+                application/json:
+                    schema:
+                        ResponseMessageSchema
+                    example:
+                        { "code": -1,"msg":"parameter error"}
     """
     try:
         check_flg = type_null_check(activity_id, str)
@@ -2171,20 +2175,17 @@ def withdraw_confirm(activity_id='0', action_id=0):
         if not check_flg:
             current_app.logger.error("withdraw_confirm: argument error")
             res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
-            return jsonify(res.data)
+            return jsonify(res.data), 400
 
         try:
             schema_load = PasswdSchema().load(request.get_json())
         except ValidationError as err:
             current_app.logger.error("withdraw_confirm: "+str(err))
             res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
-            return jsonify(res.data)
+            return jsonify(res.data), 400
         post_json = schema_load.data
 
         password = post_json.get('passwd', None)
-        if password is None:
-            res = ResponseMessageSchema({"code":-1,"msg":_('Password not provided')})
-            return jsonify(res.data)
         wekouser = ShibUser()
         if password == 'DELETE':
             # if wekouser.check_weko_user(current_user.email, password):
@@ -2192,8 +2193,8 @@ def withdraw_confirm(activity_id='0', action_id=0):
             activity_detail = activity.get_activity_detail(activity_id)
             if activity_detail is None:
                 current_app.logger.error("withdraw_confirm: can not get activity detail info")
-                res = ResponseMessageSchema({"code":-1,"msg":"can not get activity detail info"})
-                return jsonify(res.data)
+                res = ResponseMessageSchema().load({"code":-1,"msg":"can not get activity detail info"})
+                return jsonify(res.data), 400
             item_id = activity_detail.item_id
             identifier_actionid = get_actionid('identifier_grant')
             identifier = activity.get_action_identifier_grant(
@@ -2202,43 +2203,42 @@ def withdraw_confirm(activity_id='0', action_id=0):
             identifier_handle = IdentifierHandle(item_id)
             if not isinstance(identifier, dict) or "action_identifier_select" in identifier:
                 current_app.logger.error("withdraw_confirm: bad identifier data")
-                res = ResponseMessageSchema({"code":-1,"msg":"bad identifier data"})
-                return jsonify(res.data)
+                res = ResponseMessageSchema().load({"code":-1,"msg":"bad identifier data"})
+                return jsonify(res.data), 400
 
             if identifier_handle.delete_pidstore_doi():
                 identifier['action_identifier_select'] = \
                     current_app.config.get(
                         "WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING", -2)
-                if identifier:
-                    activity.create_or_update_action_identifier(
-                        activity_id,
-                        identifier_actionid,
-                        identifier)
-                    try:
-                        current_pid = PersistentIdentifier.get_by_object(
-                            pid_type='recid',
-                            object_type='rec',
-                            object_uuid=item_id)
-                    except PIDDoesNotExistError:
-                        current_app.logger.error("withdraw_confirm: can not get PersistentIdentifier")
-                        res = ResponseMessageSchema().load({"code":-1,"msg":"can not get PersistentIdentifier"})
-                        return jsonify(res.data)
-                    recid = get_record_identifier(current_pid.pid_value)
-                    if recid is None:
-                        pid_without_ver = get_record_without_version(
-                            current_pid)
-                        record_without_ver_activity_id = \
-                            get_activity_id_of_record_without_version(
-                                pid_without_ver)
-                        if record_without_ver_activity_id is not None:
-                            without_ver_identifier_handle = IdentifierHandle(
-                                item_id)
-                            without_ver_identifier_handle \
-                                .remove_idt_registration_metadata()
-                            activity.create_or_update_action_identifier(
-                                record_without_ver_activity_id,
-                                identifier_actionid,
-                                identifier)
+                activity.create_or_update_action_identifier(
+                    activity_id,
+                    identifier_actionid,
+                    identifier)
+                try:
+                    current_pid = PersistentIdentifier.get_by_object(
+                        pid_type='recid',
+                        object_type='rec',
+                        object_uuid=item_id)
+                except PIDDoesNotExistError:
+                    current_app.logger.error("withdraw_confirm: can not get PersistentIdentifier")
+                    res = ResponseMessageSchema().load({"code":-1,"msg":"can not get PersistentIdentifier"})
+                    return jsonify(res.data), 400
+                recid = get_record_identifier(current_pid.pid_value)
+                if recid is None:
+                    pid_without_ver = get_record_without_version(
+                        current_pid)
+                    record_without_ver_activity_id = \
+                        get_activity_id_of_record_without_version(
+                            pid_without_ver)
+                    if record_without_ver_activity_id is not None:
+                        without_ver_identifier_handle = IdentifierHandle(
+                            item_id)
+                        without_ver_identifier_handle \
+                            .remove_idt_registration_metadata()
+                        activity.create_or_update_action_identifier(
+                            record_without_ver_activity_id,
+                            identifier_actionid,
+                            identifier)
 
                 if session.get("guest_url"):
                     url = session.get("guest_url")
@@ -2246,17 +2246,17 @@ def withdraw_confirm(activity_id='0', action_id=0):
                     url = url_for('weko_workflow.display_activity',
                                   activity_id=activity_id)
                 res = ResponseMessageSchema().load({"code":0,"msg":_("success"),"data":{"redirect":url}})
-                return jsonify(res.data)
+                return jsonify(res.data), 200
             else:
                 res = ResponseMessageSchema().load({"code":-1,"msg":_('DOI Persistent is not exist.')})
-                return jsonify(res.data)
+                return jsonify(res.data), 400
         else:
             res = ResponseMessageSchema().load({"code":-1, "msg":_('Invalid password')})
-            return jsonify(res.data)
+            return jsonify(res.data), 400
     except ValueError:
         current_app.logger.error("withdraw_confirm: Unexpected error: {}".format(sys.exc_info()))
     res = ResponseMessageSchema().load({"code":-1, "msg":_('Error!')})
-    return jsonify(res.data)
+    return jsonify(res.data), 400
 
 
 @workflow_blueprint.route('/findDOI', methods=['POST'])
