@@ -2891,7 +2891,7 @@ def test_withdraw_confirm_exception1(client, users, db_register_fullaction, user
                 return_value=(roles, action_users)):
                 res = client.post(url, json=input)
                 data = response_data(res)
-                assert res.status_code == 400
+                assert res.status_code == 500
                 assert data["code"] == -1
                 assert data["msg"] == "argument error"
 
@@ -2902,7 +2902,7 @@ def test_withdraw_confirm_exception1(client, users, db_register_fullaction, user
                 return_value=(roles, action_users)):
                 res = client.post(url, json=input)
                 data = response_data(res)
-                assert res.status_code == 400
+                assert res.status_code == 500
                 assert data["code"] == -1
                 assert data["msg"] == "Error!"
 
@@ -2928,7 +2928,7 @@ def test_withdraw_confirm_exception1_guestlogin(guest, client, users, db_registe
                 return_value=(roles, action_users)):
                 res = guest.post(url, json=input)
                 data = response_data(res)
-                assert res.status_code == 400
+                assert res.status_code == 500
                 assert data["code"] == -1
                 assert data["msg"] == "argument error"
 
@@ -2939,16 +2939,16 @@ def test_withdraw_confirm_exception1_guestlogin(guest, client, users, db_registe
                 return_value=(roles, action_users)):
                 res = guest.post(url, json=input)
                 data = response_data(res)
-                assert res.status_code == 400
+                assert res.status_code == 500
                 assert data["code"] == -1
                 assert data["msg"] == "Error!"
 
 
 input_data_list = [
-    ({}, 400, -1, "{'passwd': ['Missing data for required field.']}"),
-    ({"passwd": None}, 400, -1, "{'passwd': ['Field may not be null.']}"),
-    ({"passwd": "DELETE"}, 400, -1, "bad identifier data"),
-    ({"passwd": "something"}, 400, -1, "Invalid password")
+    ({}, 500, -1, "{'passwd': ['Missing data for required field.']}"),
+    ({"passwd": None}, 500, -1, "{'passwd': ['Field may not be null.']}"),
+    ({"passwd": "DELETE"}, 500, -1, "bad identifier data"),
+    ({"passwd": "something"}, 500, -1, "Invalid password")
 ]
 
 @pytest.mark.parametrize('input_data, status_code, code, msg', input_data_list)
@@ -3004,12 +3004,12 @@ def test_withdraw_confirm_exception2_guestlogin(guest, client, users, db_registe
 
 
 case_list = [
-    ("activity_detail is None", 400, -1, "can not get activity detail info"),
-    ("PIDDoesNotExistError", 400, -1, "can not get PersistentIdentifier"),
+    ("activity_detail is None", 500, -1, "can not get activity detail info"),
+    ("PIDDoesNotExistError", 500, -1, "can not get PersistentIdentifier"),
     ("success", 200, 0, "success"),
     ("recid is None and record_without_ver_activity_id is not None", 200, 0, "success"),
     ("recid is None and record_without_ver_activity_id is None", 200, 0, "success"),
-    ("DOI Persistent is not exist.", 400, -1, "DOI Persistent is not exist.")
+    ("DOI Persistent is not exist.", 500, -1, "DOI Persistent is not exist.")
 ]
 
 @pytest.mark.parametrize('case, status_code, code, msg', case_list)
