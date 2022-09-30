@@ -117,9 +117,13 @@ def get_groups_price(record: dict) -> list:
 def get_billing_file_download_permission(groups_price: list) -> dict:
     """Get billing file download permission.
 
-    :param groups_price: The prices of Billing files set in each group
-    :return:Billing file permission dictionary.
-    """
+    Args:
+        groups_price (list): The prices of Billing files set in each group [{'file_name': '003.jpg', 'groups_price': [{'group': '1', 'price': '100'}]}]
+
+    Returns:
+        dict: Billing file permission dictionary.
+    """    
+    # current_app.logger.debug("groups_price:{}".format(groups_price))
     billing_file_permission = dict()
     for data in groups_price:
         file_name = data.get('file_name')
@@ -145,6 +149,8 @@ def get_min_price_billing_file_download(groups_price: list,
     :param billing_file_permission: Billing file permission dictionary.
     :return:Billing file permission dictionary.
     """
+    # current_app.logger.debug("groups_price:{}".format(groups_price))
+    # current_app.logger.debug("billing_file_permission:{}".format(billing_file_permission))
     min_prices = dict()
     for data in groups_price:
         file_name = data.get('file_name')
@@ -346,6 +352,16 @@ def get_license_pdf(license, item_metadata_json, pdf, file_item_id, footer_w,
     @param item:
     @return:
     """
+
+    # current_app.logger.debug("license:{}".format(license))
+    # current_app.logger.debug("item_metadata_json:{}".format(item_metadata_json))
+    # current_app.logger.debug("pdf:{}".format(pdf))
+    # current_app.logger.debug("file_item_id:{}".format(file_item_id))
+    # current_app.logger.debug("footer_w:{}".format(footer_w))
+    # current_app.logger.debug("footer_h:{}".format(footer_h))
+    # current_app.logger.debug("cc_logo_xposition:{}".format(cc_logo_xposition))
+    # current_app.logger.debug("item:{}".format(item))
+        
     from .views import blueprint
     license_icon_pdf_location = \
         current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION']
@@ -378,6 +394,10 @@ def get_pair_value(name_keys, lang_keys, datas):
     :param datas:
     :return:
     """
+    current_app.logger.debug("name_keys:{}".format(name_keys))
+    current_app.logger.debug("lang_keys:{}".format(lang_keys))
+    current_app.logger.debug("datas:{}".format(datas))
+    
     if len(name_keys) == 1 and len(lang_keys) == 1:
         if isinstance(datas, list):
             for data in datas:
@@ -756,6 +776,7 @@ def create_usage_report_for_user(onetime_download_extra_info: dict):
     @param onetime_download_extra_info:
     @return:
     """
+    current_app.logger.debug("onetime_download_extra_info:{}".format(onetime_download_extra_info))
     activity_id = onetime_download_extra_info.get(
         'usage_application_activity_id')
     is_guest = onetime_download_extra_info.get('is_guest', False)
@@ -825,6 +846,9 @@ def get_data_usage_application_data(record_metadata, data_result: dict):
         record_metadata (Union[list, dict]):
         data_result (dict):
     """
+    current_app.logger.debug("record_metadata:{}".format(record_metadata))
+    current_app.logger.debug("data_result:{}".format(data_result))
+
     if isinstance(record_metadata, dict):
         for k, v in record_metadata.items():
             if isinstance(v, str) and k.startswith("subitem_") \
@@ -844,6 +868,8 @@ def send_usage_report_mail_for_user(guest_mail: str, temp_url: str):
     @param temp_url:
     @return:
     """
+    current_app.logger.debug("guest_mail:{}".format(guest_mail))
+    current_app.logger.debug("temp_url:{}".format(temp_url))
     # Mail information
     mail_info = {
         'template': current_app.config.get(
@@ -862,6 +888,9 @@ def check_and_send_usage_report(extra_info, user_mail):
     @param user_mail:
     @return:
     """
+    current_app.logger.debug("extra_info:{}".format(extra_info))
+    current_app.logger.debug("user_mail:{}".format(user_mail))
+
     if not extra_info.get('send_usage_report'):
         return
     activity = create_usage_report_for_user(extra_info)
@@ -884,7 +913,7 @@ def generate_one_time_download_url(
     :param record_id: File Version ID
     :param guest_mail: guest email
     :return:
-    """
+    """    
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
     download_pattern = current_app.config[
         'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
@@ -909,6 +938,7 @@ def parse_one_time_download_token(token: str) -> Tuple[str, Tuple]:
     @param token:
     @return:
     """
+    # current_app.logger.debug("token:{}".format(token))
     error = _("Token is invalid.")
     if token is None:
         return error, ()
@@ -938,6 +968,13 @@ def validate_onetime_download_token(
     @param token:
     @return:
     """
+    # current_app.logger.debug("onetime_download:{}".format(onetime_download))
+    # current_app.logger.debug("file_name:{}".format(file_name))
+    # current_app.logger.debug("record_id:{}".format(record_id))
+    # current_app.logger.debug("guest_mail:{}".format(guest_mail))
+    # current_app.logger.debug("date:{}".format(date))
+    # current_app.logger.debug("token:{}".format(token))
+
     token_invalid = _("Token is invalid.")
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
     download_pattern = current_app.config[

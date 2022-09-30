@@ -32,6 +32,7 @@ import uuid
 from datetime import datetime
 from collections import OrderedDict
 from unittest.mock import patch
+from datetime import timedelta
 
 import pytest
 from elasticsearch import Elasticsearch
@@ -72,6 +73,7 @@ from invenio_records_ui import InvenioRecordsUI
 from invenio_search import InvenioSearch
 from invenio_search_ui import InvenioSearchUI
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
+from invenio_theme import InvenioTheme
 from simplekv.memory.redisstore import RedisStore
 from six import BytesIO
 from sqlalchemy_utils.functions import create_database, database_exists, drop_database
@@ -99,12 +101,13 @@ from weko_index_tree.config import (
 )
 from weko_index_tree.models import Index
 from weko_items_ui import WekoItemsUI
+from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
 from weko_records import WekoRecords
 from weko_records.api import ItemsMetadata
-from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
+from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList
 from weko_records.utils import get_options_and_order_list
-from weko_records_ui.config import RECORDS_UI_ENDPOINTS
-from weko_records_ui.models import PDFCoverPageSettings
+from weko_records_ui.config import WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,RECORDS_UI_ENDPOINTS,WEKO_RECORDS_UI_SECRET_KEY,WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN
+from weko_records_ui.models import PDFCoverPageSettings,FileOnetimeDownload, FilePermission
 from weko_schema_ui.config import (
     WEKO_SCHEMA_DDI_SCHEMA_NAME,
     WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
@@ -253,6 +256,11 @@ def base_app(instance_path):
         METADATA_HEIGHT=METADATA_HEIGHT,
         WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE=WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE,
         WEKO_RECORDS_UI_EMAIL_ITEM_KEYS=WEKO_RECORDS_UI_EMAIL_ITEM_KEYS,
+        WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT=WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT,
+        WEKO_ITEMS_UI_MS_MIME_TYPE=WEKO_ITEMS_UI_MS_MIME_TYPE,
+        WEKO_RECORDS_UI_SECRET_KEY=WEKO_RECORDS_UI_SECRET_KEY,
+        WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN=WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN,
+        WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE=WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
@@ -277,6 +285,7 @@ def base_app(instance_path):
     InvenioSearchUI(app_)
     InvenioPIDRelations(app_)
     InvenioI18N(app_)
+    InvenioTheme(app_)
     WekoRecords(app_)
     WekoItemsUI(app_)
     WekoRecordsUI(app_)
@@ -288,7 +297,7 @@ def base_app(instance_path):
     WekoIndexTree(app_)
     WekoIndexTreeREST(app_)
     WekoSchemaUI(app_)
-    Menu(app_)
+    #Menu(app_)
     app_.register_blueprint(weko_records_ui_blueprint)
     app_.register_blueprint(invenio_files_rest_blueprint)  # invenio_files_rest
     app_.register_blueprint(invenio_oaiserver_blueprint)
@@ -788,7 +797,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
         },
         "item_title": "ja_conference paperITEM00000009(public_open_access_open_access_simple)",
         "author_link": ["4"],
-        "item_type_id": "15",
+        "item_type_id": "1",
         "publish_date": "2021-08-06",
         "publish_status": "0",
         "weko_shared_id": -1,
@@ -1991,3 +2000,68 @@ def pdfcoverpagesetting(db):
     with db.session.begin_nested():
         setting = PDFCoverPageSettings("enable", "string", "Weko Univ", "", "center")
         db.session.add(setting)
+
+
+@pytest.fixture()
+def site_license_info(app, db):
+    record = SiteLicenseInfo(
+        organization_id=1,
+        organization_name='test',
+        domain_name='domain',
+        mail_address='nii@nii.co.jp',
+        receive_mail_flag=False)
+    with db.session.begin_nested():
+        db.session.add(record)
+    return record
+
+@pytest.fixture()
+def db_fileonetimedownload(app, db,records):
+    indexer, results = records
+    record = results[0]["record"]
+    record = FileOnetimeDownload(
+        file_name="helloworld.pdf", user_mail="wekosoftware@nii.ac.jp", record_id=record.id, download_count=10,expiration_date=0)
+    with db.session.begin_nested():
+        db.session.add(record)
+    return record
+
+
+@pytest.fixture()
+def db_file_permission(app, db,users,records):
+    indexer, results = records
+    recid0 = results[0]["recid"]
+    filename0 = results[0]["filename"]
+    record0 = FilePermission(
+        user_id=1, record_id=recid0.pid_value, file_name=filename0,
+                 usage_application_activity_id="usage_application_activity_id_dummy1",
+                 usage_report_activity_id="usage_report_activity_id_dummy1",status=1,
+    )
+    recid1 = results[1]["recid"]
+    filename1 = results[1]["filename"]
+    record1 = FilePermission(
+        user_id=1, record_id=recid1.pid_value, file_name=filename1,
+                 usage_application_activity_id="usage_application_activity_id_dummy1",
+                 usage_report_activity_id="usage_report_activity_id_dummy1",status=1,
+    )
+    recid2 = results[2]["recid"]
+    filename2 = results[2]["filename"]
+    record2 = FilePermission(
+        user_id=1, record_id=recid2.pid_value, file_name=filename2,
+                 usage_application_activity_id="usage_application_activity_id_dummy1",
+                 usage_report_activity_id="usage_report_activity_id_dummy1",status=1,
+    )
+    with db.session.begin_nested():
+        db.session.add(record0)
+        db.session.add(record1)
+        db.session.add(record2)
+    return [record0,record1,record2]
+
+    
+@pytest.fixture()
+def db_admin_settings(db):
+    with db.session.begin_nested():
+        db.session.add(AdminSettings(id=1,name='items_display_settings',settings={"items_display_email": False, "items_search_author": "name", "item_display_open_date": False}))
+        db.session.add(AdminSettings(id=2,name='storage_check_settings',settings={"day": 0, "cycle": "weekly", "threshold_rate": 80}))
+        db.session.add(AdminSettings(id=3,name='site_license_mail_settings',settings={"auto_send_flag": False}))
+        db.session.add(AdminSettings(id=4,name='default_properties_settings',settings={"show_flag": True}))
+        db.session.add(AdminSettings(id=5,name='item_export_settings',settings={"allow_item_exporting": True, "enable_contents_exporting": True}))
+    db.session.commit()
