@@ -55,7 +55,7 @@ from invenio_jsonschemas import InvenioJSONSchemas
 # from weko_records_ui import WekoRecordsUI
 from weko_theme import WekoTheme
 from weko_admin import WekoAdmin
-from weko_admin.models import SessionLifetime
+from weko_admin.models import SessionLifetime,Identifier 
 from weko_admin.views import blueprint as weko_admin_blueprint
 from weko_records.models import ItemTypeName, ItemType,FeedbackMailList,ItemTypeMapping
 from weko_records.api import Mapping
@@ -64,11 +64,9 @@ from weko_user_profiles import WekoUserProfiles
 from weko_index_tree.models import Index
 
 from weko_workflow import WekoWorkflow
-
 from weko_search_ui import WekoSearchUI
-from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole
+from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory
 from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
-
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
@@ -90,6 +88,7 @@ from weko_user_profiles.models import UserProfile
 from weko_user_profiles.config import WEKO_USERPROFILES_ROLES,WEKO_USERPROFILES_GENERAL_ROLE
 from weko_authors.models import Authors
 from invenio_records_files.api import RecordsBuckets
+from weko_redis.redis import RedisConnection
 
 # @event.listens_for(Engine, "connect")
 # def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -127,6 +126,11 @@ def base_app(instance_path):
                                          'Repository Administrator'],
         WEKO_PERMISSION_ROLE_COMMUNITY=['Community Administrator'],
         THEME_SITEURL = 'https://localhost',
+        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_DB='0',
+        CACHE_REDIS_HOST="redis",
+        REDIS_PORT='6379',
+        ACCOUNTS_SESSION_REDIS_DB_NO = 1,
         WEKO_RECORDS_UI_LICENSE_DICT=[
             {
                 'name': _('write your own license'),
@@ -393,6 +397,12 @@ def guest(client):
         sess['guest_email'] = "guest@test.org"
         sess['guest_url'] = url_for("weko_workflow.display_guest_activity",file_name="test_file")
     yield client
+
+@pytest.fixture
+def redis_connect(app):
+    redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+    redis_connection.put('updated_json_schema_A-00000001-10001',bytes('test', 'utf-8'))
+    return redis_connection
 
 @pytest.fixture()
 def users(app, db):
@@ -665,7 +675,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     title='test', shared_user_id=-1, extra_info={},
                     action_order=1,
                     )
-    activity_item1 = Activity(activity_id='2',item_id=db_records[0][2].id,workflow_id=1, flow_id=flow_define.id,
+    activity_item1 = Activity(activity_id='2',item_id=db_records[2][2].id,workflow_id=1, flow_id=flow_define.id,
                     action_id=1, activity_login_user=users[3]["id"],
                     activity_update_user=1,
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
@@ -781,7 +791,44 @@ def db_register(app, db, db_records, users, action_data, item_type):
         db.session.add(activity_item6_feedbackmail)
     db.session.commit()
 
-    return {'flow_define':flow_define,'item_type':item_type,'workflow':workflow, 'action_feedback_mail':activity_item3_feedbackmail,'action_feedback_mail1':activity_item4_feedbackmail,'action_feedback_mail2':activity_item5_feedbackmail,'action_feedback_mail3':activity_item6_feedbackmail}
+    activity_03 = Activity(activity_id='A-00000003-00000', workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item5', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    with db.session.begin_nested():
+        db.session.add(activity_03)
+    
+    activity_action03_1 = ActivityAction(id=4, activity_id=activity_03.activity_id,
+                                            action_id=1,action_status="M",action_comment="",
+                                            action_handler=1, action_order=1)
+    activity_action03_2 = ActivityAction(id=5, activity_id=activity_03.activity_id,
+                                            action_id=3,action_status="F",action_comment="",
+                                            action_handler=0, action_order=2)
+    with db.session.begin_nested():
+        db.session.add(activity_action03_1)
+        db.session.add(activity_action03_2)
+    db.session.commit()
+    
+    history = ActivityHistory(
+        activity_id=activity.activity_id,
+        action_id=activity.action_id,
+    )
+    with db.session.begin_nested():
+        db.session.add(history)
+    db.session.commit()
+    return {'flow_define':flow_define,
+            'item_type':item_type,
+            'workflow':workflow, 
+            'action_feedback_mail':activity_item3_feedbackmail,
+            'action_feedback_mail1':activity_item4_feedbackmail,
+            'action_feedback_mail2':activity_item5_feedbackmail,
+            'action_feedback_mail3':activity_item6_feedbackmail,
+            "activities":[activity,activity_item1,activity_item2,activity_item3]}
 
 @pytest.fixture()
 def db_workflow(app, db, db_itemtype, users):
@@ -979,6 +1026,25 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                 title='test', shared_user_id=-1, extra_info={},
                 action_order=1,
                 )
+    activity2 = Activity(activity_id='A-00000001-10001',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    action_status = 'M',
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=6)
+
+    activity3 = Activity(activity_id='A-00000001-10002',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    action_status = 'C',
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=6)
     # identifier登録あり
     activity_item1 = Activity(activity_id='2',item_id=db_records[2][2].id,workflow_id=1, flow_id=flow_define.id,
                     action_id=1, activity_login_user=users[3]["id"],
@@ -1042,6 +1108,8 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
     with db.session.begin_nested():
         db.session.add(workflow)
         db.session.add(activity)
+        db.session.add(activity2)
+        db.session.add(activity3)
         db.session.add(activity_item1)
         db.session.add(activity_item2)
         db.session.add(activity_item3)
@@ -1083,27 +1151,27 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
         db.session.add_all(permissions)
     db.session.commit()
 
-    def set_activityaction(_activity, _action):
+    def set_activityaction(_activity, _action,_flow_action):
         action_handler = _activity.activity_login_user \
             if not _action.action_endpoint == 'approval' else -1
         activity_action = ActivityAction(
             activity_id=_activity.activity_id,
-            action_id=flow_action.action_id,
+            action_id=_flow_action.action_id,
             action_status="F",
             action_handler=action_handler,
-            action_order=flow_action.action_order
+            action_order=_flow_action.action_order
         )
         db.session.add(activity_action)
 
     # setting activity_action in activity existed item
     for flow_action in flow_actions:
         action = action_data[0][flow_action.action_id-1]
-        set_activityaction(activity_item1, action)
-        set_activityaction(activity_item2, action)
-        set_activityaction(activity_item3, action)
-        set_activityaction(activity_item4, action)
-        set_activityaction(activity_item5, action)
-        set_activityaction(activity_item6, action)
+        set_activityaction(activity_item1, action, flow_action)
+        set_activityaction(activity_item2, action, flow_action)
+        set_activityaction(activity_item3, action, flow_action)
+        set_activityaction(activity_item4, action, flow_action)
+        set_activityaction(activity_item5, action, flow_action)
+        set_activityaction(activity_item6, action, flow_action)
 
 
     # flow_action_role = FlowActionRole(
@@ -1127,4 +1195,5 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
     with db.session.begin_nested():
         db.session.add(action_identifier)
     db.session.commit()
-    return {"flow_actions":flow_actions}
+    return {"flow_actions":flow_actions,
+            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item4,activity_item5,activity_item6]}

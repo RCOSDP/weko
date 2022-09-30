@@ -69,8 +69,10 @@ from weko_items_ui.api import item_login
 from weko_records.api import FeedbackMailList, ItemLink
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
+from weko_records_ui.utils import get_list_licence
 from weko_records_ui.models import FilePermission
 from weko_search_ui.utils import check_import_items, import_items_to_system
+from weko_theme.utils import get_design_layout
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
@@ -312,6 +314,10 @@ def iframe_success():
     files = []
     if item and item.get('pid') and 'value' in item['pid']:
         record, files = get_record_by_root_ver(item['pid']['value'])
+        if not isinstance(files, list):
+            current_app.logger.error("iframe_success: can not get files")
+            return render_template("weko_theme/error.html",
+                    error="can not get data required for rendering")
         files_thumbnail = get_thumbnails(files, None)
     else:
         if "itemlogin_record" not in session:
@@ -319,20 +325,13 @@ def iframe_success():
             return render_template("weko_theme/error.html",
                     error="can not get data required for rendering")
         record = session['itemlogin_record']
-    if not isinstance(files, list):
-        current_app.logger.error("iframe_success: can not get files")
-        return render_template("weko_theme/error.html",
-                error="can not get data required for rendering")
+
     ctx = {'community': None}
     if community_id:
         comm = GetCommunity.get_community_by_id(community_id)
         ctx = {'community': comm}
 
     from weko_theme.utils import get_design_layout
-    if "WEKO_THEME_DEFAULT_COMMUNITY" not in current_app.config:
-        current_app.logger.error("iframe_success: WEKO_THEME_DEFAULT_COMMUNITY is not exist in config")
-        return render_template("weko_theme/error.html",
-                error="can not get data required for rendering")
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
@@ -669,7 +668,7 @@ def display_guest_activity(file_name=""):
     )
 
 
-@workflow_blueprint.route('/activity/detail/<string:activity_id>',
+@blueprint.route('/activity/detail/<string:activity_id>',
                  methods=['GET', 'POST'])
 @login_required
 def display_activity(activity_id="0"):
@@ -748,7 +747,8 @@ def display_activity(activity_id="0"):
     action_endpoint, action_id, activity_detail, cur_action, histories, item, \
         steps, temporary_comment, workflow_detail = \
         get_activity_display_info(activity_id)
-    if any([s is None for s in [action_endpoint, action_id, activity_detail, cur_action, histories, steps, workflow_detail]]):
+    if not (action_endpoint and action_id and activity_detail and cur_action and histories and \
+        steps and workflow_detail):
         current_app.logger.error("display_activity: can not get activity display info")
         return render_template("weko_theme/error.html",
                 error="can not get data required for rendering")
@@ -848,16 +848,18 @@ def display_activity(activity_id="0"):
                     error="can not get data required for rendering")
 
         application_item_type = is_usage_application_item_type(activity_detail)
-        if not isinstance(application_item_type, bool):
-            current_app.logger.error("display_activity: can not get application_item_type")
-            return render_template("weko_theme/error.html",
-                    error="can not get data required for rendering")
 
         if not record and item:
             record = item
 
         redis_connection = RedisConnection()
         sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+
+
+        if not (json_schema and schema_form):
+            current_app.logger.error("display_activity: can not get json_schema,schema_form")
+            return render_template("weko_theme/error.html",
+                    error="can not get data required for rendering")
 
         if sessionstore.redis.exists(
             'updated_json_schema_{}'.format(activity_id)) \
@@ -866,37 +868,20 @@ def display_activity(activity_id="0"):
             json_schema = (json_schema + "/{}").format(activity_id)
             schema_form = (schema_form + "/{}").format(activity_id)
 
-        if any([v is None for v in [json_schema, schema_form]]):
-            current_app.logger.error("display_activity: can not get json_schema,schema_form")
-            return render_template("weko_theme/error.html",
-                    error="can not get data required for rendering")
 
         title = auto_fill_title(item_type_name)
         show_autofill_metadata = is_show_autofill_metadata(item_type_name)
-        if not isinstance(show_autofill_metadata,bool):
-            current_app.logger.error("display_activity: can not get is_sho_autofill_metadata")
-            return render_template("weko_theme/error.html",
-                    error="can not get data required for rendering")
-
         is_hidden_pubdate_value = is_hidden_pubdate(item_type_name)
-        if not isinstance(is_hidden_pubdate_value, bool):
-            current_app.logger.error("display_activity: can not get is_hidden_pubdate")
-            return render_template("weko_theme/error.html",
-                    error="can not get data required for rendering")
 
 
     # if 'approval' == action_endpoint:
     if item:
         try:
             # get record data for the first time access to editing item screen
-            recid, approval_record = get_pid_and_record(item.id)
+            recid, approval_record = get_pid_and_record(item.get("id"))
             files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
 
             links = base_factory(recid)
-            if not isinstance(links, dict):
-                current_app.logger.error("display_activity: can not get links")
-                return render_template("weko_theme/error.html",
-                    error="can not get data required for rendering")
 
         except PIDDeletedError:
             current_app.logger.debug("PIDDeletedError: {}".format(sys.exc_info()))
@@ -910,10 +895,6 @@ def display_activity(activity_id="0"):
     res_check = check_authority_action(str(activity_id), int(action_id),
                                        is_auto_set_index_action,
                                        activity_detail.action_order)
-    if not isinstance(res_check, int) or res_check not in [0,1]:
-        current_app.logger.error("display_activity: bad value for res_check")
-        return render_template("weko_theme/error.html",
-                error="can not get data required for rendering")
 
     getargs = request.args
     ctx = {'community': None}
@@ -922,7 +903,7 @@ def display_activity(activity_id="0"):
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         if comm is not None:
-            community_id = comm.id
+            community_id = comm.get("id")
     # be use for index tree and comment page.
     if 'item_login' == action_endpoint or \
             'item_login_application' == action_endpoint or \
@@ -944,33 +925,27 @@ def display_activity(activity_id="0"):
     if user_id:
         from weko_user_profiles.views import get_user_profile_info
         user_profile['results'] = get_user_profile_info(int(user_id))
-    from weko_records_ui.utils import get_list_licence
-    from weko_theme.utils import get_design_layout
 
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
-    if not isinstance(render_widgets, bool):
-        current_app.logger.error("display_activity: bad value for render_widgets")
-        return render_template("weko_theme/error.html",
-                error="can not get data required for rendering")
 
     list_license = get_list_licence()
-    if not isinstance(list_license, list):
+    if list_license is None or not isinstance(list_license, list):
         current_app.logger.error("display_activity: bad value for list_licences")
         return render_template("weko_theme/error.html",
                 error="can not get data required for rendering")
 
 
     if action_endpoint == 'item_link' and recid:
-        item_link = ItemLink.get_item_link_info(recid.pid_value)
+        item_link = ItemLink.get_item_link_info(recid.get("pid_value"))
         ctx['item_link'] = item_link
 
     # Get item link info.
     record_detail_alt = get_main_record_detail(
         activity_id, activity_detail, action_endpoint, item,
         approval_record, files, files_thumbnail)
-    if not isinstance(record_detail_alt, dict):
+    if not record_detail_alt:
         current_app.logger.error("display_activity: bad value for record_detail_alt")
         return render_template("weko_theme/error.html",
                     error="can not get data required for rendering")
@@ -989,11 +964,6 @@ def display_activity(activity_id="0"):
     # Get Auto fill data for Restricted Access Item Type.
     usage_data = get_usage_data(
         workflow_detail.itemtype_id, activity_detail, user_profile)
-    if not isinstance(usage_data,dict):
-        current_app.logger.error("display_activity: bad value for usage_data")
-        return render_template("weko_theme/error.html",
-                error="can not get data required for rendering")
-
     ctx.update(usage_data)
 
     if approval_record and files:
@@ -1008,7 +978,7 @@ def display_activity(activity_id="0"):
     )
     _id = None
     if recid:
-        _id = re.sub("\.[0-9]+", "", recid.pid_value)
+        _id = re.sub("\.[0-9]+", "", recid.get("pid_value"))
 
     return render_template(
         'weko_workflow/activity_detail.html',
@@ -1282,10 +1252,6 @@ def next_action(activity_id='0', action_id=0):
     )
 
     action = Action().get_action_detail(action_id)
-    if action is None:
-        current_app.logger.error("next_action: can not get action")
-        res = ResponseMessageSchema().load({"code":-2, "msg":"can not get action"})
-        return jsonify(res.data), 500
     action_endpoint = action.action_endpoint
 
     current_app.logger.debug('action_endpoint: {0}'.format(action_endpoint))
@@ -1474,14 +1440,10 @@ def next_action(activity_id='0', action_id=0):
                         return jsonify(res.data), 500
                     item_ids.append(last_ver.object_uuid)
                 else:
-                    try:
-                        draft_pid = PersistentIdentifier.get(
-                            'recid',
-                            '{}.0'.format(pid_without_ver.pid_value)
-                        )
-                    except PIDDoesNotExistError:
-                        res = ResponseMessageSchema().load({"code":-1, "msg":"can not get pid_without_ver"})
-                        return jsonify(res.data), 500
+                    draft_pid = PersistentIdentifier.get(
+                        'recid',
+                        '{}.0'.format(pid_without_ver.pid_value)
+                    )
                     item_ids.append(draft_pid.object_uuid)
                 item_ids.append(pid_without_ver.object_uuid)
 
@@ -1502,7 +1464,7 @@ def next_action(activity_id='0', action_id=0):
         if relation_data:
             err = item_link.update(relation_data)
             if err:
-                res = ResponseMessageSchema().load({"code":-1, "msg":_("err")})
+                res = ResponseMessageSchema().load({"code":-1, "msg":_(err)})
                 return jsonify(res.data), 500
         if post_json.get('temporary_save') == 1:
             work_activity.upt_activity_action_comment(
@@ -1570,12 +1532,11 @@ def next_action(activity_id='0', action_id=0):
                     action_id=action_id,
                     req=-1)
 
-            if item_id:
-                record_without_version = item_id
-                if not recid:
-                    record_without_version = pid_without_ver.object_uuid
-                saving_doi_pidstore(item_id, record_without_version, post_json,
-                                    int(identifier_select), False, True)
+            record_without_version = item_id
+            if not recid:
+                record_without_version = pid_without_ver.object_uuid
+            saving_doi_pidstore(item_id, record_without_version, post_json,
+                                int(identifier_select), False, True)
     elif 'identifier_grant' == action_endpoint \
             and not post_json.get('temporary_save'):
         _value, _type = IdentifierHandle(item_id).get_idt_registration_data()
@@ -1584,7 +1545,7 @@ def next_action(activity_id='0', action_id=0):
                 item_id, activity_id, IDENTIFIER_GRANT_SELECT_DICT[_type[0]],
                 pid_without_ver.object_uuid)
             if isinstance(error_list, str):
-                res = ResponseMessageSchema().load({"code":-1, "msg":_("error_list")})
+                res = ResponseMessageSchema().load({"code":-1, "msg":_(error_list)})
                 return jsonify(res.data), 500
             elif error_list:
                 return previous_action(
@@ -1701,7 +1662,8 @@ def previous_action(activity_id='0', action_id=0, req=0):
                              -1: アイテム登録アクション
                              それ以外: 2つ目のアクション
     Returns:
-        object: 成否判定のコードとメッセージを含むjson dataをレスポンスボディにもつResponse.json data validated by ResponseMessageSchema.
+        object: 成否判定のコードとメッセージを含むjson dataをレスポンスボディにもつResponse.
+            json data validated by ResponseMessageSchema.
 
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
@@ -1984,7 +1946,7 @@ def cancel_action(activity_id='0', action_id=0):
     """
 
     check_flg = type_null_check(activity_id, str)
-    check_flg &= type_null_check(action_id, str)
+    check_flg &= type_null_check(action_id, int)
     if not check_flg:
         current_app.logger.error("cancel_action: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
@@ -2160,14 +2122,16 @@ def withdraw_confirm(activity_id='0', action_id=0):
                             ResponseMessageSchema
                         example:
                             {"code": 0, "msg": "success", "data": {"redirect":"/workflow/activity/detail/1"}}
-            400:
-                description: "parameter error"
+            500:
+                description: "server error"
                 content:
-                application/json:
-                    schema:
-                        ResponseMessageSchema
-                    example:
-                        { "code": -1,"msg":"parameter error"}
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example:
+                            {"code": -1, "msg": "argument error"}}
+
+
     """
     try:
         check_flg = type_null_check(activity_id, str)
@@ -2175,14 +2139,14 @@ def withdraw_confirm(activity_id='0', action_id=0):
         if not check_flg:
             current_app.logger.error("withdraw_confirm: argument error")
             res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
-            return jsonify(res.data), 400
+            return jsonify(res.data), 500
 
         try:
             schema_load = PasswdSchema().load(request.get_json())
         except ValidationError as err:
             current_app.logger.error("withdraw_confirm: "+str(err))
             res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
-            return jsonify(res.data), 400
+            return jsonify(res.data), 500
         post_json = schema_load.data
 
         password = post_json.get('passwd', None)
@@ -2194,17 +2158,13 @@ def withdraw_confirm(activity_id='0', action_id=0):
             if activity_detail is None:
                 current_app.logger.error("withdraw_confirm: can not get activity detail info")
                 res = ResponseMessageSchema().load({"code":-1,"msg":"can not get activity detail info"})
-                return jsonify(res.data), 400
+                return jsonify(res.data), 500
             item_id = activity_detail.item_id
             identifier_actionid = get_actionid('identifier_grant')
             identifier = activity.get_action_identifier_grant(
                 activity_id,
                 identifier_actionid)
             identifier_handle = IdentifierHandle(item_id)
-            if not isinstance(identifier, dict) or "action_identifier_select" in identifier:
-                current_app.logger.error("withdraw_confirm: bad identifier data")
-                res = ResponseMessageSchema().load({"code":-1,"msg":"bad identifier data"})
-                return jsonify(res.data), 400
 
             if identifier_handle.delete_pidstore_doi():
                 identifier['action_identifier_select'] = \
@@ -2249,14 +2209,14 @@ def withdraw_confirm(activity_id='0', action_id=0):
                 return jsonify(res.data), 200
             else:
                 res = ResponseMessageSchema().load({"code":-1,"msg":_('DOI Persistent is not exist.')})
-                return jsonify(res.data), 400
+                return jsonify(res.data), 500
         else:
             res = ResponseMessageSchema().load({"code":-1, "msg":_('Invalid password')})
-            return jsonify(res.data), 400
+            return jsonify(res.data), 500
     except ValueError:
         current_app.logger.error("withdraw_confirm: Unexpected error: {}".format(sys.exc_info()))
     res = ResponseMessageSchema().load({"code":-1, "msg":_('Error!')})
-    return jsonify(res.data), 400
+    return jsonify(res.data), 500
 
 
 @workflow_blueprint.route('/findDOI', methods=['POST'])
@@ -2381,12 +2341,8 @@ def lock_activity(activity_id="0"):
 
     Returns:
         object: アクティビティの状態を示すjson dataをレスポンスボディに含むResponse.json data validated by ResponseMessageSchema
-
     Raises:
         marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
-
-    TODO:
-        400,500 を受け取った際のjsの挙動設計。postに400,500を返すとあるがjsの整備がまだなのですべて200で返す
 
     ---
     post:
@@ -2418,6 +2374,14 @@ def lock_activity(activity_id="0"):
                             {"code": 200, "msg": "Success", "err": "",
                             "locked_value": "1-1661748792565", "locked_by_email": "example@example.org",
                             "locked_by_username": ""}
+            500:
+                description: "server error"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example:
+                            {"code":-1,"msg":"argument error"}
     """
     def is_approval_user(activity_id):
         workflow_activity_action = ActivityAction.query.filter_by(
@@ -2435,7 +2399,7 @@ def lock_activity(activity_id="0"):
     if not check_flg:
         current_app.logger.error("lock_activity: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
-        return jsonify(res.data)
+        return jsonify(res.data), 500
 
     cache_key = 'workflow_locked_activity_{}'.format(activity_id)
     timeout = current_app.permanent_session_lifetime.seconds
@@ -2444,7 +2408,7 @@ def lock_activity(activity_id="0"):
     except ValidationError as err:
         current_app.logger.error("lock_activity: "+str(err))
         res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
-        return jsonify(res.data)
+        return jsonify(res.data), 500
     data = schema_load.data
     locked_value = data.get('locked_value')
     cur_locked_val = str(get_cache_data(cache_key)) or str()
@@ -2471,11 +2435,14 @@ def lock_activity(activity_id="0"):
 
     locked_by_email, locked_by_username = get_account_info(
         locked_value.split('-')[0])
-
-    res = ResponseLockSchema().load({"code":200,"msg":"" if err else _("Success"),
+    if locked_by_email is None or locked_by_username is None:
+        current_app.logger.error("lock_activity: can not get locked_by_email or locked_by_username")
+        res = ResponseMessageSchema().load({"code":-1, "msg":"can not get user locked"})
+        return jsonify(res.data), 500
+    res = ResponseLockSchema().load({"code":200,"msg":"" if err else _("Success"),"err":err or "",
                                      "locked_value":locked_value,"locked_by_email":locked_by_email,
                                      "locked_by_username":locked_by_username})
-    return jsonify(res.data)
+    return jsonify(res.data), 200
 
 
 @workflow_blueprint.route('/activity/unlock/<string:activity_id>', methods=['POST'])

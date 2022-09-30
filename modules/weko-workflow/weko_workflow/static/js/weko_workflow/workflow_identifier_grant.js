@@ -282,9 +282,18 @@ require([
           $('#error-info').parent().show();
         }
       },
-      error: function (jqXHE, status) {
-        alert('Server error');
-        endLoading(withdrawBtn);
+      error: function (jqXHR, status) {
+        if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.code){
+          if (jqXHR.responseJSON.code == -1){
+            endLoading(withdrawBtn);
+            $('#pwd').parent().addClass('has-error');
+            $('#error-info').html(data.msg);
+            $('#error-info').parent().show();
+          }
+        }else{
+          alert('Server error');
+          endLoading(withdrawBtn);
+        }
       }
     });
     event.preventDefault();
@@ -382,10 +391,10 @@ require([
           alert(data.msg);
         }
       },
-      error: function (jqXHE, status) {
-        if ((-2 == jqXHE.responseJSON.code) || (-1 == jqXHE.responseJSON.code)){
+      error: function (jqXHR, status) {
+        if ((-2 == jqXHR.responseJSON.code) || (-1 == jqXHR.responseJSON.code)){
           endLoading(_this);
-          alert(jqXHE.responseJSON.msg);
+          alert(jqXHR.responseJSON.msg);
         } else {
           endLoading(_this);
           alert('server error');
