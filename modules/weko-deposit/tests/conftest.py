@@ -100,6 +100,8 @@ from weko_index_tree.config import (
 )
 from invenio_accounts.testutils import login_user_via_session
 
+from tests.helpers import json_data, create_record
+
 
 @pytest.yield_fixture()
 def instance_path():
@@ -258,6 +260,18 @@ def db(app):
     db_.session.remove()
     db_.drop_all()
     # drop_database(str(db_.engine.url))
+
+
+@pytest.fixture()
+def records(db):
+    record_data = json_data("data/test_records.json")
+    item_data = json_data("data/test_items.json")
+    record_num = len(record_data)
+    result = []
+    for d in range(record_num):
+        result.append(create_record(record_data[d], item_data[d]))
+    db.session.commit()
+    yield result
 
 
 @pytest.fixture()
