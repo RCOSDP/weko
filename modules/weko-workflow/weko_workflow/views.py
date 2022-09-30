@@ -668,7 +668,7 @@ def display_guest_activity(file_name=""):
     )
 
 
-@blueprint.route('/activity/detail/<string:activity_id>',
+@workflow_blueprint.route('/activity/detail/<string:activity_id>',
                  methods=['GET', 'POST'])
 @login_required
 def display_activity(activity_id="0"):
