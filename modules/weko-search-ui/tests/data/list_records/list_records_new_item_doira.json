@@ -596,12 +596,12 @@
             "file00000001/1KB.pdf"
         ],
         "item_type_name": "デフォルトアイテムタイプ（フル）",
-        "item_type_id": 15,
+        "item_type_id": 1,
         "$schema": "https://localhost:8443/items/jsonschema/15",
         "identifier_key": "item_1617186819068",
         "errors": null,
         "status": "new",
-        "id": null,
+        "id": "oai:weko3.example.org:00000001",
         "item_title": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
         "filenames": [
             {
@@ -1214,12 +1214,12 @@
             ""
         ],
         "item_type_name": "デフォルトアイテムタイプ（フル）",
-        "item_type_id": 15,
+        "item_type_id": 1,
         "$schema": "https://localhost:8443/items/jsonschema/15",
         "identifier_key": "item_1617186819068",
         "errors": null,
         "status": "new",
-        "id": null,
+        "id": "oai:weko3.example.org:00000002",
         "item_title": "ja_conference paperITEM00000002(public_open_access_open_access_simple)",
         "filenames": [
             {

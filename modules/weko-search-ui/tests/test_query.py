@@ -39,6 +39,10 @@ def test_default_search_factory(i18n_app, users, client_request_args, db_records
 
 
 # def check_admin_user():
+def test_check_admin_user(i18n_app, users):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        
+        assert check_admin_user
 
 
 # def opensearch_factory(self, search, query_parser=None):

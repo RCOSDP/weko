@@ -143,8 +143,9 @@ def test_DefaultOrderDict_deepcopy():
 
 
 # def get_tree_items(index_tree_id): ERROR ~ AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
-def test_get_tree_items(i18n_app, indices):
-    assert get_tree_items(33)
+def test_get_tree_items(i18n_app, indices, users):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        assert get_tree_items(33)
 
 
 # def delete_records(index_tree_id, ignore_items): ERROR ~ AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
@@ -763,8 +764,22 @@ def test_register_item_doi(i18n_app, es_records, filerecord):
 
 
 
-# def register_item_update_publish_status(item, status):
+# def register_item_update_publish_status(item, status): 20220930
+def test_register_item_update_publish_status(i18n_app, es_records):
+    item = es_records['results'][0]['item']
+    status = "1"
+
+    # Doesn't return any value
+    assert not register_item_update_publish_status(item, status)
+    
+
+
 # def handle_doi_required_check(record):
+def test_handle_doi_required_check(i18n_app, es_records, record_with_metadata, db_itemtype, item_type):
+    record = record_with_metadata[1]
+
+    # Should have no return value
+    assert not handle_doi_required_check(record)
 
 
 # def handle_check_date(list_record):
@@ -778,7 +793,22 @@ def test_handle_check_date(app, test_list_records, mocker_itemtype):
 
 
 # def handle_check_id(list_record):
+def test_handle_check_id(i18n_app, record_with_metadata):
+    list_record = [record_with_metadata[1]]
+
+    # Doesn't return any value
+    assert not handle_check_id(list_record)
+
+
 # def get_data_in_deep_dict(search_key, _dict={}):
+def test_get_data_in_deep_dict(i18n_app):
+    search_key = "test"
+    _dict = {
+        "test": 1,
+        "sample": {"a": 1}
+    }
+
+    assert get_data_in_deep_dict(search_key, _dict)
 
 
 # def validation_file_open_date(record):
@@ -833,8 +863,63 @@ def test_get_change_identifier_mode_content(i18n_app):
 
 
 # def get_root_item_option(item_id, item, sub_form={"title_i18n": {}}):
+def test_get_root_item_option(i18n_app):
+    item_id = 1
+    item = {
+        "title": "title",
+        "option": {
+            "required": "required",
+            "hidden": "hidden",
+            "multiple": "multiple",
+        }
+    }
+
+    assert get_root_item_option(item_id, item)
+
+
 # def get_sub_item_option(key, schemaform):
+def test_get_sub_item_option(i18n_app):
+    key = "key"
+    schemaform = [
+        {
+            "key": "key",
+            "required": "required",
+            "isHide": "isHide"
+        },
+        {
+            "items": {
+                "key": "key",
+                "required": "required",
+                "isHide": "isHide"
+            }
+        }
+    ]
+
+    assert get_sub_item_option(key, schemaform)
+
+
+
 # def check_sub_item_is_system(key, schemaform):
+def test_check_sub_item_is_system(i18n_app):
+    key = "key"
+    schemaform = [
+        {
+            "key": "key",
+            "required": "required",
+            "isHide": "isHide",
+            "readonly": True
+        },
+        {
+            "items": {
+                "key": "key",
+                "required": "required",
+                "isHide": "isHide",
+                "readonly": True
+            }
+        }
+    ]
+
+    assert check_sub_item_is_system(key, schemaform)
 
 
 # def get_lifetime():
@@ -991,8 +1076,29 @@ def test_handle_get_all_id_in_item_type(i18n_app, db_itemtype):
 
 
 # def handle_check_consistence_with_mapping(mapping_ids, keys):
+def test_handle_check_consistence_with_mapping(i18n_app):
+    mapping_ids = ["abc"]
+    keys = ["abc"]
+
+    # Test 1
+    assert not handle_check_consistence_with_mapping(mapping_ids, keys)
+
+
 # def handle_check_duplication_item_id(ids: list):
+def test_handle_check_duplication_item_id(i18n_app):
+    ids = [[1,2,3,4],2,3,4]
+
+    # Test 1
+    assert not handle_check_duplication_item_id(ids)
+
+
 # def export_all(root_url, user_id, data):
+def test_export_all(i18n_app):
+
+
+    assert export_all(root_url, user_id, data)
+
+
 # def delete_exported(uri, cache_key):
 
 

@@ -30,7 +30,7 @@ from time import sleep
 import pytest
 from mock import Mock, patch
 from pytest_mock import mocker
-from flask import Flask
+from flask import Flask, url_for
 from flask_babelex import Babel, lazy_gettext as _
 from flask_celeryext import FlaskCeleryExt
 from flask_menu import Menu
@@ -96,13 +96,14 @@ from invenio_db.utils import drop_alembic_version_table
 from invenio_records_rest.config import RECORDS_REST_SORT_OPTIONS
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from invenio_pidrelations.models import PIDRelation
+from invenio_oaiserver.models import Identify
 
 from weko_deposit.config import WEKO_BUCKET_QUOTA_SIZE, WEKO_MAX_FILE_SIZE
 from weko_admin.models import FacetSearchSetting
 from weko_schema_ui.models import OAIServerSchema
 from weko_index_tree.api import Indexes
 from weko_records import WekoRecords
-from weko_records.api import ItemTypes, ItemsMetadata, WekoRecord
+from weko_records.api import ItemTypes, ItemsMetadata, WekoRecord, Mapping
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records_ui.models import PDFCoverPageSettings
@@ -236,6 +237,11 @@ def base_app(instance_path):
         WEKO_AUTHORS_ES_INDEX_NAME = "{}-authors".format(index_prefix),
         WEKO_AUTHORS_ES_DOC_TYPE = "author-v1.0.0",
         WEKO_HANDLE_ALLOW_REGISTER_CNRI = True,
+        WEKO_PERMISSION_ROLE_USER = ['System Administrator',
+                             'Repository Administrator',
+                             'Contributor',
+                             'General',
+                             'Community Administrator'],
         WEKO_RECORDS_UI_LICENSE_DICT=[
             {
                 'name': _('write your own license'),
@@ -1138,166 +1144,6 @@ def mock_execute(app):
 
 
 @pytest.fixture()
-def count_json_data():
-    data = [{
-        "public_state": True,
-        "doc_count": 99,
-        "no_available": 9
-    }]
-    return data
-
-
-
-    """Test of method which creates OAI-PMH response for verb GetRecord."""
-    with app.app_context():
-        identify = Identify(
-            outPutSetting=True
-        )
-        index_metadata = {
-            "id": 1557819692844,
-            "parent": 0,
-            "position": 0,
-            "index_name": "コンテンツタイプ (Contents Type)",
-            "index_name_english": "Contents Type",
-            "index_link_name": "",
-            "index_link_name_english": "New Index",
-            "index_link_enabled": False,
-            "more_check": False,
-            "display_no": 5,
-            "harvest_public_state": True,
-            "display_format": 1,
-            "image_name": "",
-            "public_state": True,
-            "recursive_public_state": True,
-            "rss_status": False,
-            "coverpage_state": False,
-            "recursive_coverpage_check": False,
-            "browsing_role": "3,-98,-99",
-            "recursive_browsing_role": False,
-            "contribute_role": "1,2,3,4,-98,-99",
-            "recursive_contribute_role": False,
-            "browsing_group": "",
-            "recursive_browsing_group": False,
-            "recursive_contribute_group": False,
-            "owner_user_id": 1,
-            "item_custom_sort": {"2": 1}
-        }
-        index = Index(**index_metadata)
-        mapping = Mapping.create(
-            item_type_id=item_type.id,
-            mapping={}
-        )
-        with db.session.begin_nested():
-            db.session.add(identify)
-            db.session.add(index)
-        dummy_data = {
-            "hits": {
-                "total": 3,
-                "hits": [
-                    {
-                        "_source": {
-                            "_oai": {"id": str(records[0][0])},
-                            "_updated": "2022-01-01T10:10:10"
-                        },
-                        "_id": records[0][2].id,
-                    },
-                    {
-                        "_source": {
-                            "_oai": {"id": str(records[1][0])},
-                            "_updated": "2022-01-01T10:10:10"
-                        },
-                        "_id": records[1][2].id,
-                    },
-                    {
-                        "_source": {
-                            "_oai": {"id": str(records[2][0])},
-                            "_updated": "2022-01-01T10:10:10"
-                        },
-                        "_id": records[2][2].id,
-                    },
-                ]
-            }
-        }
-        kwargs = dict(
-            metadataPrefix="jpcoar_1.0",
-            verb="GetRecord",
-            identifier=str(records[0][0])
-        )
-        ns = {"root_name": "jpcoar", "namespaces":{'': 'https://github.com/JPCOAR/schema/blob/master/1.0/',
-              'dc': 'http://purl.org/dc/elements/1.1/', 'xs': 'http://www.w3.org/2001/XMLSchema',
-              'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'xml': 'http://www.w3.org/XML/1998/namespace',
-              'dcndl': 'http://ndl.go.jp/dcndl/terms/', 'oaire': 'http://namespace.openaire.eu/schema/oaire/',
-              'jpcoar': 'https://github.com/JPCOAR/schema/blob/master/1.0/',
-              'dcterms': 'http://purl.org/dc/terms/', 'datacite': 'https://schema.datacite.org/meta/kernel-4/',
-              'rioxxterms': 'http://www.rioxx.net/schema/v2.0/rioxxterms/'}}
-        mocker.patch("invenio_oaiserver.response.to_utc",side_effect=lambda x:x)
-        mocker.patch("weko_index_tree.utils.get_user_groups",return_value=[])
-        mocker.patch("weko_index_tree.utils.check_roles",return_value=True)
-        mocker.patch("invenio_oaiserver.response.get_identifier",return_value=None)
-        mocker.patch("weko_schema_ui.schema.cache_schema",return_value=ns)
-        with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
-            # return error 1
-            identify = Identify(
-                outPutSetting=False
-            )
-            with patch("invenio_oaiserver.response.OaiIdentify.get_all",return_value=identify):
-                res = getrecord(**kwargs)
-                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
-
-            # return error 2
-            with patch("invenio_oaiserver.response.is_output_harvest",return_value=HARVEST_PRIVATE):
-                res = getrecord(**kwargs)
-                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
-
-        dummy_data = {
-            "hits": {
-                "total": 1,
-                "hits": [
-                    {
-                        "_source": {
-                            "_oai": {"id": str(records[3][0])},
-                            "_updated": "2022-01-01T10:10:10"
-                        },
-                        "_id": records[3][2].id,
-                    }
-                ]
-            }
-        }
-        kwargs = dict(
-            metadataPrefix='jpcoar_1.0',
-            verb="GetRecord",
-            identifier=str(records[2][0])
-        )
-        # not etree_record.get("system_identifier_doi")
-        with patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
-            with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
-                res = getrecord(**kwargs)
-                identifier = res.xpath(
-                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
-                    namespaces=NAMESPACES)
-                assert identifier == [str(records[2][0])]
-                datestamp = res.xpath(
-                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:datestamp/text()',
-                    namespaces=NAMESPACES)
-                assert datestamp == [datetime_to_datestamp(records[2][0].updated)]
-
-            kwargs = dict(
-                metadataPrefix='jpcoar_1.0',
-                verb="GetRecord",
-                identifier=str(records[3][0])
-            )
-            # etree_record.get("system_identifier_doi")
-            with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
-                res = getrecord(**kwargs)
-                identifier = res.xpath(
-                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
-                    namespaces=NAMESPACES)
-                assert identifier == [str(records[3][0])]
-                assert len(res.xpath('/x:OAI-PMH/x:GetRecord/x:record/x:metadata',
-                                        namespaces=NAMESPACES)) == 1
-
-
-@pytest.fixture()
 def db_oaischema(app, db):
     schema_name = "jpcoar_mapping"
     form_data = {"name": "jpcoar", "file_name": "jpcoar_scm.xsd", "root_name": "jpcoar"}
@@ -1779,6 +1625,12 @@ def testfile(db, bucket):
     obj = ObjectVersion.create(bucket, 'testfile', stream=BytesIO(b'atest'))
     db.session.commit()
     return obj
+
+
+@pytest.yield_fixture()
+def search_url():
+    """Search class."""
+    yield url_for('invenio_records_rest.recid_list')
 
 
 @pytest.fixture()
