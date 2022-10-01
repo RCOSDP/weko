@@ -10,19 +10,60 @@ from invenio_records_files.utils import record_file_factory
 from flask import Flask, json, jsonify, session, url_for
 from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
 from weko_deposit.api import WekoRecord
 from weko_records_ui.models import FileOnetimeDownload
 from werkzeug.exceptions import NotFound
+from weko_admin.models import AdminSettings
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 
 # def check_items_settings(settings=None):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_check_items_settings -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_check_items_settings(app):
+def test_check_items_settings(app,db_admin_settings):
     with app.test_request_context():
         assert check_items_settings()==None
+    
+    settings = AdminSettings(name='items_display_settings',settings={"items_display_email": False, "items_search_author": "name", "item_display_open_date": False})
+    setting = settings.get("items_display_settings")
+    with app.test_request_context():
+        assert check_items_settings(setting)==None
 
+    settings = AdminSettings(name='items_display_settings',settings={"items_display_email": False})
+    setting = settings.get("items_display_settings")
+    with app.test_request_context():
+        assert check_items_settings(setting)==None
+
+    settings = AdminSettings(name='items_display_settings',settings={"items_search_author": "name"})
+    setting = settings.get("items_display_settings")
+    with app.test_request_context():
+        assert check_items_settings(setting)==None
+    
+    settings = AdminSettings(name='items_display_settings',settings={"item_display_open_date": False})
+    setting = settings.get("items_display_settings")
+    with app.test_request_context():
+        assert check_items_settings(setting)==None
+
+    settings = AdminSettings(name='items_display_settings',settings={"items_display_email": False, "items_search_author": "name"})
+    setting = settings.get("items_display_settings")
+    with app.test_request_context():
+        assert check_items_settings(setting)==None
+
+    settings = AdminSettings(name='items_display_settings',settings={"items_display_email": False, "item_display_open_date": False})
+    setting = settings.get("items_display_settings")
+    with app.test_request_context():
+        assert check_items_settings(setting)==None
+
+    settings = AdminSettings(name='items_display_settings',settings={"items_search_author": "name", "item_display_open_date": False})
+    setting = settings.get("items_display_settings")
+    with app.test_request_context():
+        assert check_items_settings(setting)==None
+    
+    settings = AdminSettings(name='items_display_settings',settings={})
+    setting = settings.get("items_display_settings")
+    with app.test_request_context():
+        assert check_items_settings(setting)==None
 
 # def get_record_permalink(record):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_record_permalink -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -30,6 +71,9 @@ def test_get_record_permalink(app,records):
     indexer, results = records
     record = results[0]["record"]
     assert get_record_permalink(record) == 'https://doi.org/10.xyz/0000000001'
+
+    record = results[1]["record"]
+    assert get_record_permalink(record) == None
 
 # def get_groups_price(record: dict) -> list:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_groups_price -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -66,7 +110,9 @@ def test_is_billing_item(app,itemtypes):
 def test_soft_delete(app,records):
     indexer, results = records
     record = results[0]["record"]
+    recid = results[0]["recid"]
     assert soft_delete(record.pid.pid_value)==None
+    assert recid.status == PIDStatus.DELETED
 
 
 # def restore(recid):
@@ -74,7 +120,15 @@ def test_soft_delete(app,records):
 def test_restore(app,records):
     indexer, results = records
     record = results[0]["record"]
+    recid = results[0]["recid"]
     assert restore(record.pid.pid_value)==None
+
+    soft_delete(record.pid.pid_value)
+    assert recid.status == PIDStatus.DELETED
+    assert restore(record.pid.pid_value)==None
+    assert recid.status == PIDStatus.REGISTERED
+
+
 
 
 # def get_list_licence():
