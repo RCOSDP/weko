@@ -500,30 +500,42 @@ def es(app):
     Don't create template so that the test or another fixture can modify the
     enabled events.
     """
+    current_search_client.indices.delete(index='test-*')
+    # file_download event
     with open("invenio_stats/contrib/file_download/v6/file-download-v1.json", "r") as f:
         file_download_mapping = json.load(f)
-    with open("invenio_stats/contrib/record_view/v6/record-view-v1.json", "r") as f:
-        record_view_mapping = json.load(f)
-    with open("invenio_stats/contrib/aggregations/aggr_file_download/v6/aggr-file-download-v1.json", "r") as f:
-        aggr_file_download_mapping = json.load(f)
-    with open("invenio_stats/contrib/aggregations/aggr_record_view/v6/aggr-record-view-v1.json", "r") as f:
-        aggr_record_view_mapping = json.load(f)
-    current_search_client.indices.delete(index='test-*')
+    file_download_mapping.update({'aliases':
+        {'{}events-stats-file-download'.format(app.config['SEARCH_INDEX_PREFIX']): {'is_write_index': True}}})
     current_search_client.indices.create(
         index='{}events-stats-file-download-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
         body=file_download_mapping, ignore=[400, 404]
     )
+    # file_download aggr
+    with open("invenio_stats/contrib/aggregations/aggr_file_download/v6/aggr-file-download-v1.json", "r") as f:
+        aggr_file_download_mapping = json.load(f)
+    aggr_file_download_mapping.update({'aliases':
+        {'{}stats-file-download'.format(app.config['SEARCH_INDEX_PREFIX']): {'is_write_index': True}}})
+    current_search_client.indices.create(
+        index='{}stats-file-download-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
+        body=aggr_file_download_mapping, ignore=[400, 404]
+    )
+    # record_view event
+    with open("invenio_stats/contrib/record_view/v6/record-view-v1.json", "r") as f:
+        record_view_mapping = json.load(f)
+    record_view_mapping.update({'aliases':
+        {'{}events-stats-record-view'.format(app.config['SEARCH_INDEX_PREFIX']): {'is_write_index': True}}})
     current_search_client.indices.create(
         index='{}events-stats-record-view-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
         body=record_view_mapping, ignore=[400, 404]
     )
-    current_search_client.indices.create(
-        index='{}stats-file-download-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
-        body=aggr_record_view_mapping, ignore=[400, 404]
-    )
+    # record_view aggr
+    with open("invenio_stats/contrib/aggregations/aggr_record_view/v6/aggr-record-view-v1.json", "r") as f:
+        aggr_record_view_mapping = json.load(f)
+    aggr_record_view_mapping.update({'aliases':
+        {'{}stats-record-view'.format(app.config['SEARCH_INDEX_PREFIX']): {'is_write_index': True}}})
     current_search_client.indices.create(
         index='{}stats-record-view-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
-        body=record_view_mapping, ignore=[400, 404]
+        body=aggr_record_view_mapping, ignore=[400, 404]
     )
     try:
         yield current_search_client

@@ -38,8 +38,14 @@ def test_BookmarkAPI(app):
     bookmark_api = BookmarkAPI(current_search_client,
                                'file-download-agg',
                                'day')
-    result = {"mappings":bookmark_api.MAPPINGS["mappings"]["aggregation-bookmark"]}
-    assert bookmark_api.MAPPINGS_ES7 == result
+    bookmark_api.set_bookmark('2021-01-01')
+    time.sleep(10)
+    res = bookmark_api.get_bookmark()
+    assert res==datetime.datetime(2021, 1, 1)
+
+    res = bookmark_api.list_bookmarks(start_date='2021-01-01', end_date='2021-02-01')
+    for b in res:
+        assert b.date=='2021-01-01'
 
 # class StatAggregator(object):
 #     def __init__(self, name, event, client=None,
@@ -57,15 +63,8 @@ def test_wrong_intervals(app):
         StatAggregator('test-agg', 'test', current_search_client,
                        aggregation_interval='month', index_interval='day')
 
-# .tox/c1/bin/pytest --cov=invenio_stats tests/test_aggregations.py::test_get_bookmark -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-@pytest.mark.parametrize('indexed_events',
-                         [dict(file_number=1,
-                               event_number=1,
-                               robot_event_number=0,
-                               start_date=datetime.date(2021, 1, 1),
-                               end_date=datetime.date(2021, 1, 7))],
-                         indirect=['indexed_events'])
-def test_get_bookmark(app, evnet_queues, indexed_events):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_aggregations.py::test_StatAggregator -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_StatAggregator(app):
     """Test bookmark reading."""
     stat_agg = StatAggregator(name='file-download-agg',
                               client=current_search_client,
@@ -73,9 +72,6 @@ def test_get_bookmark(app, evnet_queues, indexed_events):
                               aggregation_field='file_id',
                               aggregation_interval='day')
     stat_agg.run()
-    current_search.flush_and_refresh(index='*')
-    assert stat_agg.bookmark_api.get_bookmark() == \
-        datetime.datetime(2021, 1, 8)
 
 # def test_overwriting_aggregations(app, mock_event_queue, es_with_templates):
 #     """Check that the StatAggregator correctly starts from bookmark.
