@@ -710,6 +710,53 @@ def indices(app, db):
     }
 
 
+@pytest.fixture
+def test_indices(app, db):
+    def base_index(id, parent, position, public_date=None, coverpage_state=False, recursive_browsing_role=False,
+                   recursive_contribute_role=False, recursive_browsing_group=False,
+                   recursive_contribute_group=False, online_issn=''):
+        _browsing_role = "3,-98,-99"
+        _contribute_role = "1,2,3,4,-98,-99"
+        _group = "g1,g2"
+        return Index(
+            id=id,
+            parent=parent,
+            position=position,
+            index_name="Test index {}".format(id),
+            index_name_english="Test index {}".format(id),
+            index_link_name="Test index link {}".format(id),
+            index_link_name_english="Test index link {}".format(id),
+            index_link_enabled=False,
+            more_check=False,
+            display_no=position,
+            harvest_public_state=True,
+            public_state=True,
+            public_date=public_date,
+            recursive_public_state=True if not public_date else False,
+            coverpage_state=coverpage_state,
+            recursive_coverpage_check=True if coverpage_state else False,
+            browsing_role=_browsing_role,
+            recursive_browsing_role=recursive_browsing_role,
+            contribute_role=_contribute_role,
+            recursive_contribute_role=recursive_contribute_role,
+            browsing_group=_group,
+            recursive_browsing_group=recursive_browsing_group,
+            contribute_group=_group,
+            recursive_contribute_group=recursive_contribute_group,
+            biblio_flag=True if not online_issn else False,
+            online_issn=online_issn
+        )
+    
+    with db.session.begin_nested():
+        db.session.add(base_index(1, 0, 0, datetime(2022, 1, 1), True, True, True, True, True, '1234-5678'))
+        db.session.add(base_index(2, 0, 1))
+        db.session.add(base_index(3, 0, 2))
+        db.session.add(base_index(11, 1, 0))
+        db.session.add(base_index(21, 2, 0))
+        db.session.add(base_index(22, 2, 1))
+    db.session.commit()
+
+
 @pytest.fixture()
 def esindex(app,db_records):
     with open("tests/data/mappings/item-v1.0.0.json","r") as f:
@@ -1224,22 +1271,20 @@ def db_oaischema(app, db):
 
 
 @pytest.fixture()
-def communities(app, db, user, indices):
+def communities(app, db, users, test_indices):
     """Create some example communities."""
-    user1 = db_.session.merge(user)
-    ds = app.extensions['invenio-accounts'].datastore
-    r = ds.create_role(name='superuser', description='1234')
-    ds.add_role_to_user(user1, r)
-    ds.commit()
+    comm = Community(
+        id='comm1',
+        id_user=users[3]['id'],
+        title='Test Comm Title',
+        root_node_id=1,
+        id_role=users[3]['obj'].roles[0].id
+    )
+    with db.session.begin_nested():
+        db.session.add(comm)
     db.session.commit()
 
-    comm0 = Community.create(community_id='comm1', role_id=r.id,
-                             id_user=user1.id, title='Title1',
-                             description='Description1',
-                             root_node_id=33)
-    db.session.add(comm0)
-
-    return comm0
+    return comm
 
 
 @pytest.fixture()
