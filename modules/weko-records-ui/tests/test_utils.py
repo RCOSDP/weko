@@ -375,10 +375,11 @@ def test_display_oaiset_path(app,records,itemtypes,oaischema,users):
 
 # def get_google_scholar_meta(record):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_google_scholar_meta -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_google_scholar_meta(app,records,itemtypes,oaischema):
+def test_get_google_scholar_meta(app,records,itemtypes,oaischema,oaiidentify):
     indexer, results = records
     record = results[0]["record"]
     assert get_google_scholar_meta(record)==None
+
 
 # def get_google_detaset_meta(record):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_google_detaset_meta -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

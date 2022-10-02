@@ -59,6 +59,7 @@ from invenio_indexer import InvenioIndexer
 from invenio_jsonschemas import InvenioJSONSchemas
 from invenio_oaiserver import InvenioOAIServer
 from invenio_oaiserver.views.server import blueprint as invenio_oaiserver_blueprint
+from invenio_oaiserver.models import Identify
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -104,7 +105,7 @@ from weko_items_ui import WekoItemsUI
 from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
 from weko_records import WekoRecords
 from weko_records.api import ItemsMetadata
-from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList
+from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList,SiteLicenseIpAddress
 from weko_records.utils import get_options_and_order_list
 from weko_records_ui.config import WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,RECORDS_UI_ENDPOINTS,WEKO_RECORDS_UI_SECRET_KEY,WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN
 from weko_records_ui.models import PDFCoverPageSettings,FileOnetimeDownload, FilePermission
@@ -643,6 +644,13 @@ def oaischema(app, db):
     with db.session.begin_nested():
         db.session.add(jpcoar_mapping)
         db.session.add(jpcoar_v1_mapping)
+
+
+@pytest.fixture()
+def oaiidentify(app, db):
+    identify = Identify(outPutSetting=True,emails="wekosoftware@nii.ac.jp",repositoryName="test repository")
+    with db.session.begin_nested():
+        db.session.add(identify)
 
 
 @pytest.fixture()
@@ -2013,6 +2021,15 @@ def site_license_info(app, db):
     with db.session.begin_nested():
         db.session.add(record)
     return record
+
+@pytest.fixture()
+def site_license_ipaddr(app, db,site_license_info):
+    record1 = SiteLicenseIpAddress(organization_id=1,organization_no=1,start_ip_address="192.168.0.0",finish_ip_address="192.168.0.255")
+    # record2 = SiteLicenseIpAddress(organization_id=1,start_ip_address="192.168.1.0",finish_ip_address="192.168.2.255")   
+    with db.session.begin_nested():
+        db.session.add(record1)
+        # db.session.add(record2)
+    return record1
 
 @pytest.fixture()
 def db_fileonetimedownload(app, db,records):
