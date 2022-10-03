@@ -68,8 +68,25 @@ def test_ItemImportView_index(i18n_app, users, client_request_args, db_records2)
         test = ItemImportView()
         assert test.index()
 
-#     def check(self) -> jsonify: ~ UnboundLocalError: local variable 'task' referenced before assignment
-def test_ItemImportView_check(i18n_app, users, client_request_args, db_records2):
+# def check(self) -> jsonify: ~ UnboundLocalError: local variable 'task' referenced before assignment request.form needed
+def test_ItemImportView_check(i18n_app, users, client, client_request_args):
+    file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        'data',
+        'sample_file',
+        'sample_csv.csv'
+    )
+
+    csv_data = open(file_path, "rb")
+    data = {"file": (csv_data, "sample_csv.csv")}
+    
+    client.post(
+        "/",
+        data=data,
+        buffered=True,
+        content_type="multipart/form-data",
+    )
+
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         test = ItemImportView()
         assert test.check()

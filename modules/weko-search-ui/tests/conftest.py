@@ -24,6 +24,7 @@ import shutil
 import tempfile
 import json
 import uuid
+import requests
 from os.path import join
 from datetime import date, datetime, timedelta
 from time import sleep
@@ -157,6 +158,7 @@ def base_app(instance_path):
         ACCOUNTS_JWT_ENABLE=True,
         SECRET_KEY='SECRET_KEY',
         WEKO_INDEX_TREE_UPDATED=True,
+        DEPOSIT_FILES_API = '/api/files',
         TESTING=True,
         FILES_REST_DEFAULT_QUOTA_SIZE = None,
         FILES_REST_DEFAULT_STORAGE_CLASS = 'S',
@@ -595,8 +597,21 @@ def client_api(app):
 
 
 @pytest.yield_fixture()
-def client_request_args(app):
+def client_request_args(app, file_instance_mock):
     app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
+
+    file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        'data',
+        'sample_file',
+        'sample_file.txt'
+    )
+
+    # files = {'upload_file': open(file_path,'rb')}
+    # values = {'DB': 'photcat', 'OUT': 'txt', 'SHORT': 'short'}
+
+    # r = requests.post(url, files=files, data=values)
+
     with app.test_client() as client:
         r = client.get('/', query_string={
             'index_id': '33',
@@ -610,6 +625,7 @@ def client_request_args(app):
             'item_link': '1',
             'is_search': 1,
             'search_type': WEKO_SEARCH_TYPE_DICT["INDEX"],
+            'is_change_identifier': True,
             'remote_addr': '0.0.0.0',
             'referrer': 'test',
             'host': '127.0.0.1',
@@ -1217,6 +1233,25 @@ def communities2(app, db, user, indices):
 
 
 @pytest.fixture()
+def communities3(app, db, user, indices):
+    """Create some example communities."""
+    user1 = db_.session.merge(user)
+    ds = app.extensions['invenio-accounts'].datastore
+    r = ds.create_role(name='superuser', description='1234')
+    ds.add_role_to_user(user1, r)
+    ds.commit()
+    db.session.commit()
+
+    comm0 = Community.create(community_id='comm1', role_id=r.id,
+                             id_user=user1.id, title='Title1',
+                             description='Description1',
+                             root_node_id=33)
+    db.session.add(comm0)
+
+    return comm0
+
+
+@pytest.fixture()
 def mock_users():
     """Create mock users."""
     mock_auth_user = Mock()
@@ -1237,6 +1272,27 @@ def mock_user_ctx(mock_users):
     with patch('invenio_stats.utils.current_user',
                mock_users['authenticated']):
         yield
+
+
+@pytest.fixture
+def file_instance_mock():
+    """Mock of a file instance."""
+    class FileInstance(object):
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+
+    file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        'data',
+        'sample_file',
+    )
+
+    return FileInstance(
+        id='deadbeef-65bd-4d9b-93e2-ec88cc59aec5',
+        uri=file_path,
+        size=4,
+        updated=None)
 
 
 # @pytest.yield_fixture()

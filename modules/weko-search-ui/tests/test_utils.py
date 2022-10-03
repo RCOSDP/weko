@@ -315,7 +315,7 @@ def test_getEncode():
 
 
 # def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
-def test_read_stats_file(i18n_app, db_itemtype):
+def test_read_stats_file(i18n_app, db_itemtype, users):
     current_path = os.path.dirname(os.path.abspath(__file__))
     file_name_tsv = 'sample_tsv.tsv'
     file_path_tsv = os.path.join(
@@ -557,7 +557,7 @@ def test_update_publish_status(i18n_app, es_records):
 
 # def handle_workflow(item: dict):
 def test_handle_workflow(i18n_app, es_records):
-    item = es_records['recid']
+    item = es_records['results'][0]['item']
 
     assert handle_workflow(item)
 
