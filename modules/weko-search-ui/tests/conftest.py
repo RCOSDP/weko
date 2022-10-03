@@ -1099,6 +1099,8 @@ def pdfcoverpage(app, db):
 @pytest.fixture()
 def item_type(app, db):
     _item_type_name = ItemTypeName(name='test')
+    _item_type_name2 = ItemTypeName(name='test2')
+    _item_type_name3 = ItemTypeName(name='test3')
 
     _render = {
         'meta_list': {},
@@ -1115,13 +1117,35 @@ def item_type(app, db):
     with open("tests/data/itemtype_schema.json", "r") as f:
         item_type_schema = json.load(f)
 
-    return ItemTypes.create(
+    sample1 = ItemTypes.create(
         name='test',
         item_type_name=_item_type_name,
         schema=item_type_schema,
         render=_render,
         tag=1
     )
+
+    sample2 = ItemTypes.create(
+        name='test2',
+        item_type_name=_item_type_name2,
+        schema=item_type_schema,
+        render=_render,
+        tag=2
+    )
+
+    sample3 = ItemTypes.create(
+        name='test3',
+        item_type_name=_item_type_name3,
+        schema=item_type_schema,
+        render=_render,
+        tag=3
+    )
+
+    return [
+        sample1,
+        sample2,
+        sample3
+    ]
 
 
 @pytest.fixture()
@@ -1286,6 +1310,7 @@ def file_instance_mock():
         os.path.dirname(os.path.abspath(__file__)),
         'data',
         'sample_file',
+        'sample_file.txt'
     )
 
     return FileInstance(

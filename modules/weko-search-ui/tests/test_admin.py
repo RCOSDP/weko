@@ -87,6 +87,27 @@ def test_ItemImportView_check(i18n_app, users, client, client_request_args):
         content_type="multipart/form-data",
     )
 
+    rf = request.form.to_dict()
+    rf['username'] = "test_user"
+
+    # mimetype = 'application/json'
+    # headers = {
+    #     'Content-Type': mimetype,
+    #     'Accept': mimetype
+    # }
+    # data = {
+    #     'Data': [20.0, 30.0, 401.0, 50.0],
+    #     'Date': ['2017-08-11', '2017-08-12', '2017-08-13', '2017-08-14'],
+    #     'Day': 4
+    # }
+
+    # client.post(
+    #     '/',
+    #     data=json.dumps(data),
+    #     headers=headers
+    # )
+
+    raise BaseException
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         test = ItemImportView()
         assert test.check()

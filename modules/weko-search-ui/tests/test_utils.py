@@ -502,6 +502,7 @@ def test_clean_thumbnail_file(i18n_app, deposit):
     # Doesn't return a value
     assert not clean_thumbnail_file(deposit, root_path, thumbnail_path)
 
+
 # def up_load_file(record, root_path, deposit, allow_upload_file_content, old_files):
 def test_up_load_file(i18n_app, deposit, db_activity):
     record = db_activity['record']
@@ -559,7 +560,8 @@ def test_update_publish_status(i18n_app, es_records):
 def test_handle_workflow(i18n_app, es_records):
     item = es_records['results'][0]['item']
 
-    assert handle_workflow(item)
+    # Doesn't return any value
+    assert not handle_workflow(item)
 
 
 # def create_work_flow(item_type_id):
@@ -574,7 +576,7 @@ def test_create_flow_define(i18n_app, db_activity):
     assert not create_flow_define()
 
 
-# def send_item_created_event_to_es(item, request_info): 20220929
+# def send_item_created_event_to_es(item, request_info): ERR
 def test_send_item_created_event_to_es(i18n_app, es_records, client_request_args, users, es):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         item = es_records['results'][0]['item']
@@ -597,9 +599,10 @@ def test_import_items_to_system(i18n_app, db_activity):
 
 # def handle_item_title(list_record):
 def test_handle_item_title(i18n_app, es_records):
-    list_record = es_records['results'][0]['item']
+    list_record = [es_records['results'][0]['item']]
 
-    assert handle_item_title(list_record)
+    # Doesn't return any value
+    assert not handle_item_title(list_record)
     
 
 # def handle_check_and_prepare_publish_status(list_record):
@@ -642,8 +645,8 @@ def test_handle_set_change_identifier_flag(i18n_app, record_with_metadata):
 
 
 # def handle_check_cnri(list_record):
-def test_handle_check_cnri(i18n_app, es_records):
-    list_record = [es_records['results'][0]['item']]
+def test_handle_check_cnri(i18n_app, db_activity):
+    list_record = [db_activity['item']]
 
     # Doesn't return any value
     assert not handle_check_cnri(list_record)
@@ -763,16 +766,15 @@ def test_register_item_doi(i18n_app, es_records, filerecord):
     assert register_item_doi(item)
 
 
-
-# def register_item_update_publish_status(item, status): 20220930
+# def register_item_update_publish_status(item, status): ERR
 def test_register_item_update_publish_status(i18n_app, es_records):
     item = es_records['results'][0]['item']
-    status = "1"
+    # item = db_activity['item']
+    status = 0
 
     # Doesn't return any value
     assert not register_item_update_publish_status(item, status)
     
-
 
 # def handle_doi_required_check(record):
 def test_handle_doi_required_check(i18n_app, es_records, record_with_metadata, db_itemtype, item_type):
@@ -896,7 +898,6 @@ def test_get_sub_item_option(i18n_app):
     ]
 
     assert get_sub_item_option(key, schemaform)
-
 
 
 # def check_sub_item_is_system(key, schemaform):
@@ -1093,13 +1094,35 @@ def test_handle_check_duplication_item_id(i18n_app):
 
 
 # def export_all(root_url, user_id, data):
-def test_export_all(i18n_app):
+def test_export_all(db_activity, i18n_app, users, item_type, db_records2):
+    root_url = "/"
+    user_id = users[3]['obj'].id
+    data = {
+        "item_type_id": 1,
+        "item_id_range": 1
+    }
+    data2 = {
+        "item_type_id": -1,
+        "item_id_range": 1-9
+    }
 
+    # Test 1
+    assert not export_all(root_url, user_id, data)
 
-    assert export_all(root_url, user_id, data)
-
+    # Test 2
+    assert not export_all(root_url, user_id, data2)
 
 # def delete_exported(uri, cache_key):
+def test_delete_exported(i18n_app, file_instance_mock):
+    file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        'data',
+        'sample_file',
+        'sample_file.txt'
+    )
+
+    # Doesn't return any value
+    assert not delete_exported(file_path, "key")
 
 
 # def cancel_export_all(): ~ GETS STUCK
@@ -1194,7 +1217,21 @@ def test_handle_check_thumbnail(i18n_app, record_with_metadata):
 
 
 # def get_key_by_property(record, item_map, item_property):
+def test_get_key_by_property(i18n_app):
+    record = "record"
+    item_map = {"item_property": "item_property"}
+    item_property = "item_property"
+
+    assert get_key_by_property(record, item_map, item_property)
+
+
 # def get_data_by_property(item_metadata, item_map, mapping_key):
+def test_get_data_by_property(i18n_app):
+    item_metadata = {}
+    item_map = {"mapping_key": "{'test': 1}.test"}
+    mapping_key = "mapping_key"
+
+    assert get_data_by_property(item_metadata, item_map, mapping_key)
 
 
 # def get_filenames_from_metadata(metadata):
@@ -1204,3 +1241,8 @@ def test_get_filenames_from_metadata(i18n_app, record_with_metadata):
 
 
 # def handle_check_filename_consistence(file_paths, meta_filenames):
+def test_handle_check_filename_consistence(i18n_app):
+    file_paths = ["abc/abc", "abc/abc"]
+    meta_filenames = [{"id": 1, "filename": "abc"}, {"id": 2, "filename": "xyz"}]
+
+    assert handle_check_filename_consistence(file_paths, meta_filenames)

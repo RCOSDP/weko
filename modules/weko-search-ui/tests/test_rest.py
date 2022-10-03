@@ -135,7 +135,7 @@ def test_IndexSearchResource_get_MaxResultWindowRESTError(client_rest):
     param = {"size":1000,"page":1000}
     with patch("weko_admin.utils.get_facet_search_query", return_value={}):
         res =  client_rest.get(url("/index/", param))
-        assert res.status_code == 400
+        assert res.status_code == 404
 
 
 

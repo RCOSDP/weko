@@ -14,9 +14,11 @@ from weko_search_ui.ext import WekoSearchUI, WekoSearchREST
 # class WekoSearchUI
 def test_WekoSearchUI(i18n_app):
     test = WekoSearchUI(i18n_app)
+    assert test
+    
+    del i18n_app.config["INDEX_IMG"]
 
     assert test
-
 
 def test_WekoSearchREST(i18n_app):
     test = WekoSearchREST(i18n_app)
