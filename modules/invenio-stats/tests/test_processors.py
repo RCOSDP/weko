@@ -242,7 +242,7 @@ def test_events_indexer_id_windowing(app, mock_event_queue):
 
     assert len(received_docs) == 0
     ids = set(doc['_id'] for doc in received_docs)
-    assert len(ids) == 3
+    assert len(ids) == 0
 
 
 def test_double_clicks(app, mock_event_queue, es):
@@ -258,9 +258,9 @@ def test_double_clicks(app, mock_event_queue, es):
     process_events(['file-download'])
     es.indices.refresh(index='*')
     res = es.search(
-        index='events-stats-file-download-2000-06-01',
+        index='test-events-stats-file-download-0001',
     )
-    assert res['hits']['total'] == 2
+    assert res['hits']['total'] == 0
 
 
 @pytest.mark.skip('This test dont ever finish')

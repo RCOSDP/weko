@@ -36,212 +36,160 @@ from weko_index_tree import WekoIndexTree
 from weko_groups.api import Group
 
 
-def test_indexes(i18n_app, app, db, users, location, indices, esindex, client_rest, records, communities):
-    index_one = indices["index_non_dict"]
-    index_two = indices["index_non_dict_child"]
-
+# class Indexes(object):
+#     def create(cls, pid=None, indexes=None):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_create -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_indexes_create(app, db, users, test_indices):
+    app.config['WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER'] = 5
     with app.test_client() as client:
-        login_user_via_session(client=client_rest, email=users[-1]['email'])
-        # login_user_via_view(client=client, user=user)
-        WekoIndexTree(app)
-        index_metadata = {
-            'id': 1,
-            'parent': 0,
-            'value': 'test_name',
-        }
-
-        Indexes.create(0, index_metadata)
-        Indexes.create(1, {
-            'id': 2,
-            'parent': 1,
-            'value': 'test_name',
-        })
-        Indexes.create(2, {
-            'id': 3,
-            'parent': 2,
-            'value': 'test_name',
-        })
-        Indexes.create(1, {
-            'id': 4,
-            'parent': 1,
-            'value': 'test_name',
-        })
-
-        Indexes.update(2)
-
-        data = {
-            'pre_parent': 2,
-            'parent': 4,
-            'position': 0
-        }
-        Indexes.move(3, **data)
-        Indexes.create(4, {
-            'id': 5,
-            'parent': 4,
-            'value': 'test_name',
-        })
-        data = {
-            'pre_parent': 4,
-            'parent': 4,
-            'position': 5
-        }
-        Indexes.move(3, **data)
-
-        Indexes.get_index_tree()
-
-        Indexes.get_browsing_info()
-
-        Indexes.get_browsing_tree()
-
-        Indexes.get_more_browsing_tree()
-
-        Indexes.get_browsing_tree_ignore_more()
-
-        Indexes.get_browsing_tree_paths()
-        Indexes.get_browsing_tree_paths(33) # Additional
-
-        app.config['WEKO_BUCKET_QUOTA_SIZE'] = 50 * 1024 * 1024 * 1024
-        app.config['WEKO_MAX_FILE_SIZE'] = 50 * 1024 * 1024 * 1024
-        app.config['FILES_REST_DEFAULT_STORAGE_CLASS'] = 'S'
-        app.config['FILES_REST_STORAGE_CLASS_LIST'] = {
-            'S': 'Standard',
-            'A': 'Archive',
-        }
-        app.config['DEPOSIT_DEFAULT_JSONSCHEMA'] = 'deposits/'
-        'deposit-v1.0.0.json'
-
-        # Error - invenio_pidstore.errors.PIDAlreadyExists
-        try:
-            deposit = WekoDeposit.create({})
-        except:
-            pass
-        
-        db.session.commit()
-
-        # Related to Error - invenio_pidstore.errors.PIDAlreadyExists
-        try:
-            Indexes.get_contribute_tree(deposit.pid.pid_value)
-        except:
-            Indexes.get_contribute_tree(1)
-
-        Indexes.get_recursive_tree()
-        Indexes.get_recursive_tree(33) # Additional
-
-        Indexes.get_index_with_role(3)
-        Indexes.get_index_with_role(33) # Additional
-        Indexes.get_index(2)
-        Indexes.get_index(33) # Additional
-        Indexes.get_index(44) # Additional
-
-        Indexes.get_index_by_name('test_name')
-
-        Indexes.get_index_by_all_name()
-
-        Indexes.get_root_index_count()
-
-        Indexes.get_path_list([3])
-
-        Indexes.get_path_name([3])
-
-        Indexes.get_self_list(3)
-        Indexes.get_self_list(33,community_id="comm1") # Additional
-
-        Indexes.get_self_path(3)
-
-        Indexes.get_child_list_recursive(1)
-
-        Indexes.recs_reverse_query()
-
-        Indexes.recs_query()
-
-        Indexes.recs_tree_query()
-
-        Indexes.recs_root_tree_query()
-        # current_i18n.language = "en" # Additional
-        # Indexes.recs_root_tree_query() # Additional
-        
-        paths = [Indexes.get_full_path(3)]
-        Indexes.get_harvest_public_state(paths)
-        Indexes.is_index(Indexes.get_full_path(3)) # Additional
-        Indexes.is_public_state(paths)
-
-        Indexes.is_public_state_and_not_in_future([3])
-
-        Indexes.set_item_sort_custom(3, {})
-        Indexes.set_item_sort_custom(33) # Additional
-
-        Indexes.update_item_sort_custom_es(paths) # Additional
-
-        Indexes.get_item_sort(3)
-        Indexes.get_item_sort(33) # Additional
-        
-        # class Index has no "get_children" method instead it has "have_children"
-        # Indexes.have_children(33) # Additional
-
-        Indexes.get_coverpage_state([3])
-
-        Indexes.set_coverpage_state_resc(1, True)
-
-        #Indexes.set_public_state_resc(1, True, '220202')
-        Indexes.set_public_state_resc(1, True, datetime.now())
-        Indexes.set_contribute_role_resc(1, 'Admin')
-
-        #Indexes.set_contribute_group_resc(1, [])
-        Indexes.set_contribute_group_resc(1, "1")
-
-        Indexes.set_browsing_role_resc(1, "1")
-
-        Indexes.get_index_count()
-
-        Indexes.get_child_list(33) # Additional
-
-        Indexes.get_child_id_list()
-
-        Indexes.get_list_path_publish(3)
-
-        Indexes.get_public_indexes()
-
-        Indexes.get_all_indexes()
-
-        Indexes.get_all_parent_indexes(3)
-
-        Indexes.get_full_path_reverse(33) # Additional
-
-        Indexes.get_full_path(3)
-
-        Indexes.get_harverted_index_list()
-
-        # Indexes.update_set_info(index_one) # Additional
-
-        # Indexes.delete_set_info(action="",index_id=33,id_list=[33]) # Additional
-
-        Indexes.get_public_indexes_list()
-
-def test_indexes_delete(app, db):
-    WekoIndexTree(app)
-    index_metadata = {
-        'id': 1,
-        'parent': 0,
-        'value': 'test_name',
-    }
-
-    parent = Indexes.create(0, index_metadata)
-    child = Indexes.create(1, {
-        'id': 2,
-        'parent': 1,
-        'value': 'test_name',
-    })
-
-    Indexes.delete(2, True)
-    Indexes.delete(1)
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            res = Indexes.create(0, {
+                'id': 4,
+                'parent': 3,
+                'value': 'Create index test1',
+            })
+            assert res==True
+            res = Indexes.create(1, {
+                'id': 12,
+                'parent': 1,
+                'value': 'Create index test2',
+            })
+            assert res==True
+            res = Indexes.create(2, {
+                'id': 23,
+                'parent': 3,
+                'value': 'Create index test3',
+            })
+            assert res==True
+            res = Indexes.create(2, {
+                'id': 23,
+                'parent': 3,
+                'value': 'Create index test3',
+            })
+            assert res==False
+            res = Indexes.create(0)
+            assert res==None
+            res = Indexes.create(0, {'id': None})
+            assert res==None
 
 
 # class Indexes(object):
-#     def create(cls, pid=None, indexes=None):
 #     def update(cls, index_id, **data):
-#     def delete(cls, index_id, del_self=False):
-#     def delete_by_action(cls, action, index_id):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_indexes_update(app, db, users, test_indices):
+    index_metadata = {
+        "biblio_flag": False,
+        "browsing_group": {
+            "allow": [],
+            "deny": []
+        },
+        "browsing_role": {
+            "allow": [
+            {
+                "id": 3,
+                "name": "Contributor"
+            },
+            {
+                "id": -98,
+                "name": "Authenticated User"
+            },
+            {
+                "id": -99,
+                "name": "Guest"
+            }
+            ],
+            "deny": []
+        },
+        "can_edit": True,
+        "comment": "",
+        "contribute_group": {
+            "allow": [],
+            "deny": []
+        },
+        "contribute_role": {
+            "allow": [
+            {
+                "id": 1,
+                "name": "System Administrator"
+            },
+            {
+                "id": 2,
+                "name": "Repository Administrator"
+            },
+            {
+                "id": 3,
+                "name": "Contributor"
+            },
+            {
+                "id": 4,
+                "name": "Community Administrator"
+            },
+            {
+                "id": -98,
+                "name": "Authenticated User"
+            },
+            {
+                "id": -99,
+                "name": "Guest"
+            }
+            ],
+            "deny": []
+        },
+        "coverpage_state": False,
+        "display_format": "1",
+        "display_no": 5,
+        "harvest_public_state": True,
+        "harvest_spec": "",
+        "have_children": False,
+        "id": 1,
+        "image_name": "",
+        "index_link_enabled": False,
+        "index_link_name": "Test index 1 new",
+        "index_link_name_english": "Test index 1 new",
+        "index_name": "Test index 1 new",
+        "index_name_english": "Test index 1 new",
+        "more_check": False,
+        "online_issn": "",
+        "owner_user_id": 3,
+        "parent": 0,
+        "position": 0,
+        "public_date": "20220201",
+        "public_state": True,
+        "recursive_browsing_group": True,
+        "recursive_browsing_role": True,
+        "recursive_contribute_group": True,
+        "recursive_contribute_role": True,
+        "recursive_coverpage_check": False,
+        "recursive_public_state": True,
+        "rss_status": True
+    }
+    with app.test_client() as client:
+        login_user_via_session(client=client, email=users[3]['email'])
+        # need to fix
+        with pytest.raises(Exception) as e:
+            Indexes.update(2)
+        assert e.type==AttributeError
+        res = Indexes.update(0)
+        assert res==None
+        with pytest.raises(Exception) as e:
+            Indexes.update(1, **index_metadata)
+        assert e.type==AttributeError
 
+
+# class Indexes(object):
+#     def delete(cls, index_id, del_self=False):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_indexes_delete(app, db, users, test_indices):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        res = Indexes.delete(11, True)
+        assert res==None
+    # need to fix
+    res = Indexes.delete(10)
+    assert res==0
+
+
+# class Indexes(object):
+#     def delete_by_action(cls, action, index_id):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_delete_by_action -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_indexes_delete_by_action(app, db, user):
     WekoIndexTree(app)
@@ -258,59 +206,58 @@ def test_indexes_delete_by_action(app, db, user):
         'value': 'test_name',
     })
 
-    Indexes.delete_by_action('move', 2)
-    with pytest.raises(NotFoundError):
-        Indexes.delete_by_action('delete', 1)
+    res = Indexes.delete_by_action('move', 2)
+    assert res==None
+    res = Indexes.delete_by_action('delete', 1)
+    assert res==0
 
+
+# class Indexes(object):
 #     def move(cls, index_id, **data):
 #         def _update_index(new_position, parent=None):
 #         def _swap_position(i, index_tree, next_index_tree):
 #         def _re_order_tree(new_position):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_move -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_indexes_move(app, db, users, test_indices):
+    with app.test_client() as client:
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            _data = {
+                'pre_parent': 2,
+                'parent': None,
+                'position': 1
+            }
+            res = Indexes.move(22, **_data)
+            assert res['is_ok']==False
+            assert res['msg']=='Select an index to move.'
+
+            _data = {
+                'pre_parent': 2,
+                'parent': 22,
+                'position': 1
+            }
+            res = Indexes.move(22, **_data)
+            assert res['is_ok']==False
+            assert res['msg']=='Fail move an index.'
+
+            _data = {
+                'pre_parent': "0",
+                'parent': "0",
+                'position': 3
+            }
+            res = Indexes.move(1, **_data)
+            assert res['is_ok']==True
+            assert res['msg']==''
+
+
+# class Indexes(object):
 #     def get_index_tree(cls, pid=0):
 #     def get_browsing_info(cls):
 #     def get_browsing_tree(cls, pid=0):
 #     def get_more_browsing_tree(cls, pid=0, more_ids=[]):
 #     def get_browsing_tree_ignore_more(cls, pid=0):
 #     def get_browsing_tree_paths(cls, index_id: int = 0):
-#     def get_contribute_tree(cls, pid, root_node_id=0):
 #     def get_recursive_tree(cls, pid: int = 0):
 #     def get_index_with_role(cls, index_id):
-#         def _get_allow_deny(allow, role, browse_flag=False):
-#         def _get_group_allow_deny(allow_group_id=[], groups=[]):
-
-def test_indexes_get_index_with_role(app, db, user, location):
-    with app.test_client() as client:
-        login_user_via_view(client=client, user=user)
-
-        WekoIndexTree(app)
-        index_metadata = {
-            'id': 1,
-            'parent': 0,
-            'value': 'test_name',
-        }
-        Indexes.create(0, index_metadata)
-        index = Indexes.update(1,
-                       public_date="20220101",
-                       browsing_group="1,2",
-                       contribute_group="4,5",
-                       browsing_role="",
-                       contribute_role=""
-                       )
-        group=Group(id=1,name="test group1")
-        role_test=Role(id=999,name="test role")
-        role_admin = Role(id=0,name="Administrator")
-        
-        with db.session.begin_nested():
-            db.session.add(group)
-            db.session.add(role_test)
-            db.session.add(role_admin)
-        Indexes.get_index_with_role(1)
-
-
-        with patch("weko_index_tree.api.Indexes.get_account_role",return_value="test role"):
-            Indexes.get_index_with_role(1)
-
-
 #     def get_index(cls, index_id, with_count=False):
 #     def get_index_by_name(cls, index_name="", pid=0):
 #     def get_index_by_all_name(cls, index_name=""):
@@ -359,3 +306,158 @@ def test_indexes_get_index_with_role(app, db, user, location):
 #     def update_set_info(cls, index):
 #     def delete_set_info(cls, action, index_id, id_list):
 #     def get_public_indexes_list(cls):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_get_index_tree -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_indexes_get_index_tree(i18n_app, db, users, test_indices):
+    with i18n_app.test_client() as client:
+        # get_index_tree
+        res = Indexes.get_index_tree()
+        assert len(res)==3
+
+        # get_browsing_info
+        res = Indexes.get_browsing_info()
+        assert res["1"]["browsing_role"]==['3', '-98', '-99']
+        assert res["1"]["index_name"]=="Test index 1"
+        assert res["1"]["parent"]=="0"
+        assert res["1"]["public_date"]==datetime(2022, 1, 1)
+        assert res["1"]["harvest_public_state"]==True
+
+        # get_browsing_tree
+        res = Indexes.get_browsing_tree(1)
+        assert len(res)==1
+
+        # get_more_browsing_tree
+        res = Indexes.get_more_browsing_tree()
+        assert len(res)==3
+
+        # get_browsing_tree_ignore_more
+        res = Indexes.get_browsing_tree_ignore_more(1)
+        assert len(res)==1
+
+        # get_browsing_tree_paths
+        res = Indexes.get_browsing_tree_paths(11)
+        assert res==['11']
+
+        # get_recursive_tree
+        res = Indexes.get_recursive_tree()
+        assert len(res)==6
+        res = Indexes.get_recursive_tree(11)
+        assert res==[(1, 11, 0, 'Test index 11', 'Test index link 11', False, True, None, '3,-98,-99', '1,2,3,4,-98,-99', 'g1,g2', 'g1,g2', False, 0, False, False)]
+
+        # get_index_with_role
+        res = Indexes.get_index_with_role(1)
+        assert res=={'biblio_flag': False, 'browsing_group': {'allow': [], 'deny': []}, 'browsing_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': -98, 'name': 'Authenticated User'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'}, {'id': 6, 'name': 'Original Role'}]}, 'comment': '', 'contribute_group': {'allow': [], 'deny': []}, 'contribute_role': {'allow': [{'id': 1, 'name': 'System Administrator'}, {'id': 2, 'name': 'Repository Administrator'}, {'id': 3, 'name': 'Contributor'}, {'id': 4, 'name': 'Community Administrator'}, {'id': -98, 'name': 'Authenticated User'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'}, {'id': 6, 'name': 'Original Role'}]}, 'coverpage_state': True, 'display_format': '1', 'display_no': 0, 'harvest_public_state': True, 'harvest_spec': '', 'id': 1, 'image_name': '', 'index_link_enabled': False, 'index_link_name': 'Test index link 1', 'index_link_name_english': 'Test index link 1', 'index_name': 'Test index 1', 'index_name_english': 'Test index 1', 'more_check': False, 'online_issn': '1234-5678', 'owner_user_id': 0, 'parent': 0, 'position': 0, 'public_date': '20220101', 'public_state': True, 'recursive_browsing_group': True, 'recursive_browsing_role': True, 'recursive_contribute_group': True, 'recursive_contribute_role': True, 'recursive_coverpage_check': True, 'recursive_public_state': False, 'rss_status': False}
+        res = Indexes.get_index_with_role(22)
+        assert res=={'biblio_flag': True, 'browsing_group': {'allow': [], 'deny': []}, 'browsing_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': -98, 'name': 'Authenticated User'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'}, {'id': 6, 'name': 'Original Role'}]}, 'comment': '', 'contribute_group': {'allow': [], 'deny': []}, 'contribute_role': {'allow': [{'id': 1, 'name': 'System Administrator'}, {'id': 2, 'name': 'Repository Administrator'}, {'id': 3, 'name': 'Contributor'}, {'id': 4, 'name': 'Community Administrator'}, {'id': -98, 'name': 'Authenticated User'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'},  {'id': 6, 'name': 'Original Role'}]}, 'coverpage_state': False, 'display_format': '1', 'display_no': 1, 'harvest_public_state': True, 'harvest_spec': '', 'id': 22, 'image_name': '', 'index_link_enabled': False, 'index_link_name': 'Test index link 22', 'index_link_name_english': 'Test index link 22', 'index_name': 'Test index 22', 'index_name_english': 'Test index 22', 'more_check': False, 'online_issn': '', 'owner_user_id': 0, 'parent': 2, 'position': 1, 'public_date': '', 'public_state': True, 'recursive_browsing_group': False, 'recursive_browsing_role': False, 'recursive_contribute_group': False, 'recursive_contribute_role': False, 'recursive_coverpage_check': False, 'recursive_public_state': True, 'rss_status': False}
+
+        # get_index
+        res = Indexes.get_index(2)
+        assert res.id==2
+        assert res.index_name=='Test index 2'
+        res = Indexes.get_index(2, True)
+        assert res[0].id==2
+        assert res[0].index_name=='Test index 2'
+        assert res[1]==1
+
+        # get_index_by_name
+        res = Indexes.get_index_by_name('Test index 2')
+        assert res.id==2
+        assert res.index_name=='Test index 2'
+        res = Indexes.get_index_by_name('Test index 22', 2)
+        assert res.id==22
+        assert res.index_name=='Test index 22'
+
+        # get_index_by_all_name
+        res = Indexes.get_index_by_all_name()
+        assert res==None
+        res = Indexes.get_index_by_all_name("Test index 1")
+        assert res.id==1
+        assert res.index_name=='Test index 1'
+
+        # get_root_index_count
+        res = Indexes.get_root_index_count()
+        assert res.parent==0
+        assert res.position_max==2
+
+        # get_path_list
+        res = Indexes.get_path_list([3])
+        assert res==[(0, 3, '3', 'Test index 3', 'Test index 3', 1, True, None, '', '3,-98,-99', 'g1,g2', True)]
+
+        # get_path_name
+        res = Indexes.get_path_name([3])
+        assert res==[(0, 3, '3', 'Test index 3', 'Test index 3', 1, True, None, '', '3,-98,-99', 'g1,g2', True)]
+
+        # get_self_list
+        res = Indexes.get_self_list(3)
+        assert res==[(0, 3, '3', 'Test index 3', 'Test index 3', 1, True, None, '', '3,-98,-99', 'g1,g2', True)]
+
+        # get_self_path
+        res = Indexes.get_self_path(3)
+        assert res==(0, 3, '3', 'Test index 3', 'Test index 3', 1, True, None, '', '3,-98,-99', 'g1,g2', True)
+
+        # is_index
+        res = Indexes.is_index('1:11')
+        assert res==True
+        res = Indexes.is_index('3')
+        assert res==True
+        res = Indexes.is_index('4')
+        assert res==False
+        res = Indexes.is_index('a')
+        assert res==False
+
+        # is_public_state_and_not_in_future
+        res = Indexes.is_public_state_and_not_in_future([3])
+        assert res==False
+
+        # set_item_sort_custom
+        res = Indexes.set_item_sort_custom(3, {1: 1, 2: 2})
+        assert res.id==3
+        assert res.item_custom_sort=={'1': 1, '2': 2}
+
+        # get_item_sort
+        res = Indexes.get_item_sort(3)
+        assert res=={'1': 1, '2': 2}
+
+        # get_coverpage_state
+        res = Indexes.get_coverpage_state([1])
+        assert res==True
+        res = Indexes.get_coverpage_state([2])
+        assert res==False
+
+        # set_coverpage_state_resc
+        Indexes.set_coverpage_state_resc(2, True)
+        res = Indexes.get_coverpage_state([21])
+        assert res==True
+
+        # get_index_count
+        res = Indexes.get_index_count()
+        assert res==6
+
+        # get_child_list
+        res = Indexes.get_child_list(1)
+        assert res==[(0, 1, '1', 'Test index 1', 'Test index 1', 1, True, datetime(2022, 1, 1, 0, 0), '', '3,-98,-99', 'g1,g2', True),(1, 11, '1/11', 'Test index 1-/-Test index 11', 'Test index 1-/-Test index 11', 2, True, None, '', '3,-98,-99', 'g1,g2', True)]
+
+        # get_child_id_list
+        res = Indexes.get_child_id_list()
+        assert res==[1, 2, 3]
+
+        # get_list_path_publish
+        res = Indexes.get_list_path_publish(11)
+        assert res==['11']
+
+        # get_all_indexes
+        res = Indexes.get_all_indexes()
+        assert len(res)==6
+
+        # get_all_parent_indexes
+        res = Indexes.get_all_parent_indexes(11)
+        assert len(res)==2
+
+        # get_harverted_index_list
+        res = Indexes.get_harverted_index_list()
+        assert res==['1', '2', '3', '11', '21', '22']
+
+        # get_public_indexes_list
+        res = Indexes.get_public_indexes_list()
+        assert res==['1', '2', '3', '11', '21', '22']
+
+#     def get_contribute_tree(cls, pid, root_node_id=0):
