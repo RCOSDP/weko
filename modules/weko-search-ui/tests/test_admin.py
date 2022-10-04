@@ -107,7 +107,6 @@ def test_ItemImportView_check(i18n_app, users, client, client_request_args):
     #     headers=headers
     # )
 
-    raise BaseException
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         test = ItemImportView()
         assert test.check()

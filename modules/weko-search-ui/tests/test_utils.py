@@ -591,8 +591,9 @@ def test_send_item_created_event_to_es(i18n_app, es_records, client_request_args
 
 
 # def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False): ERROR = TypeError: handle_remove_es_metadata() missing 2 required positional arguments: 'bef_metadata' and 'bef_las...
-def test_import_items_to_system(i18n_app, db_activity):
-    item = dict(db_activity['item'])
+def test_import_items_to_system(i18n_app, es_records):
+    # item = dict(db_activity['item'])
+    item = es_records['results'][0]['item']
 
     assert import_items_to_system(item)
 
@@ -760,10 +761,12 @@ def test_prepare_doi_link(i18n_app, communities2, db):
 
 
 # def register_item_doi(item):
-def test_register_item_doi(i18n_app, es_records, filerecord):
-    item = es_records['results'][0]['item']
+def test_register_item_doi(i18n_app, db_activity):
+    # item = es_records['results'][0]['item']
+    item = db_activity['item']
 
-    assert register_item_doi(item)
+    # Doesn't return any value
+    assert not register_item_doi(item)
 
 
 # def register_item_update_publish_status(item, status): ERR
@@ -1111,6 +1114,7 @@ def test_export_all(db_activity, i18n_app, users, item_type, db_records2):
 
     # Test 2
     assert not export_all(root_url, user_id, data2)
+
 
 # def delete_exported(uri, cache_key):
 def test_delete_exported(i18n_app, file_instance_mock):

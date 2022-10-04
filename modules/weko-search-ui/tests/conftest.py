@@ -24,6 +24,7 @@ import shutil
 import tempfile
 import json
 import uuid
+import copy
 import requests
 from os.path import join
 from datetime import date, datetime, timedelta
@@ -98,6 +99,11 @@ from invenio_records_rest.config import RECORDS_REST_SORT_OPTIONS
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from invenio_pidrelations.models import PIDRelation
 from invenio_oaiserver.models import Identify
+from invenio_pidstore.providers.recordid import RecordIdProvider
+from invenio_records_rest import InvenioRecordsREST, config
+from invenio_records_rest.facets import terms_filter
+from invenio_rest import InvenioREST
+from invenio_records_rest.views import create_blueprint_from_app
 
 from weko_deposit.config import WEKO_BUCKET_QUOTA_SIZE, WEKO_MAX_FILE_SIZE
 from weko_admin.models import FacetSearchSetting
@@ -141,6 +147,73 @@ from sqlalchemy_utils.functions import create_database, database_exists, drop_da
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
 
+class TestSearch(RecordsSearch):
+    """Test record search."""
+
+    class Meta:
+        """Test configuration."""
+
+        index = 'invenio-records-rest'
+        doc_types = None
+
+    def __init__(self, **kwargs):
+        """Add extra options."""
+        super(TestSearch, self).__init__(**kwargs)
+        self._extra.update(**{'_source': {'excludes': ['_access']}})
+
+
+# class MockEs():
+#     def __init__(self,**keywargs):
+#         self.indices = self.MockIndices()
+#         self.es = Elasticsearch()
+#         self.cluster = self.MockCluster()
+#     def index(self, id="",version="",version_type="",index="",doc_type="",body="",**arguments):
+#         pass
+#     def delete(self,id="",index="",doc_type="",**kwargs):
+#         return Response(response=json.dumps({}),status=500)
+#     @property
+#     def transport(self):
+#         return self.es.transport
+#     class MockIndices():
+#         def __init__(self,**keywargs):
+#             self.mapping = dict()
+#         def delete(self,index="", ignore=""):
+#             pass
+#         def delete_template(self,index=""):
+#             pass
+#         def create(self,index="",body={},ignore=""):
+#             self.mapping[index] = body
+#         def put_alias(self,index="", name="", ignore=""):
+#             pass
+#         def put_template(self,name="", body={}, ignore=""):
+#             pass
+#         def refresh(self,index=""):
+#             pass
+#         def exists(self, index="", **kwargs):
+#             if index in self.mapping:
+#                 return True
+#             else:
+#                 return False
+#         def flush(self,index="",wait_if_ongoing=""):
+#             pass
+#         def delete_alias(self, index="", name="",ignore=""):
+#             pass
+        
+#         # def search(self,index="",doc_type="",body={},**kwargs):
+#         #     pass
+#     class MockCluster():
+#         def __init__(self,**kwargs):
+#             pass
+#         def health(self, wait_for_status="", request_timeout=0):
+#             pass
+
+
+@pytest.yield_fixture(scope='session')
+def search_class():
+    """Search class."""
+    yield TestSearch
+
+
 @pytest.yield_fixture()
 def instance_path():
     """Temporary instance path."""
@@ -150,7 +223,7 @@ def instance_path():
 
 
 @pytest.fixture()
-def base_app(instance_path):
+def base_app(instance_path, search_class, request):
     """Flask application fixture."""
     app_ = Flask('testapp', instance_path=instance_path, static_folder=join(instance_path, "static"),)
     os.environ['INVENIO_WEB_HOST_NAME']="127.0.0.1"
@@ -198,7 +271,7 @@ def base_app(instance_path):
         DEPOSIT_RECORDS_UI_ENDPOINTS=DEPOSIT_RECORDS_UI_ENDPOINTS,
         DEPOSIT_REST_ENDPOINTS=DEPOSIT_REST_ENDPOINTS,
         DEPOSIT_DEFAULT_STORAGE_CLASS=DEPOSIT_DEFAULT_STORAGE_CLASS,
-        RECORDS_REST_SORT_OPTIONS=RECORDS_REST_SORT_OPTIONS,
+        # RECORDS_REST_SORT_OPTIONS=RECORDS_REST_SORT_OPTIONS,
         RECORDS_REST_DEFAULT_LOADERS = {
             'application/json': lambda: request.get_json(),
             'application/json-patch+json': lambda: request.get_json(force=True),
@@ -229,6 +302,30 @@ def base_app(instance_path):
         THEME_FRONTPAGE_TEMPLATE = 'weko_theme/frontpage.html',
         BASE_EDIT_TEMPLATE = 'weko_theme/edit.html',
         BASE_PAGE_TEMPLATE = 'weko_theme/page.html',
+        RECORDS_REST_ENDPOINTS=copy.deepcopy(config.RECORDS_REST_ENDPOINTS),
+        RECORDS_REST_DEFAULT_CREATE_PERMISSION_FACTORY=None,
+        RECORDS_REST_DEFAULT_DELETE_PERMISSION_FACTORY=None,
+        RECORDS_REST_DEFAULT_READ_PERMISSION_FACTORY=None,
+        RECORDS_REST_DEFAULT_UPDATE_PERMISSION_FACTORY=None,
+        RECORDS_REST_DEFAULT_RESULTS_SIZE=10,
+        RECORDS_REST_DEFAULT_SEARCH_INDEX=search_class.Meta.index,
+        RECORDS_REST_FACETS={
+            search_class.Meta.index: {
+                'aggs': {
+                    'stars': {'terms': {'field': 'stars'}}
+                },
+                'post_filters': {
+                    'stars': terms_filter('stars'),
+                }
+            }
+        },
+        RECORDS_REST_SORT_OPTIONS={
+            search_class.Meta.index: dict(
+                year=dict(
+                    fields=['year'],
+                )
+            )
+        },
         FILES_REST_DEFAULT_MAX_FILE_SIZE=None,
         WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS = False,
         WEKO_ADMIN_MANAGEMENT_OPTIONS=WEKO_ADMIN_MANAGEMENT_OPTIONS,
@@ -467,6 +564,7 @@ def base_app(instance_path):
                 pid_type='recid',
                 pid_minter='recid',
                 pid_fetcher='recid',
+                pid_value='1.0',
                 search_class=RecordsSearch,
                 # search_index="test-weko",
                 # search_index=SEARCH_UI_SEARCH_INDEX,
@@ -517,6 +615,22 @@ def base_app(instance_path):
         WEKO_SEARCH_UI_TO_NUMBER_FORMAT = "99999999999999.99"
     )
     app_.url_map.converters['pid'] = PIDConverter
+    app_.config['RECORDS_REST_ENDPOINTS']['recid']['search_class'] = search_class
+
+    # Parameterize application.
+    if hasattr(request, 'param'):
+        if 'endpoint' in request.param:
+            app.config['RECORDS_REST_ENDPOINTS']['recid'].update(
+                request.param['endpoint'])
+        if 'records_rest_endpoints' in request.param:
+            original_endpoint = app.config['RECORDS_REST_ENDPOINTS']['recid']
+            del app.config['RECORDS_REST_ENDPOINTS']['recid']
+            for new_endpoint_prefix, new_endpoint_value in \
+                    request.param['records_rest_endpoints'].items():
+                new_endpoint = dict(original_endpoint)
+                new_endpoint.update(new_endpoint_value)
+                app.config['RECORDS_REST_ENDPOINTS'][new_endpoint_prefix] = \
+                    new_endpoint
 
     FlaskCeleryExt(app_)
     Menu(app_)
@@ -529,6 +643,7 @@ def base_app(instance_path):
     InvenioJSONSchemas(app_)
     InvenioSearch(app_)
     InvenioRecords(app_)
+    InvenioREST(app_)
     InvenioIndexer(app_)
     InvenioI18N(app_)
     InvenioPIDRelations(app_)
@@ -537,13 +652,19 @@ def base_app(instance_path):
     InvenioStats(app_)
     InvenioAdmin(app_)
     InvenioPIDStore(app_)
+    WekoRecords(app_)
     WekoSearchUI(app_)
     WekoWorkflow(app_)
     WekoGroups(app_)
     
+    # search = InvenioSearch(app_, client=MockEs())
+    # search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
+    InvenioRecordsREST(app_)
+    app_.register_blueprint(create_blueprint_from_app(app_))
+
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
     current_assets.collect.collect()
-
+    
     return app_
 
 
@@ -585,6 +706,13 @@ def client(app):
 @pytest.yield_fixture()
 def client_rest(app):
     app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
+    with app.test_client() as client:
+        yield client
+
+
+@pytest.yield_fixture()
+def client_rest_weko_search_ui(app):
+    WekoSearchREST(app)
     with app.test_client() as client:
         yield client
 
