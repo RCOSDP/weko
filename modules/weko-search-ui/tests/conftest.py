@@ -795,7 +795,7 @@ def indices(app, db):
         testIndexThreeChild = Index(
             index_name="testIndexThreeChild",
             browsing_role="Contributor",
-            parent="testIndexThree",
+            parent=33,
             index_link_enabled=True,
             index_link_name="test_link",
             public_state=True,
@@ -803,7 +803,7 @@ def indices(app, db):
             id=44,
             public_date=datetime.today() - timedelta(days=1)
         )
-        testIndexMore = Index(index_name="testIndexMore",parent="testIndexThree",public_state=True,id='more')
+        testIndexMore = Index(index_name="testIndexMore",parent=33,public_state=True,id='more')
         testIndexPrivate = Index(index_name="testIndexPrivate",public_state=False,id=55)
 
         db.session.add(testIndexThree)
