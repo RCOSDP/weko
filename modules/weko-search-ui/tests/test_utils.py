@@ -10,8 +10,10 @@ from flask_login import current_user
 from flask_babelex import Babel
 
 from invenio_i18n.babel import set_locale
+from invenio_records.api import Record
 
 from weko_search_ui import WekoSearchUI
+from weko_deposit.api import WekoDeposit, WekoIndexer
 from weko_search_ui.config import (
     WEKO_REPO_USER,
     WEKO_SYS_USER,
@@ -115,6 +117,24 @@ from weko_search_ui.utils import (
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
 
+class MockRecordsSearch:
+    class MockQuery:
+        class MockExecute:
+            def __init__(self):
+                pass
+            def to_dict(self):
+                raise NotFoundError
+        def __init__(self):
+            pass
+        def execute(self):
+            return self.MockExecute()
+    def __init__(self, index=None):
+        pass
+    
+    def update_from_dict(self,query=None):
+        return self.MockQuery()
+
+
 # class DefaultOrderedDict(OrderedDict):
 def test_DefaultOrderDict_deepcopy():
     import copy
@@ -144,25 +164,59 @@ def test_DefaultOrderDict_deepcopy():
 
 # def get_tree_items(index_tree_id): ERROR ~ AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 def test_get_tree_items(i18n_app, indices, users):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+    search_instance = '{"size": 1, "query": {"bool": {"filter": [{"bool": {"must": [{"match": {"publish_status": "0"}}, {"range": {"publish_date": {"lte": "now/d"}}}, {"terms": {"path": ["1031", "1029", "1025", "952", "953", "943", "940", "1017", "1015", "1011", "881", "893", "872", "869", "758", "753", "742", "530", "533", "502", "494", "710", "702", "691", "315", "351", "288", "281", "759", "754", "744", "531", "534", "503", "495", "711", "704", "692", "316", "352", "289", "282", "773", "771", "767", "538", "539", "519", "510", "756", "745", "733", "337", "377", "308", "299", "2063", "2061", "2057", "1984", "1985", "1975", "1972", "2049", "2047", "2043", "1913", "1925", "1904", "1901", "1790", "1785", "1774", "1562", "1565", "1534", "1526", "1742", "1734", "1723", "1347", "1383", "1320", "1313", "1791", "1786", "1776", "1563", "1566", "1535", "1527", "1743", "1736", "1724", "1348", "1384", "1321", "1314", "1805", "1803", "1799", "1570", "1571", "1551", "1542", "1788", "1777", "1765", "1369", "1409", "1340", "1331", "4127", "4125", "4121", "4048", "4049", "4039", "4036", "4113", "4111", "4107", "3977", "3989", "3968", "3965", "3854", "3849", "3838", "3626", "3629", "3598", "3590", "3806", "3798", "3787", "3411", "3447", "3384", "3377", "3855", "3850", "3840", "3627", "3630", "3599", "3591", "3807", "3800", "3788", "3412", "3448", "3385", "3378", "3869", "3867", "3863", "3634", "3635", "3615", "3606", "3852", "3841", "3829", "3433", "3473", "3404", "3395", "1631495207665", "1631495247023", "1631495289664", "1631495340640", "1631510190230", "1631510251689", "1631510324260", "1631510380602", "1631510415574", "1631511387362", "1631511432362", "1631511521954", "1631511525655", "1631511606115", "1631511735866", "1631511740808", "1631511841882", "1631511874428", "1631511843164", "1631511845163", "1631512253601", "1633380618401", "1638171727119", "1638171753803", "1634120530242", "1636010714174", "1636010749240", "1638512895916", "1638512971664"]}}, {"bool": {"must": [{"match": {"publish_status": "0"}}, {"match": {"relation_version_is_last": "true"}}]}}, {"bool": {"should": [{"nested": {"query": {"multi_match": {"query": "simple", "operator": "and", "fields": ["content.attachment.content"]}}, "path": "content"}}, {"query_string": {"query": "simple", "default_operator": "and", "fields": ["search_*", "search_*.ja"]}}]}}]}}], "must": [{"match_all": {}}]}}, "aggs": {"Data Language": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Data Language": {"terms": {"field": "language", "size": 1000}}}}, "Access": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Access": {"terms": {"field": "accessRights", "size": 1000}}}}, "Location": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Location": {"terms": {"field": "geoLocation.geoLocationPlace", "size": 1000}}}}, "Temporal": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Temporal": {"terms": {"field": "temporal", "size": 1000}}}}, "Topic": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Topic": {"terms": {"field": "subject.value", "size": 1000}}}}, "Distributor": {"filter": {"bool": {"must": [{"term": {"contributor.@attributes.contributorType": "Distributor"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Distributor": {"terms": {"field": "contributor.contributorName", "size": 1000}}}}, "Data Type": {"filter": {"bool": {"must": [{"term": {"description.descriptionType": "Other"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Data Type": {"terms": {"field": "description.value", "size": 1000}}}}}, "sort": [{"_id": {"order": "desc", "unmapped_type": "long"}}], "_source": {"excludes": ["content"]}}'
+
+    with patch("weko_search_ui.query.item_path_search_factory", return_value=search_instance):
+        # with patch("weko_search_ui.query.item_path_search_factory", return_value="{'abc': 123}"):
         assert get_tree_items(33)
 
 
-# def delete_records(index_tree_id, ignore_items): ERROR ~ AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
-def test_delete_records(i18n_app, indices):
-    assert delete_records(33, ignore_items=None)
+# def delete_records(index_tree_id, ignore_items):
+def test_delete_records(i18n_app, db_activity):
+    with open("tests/data/search_result_2.json","r") as json_file:
+        search_result = json.load(json_file)
+
+        with patch("weko_search_ui.utils.get_tree_items", return_value=[search_result]):
+            with patch("invenio_records.api.Record.get_record", return_value=db_activity['record']):
+                with patch("weko_deposit.api.WekoIndexer.update_path", return_value=db_activity['record']):
+                    with patch("weko_deposit.api.WekoDeposit.delete_by_index_tree_id", return_value=""):
+                        with patch("invenio_records.api.Record.delete", return_value=""):
+                            assert delete_records(33, ignore_items=[])
+                            assert delete_records(1, ignore_items=[])
 
 
 # def get_journal_info(index_id=0):
-def test_get_journal_info(i18n_app, indices):
-    # Test 1
-    assert not get_journal_info(33)
+def test_get_journal_info(i18n_app, indices, client_request_args):
+    journal = {
+        "publisher_name": "key",
+        "is_output": True,
+        "title_url": "title"
+    }
+
+    with patch("weko_indextree_journal.api.Journals.get_journal_by_index_id", return_value=journal):
+        assert get_journal_info(33)
+        
+    assert not get_journal_info(0)
+
+    with patch("weko_indextree_journal.api.Journals.get_journal_by_index_id", return_value=journal):
+        del journal["title_url"]
+        # Will result in an error for coverage of the except part
+        assert get_journal_info(33)
 
 
-# def get_feedback_mail_list():
+# def get_feedback_mail_list(): *** not yet done
 def test_get_feedback_mail_list(i18n_app, db_records2):
-    # Test 1
-    assert not get_feedback_mail_list()
+    search_instance = '{"size": 1, "query": {"bool": {"filter": [{"bool": {"must": [{"match": {"publish_status": "0"}}, {"range": {"publish_date": {"lte": "now/d"}}}, {"terms": {"path": ["1031", "1029", "1025", "952", "953", "943", "940", "1017", "1015", "1011", "881", "893", "872", "869", "758", "753", "742", "530", "533", "502", "494", "710", "702", "691", "315", "351", "288", "281", "759", "754", "744", "531", "534", "503", "495", "711", "704", "692", "316", "352", "289", "282", "773", "771", "767", "538", "539", "519", "510", "756", "745", "733", "337", "377", "308", "299", "2063", "2061", "2057", "1984", "1985", "1975", "1972", "2049", "2047", "2043", "1913", "1925", "1904", "1901", "1790", "1785", "1774", "1562", "1565", "1534", "1526", "1742", "1734", "1723", "1347", "1383", "1320", "1313", "1791", "1786", "1776", "1563", "1566", "1535", "1527", "1743", "1736", "1724", "1348", "1384", "1321", "1314", "1805", "1803", "1799", "1570", "1571", "1551", "1542", "1788", "1777", "1765", "1369", "1409", "1340", "1331", "4127", "4125", "4121", "4048", "4049", "4039", "4036", "4113", "4111", "4107", "3977", "3989", "3968", "3965", "3854", "3849", "3838", "3626", "3629", "3598", "3590", "3806", "3798", "3787", "3411", "3447", "3384", "3377", "3855", "3850", "3840", "3627", "3630", "3599", "3591", "3807", "3800", "3788", "3412", "3448", "3385", "3378", "3869", "3867", "3863", "3634", "3635", "3615", "3606", "3852", "3841", "3829", "3433", "3473", "3404", "3395", "1631495207665", "1631495247023", "1631495289664", "1631495340640", "1631510190230", "1631510251689", "1631510324260", "1631510380602", "1631510415574", "1631511387362", "1631511432362", "1631511521954", "1631511525655", "1631511606115", "1631511735866", "1631511740808", "1631511841882", "1631511874428", "1631511843164", "1631511845163", "1631512253601", "1633380618401", "1638171727119", "1638171753803", "1634120530242", "1636010714174", "1636010749240", "1638512895916", "1638512971664"]}}, {"bool": {"must": [{"match": {"publish_status": "0"}}, {"match": {"relation_version_is_last": "true"}}]}}, {"bool": {"should": [{"nested": {"query": {"multi_match": {"query": "simple", "operator": "and", "fields": ["content.attachment.content"]}}, "path": "content"}}, {"query_string": {"query": "simple", "default_operator": "and", "fields": ["search_*", "search_*.ja"]}}]}}]}}], "must": [{"match_all": {}}]}}, "aggs": {"Data Language": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Data Language": {"terms": {"field": "language", "size": 1000}}}}, "Access": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Access": {"terms": {"field": "accessRights", "size": 1000}}}}, "Location": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Location": {"terms": {"field": "geoLocation.geoLocationPlace", "size": 1000}}}}, "Temporal": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Temporal": {"terms": {"field": "temporal", "size": 1000}}}}, "Topic": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Topic": {"terms": {"field": "subject.value", "size": 1000}}}}, "Distributor": {"filter": {"bool": {"must": [{"term": {"contributor.@attributes.contributorType": "Distributor"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Distributor": {"terms": {"field": "contributor.contributorName", "size": 1000}}}}, "Data Type": {"filter": {"bool": {"must": [{"term": {"description.descriptionType": "Other"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Data Type": {"terms": {"field": "description.value", "size": 1000}}}}}, "sort": [{"_id": {"order": "desc", "unmapped_type": "long"}}], "_source": {"excludes": ["content"]}}'
+    execute_result = {
+        "aggregations": {"doc_count": 1, "key": 2},
+        "feedback_mail_list": {},
+        "email_list": {},
+        "buckets": []
+    }
+    # mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
+    # side_effect=mock_recordssearch
+    with patch("weko_search_ui.query.feedback_email_search_factory", return_value=search_instance):
+        assert get_feedback_mail_list()
 
 
 # def check_permission():
@@ -227,13 +281,13 @@ def test_set_nested_item(i18n_app):
 #     assert convert_nested_item_to_list(data_dict, map_list)
 
 
-# def define_default_dict():
+# def define_default_dict(): *** not yet done
 def test_define_default_dict(i18n_app):
     # Test 1
     assert not define_default_dict()
 
 
-# def defaultify(d: dict) -> dict:
+# def defaultify(d: dict) -> dict: *** not yet done
 def test_defaultify():
     # Test 1
     assert not defaultify({})
@@ -324,6 +378,7 @@ def test_read_stats_file(i18n_app, db_itemtype, users):
         'sample_file',
         file_name_tsv
     )
+
     file_name_csv = 'sample_csv.csv'
     file_path_csv = os.path.join(
         current_path,
@@ -332,31 +387,26 @@ def test_read_stats_file(i18n_app, db_itemtype, users):
         file_name_csv
     )
 
-    # import csv, re
-    # from weko_records.models import ItemType
-    # from weko_records.api import ItemTypes
-    # enc = getEncode(file_path_tsv)
-    # with open(file_path_tsv, "r", newline="", encoding=enc) as file:
-    #     file_reader = csv.reader(file, delimiter='\t')
-    #     for num, data_row in enumerate(file_reader, start=1):
-    #         item_type_id = data_row[2].split("/")[-1]
-    #         itemtype = ItemTypes.get_by_id(item_type_id) # if you use itemtype.schema y will be None
-    #         x = ItemType.query.filter_by(id=1).first()
-    #         y = get_item_type(int(item_type_id)) # if you use itemtype.schema y will be None
-    #         print('++++++++++++++')
-    #         if y:
-    #             print("y!")
-    #         print(x)
-    #         print(itemtype)
-    #         # print(itemtype.schema)
-    #         # print(itemtype.item_type_name.name)
-    #         # print(item_type_id)
-    #         print('--------')
-    # raise BaseException
+    file_name_tsv_2 = 'sample_tsv_2.tsv'
+    file_path_tsv_2 = os.path.join(
+        current_path,
+        'data',
+        'sample_file',
+        file_name_tsv_2
+    )
+    
+    check_item_type = {
+        "schema": "test",
+        "is_lastest": "test",
+        "name": "test",
+        "item_type_id": "test",
+    }
 
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        assert read_stats_file(file_path_tsv, file_name_tsv, 'tsv')
-        assert read_stats_file(file_path_csv, file_name_csv, 'csv')
+        with patch("weko_search_ui.utils.get_item_type", return_value=check_item_type):
+            assert read_stats_file(file_path_tsv, file_name_tsv, 'tsv')
+            assert read_stats_file(file_path_csv, file_name_csv, 'csv')
+            assert read_stats_file(file_path_tsv_2, file_name_tsv_2, 'tsv')
 
 
 # def handle_convert_validate_msg_to_jp(message: str):
@@ -614,7 +664,7 @@ def test_handle_check_and_prepare_publish_status(i18n_app, record_with_metadata)
     assert not handle_check_and_prepare_publish_status(list_record)
 
 
-# def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_edit_indexes): 20220929
+# def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_edit_indexes): *** not yet done
 def test_handle_check_and_prepare_index_tree(i18n_app, record_with_metadata, indices):
     list_record = [record_with_metadata[0]]
     can_edit_indexes = [indices['index_dict']]
@@ -1036,7 +1086,7 @@ def test_handle_check_thumbnail_file_type(i18n_app):
     assert handle_check_thumbnail_file_type(["/"])
 
 
-# def handle_check_metadata_not_existed(str_keys, item_type_id=0):
+# def handle_check_metadata_not_existed(str_keys, item_type_id=0): *** not yet done
 def test_handle_check_metadata_not_existed(i18n_app, db_itemtype):
     # Test 1
     assert not handle_check_metadata_not_existed(".metadata", db_itemtype['item_type'].id)
@@ -1079,7 +1129,7 @@ def test_handle_get_all_id_in_item_type(i18n_app, db_itemtype):
     assert handle_get_all_id_in_item_type(db_itemtype['item_type'].id)
 
 
-# def handle_check_consistence_with_mapping(mapping_ids, keys):
+# def handle_check_consistence_with_mapping(mapping_ids, keys): *** not yet done
 def test_handle_check_consistence_with_mapping(i18n_app):
     mapping_ids = ["abc"]
     keys = ["abc"]
@@ -1088,7 +1138,7 @@ def test_handle_check_consistence_with_mapping(i18n_app):
     assert not handle_check_consistence_with_mapping(mapping_ids, keys)
 
 
-# def handle_check_duplication_item_id(ids: list):
+# def handle_check_duplication_item_id(ids: list): *** not yet done
 def test_handle_check_duplication_item_id(i18n_app):
     ids = [[1,2,3,4],2,3,4]
 
@@ -1096,7 +1146,7 @@ def test_handle_check_duplication_item_id(i18n_app):
     assert not handle_check_duplication_item_id(ids)
 
 
-# def export_all(root_url, user_id, data):
+# def export_all(root_url, user_id, data): *** not yet done
 def test_export_all(db_activity, i18n_app, users, item_type, db_records2):
     root_url = "/"
     user_id = users[3]['obj'].id
