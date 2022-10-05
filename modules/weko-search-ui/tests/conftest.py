@@ -790,6 +790,7 @@ def indices(app, db):
             public_state=True,
             harvest_public_state=True,
             id=33,
+            item_custom_sort={'1': 1},
             public_date=datetime.today() - timedelta(days=1)
         )
         testIndexThreeChild = Index(
