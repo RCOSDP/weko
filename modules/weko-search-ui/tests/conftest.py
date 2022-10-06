@@ -726,7 +726,7 @@ def client_api(app):
 
 @pytest.yield_fixture()
 def client_request_args(app, file_instance_mock):
-    app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
+    app.register_blueprint(create_blueprint(app, app.config['WEKO_SEARCH_REST_ENDPOINTS']))
 
     file_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
