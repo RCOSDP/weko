@@ -11,14 +11,17 @@ from tests.conftest import json_data
 from invenio_records_rest.errors import MaxResultWindowRESTError
 from invenio_rest import ContentNegotiatedMethodView
 
+from weko_records.api import ItemTypes
 from weko_search_ui.rest import create_blueprint, IndexSearchResource, get_heading_info
 
 
-def test_IndexSearchResource_post_guest(client_rest, users):
-    res = client_rest.post("/index/",
-                           data=json.dumps({}),
-                           content_type="application/json")
-    assert res.status_code == 300
+def test_IndexSearchResource_post_guest(app, client_rest, esindex, users, indices):
+    app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
+    with patch('weko_search_ui.query.get_item_type_aggs', return_value={}):
+        res = client_rest.get("/index/?page=1&size=20&sort=controlnumber&search_type=2&q=0&is_search=1")
+        assert res.status_code==200
+        res = client_rest.get("/index/?page=1&size=20&sort=controlnumber&search_type=2&q=0")
+        assert res.status_code==200
 
 
 def url(root, kwargs={}):
@@ -155,10 +158,10 @@ def test_create_blueprint(i18n_app, app, users):
 #         assert test.get()
 
 # def get_heading_info(data, lang, item_type):
-def test_get_heading_info(i18n_app, app, users, db_itemtype, records):
+def test_get_heading_info(i18n_app, app, users, item_type, records):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        # Test 1
-        assert not get_heading_info(records['hits']['hits'][0], "en", item_type=None)
+        it = ItemTypes.get_by_id(1)
+        assert not get_heading_info(records['hits']['hits'][0], "en", item_type=it)
 
         # Test 2
         # assert get_heading_info(records['hits']['hits'][0], "en", db_itemtype['item_type'])

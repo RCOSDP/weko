@@ -128,8 +128,8 @@ from weko_workflow.models import (
 )
 from weko_index_tree.models import Index
 from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
-from weko_index_tree.views import blueprint_api
-from weko_index_tree.rest import create_blueprint
+from weko_search_ui.views import blueprint_api
+from weko_search_ui.rest import create_blueprint
 from weko_search_ui import WekoSearchUI, WekoSearchREST
 from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX, WEKO_SEARCH_TYPE_DICT
 from weko_redis.redis import RedisConnection
@@ -568,7 +568,7 @@ def base_app(instance_path, search_class, request):
                 search_class=RecordsSearch,
                 # search_index="test-weko",
                 # search_index=SEARCH_UI_SEARCH_INDEX,
-                search_index="tenant1",
+                search_index="test-weko",
                 search_type='item-v1.0.0',
                 search_factory_imp='weko_search_ui.query.weko_search_factory',
                 # record_class='',
@@ -705,7 +705,7 @@ def client(app):
 
 @pytest.yield_fixture()
 def client_rest(app):
-    app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
+    app.register_blueprint(create_blueprint(app, app.config['WEKO_SEARCH_REST_ENDPOINTS']))
     with app.test_client() as client:
         yield client
 
@@ -719,7 +719,7 @@ def client_rest_weko_search_ui(app):
 
 @pytest.yield_fixture()
 def client_api(app):
-    app.register_blueprint(blueprint_api, url_prefix='/api')
+    app.register_blueprint(blueprint_api)
     with app.test_client() as client:
         yield client
 
@@ -947,33 +947,24 @@ def indices(app, db):
 
 @pytest.fixture()
 def esindex(app,db_records):
-    with open("tests/data/mappings/item-v1.0.0.json","r") as f:
+    current_search_client.indices.delete(index='test-*')
+    with open("tests/data/item-v1.0.0.json","r") as f:
         mapping = json.load(f)
-
-    search = LocalProxy(lambda: app.extensions["invenio-search"])
-
-    with app.test_request_context():
-        try:
-            search.client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
-            search.client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
-        except:
-            search.client.indices.create("test-weko-items",body=mapping)
-            search.client.indices.put_alias(index="test-weko-items", name="test-weko")
-        # print(current_search_client.indices.get_alias())
+    try:
+        current_search_client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
+        current_search_client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
+    except:
+        current_search_client.indices.create("test-weko-items",body=mapping)
+        current_search_client.indices.put_alias(index="test-weko-items", name="test-weko")
+    # print(current_search_client.indices.get_alias())
     
     for depid, recid, parent, doi, record, item in db_records:
-        search.client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
-    
+        current_search_client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
 
-    yield search
-
-    with app.test_request_context():
-        try:
-            search.client.indices.delete_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
-            search.client.indices.delete(index=app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
-        except:
-            search.client.indices.delete_alias(index="test-weko-items", name="test-weko")
-            search.client.indices.delete(index=test-weko-items, ignore=[400, 404])
+    try:
+        yield current_search_client
+    finally:
+        current_search_client.indices.delete(index='test-*')
 
 
 @pytest.fixture()
@@ -1232,15 +1223,128 @@ def item_type(app, db):
     _item_type_name3 = ItemTypeName(name='test3')
 
     _render = {
-        'meta_list': {},
-        'table_row_map': {
-            'schema': {
-                'properties': {
-                    'item_1': {}
+        'meta_list': {
+            'file': {
+                'title': 'ファイル名',
+                'title_i18n': {
+                    'ja': 'ファイル名',
+                    'en': 'File'
+                },
+                'input_type': 'cus_1',
+                'input_value': '',
+                'option': {
+                    'required': False,
+                    'multiple': True,
+                    'hidden': False,
+                    'showlist': False,
+                    'crtf': False,
+                    'oneline': False
+                }
+            },
+            'thumbnail': {
+                'title': 'ラベル',
+                'title_i18n': {
+                    'ja': 'ラベル',
+                    'en': 'Thumbnail'
+                },
+                'input_type': 'cus_2',
+                'input_value': '',
+                'option': {
+                    'required': False,
+                    'multiple': True,
+                    'hidden': False,
+                    'showlist': False,
+                    'crtf': False,
+                    'oneline': False
                 }
             }
         },
-        'table_row': ['1']
+        'meta_fix': {
+            'pubdate': {
+                'title': '公開日',
+                'title_i18n': {
+                    'ja': '公開日',
+                    'en': 'PubDate'
+                },
+                'input_type': 'datetime',
+                'input_value': '',
+                'option': {
+                    'required': True,
+                    'multiple': False,
+                    'hidden': False,
+                    'showlist': False,
+                    'crtf': False
+                }
+            }
+        },
+        'table_row_map': {
+            'schema': {
+                'properties': {
+                    'item_1': {},
+                    'pubdate': {
+                        'type': 'string',
+                        'title': '公開日',
+                        'format': 'datetime'
+                    },
+                    'file': {
+                        'type': 'array',
+                        'format': 'array',
+                        'title': 'URI',
+                        'items': {
+                            'type': 'object',
+                            'format': 'object',
+                            'properties': {
+                                'url': {
+                                    'type': 'object',
+                                    'format': 'object',
+                                    'properties': {
+                                        'label': {
+                                            'format': 'text',
+                                            'title': 'ラベル',
+                                            'type': 'string'
+                                        },
+                                        'url': {
+                                            'format': 'text',
+                                            'title': '本文URL',
+                                            'type': 'string'
+                                        }
+                                    },
+                                    'title': '本文URL'
+                                },
+                                'filename': {
+                                    'type': ['null', 'string'],
+                                    'format': 'text',
+                                    'enum': [],
+                                    'title': 'ファイル名'
+                                }
+                            }
+                        }
+                    },
+                    'thumbnail': {
+                        'type': 'array',
+                        'format': 'array',
+                        'title': 'URI',
+                        'items': {
+                            'type': 'object',
+                            'format': 'object',
+                            'properties': {
+                                'thumbnail_label': {
+                                    'format': 'text',
+                                    'title': 'ラベル',
+                                    'type': 'string'
+                                },
+                                'thumbnail_url': {
+                                    'format': 'text',
+                                    'title': 'URI',
+                                    'type': 'string'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        'table_row': ['pubdate', 'file', 'thumbnail']
     }
 
     with open("tests/data/itemtype_schema.json", "r") as f:
