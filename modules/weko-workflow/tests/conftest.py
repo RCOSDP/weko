@@ -20,18 +20,20 @@
 
 """Pytest configuration."""
 
-import os
+import os, sys
 import shutil
 import tempfile
 import json
 import uuid
 from datetime import datetime
+from six import BytesIO
+import base64
 
 import pytest
-from mock import patch
-from flask import Flask
+from flask import Flask, session, url_for, Response
 from flask_babelex import Babel, lazy_gettext as _
 from flask_menu import Menu
+from elasticsearch import Elasticsearch
 from invenio_theme import InvenioTheme
 from invenio_theme.views import blueprint as invenio_theme_blueprint
 from invenio_assets import InvenioAssets
@@ -48,20 +50,25 @@ from invenio_admin import InvenioAdmin
 from invenio_admin.views import blueprint as invenio_admin_blueprint
 from invenio_db import InvenioDB, db as db_
 from invenio_stats import InvenioStats
+from invenio_search import RecordsSearch,InvenioSearch
 from invenio_communities import InvenioCommunities
 from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
-from invenio_communities.models import Community 
-from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
-from werkzeug.local import LocalProxy
+from invenio_communities.models import Community
+from invenio_jsonschemas import InvenioJSONSchemas
 # from weko_records_ui import WekoRecordsUI
 from weko_theme import WekoTheme
 from weko_admin import WekoAdmin
-from weko_admin.models import SessionLifetime 
+from weko_admin.models import SessionLifetime,Identifier 
 from weko_admin.views import blueprint as weko_admin_blueprint
-from weko_records.models import ItemTypeName, ItemType
+from weko_records.models import ItemTypeName, ItemType,FeedbackMailList,ItemTypeMapping,ItemTypeProperty
+from weko_records.api import Mapping
+from weko_records_ui.models import FilePermission
+from weko_user_profiles import WekoUserProfiles
+from weko_index_tree.models import Index
+from weko_search_ui import WekoSearchUI
 from weko_workflow import WekoWorkflow
 from weko_search_ui import WekoSearchUI
-from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
+from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory
 from weko_workflow.views import blueprint as weko_workflow_blueprint
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
@@ -71,18 +78,29 @@ from tests.helpers import json_data, create_record
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy import event
-from invenio_files_rest.models import Location
+from invenio_files_rest.models import Location, Bucket,ObjectVersion
 from invenio_files_rest import InvenioFilesREST
+from invenio_records import InvenioRecords
+
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidstore import InvenioPIDStore
 from weko_index_tree.api import Indexes
 from kombu import Exchange, Queue
 from weko_index_tree.models import Index
 from weko_schema_ui.models import OAIServerSchema
+from weko_schema_ui.config import WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,WEKO_SCHEMA_DDI_SCHEMA_NAME
 from weko_index_tree.config import WEKO_INDEX_TREE_REST_ENDPOINTS,WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER
 from weko_user_profiles.models import UserProfile
 from weko_user_profiles.config import WEKO_USERPROFILES_ROLES,WEKO_USERPROFILES_GENERAL_ROLE
+from weko_authors.models import Authors
+from invenio_records_files.api import RecordsBuckets
+from weko_redis.redis import RedisConnection
+from weko_items_ui import WekoItemsUI
+from weko_admin.models import SiteInfo
+from weko_admin import WekoAdmin
+from weko_deposit import WekoDeposit
 
+sys.path.append(os.path.dirname(__file__))
 # @event.listens_for(Engine, "connect")
 # def set_sqlite_pragma(dbapi_connection, connection_record):
 #     cursor = dbapi_connection.cursor()
@@ -92,6 +110,24 @@ from weko_user_profiles.config import WEKO_USERPROFILES_ROLES,WEKO_USERPROFILES_
 # @event.listens_for(Session, 'after_begin')
 # def receive_after_begin(session, transaction, connection):
 #     connection.execute("PRAGMA foreign_keys=OFF;")
+class TestSearch(RecordsSearch):
+    """Test record search."""
+
+    class Meta:
+        """Test configuration."""
+
+        index = 'invenio-records-rest'
+        doc_types = None
+
+    def __init__(self, **kwargs):
+        """Add extra options."""
+        super(TestSearch, self).__init__(**kwargs)
+        self._extra.update(**{'_source': {'excludes': ['_access']}})
+        
+@pytest.yield_fixture(scope='session')
+def search_class():
+    """Search class."""
+    yield TestSearch
 
 @pytest.yield_fixture()
 def instance_path():
@@ -100,34 +136,96 @@ def instance_path():
     yield path
     shutil.rmtree(path)
 
+class MockEs():
+    def __init__(self,**keywargs):
+        self.indices = self.MockIndices()
+        self.es = Elasticsearch()
+        self.cluster = self.MockCluster()
+    def index(self, id="",version="",version_type="",index="",doc_type="",body="",**arguments):
+        pass
+    def delete(self,id="",index="",doc_type="",**kwargs):
+        return Response(response=json.dumps({}),status=500)
+    @property
+    def transport(self):
+        return self.es.transport
+    class MockIndices():
+        def __init__(self,**keywargs):
+            self.mapping = dict()
+        def delete(self,index="", ignore=""):
+            pass
+        def delete_template(self,index=""):
+            pass
+        def create(self,index="",body={},ignore=""):
+            self.mapping[index] = body
+        def put_alias(self,index="", name="", ignore=""):
+            pass
+        def put_template(self,name="", body={}, ignore=""):
+            pass
+        def refresh(self,index=""):
+            pass
+        def exists(self, index="", **kwargs):
+            if index in self.mapping:
+                return True
+            else:
+                return False
+        def flush(self,index="",wait_if_ongoing=""):
+            pass
+        def delete_alias(self, index="", name="",ignore=""):
+            pass
+        
+        # def search(self,index="",doc_type="",body={},**kwargs):
+        #     pass
+    class MockCluster():
+        def __init__(self,**kwargs):
+            pass
+        def health(self, wait_for_status="", request_timeout=0):
+            pass
 
 @pytest.fixture()
-def base_app(instance_path):
+def cache_config():
+    """Generate cache configuration."""
+    CACHE_TYPE = os.environ.get("CACHE_TYPE", "simple")
+    config = {"CACHE_TYPE": CACHE_TYPE}
+
+    if CACHE_TYPE == "simple":
+        pass
+    elif CACHE_TYPE == "redis":
+        config.update(
+            CACHE_REDIS_URL=os.environ.get(
+                "CACHE_REDIS_URL", "redis://localhost:6379/0"
+            )
+        )
+    elif CACHE_TYPE == "memcached":
+        config.update(
+            CACHE_MEMCACHED_SERVERS=os.environ.get(
+                "CACHE_MEMCACHED_SERVERS", "localhost:11211"
+            ).split(",")
+        )
+    return config
+
+@pytest.fixture()
+def base_app(instance_path, search_class, cache_config):
     """Flask application fixture."""
     app_ = Flask('testapp', instance_path=instance_path)
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
-        SERVER_NAME='TEST_SERVER',
+        SERVER_NAME='TEST_SERVER.localdomain',
         # SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
         #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         ACCOUNTS_USERINFO_HEADERS=True,
-        INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
-        SEARCH_UI_SEARCH_INDEX="{}-weko".format("test"),
-        INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
-        INDEXER_DEFAULT_DOC_TYPE="item-v1.0.0",
-        INDEXER_FILE_DOC_TYPE="content",
-                WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
-        WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER=WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER,
-     INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
-   
         WEKO_PERMISSION_SUPER_ROLE_USER=['System Administrator',
                                          'Repository Administrator'],
         WEKO_PERMISSION_ROLE_COMMUNITY=['Community Administrator'],
         THEME_SITEURL = 'https://localhost',
+        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_DB='0',
+        CACHE_REDIS_HOST="redis",
+        REDIS_PORT='6379',
+        ACCOUNTS_SESSION_REDIS_DB_NO = 1,
         WEKO_RECORDS_UI_LICENSE_DICT=[
             {
                 'name': _('write your own license'),
@@ -315,12 +413,67 @@ def base_app(instance_path):
                     '-NonCommercial-ShareAlike 4.0 International License.'
             },
         ],
-        WEKO_USERPROFILES_ROLES=WEKO_USERPROFILES_ROLES,
-        WEKO_USERPROFILES_GENERAL_ROLE=WEKO_USERPROFILES_GENERAL_ROLE,
+        WEKO_ITEMS_UI_MS_MIME_TYPE = {
+            'ms_word': ['application/msword',
+                        'application/vnd.openxmlformats-officedocument.'
+                        'wordprocessingml.document',
+                        'application/vnd.openxmlformats-officedocument.'
+                        'wordprocessingml.template',
+                        'application/vnd.ms-word.document.macroEnabled.12',
+                        'application/vnd.ms-word.template.macroEnabled.12'
+                        ],
+            'ms_powerpoint': ['application/vnd.ms-powerpoint',
+                              'application/vnd.openxmlformats-officedocument.'
+                              'presentationml.presentation',
+                              'application/vnd.openxmlformats-officedocument.'
+                              'presentationml.template',
+                              'application/vnd.openxmlformats-officedocument.'
+                              'presentationml.slideshow',
+                              'application/vnd.ms-powerpoint.addin.macroEnabled.12',
+                              'application/vnd.ms-powerpoint.presentation.'
+                              'macroEnabled.12',
+                              'applcation/vnd.ms-powerpoint.template.macroEnabled.12',
+                              'application/vnd.ms-powerpoint.slideshow.macroEnabled.12'
+                              ],
+            'ms_excel': ['application/vnd.ms-excel',
+                         'application/vnd.openxmlformats-officedocument.'
+                         'spreadsheetml.sheet',
+                         'application/vnd.openxmlformats-officedocument.'
+                         'spreadsheetml.template',
+                         'application/vnd.ms-excel.sheet.macroEnabled.12',
+                         'application/vnd.ms-excel.template.macroEnabled.12',
+                         'application/vnd.ms-excel.addin.macroEnabled.12',
+                         'application/vnd.ms-excel.sheet.binary.macroEnabled.12']
+        },
+        WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT = {
+            'ms_word': 30,
+            'ms_powerpoint': 20,
+            'ms_excel': 10
+        },
         WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE="",
         WEKO_ITEMS_UI_MULTIPLE_APPROVALS=True,
         WEKO_THEME_DEFAULT_COMMUNITY="Root Index",
+        DEPOSIT_DEFAULT_STORAGE_CLASS = 'S',
+        WEKO_USERPROFILES_ROLES=[
+            'Administrator','General','Graduated Student','Student'
+        ],
+        WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST = [],
+        WEKO_HANDLE_ALLOW_REGISTER_CNRI=True,
+        I18N_LANGUAGES=[("ja","Japanese"), ("en","English")],
+        WEKO_BUCKET_QUOTA_SIZE=50 * 1024 * 1024 * 1024,
+        WEKO_MAX_FILE_SIZE=50 * 1024 * 1024 * 1024,
+        SEARCH_UI_SEARCH_INDEX="test-weko",
+        INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
+        INDEXER_FILE_DOC_TYPE="content",
+        INDEXER_DEFAULT_DOC_TYPE='testrecord',
+        INDEXER_DEFAULT_INDEX=search_class.Meta.index,
+        WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME=WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
+        WEKO_SCHEMA_DDI_SCHEMA_NAME=WEKO_SCHEMA_DDI_SCHEMA_NAME,
+        DEPOSIT_DEFAULT_JSONSCHEMA = 'deposits/deposit-v1.0.0.json',
+        WEKO_RECORDS_UI_SECRET_KEY = "secret",
+        WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN = "filename={} record_id={} user_mail={} date={}"
     )
+    
     app_.testing = True
     Babel(app_)
     InvenioI18N(app_)
@@ -333,13 +486,21 @@ def base_app(instance_path):
     InvenioStats(app_)
     InvenioAssets(app_)
     InvenioAdmin(app_)
-    InvenioPIDStore(app_)
     InvenioPIDRelations(app_)
+    InvenioJSONSchemas(app_)
+    InvenioPIDStore(app_)
+    InvenioRecords
+    search = InvenioSearch(app_, client=MockEs())
+    search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
     # InvenioCommunities(app_)
     # WekoAdmin(app_)
     # WekoTheme(app_)
-    WekoWorkflow(app_)
     WekoSearchUI(app_)
+    WekoWorkflow(app_)
+    WekoUserProfiles(app_)
+    WekoDeposit(app_)
+    WekoItemsUI(app_)
+    WekoAdmin(app_)
     # WekoRecordsUI(app_)
     # app_.register_blueprint(invenio_theme_blueprint)
     app_.register_blueprint(invenio_communities_blueprint)
@@ -348,7 +509,7 @@ def base_app(instance_path):
     # app_.register_blueprint(weko_theme_blueprint)
     # app_.register_blueprint(weko_admin_blueprint)
     app_.register_blueprint(weko_workflow_blueprint)
-    
+
     return app_
 
 
@@ -374,38 +535,31 @@ def db(app):
 @pytest.yield_fixture()
 def client(app):
     """make a test client.
-
     Args:
         app (Flask): flask app.
-
     Yields:
         FlaskClient: test client
     """
     with app.test_client() as client:
         yield client
 
-@pytest.fixture()
-def esindex(app,db_records):
-    with open("tests/data/mappings/item-v1.0.0.json","r") as f:
-        mapping = json.load(f)
+@pytest.yield_fixture()
+def guest(client):
+    with client.session_transaction() as sess:
+        sess['guest_token'] = "test_guest_token"
+        sess['guest_email'] = "guest@test.org"
+        sess['guest_url'] = url_for("weko_workflow.display_guest_activity",file_name="test_file")
+    yield client
 
-    search = LocalProxy(lambda: app.extensions["invenio-search"])
-
+@pytest.yield_fixture()
+def req_context(client,app):
     with app.test_request_context():
-        search.client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
-        search.client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
-        # print(current_search_client.indices.get_alias())
-    
-    for depid, recid, parent, doi, record, item in db_records:
-        search.client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
-    
-
-    yield search
-
-    with app.test_request_context():
-        search.client.indices.delete_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
-        search.client.indices.delete(index=app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
-        
+        yield client
+@pytest.fixture
+def redis_connect(app):
+    redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+    redis_connection.put('updated_json_schema_A-00000001-10001',bytes('test', 'utf-8'))
+    return redis_connection
 
 @pytest.fixture()
 def users(app, db):
@@ -421,6 +575,7 @@ def users(app, db):
         generaluser = create_test_user(email='generaluser@test.org')
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
+        student = create_test_user(email='student@test.org')
     else:
         user = User.query.filter_by(email='user@test.org').first()
         contributor = User.query.filter_by(email='contributor@test.org').first()
@@ -430,7 +585,8 @@ def users(app, db):
         generaluser = User.query.filter_by(email='generaluser@test.org')
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
-
+        student = User.query.filter_by(email='student@test.org').first()
+        
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -439,6 +595,7 @@ def users(app, db):
         comadmin_role = ds.create_role(name='Community Administrator')
         general_role = ds.create_role(name='General')
         originalrole = ds.create_role(name='Original Role')
+        studentrole = ds.create_role(name='Student')
     else:
         sysadmin_role = Role.query.filter_by(name='System Administrator').first()
         repoadmin_role = Role.query.filter_by(name='Repository Administrator').first()
@@ -446,6 +603,7 @@ def users(app, db):
         comadmin_role = Role.query.filter_by(name='Community Administrator').first()
         general_role = Role.query.filter_by(name='General').first()
         originalrole = Role.query.filter_by(name='Original Role').first()
+        studentrole = Role.query.filter_by(name='Student').first()
 
     ds.add_role_to_user(sysadmin, sysadmin_role)
     ds.add_role_to_user(repoadmin, repoadmin_role)
@@ -455,7 +613,8 @@ def users(app, db):
     ds.add_role_to_user(originalroleuser, originalrole)
     ds.add_role_to_user(originalroleuser2, originalrole)
     ds.add_role_to_user(originalroleuser2, repoadmin_role)
-    
+    ds.add_role_to_user(student,studentrole)
+
     # Assign access authorization
     with db.session.begin_nested():
         action_users = [
@@ -514,68 +673,50 @@ def users(app, db):
             ActionRoles(action='detail-page-acces', role=contributor_role),
         ]
         db.session.add_all(action_roles)
-        
+    db.session.commit()
+    index = Index()
+    db.session.add(index)
+    db.session.commit()
+    comm = Community.create(community_id="comm01", role_id=sysadmin_role.id,
+                            id_user=sysadmin.id, title="test community",
+                            description=("this is test community"),
+                            root_node_id=index.id)
+    db.session.commit()
     return [
         {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
         {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
         {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
         {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
-        {'email': generaluser.email, 'id': generaluser.id, 'obj': sysadmin},
+        {'email': generaluser.email, 'id': generaluser.id, 'obj': generaluser},
         {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
         {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
         {'email': user.email, 'id': user.id, 'obj': user},
+        {'email': student.email,'id': student.id, 'obj': student}
     ]
 
 
 @pytest.fixture()
-def db_oaischema(app, db):
-    schema_name = "jpcoar_mapping"
-    form_data = {"name": "jpcoar", "file_name": "jpcoar_scm.xsd", "root_name": "jpcoar"}
-    xsd = '{"dc:title": {"type": {"maxOccurs": "unbounded", "minOccurs": 1, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "dcterms:alternative": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:creator": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:creatorName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:familyName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:givenName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:creatorAlternative": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:affiliation": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:affiliationName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}}, "jpcoar:contributor": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "contributorType", "ref": null, "restriction": {"enumeration": ["ContactPerson", "DataCollector", "DataCurator", "DataManager", "Distributor", "Editor", "HostingInstitution", "Producer", "ProjectLeader", "ProjectManager", "ProjectMember", "RegistrationAgency", "RegistrationAuthority", "RelatedPerson", "Researcher", "ResearchGroup", "Sponsor", "Supervisor", "WorkPackageLeader", "Other"]}}]}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:contributorName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:familyName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:givenName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:contributorAlternative": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:affiliation": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:affiliationName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}}, "dcterms:accessRights": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "required", "name": "rdf:resource", "ref": "rdf:resource"}], "restriction": {"enumeration": ["embargoed access", "metadata only access", "open access", "restricted access"]}}}, "rioxxterms:apc": {"type": {"maxOccurs": 1, "minOccurs": 0, "restriction": {"enumeration": ["Paid", "Partially waived", "Fully waived", "Not charged", "Not required", "Unknown"]}}}, "dc:rights": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "rdf:resource", "ref": "rdf:resource"}, {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:rightsHolder": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:rightsHolderName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}, "jpcoar:subject": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}, {"use": "optional", "name": "subjectURI", "ref": null}, {"use": "required", "name": "subjectScheme", "ref": null, "restriction": {"enumeration": ["BSH", "DDC", "LCC", "LCSH", "MeSH", "NDC", "NDLC", "NDLSH", "Sci-Val", "UDC", "Other"]}}]}}, "datacite:description": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}, {"use": "required", "name": "descriptionType", "ref": null, "restriction": {"enumeration": ["Abstract", "Methods", "TableOfContents", "TechnicalInfo", "Other"]}}]}}, "dc:publisher": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "datacite:date": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "dateType", "ref": null, "restriction": {"enumeration": ["Accepted", "Available", "Collected", "Copyrighted", "Created", "Issued", "Submitted", "Updated", "Valid"]}}]}}, "dc:language": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "restriction": {"patterns": ["^[a-z]{3}$"]}}}, "dc:type": {"type": {"maxOccurs": 1, "minOccurs": 1, "attributes": [{"use": "required", "name": "rdf:resource", "ref": "rdf:resource"}], "restriction": {"enumeration": ["conference paper", "data paper", "departmental bulletin paper", "editorial", "journal article", "newspaper", "periodical", "review article", "software paper", "article", "book", "book part", "cartographic material", "map", "conference object", "conference proceedings", "conference poster", "dataset", "aggregated data", "clinical trial data", "compiled data", "encoded data", "experimental data", "genomic data", "geospatial data", "laboratory notebook", "measurement and test data", "observational data", "recorded data", "simulation data", "survey data", "interview", "image", "still image", "moving image", "video", "lecture", "patent", "internal report", "report", "research report", "technical report", "policy report", "report part", "working paper", "data management plan", "sound", "thesis", "bachelor thesis", "master thesis", "doctoral thesis", "interactive resource", "learning object", "manuscript", "musical notation", "research proposal", "software", "technical documentation", "workflow", "other"]}}}, "datacite:version": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "oaire:versiontype": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "required", "name": "rdf:resource", "ref": "rdf:resource"}], "restriction": {"enumeration": ["AO", "SMUR", "AM", "P", "VoR", "CVoR", "EVoR", "NA"]}}}, "jpcoar:identifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "identifierType", "ref": null, "restriction": {"enumeration": ["DOI", "HDL", "URI"]}}]}}, "jpcoar:identifierRegistration": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "required", "name": "identifierType", "ref": null, "restriction": {"enumeration": ["JaLC", "Crossref", "DataCite", "PMID"]}}]}}, "jpcoar:relation": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "relationType", "ref": null, "restriction": {"enumeration": ["isVersionOf", "hasVersion", "isPartOf", "hasPart", "isReferencedBy", "references", "isFormatOf", "hasFormat", "isReplacedBy", "replaces", "isRequiredBy", "requires", "isSupplementTo", "isSupplementedBy", "isIdenticalTo", "isDerivedFrom", "isSourceOf"]}}]}, "jpcoar:relatedIdentifier": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "required", "name": "identifierType", "ref": null, "restriction": {"enumeration": ["ARK", "arXiv", "DOI", "HDL", "ICHUSHI", "ISBN", "J-GLOBAL", "Local", "PISSN", "EISSN", "NAID", "PMID", "PURL", "SCOPUS", "URI", "WOS"]}}]}}, "jpcoar:relatedTitle": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}, "dcterms:temporal": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "datacite:geoLocation": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "datacite:geoLocationPoint": {"type": {"maxOccurs": 1, "minOccurs": 0}, "datacite:pointLongitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 180, "minInclusive": -180}}}, "datacite:pointLatitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 90, "minInclusive": -90}}}}, "datacite:geoLocationBox": {"type": {"maxOccurs": 1, "minOccurs": 0}, "datacite:westBoundLongitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 180, "minInclusive": -180}}}, "datacite:eastBoundLongitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 180, "minInclusive": -180}}}, "datacite:southBoundLatitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 90, "minInclusive": -90}}}, "datacite:northBoundLatitude": {"type": {"maxOccurs": 1, "minOccurs": 1, "restriction": {"maxInclusive": 90, "minInclusive": -90}}}}, "datacite:geoLocationPlace": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}}}, "jpcoar:fundingReference": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "datacite:funderIdentifier": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "required", "name": "funderIdentifierType", "ref": null, "restriction": {"enumeration": ["Crossref Funder", "GRID", "ISNI", "Other"]}}]}}, "jpcoar:funderName": {"type": {"maxOccurs": "unbounded", "minOccurs": 1, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "datacite:awardNumber": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "optional", "name": "awardURI", "ref": null}]}}, "jpcoar:awardTitle": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}, "jpcoar:sourceIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "identifierType", "ref": null, "restriction": {"enumeration": ["PISSN", "EISSN", "ISSN", "NCID"]}}]}}, "jpcoar:sourceTitle": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:volume": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:issue": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:numPages": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:pageStart": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:pageEnd": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "dcndl:dissertationNumber": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "dcndl:degreeName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "dcndl:dateGranted": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:degreeGrantor": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:nameIdentifier": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "nameIdentifierScheme", "ref": null, "restriction": {"enumeration": ["e-Rad", "NRID", "ORCID", "ISNI", "VIAF", "AID", "kakenhi", "Ringgold", "GRID"]}}, {"use": "optional", "name": "nameIdentifierURI", "ref": null}]}}, "jpcoar:degreeGrantorName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}}, "jpcoar:conference": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:conferenceName": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:conferenceSequence": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:conferenceSponsor": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:conferenceDate": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "optional", "name": "startMonth", "ref": null, "restriction": {"maxInclusive": 12, "minInclusive": 1, "totalDigits": 2}}, {"use": "optional", "name": "endYear", "ref": null, "restriction": {"maxInclusive": 2200, "minInclusive": 1400, "totalDigits": 4}}, {"use": "optional", "name": "startDay", "ref": null, "restriction": {"maxInclusive": 31, "minInclusive": 1, "totalDigits": 2}}, {"use": "optional", "name": "endDay", "ref": null, "restriction": {"maxInclusive": 31, "minInclusive": 1, "totalDigits": 2}}, {"use": "optional", "name": "endMonth", "ref": null, "restriction": {"maxInclusive": 12, "minInclusive": 1, "totalDigits": 2}}, {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}, {"use": "optional", "name": "startYear", "ref": null, "restriction": {"maxInclusive": 2200, "minInclusive": 1400, "totalDigits": 4}}]}}, "jpcoar:conferenceVenue": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:conferencePlace": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}]}}, "jpcoar:conferenceCountry": {"type": {"maxOccurs": 1, "minOccurs": 0, "restriction": {"patterns": ["^[A-Z]{3}$"]}}}}, "jpcoar:file": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}, "jpcoar:URI": {"type": {"maxOccurs": 1, "minOccurs": 0, "attributes": [{"use": "optional", "name": "label", "ref": null}, {"use": "optional", "name": "objectType", "ref": null, "restriction": {"enumeration": ["abstract", "dataset", "fulltext", "software", "summary", "thumbnail", "other"]}}]}}, "jpcoar:mimeType": {"type": {"maxOccurs": 1, "minOccurs": 0}}, "jpcoar:extent": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}}, "datacite:date": {"type": {"maxOccurs": "unbounded", "minOccurs": 0, "attributes": [{"use": "required", "name": "dateType", "ref": null, "restriction": {"enumeration": ["Accepted", "Available", "Collected", "Copyrighted", "Created", "Issued", "Submitted", "Updated", "Valid"]}}]}}, "datacite:version": {"type": {"maxOccurs": 1, "minOccurs": 0}}}, "custom:system_file": {"type": {"minOccurs": 0, "maxOccurs": "unbounded"}, "jpcoar:URI": {"type": {"minOccurs": 0, "maxOccurs": 1, "attributes": [{"name": "objectType", "ref": null, "use": "optional", "restriction": {"enumeration": ["abstract", "summary", "fulltext", "thumbnail", "other"]}}, {"name": "label", "ref": null, "use": "optional"}]}}, "jpcoar:mimeType": {"type": {"minOccurs": 0, "maxOccurs": 1}}, "jpcoar:extent": {"type": {"minOccurs": 0, "maxOccurs": "unbounded"}}, "datacite:date": {"type": {"minOccurs": 1, "maxOccurs": "unbounded", "attributes": [{"name": "dateType", "ref": null, "use": "required", "restriction": {"enumeration": ["Accepted", "Available", "Collected", "Copyrighted", "Created", "Issued", "Submitted", "Updated", "Valid"]}}]}}, "datacite:version": {"type": {"minOccurs": 0, "maxOccurs": 1}}}}'
-    namespaces = {
-        "": "https://github.com/JPCOAR/schema/blob/master/1.0/",
-        "dc": "http://purl.org/dc/elements/1.1/",
-        "xs": "http://www.w3.org/2001/XMLSchema",
-        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-        "xml": "http://www.w3.org/XML/1998/namespace",
-        "dcndl": "http://ndl.go.jp/dcndl/terms/",
-        "oaire": "http://namespace.openaire.eu/schema/oaire/",
-        "jpcoar": "https://github.com/JPCOAR/schema/blob/master/1.0/",
-        "dcterms": "http://purl.org/dc/terms/",
-        "datacite": "https://schema.datacite.org/meta/kernel-4/",
-        "rioxxterms": "http://www.rioxx.net/schema/v2.0/rioxxterms/",
-    }
-    schema_location = "https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd"
-    oaischema = OAIServerSchema(
-        id=uuid.uuid4(),
-        schema_name=schema_name,
-        form_data=form_data,
-        xsd=xsd,
-        namespaces=namespaces,
-        schema_location=schema_location,
-        isvalid=True,
-        is_mapping=False,
-        isfixed=False,
-        version_id=1,
-    )
+def action_data(db):
+    action_datas=dict()
+    with open('tests/data/actions.json', 'r') as f:
+        action_datas = json.load(f)
+    actions_db = list()
     with db.session.begin_nested():
-        db.session.add(oaischema)
+        for data in action_datas:
+            actions_db.append(Action(**data))
+        db.session.add_all(actions_db)
+    db.session.commit()
 
-
-@pytest.fixture()
-def db_userprofile(app, db):
-    profiles = {}
+    actionstatus_datas = dict()
+    with open('tests/data/action_status.json') as f:
+        actionstatus_datas = json.load(f)
+    actionstatus_db = list()
     with db.session.begin_nested():
-        users = User.query.all()
-        for user in users:
-            p = UserProfile()
-            p.user_id = user.id
-            p._username = (user.email).split("@")[0]
-            profiles[user.email] = p
-            db.session.add(p)
-    return profiles
-
-
+        for data in actionstatus_datas:
+            actionstatus_db.append(ActionStatus(**data))
+        db.session.add_all(actionstatus_db)
+    db.session.commit()
+    return actions_db, actionstatus_db
 @pytest.fixture()
 def db_itemtype(app, db):
     item_type_name = ItemTypeName(id=1,
@@ -618,41 +759,54 @@ def db_itemtype(app, db):
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
 
-
 @pytest.fixture()
-def db_register(app, db,users):
-    action_datas=dict()
-    with open('tests/data/actions.json', 'r') as f:
-        action_datas = json.load(f)
-    actions_db = list()
-    with db.session.begin_nested():
-        for data in action_datas:
-            actions_db.append(Action(**data))
-        db.session.add_all(actions_db)
-    
-    actionstatus_datas = dict()
-    with open('tests/data/action_status.json') as f:
-        actionstatus_datas = json.load(f)
-    actionstatus_db = list()
-    with db.session.begin_nested():
-        for data in actionstatus_datas:
-            actionstatus_db.append(ActionStatus(**data))
-        db.session.add_all(actionstatus_db)
-    
-    flow_define = FlowDefine(flow_id=uuid.uuid4(),
-                             flow_name='Registration Flow',
-                             flow_user=1)
-
+def item_type(db):
     item_type_name = ItemTypeName(name='テストアイテムタイプ',
                                   has_site_license=True,
                                   is_active=True)
-
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
     item_type = ItemType(name_id=1,harvesting_type=True,
-                         schema={'type':'test schema'},
-                         form={'type':'test form'},
-                         render={'type':'test render'},
+                         schema=json_data("data/item_type/15_schema.json"),
+                         form=json_data("data/item_type/15_form.json"),
+                         render=json_data("data/item_type/15_render.json"),
                          tag=1,version_id=1,is_deleted=False)
-    
+    itemtype_property_data = json_data("data/itemtype_properties.json")[0]
+    item_type_property = ItemTypeProperty(
+        name=itemtype_property_data["name"],
+        schema=itemtype_property_data["schema"],
+        form=itemtype_property_data["form"],
+        forms=itemtype_property_data["forms"],
+        delflg=False
+    )
+    with db.session.begin_nested():
+        db.session.add(item_type)
+        db.session.add(item_type_property)
+    mappin = Mapping.create(
+        item_type.id,
+        mapping = json_data("data/item_type/item_type_mapping.json")
+    )
+    db.session.commit()
+    return item_type
+
+@pytest.fixture()
+def identifier(db):
+    doi_identifier = Identifier(id=1, repository='Root Index',jalc_flag= True,jalc_crossref_flag= True,jalc_datacite_flag=True,ndl_jalc_flag=True,
+        jalc_doi='123',jalc_crossref_doi='1234',jalc_datacite_doi='12345',ndl_jalc_doi='123456',suffix='def',
+        created_userId='1',created_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S'),
+        updated_userId='1',updated_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S')
+    )
+    db.session.add(doi_identifier)
+    db.session.commit()
+    return doi_identifier
+@pytest.fixture()
+def db_register(app, db, db_records, users, action_data, item_type):
+    flow_define = FlowDefine(flow_id=uuid.uuid4(),
+                             flow_name='Registration Flow',
+                             flow_user=1)
+    with db.session.begin_nested():
+        db.session.add(flow_define)
+    db.session.commit()
     flow_action1 = FlowAction(status='N',
                      flow_id=flow_define.flow_id,
                      action_id=1,
@@ -680,7 +834,11 @@ def db_register(app, db,users):
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={})
-
+    with db.session.begin_nested():
+        db.session.add(flow_action1)
+        db.session.add(flow_action2)
+        db.session.add(flow_action3)
+    db.session.commit()
     workflow = WorkFlow(flows_id=uuid.uuid4(),
                         flows_name='test workflow1',
                         itemtype_id=1,
@@ -690,7 +848,6 @@ def db_register(app, db,users):
                         open_restricted=False,
                         location_id=None,
                         is_gakuninrdm=False)
-
     activity = Activity(activity_id='1',workflow_id=1, flow_id=flow_define.id,
                     action_id=1, activity_login_user=1,
                     activity_update_user=1,
@@ -698,201 +855,670 @@ def db_register(app, db,users):
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
                     title='test', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    activity2 = Activity(activity_id='A-00000001-10001',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    action_status = 'M',
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
                     action_order=6)
-    
+
+    activity3 = Activity(activity_id='A-00000001-10002',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    action_status = 'C',
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=6)
+    activity_item1 = Activity(activity_id='2',item_id=db_records[2][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item1', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    activity_item2 = Activity(activity_id='3', workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item2', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    activity_item3 = Activity(activity_id='4', workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item3', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    activity_item4 = Activity(activity_id='5', workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item4', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    activity_item5 = Activity(activity_id='6', workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item5', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    activity_item6 = Activity(activity_id='7', workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item5', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    activity_item7 = Activity(activity_id='8', item_id=db_records[0][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item8', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    activity_item8 = Activity(activity_id='9', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item8', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    activity_guest = Activity(activity_id='guest', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item8', shared_user_id=-1,
+                    action_order=1,
+                    extra_info={"guest_mail":"guest@test.org","related_title":"related_guest_activity","usage_record_id":str(db_records[1][2].id),"usage_activity_id":str(uuid.uuid4())}
+                    )
     with db.session.begin_nested():
-        db.session.add(flow_define)
-        db.session.add(item_type_name)
-        db.session.add(item_type)
-        db.session.add(flow_action1)
-        db.session.add(flow_action2)
-        db.session.add(flow_action3)
         db.session.add(workflow)
         db.session.add(activity)
-    
-    # return {'flow_define':flow_define,'item_type_name':item_type_name,'item_type':item_type,'flow_action':flow_action,'workflow':workflow,'activity':activity}
-    return {'flow_define':flow_define,'item_type':item_type,'workflow':workflow}
-
-@pytest.fixture()
-def db_workflow(app, db, db_itemtype, users):
-    action_datas = dict()
-    with open("tests/data/actions.json", "r") as f:
-        action_datas = json.load(f)
-    actions_db = list()
-    with db.session.begin_nested():
-        for data in action_datas:
-            actions_db.append(Action(**data))
-        db.session.add_all(actions_db)
-
-    actionstatus_datas = dict()
-    with open("tests/data/action_status.json") as f:
-        actionstatus_datas = json.load(f)
-    actionstatus_db = list()
-    with db.session.begin_nested():
-        for data in actionstatus_datas:
-            actionstatus_db.append(ActionStatus(**data))
-        db.session.add_all(actionstatus_db)
-
-    flow_id = uuid.uuid4()
-    flow_define = FlowDefine(id=1,
-        flow_id=flow_id, flow_name="Registration Flow", flow_user=1, flow_status="A"
-    )
-    flow_action1 = FlowAction(
-        status="N",
-        flow_id=flow_id,
-        action_id=1,
-        action_version="1.0.0",
-        action_order=1,
-        action_condition="",
-        action_status="A",
-        action_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
-        send_mail_setting={},
-    )
-    flow_action2 = FlowAction(
-        status="N",
-        flow_id=flow_id,
-        action_id=3,
-        action_version="1.0.0",
-        action_order=2,
-        action_condition="",
-        action_status="A",
-        action_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
-        send_mail_setting= {"inform_reject": False, "inform_approval": False, "request_approval": False},
-    )
-    flow_action3 = FlowAction(
-        status="N",
-        flow_id=flow_id,
-        action_id=5,
-        action_version="1.0.0",
-        action_order=3,
-        action_condition="",
-        action_status="A",
-        action_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
-        send_mail_setting={},
-    )
-
-    workflow = WorkFlow(
-        id=1,
-        flows_id=flow_id,
-        flows_name="test workflow1",
-        itemtype_id=1,
-        index_tree_id=None,
-        flow_id=1,
-        is_deleted=False,
-        open_restricted=False,
-        location_id=None,
-        is_gakuninrdm=False,
-    )
-    activity = Activity(
-        activity_id="A-00000000-00000",
-        workflow_id=1,
-        flow_id=1,
-        action_id=3,
-        activity_login_user=1,
-        activity_update_user=1,
-        activity_start=datetime.strptime(
-            "2022/04/14 3:01:53.931", "%Y/%m/%d %H:%M:%S.%f"
-        ),
-        activity_community_id=3,
-        activity_confirm_term_of_use=True,
-        title="test",
-        shared_user_id=-1,
-        extra_info={},
-        action_order=2,
-    )
-
-    with db.session.begin_nested():
-        db.session.add(flow_define)
-        db.session.add(flow_action1)
-        db.session.add(flow_action2)
-        db.session.add(flow_action3)
-        db.session.add(workflow)
-        db.session.add(activity)
-
-    return {
-        "flow_define": flow_define,
-        "workflow": workflow,
-        "activity": activity,
-        "flow_action1": flow_action1,
-        "flow_action2": flow_action2,
-        "flow_action3": flow_action3,
-    }
-
-
-@pytest.fixture()
-def db_records(db,instance_path,users):
-    with db.session.begin_nested():
-        Location.query.delete()
-        loc = Location(name="local", uri=instance_path, default=True)
-        db.session.add(loc)
+        db.session.add(activity2)
+        db.session.add(activity3)
+        db.session.add(activity_item1)
+        db.session.add(activity_item2)
+        db.session.add(activity_item3)
+        db.session.add(activity_item4)
+        db.session.add(activity_item5)
+        db.session.add(activity_item6)
+        db.session.add(activity_item7)
+        db.session.add(activity_item8)
+        db.session.add(activity_guest)
     db.session.commit()
 
+    activity_action1_item1 = ActivityAction(activity_id=activity_item1.activity_id,
+                                            action_id=1,action_status="M",
+                                            action_handler=1, action_order=1)
+    activity_action2_item1 = ActivityAction(activity_id=activity_item1.activity_id,
+                                            action_id=3,action_status="M",
+                                            action_handler=1, action_order=2)
+    activity_action3_item1 = ActivityAction(activity_id=activity_item1.activity_id,
+                                            action_id=5,action_status="M",
+                                            action_handler=1, action_order=3)
+    activity_action1_item2 = ActivityAction(activity_id=activity_item2.activity_id,
+                                            action_id=1,action_status="M",
+                                            action_handler=1, action_order=1)
+    activity_action2_item2 = ActivityAction(activity_id=activity_item2.activity_id,
+                                            action_id=3,action_status="M",
+                                            action_handler=1, action_order=2)
+    activity_action3_item2 = ActivityAction(activity_id=activity_item2.activity_id,
+                                            action_id=5,action_status="M",
+                                            action_handler=1, action_order=3)
+    activity_item2_feedbackmail = ActionFeedbackMail(activity_id='3',
+                                action_id=3,
+                                feedback_maillist=None
+                                )
+    activity_item3_feedbackmail = ActionFeedbackMail(activity_id='4',
+                                action_id=3,
+                                feedback_maillist=[{"email": "test@org", "author_id": ""}]
+                                )
+    activity_item4_feedbackmail = ActionFeedbackMail(activity_id='5',
+                                action_id=3,
+                                feedback_maillist=[{"email": "test@org", "author_id": "1"}]
+                                )
+    activity_item5_feedbackmail = ActionFeedbackMail(activity_id='6',
+                                action_id=3,
+                                feedback_maillist=[{"email": "test1@org", "author_id": "2"}]
+                                )
+    activity_item5_Authors = Authors(id=1,json="{\"affiliationInfo\": [{\"affiliationNameInfo\": [{\"affiliationName\": \"\", \"affiliationNameLang\": \"ja\", \"affiliationNameShowFlg\": \"true\"}], \"identifierInfo\": [{\"affiliationId\": \"aaaa\", \"affiliationIdType\": \"1\", \"identifierShowFlg\": \"true\"}]}], \"authorIdInfo\": [{\"authorId\": \"1\", \"authorIdShowFlg\": \"true\", \"idType\": \"1\"}, {\"authorId\": \"1\", \"authorIdShowFlg\": \"true\", \"idType\": \"2\"}], \"authorNameInfo\": [{\"familyName\": \"一\", \"firstName\": \"二\", \"fullName\": \"一　二 \", \"language\": \"ja-Kana\", \"nameFormat\": \"familyNmAndNm\", \"nameShowFlg\": \"true\"}], \"emailInfo\": [{\"email\": \"test@org\"}], \"gather_flg\": 0, \"id\": {\"_id\": \"HZ9iXYMBnq6bEezA2CK3\", \"_index\": \"tenant1-authors-author-v1.0.0\", \"_primary_term\": 29, \"_seq_no\": 0, \"_shards\": {\"failed\": 0, \"successful\": 1, \"total\": 2}, \"_type\": \"author-v1.0.0\", \"_version\": 1, \"result\": \"created\"}, \"is_deleted\": \"false\", \"pk_id\": \"1\"}")
+    activity_item6_feedbackmail = ActionFeedbackMail(activity_id='7',
+                                action_id=3,
+                                feedback_maillist={"email": "test1@org", "author_id": "2"}
+                                )
+    with db.session.begin_nested():
+        db.session.add(activity_action1_item1)
+        db.session.add(activity_action2_item1)
+        db.session.add(activity_action3_item1)
+        db.session.add(activity_item2_feedbackmail)
+        db.session.add(activity_item3_feedbackmail)
+        db.session.add(activity_item4_feedbackmail)
+        db.session.add(activity_item5_feedbackmail)
+        db.session.add(activity_item5_Authors)
+        db.session.add(activity_item6_feedbackmail)
+    db.session.commit()
+
+    activity_03 = Activity(activity_id='A-00000003-00000', workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item5', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    with db.session.begin_nested():
+        db.session.add(activity_03)
+    
+    activity_action03_1 = ActivityAction(id=4, activity_id=activity_03.activity_id,
+                                            action_id=1,action_status="M",action_comment="",
+                                            action_handler=1, action_order=1)
+    activity_action03_2 = ActivityAction(id=5, activity_id=activity_03.activity_id,
+                                            action_id=3,action_status="F",action_comment="",
+                                            action_handler=0, action_order=2)
+    with db.session.begin_nested():
+        db.session.add(activity_action03_1)
+        db.session.add(activity_action03_2)
+    db.session.commit()
+    
+    history = ActivityHistory(
+        activity_id=activity.activity_id,
+        action_id=activity.action_id,
+    )
+    with db.session.begin_nested():
+        db.session.add(history)
+    db.session.commit()
+    doi_identifier = Identifier(id=1, repository='Root Index',jalc_flag= True,jalc_crossref_flag= True,jalc_datacite_flag=True,ndl_jalc_flag=True,
+        jalc_doi='123',jalc_crossref_doi='1234',jalc_datacite_doi='12345',ndl_jalc_doi='123456',suffix='def',
+        created_userId='1',created_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S'),
+        updated_userId='1',updated_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S')
+    )
+    doi_identifier2 = Identifier(id=2, repository='test',jalc_flag= True,jalc_crossref_flag= True,jalc_datacite_flag=True,ndl_jalc_flag=True,
+        jalc_doi=None,jalc_crossref_doi=None,jalc_datacite_doi=None,ndl_jalc_doi=None,suffix=None,
+        created_userId='1',created_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S'),
+        updated_userId='1',updated_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S')
+        )
+    with db.session.begin_nested():
+        db.session.add(doi_identifier)
+        db.session.add(doi_identifier2)
+    db.session.commit()
+    return {'flow_define':flow_define,
+            'item_type':item_type,
+            'workflow':workflow, 
+            'action_feedback_mail':activity_item3_feedbackmail,
+            'action_feedback_mail1':activity_item4_feedbackmail,
+            'action_feedback_mail2':activity_item5_feedbackmail,
+            'action_feedback_mail3':activity_item6_feedbackmail,
+            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_guest]}
+
+@pytest.fixture()
+def workflow(app, db, item_type, action_data, users):
+    flow_define = FlowDefine(flow_id=uuid.uuid4(),
+                             flow_name='Registration Flow',
+                             flow_user=1)
+    with db.session.begin_nested():
+        db.session.add(flow_define)
+    db.session.commit()
+    
+    # setting flow action(start, item register, oa policy, item link, identifier grant, approval, end)
+    flow_actions = list()
+    # start
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=1,
+                     action_version='1.0.0',
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # item register
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=3,
+                     action_version='1.0.0',
+                     action_order=2,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # oa policy
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=6,
+                     action_version='1.0.0',
+                     action_order=3,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # item link
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=5,
+                     action_version='1.0.0',
+                     action_order=4,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # identifier grant
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=7,
+                     action_version='1.0.0',
+                     action_order=5,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # approval
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=4,
+                     action_version='1.0.0',
+                     action_order=6,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # end
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=2,
+                     action_version='1.0.0',
+                     action_order=7,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    with db.session.begin_nested():
+        db.session.add_all(flow_actions)
+    db.session.commit()
+    workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test workflow01',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=1,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    with db.session.begin_nested():
+        db.session.add(workflow)
+    db.session.commit()
+
+    return {
+        "flow":flow_define,
+        "flow_action":flow_actions,
+        "workflow":workflow
+    }
+
+@pytest.fixture()
+def location(app, db, instance_path):
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name='local', uri=instance_path, default=True)
+        db.session.add(loc)
+    db.session.commit()
+    return loc
+
+@pytest.fixture()
+def db_records(db, location):
     record_data = json_data("data/test_records.json")
     item_data = json_data("data/test_items.json")
     record_num = len(record_data)
     result = []
-    with db.session.begin_nested():
-        for d in range(record_num):
-            result.append(create_record(record_data[d], item_data[d]))
-    db.session.commit()
+    for d in range(record_num):
+        result.append(create_record(record_data[d], item_data[d]))
+        db.session.commit()
 
-    index_metadata = {
-            'id': 1,
-            'parent': 0,
-            'value': 'Index(public_state = True,harvest_public_state = True)'
-        }
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
-        ret = Indexes.create(0, index_metadata)
-        index = Index.get_index_by_id(1)
-        index.public_state = True
-        index.harvest_public_state = True
-    
-    index_metadata = {
-            'id': 2,
-            'parent': 0,
-            'value': 'Index(public_state = True,harvest_public_state = False)',
-        }
-    
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
-        Indexes.create(0, index_metadata)
-        index = Index.get_index_by_id(2)
-        index.public_state = True
-        index.harvest_public_state = False
-    
-    index_metadata = {
-            'id': 3,
-            'parent': 0,
-            'value': 'Index(public_state = False,harvest_public_state = True)',
-    }
-    
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
-        Indexes.create(0, index_metadata)
-        index = Index.get_index_by_id(3)
-        index.public_state = False
-        index.harvest_public_state = True
-    
-    index_metadata = {
-            'id': 4,
-            'parent': 0,
-            'value': 'Index(public_state = False,harvest_public_state = False)',
-    }
-    
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
-        Indexes.create(0, index_metadata)
-        index = Index.get_index_by_id(4)
-        index.public_state = False
-        index.harvest_public_state = False
-
- 
     yield result
 
+@pytest.fixture()
+def add_file(db, location):
+    def factory(record, contents=b'test example', filename="generic_file.txt"):
+        b = Bucket.create()
+        r = RecordsBuckets.create(bucket=b, record=record.model)
+        ObjectVersion.create(b,filename)
+        stream = BytesIO(contents)
+        record.files[filename] = stream
+        record.files.dumps()
+        record.commit()
+        db.session.commit()
+        return b,r
+    return factory
 
 @pytest.fixture()
 def db_register2(app, db):
     session_lifetime = SessionLifetime(lifetime=60,is_delete=False)
-    
+
     with db.session.begin_nested():
         db.session.add(session_lifetime)
 
 
-    
+@pytest.fixture()
+def db_register_fullaction(app, db, db_records, users, action_data, item_type):
+    flow_define = FlowDefine(flow_id=uuid.uuid4(),
+                             flow_name='Registration Flow',
+                             flow_user=1)
+    with db.session.begin_nested():
+        db.session.add(flow_define)
+    db.session.commit()
+
+    # setting flow action(start, item register, oa policy, item link, identifier grant, approval, end)
+    flow_actions = list()
+    # start
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=1,
+                     action_version='1.0.0',
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # item register
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=3,
+                     action_version='1.0.0',
+                     action_order=2,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # oa policy
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=6,
+                     action_version='1.0.0',
+                     action_order=3,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # item link
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=5,
+                     action_version='1.0.0',
+                     action_order=4,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # identifier grant
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=7,
+                     action_version='1.0.0',
+                     action_order=5,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # approval
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=4,
+                     action_version='1.0.0',
+                     action_order=6,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # end
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=2,
+                     action_version='1.0.0',
+                     action_order=7,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    with db.session.begin_nested():
+        db.session.add_all(flow_actions)
+    db.session.commit()
+
+    # setting workflow, activity(not exist item, exist item)
+    workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test workflow01',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=1,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    activity = Activity(activity_id='1',workflow_id=1, flow_id=flow_define.id,
+                action_id=1, activity_login_user=1,
+                activity_update_user=1,
+                activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                activity_community_id=3,
+                activity_confirm_term_of_use=True,
+                title='test', shared_user_id=-1, extra_info={},
+                action_order=1,
+                )
+    activity2 = Activity(activity_id='A-00000001-10001',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    action_status = 'M',
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=6)
+
+    activity3 = Activity(activity_id='A-00000001-10002',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    action_status = 'C',
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=6)
+    # identifier登録あり
+    activity_item1 = Activity(activity_id='2',item_id=db_records[2][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item1', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    # identifier登録なし
+    activity_item2 = Activity(activity_id='3',item_id=db_records[4][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item1', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    # ゲスト作成アクティビティ
+    activity_item3 = Activity(activity_id='4',item_id=db_records[5][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item1', shared_user_id=-1, extra_info={"guest_mail":"guest@test.org"},
+                    action_order=1,
+                    )
+    # item_idが"."を含まない
+    activity_item4 = Activity(activity_id='5',item_id=db_records[0][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item1', shared_user_id=-1, extra_info={"guest_mail":"guest@test.org"},
+                    action_order=1,
+                    )
+    # not identifier value in without_ver
+    activity_item5 = Activity(activity_id='6',item_id=db_records[3][2].id,workflow_id=1, flow_id=flow_define.id,
+                action_id=1, activity_login_user=users[3]["id"],
+                activity_update_user=1,
+                activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                activity_community_id=3,
+                activity_confirm_term_of_use=True,
+                title='test item1', shared_user_id=-1, extra_info={"guest_mail":"guest@test.org"},
+                action_order=1,
+                )
+    # same identifier with without_ver
+    activity_item6 = Activity(activity_id='7',item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
+                action_id=1, activity_login_user=users[3]["id"],
+                activity_update_user=1,
+                activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                activity_community_id=3,
+                activity_confirm_term_of_use=True,
+                title='test item1', shared_user_id=-1, extra_info={"guest_mail":"guest@test.org"},
+                action_order=1,
+                )
+    with db.session.begin_nested():
+        db.session.add(workflow)
+        db.session.add(activity)
+        db.session.add(activity2)
+        db.session.add(activity3)
+        db.session.add(activity_item1)
+        db.session.add(activity_item2)
+        db.session.add(activity_item3)
+        db.session.add(activity_item4)
+        db.session.add(activity_item5)
+        db.session.add(activity_item6)
+    db.session.commit()
+
+    feedbackmail_action1 = ActionFeedbackMail(
+        activity_id=activity_item1.activity_id,
+        action_id=3,
+        feedback_maillist=[{"email":"test@test.org"}]
+        )
+    feedbackmail_action2 = ActionFeedbackMail(
+        activity_id=activity_item2.activity_id,
+        action_id=3,
+        feedback_maillist=[]
+    )
+    feedbackmail_action3 = ActionFeedbackMail(
+        activity_id=activity_item4.activity_id,
+        action_id=3,
+        feedback_maillist=[]
+    )
+    feedbackmail = FeedbackMailList(
+        item_id=activity_item2.item_id,
+        mail_list=[{"email":"test@test.org"}]
+    )
+    with db.session.begin_nested():
+        db.session.add(feedbackmail_action1)
+        db.session.add(feedbackmail_action2)
+        db.session.add(feedbackmail_action3)
+        db.session.add(feedbackmail)
+    db.session.commit()
+
+    permissions = list()
+    for i in range(len(users)):
+        permissions.append(FilePermission(users[i]["id"],"1.1","test_file","2",None,-1))
+    with db.session.begin_nested():
+        db.session.add_all(permissions)
+    db.session.commit()
+
+    def set_activityaction(_activity, _action,_flow_action):
+        action_handler = _activity.activity_login_user \
+            if not _action.action_endpoint == 'approval' else -1
+        activity_action = ActivityAction(
+            activity_id=_activity.activity_id,
+            action_id=_flow_action.action_id,
+            action_status="F",
+            action_handler=action_handler,
+            action_order=_flow_action.action_order
+        )
+        db.session.add(activity_action)
+
+    # setting activity_action in activity existed item
+    for flow_action in flow_actions:
+        action = action_data[0][flow_action.action_id-1]
+        set_activityaction(activity_item1, action, flow_action)
+        set_activityaction(activity_item2, action, flow_action)
+        set_activityaction(activity_item3, action, flow_action)
+        set_activityaction(activity_item4, action, flow_action)
+        set_activityaction(activity_item5, action, flow_action)
+        set_activityaction(activity_item6, action, flow_action)
+
+
+    # flow_action_role = FlowActionRole(
+    #     flow_action_id=flow_actions[5].id,
+    #     action_role=None,
+    #     action_user=1
+    # )
+    # with db.session.begin_nested():
+    #     db.session.add(flow_action_role)
+    # db.session.commit()
+
+    action_identifier=ActionIdentifier(
+        activity_id=activity_item3.activity_id,
+        action_id=7,
+        action_identifier_select=1,
+        action_identifier_jalc_doi="",
+        action_identifier_jalc_cr_doi="",
+        action_identifier_jalc_dc_doi="",
+        action_identifier_ndl_jalc_doi=""
+    )
+    with db.session.begin_nested():
+        db.session.add(action_identifier)
+    db.session.commit()
+    return {"flow_actions":flow_actions,
+            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item4,activity_item5,activity_item6]}
+
+@pytest.fixture()
+def site_info(db):
+    site_info = {
+        "site_name":["test_site"],
+        "notify":["test_notify"],
+    }
+    SiteInfo.update(site_info)
+@pytest.fixture()
+def get_mapping_data(db):
+    def factory(item_id):
+        metadata = MappingData(item_id)
+        return metadata
+    return factory
+
+
+
+
+
+
+
+
+
