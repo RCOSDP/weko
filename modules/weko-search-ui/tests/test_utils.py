@@ -618,9 +618,10 @@ def test_create_flow_define(i18n_app, db_activity):
     assert not create_flow_define()
 
 
-# def send_item_created_event_to_es(item, request_info): *** ERR but full coverage
+# def send_item_created_event_to_es(item, request_info): *** ERR
 def test_send_item_created_event_to_es(i18n_app, es_records, client_request_args, users, es):
-    with patch("weko_search_ui.utils.send_item_created_event_to_es._push_item_to_elasticsearch", return_value=""):
+    # with patch("weko_search_ui.utils.send_item_created_event_to_es._push_item_to_elasticsearch", return_value=""):
+    with patch("weko_search_ui.utils._push_item_to_elasticsearch", return_value=""):
         item = es_records['results'][0]['item']
         request_info = {
             "remote_addr": request.remote_addr,
@@ -642,12 +643,12 @@ def test_import_items_to_system(i18n_app, es_records):
             with patch("weko_search_ui.utils.register_item_update_publish_status", return_value={}):
                 with patch("weko_search_ui.utils.create_deposit", return_value=item['id']):
                     with patch("weko_search_ui.utils.send_item_created_event_to_es", return_value=item['id']):
-                        with patch("weko_workflow.utils.get_cache_data", return_value=["/"]):
+                        with patch("weko_workflow.utils.get_cache_data", return_value=True):
                             assert import_items_to_system(item)
                             item['status'] = "new"
                             assert import_items_to_system(item)
-                    # Will result in error but will cover the exception part
-                    assert import_items_to_system(item)
+                            
+                    assert import_items_to_system(item) # Will result in error but will cover exception part
 
 
 # def handle_item_title(list_record):
@@ -670,12 +671,21 @@ def test_handle_check_and_prepare_publish_status(i18n_app, record_with_metadata)
 def test_handle_check_and_prepare_index_tree(i18n_app, record_with_metadata, indices):
     list_record = [record_with_metadata[0]]
     can_edit_indexes = [indices['index_dict']]
+    item_2 = record_with_metadata[0]
 
-    # Test 1
     all_index_permission = False
     assert not handle_check_and_prepare_index_tree(list_record, all_index_permission, can_edit_indexes)
+    
+    index = MagicMock()
+    index.index_name = "test"
+    index.index_name_english = "eng_test"
+    with patch("weko_index_tree.api.Indexes.get_index", return_value=index):
+        assert not handle_check_and_prepare_index_tree([item_2], all_index_permission, can_edit_indexes)
 
-    # Test 2
+    del item_2["metadata"]
+    del item_2["pos_index"]
+    assert not handle_check_and_prepare_index_tree([item_2], all_index_permission, can_edit_indexes)
+
     all_index_permission = True
     assert not handle_check_and_prepare_index_tree(list_record, all_index_permission, can_edit_indexes)
 
@@ -698,11 +708,26 @@ def test_handle_set_change_identifier_flag(i18n_app, record_with_metadata):
 
 
 # def handle_check_cnri(list_record):
-def test_handle_check_cnri(i18n_app, db_activity):
-    list_record = [db_activity['item']]
-
+def test_handle_check_cnri(i18n_app):
+    item = MagicMock()
+    # item = {
+    #     "id": 1,
+    #     "cnri": None,
+    #     "is_change_identifier": True
+    # }
     # Doesn't return any value
-    assert not handle_check_cnri(list_record)
+    assert not handle_check_cnri([item])
+
+def test_handle_check_cnri_2(i18n_app):
+    # item["cnri"] = 
+    # item["is_change_identifier"] = False
+    item2 = {
+        "id": 1,
+        "cnri": f"{'x'*200}/{'y'*100}",
+        "is_change_identifier": False
+    }
+    # Doesn't return any value
+    assert not handle_check_cnri([item2])
 
 
 # def handle_check_doi_indexes(list_record):
@@ -715,11 +740,22 @@ def test_handle_check_doi_indexes(i18n_app, es_records):
 
 # def handle_check_doi_ra(list_record):
 def test_handle_check_doi_ra(i18n_app, es_records):
-    list_record = [es_records['results'][0]['item']]
+    # list_record = [es_records['results'][0]['item']]
+    item = MagicMock()
 
     # Doesn't return any value
-    assert not handle_check_doi_ra(list_record)
+    assert not handle_check_doi_ra([item])
 
+    item = {
+        "doi_ra": "JaLC",
+        "is_change_identifier": False,
+        "status": "keep"
+    }
+
+    with patch("weko_search_ui.utils.handle_doi_required_check", return_value="1"):
+        with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value="1"):
+            # Doesn't return any value
+            assert not handle_check_doi_ra([item])
 
 # def handle_check_doi(list_record):
 def test_handle_check_doi(app):
@@ -734,6 +770,30 @@ def test_handle_check_doi(app):
         list_record = json.load(f)
     assert handle_check_doi(list_record)==None
 
+    # item = {
+    #     "doi_ra": "JaLC",
+    #     "is_change_identifier": True,
+    #     "status": "new"
+    # }
+    item = MagicMock()
+    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value="1"):
+        assert not handle_check_doi([item])
+
+    item2 = {
+        "doi_ra": "JaLC",
+        "is_change_identifier": False,
+        "status": "keep"
+    }
+    mock = MagicMock()
+    mock.pid_recid = 1
+    
+    # def myfunc():
+    #     return 1,2
+    # mock.get_idt_registration_data = myfunc
+
+    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=mock):
+        # with patch("weko_workflow.utils.IdentifierHandle", return_value=mock):
+        assert not handle_check_doi([item2])
 
 # def register_item_handle(item):
 def test_register_item_handle(i18n_app, es_records):
@@ -811,14 +871,20 @@ def test_prepare_doi_link(i18n_app, communities2, db):
 
     assert prepare_doi_link(item_id)
 
+    item_id = MagicMock()
+    assert prepare_doi_link(item_id)
+
 
 # def register_item_doi(item):
 def test_register_item_doi(i18n_app, db_activity):
     # item = es_records['results'][0]['item']
-    item = db_activity['item']
+    # item = db_activity['item']
+    item = MagicMock()
+    item.is_change_identifier = True
 
-    # Doesn't return any value
-    assert not register_item_doi(item)
+    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=item):
+        # Doesn't return any value
+        assert not register_item_doi(item)
 
 
 # def register_item_update_publish_status(item, status):
