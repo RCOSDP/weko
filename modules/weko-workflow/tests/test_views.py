@@ -33,6 +33,7 @@ from invenio_db import db
 from sqlalchemy import func
 from datetime import datetime
 import uuid
+from invenio_communities.models import Community
 from invenio_pidstore.errors import PIDDoesNotExistError,PIDDeletedError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 
@@ -45,6 +46,7 @@ from invenio_accounts.testutils import login_user_via_session as login
 from weko_workflow.views import unlock_activity, check_approval, get_feedback_maillist, save_activity, previous_action
 from marshmallow.exceptions import ValidationError
 from weko_records_ui.models import FilePermission
+from weko_records.models import ItemMetadata
 
 
 def response_data(response):
@@ -2406,18 +2408,25 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
     #action_endpoint = cur_action.action_endpoint
     action_id = cur_action.id
     histories = 1
-    item_metadata = {'created':datetime.strptime("2022-09-22 05:09:54.677307", "%Y-%m-%d %H:%M:%S.%f"),'updated':datetime.strptime("2022-09-22 05:09:54.677307", "%Y-%m-%d %H:%M:%S.%f"),
-                    'id':'37075580-8442-4402-beee-05f62e6e1dc2','item_type_id':15,'json': {"id": "1", "pid": {"type": "depid", "value": "1", "revision_id": 0}, "lang": "ja", "owner": "1", "title": "title", "owners": [1], "status": "published", "$schema": "/items/jsonschema/15", "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_id": -1, "item_1617186331708": [{"subitem_1551255647225": "ff", "subitem_1551255648112": "ja"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}}
-                    ,'version_id':3}
+    item_metadata = ItemMetadata()
+    item_metadata.id = '37075580-8442-4402-beee-05f62e6e1dc2'
+    # item_metadata = {'created':datetime.strptime("2022-09-22 05:09:54.677307", "%Y-%m-%d %H:%M:%S.%f"),'updated':datetime.strptime("2022-09-22 05:09:54.677307", "%Y-%m-%d %H:%M:%S.%f"),
+    #                 'id':'37075580-8442-4402-beee-05f62e6e1dc2','item_type_id':15,'json': {"id": "1", "pid": {"type": "depid", "value": "1", "revision_id": 0}, "lang": "ja", "owner": "1", "title": "title", "owners": [1], "status": "published", "$schema": "/items/jsonschema/15", "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_id": -1, "item_1617186331708": [{"subitem_1551255647225": "ff", "subitem_1551255648112": "ja"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}}
+    #                 ,'version_id':3}
     item = None
     steps = 1
     temporary_comment = 1
 
-    test_pid= dict(created=datetime.strptime("2022-09-22 05:09:48.085724", "%Y-%m-%d %H:%M:%S.%f"),updated=datetime.strptime("2022-09-22 05:09:48.085747", "%Y-%m-%d %H:%M:%S.%f"),
-                id=3, pid_type='recid',pid_value='1',pid_provider='',status='R',object_type='rec',object_uuid='37075580-8442-4402-beee-05f62e6e1dc2')
-    test_comm=  dict(created=datetime.strptime("2022-09-22 05:09:48.085724", "%Y-%m-%d %H:%M:%S.%f"),updated=datetime.strptime("2022-09-22 05:09:48.085747", "%Y-%m-%d %H:%M:%S.%f"),
-                id='test',id_role=1,id_user=1,title='test',description='',page='',curation_policy='',community_header='',community_footer='',last_record_accepted=datetime.strptime("2000-01-01 00:00:00", "%Y-%m-%d %H:%M:%S"),
-                logo_ext='',ranking=0,fixed_points=0,deleted_at=None,root_node_id=1557819733276)
+
+    test_pid = PersistentIdentifier()
+    test_pid.pid_value = '1'
+    # test_pid= dict(created=datetime.strptime("2022-09-22 05:09:48.085724", "%Y-%m-%d %H:%M:%S.%f"),updated=datetime.strptime("2022-09-22 05:09:48.085747", "%Y-%m-%d %H:%M:%S.%f"),
+    #             id=3, pid_type='recid',pid_value='1',pid_provider='',status='R',object_type='rec',object_uuid='37075580-8442-4402-beee-05f62e6e1dc2')
+    test_comm= Community()
+    test_comm.id = 'test'
+    # test_comm=  dict(created=datetime.strptime("2022-09-22 05:09:48.085724", "%Y-%m-%d %H:%M:%S.%f"),updated=datetime.strptime("2022-09-22 05:09:48.085747", "%Y-%m-%d %H:%M:%S.%f"),
+    #             id='test',id_role=1,id_user=1,title='test',description='',page='',curation_policy='',community_header='',community_footer='',last_record_accepted=datetime.strptime("2000-01-01 00:00:00", "%Y-%m-%d %H:%M:%S"),
+    #             logo_ext='',ranking=0,fixed_points=0,deleted_at=None,root_node_id=1557819733276)
     roles = {
         'allow': [],
         'deny': []
@@ -2481,7 +2490,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 res = client.post(url, query_string=input)
@@ -2502,7 +2511,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                     files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
                 with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
                     with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                        with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                             with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                                 with patch('weko_workflow.views.render_template', mock_render_template):
                                     res = client.post(url, query_string=input)
@@ -2522,7 +2531,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 res = client.post(url, query_string=input)
@@ -2541,7 +2550,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 res = client.post(url, query_string=input)
@@ -2561,7 +2570,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 res = client.post(url, query_string=input)
@@ -2580,7 +2589,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 res = client.post(url, query_string=input)
@@ -2600,7 +2609,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 res = client.post(url, query_string=input)
@@ -2621,7 +2630,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 res = client.post(url, query_string=input)
@@ -2641,7 +2650,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,dict(test="test"))):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 res = client.post(url, query_string=input)
@@ -2660,7 +2669,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,dict(test="test"))):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 with patch("weko_workflow.views.get_identifier_setting", return_value=None):
@@ -2681,7 +2690,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record'):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 res = client.post(url, query_string=input)
@@ -2703,7 +2712,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 res = client.post(url, query_string=input)
@@ -2725,7 +2734,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 res = client.post(url, query_string=input)
@@ -2748,7 +2757,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                     files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
                 with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
                     with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                        with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                             with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                                 with patch('weko_workflow.views.render_template', mock_render_template):
                                     res = client.post(url, query_string=input)
@@ -2771,7 +2780,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                     files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
                 with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
                     with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                        with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                        with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                             with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                                 with patch('weko_workflow.views.render_template', mock_render_template):
                                     res = client.post(url, query_string=input)
@@ -2794,7 +2803,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',side_effect=PIDDeletedError('test','test')):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 res = client.post(url, query_string=input)
@@ -2816,7 +2825,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',side_effect=PIDDoesNotExistError('test','test')):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 res = client.post(url, query_string=input)
@@ -2838,7 +2847,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',side_effect=Exception()):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 res = client.post(url, query_string=input)
@@ -2860,7 +2869,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,True)):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 res = client.post(url, query_string=input)
@@ -2882,7 +2891,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=None):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=None):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=record_detail_alt):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 res = client.post(url, query_string=input)
@@ -2904,7 +2913,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=test_comm):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=None):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 res = client.post(url, query_string=input)
@@ -2928,7 +2937,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
             with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
                 with patch('weko_workflow.views.GetCommunity.get_community_by_id',return_value=None):
-                    with patch('weko_workflow.views.get_list_licence',return_value=license_list):
+                    with patch('weko_records_ui.utils.get_list_licence',return_value=license_list):
                         with patch('weko_workflow.views.get_main_record_detail',return_value=None):
                             with patch('weko_workflow.views.render_template', mock_render_template):
                                 with patch("flask_login.utils._get_user",return_value=mock_user):
