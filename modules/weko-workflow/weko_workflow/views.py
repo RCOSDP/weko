@@ -69,10 +69,8 @@ from weko_items_ui.api import item_login
 from weko_records.api import FeedbackMailList, ItemLink
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
-from weko_records_ui.utils import get_list_licence
 from weko_records_ui.models import FilePermission
 from weko_search_ui.utils import check_import_items, import_items_to_system
-from weko_theme.utils import get_design_layout
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
@@ -877,7 +875,7 @@ def display_activity(activity_id="0"):
     if item:
         try:
             # get record data for the first time access to editing item screen
-            recid, approval_record = get_pid_and_record(item.get("id"))
+            recid, approval_record = get_pid_and_record(item.id)
             files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
 
             links = base_factory(recid)
@@ -902,7 +900,7 @@ def display_activity(activity_id="0"):
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         if comm is not None:
-            community_id = comm.get("id")
+            community_id = comm.id
     # be use for index tree and comment page.
     if 'item_login' == action_endpoint or \
             'item_login_application' == action_endpoint or \
@@ -924,6 +922,8 @@ def display_activity(activity_id="0"):
     if user_id:
         from weko_user_profiles.views import get_user_profile_info
         user_profile['results'] = get_user_profile_info(int(user_id))
+    from weko_records_ui.utils import get_list_licence
+    from weko_theme.utils import get_design_layout
 
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
@@ -937,7 +937,7 @@ def display_activity(activity_id="0"):
 
 
     if action_endpoint == 'item_link' and recid:
-        item_link = ItemLink.get_item_link_info(recid.get("pid_value"))
+        item_link = ItemLink.get_item_link_info(recid.pid_value)
         ctx['item_link'] = item_link
 
     # Get item link info.
@@ -977,7 +977,7 @@ def display_activity(activity_id="0"):
     )
     _id = None
     if recid:
-        _id = re.sub("\.[0-9]+", "", recid.get("pid_value"))
+        _id = re.sub("\.[0-9]+", "", recid.pid_value)
 
     return render_template(
         'weko_workflow/activity_detail.html',
