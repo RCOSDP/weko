@@ -65,11 +65,11 @@ from weko_records.api import Mapping
 from weko_records_ui.models import FilePermission
 from weko_user_profiles import WekoUserProfiles
 from weko_index_tree.models import Index
-from weko_search_ui import WekoSearchUI
+
 from weko_workflow import WekoWorkflow
 from weko_search_ui import WekoSearchUI
 from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory
-from weko_workflow.views import blueprint as weko_workflow_blueprint
+from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
@@ -477,6 +477,7 @@ def base_app(instance_path, search_class, cache_config):
     app_.testing = True
     Babel(app_)
     InvenioI18N(app_)
+    Menu(app_)
     # InvenioTheme(app_)
     InvenioAccess(app_)
     InvenioAccounts(app_)
@@ -555,6 +556,7 @@ def guest(client):
 def req_context(client,app):
     with app.test_request_context():
         yield client
+        
 @pytest.fixture
 def redis_connect(app):
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
@@ -717,6 +719,7 @@ def action_data(db):
         db.session.add_all(actionstatus_db)
     db.session.commit()
     return actions_db, actionstatus_db
+
 @pytest.fixture()
 def db_itemtype(app, db):
     item_type_name = ItemTypeName(id=1,
@@ -799,6 +802,7 @@ def identifier(db):
     db.session.add(doi_identifier)
     db.session.commit()
     return doi_identifier
+
 @pytest.fixture()
 def db_register(app, db, db_records, users, action_data, item_type):
     flow_define = FlowDefine(flow_id=uuid.uuid4(),
@@ -1080,7 +1084,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
 
 @pytest.fixture()
 def workflow(app, db, item_type, action_data, users):
-    flow_define = FlowDefine(flow_id=uuid.uuid4(),
+    flow_define = FlowDefine(id=1,flow_id=uuid.uuid4(),
                              flow_name='Registration Flow',
                              flow_user=1)
     with db.session.begin_nested():
@@ -1513,7 +1517,6 @@ def get_mapping_data(db):
         metadata = MappingData(item_id)
         return metadata
     return factory
-
 
 
 

@@ -123,7 +123,8 @@ from weko_workflow.utils import (
     get_record_first_version,
     get_current_date,
     update_system_data_for_item_metadata,
-    update_approval_date_for_deposit
+    update_approval_date_for_deposit,
+    update_system_data_for_activity
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
 from weko_workflow.models import Activity
@@ -262,9 +263,12 @@ def test_register_hdl(app,db_records,db_register):#c
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
 # def item_metadata_validation(item_id, identifier_type, record=None,
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_item_metadata_validation(db_records):#xxx
-    result = item_metadata_validation()
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_item_metadata_validation -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_item_metadata_validation(db_records):
+    recid, depid, record, item, parent, doi, deposit = db_records[0]
+    result = item_metadata_validation(recid.id,"hdl")
+    assert result == ""
+    
 # def merge_doi_error_list(current, new):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_merge_doi_error_list():#c
