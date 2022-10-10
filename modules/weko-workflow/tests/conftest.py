@@ -68,8 +68,9 @@ from weko_index_tree.models import Index
 
 from weko_workflow import WekoWorkflow
 from weko_search_ui import WekoSearchUI
-from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory
+from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory,GuestActivity
 from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
+from weko_workflow.config import WEKO_WORKFLOW_GAKUNINRDM_DATA,WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
@@ -471,7 +472,19 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_SCHEMA_DDI_SCHEMA_NAME=WEKO_SCHEMA_DDI_SCHEMA_NAME,
         DEPOSIT_DEFAULT_JSONSCHEMA = 'deposits/deposit-v1.0.0.json',
         WEKO_RECORDS_UI_SECRET_KEY = "secret",
-        WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN = "filename={} record_id={} user_mail={} date={}"
+        WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN = "filename={} record_id={} user_mail={} date={}",
+        WEKO_WORKFLOW_ACTION_START=WEKO_WORKFLOW_ACTION_START,
+        WEKO_WORKFLOW_ACTION_END=WEKO_WORKFLOW_ACTION_END,
+        WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION=WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,
+        WEKO_WORKFLOW_ACTION_APPROVAL=WEKO_WORKFLOW_ACTION_APPROVAL,
+        WEKO_WORKFLOW_ACTION_ITEM_LINK=WEKO_WORKFLOW_ACTION_ITEM_LINK,
+        WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION=WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,
+        WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT=WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,
+        WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION=WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,
+        WEKO_WORKFLOW_ACTION_GUARANTOR=WEKO_WORKFLOW_ACTION_GUARANTOR,
+        WEKO_WORKFLOW_ACTION_ADVISOR=WEKO_WORKFLOW_ACTION_ADVISOR,
+        WEKO_WORKFLOW_ACTION_ADMINISTRATOR=WEKO_WORKFLOW_ACTION_ADMINISTRATOR,
+        WEKO_WORKFLOW_GAKUNINRDM_DATA=WEKO_WORKFLOW_GAKUNINRDM_DATA,
     )
     
     app_.testing = True
@@ -1511,6 +1524,7 @@ def site_info(db):
         "notify":["test_notify"],
     }
     SiteInfo.update(site_info)
+
 @pytest.fixture()
 def get_mapping_data(db):
     def factory(item_id):
@@ -1519,7 +1533,13 @@ def get_mapping_data(db):
     return factory
 
 
-
+@pytest.fixture()
+def db_guestactivity(db):
+    record = GuestActivity(user_mail="user_mail",record_id="record_id",file_name="file_name",activity_id="activity_id",token="token",expiration_date=datetime.utcnow(),is_usage_report=False)
+    with db.session.begin_nested():
+        db.session.add(record)
+    db.session.commit()
+    
 
 
 
