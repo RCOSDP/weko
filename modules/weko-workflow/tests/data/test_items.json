@@ -23,10 +23,14 @@
         "resourceuri": "http://purl.org/coar/resource_type/c_5794",
         "resourcetype": "conference paper"
       },
+      "item_1617186819068": {
+        "subitem_identifier_reg_text":"test/0000000001",
+        "subitem_identifier_reg_type": "JaLC"
+      },
       "item_1617605131499": [
         {
             "url": {
-                "url": "https://weko3.example.org/record/1/files/test.txt"
+                "url": "https://localhost/record/1/files/test.txt"
             },
             "date": [
                 {
@@ -80,6 +84,10 @@
       "item_1617258105262": {
         "resourceuri": "http://purl.org/coar/resource_type/c_5794",
         "resourcetype": "conference paper"
+      },
+      "item_1617186819068": {
+        "subitem_identifier_reg_text" :"test/0000000001",
+        "subitem_identifier_reg_type": "JaLC"
       }
     },
     {
@@ -105,6 +113,10 @@
       "item_1617258105262": {
         "resourceuri": "http://purl.org/coar/resource_type/c_5794",
         "resourcetype": "conference paper"
+      },
+      "item_1617186819068":{
+        "subitem_identifier_reg_text": "test_2/0000000001",
+        "subitem_identifier_reg_type": "JaLC"
       }
     },
     {
@@ -130,6 +142,10 @@
       "item_1617258105262": {
         "resourceuri": "http://purl.org/coar/resource_type/c_5794",
         "resourcetype": "conference paper"
+      },
+      "item_1617186819068": {
+        "subitem_identifier_reg_text" :"",
+        "subitem_identifier_reg_type": ""
       }
     },
     {

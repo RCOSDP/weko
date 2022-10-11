@@ -471,7 +471,8 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_SCHEMA_DDI_SCHEMA_NAME=WEKO_SCHEMA_DDI_SCHEMA_NAME,
         DEPOSIT_DEFAULT_JSONSCHEMA = 'deposits/deposit-v1.0.0.json',
         WEKO_RECORDS_UI_SECRET_KEY = "secret",
-        WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN = "filename={} record_id={} user_mail={} date={}"
+        WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN = "filename={} record_id={} user_mail={} date={}",
+        DEPOSIT_FILES_API = '/api/files'
     )
     
     app_.testing = True
@@ -886,13 +887,13 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     action_order=1,
                     )
     activity_item2 = Activity(activity_id='3', workflow_id=1, flow_id=flow_define.id,
-                    action_id=3, activity_login_user=users[3]["id"],
+                    action_id=3, activity_login_user=users[4]["id"],
                     activity_update_user=1,
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
                     title='test item2', shared_user_id=-1, extra_info={},
-                    action_order=1,
+                    action_order=1,temp_data='{"description":"this is temp_data","metainfo":{}}'
                     )
     activity_item3 = Activity(activity_id='4', workflow_id=1, flow_id=flow_define.id,
                     action_id=3, activity_login_user=users[3]["id"],
@@ -901,7 +902,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
                     title='test item3', shared_user_id=-1, extra_info={},
-                    action_order=1,
+                    action_order=1
                     )
     activity_item4 = Activity(activity_id='5', workflow_id=1, flow_id=flow_define.id,
                     action_id=3, activity_login_user=users[3]["id"],
@@ -937,7 +938,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
                     title='test item8', shared_user_id=-1, extra_info={},
-                    action_order=1,
+                    action_order=1,temp_data='{"endpoints":{"self":""}}'
                     )
     activity_item8 = Activity(activity_id='9', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
                     action_id=3, activity_login_user=users[3]["id"],
@@ -946,7 +947,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
                     title='test item8', shared_user_id=-1, extra_info={},
-                    action_order=1,
+                    action_order=1,temp_data='{"files":[{"is_thumbnail": true,"key": "test_thumbnail.png"},{"is_thumbnail": false,"key":"test_file.txt"}],"endpoints":{"self":"test/endpoint1"}}'
                     )
     activity_guest = Activity(activity_id='guest', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
                     action_id=3, activity_login_user=users[3]["id"],
@@ -1076,7 +1077,8 @@ def db_register(app, db, db_records, users, action_data, item_type):
             'action_feedback_mail1':activity_item4_feedbackmail,
             'action_feedback_mail2':activity_item5_feedbackmail,
             'action_feedback_mail3':activity_item6_feedbackmail,
-            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_guest]}
+            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_guest],
+            "identifiers":[doi_identifier,doi_identifier2]}
 
 @pytest.fixture()
 def workflow(app, db, item_type, action_data, users):
@@ -1204,13 +1206,17 @@ def db_records(db, location):
 
 @pytest.fixture()
 def add_file(db, location):
-    def factory(record, contents=b'test example', filename="generic_file.txt"):
+    def factory(record, contents=b'test example', filename="generic_file.txt",version_id=None):
         b = Bucket.create()
+        print("11")
         r = RecordsBuckets.create(bucket=b, record=record.model)
-        ObjectVersion.create(b,filename)
+        print("12")
+        ObjectVersion.create(b,filename,version_id=version_id)
+        print("13")
         stream = BytesIO(contents)
         record.files[filename] = stream
         record.files.dumps()
+        print("14")
         record.commit()
         db.session.commit()
         return b,r

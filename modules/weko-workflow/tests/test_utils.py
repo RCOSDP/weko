@@ -3,6 +3,7 @@ from urllib.parse import parse_qs
 import pytest
 import uuid
 from os.path import dirname, join
+from collections import OrderedDict
 from mock import patch
 import copy
 import datetime
@@ -17,7 +18,7 @@ from weko_deposit.api import WekoRecord, WekoDeposit
 from invenio_files_rest.models import Bucket
 from invenio_cache import current_cache
 from invenio_accounts.testutils import login_user_via_session as login
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus,PIDDoesNotExistError
 from flask_login.utils import login_user,logout_user
 from tests.helpers import json_data
 from invenio_mail.models import MailConfig
@@ -123,7 +124,20 @@ from weko_workflow.utils import (
     get_record_first_version,
     get_current_date,
     update_system_data_for_item_metadata,
-    update_approval_date_for_deposit
+    update_approval_date_for_deposit,
+    update_system_data_for_activity,##
+    check_authority_by_admin,
+    get_files_and_thumbnail,
+    get_pid_and_record,
+    get_items_metadata_by_activity_detail,
+    prepare_doi_link_workflow,
+    get_pid_value_by_activity_detail,
+    create_record_metadata_for_user,
+    check_suffix_identifier,
+    validattion_item_property_required,
+    validattion_item_property_either_required,
+    register_hdl_by_item_id,
+    register_hdl_by_handle
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
 from weko_workflow.models import Activity
@@ -250,16 +264,32 @@ def test_register_hdl(app,db_records,db_register):#c
             # register_hdl does not use recid object_uuid.
             pid = IdentifierHandle(recid.object_uuid).check_pidstore_exist(pid_type='hdl')
             assert pid==[]
-    
-
-                
-
 
 # def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_register_hdl_by_item_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_register_hdl_by_item_id(db_records,item_type):
+    deposit = db_records[1][6]
+    item_id = db_records[1][2].id
+    with patch("weko_handle.api.Handle.register_handle",return_value="handle:00.000.12345/0000000001"):
+        register_hdl_by_item_id(deposit.id,item_id,"http://localhost")
+        pid = IdentifierHandle(item_id).check_pidstore_exist(pid_type='hdl')
+        assert pid[0].object_uuid == db_records[1][0].object_uuid
+        assert pid[0].pid_value == "http://hdl.handle.net/handle:00.000.12345/0000000001"
+    
+    with patch("weko_handle.api.Handle.register_handle",return_value=None):
+        result = register_hdl_by_item_id(deposit.id,item_id,"http://localhost")
+        assert result == None
 # def register_hdl_by_handle(hdl, item_uuid, item_uri):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_register_hdl_by_handle -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_register_hdl_by_handle(db_records,item_type):
+    deposit = db_records[1][6]
+    item_id = db_records[1][2].id
+    with patch("weko_handle.api.Handle.register_handle",return_value="handle:00.000.12345/0000000001"):
+        register_hdl_by_handle(deposit,item_id,"http://test_item.com")
+        pid = IdentifierHandle(item_id).check_pidstore_exist(pid_type='hdl')
+        assert pid[0].object_uuid == db_records[1][0].object_uuid
+        assert pid[0].pid_value == "http://hdl.handle.net/handle:00.000.12345/0000000001"
+    
 
 # def item_metadata_validation(item_id, identifier_type, record=None,
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -325,23 +355,112 @@ def test_handle_check_required_data(db_records, item_type):#c
         assert keys == ['item_1617186331708.subitem_1551255647225']
         assert values == [["title"]]
 
-
-
-
-
-
-
-
-
-
 # def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-
+def test_handle_check_required_pattern_and_either(db_records,item_type):
+    result = handle_check_required_pattern_and_either(None,None)
+    assert result == None
+    
+    
+    record = db_records[0][2]
+    mapping = MappingData(record=record)
+    
 # def validattion_item_property_required(
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_validattion_item_property_required -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_validattion_item_property_required(mocker):
+    mock_handle_check = mocker.patch("weko_workflow.utils.handle_check_required_pattern_and_either")
+    
+    result = validattion_item_property_required("mapping data",['fileURI','title','givenName','sourceIdentifier','sourceIdentifier','sourceTitle','publisher'])
+    assert result == None
+    result = validattion_item_property_required("mapping data",[])
+    def change_errorlist(mapping, keys, error_list):
+        error_list["required"]=["item_test"]
+        error_list["pattern"]=["item_test"]
+    mock_handle_check.side_effect=change_errorlist
+    result = validattion_item_property_required("mapping data",['fileURI'])
+    assert result == {'required': ["item_test"], 'required_key': [],
+                  'pattern': ["item_test"], 'either': [], 'either_key': [], 'mapping': []}
+    
 # def validattion_item_property_either_required(
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_validattion_item_property_either_required -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_validattion_item_property_either_required(app,mocker):
+    
+    mock_handle_check = mocker.patch("weko_workflow.utils.handle_check_required_pattern_and_either")
+    not_error = {'required': [], 'required_key': [],
+                  'pattern': [], 'either': [], 'either_key': [], 'mapping': []}
+
+    def mock_merge(data,error):
+        print("called")
+        data["required"].extend(error["required"])
+        if "either" in error:
+            data["either"] = error["either"]
+    mocker.patch("weko_workflow.utils.merge_doi_error_list",side_effect=mock_merge)
+    mock_handle_check.side_effect=[{}]
+    result = validattion_item_property_either_required("mapping data",["geoLocation"])
+    assert result == not_error
+    mock_handle_check = mocker.patch("weko_workflow.utils.handle_check_required_pattern_and_either")
+    mock_handle_check.side_effect=[{"required":["req_geolocation"]},{}]
+    result = validattion_item_property_either_required("mapping data",["geoLocation"])
+    assert result == not_error
+    
+    mock_handle_check = mocker.patch("weko_workflow.utils.handle_check_required_pattern_and_either")
+    mock_handle_check.side_effect=[{"required":["req_geolocation"]},
+                                   {"required":["req_geolocationbox"]},
+                                   {}]
+    result = validattion_item_property_either_required("mapping data",["geoLocation"])
+    assert result == not_error
+    
+    mock_handle_check = mocker.patch("weko_workflow.utils.handle_check_required_pattern_and_either")
+    mock_handle_check.side_effect=[{"required":["req_geolocation"]},
+                                   {"required":["req_geolocationbox"]},
+                                   {"required":["req_geolocationplace"],"either":[]}]
+    result = validattion_item_property_either_required("mapping data",["geoLocation"])
+    assert result == {'required': ["req_geolocation","req_geolocationbox","req_geolocationplace"], 'required_key': [],
+                  'pattern': [], 'either': [], 'either_key': [], 'mapping': []}
+
+    
+    mock_handle_check = mocker.patch("weko_workflow.utils.handle_check_required_pattern_and_either")
+    mock_handle_check.side_effect=[{"required":["req_geolocation"]},
+                                   {"required":["req_geolocationbox"]},
+                                   {"required":["req_geolocationplace"],"either":["either_geolocation"]}]
+    result = validattion_item_property_either_required("mapping data",["geoLocation"])
+    assert result == {'required': ["req_geolocation","req_geolocationbox","req_geolocationplace"], 'required_key': [],
+                  'pattern': [], 'either': [["either_geolocation"]], 'either_key': [], 'mapping': []}
+    
+    
+    mock_handle_check = mocker.patch("weko_workflow.utils.handle_check_required_pattern_and_either")
+    mock_handle_check.side_effect=[{}]
+    result = validattion_item_property_either_required("mapping data",["version"])
+    assert result == not_error
+
+    mock_handle_check = mocker.patch("weko_workflow.utils.handle_check_required_pattern_and_either")
+    mock_handle_check.side_effect=[{"required":["req_mimetype"]},{}]
+    result = validattion_item_property_either_required("mapping data",["version"])
+    assert result == not_error
+
+    mock_handle_check = mocker.patch("weko_workflow.utils.handle_check_required_pattern_and_either")
+    mock_handle_check.side_effect=[{"required":["req_mimetype"]},
+                                   {"required":["req_dataversion"]},
+                                   {}]
+    result = validattion_item_property_either_required("mapping data",["version"])
+    assert result == not_error
+
+    mock_handle_check = mocker.patch("weko_workflow.utils.handle_check_required_pattern_and_either")
+    mock_handle_check.side_effect=[{"required":["req_mimetype"]},
+                                   {"required":["req_dataversion"]},
+                                   {"required":["req_oaiversion"],"either":[]}]
+    result = validattion_item_property_either_required("mapping data",["version"])
+    assert result == {'required': ["req_mimetype","req_dataversion","req_oaiversion"], 'required_key': [],
+                  'pattern': [], 'either': [], 'either_key': [], 'mapping': []}
+
+
+    mock_handle_check = mocker.patch("weko_workflow.utils.handle_check_required_pattern_and_either")
+    mock_handle_check.side_effect=[{"required":["req_mimetype"]},
+                                   {"required":["req_dataversion"]},
+                                   {"required":["req_oaiversion"],"either":["either_version"]}]
+    result = validattion_item_property_either_required("mapping data",["version"])
+    assert result == {'required': ["req_mimetype","req_dataversion","req_oaiversion"], 'required_key': [],
+                  'pattern': [], 'either': [["either_version"]], 'either_key': [], 'mapping': []}
 
 # def check_required_data(data, key, repeatable=False):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -375,21 +494,77 @@ def test_get_activity_id_of_record_without_version(db_register,db_records):
 
 
 # def check_suffix_identifier(idt_regis_value, idt_list, idt_type_list):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_check_suffix_identifier -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_check_suffix_identifier():
-    regis_value = []
-    idt_lsit = [1,2,]
+    regis_value = ["value"]
+    idt_lsit = ["","","test_value"]
     idt_type_list = ["value1","value2","DOI"]
-
-
-
-
+    
+    result = check_suffix_identifier(regis_value,idt_lsit,idt_type_list)
+    assert result == False
+    
+    # in error list
+    regis_value = ["value"]
+    idt_lsit = ["","","value_test"]
+    idt_type_list = ["value1","value2","DOI"]
+    result = check_suffix_identifier(regis_value,idt_lsit,idt_type_list)
+    assert result == [2]
+    # not exist idt_list and idt_regis_value
+    result = check_suffix_identifier([],[],idt_type_list)
+    assert result == []
+    
 #     def __init__(self, item_id=None, record=None):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_MappingData__init__ -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_MappingData__init__(db_records,item_type):
+    record = db_records[0][2]
+    result = MappingData(record=record)
+    assert result.record == record
+    assert result.item_map == {"system_file.URI.@value": ["system_file.subitem_systemfile_filename_uri"], "system_file.URI.@attributes.label": ["system_file.subitem_systemfile_filename_label"], "system_file.URI.@attributes.objectType": ["system_file.subitem_systemfile_filename_type"], "system_file.date.@value": ["system_file.subitem_systemfile_datetime_date"], "system_file.date.@attributes.dateType": ["system_file.subitem_systemfile_datetime_type"], "system_file.extent.@value": ["system_file.subitem_systemfile_size"], "system_file.version.@value": ["system_file.subitem_systemfile_version"], "system_file.mimeType.@value": ["system_file.subitem_systemfile_mimetype"], "title.@value": ["item_1617186331708.subitem_1551255647225"], "title.@attributes.xml:lang": ["item_1617186331708.subitem_1551255648112"], "alternative.@value": ["item_1617186385884.subitem_1551255720400"], "alternative.@attributes.xml:lang": ["item_1617186385884.subitem_1551255721061"], "creator.givenName.@value": ["item_1617186419668.givenNames.givenName"], "creator.givenName.@attributes.xml:lang": ["item_1617186419668.givenNames.givenNameLang"], "creator.familyName.@value": ["item_1617186419668.familyNames.familyName"], "creator.familyName.@attributes.xml:lang": ["item_1617186419668.familyNames.familyNameLang"], "creator.affiliation.nameIdentifier.@value": ["item_1617186419668.creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifier"], "creator.affiliation.nameIdentifier.@attributes.nameIdentifierURI": ["item_1617186419668.creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierURI"], "creator.affiliation.nameIdentifier.@attributes.nameIdentifierScheme": ["item_1617186419668.creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierScheme"], "creator.affiliation.affiliationName.@value": ["item_1617186419668.creatorAffiliations.affiliationNames.affiliationName"], "creator.affiliation.affiliationName.@attributes.xml:lang": ["item_1617186419668.creatorAffiliations.affiliationNames.affiliationNameLang"], "creator.creatorName.@value": ["item_1617186419668.creatorNames.creatorName"], "creator.creatorName.@attributes.xml:lang": ["item_1617186419668.creatorNames.creatorNameLang"], "creator.nameIdentifier.@value": ["item_1617186419668.nameIdentifiers.nameIdentifier"], "creator.nameIdentifier.@attributes.nameIdentifierURI": ["item_1617186419668.nameIdentifiers.nameIdentifierURI"], "creator.nameIdentifier.@attributes.nameIdentifierScheme": ["item_1617186419668.nameIdentifiers.nameIdentifierScheme"], "creator.creatorAlternative.@value": ["item_1617186419668.creatorAlternatives.creatorAlternative"], "creator.creatorAlternative.@attributes.xml:lang": ["item_1617186419668.creatorAlternatives.creatorAlternativeLang"], "accessRights.@value": ["item_1617186476635.subitem_1522299639480"], "accessRights.@attributes.rdf:resource": ["item_1617186476635.subitem_1600958577026"], "rights.@value": ["item_1617186499011.subitem_1522651041219"], "rights.@attributes.xml:lang": ["item_1617186499011.subitem_1522650717957"], "rights.@attributes.rdf:resource": ["item_1617186499011.subitem_1522650727486"], "subject.@value": ["item_1617186609386.subitem_1523261968819"], "subject.@attributes.xml:lang": ["item_1617186609386.subitem_1522299896455"], "subject.@attributes.subjectURI": ["item_1617186609386.subitem_1522300048512"], "subject.@attributes.subjectScheme": ["item_1617186609386.subitem_1522300014469"], "description.@value": ["item_1617186626617.subitem_description"], "description.@attributes.xml:lang": ["item_1617186626617.subitem_description_language"], "description.@attributes.descriptionType": ["item_1617186626617.subitem_description_type"], "publisher.@value": ["item_1617186643794.subitem_1522300316516"], "publisher.@attributes.xml:lang": ["item_1617186643794.subitem_1522300295150"], "date.@value": ["item_1617186660861.subitem_1522300722591", "item_1617187056579.bibliographicIssueDates.bibliographicIssueDate"], "date.@attributes.dateType": ["item_1617186660861.subitem_1522300695726", "item_1617187056579.bibliographicIssueDates.bibliographicIssueDateType"], "language.@value": ["item_1617186702042.subitem_1551255818386"], "identifier.@value": ["item_1617186783814.subitem_identifier_uri"], "identifier.@attributes.identifierType": ["item_1617186783814.subitem_identifier_type"], "identifierRegistration.@value": ["item_1617186819068.subitem_identifier_reg_text"], "identifierRegistration.@attributes.identifierType": ["item_1617186819068.subitem_identifier_reg_type"], "temporal.@value": ["item_1617186859717.subitem_1522658031721"], "temporal.@attributes.xml:lang": ["item_1617186859717.subitem_1522658018441"], "geoLocation.geoLocationBox.eastBoundLongitude.@value": ["item_1617186882738.subitem_geolocation_box.subitem_east_longitude"], "geoLocation.geoLocationBox.northBoundLatitude.@value": ["item_1617186882738.subitem_geolocation_box.subitem_north_latitude"], "geoLocation.geoLocationBox.southBoundLatitude.@value": ["item_1617186882738.subitem_geolocation_box.subitem_south_latitude"], "geoLocation.geoLocationBox.westBoundLongitude.@value": ["item_1617186882738.subitem_geolocation_box.subitem_west_longitude"], "geoLocation.geoLocationPlace.@value": ["item_1617186882738.subitem_geolocation_place.subitem_geolocation_place_text"], "geoLocation.geoLocationPoint.pointLatitude.@value": ["item_1617186882738.subitem_geolocation_point.subitem_point_latitude"], "geoLocation.geoLocationPoint.pointLongitude.@value": ["item_1617186882738.subitem_geolocation_point.subitem_point_longitude"], "fundingReference.awardTitle.@value": ["item_1617186901218.subitem_1522399651758.subitem_1522721929892"], "fundingReference.awardTitle.@attributes.xml:lang": ["item_1617186901218.subitem_1522399651758.subitem_1522721910626"], "fundingReference.funderName.@value": ["item_1617186901218.subitem_1522399412622.subitem_1522737543681"], "fundingReference.funderName.@attributes.xml:lang": ["item_1617186901218.subitem_1522399412622.subitem_1522399416691"], "fundingReference.awardNumber.@value": ["item_1617186901218.subitem_1522399571623.subitem_1522399628911"], "fundingReference.awardNumber.@attributes.awardURI": ["item_1617186901218.subitem_1522399571623.subitem_1522399585738"], "fundingReference.funderIdentifier.@value": ["item_1617186901218.subitem_1522399143519.subitem_1522399333375"], "fundingReference.funderIdentifier.@attributes.funderIdentifierType": ["item_1617186901218.subitem_1522399143519.subitem_1522399281603"], "sourceIdentifier.@value": ["item_1617186920753.subitem_1522646572813"], "sourceIdentifier.@attributes.identifierType": ["item_1617186920753.subitem_1522646500366"], "sourceTitle.@value": ["item_1617186941041.subitem_1522650091861", "item_1617187056579.bibliographic_titles.bibliographic_title"], "sourceTitle.@attributes.xml:lang": ["item_1617186941041.subitem_1522650068558", "item_1617187056579.bibliographic_titles.bibliographic_titleLang"], "volume.@value": ["item_1617186959569.subitem_1551256328147", "item_1617187056579.bibliographicVolumeNumber"], "issue.@value": ["item_1617186981471.subitem_1551256294723", "item_1617187056579.bibliographicIssueNumber"], "numPages.@value": ["item_1617186994930.subitem_1551256248092", "item_1617187056579.bibliographicNumberOfPages"], "pageStart.@value": ["item_1617187024783.subitem_1551256198917", "item_1617187056579.bibliographicPageStart"], "pageEnd.@value": ["item_1617187045071.subitem_1551256185532", "item_1617187056579.bibliographicPageEnd"], "dissertationNumber.@value": ["item_1617187087799.subitem_1551256171004"], "degreeName.@value": ["item_1617187112279.subitem_1551256126428"], "degreeName.@attributes.xml:lang": ["item_1617187112279.subitem_1551256129013"], "dateGranted.@value": ["item_1617187136212.subitem_1551256096004"], "conference.conferenceDate.@value": ["item_1617187187528.subitem_1599711699392.subitem_1599711704251"], "conference.conferenceDate.@attributes.endDay": ["item_1617187187528.subitem_1599711699392.subitem_1599711735410"], "conference.conferenceDate.@attributes.endYear": ["item_1617187187528.subitem_1599711699392.subitem_1599711743722"], "conference.conferenceDate.@attributes.endMonth": ["item_1617187187528.subitem_1599711699392.subitem_1599711739022"], "conference.conferenceDate.@attributes.startDay": ["item_1617187187528.subitem_1599711699392.subitem_1599711712451"], "conference.conferenceDate.@attributes.xml:lang": ["item_1617187187528.subitem_1599711699392.subitem_1599711745532"], "conference.conferenceDate.@attributes.startYear": ["item_1617187187528.subitem_1599711699392.subitem_1599711731891"], "conference.conferenceDate.@attributes.startMonth": ["item_1617187187528.subitem_1599711699392.subitem_1599711727603"], "conference.conferenceName.@value": ["item_1617187187528.subitem_1599711633003.subitem_1599711636923"], "conference.conferenceName.@attributes.xml:lang": ["item_1617187187528.subitem_1599711633003.subitem_1599711645590"], "conference.conferenceVenue.@value": ["item_1617187187528.subitem_1599711758470.subitem_1599711769260"], "conference.conferenceVenue.@attributes.xml:lang": ["item_1617187187528.subitem_1599711758470.subitem_1599711775943"], "conference.conferenceCountry.@value": ["item_1617187187528.subitem_1599711813532"], "conference.conferenceSponsor.@value": ["item_1617187187528.subitem_1599711660052.subitem_1599711680082"], "conference.conferenceSponsor.@attributes.xml:lang": ["item_1617187187528.subitem_1599711660052.subitem_1599711686511"], "conference.conferenceSequence.@value": ["item_1617187187528.subitem_1599711655652"], "type.@value": ["item_1617258105262.resourcetype"], "type.@attributes.rdf:resource": ["item_1617258105262.resourceuri"], "versiontype.@value": ["item_1617265215918.subitem_1522305645492"], "versiontype.@attributes.rdf:resource": ["item_1617265215918.subitem_1600292170262"], "contributor.givenName.@value": ["item_1617349709064.givenNames.givenName"], "contributor.givenName.@attributes.xml:lang": ["item_1617349709064.givenNames.givenNameLang"], "contributor.familyName.@value": ["item_1617349709064.familyNames.familyName"], "contributor.familyName.@attributes.xml:lang": ["item_1617349709064.familyNames.familyNameLang"], "contributor.@attributes.contributorType": ["item_1617349709064.contributorType"], "contributor.affiliation.nameIdentifier.@value": ["item_1617349709064.contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationNameIdentifier"], "contributor.affiliation.nameIdentifier.@attributes.nameIdentifierURI": ["item_1617349709064.contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationURI"], "contributor.affiliation.nameIdentifier.@attributes.nameIdentifierScheme": ["item_1617349709064.contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationScheme"], "contributor.affiliation.affiliationName.@value": ["item_1617349709064.contributorAffiliations.contributorAffiliationNames.contributorAffiliationName"], "contributor.affiliation.affiliationName.@attributes.xml:lang": ["item_1617349709064.contributorAffiliations.contributorAffiliationNames.contributorAffiliationNameLang"], "contributor.nameIdentifier.@value": ["item_1617349709064.nameIdentifiers.nameIdentifier"], "contributor.nameIdentifier.@attributes.nameIdentifierURI": ["item_1617349709064.nameIdentifiers.nameIdentifierURI"], "contributor.nameIdentifier.@attributes.nameIdentifierScheme": ["item_1617349709064.nameIdentifiers.nameIdentifierScheme"], "contributor.contributorName.@value": ["item_1617349709064.contributorNames.contributorName"], "contributor.contributorName.@attributes.xml:lang": ["item_1617349709064.contributorNames.lang"], "contributor.contributorAlternative.@value": ["item_1617349709064.contributorAlternatives.contributorAlternative"], "contributor.contributorAlternative.@attributes.xml:lang": ["item_1617349709064.contributorAlternatives.contributorAlternativeLang"], "version.@value": ["item_1617349808926.subitem_1523263171732"], "apc.@value": ["item_1617351524846.subitem_1523260933860"], "relation.@attributes.relationType": ["item_1617353299429.subitem_1522306207484"], "relation.relatedTitle.@value": ["item_1617353299429.subitem_1523320863692.subitem_1523320909613"], "relation.relatedTitle.@attributes.xml:lang": ["item_1617353299429.subitem_1523320863692.subitem_1523320867455"], "relation.relatedIdentifier.@value": ["item_1617353299429.subitem_1522306287251.subitem_1522306436033"], "relation.relatedIdentifier.@attributes.identifierType": ["item_1617353299429.subitem_1522306287251.subitem_1522306382014"], "file.URI.@value": ["item_1617605131499.url.url"], "file.URI.@attributes.label": ["item_1617605131499.url.label"], "file.URI.@attributes.objectType": ["item_1617605131499.url.objectType"], "file.date.@value": ["item_1617605131499.fileDate.fileDateValue"], "file.date.@attributes.dateType": ["item_1617605131499.fileDate.fileDateType"], "file.extent.@value": ["item_1617605131499.filesize.value"], "file.version.@value": ["item_1617605131499.version"], "file.mimeType.@value": ["item_1617605131499.format"], "rightsHolder.nameIdentifier.@value": ["item_1617610673286.nameIdentifiers.nameIdentifier"], "rightsHolder.nameIdentifier.@attributes.nameIdentifierURI": ["item_1617610673286.nameIdentifiers.nameIdentifierURI"], "rightsHolder.nameIdentifier.@attributes.nameIdentifierScheme": ["item_1617610673286.nameIdentifiers.nameIdentifierScheme"], "rightsHolder.rightsHolderName.@value": ["item_1617610673286.rightHolderNames.rightHolderName"], "rightsHolder.rightsHolderName.@attributes.xml:lang": ["item_1617610673286.rightHolderNames.rightHolderLanguage"], "degreeGrantor.nameIdentifier.@value": ["item_1617944105607.subitem_1551256015892.subitem_1551256027296"], "degreeGrantor.nameIdentifier.@attributes.nameIdentifierScheme": ["item_1617944105607.subitem_1551256015892.subitem_1551256029891"], "degreeGrantor.degreeGrantorName.@value": ["item_1617944105607.subitem_1551256037922.subitem_1551256042287"], "degreeGrantor.degreeGrantorName.@attributes.xml:lang": ["item_1617944105607.subitem_1551256037922.subitem_1551256047619"], "system_identifier.@value": ["system_identifier_doi.subitem_systemidt_identifier", "system_identifier_hdl.subitem_systemidt_identifier", "system_identifier_uri.subitem_systemidt_identifier"], "system_identifier.@attributes.identifierType": ["system_identifier_doi.subitem_systemidt_identifier_type", "system_identifier_hdl.subitem_systemidt_identifier_type", "system_identifier_uri.subitem_systemidt_identifier_type"]}
 #     def get_data_item_type(self):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_MappingData_get_data_by_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_MappingData_get_data_by_mapping(db_records,item_type):
+    mapping = MappingData(db_records[0][2].id)
+    result = mapping.get_data_item_type()
+    assert result == item_type
 #     def get_data_by_mapping(self, mapping_key, ignore_empty=False,
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_MappingData_get_data_by_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_MappingData_get_data_by_mapping(db_records,item_type):
+    record = db_records[0][2]
+    with patch("weko_workflow.utils.get_full_mapping",return_value={}):
+        mapping = MappingData(record=record)
+        result = mapping.get_data_by_mapping("test_key")
+        assert result == OrderedDict()
+    mapping = MappingData(record=record)
+    result = mapping.get_data_by_mapping("identifierRegistration.@value")
+    test = OrderedDict([("item_1617186819068.subitem_identifier_reg_text",['test/0000000001'])])
+    
+    assert result == test
+    # None attribute
+    result = mapping.get_data_by_mapping("system_file.URI.@value",ignore_empty=True)
+    assert result == OrderedDict()
+    
+    # hide_parent_key
+    result = mapping.get_data_by_mapping("identifierRegistration.@value",hide_parent_key=["item_1617186819068"])
+    assert result == OrderedDict()
+    
+    result = mapping.get_data_by_mapping("identifierRegistration.@value",hide_sub_keys=["item_1617186819068.subitem_identifier_reg_text"])
+    assert result == OrderedDict()
 #     def get_first_data_by_mapping(self, mapping_key):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_MappingData_get_first_data_by_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_MappingData_get_first_data_by_mapping(db_records,item_type,mocker):
+    mocker.patch("weko_workflow.utils.MappingData.get_data_by_mapping",return_value=OrderedDict([("item_1617186819068.subitem_identifier_reg_text",['test/0000000001'])]))
+    record = db_records[0][2]
+    mapping = MappingData(record=record)
+    result = mapping.get_first_data_by_mapping("identifierRegistration.@value")
+    assert result == ("item_1617186819068.subitem_identifier_reg_text",['test/0000000001'])
 #     def get_first_property_by_mapping(self, mapping_key, ignore_empty=False):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_MappingData_get_first_property_by_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_MappingData_get_first_property_by_mapping(db_records,item_type,mocker):
+    mocker.patch("weko_workflow.utils.MappingData.get_data_by_mapping",return_value=OrderedDict([("item_1617186819068.subitem_identifier_reg_text",['test/0000000001'])]))
+    record = db_records[0][2]
+    mapping = MappingData(record=record)
+    result = mapping.get_first_property_by_mapping("identifierRegistration.@value")
+    assert result == "item_1617186819068.subitem_identifier_reg_text"
 # def get_sub_item_value(atr_vm, key):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_sub_item_value():
@@ -423,17 +598,149 @@ def test_get_item_value_in_deep():
     for i,r in enumerate(result):
         assert r == test[i]
 
-
 #     def __init__(self, item_id):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_IdentifierHandle___init__ -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_IdentifierHandle___init__(db_records,item_type):
+    item_id = db_records[0][2].id
+    handle = IdentifierHandle(item_id)
+    assert handle.item_uuid == item_id
+    assert handle.item_type_id == item_type.id
+    assert handle.item_metadata == db_records[0][3]
+    assert handle.item_record == db_records[0][2]
+    
 #     def get_pidstore(self, pid_type='doi', object_uuid=None):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_IdentifierHandle_get_pidstore -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_IdentifierHandle_get_pidstore(db_records,item_type,mocker):
+    
+    item_id = db_records[0][2].id
+    handle = IdentifierHandle(item_id)
+    mock_get_pid = mocker.patch("weko_workflow.utils.get_parent_pid_with_type")
+    result = handle.get_pidstore(pid_type="doi",object_uuid="test_uuid")
+    mock_get_pid.assert_called_with("doi","test_uuid")
+    
+    mock_get_pid = mocker.patch("weko_workflow.utils.get_parent_pid_with_type")
+    result = handle.get_pidstore(pid_type="rec")
+    mock_get_pid.assert_called_with("rec",item_id)
 #     def check_pidstore_exist(self, pid_type, chk_value=None):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_IdentifierHandle_check_pidstore_exist -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_IdentifierHandle_check_pidstore_exist(db_records,item_type):
+    item_id = db_records[0][2].id
+    handle = IdentifierHandle(item_id)
+    # chk_value is None
+    result = handle.check_pidstore_exist("recid",None)
+    assert result == [db_records[0][0]]
+    
+    # exist chk_value
+    result = handle.check_pidstore_exist("recid",db_records[1][0].pid_value)
+    assert result == db_records[1][0]
+    
+    # not exist pid
+    result = handle.check_pidstore_exist("recid","not exist pid")
+    assert result == None
 #     def register_pidstore(self, pid_type, reg_value):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_IdentifierHandle_register_pidstore -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_IdentifierHandle_register_pidstore(db_records,item_type):
+    item_id = db_records[0][2].id
+    handle = IdentifierHandle(item_id)
+    with patch("weko_workflow.utils.IdentifierHandle.check_pidstore_exist",return_value=[db_records[0][0]]):
+        result = handle.register_pidstore("recid",db_records[0][0].pid_value)
+        assert result == False
+    with patch("weko_workflow.utils.IdentifierHandle.check_pidstore_exist",side_effect=Exception):
+        result = handle.register_pidstore("recid",db_records[0][0].pid_value)
+        assert result == False
+    with patch("weko_workflow.utils.IdentifierHandle.check_pidstore_exist",return_value=None):
+        result = handle.register_pidstore("oai","oai:localhost:00000001")
+        assert result.pid_type == "oai"
+        assert result.pid_value=="oai:localhost:00000001"
+        assert result.object_type == "rec"
+        assert result.object_uuid == item_id
+        
+    
 #     def delete_pidstore_doi(self, pid_value=None):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_IdentifierHandle_delete_pidstore_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_IdentifierHandle_delete_pidstore_doi(db_records,item_type,mocker):
+    mocker.patch("weko_workflow.utils.IdentifierHandle.remove_idt_registration_metadata")
+    item_id = db_records[1][2].id
+    handle = IdentifierHandle(item_id)
+    with patch("weko_workflow.utils.PersistentIdentifier.delete",side_effect=PIDDoesNotExistError):
+        result = handle.delete_pidstore_doi()
+        assert result == False
+    with patch("weko_workflow.utils.PersistentIdentifier.delete",side_effect=Exception):
+        result = handle.delete_pidstore_doi()
+        assert result == False
+    result = handle.delete_pidstore_doi()
+    assert result == True
+    result = handle.delete_pidstore_doi()
+    assert result == False
 #     def remove_idt_registration_metadata(self):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_IdentifierHandle_remove_idt_registration_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_IdentifierHandle_remove_idt_registration_metadata(db_records,item_type,mocker):
+    mocker.patch("weko_workflow.utils.WekoDeposit.update")
+    mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+    key = "item_1617186819068.subitem_identifier_reg_text"
+    mocker.patch("weko_workflow.utils.MappingData.get_first_property_by_mapping",return_value=key)
+    item_id = db_records[0][2].id
+    handle = IdentifierHandle(item_id)
+    result = handle.remove_idt_registration_metadata()
+    assert handle.item_metadata["deleted_items"] == ["item_1617186819068"]
 #     def update_idt_registration_metadata(self, input_value, input_type):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_IdentifierHandle_update_idt_registration_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_IdentifierHandle_update_idt_registration_metadata(db_records,item_type,mocker):
+    item_id = db_records[0][2].id
+    handle = IdentifierHandle(item_id)
+    value = "item_1617186819068.subitem_identifier_reg_text"
+    identifier_type = "item_1617186819068.subitem_identifier_reg_type"
+    mocker.patch("weko_workflow.utils.MappingData.get_first_property_by_mapping",side_effect=[value,identifier_type])
+    mock_commit = mocker.patch("weko_workflow.utils.IdentifierHandle.commit")
+    handle.update_idt_registration_metadata("input_value","input_type")
+    mock_commit.assert_called_with(
+        key_id="item_1617186819068",
+        key_val="subitem_identifier_reg_text",
+        key_typ="subitem_identifier_reg_type",
+        atr_nam="Identifier Registration",
+        atr_val="input_value",
+        atr_typ="input_type"
+    )
 #     def get_idt_registration_data(self):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_IdentifierHandle_get_idt_registration_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_IdentifierHandle_get_idt_registration_data(db_records,item_type,mocker):
+    item_id = db_records[0][2].id
+    handle = IdentifierHandle(item_id)
+
+    mocker.patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",side_effect=[
+        ("item_1617186819068.subitem_identifier_reg_text",['test/0000000001']),
+        ("item_1617186819068.subitem_identifier_reg_type",['JaLC'])])
+    res_value, res_type = handle.get_idt_registration_data()
+    assert res_value == ['test/0000000001']
+    assert res_type == ['JaLC']
 #     def commit(self, key_id, key_val, key_typ, atr_nam, atr_val, atr_typ):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_IdentifierHandle_commit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_IdentifierHandle_commit(db_records,item_type,mocker):
+    mocker.patch("weko_workflow.utils.WekoDeposit.update")
+    mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+    key = "item_1617186819068"
+    
+    item_id = db_records[0][2].id
+    handle = IdentifierHandle(item_id)
+
+    handle.commit(
+        key_id="item_1617186819068",
+        key_val="subitem_identifier_reg_text",
+        key_typ="subitem_identifier_reg_type",
+        atr_nam="not Identifier Registration",
+        atr_val="new identifier value",
+        atr_typ="new identifier type"
+    )
+    
+    handle.commit(
+        key_id="item_1617186819068",
+        key_val="subitem_identifier_reg_text",
+        key_typ="subitem_identifier_reg_type",
+        atr_nam="Identifier Registration",
+        atr_val="new identifier value",
+        atr_typ="new identifier type"
+    )
+
 
 # def delete_bucket(bucket_id):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -1133,7 +1440,7 @@ def test_get_approval_dates(app,mocker):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_item_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_item_info(db_records):
     result = get_item_info(db_records[0][3].id)
-    assert result == {'type': 'depid', 'value': '1', 'revision_id': 0, 'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': '', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper', 'subitem_thumbnail': [{'thumbnail_url': '/api/files/29ad484d-4ed1-4caf-8b21-ab348ae7bf28/test.png?versionId=ecd5715e-4ca5-4e45-b93c-5089f52860a0', 'thumbnail_label': 'test.png'}]}
+    assert result == {'type': 'depid', 'value': '1', 'revision_id': 0, 'subitem_identifier_reg_text': 'test/0000000001','subitem_identifier_reg_type': 'JaLC','email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': '', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper', 'subitem_thumbnail': [{'thumbnail_url': '/api/files/29ad484d-4ed1-4caf-8b21-ab348ae7bf28/test.png?versionId=ecd5715e-4ca5-4e45-b93c-5089f52860a0', 'thumbnail_label': 'test.png'}]}
     print("reslt:{}".format(result))
     
     with patch("weko_workflow.utils.ItemsMetadata.get_record",side_effect=Exception("test error")):
@@ -1528,7 +1835,7 @@ def test_modify_item_metadata(app,db,db_register,users,mocker):
         "subitem_identifier_reg_type":"item_1617186819068"
     }
     
-    test = {'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'related_title - ja_usage_title - 2 - ', 'owners': [1], 'status': 'published', '$schema': 'items/jsonschema/1', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}
+    test = {'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'related_title - ja_usage_title - 2 - ', 'owners': [1], 'status': 'published', '$schema': 'items/jsonschema/1', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], "item_1617186819068":{'subitem_identifier_reg_text': 'test_2/0000000001','subitem_identifier_reg_type': 'JaLC'},'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}
     mocker.patch("weko_workflow.utils.get_shema_dict",return_value=schema_dict)
     result = modify_item_metadata(item,item_type_id,"new activity",activity_id,
                          data_dict,schema,owner_id,related_title)
@@ -2103,7 +2410,7 @@ def test___init_activity_detail_data_for_guest(app,db,users,db_register,mocker):
             step_item_login_url="weko_items_ui/iframe/item_edit.html",
             need_file=True,
             need_billing_file=False,
-            records={'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'title', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}},
+            records={'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'title', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617186819068': {'subitem_identifier_reg_text': 'test_2/0000000001','subitem_identifier_reg_type': 'JaLC'},   'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}},
             record=[],
             jsonschema="/items/jsonschema/1",
             schemaform="/items/schemaform/1",
@@ -2115,7 +2422,6 @@ def test___init_activity_detail_data_for_guest(app,db,users,db_register,mocker):
             allow_multi_thumbnail=False,
             id=db_register["workflow"].itemtype_id,
         )
-
         result = __init_activity_detail_data_for_guest(activity_id,community_id)
         assert result == test
 
@@ -2522,13 +2828,29 @@ def test_update_approval_date(app,db_register,mocker):
     with patch("weko_workflow.utils.get_sub_key_by_system_property_key",return_value=("approval_date_key","approval_date_value")):
         update_approval_date(activity)
 # def create_record_metadata_for_user(usage_application_activity, usage_report):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_create_record_metadata_for_user(app,db_register,mocker):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_create_record_metadata_for_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_create_record_metadata_for_user(app,db_register,db_records,mocker):
     mock_update_deposit = mocker.patch("weko_workflow.utils.update_system_data_for_item_metadata")
     mock_update_metadata = mocker.patch("weko_workflow.utils.update_approval_date_for_deposit")
     mock_update_system = mocker.patch("weko_workflow.utils.update_system_data_for_activity")
+    activity1 = db_register["activities"][1]
+    activity2 = db_register["activities"][2]
+    deposit_without_ver = db_records[0][6]
+    item_id_without_ver = db_records[0][0].object_uuid
+    sub_system_data_key = "item_1617186476635"
+    attribute_name = "Access Rights"
     
-    activitiy = db_register["activities"][0]
+    # not exist sub_system_data_key
+    mocker.patch("weko_workflow.utils.get_sub_key_by_system_property_key",return_value=(None,None))
+    create_record_metadata_for_user(activity1,activity2)
+    # exist sub_system_data_key,not exist item_id_without_ver
+    mocker.patch("weko_workflow.utils.get_sub_key_by_system_property_key",return_value=(sub_system_data_key,attribute_name))
+    mocker.patch("weko_workflow.utils.get_record_first_version",return_value=(None,None))
+    create_record_metadata_for_user(activity1,activity2)
+    # exist sub_system_data_key,exist item_id_without_ver
+    mocker.patch("weko_workflow.utils.get_sub_key_by_system_property_key",return_value=(sub_system_data_key,attribute_name))
+    mocker.patch("weko_workflow.utils.get_record_first_version",return_value=(deposit_without_ver,item_id_without_ver))
+    create_record_metadata_for_user(activity1,activity2)
 # def get_current_date():
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_date -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_current_date(mocker):
@@ -2577,7 +2899,7 @@ def test_update_approval_date_for_deposit(db_records):
     assert deposit[date_key] is not None
     assert deposit[date_key] == {"attribute_name":attribute_name,"attribute_value_mlt":[approval_date]}
 # def update_system_data_for_activity(activity, sub_system_data_key,
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_update_system_data_for_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_update_system_data_for_activity(db_register):
     update_system_data_for_activity(None,None,None)
     
@@ -2585,14 +2907,37 @@ def test_update_system_data_for_activity(db_register):
     value = {"data_key":"data_value"}
     activity = db_register["activities"][1]
     update_system_data_for_activity(activity,key,value)
-    assert activity.temp_data == {"metainfo":{key:value}}
+    assert activity.temp_data == '{"metainfo": {"temp_key": {"data_key": "data_value"}}}'
     
     activity = db_register["activities"][2]
     update_system_data_for_activity(activity,key,value)
-    assert activity.temp_data == {"description":"this is temp_data","metainfo":{key:value}}
+    assert activity.temp_data == '{"description": "this is temp_data", "metainfo": {"temp_key": {"data_key": "data_value"}}}'
 # def check_authority_by_admin(activity):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_check_authority_by_admin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_check_authority_by_admin(app,db_register,users):
+    activity = db_register["activities"][1]
+    with app.test_request_context():
+        # user's role is super role
+        login_user(users[2]["obj"])
+        result = check_authority_by_admin(activity)
+        assert result == True
+        logout_user()
+        
+        # user not have community_role
+        login_user(users[4]["obj"])
+        result = check_authority_by_admin(activity)
+        assert result == False
+        logout_user()
+        
+        # user have community_role, activity.login_user
+        login_user(users[3]["obj"])
+        result = check_authority_by_admin(activity)
+        assert result == True
+        
+        # user have community_role, not activity.login_user
+        activity = db_register["activities"][2]
+        result = check_authority_by_admin(activity)
+        assert result == False
 # def get_record_first_version(deposit):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_record_first_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_record_first_version(db_register,db_records):
@@ -2605,27 +2950,139 @@ def test_get_record_first_version(db_register,db_records):
     assert result_deposit == db_records[0][6]
     assert pid == db_records[0][0].object_uuid
 # def get_files_and_thumbnail(activity_id, item):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_files_and_thumbnail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_files_and_thumbnail(db_register,db_records,add_file,mocker):
+    activity = db_register["activities"][5]
+    item = db_records[1][3]
+    
+    # exist metadata
+    files, thums = get_files_and_thumbnail(activity.activity_id,item)
+    assert files == [{"is_thumbnail": True,"key": "test_thumbnail.png"},{"is_thumbnail": False,"key":"test_file.txt"}]
+    assert thums == [{"is_thumbnail": True,"key": "test_thumbnail.png"}]
+    
+    # not exist metadata
+    version_id1 = uuid.uuid4()
+    version_id2 = uuid.uuid4()
+    mocker.patch("invenio_files_rest.models.uuid.uuid4",return_value = version_id1)
+    bucket,_=add_file(db_records[0][2],filename="check_2022-03-10.tsv",version_id=version_id2)
+    print("after add")
+    activity = db_register["activities"][4]
+    item = db_records[0][3]
+    link = "/api/files/{}/check_2022-03-10.tsv?versionId={}".format(bucket.id,version_id1)
+    files, thums = get_files_and_thumbnail(activity.activity_id,item)
+    assert files == [{'displaytype': '', 'filename': '', 'mimetype': 'text/tab-separated-values', 'licensetype': '', 'key': 'check_2022-03-10.tsv', 'version_id': str(version_id1), 'checksum': 'sha256:fcacc4c6fc78a8a1429ed41c59bbca3b1052eeb3f9323725ce198d1ea8c32e06', 'size': 12, 'completed': True, 'progress': 100, 'links': {'self': link}, 'is_show': False, 'is_thumbnail': False}]
+    assert thums == []
+    
+    activity = db_register["activities"][1]
+    item = db_records[2][3]
+    files, thums = get_files_and_thumbnail(activity.activity_id,item)
+    assert files == []
+    assert thums == []
 # def get_pid_and_record(item_id):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_pid_and_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_pid_and_record(db_records):
+    item_id = db_records[0][0].object_uuid
+    recid, record = get_pid_and_record(item_id)
+    assert recid == db_records[0][0]
+    assert record == db_records[0][2]
 # def get_items_metadata_by_activity_detail(activity_detail):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_items_metadata_by_activity_detail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_items_metadata_by_activity_detail(db_register,db_records):
+    activity = db_register["activities"][1]
+    result = get_items_metadata_by_activity_detail(activity)
+    assert result == db_records[2][3]
+    
+    activity = db_register["activities"][0]
+    result = get_items_metadata_by_activity_detail(activity)
+    assert result == None
 # def get_main_record_detail(activity_id,
 #     def check_record(record):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-
+def test_get_main_record_detail(db_register):
+    pass
 # def prepare_doi_link_workflow(item_id, doi_input):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_doi_link_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_doi_link_workflow(app,db_records,db_register,mocker):
+    with app.test_request_context():
+        with patch("weko_workflow.utils.get_identifier_setting",return_value=db_register["identifiers"][0]):
+            request_mock = mocker.patch.object(flask, "request")
+            request_mock.get_json.return_value={"community":"Root Index"}
+            item_id = db_records[0][0].id
+            _item_id = '%010d' % int(item_id)
+            doi_input = {"action_identifier_jalc_doi":"_testdoi"}
 
+            # suffix_method = 0
+            test = {
+                'identifier_grant_jalc_doi_link': "https://doi.org/123/"+_item_id,
+                'identifier_grant_jalc_cr_doi_link': "https://doi.org/1234/"+_item_id,
+                'identifier_grant_jalc_dc_doi_link': "https://doi.org/12345/"+str(item_id),
+                'identifier_grant_ndl_jalc_doi_link': "https://doi.org/123456/"+_item_id
+            }
+            result = prepare_doi_link_workflow(item_id,doi_input)
+            assert result == test
+
+            # suffix_method = 1
+            current_app.config.update(
+                IDENTIFIER_GRANT_SUFFIX_METHOD=1
+            )
+            test = {
+                'identifier_grant_jalc_doi_link': "https://doi.org/123/def_testdoi",
+                'identifier_grant_jalc_cr_doi_link': "https://doi.org/1234/def_testdoi",
+                'identifier_grant_jalc_dc_doi_link': "https://doi.org/12345/def_testdoi",
+                'identifier_grant_ndl_jalc_doi_link': "https://doi.org/123456/def_testdoi"
+            }
+            result = prepare_doi_link_workflow(item_id,doi_input)
+            assert result == test
+
+            # suffix_method = 2
+            current_app.config.update(
+                IDENTIFIER_GRANT_SUFFIX_METHOD=2
+            )
+            test = {
+                'identifier_grant_jalc_doi_link': "https://doi.org/123/_testdoi",
+                'identifier_grant_jalc_cr_doi_link': "https://doi.org/1234/_testdoi",
+                'identifier_grant_jalc_dc_doi_link': "https://doi.org/12345/_testdoi",
+                'identifier_grant_ndl_jalc_doi_link': "https://doi.org/123456/_testdoi"
+            }
+            result = prepare_doi_link_workflow(item_id,doi_input)
+            assert result == test
+        # identifier setting empty
+        with patch("weko_workflow.utils.get_identifier_setting",return_value=db_register["identifiers"][1]):
+            request_mock = mocker.patch.object(flask, "request")
+            request_mock.get_json.return_value={"community":"test"}
+            test = {
+                'identifier_grant_jalc_doi_link': "https://doi.org/<Empty>/_testdoi",
+                'identifier_grant_jalc_cr_doi_link': "https://doi.org/<Empty>/_testdoi",
+                'identifier_grant_jalc_dc_doi_link': "https://doi.org/<Empty>/_testdoi",
+                'identifier_grant_ndl_jalc_doi_link': "https://doi.org/<Empty>/_testdoi"
+            }
+            result = prepare_doi_link_workflow(item_id,doi_input)
+            assert result == test
+        
+        # not exist identifier_setting
+        with patch("weko_workflow.utils.get_identifier_setting",return_value=None):
+            result = prepare_doi_link_workflow(item_id,doi_input)
+            assert result == {}
 # def get_pid_value_by_activity_detail(activity_detail):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_pid_value_by_activity_detail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_pid_value_by_activity_detail(db_register):
+    # not exist temp_data
+    activity = db_register["activities"][1]
+    result = get_pid_value_by_activity_detail(activity)
+    assert result == None
+    # exist temp_data, not exist endpoint
+    activity = db_register["activities"][4]
+    result = get_pid_value_by_activity_detail(activity)
+    assert result == None
+    # exist temp_data, exist endpoint, len_endpoint > 0
+    activity = db_register["activities"][5]
+    result = get_pid_value_by_activity_detail(activity)
+    assert result == "endpoint1"
 
 # def check_doi_validation_not_pass(item_id, activity_id,
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-
+def test_check_doi_validation_not_pass():
+    pass
 
 def test_get_index_id():
     """Get index ID base on activity id"""
