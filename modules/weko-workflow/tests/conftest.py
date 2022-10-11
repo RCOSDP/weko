@@ -65,11 +65,12 @@ from weko_records.api import Mapping
 from weko_records_ui.models import FilePermission
 from weko_user_profiles import WekoUserProfiles
 from weko_index_tree.models import Index
-from weko_search_ui import WekoSearchUI
+
 from weko_workflow import WekoWorkflow
 from weko_search_ui import WekoSearchUI
-from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory
-from weko_workflow.views import blueprint as weko_workflow_blueprint
+from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory,GuestActivity
+from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
+from weko_workflow.config import WEKO_WORKFLOW_GAKUNINRDM_DATA,WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
@@ -472,12 +473,25 @@ def base_app(instance_path, search_class, cache_config):
         DEPOSIT_DEFAULT_JSONSCHEMA = 'deposits/deposit-v1.0.0.json',
         WEKO_RECORDS_UI_SECRET_KEY = "secret",
         WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN = "filename={} record_id={} user_mail={} date={}",
-        DEPOSIT_FILES_API = '/api/files'
+        DEPOSIT_FILES_API = '/api/files',
+        WEKO_WORKFLOW_ACTION_START=WEKO_WORKFLOW_ACTION_START,
+        WEKO_WORKFLOW_ACTION_END=WEKO_WORKFLOW_ACTION_END,
+        WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION=WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,
+        WEKO_WORKFLOW_ACTION_APPROVAL=WEKO_WORKFLOW_ACTION_APPROVAL,
+        WEKO_WORKFLOW_ACTION_ITEM_LINK=WEKO_WORKFLOW_ACTION_ITEM_LINK,
+        WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION=WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,
+        WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT=WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,
+        WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION=WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,
+        WEKO_WORKFLOW_ACTION_GUARANTOR=WEKO_WORKFLOW_ACTION_GUARANTOR,
+        WEKO_WORKFLOW_ACTION_ADVISOR=WEKO_WORKFLOW_ACTION_ADVISOR,
+        WEKO_WORKFLOW_ACTION_ADMINISTRATOR=WEKO_WORKFLOW_ACTION_ADMINISTRATOR,
+        WEKO_WORKFLOW_GAKUNINRDM_DATA=WEKO_WORKFLOW_GAKUNINRDM_DATA,
     )
     
     app_.testing = True
     Babel(app_)
     InvenioI18N(app_)
+    Menu(app_)
     # InvenioTheme(app_)
     InvenioAccess(app_)
     InvenioAccounts(app_)
@@ -556,6 +570,7 @@ def guest(client):
 def req_context(client,app):
     with app.test_request_context():
         yield client
+        
 @pytest.fixture
 def redis_connect(app):
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
@@ -718,6 +733,7 @@ def action_data(db):
         db.session.add_all(actionstatus_db)
     db.session.commit()
     return actions_db, actionstatus_db
+
 @pytest.fixture()
 def db_itemtype(app, db):
     item_type_name = ItemTypeName(id=1,
@@ -800,6 +816,7 @@ def identifier(db):
     db.session.add(doi_identifier)
     db.session.commit()
     return doi_identifier
+
 @pytest.fixture()
 def db_register(app, db, db_records, users, action_data, item_type):
     flow_define = FlowDefine(flow_id=uuid.uuid4(),
@@ -1082,7 +1099,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
 
 @pytest.fixture()
 def workflow(app, db, item_type, action_data, users):
-    flow_define = FlowDefine(flow_id=uuid.uuid4(),
+    flow_define = FlowDefine(id=1,flow_id=uuid.uuid4(),
                              flow_name='Registration Flow',
                              flow_user=1)
     with db.session.begin_nested():
@@ -1513,6 +1530,7 @@ def site_info(db):
         "notify":["test_notify"],
     }
     SiteInfo.update(site_info)
+
 @pytest.fixture()
 def get_mapping_data(db):
     def factory(item_id):
@@ -1521,8 +1539,13 @@ def get_mapping_data(db):
     return factory
 
 
-
-
+@pytest.fixture()
+def db_guestactivity(db):
+    record = GuestActivity(user_mail="user_mail",record_id="record_id",file_name="file_name",activity_id="activity_id",token="token",expiration_date=datetime.utcnow(),is_usage_report=False)
+    with db.session.begin_nested():
+        db.session.add(record)
+    db.session.commit()
+    
 
 
 

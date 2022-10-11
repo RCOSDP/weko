@@ -292,9 +292,12 @@ def test_register_hdl_by_handle(db_records,item_type):
     
 
 # def item_metadata_validation(item_id, identifier_type, record=None,
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_item_metadata_validation(db_records):#xxx
-    result = item_metadata_validation()
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_item_metadata_validation -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_item_metadata_validation(db_records):
+    recid, depid, record, item, parent, doi, deposit = db_records[0]
+    result = item_metadata_validation(recid.id,"hdl")
+    assert result == ""
+    
 # def merge_doi_error_list(current, new):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_merge_doi_error_list():#c
