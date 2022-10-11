@@ -256,8 +256,20 @@ def test_create_usage_report_for_user():
 
 # def get_data_usage_application_data(record_metadata, data_result: dict):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_data_usage_application_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_data_usage_application_data():
-    assert False
+def test_get_data_usage_application_data(app, db, workflows, records, users, db_file_permission):
+    _onetime_download_extra_info = {
+        'usage_application_activity_id': 'usage_application_activity_id_dummy1',
+        'is_guest': False
+    }
+    app.config['WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME'] = 'Data Usage Report'
+    app.config['WEKO_WORKFLOW_ENABLE_SHOWING_TERM_OF_USE'] = False
+    app.config['WEKO_WORKFLOW_ACTIVITY_ID_FORMAT'] = 'A-{}-{}'
+    app.config['WEKO_WORKFLOW_RESTRICTED_ACCESS_USAGE_REPORT_ID'] = 'subitem_restricted_access_usage_report_id'
+    assert create_usage_report_for_user(_onetime_download_extra_info)
+
+    _onetime_download_extra_info['is_guest'] = True
+    with app.test_request_context():
+        assert create_usage_report_for_user(_onetime_download_extra_info)==None
 
 # def send_usage_report_mail_for_user(guest_mail: str, temp_url: str):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_send_usage_report_mail_for_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -266,8 +278,18 @@ def test_send_usage_report_mail_for_user():
 
 # def check_and_send_usage_report(extra_info, user_mail):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_check_and_send_usage_report -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_check_and_send_usage_report():
-    assert False
+def test_check_and_send_usage_report(app, db, workflows, records, users, db_file_permission):
+    _record = {
+        'recid': db_file_permission[0].record_id
+    }
+    _file_obj = {
+        'accessrole': 'open_restricted',
+        'filename': db_file_permission[0].file_name
+    }
+    app.config['WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME'] = 'Data Usage Report'
+    with patch("flask_login.utils._get_user", return_value=users[7]['obj']):
+        with patch("weko_workflow.utils.create_record_metadata", return_value='usage_report_activity_0'):
+            assert check_and_create_usage_report(_record, _file_obj)==None
 
 # def generate_one_time_download_url(
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_generate_one_time_download_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -282,8 +304,6 @@ def test_generate_one_time_download_url(app):
         token = (token_str.decode('utf-8')).split(' ')
         assert token[0] == record_id
         assert token[1] == guest_mail
-        assert token[3] == '4E1CF41428AAC4B3'
-        
         
 
 # def parse_one_time_download_token(token: str) -> Tuple[str, Tuple]:
@@ -377,9 +397,13 @@ def test_display_oaiset_path(app,records,itemtypes,oaischema,users):
 # def get_google_scholar_meta(record):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_google_scholar_meta -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_get_google_scholar_meta(app,records,itemtypes,oaischema,oaiidentify):
-    indexer, results = records
-    record = results[0]["record"]
-    assert get_google_scholar_meta(record)==None
+    _data = '<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><responseDate>2022-10-07T06:11:40Z</responseDate><request identifier="oai:repository.dl.itc.u-tokyo.ac.jp:02005680" verb="getrecord" metadataPrefix="jpcoar_1.0">https://repository.dl.itc.u-tokyo.ac.jp/oai</request><getrecord><record><header><identifier>oai:repository.dl.itc.u-tokyo.ac.jp:02005680</identifier><datestamp>2022-09-27T06:40:27Z</datestamp></header><metadata><jpcoar:jpcoar xmlns:datacite="https://schema.datacite.org/meta/kernel-4/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:jpcoar="https://github.com/JPCOAR/schema/blob/master/1.0/" xmlns:oaire="http://namespace.openaire.eu/schema/oaire/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rioxxterms="http://www.rioxx.net/schema/v2.0/rioxxterms/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="https://github.com/JPCOAR/schema/blob/master/1.0/" xsi:schemaLocation="https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd"><dc:title xml:lang="ja">『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表</dc:title><jpcoar:creator><jpcoar:nameIdentifier nameIdentifierURI="https://orcid.org/123" nameIdentifierScheme="ORCID">123</jpcoar:nameIdentifier><jpcoar:creatorName xml:lang="en">creator name</jpcoar:creatorName><jpcoar:familyName xml:lang="en">creator family name</jpcoar:familyName><jpcoar:givenName xml:lang="en">creator given name</jpcoar:givenName><jpcoar:creatorAlternative xml:lang="en">creator alternative name</jpcoar:creatorAlternative><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="test uri" nameIdentifierScheme="ISNI">affi name id</jpcoar:nameIdentifier><jpcoar:affiliationName xml:lang="en">affi name</jpcoar:affiliationName></jpcoar:affiliation></jpcoar:creator><dc:rights>CC BY</dc:rights><datacite:description xml:lang="ja" descriptionType="Other">『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。</datacite:description><dc:publisher xml:lang="ja">東京大学史料編纂所附属画像史料解析センター</dc:publisher><dc:publisher xml:lang="en">Center for the Study of Visual Sources, Historiographical Institute, The University of Tokyo</dc:publisher><datacite:date dateType="Issued">2022-09-30</datacite:date><dc:language>jpn</dc:language><dc:type rdf:resource="http://purl.org/coar/resource_type/c_ddb1">dataset</dc:type><jpcoar:identifier identifierType="HDL">http://hdl.handle.net/2261/0002005680</jpcoar:identifier><jpcoar:identifier identifierType="URI">https://repository.dl.itc.u-tokyo.ac.jp/records/2005680</jpcoar:identifier><jpcoar:relation relationType="references"><jpcoar:relatedIdentifier identifierType="URI">https://clioimg.hi.u-tokyo.ac.jp/viewer/list/idata/850/8500/20/%28a%29/?m=limit</jpcoar:relatedIdentifier></jpcoar:relation><datacite:geoLocation><datacite:geoLocationPoint><datacite:pointLongitude>point longitude test</datacite:pointLongitude><datacite:pointLatitude>point latitude test</datacite:pointLatitude></datacite:geoLocationPoint><datacite:geoLocationBox><datacite:westBoundLongitude>1</datacite:westBoundLongitude><datacite:eastBoundLongitude>2</datacite:eastBoundLongitude><datacite:southBoundLatitude>3</datacite:southBoundLatitude><datacite:northBoundLatitude>4</datacite:northBoundLatitude></datacite:geoLocationBox><datacite:geoLocationPlace>geo location place test</datacite:geoLocationPlace></datacite:geoLocation><jpcoar:file><jpcoar:URI objectType="dataset">https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx</jpcoar:URI><jpcoar:mimeType>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</jpcoar:mimeType><jpcoar:extent>121.7KB</jpcoar:extent><datacite:date dateType="Available">2022-09-27</datacite:date></jpcoar:file></jpcoar:jpcoar></metadata></record></getrecord></OAI-PMH>'
+    _rv = etree.fromstring(_data)
+    with patch("weko_records_ui.utils.getrecord", return_value=_rv):
+        with app.test_request_context():
+            indexer, results = records
+            record = results[0]["record"]
+            assert get_google_scholar_meta(record)==[{'data': '『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表', 'name': 'citation_title'}, {'data': '東京大学史料編纂所附属画像史料解析センター', 'name': 'citation_publisher'}, {'data': '2022-09-30', 'name': 'citation_publication_date'}, {'data': 'creator name', 'name': 'citation_author'}, {'data': 'https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx',  'name': 'citation_pdf_url'}, {'data': '', 'name': 'citation_dissertation_institution'}, {'data': 'http://TEST_SERVER/records/1', 'name': 'citation_abstract_html_url'}]
 
 
 # def get_google_detaset_meta(record):

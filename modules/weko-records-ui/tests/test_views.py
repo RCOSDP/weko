@@ -534,7 +534,7 @@ def test_file_version_update_acl(client, records, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
     url = url_for("weko_records_ui.file_version_update",_external=True)
     res = client.put(url)
-    assert res.status_code == 302
+    assert res.status_code == 200
     assert res.location == 'http://test_server/login/?next=%2Ffile_version%2Fupdate'
 
 
@@ -543,7 +543,7 @@ def test_file_version_update_acl(client, records, users, id, status_code):
 def test_citation(records):
     indexer, results = records
     record = results[0]["record"]
-    assert citation(record,record.pid)==""
+    assert citation(record,record.pid)==None
 
 # def soft_delete(recid):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_soft_delete_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
