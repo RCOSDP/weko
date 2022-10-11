@@ -1225,15 +1225,11 @@ def db_records(db, location):
 def add_file(db, location):
     def factory(record, contents=b'test example', filename="generic_file.txt",version_id=None):
         b = Bucket.create()
-        print("11")
         r = RecordsBuckets.create(bucket=b, record=record.model)
-        print("12")
         ObjectVersion.create(b,filename,version_id=version_id)
-        print("13")
         stream = BytesIO(contents)
         record.files[filename] = stream
         record.files.dumps()
-        print("14")
         record.commit()
         db.session.commit()
         return b,r
