@@ -785,7 +785,10 @@ def test_handle_check_doi(app):
         "status": "keep"
     }
     mock = MagicMock()
-    mock.pid_recid = 1
+    mock2 = MagicMock()
+    mock3 = MagicMock()
+    mock2.object_uuid = mock3
+    mock.pid_recid = mock2
     
     # def myfunc():
     #     return 1,2
@@ -1248,10 +1251,13 @@ def test_delete_exported(i18n_app, file_instance_mock):
     assert not delete_exported(file_path, "key")
 
 
-# def cancel_export_all(): ~ GETS STUCK
+# def cancel_export_all():
 # def test_cancel_export_all(i18n_app, users):
-#     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-#         assert cancel_export_all()
+    # with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        # with patch("weko_admin.utils.get_redis_cache", return_value=""):
+            # with patch("weko_search_ui.utils.get_export_status", return_value=True):
+                # with patch("celery.task.control.revoke", return_value=""):
+                # assert cancel_export_all()
 
 
 # def get_export_status():
@@ -1314,6 +1320,7 @@ def test_handle_check_file_metadata(i18n_app, record_with_metadata):
     # Doesn't return any value
     assert not handle_check_file_metadata(list_record, data_path)
 
+    # with patch("weko_search_ui.utils.handle_check_file_content", return_value=):
 
 # def handle_check_file_path(paths, data_path, is_new=False, is_thumbnail=False, is_single_thumbnail=False):
 def test_handle_check_file_path(i18n_app):
@@ -1333,10 +1340,14 @@ def test_handle_check_file_content(i18n_app, record_with_metadata):
 
 # def handle_check_thumbnail(record, data_path):
 def test_handle_check_thumbnail(i18n_app, record_with_metadata):
-    list_record = record_with_metadata[0]
+    record = record_with_metadata[0]
     data_path = "test/test/test"
 
-    assert handle_check_thumbnail(list_record, data_path)
+    assert handle_check_thumbnail(record, data_path)
+
+    record = {"thumbnail_path": "/", "status": "new"}
+    with patch("weko_search_ui.utils.handle_check_file_path", return_value=("error", "warning")):
+        assert handle_check_thumbnail(record, data_path)
 
 
 # def get_key_by_property(record, item_map, item_property):
@@ -1346,15 +1357,20 @@ def test_get_key_by_property(i18n_app):
     item_property = "item_property"
 
     assert get_key_by_property(record, item_map, item_property)
+    assert not get_key_by_property("", {}, "")
 
 
 # def get_data_by_property(item_metadata, item_map, mapping_key):
 def test_get_data_by_property(i18n_app):
     item_metadata = {}
-    item_map = {"mapping_key": "{'test': 1}.test"}
+    item_map = {"mapping_key": "test.test"}
     mapping_key = "mapping_key"
 
     assert get_data_by_property(item_metadata, item_map, mapping_key)
+    assert get_data_by_property(item_metadata, {}, mapping_key)
+    
+    with patch("weko_workflow.utils.get_sub_item_value", return_value=[True,["value"]]):
+        assert get_data_by_property(item_metadata, item_map, mapping_key)
 
 
 # def get_filenames_from_metadata(metadata):
