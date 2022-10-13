@@ -1532,7 +1532,7 @@ def mock_user_ctx(mock_users):
 
 
 @pytest.fixture
-def file_instance_mock():
+def file_instance_mock(db):
     """Mock of a file instance."""
     class FileInstance(object):
         def __init__(self, **kwargs):
@@ -1545,12 +1545,15 @@ def file_instance_mock():
         'sample_file',
         'sample_file.txt'
     )
-
-    return FileInstance(
+    
+    file = FileInstance(
         id='deadbeef-65bd-4d9b-93e2-ec88cc59aec5',
         uri=file_path,
         size=4,
         updated=None)
+    
+    # db.session.add(file)
+    # db.session.commit()
 
 
 @pytest.yield_fixture()

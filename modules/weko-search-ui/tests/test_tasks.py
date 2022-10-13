@@ -54,16 +54,17 @@ def test_remove_temp_dir_task(i18n_app, users, indices):
         assert not remove_temp_dir_task(file_path)
 
 
-# def export_all_task(root_url, user_id, data): ~ GETS STUCK
-# def test_export_all_task(i18n_app, users):
-#     with patch("weko_search_ui.utils.export_all", return_value="/"):
-#         with patch("weko_admin.utils.reset_redis_cache", return_value=""):
-#             # Doesn't return a value
-#             assert not export_all_task(
-#                 root_url="/",
-#                 user_id=users[3]['obj'].id,
-#                 data={}
-#             )
+# def export_all_task(root_url, user_id, data):
+def test_export_all_task(i18n_app, users):
+    with patch("weko_search_ui.utils.export_all", return_value="/"):
+        with patch("weko_admin.utils.reset_redis_cache", return_value=""):
+            with patch("weko_search_ui.tasks.delete_exported_task", return_value=""):
+                # Doesn't return a value
+                assert not export_all_task(
+                    root_url="/",
+                    user_id=users[3]['obj'].id,
+                    data={}
+                )
 
 
 # def delete_exported_task(uri, cache_key):
