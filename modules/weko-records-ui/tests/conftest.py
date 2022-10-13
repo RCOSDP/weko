@@ -100,7 +100,7 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.config import (
     WEKO_INDEX_TREE_REST_ENDPOINTS as _WEKO_INDEX_TREE_REST_ENDPOINTS,
 )
-from weko_index_tree.models import Index
+from weko_index_tree.models import Index, IndexStyle
 from weko_items_ui import WekoItemsUI
 from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
 from weko_records import WekoRecords
@@ -533,6 +533,18 @@ def indextree(client, users):
         index = Index.get_index_by_id(4)
         index.public_state = False
         index.harvest_public_state = False
+
+
+@pytest.fixture()
+def indexstyle(app, db):
+    record = IndexStyle(
+        id=app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
+        width='100',
+        height='800',
+        index_link_enabled=False
+    )
+    with db.session.begin_nested():
+        db.session.add(record)
 
 
 @pytest.fixture()
@@ -2082,11 +2094,13 @@ def site_license_ipaddr(app, db,site_license_info):
     return record1
 
 @pytest.fixture()
-def db_fileonetimedownload(app, db,records):
-    indexer, results = records
-    record = results[0]["record"]
+def db_fileonetimedownload(app, db):
     record = FileOnetimeDownload(
-        file_name="helloworld.pdf", user_mail="wekosoftware@nii.ac.jp", record_id=record.id, download_count=10,expiration_date=0)
+        file_name="helloworld.pdf",
+        user_mail="wekosoftware@nii.ac.jp",
+        record_id='1',
+        download_count=10,
+        expiration_date=0)
     with db.session.begin_nested():
         db.session.add(record)
     return record

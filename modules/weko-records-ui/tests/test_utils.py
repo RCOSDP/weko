@@ -251,8 +251,8 @@ def test_check_and_create_usage_report(app,records):
 
 # def create_usage_report_for_user(onetime_download_extra_info: dict):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_create_usage_report_for_user():
-    assert False
+#def test_create_usage_report_for_user():
+#    assert False
 
 # def get_data_usage_application_data(record_metadata, data_result: dict):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_data_usage_application_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -273,8 +273,10 @@ def test_get_data_usage_application_data(app, db, workflows, records, users, db_
 
 # def send_usage_report_mail_for_user(guest_mail: str, temp_url: str):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_send_usage_report_mail_for_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_send_usage_report_mail_for_user():
-    assert False
+def test_send_usage_report_mail_for_user(app):
+    with patch("weko_workflow.utils.send_mail_url_guest_user", return_value=True):
+        res = send_usage_report_mail_for_user('guest@nii.co.jp', 'guest_url')
+        assert res
 
 # def check_and_send_usage_report(extra_info, user_mail):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_check_and_send_usage_report -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -346,7 +348,7 @@ def test_validate_download_record(app,records):
 
 # def get_onetime_download(file_name: str, record_id: str,
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_onetime_download -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_onetime_download(app,db_fileonetimedownload):
+def test_get_onetime_download(app, db_fileonetimedownload):
     with app.test_request_context():
         ret = get_onetime_download('helloworld.pdf','1','wekosoftware@nii.ac.jp')
         assert ret.file_name=='helloworld.pdf'
