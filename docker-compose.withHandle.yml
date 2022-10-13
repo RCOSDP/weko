@@ -50,6 +50,15 @@ services:
       - FLASK_DEBUG=0
       - SEARCH_INDEX_PREFIX=tenant1
       - INVENIO_DB_POOL_CLASS=QueuePool
+      - CACHE_REDIS_DB=0
+      - ACCOUNTS_SESSION_REDIS_DB_NO=1
+      - CELERY_RESULT_BACKEND_DB_NO=2
+      - WEKO_AGGREGATE_EVENT_HOUR=0
+      - WEKO_AGGREGATE_EVENT_MINUTE=0
+      - WEKO_HANDLE_ALLOW_REGISTER_CRNI=False
+      - WEKO_RECORDS_UI_SECRET_KEY="secret"
+      - SECRET_KEY="CHANGE ME"
+      - WTF_CSRF_SECRET_KEY="CHANGE ME"
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
