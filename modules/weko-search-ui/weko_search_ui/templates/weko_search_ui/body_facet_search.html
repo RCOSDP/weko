@@ -24,6 +24,8 @@
 
 
 <input class="body-facet-search-label" id="Goto" type="hidden" value="{{_('Go to')}}" />
+<input class="body-facet-search-label" id="search" type="hidden" value="{{_('search')}}" />
+<input class="body-facet-search-label" id="cancel" type="hidden" value="{{_('cancel')}}" />
 <div id="app-facet-search"></div>
 {%- block javascript %}
 {% assets "weko_facet_search_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}  

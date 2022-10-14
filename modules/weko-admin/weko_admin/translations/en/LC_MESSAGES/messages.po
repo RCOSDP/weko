@@ -826,3 +826,32 @@ msgstr "Failed to delete due to server error."
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
 msgid "The item name/mapping is already exists. Please input other faceted item/mapping."
 msgstr "The item name/mapping is already exists. Please input other faceted item/mapping."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
+msgid "UiType"
+msgstr "UI"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:60
+msgid "DisplayNumber"
+msgstr "Display Number"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
+msgid "OpenClose"
+msgstr "Open/Close"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
+msgid "OpenClose Open"
+msgstr "Open"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
+msgid "OpenClose Close"
+msgstr "Close"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+#, python-format
+msgid "%(name)s must be an integer value from %(min)s to %(max)s."
+msgstr "%(name)s must be an integer value from %(min)s to %(max)s."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+msgid "DisplayNumber Validation"
+msgstr "If CheckBox is selected, DisplayNumber must be entered."

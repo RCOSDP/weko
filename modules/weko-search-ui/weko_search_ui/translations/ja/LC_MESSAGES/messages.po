@@ -73,8 +73,8 @@ msgstr "指定されたファイル{}にtsv/csvファイルが見つかりませ
 
 #: weko_search_ui/utils.py:560
 msgid ""
-"There is an error in the format of the first line of the header of the "
-"{} file."
+"There is an error in the format of the first line of the header of the {}"
+" file."
 msgstr "{}ファイルのヘッダ１行目の形式に誤りがあります。"
 
 #: weko_search_ui/utils.py:576
@@ -105,8 +105,8 @@ msgstr "次の項目指定されたアイテムタイプに存在しないため
 
 #: weko_search_ui/utils.py:651
 msgid ""
-"The {} file could not be read. Make sure the file format is {} and that"
-" the file is UTF-8 encoded."
+"The {} file could not be read. Make sure the file format is {} and that "
+"the file is UTF-8 encoded."
 msgstr "{}ファイルを読み込めませんでした。ファイル形式が{}であること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
 
 #: weko_search_ui/utils.py:713
@@ -760,6 +760,10 @@ msgstr "入力内容を破棄してもよろしいですか？"
 msgid "Go to"
 msgstr "移動"
 
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:27
+msgid "search"
+msgstr "検索"
+
 msgid "The following item(s) cannot be deleted."
 msgstr "以下のアイテムを削除することはできませんでした。"
 
@@ -774,6 +778,9 @@ msgid ""
 "granting item(s) cannot be deleted without withdrawing the DOI.<br/>Do "
 "you want to continue deleting items that are not grant DOI?"
 msgstr "削除対象にDOI付与済みアイテムが含まれています。<br/>DOI付与済みアイテムはDOI取下げを行わないと削除できません。<br/>DOI付与済み以外のアイテム削除を続行しますか？"
+
+msgid "Your role cannot register items in this index."
+msgstr "ロールの権限が足りずこのインデックスにアイテム登録ができません。"
 
 #~ msgid "Search"
 #~ msgstr "キーワード検索"
@@ -790,28 +797,24 @@ msgstr "削除対象にDOI付与済みアイテムが含まれています。<br
 #~ msgid "\"<\" and \">\" are cannot be used for searching"
 #~ msgstr ""
 
-msgid "The last item ID"
-msgstr "最新のアイテムID"
+#~ msgid "The last item ID"
+#~ msgstr "最新のアイテムID"
 
-msgid "Filter"
-msgstr "フィルター"
+#~ msgid "Filter"
+#~ msgstr "フィルター"
 
-msgid "Export item"
-msgstr "エクスポート"
+#~ msgid "Export item"
+#~ msgstr "エクスポート"
 
-msgid "Download URL"
-msgstr "ダウンロードURL"
+#~ msgid "Download URL"
+#~ msgstr "ダウンロードURL"
 
-msgid "Export message"
-msgstr "全体エクスポートを実行してよいですか？"
+#~ msgid "Export message"
+#~ msgstr "全体エクスポートを実行してよいですか？"
 
-msgid "Cancel export message"
-msgstr "全件エクスポートの処理をキャンセルしてよいですか？"
+#~ msgid "Cancel export message"
+#~ msgstr "全件エクスポートの処理をキャンセルしてよいですか？"
 
-msgid "Execute"
-msgstr "実行"
-
-msgid "Your role cannot register items in this index."
-msgstr "ロールの権限が足りずこのインデックスにアイテム登録ができません。"
-
+#~ msgid "Execute"
+#~ msgstr "実行"
 

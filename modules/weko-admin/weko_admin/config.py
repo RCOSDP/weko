@@ -1248,7 +1248,10 @@ WEKO_ADMIN_FACET_SEARCH_SETTING = {
     "name_jp": "",
     "mapping": "",
     "active": True,
-    "aggregations": []
+    "aggregations": [],
+    "ui_type": "CheckboxList",
+    "display_number": 5,
+    "is_open": True
 }
 """Default Facet Search settings."""
 

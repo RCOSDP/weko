@@ -17,7 +17,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.8.0\n"
+"Generated-By: Babel 2.5.1\n"
 
 #: weko_search_ui/admin.py:179 weko_search_ui/admin.py:617
 msgid "Custom Sort"
@@ -54,9 +54,8 @@ msgstr ""
 msgid "\"<\" and \">\" cannot be used for searching."
 msgstr ""
 
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:94
-#: weko_search_ui/utils.py:482
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:50
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:83
+#: weko_search_ui/utils.py:490
 msgid "Internal server error"
 msgstr ""
 
@@ -74,8 +73,8 @@ msgstr ""
 
 #: weko_search_ui/utils.py:560
 msgid ""
-"There is an error in the format of the first line of the header of the "
-"{} file."
+"There is an error in the format of the first line of the header of the {}"
+" file."
 msgstr ""
 
 #: weko_search_ui/utils.py:576
@@ -106,8 +105,8 @@ msgstr ""
 
 #: weko_search_ui/utils.py:651
 msgid ""
-"The {} file could not be read. Make sure the file format is {} and that"
-" the file is UTF-8 encoded."
+"The {} file could not be read. Make sure the file format is {} and that "
+"the file is UTF-8 encoded."
 msgstr ""
 
 #: weko_search_ui/utils.py:713
@@ -318,8 +317,7 @@ msgstr ""
 msgid "Execution"
 msgstr ""
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:128
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:42
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:111
 msgid "Export"
 msgstr ""
 
@@ -521,11 +519,10 @@ msgstr "Are you sure you want to discard the input contents?"
 msgid "Continue"
 msgstr ""
 
-#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:84
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:58
-#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:100
-#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:120
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:45
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:75
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:47
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:82
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:101
 msgid "Cancel"
 msgstr ""
 
@@ -759,51 +756,13 @@ msgstr ""
 msgid "Is the input contents discarded ?"
 msgstr "Is the input contents discarded?"
 
-#~ msgid "Search"
-#~ msgstr "Search"
-
-#~ msgid "DetailSearch"
-#~ msgstr "DetailSearch"
-
-#~ msgid "\"<\" and \">\" are cannot be used for searching."
-#~ msgstr ""
-
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:40
-msgid "The last item ID"
-msgstr ""
-
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:41
-msgid "Filter"
-msgstr ""
-
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:44
-msgid "Export item"
-msgstr ""
-
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:45
-msgid "Download URL"
-msgstr ""
-
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:47
-msgid "Export message"
-msgstr "Are you sure you want to export all items?"
-
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:51
-msgid "Cancel export message"
-msgstr "Are you sure you want to cancel process of exporting all items?"
-
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:48
-msgid "Execute"
-msgstr ""
-
-
-
-msgid "import_error_msg_is_withdraw_doi"
-msgstr "This DOI was withdrawn. Please input another DOI."
-
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:50
 msgid "Go to"
 msgstr "Go to"
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:27
+msgid "search"
+msgstr ""
 
 msgid "The following item(s) cannot be deleted."
 msgstr ""
@@ -814,9 +773,42 @@ msgstr ""
 msgid "Editing item(s):"
 msgstr ""
 
-msgid "DOI granting item(s) are including in the deletion items.<br/>DOI granting item(s) cannot be deleted without withdrawing the DOI.<br/>Do you want to continue deleting items that are not grant DOI?"
+msgid ""
+"DOI granting item(s) are including in the deletion items.<br/>DOI "
+"granting item(s) cannot be deleted without withdrawing the DOI.<br/>Do "
+"you want to continue deleting items that are not grant DOI?"
 msgstr ""
 
 msgid "Your role cannot register items in this index."
 msgstr ""
+
+#~ msgid "Search"
+#~ msgstr "Search"
+
+#~ msgid "DetailSearch"
+#~ msgstr "DetailSearch"
+
+#~ msgid "\"<\" and \">\" are cannot be used for searching."
+#~ msgstr ""
+
+#~ msgid "The last item ID"
+#~ msgstr ""
+
+#~ msgid "Filter"
+#~ msgstr ""
+
+#~ msgid "Export item"
+#~ msgstr ""
+
+#~ msgid "Download URL"
+#~ msgstr ""
+
+#~ msgid "Export message"
+#~ msgstr "Are you sure you want to export all items?"
+
+#~ msgid "Cancel export message"
+#~ msgstr "Are you sure you want to cancel process of exporting all items?"
+
+#~ msgid "Execute"
+#~ msgstr ""
 
