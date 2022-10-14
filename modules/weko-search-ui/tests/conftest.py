@@ -1845,7 +1845,7 @@ def db_workflow(app, db, db_itemtype, users):
 
     flow_id = uuid.uuid4()
     flow_define = FlowDefine(
-        flow_id=flow_id, flow_name="Registration Flow", flow_user=1, flow_status="A"
+        flow_id=flow_id, flow_name="Registration", flow_user=1, flow_status="A"
     )
     flow_action1 = FlowAction(
         status="N",

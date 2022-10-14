@@ -613,7 +613,7 @@ def test_create_work_flow(i18n_app, db_itemtype, db_workflow):
 
 
 # def create_flow_define():
-def test_create_flow_define(i18n_app, db_activity):
+def test_create_flow_define(i18n_app, db_workflow):
     # Doesn't return anything
     assert not create_flow_define()
 
@@ -660,12 +660,18 @@ def test_handle_item_title(i18n_app, es_records):
     
 
 # def handle_check_and_prepare_publish_status(list_record):
-def test_handle_check_and_prepare_publish_status(i18n_app, record_with_metadata):
-    list_record = [record_with_metadata[0]]
+def test_handle_check_and_prepare_publish_status(i18n_app):
+    record = {
+        "publish_status": False
+    }
 
     # Doesn't return any value
-    assert not handle_check_and_prepare_publish_status(list_record)
+    assert not handle_check_and_prepare_publish_status([record])
 
+    record["publish_status"] = "test"
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_publish_status([record])
 
 # def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_edit_indexes): *** not yet done
 def test_handle_check_and_prepare_index_tree(i18n_app, record_with_metadata, indices):
@@ -696,6 +702,19 @@ def test_handle_check_and_prepare_feedback_mail(i18n_app, record_with_metadata):
 
     # Doesn't return any value
     assert not handle_check_and_prepare_feedback_mail(list_record)
+
+    record = {
+        "feedback_mail": ["wekosoftware@test.com"],
+        "metadata": {"feedback_mail_list": ""},
+    }
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_feedback_mail([record])
+
+    record["feedback_mail"] = ["test"]
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_feedback_mail([record])
 
 
 # def handle_set_change_identifier_flag(list_record, is_change_identifier):
@@ -1464,6 +1483,15 @@ def test_get_data_by_property(i18n_app):
 def test_get_filenames_from_metadata(i18n_app, record_with_metadata):
     metadata = record_with_metadata[0]['metadata']
     assert get_filenames_from_metadata(metadata)
+
+    metadata = {
+        "_id": [{"filename": False}],
+        "filename": "test_filename",
+    }
+    assert get_filenames_from_metadata(metadata)
+
+    metadata["_id"] = [{"test": "test"}]
+    assert not get_filenames_from_metadata(metadata)
 
 
 # def handle_check_filename_consistence(file_paths, meta_filenames):
