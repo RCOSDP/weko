@@ -54,15 +54,17 @@ def test_remove_temp_dir_task(i18n_app, users, indices):
         assert not remove_temp_dir_task(file_path)
 
 
-# def export_all_task(root_url, user_id, data): ~ GETS STUCK
-# def test_export_all_task(i18n_app, users, client_request_args, records):
-    # with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-    #     # Doesn't return a value
-    #     assert not export_all_task(
-    #         root_url="https://localhost:4404/",
-    #         user_id=users[3]['obj'].id,
-    #         data=records
-    #     )
+# def export_all_task(root_url, user_id, data):
+def test_export_all_task(i18n_app, users):
+    with patch("weko_search_ui.utils.export_all", return_value="/"):
+        with patch("weko_admin.utils.reset_redis_cache", return_value=""):
+            with patch("weko_search_ui.tasks.delete_exported_task", return_value=""):
+                # Doesn't return a value
+                assert not export_all_task(
+                    root_url="/",
+                    user_id=users[3]['obj'].id,
+                    data={}
+                )
 
 
 # def delete_exported_task(uri, cache_key):
@@ -80,8 +82,14 @@ def test_delete_exported_task(i18n_app, users, file_instance_mock, redis_connect
 
 # def is_import_running(): ~ GETS STUCK
 # def test_is_import_running(i18n_app, users, celery):
-#     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-#         assert not is_import_running()
+    # from celery.task.control import inspect
+    # if not inspect().ping():
+    #     print(False) 
+    # else:
+    #     print(True)
+    
+    # with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+    #     assert not is_import_running()
 
 
 # def check_celery_is_run(): ~ GETS STUCK

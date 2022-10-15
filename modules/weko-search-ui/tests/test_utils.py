@@ -613,7 +613,7 @@ def test_create_work_flow(i18n_app, db_itemtype, db_workflow):
 
 
 # def create_flow_define():
-def test_create_flow_define(i18n_app, db_activity):
+def test_create_flow_define(i18n_app, db_workflow):
     # Doesn't return anything
     assert not create_flow_define()
 
@@ -660,12 +660,18 @@ def test_handle_item_title(i18n_app, es_records):
     
 
 # def handle_check_and_prepare_publish_status(list_record):
-def test_handle_check_and_prepare_publish_status(i18n_app, record_with_metadata):
-    list_record = [record_with_metadata[0]]
+def test_handle_check_and_prepare_publish_status(i18n_app):
+    record = {
+        "publish_status": False
+    }
 
     # Doesn't return any value
-    assert not handle_check_and_prepare_publish_status(list_record)
+    assert not handle_check_and_prepare_publish_status([record])
 
+    record["publish_status"] = "test"
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_publish_status([record])
 
 # def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_edit_indexes): *** not yet done
 def test_handle_check_and_prepare_index_tree(i18n_app, record_with_metadata, indices):
@@ -696,6 +702,19 @@ def test_handle_check_and_prepare_feedback_mail(i18n_app, record_with_metadata):
 
     # Doesn't return any value
     assert not handle_check_and_prepare_feedback_mail(list_record)
+
+    record = {
+        "feedback_mail": ["wekosoftware@test.com"],
+        "metadata": {"feedback_mail_list": ""},
+    }
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_feedback_mail([record])
+
+    record["feedback_mail"] = ["test"]
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_feedback_mail([record])
 
 
 # def handle_set_change_identifier_flag(list_record, is_change_identifier):
@@ -785,7 +804,10 @@ def test_handle_check_doi(app):
         "status": "keep"
     }
     mock = MagicMock()
-    mock.pid_recid = 1
+    mock2 = MagicMock()
+    mock3 = MagicMock()
+    mock2.object_uuid = mock3
+    mock.pid_recid = mock2
     
     # def myfunc():
     #     return 1,2
@@ -799,9 +821,20 @@ def test_handle_check_doi(app):
 def test_register_item_handle(i18n_app, es_records):
     item = es_records['results'][0]['item']
     
-    # Doesn't return any value
     assert not register_item_handle(item)
 
+    with patch("weko_workflow.utils.register_hdl_by_handle", return_value=""):
+        item["status"] = "new"
+        # Doesn't return any value
+        assert not register_item_handle(item)
+
+    item["is_change_identifier"] = False
+    assert not register_item_handle(item)
+
+    with patch("weko_workflow.utils.register_hdl_by_handle", return_value=""):
+        item["status"] = "new"
+        # Doesn't return any value
+        assert not register_item_handle(item)
 
 # def prepare_doi_setting():
 def test_prepare_doi_setting(i18n_app, communities2, db):
@@ -881,10 +914,15 @@ def test_register_item_doi(i18n_app, db_activity):
     # item = db_activity['item']
     item = MagicMock()
     item.is_change_identifier = True
+    item2 = MagicMock()
+    item2.is_change_identifier = False
 
     with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=item):
         # Doesn't return any value
         assert not register_item_doi(item)
+        
+        # Doesn't return any value
+        assert not register_item_doi(item2)
 
 
 # def register_item_update_publish_status(item, status):
@@ -902,8 +940,27 @@ def test_register_item_update_publish_status(i18n_app, es_records):
 def test_handle_doi_required_check(i18n_app, es_records, record_with_metadata, db_itemtype, item_type):
     record = record_with_metadata[1]
 
-    # Should have no return value
-    assert not handle_doi_required_check(record)
+    record2 = {
+        "id": 1,
+        "item_type_id": 1,
+        "metadata": {"a": 1},
+        "doi_ra": "JaLC",
+        "file_path": "a b c d",
+        "status": "keep"
+    }
+
+    error_list_dict = {
+        "mapping": "mapping",
+        "other": "other",
+        "required_key": "required_key",
+        "either_key": "either_key"
+    }
+    with patch("weko_workflow.utils.item_metadata_validation", return_value=error_list_dict):
+        # Should have no return value
+        assert not handle_doi_required_check(record)
+
+    with patch("weko_workflow.utils.item_metadata_validation", return_value=error_list_dict):
+        assert handle_doi_required_check(record2)
 
 
 # def handle_check_date(list_record):
@@ -914,6 +971,8 @@ def test_handle_check_date(app, test_list_records, mocker_itemtype):
         with app.app_context():
             ret = handle_check_date(input_data)
             assert ret == output_data
+    # with patch("weko_search_ui.utils.validation_date_property", return_value=""):
+    #     assert handle_check_date(test_list_records)
 
 
 # def handle_check_id(list_record):
@@ -931,8 +990,18 @@ def test_get_data_in_deep_dict(i18n_app):
         "test": 1,
         "sample": {"a": 1}
     }
+    _dict2 = {
+        "test": {"a": 1, "b": 2},
+        "sample": {"a": 1}
+    }
 
     assert get_data_in_deep_dict(search_key, _dict)
+
+    with patch("weko_search_ui.utils.get_data_in_deep_dict", return_value=[{"tree_key": 1}]):
+        assert get_data_in_deep_dict("tests", _dict2)
+
+        _dict["test"] = [{"a": 1},2]
+        assert get_data_in_deep_dict("tests", _dict)
 
 
 # def validation_file_open_date(record):
@@ -1008,18 +1077,25 @@ def test_get_sub_item_option(i18n_app):
         {
             "key": "key",
             "required": "required",
-            "isHide": "isHide"
+            "isHide": "isHide",
+            "readonly": True
         },
+    ]
+    schemaform2 = [
         {
             "items": {
                 "key": "key",
                 "required": "required",
-                "isHide": "isHide"
+                "isHide": "isHide",
+                "readonly": True
             }
-        }
+        },
     ]
 
     assert get_sub_item_option(key, schemaform)
+
+    with patch("weko_search_ui.utils.get_sub_item_option", return_value=True):
+        assert get_sub_item_option(key, schemaform2)
 
 
 # def check_sub_item_is_system(key, schemaform):
@@ -1032,6 +1108,8 @@ def test_check_sub_item_is_system(i18n_app):
             "isHide": "isHide",
             "readonly": True
         },
+    ]
+    schemaform2 = [
         {
             "items": {
                 "key": "key",
@@ -1039,15 +1117,22 @@ def test_check_sub_item_is_system(i18n_app):
                 "isHide": "isHide",
                 "readonly": True
             }
-        }
+        },
     ]
-
+    
     assert check_sub_item_is_system(key, schemaform)
+
+    with patch("weko_search_ui.utils.check_sub_item_is_system", return_value=True):
+        assert check_sub_item_is_system(key, schemaform2)
 
 
 # def get_lifetime():
 def test_get_lifetime(i18n_app, db_register2):
     assert get_lifetime()
+    with patch("weko_admin.models.SessionLifetime.get_validtime", return_value=None):
+        assert get_lifetime()
+    with patch("weko_admin.models.SessionLifetime.get_validtime", return_value=""):
+        assert not get_lifetime()
 
 
 # def get_system_data_uri(key_type, key):
@@ -1220,19 +1305,21 @@ def test_export_all(db_activity, i18n_app, users, item_type, db_records2):
     root_url = "/"
     user_id = users[3]['obj'].id
     data = {
-        "item_type_id": 1,
-        "item_id_range": 1
+        "item_type_id": "1",
+        "item_id_range": "1"
     }
     data2 = {
+        "item_type_id": "-1",
+        "item_id_range": "1-9"
+    }
+    data3 = {
         "item_type_id": -1,
-        "item_id_range": 1-9
+        "item_id_range": "1"
     }
 
-    # Test 1
     assert not export_all(root_url, user_id, data)
-
-    # Test 2
     assert not export_all(root_url, user_id, data2)
+    assert not export_all(root_url, user_id, data3)
 
 
 # def delete_exported(uri, cache_key):
@@ -1244,19 +1331,44 @@ def test_delete_exported(i18n_app, file_instance_mock):
         'sample_file.txt'
     )
 
-    # Doesn't return any value
-    assert not delete_exported(file_path, "key")
+    with patch("invenio_files_rest.models.FileInstance.delete", return_value=None):
+        # Doesn't return any value
+        assert not delete_exported(file_path, "key")
 
 
-# def cancel_export_all(): ~ GETS STUCK
+# def cancel_export_all():
 # def test_cancel_export_all(i18n_app, users):
-#     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-#         assert cancel_export_all()
+    # with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        # with patch("weko_admin.utils.get_redis_cache", return_value=""):
+            # with patch("weko_search_ui.utils.get_export_status", return_value=True):
+                # with patch("celery.task.control.revoke", return_value=""):
+                # assert cancel_export_all()
 
 
 # def get_export_status():
-def test_get_export_status(i18n_app, users):
+def test_get_export_status(i18n_app, users, redis_connect):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        cache_key = i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name="KEY_EXPORT_ALL",
+            user_id=current_user.get_id()
+        )
+        cache_uri = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name="URI_EXPORT_ALL",
+            user_id=current_user.get_id()
+        )
+        cache_msg = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name="MSG_EXPORT_ALL",
+            user_id=current_user.get_id()
+        )
+        run_msg = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name="RUN_MSG_EXPORT_ALL",
+            user_id=current_user.get_id()
+        )
+        datastore = redis_connect
+        datastore.put(cache_key, json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=30)
+        datastore.put(cache_uri, json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=30)
+        datastore.put(cache_msg, json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=30)
+        datastore.put(run_msg, json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=30)
         assert get_export_status()
 
 
@@ -1314,6 +1426,7 @@ def test_handle_check_file_metadata(i18n_app, record_with_metadata):
     # Doesn't return any value
     assert not handle_check_file_metadata(list_record, data_path)
 
+    # with patch("weko_search_ui.utils.handle_check_file_content", return_value=):
 
 # def handle_check_file_path(paths, data_path, is_new=False, is_thumbnail=False, is_single_thumbnail=False):
 def test_handle_check_file_path(i18n_app):
@@ -1333,10 +1446,14 @@ def test_handle_check_file_content(i18n_app, record_with_metadata):
 
 # def handle_check_thumbnail(record, data_path):
 def test_handle_check_thumbnail(i18n_app, record_with_metadata):
-    list_record = record_with_metadata[0]
+    record = record_with_metadata[0]
     data_path = "test/test/test"
 
-    assert handle_check_thumbnail(list_record, data_path)
+    assert handle_check_thumbnail(record, data_path)
+
+    record = {"thumbnail_path": "/", "status": "new"}
+    with patch("weko_search_ui.utils.handle_check_file_path", return_value=("error", "warning")):
+        assert handle_check_thumbnail(record, data_path)
 
 
 # def get_key_by_property(record, item_map, item_property):
@@ -1346,21 +1463,35 @@ def test_get_key_by_property(i18n_app):
     item_property = "item_property"
 
     assert get_key_by_property(record, item_map, item_property)
+    assert not get_key_by_property("", {}, "")
 
 
 # def get_data_by_property(item_metadata, item_map, mapping_key):
 def test_get_data_by_property(i18n_app):
     item_metadata = {}
-    item_map = {"mapping_key": "{'test': 1}.test"}
+    item_map = {"mapping_key": "test.test"}
     mapping_key = "mapping_key"
 
     assert get_data_by_property(item_metadata, item_map, mapping_key)
+    assert get_data_by_property(item_metadata, {}, mapping_key)
+    
+    with patch("weko_workflow.utils.get_sub_item_value", return_value=[True,["value"]]):
+        assert get_data_by_property(item_metadata, item_map, mapping_key)
 
 
 # def get_filenames_from_metadata(metadata):
 def test_get_filenames_from_metadata(i18n_app, record_with_metadata):
     metadata = record_with_metadata[0]['metadata']
     assert get_filenames_from_metadata(metadata)
+
+    metadata = {
+        "_id": [{"filename": False}],
+        "filename": "test_filename",
+    }
+    assert get_filenames_from_metadata(metadata)
+
+    metadata["_id"] = [{"test": "test"}]
+    assert not get_filenames_from_metadata(metadata)
 
 
 # def handle_check_filename_consistence(file_paths, meta_filenames):
