@@ -572,7 +572,8 @@ def find_and_update_location_size():
                     Location.id == row[0]).one()
                 loc.size = row[1]
 """
-def test_register_item_metadata(i18n_app, deposit, es_records):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_register_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_register_item_metadata(i18n_app, es_item_file_pipeline,deposit, es_records):
     item = es_records['results'][0]['item']
     root_path = os.path.dirname(os.path.abspath(__file__))
     
@@ -581,7 +582,8 @@ def test_register_item_metadata(i18n_app, deposit, es_records):
 
 
 # def update_publish_status(item_id, status):
-def test_update_publish_status(i18n_app, es_records):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_update_publish_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_update_publish_status(i18n_app, es_item_file_pipeline,es_records):
     item_id = 1
     status = None
 
@@ -590,7 +592,8 @@ def test_update_publish_status(i18n_app, es_records):
 
 
 # def handle_workflow(item: dict):
-def test_handle_workflow(i18n_app, es_records, db, db_register):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_workflow(i18n_app, es_item_file_pipeline,es_records, db, db_register):
     item = es_records['results'][0]['item']
 
     with patch("weko_workflow.api.WorkActivity.get_workflow_activity_by_item_id", return_value=True):
@@ -607,34 +610,37 @@ def test_handle_workflow(i18n_app, es_records, db, db_register):
 
 
 # def create_work_flow(item_type_id):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_update_publish_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_create_work_flow(i18n_app, db_itemtype, db_workflow):
     # Doesn't return any value
     assert not create_work_flow(db_itemtype['item_type'].id)
 
 
 # def create_flow_define():
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_update_publish_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_create_flow_define(i18n_app, db_workflow):
     # Doesn't return anything
     assert not create_flow_define()
 
 
 # def send_item_created_event_to_es(item, request_info): *** ERR
-def test_send_item_created_event_to_es(i18n_app, es_records, client_request_args, users, es):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_send_item_created_event_to_es -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_send_item_created_event_to_es(i18n_app, es_item_file_pipeline,es_records, client_request_args, users, es):
     # with patch("weko_search_ui.utils.send_item_created_event_to_es._push_item_to_elasticsearch", return_value=""):
-    with patch("weko_search_ui.utils._push_item_to_elasticsearch", return_value=""):
-        item = es_records['results'][0]['item']
-        request_info = {
-            "remote_addr": request.remote_addr,
-            "referrer": request.referrer,
-            "hostname": request.host,
-            "user_id": 1
-        }
+    # with patch("weko_search_ui.utils._push_item_to_elasticsearch", return_value=""):
+    item = es_records['results'][0]['item']
+    request_info = {
+        "remote_addr": request.remote_addr,
+        "referrer": request.referrer,
+        "hostname": request.host,
+        "user_id": 1
+    }
 
-        assert send_item_created_event_to_es(item, request_info)
+    send_item_created_event_to_es(item, request_info)
 
 
 # def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False): ERROR = TypeError: handle_remove_es_metadata() missing 2 required positional arguments: 'bef_metadata' and 'bef_las...
-def test_import_items_to_system(i18n_app, es_records):
+def test_import_items_to_system(i18n_app,es_item_file_pipeline, es_records):
     # item = dict(db_activity['item'])
     item = es_records['results'][0]['item']
 
@@ -652,7 +658,7 @@ def test_import_items_to_system(i18n_app, es_records):
 
 
 # def handle_item_title(list_record):
-def test_handle_item_title(i18n_app, es_records):
+def test_handle_item_title(i18n_app, es_item_file_pipeline,es_records):
     list_record = [es_records['results'][0]['item']]
 
     # Doesn't return any value
@@ -750,7 +756,7 @@ def test_handle_check_cnri_2(i18n_app):
 
 
 # def handle_check_doi_indexes(list_record):
-def test_handle_check_doi_indexes(i18n_app, es_records):
+def test_handle_check_doi_indexes(i18n_app, es_item_file_pipeline,es_records):
     list_record = [es_records['results'][0]['item']]
 
     # Doesn't return any value
@@ -758,7 +764,7 @@ def test_handle_check_doi_indexes(i18n_app, es_records):
 
 
 # def handle_check_doi_ra(list_record):
-def test_handle_check_doi_ra(i18n_app, es_records):
+def test_handle_check_doi_ra(i18n_app, es_item_file_pipeline,es_records):
     # list_record = [es_records['results'][0]['item']]
     item = MagicMock()
 
@@ -818,7 +824,7 @@ def test_handle_check_doi(app):
         assert not handle_check_doi([item2])
 
 # def register_item_handle(item):
-def test_register_item_handle(i18n_app, es_records):
+def test_register_item_handle(i18n_app, es_item_file_pipeline,es_records):
     item = es_records['results'][0]['item']
     
     assert not register_item_handle(item)
@@ -926,7 +932,7 @@ def test_register_item_doi(i18n_app, db_activity):
 
 
 # def register_item_update_publish_status(item, status):
-def test_register_item_update_publish_status(i18n_app, es_records):
+def test_register_item_update_publish_status(i18n_app, es_item_file_pipeline,es_records):
     item = es_records['results'][0]['item']
     # item = db_activity['item']
     status = 0
@@ -937,7 +943,7 @@ def test_register_item_update_publish_status(i18n_app, es_records):
     
 
 # def handle_doi_required_check(record):
-def test_handle_doi_required_check(i18n_app, es_records, record_with_metadata, db_itemtype, item_type):
+def test_handle_doi_required_check(i18n_app, es_item_file_pipeline,es_records, record_with_metadata, db_itemtype, item_type):
     record = record_with_metadata[1]
 
     record2 = {
@@ -1385,7 +1391,7 @@ def test_handle_check_item_is_locked(i18n_app, db_activity):
         
 
 # def handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata):
-def test_handle_remove_es_metadata(i18n_app, es_records):
+def test_handle_remove_es_metadata(i18n_app, es_item_file_pipeline,es_records):
     item = es_records['results'][0]['item']
     bef_metadata = {}
     bef_metadata["_id"] = 9

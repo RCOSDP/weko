@@ -1,7 +1,9 @@
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 import os
 import json
 import pytest
 from flask import current_app, make_response, request
+from mock import patch, MagicMock, Mock
 from flask_login import current_user
 from mock import patch
 
@@ -80,19 +82,22 @@ def test_delete_exported_task(i18n_app, users, file_instance_mock, redis_connect
         assert not delete_exported_task("",cache_key)
 
 
-# def is_import_running(): ~ GETS STUCK
-# def test_is_import_running(i18n_app, users, celery):
-    # from celery.task.control import inspect
-    # if not inspect().ping():
-    #     print(False) 
-    # else:
-    #     print(True)
+# def is_import_running(): 
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py::test_is_import_running -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_is_import_running(i18n_app):
+    with patch("weko_search_ui.tasks.check_celery_is_run",return_Value=True):
+        with patch("celery.task.control.inspect.active",return_Value=MagicMock()):
+            with patch("celery.task.control.inspect.reserved",return_Value=MagicMock()):
+                assert is_import_running()==None
     
-    # with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-    #     assert not is_import_running()
 
 
-# def check_celery_is_run(): ~ GETS STUCK
-# def test_check_celery_is_run(i18n_app, users):
-#     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-#             assert check_celery_is_run()
+
+# def check_celery_is_run():
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py::test_check_celery_is_run -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_celery_is_run(i18n_app):
+    with patch("celery.task.control.inspect.ping",return_value={'hostname': True}):
+        assert check_celery_is_run()==True
+    
+    with patch("celery.task.control.inspect.ping",return_value={}):
+        assert check_celery_is_run()==False

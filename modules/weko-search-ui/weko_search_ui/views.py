@@ -72,7 +72,7 @@ blueprint = Blueprint(
 )
 
 blueprint_api = Blueprint(
-    "weko_search_ui",
+    "weko_search_api",
     __name__,
     template_folder="templates",
     static_folder="static",

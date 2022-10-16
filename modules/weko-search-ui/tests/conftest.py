@@ -64,6 +64,7 @@ from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers, ActionRoles
 from invenio_assets import InvenioAssets
 from invenio_cache import InvenioCache
+from invenio_communities import InvenioCommunities
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_files_rest.models import Location
@@ -114,8 +115,9 @@ from weko_records.api import ItemTypes, ItemsMetadata, WekoRecord, Mapping
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records_ui.models import PDFCoverPageSettings
-from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISSION_ROLE_COMMUNITY, EMAIL_DISPLAY_FLG
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISSION_ROLE_COMMUNITY, EMAIL_DISPLAY_FLG,WEKO_RECORDS_UI_BULK_UPDATE_FIELDS
 from weko_groups import WekoGroups
+from weko_admin import WekoAdmin
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import (
     Action,
@@ -126,12 +128,16 @@ from weko_workflow.models import (
     FlowDefine,
     WorkFlow
 )
+from weko_theme import WekoTheme
+from weko_theme.views import blueprint as weko_theme_blueprint
+from weko_theme.config import THEME_BODY_TEMPLATE,WEKO_THEME_ADMIN_ITEM_MANAGEMENT_INIT_TEMPLATE
+from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from weko_index_tree.models import Index
 from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
 from weko_search_ui.views import blueprint_api
 from weko_search_ui.rest import create_blueprint
 from weko_search_ui import WekoSearchUI, WekoSearchREST
-from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX, WEKO_SEARCH_TYPE_DICT
+from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX, WEKO_SEARCH_TYPE_DICT,WEKO_SEARCH_UI_BASE_TEMPLATE
 from weko_redis.redis import RedisConnection
 from weko_admin.models import SessionLifetime
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS, WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
@@ -528,6 +534,7 @@ def base_app(instance_path, search_class, request):
                     '-NonCommercial-ShareAlike 4.0 International License.'
             },
         ],
+        WEKO_RECORDS_UI_BULK_UPDATE_FIELDS=WEKO_RECORDS_UI_BULK_UPDATE_FIELDS,
         WEKO_SEARCH_UI_BULK_EXPORT_URI = "URI_EXPORT_ALL",
         WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3,
         WEKO_SEARCH_UI_BULK_EXPORT_TASK = "KEY_EXPORT_ALL",
@@ -559,6 +566,8 @@ def base_app(instance_path, search_class, request):
         WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE="",
         WEKO_ITEMS_UI_MULTIPLE_APPROVALS=True,
         WEKO_THEME_ADMIN_ITEM_MANAGEMENT_TEMPLATE = 'weko_theme/admin/item_management_display.html',
+        THEME_BODY_TEMPLATE=THEME_BODY_TEMPLATE,
+        WEKO_THEME_ADMIN_ITEM_MANAGEMENT_INIT_TEMPLATE=WEKO_THEME_ADMIN_ITEM_MANAGEMENT_INIT_TEMPLATE,
         WEKO_SEARCH_REST_ENDPOINTS = dict(
             recid=dict(
                 pid_type='recid',
@@ -612,7 +621,8 @@ def base_app(instance_path, search_class, request):
         WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_edit_setting.html',
         WEKO_INDEX_TREE_LIST_API = "/api/tree",
         WEKO_INDEX_TREE_API = "/api/tree/index/",
-        WEKO_SEARCH_UI_TO_NUMBER_FORMAT = "99999999999999.99"
+        WEKO_SEARCH_UI_TO_NUMBER_FORMAT = "99999999999999.99",
+        WEKO_SEARCH_UI_BASE_TEMPLATE=WEKO_SEARCH_UI_BASE_TEMPLATE,
     )
     app_.url_map.converters['pid'] = PIDConverter
     app_.config['RECORDS_REST_ENDPOINTS']['recid']['search_class'] = search_class
@@ -656,11 +666,16 @@ def base_app(instance_path, search_class, request):
     WekoSearchUI(app_)
     WekoWorkflow(app_)
     WekoGroups(app_)
+    WekoAdmin(app_)
+    # WekoTheme(app_)
+    # InvenioCommunities(app_)
     
     # search = InvenioSearch(app_, client=MockEs())
     # search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
     InvenioRecordsREST(app_)
     app_.register_blueprint(create_blueprint_from_app(app_))
+    app_.register_blueprint(weko_theme_blueprint)
+    app_.register_blueprint(invenio_communities_blueprint)
 
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
     current_assets.collect.collect()
@@ -741,24 +756,25 @@ def client_request_args(app, file_instance_mock):
     # r = requests.post(url, files=files, data=values)
 
     with app.test_client() as client:
-        r = client.get('/', query_string={
-            'index_id': '33',
-            'page': 1,
-            'count': 20,
-            'term': 14,
-            'lang': 'en',
-            'parent_id': 33,
-            'index_info': {},
-            'community': 'comm1',
-            'item_link': '1',
-            'is_search': 1,
-            'search_type': WEKO_SEARCH_TYPE_DICT["INDEX"],
-            'is_change_identifier': True,
-            'remote_addr': '0.0.0.0',
-            'referrer': 'test',
-            'host': '127.0.0.1',
-            # 'search_type': WEKO_SEARCH_TYPE_DICT["FULL_TEXT"],
-            })
+        with patch("flask.templating._render", return_value=""):
+            r = client.get('/', query_string={
+                'index_id': '33',
+                'page': 1,
+                'count': 20,
+                'term': 14,
+                'lang': 'en',
+                'parent_id': 33,
+                'index_info': {},
+                'community': 'comm1',
+                'item_link': '1',
+                'is_search': 1,
+                'search_type': WEKO_SEARCH_TYPE_DICT["INDEX"],
+                'is_change_identifier': True,
+                'remote_addr': '0.0.0.0',
+                'referrer': 'test',
+                'host': '127.0.0.1',
+                # 'search_type': WEKO_SEARCH_TYPE_DICT["FULL_TEXT"],
+                })
         yield r
 
 
@@ -2281,4 +2297,12 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
         "indexer": indexer,
         "results": results
     }
+
+
+
+@pytest.fixture()
+def es_item_file_pipeline(es):
+    from elasticsearch.client.ingest import IngestClient
+    p = IngestClient(current_search_client)
+    p.put_pipeline(id='item-file-pipeline', body={'description': "Index contents of each file.",'processors': [{"foreach": {"field": "content","processor": {"attachment": {"indexed_chars" : -1,"target_field": "_ingest._value.attachment","field": "_ingest._value.file","properties": ["content"]}}}},{"foreach": {"field": "content","processor": {"remove": {"field": "_ingest._value.file"}}}}]})
 
