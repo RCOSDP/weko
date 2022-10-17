@@ -71,7 +71,7 @@ from invenio_records import InvenioRecords
 from invenio_records_files.models import RecordsBuckets
 from invenio_records_rest.utils import PIDConverter
 from invenio_records_ui import InvenioRecordsUI
-from invenio_search import InvenioSearch
+from invenio_search import InvenioSearch, current_search_client
 from invenio_search_ui import InvenioSearchUI
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 from invenio_theme import InvenioTheme
@@ -100,7 +100,7 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.config import (
     WEKO_INDEX_TREE_REST_ENDPOINTS as _WEKO_INDEX_TREE_REST_ENDPOINTS,
 )
-from weko_index_tree.models import Index
+from weko_index_tree.models import Index, IndexStyle
 from weko_items_ui import WekoItemsUI
 from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
 from weko_records import WekoRecords
@@ -145,6 +145,7 @@ from weko_workflow.models import (
     ActionStatus,
     ActionStatusPolicy,
     Activity,
+    GuestActivity,
     FlowAction,
     FlowDefine,
     WorkFlow,
@@ -315,25 +316,26 @@ def base_app(instance_path):
 @pytest.yield_fixture()
 def app(base_app):
     """Flask application fixture."""
-    with open("tests/data/mappings/item-v1.0.0.json", "r") as f:
-        mapping = json.load(f)
-    es = Elasticsearch("http://{}:9200".format(base_app.config["SEARCH_ELASTIC_HOSTS"]))
-    es.indices.create(
-        index=base_app.config["INDEXER_DEFAULT_INDEX"], body=mapping, ignore=[400, 404]
-    )
-    es.indices.put_alias(
-        index=base_app.config["INDEXER_DEFAULT_INDEX"],
-        name=base_app.config["SEARCH_UI_SEARCH_INDEX"],
-        ignore=[400, 404],
-    )
     with base_app.app_context():
         yield base_app
-    es.indices.delete_alias(
-        index=base_app.config["INDEXER_DEFAULT_INDEX"],
-        name=base_app.config["SEARCH_UI_SEARCH_INDEX"],
-        ignore=[400, 404],
-    )
-    es.indices.delete(index=base_app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
+
+@pytest.fixture()
+def esindex(app):
+    current_search_client.indices.delete(index='test-*')
+    with open("tests/data/mappings/item-v1.0.0.json","r") as f:
+        mapping = json.load(f)
+    try:
+        current_search_client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
+        current_search_client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
+    except:
+        current_search_client.indices.create("test-weko-items",body=mapping)
+        current_search_client.indices.put_alias(index="test-weko-items", name="test-weko")
+    # print(current_search_client.indices.get_alias())
+
+    try:
+        yield current_search_client
+    finally:
+        current_search_client.indices.delete(index='test-*')
 
 
 @pytest.yield_fixture()
@@ -534,6 +536,18 @@ def indextree(client, users):
 
 
 @pytest.fixture()
+def indexstyle(app, db):
+    record = IndexStyle(
+        id=app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
+        width='100',
+        height='800',
+        index_link_enabled=False
+    )
+    with db.session.begin_nested():
+        db.session.add(record)
+
+
+@pytest.fixture()
 def location(app, db):
     """Create default location."""
     tmppath = tempfile.mkdtemp()
@@ -661,7 +675,7 @@ def db_sessionlifetime(app, db):
 
 
 @pytest.fixture()
-def records(app, db, indextree, location, itemtypes, oaischema):
+def records(app, db, esindex, indextree, location, itemtypes, oaischema):
     indexer = WekoIndexer()
     indexer.get_es_index()
     results = []
@@ -701,7 +715,6 @@ def records(app, db, indextree, location, itemtypes, oaischema):
         filepath = "tests/data/helloworld.zip"
         results.append(make_record(db, indexer, i, filepath, filename, mimetype))
 
-    time.sleep(1)
     # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
     # print(es.cat.indices())
     return indexer, results
@@ -1899,7 +1912,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
 
 
 @pytest.fixture()
-def workflows(app, db, itemtypes, users):
+def workflows(app, db, itemtypes, users, records):
     action_datas = dict()
     with open("tests/data/actions.json", "r") as f:
         action_datas = json.load(f)
@@ -1956,7 +1969,7 @@ def workflows(app, db, itemtypes, users):
         send_mail_setting={},
     )
 
-    workflow = WorkFlow(
+    def_workflow = WorkFlow(
         flows_id=uuid.uuid4(),
         flows_name="test workflow1",
         itemtype_id=1,
@@ -1967,7 +1980,18 @@ def workflows(app, db, itemtypes, users):
         location_id=None,
         is_gakuninrdm=False,
     )
-    activity = Activity(
+    data_usage_workflow = WorkFlow(
+        flows_id=uuid.uuid4(),
+        flows_name="Data Usage Report",
+        itemtype_id=1,
+        index_tree_id=None,
+        flow_id=1,
+        is_deleted=False,
+        open_restricted=False,
+        location_id=None,
+        is_gakuninrdm=False,
+    )
+    def_activity = Activity(
         activity_id="A-00000000-00000",
         workflow_id=1,
         flow_id=flow_define.id,
@@ -1984,19 +2008,57 @@ def workflows(app, db, itemtypes, users):
         extra_info={},
         action_order=6,
     )
+    data_usage_activity = Activity(
+        item_id=records[1][0]['record'].id,
+        activity_id="usage_application_activity_id_dummy1",
+        workflow_id=1,
+        flow_id=flow_define.id,
+        action_id=1,
+        activity_login_user=1,
+        activity_update_user=1,
+        activity_start=datetime.strptime(
+            "2022/04/14 3:01:53.931", "%Y/%m/%d %H:%M:%S.%f"
+        ),
+        activity_community_id=3,
+        activity_confirm_term_of_use=True,
+        title="Data Usage Report",
+        shared_user_id=-1,
+        extra_info={
+            "related_title": "Data Usage Report",
+            "record_id": 1,
+            "file_name": records[1][0]["filename"],
+            "guest_mail": "guest@nii.co.jp",
+            "user_mail": "user@nii.co.jp"
+        },
+        action_order=6,
+    )
+    guest_activity = GuestActivity(
+        user_mail="guest@nii.co.jp",
+        record_id=1,
+        file_name=records[1][0]["filename"],
+        activity_id='',
+        token='',
+        expiration_date=datetime.now()
+    )
 
     with db.session.begin_nested():
         db.session.add(flow_define)
         db.session.add(flow_action1)
         db.session.add(flow_action2)
         db.session.add(flow_action3)
-        db.session.add(workflow)
-        db.session.add(activity)
+        db.session.add(def_workflow)
+        db.session.add(data_usage_workflow)
+        db.session.add(def_activity)
+        db.session.add(data_usage_activity)
+        db.session.add(guest_activity)
 
     return {
         "flow_define": flow_define,
-        "workflow": workflow,
-        "activity": activity,
+        "workflow": def_workflow,
+        "data_usage_wf": data_usage_workflow,
+        "activity": def_activity,
+        "guest_activity": guest_activity,
+        "data_usage_activity": data_usage_activity,
         "flow_action1": flow_action1,
         "flow_action2": flow_action2,
         "flow_action3": flow_action3,
@@ -2032,11 +2094,13 @@ def site_license_ipaddr(app, db,site_license_info):
     return record1
 
 @pytest.fixture()
-def db_fileonetimedownload(app, db,records):
-    indexer, results = records
-    record = results[0]["record"]
+def db_fileonetimedownload(app, db):
     record = FileOnetimeDownload(
-        file_name="helloworld.pdf", user_mail="wekosoftware@nii.ac.jp", record_id=record.id, download_count=10,expiration_date=0)
+        file_name="helloworld.pdf",
+        user_mail="wekosoftware@nii.ac.jp",
+        record_id='1',
+        download_count=10,
+        expiration_date=0)
     with db.session.begin_nested():
         db.session.add(record)
     return record
@@ -2049,8 +2113,8 @@ def db_file_permission(app, db,users,records):
     filename0 = results[0]["filename"]
     record0 = FilePermission(
         user_id=1, record_id=recid0.pid_value, file_name=filename0,
-                 usage_application_activity_id="usage_application_activity_id_dummy1",
-                 usage_report_activity_id="usage_report_activity_id_dummy1",status=1,
+        usage_application_activity_id="usage_application_activity_id_dummy1",
+        usage_report_activity_id=None, status=1, 
     )
     recid1 = results[1]["recid"]
     filename1 = results[1]["filename"]

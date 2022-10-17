@@ -119,7 +119,7 @@ from weko_workflow.models import (
     FlowDefine,
     WorkFlow,
 )
-from weko_workflow.views import blueprint as weko_workflow_blueprint
+from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
 from werkzeug.local import LocalProxy
 
 from tests.helpers import create_record, json_data

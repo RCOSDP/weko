@@ -65,6 +65,9 @@ $(document).ready(function () {
           locked_value = result.locked_value;
           sessionStorage.setItem('locked_value', locked_value);
         }
+      },
+      error: function(jqXHR, status){
+        alert(jqXHR.responseJSON.msg)
       }
     });
   } else if (locked_value) {

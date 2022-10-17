@@ -24,19 +24,24 @@ import shutil
 import tempfile
 import json
 import uuid
+import copy
+import requests
 from os.path import join
 from datetime import date, datetime, timedelta
-
+from time import sleep
 import pytest
 from mock import Mock, patch
 from pytest_mock import mocker
-from flask import Flask
+from flask import Flask, url_for
 from flask_babelex import Babel, lazy_gettext as _
 from flask_celeryext import FlaskCeleryExt
 from flask_menu import Menu
 from flask_login import current_user, login_user, LoginManager
 from werkzeug.local import LocalProxy
 from tests.helpers import create_record, json_data
+from six import BytesIO
+from elasticsearch import Elasticsearch
+from simplekv.memory.redisstore import RedisStore
 # from moto import mock_s3
 
 from invenio_deposit.config import (
@@ -59,6 +64,7 @@ from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers, ActionRoles
 from invenio_assets import InvenioAssets
 from invenio_cache import InvenioCache
+from invenio_communities import InvenioCommunities
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_files_rest.models import Location
@@ -71,8 +77,7 @@ from invenio_oaiserver.models import OAISet
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_records import InvenioRecords
 from invenio_search import InvenioSearch
-from sqlalchemy_utils.functions import create_database, database_exists, drop_database
-from simplekv.memory.redisstore import RedisStore
+from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 from invenio_oaiharvester.models import HarvestSettings
 from invenio_stats import InvenioStats
 from invenio_admin import InvenioAdmin
@@ -89,22 +94,30 @@ from invenio_files_rest.permissions import bucket_listmultiparts_all, \
     location_update_all, multipart_delete_all, multipart_read_all, \
     object_delete_all, object_delete_version_all, object_read_all, \
     object_read_version_all
-from invenio_files_rest.models import Bucket
+from invenio_files_rest.models import Bucket, Location, ObjectVersion
 from invenio_db.utils import drop_alembic_version_table
 from invenio_records_rest.config import RECORDS_REST_SORT_OPTIONS
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from invenio_pidrelations.models import PIDRelation
+from invenio_oaiserver.models import Identify
+from invenio_pidstore.providers.recordid import RecordIdProvider
+from invenio_records_rest import InvenioRecordsREST, config
+from invenio_records_rest.facets import terms_filter
+from invenio_rest import InvenioREST
+from invenio_records_rest.views import create_blueprint_from_app
 
+from weko_deposit.config import WEKO_BUCKET_QUOTA_SIZE, WEKO_MAX_FILE_SIZE
 from weko_admin.models import FacetSearchSetting
 from weko_schema_ui.models import OAIServerSchema
 from weko_index_tree.api import Indexes
 from weko_records import WekoRecords
-from weko_records.api import ItemTypes
+from weko_records.api import ItemTypes, ItemsMetadata, WekoRecord, Mapping
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records_ui.models import PDFCoverPageSettings
-from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISSION_ROLE_COMMUNITY, EMAIL_DISPLAY_FLG
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISSION_ROLE_COMMUNITY, EMAIL_DISPLAY_FLG,WEKO_RECORDS_UI_BULK_UPDATE_FIELDS
 from weko_groups import WekoGroups
+from weko_admin import WekoAdmin
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import (
     Action,
@@ -115,22 +128,96 @@ from weko_workflow.models import (
     FlowDefine,
     WorkFlow
 )
+from weko_theme import WekoTheme
+from weko_theme.views import blueprint as weko_theme_blueprint
+from weko_theme.config import THEME_BODY_TEMPLATE,WEKO_THEME_ADMIN_ITEM_MANAGEMENT_INIT_TEMPLATE
+from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from weko_index_tree.models import Index
 from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
-from weko_index_tree.views import blueprint_api
-from weko_index_tree.rest import create_blueprint
+from weko_search_ui.views import blueprint_api
+from weko_search_ui.rest import create_blueprint
 from weko_search_ui import WekoSearchUI, WekoSearchREST
-from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX, WEKO_SEARCH_TYPE_DICT
+from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX, WEKO_SEARCH_TYPE_DICT,WEKO_SEARCH_UI_BASE_TEMPLATE
 from weko_redis.redis import RedisConnection
 from weko_admin.models import SessionLifetime
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS, WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
 from weko_index_tree.models import IndexStyle
+from weko_deposit.api import WekoDeposit, WekoRecord, WekoIndexer
 
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy import event
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
+
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
+
+
+class TestSearch(RecordsSearch):
+    """Test record search."""
+
+    class Meta:
+        """Test configuration."""
+
+        index = 'invenio-records-rest'
+        doc_types = None
+
+    def __init__(self, **kwargs):
+        """Add extra options."""
+        super(TestSearch, self).__init__(**kwargs)
+        self._extra.update(**{'_source': {'excludes': ['_access']}})
+
+
+# class MockEs():
+#     def __init__(self,**keywargs):
+#         self.indices = self.MockIndices()
+#         self.es = Elasticsearch()
+#         self.cluster = self.MockCluster()
+#     def index(self, id="",version="",version_type="",index="",doc_type="",body="",**arguments):
+#         pass
+#     def delete(self,id="",index="",doc_type="",**kwargs):
+#         return Response(response=json.dumps({}),status=500)
+#     @property
+#     def transport(self):
+#         return self.es.transport
+#     class MockIndices():
+#         def __init__(self,**keywargs):
+#             self.mapping = dict()
+#         def delete(self,index="", ignore=""):
+#             pass
+#         def delete_template(self,index=""):
+#             pass
+#         def create(self,index="",body={},ignore=""):
+#             self.mapping[index] = body
+#         def put_alias(self,index="", name="", ignore=""):
+#             pass
+#         def put_template(self,name="", body={}, ignore=""):
+#             pass
+#         def refresh(self,index=""):
+#             pass
+#         def exists(self, index="", **kwargs):
+#             if index in self.mapping:
+#                 return True
+#             else:
+#                 return False
+#         def flush(self,index="",wait_if_ongoing=""):
+#             pass
+#         def delete_alias(self, index="", name="",ignore=""):
+#             pass
+        
+#         # def search(self,index="",doc_type="",body={},**kwargs):
+#         #     pass
+#     class MockCluster():
+#         def __init__(self,**kwargs):
+#             pass
+#         def health(self, wait_for_status="", request_timeout=0):
+#             pass
+
+
+@pytest.yield_fixture(scope='session')
+def search_class():
+    """Search class."""
+    yield TestSearch
 
 
 @pytest.yield_fixture()
@@ -142,7 +229,7 @@ def instance_path():
 
 
 @pytest.fixture()
-def base_app(instance_path):
+def base_app(instance_path, search_class, request):
     """Flask application fixture."""
     app_ = Flask('testapp', instance_path=instance_path, static_folder=join(instance_path, "static"),)
     os.environ['INVENIO_WEB_HOST_NAME']="127.0.0.1"
@@ -150,6 +237,7 @@ def base_app(instance_path):
         ACCOUNTS_JWT_ENABLE=True,
         SECRET_KEY='SECRET_KEY',
         WEKO_INDEX_TREE_UPDATED=True,
+        DEPOSIT_FILES_API = '/api/files',
         TESTING=True,
         FILES_REST_DEFAULT_QUOTA_SIZE = None,
         FILES_REST_DEFAULT_STORAGE_CLASS = 'S',
@@ -189,11 +277,12 @@ def base_app(instance_path):
         DEPOSIT_RECORDS_UI_ENDPOINTS=DEPOSIT_RECORDS_UI_ENDPOINTS,
         DEPOSIT_REST_ENDPOINTS=DEPOSIT_REST_ENDPOINTS,
         DEPOSIT_DEFAULT_STORAGE_CLASS=DEPOSIT_DEFAULT_STORAGE_CLASS,
-        RECORDS_REST_SORT_OPTIONS=RECORDS_REST_SORT_OPTIONS,
+        # RECORDS_REST_SORT_OPTIONS=RECORDS_REST_SORT_OPTIONS,
         RECORDS_REST_DEFAULT_LOADERS = {
             'application/json': lambda: request.get_json(),
             'application/json-patch+json': lambda: request.get_json(force=True),
         },
+        FILES_REST_OBJECT_KEY_MAX_LEN = 255,
         # SEARCH_UI_SEARCH_INDEX=SEARCH_UI_SEARCH_INDEX,
         SEARCH_UI_SEARCH_INDEX="test-weko",
         # SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST"),
@@ -215,15 +304,49 @@ def base_app(instance_path):
             }
         },
         THEME_SITENAME = 'WEKO3',
+        IDENTIFIER_GRANT_SUFFIX_METHOD = 0,
         THEME_FRONTPAGE_TEMPLATE = 'weko_theme/frontpage.html',
         BASE_EDIT_TEMPLATE = 'weko_theme/edit.html',
         BASE_PAGE_TEMPLATE = 'weko_theme/page.html',
+        RECORDS_REST_ENDPOINTS=copy.deepcopy(config.RECORDS_REST_ENDPOINTS),
+        RECORDS_REST_DEFAULT_CREATE_PERMISSION_FACTORY=None,
+        RECORDS_REST_DEFAULT_DELETE_PERMISSION_FACTORY=None,
+        RECORDS_REST_DEFAULT_READ_PERMISSION_FACTORY=None,
+        RECORDS_REST_DEFAULT_UPDATE_PERMISSION_FACTORY=None,
+        RECORDS_REST_DEFAULT_RESULTS_SIZE=10,
+        RECORDS_REST_DEFAULT_SEARCH_INDEX=search_class.Meta.index,
+        RECORDS_REST_FACETS={
+            search_class.Meta.index: {
+                'aggs': {
+                    'stars': {'terms': {'field': 'stars'}}
+                },
+                'post_filters': {
+                    'stars': terms_filter('stars'),
+                }
+            }
+        },
+        RECORDS_REST_SORT_OPTIONS={
+            search_class.Meta.index: dict(
+                year=dict(
+                    fields=['year'],
+                )
+            )
+        },
+        FILES_REST_DEFAULT_MAX_FILE_SIZE=None,
         WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS = False,
         WEKO_ADMIN_MANAGEMENT_OPTIONS=WEKO_ADMIN_MANAGEMENT_OPTIONS,
         WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS=WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS,
         WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info',
         WEKO_ITEMS_UI_EXPORT_TMP_PREFIX = 'weko_export_',
         WEKO_SEARCH_UI_IMPORT_TMP_PREFIX = 'weko_import_',
+        WEKO_AUTHORS_ES_INDEX_NAME = "{}-authors".format(index_prefix),
+        WEKO_AUTHORS_ES_DOC_TYPE = "author-v1.0.0",
+        WEKO_HANDLE_ALLOW_REGISTER_CNRI = True,
+        WEKO_PERMISSION_ROLE_USER = ['System Administrator',
+                             'Repository Administrator',
+                             'Contributor',
+                             'General',
+                             'Community Administrator'],
         WEKO_RECORDS_UI_LICENSE_DICT=[
             {
                 'name': _('write your own license'),
@@ -411,6 +534,7 @@ def base_app(instance_path):
                     '-NonCommercial-ShareAlike 4.0 International License.'
             },
         ],
+        WEKO_RECORDS_UI_BULK_UPDATE_FIELDS=WEKO_RECORDS_UI_BULK_UPDATE_FIELDS,
         WEKO_SEARCH_UI_BULK_EXPORT_URI = "URI_EXPORT_ALL",
         WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3,
         WEKO_SEARCH_UI_BULK_EXPORT_TASK = "KEY_EXPORT_ALL",
@@ -431,6 +555,8 @@ def base_app(instance_path):
             )
         ),
         WEKO_OPENSEARCH_SYSTEM_SHORTNAME = "WEKO",
+        WEKO_BUCKET_QUOTA_SIZE = WEKO_BUCKET_QUOTA_SIZE,
+        WEKO_MAX_FILE_SIZE = WEKO_MAX_FILE_SIZE,
         WEKO_OPENSEARCH_SYSTEM_DESCRIPTION = (
             "WEKO - NII Scholarly and Academic Information Navigator"
         ),
@@ -440,15 +566,18 @@ def base_app(instance_path):
         WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE="",
         WEKO_ITEMS_UI_MULTIPLE_APPROVALS=True,
         WEKO_THEME_ADMIN_ITEM_MANAGEMENT_TEMPLATE = 'weko_theme/admin/item_management_display.html',
+        THEME_BODY_TEMPLATE=THEME_BODY_TEMPLATE,
+        WEKO_THEME_ADMIN_ITEM_MANAGEMENT_INIT_TEMPLATE=WEKO_THEME_ADMIN_ITEM_MANAGEMENT_INIT_TEMPLATE,
         WEKO_SEARCH_REST_ENDPOINTS = dict(
             recid=dict(
                 pid_type='recid',
                 pid_minter='recid',
                 pid_fetcher='recid',
+                pid_value='1.0',
                 search_class=RecordsSearch,
                 # search_index="test-weko",
                 # search_index=SEARCH_UI_SEARCH_INDEX,
-                search_index="tenant1",
+                search_index="test-weko",
                 search_type='item-v1.0.0',
                 search_factory_imp='weko_search_ui.query.weko_search_factory',
                 # record_class='',
@@ -492,9 +621,26 @@ def base_app(instance_path):
         WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_edit_setting.html',
         WEKO_INDEX_TREE_LIST_API = "/api/tree",
         WEKO_INDEX_TREE_API = "/api/tree/index/",
-        WEKO_SEARCH_UI_TO_NUMBER_FORMAT = "99999999999999.99"
+        WEKO_SEARCH_UI_TO_NUMBER_FORMAT = "99999999999999.99",
+        WEKO_SEARCH_UI_BASE_TEMPLATE=WEKO_SEARCH_UI_BASE_TEMPLATE,
     )
     app_.url_map.converters['pid'] = PIDConverter
+    app_.config['RECORDS_REST_ENDPOINTS']['recid']['search_class'] = search_class
+
+    # Parameterize application.
+    if hasattr(request, 'param'):
+        if 'endpoint' in request.param:
+            app.config['RECORDS_REST_ENDPOINTS']['recid'].update(
+                request.param['endpoint'])
+        if 'records_rest_endpoints' in request.param:
+            original_endpoint = app.config['RECORDS_REST_ENDPOINTS']['recid']
+            del app.config['RECORDS_REST_ENDPOINTS']['recid']
+            for new_endpoint_prefix, new_endpoint_value in \
+                    request.param['records_rest_endpoints'].items():
+                new_endpoint = dict(original_endpoint)
+                new_endpoint.update(new_endpoint_value)
+                app.config['RECORDS_REST_ENDPOINTS'][new_endpoint_prefix] = \
+                    new_endpoint
 
     FlaskCeleryExt(app_)
     Menu(app_)
@@ -507,6 +653,7 @@ def base_app(instance_path):
     InvenioJSONSchemas(app_)
     InvenioSearch(app_)
     InvenioRecords(app_)
+    InvenioREST(app_)
     InvenioIndexer(app_)
     InvenioI18N(app_)
     InvenioPIDRelations(app_)
@@ -515,13 +662,24 @@ def base_app(instance_path):
     InvenioStats(app_)
     InvenioAdmin(app_)
     InvenioPIDStore(app_)
+    WekoRecords(app_)
     WekoSearchUI(app_)
     WekoWorkflow(app_)
     WekoGroups(app_)
+    WekoAdmin(app_)
+    # WekoTheme(app_)
+    # InvenioCommunities(app_)
     
+    # search = InvenioSearch(app_, client=MockEs())
+    # search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
+    InvenioRecordsREST(app_)
+    app_.register_blueprint(create_blueprint_from_app(app_))
+    app_.register_blueprint(weko_theme_blueprint)
+    app_.register_blueprint(invenio_communities_blueprint)
+
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
     current_assets.collect.collect()
-
+    
     return app_
 
 
@@ -554,48 +712,81 @@ def i18n_app(app):
 
 
 @pytest.yield_fixture()
+def client(app):
+    """Get test client."""
+    with app.test_client() as client:
+        yield client
+
+
+@pytest.yield_fixture()
 def client_rest(app):
-    app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
+    app.register_blueprint(create_blueprint(app, app.config['WEKO_SEARCH_REST_ENDPOINTS']))
+    with app.test_client() as client:
+        yield client
+
+
+@pytest.yield_fixture()
+def client_rest_weko_search_ui(app):
+    WekoSearchREST(app)
     with app.test_client() as client:
         yield client
 
 
 @pytest.yield_fixture()
 def client_api(app):
-    app.register_blueprint(blueprint_api, url_prefix='/api')
+    app.register_blueprint(blueprint_api)
     with app.test_client() as client:
         yield client
 
 
 @pytest.yield_fixture()
-def client_request_args(app):
-    app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
+def client_request_args(app, file_instance_mock):
+    app.register_blueprint(create_blueprint(app, app.config['WEKO_SEARCH_REST_ENDPOINTS']))
+
+    file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        'data',
+        'sample_file',
+        'sample_file.txt'
+    )
+
+    # files = {'upload_file': open(file_path,'rb')}
+    # values = {'DB': 'photcat', 'OUT': 'txt', 'SHORT': 'short'}
+
+    # r = requests.post(url, files=files, data=values)
+
     with app.test_client() as client:
-        r = client.get('/', query_string={
-            'index_id': '33',
-            'page': 1,
-            'count': 20,
-            'term': 14,
-            'lang': 'en',
-            'parent_id': 33,
-            'index_info': {},
-            'community': 'comm1',
-            'item_link': '1',
-            'is_search': 1,
-            'search_type': WEKO_SEARCH_TYPE_DICT["FULL_TEXT"],
-            })
+        with patch("flask.templating._render", return_value=""):
+            r = client.get('/', query_string={
+                'index_id': '33',
+                'page': 1,
+                'count': 20,
+                'term': 14,
+                'lang': 'en',
+                'parent_id': 33,
+                'index_info': {},
+                'community': 'comm1',
+                'item_link': '1',
+                'is_search': 1,
+                'search_type': WEKO_SEARCH_TYPE_DICT["INDEX"],
+                'is_change_identifier': True,
+                'remote_addr': '0.0.0.0',
+                'referrer': 'test',
+                'host': '127.0.0.1',
+                # 'search_type': WEKO_SEARCH_TYPE_DICT["FULL_TEXT"],
+                })
         yield r
 
 
 @pytest.fixture()
-def location(app):
+def location(app, db):
     """Create default location."""
     tmppath = tempfile.mkdtemp()
-    with db_.session.begin_nested():
+    with db.session.begin_nested():
         Location.query.delete()
         loc = Location(name='local', uri=tmppath, default=True)
-        db_.session.add(loc)
-    db_.session.commit()
+        db.session.add(loc)
+    db.session.commit()
     return location
 
 
@@ -743,12 +934,13 @@ def indices(app, db):
             public_state=True,
             harvest_public_state=True,
             id=33,
+            item_custom_sort={'1': 1},
             public_date=datetime.today() - timedelta(days=1)
         )
         testIndexThreeChild = Index(
             index_name="testIndexThreeChild",
             browsing_role="Contributor",
-            parent="testIndexThree",
+            parent=33,
             index_link_enabled=True,
             index_link_name="test_link",
             public_state=True,
@@ -756,7 +948,7 @@ def indices(app, db):
             id=44,
             public_date=datetime.today() - timedelta(days=1)
         )
-        testIndexMore = Index(index_name="testIndexMore",parent="testIndexThree",public_state=True,id='more')
+        testIndexMore = Index(index_name="testIndexMore",parent=33,public_state=True,id='more')
         testIndexPrivate = Index(index_name="testIndexPrivate",public_state=False,id=55)
 
         db.session.add(testIndexThree)
@@ -771,33 +963,24 @@ def indices(app, db):
 
 @pytest.fixture()
 def esindex(app,db_records):
-    with open("tests/data/mappings/item-v1.0.0.json","r") as f:
+    current_search_client.indices.delete(index='test-*')
+    with open("tests/data/item-v1.0.0.json","r") as f:
         mapping = json.load(f)
-
-    search = LocalProxy(lambda: app.extensions["invenio-search"])
-
-    with app.test_request_context():
-        try:
-            search.client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
-            search.client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
-        except:
-            search.client.indices.create("test-weko-items",body=mapping)
-            search.client.indices.put_alias(index="test-weko-items", name="test-weko")
-        # print(current_search_client.indices.get_alias())
+    try:
+        current_search_client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
+        current_search_client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
+    except:
+        current_search_client.indices.create("test-weko-items",body=mapping)
+        current_search_client.indices.put_alias(index="test-weko-items", name="test-weko")
+    # print(current_search_client.indices.get_alias())
     
     for depid, recid, parent, doi, record, item in db_records:
-        search.client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
-    
+        current_search_client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
 
-    yield search
-
-    with app.test_request_context():
-        try:
-            search.client.indices.delete_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
-            search.client.indices.delete(index=app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
-        except:
-            search.client.indices.delete_alias(index="test-weko-items", name="test-weko")
-            search.client.indices.delete(index=test-weko-items, ignore=[400, 404])
+    try:
+        yield current_search_client
+    finally:
+        current_search_client.indices.delete(index='test-*')
 
 
 @pytest.fixture()
@@ -868,52 +1051,6 @@ def db_records2(db, instance_path, users):
         index.public_state = True
         index.harvest_public_state = True
     
-    # index_metadata = {
-    #         'id': 2,
-    #         'parent': 0,
-    #         'value': 'Index(public_state = True,harvest_public_state = False)',
-    #     }
-    
-    # with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
-    #     # Indexes.create(0, index_metadata)
-    #     index_two = Index(id=index_metadata['id'],index_name="index_two")
-    #     db.session.add(index_two)
-    #     db.session.commit()
-    #     index = Index.get_index_by_id(2)
-    #     index.public_state = True
-    #     index.harvest_public_state = False
-    
-    # index_metadata = {
-    #         'id': 3,
-    #         'parent': 0,
-    #         'value': 'Index(public_state = False,harvest_public_state = True)',
-    # }
-    
-    # with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
-    #     # Indexes.create(0, index_metadata)
-    #     index_three = Index(id=index_metadata['id'],index_name="index_three")
-    #     db.session.add(index_three)
-    #     db.session.commit()
-    #     index = Index.get_index_by_id(3)
-    #     index.public_state = False
-    #     index.harvest_public_state = True
-    
-    # index_metadata = {
-    #         'id': 4,
-    #         'parent': 0,
-    #         'value': 'Index(public_state = False,harvest_public_state = False)',
-    # }
-    
-    # with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
-    #     # Indexes.create(0, index_metadata)
-    #     index_four = Index(id=index_metadata['id'],index_name="index_four")
-    #     db.session.add(index_four)
-    #     db.session.commit()
-    #     index = Index.get_index_by_id(4)
-    #     index.public_state = False
-    #     index.harvest_public_state = False
-
- 
     yield result
 
 
@@ -1076,7 +1213,7 @@ def records(db):
         
         search_query_result = json_data("data/search_result.json")
 
-    return(search_query_result)
+    return search_query_result
 
 
 @pytest.fixture()
@@ -1098,26 +1235,166 @@ def pdfcoverpage(app, db):
 @pytest.fixture()
 def item_type(app, db):
     _item_type_name = ItemTypeName(name='test')
+    _item_type_name2 = ItemTypeName(name='test2')
+    _item_type_name3 = ItemTypeName(name='test3')
 
     _render = {
-        'meta_list': {},
-        'table_row_map': {
-            'schema': {
-                'properties': {
-                    'item_1': {}
+        'meta_list': {
+            'file': {
+                'title': 'ファイル名',
+                'title_i18n': {
+                    'ja': 'ファイル名',
+                    'en': 'File'
+                },
+                'input_type': 'cus_1',
+                'input_value': '',
+                'option': {
+                    'required': False,
+                    'multiple': True,
+                    'hidden': False,
+                    'showlist': False,
+                    'crtf': False,
+                    'oneline': False
+                }
+            },
+            'thumbnail': {
+                'title': 'ラベル',
+                'title_i18n': {
+                    'ja': 'ラベル',
+                    'en': 'Thumbnail'
+                },
+                'input_type': 'cus_2',
+                'input_value': '',
+                'option': {
+                    'required': False,
+                    'multiple': True,
+                    'hidden': False,
+                    'showlist': False,
+                    'crtf': False,
+                    'oneline': False
                 }
             }
         },
-        'table_row': ['1']
+        'meta_fix': {
+            'pubdate': {
+                'title': '公開日',
+                'title_i18n': {
+                    'ja': '公開日',
+                    'en': 'PubDate'
+                },
+                'input_type': 'datetime',
+                'input_value': '',
+                'option': {
+                    'required': True,
+                    'multiple': False,
+                    'hidden': False,
+                    'showlist': False,
+                    'crtf': False
+                }
+            }
+        },
+        'table_row_map': {
+            'schema': {
+                'properties': {
+                    'item_1': {},
+                    'pubdate': {
+                        'type': 'string',
+                        'title': '公開日',
+                        'format': 'datetime'
+                    },
+                    'file': {
+                        'type': 'array',
+                        'format': 'array',
+                        'title': 'URI',
+                        'items': {
+                            'type': 'object',
+                            'format': 'object',
+                            'properties': {
+                                'url': {
+                                    'type': 'object',
+                                    'format': 'object',
+                                    'properties': {
+                                        'label': {
+                                            'format': 'text',
+                                            'title': 'ラベル',
+                                            'type': 'string'
+                                        },
+                                        'url': {
+                                            'format': 'text',
+                                            'title': '本文URL',
+                                            'type': 'string'
+                                        }
+                                    },
+                                    'title': '本文URL'
+                                },
+                                'filename': {
+                                    'type': ['null', 'string'],
+                                    'format': 'text',
+                                    'enum': [],
+                                    'title': 'ファイル名'
+                                }
+                            }
+                        }
+                    },
+                    'thumbnail': {
+                        'type': 'array',
+                        'format': 'array',
+                        'title': 'URI',
+                        'items': {
+                            'type': 'object',
+                            'format': 'object',
+                            'properties': {
+                                'thumbnail_label': {
+                                    'format': 'text',
+                                    'title': 'ラベル',
+                                    'type': 'string'
+                                },
+                                'thumbnail_url': {
+                                    'format': 'text',
+                                    'title': 'URI',
+                                    'type': 'string'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        'table_row': ['pubdate', 'file', 'thumbnail']
     }
 
-    return ItemTypes.create(
+    with open("tests/data/itemtype_schema.json", "r") as f:
+        item_type_schema = json.load(f)
+
+    sample1 = ItemTypes.create(
         name='test',
         item_type_name=_item_type_name,
-        schema={},
+        schema=item_type_schema,
         render=_render,
         tag=1
     )
+
+    sample2 = ItemTypes.create(
+        name='test2',
+        item_type_name=_item_type_name2,
+        schema=item_type_schema,
+        render=_render,
+        tag=2
+    )
+
+    sample3 = ItemTypes.create(
+        name='test3',
+        item_type_name=_item_type_name3,
+        schema=item_type_schema,
+        render=_render,
+        tag=3
+    )
+
+    return [
+        sample1,
+        sample2,
+        sample3
+    ]
 
 
 @pytest.fixture()
@@ -1153,166 +1430,6 @@ def mock_execute(app):
         dummy = response.Response(Search(), data)
         return dummy
     return factory
-
-
-@pytest.fixture()
-def count_json_data():
-    data = [{
-        "public_state": True,
-        "doc_count": 99,
-        "no_available": 9
-    }]
-    return data
-
-
-
-    """Test of method which creates OAI-PMH response for verb GetRecord."""
-    with app.app_context():
-        identify = Identify(
-            outPutSetting=True
-        )
-        index_metadata = {
-            "id": 1557819692844,
-            "parent": 0,
-            "position": 0,
-            "index_name": "コンテンツタイプ (Contents Type)",
-            "index_name_english": "Contents Type",
-            "index_link_name": "",
-            "index_link_name_english": "New Index",
-            "index_link_enabled": False,
-            "more_check": False,
-            "display_no": 5,
-            "harvest_public_state": True,
-            "display_format": 1,
-            "image_name": "",
-            "public_state": True,
-            "recursive_public_state": True,
-            "rss_status": False,
-            "coverpage_state": False,
-            "recursive_coverpage_check": False,
-            "browsing_role": "3,-98,-99",
-            "recursive_browsing_role": False,
-            "contribute_role": "1,2,3,4,-98,-99",
-            "recursive_contribute_role": False,
-            "browsing_group": "",
-            "recursive_browsing_group": False,
-            "recursive_contribute_group": False,
-            "owner_user_id": 1,
-            "item_custom_sort": {"2": 1}
-        }
-        index = Index(**index_metadata)
-        mapping = Mapping.create(
-            item_type_id=item_type.id,
-            mapping={}
-        )
-        with db.session.begin_nested():
-            db.session.add(identify)
-            db.session.add(index)
-        dummy_data = {
-            "hits": {
-                "total": 3,
-                "hits": [
-                    {
-                        "_source": {
-                            "_oai": {"id": str(records[0][0])},
-                            "_updated": "2022-01-01T10:10:10"
-                        },
-                        "_id": records[0][2].id,
-                    },
-                    {
-                        "_source": {
-                            "_oai": {"id": str(records[1][0])},
-                            "_updated": "2022-01-01T10:10:10"
-                        },
-                        "_id": records[1][2].id,
-                    },
-                    {
-                        "_source": {
-                            "_oai": {"id": str(records[2][0])},
-                            "_updated": "2022-01-01T10:10:10"
-                        },
-                        "_id": records[2][2].id,
-                    },
-                ]
-            }
-        }
-        kwargs = dict(
-            metadataPrefix="jpcoar_1.0",
-            verb="GetRecord",
-            identifier=str(records[0][0])
-        )
-        ns = {"root_name": "jpcoar", "namespaces":{'': 'https://github.com/JPCOAR/schema/blob/master/1.0/',
-              'dc': 'http://purl.org/dc/elements/1.1/', 'xs': 'http://www.w3.org/2001/XMLSchema',
-              'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'xml': 'http://www.w3.org/XML/1998/namespace',
-              'dcndl': 'http://ndl.go.jp/dcndl/terms/', 'oaire': 'http://namespace.openaire.eu/schema/oaire/',
-              'jpcoar': 'https://github.com/JPCOAR/schema/blob/master/1.0/',
-              'dcterms': 'http://purl.org/dc/terms/', 'datacite': 'https://schema.datacite.org/meta/kernel-4/',
-              'rioxxterms': 'http://www.rioxx.net/schema/v2.0/rioxxterms/'}}
-        mocker.patch("invenio_oaiserver.response.to_utc",side_effect=lambda x:x)
-        mocker.patch("weko_index_tree.utils.get_user_groups",return_value=[])
-        mocker.patch("weko_index_tree.utils.check_roles",return_value=True)
-        mocker.patch("invenio_oaiserver.response.get_identifier",return_value=None)
-        mocker.patch("weko_schema_ui.schema.cache_schema",return_value=ns)
-        with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
-            # return error 1
-            identify = Identify(
-                outPutSetting=False
-            )
-            with patch("invenio_oaiserver.response.OaiIdentify.get_all",return_value=identify):
-                res = getrecord(**kwargs)
-                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
-
-            # return error 2
-            with patch("invenio_oaiserver.response.is_output_harvest",return_value=HARVEST_PRIVATE):
-                res = getrecord(**kwargs)
-                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
-
-        dummy_data = {
-            "hits": {
-                "total": 1,
-                "hits": [
-                    {
-                        "_source": {
-                            "_oai": {"id": str(records[3][0])},
-                            "_updated": "2022-01-01T10:10:10"
-                        },
-                        "_id": records[3][2].id,
-                    }
-                ]
-            }
-        }
-        kwargs = dict(
-            metadataPrefix='jpcoar_1.0',
-            verb="GetRecord",
-            identifier=str(records[2][0])
-        )
-        # not etree_record.get("system_identifier_doi")
-        with patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
-            with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
-                res = getrecord(**kwargs)
-                identifier = res.xpath(
-                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
-                    namespaces=NAMESPACES)
-                assert identifier == [str(records[2][0])]
-                datestamp = res.xpath(
-                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:datestamp/text()',
-                    namespaces=NAMESPACES)
-                assert datestamp == [datetime_to_datestamp(records[2][0].updated)]
-
-            kwargs = dict(
-                metadataPrefix='jpcoar_1.0',
-                verb="GetRecord",
-                identifier=str(records[3][0])
-            )
-            # etree_record.get("system_identifier_doi")
-            with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
-                res = getrecord(**kwargs)
-                identifier = res.xpath(
-                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
-                    namespaces=NAMESPACES)
-                assert identifier == [str(records[3][0])]
-                assert len(res.xpath('/x:OAI-PMH/x:GetRecord/x:record/x:metadata',
-                                        namespaces=NAMESPACES)) == 1
 
 
 @pytest.fixture()
@@ -1370,6 +1487,44 @@ def communities(app, db, user, indices):
 
 
 @pytest.fixture()
+def communities2(app, db, user, indices):
+    """Create some example communities."""
+    user1 = db_.session.merge(user)
+    ds = app.extensions['invenio-accounts'].datastore
+    r = ds.create_role(name='superuser', description='1234')
+    ds.add_role_to_user(user1, r)
+    ds.commit()
+    db.session.commit()
+
+    comm0 = Community.create(community_id='Root Index', role_id=r.id,
+                             id_user=user1.id, title='Title1',
+                             description='Description1',
+                             root_node_id=33)
+    db.session.add(comm0)
+
+    return comm0
+
+
+@pytest.fixture()
+def communities3(app, db, user, indices):
+    """Create some example communities."""
+    user1 = db_.session.merge(user)
+    ds = app.extensions['invenio-accounts'].datastore
+    r = ds.create_role(name='superuser', description='1234')
+    ds.add_role_to_user(user1, r)
+    ds.commit()
+    db.session.commit()
+
+    comm0 = Community.create(community_id='comm1', role_id=r.id,
+                             id_user=user1.id, title='Title1',
+                             description='Description1',
+                             root_node_id=33)
+    db.session.add(comm0)
+
+    return comm0
+
+
+@pytest.fixture()
 def mock_users():
     """Create mock users."""
     mock_auth_user = Mock()
@@ -1390,6 +1545,31 @@ def mock_user_ctx(mock_users):
     with patch('invenio_stats.utils.current_user',
                mock_users['authenticated']):
         yield
+
+
+@pytest.fixture
+def file_instance_mock(db):
+    """Mock of a file instance."""
+    class FileInstance(object):
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+
+    file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        'data',
+        'sample_file',
+        'sample_file.txt'
+    )
+    
+    file = FileInstance(
+        id='deadbeef-65bd-4d9b-93e2-ec88cc59aec5',
+        uri=file_path,
+        size=4,
+        updated=None)
+    
+    # db.session.add(file)
+    # db.session.commit()
 
 
 @pytest.yield_fixture()
@@ -1613,7 +1793,7 @@ def db_activity(db, db_records2, db_itemtype, db_workflow, users):
         db.session.add(activity)
         db.session.add(rel)
 
-    return {"activity": activity, "recid": recid, "item": item}
+    return {"activity": activity, "recid": recid, "item": item, "record": record}
 
 
 @pytest.fixture()
@@ -1681,7 +1861,7 @@ def db_workflow(app, db, db_itemtype, users):
 
     flow_id = uuid.uuid4()
     flow_define = FlowDefine(
-        flow_id=flow_id, flow_name="Registration Flow", flow_user=1, flow_status="A"
+        flow_id=flow_id, flow_name="Registration", flow_user=1, flow_status="A"
     )
     flow_action1 = FlowAction(
         status="N",
@@ -1778,6 +1958,12 @@ def testfile(db, bucket):
     obj = ObjectVersion.create(bucket, 'testfile', stream=BytesIO(b'atest'))
     db.session.commit()
     return obj
+
+
+@pytest.yield_fixture()
+def search_url():
+    """Search class."""
+    yield url_for('invenio_records_rest.recid_list')
 
 
 @pytest.fixture()
@@ -1973,3 +2159,150 @@ def record_with_metadata():
 def item_render():
     data = json_data("data/itemtype1_render.json")
     return data
+
+
+@pytest.yield_fixture()
+def es(app):
+    """Elasticsearch fixture."""
+    try:
+        list(current_search.create())
+    # except RequestError:
+    except:
+        list(current_search.delete(ignore=[404]))
+        list(current_search.create(ignore=[400]))
+    current_search_client.indices.refresh()
+    yield current_search_client
+    list(current_search.delete(ignore=[404]))
+
+
+@pytest.fixture()
+def deposit(app, es, users, location, db):
+    """New deposit with files."""
+    record = {
+        'title': 'fuu'
+    }
+    with app.test_request_context():
+        datastore = app.extensions['security'].datastore
+        login_user(datastore.find_user(email=users[0]['email']))
+        deposit = Deposit.create(record)
+        deposit.commit()
+        db.session.commit()
+    sleep(2)
+    return deposit
+
+
+@pytest.fixture()
+def db_index(client, users):
+    index_metadata = {
+        "id": 1,
+        "parent": 0,
+        "value": "Index(public_state = True,harvest_public_state = True)",
+    }
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        ret = Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(1)
+        # index.public_state = True
+        # index.harvest_public_state = True
+
+    index_metadata = {
+        "id": 2,
+        "parent": 0,
+        "value": "Index(public_state = True,harvest_public_state = False)",
+    }
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(2)
+        # index.public_state = True
+        # index.harvest_public_state = False
+
+    index_metadata = {
+        "id": 3,
+        "parent": 0,
+        "value": "Index(public_state = False,harvest_public_state = True)",
+    }
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(3)
+        # index.public_state = False
+        # index.harvest_public_state = True
+
+    index_metadata = {
+        "id": 4,
+        "parent": 0,
+        "value": "Index(public_state = False,harvest_public_state = False)",
+    }
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(4)
+        # index.public_state = False
+        # index.harvest_public_state = False
+
+
+@pytest.fixture()
+def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
+    indexer = WekoIndexer()
+    indexer.get_es_index()
+    results = []
+    with app.test_request_context():
+        for i in range(1, 10):
+            record_data =  {"_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]}, "path": ["{}".format((i % 2) + 1)], "recid": "{}".format(i), "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-08-20"}, "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02"}, "_deposit": {"id": "{}".format(i), "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "owner": "1", "owners": [1], "status": "draft", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}}, "item_title": "title", "author_link": [], "item_type_id": "1", "publish_date": "2022-08-20", "publish_status": "1", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}]}, "relation_version_is_last": True, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://weko3.example.org/record/{}/files/hello.txt'.format(i)}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_access', 'version_id': '', 'mimetype': 'application/pdf',"file": "",}]}}
+ 
+            item_data = {"id": "{}".format(i), "cnri": "cnricnricnri", "cnri_suffix_not_existed": "cnri_suffix_not_existed", "is_change_identifier": "is_change_identifier" ,"pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "lang": "ja", "publish_status": "public", "owner": "1", "title": "title", "owners": [1], "item_type_id": 1, "status": "keep", "$schema": "/items/jsonschema/1", "item_title": "item_title", "metadata": record_data, "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_id": -1, "item_1617186331708": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}}
+   
+            rec_uuid = uuid.uuid4()
+
+            recid = PersistentIdentifier.create('recid', str(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            depid = PersistentIdentifier.create('depid', str(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            rel = PIDRelation.create(recid,depid,3)
+            db.session.add(rel)
+            parent = None
+            doi = None
+            parent = PersistentIdentifier.create('parent', "parent:{}".format(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            rel = PIDRelation.create(parent,recid,2,0)
+            db.session.add(rel)
+            if(i%2==1):
+                doi = PersistentIdentifier.create('doi', "https://doi.org/10.xyz/{}".format((str(i)).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+                hdl = PersistentIdentifier.create('hdl', "https://hdl.handle.net/0000/{}".format((str(i)).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            
+            record = WekoRecord.create(record_data, id_=rec_uuid)
+            # from six import BytesIO
+            from invenio_files_rest.models import Bucket
+            from invenio_records_files.models import RecordsBuckets
+            import base64
+            bucket = Bucket.create()
+            record_buckets = RecordsBuckets.create(record=record.model, bucket=bucket)
+            stream = BytesIO(b'Hello, World')
+            # record.files['hello.txt'] = stream
+            # obj=ObjectVersion.create(bucket=bucket.id, key='hello.txt', stream=stream)
+            record['item_1617605131499']['attribute_value_mlt'][0]['file'] = (base64.b64encode(stream.getvalue())).decode('utf-8')
+            deposit = WekoDeposit(record, record.model)
+            deposit.commit()
+            # record['item_1617605131499']['attribute_value_mlt'][0]['version_id'] = str(obj.version_id)
+            record['item_1617605131499']['attribute_value_mlt'][0]['version_id'] = '1'
+            
+            record_data['content']= [{"date":[{"dateValue":"2021-07-12","dateType":"Available"}],"accessrole":"open_access","displaytype" : "simple","filename" : "hello.txt","attachment" : {},"format" : "text/plain","mimetype" : "text/plain","filesize" : [{"value" : "1 KB"}],"version_id" : "{}".format('1'),"url" : {"url":"http://localhost/record/{}/files/hello.txt".format(i)},"file":(base64.b64encode(stream.getvalue())).decode('utf-8')}]
+            indexer.upload_metadata(record_data, rec_uuid, 1, False)
+            item = ItemsMetadata.create(item_data, id_=rec_uuid)
+            
+            results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit})
+
+    sleep(3)
+    es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
+    # print(es.cat.indices())
+    return {
+        "indexer": indexer,
+        "results": results
+    }
+
+
+
+@pytest.fixture()
+def es_item_file_pipeline(es):
+    from elasticsearch.client.ingest import IngestClient
+    p = IngestClient(current_search_client)
+    p.put_pipeline(id='item-file-pipeline', body={'description': "Index contents of each file.",'processors': [{"foreach": {"field": "content","processor": {"attachment": {"indexed_chars" : -1,"target_field": "_ingest._value.attachment","field": "_ingest._value.file","properties": ["content"]}}}},{"foreach": {"field": "content","processor": {"remove": {"field": "_ingest._value.file"}}}}]})
+

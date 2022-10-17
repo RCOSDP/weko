@@ -1,0 +1,39 @@
+{
+  "mappings": {
+    "testrecord": {
+      "properties": {
+        "control_number": {
+          "type": "string"
+        },
+        "stars": {
+          "type": "long"
+        },
+        "title": {
+          "type": "string"
+        },
+        "year": {
+          "type": "long"
+        },
+        "suggest_title": {
+          "type": "completion",
+          "analyzer": "simple",
+          "search_analyzer": "simple",
+          "payloads": true
+        },
+        "suggest_byyear": {
+          "type": "completion",
+          "analyzer": "simple",
+          "search_analyzer": "simple",
+          "payloads": true,
+          "context": {
+            "year": {
+              "type": "category",
+              "path": "year",
+              "default": ""
+            }
+          }
+        }
+      }
+    }
+  }
+}
