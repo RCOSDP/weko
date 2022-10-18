@@ -8,7 +8,7 @@
 
 import mimetypes
 import unicodedata
-
+from time import time
 from flask import current_app, request
 from invenio_files_rest.helpers import chunk_size_or_default, sanitize_mimetype
 from werkzeug.datastructures import Headers
