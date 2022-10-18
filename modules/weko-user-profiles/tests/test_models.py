@@ -23,14 +23,11 @@
 
 """Tests for user profile models."""
 
-import pytest
 from invenio_accounts.models import User
-from invenio_db import db
-from sqlalchemy.exc import IntegrityError
-from tests.test_validators import test_usernames
 
 from weko_user_profiles import UserProfile, WekoUserProfiles
 
+from tests.test_validators import test_usernames
 
 def test_userprofiles(app):
     """Test UserProfile model."""
@@ -50,7 +47,7 @@ def test_userprofiles(app):
     # assert profile.last_name == 'User'
 
 
-def test_profile_updating(base_app):
+def test_profile_updating(base_app,db):
     """Test profile updating."""
     base_app.config.update(USERPROFILES_EXTEND_SECURITY_FORMS=True)
     WekoUserProfiles(base_app)
@@ -73,7 +70,7 @@ def test_profile_updating(base_app):
         # assert profile.username == 'Different_Name'
 
 
-def test_case_insensitive_username(app):
+def test_case_insensitive_username(app,db):
     """Test case-insensitive uniqueness."""
     with app.app_context():
         with db.session.begin_nested():
@@ -87,7 +84,7 @@ def test_case_insensitive_username(app):
         # pytest.raises(IntegrityError, db.session.commit)
 
 
-def test_case_preserving_username(app):
+def test_case_preserving_username(app,db):
     """Test that username preserves the case."""
     with app.app_context():
         with db.session.begin_nested():
@@ -99,7 +96,7 @@ def test_case_preserving_username(app):
         # assert profile.username == 'InFo'
 
 
-def test_delete_cascade(app):
+def test_delete_cascade(app,db):
     """Test that deletion of user, also removes profile."""
     with app.app_context():
         with db.session.begin_nested():
@@ -116,7 +113,7 @@ def test_delete_cascade(app):
         assert UserProfile.get_by_userid(u.id) is None
 
 
-def test_create_profile(app):
+def test_create_profile(app,db):
     """Test that userprofile can be patched using UserAccount constructor."""
     with app.app_context():
         user = User(
@@ -147,7 +144,7 @@ def test_create_profile(app):
         # assert user.profile.username == 'test_username'
 
 
-def test_create_profile_with_null(app):
+def test_create_profile_with_null(app,db):
     """Test that creation with empty profile."""
     with app.app_context():
         user = User(
