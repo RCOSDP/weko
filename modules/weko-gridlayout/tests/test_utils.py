@@ -162,15 +162,135 @@ def test_build_data(i18n_app):
         assert build_data(data)
 
 
-
 # def _escape_html_multi_lang_setting(multi_lang_setting: dict):
+def test__escape_html_multi_lang_setting(i18n_app):
+    multi_lang_setting = {
+        "a": 1,
+        "b": {"c": 2}
+    }
+    # Doesn't return any value
+    assert not _escape_html_multi_lang_setting(multi_lang_setting)
+
+
 # def build_data_setting(data):
+def test_build_data_setting(i18n_app):
+    WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE = "Access counter"
+    WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE = "New arrivals"
+    WEKO_GRIDLAYOUT_NOTICE_TYPE = "Notice"
+    WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE = 'Menu'
+    WEKO_GRIDLAYOUT_HEADER_WIDGET_TYPE = 'Header'
+    with patch("weko_gridlayout.utils.convert_popular_data", return_value=""):
+        data = {
+            "widget_type": WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE, 
+            "settings": {
+                "menu_orientation": "test",
+                "menu_bg_color": "test",
+                "menu_active_bg_color": "test",
+                "menu_default_color": "test",
+                "menu_active_color": "test",
+                "menu_show_pages": "test",
+            }
+        }
+        with patch("weko_gridlayout.utils._build_access_counter_setting_data", return_value=""):
+            # Doesn't return any value
+            assert not build_data_setting(data)
+
+        with patch("weko_gridlayout.utils._build_new_arrivals_setting_data", return_value=""):
+            data["widget_type"] = WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE
+            # Doesn't return any value
+            assert not build_data_setting(data)
+
+        with patch("weko_gridlayout.utils._build_notice_setting_data", return_value=""):
+            data["widget_type"] = WEKO_GRIDLAYOUT_NOTICE_TYPE
+            # Doesn't return any value
+            assert not build_data_setting(data)
+        
+        data["widget_type"] = WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE
+        assert build_data_setting(data)
+
+        with patch("weko_gridlayout.utils._build_header_setting_data", return_value=""):       
+            data["widget_type"] = WEKO_GRIDLAYOUT_HEADER_WIDGET_TYPE
+            # Doesn't return any value
+            assert not build_data_setting(data)
+
+
 # def _build_access_counter_setting_data(result, setting):
+def test__build_access_counter_setting_data(i18n_app):
+    result = {}
+    setting = {
+        "access_counter": "test",
+        "following_message": "test",
+        "other_message": "test",
+        "preceding_message": "test",
+    }
+    # Doesn't return any value
+    assert not _build_access_counter_setting_data(result, setting)
+
+
 # def _build_new_arrivals_setting_data(result, setting):
+def test__build_new_arrivals_setting_data(i18n_app):
+    result = {}
+    setting = {
+        "new_dates": "test",
+        "display_result": "test",
+        "rss_feed": "test",
+    }
+    # Doesn't return any value
+    assert not _build_new_arrivals_setting_data(result, setting)
+
+
 # def _build_notice_setting_data(result, setting):
+def test__build_notice_setting_data(i18n_app):
+    result = {}
+    setting = {
+        "setting": "test",
+        "read_more": "test",
+    }
+    # Doesn't return any value
+    assert not _build_notice_setting_data(result, setting)
+
+
 # def _build_header_setting_data(result, setting):
+def test__build_header_setting_data(i18n_app):
+    result = {}
+    setting = {
+        "fixedHeaderBackgroundColor": "test",
+        "fixedHeaderTextColor": "test",
+    }
+    # Doesn't return any value
+    assert not _build_header_setting_data(result, setting)
+
+
 # def build_multi_lang_data(widget_id, multi_lang_json):
+def test_build_multi_lang_data(i18n_app):
+    widget_id = 1
+    multi_lang_json = {
+        "test": {"label": 1, "description": 2}
+    }
+    
+    assert build_multi_lang_data(widget_id, multi_lang_json)
+
+    multi_lang_json = {}
+    # Doesn't return any value
+    assert not build_multi_lang_data(widget_id, multi_lang_json)
+
+
 # def convert_widget_data_to_dict(widget_data):
+def test_convert_widget_data_to_dict(i18n_app):
+    def test_func():
+        return
+    widget_data = MagicMock()
+    widget_data.settings = {}
+    widget_data.widget_id = "test"
+    widget_data.repository_id = "test"
+    widget_data.widget_type = "test"
+    widget_data.is_enabled = "test"
+    widget_data.is_deleted = "test"
+    widget_data.updated = MagicMock()
+    widget_data.updated.timestamp = test_func
+    assert convert_widget_data_to_dict(widget_data)
+
+
 # def convert_widget_multi_lang_to_dict(multi_lang_data):
 # def convert_data_to_design_pack(widget_data, list_multi_lang_data):
 # def convert_data_to_edit_pack(data):
