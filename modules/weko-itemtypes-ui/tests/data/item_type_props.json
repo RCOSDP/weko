@@ -1,0 +1,26 @@
+{
+    "test1":{
+        "id":1,
+        "name":"test1",
+        "schema":{"properties":{"filename":"test_file"}},
+        "form":{"title_i18n":{"en":"test_name_en"}},
+        "forms":{},
+        "delflg":false
+    },
+    "S_test2":{
+        "id":2,
+        "name":"S_test2",
+        "schema":{},
+        "form":{},
+        "forms":{},
+        "delflg":false
+    },
+    "test3":{
+        "id":3,
+        "name":"test3",
+        "schema":{"billing_file_prop":true},
+        "form":{},
+        "forms":{},
+        "delflg":false
+    }
+}

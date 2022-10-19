@@ -1,12 +1,369 @@
+import pytest
+import uuid
+import copy
+from mock import patch
+from io import BytesIO
+from werkzeug.datastructures import FileStorage
+from flask import url_for,make_response,json,current_app
+from flask_login import login_user
+from invenio_accounts.testutils import login_user_via_session
+from invenio_pidstore.models import PersistentIdentifier
+from weko_admin.models import BillingPermission
+from weko_records.models import ItemMetadata
+from weko_workflow.models import WorkFlow, FlowDefine
+
+from tests.helpers import login
+
+def assert_statuscode_with_role(response,is_admin,error_code=403):
+    if is_admin:
+        assert response.status_code != error_code
+    else:
+        assert response.status_code == error_code
 # class ItemTypeMetaDataView(BaseView):
+class TestItemTypeMetaDataView:
+    
 #     def index(self, item_type_id=0):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    @pytest.mark.parametrize("index,is_permission",[
+        (0,True),
+        #(1,True),
+        #(2,False),
+        #(3,False),
+        #(4,False),
+        #(5,False),
+        (7,False)
+    ])
+    def test_index_acl(self,client,admin_view,users,index,is_permission):
+        login_user_via_session(client=client,email=users[index]["email"])
+        url = url_for("itemtypesregister.index")
+        res = client.get(url)
+        assert_statuscode_with_role(res,is_permission)
+        url = url_for("itemtypesregister.index",item_type_id=10)#
+        res = client.get(url)
+        assert_statuscode_with_role(res,is_permission)
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    def test_index(self,client,admin_view,item_type,users,mocker):
+        login_user_via_session(client=client,email=users[0]["email"])
+        url = url_for("itemtypesregister.index",item_type_id=3)
+        mock_render = mocker.patch("weko_itemtypes_ui.admin.ItemTypeMetaDataView.render",return_value=make_response())
+        res = client.get(url)
+        assert res.status_code == 200#
+        itemtype_list_ = [(obj["item_type_name"],obj["item_type_name"].name,obj["item_type"].id,obj["item_type"].harvesting_type,obj["item_type"].is_deleted,obj["item_type"].tag) for obj in item_type]
+        itemtype_list = sorted(itemtype_list_, key=lambda x: x[2])
+        mock_render.assert_called_with(
+            'weko_itemtypes_ui/admin/create_itemtype.html',
+            item_type_list=itemtype_list,
+            id=3,
+            is_sys_admin=True,
+            lang_code="en"
+        )#
 #     def render_itemtype(self, item_type_id=0):
+    @pytest.mark.parametrize("index,is_permission",[
+        (0,True),
+        #(1,True),
+        #(2,False),
+        #(3,False),
+        #(4,False),
+        #(5,False),
+        (7,False)
+    ])
+    def test_render_itemtype_acl(self,client,admin_view,users,index,is_permission):
+        login_user_via_session(client=client,email=users[index]["email"])
+        url = url_for("itemtypesregister.render_itemtype")
+        res = client.get(url)
+        assert_statuscode_with_role(res,is_permission)
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_render_itemtype -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    def test_render_itemtype(self,client,admin_view,item_type,users,):
+        login_user_via_session(client=client,email=users[0]["email"])
+        
+        url = url_for("itemtypesregister.render_itemtype",item_type_id=2)
+        res = client.get(url)
+        result = json.loads(res.data)
+        assert result["edit_notes"] == {}
+        assert result["table_row"] != []
+        assert result["meta_list"] != {}
+        
+        
+        # url = url_for("itemtypesregister.render_itemtype",item_type_id=0)
+        # res = client.get(url)
+        # result = json.loads(res.data)
+        # assert result == {
+        #         'table_row': [],
+        #         'table_row_map': {},
+        #         'meta_list': {},
+        #         'schemaeditor': {
+        #             'schema': {}
+        #         },
+        #         'edit_notes': {}
+        #     }#
 #     def delete_itemtype(self, item_type_id=0):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_delete_itemtype -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    def test_delete_itemtype(self,client,admin_view,db,users,item_type,mocker):
+        login_user_via_session(client=client,email=users[0]["email"])
+        url = url_for("itemtypesregister.delete_itemtype")
+        res = client.post(url)
+        assert json.loads(res.data)["code"] == -1
+        
+        url = url_for("itemtypesregister.delete_itemtype",item_type_id=100)
+        res = client.post(url)
+        assert json.loads(res.data)["code"] == -1
+        
+        url = url_for("itemtypesregister.delete_itemtype",item_type_id=1)
+        mock_flash = mocker.patch("weko_itemtypes_ui.admin.flash")
+        res = client.post(url)
+        mock_flash.assert_called_with("Cannot delete Item type for Harvesting.","error")
+        assert json.loads(res.data)["code"] == -1
+        
+        item_type1 = item_type[0]["item_type"]
+        item_type1.harvesting_type = False
+        item_type2 = item_type[1]["item_type"]
+        item_type2.harvesting_type = False
+        db.session.merge(item_type1)
+        db.session.merge(item_type2)
+        item = ItemMetadata(item_type_id=item_type1.id,json={})
+        
+        db.session.add(item)
+        db.session.commit()
+        pid = PersistentIdentifier(
+            pid_type="recid",
+            pid_value="1",
+            status="R",
+            object_type="rec",
+            object_uuid=item.id
+        )
+        db.session.add(pid)
+        db.session.commit()
+        mock_flash = mocker.patch("weko_itemtypes_ui.admin.flash")
+        url = url_for("itemtypesregister.delete_itemtype",item_type_id=item_type1.id)
+        res = client.post(url)
+        mock_flash.assert_called_with("Cannot delete due to child existing item types.","error")
+        assert json.loads(res.data)["code"] == -1#
+        mock_flash = mocker.patch("weko_itemtypes_ui.admin.flash")
+        url = url_for("itemtypesregister.delete_itemtype",item_type_id=item_type2.id)
+        res = client.post(url)
+        mock_flash.assert_called_with("Deleted Item type successfully.")
+        assert json.loads(res.data)["code"] == 0
 #     def register(self, item_type_id=0):
+    @pytest.mark.parametrize("index,is_permission",[
+        (0,True),
+        #(1,True),
+        #(2,False),
+        #(3,False),
+        #(4,False),
+        #(5,False),
+        (7,False)
+    ])
+    def test_register_acl(self,client,admin_view,users,index,is_permission):
+        login_user_via_session(client=client,email=users[index]["email"])
+        url = url_for("itemtypesregister.register")
+        res = client.post(url)
+        assert_statuscode_with_role(res,is_permission)
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_register -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    def test_register(self,app,client,db,admin_view,users,item_type,mocker):
+        login_user_via_session(client=client,email=users[0]["email"])
+        login(app,client,obj=users[0]["obj"])
+        mocker.patch("weko_records.api.after_record_insert.send")
+        mocker.patch("weko_records.api.before_record_insert.send")
+        url = url_for("itemtypesregister.register")
+        res = client.post(url,headers={"Content-Type":"plain/text"})
+        assert json.loads(res.data)["msg"] == "Header Error"
+        
+        data = {
+            "table_row_map":{
+                "schema":{"object":"test schema"},
+                "form":["test form"],
+                "name":"new item type name",
+            }
+        }
+        schema = copy.deepcopy(data["table_row_map"]["schema"])
+        form = copy.deepcopy(data["table_row_map"]["form"])
+        mocker.patch("weko_itemtypes_ui.admin.fix_json_schema",return_value=schema)
+        mocker.patch("weko_itemtypes_ui.admin.update_text_and_textarea",return_value=(schema,form))
+        
+        # raise ValueError
+        mocker.patch("weko_itemtypes_ui.admin.update_required_schema_not_exist_in_form",return_value={})
+        res = client.post(url,json=data,headers={"Content-Type":"application/json"})
+        assert res.status_code == 400
+        result = json.loads(res.data)
+        assert result["msg"] == "Failed to register Item type. Schema is in wrong format."
+        
+        
+        flow_define = FlowDefine(id=1,flow_id=uuid.uuid4(),
+                             flow_name='Registration Flow',
+                             flow_user=1)
+        with db.session.begin_nested():
+            db.session.add(flow_define)
+        db.session.commit()
+        workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test workflow01',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=1,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+        with db.session.begin_nested():
+            db.session.add(workflow)
+        db.session.commit()
+        
+        url = url_for("itemtypesregister.register",item_type_id=0)
+        mocker.patch("weko_itemtypes_ui.admin.update_required_schema_not_exist_in_form",return_value=schema)
+        res = client.post(url,json=data,headers={"Content-Type":"application/json"})
+        result = json.loads(res.data)
+        assert result["msg"] == "Successfuly registered Item type."
+        assert result["redirect_url"] == "/admin/itemtypes/7"
+        
 #     def restore_itemtype(self, item_type_id=0):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_restore_itemtype -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    def test_restore_itemtype(self,client,db,admin_view,users,item_type):
+        login_user_via_session(client=client,email=users[0]["email"])
+        url = url_for("itemtypesregister.restore_itemtype")
+        
+        res = client.post(url)
+        result = json.loads(res.data)
+        assert result["code"] == -1
+        assert result["msg"] == 'An error has occurred.'
+        
+        url = url_for("itemtypesregister.restore_itemtype",item_type_id=1)
+        res = client.post(url)
+        result = json.loads(res.data)
+        assert result["code"] == -1
+        assert result["msg"] == 'An error has occurred.'
+        
+        item_type1 = item_type[0]["item_type"]
+        item_type1.is_deleted=True
+        db.session.merge(item_type1)
+        db.session.commit()
+
+        url = url_for("itemtypesregister.restore_itemtype",item_type_id=1)
+        res = client.post(url)
+        result = json.loads(res.data)
+        assert result["code"] == 0
+        assert result["msg"] == 'Restored Item type successfully.'
+        
+        item_type1 = item_type[0]["item_type"]
+        item_type1.is_deleted=True
+        db.session.merge(item_type1)
+        db.session.commit()
+        with patch("weko_itemtypes_ui.admin.ItemTypeNames.restore",side_effect=BaseException):
+            res = client.post(url)
+            result = json.loads(res.data)
+            assert result["code"] == -1
+            assert result["msg"] == 'Failed to restore Item type.'
+        
 #     def get_property_list(self, property_id=0):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_get_property_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    def test_get_property_list(self,client,admin_view,db,itemtype_props,admin_settings,users,mocker):
+        login_user_via_session(client=client,email=users[0]["email"])
+        url = url_for("itemtypesregister.get_property_list")
+        billing_permission = BillingPermission(user_id=1,is_active=True)
+        db.session.add(billing_permission)
+        db.session.commit()
+        
+        res = client.get(url,query_string={"lang":"en"})
+        result = json.loads(res.data)
+        test = {
+            "system":{"2":{"name":"S_test2","schema":{},"form":{},"forms":{},"sort":None,"is_file":False}},
+            "1":{"name":"test_name_en","schema":{"properties":{"filename":"test_file"}},"form":{"title_i18n":{"en":"test_name_en"}},"forms":{},"sort":None,"is_file":True},
+            "3":{"name":"test3","schema":{"billing_file_prop":True},"form":{},"forms":{},"sort":None,"is_file":False},
+            "defaults":{'1': {'name': 'Text Field', 'value': 'text'},'2': {'name': 'Text Area', 'value': 'textarea'},'3': {'name': 'Check Box', 'value': 'checkboxes'},'4': {'name': 'Radio Button', 'value': 'radios'},'5': {'name': 'List Box', 'value': 'select'},'6': {'name': 'Date', 'value': 'datetime'}},
+        }
+        assert result == test
+        
+        # settings.show_flag is false,billing_perm.is_active is false
+        billing_permission.is_active=False
+        db.session.merge(billing_permission)
+        default_properties = admin_settings["default_properties"]
+        default_properties.settings = {"show_flag": False}
+        db.session.merge(default_properties)
+        db.session.commit()
+        res = client.get(url,query_string={"lang":"en"})
+        result = json.loads(res.data)
+        test = {
+            "system":{"2":{"name":"S_test2","schema":{},"form":{},"forms":{},"sort":None,"is_file":False}},
+            "1":{"name":"test_name_en","schema":{"properties":{"filename":"test_file"}},"form":{"title_i18n":{"en":"test_name_en"}},"forms":{},"sort":None,"is_file":True},
+            "defaults":{"0":{"name":"Date (Type-less）","value":"datetime"}}
+        }
+        assert result == test
+        # adminsetting is None
+        mocker.patch("weko_itemtypes_ui.admin.AdminSettings.get",return_value=None)
+        res = client.get(url,query_string={"lang":"en"})
+        result = json.loads(res.data)
+        test = {
+            "system":{"2":{"name":"S_test2","schema":{},"form":{},"forms":{},"sort":None,"is_file":False}},
+            "1":{"name":"test_name_en","schema":{"properties":{"filename":"test_file"}},"form":{"title_i18n":{"en":"test_name_en"}},"forms":{},"sort":None,"is_file":True},
+            "defaults":{'1': {'name': 'Text Field', 'value': 'text'},'2': {'name': 'Text Area', 'value': 'textarea'},'3': {'name': 'Check Box', 'value': 'checkboxes'},'4': {'name': 'Radio Button', 'value': 'radios'},'5': {'name': 'List Box', 'value': 'select'},'6': {'name': 'Date', 'value': 'datetime'}},
+        }
+        assert result == test
+        # 
+        current_app.config.update(
+            WEKO_ITEMTYPES_UI_SHOW_DEFAULT_PROPERTIES=False
+        )
+        res = client.get(url,query_string={"lang":"en"})
+        result = json.loads(res.data)
+        test = {
+            "system":{"2":{"name":"S_test2","schema":{},"form":{},"forms":{},"sort":None,"is_file":False}},
+            "1":{"name":"test_name_en","schema":{"properties":{"filename":"test_file"}},"form":{"title_i18n":{"en":"test_name_en"}},"forms":{},"sort":None,"is_file":True},
+            "defaults":{"0":{"name":"Date (Type-less）","value":"datetime"}}
+        }
+        assert result == test
 #     def export(self,item_type_id):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_export -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    def test_export(self,client,db,admin_view,users,item_type,itemtype_props,mocker):
+        login_user_via_session(client=client,email=users[0]["email"])
+        item_type1 = item_type[0]["item_type"]
+        item_type1.harvesting_type = False
+        db.session.merge(item_type1)
+        db.session.commit()
+        # not exist itemtype
+        url = url_for("itemtypesregister.export",item_type_id=100)
+        mock_render = mocker.patch("weko_itemtypes_ui.admin.ItemTypeMetaDataView.render",return_value=make_response())
+        
+        res = client.get(url)
+        mock_render.assert_called_with("weko_itemtypes_ui/admin/error.html")
+        
+        url = url_for("itemtypesregister.export",item_type_id=1)
+        mock_send = mocker.patch("weko_itemtypes_ui.admin.send_file",return_value=make_response())#
+        class MockZip:
+            def __init__(self,fp,mode,compression):
+                self.fp=fp
+            def writestr(self,filename,data):
+                self.fp.data[filename]=data
+            def __enter__(self):
+                return self
+            def __exit__(self, exc_type, exc_value, traceback):
+                pass
+        class MockBytesIO():
+            def __init__(self):
+                self.data = {}
+            def seek(self,flg):
+                pass
+        mocker.patch("weko_itemtypes_ui.admin.io.BytesIO",side_effect=MockBytesIO)
+        mocker.patch("weko_itemtypes_ui.admin.ZipFile",side_effect=MockZip)
+        res = client.get(url)
+        fp,kwargs = mock_send.call_args
+        assert "ItemType.json" in fp[0].data
+        assert "ItemTypeName.json" in fp[0].data
+        assert "ItemTypeMapping.json" in fp[0].data
+        assert "ItemTypeProperty.json" in fp[0].data
+        
 #     def item_type_import(self):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_item_type_import -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    def test_item_type_import(self,client,admin_view,users,item_type):
+        login_user_via_session(client=client,email=users[0]["email"])
+        url = url_for("itemtypesregister.item_type_import")
+        file = FileStorage(filename="",stream=None)
+        # not exist item_type_name
+        res = client.post(url,data={"item_type_name":"","file":(file,"")},content_type="multipart/form-data")
+
+        assert json.loads(res.data)["msg"] == 'No item type name Error'
+        
+        
+        file = FileStorage(filename='test', stream=BytesIO(b'test'))
+        res = client.post(url,data={"item_type_name":"テストアイテムタイプ1","file":file},
+                          content_type="multipart/form-data")
+        
 # class ItemTypeSchema(SQLAlchemyAutoSchema):
 #     class Meta:
 # class ItemTypeNameSchema(SQLAlchemyAutoSchema):
@@ -22,8 +379,7 @@
 # class ItemTypeMappingView(BaseView):
 #     def index(self, ItemTypeID=0):
  # current_app.logger.error("lists:{}".format(lists))
-            # # lists:[<ItemTypeName 1>, <ItemTypeName 2>, <ItemTypeName 3>, <ItemTypeName 4>, <ItemTypeName 5>, <ItemTypeName 6>, <ItemTypeName 7>, <ItemTypeName 8>, <ItemTypeName 9>, <ItemTypeName 10>, <ItemTypeName 11>, <ItemTypeName 12>, <ItemTypeName 13>, <ItemTypeName 14>, <ItemTypeName 15>, <ItemTypeName 16>, <ItemTypeName 22>, <ItemTypeName 32>, <ItemTypeName 33>, <ItemTypeName 34>, <ItemTypeName 35>, <ItemTypeName 36>, <ItemTypeName 37>, <ItemTypeName 38>, <ItemTypeName 39>, <ItemTypeName 40>, <ItemTypeName 41>, <ItemTypeName 31001>, <ItemTypeName 31002>, <ItemTypeName 31003>, <ItemTypeName 40001>]
-
+            # # lists:[<ItemTypeName 1>, <ItemTypeName 2>, <ItemTypeName 3>, <ItemTypeName 4>, <ItemTypeName 5>, <ItemTypeName 6>, <ItemTypeName 7>, <ItemTypeName 8>, <ItemTypeName 9>, <ItemTypeName 10>, <ItemTypeName 11>, <ItemTypeName 12>, <ItemTypeName 13>, <ItemTypeName 14>, <ItemTypeName 15>, <ItemTypeName 16>, <ItemTypeName 22>, <ItemTypeName 32>, <ItemTypeName 33>, <ItemTypeName 34>, <ItemTypeName 35>, <ItemTypeName 36>, <ItemTypeName 37>, <ItemTypeName 38>, <ItemTypeName 39>, <ItemTypeName 40>, <ItemTypeName 41>, <ItemTypeName 31001>, <ItemTypeName 31002>, <ItemTypeName 31003>, <ItemTypeName 40001>]#
             # current_app.logger.error("item_type_mapping:{}".format(item_type_mapping['item_1663165432106']))
             # # current_app.logger.error("mapping_name:{}".format(mapping_name))
             # # current_app.logger.error("itemtype_prop:{}".format(itemtype_prop))
