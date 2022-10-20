@@ -7,6 +7,7 @@
 
 """Module tests."""
 import pytest
+import json
 from mock import patch, MagicMock, Mock
 from datetime import datetime
 from weko_gridlayout.utils import (
@@ -32,7 +33,20 @@ from weko_gridlayout.utils import (
     convert_widget_data_to_dict,
     convert_widget_multi_lang_to_dict,
     convert_data_to_design_pack,
-    convert_data_to_edit_pack
+    convert_data_to_edit_pack,
+    build_rss_xml,
+    find_rss_value,
+    get_rss_data_source,
+    get_elasticsearch_result_by_date,
+    validate_main_widget_insertion,
+    get_widget_design_page_with_main,
+    main_design_has_main_widget,
+    has_main_contents_widget,
+    get_widget_design_setting,
+    compress_widget_response,
+    delete_widget_cache,
+    validate_upload_file,
+    WidgetBucket,
 )
 
 
@@ -292,180 +306,303 @@ def test_convert_widget_data_to_dict(i18n_app):
 
 
 # def convert_widget_multi_lang_to_dict(multi_lang_data):
+def test_convert_widget_multi_lang_to_dict(i18n_app):
+    multi_lang_data = MagicMock()
+    multi_lang_data.description_data = json.dumps({"test": "test"})
+    multi_lang_data.id = "test"
+    multi_lang_data.widget_id = "test"
+    multi_lang_data.lang_code = "test"
+    multi_lang_data.label = "test"
+    assert convert_widget_multi_lang_to_dict(multi_lang_data)
+
+
 # def convert_data_to_design_pack(widget_data, list_multi_lang_data):
+def test_convert_data_to_design_pack(i18n_app):
+    widget_data = {
+        "widget_id": "test",
+        "repository_id": "test",
+        "widget_type": "test",
+        "is_enabled": "test",
+        "is_deleted": "test",
+        "updated": "test",
+        "settings": {"multiLangSetting": ""},
+    }
+    list_multi_lang_data = ["test"]
+    return_data = {
+        "label": "test",
+        "description_data": "test",
+        "lang_code": "test",
+    }
+    with patch("weko_gridlayout.utils.convert_widget_multi_lang_to_dict", return_value=return_data):
+        assert convert_data_to_design_pack(widget_data, list_multi_lang_data)
+
+    widget_data = {}
+    assert not convert_data_to_design_pack(widget_data, list_multi_lang_data)
+
+
+
 # def convert_data_to_edit_pack(data):
-
-
-@pytest.mark.parametrize("data, result",[({}, None),
-    ({
+def test_convert_data_to_edit_pack(i18n_app):
+    WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE = "Access counter"
+    WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE = "New arrivals"
+    WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE = 'Menu'
+    WEKO_GRIDLAYOUT_HEADER_WIDGET_TYPE = 'Header'
+    data = {
         "settings": {
-            "multiLangSetting": {
-                "en": {
-                    "label": "for test"
-                }},
-            "access_counter": "test access_counter",
-            "preceding_message": "test preceding_message",
-            "following_message": "test following_message",
-            "other_message": "test other_message"
-
+            "multiLangSetting": "test",
+            "access_counter": "test",
+            "preceding_message": "test",
+            "following_message": "test",
+            "other_message": "test",
+            "new_dates": "test",
+            "display_result": "test",
+            "rss_feed": "test",
         },
-        "widget_id": 1,
-        "repository_id": "Root Index",
-        "widget_type": "Access counter",
-        "is_enabled": True},
-     {
-        "background_color": None,
-        "label_enable": None,
-        "theme": None,
-        "updated": None,
-        "frame_border_color": None,
-        "border_style": None,
-        "widget_id": 1,
-        "is_enabled": True,
-        "enable": True,
-        "multiLangSetting": {"en": {"label": "for test"}},
-        "repository_id": "Root Index",
-        "widget_type": "Access counter",
-        "settings": {"access_counter": "test access_counter",
-                    "preceding_message": "test preceding_message",
-                    "following_message": "test following_message",
-                    "other_message": "test other_message"}}),
-    ({
-        "settings": {
-            "multiLangSetting": {
-                "en": {
-                    "label": "for test"
-                }},
-            "new_dates": "test new_dates",
-            "display_result": "test display_result",
-            "rss_feed": "test rss_feed"
-        },
-        "widget_id": 1,
-        "repository_id": "Root Index",
-        "widget_type": "New arrivals",
-        "is_enabled": True},
-     {
-        "background_color": None,
-        "label_enable": None,
-        "theme": None,
-        "updated": None,
-        "frame_border_color": None,
-        "border_style": None,
-        "widget_id": 1,
-        "is_enabled": True,
-        "enable": True,
-        "multiLangSetting": {"en": {"label": "for test"}},
-        "repository_id": "Root Index",
-        "widget_type": "New arrivals",
-        "settings": {
-            "new_dates": "test new_dates",
-            "display_result": "test display_result",
-            "rss_feed": "test rss_feed"}}),
-    ({
-        "settings": {
-            "background_color": "#FFFFFF",
-            "label_enable": True,
-            "theme": "default",
-            "frame_border_color": "#DDDDDD",
-            "border_style": "solid",
-            "widget_id": 1,
-            "is_enabled": True,
-            "menu_orientation": "test menu_orientation",
-            "menu_bg_color": "test menu_bg_color",
-            "menu_active_bg_color": "test menu_active_bg_color",
-            "menu_default_color": "test menu_default_color",
-            "menu_active_color": "test menu_active_color",
-            "menu_show_pages": "test menu_show_pages"},
-        "widget_type": "Menu"},
-         {
-            "background_color": "#FFFFFF",
-            "label_color": None,
-            "label_enable": True,
-            "label_text_color": None,
-            "theme": "default",
-            "frame_border_color": "#DDDDDD",
-            "border_style": "solid",
-            "widget_id": 1,
-            "is_enabled": True,
-            "enable": True,
-            "multiLangSetting": None,
-            "repository_id": None,
-            "widget_type": "Menu",
-            "updated": None,
-            "settings": {
-                "menu_orientation": "test menu_orientation",
-                "menu_bg_color": "test menu_bg_color",
-                "menu_active_bg_color": "test menu_active_bg_color",
-                "menu_default_color": "test menu_default_color",
-                "menu_active_color": "test menu_active_color",
-                "menu_show_pages": "test menu_show_pages"}}),
-    ({
-        "settings": {
-            "background_color": "#FFFFFF",
-            "label_enable": True,
-            "theme": "default",
-            "frame_border_color": "#DDDDDD",
-            "border_style": "solid",
-            "widget_id": 1,
-            "is_enabled": True,
-            "fixedHeaderBackgroundColor": "#FFFFFF",
-            "fixedHeaderTextColor": "#000000"},
-        "widget_type": "Header"},
-     {
-            "background_color": "#FFFFFF",
-            "label_color": None,
-            "label_enable": True,
-            "label_text_color": None,
-            "theme": "default",
-            "frame_border_color": "#DDDDDD",
-            "border_style": "solid",
-            "widget_id": 1,
-            "is_enabled": True,
-            "enable": None,
-            "multiLangSetting": None,
-            "repository_id": None,
-            "widget_type": "Header",
-            "updated": None,
-            "settings": {
-                "fixedHeaderBackgroundColor": "#FFFFFF",
-                "fixedHeaderTextColor": "#000000"}}),
-    ({
-        "widget_type": "Free description",
-        "settings": {
-            "background_color": "#FFFFFF",
-            "label_enable": True,
-            "theme": "default",
-            "frame_border_color": "#DDDDDD",
-            "border_style": "solid",
-            "widget_id": 1,
-            "is_enabled": True,
-        }},
-        {
-            "background_color": "#FFFFFF",
-            "label_enable": True,
-            "theme": "default",
-            "frame_border_color": "#DDDDDD",
-            "border_style": "solid",
-            "label_text_color": None,
-            "label_color": None,
-            "widget_id": 1,
-            "is_enabled": True,
-            "enable": True,
-            "multiLangSetting": None,
-            "repository_id": None,
-            "widget_type": "Free description",
-            "updated": None,
-            "settings": {}}),
-    ])
-def test_convert_data_to_edit_pack(data, result):
-    data = data
-    res = convert_data_to_edit_pack(data)
-    assert res == result
+        "widget_id": "test",
+        "is_enabled": "test",
+        "repository_id": "test",
+        "widget_type": "test",
+        "updated": "test",
+        "widget_type": WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE,
+    }
+    with patch("weko_gridlayout.utils.convert_popular_data", return_value=""):
+        assert convert_data_to_edit_pack(data)
+    with patch("weko_gridlayout.utils.convert_popular_data", return_value=""):
+        data["widget_type"] = WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE
+        assert convert_data_to_edit_pack(data)
+    with patch("weko_gridlayout.utils.convert_popular_data", return_value=""):
+        data["widget_type"] = WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE
+        assert convert_data_to_edit_pack(data)
+    with patch("weko_gridlayout.utils.convert_popular_data", return_value=""):
+        data["widget_type"] = WEKO_GRIDLAYOUT_HEADER_WIDGET_TYPE
+        assert convert_data_to_edit_pack(data)
+    data = None
+    assert not convert_data_to_edit_pack(data)
+
+
+# @pytest.mark.parametrize("data, result",[({}, None),
+#     ({
+#         "settings": {
+#             "multiLangSetting": {
+#                 "en": {
+#                     "label": "for test"
+#                 }},
+#             "access_counter": "test access_counter",
+#             "preceding_message": "test preceding_message",
+#             "following_message": "test following_message",
+#             "other_message": "test other_message"
+
+#         },
+#         "widget_id": 1,
+#         "repository_id": "Root Index",
+#         "widget_type": "Access counter",
+#         "is_enabled": True},
+#      {
+#         "background_color": None,
+#         "label_enable": None,
+#         "theme": None,
+#         "updated": None,
+#         "frame_border_color": None,
+#         "border_style": None,
+#         "widget_id": 1,
+#         "is_enabled": True,
+#         "enable": True,
+#         "multiLangSetting": {"en": {"label": "for test"}},
+#         "repository_id": "Root Index",
+#         "widget_type": "Access counter",
+#         "settings": {"access_counter": "test access_counter",
+#                     "preceding_message": "test preceding_message",
+#                     "following_message": "test following_message",
+#                     "other_message": "test other_message"}}),
+#     ({
+#         "settings": {
+#             "multiLangSetting": {
+#                 "en": {
+#                     "label": "for test"
+#                 }},
+#             "new_dates": "test new_dates",
+#             "display_result": "test display_result",
+#             "rss_feed": "test rss_feed"
+#         },
+#         "widget_id": 1,
+#         "repository_id": "Root Index",
+#         "widget_type": "New arrivals",
+#         "is_enabled": True},
+#      {
+#         "background_color": None,
+#         "label_enable": None,
+#         "theme": None,
+#         "updated": None,
+#         "frame_border_color": None,
+#         "border_style": None,
+#         "widget_id": 1,
+#         "is_enabled": True,
+#         "enable": True,
+#         "multiLangSetting": {"en": {"label": "for test"}},
+#         "repository_id": "Root Index",
+#         "widget_type": "New arrivals",
+#         "settings": {
+#             "new_dates": "test new_dates",
+#             "display_result": "test display_result",
+#             "rss_feed": "test rss_feed"}}),
+#     ({
+#         "settings": {
+#             "background_color": "#FFFFFF",
+#             "label_enable": True,
+#             "theme": "default",
+#             "frame_border_color": "#DDDDDD",
+#             "border_style": "solid",
+#             "widget_id": 1,
+#             "is_enabled": True,
+#             "menu_orientation": "test menu_orientation",
+#             "menu_bg_color": "test menu_bg_color",
+#             "menu_active_bg_color": "test menu_active_bg_color",
+#             "menu_default_color": "test menu_default_color",
+#             "menu_active_color": "test menu_active_color",
+#             "menu_show_pages": "test menu_show_pages"},
+#         "widget_type": "Menu"},
+#          {
+#             "background_color": "#FFFFFF",
+#             "label_color": None,
+#             "label_enable": True,
+#             "label_text_color": None,
+#             "theme": "default",
+#             "frame_border_color": "#DDDDDD",
+#             "border_style": "solid",
+#             "widget_id": 1,
+#             "is_enabled": True,
+#             "enable": True,
+#             "multiLangSetting": None,
+#             "repository_id": None,
+#             "widget_type": "Menu",
+#             "updated": None,
+#             "settings": {
+#                 "menu_orientation": "test menu_orientation",
+#                 "menu_bg_color": "test menu_bg_color",
+#                 "menu_active_bg_color": "test menu_active_bg_color",
+#                 "menu_default_color": "test menu_default_color",
+#                 "menu_active_color": "test menu_active_color",
+#                 "menu_show_pages": "test menu_show_pages"}}),
+#     ({
+#         "settings": {
+#             "background_color": "#FFFFFF",
+#             "label_enable": True,
+#             "theme": "default",
+#             "frame_border_color": "#DDDDDD",
+#             "border_style": "solid",
+#             "widget_id": 1,
+#             "is_enabled": True,
+#             "fixedHeaderBackgroundColor": "#FFFFFF",
+#             "fixedHeaderTextColor": "#000000"},
+#         "widget_type": "Header"},
+#      {
+#             "background_color": "#FFFFFF",
+#             "label_color": None,
+#             "label_enable": True,
+#             "label_text_color": None,
+#             "theme": "default",
+#             "frame_border_color": "#DDDDDD",
+#             "border_style": "solid",
+#             "widget_id": 1,
+#             "is_enabled": True,
+#             "enable": None,
+#             "multiLangSetting": None,
+#             "repository_id": None,
+#             "widget_type": "Header",
+#             "updated": None,
+#             "settings": {
+#                 "fixedHeaderBackgroundColor": "#FFFFFF",
+#                 "fixedHeaderTextColor": "#000000"}}),
+#     ({
+#         "widget_type": "Free description",
+#         "settings": {
+#             "background_color": "#FFFFFF",
+#             "label_enable": True,
+#             "theme": "default",
+#             "frame_border_color": "#DDDDDD",
+#             "border_style": "solid",
+#             "widget_id": 1,
+#             "is_enabled": True,
+#         }},
+#         {
+#             "background_color": "#FFFFFF",
+#             "label_enable": True,
+#             "theme": "default",
+#             "frame_border_color": "#DDDDDD",
+#             "border_style": "solid",
+#             "label_text_color": None,
+#             "label_color": None,
+#             "widget_id": 1,
+#             "is_enabled": True,
+#             "enable": True,
+#             "multiLangSetting": None,
+#             "repository_id": None,
+#             "widget_type": "Free description",
+#             "updated": None,
+#             "settings": {}}),
+#     ])
+# def test_convert_data_to_edit_pack(data, result):
+#     data = data
+#     res = convert_data_to_edit_pack(data)
+#     assert res == result
 
 
 # def build_rss_xml(data=None, index_id=0, page=1, count=20, term=0, lang=''):
+def test_build_rss_xml(i18n_app, indices):
+    assert build_rss_xml(index_id=33)
+    assert build_rss_xml()
+    with patch("weko_gridlayout.utils.find_rss_value", return_value=""):
+        assert build_rss_xml(data=["test"])
+    
+
 # def find_rss_value(data, keyword):
+keywords = [
+    'title',
+    'link',
+    'seeAlso',
+    'creator',
+    'publisher',
+    'sourceTitle',
+    'issn',
+    'volume',
+    'issue',
+    'pageStart',
+    'pageEnd',
+    'date',
+    'description',
+    '_updated'
+]
+@pytest.mark.parametrize('keyword', keywords)
+def test_find_rss_value(i18n_app, keyword, item_type):
+    data = MagicMock()
+    data._source = {
+        "date": ["test"],
+        "creator": {
+            "familyName": ["test", "test"],
+            "givenName": ["test", "test"]
+        }
+    }
+    return_data = {
+        "description.@attributes.descriptionType": "test",
+        "description.@value": "test",
+    }
+    with patch("weko_gridlayout.utils.get_rss_data_source", return_value="Issued"):
+        with patch("weko_records.api.Mapping.get_record", return_value="test"):
+            with patch("weko_records.serializers.utils.get_mapping", return_value=return_data):
+                assert find_rss_value(data, keyword)
+
+
 # def get_rss_data_source(source, keyword):
+def test_get_rss_data_source(i18n_app):
+    source = {"test": ["test"]}
+    keyword = "test"
+    assert get_rss_data_source(source, keyword)
+    source["test"] = "test"
+    assert get_rss_data_source(source, keyword)
+    source["test"] = None
+    assert not get_rss_data_source(source, keyword)
+    
+
 # def get_elasticsearch_result_by_date(start_date, end_date):
 # def validate_main_widget_insertion(repository_id, new_settings, page_id=0):
 # def get_widget_design_page_with_main(repository_id):

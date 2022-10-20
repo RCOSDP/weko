@@ -23,14 +23,20 @@ from flask import Flask
 from flask_admin import Admin
 from flask_babelex import Babel
 from sqlalchemy_utils.functions import create_database, database_exists
+from datetime import datetime, timedelta
+from tests.helpers import create_record, json_data
 
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.testutils import create_test_user, login_user_via_session
 from invenio_access.models import ActionUsers
 from invenio_access import InvenioAccess
 from invenio_db import InvenioDB, db as db_
-
 from invenio_accounts.models import User, Role
+
+from weko_records.models import ItemTypeProperty
+from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
+from weko_records.api import Mapping
+from weko_index_tree.models import Index
 from weko_gridlayout import WekoGridLayout
 #from weko_admin import WekoAdmin
 from weko_gridlayout.views import blueprint, blueprint_api
@@ -108,6 +114,20 @@ def i18n_app(app):
 def client(app):
     with app.test_client() as client:
         yield client
+
+
+@pytest.yield_fixture()
+def client_request_args(app, file_instance_mock):
+    with app.test_client() as client:
+        with patch("flask.templating._render", return_value=""):
+            r = client.get('/', query_string={
+                'remote_addr': '0.0.0.0',
+                'referrer': 'test',
+                'host': '127.0.0.1',
+                'url_root': 'https://localhost/api/'
+                # 'search_type': WEKO_SEARCH_TYPE_DICT["FULL_TEXT"],
+                })
+        yield r
 
 
 @pytest.fixture()
@@ -362,3 +382,73 @@ def db_register(users,db):
         db.session.add(widget_design_setting_2)
         db.session.add(widget_design_page_1)
         db.session.add(widget_design_page_2)
+
+
+@pytest.fixture
+def indices(app, db):
+    with db.session.begin_nested():
+        # Create a test Indices
+        testIndexOne = Index(index_name="testIndexOne",browsing_role="Contributor",public_state=True,id=11)
+        testIndexTwo = Index(index_name="testIndexTwo",browsing_group="group_test1",public_state=True,id=22)
+        testIndexThree = Index(
+            index_name="testIndexThree",
+            browsing_role="Contributor",
+            public_state=True,
+            harvest_public_state=True,
+            id=33,
+            item_custom_sort={'1': 1},
+            public_date=datetime.today() - timedelta(days=1)
+        )
+        testIndexThreeChild = Index(
+            index_name="testIndexThreeChild",
+            browsing_role="Contributor",
+            parent=33,
+            index_link_enabled=True,
+            index_link_name="test_link",
+            public_state=True,
+            harvest_public_state=False,
+            id=44,
+            public_date=datetime.today() - timedelta(days=1)
+        )
+        testIndexMore = Index(index_name="testIndexMore",parent=33,public_state=True,id='more')
+        testIndexPrivate = Index(index_name="testIndexPrivate",public_state=False,id=55)
+
+        db.session.add(testIndexThree)
+        db.session.add(testIndexThreeChild)
+        
+    return {
+        'index_dict': dict(testIndexThree),
+        'index_non_dict': testIndexThree,
+        'index_non_dict_child': testIndexThreeChild,
+    }
+
+
+@pytest.fixture()
+def item_type(db):
+    item_type_name = ItemTypeName(name='テストアイテムタイプ',
+                                  has_site_license=True,
+                                  is_active=True)
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
+    item_type = ItemType(name_id=1,harvesting_type=True,
+                         schema=json_data("data/item_type/15_schema.json"),
+                         form=json_data("data/item_type/15_form.json"),
+                         render=json_data("data/item_type/15_render.json"),
+                         tag=1,version_id=1,is_deleted=False)
+    itemtype_property_data = json_data("data/itemtype_properties.json")[0]
+    item_type_property = ItemTypeProperty(
+        name=itemtype_property_data["name"],
+        schema=itemtype_property_data["schema"],
+        form=itemtype_property_data["form"],
+        forms=itemtype_property_data["forms"],
+        delflg=False
+    )
+    with db.session.begin_nested():
+        db.session.add(item_type)
+        db.session.add(item_type_property)
+    mappin = Mapping.create(
+        item_type.id,
+        mapping = json_data("data/item_type/item_type_mapping.json")
+    )
+    db.session.commit()
+    return item_type
