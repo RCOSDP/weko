@@ -21,6 +21,7 @@ import pytest
 from flask import Flask
 from flask_babelex import Babel
 from flask_menu import Menu
+from flask_celeryext import FlaskCeleryExt
 
 from invenio_admin import InvenioAdmin
 from invenio_cache import InvenioCache
@@ -39,6 +40,7 @@ from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers, ActionRoles
 from invenio_db import InvenioDB
 from invenio_db import db as db_
+from invenio_pidstore import InvenioPIDStore
 from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 
 @pytest.fixture(scope='module')
@@ -86,15 +88,26 @@ def base_app(instance_path):
         SQLALCHEMY_ECHO=False,
         TESTING=True,
         WEKO_SITEMAP_ADMIN_TEMPLATE=WEKO_SITEMAP_ADMIN_TEMPLATE,
+        CELERY_ALWAYS_EAGER=True,
+        CELERY_CACHE_BACKEND="memory",
+        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_RESULT_BACKEND="cache",
+        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_DB='0',
+        CACHE_REDIS_HOST="redis",
+        REDIS_PORT='6379',
+        ACCOUNTS_SESSION_REDIS_DB_NO = 1,
     )
     Babel(app_)
     Menu(app_)
+    FlaskCeleryExt(app_)
     InvenioDB(app_)
     InvenioCache(app_)
     InvenioAdmin(app_)
     InvenioAssets(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
+    InvenioPIDStore(app_)
     WekoSitemap(app_)
     WekoAdmin(app_)
     app_.register_blueprint(blueprint)
