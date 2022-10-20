@@ -16,9 +16,8 @@ from __future__ import absolute_import, print_function
 import os
 import shutil
 import tempfile
-
 import pytest
-from mock import patch
+from mock import patch, MagicMock
 from flask import Flask
 from flask_admin import Admin
 from flask_babelex import Babel
@@ -82,6 +81,9 @@ def base_app(instance_path):
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         TESTING=True,
+        SEARCH_INDEX_PREFIX='test-',
+        INDEXER_DEFAULT_DOC_TYPE='testrecord',
+        SEARCH_UI_SEARCH_INDEX='tenant1-weko',
         SECRET_KEY='SECRET_KEY',
     )
     Babel(app_)
@@ -107,6 +109,7 @@ def i18n_app(app):
         headers=[('Accept-Language','ja')]):
         app.extensions['invenio-oauth2server'] = 1
         app.extensions['invenio-queues'] = 1
+        app.extensions['invenio-search'] = MagicMock()
         yield app
 
 

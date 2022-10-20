@@ -604,8 +604,33 @@ def test_get_rss_data_source(i18n_app):
     
 
 # def get_elasticsearch_result_by_date(start_date, end_date):
+def test_get_elasticsearch_result_by_date(i18n_app):
+    start_date = "2021-11-11"
+    end_date = "2021-11-22"
+    assert get_elasticsearch_result_by_date(start_date, end_date)
+    
+
 # def validate_main_widget_insertion(repository_id, new_settings, page_id=0):
+def test_validate_main_widget_insertion(i18n_app, widget_item):
+    repository_id = 1
+    new_settings = ""
+    return_data = MagicMock()
+    with patch("weko_gridlayout.utils.has_main_contents_widget", return_value=True):
+        assert validate_main_widget_insertion(repository_id, new_settings)
+    with patch("weko_gridlayout.models.WidgetDesignSetting.select_by_repository_id", return_value=return_data):
+        assert validate_main_widget_insertion(repository_id, new_settings)
+
+
+
 # def get_widget_design_page_with_main(repository_id):
+def test_get_widget_design_page_with_main(i18n_app):
+    repository_id = 1
+    mock_data = MagicMock()
+    mock_data.settings = "test"
+    with patch("weko_gridlayout.models.WidgetDesignPage.get_by_repository_id", return_value=mock_data):
+        with patch("weko_gridlayout.utils.has_main_contents_widget", return_value="test"):
+            # Test 1 - loop not starting and the result is no data returned
+            assert not get_widget_design_page_with_main(repository_id)
 
 
 # def main_design_has_main_widget(repository_id):
