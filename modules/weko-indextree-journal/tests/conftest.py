@@ -44,26 +44,26 @@ from weko_indextree_journal.views import blueprint
 from weko_indextree_journal.rest import create_blueprint
 
 
-@pytest.fixture(scope='module')
-def celery_config():
-    """Override pytest-invenio fixture.
+# @pytest.fixture(scope='module')
+# def celery_config():
+#     """Override pytest-invenio fixture.
 
-    TODO: Remove this fixture if you add Celery support.
-    """
-    return {}
+#     TODO: Remove this fixture if you add Celery support.
+#     """
+#     return {}
 
 
-@pytest.fixture(scope='module')
-def create_app(instance_path):
-    """Application factory fixture."""
-    def factory(**config):
-        app = Flask('testapp', instance_path=instance_path)
-        app.config.update(**config)
-        Babel(app)
-        WekoIndextreeJournal(app)
-        app.register_blueprint(blueprint)
-        return app
-    return factory
+# @pytest.fixture(scope='module')
+# def create_app(instance_path):
+#     """Application factory fixture."""
+#     def factory(**config):
+#         app = Flask('testapp', instance_path=instance_path)
+#         app.config.update(**config)
+#         Babel(app)
+#         WekoIndextreeJournal(app)
+#         app.register_blueprint(blueprint)
+#         return app
+#     return factory
 
 
 @pytest.yield_fixture()
@@ -81,10 +81,55 @@ def base_app(instance_path):
         static_folder=join(instance_path, "static"),
     )
     app_.config.update(
-        SECRET_KEY='SECRET_KEY',
-        TESTING=True,
+        CELERY_ALWAYS_EAGER=True,
+        CELERY_CACHE_BACKEND="memory",
+        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_RESULT_BACKEND="cache",
+        CACHE_REDIS_URL="redis://redis:6379/0",
+        CACHE_REDIS_DB=0,
+        CACHE_REDIS_HOST="redis",
+        REDIS_PORT="6379",
+        JSONSCHEMAS_URL_SCHEME="http",
+        SECRET_KEY="CHANGE_ME",
+        SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
         SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+        ),
+        SQLALCHEMY_TRACK_MODIFICATIONS=True,
+        SQLALCHEMY_ECHO=False,
+        TESTING=True,
+        WTF_CSRF_ENABLED=False,
+        DEPOSIT_SEARCH_API="/api/search",
+        SECURITY_PASSWORD_HASH="plaintext",
+        SECURITY_PASSWORD_SCHEMES=["plaintext"],
+        SECURITY_DEPRECATED_PASSWORD_SCHEMES=[],
+        OAUTHLIB_INSECURE_TRANSPORT=True,
+        OAUTH2_CACHE_TYPE="simple",
+        ACCOUNTS_JWT_ENABLE=False,
+        INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
+        INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
+        INDEXER_DEFAULT_DOC_TYPE="item-v1.0.0",
+        INDEXER_FILE_DOC_TYPE="content",
+        WEKO_INDEX_TREE_STYLE_OPTIONS={
+            "id": "weko",
+            "widths": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"],
+        },
+        WEKO_INDEX_TREE_UPATED=True,
+        I18N_LANGUAGE=[("ja", "Japanese"), ("en", "English")],
+        SERVER_NAME="TEST_SERVER",
+        SEARCH_ELASTIC_HOSTS="elasticsearch",
+        SEARCH_INDEX_PREFIX="test-",
+        WEKO_PERMISSION_ROLE_USER=[
+            "System Administrator",
+            "Repository Administrator",
+            "Contributor",
+            "General",
+            "Community Administrator",
+        ],
+        WEKO_PERMISSION_SUPER_ROLE_USER=[
+            "System Administrator",
+            "Repository Administrator",
+        ],
         WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS = dict(
             tid=dict(
                 record_class='weko_indextree_journal.api:Journals',
