@@ -275,6 +275,17 @@ def test_find_hidden_items(app, users, db_records):
                     target.pop(i)
             assert target == [str(record0.id), str(record1.id)]
 
+    with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+        with app.test_request_context():
+            assert users[1]["email"] == "repoadmin@test.org"
+            result = find_hidden_items([record0.id, record1.id],[1,2], False)
+            target = [str(record0.id), str(record1.id)]
+            for item in result:
+                if item in target:
+                    i = target.index(item)
+                    target.pop(i)
+            assert target == [str(record0.id), str(record1.id)]
+
 
 # def parse_ranking_results(index_info,
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_parse_ranking_results -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
