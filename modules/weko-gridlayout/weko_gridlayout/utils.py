@@ -753,12 +753,13 @@ def get_rss_data_source(source, keyword):
         return ''
 
 
-def get_elasticsearch_result_by_date(start_date, end_date):
+def get_elasticsearch_result_by_date(start_date, end_date, query_with_publish_status=False):
     """Get data from elastic search.
 
     Arguments:
         start_date {string} -- start date
         end_date {string} -- end date
+        query_with_publish_status {bool} -- Only query public items
 
     Returns:
         dictionary -- elastic search data
@@ -771,7 +772,8 @@ def get_elasticsearch_result_by_date(start_date, end_date):
     result = None
     try:
         search_instance, _qs_kwargs = item_search_factory(
-            None, records_search, start_date, end_date, None, True)
+            None, records_search, start_date, end_date, None,
+            query_with_publish_status, False)
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError:
