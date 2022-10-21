@@ -110,6 +110,8 @@ def i18n_app(app):
         app.extensions['invenio-oauth2server'] = 1
         app.extensions['invenio-queues'] = 1
         app.extensions['invenio-search'] = MagicMock()
+        app.extensions['invenio-i18n'] = MagicMock()
+        app.extensions['invenio-i18n'].language = "ja"
         yield app
 
 
@@ -221,6 +223,7 @@ def widget_item(db):
             "is_enabled": True,
             "is_deleted": False,
             "locked": False,
+            "is_main_layout": True,
             "locked_by_user": None,
             "multiLangSetting": {
                 "en": {
