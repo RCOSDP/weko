@@ -87,6 +87,7 @@ from tests.helpers import create_record, json_data
 # from weko_schema_ui import WekoSchemaREST
 from weko_schema_ui.rest import create_blueprint
 from weko_schema_ui.models import OAIServerSchema
+from weko_schema_ui.views import blueprint as weko_schema_ui_blueprint
 
 
 @pytest.yield_fixture()
@@ -100,9 +101,10 @@ def instance_path():
 @pytest.fixture()
 def base_app(instance_path):
     """Flask application fixture."""
-    app_ = Flask('testapp', instance_path=instance_path)
+    app_ = Flask('testapp', instance_path=instance_path,static_folder=join(instance_path, "static"),)
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
+        SERVER_NAME='test_server',
         TESTING=True,
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
@@ -130,14 +132,22 @@ def base_app(instance_path):
                 'max_result_window': 10000,
             },
         },
-        WEKO_SCHEMA_REST_XSD_LOCATION_FOLDER = '{0}/data/xsd/'
+        WEKO_SCHEMA_REST_XSD_LOCATION_FOLDER = '{0}/data/xsd/',
+        WEKO_SCHEMA_UI_ADMIN_LIST = 'weko_schema_ui/admin/list.html',
+        WEKO_SCHEMA_UI_ADMIN_UPLOAD = 'weko_schema_ui/admin/upload.html',
+        
     )
     InvenioAccounts(app_)
+    InvenioAssets(app_)
     InvenioAccess(app_)
+    InvenioAdmin(app_)
     InvenioDB(app_)
     InvenioCache(app_)
     InvenioPIDStore(app_)
     Babel(app_)
+    app_.register_blueprint(weko_schema_ui_blueprint)
+    current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
+    current_assets.collect.collect()
     
     return app_
 
@@ -333,3 +343,8 @@ def db_itemtype(app, db):
         db.session.add(item_type_mapping)
         
     return {'item_type_name':item_type_name,'item_type':item_type}
+
+@pytest.yield_fixture()
+def client(app):
+    with app.test_client() as client:
+        yield client

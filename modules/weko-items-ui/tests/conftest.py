@@ -491,24 +491,7 @@ def users(app, db):
         },
         {"email": user.email, "id": user.id, "obj": user},
     ]
-    # return [
-    #     {"email": contributor.email, "id": contributor.id, "obj": copy.deepcopy(contributor)},
-    #     {"email": repoadmin.email, "id": repoadmin.id, "obj": copy.deepcopy(repoadmin)},
-    #     {"email": sysadmin.email, "id": sysadmin.id, "obj": copy.deepcopy(sysadmin)},
-    #     {"email": comadmin.email, "id": comadmin.id, "obj": copy.deepcopy(comadmin)},
-    #     {"email": generaluser.email, "id": generaluser.id, "obj": copy.deepcopy(sysadmin)},
-    #     {
-    #         "email": originalroleuser.email,
-    #         "id": originalroleuser.id,
-    #         "obj": copy.deepcopy(originalroleuser),
-    #     },
-    #     {
-    #         "email": originalroleuser2.email,
-    #         "id": originalroleuser2.id,
-    #         "obj": copy.deepcopy(originalroleuser2),
-    #     },
-    #     {"email": user.email, "id": user.id, "obj": copy.deepcopy(user)},
-    # ]
+
 
 
 @pytest.fixture()
