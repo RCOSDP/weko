@@ -44,7 +44,7 @@ def test_init(app):
     assert 'weko-schema-ui' in app_2.extensions
 
 
-def test_view(app):
+def test_view(app,db_sessionlifetime):
     """Test view."""
     WekoSchemaUI(app)
     with app.test_client() as client:

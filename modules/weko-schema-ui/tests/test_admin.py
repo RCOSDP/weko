@@ -11,7 +11,7 @@ from invenio_accounts.testutils import login_user_via_session
 class TestOAISchemaSettingView():  
     # def list(self):
     # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_admin.py::TestOAISchemaSettingView::test_list_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
-    def test_list_acl_guest(self,app,client):
+    def test_list_acl_guest(self,app,client,db_sessionlifetime):
         url = url_for('schemasettings.list')
         res = client.get(url)
         assert res.status_code == 302
@@ -38,7 +38,7 @@ class TestOAISchemaSettingView():
     
     # def add(self):
     # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_admin.py::TestOAISchemaSettingView::test_add_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
-    def test_add_acl_guest(self,app,client):
+    def test_add_acl_guest(self,app,client,db_sessionlifetime):
         url = url_for('schemasettings.add')
         res = client.get(url)
         assert res.status_code == 302
@@ -65,7 +65,7 @@ class TestOAISchemaSettingView():
     
     # def delete(self, pid=None):
     # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_admin.py::TestOAISchemaSettingView::test_delete_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
-    def test_delete_acl_guest(self,app,client):
+    def test_delete_acl_guest(self,app,client,db_sessionlifetime):
         url = url_for('schemasettings.delete',pid=None)
         res = client.get(url)
         assert res.status_code == 405
