@@ -235,6 +235,7 @@ def base_app(instance_path):
         DEPOSIT_JSONSCHEMAS_PREFIX=DEPOSIT_JSONSCHEMAS_PREFIX,
         WEKO_SEARCH_REST_ENDPOINTS=WEKO_SEARCH_REST_ENDPOINTS,
         INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
+        I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
     )
     
     app_.config['WEKO_SEARCH_REST_ENDPOINTS']['recid']['search_index']='test-weko'
@@ -243,6 +244,7 @@ def base_app(instance_path):
     # Babel(app_)
     InvenioI18N(app_)
     InvenioAssets(app_)
+    #InvenioAdmin(app_)
     InvenioDB(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
@@ -546,6 +548,7 @@ def itemtype_props(app,db):
         props.append(prop)
     db.session.add_all(props)
     db.session.commit()
+    return props
     
     
 @pytest.fixture()
@@ -564,6 +567,28 @@ def admin_settings(db):
     db.session.commit()
     
     return {"items_display":items_display,"storage_check":storage_check,"site_license_mail":site_license_mail,"default_properties":default_properties,"item_expost":item_expost}
+
+@pytest.fixture()
+def oaiserver_schema(db):
+    id = uuid.uuid4()
+    schema = OAIServerSchema(
+        id = id,
+        schema_name="oai_dc_mapping",
+        form_data={"name":"oai_dc_mapping","xsd_file":"http://dublincore.org/schemas/xmls/simpledc20021212.xsd","file_name":"oai_dc.xsd","root_name":"dc"},
+        xsd="{\"dc:title\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:creator\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:subject\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:description\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:publisher\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:contributor\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:date\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:type\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:format\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:identifier\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:source\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:language\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:relation\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:coverage\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:rights\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}}",
+        namespaces={"":"http://www.w3.org/2001/XMLSchema","dc":"http://purl.org/dc/elements/1.1/","xml":"http://www.w3.org/XML/1998/namespace","oai_dc":"http://www.openarchives.org/OAI/2.0/oai_dc/"},
+        schema_location="http://www.openarchives.org/OAI/2.0/oai_dc/",
+        isvalid=True,
+        is_mapping=False,
+        isfixed=False,
+        version_id=1,
+        target_namespace="oai_dc"
+    )
+    db.session.add(schema)
+    db.session.commit()
+    return schema
+
+
 @pytest.fixture()
 def db_itemtype1(app, db):
     item_type_name = ItemTypeName(

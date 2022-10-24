@@ -1,17 +1,277 @@
-from weko_itemtypes_ui.utils import check_duplicate_mapping
+
+from flask_login import login_user,logout_user
+import pytest
+from weko_records.models import ItemType, ItemTypeName
+from weko_itemtypes_ui.utils import (
+    remove_xsd_prefix,
+    fix_json_schema,
+    fix_min_max_multiple_item,
+    parse_required_item_in_schema,
+    helper_remove_empty_enum,
+    add_required_subitem,
+    is_properties_exist_in_item,
+    has_system_admin_access,
+    get_lst_mapping,
+    get_detail_node,
+    get_all_mapping,
+    check_duplicate_mapping,
+    update_required_schema_not_exist_in_form,
+    update_text_and_textarea
+)
+
 
 # def remove_xsd_prefix(jpcoar_lists):
 #     def remove_prefix(jpcoar_src, jpcoar_dst):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_remove_xsd_prefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+def test_remove_xsd_prefix():
+    data = {
+        "dc:test1":{
+            "type":{
+                "test_type1":1,
+                "test_type2":2,
+            }
+        }
+    }
+    test = {"test1":{"type":{"test_type1":1,"test_type2":2}}}
+    result = remove_xsd_prefix(data)
+    assert result == test
+    
 # def fix_json_schema(json_schema):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_fix_json_schema -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+def test_fix_json_schema():
+    pass
+
 # def fix_min_max_multiple_item(json_schema):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_fix_min_max_multiple_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+def test_fix_min_max_multiple_item(client):
+    data = {
+        "properties":{
+            "item1":{
+                "maxItems":None
+            },
+            "item2":{
+                "maxItems":"9999"
+            },
+            "item3":{
+                "minItems":None
+            },
+            "item4":{
+                "minItems":"1"
+            }
+        }
+    }
+    test = {"properties":{"item1":{"maxItems":None},"item2":{"maxItems":9999},"item3":{"minItems":None},"item4":{"minItems":1}}}
+    result = fix_min_max_multiple_item(data)
+    assert result == test
+    data = {"properties":{"item1":{"maxItems":"can not perse"}}}
+    result = fix_min_max_multiple_item(data)
+    assert result == None
+    
+    data = {"properties":{"item1":{"minItems":"can not perse"}}}
+    result = fix_min_max_multiple_item(data)
+    assert result == None
+    
 # def parse_required_item_in_schema(json_schema):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_parse_required_item_in_schema -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+def test_parse_required_item_in_schema():
+    data = {
+        "test":"value"
+    }
+    # not exist required
+    result = parse_required_item_in_schema(data)
+    assert result == {"test":"value"}
+    
+    # required is only pubdate
+    data = {
+        "required":["pubdate"],
+        "test":"value"
+    }
+    result = parse_required_item_in_schema(data)
+    assert result == {"required":["pubdate"],"test":"value"}
+    
+    # not properties
+    data = {
+        "required":["item_12345"]
+    }
+    result = parse_required_item_in_schema(data)
+    assert result == None
+    assert 1==2
+    
 # def helper_remove_empty_enum(data):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_helper_remove_empty_enum -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+def test_helper_remove_empty_enum():
+    data = {
+        "properties":{
+            "key1":{"enum":"test","key1_1":"value1_1"},
+            "key2":{"enum":None,"key2_1":"value2_1"},
+            "key3":None,
+            "key4":{"items":{"enum":"test","key4_1":"value4_1"}}
+        }
+    }
+    test = {
+        "properties":{
+            "key1":{"enum":"test","key1_1":"value1_1"},
+            "key2":{"key2_1":"value2_1"},
+            "key3":None,
+            "key4":{"items":{"enum":"test","key4_1":"value4_1"}}
+        }
+    }
+    helper_remove_empty_enum(data)
+    assert data == test
 # def add_required_subitem(data):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_add_required_subitem -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+def test_add_required_subitem():
+    # not data
+    result = add_required_subitem({})
+    assert result == None
+    
+    # not exist properties
+    data = {"items":{}}
+    result = add_required_subitem(data)
+    assert result == None
+    
+    data = {
+        "items":{
+            "type":"object",
+            "text":"in type is object",
+            "properties":{
+                "key1":{"type":"text","test1":"value1","text":"is_properties_exist_in_item is false"},
+                "key2":{
+                    "type":"text",
+                    "text":"sub_data is None",
+                    "properties":{
+                        "key2_1":None
+                    }
+                },
+                "key3":{
+                    "type":"object",
+                    "text":"sub_data is not None",
+                    "properties":{
+                        "key3_1":{"type":"object","test3_1":"value3_1"}
+                    }
+                },
+                "key4":{
+                    "type":"text",
+                    "properties":{
+                        "key4_1":{
+                            "type":"object",
+                            "properties":{"test4_1":{"type":"object","test4_1_1":"value4_1_1"}}
+                        }
+                    }
+                }
+            }
+        }
+    }
+    test = {
+        "items":{
+            "type":"object",
+            "text":"in type is object",
+            "properties":{
+                "key1":{"type":"text","test1":"value1","text":"is_properties_exist_in_item is false"},
+                "key2":{"type":"text","text":"sub_data is None","properties":{"key2_1":None}},
+                "key3":{
+                    "type":"object",
+                    "text":"sub_data is not None",
+                    "properties":{"key3_1":{"type":"object","test3_1":"value3_1"}},
+                    "required":["key3_1"]
+                },
+                "key4":{
+                    "type":"text",
+                    "properties":{
+                        "key4_1":{
+                            "type":"object",
+                            "properties":{"test4_1":{"type":"object","test4_1_1":"value4_1_1"}},
+                            "required":["test4_1"]
+                        }
+                    }
+                }
+            },
+            "required":["key1","key2"]
+        }
+    }
+    result = add_required_subitem(data)
+    assert result == test
+    
 # def is_properties_exist_in_item(data):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_is_properties_exist_in_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+def test_is_properties_exist_in_item():
+    # exist properties or items
+    data = {"properties":"data"}
+    result = is_properties_exist_in_item(data)
+    assert result == True
+    
+    # not exist properties or items
+    data = {"not_properties":"data"}
+    result = is_properties_exist_in_item(data)
+    assert result == False
 # def has_system_admin_access():
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_has_system_admin_access -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+def test_has_system_admin_access(app,users):
+    with app.test_request_context():
+        login_user(users[7]["obj"])
+        result = has_system_admin_access()
+        assert result == False
+        logout_user()
+        login_user(users[0]["obj"])
+        result = has_system_admin_access()
+        assert result == True
 # def get_lst_mapping(current_checking, parent_node=[]):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_get_lst_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+def test_get_lst_mapping():
+    data = {
+        "key1":{
+            "key1_1":"value1_1"
+        },
+        "key2":"value2_2"
+    }
+    iters = iter(get_lst_mapping(data))
+    assert next(iters) == "key1.key1_1"
+    assert next(iters) == "key2"
+    with pytest.raises(StopIteration):
+        next(iters)
 # def get_detail_node(lst_data, idx, meta_list):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_get_detail_node -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+def test_get_detail_node():
+    data = [{"title":["title.value","title.sub_title"]}]
+    idx = 0
+    meta_list={"title":{
+      "title": "タイトル",
+      "option": {
+        "crtf": True,
+        "hidden": False,
+        "oneline": False,
+        "multiple": False,
+        "required": True,
+        "showlist": True
+      },
+      "input_type": "text",
+      "title_i18n": { "en": "Title (ja)", "ja": "タイトル（日）" },
+      "input_value": "",
+      "input_maxItems": "9999",
+      "input_minItems": "1"
+    }}
+    key,val,lst_values,input_type = get_detail_node(data,idx,meta_list)
+    assert key == "title"
+    assert val == ["title.value","title.sub_title"]
+    assert lst_values == ["title.sub_title","title.value"]
+    assert input_type == "text"
+
 # def get_all_mapping(item_value, mapping_type):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_get_all_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+def test_get_all_mapping(mocker):
+    mocker.patch("weko_itemtypes_ui.utils.get_lst_mapping",return_value=["jpcoar.key1.key1_1","jpcoar.key2"])
+    data = {
+        "jpcoar":{
+            "key1":{
+                "key1_1":"value1_1"
+            },
+            "key2":"value2"
+        },
+        "oai_dc":""
+    }
+    mapping_type="jpcoar"
+    result = get_all_mapping(data,mapping_type)
+    assert result == ["jpcoar.key1.key1_1","jpcoar.key2"]
 # def check_duplicate_mapping(
 #     def process_overlap():
 #  .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_check_duplicate_mapping -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
@@ -32,9 +292,125 @@ def test_check_duplicate_mapping(db_itemtype6):
 
 # def update_required_schema_not_exist_in_form(schema, forms):
 #     def get_form_by_key(key, forms):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_update_required_schema_not_exist_in_form -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+def test_update_required_schema_not_exist_in_form():
+    schema = {
+        "properties":{
+            "key1":{
+                "items":{"required":["subkey2"]}
+            },
+            "key2":{
+                "items":{"required":["subkey2"]}
+            },
+            "key3":{
+                "items":{}
+            }
+        }
+    }
+    forms = [
+        {
+            "key":"key1",
+            "items":[
+                {"key":"key1.subkey1"},
+                {"key":"key1.subkey2"}
+            ]
+        },
+        {
+            "key":"key2",
+            "items":[{"key":"key2.subkey1"}]
+        }
+    ]
+    test = {"properties":{
+        "key1":{"items":{"required":["subkey2"]}},
+        "key2":{"items":{}},
+        "key3":{"items":{}}}}
+    result = update_required_schema_not_exist_in_form(schema,forms)
+    assert result == test
 # def update_text_and_textarea(item_type_id, new_schema, new_form):
 #     def is_text(prop):
 #     def is_textarea(prop):
 #     def is_text_or_textarea(prop):
 #     def get_format_string(prop):
 #     def is_multiple(prop):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_update_text_and_textarea -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+def test_update_text_and_textarea(client,db):
+    item_type_id = 10
+    new_schema={
+        "properties":{
+            "key1":{
+                "properties":{
+                    "subitem_text_value":{"type":"string","title":"値","format":"text"},
+                    "subitem_text_language":{"type":["null","string"],"title":"言語","format":"select","editAble":True}
+                }
+            },
+            "key2":{
+                "items":{
+                    "properties":{
+                        "subitem_text_value":{"type":"string","title":"値","format":"text"},
+                        "subitem_text_language":{"type":["null","string"],"title":"言語","format":"select","editAble":True}
+                    }
+                },
+                "maxItems":2
+            }
+        }
+    }
+    new_form=[
+        {"key":"key1",
+         "items":[
+             {
+                 "type":"text",
+                 "key":""
+             },
+             {
+                 "type":"select"
+             }
+         ]
+         }
+    ]
+    
+    old_schema = {
+        "properties":{
+            "key1":{
+                "properties":{
+                    "subitem_text_value":{"type":"string","title":"値","format":"text"},
+                    "subitem_text_language":{"type":["null","string"],"title":"言語","format":"select","editAble":True}
+                }
+            },
+            "key2":{
+                "items":{
+                    "properties":{
+                        "subitem_text_value":{"type":"string","title":"値","format":"text"},
+                        "subitem_text_language":{"type":["null","string"],"title":"言語","format":"select","editAble":True}
+                    }
+                },
+                "maxItems":2
+            },
+            "key3":{
+                "items":{
+                    "properties":{}
+                }
+            }
+        }
+    }
+    item_type_name = ItemTypeName(
+            id=10, name="test_itemtype", has_site_license=True, is_active=True
+        )
+    db.session.add(item_type_name)
+    db.session.commit()
+    item_type = ItemType(
+            id=10,
+            name_id=item_type_name.id,
+            harvesting_type=True,
+            schema=old_schema,
+            form={},
+            render={},
+            tag=1,
+            version_id=1,
+            is_deleted=False,
+        )
+    db.session.add(item_type)
+    db.session.commit()
+    
+    ns,nf = update_text_and_textarea(item_type_id,new_schema,new_form)
+    assert ns == {'properties': {'key1': {'properties': {'subitem_text_value': {'type': 'string', 'title': '値', 'format': 'text'}, 'subitem_text_language': {'type': ['null', 'string'], 'title': '言語', 'format': 'select', 'editAble': True}}}, 'key2': {'items': {'properties': {'subitem_text_value': {'type': 'string', 'title': '値', 'format': 'text'}, 'subitem_text_language': {'type': ['null', 'string'], 'title': '言語', 'format': 'select', 'editAble': True}}}, 'maxItems': 2}}}
+    assert nf == [{'key': 'key1', 'items': [{'type': 'text', 'key': 'key1.subitem_text_value'}, {'type': 'select', 'key': 'key1.subitem_text_language'}]}]

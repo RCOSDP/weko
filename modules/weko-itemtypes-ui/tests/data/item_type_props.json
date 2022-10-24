@@ -2,7 +2,7 @@
     "test1":{
         "id":1,
         "name":"test1",
-        "schema":{"properties":{"filename":"test_file"}},
+        "schema":{"properties":{"filename":{"items":["test_file"]}}},
         "form":{"title_i18n":{"en":"test_name_en"}},
         "forms":{},
         "delflg":false
@@ -17,8 +17,16 @@
     },
     "test3":{
         "id":3,
-        "name":"test3",
+        "name":"test3_exist_billing_file_prop",
         "schema":{"billing_file_prop":true},
+        "form":{},
+        "forms":{},
+        "delflg":false
+    },
+    "test4":{
+        "id":4,
+        "name":"test4_exist_system_prop",
+        "schema":{"system_prop":true},
         "form":{},
         "forms":{},
         "delflg":false
