@@ -7,6 +7,7 @@
 
 """Module tests."""
 import pytest
+import json
 from mock import patch, MagicMock
 
 from weko_gridlayout.services import (
@@ -133,7 +134,20 @@ def test_update_by_id_exception(db):
 
 ### class WidgetDesignServices:
 #     def get_repository_list(cls):
+def test_get_repository_list(i18n_app, communities):
+    assert WidgetDesignServices.get_repository_list()
+def test_get_repository_list_2(i18n_app):
+    assert WidgetDesignServices.get_repository_list()
+
+
 #     def get_widget_list(cls, repository_id, default_language):
+def test_get_widget_list(i18n_app, widget_items):
+    repository_id = "Root Index"
+    default_language = {"lang_code": "ja"}
+    assert WidgetDesignServices.get_widget_list(repository_id, default_language)
+
+
+
 #     def get_widget_preview(cls, repository_id, default_language,
 #     def get_widget_design_setting(cls, repository_id: str,
 #     def _get_setting(cls, settings, current_language):
@@ -177,6 +191,7 @@ def test_add_or_update_page(i18n_app):
 
 
 #     def _update_main_layout_id_for_widget(cls, repository_id):
+#     def __update_main_layout_page_id_for_widget_item(cls, repository_id,
 def test__update_main_layout_id_for_widget(i18n_app, db):
     test = WidgetDesignPage(
         id=1,
@@ -186,16 +201,91 @@ def test__update_main_layout_id_for_widget(i18n_app, db):
     )
     db.session.add(test)
     db.session.commit()
-    assert WidgetDesignPageServices._update_main_layout_id_for_widget("test")
+    with patch("weko_gridlayout.models.WidgetItem.get_id_by_repository_and_type", return_value=["1"]):
+        with patch("weko_gridlayout.models.WidgetItem.get_by_id", return_value=""):
+            with patch("weko_gridlayout.services.WidgetDesignPageServices._update_page_id_for_widget_item_setting", return_value=""):
+                assert WidgetDesignPageServices._update_main_layout_id_for_widget("test")
 
 
-#     def _update_main_layout_page_id_for_widget_design(
+#     def _update_main_layout_page_id_for_widget_design( ERR ~ 
+def test__update_main_layout_page_id_for_widget_design(i18n_app):
+    repository_id = "1"
+    page_id = "1"
+    return_data = {
+        "settings": "test",
+    }
+    with patch("weko_gridlayout.services.WidgetDesignSetting.select_by_repository_id", return_value=return_data):
+        # Doesn't return any value
+        assert not WidgetDesignPageServices._update_main_layout_page_id_for_widget_design(repository_id, page_id)
+
+
 #     def _update_page_id_for_widget_design_setting(cls, settings, page_id):
-#     def __update_main_layout_page_id_for_widget_item(cls, repository_id,
+def test__update_page_id_for_widget_design_setting(i18n_app):
+    WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE = 'Menu'
+    settings = [{
+        "type": WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE,
+        "menu_show_pages": ["0"]
+    }]
+    page_id = "0"
+    assert WidgetDesignPageServices._update_page_id_for_widget_design_setting(settings, page_id)
+
+
 #     def _update_page_id_for_widget_item_setting(cls, page_id,
+def test__update_page_id_for_widget_item_setting(i18n_app):
+    page_id = "0"
+    widget_item = MagicMock()
+    widget_item.settings = {
+        "menu_show_pages": ["0"]
+    }
+
+    with patch("weko_gridlayout.models.WidgetItem.update_setting_by_id", return_value=""):
+        # Doesn't return any value
+        assert not WidgetDesignPageServices._update_page_id_for_widget_item_setting(page_id, widget_item)
+
+
 #     def delete_page(cls, page_id):
+def test_delete_page(i18n_app):
+    page_id = "1"
+    with patch("weko_gridlayout.models.WidgetDesignPageMultiLangData.delete_by_page_id", return_value="test"):
+        with patch("weko_gridlayout.models.WidgetDesignPage.delete", return_value=""):
+            assert WidgetDesignPageServices.delete_page(page_id)
+    assert WidgetDesignPageServices.delete_page(page_id)
+
+
+
 #     def get_page_list(cls, repository_id, language):
+def test_get_page_list(i18n_app):
+    repository_id = "1"
+    language = "ja"
+    return_data = MagicMock()
+    return_data_2 = MagicMock()
+    return_data_2.title = "test"
+    return_data.multi_lang_data = {"language": return_data_2, "ja": "ja"}
+    return_data.title = "test"
+    return_data.id = "test"
+    with patch("weko_gridlayout.services.WidgetDesignPage.get_by_repository_id", return_value=[return_data]):
+        assert WidgetDesignPageServices.get_page_list(repository_id, language)
+    assert WidgetDesignPageServices.get_page_list(repository_id, language)
+
+
 #     def get_page(cls, page_id, repository_id):
+def test_get_page(i18n_app):
+    page_id = "1"
+    repository_id = "1"
+    return_data = MagicMock()
+    return_data_2 = MagicMock()
+    return_data_2.title = "test"
+    return_data.multi_lang_data = {"lang": return_data_2}
+    return_data.title = "test"
+    return_data.id = "test"
+    return_data.url = "test"
+    return_data.content = "test"
+    return_data.repository_id = "test"
+    return_data.is_main_layout = "test"
+
+    with patch("weko_gridlayout.services.WidgetDesignPage.get_by_id", return_value=return_data):
+        assert WidgetDesignPageServices.get_page(page_id, repository_id)
+    assert WidgetDesignPageServices.get_page(page_id, repository_id)
 
 
 ### class WidgetDataLoaderServices:
@@ -209,6 +299,7 @@ def test_get_new_arrivals_data(i18n_app, widget_item):
     }
     with patch("weko_gridlayout.services.WidgetItemServices.get_widget_data_by_widget_id", return_value=return_data):
         assert WidgetDataLoaderServices.get_new_arrivals_data(1)
+
 
 #     def get_arrivals_rss(cls, data, term, count):
 def test_get_arrivals_rss(i18n_app):
