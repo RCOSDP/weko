@@ -19,13 +19,16 @@
 # MA 02111-1307, USA.
 
 """Pytest configuration."""
-import os
+import os,sys
 import shutil
 import tempfile
 import json
+from os.path import dirname, join
+
+from elasticsearch import Elasticsearch
 
 import pytest
-from flask import Flask, url_for
+from flask import Flask, url_for, Response
 from flask_babelex import Babel
 from invenio_db import InvenioDB, db as db_
 from invenio_access.models import ActionUsers,ActionRoles
@@ -36,10 +39,15 @@ from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user, login_user_via_session
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers
+from invenio_cache import InvenioCache
+from invenio_communities.models import Community
+from invenio_files_rest import InvenioFilesREST
 from invenio_indexer import InvenioIndexer
-from invenio_search import InvenioSearch
+from invenio_search import InvenioSearch,RecordsSearch
 from invenio_assets import InvenioAssets
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
+
+from weko_index_tree.models import Index
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import inspect
 from sqlalchemy_utils.functions import create_database, database_exists, \
@@ -50,7 +58,25 @@ from weko_authors import WekoAuthors
 from weko_authors.models import Authors, AuthorsPrefixSettings
 from weko_search_ui import WekoSearchUI
 
+sys.path.append(os.path.dirname(__file__))
 
+class TestSearch(RecordsSearch):
+    """Test record search."""
+
+    class Meta:
+        """Test configuration."""
+
+        index = 'records'
+        doc_types = None
+
+    def __init__(self, **kwargs):
+        """Add extra options."""
+        super(TestSearch, self).__init__(**kwargs)
+        self._extra.update(**{'_source': {'excludes': ['_access']}})
+@pytest.yield_fixture(scope='session')
+def search_class():
+    """Search class."""
+    yield TestSearch
 @pytest.yield_fixture()
 def instance_path():
     """Temporary instance path."""
@@ -58,9 +84,53 @@ def instance_path():
     yield path
     shutil.rmtree(path)
 
+class MockEs():
+    def __init__(self,**keywargs):
+        self.indices = self.MockIndices()
+        self.es = Elasticsearch()
+        self.cluster = self.MockCluster()
+    def index(self, id="",version="",version_type="",index="",doc_type="",body="",**arguments):
+        pass
+    def delete(self,id="",index="",doc_type="",**kwargs):
+        return Response(response=json.dumps({}),status=500)
+    @property
+    def transport(self):
+        return self.es.transport
+    class MockIndices():
+        def __init__(self,**keywargs):
+            self.mapping = dict()
+        def delete(self,index="", ignore=""):
+            pass
+        def delete_template(self,index=""):
+            pass
+        def create(self,index="",body={},ignore=""):
+            self.mapping[index] = body
+        def put_alias(self,index="", name="", ignore=""):
+            pass
+        def put_template(self,name="", body={}, ignore=""):
+            pass
+        def refresh(self,index=""):
+            pass
+        def exists(self, index="", **kwargs):
+            if index in self.mapping:
+                return True
+            else:
+                return False
+        def flush(self,index="",wait_if_ongoing=""):
+            pass
+        def delete_alias(self, index="", name="",ignore=""):
+            pass
+        
+        # def search(self,index="",doc_type="",body={},**kwargs):
+        #     pass
+    class MockCluster():
+        def __init__(self,**kwargs):
+            pass
+        def health(self, wait_for_status="", request_timeout=0):
+            pass
 
 @pytest.fixture()
-def base_app(instance_path):
+def base_app(instance_path,search_class):
     """Flask application fixture."""
     app_ = Flask('testapp', instance_path=instance_path)
     app_.config.update(
@@ -78,15 +148,26 @@ def base_app(instance_path):
         WEKO_AUTHORS_AFFILIATION_IDENTIFIER_ITEM_OTHER=4,
         WEKO_AUTHORS_LIST_SCHEME_AFFILIATION=[
             'ISNI', 'GRID', 'Ringgold', 'kakenhi', 'Other'],
+        CELERY_ALWAYS_EAGER=True,
+        CELERY_CACHE_BACKEND="memory",
+        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_RESULT_BACKEND="cache",
+        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_DB='0',
+        CACHE_REDIS_HOST="redis",
     )
     Babel(app_)
     InvenioDB(app_)
+    InvenioCache(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
     InvenioAdmin(app_)
     InvenioAssets(app_)
     InvenioIndexer(app_)
-    InvenioSearch(app_)
+    InvenioFilesREST(app_)
+    
+    search = InvenioSearch(app_, client=MockEs())
+    search.register_mappings(search_class.Meta.index, 'mock_module.mapping')
     WekoAuthors(app_)
     WekoSearchUI(app_)
 
@@ -233,13 +314,30 @@ def users(app, db):
             ActionRoles(action='detail-page-acces', role=contributor_role),
         ]
         db.session.add_all(action_roles)
-
+    index = Index()
+    db.session.add(index)
     db.session.commit()
+    comm = Community.create(community_id="comm01", role_id=sysadmin_role.id,
+                            id_user=sysadmin.id, title="test community",
+                            description=("this is test community"),
+                            root_node_id=index.id)
+    db.session.commit()
+    #return [
+    #    {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
+    #    {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
+    #    {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
+    #    {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
+    #    {'email': generaluser.email, 'id': generaluser.id, 'obj': generaluser},
+    #    {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
+    #    {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
+    #    {'email': user.email, 'id': user.id, 'obj': user},
+    #    {'email': student.email,'id': student.id, 'obj': student}
+    #]
     return [
-        {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
-        {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
         {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
+        {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
         {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
+        {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
         {'email': generaluser.email, 'id': generaluser.id, 'obj': generaluser},
         {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
         {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
@@ -291,3 +389,41 @@ def object_as_dict(obj):
     """Make a dict from SQLAlchemy object."""
     return {c.key: getattr(obj, c.key)
             for c in inspect(obj).mapper.column_attrs}
+
+
+def json_data(filename):
+    with open(join(dirname(__file__),filename), "r") as f:
+        return json.load(f)
+
+@pytest.fixture()
+def authors(db):
+    datas = json_data("data/author.json")
+    returns = list()
+    for data in datas:
+        returns.append(Authors(
+            gather_flg=0,
+            is_deleted=False,
+            json=json.dumps(data)
+        ))
+    
+    db.session.add_all(returns)
+    db.session.commit()
+    return returns
+
+@pytest.fixture()
+def prefix_settings(db):
+    weko = AuthorsPrefixSettings(
+        id=1,
+        name="WEKO",
+        scheme="WEKO"
+    )
+    orcid = AuthorsPrefixSettings(
+        id=2,
+        name="ORCID",
+        scheme="ORCID",
+        url="https://orcid.org/##"
+    )
+    db.session.add(weko)
+    db.session.add(orcid)
+    db.session.commit()
+    return {"weko":weko,"orcid":orcid}
