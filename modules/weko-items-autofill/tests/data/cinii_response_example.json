@@ -1,0 +1,131 @@
+{
+    "@context": {
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "dc": "http://purl.org/dc/elements/1.1/",
+      "dcterms": "http://purl.org/dc/terms/",
+      "foaf": "http://xmlns.com/foaf/0.1/",
+      "prism": "http://prismstandard.org/namespaces/basic/2.0/",
+      "cinii": "http://ci.nii.ac.jp/ns/1.0/",
+      "ndl": "http://ndl.go.jp/dcndl/terms/",
+      "bibo": "http://purl.org/ontology/bibo/"
+    },
+    "@id": "https://ci.nii.ac.jp/naid/123456789101.json",
+    "@graph": [
+      {
+        "@id": "https://ci.nii.ac.jp/naid/123456789101#article",
+        "@type": "bibo:Thesis",
+        "foaf:isPrimaryTopicOf": {
+          "@id": "https://ci.nii.ac.jp/naid/123456789101.json"
+        },
+        "dc:title": [
+          {
+            "@value": "this is test Dissertation"
+          }
+        ],
+        "dcterms:alternative": [
+          { "@value": "テスト博士論文" }
+        ],
+        "dc:creator": [[{ "@value": "テスト 太郎" },{ "@value": "test taro","@language":"en"}]],
+        "dc:publisher": [{ "@value": "Test University (試験大学)" }],
+        "dc:language": [{ "@value": "eng" }],
+        "dc:date": "2022",
+        "dc:description": [
+            {
+              "@value": "これはテストの説明です"
+            },
+            {
+              "@value": "this is test description.","@language":"en"
+            }
+          ],
+        "ndl:dissertationNumber": "テスト第1401号",
+        "ndl:degreeName": "博士(歯学)",
+        "ndl:dateGranted": "2022-03-02",
+        "prism:doi": [{ "@value": "10.1016/j.test.2022.146234" }],
+        "dc:source": [
+          {
+            "@id": "https://doi.org/10.1016/j.test.2022.146234",
+            "dc:title": "Publisher"
+          },
+          { "@id": "https://doi.org/info:doi/10.1016/j.test.2022.146234" },
+          {
+            "@id": "https://dl.ndl.go.jp/info:ndljp/pid/12297073",
+            "dc:title": "NDLデジタルコレクション"
+          },
+          {
+            "@id": "http://hdl.handle.net/12345/67891011",
+            "dc:title": "長崎大学"
+          },
+          {
+            "@id": "http://hdl.handle.net/10069/67891011",
+            "dc:title": "長崎大学"
+          }
+        ],
+        "foaf:topic": [
+            {
+                "@id": "https://ci.nii.ac.jp/d/search?q=p53",
+                "dc:title": [{ "@value": "p53" }]
+            },
+            {
+                "@id": "https://ci.nii.ac.jp/d/search?q=Myc",
+                "dc:title": [{ "@value": "Myc","@language":"en" }]
+            },
+            {
+                "@id": "https://ci.nii.ac.jp/d/search?q=Runx1",
+                "dc:title":[null]
+            }
+        ],
+        "foaf:maker": [
+            {
+                "con:organization":[
+                    {
+                        "@id":"https://ci.nii.ac.jp/org/test_organization",
+                        "@type": "foaf:Organization",
+                        "foaf:name": [
+                            { "@value": "テスト組織" },
+                            { "@value": "test organization", "@language": "en" }
+                        ]
+                    }
+                ],
+                "@id": "https://ci.nii.ac.jp/nrid/1234567891011#me",
+                "@type": "foaf:Person",
+                "foaf:name": [
+                    { "@value": "テスト, 太郎" },
+                    { "@value": "test taro", "@language": "en"}
+                ]
+            },
+            {
+                "@id": "https://ci.nii.ac.jp/nrid/1234567891011#me",
+                "@type": "foaf:Person",
+                "foaf:name": [
+                    { "@value": "テスト, 太郎" },
+                    { "@value": "test taro", "@language": "en"}
+                ]
+            },
+            {
+                "con:organization":[
+                    {
+                        "@id":"https://ci.nii.ac.jp/org/test_organization",
+                        "@type": "foaf:Organization"
+                    }
+                ],
+                "@id": "https://ci.nii.ac.jp/nrid/1234567891011#me",
+                "@type": "foaf:Person",
+                "foaf:name": [
+                    { "@value": "テスト, 太郎" },
+                    { "@value": "test taro", "@language": "en"}
+                ]
+            }
+        ],
+        "prism:publicationName":[{"@value":"test_publication"}],
+        "prism:volume":"10",
+        "prism:number":"5",
+        "prism:startingPage":"10",
+        "prism:endingPage":"15",
+        "prism:pageRange":"6",
+        "prism:publicationDate":"2022-10-01",
+        "cinii:naid": "123456789101"
+      }
+    ]
+  }
+  
