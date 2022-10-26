@@ -26,37 +26,34 @@ import json
 from os.path import dirname, join
 
 from elasticsearch import Elasticsearch
+from sqlalchemy import inspect
 
 import pytest
 from flask import Flask, url_for, Response
 from flask_babelex import Babel
-from invenio_db import InvenioDB, db as db_
+from sqlalchemy_utils.functions import create_database, database_exists
+
+from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers,ActionRoles
-from invenio_accounts.testutils import create_test_user
 from invenio_accounts import InvenioAccounts
-from invenio_admin import InvenioAdmin
 from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user, login_user_via_session
-from invenio_access import InvenioAccess
-from invenio_access.models import ActionUsers
+
+from invenio_admin import InvenioAdmin
+from invenio_assets import InvenioAssets
 from invenio_cache import InvenioCache
 from invenio_communities.models import Community
+from invenio_db import InvenioDB, db as db_
 from invenio_files_rest import InvenioFilesREST
+from invenio_files_rest.models import Location
 from invenio_indexer import InvenioIndexer
 from invenio_search import InvenioSearch,RecordsSearch
-from invenio_assets import InvenioAssets
-from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
-
+from weko_search_ui import WekoSearchUI
 from weko_index_tree.models import Index
-from simplekv.memory.redisstore import RedisStore
-from sqlalchemy import inspect
-from sqlalchemy_utils.functions import create_database, database_exists, \
-    drop_database
 
 from weko_authors.views import blueprint_api
 from weko_authors import WekoAuthors
 from weko_authors.models import Authors, AuthorsPrefixSettings
-from weko_search_ui import WekoSearchUI
 
 sys.path.append(os.path.dirname(__file__))
 
@@ -73,16 +70,21 @@ class TestSearch(RecordsSearch):
         """Add extra options."""
         super(TestSearch, self).__init__(**kwargs)
         self._extra.update(**{'_source': {'excludes': ['_access']}})
+
+
 @pytest.yield_fixture(scope='session')
 def search_class():
     """Search class."""
     yield TestSearch
+
+
 @pytest.yield_fixture()
 def instance_path():
     """Temporary instance path."""
     path = tempfile.mkdtemp()
     yield path
     shutil.rmtree(path)
+
 
 class MockEs():
     def __init__(self,**keywargs):
@@ -128,6 +130,7 @@ class MockEs():
             pass
         def health(self, wait_for_status="", request_timeout=0):
             pass
+
 
 @pytest.fixture()
 def base_app(instance_path,search_class):
@@ -346,8 +349,6 @@ def users(app, db):
     ]
 
 
-
-
 @pytest.fixture()
 def id_prefix(client, users):
     """Create test prefix."""
@@ -395,6 +396,7 @@ def json_data(filename):
     with open(join(dirname(__file__),filename), "r") as f:
         return json.load(f)
 
+
 @pytest.fixture()
 def authors(db):
     datas = json_data("data/author.json")
@@ -409,6 +411,7 @@ def authors(db):
     db.session.add_all(returns)
     db.session.commit()
     return returns
+
 
 @pytest.fixture()
 def prefix_settings(db):
@@ -427,3 +430,16 @@ def prefix_settings(db):
     db.session.add(orcid)
     db.session.commit()
     return {"weko":weko,"orcid":orcid}
+
+
+@pytest.fixture()
+def location(app,db):
+    """Create default location."""
+    tmppath = tempfile.mkdtemp()
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name='local', uri=tmppath, default=True)
+        db.session.add(loc)
+    db.session.commit()
+    return loc
+
