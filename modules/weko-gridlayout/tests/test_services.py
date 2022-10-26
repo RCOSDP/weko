@@ -45,7 +45,23 @@ def test_save_command(i18n_app):
 
 
 #     def __edit_widget(cls, data, ):
+
+
 #     def get_by_id(cls, widget_id):
+def test_get_by_id(i18n_app):
+    widget_id = "1"
+    return_data = {"multiLangSetting": "test"}
+    return_data_2 = [{
+        "label": "test",
+        "description_data": "test",
+        "lang_code": "test"
+    }]
+    with patch("weko_gridlayout.models.WidgetItem.get_by_id", return_value=""):
+        with patch("weko_gridlayout.models.WidgetMultiLangData.get_by_widget_id", return_value=""):
+            assert WidgetItemServices.get_by_id(widget_id)
+    with patch("weko_gridlayout.models.WidgetItem.get_by_id", return_value=return_data):
+        with patch("weko_gridlayout.models.WidgetMultiLangData.get_by_widget_id", return_value=return_data_2):
+            assert WidgetItemServices.get_by_id(widget_id)
 
 
 #     def create(cls, widget_data):
@@ -122,13 +138,58 @@ def test_update_by_id_exception(db):
         assert result['error'] == "Exception"
 
 
-#     def delete_by_id(cls, widget_id):
+#     def delete_by_id(cls, widget_id):.
+def test_delete_by_id(i18n_app):
+    widget_id = "1"
+    assert WidgetItemServices.delete_by_id(widget_id="")
+    with patch("weko_gridlayout.services.WidgetDesignServices.is_used_in_widget_design", return_value=True):
+        assert WidgetItemServices.delete_by_id(widget_id)
+    with patch("weko_gridlayout.services.WidgetDesignServices.is_used_in_widget_design", return_value=False):
+        with patch("weko_gridlayout.models.WidgetItem.delete_by_id", return_value=""):
+            with patch("weko_gridlayout.models.WidgetMultiLangData.delete_by_widget_id", return_value=""):
+                assert WidgetItemServices.delete_by_id(widget_id)
+        assert WidgetItemServices.delete_by_id(widget_id)
+
+
 #     def delete_multi_item_by_id(cls, widget_id, session):
 #     def get_widget_data_by_widget_id(cls, widget_id):
+
+
 #     def load_edit_pack(cls, widget_id):
+def test_load_edit_pack(i18n_app, widget_items):
+    widget_id = widget_items[0].widget_id
+    with patch("weko_gridlayout.utils.convert_widget_data_to_dict", return_value=""):
+        # with patch("weko_gridlayout.models.WidgetItem.get_by_id", return_value=""):
+        with patch("weko_gridlayout.models.WidgetMultiLangData.get_by_widget_id", return_value=""):
+            with patch("weko_gridlayout.utils.convert_data_to_design_pack", return_value=""):
+                with patch("weko_gridlayout.utils.convert_data_to_edit_pack", return_value="test"):
+                    # Doesn't return any value
+                    assert not WidgetItemServices.load_edit_pack(widget_id)
+    # Doesn't return any value
+    assert not WidgetItemServices.load_edit_pack(widget_id=None)
+
+
 #     def get_locked_widget_info(cls, widget_id, widget_item=None,
+
+
 #     def lock_widget(cls, widget_id, locked_value):
+def test_lock_widget(i18n_app, users):
+    widget_id = "1"
+    locked_value = "1"
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        with patch("weko_gridlayout.models.WidgetItem.update_by_id", return_value=""):
+            # Doesn't return any value
+            assert not WidgetItemServices.lock_widget(widget_id, locked_value)
+
+
 #     def unlock_widget(cls, widget_id):
+def test_unlock_widget(i18n_app):
+    widget_id = "1"
+    with patch("weko_gridlayout.models.WidgetItem.update_by_id", return_value=""):
+        # Doesn't return any value
+            assert not WidgetItemServices.unlock_widget(widget_id)
+
+
 #     def __validate(cls, data, is_used_in_widget_design=False):
 
 
