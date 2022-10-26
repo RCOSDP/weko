@@ -299,8 +299,9 @@ def copy_field_test(dc, map, jrc, iid=None):
                                     for idx in range(len(_gte)):
                                         a = _gte[idx]
                                         b = None
-                                        if idx < len(_lte):
-                                            b = _lte[idx]
+                                        if _lte:
+                                            if idx < len(_lte):
+                                                b = _lte[idx]
                                         ranges.append(convert_range_value(a, b))
                                 if len(ranges) > 0:
                                     value_range = {id: ranges}
@@ -318,8 +319,9 @@ def copy_field_test(dc, map, jrc, iid=None):
                                     for idx in range(len(_gte)):
                                         a = _gte[idx]
                                         b = None
-                                        if idx < len(_lte):
-                                            b = _lte[idx]
+                                        if _lte:
+                                            if idx < len(_lte):
+                                                b = _lte[idx]
                                         dateRanges.append(convert_date_range_value(a, b))
                                 if len(dateRanges) > 0:
                                     value_range = {id: dateRanges}
