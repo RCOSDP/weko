@@ -33,6 +33,7 @@ from invenio_access.models import ActionUsers
 from invenio_admin import InvenioAdmin
 from invenio_db import InvenioDB
 from invenio_db import db as db_
+from invenio_i18n import InvenioI18N
 from weko_records import WekoRecords
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_index_tree.models import Index
@@ -42,28 +43,6 @@ from weko_indextree_journal import WekoIndextreeJournal, WekoIndextreeJournalRES
 from weko_indextree_journal.models import Journal
 from weko_indextree_journal.views import blueprint
 from weko_indextree_journal.rest import create_blueprint
-
-
-# @pytest.fixture(scope='module')
-# def celery_config():
-#     """Override pytest-invenio fixture.
-
-#     TODO: Remove this fixture if you add Celery support.
-#     """
-#     return {}
-
-
-# @pytest.fixture(scope='module')
-# def create_app(instance_path):
-#     """Application factory fixture."""
-#     def factory(**config):
-#         app = Flask('testapp', instance_path=instance_path)
-#         app.config.update(**config)
-#         Babel(app)
-#         WekoIndextreeJournal(app)
-#         app.register_blueprint(blueprint)
-#         return app
-#     return factory
 
 
 @pytest.yield_fixture()
@@ -149,6 +128,7 @@ def base_app(instance_path):
     InvenioAccess(app_)
     InvenioDB(app_)
     InvenioAdmin(app_)
+    InvenioI18N(app_)
     WekoRecords(app_)
     WekoWorkflow(app_)
     WekoIndextreeJournal(app_)
@@ -168,6 +148,14 @@ def app(base_app):
 def client_rest(app):
     with app.test_client() as client:
         yield client
+
+
+@pytest.yield_fixture()
+def i18n_app(app):
+    with app.test_request_context(
+        headers=[('Accept-Language','ja')]):
+        app.extensions['invenio-oauth2server'] = 1
+        yield app
 
 
 @pytest.fixture()
