@@ -90,6 +90,16 @@ def test_check_items_settings(app,db_admin_settings):
         assert current_app.config["EMAIL_DISPLAY_FLG"]==setting['items_display_email']
         assert current_app.config["ITEM_SEARCH_FLG"]==setting['items_search_author']
         assert current_app.config["OPEN_DATE_DISPLAY_FLG"]==setting['item_display_open_date']
+        current_app.config["EMAIL_DISPLAY_FLG"]=""
+        current_app.config["ITEM_SEARCH_FLG"]=""
+        current_app.config["OPEN_DATE_DISPLAY_FLG"]=""
+        setting['items_display_email']=True
+        setting['items_search_author']='id'
+        setting['item_display_open_date']=True
+        assert check_items_settings(setting)==None
+        assert current_app.config["EMAIL_DISPLAY_FLG"]==setting['items_display_email']
+        assert current_app.config["ITEM_SEARCH_FLG"]==setting['items_search_author']
+        assert current_app.config["OPEN_DATE_DISPLAY_FLG"]==setting['item_display_open_date']
 
 # def get_record_permalink(record):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_record_permalink -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

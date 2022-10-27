@@ -610,7 +610,7 @@ def is_show_email_of_creator(item_type_id):
     def item_setting_show_email():
         # Display email from setting item admin.
         settings = AdminSettings.get('items_display_settings',dict_to_object=False)
-        if settings and 'item_display_email' in settings:
+        if settings and 'items_display_email' in settings:
             is_display = settings['items_display_email']
         else:
             is_display = False
