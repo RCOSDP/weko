@@ -1,3 +1,4 @@
+
 import pytest
 import uuid
 import copy
@@ -5,11 +6,12 @@ from mock import patch
 from io import BytesIO
 from werkzeug.datastructures import FileStorage
 from flask import url_for,make_response,json,current_app
-from flask_login import login_user
+
 from invenio_accounts.testutils import login_user_via_session
 from invenio_pidstore.models import PersistentIdentifier
 from weko_admin.models import BillingPermission
-from weko_records.models import ItemMetadata
+from weko_records.models import ItemMetadata, ItemTypeProperty
+from weko_records.api import Mapping
 from weko_workflow.models import WorkFlow, FlowDefine
 
 from tests.helpers import login
@@ -26,11 +28,11 @@ class TestItemTypeMetaDataView:
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
     @pytest.mark.parametrize("index,is_permission",[
         (0,True),
-        #(1,True),
-        #(2,False),
-        #(3,False),
-        #(4,False),
-        #(5,False),
+        (1,True),
+        (2,False),
+        (3,False),
+        (4,False),
+        (5,False),
         (7,False)
     ])
     def test_index_acl(self,client,admin_view,users,index,is_permission):
@@ -60,16 +62,16 @@ class TestItemTypeMetaDataView:
 #     def render_itemtype(self, item_type_id=0):
     @pytest.mark.parametrize("index,is_permission",[
         (0,True),
-        #(1,True),
-        #(2,False),
-        #(3,False),
-        #(4,False),
-        #(5,False),
+        (1,True),
+        (2,False),
+        (3,False),
+        (4,False),
+        (5,False),
         (7,False)
     ])
-    def test_render_itemtype_acl(self,client,admin_view,users,index,is_permission):
+    def test_render_itemtype_acl(self,client,admin_view,users,item_type,index,is_permission):
         login_user_via_session(client=client,email=users[index]["email"])
-        url = url_for("itemtypesregister.render_itemtype")
+        url = url_for("itemtypesregister.render_itemtype",item_type_id=2)
         res = client.get(url)
         assert_statuscode_with_role(res,is_permission)
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_render_itemtype -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
@@ -146,17 +148,17 @@ class TestItemTypeMetaDataView:
 #     def register(self, item_type_id=0):
     @pytest.mark.parametrize("index,is_permission",[
         (0,True),
-        #(1,True),
-        #(2,False),
-        #(3,False),
-        #(4,False),
-        #(5,False),
+        (1,True),
+        (2,False),
+        (3,False),
+        (4,False),
+        (5,False),
         (7,False)
     ])
-    def test_register_acl(self,client,admin_view,users,index,is_permission):
+    def test_register_acl(self,client,admin_view,users,item_type,index,is_permission):
         login_user_via_session(client=client,email=users[index]["email"])
-        url = url_for("itemtypesregister.register")
-        res = client.post(url)
+        url = url_for("itemtypesregister.register",item_type_id=1)
+        res = client.post(url,json={})
         assert_statuscode_with_role(res,is_permission)
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_register -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
     def test_register(self,app,client,db,admin_view,users,item_type,mocker):
@@ -212,7 +214,7 @@ class TestItemTypeMetaDataView:
         res = client.post(url,json=data,headers={"Content-Type":"application/json"})
         result = json.loads(res.data)
         assert result["msg"] == "Successfuly registered Item type."
-        assert result["redirect_url"] == "/admin/itemtypes/7"
+        assert result["redirect_url"] == "/admin/itemtypes/8"
         
 #     def restore_itemtype(self, item_type_id=0):
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_restore_itemtype -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
@@ -265,8 +267,9 @@ class TestItemTypeMetaDataView:
         result = json.loads(res.data)
         test = {
             "system":{"2":{"name":"S_test2","schema":{},"form":{},"forms":{},"sort":None,"is_file":False}},
-            "1":{"name":"test_name_en","schema":{"properties":{"filename":"test_file"}},"form":{"title_i18n":{"en":"test_name_en"}},"forms":{},"sort":None,"is_file":True},
-            "3":{"name":"test3","schema":{"billing_file_prop":True},"form":{},"forms":{},"sort":None,"is_file":False},
+            "1":{"name":"test_name_en","schema":{"properties":{"filename":{"items":["test_file"]}}},"form":{"title_i18n":{"en":"test_name_en"}},"forms":{},"sort":None,"is_file":True},
+            "3":{"name":"test3_exist_billing_file_prop","schema":{"billing_file_prop":True},"form":{},"forms":{},"sort":None,"is_file":False},
+            "4":{"name":"test4_exist_system_prop","schema":{"system_prop":True},"form":{},"forms":{},"sort":None,"is_file":False},
             "defaults":{'1': {'name': 'Text Field', 'value': 'text'},'2': {'name': 'Text Area', 'value': 'textarea'},'3': {'name': 'Check Box', 'value': 'checkboxes'},'4': {'name': 'Radio Button', 'value': 'radios'},'5': {'name': 'List Box', 'value': 'select'},'6': {'name': 'Date', 'value': 'datetime'}},
         }
         assert result == test
@@ -282,7 +285,8 @@ class TestItemTypeMetaDataView:
         result = json.loads(res.data)
         test = {
             "system":{"2":{"name":"S_test2","schema":{},"form":{},"forms":{},"sort":None,"is_file":False}},
-            "1":{"name":"test_name_en","schema":{"properties":{"filename":"test_file"}},"form":{"title_i18n":{"en":"test_name_en"}},"forms":{},"sort":None,"is_file":True},
+            "1":{"name":"test_name_en","schema":{"properties":{"filename":{"items":["test_file"]}}},"form":{"title_i18n":{"en":"test_name_en"}},"forms":{},"sort":None,"is_file":True},
+            "4":{"name":"test4_exist_system_prop","schema":{"system_prop":True},"form":{},"forms":{},"sort":None,"is_file":False},
             "defaults":{"0":{"name":"Date (Type-less）","value":"datetime"}}
         }
         assert result == test
@@ -292,7 +296,8 @@ class TestItemTypeMetaDataView:
         result = json.loads(res.data)
         test = {
             "system":{"2":{"name":"S_test2","schema":{},"form":{},"forms":{},"sort":None,"is_file":False}},
-            "1":{"name":"test_name_en","schema":{"properties":{"filename":"test_file"}},"form":{"title_i18n":{"en":"test_name_en"}},"forms":{},"sort":None,"is_file":True},
+            "1":{"name":"test_name_en","schema":{"properties":{"filename":{"items":["test_file"]}}},"form":{"title_i18n":{"en":"test_name_en"}},"forms":{},"sort":None,"is_file":True},
+            "4":{"name":"test4_exist_system_prop","schema":{"system_prop":True},"form":{},"forms":{},"sort":None,"is_file":False},
             "defaults":{'1': {'name': 'Text Field', 'value': 'text'},'2': {'name': 'Text Area', 'value': 'textarea'},'3': {'name': 'Check Box', 'value': 'checkboxes'},'4': {'name': 'Radio Button', 'value': 'radios'},'5': {'name': 'List Box', 'value': 'select'},'6': {'name': 'Date', 'value': 'datetime'}},
         }
         assert result == test
@@ -304,7 +309,8 @@ class TestItemTypeMetaDataView:
         result = json.loads(res.data)
         test = {
             "system":{"2":{"name":"S_test2","schema":{},"form":{},"forms":{},"sort":None,"is_file":False}},
-            "1":{"name":"test_name_en","schema":{"properties":{"filename":"test_file"}},"form":{"title_i18n":{"en":"test_name_en"}},"forms":{},"sort":None,"is_file":True},
+            "1":{"name":"test_name_en","schema":{"properties":{"filename":{"items":["test_file"]}}},"form":{"title_i18n":{"en":"test_name_en"}},"forms":{},"sort":None,"is_file":True},
+            "4":{"name":"test4_exist_system_prop","schema":{"system_prop":True},"form":{},"forms":{},"sort":None,"is_file":False},
             "defaults":{"0":{"name":"Date (Type-less）","value":"datetime"}}
         }
         assert result == test
@@ -350,6 +356,7 @@ class TestItemTypeMetaDataView:
         
 #     def item_type_import(self):
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_item_type_import -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+# TODO:zipファイルを扱う方法の調査
     def test_item_type_import(self,client,admin_view,users,item_type):
         login_user_via_session(client=client,email=users[0]["email"])
         url = url_for("itemtypesregister.item_type_import")
@@ -373,11 +380,198 @@ class TestItemTypeMetaDataView:
 # class ItemTypePropertySchema(SQLAlchemyAutoSchema):
 #     class Meta:
 # class ItemTypePropertiesView(BaseView):
+class TestItemTypePropertiesView():
 #     def index(self, property_id=0):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypePropertiesView::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    @pytest.mark.parametrize("index,is_permission",[
+        (0,True),
+        (1,False),
+        (2,False),
+        (3,False),
+        (4,False),
+        (5,False),
+        (7,False)
+    ])
+    def test_index_acl(self,client,admin_view,users,index,is_permission):
+        login_user_via_session(client,email=users[index]["email"])
+        url = url_for("itemtypesproperties.index")
+        res = client.get(url)
+        assert_statuscode_with_role(res,is_permission)
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypePropertiesView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    def test_index(self,client,db,admin_view,users,itemtype_props,mocker):
+        login_user_via_session(client,email=users[0]["email"])
+        billing_permission = BillingPermission(user_id=1,is_active=False)
+        db.session.add(billing_permission)
+        db.session.commit()
+        
+        url = url_for("itemtypesproperties.index")
+        test_props = itemtype_props.copy()
+        test_props.pop(3)
+        test_props.pop(2)
+        mock_render = mocker.patch("weko_itemtypes_ui.admin.ItemTypePropertiesView.render",return_value=make_response())
+        res = client.get(url)
+        mock_render.assert_called_with(
+            'weko_itemtypes_ui/admin/create_property.html',
+            lists=test_props,
+            lang_code="en"
+        )
+        
+        billing_permission.is_active=True
+        db.session.merge(billing_permission)
+        db.session.commit()
+        test_props=itemtype_props.copy()
+        test_props.pop(3)
+        
+        mock_render = mocker.patch("weko_itemtypes_ui.admin.ItemTypePropertiesView.render",return_value=make_response())
+        res = client.get(url)
+        mock_render.assert_called_with(
+            'weko_itemtypes_ui/admin/create_property.html',
+            lists=test_props,
+            lang_code="en"
+        )
 #     def get_property(self, property_id=0):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypePropertiesView::test_get_property -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    @pytest.mark.parametrize("index,is_permission",[
+        (0,True),
+        (1,False),
+        (2,False),
+        (3,False),
+        (4,False),
+        (5,False),
+        (7,False)
+    ])
+    def test_get_property_acl(self,client,admin_view,users,itemtype_props,index,is_permission):
+        login_user_via_session(client,email=users[index]["email"])
+        url = url_for("itemtypesproperties.get_property",property_id=1)
+        res = client.get(url)
+        assert_statuscode_with_role(res,is_permission)
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypePropertiesView::test_get_property -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    def test_get_property(self,client,admin_view,users,itemtype_props):
+        login_user_via_session(client,email=users[0]["email"])
+        url = url_for("itemtypesproperties.get_property",property_id=1)
+        res = client.get(url)
+        assert res.status_code == 200
+        result = json.loads(res.data)
+        assert result["id"] == 1
+        assert result["name"] == "test1"
+        assert result["schema"] == {"properties":{"filename":{"items":["test_file"]}}}
+        assert result["form"] == {"title_i18n":{"en":"test_name_en"}}
+        assert result["forms"] == {}
+        
 #     def custom_property_new(self, property_id=0):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypePropertiesView::test_custom_property_new -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    @pytest.mark.parametrize("index,is_permission",[
+        (0,True),
+        (1,False),
+        (2,False),
+        (3,False),
+        (4,False),
+        (5,False),
+        (7,False)
+    ])
+    def test_custom_property_new_acl(self,client,admin_view,users,index,is_permission):
+        login_user_via_session(client,email=users[index]["email"])
+        url = url_for("itemtypesproperties.custom_property_new")
+        res = client.post(url,json={})
+        assert_statuscode_with_role(res,is_permission)
+        url = url_for("itemtypesproperties.custom_property_new",property_id=1)
+        res = client.post(url,json={})
+        assert_statuscode_with_role(res,is_permission)
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypePropertiesView::test_custom_property_new -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    def test_custom_property_new(self,client,admin_view,db,users,mocker):
+        login_user_via_session(client,email=users[0]["email"])
+        mocker.patch("weko_records.api.before_record_insert.send")
+        mocker.patch("weko_records.api.after_record_insert.send")
+        url = url_for("itemtypesproperties.custom_property_new")
+        data = {
+            "name":"new_prop",
+            "schema":{"key_schema":"value_schema"},
+            "form1":{"key_form1":"value_form1"},
+            "form2":{"key_form2":"value_form2"}
+        }
+        res = client.post(url,json=data,headers={"Content-Type":"application/json"})
+        assert res.status_code == 200
+        assert json.loads(res.data)["msg"] == "Saved property successfully."
+        result = obj = ItemTypeProperty.query.filter_by(id=1,
+                                                       delflg=False).first()
+        assert result.name == "new_prop"
+        assert result.schema == {"key_schema":"value_schema"}
+        
+        # raise Exception
+        with patch("weko_itemtypes_ui.admin.ItemTypeProps.create",side_effect=Exception):
+            res = client.post(url,json=data,headers={"Content-Type":"application/json"})
+            assert res.status_code == 200
+            assert json.loads(res.data)["msg"] == 'Failed to save property.'
+        
+        # header is not application/json
+        data = "test_data"
+        res = client.post(url,headers={"Content-Type":"text/plain"})
+        assert res.status_code ==200
+        assert json.loads(res.data)["msg"] == "Header Error"
 # class ItemTypeMappingView(BaseView):
+class TestItemTypeMappingView:
 #     def index(self, ItemTypeID=0):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMappingView::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    @pytest.mark.parametrize("index,is_permission",[
+        (0,True),
+        (1,True),
+        (2,False),
+        (3,False),
+        (4,False),
+        (5,False),
+        (7,False)
+    ])
+    def test_index_acl(self,client,admin_view,users,index,is_permission):
+        login_user_via_session(client,email=users[index]["email"])
+        url = url_for("itemtypesmapping.index")
+        res = client.get(url)
+        assert_statuscode_with_role(res,is_permission)
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMappingView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    def test_index(self,app,client,admin_view,users,item_type,oaiserver_schema,mocker):
+        login_user_via_session(client,email=users[0]["email"])
+        login(app,client,obj=users[0]["obj"])
+        url = url_for("itemtypesmapping.index")
+        # not exist itemtypes
+        with patch("weko_itemtypes_ui.admin.ItemTypes.get_latest",return_value=[]):
+            mock_render = mocker.patch("weko_itemtypes_ui.admin.ItemTypeMappingView.render",return_value=make_response())
+            res = client.get(url)
+            mock_render.assert_called_with("weko_itemtypes_ui/admin/error.html")
+        
+        # item_type is None
+        mock_render = mocker.patch("weko_itemtypes_ui.admin.redirect",return_value=make_response())
+        res = client.get(url)
+        mock_render.assert_called_with(
+            "/admin/itemtypes/mapping/1"
+        )
+        
+        url = url_for("itemtypesmapping.index",ItemTypeID=7)
+        mock_render = mocker.patch("weko_itemtypes_ui.admin.ItemTypeMappingView.render",return_value=make_response())
+        mocker.patch("weko_itemtypes_ui.admin.remove_xsd_prefix",return_value="called remove_xsd_prefix")
+        res = client.get(url,headers={"Accept-Language":"ja"})
+        mock_render.assert_called_with(
+            "weko_itemtypes_ui/admin/create_mapping.html",
+            lists=[data["item_type_name"] for data in item_type],
+            hide_mapping_prop={},
+            mapping_name="jpcoar_mapping",
+            hide_itemtype_prop={"pubdate": {"type": "string","title": "PubDate","format": "datetime"},"test_not_form":{"title":"test_not_form_title"},"test_key1":{"title":"test_key1_no_title"},"test_key2":{"title":"test_key2_no_title"},"test_key3":{"title":"test_key3_no_title"},"test_key4":{"title":"test_key4_no_title"},"test_key5":{"title":"test_key5_no_title"},"test_key6":{"title":"test_key6_no_title"},"test_key7":{"title":"test_key7_no_title"},"test_key8":{"title":"test_key8_no_title"},"test_key9":{"title":"test_key9_no_title"},"test1_subkey1":{"title":"test1_subkey1_no_title"},"test2_subkey1":{"title":"test2_subkey1_no_title"},"test3_subkey1":{"title":"test3_subkey1_no_title"},"test4_subkey1":{"title":"test4_subkey1_no_title"},"test5_subkey1":{"title":"test5_subkey1_no_title"}},
+            jpcoar_prop_lists="called remove_xsd_prefix",
+            meta_system={
+                "system_identifier_doi":{
+                    "title_i18n":{"en":"system_identifier_doi_en"},
+                    "title":"system_identifier_doi_en"
+                },
+                "system_identifier_hdl":{
+                    "title_i18n":{
+                        "en":"system_identifier_hdl_en",
+                        "ja":"system_identifier_hdl_ja"},
+                    "title":"system_identifier_hdl_ja"
+                }
+            },
+            itemtype_list=[("pubdate","PubDate"),("test_key1","test1_ja"),("test_key2","test_key2_no_title"),("test_key3","test_key3_no_title"),("test_key4","test_key4_title"),("test_key5","test_key5_title"),("test_key6","test_key6_ja"),("test_key7","test_key7_no_title"),("test_key8","test_key8_no_title"),("test_key9","test_key9_title"),("test1_subkey1","test1_subkey1_title"),("test2_subkey1","test2_subkey1_no_title"),("test3_subkey1","test3_subkey1_no_title"),("test4_subkey1","test4.sub1.ja"),("test5_subkey1","test5.sub.title"),("test_not_form","test_not_form_title")],
+            id=7,
+            is_system_admin=True,
+            lang_code="en"
+        )
  # current_app.logger.error("lists:{}".format(lists))
             # # lists:[<ItemTypeName 1>, <ItemTypeName 2>, <ItemTypeName 3>, <ItemTypeName 4>, <ItemTypeName 5>, <ItemTypeName 6>, <ItemTypeName 7>, <ItemTypeName 8>, <ItemTypeName 9>, <ItemTypeName 10>, <ItemTypeName 11>, <ItemTypeName 12>, <ItemTypeName 13>, <ItemTypeName 14>, <ItemTypeName 15>, <ItemTypeName 16>, <ItemTypeName 22>, <ItemTypeName 32>, <ItemTypeName 33>, <ItemTypeName 34>, <ItemTypeName 35>, <ItemTypeName 36>, <ItemTypeName 37>, <ItemTypeName 38>, <ItemTypeName 39>, <ItemTypeName 40>, <ItemTypeName 41>, <ItemTypeName 31001>, <ItemTypeName 31002>, <ItemTypeName 31003>, <ItemTypeName 40001>]#
             # current_app.logger.error("item_type_mapping:{}".format(item_type_mapping['item_1663165432106']))
@@ -399,4 +593,90 @@ class TestItemTypeMetaDataView:
             # # web_1            | [2022-09-15 02:45:23,832] ERROR in admin: is_admin:True
             # # web_1            | [2022-09-15 02:45:23,833] ERROR in admin: session.get('selected_language', 'en'):en
 #     def mapping_register(self):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMappingView::test_mapping_register_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    @pytest.mark.parametrize("index,is_permission",[
+        (0,True),
+        (1,True),
+        (2,False),
+        (3,False),
+        (4,False),
+        (5,False),
+        (7,False)
+    ])
+    def test_mapping_register_acl(self,client,admin_view,users,index,is_permission,mocker):
+        login_user_via_session(client,email=users[index]["email"])
+        url = url_for("itemtypesmapping.mapping_register")
+        res = client.post(url,data="test",headers={"Content-Type":"text/plain"})
+        assert_statuscode_with_role(res,is_permission)
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMappingView::test_mapping_register -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    def test_mapping_register(self,client,admin_view,users,item_type,mocker):
+        mocker.patch("weko_records.api.before_record_insert.send")
+        mocker.patch("weko_records.api.after_record_insert.send")
+        login_user_via_session(client,email=users[0]["email"])
+        url = url_for("itemtypesmapping.mapping_register")
+        # header is not application/json
+        res = client.post(url,data="test",headers={"Content-Type":"text/plain"})
+        assert res.status_code == 200
+        assert json.loads(res.data)["msg"] == "Header Error"
+        
+        data = {
+            "item_type_id":1,
+            "mapping":{"key":"test_mapping"}
+        }
+        # check_duplicate_mapping is not
+        with patch("weko_itemtypes_ui.admin.check_duplicate_mapping",return_value=["item1","item2"]):
+            res = client.post(url,json=data)
+            assert res.status_code == 200
+            result = json.loads(res.data)
+            assert result["duplicate"] == True
+            assert result["err_items"] == ["item1","item2"]
+            assert result["msg"] == "Duplicate mapping as below:"
+        
+        with patch("weko_itemtypes_ui.admin.check_duplicate_mapping",return_value=[]):
+            # nomal
+            res = client.post(url,json=data)
+            assert res.status_code==200
+            assert json.loads(res.data)["msg"] == 'Successfully saved new mapping.'
+            assert  Mapping.get_record(1) == {"key":"test_mapping"}
+            
+            # raise Exception
+            with patch("weko_itemtypes_ui.admin.Mapping.create",side_effect=BaseException):
+                res = client.post(url,json=data)
+                assert json.loads(res.data)["msg"] == "Unexpected error occurred."
 #     def schema_list(self, SchemaName=None):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMappingView::test_schema_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    @pytest.mark.parametrize("index,is_permission",[
+        (0,True),
+        (1,True),
+        (2,False),
+        (3,False),
+        (4,False),
+        (5,False),
+        (7,False)
+    ])
+    def test_schema_list_acl(self,client,admin_view,users,index,is_permission):
+        login_user_via_session(client,email=users[index]["email"])
+        url = url_for("itemtypesmapping.schema_list",SchemaName="not_exist_oai")
+        res = client.get(url)
+        assert_statuscode_with_role(res,is_permission)
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMappingView::test_schema_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
+    def test_schema_list(self,client,admin_view,users,oaiserver_schema):
+        login_user_via_session(client,email=users[0]["email"])
+        #test = {"oai_dc_mapping":{"dc:title": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:creator": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:subject": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:description": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:publisher": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:contributor": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:date": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:type": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:format": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:identifier": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:source": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:language": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:relation": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:coverage": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:rights": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}}}
+        test = {'oai_dc_mapping': {'contributor': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'coverage': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'creator': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'date': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'description': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'format': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'identifier': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'language': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'publisher': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'relation': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'rights': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'source': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'subject': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'title': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'type': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}}} 
+        url = url_for("itemtypesmapping.schema_list")
+        # not exist SchemaName
+        res = client.get(url)
+        assert res.status_code == 200
+        assert json.loads(res.data) == test
+        
+        # exist Schema
+        url = url_for("itemtypesmapping.schema_list",SchemaName="oai_dc_mapping")
+        res = client.get(url)
+        assert res.status_code == 200
+        assert json.loads(res.data) == test
+        # not exist Schema
+        url = url_for("itemtypesmapping.schema_list",SchemaName="not_exist_oai")
+        res = client.get(url)
+        assert res.status_code == 200
+        assert json.loads(res.data) == {}
