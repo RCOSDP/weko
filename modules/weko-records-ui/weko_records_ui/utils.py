@@ -66,13 +66,21 @@ def check_items_settings(settings=None):
     if settings is None:
         settings = AdminSettings.get('items_display_settings',dict_to_object=False)
     if settings is not None:
-        if 'items_display_email' in settings:
-            current_app.config['EMAIL_DISPLAY_FLG'] = settings['items_display_email']
-        if 'items_search_author' in settings:    
-            current_app.config['ITEM_SEARCH_FLG'] = settings['items_search_author']
-        if 'item_display_open_date' in settings:    
-            current_app.config['OPEN_DATE_DISPLAY_FLG'] = \
-            settings['item_display_open_date']
+        if isinstance(settings,dict):
+            if 'items_display_email' in settings:
+                current_app.config['EMAIL_DISPLAY_FLG'] = settings['items_display_email']
+            if 'items_search_author' in settings:    
+                current_app.config['ITEM_SEARCH_FLG'] = settings['items_search_author']
+            if 'item_display_open_date' in settings:    
+                current_app.config['OPEN_DATE_DISPLAY_FLG'] = \
+                settings['item_display_open_date']
+        else:
+            if hasattr(settings,'items_display_email'):
+                current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
+            if hasattr(settings,'items_search_author'):
+                current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
+            if hasattr(settings,'item_display_open_date'):
+                current_app.config['OPEN_DATE_DISPLAY_FLG'] = settings.item_display_open_date
 
 
 def get_record_permalink(record):

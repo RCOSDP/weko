@@ -8,7 +8,7 @@ import io
 from lxml import etree
 from fpdf import FPDF
 from invenio_records_files.utils import record_file_factory
-from flask import Flask, json, jsonify, session, url_for
+from flask import Flask, json, jsonify, session, url_for,current_app
 from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -65,6 +65,31 @@ def test_check_items_settings(app,db_admin_settings):
     setting = settings.get("items_display_settings")
     with app.test_request_context():
         assert check_items_settings(setting)==None
+        
+    setting = AdminSettings.get(name="items_display_settings")
+    assert isinstance(setting,AdminSettings.Dict2Obj)==True
+    with app.test_request_context():
+        current_app.config["EMAIL_DISPLAY_FLG"]=""
+        current_app.config["ITEM_SEARCH_FLG"]=""
+        current_app.config["OPEN_DATE_DISPLAY_FLG"]=""
+        assert check_items_settings(setting)==None
+        assert current_app.config["EMAIL_DISPLAY_FLG"]==setting.items_display_email
+        assert current_app.config["ITEM_SEARCH_FLG"]==setting.items_search_author
+        assert current_app.config["OPEN_DATE_DISPLAY_FLG"]==setting.item_display_open_date
+
+    setting = AdminSettings.get(name="items_display_settings",dict_to_object=False)
+    assert isinstance(setting,dict)==True
+    with app.test_request_context():
+        current_app.config["EMAIL_DISPLAY_FLG"]=""
+        current_app.config["ITEM_SEARCH_FLG"]=""
+        current_app.config["OPEN_DATE_DISPLAY_FLG"]=""
+        assert setting['items_display_email']==False
+        assert setting['items_search_author']=='name'
+        assert setting['item_display_open_date']==False
+        assert check_items_settings(setting)==None
+        assert current_app.config["EMAIL_DISPLAY_FLG"]==setting['items_display_email']
+        assert current_app.config["ITEM_SEARCH_FLG"]==setting['items_search_author']
+        assert current_app.config["OPEN_DATE_DISPLAY_FLG"]==setting['item_display_open_date']
 
 # def get_record_permalink(record):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_record_permalink -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
