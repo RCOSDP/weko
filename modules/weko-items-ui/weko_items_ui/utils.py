@@ -328,7 +328,7 @@ def get_current_user():
     return current_id
 
 
-def find_hidden_items(item_id_list, idx_paths=None, check_creator_permission=True):
+def find_hidden_items(item_id_list, idx_paths=None, check_creator_permission=False):
     """
     Find items that should not be visible by the current user.
 
@@ -1618,6 +1618,7 @@ def get_new_items_by_date(start_date: str, end_date: str, ranking=False) -> dict
                                                           start_date,
                                                           end_date,
                                                           indexes,
+                                                          query_with_publish_status=False,
                                                           ranking=ranking)
         search_result = search_instance.execute()
         result = search_result.to_dict()
@@ -2414,12 +2415,17 @@ def get_ranking(settings):
         result = QueryRecordViewReportHelper.get(
             start_date=start_date,
             end_date=end_date,
-            agg_size=settings.display_rank,
+            agg_size=settings.display_rank + 100,
             agg_sort={'value': 'desc'},
             ranking=True)
-        if not pid_value_permissions:
-            pid_value_permissions = parse_ranking_record(
-                get_new_items_by_date(start_date, end_date, ranking=True))
+        # if not pid_value_permissions:
+        #     pid_value_permissions = parse_ranking_record(
+        #         get_new_items_by_date(start_date, end_date, ranking=True))
+
+        print("\nmost_reviewed_items\n")
+        print(result)
+        print("\n\n")
+
         permission_ranking(result, pid_value_permissions, settings.display_rank,
                            'all', 'pid_value')
         rankings['most_reviewed_items'] = \
@@ -2435,12 +2441,17 @@ def get_ranking(settings):
             end_date=end_date,
             target_report='3',
             unit='Item',
-            agg_size=settings.display_rank,
+            agg_size=settings.display_rank + 100,
             agg_sort={'_count': 'desc'},
             ranking=True)
-        if not pid_value_permissions:
-            pid_value_permissions = parse_ranking_record(
-                get_new_items_by_date(start_date, end_date, ranking=True))
+        # if not pid_value_permissions:
+        #     pid_value_permissions = parse_ranking_record(
+        #         get_new_items_by_date(start_date, end_date, ranking=True))
+
+        print("\nmost_downloaded_items\n")
+        print(result)
+        print("\n\n")
+
         permission_ranking(result, pid_value_permissions, settings.display_rank,
                            'data', 'col1')
         rankings['most_downloaded_items'] = \
@@ -2455,8 +2466,13 @@ def get_ranking(settings):
             end_date=end_date,
             target_report='0',
             unit='User',
-            agg_size=settings.display_rank,
+            agg_size=settings.display_rank + 100,
             agg_sort={'_count': 'desc'})
+        
+        print("\ncreated_most_items_user\n")
+        print(result)
+        print("\n\n")
+
         rankings['created_most_items_user'] = \
             parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='data',
@@ -2467,9 +2483,14 @@ def get_ranking(settings):
         result = QuerySearchReportHelper.get(
             start_date=start_date,
             end_date=end_date,
-            agg_size=settings.display_rank + 1,
+            agg_size=settings.display_rank + 100,
             agg_sort={'value': 'desc'}
         )
+
+        print("\nmost_searched_keywords\n")
+        print(result)
+        print("\n\n")
+
         rankings['most_searched_keywords'] = \
             parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='all',
@@ -2488,6 +2509,15 @@ def get_ranking(settings):
         result = get_new_items_by_date(
             new_item_start_date,
             end_date)
+
+        item_id_list = [item["_id"] for item in result['hits']['hits']]
+        hidden_items = find_hidden_items(item_id_list)
+
+        for item_id in hidden_items:
+            for index, item in enumerate(result['hits']['hits']):
+                if item_id == item['_id']:
+                    del result['hits']['hits'][index]
+
         rankings['new_items'] = \
             parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='all', title_key='record_name',
