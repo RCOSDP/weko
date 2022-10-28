@@ -472,7 +472,7 @@ class LogAnalysisSettings(BaseView):
                     crawler_lists)
             except Exception as e:
                 current_app.logger.error(
-                    'Could not save restricted data: ', e)
+                    'Could not save restricted data: %s', e)
                 flash(_('Could not save data.'), 'error')
 
         # Get most current restricted addresses/user agents
@@ -484,7 +484,7 @@ class LogAnalysisSettings(BaseView):
                     "WEKO_ADMIN_DEFAULT_CRAWLER_LISTS"])
                 shared_crawlers = LogAnalysisRestrictedCrawlerList.get_all()
         except Exception as e:
-            current_app.logger.error(_('Could not get restricted data: '), e)
+            current_app.logger.error(_('Could not get restricted data: %s'), e)
             flash(_('Could not get restricted data.'), 'error')
             restricted_ip_addresses = []
             shared_crawlers = []
@@ -684,7 +684,7 @@ class SearchSettingsView(BaseView):
                 lists=lists,
             )
         except BaseException as e:
-            current_app.logger.error('Could not save search settings', e)
+            current_app.logger.error('Could not save search settings %s', e)
             abort(500)
             # flash(_('Unable to change search settings.'), 'error')
 
@@ -743,7 +743,7 @@ class SiteLicenseSettingsView(BaseView):
                 current_app.config['WEKO_ADMIN_SITE_LICENSE_TEMPLATE'],
                 result=json.dumps(result))
         except BaseException as e:
-            current_app.logger.error('Could not save site license settings', e)
+            current_app.logger.error('Could not save site license settings %s', e)
             abort(500)
 
 

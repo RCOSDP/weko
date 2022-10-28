@@ -203,7 +203,7 @@ def test_get_api_cert_type(api):
 #def get_curr_api_cert(api_code=''):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_api_cert_type -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_get_curr_api_cert(api):
-    url = url_for("weko_admin.get_curr_api_cert",aip_code="test_code")
+    url = url_for("weko_admin.get_curr_api_cert",api_code="test_code")
     with patch("weko_admin.views.get_current_api_certification",return_value={"api_code":"test_code","api_name":"test_name","cert_data":"test_data"}):
         res = api.get(url)
         assert response_data(res) == {"results":{"api_code":"test_code","api_name":"test_name","cert_data":"test_data"},"error":""}
@@ -292,20 +292,23 @@ def test_get_init_selection(api,mocker):
                          (3,False),# contributor
                          (4,False),# generaluser
                          ])
-def test_get_email_author_acl(client,users,index,is_permission):
-    login_user_via_session(client,email=users[index]["email"])
+def test_get_email_author_acl(api,users,index,is_permission):
+    login_user_via_session(api,email=users[index]["email"])
+    url = url_for("weko_admin.get_email_author")
     with patch("weko_admin.views.FeedbackMail.search_author_mail",return_value={}):
-        res = client.post('/api/admin/search_email',json={},)
+        res = api.post(url,json={},)
         assert_role(res, is_permission)
 
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_email_author_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_get_email_author_acl_guest(client):
+def test_get_email_author_acl_guest(api):
+    url = url_for("weko_admin.get_email_author")
     with patch("weko_admin.views.FeedbackMail.search_author_mail",return_value={}):
-        res = client.post('/api/admin/search_email',json={},)
+        res = api.post(url,json={},)
         assert res.status_code == 302
 
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_email_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_get_email_author(api):
+def test_get_email_author(api,users):
+    login_user_via_session(api,email=users[0]["email"])
     url = url_for("weko_admin.get_email_author")
     with patch("weko_admin.views.FeedbackMail.search_author_mail",return_value={"key":"value"}):
         res = api.post(url,json={"key":"data"})
@@ -370,7 +373,7 @@ def test_get_feedback_mail_acl_guest(api):
     url = url_for("weko_admin.get_feedback_mail")
     with patch("weko_admin.views.FeedbackMail.get_feed_back_email_setting",return_value={"data":["datas"],"is_sending_feedback":True,"root_url":"http://test.com","error":""}):
         res = api.post(url)
-        assert res.status_code == 302
+        assert res.status_code == 401
 
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_feedback_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_get_feedback_mail(api, users):
@@ -421,7 +424,7 @@ def test_get_failed_mail_acl_guest(api, mocker):
     mocker.patch("weko_admin.views.FeedbackMail.load_feedback_failed_mail",side_effect=lambda x,y:{"history_id":x,"page":y})
     url = url_for("weko_admin.get_failed_mail")
     res = api.post(url,data={"page":5,"id":3})
-    assert res.status_code == 302
+    assert res.status_code == 401
     
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_failed_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_get_failed_mail(api, users,mocker):
