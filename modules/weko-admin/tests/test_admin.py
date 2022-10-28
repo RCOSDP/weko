@@ -1,3 +1,4 @@
+
 from os.path import dirname, join
 from flask import url_for,current_app,make_response
 from mock import patch
@@ -8,6 +9,7 @@ from invenio_accounts.testutils import login_user_via_session
 
 from weko_admin.admin import StyleSettingView,LogAnalysisSettings
 from weko_admin.models import AdminSettings,StatisticsEmail,LogAnalysisRestrictedCrawlerList,LogAnalysisRestrictedIpAddress,RankingSettings
+
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 
 #class StyleSettingView(BaseView):

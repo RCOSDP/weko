@@ -1,5 +1,4 @@
 
-
 from mock import patch
 from redis import RedisError
 from requests.models import Response

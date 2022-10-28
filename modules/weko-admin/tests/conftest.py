@@ -26,15 +26,18 @@ import tempfile
 import uuid
 import json
 from datetime import datetime
-
 import pytest
+
 from flask import Flask
 from flask_babelex import Babel
 from flask_mail import Mail
 from flask_menu import Menu
 from flask.cli import ScriptInfo
-from invenio_db import InvenioDB
-from invenio_db import db as db_
+from sqlalchemy_utils.functions import create_database, database_exists, \
+    drop_database
+from simplekv.memory.redisstore import RedisStore
+
+
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user, login_user_via_session
@@ -42,14 +45,13 @@ from invenio_access.models import ActionUsers, ActionRoles
 from invenio_access import InvenioAccess
 from invenio_admin import InvenioAdmin
 from invenio_cache import InvenioCache
+from invenio_db import InvenioDB
+from invenio_db import db as db_
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import FileInstance, Location
 from invenio_i18n import InvenioI18N
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidstore import InvenioPIDStore
-from simplekv.memory.redisstore import RedisStore
-from sqlalchemy_utils.functions import create_database, database_exists, \
-    drop_database
 
 from weko_authors import WekoAuthors
 from weko_authors.models import Authors
@@ -212,13 +214,16 @@ def client(app):
     WekoAdmin(app)
     with app.test_client() as client:
         yield client
+
 @pytest.fixture
 def script_info(app):
     return ScriptInfo(create_app=lambda info: app)
+
 @pytest.fixture
 def redis_connect(app):
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
     return redis_connection
+
 @pytest.fixture()
 def users(app, db):
     """Create users."""
