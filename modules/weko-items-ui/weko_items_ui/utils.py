@@ -2418,13 +2418,21 @@ def get_ranking(settings):
             agg_size=settings.display_rank + 100,
             agg_sort={'value': 'desc'},
             ranking=True)
-        # if not pid_value_permissions:
-        #     pid_value_permissions = parse_ranking_record(
-        #         get_new_items_by_date(start_date, end_date, ranking=True))
 
-        print("\nmost_reviewed_items\n")
-        print(result)
-        print("\n\n")
+        record_id_list = [item["record_id"] for item in result['all']]
+        hidden_items = find_hidden_items(record_id_list, check_creator_permission=True)
+        private_items_to_be_deleted_from_result = []
+
+        for record_id in hidden_items:
+            for index, item in enumerate(result['all']):
+                if record_id == item['record_id']:
+                    private_items_to_be_deleted_from_result.append(index)
+
+        private_items_to_be_deleted_from_result.sort()
+        private_items_to_be_deleted_from_result.reverse()
+
+        for index in private_items_to_be_deleted_from_result:
+            del result['all'][index]
 
         permission_ranking(result, pid_value_permissions, settings.display_rank,
                            'all', 'pid_value')
@@ -2444,13 +2452,29 @@ def get_ranking(settings):
             agg_size=settings.display_rank + 100,
             agg_sort={'_count': 'desc'},
             ranking=True)
-        # if not pid_value_permissions:
-        #     pid_value_permissions = parse_ranking_record(
-        #         get_new_items_by_date(start_date, end_date, ranking=True))
 
-        print("\nmost_downloaded_items\n")
-        print(result)
-        print("\n\n")
+
+        def get_publish_status(pid_value):
+            item = WekoRecord.get_record_by_pid(pid_value)
+            if item["publish_status"] != "0":
+                return False
+            else:
+                return True
+
+
+        private_items_to_be_deleted_from_result = []
+
+        for index, item in enumerate(result['data']):
+            if get_publish_status(item['col1']):
+                continue
+            else:
+                private_items_to_be_deleted_from_result.append(index)
+        
+        private_items_to_be_deleted_from_result.sort()
+        private_items_to_be_deleted_from_result.reverse()
+
+        for index in private_items_to_be_deleted_from_result:
+            del result['data'][index]
 
         permission_ranking(result, pid_value_permissions, settings.display_rank,
                            'data', 'col1')
@@ -2469,10 +2493,6 @@ def get_ranking(settings):
             agg_size=settings.display_rank + 100,
             agg_sort={'_count': 'desc'})
         
-        print("\ncreated_most_items_user\n")
-        print(result)
-        print("\n\n")
-
         rankings['created_most_items_user'] = \
             parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='data',
@@ -2486,10 +2506,6 @@ def get_ranking(settings):
             agg_size=settings.display_rank + 100,
             agg_sort={'value': 'desc'}
         )
-
-        print("\nmost_searched_keywords\n")
-        print(result)
-        print("\n\n")
 
         rankings['most_searched_keywords'] = \
             parse_ranking_results(index_info, result, settings.display_rank,
