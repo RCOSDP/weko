@@ -33,6 +33,7 @@ from invenio_db import InvenioDB, db as db_
 from invenio_accounts.models import User, Role
 from invenio_communities.models import Community
 
+from weko_redis.redis import RedisConnection
 from weko_records.models import ItemTypeProperty
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records.api import Mapping
@@ -86,6 +87,8 @@ def base_app(instance_path):
         INDEXER_DEFAULT_DOC_TYPE='testrecord',
         SEARCH_UI_SEARCH_INDEX='tenant1-weko',
         SECRET_KEY='SECRET_KEY',
+        CACHE_REDIS_DB='0',
+        CACHE_TYPE='0'
     )
     Babel(app_)
     InvenioDB(app_)
@@ -484,3 +487,9 @@ def communities(app, db, user, indices):
     db.session.add(comm0)
 
     return comm0
+
+
+@pytest.fixture
+def redis_connect(app):
+    redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+    return redis_connection

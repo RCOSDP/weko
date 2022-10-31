@@ -52,6 +52,8 @@ def test_get_sequence(i18n_app, db):
 
 
 #     def create(cls, widget_data, session):
+# def test_create_WidgetItem(i18n_app):
+
 
 
 #     def update_by_id(cls, widget_item_id, widget_data, session=None):
@@ -63,7 +65,19 @@ def test_update_by_id(i18n_app, widget_items):
 
 
 #     def update_setting_by_id(cls, widget_id, settings):
+def test_update_setting_by_id(i18n_app, widget_items):
+    settings = {}
+    widget_id = "1"
+    assert WidgetItem.update_setting_by_id(widget_id, settings)
+    assert not WidgetItem.update_setting_by_id(222, settings)
+
+
 #     def delete_by_id(cls, widget_id, session):
+def test_delete_by_id(i18n_app, widget_items):
+    session = MagicMock()
+    widget_id = "1"
+    assert WidgetItem.delete_by_id(widget_id, session)
+    assert not WidgetItem.delete_by_id(False, session)
 
 
 # class WidgetMultiLangData(db.Model):
