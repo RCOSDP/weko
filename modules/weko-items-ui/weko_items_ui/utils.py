@@ -328,13 +328,14 @@ def get_current_user():
     return current_id
 
 
-def find_hidden_items(item_id_list, idx_paths=None):
+def find_hidden_items(item_id_list, idx_paths=None, check_creator_permission=True):
     """
     Find items that should not be visible by the current user.
 
     parameter:
         item_id_list: list of uuid of items to be checked.
         idx_paths: List of index paths.
+        check_creator_permission: List of index paths.
     return: List of items ID that the user cannot access.
     """
     if not item_id_list:
@@ -345,20 +346,34 @@ def find_hidden_items(item_id_list, idx_paths=None):
     if roles[0]:
         return []
 
+    has_permission_index = []
+    no_permission_index = []
     hidden_list = []
     for record in WekoRecord.get_records(item_id_list):
-        # Check if user is owner of the item
-        if check_created_id(record):
-            continue
+        if check_creator_permission:
+            # Check if user is owner of the item
+            if check_created_id(record):
+                continue
 
-        # Check if item and indices are public
-        is_public = check_publish_status(record)
+            # Check if item are public
+            is_public = check_publish_status(record)
+        else:
+            is_public = True
+        # Check if indices are public
         has_index_permission = False
         for idx in record.navi:
-            if check_index_permissions(None, idx.cid) \
-                    and (not idx_paths or idx.path in idx_paths):
+            if str(idx.cid) in has_permission_index:
                 has_index_permission = True
                 break
+            elif idx.cid in no_permission_index:
+                continue
+            if check_index_permissions(None, idx.cid) \
+                    and (not idx_paths or idx.path in idx_paths):
+                has_permission_index.append(idx.cid)
+                has_index_permission = True
+                break
+            else:
+                no_permission_index.append(idx.cid)
         if is_public and has_index_permission:
             continue
 
@@ -1180,8 +1195,11 @@ def make_stats_file(item_type_id, recids, list_item_role):
                 if not labels:
                     labels = [item.get('title')]                
                 data = records.attr_data[item_key].get(recid) or {}
-                records.attr_output[recid].extend(
-                    data.get("attribute_value", ""))
+                attr_val = data.get("attribute_value", "")
+                if isinstance(attr_val,str):
+                    records.attr_output[recid].append(attr_val)
+                else:
+                    records.attr_output[recid].extend(attr_val)
 
         new_keys = []
         for key in keys:
@@ -3086,8 +3104,11 @@ def make_stats_file_with_permission(item_type_id, recids,
                 if not labels:
                     labels = [item.get('title')]
                 data = records.attr_data[item_key].get(recid) or {}
-                records.attr_output[recid].extend(
-                    data.get("attribute_value", ""))
+                attr_val = data.get("attribute_value", "")
+                if isinstance(attr_val,str):
+                    records.attr_output[recid].append(attr_val)
+                else:
+                    records.attr_output[recid].extend(attr_val)
 
         new_keys = []
         for key in keys:

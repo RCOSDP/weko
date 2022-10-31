@@ -301,6 +301,7 @@ def get_permission(record, fjson):
     @param fjson:
     @return:
     """
+    # current_app.logger.debug("fjson: {}".format(fjson))
     record_id = record.get('recid')
     file_name = fjson.get('filename')
     list_permission = __get_file_permission(record_id, file_name)

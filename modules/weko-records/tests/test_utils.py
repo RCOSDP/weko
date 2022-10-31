@@ -1110,6 +1110,23 @@ def test_convert_bibliographic():
 
     res = convert_bibliographic(_biblio)
     assert res=='title1, key name1, key name2, title2, key name3'
+    _biblio2 = [
+        {
+            'magazine_attribute_name': [
+                {'key': 'name1'},
+                {'key': 'name2'}
+            ]
+        },
+        {
+            'magazine_attribute_name': [
+                {'key': 'name3'}
+            ]
+        }
+    ]
+
+    res2 = convert_bibliographic(_biblio2)
+    assert res2=='key name1, key name2, key name3'
+
 
 # def add_biographic(sys_bibliographic, bibliographic_key, s, stt_key, data_result, 
 
@@ -1129,6 +1146,9 @@ def test_replace_fqdn(app):
     assert url=='https://localhost/a'
     url = replace_fqdn('http://test/a', 'https://nii.co.jp/')
     assert url=='https://nii.co.jp/a'
+    url = replace_fqdn('http://weko3.ir.rcos.nii.ac.jp/a', 'https://weko3.ir.rcos.nii.co.jp/')
+    assert url=='https://weko3.ir.rcos.nii.co.jp/a'
+
 
 # def replace_fqdn_of_file_metadata(file_metadata_lst: list, file_url: list = None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_replace_fqdn_of_file_metadata -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -1151,9 +1171,12 @@ def test_replace_fqdn_of_file_metadata(app):
             'version_id': '1'
         }
     ]
+    
     _file_url = []
-
+    replace_fqdn_of_file_metadata(_file_metadata_list1)
+    assert _file_metadata_list1==[{'url': {'url': 'http://test/a'}}, {'url': {'url': 'http://test/b'}}]
     replace_fqdn_of_file_metadata(_file_metadata_list1, _file_url)
     assert _file_url==['http://test/a', 'http://test/b']
     replace_fqdn_of_file_metadata(_file_metadata_list2)
     assert _file_metadata_list2==[{'url': {'url': 'https://localhost/a'}, 'version_id': '1'}, {'url': {'url': 'https://localhost/b'}, 'version_id': '1'}]
+    

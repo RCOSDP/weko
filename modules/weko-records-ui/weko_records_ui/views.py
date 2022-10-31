@@ -274,10 +274,11 @@ def check_permission(record):
 def check_file_permission(record, fjson):
     """Check File Download Permission.
 
-    :param record
-    :param fjson
-    :return: result
-    """
+    Args:
+        record (weko_deposit.api.WekoRecord): _description_
+        fjson (dict): _description_
+    
+    """    
     return check_file_download_permission(record, fjson)
 
 
@@ -902,7 +903,14 @@ def xml_string_escape(s):
 
 @blueprint.app_template_filter('preview_able')
 def preview_able(file_json):
-    """Check whether file can be previewed or not."""
+    """Check whether file can be previewed or not.
+
+    Args:
+        file_json (dict): _description_
+
+    Returns:
+        bool: _description_
+    """
     file_type = ''
     file_size = file_json.get('size')
     file_format = file_json.get('format', '')
@@ -922,6 +930,17 @@ def preview_able(file_json):
 
 @blueprint.route("/get_uri", methods=['POST'])
 def get_uri():
+    """_summary_
+    ---
+      post:
+        description: 
+        requestBody:
+            required: true
+            content:
+            application/json: {"uri":"https://localhost/record/1/files/001.jpg","pid_value":"1","accessrole":"1"}
+        responses:
+          200:
+    """  
     data = request.get_json()
     uri = data.get('uri')
     pid_value = data.get('pid_value')

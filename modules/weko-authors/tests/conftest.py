@@ -28,13 +28,17 @@ import pytest
 from flask import Flask, url_for
 from flask_babelex import Babel
 from invenio_db import InvenioDB, db as db_
+from invenio_access.models import ActionUsers,ActionRoles
+from invenio_accounts.testutils import create_test_user
 from invenio_accounts import InvenioAccounts
+from invenio_admin import InvenioAdmin
 from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user, login_user_via_session
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers
 from invenio_indexer import InvenioIndexer
 from invenio_search import InvenioSearch
+from invenio_assets import InvenioAssets
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import inspect
@@ -79,6 +83,8 @@ def base_app(instance_path):
     InvenioDB(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
+    InvenioAdmin(app_)
+    InvenioAssets(app_)
     InvenioIndexer(app_)
     InvenioSearch(app_)
     WekoAuthors(app_)
@@ -119,68 +125,136 @@ def client(app):
 def users(app, db):
     """Create users."""
     ds = app.extensions['invenio-accounts'].datastore
-    user_count = User.query.filter_by(email='test@test.org').count()
+    user_count = User.query.filter_by(email='user@test.org').count()
     if user_count != 1:
-        user = create_test_user(email='test@test.org')
-        contributor = create_test_user(email='test2@test.org')
-        comadmin = create_test_user(email='test3@test.org')
-        repoadmin = create_test_user(email='test4@test.org')
-        sysadmin = create_test_user(email='test5@test.org')
-
+        user = create_test_user(email='user@test.org')
+        contributor = create_test_user(email='contributor@test.org')
+        comadmin = create_test_user(email='comadmin@test.org')
+        repoadmin = create_test_user(email='repoadmin@test.org')
+        sysadmin = create_test_user(email='sysadmin@test.org')
+        generaluser = create_test_user(email='generaluser@test.org')
+        originalroleuser = create_test_user(email='originalroleuser@test.org')
+        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
+        student = create_test_user(email='student@test.org')
     else:
-        user = User.query.filter_by(email='test@test.org').first()
-        contributor = User.query.filter_by(email='test2@test.org').first()
-        comadmin = User.query.filter_by(email='test3@test.org').first()
-        repoadmin = User.query.filter_by(email='test4@test.org').first()
-        sysadmin = User.query.filter_by(email='test5@test.org').first()
-
+        user = User.query.filter_by(email='user@test.org').first()
+        contributor = User.query.filter_by(email='contributor@test.org').first()
+        comadmin = User.query.filter_by(email='comadmin@test.org').first()
+        repoadmin = User.query.filter_by(email='repoadmin@test.org').first()
+        sysadmin = User.query.filter_by(email='sysadmin@test.org').first()
+        generaluser = User.query.filter_by(email='generaluser@test.org')
+        originalroleuser = create_test_user(email='originalroleuser@test.org')
+        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
+        student = User.query.filter_by(email='student@test.org').first()
+        
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
-        r1 = ds.create_role(name='System Administrator')
-        r2 = ds.create_role(name='Repository Administrator')
-        r3 = ds.create_role(name='Contributor')
-        r4 = ds.create_role(name='Community Administrator')
-
+        sysadmin_role = ds.create_role(name='System Administrator')
+        repoadmin_role = ds.create_role(name='Repository Administrator')
+        contributor_role = ds.create_role(name='Contributor')
+        comadmin_role = ds.create_role(name='Community Administrator')
+        general_role = ds.create_role(name='General')
+        originalrole = ds.create_role(name='Original Role')
+        studentrole = ds.create_role(name='Student')
     else:
-        r1 = Role.query.filter_by(name='System Administrator').first()
-        r2 = Role.query.filter_by(name='Repository Administrator').first()
-        r3 = Role.query.filter_by(name='Contributor').first()
-        r4 = Role.query.filter_by(name='Community Administrator').first()
+        sysadmin_role = Role.query.filter_by(name='System Administrator').first()
+        repoadmin_role = Role.query.filter_by(name='Repository Administrator').first()
+        contributor_role = Role.query.filter_by(name='Contributor').first()
+        comadmin_role = Role.query.filter_by(name='Community Administrator').first()
+        general_role = Role.query.filter_by(name='General').first()
+        originalrole = Role.query.filter_by(name='Original Role').first()
+        studentrole = Role.query.filter_by(name='Student').first()
 
-    ds.add_role_to_user(sysadmin, r1)
-    ds.add_role_to_user(repoadmin, r2)
-    ds.add_role_to_user(contributor, r3)
-    ds.add_role_to_user(comadmin, r4)
+    ds.add_role_to_user(sysadmin, sysadmin_role)
+    ds.add_role_to_user(repoadmin, repoadmin_role)
+    ds.add_role_to_user(contributor, contributor_role)
+    ds.add_role_to_user(comadmin, comadmin_role)
+    ds.add_role_to_user(generaluser, general_role)
+    ds.add_role_to_user(originalroleuser, originalrole)
+    ds.add_role_to_user(originalroleuser2, originalrole)
+    ds.add_role_to_user(originalroleuser2, repoadmin_role)
+    ds.add_role_to_user(student,studentrole)
 
     # Assign access authorization
     with db.session.begin_nested():
         action_users = [
             ActionUsers(action='superuser-access', user=sysadmin),
-            ActionUsers(action='author-access', user=contributor),
-            ActionUsers(action='author-access', user=comadmin),
-            ActionUsers(action='author-access', user=repoadmin)
         ]
         db.session.add_all(action_users)
+        action_roles = [
+            ActionRoles(action='superuser-access', role=sysadmin_role),
+            ActionRoles(action='admin-access', role=repoadmin_role),
+            ActionRoles(action='schema-access', role=repoadmin_role),
+            ActionRoles(action='index-tree-access', role=repoadmin_role),
+            ActionRoles(action='indextree-journal-access', role=repoadmin_role),
+            ActionRoles(action='item-type-access', role=repoadmin_role),
+            ActionRoles(action='item-access', role=repoadmin_role),
+            ActionRoles(action='files-rest-bucket-update', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-delete', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-delete-version', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-read', role=repoadmin_role),
+            ActionRoles(action='search-access', role=repoadmin_role),
+            ActionRoles(action='detail-page-acces', role=repoadmin_role),
+            ActionRoles(action='download-original-pdf-access', role=repoadmin_role),
+            ActionRoles(action='author-access', role=repoadmin_role),
+            ActionRoles(action='items-autofill', role=repoadmin_role),
+            ActionRoles(action='stats-api-access', role=repoadmin_role),
+            ActionRoles(action='read-style-action', role=repoadmin_role),
+            ActionRoles(action='update-style-action', role=repoadmin_role),
+            ActionRoles(action='detail-page-acces', role=repoadmin_role),
 
+            ActionRoles(action='admin-access', role=comadmin_role),
+            ActionRoles(action='index-tree-access', role=comadmin_role),
+            ActionRoles(action='indextree-journal-access', role=comadmin_role),
+            ActionRoles(action='item-access', role=comadmin_role),
+            ActionRoles(action='files-rest-bucket-update', role=comadmin_role),
+            ActionRoles(action='files-rest-object-delete', role=comadmin_role),
+            ActionRoles(action='files-rest-object-delete-version', role=comadmin_role),
+            ActionRoles(action='files-rest-object-read', role=comadmin_role),
+            ActionRoles(action='search-access', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='download-original-pdf-access', role=comadmin_role),
+            ActionRoles(action='author-access', role=comadmin_role),
+            ActionRoles(action='items-autofill', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+
+            ActionRoles(action='item-access', role=contributor_role),
+            ActionRoles(action='files-rest-bucket-update', role=contributor_role),
+            ActionRoles(action='files-rest-object-delete', role=contributor_role),
+            ActionRoles(action='files-rest-object-delete-version', role=contributor_role),
+            ActionRoles(action='files-rest-object-read', role=contributor_role),
+            ActionRoles(action='search-access', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='download-original-pdf-access', role=contributor_role),
+            ActionRoles(action='author-access', role=contributor_role),
+            ActionRoles(action='items-autofill', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+        ]
+        db.session.add_all(action_roles)
+
+    db.session.commit()
     return [
-        {'email': user.email, 'id': user.id,
-         'obj': user},
-        {'email': contributor.email, 'id': contributor.id,
-         'obj': contributor},
-        {'email': comadmin.email, 'id': comadmin.id,
-         'obj': comadmin},
-        {'email': repoadmin.email, 'id': repoadmin.id,
-         'obj': repoadmin},
-        {'email': sysadmin.email, 'id': sysadmin.id,
-         'obj': sysadmin},
+        {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
+        {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
+        {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
+        {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
+        {'email': generaluser.email, 'id': generaluser.id, 'obj': generaluser},
+        {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
+        {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
+        {'email': user.email, 'id': user.id, 'obj': user},
+        {'email': student.email,'id': student.id, 'obj': student}
     ]
+
+
 
 
 @pytest.fixture()
 def id_prefix(client, users):
     """Create test prefix."""
     # login for create prefix
-    login_user_via_session(client=client, email=users[4]['email'])
+    login_user_via_session(client=client, email=users[2]['email'])
     input = {'name': 'testprefix', 'scheme': 'testprefix',
              'url': 'https://testprefix/##'}
     client.put('/api/authors/add_prefix',

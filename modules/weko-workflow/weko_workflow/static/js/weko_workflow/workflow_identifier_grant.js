@@ -202,8 +202,12 @@ require([
           alert(data.msg);
         }
       },
-      error: function (textStatus, errorThrown) {
-        alert('Server error.');
+      error: function (jqXHR, textStatus, errorThrown) {
+        if (jqXHR.responseJSON && jqXHR.responseJSON.code==-1){
+          alert(jqXHR.responseJSON.msg);
+        }else {
+          alert('Server error.');
+        }
       }
     });
   });
@@ -278,9 +282,18 @@ require([
           $('#error-info').parent().show();
         }
       },
-      error: function (jqXHE, status) {
-        alert('Server error');
-        endLoading(withdrawBtn);
+      error: function (jqXHR, status) {
+        if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.code){
+          if (jqXHR.responseJSON.code == -1){
+            endLoading(withdrawBtn);
+            $('#pwd').parent().addClass('has-error');
+            $('#error-info').html(data.msg);
+            $('#error-info').parent().show();
+          }
+        }else{
+          alert('Server error');
+          endLoading(withdrawBtn);
+        }
       }
     });
     event.preventDefault();
@@ -378,9 +391,14 @@ require([
           alert(data.msg);
         }
       },
-      error: function (jqXHE, status) {
-        endLoading(_this);
-        alert('server error');
+      error: function (jqXHR, status) {
+        if ((-2 == jqXHR.responseJSON.code) || (-1 == jqXHR.responseJSON.code)){
+          endLoading(_this);
+          alert(jqXHR.responseJSON.msg);
+        } else {
+          endLoading(_this);
+          alert('server error');
+        }
       }
     });
   });

@@ -395,7 +395,7 @@ class WorkFlowSettingView(BaseView):
         :param list_hide:
 
         :return: displays, hides.
-        """
+        """        
         displays = []
         hides = []
         if isinstance(role, list):
@@ -428,6 +428,9 @@ class WorkFlowSettingView(BaseView):
 
         :return:
         """
+        current_app.logger.error("wf_id:{}".format(wf_id))
+        # ['4']
+        current_app.logger.error("list_hide:{}".format(list_hide))
         with db.session.begin_nested():
             db.session.query(WorkflowRole).filter_by(
                 workflow_id=wf_id).delete()
