@@ -2453,24 +2453,22 @@ def get_ranking(settings):
             agg_sort={'_count': 'desc'},
             ranking=True)
 
-
-        def get_publish_status(pid_value):
-            item = WekoRecord.get_record_by_pid(pid_value)
-            if item["publish_status"] != "0":
-                return False
-            else:
-                return True
-
-
+        item_id_list = []
         private_items_to_be_deleted_from_result = []
 
-        for index, item in enumerate(result['data']):
-            if get_publish_status(item['col1']):
-                continue
-            else:
-                private_items_to_be_deleted_from_result.append(index)
+        for item in result['data']:
+            item_id_list.append(WekoRecord.get_record_by_pid(item['col1']).id)
         
+        hidden_items = find_hidden_items(item_id_list, check_creator_permission=True)
+
+        for item in result['data']:
+            for index, item in enumerate(result['data']):
+                if str(WekoRecord.get_record_by_pid(item['col1']).id) in hidden_items:
+                    private_items_to_be_deleted_from_result.append(index)
+
         private_items_to_be_deleted_from_result.sort()
+        set_private_items_to_be_deleted_from_result = set(private_items_to_be_deleted_from_result)
+        private_items_to_be_deleted_from_result = list(set_private_items_to_be_deleted_from_result)
         private_items_to_be_deleted_from_result.reverse()
 
         for index in private_items_to_be_deleted_from_result:
@@ -2527,6 +2525,7 @@ def get_ranking(settings):
             end_date)
 
         item_id_list = [item["_id"] for item in result['hits']['hits']]
+
         hidden_items = find_hidden_items(item_id_list)
 
         for item_id in hidden_items:
