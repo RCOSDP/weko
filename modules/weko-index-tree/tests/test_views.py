@@ -40,7 +40,7 @@ def test_set_expand_guest(client_api, users):
     res = client_api.post("/api/indextree/set_expand",
                           data=json.dumps({}),
                           content_type="application/json")
-    assert res.status_code == 302
+    assert res.status_code == 200
 
 
 # def create_index():

@@ -1156,6 +1156,7 @@ class WekoDeposit(Deposit):
                                 file_content = ""
                                 if file.obj.file.size <= file_size_max and \
                                         file.obj.mimetype in mimetypes:
+                                    ## invenio_files_rest.errors.StorageError
                                     file_content = file.obj.file.read_file(lst)
                                 content.update({"file": file_content})
                                 contents.append(content)

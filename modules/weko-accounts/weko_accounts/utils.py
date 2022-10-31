@@ -35,13 +35,13 @@ def get_remote_addr():
     # An 'X-Forwarded-For' header includes a comma separated list of the
     # addresses, the first address being the actual remote address.
     """
+
     if not request:
         return None
 
     # current_app.logger.debug('{0} {1} {2}: {3}'.format(
     #     __file__, 'get_remote_addr()', 'request.headers', request.headers))
     address = request.headers.get('X-Real-IP', None)
-
     if address is None:
         address = request.headers.get('X-Forwarded-For', request.remote_addr)
         if address is not None:

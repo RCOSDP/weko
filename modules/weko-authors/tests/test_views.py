@@ -19,6 +19,8 @@
 # MA 02111-1307, USA.
 
 """Module tests."""
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+
 
 
 import json
@@ -78,12 +80,17 @@ def test_create_prefix_guest(client):
     # assert res.url == url_for('security.login')
 
 
+#.tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_create_prefix_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 403),
-    (2, 403),
-    (3, 200),
-    (4, 200),
+    (0, 200), # contributor
+    (1, 200), # repoadmin
+    (2, 200), # sysadmin
+    (3, 200), # comadmin
+    (4, 403), # generaluser
+    (5, 403), # originalroleuser
+    (6, 200), # originalroleuser2
+    (7, 403), # user
+    (8, 403), # student       
 ])
 def test_create_prefix_users(client, users, users_index, status_code):
     """
@@ -100,6 +107,7 @@ def test_create_prefix_users(client, users, users_index, status_code):
     assert res.status_code == status_code
 
 
+#.tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_update_prefix_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_update_prefix_guest(client, id_prefix):
     """
     Test of update author prefix.
@@ -114,13 +122,17 @@ def test_update_prefix_guest(client, id_prefix):
     # TODO check that the path changed
     # assert res.url == url_for('security.login')
 
-
+#.tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_update_prefix_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 403),
-    (2, 403),
-    (3, 200),
-    (4, 200),
+    (0, 200), # contributor
+    (1, 200), # repoadmin
+    (2, 200), # sysadmin
+    (3, 200), # comadmin
+    (4, 403), # generaluser
+    (5, 403), # originalroleuser
+    (6, 200), # originalroleuser2
+    (7, 403), # user
+    (8, 403), # student  
 ])
 def test_update_prefix_users(client, users, id_prefix, users_index, status_code):
     """
@@ -151,11 +163,15 @@ def test_delete_prefix_guest(client, id_prefix):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 403),
-    (2, 403),
-    (3, 200),
-    (4, 200),
+    (0, 200), # contributor
+    (1, 200), # repoadmin
+    (2, 200), # sysadmin
+    (3, 200), # comadmin
+    (4, 403), # generaluser
+    (5, 403), # originalroleuser
+    (6, 200), # originalroleuser2
+    (7, 403), # user
+    (8, 403), # student  
 ])
 def test_delete_prefix_users(client, users, id_prefix, users_index, status_code):
     """
@@ -184,11 +200,15 @@ def test_getById_guest(client):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 403),
-    (2, 403),
-    (3, 200),
-    (4, 200),
+    (0, 200), # contributor
+    (1, 200), # repoadmin
+    (2, 200), # sysadmin
+    (3, 200), # comadmin
+    (4, 403), # generaluser
+    (5, 403), # originalroleuser
+    (6, 200), # originalroleuser2
+    (7, 403), # user
+    (8, 403), # student  
 ])
 def test_getById_users(client, users, users_index, status_code):
     """
@@ -221,11 +241,15 @@ def test_gatherById_guest(client):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 403),
-    (2, 403),
-    (3, 200),
-    (4, 200),
+    (0, 200), # contributor
+    (1, 200), # repoadmin
+    (2, 200), # sysadmin
+    (3, 200), # comadmin
+    (4, 403), # generaluser
+    (5, 403), # originalroleuser
+    (6, 200), # originalroleuser2
+    (7, 403), # user
+    (8, 403), # student  
 ])
 def test_gatherById_users(client, users, users_index, status_code):
     """
@@ -259,11 +283,15 @@ def test_get_guest(client):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 200),
-    (2, 200),
-    (3, 200),
-    (4, 200),
+    (0, 200), # contributor
+    (1, 200), # repoadmin
+    (2, 200), # sysadmin
+    (3, 200), # comadmin
+    (4, 403), # generaluser
+    (5, 403), # originalroleuser
+    (6, 200), # originalroleuser2
+    (7, 403), # user
+    (8, 403), # student  
 ])
 def test_get_users(client, users, users_index, status_code):
     """
@@ -319,11 +347,15 @@ def test_create_guest(client):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 200),
-    (2, 200),
-    (3, 200),
-    (4, 200),
+    (0, 200), # contributor
+    (1, 200), # repoadmin
+    (2, 200), # sysadmin
+    (3, 200), # comadmin
+    (4, 403), # generaluser
+    (5, 403), # originalroleuser
+    (6, 200), # originalroleuser2
+    (7, 403), # user
+    (8, 403), # student  
 ])
 def test_create_users(client, users, users_index, status_code):
     """
@@ -402,11 +434,15 @@ def test_update_author_guest(client):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 403),
-    (2, 403),
-    (3, 200),
-    (4, 200),
+    (0, 200), # contributor
+    (1, 200), # repoadmin
+    (2, 200), # sysadmin
+    (3, 200), # comadmin
+    (4, 403), # generaluser
+    (5, 403), # originalroleuser
+    (6, 200), # originalroleuser2
+    (7, 403), # user
+    (8, 403), # student  
 ])
 def test_update_author_users(client, users, create_author, users_index, status_code):
     """
@@ -486,11 +522,15 @@ def test_delete_author_guest(client):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 403),
-    (2, 403),
-    (3, 200),
-    (4, 200),
+    (0, 200), # contributor
+    (1, 200), # repoadmin
+    (2, 200), # sysadmin
+    (3, 200), # comadmin
+    (4, 403), # generaluser
+    (5, 403), # originalroleuser
+    (6, 200), # originalroleuser2
+    (7, 403), # user
+    (8, 403), # student  
 ])
 def test_delete_author_users(client, users, create_author, users_index, status_code):
     """
@@ -547,11 +587,15 @@ def test_mapping_guest(client):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 200),
-    (2, 200),
-    (3, 200),
-    (4, 200),
+    (0, 200), # contributor
+    (1, 200), # repoadmin
+    (2, 200), # sysadmin
+    (3, 200), # comadmin
+    (4, 403), # generaluser
+    (5, 403), # originalroleuser
+    (6, 200), # originalroleuser2
+    (7, 403), # user
+    (8, 403), # student  
 ])
 def test_mapping_users(client, users, users_index, status_code):
     """

@@ -43,7 +43,7 @@ def test_init():
     assert 'weko-accounts' in app.extensions
 
 
-def test_view(app):
+def test_view(app,session_time):
     """
     Test view.
 
@@ -51,6 +51,8 @@ def test_view(app):
     """
     WekoAccounts(app)
     with app.test_client() as client:
-        res = client.get("/weko")
+        from flask import url_for
+        url = url_for("weko_accounts.index")
+        res = client.get(url)
         assert res.status_code == 200
         assert 'Welcome to WEKO-Accounts' in str(res.data)

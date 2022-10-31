@@ -25,8 +25,12 @@ require([
           alert(data.msg);
         }
       },
-      error: function (textStatus, errorThrown) {
-        alert('Server error.');
+      error: function (jqXHR, textStatus, errorThrown) {
+        if (jqXHR.responseJSON && jqXHR.responseJSON.code == -1){
+          alert(jqXHR.responseJSON.msg);
+        }else {
+          alert('Server error.');
+        }
       }
     });
   });
@@ -78,6 +82,7 @@ require([
       },
       error: function (jqXHE, status) {
         endLoading(_this);
+        alert(jqXHE.responseJSON.msg);
       }
     });
   });
@@ -132,9 +137,13 @@ require([
           alert(data.msg);
         }
       },
-      error: function (jqXHE, status) {
+      error: function (jqXHR, status) {
         endLoading(_this);
-        alert('server error');
+        if (jqXHR.responseJSON && jqXHR.responseJSON.msg) {
+          alert(jqXHR.responseJSON.msg);
+        } else {
+          alert('server error');
+        }
         $('#myModal').modal('hide');
       }
     });
@@ -196,9 +205,13 @@ require([
           alert(data.msg);
         }
       },
-      error: function (jqXHE, status) {
+      error: function (jqXHR, status) {
         endLoading(_this);
-        alert('server error');
+        if (jqXHR.responseJSON && jqXHR.responseJSON.msg) {
+          alert(jqXHR.responseJSON.msg);
+        } else {
+          alert('server error');
+        }
         $('#myModal').modal('hide');
       }
     });
@@ -249,9 +262,13 @@ require([
           alert(data.msg);
         }
       },
-      error: function (jqXHE, status) {
+      error: function (jqXHR, status) {
         endLoading(_this);
-        alert('server error');
+        if (jqXHR.responseJSON && jqXHR.responseJSON.msg) {
+          alert(jqXHR.responseJSON.msg);
+        } else {
+          alert('server error');
+        }
       }
     });
   }
@@ -327,9 +344,18 @@ require([
           alert(data.msg);
         }
       },
-      error: function (jqXHE, status) {
-        endLoading(_this);
-        alert('server error');
+      error: function (jqXHR, status) {
+        if (-2 == jqXHR.responseJSON.code) {
+          let error_msg = $('#AutoCancelMsg').text();
+          $('#cancelModalBody').text(error_msg);
+          $('#cancelModal').modal('show');
+        } else if (-1 == jqXHR.responseJSON.code) {
+          endLoading(_this);
+          alert(jqXHR.responseJSON.msg);
+        } else{
+          endLoading(_this);
+          alert('server error');
+        }
       }
     });
   });
@@ -371,9 +397,18 @@ require([
           alert(data.msg);
         }
       },
-      error: function (jqXHE, status) {
-        endLoading(_this);
-        alert('server error');
+      error: function (jqXHR, status) {
+        if (-2 == jqXHR.responseJSON.code) {
+          let error_msg = $('#AutoCancelMsg').text();
+          $('#cancelModalBody').text(error_msg);
+          $('#cancelModal').modal('show');
+        } else if (-1 == jqXHR.responseJSON.code) {
+          endLoading(_this);
+          alert(jqXHR.responseJSON.msg);
+        } else {
+          endLoading(_this);
+          alert('server error');
+        }
       }
     });
   });
