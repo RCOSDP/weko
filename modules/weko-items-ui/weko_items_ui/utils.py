@@ -80,6 +80,8 @@ from weko_workflow.models import Activity, FlowAction, FlowActionRole, \
     FlowDefine
 from weko_workflow.utils import IdentifierHandle
 
+from .config import WEKO_ITEMS_UI_RANKING_BUFFER
+
 
 def get_list_username():
     """Get list username.
@@ -350,6 +352,7 @@ def find_hidden_items(item_id_list, idx_paths=None, check_creator_permission=Fal
     no_permission_index = []
     hidden_list = []
     for record in WekoRecord.get_records(item_id_list):
+        
         if check_creator_permission:
             # Check if user is owner of the item
             if check_created_id(record):
@@ -2400,7 +2403,6 @@ def get_ranking(settings):
     :param settings: ranking setting.
     :return:
     """
-    current_app.logger.error("settings:{}".format(settings))
     index_info = Indexes.get_browsing_info()
     # get statistical period
     end_date_original = date.today()  # - timedelta(days=1)
@@ -2415,24 +2417,17 @@ def get_ranking(settings):
         result = QueryRecordViewReportHelper.get(
             start_date=start_date,
             end_date=end_date,
-            agg_size=settings.display_rank + 100,
+            agg_size=settings.display_rank + WEKO_ITEMS_UI_RANKING_BUFFER,
             agg_sort={'value': 'desc'},
             ranking=True)
 
-        record_id_list = [item["record_id"] for item in result['all']]
+        
+        record_id_list = [item['record_id']  for item in result['all']]
         hidden_items = find_hidden_items(record_id_list, check_creator_permission=True)
-        private_items_to_be_deleted_from_result = []
 
-        for record_id in hidden_items:
-            for index, item in enumerate(result['all']):
-                if record_id == item['record_id']:
-                    private_items_to_be_deleted_from_result.append(index)
-
-        private_items_to_be_deleted_from_result.sort()
-        private_items_to_be_deleted_from_result.reverse()
-
-        for index in private_items_to_be_deleted_from_result:
-            del result['all'][index]
+        for item in result['all']:
+            if item['record_id'] not in hidden_items:
+                pid_value_permissions.append(item['pid_value'])
 
         permission_ranking(result, pid_value_permissions, settings.display_rank,
                            'all', 'pid_value')
@@ -2449,33 +2444,24 @@ def get_ranking(settings):
             end_date=end_date,
             target_report='3',
             unit='Item',
-            agg_size=settings.display_rank + 100,
+            agg_size=settings.display_rank + WEKO_ITEMS_UI_RANKING_BUFFER,
             agg_sort={'_count': 'desc'},
             ranking=True)
 
-
-        def get_publish_status(pid_value):
-            item = WekoRecord.get_record_by_pid(pid_value)
-            if item["publish_status"] != "0":
-                return False
-            else:
-                return True
-
-
-        private_items_to_be_deleted_from_result = []
-
-        for index, item in enumerate(result['data']):
-            if get_publish_status(item['col1']):
-                continue
-            else:
-                private_items_to_be_deleted_from_result.append(index)
         
-        private_items_to_be_deleted_from_result.sort()
-        private_items_to_be_deleted_from_result.reverse()
-
-        for index in private_items_to_be_deleted_from_result:
-            del result['data'][index]
-
+        _tmp = [item['col1']  for item in result['data']]
+        for pid_value in _tmp:
+            rec = WekoRecord.get_record_by_pid(pid_value)
+            record_id_list.append(rec.id)
+        
+        hidden_items = find_hidden_items(record_id_list, check_creator_permission=True)
+        pid_value_permissions = []
+        for pid_value in _tmp:
+            rec = WekoRecord.get_record_by_pid(pid_value)
+            _id = str(rec.id)
+            if _id not in hidden_items:
+                pid_value_permissions.append(pid_value)
+        
         permission_ranking(result, pid_value_permissions, settings.display_rank,
                            'data', 'col1')
         rankings['most_downloaded_items'] = \
@@ -2490,7 +2476,7 @@ def get_ranking(settings):
             end_date=end_date,
             target_report='0',
             unit='User',
-            agg_size=settings.display_rank + 100,
+            agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
         
         rankings['created_most_items_user'] = \
@@ -2503,7 +2489,7 @@ def get_ranking(settings):
         result = QuerySearchReportHelper.get(
             start_date=start_date,
             end_date=end_date,
-            agg_size=settings.display_rank + 100,
+            agg_size=settings.display_rank ,
             agg_sort={'value': 'desc'}
         )
 
@@ -2527,7 +2513,7 @@ def get_ranking(settings):
             end_date)
 
         item_id_list = [item["_id"] for item in result['hits']['hits']]
-        hidden_items = find_hidden_items(item_id_list)
+        hidden_items = find_hidden_items(item_id_list,check_creator_permission=True)
 
         for item_id in hidden_items:
             for index, item in enumerate(result['hits']['hits']):
