@@ -170,6 +170,16 @@ def test_load_edit_pack(i18n_app, widget_items):
 
 
 #     def get_locked_widget_info(cls, widget_id, widget_item=None,
+# ERR ~ TypeError: '<' not supported between instances of 'datetime.timedelta' and 'datetime.datetime'
+def test_get_locked_widget_info(i18n_app, widget_items):
+    import datetime
+    widget_id = "1"
+    # with patch("weko_gridlayout.services.WidgetItemServices.get_widget_by_id", return_value=return_data):
+    widget_item = MagicMock()
+    widget_item.updated = datetime.timedelta(0, 3)
+
+    assert not WidgetItemServices.get_locked_widget_info(widget_id)
+    assert WidgetItemServices.get_locked_widget_info(widget_id, widget_item)
 
 
 #     def lock_widget(cls, widget_id, locked_value):
