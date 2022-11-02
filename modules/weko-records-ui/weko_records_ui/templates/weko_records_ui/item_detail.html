@@ -19,7 +19,7 @@
   #}
 
 {% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
-{% from "weko_records_ui/creator_detail_template.html" import output_creator_data %}
+{% from "weko_records_ui/creator_detail_template.html" import output_creator_data with context %}
 {% from "weko_records_ui/output_bibliographic_information_detail.html" import output_bibliographic_information %}
 {% macro output_item_detail(m_record,
                             m_files,
