@@ -2149,7 +2149,7 @@ def withdraw_confirm(activity_id='0', action_id=0):
         post_json = schema_load.data
 
         password = post_json.get('passwd', None)
-        wekouser = ShibUser()
+        # wekouser = ShibUser()
         if password == 'DELETE':
             # if wekouser.check_weko_user(current_user.email, password):
             activity = WorkActivity()
