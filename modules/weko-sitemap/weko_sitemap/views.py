@@ -27,6 +27,9 @@ blueprint = Blueprint(
 @blueprint.route('/robots.txt')
 def display_robots_txt():
     # return current_app.send_static_file('robots.txt')
-    resp = make_response(render_template('weko_sitemap/robots.txt.tmpl',sitemapindex = url_for('flask_sitemap.sitemap', _external=True)))
+    robot_txt = ""
+    if "WEKO_SITEMAP__ROBOT_TXT" in current_app.config:
+        robot_txt = current_app.config.get("WEKO_SITEMAP__ROBOT_TXT","")
+    resp = make_response(render_template('weko_sitemap/robots.txt.tmpl',robot_txt = robot_txt,sitemapindex = url_for('flask_sitemap.sitemap', _external=True)))
     resp.headers['Content-Type'] = "text/plain"
     return resp

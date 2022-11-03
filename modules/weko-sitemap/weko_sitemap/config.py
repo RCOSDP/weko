@@ -34,3 +34,8 @@ SITEMAP_ENDPOINT_URL = '/sitemapindex.xml'
 SITEMAP_ENDPOINT_PAGE_URL = '/sitemap_<int:page>.xml.gz'
 
 SITEMAP_MAX_URL_COUNT = 10000
+
+WEKO_SITEMAP__ROBOT_TXT = """
+User-agent: Bingbot
+Crawl-delay: 30
+"""
