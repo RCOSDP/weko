@@ -1,0 +1,44 @@
+[
+    {
+        "key":"test_item1",
+        "title":"Title",
+        "items":[
+            {
+                "key":"test_item1[].test1_subitem1",
+                "type":"text",
+                "title":"Title"
+            },
+            {
+                "key":"test_item1[].test1_subitem2",
+                "type":"select",
+                "title":"Language",
+                "titleMap":[
+                    {"name":"ja","value":"ja"},{"name":"en","value":"en"}
+                ]
+            }
+        ]
+    },
+    {
+        "key":"test_item5",
+        "type":"fieldset",
+        "title":"Access Rights",
+        "items":[
+            {
+                "key":"test_item5.test5_subitem1",
+                "type":"select",
+                "title":"アクセス権",
+                "titleMap": [
+                    { "name": "choice1", "value": "test choice1" },
+                    { "name": "choice2", "value": "test choice2" }
+                ]
+            },
+            {
+                "key":"test_item5.test5_subitem2",
+                "type":"text",
+                "title":"アクセス権URI",
+                "readonly":true
+            }
+        ]
+    }
+    
+]
