@@ -19,18 +19,192 @@ def test_get_remote_addr(app):
         headers={
             "X-Real-IP":'192.168.0.1',
             
-        }
+        },environ_base={'REMOTE_ADDR': '10.0.0.1'}
     ):
         result = get_remote_addr()
         assert result == '192.168.0.1'
+
     with app.test_request_context(headers={
-        "X-Forwarded-For":"192.168.254.1, 192.168.255.1",}):
+        "X-Forwarded-For":"192.168.254.1, 192.168.255.1"},environ_base={'REMOTE_ADDR': '10.0.0.1'}):
         result = get_remote_addr()
         assert result == "192.168.254.1"
+    
     with app.test_request_context(headers={
-    },environ_base={'REMOTE_ADDR': None}):
+         "X-Real-IP":'192.168.0.1',"X-Forwarded-For":"192.168.254.1, 192.168.255.1"},environ_base={'REMOTE_ADDR': '10.0.0.1'}):
+        result = get_remote_addr()
+        assert result == '192.168.0.1'
+    
+    with app.test_request_context(headers={
+    },environ_base={'REMOTE_ADDR': '10.0.0.1'}):
+        result = get_remote_addr()
+        assert result == '10.0.0.1'
+    
+    with app.test_request_context(headers={
+    },environ_base={}):
         result = get_remote_addr()
         assert result == None
+
+    # WEKO_ACCOUNTS_REAL_IP = None
+    app.config["WEKO_ACCOUNTS_REAL_IP"] = None
+    result = get_remote_addr()
+    assert result == None
+    with app.test_request_context(
+        headers={
+            "X-Real-IP":'192.168.0.1',
+            
+        },environ_base={'REMOTE_ADDR': '10.0.0.1'}
+    ):
+        result = get_remote_addr()
+        assert result == '192.168.0.1'
+
+    with app.test_request_context(headers={
+        "X-Forwarded-For":"192.168.254.1, 192.168.255.1"},environ_base={'REMOTE_ADDR': '10.0.0.1'}):
+        result = get_remote_addr()
+        assert result == "192.168.254.1"
+    
+    with app.test_request_context(headers={
+         "X-Real-IP":'192.168.0.1',"X-Forwarded-For":"192.168.254.1, 192.168.255.1"},environ_base={'REMOTE_ADDR': '10.0.0.1'}):
+        result = get_remote_addr()
+        assert result == '192.168.0.1'
+    
+    with app.test_request_context(headers={
+    },environ_base={'REMOTE_ADDR': '10.0.0.1'}):
+        result = get_remote_addr()
+        assert result == '10.0.0.1'
+    
+    with app.test_request_context(headers={
+    },environ_base={}):
+        result = get_remote_addr()
+        assert result == None
+
+    app.config["WEKO_ACCOUNTS_REAL_IP"] = "remote_add"
+    result = get_remote_addr()
+    assert result == None
+    with app.test_request_context(
+        headers={
+            "X-Real-IP":'192.168.0.1',
+            
+        },environ_base={'REMOTE_ADDR': '10.0.0.1'}
+    ):
+        result = get_remote_addr()
+        assert result == '10.0.0.1'
+
+    with app.test_request_context(headers={
+        "X-Forwarded-For":"192.168.254.1, 192.168.255.1"},environ_base={'REMOTE_ADDR': '10.0.0.1'}):
+        result = get_remote_addr()
+        assert result == '10.0.0.1'
+    
+    with app.test_request_context(headers={
+         "X-Real-IP":'192.168.0.1',"X-Forwarded-For":"192.168.254.1, 192.168.255.1"},environ_base={'REMOTE_ADDR': '10.0.0.1'}):
+        result = get_remote_addr()
+        assert result == '10.0.0.1'
+    
+    with app.test_request_context(headers={
+    },environ_base={'REMOTE_ADDR': '10.0.0.1'}):
+        result = get_remote_addr()
+        assert result == '10.0.0.1'
+    
+    with app.test_request_context(headers={
+    },environ_base={}):
+        result = get_remote_addr()
+        assert result == None
+    
+    app.config["WEKO_ACCOUNTS_REAL_IP"] = "x_real_ip"
+    result = get_remote_addr()
+    assert result == None
+    with app.test_request_context(
+        headers={
+            "X-Real-IP":'192.168.0.1',
+            
+        },environ_base={'REMOTE_ADDR': '10.0.0.1'}
+    ):
+        result = get_remote_addr()
+        assert result == '192.168.0.1'
+
+    with app.test_request_context(headers={
+        "X-Forwarded-For":"192.168.254.1, 192.168.255.1"},environ_base={'REMOTE_ADDR': '10.0.0.1'}):
+        result = get_remote_addr()
+        assert result == '10.0.0.1'
+    
+    with app.test_request_context(headers={
+         "X-Real-IP":'192.168.0.1',"X-Forwarded-For":"192.168.254.1, 192.168.255.1"},environ_base={'REMOTE_ADDR': '10.0.0.1'}):
+        result = get_remote_addr()
+        assert result == '192.168.0.1'
+    
+    with app.test_request_context(headers={
+    },environ_base={'REMOTE_ADDR': '10.0.0.1'}):
+        result = get_remote_addr()
+        assert result == '10.0.0.1'
+    
+    with app.test_request_context(headers={
+    },environ_base={}):
+        result = get_remote_addr()
+        assert result == None
+    
+    app.config["WEKO_ACCOUNTS_REAL_IP"] = "x_forwarded_for"
+    result = get_remote_addr()
+    assert result == None
+    with app.test_request_context(
+        headers={
+            "X-Real-IP":'192.168.0.1',
+            
+        },environ_base={'REMOTE_ADDR': '10.0.0.1'}
+    ):
+        result = get_remote_addr()
+        assert result == '10.0.0.1'
+
+    with app.test_request_context(headers={
+        "X-Forwarded-For":"192.168.254.1, 192.168.255.1"},environ_base={'REMOTE_ADDR': '10.0.0.1'}):
+        result = get_remote_addr()
+        assert result == "192.168.254.1"
+    
+    with app.test_request_context(headers={
+         "X-Real-IP":'192.168.0.1',"X-Forwarded-For":"192.168.254.1, 192.168.255.1"},environ_base={'REMOTE_ADDR': '10.0.0.1'}):
+        result = get_remote_addr()
+        assert result == '192.168.254.1'
+    
+    with app.test_request_context(headers={
+    },environ_base={'REMOTE_ADDR': '10.0.0.1'}):
+        result = get_remote_addr()
+        assert result == '10.0.0.1'
+    
+    with app.test_request_context(headers={
+    },environ_base={}):
+        result = get_remote_addr()
+        assert result == None
+    
+    app.config["WEKO_ACCOUNTS_REAL_IP"] = "x_forwarded_for_rev"
+    result = get_remote_addr()
+    assert result == None
+    with app.test_request_context(
+        headers={
+            "X-Real-IP":'192.168.0.1',
+            
+        },environ_base={'REMOTE_ADDR': '10.0.0.1'}
+    ):
+        result = get_remote_addr()
+        assert result == '10.0.0.1'
+
+    with app.test_request_context(headers={
+        "X-Forwarded-For":"192.168.254.1, 192.168.255.1"},environ_base={'REMOTE_ADDR': '10.0.0.1'}):
+        result = get_remote_addr()
+        assert result == "192.168.255.1"
+    
+    with app.test_request_context(headers={
+         "X-Real-IP":'192.168.0.1',"X-Forwarded-For":"192.168.254.1, 192.168.255.1"},environ_base={'REMOTE_ADDR': '10.0.0.1'}):
+        result = get_remote_addr()
+        assert result == '192.168.255.1'
+    
+    with app.test_request_context(headers={
+    },environ_base={'REMOTE_ADDR': '10.0.0.1'}):
+        result = get_remote_addr()
+        assert result == '10.0.0.1'
+    
+    with app.test_request_context(headers={
+    },environ_base={}):
+        result = get_remote_addr()
+        assert result == None
+
 #def generate_random_str(length=128):
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_utils.py::test_generate_random_str -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_generate_random_str(mocker):
