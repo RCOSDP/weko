@@ -2149,7 +2149,7 @@ def withdraw_confirm(activity_id='0', action_id=0):
         post_json = schema_load.data
 
         password = post_json.get('passwd', None)
-        wekouser = ShibUser()
+        # wekouser = ShibUser()
         if password == 'DELETE':
             # if wekouser.check_weko_user(current_user.email, password):
             activity = WorkActivity()
@@ -2164,7 +2164,7 @@ def withdraw_confirm(activity_id='0', action_id=0):
                 activity_id,
                 identifier_actionid)
             identifier_handle = IdentifierHandle(item_id)
-            if not isinstance(identifier, dict) or "action_identifier_select" in identifier:
+            if not isinstance(identifier, dict) or "action_identifier_select" not in identifier:
                 current_app.logger.error("withdraw_confirm: bad identifier data")
                 res = ResponseMessageSchema().load({"code":-1,"msg":"bad identifier data"})
                 return jsonify(res.data), 500

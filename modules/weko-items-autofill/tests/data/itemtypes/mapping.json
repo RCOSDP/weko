@@ -1,0 +1,144 @@
+{
+    "test0":{
+        "jpcoar_mapping":{
+            "title":{}
+        }
+    },
+    "test_item1":{
+        "jpcoar_mapping":{
+            "title":{
+                "@value": "test1_subitem1",
+                "@attributes":{"xml:lang":"test1_subitem2"}
+            }
+        }
+    },
+    "test_item2":{
+        "jpcoar_mapping":{
+            "title":{
+                "@value": "test2_subitem1",
+                "@attributes":{"xml:lang":"test2_subitem2"}
+            }
+        }
+    },
+    "test_item3":{
+        "jpcoar_mapping":{
+            "title":{
+                "@value": "test3_subitem1",
+                "@attributes":{"xml:lang":"test3_subitem2"}
+            }
+        }
+    },
+    "test_item4":{
+        "jpcoar_mapping":""
+    },
+    "test_item5":{
+        "jpcoar_mapping":{
+            "accessRights": {
+                "@value": "test4_subitem1",
+                "@attributes": { "rdf:resource": "test4_subitem2" }
+            }
+        }
+    },
+    "test_item6":{
+        "jpcoar_mapping":{
+            "creator":{
+                "creatorName": {
+                    "@value": "creatorNames.creatorName",
+                    "@attributes": { "xml:lang": "creatorNames.creatorNameLang" }
+                }
+            }
+        }
+    },
+    "test_item7":{
+        "jpcoar_mapping":{
+            "contributor":{
+                "contributorName": {
+                    "@value": "contributorNames.contributorName",
+                    "@attributes": { "xml:lang": "contributorNames.lang" }
+                }
+            }
+        }
+    },
+    "test_item8":{
+        "jpcoar_mapping":{
+            "relation":{
+                "relatedIdentifier": {
+                    "@value": "test8_subitem1.test8_subitem2",
+                    "@attributes": {
+                      "identifierType": "test8_subitem1.test8_subitem3"
+                    }
+                }
+            }
+        }
+    },
+    "test_item9":{
+        "memo":"exist @attributes.identifierType",
+        "jpcoar_mapping":{
+            "identifier":{
+                "@value": "subitem_identifier_uri",
+                "@attributes": { "identifierType": "subitem_identifier_type" }
+            }
+        }
+    },
+    "test_item10":{
+        "memo":"exist @attributes.descriptionType",
+        "jpcoar_mapping": {
+            "description": {
+                "@value": "subitem_description",
+                "@attributes": {
+                  "descriptionType": "subitem_description_type"
+                }
+            }
+        }
+    },
+    "test_item11":{
+        "memo":"exist @attributes.subjectSchema",
+        "jpcoar_mapping": {
+            "subject": {
+                "@value": "test11_subitem1",
+                "@attributes": {
+                  "subjectScheme": "test11_subitem1"
+                }
+            }
+        }
+    },
+    "test_item12":{
+        "memo":"exist @attributes.subjectURI",
+        "jpcoar_mapping": {
+            "subject": {
+                "@value": "test12_subitem1",
+                "@attributes": {
+                    "subjectURI": "test12_subitem1"
+                }
+            }
+        }
+    },
+    "test_item13":{
+        "memo":"exist @attributes.dateType",
+        "jpcoar_mapping": {
+            "date": {
+                "@value": "test13_subitem1",
+                "@attributes": { "dateType": "test13_subitem2" }
+            }
+        }
+    },
+    "test_item14":{
+        "memo":"not exist @value",
+        "jpcoar_mapping":{
+            "others":{
+                "@attributes":{"xxx":"test14_subitem1"}
+            }
+        }
+    },
+    "test_item15":{
+        "memo":"not exist @attributes",
+        "jpcoar_mapping":{
+            "others":{
+                "@value":"test15_subitem1"
+            }
+        }
+    },
+    "test_item16":{
+        "jpcoar_mapping":{"volume": { "@value": "test16_subitem1" } }
+    }
+}
