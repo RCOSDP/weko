@@ -1,0 +1,3 @@
+#pk_id	authorNameInfo[0].familyName	authorNameInfo[0].firstName	authorNameInfo[0].language	authorNameInfo[0].nameFormat	authorNameInfo[0].nameShowFlg	authorIdInfo[0].idType	authorIdInfo[0].authorId	authorIdInfo[0].authorIdShowFlg	emailInfo[0].email	is_deleted
+#WEKO ID	Family Name[0]	Given Name[0]	Language[0]	Name Format[0]	Name Display[0]	Identifier Scheme[0]	Identifier[0]	Identifier Display[0]	Mail Address[0]	Delete Flag
+#WEKO ID	姓[0]	名[0]	言語[0]	フォーマット[0]	姓名・言語 表示／非表示[0]	外部著者ID 識別子[0]	外部著者ID[0]	外部著者ID 表示／非表示[0]	メールアドレス[0]	削除フラグ
