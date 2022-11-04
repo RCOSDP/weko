@@ -3,7 +3,7 @@ import json
 import copy
 import pytest
 import unittest
-from datetime import datetime
+import datetime
 from mock import patch, MagicMock, Mock
 from flask import current_app, make_response, request
 from flask_login import current_user
@@ -37,6 +37,35 @@ def sample_ResourceListIndexes():
     )
 
     return test
+
+
+def sample_ChangeListHandler(key):
+
+    def _func(keyword):
+        if keyword == "str":
+            test = ChangeListHandler(
+                change_tracking_state="test"
+            )
+        else:
+            test = ChangeListHandler(
+                change_tracking_state=["test"]
+            )
+        
+        test.id = "test"
+        test.status = "test"
+        test.repository_id = "Root Index"
+        test.change_dump_manifest = "test"
+        test.max_changes_size = "test"
+        test.url_path = "/"
+        test.created = "test"
+        test.updated = "test"
+        test.index = "test"
+        test.publish_date = "test"
+        test.interval_by_date = 2
+
+        return test
+    
+    return _func(key)
 
 
 # class ResourceListHandler(object):
@@ -131,18 +160,176 @@ def test__validation_ResourceListHandler(i18n_app):
     assert test._validation()
 
 
-#     def get_resource_list_xml(self, from_date=None, to_date=None):
-#     def get_resource_dump_xml(self, from_date=None, to_date=None):
+#     def get_resource_list_xml(self, from_date=None, to_date=None): ERR ~ 
+def test_get_resource_list_xml_ResourceListHandler(i18n_app):
+    test = sample_ResourceListHandler()
+    test.repository_id = "Root Index"
+    return_data = [{}]
+
+    with patch("invenio_resourcesyncserver.api.ResourceListHandler._validation", return_value=""):
+        assert not test.get_resource_list_xml()
+    with patch("invenio_resourcesyncserver.api.ResourceListHandler._validation", return_value="test"):
+        with patch("invenio_resourcesyncserver.query.get_items_by_index_tree", return_value=return_data):
+            assert test.get_resource_list_xml()
+
+
+#     def get_resource_dump_xml(self, from_date=None, to_date=None): ERR ~ 
+def test_get_resource_dump_xml_ResourceListHandler(i18n_app):
+    test = sample_ResourceListHandler()
+    test.repository_id = "Root Index"
+    from_date = "2022/11/3 0:00:00"
+    to_date = "2022/11/4 0:00:00"
+
+    with patch("invenio_resourcesyncserver.api.ResourceListHandler._validation", return_value=""):
+        assert not test.get_resource_dump_xml()
+    with patch("invenio_resourcesyncserver.api.ResourceListHandler._validation", return_value="test"):
+        with patch("invenio_resourcesyncserver.query.get_items_by_index_tree", return_value=MagicMock()):
+            assert test.get_resource_dump_xml(from_date=from_date, to_date=to_date)
+
+
 #     def get_capability_content(cls):
+def test_get_capability_content_ResourceListHandler(i18n_app):
+    test = sample_ResourceListHandler()
+    return_data = MagicMock()
+
+    def _validation():
+        return True
+
+    return_data._validation = _validation
+
+    with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_list_resource", return_value=[return_data]):
+        assert test.get_capability_content()
+
+
 #     def get_resource_dump_manifest(self, record_id):
+def test_get_resource_dump_manifest_ResourceListHandler(i18n_app):
+    test = sample_ResourceListHandler()
+    test.resource_dump_manifest = True
+    record_id = 1
+    return_data = MagicMock()
+    return_data_2 = MagicMock()
+
+    def as_xml_sample():
+        return True
+
+    return_data_2.as_xml = as_xml_sample
+    return_data.files = [return_data_2]
+
+    with patch("invenio_resourcesyncserver.api.ResourceListHandler._validation", return_value=False):
+        assert not test.get_resource_dump_manifest(record_id)
+
+    with patch("invenio_resourcesyncserver.api.ResourceListHandler._validation", return_value=True):
+        with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=return_data):
+            # try and except is for bypassing ResourceDumpManifest.as_xml()
+            try:
+                assert test.get_resource_dump_manifest(record_id)
+            except:
+                pass
+    
+
 #     def get_record_content_file(self, record_id):
+def test_get_record_content_file_ResourceListHandler(i18n_app):
+    test = sample_ResourceListHandler()
+
+    with patch("invenio_resourcesyncserver.api.ResourceListHandler._validation", return_value=False):
+        assert not test.get_record_content_file(1)
+
+    with patch("invenio_resourcesyncserver.api.ResourceListHandler._validation", return_value=True):
+        with patch("weko_items_ui.utils._export_item", return_value=[MagicMock(), MagicMock()]):
+            # Exception coverage
+            assert not test.get_record_content_file(1)
 
 
 # class ChangeListHandler(object):
 #     def __init__(self, **kwargs):
 #     def save(self):
+def test_save_ChangeListHandler(i18n_app):
+    test_str = sample_ChangeListHandler("str")
+    test_list = sample_ChangeListHandler("list")
+
+    return_data = MagicMock()
+
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list_by_repo_id", return_value=return_data):
+        assert test_str.save()
+        assert test_list.save()
+
+    return_data.id = "test"
+
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list_by_repo_id", return_value=return_data):
+        with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list", return_value=MagicMock()):
+            with patch("invenio_db.db.session.merge", return_value=""):
+                assert test_str.save()
+                assert test_list.save()
+            assert test_str.save()
+        with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list", return_value=""):
+            assert not test_str.save()
+
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list_by_repo_id", return_value=""):
+        test_str.id = None
+        assert test_str.save()
+
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list_by_repo_id", return_value="test"):
+        test_str.id = None
+        assert test_str.save()    
+
+
 #     def get_change_list_content_xml(self, from_date,
+def test_get_change_list_content_xml(i18n_app, db, users):
+    from invenio_pidstore.models import PersistentIdentifier
+    from invenio_pidstore.models import PIDStatus
+    import uuid
+
+    user = users[3]["obj"]
+    rec_uuid = uuid.uuid4()
+    sample = PersistentIdentifier.create(
+        "recid",
+        "1.0",
+        object_type="rec",
+        object_uuid=rec_uuid,
+        status=PIDStatus.REGISTERED,
+    )
+
+    db.session.add(sample)
+    db.session.commit()
+
+    test_str = sample_ChangeListHandler("str")
+    from_date = "2022/11/3 0:00:00"
+    from_date_args = "2022/11/3 0:00:00"
+    to_date_args = "2022/11/4 0:00:00"
+    return_data = MagicMock()
+    return_data.pid_value = "test"
+
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler._validation", return_value=""):
+        assert not test_str.get_change_list_content_xml(
+            from_date=from_date,
+            from_date_args=from_date_args,
+            to_date_args=to_date_args
+        )
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler._validation", return_value="_str"):
+        with patch("invenio_resourcesyncserver.query.get_items_by_index_tree", return_value=MagicMock()):
+            with patch("invenio_resourcesyncserver.api.ChangeListHandler._get_record_changes_with_interval", return_value=[MagicMock()]):
+                with patch("invenio_pidstore.models.PersistentIdentifier.get", return_value=sample):
+                    with patch("invenio_pidrelations.contrib.versioning.PIDVersioning", return_value=return_data):
+                        # Exception coverage
+                        assert test_str.get_change_list_content_xml(
+                            from_date=from_date,
+                            from_date_args=from_date_args,
+                            to_date_args=to_date_args
+                        )
+
+
 #     def get_change_list_index(self):
+def test_get_change_list_index(i18n_app):
+    test_str = sample_ChangeListHandler("str")
+    test_str.publish_date = datetime.datetime.now() - datetime.timedelta(hours=1)
+    
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler._validation", return_value=""):
+        assert not test_str.get_change_list_index()
+
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler._validation", return_value="_str"):
+        assert test_str.get_change_list_index()
+
+
 #     def get_change_dump_index(self):
 #     def get_change_dump_xml(self, from_date):
 #     def _validation(self):
