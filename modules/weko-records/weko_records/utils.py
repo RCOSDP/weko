@@ -40,6 +40,7 @@ from lxml import etree
 from weko_admin import config as ad_config
 from weko_admin.models import SearchManagement as sm
 from weko_schema_ui.schema import SchemaTree
+from invenio_accounts.models import Role
 
 from .api import ItemTypes, Mapping
 from .config import COPY_NEW_FIELD, WEKO_TEST_FIELD
@@ -710,6 +711,11 @@ def get_all_items(nlst, klst, is_get_name=False):
 
             return item_name
 
+    def get_role_name(role_id):
+        role = Role.query.filter_by(id=role_id).first()
+        if role:
+            return role.name
+
     def get_items(nlst):
         _list = []
 
@@ -725,6 +731,10 @@ def get_all_items(nlst, klst, is_get_name=False):
                         item_name = get_name(k)
                         if item_name:
                             d[k + ".name"] = item_name
+                    if k.endswith("priceinfo[].role") and v.isdecimal():
+                        role_name = get_role_name(int(v))
+                        if role_name:
+                            d[k] = role_name
                 else:
                     _list.append(get_items(v))
             _list.append(d)
