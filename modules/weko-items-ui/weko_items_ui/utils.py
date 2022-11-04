@@ -1985,6 +1985,11 @@ def set_multi_language_name(item, cur_lang):
                     and len(value['name_i18n'][cur_lang]) > 0:
                 value['name'] = value['name_i18n'][cur_lang]
 
+    if 'items' in item:
+        items2 = item['items']
+        for item2 in items2:
+            set_multi_language_name(item2, cur_lang)
+
 
 def get_data_authors_prefix_settings():
     """Get all authors prefix settings."""
