@@ -274,7 +274,7 @@ def test_save_ChangeListHandler(i18n_app):
 
 
 #     def get_change_list_content_xml(self, from_date,
-def test_get_change_list_content_xml(i18n_app, db, users):
+def test_get_change_list_content_xml_ChangeListHandler(i18n_app, db, users):
     from invenio_pidstore.models import PersistentIdentifier
     from invenio_pidstore.models import PIDStatus
     import uuid
@@ -319,7 +319,7 @@ def test_get_change_list_content_xml(i18n_app, db, users):
 
 
 #     def get_change_list_index(self):
-def test_get_change_list_index(i18n_app):
+def test_get_change_list_index_ChangeListHandler(i18n_app):
     test_str = sample_ChangeListHandler("str")
     test_str.publish_date = datetime.datetime.now() - datetime.timedelta(hours=1)
     
@@ -331,15 +331,190 @@ def test_get_change_list_index(i18n_app):
 
 
 #     def get_change_dump_index(self):
+def test_get_change_dump_index_ChangeListHandler(i18n_app):
+    test_str = sample_ChangeListHandler("str")
+
+    def _validation():
+        return True
+    
+    def _not_validation():
+        return False
+
+    test_str._validation = _validation
+    test_str.publish_date = datetime.datetime.now() - datetime.timedelta(hours=1)
+    
+    assert test_str.get_change_dump_index()
+
+    test_str._validation = _not_validation
+
+    assert not test_str.get_change_dump_index()
+
+
 #     def get_change_dump_xml(self, from_date):
+def test_get_change_dump_xml_ChangeListHandler(i18n_app):
+    test_str = sample_ChangeListHandler("str")
+    from_date = datetime.datetime.now() - datetime.timedelta(hours=1)
+    
+
+    def _validation():
+        return True
+    
+    def _not_validation():
+        return False
+
+    def _get_record_changes_with_interval(key_date, keyword=True):
+        data_1 = MagicMock()
+
+        if not keyword:
+            data_1.status = "deleted"
+
+        data_1.updated = datetime.datetime.now()
+        data_2 = [data_1]
+        return data_2
+
+    def _next_change(x, y):
+        return MagicMock()
+
+    test_str._validation = _validation
+    test_str._get_record_changes_with_interval = _get_record_changes_with_interval
+    test_str._next_change = _next_change
+
+    # Exception coverage
+    assert test_str.get_change_dump_xml(from_date)
+
+    test_str._validation = _not_validation
+
+    assert not test_str.get_change_dump_xml(from_date)
+
+
 #     def _validation(self):
+def test__validation_ChangeListHandler(i18n_app):
+    test_str = sample_ChangeListHandler("str")
+    test_str.index = MagicMock()
+    test_str.index.public_state = True
+
+    assert test_str._validation()
+
+    test_str.repository_id = None
+    
+    assert test_str._validation()
+
+    test_str.status = False
+
+    assert not test_str._validation()
+
+
 #     def get_change_dump_manifest_xml(self, record_id):
+def test_get_change_dump_manifest_xml_ChangeListHandler(i18n_app):
+    test_str = sample_ChangeListHandler("str")
+    record_id = "8.9"
+
+    def _validation():
+        return True
+
+    def _is_record_in_index(key):
+        return "8.9"
+
+    assert not test_str.get_change_dump_manifest_xml(record_id)
+
+    test_str._validation = _validation
+    test_str._is_record_in_index = _is_record_in_index
+    return_data = MagicMock()
+    data_1 = MagicMock()
+    return_data.files = [data_1]
+
+    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=return_data):
+        with patch("invenio_resourcesyncserver.utils.get_pid", return_value=return_data):
+            with patch("weko_deposit.api.WekoRecord.get_record", return_value=return_data):
+                assert test_str.get_change_dump_manifest_xml(record_id)
+
+
 #     def delete(cls, change_list_id):
+def test_delete_ChangeListHandler(i18n_app):
+    change_list_id = 1
+    test_str = sample_ChangeListHandler("str")
+
+    # def get_change_list(x, y):
+    #     return True
+
+    # def not_get_change_list(x, y):
+    #     return False
+
+    # test_str.get_change_list = not_get_change_list
+
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list", return_value="test"):
+        assert not test_str.delete(change_list_id)
+
+    assert not test_str.delete(change_list_id)
+
+
 #     def get_index(self):
+def test_get_index_ChangeListHandler(i18n_app):
+    test_str = sample_ChangeListHandler("str")
+    with patch("weko_index_tree.api.Indexes.get_index", return_value=""):
+        assert not test_str.get_index()
+
+
 #     def to_dict(self):
+def test_to_dict_ChangeListHandler(i18n_app):
+    test_str = sample_ChangeListHandler("str")
+    test_str.index = MagicMock()
+    test_str.index.index_name_english = "test"
+
+    assert test_str.to_dict()
+
+
 #     def get_change_list(cls, changelist_id, type_result='obj'):
+def test_get_change_list_ChangeListHandler(i18n_app, db):
+    test_str = sample_ChangeListHandler("str")
+    changelist_id = 1
+
+    from invenio_resourcesyncserver.models import ChangeListIndexes
+    test = ChangeListIndexes(
+        id=1,
+        repository_id=111,
+        change_dump_manifest=True,
+        max_changes_size=1,
+        interval_by_date=2,
+        change_tracking_state="test",
+        url_path="/",
+        publish_date=datetime.datetime.now()
+    )
+
+    assert not test_str.get_change_list(changelist_id)
+
+    db.session.add(test)
+    db.session.commit()
+
+    assert test_str.get_change_list(changelist_id, "modal")
+    assert test_str.get_change_list(changelist_id)
+    
+
 #     def get_all(cls):
 #     def convert_modal_to_obj(cls, model=ChangeListIndexes()):
+def test_get_all_ChangeListHandler(i18n_app, db):
+    test_str = sample_ChangeListHandler("str")
+
+    from invenio_resourcesyncserver.models import ChangeListIndexes
+    test = ChangeListIndexes(
+        id=1,
+        repository_id=111,
+        change_dump_manifest=True,
+        max_changes_size=1,
+        interval_by_date=2,
+        change_tracking_state="test",
+        url_path="/",
+        publish_date=datetime.datetime.now()
+    )
+
+    assert not test_str.get_all()
+
+    db.session.add(test)
+    db.session.commit()
+
+    assert test_str.get_all()
+
+
 #     def get_change_list_by_repo_id(cls, repo_id, type_result='obj'):
 #     def _is_record_in_index(self, record_id):
 #     def get_record_content_file(self, record_id):
