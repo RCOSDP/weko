@@ -100,6 +100,13 @@ def test_create_ResourceListHandler(i18n_app):
 def test_update_ResourceListHandler(i18n_app):
     test = sample_ResourceListHandler()
 
+    def get_resource(key1, key2):
+        data = MagicMock()
+        return data
+
+    test.get_resource = get_resource
+
+    # Exception coverage
     assert test.update()
 
 
@@ -516,10 +523,161 @@ def test_get_all_ChangeListHandler(i18n_app, db):
 
 
 #     def get_change_list_by_repo_id(cls, repo_id, type_result='obj'):
+def test_get_change_list_by_repo_id_ChangeListHandler(i18n_app, db):
+    test_str = sample_ChangeListHandler("str")
+    repo_id = 111
+
+    from invenio_resourcesyncserver.models import ChangeListIndexes
+    test = ChangeListIndexes(
+        id=1,
+        repository_id=111,
+        change_dump_manifest=True,
+        max_changes_size=1,
+        interval_by_date=2,
+        change_tracking_state="test",
+        url_path="/",
+        publish_date=datetime.datetime.now()
+    )
+
+    db.session.add(test)
+    db.session.commit()
+
+    assert test_str.get_change_list_by_repo_id(repo_id)
+    assert test_str.get_change_list_by_repo_id(repo_id, 'modal')
+
+
 #     def _is_record_in_index(self, record_id):
+def test__is_record_in_index_ChangeListHandler(i18n_app):
+    test_str = sample_ChangeListHandler("str")
+    record_id = 1
+    return_data = MagicMock()
+    return_data.object_uuid = 1
+
+    with patch("invenio_resourcesyncserver.utils.get_pid", return_value=return_data):
+        with patch("weko_deposit.api.WekoRecord.get_record", return_value=MagicMock()):
+            with patch("invenio_resourcesyncserver.utils.get_real_path", return_value=test_str.repository_id):
+                assert test_str._is_record_in_index(record_id)
+                
+                test_str.repository_id = "Index"
+
+                assert test_str._is_record_in_index(record_id)
+            assert not test_str._is_record_in_index(record_id)
+
+
 #     def get_record_content_file(self, record_id):
+def test_get_record_content_file_ChangeListHandler(i18n_app, es_records):
+    test_str = sample_ChangeListHandler("str")
+    record_id = 1
+    data_1 = MagicMock()
+    data_2 = MagicMock()
+    return_data = (data_1, data_2)
+
+    def _is_record_in_index(key):
+        return True
+    
+    def _is_not_record_in_index(key):
+        return False
+
+    def get_change_dump_manifest_xml(key):
+        return "test"
+
+    test_str._is_record_in_index = _is_not_record_in_index
+
+    assert not test_str.get_record_content_file(record_id)
+
+    test_str._is_record_in_index = _is_record_in_index
+
+    # Exception coverage
+    assert not test_str.get_record_content_file(record_id)
+
+    test_str.get_change_dump_manifest_xml = get_change_dump_manifest_xml
+
+    assert test_str.get_record_content_file(record_id)
+
+
 #     def get_capability_content(cls):
+def test_get_capability_content_ChangeListHandler(i18n_app):
+    test_str = sample_ChangeListHandler("str")
+    return_data = MagicMock()
+
+    def _validation():
+        return True
+
+    return_data._validation = _validation
+    return_data.url_path = "/test"
+
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_all", return_value=[return_data]):
+        assert test_str.get_capability_content()
+
+
 #     def _date_validation(self, date_from: str):
+def test__date_validation_ChangeListHandler(i18n_app):
+    test_str = sample_ChangeListHandler("str")
+    test_str.publish_date = datetime.datetime.now() - datetime.timedelta(days=5)
+    date_from = "20221107"
+
+    assert test_str._date_validation(date_from)
+
+    date_from = "test"
+
+    # Exception coverage
+    assert not test_str._date_validation(date_from)
+
+
 #     def _next_change(self, data, changes):
+def test__next_change_ChangeListHandler(i18n_app):
+    test_str = sample_ChangeListHandler("str")
+    data = {
+        "record_id": 1,
+        "record_version": 1
+    }
+    changes = {
+        "record_id": 1,
+        "record_version": 2
+    }
+
+    assert test_str._next_change(data, [changes])
+
+    changes["record_version"] = 1
+    
+    assert not test_str._next_change(data, [changes])
+
+
 #     def _get_record_changes_with_interval(self, from_date):
+def test__get_record_changes_with_interval_ChangeListHandler(i18n_app):
+    test_str = sample_ChangeListHandler("str")
+
+    def _date_validation(key):
+        return datetime.datetime.now() - datetime.timedelta(hours=1)
+
+    def _not_date_validation(key):
+        return False
+
+    def _get_record_changes(key1, key2, key3):
+        return "test"
+
+    test_str._date_validation = _date_validation
+    test_str.interval_by_date = 1
+    test_str._get_record_changes = _get_record_changes
+
+    from_date = "test"
+
+    assert test_str._get_record_changes_with_interval(from_date)
+
+    test_str._date_validation = _not_date_validation
+
+    assert not test_str._get_record_changes_with_interval(from_date)
+
+
 #     def _get_record_changes(self, repo_id, from_date, until_date):
+def test__get_record_changes_ChangeListHandler(i18n_app):
+    test_str = sample_ChangeListHandler("str")
+    repo_id = 1
+    from_date = 1
+    until_date = 1
+
+    with patch("invenio_resourcesyncserver.utils.query_record_changes", return_value=True):
+        assert test_str._get_record_changes(repo_id, from_date, until_date)
+
+    # Exception coverage
+    assert not test_str._get_record_changes(repo_id, from_date, until_date)
