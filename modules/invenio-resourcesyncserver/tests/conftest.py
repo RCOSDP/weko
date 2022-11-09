@@ -1043,3 +1043,9 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
         "results": results
     }
 
+
+@pytest.fixture()
+def search_result():
+    search_query_result = json_data("data/search_result.json")
+
+    return search_query_result
