@@ -1,19 +1,35 @@
-from weko_schema_ui.schema import SchemaConverter,cache_schema
+from weko_schema_ui.schema import (
+    SchemaConverter,
+    cache_schema,
+    schema_list_render,
+    delete_schema,
+    get_oai_metadata_formats)
 import pytest
 from collections import Iterable, OrderedDict
+from werkzeug.exceptions import BadRequest
 
 # class SchemaConverter:
-
-@pytest.fixture
-def schemaConverter_ins(app):
-    schema = "tests/data/oai_dc.xsd"
-    rootname = "dc"
+# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_schema.py::test_SchemaConverter -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+def test_SchemaConverter(app):
     with app.app_context():
-        return SchemaConverter(schema,rootname) 
+        schema = "tests/data/collection.xsd"
+        rootname = "collection"
+        res = SchemaConverter(schema, rootname)
+        assert isinstance(res, SchemaConverter)
+        assert res.namespaces=={'xml': 'http://www.w3.org/XML/1998/namespace', 'xs': 'http://www.w3.org/2001/XMLSchema', '': 'http://example.com/ns/collection'}
+        assert res.target_namespace==''
 
+        schema = "tests/data/none.xsd"
+        rootname = "collection"
+        with pytest.raises(Exception) as e:
+            res = SchemaConverter(schema, rootname)
+        assert e.type==BadRequest
 
-def test_SchemaConverter(schemaConverter_ins):
-    assert isinstance(schemaConverter_ins,SchemaConverter)
+        schema = "tests/data/oai_dc.xsd"
+        rootname = "dc"
+        with pytest.raises(Exception) as e:
+            res = SchemaConverter(schema, rootname)
+        assert e.type==BadRequest
 
 #     def __init__(self, schemafile, rootname):
 #     def to_dict(self):
@@ -87,6 +103,25 @@ def test_cache_schema(db_oaischema):
 
 
 # def delete_schema_cache(schema_name):
+
 # def schema_list_render(pid=None, **kwargs):
+# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_schema.py::test_schema_list_render -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+def test_schema_list_render(app, db_oaischema):
+    res = schema_list_render()
+    for x in res:
+        x.pop('pid')
+    assert res==[{'name': 'ddi_mapping', 'xsd_file': 'https://ddialliance.org/Specification/DDI-Codebook/2.5/XMLSchema/codebook.xsd', 'file_name': 'codebook.xsd', 'root_name': 'codeBook', 'schema_name': 'ddi_mapping', 'dis': None}, {'name': 'jpcoar', 'file_name': 'jpcoar_scm.xsd', 'root_name': 'jpcoar', 'schema_name': 'jpcoar_v1_mapping', 'dis': None}, {'name': 'jpcoar', 'file_name': 'jpcoar_scm.xsd', 'root_name': 'jpcoar', 'schema_name': 'jpcoar_mapping', 'dis': None}, {'name': 'oai_dc_mapping', 'xsd_file': 'http://dublincore.org/schemas/xmls/simpledc20021212.xsd', 'file_name': 'oai_dc.xsd', 'root_name': 'dc', 'schema_name': 'oai_dc_mapping', 'dis': None}]
+
 # def delete_schema(pid):
+# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_schema.py::test_delete_schema -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+def test_delete_schema(app, db_oaischema):
+    datas = schema_list_render()
+    pid = datas[0]['pid']
+    res = delete_schema(pid)
+    assert res=='ddi_mapping'
+
 # def get_oai_metadata_formats(app):
+# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_schema.py::test_get_oai_metadata_formats -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+def test_get_oai_metadata_formats(app, db_oaischema):
+    res = get_oai_metadata_formats(app)
+    assert res=={'oai_dc': {'serializer': ('invenio_oaiserver.utils:dumps_etree', {'xslt_filename': '/code/modules/invenio-oaiserver/invenio_oaiserver/static/xsl/MARC21slim2OAIDC.xsl'}), 'schema': 'http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd', 'namespace': 'http://www.w3.org/2001/XMLSchema'}, 'marc21': {'serializer': ('invenio_oaiserver.utils:dumps_etree', {'prefix': 'marc'}), 'schema': 'http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd', 'namespace': 'http://www.loc.gov/MARC21/slim'}, 'ddi': {'namespace': 'ddi:codebook:2_5', 'schema': 'https://ddialliance.org/Specification/DDI-Codebook/2.5/XMLSchema/codebook.xsd', 'serializer': ('invenio_oaiserver.utils:dumps_etree', {'schema_type': 'ddi'})}, 'jpcoar_v1': {'namespace': 'https://github.com/JPCOAR/schema/blob/master/1.0/', 'schema': 'https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd', 'serializer': ('invenio_oaiserver.utils:dumps_etree', {'schema_type': 'jpcoar_v1'})}, 'jpcoar': {'namespace': 'https://github.com/JPCOAR/schema/blob/master/2.0/', 'schema': 'https://github.com/JPCOAR/schema/blob/master/2.0/jpcoar_scm.xsd', 'serializer': ('invenio_oaiserver.utils:dumps_etree', {'schema_type': 'jpcoar'})}}
