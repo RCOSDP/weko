@@ -15,6 +15,7 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
 from weko_deposit.api import WekoRecord
 from weko_records_ui.models import FileOnetimeDownload
+from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from werkzeug.exceptions import NotFound
 from weko_admin.models import AdminSettings
 
@@ -248,9 +249,22 @@ def test_hide_by_itemtype(app,records):
 #     def item_type_show_email(item_type_id):
 #     def item_setting_show_email():
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_show_email_of_creator -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_is_show_email_of_creator(app,itemtypes):
-    assert is_show_email_of_creator(1)==False
-
+@pytest.mark.parametrize(
+    "is_hide,items_display_email, ret",[
+        (False, True, True),
+        (True, True, False),
+        (False, False, False),
+        (True, False, False),
+    ]
+)
+def test_is_show_email_of_creator(app,itemtypes,db_admin_settings,is_hide,items_display_email,ret):
+    settings = AdminSettings.get('items_display_settings',dict_to_object=False)
+    settings['items_display_email']=items_display_email
+    AdminSettings.update('items_display_settings',settings)
+    item_type = itemtypes["item_type"]
+    item_type.schema["properties"]["item_1617186419668"]["items"]["properties"]["creatorMails"]["items"]["properties"]["creatorMail"]['isHide'] = is_hide
+    item_type.render["schemaeditor"]["schema"]["item_1617186419668"]["properties"]["creatorMails"]["items"]["properties"]["creatorMail"]['isHide'] = is_hide
+    assert is_show_email_of_creator(item_type.id)==ret
 
 # def replace_license_free(record_metadata, is_change_label=True):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_replace_license_free -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

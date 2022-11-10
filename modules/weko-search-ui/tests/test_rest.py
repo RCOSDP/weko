@@ -1,6 +1,8 @@
 """
 /index/:post, get
 """
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+
 import json
 import pytest
 from mock import patch
@@ -74,7 +76,10 @@ path2 = dict(
     harvest_public_state=True,
 )
 
-        
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResource_get -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+
 test_patterns =[
     ({},
      "facet_not_post_filters.json",
@@ -98,19 +103,19 @@ test_patterns =[
      "execute_result01_02_03.json")
     ]
 @pytest.mark.parametrize("params, facet_file, links, paths, rd_file, execute", test_patterns)
-def test_IndexSearchResource_get(client_rest, users, item_type, record, facet_search_setting, index, mock_es_execute, 
+def test_IndexSearchResource_get(client_rest, users, item_type, records, facet_search_setting, db_index, mock_execute, 
                                  params, facet_file, links, paths, rd_file, execute):
     sname = current_app.config["SERVER_NAME"]
 
-    facet = json_data("tests/data/search/"+facet_file)
+    facet = json_data("data/search/"+facet_file)
     for l in links:
         links[l]="http://"+sname+"/index/"+links[l]
     with patch("weko_admin.utils.get_facet_search_query", return_value=facet):
         with patch("weko_search_ui.rest.Indexes.get_self_list",side_effect=paths):
-            with patch("invenio_search.api.RecordsSearch.execute", return_value=mock_es_execute("tests/data/search/"+execute)):
+            with patch("invenio_search.api.RecordsSearch.execute", return_value=mock_execute("data/search/"+execute)):
                 res = client_rest.get(url("/index/",params))
                 result = json.loads(res.get_data(as_text=True))
-                rd = json_data("tests/data/search/"+rd_file)
+                rd = json_data("../data/search/"+rd_file)
                 rd["links"] = links
                 assert result == rd
 

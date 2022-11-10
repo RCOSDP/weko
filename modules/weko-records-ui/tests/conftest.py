@@ -564,7 +564,7 @@ def location(app, db):
 
     shutil.rmtree(tmppath)
 
-
+ 
 @pytest.fixture()
 def itemtypes(app, db):
     item_type_name = ItemTypeName(
@@ -599,6 +599,7 @@ def itemtypes(app, db):
     )
 
     item_type_mapping = ItemTypeMapping(id=1, item_type_id=1, mapping=item_type_mapping)
+    
 
     with db.session.begin_nested():
         db.session.add(item_type_name)
@@ -609,7 +610,7 @@ def itemtypes(app, db):
         "item_type_name": item_type_name,
         "item_type": item_type,
         "item_type_mapping": item_type_mapping,
-    }
+    } 
 
 
 @pytest.fixture()

@@ -32,6 +32,7 @@ from time import sleep
 import pytest
 import requests
 from elasticsearch import Elasticsearch
+from elasticsearch_dsl import response, Search
 from flask import Flask, url_for
 from flask_babelex import Babel
 from flask_babelex import lazy_gettext as _
