@@ -26,39 +26,50 @@ import tempfile
 import uuid
 import json
 from datetime import datetime
-
 import pytest
+
 from flask import Flask
 from flask_babelex import Babel
 from flask_mail import Mail
 from flask_menu import Menu
-from invenio_db import InvenioDB
-from invenio_db import db as db_
+from flask.cli import ScriptInfo
+from sqlalchemy_utils.functions import create_database, database_exists, \
+    drop_database
+from simplekv.memory.redisstore import RedisStore
+
+
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user, login_user_via_session
 from invenio_access.models import ActionUsers, ActionRoles
 from invenio_access import InvenioAccess
 from invenio_admin import InvenioAdmin
+from invenio_cache import InvenioCache
+from invenio_db import InvenioDB
+from invenio_db import db as db_
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import FileInstance, Location
 from invenio_i18n import InvenioI18N
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidstore import InvenioPIDStore
-from simplekv.memory.redisstore import RedisStore
-from sqlalchemy_utils.functions import create_database, database_exists, \
-    drop_database
 
 from weko_authors import WekoAuthors
 from weko_authors.models import Authors
-from weko_workflow import WekoWorkflow
+from weko_index_tree import WekoIndexTree
+from weko_index_tree.models import Index, IndexStyle
 from weko_records_ui import WekoRecordsUI
 from weko_records import WekoRecords
 from weko_records.models import SiteLicenseInfo, SiteLicenseIpAddress,ItemType,ItemTypeName
 from weko_redis.redis import RedisConnection
+from weko_workflow import WekoWorkflow
+from weko_workflow.models import Action, ActionStatus,FlowDefine,FlowAction,WorkFlow,Activity,ActivityAction
 
 from weko_admin import WekoAdmin
-from weko_admin.models import SessionLifetime,SiteInfo,SearchManagement,AdminLangSettings,ApiCertificate,StatisticTarget,StatisticUnit,FeedbackMailSetting,FeedbackMailHistory
+from weko_admin.models import SessionLifetime,SiteInfo,SearchManagement,\
+        AdminLangSettings,ApiCertificate,StatisticTarget,StatisticUnit,\
+        FeedbackMailSetting,FeedbackMailHistory,FeedbackMailFailed,AdminSettings,\
+        FacetSearchSetting,BillingPermission,LogAnalysisRestrictedIpAddress,\
+        LogAnalysisRestrictedCrawlerList,StatisticsEmail,RankingSettings
 from weko_admin.views import blueprint_api,blueprint
 
 from tests.helpers import json_data, create_record
@@ -124,6 +135,8 @@ def base_app(instance_path, cache_config,request):
         INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
         INDEXER_FILE_DOC_TYPE="content",
         THEME_SITEURL = 'https://localhost',
+        CRAWLER_REDIS_DB=3,
+        CRAWLER_REDIS_TTL=86400
     )
     app_.testing = True
     app_.login_manager = dict(_login_disabled=True)
@@ -136,6 +149,7 @@ def base_app(instance_path, cache_config,request):
     InvenioAccounts(app_)
     InvenioAccess(app_)
     InvenioAdmin(app_)
+    InvenioCache(app_)
     InvenioPIDRelations(app_)
     InvenioPIDStore(app_)
     InvenioFilesREST(app_)
@@ -143,6 +157,7 @@ def base_app(instance_path, cache_config,request):
     WekoAuthors(app_)
     WekoRecords(app_)
     WekoRecordsUI(app_)
+    WekoIndexTree(app_)
     
     yield app_
 
@@ -201,9 +216,14 @@ def client(app):
         yield client
 
 @pytest.fixture
+def script_info(app):
+    return ScriptInfo(create_app=lambda info: app)
+
+@pytest.fixture
 def redis_connect(app):
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
     return redis_connection
+
 @pytest.fixture()
 def users(app, db):
     """Create users."""
@@ -432,7 +452,7 @@ def item_type(db):
         db.session.add(item_type1)
         db.session.add(item_type2)
     
-    return [{"obj":item_type1,"name":item_type_name1},{"obj":item_type2,"name":item_type_name1}]
+    return [{"obj":item_type1,"name":item_type_name1},{"obj":item_type2,"name":item_type_name2}]
 
 @pytest.fixture()
 def search_management(db):
@@ -596,7 +616,7 @@ def site_infos(db):
 @pytest.fixture()
 def feedback_mail_histories(db):
     
-    history = FeedbackMailHistory(
+    history1 = FeedbackMailHistory(
         start_time=datetime(2022,10,1,1,2,3,45678),
         end_time=datetime(2022,10,1,2,3,4,56789),
         stats_time="2022-10",
@@ -604,5 +624,254 @@ def feedback_mail_histories(db):
         error=0,
         is_latest=True
     )
-    db.session.add(history)
+    db.session.add(history1)
+    
+    history2 = FeedbackMailHistory(
+        start_time=datetime(2022,10,1,1,2,3,45678),
+        end_time=datetime(2022,10,1,2,3,4,56789),
+        stats_time="2022-11",
+        count=2,
+        error=0,
+        is_latest=True
+    )
+    db.session.add(history2)
     db.session.commit()
+    return [history1, history2]
+
+@pytest.fixture()
+def feedback_mail_faileds(db, feedback_mail_histories, authors):
+    failed1 = FeedbackMailFailed(
+        history_id=feedback_mail_histories[0].id,
+        author_id=authors[0].id,
+        mail="test.test1@test.org"
+    )
+    db.session.add(failed1)
+
+    db.session.commit()
+    return [failed1]
+
+@pytest.fixture()
+def indexes(db):
+    index_data = json_data("data/indexes.json")
+    index_db = list()
+    for data in index_data:
+        index_db.append(Index(**data))
+    db.session.add_all(index_db)
+    db.session.commit()
+    return index_db
+
+@pytest.fixture()
+def index_style(db):
+    style = IndexStyle(
+        id="weko",
+        width="3",
+        index_link_enabled=False
+    )
+    db.session.add(style)
+    db.session.commit()
+    return style
+
+@pytest.fixture()
+def admin_settings(db):
+    settings = list()
+    settings.append(AdminSettings(id=1,name='items_display_settings',settings={"items_display_email": False, "items_search_author": "name", "item_display_open_date": False}))
+    settings.append(AdminSettings(id=2,name='storage_check_settings',settings={"day": 0, "cycle": "weekly", "threshold_rate": 80}))
+    settings.append(AdminSettings(id=3,name='site_license_mail_settings',settings={"auto_send_flag": False}))
+    settings.append(AdminSettings(id=4,name='default_properties_settings',settings={"show_flag": True}))
+    settings.append(AdminSettings(id=5,name='item_export_settings',settings={"allow_item_exporting": True, "enable_contents_exporting": True}))
+    settings.append(AdminSettings(id=6,name="restricted_access",settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": []}))
+    settings.append(AdminSettings(id=7,name="display_stats_settings",settings={"display_stats":False}))
+    db.session.add_all(settings)
+    db.session.commit()
+    return settings
+
+@pytest.fixture()
+def actions(db):
+    action_datas = json_data("data/actions.json")
+    action_db = list()
+    for data in action_datas:
+        action_db.append(Action(**data))
+    db.session.add_all(action_db)
+    
+    status_datas = json_data("data/action_status.json")
+    status_db = list()
+    for data in status_datas:
+        status_db.append(ActionStatus(**data))
+    db.session.add_all(status_db)
+    
+    db.session.commit()
+    
+    return action_db, status_db
+
+@pytest.fixture()
+def flows(db,item_type,actions,users):
+    flow_define = FlowDefine(flow_id=uuid.uuid4(),
+                             flow_name='Registration Flow',
+                             flow_user=1)
+    db.session.add(flow_define)
+    db.session.commit()
+    flow_action1 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=1,
+                     action_version='1.0.0',
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    flow_action2 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=3,
+                     action_version='1.0.0',
+                     action_order=2,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    flow_action3 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=5,
+                     action_version='1.0.0',
+                     action_order=3,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    db.session.add(flow_action1)
+    db.session.add(flow_action2)
+    db.session.add(flow_action3)
+    db.session.commit()
+
+    workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test workflow1',
+                        itemtype_id=item_type[0]["obj"].id,
+                        index_tree_id=None,
+                        flow_id=flow_define.id,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    db.session.add(workflow)
+    db.session.commit()
+    return {"flow":flow_define,"flow_actions":[flow_action1,flow_action2,flow_action3],"workflow":workflow}
+
+@pytest.fixture()
+def activities(db,flows,records,users):
+    activity_item1 = Activity(activity_id='1',item_id=records[0][2].id,workflow_id=flows["workflow"].id, flow_id=flows["flow"].id,
+                    action_id=1, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item1', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    db.session.add(activity_item1)
+    db.session.commit()
+    activity_action1_1 = ActivityAction(activity_id=activity_item1.activity_id,
+                                            action_id=1,action_status="M",
+                                            action_handler=1, action_order=1)
+    activity_action1_2 = ActivityAction(activity_id=activity_item1.activity_id,
+                                            action_id=3,action_status="M",
+                                            action_handler=1, action_order=2)
+    activity_action1_3 = ActivityAction(activity_id=activity_item1.activity_id,
+                                            action_id=5,action_status="M",
+                                            action_handler=1, action_order=3)
+    db.session.add(activity_action1_1)
+    db.session.add(activity_action1_2)
+    db.session.add(activity_action1_3)
+    
+    db.session.commit()
+    
+    return activity_item1
+
+@pytest.fixture()
+def facet_search_settings(db):
+    language = FacetSearchSetting(
+        name_en="Data Language",
+        name_jp="データの言語",
+        mapping="language",
+        aggregations=[],
+        active=True
+    )
+    access = FacetSearchSetting(
+        name_en="Access",
+        name_jp="アクセス制限",
+        mapping="accessRights",
+        aggregations=[],
+        active=False
+    )
+    data_type = FacetSearchSetting(
+        name_en="Data Type",
+        name_jp="データタイプ",
+        mapping="description.value",
+        aggregations=[{"agg_value":"Other","agg_mapping":"description.descriptionType"}],
+        active=True
+    )
+    db.session.add(language)
+    db.session.add(access)
+    db.session.add(data_type)
+    db.session.commit()
+
+@pytest.fixture()
+def billing_permissions(db):
+    permission1 = BillingPermission(
+        user_id=1,
+        is_active=True
+    )
+    db.session.add(permission1)
+    permission2 = BillingPermission(
+        user_id=2,
+        is_active=False
+    )
+    db.session.add(permission2)
+    db.session.commit()
+    return [permission1,permission2]
+
+@pytest.fixture()
+def log_crawler_list(db):
+    crawler1 = LogAnalysisRestrictedCrawlerList(
+        list_url="https://bitbucket.org/niijp/jairo-crawler-list/raw/master/JAIRO_Crawler-List_ip_blacklist.txt",
+        is_active=True
+    )
+    crawler2 = LogAnalysisRestrictedCrawlerList(
+        list_url="https://bitbucket.org/niijp/jairo-crawler-list/raw/master/JAIRO_Crawler-List_useragent.txt",
+        is_active=True
+    )
+    
+    db.session.add(crawler1)
+    db.session.add(crawler2)
+    db.session.commit()
+    return [crawler1,crawler2]
+
+@pytest.fixture()
+def restricted_ip_addr(db):
+    ip_addr1 = LogAnalysisRestrictedIpAddress(
+        ip_address="123.456.789.012"
+    )
+    db.session.add(ip_addr1)
+    db.session.commit()
+    return [ip_addr1]
+
+@pytest.fixture()
+def statistic_email_addrs(db):
+    addr1 = StatisticsEmail(
+        email_address="test.taro@test.org"
+    )
+    db.session.add(addr1)
+    db.session.commit()
+    return [addr1]
+
+@pytest.fixture()
+def ranking_settings(db):
+    ranking = RankingSettings(
+        id=0,
+        is_show=True,
+        new_item_period=14,
+        statistical_period=365,
+        display_rank=10,
+        rankings={"new_items":True,"most_reviewed_items":True,"most_downloaded_items":True,"most_searched_keywords":True,"created_most_items_user":True}
+    )
+    db.session.add(ranking)
+    db.session.commit()
+    return ranking

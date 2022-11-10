@@ -2,12 +2,14 @@ import csv
 import uuid
 from mock import patch
 from datetime import datetime, timedelta
-from flask import current_app
+from flask import current_app, Markup
 from io import StringIO
 import pytest
 
 from invenio_indexer.api import RecordIndexer
+from invenio_cache import current_cache
 
+from weko_index_tree.api import Indexes
 from weko_records.api import ItemTypes, SiteLicense,ItemsMetadata
 from weko_user_profiles import UserProfile
 
@@ -37,7 +39,25 @@ from weko_admin.utils import (
     StatisticMail,
     get_system_default_language,
     str_to_bool,
-    FeedbackMail
+    FeedbackMail,
+    validation_site_info,
+    format_site_info_data,
+    get_site_name_for_current_language,
+    get_notify_for_current_language,
+    __build_init_display_index,
+    get_init_display_index,
+    get_restricted_access,
+    update_restricted_access,
+    UsageReport,
+    get_facet_search,
+    get_item_mapping_list,
+    create_facet_search_query,
+    store_facet_search_query_in_redis,
+    get_query_key_by_permission,
+    
+    get_title_facets,
+    is_exits_facet,
+    overwrite_the_memory_config_with_db
 )
 
 from tests.helpers import json_data
@@ -87,8 +107,7 @@ def test_get_search_setting(app,search_management):
         assert result == WEKO_ADMIN_MANAGEMENT_OPTIONS
     
     result = get_search_setting()
-    result = get_search_setting()
-    assert 1==2
+    assert result=={"init_disp_setting":{"init_disp_index":"","init_disp_index_disp_method":"0","init_disp_screen_setting":"0"}}
     
 # def get_admin_lang_setting():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_admin_lang_setting -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -560,10 +579,7 @@ class TestStatisticMail:
                 "test.taro@test.org":{"author_id":"1","items":{}}
             }
             StatisticMail.send_mail_to_all(list_mail_data,None)
-            assert 1==2
-            
-        with patch("weko_admin.utils.get_system_default_language",return_value="en"):
-            pass
+
 
 #     def get_banned_mail(cls, list_banned_mail):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestStatisticMail::test_get_banned_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -651,7 +667,7 @@ class TestStatisticMail:
             "title":"title",
             "url":"http://test.com/records/1",
             "detail_view":"2",
-            "file_download":{"test_file_.sv":"10"}
+            "file_download":{"test_file.tsv":"10"}
         }
         result = StatisticMail.get_item_information(item_id,time,root_url)
         assert result == test
@@ -1051,7 +1067,9 @@ class TestFeedbackMail:
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestFeedbackMail::test_load_feedback_mail_history -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_load_feedback_mail_history(self,feedback_mail_histories):
         test = {
-            "data":[{"start_time":"2022-10-01 01:02:03.045","end_time":"2022-10-01 02:03:04.056","count":2,"error":0,"id":1,"is_latest":True,"success":2}],
+            "data":[
+                {"start_time":"2022-10-01 01:02:03.045","end_time":"2022-10-01 02:03:04.056","count":2,"error":0,"id":1,"is_latest":True,"success":2},
+                {"start_time":"2022-10-01 01:02:03.045","end_time":"2022-10-01 02:03:04.056","count":2,"error":0,"id":2,"is_latest":True,"success":2}],
             "error":"",
             "records_per_page":20,
             "selected_page":1,
@@ -1116,24 +1134,408 @@ class TestFeedbackMail:
         result = FeedbackMail.get_total_page(4,3)
         assert result == 2
 
-#     @classmethod
 #     def get_mail_data_by_history_id(cls, history_id):
-#     @classmethod
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestFeedbackMail::test_get_mail_data_by_history_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_get_mail_data_by_history_id(self,feedback_mail_faileds,feedback_mail_histories):
+        # not exist history
+        result = FeedbackMail.get_mail_data_by_history_id("not exist history")
+        assert result == None
+        
+        # not exist failed
+        result = FeedbackMail.get_mail_data_by_history_id(feedback_mail_histories[1].id)
+        assert result == None
+        
+        with patch("weko_search_ui.utils.get_feedback_mail_list",return_value={}):
+            result = FeedbackMail.get_mail_data_by_history_id(feedback_mail_histories[0].id)
+            assert result == None
+        mail_list = {
+            "test.taro@test.org":{"items":{},"author_id":""},
+            "test.test1@test.org":{"items":{},"author_id":"1"},
+        }
+        test = {
+            "data":{"test.test1@test.org":{"items":{},"author_id":"1"}},
+            "stats_date":"2022-10"
+        }
+        with patch("weko_search_ui.utils.get_feedback_mail_list",return_value=mail_list):
+            result = FeedbackMail.get_mail_data_by_history_id(feedback_mail_histories[0].id)
+            assert result == test
+
+
 #     def update_history_after_resend(cls, history_id):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestFeedbackMail::test_update_history_after_resend -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_update_history_after_resend(self,feedback_mail_histories):
+        FeedbackMail.update_history_after_resend(feedback_mail_histories[0].id)
+        assert feedback_mail_histories[0].is_latest == False
+
+
 # def validation_site_info(site_info):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_validation_site_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_validation_site_info(mocker):
+    lang_settings = [
+        {"is_registered":True,"lang_code":"en","lang_name":"English","sequence":1},
+        {"is_registered":True,"lang_code":"ja","lang_name":"日本語","sequence":2}]
+    mocker.patch("weko_admin.utils.get_admin_lang_setting",return_value=lang_settings)
+
+    # not site_name
+    result = validation_site_info({})
+    assert result == {"error":'Must set at least 1 site name.',"data":[],"status":False}
+    
+    # All site＿names have no name
+    site_info = {
+        "site_name":[
+            {'index': 0, 'language': 'en'},
+            {'index': 1, 'language': 'ja'}
+        ],
+    }
+    result = validation_site_info(site_info)
+    assert result == {"error":'Must set at least 1 site name.',"data":["site_name_0"],"status":False}
+    
+    # site_name have no name
+    site_info = {
+        "site_name":[
+            {'index': 0, 'language': 'en', "name":"test site"},
+            {'index': 1, 'language': 'ja', "name":""}
+        ],
+    }
+    result = validation_site_info(site_info)
+    assert result == {"error":'Please input site information for empty field.',
+                      "data":["site_name_1"],"status":False}
+    
+    # 2 or more same language in site_name
+    site_info = {
+        "site_name":[
+            {'index': 0, 'language': 'en', "name":"test site1"},
+            {'index': 1, 'language': 'en', "name":"test site2"}
+        ],
+    }
+    result = validation_site_info(site_info)
+    assert result == {"error":'The same language is set for many site names.',
+                      "data":["site_name_0","site_name_1"],"status":False}
+    
+    # index in item > registered_language
+    site_info = {
+        "site_name":[
+            {'index': 0, 'language': 'en', "name":"test site1"},
+            {'index': 1, 'language': 'ja', "name":"テスト サイト"},
+            {'index': 2, 'language': 'zh', "name":"テスト サイト2"}
+        ],
+    }
+    result = validation_site_info(site_info)
+    assert result == {"error":'Language is deleted from Registered Language of system.',
+                      "data":["site_name_2"],"status":False}
+    
+    # language in item not in lang_list
+    site_info = {
+        "site_name":[
+            {'index': 0, 'language': 'en', "name":"test site1"},
+            {'index': 1, 'language': 'zh', "name":"テスト サイト2"}
+        ],
+    }
+    result = validation_site_info(site_info)
+    assert result == {"error":'Language is deleted from Registered Language of system.',
+                      "data":["site_name_1"],"status":False}
+    
+    # len(notify_name) > 1000
+    site_info = {
+        "site_name":[
+            {'index': 0, 'language': 'en', "name":"test site"},
+            {'index': 1, 'language': 'ja', "name":"テスト サイト"}
+        ],
+        "notify":[
+            {"language":"en","notify_name":"a"*1001}
+        ]
+    }
+    result = validation_site_info(site_info)
+    assert result == {"error":'The limit is 1000 characters',
+                      "data":["notify_None"],"status":False}
+    
+    # not exist error
+    site_info = {
+        'site_name': [
+            {'index': 0, 'language': 'en', 'name': 'test site'},
+            {'index': 1, 'language': 'ja', 'name': 'テスト サイト'}
+        ],
+        'copy_right': 'test copy right',
+        'description': 'this is test description',
+        'keyword': 'test_keyword1\ntest_keyword2',
+        'favicon': '/static/favicon.ico',
+        'favicon_name': 'JAIRO Cloud icon',
+        'notify': [{'language': 'en', 'notify_name': ''}],
+        'google_tracking_id_user': 'test_tracking_id',
+        'addthis_user_id': 'ra-5d8af23e9a3a2633',
+        'ogp_image': '', 
+        'ogp_image_name': '', 
+    }
+    result = validation_site_info(site_info)
+    assert result == {"error":'',
+                      "data":[],"status":True}
+
+
 # def format_site_info_data(site_info):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_format_site_info_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_format_site_info_data():
+    site_info = {
+        'site_name': [
+            {'index': 0, 'language': 'en', 'name': 'test site'},
+            {'index': 1, 'language': 'ja', 'name': 'テスト サイト'}
+        ], 
+        'copy_right': 'test copy right ', 
+        'google_tracking_id_user': 'test_tracking_id', 
+        'addthis_user_id': 'ra-5d8af23e9a3a2633', 
+        'keyword': 'test_keyword1\ntest_keyword2', 
+        'description': 'this is test description', 
+        'favicon_name': 'JAIRO Cloud icon', 
+        'favicon': '/static/favicon.ico', 
+        'ogp_image_name': '', 
+        'ogp_image': '', 
+        'notify': [{'language': 'en', 'notify_name': '', 'index': 0}]
+    }
+    test = {
+        'site_name': [
+            {'index': 0, 'language': 'en', 'name': 'test site'},
+            {'index': 1, 'language': 'ja', 'name': 'テスト サイト'}
+        ],
+        'copy_right': 'test copy right',
+        'description': 'this is test description',
+        'keyword': 'test_keyword1\ntest_keyword2',
+        'favicon': '/static/favicon.ico',
+        'favicon_name': 'JAIRO Cloud icon',
+        'notify': [{'language': 'en', 'notify_name': ''}],
+        'google_tracking_id_user': 'test_tracking_id',
+        'addthis_user_id': 'ra-5d8af23e9a3a2633',
+        'ogp_image': '', 
+        'ogp_image_name': '', 
+    }
+    result = format_site_info_data(site_info)
+    assert result == test
+
+
 # def get_site_name_for_current_language(site_name):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_site_name_for_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_get_site_name_for_current_language(app):
+    # not site_name
+    result = get_site_name_for_current_language("")
+    assert result == ""
+    
+    with app.test_request_context(headers=[('Accept-Language', 'ja')]):
+        # current_i18.language = item.language
+        site_name = [
+            {'index': 0, 'language': 'en', 'name': 'test site'},
+            {'index': 1, 'language': 'ja', 'name': 'テスト サイト'}
+        ]
+        result = get_site_name_for_current_language(site_name)
+        assert result == "テスト サイト"
+        
+        # language = en
+        site_name = [
+            {'index': 0, 'language': 'zh', 'name': 'テスト サイト'},
+            {'index': 1, 'language': 'en', 'name': 'test site'},
+            
+        ]
+        result = get_site_name_for_current_language(site_name)
+        assert result == "test site"
+    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+        # language = en
+        site_name = [
+            {'index': 0, 'language': 'ja', 'name': 'テスト サイト1'},
+            {'index': 1, 'language': 'zh', 'name': 'テスト サイト2'}
+        ]
+        result = get_site_name_for_current_language(site_name)
+        assert result == "テスト サイト1"
+
 # def get_notify_for_current_language(notify):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_notify_for_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_get_notify_for_current_language(app):
+    with app.test_request_context(headers=[('Accept-Language', 'ja')]):
+        # not notify
+        result = get_notify_for_current_language([])
+        assert result == ""
+        
+        # current_i18n.language = language
+        notify = [
+            {'language': 'en', 'notify_name': 'notify_en'},
+            {'language': 'ja', 'notify_name': 'notify_ja'}
+        ]
+        result = get_notify_for_current_language(notify)
+        assert result == "notify_ja"
+        
+        # en = language
+        notify = [
+            {'language': 'zh', 'notify_name': 'notify_zh'},
+            {'language': 'en', 'notify_name': 'notify_en'}
+        ]
+        result = get_notify_for_current_language(notify)
+        assert result == "notify_en"
+    # not current_i18n.language, not en
+    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+        notify = [
+            {'language': 'zh', 'notify_name': 'notify_zh'},
+            {'language': 'ja', 'notify_name': 'notify_ja'}
+        ]
+        result = get_notify_for_current_language(notify)
+        assert result == ""
+
+
 # def __build_init_display_index(indexes: list,
-#                 index['a_attr'] = {"class": "jstree-clicked"}
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_build_init_display_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_build_init_display_index(app,indexes):
+    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+        
+        indexes_list = Indexes.get_index_tree()
+        init_display_indexes = [{
+            "id":"0",
+            "parent":"#",
+            "text":"Root Index",
+            "state":{"opened":True}
+        }]
+        init_desp_index="1557819733276"
+        __build_init_display_index(indexes_list,init_display_indexes,init_desp_index)
+        test = [
+            {"id":"0","parent":"#","text":"Root Index","state":{"opened":True}},
+            {'id': '1557819692844','parent': '0','text': Markup('Contents Type')},
+            {'a_attr': {'class': 'jstree-clicked'},'id': '1557819733276','parent': '1557819692844','state': {'selected': True},'text': Markup('conference paper')},
+            {'id': '1557820086539','parent': '0','text': Markup('Faculty of Humanities and Social Sciences')},
+        ]
+        assert init_display_indexes == test
+
+
 # def get_init_display_index(init_disp_index: str) -> list:
-#         root_index['a_attr'] = {"class": "jstree-clicked"}
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_init_display_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_get_init_display_index(app,indexes,mocker):
+    current_cache.delete("index_tree_json")
+    mocker.patch("weko_admin.utils.__build_init_display_index")
+    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+        result = get_init_display_index("1")
+        assert result == [{"id":"0","parent":"#","text":"Root Index","state":{"opened":True}}]
+        
+        result = get_init_display_index("0")
+        assert result == [{"a_attr":{"class":"jstree-clicked"},"id":"0","parent":"#","text":"Root Index","state":{"opened":True,"selected":True}}]
+
+
 # def get_restricted_access(key: str = None):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_restricted_access -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_get_restricted_access(client,admin_settings):
+    test = {
+        "content_file_download": {
+            "expiration_date": 30,
+            "expiration_date_unlimited_chk": False,
+            "download_limit": 10,
+            "download_limit_unlimited_chk": False,
+        },
+        "usage_report_workflow_access": {
+            "expiration_date_access": 500,
+            "expiration_date_access_unlimited_chk": False,
+        },
+        "terms_and_conditions": []
+    }
+    with patch("weko_admin.utils.AdminSettings.get",return_value=None):
+        result = get_restricted_access("not exist key")
+        assert result == None
+    
+    # not key
+    result = get_restricted_access("")
+    assert result == admin_settings[5].settings
+    
+    result = get_restricted_access("usage_report_workflow_access")
+    assert result == admin_settings[5].settings["usage_report_workflow_access"]
+
+
 # def update_restricted_access(restricted_access: dict):
 #     def parse_content_file_download():
 #     def validate_content_file_download():
 #     def validate_usage_report_wf_access():
 #     def parse_usage_report_wf_access():
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_update_restricted_access -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_update_restricted_access(admin_settings):
+    data = {
+        "terms_and_conditions": []
+    }
+    result = update_restricted_access(data)
+    assert result == True
+    
+    # validate_content_file_download is False
+    data = {
+        "content_file_download": {
+            "expiration_date": 0,
+            "expiration_date_unlimited_chk": False,
+            "download_limit": 0,
+            "download_limit_unlimited_chk": False,
+        }
+    }
+    result = update_restricted_access(data)
+    assert result == False
+    data = {
+        "content_file_download": {
+            "expiration_date": -1,
+            "expiration_date_unlimited_chk": True,
+            "download_limit": -1,
+            "download_limit_unlimited_chk": True,
+        }
+    }
+    result = update_restricted_access(data)
+    assert result == False
+    # validate_content_file_download is True
+    data = {
+        "content_file_download": {
+            "expiration_date": 30,
+            "expiration_date_unlimited_chk": True,
+            "download_limit": 10,
+            "download_limit_unlimited_chk": True,
+        }
+    }
+    result = update_restricted_access(data)
+    assert result == True
+    
+    data = {
+        "content_file_download": {
+            "expiration_date": 30,
+            "expiration_date_unlimited_chk": False,
+            "download_limit": 10,
+            "download_limit_unlimited_chk": False,
+        }
+    }
+    result = update_restricted_access(data)
+    assert result == True
+    
+    # validate_usage_report_wf_access is False
+    data = {
+            "usage_report_workflow_access": {
+                "expiration_date_access": 0,
+                "expiration_date_access_unlimited_chk": False,
+            }
+        }
+    result = update_restricted_access(data)
+    assert result == False
+    
+    data = {
+            "usage_report_workflow_access": {
+                "expiration_date_access": -500,
+                "expiration_date_access_unlimited_chk": False,
+            }
+        }
+    result = update_restricted_access(data)
+    assert result == False
+    
+    # validate_usage_report_wf_access is True
+    data = {
+            "usage_report_workflow_access": {
+                "expiration_date_access": 500,
+                "expiration_date_access_unlimited_chk": False,
+            }
+        }
+    result = update_restricted_access(data)
+    assert result == True
+    
+    data = {
+            "usage_report_workflow_access": {
+                "expiration_date_access": 500,
+                "expiration_date_access_unlimited_chk": True,
+            }
+        }
+    result = update_restricted_access(data)
+    assert result == True
+
+
 # class UsageReport:
 #     def __init__(self):
 #     def get_activities_per_page(
@@ -1147,20 +1549,131 @@ class TestFeedbackMail:
 #     def __get_default_mail_sender():
 #         """Get default mail sender.
 #         return mail_config.get('mail_default_sender', '')
+
+
 # def get_facet_search(id: int = None):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_facet_search -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_get_facet_search(client,facet_search_settings):
+    # id is None
+    test = {
+        "name_en": "",
+        "name_jp": "",
+        "mapping": "",
+        "active": True,
+        "aggregations": []
+    }
+    result = get_facet_search(None)
+    assert result == test
+    
+    result  = get_facet_search(1)
+    assert result == {"name_en":"Data Language","name_jp":"データの言語","mapping":"language","aggregations":[],"active":True}
+
+
 # def get_item_mapping_list():
 #     def handle_prefix_key(pre_key, key):
 #     def get_mapping(pre_key, key, value, mapping_list):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_item_mapping_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_get_item_mapping_list(facet_search_settings):
+    result = get_item_mapping_list()
+    assert result == ['','path','item_type_id','itemtype.keyword','publish_status','_oai.id','_oai.sets','control_number','title','feedback_mail_list.author_id','feedback_mail_list.email','alternative','creator.nameIdentifier','creator.creatorName','creator.familyName','creator.givenName','creator.creatorAlternative','creator.affiliation.nameIdentifier','creator.affiliation.affiliationName','contributor.@attributes.contributorType','contributor.nameIdentifier','contributor.contributorName','contributor.familyName','contributor.givenName','contributor.contributorAlternative','contributor.affiliation.nameIdentifier','contributor.affiliation.affiliationName','accessRights','rightsHolder.nameIdentifier','rightsHolder.rightsHolderName','subject.value','subject.subjectScheme','description.value','description.descriptionType','date.dateType','date.value','language','identifier.identifierType','identifierRegistration.identifierType','relation.relatedIdentifier.identifierType','relation.relatedTitle','relation.relationType.item_links','relation.relationType.item_title','temporal','text1.raw','text2.raw','text3.raw','text4.raw','text5.raw','text6.raw','text7.raw','text8.raw','text9.raw','text10.raw','text11.raw','text12.raw','text13.raw','text14.raw','text15.raw','text16.raw','text17.raw','text18.raw','text19.raw','text20.raw','text21.raw','text22.raw','text23.raw','text24.raw','text25.raw','text26.raw','text27.raw','text28.raw','text29.raw','text30.raw','geoLocation.geoLocationPlace','fundingReference.funderIdentifier','fundingReference.funderName','fundingReference.awardNumber','fundingReference.awardTitle','sourceIdentifier.identifierType','author_link.raw','dateGranted','degreeGrantor.nameIdentifier','degreeGrantor.degreeGrantorName','conference.conferenceName','conference.conferenceSequence','conference.conferencePlace','conference.conferenceCountry','file.URI.objectType','file.mimeType','file.extent','file.date.dateType','file.date.value','content.file_id','content.groups']
+
+
 # def create_facet_search_query():
 #     def create_agg_by_aggregations(aggregations, key, val):
 #     def create_aggregations(facets):
 #     def create_post_filters(facets):
-# def store_facet_search_query_in_redis():
-# def get_query_key_by_permission(has_permission):
-# def get_facet_search_query(has_permission=True):
-# def get_title_facets():
-# def is_exits_facet(data, id):
-# def overwrite_the_memory_config_with_db(app, site_info):
-#             app.config.setdefault(
-#             app.config.setdefault(
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_create_facet_search_query -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_create_facet_search_query(facet_search_settings):
+    has_permission, no_permission = create_facet_search_query()
+    test_has_permission = {
+        "test-weko":{
+            "aggs":{"Data Language":{"terms":{"field":"language","size":1000}},
+                    "Data Type":{"aggs":{"Data Type":{"terms":{"field":"description.value","size":1000}}},
+                                 "filter":{"bool":{"must":[{"term":{"description.descriptionType":"Other"}}]}}}
+            },
+            "post_filters":{"Data Language":"language","Data Type":"description.value"}
+        }
+    }
+    test_no_permission = {
+        'test-weko': {
+            'aggs': {'Data Language': {'aggs': {'Data Language': {'terms': {'field': 'language','size': 1000}}},
+                                        'filter': {'bool': {'must': [{'term': {'publish_status': '0'}}]}}},
+                    'Data Type': {'aggs': {'Data Type': {'terms': {'field': 'description.value','size': 1000}}},
+                                'filter': {'bool': {'must': [{'term': {'description.descriptionType': 'Other'}},{'term': {'publish_status': '0'}}]}}}},
+                   'post_filters': {'Data Language': 'language',
+                                    'Data Type': 'description.value'}},
+    }
+    assert has_permission == test_has_permission
+    assert no_permission == test_no_permission
 
+
+# def store_facet_search_query_in_redis():
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_store_facet_search_query_in_redis -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_store_facet_search_query_in_redis(mocker):
+    has_permission = {
+        "test-weko":{
+            "aggs":{"Data Language":{"terms":{"field":"language","size":1000}},
+                    "Data Type":{"aggs":{"Data Type":{"terms":{"field":"description.value","size":1000}}},
+                                 "filter":{"bool":{"must":[{"term":{"description.descriptionType":"Other"}}]}}}
+            },
+            "post_filters":{"Data Language":"language","Data Type":"description.value"}
+        }
+    }
+    no_permission = {
+        'test-weko': {
+            'aggs': {'Data Language': {'aggs': {'Data Language': {'terms': {'field': 'language','size': 1000}}},
+                                        'filter': {'bool': {'must': [{'term': {'publish_status': '0'}}]}}},
+                    'Data Type': {'aggs': {'Data Type': {'terms': {'field': 'description.value','size': 1000}}},
+                                'filter': {'bool': {'must': [{'term': {'description.descriptionType': 'Other'}},{'term': {'publish_status': '0'}}]}}}},
+                   'post_filters': {'Data Language': 'language',
+                                    'Data Type': 'description.value'}},
+    }
+    mocker.patch("weko_admin.utils.create_facet_search_query",return_value=(has_permission,no_permission))
+    mocker.patch("weko_admin.utils.reset_redis_cache")
+    store_facet_search_query_in_redis()
+
+
+# def get_query_key_by_permission(has_permission):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_query_key_by_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_get_query_key_by_permission():
+    result = get_query_key_by_permission(True)
+    assert result == 'facet_search_query_has_permission'
+    
+    result = get_query_key_by_permission(False)
+    assert result == 'facet_search_query_no_permission'
+
+
+# def get_facet_search_query(has_permission=True):
+
+
+# def get_title_facets():
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_title_facets -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_get_title_facets(app,facet_search_settings):
+    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+        titles, order = get_title_facets()
+        assert titles == {"Data Language":"Data Language","Data Type":"Data Type"}
+        assert order == {1:"Data Language",3:"Data Type"}
+
+
+# def is_exits_facet(data, id):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_is_exits_facet -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_is_exits_facet(app, facet_search_settings):
+    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+        # not id > 0
+        result = is_exits_facet({"name_en":"Data Type","name_jp":"データタイプ","mapping":"description.value"},None)
+        assert result == True
+        result = is_exits_facet({"name_en":"not exist facet","name_jp":"存在しないファセット","mapping":"not exist mapping"},None)
+        assert result == False
+        
+        # id > 0
+        result = is_exits_facet({"name_en":"Data Type","name_jp":"データタイプ","mapping":"description.value"},"3")
+        assert result == False
+        result = is_exits_facet({"name_en":"Data Type","name_jp":"データタイプ","mapping":"description.value"},"100")
+        assert result == True
+        
+# def overwrite_the_memory_config_with_db(app, site_info):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_overwrite_the_memory_config_with_db -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_overwrite_the_memory_config_with_db(app,client,site_info):
+    overwrite_the_memory_config_with_db(app,None)
+    overwrite_the_memory_config_with_db(app,site_info[0])
+    overwrite_the_memory_config_with_db(app,site_info[1])
