@@ -192,6 +192,8 @@ def base_app(instance_path, request):
         SECRET_KEY='SECRET_KEY',
         WEKO_INDEX_TREE_UPDATED=True,
         DEPOSIT_FILES_API = '/api/files',
+        INVENIO_RESOURCESYNCSERVER_ADMIN_TEMPLATE='invenio_resourcesyncserver/resource.html',
+        INVENIO_RESOURCESYNC_CHANGE_LIST_ADMIN='invenio_resourcesyncserver/change_list.html',
         TESTING=True,
         WEKO_ROOT_INDEX="Root Index",
         INVENIO_RESOURCESYNCSERVER_TMP_PREFIX="test",
