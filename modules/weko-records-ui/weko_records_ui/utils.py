@@ -618,6 +618,7 @@ def is_show_email_of_creator(item_type_id):
 
     is_hide = item_type_show_email(item_type_id)
     is_display = item_setting_show_email()
+    
     return not is_hide and not is_display
 
 
