@@ -766,7 +766,7 @@ def set_pdfcoverpage_header():
         flash(_('PDF cover page settings have been updated.'),
               category='success')
         return redirect('/admin/pdfcoverpage')
-
+    
     return redirect('/admin/pdfcoverpage')
 
 
