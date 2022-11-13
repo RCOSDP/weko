@@ -676,37 +676,50 @@ def users(app, db):
 def indices(app, db):
     with db.session.begin_nested():
         # Create a test Indices
-        testIndexOne = Index(index_name="testIndexOne",browsing_role="Contributor",public_state=True,id=11)
-        testIndexTwo = Index(index_name="testIndexTwo",browsing_group="group_test1",public_state=True,id=22)
+        testIndexOne = Index(index_name="testIndexOne",browsing_role="Contributor",public_state=True,id=11,position=0)
+        testIndexTwo = Index(index_name="testIndexTwo",browsing_group="group_test1",public_state=True,id=22,position=1)
         testIndexThree = Index(
             index_name="testIndexThree",
             browsing_role="Contributor",
             public_state=True,
             harvest_public_state=True,
             id=33,
+            position=2,
             public_date=datetime.today() - timedelta(days=1)
         )
+        testIndexPrivate = Index(index_name="testIndexPrivate",public_state=False,id=55,position=3)
         testIndexThreeChild = Index(
             index_name="testIndexThreeChild",
             browsing_role="Contributor",
-            parent="testIndexThree",
+            parent=33,
             index_link_enabled=True,
             index_link_name="test_link",
             public_state=True,
             harvest_public_state=False,
             id=44,
+            position=0,
             public_date=datetime.today() - timedelta(days=1)
         )
-        testIndexMore = Index(index_name="testIndexMore",parent="testIndexThree",public_state=True,id='more')
-        testIndexPrivate = Index(index_name="testIndexPrivate",public_state=False,id=55)
+        testIndexMore = Index(index_name="testIndexMore",parent=33,public_state=True,id=45,position=1)
 
+
+        db.session.add(testIndexOne)
+        db.session.add(testIndexTwo)
         db.session.add(testIndexThree)
         db.session.add(testIndexThreeChild)
+        db.session.add(testIndexMore)
+        db.session.add(testIndexPrivate)
         
     return {
         'index_dict': dict(testIndexThree),
         'index_non_dict': testIndexThree,
         'index_non_dict_child': testIndexThreeChild,
+        'testIndexOne':testIndexOne,
+        'testIndexTwo':testIndexTwo,
+        'testIndexThree':testIndexThree,
+        'testIndexThreeChild':testIndexThreeChild,
+        'testIndexMore':testIndexMore,
+        'testIndexPrivate':testIndexPrivate,
     }
 
 

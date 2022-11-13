@@ -469,7 +469,7 @@ def users(app, db):
         {"email": repoadmin.email, "id": repoadmin.id, "obj": repoadmin},
         {"email": sysadmin.email, "id": sysadmin.id, "obj": sysadmin},
         {"email": comadmin.email, "id": comadmin.id, "obj": comadmin},
-        {"email": generaluser.email, "id": generaluser.id, "obj": sysadmin},
+        {"email": generaluser.email, "id": generaluser.id, "obj": generaluser},
         {
             "email": originalroleuser.email,
             "id": originalroleuser.id,
