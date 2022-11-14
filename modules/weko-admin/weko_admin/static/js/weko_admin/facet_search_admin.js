@@ -191,12 +191,12 @@ function FacetSearchLayout(
             <select className="form-control" id={LABELS['lblUiType']}
                     value={_uiType}
                     onChange={handleChangeUiType}>
-              <option id='uiType_Checkbox' value="CheckboxList">Checkbox</option>
-              <option value="SelectBox">Editbox</option>
+              <option id='uiType_Checkbox' value="CheckboxList">CheckboxList</option>
+              <option value="SelectBox">SelectBox</option>
               {isDisableRangeUi(_mapping) && 
-                <option id='uiType_Range' value="RangeSlider" disabled>Range</option>}
+                <option id='uiType_Range' value="RangeSlider" disabled>RangeSlider</option>}
               {!isDisableRangeUi(_mapping) &&
-                <option id='uiType_Range' value="RangeSlider">Range</option>}
+                <option id='uiType_Range' value="RangeSlider">RangeSlider</option>}
             </select>
           </div>
         </div>

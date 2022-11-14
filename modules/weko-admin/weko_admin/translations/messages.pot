@@ -189,11 +189,11 @@ msgid "OpenClose Close"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
-msgid "%(name)s must be an integer value from %(min)s to %(max)s."
+msgid "DisplayNumber Validation1"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
-msgid "DisplayNumber Validation"
+msgid "DisplayNumber Validation2"
 msgstr ""
 
 #: weko_admin/admin.py:1210 weko_admin/admin.py:1237 weko_admin/admin.py:1246
