@@ -2272,13 +2272,13 @@ def elasticsearch_reindex():
     # https://redmine.devops.rcos.nii.ac.jp/issues/30930
 
     current_app.logger.debug(res)
-    # alias = res.get("aliases") # dict
+    alias = res.get("aliases") # dict
     # mappings = res.get("mappings")
     # settings = res.get("settings")
     
     # current_app.logger.info("--------------alias----------------")
     # current_app.logger.info(alias)
-    # alias_name = list(alias.keys())[0]
+    alias_name = list(alias.keys())[0]
 
     # current_app.logger.info("--------------mappings---------------")
     # current_app.logger.info(mappings)
@@ -2322,11 +2322,11 @@ def elasticsearch_reindex():
             'index': index,
         },
     }
-    # json_data_set_alias = {
-    #     "actions" : [
-    #         { "add" : { "index" : index, "alias" : alias_name } }
-    #     ]
-    # }
+    json_data_set_alias = {
+        "actions" : [
+            { "add" : { "index" : index, "alias" : alias_name } }
+        ]
+    }
 
     current_app.logger.info(' START elasticsearch reindex: {}.'.format(index))
 
