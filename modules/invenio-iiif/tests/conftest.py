@@ -12,28 +12,101 @@ from __future__ import absolute_import, print_function
 
 import shutil
 import tempfile
+import os
 from os.path import dirname, getsize, join
 
 import pytest
 from flask import Flask, request
+from flask_babelex import Babel
+from flask_mail import Mail
+from flask_menu import Menu
 from flask_iiif.restful import current_iiif
+from sqlalchemy_utils.functions import create_database, database_exists, \
+    drop_database
+
 from invenio_access import InvenioAccess
 from invenio_accounts import InvenioAccounts
 from invenio_db import InvenioDB
+from invenio_db import db as db_
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Bucket, Location, ObjectVersion
+from invenio_i18n import InvenioI18N
 
-from invenio_iiif import InvenioIIIFAPI
+from invenio_iiif import InvenioIIIFAPI, InvenioIIIF
 from invenio_iiif.previewer import blueprint
 
+from tests.helpers import json_data, create_record
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def image_path():
     """Path to test image.
 
     The test image was downloaded from Flickr and marked as public domain.
     """
-    return join(dirname(__file__), u'image-public-domain.jpg')
+    return join(dirname(__file__), u'data/image-public-domain.jpg')
+
+@pytest.yield_fixture()
+def instance_path():
+    """Temporary instance path."""
+    path = tempfile.mkdtemp()
+    yield path
+    shutil.rmtree(path)
+
+@pytest.fixture()
+def base_app(instance_path):
+    app_ = Flask('test_invenio_iiif_app', instance_path=instance_path)
+    app_.config.update(
+        TESTING=True,
+        SERVER_NAME='test_server',
+        ACCOUNTS_USE_CELERY=False,
+        SECRET_KEY='SECRET_KEY',
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SEARCH_UI_SEARCH_INDEX="test-search-weko",
+        WEKO_AUTHORS_ES_INDEX_NAME="test-weko-authors",
+        INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
+        INDEXER_FILE_DOC_TYPE="content",
+        PRESERVE_CONTEXT_ON_EXCEPTION = False,
+        THEME_SITEURL = 'https://localhost',
+    )
+    app_.login_manager = dict(_login_disabled=True)
+    Babel(app_)
+    InvenioI18N(app_)
+    InvenioDB(app_)
+    Mail(app_)
+    Menu(app_)
+    InvenioAccounts(app_)
+    InvenioAccess(app_)
+    InvenioFilesREST(app_)
+    InvenioIIIF(app_)
+    InvenioIIIFAPI(app_)
+    
+    app_.register_blueprint(blueprint)
+    
+    yield app_
+    
+@pytest.yield_fixture()
+def app(base_app):
+    
+    with base_app.app_context():
+        yield base_app
+
+@pytest.yield_fixture()
+def client(app):
+    with app.test_client() as client:
+        yield client
+        
+@pytest.yield_fixture()
+def db(app):
+    # if not database_exists(str(db_.engine.url)) and \
+    #         app.config['SQLALCHEMY_DATABASE_URI'] != 'sqlite://':
+    #     create_database(db_.engine.url)
+    if not database_exists(str(db_.engine.url)):
+        create_database(str(db_.engine.url))
+    db_.create_all()
+    yield db_
+    db_.session.remove()
+    db_.drop_all()
 
 
 @pytest.fixture(scope='module')
@@ -55,70 +128,63 @@ def app_config(app_config, permission_factory):
     return app_config
 
 
-@pytest.fixture(scope='module')
-def create_app():
-    """Application factory fixture."""
-    def factory(**config):
-        app = Flask('testapp')
-        app.config.update(
-            SERVER_NAME='localhost',
-            **config
-        )
-
-        InvenioDB(app)
-        InvenioAccounts(app)
-        InvenioAccess(app)
-        InvenioFilesREST(app)
-        InvenioIIIFAPI(app)
-
-        app.register_blueprint(blueprint)
-
-        return app
-    return factory
-
-
 @pytest.fixture(autouse=True)
-def clear_cache(appctx):
+def clear_cache(app):
     """Clear cache after each test."""
     current_iiif.cache().flush()
 
-
-@pytest.fixture(scope='module')
-def location_path():
-    """Temporary directory for location path."""
-    tmppath = tempfile.mkdtemp()
-    yield tmppath
-    shutil.rmtree(tmppath)
-
-
-@pytest.fixture(scope='module')
-def location(location_path, database):
-    """File system locations."""
-    loc = Location(
-        name='testloc',
-        uri=location_path,
-        default=True
-    )
-    database.session.add(loc)
-    database.session.commit()
+@pytest.fixture()
+def location(app, db, instance_path):
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name='local', uri=instance_path, default=True)
+        db.session.add(loc)
+    db.session.commit()
     return loc
 
 
-@pytest.fixture(scope='module')
-def image_object(database, location, image_path):
-    """Get ObjectVersion of test image."""
+@pytest.fixture()
+def records(db,location):
+    record_data = json_data("data/test_records.json")
+    item_data = json_data("data/test_items.json")
+    
+    record_num = len(record_data)
+    result = []
+    for d in range(record_num):
+        result.append(create_record(record_data[d], item_data[d]))
+        db.session.commit()
+
+    yield result
+
+
+@pytest.fixture()
+def add_file(db, location):
+    def factory(record, contents=b'test example', filename="generic_file.txt"):
+        b = Bucket.create()
+        r = RecordsBuckets.create(bucket=b, record=record.model)
+        ObjectVersion.create(b,filename)
+        stream = BytesIO(contents)
+        record.files[filename] = stream
+        record.files.dumps()
+        record.commit()
+        db.session.commit()
+        return b,r
+    return factory
+
+
+@pytest.fixture()
+def image_object(db, location, image_path):
     bucket = Bucket.create()
-    database.session.commit()
+    db.session.commit()
 
     with open(image_path, 'rb') as fp:
         obj = ObjectVersion.create(
             bucket, u'test-ünicode.png', stream=fp, size=getsize(image_path)
         )
-    database.session.commit()
+    db.session.commit()
     return obj
 
-
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def image_uuid(image_object):
     """Get image UUID (Flask-IIIF term, not actual an UUID)."""
     return u'{}:{}:{}'.format(
