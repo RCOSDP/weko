@@ -152,10 +152,20 @@ def test_create_blueprint(i18n_app, app, users):
 # class IndexSearchResource(ContentNegotiatedMethodView):
 # def __init__
 # def get(self, **kwargs):
-# def test_IndexSearchResource_get(i18n_app, users, client_request_args):
-#     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-#         test = IndexSearchResource(ContentNegotiatedMethodView)
-#         assert test.get()
+def test_IndexSearchResource_get(i18n_app, users, client_request_args):
+    ctx = {"a": 1}
+    test = IndexSearchResource(
+        ctx=ctx,
+        search_serializers=None, 
+        record_serializers=None, 
+        default_media_type=None,
+    )
+    test.pid_fetcher = "test"
+    request = MagicMock()
+    request.values = MagicMock()
+
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        assert test.get(request=request)
 
 # def get_heading_info(data, lang, item_type):
 def test_get_heading_info(i18n_app, app, users, item_type, records):
