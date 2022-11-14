@@ -1544,3 +1544,34 @@ msgstr ""
 msgid "Update"
 msgstr ""
 
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "reindex item_index"
+msgstr "アイテムインデックスの再作成"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "reindex item"
+msgstr "アイテムの再インデックス"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "execute"
+msgstr "実行"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "Maintenance"
+msgstr "メンテナンス"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "ElasticSearch Index"
+msgstr "インデックス再作成"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "waiting..."
+msgstr "実行可能"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "executing..."
+msgstr "実行中..."
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "haserror"
+msgstr "エラー発生中につき実行できません"

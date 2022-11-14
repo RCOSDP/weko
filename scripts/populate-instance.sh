@@ -464,6 +464,9 @@ ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
 ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
        4 "default_properties_settings" \
        "{'show_flag': True}"
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       5 "elastic_reindex_settings" \
+       "{'has_errored': False}"
 # create-admin-settings-end
 
 # create-default-authors-prefix-settings-begin

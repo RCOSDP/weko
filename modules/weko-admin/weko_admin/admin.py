@@ -31,7 +31,7 @@ import ipaddress
 from datetime import datetime, timedelta
 
 from flask import abort, current_app, flash, jsonify, make_response, \
-    redirect, render_template, request, url_for
+    redirect, render_template, request, url_for ,Response
 from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.fields import QuerySelectField
@@ -52,21 +52,73 @@ from wtforms.fields import StringField
 from wtforms.validators import ValidationError
 
 from .config import WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR, \
-    WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR
+    WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR,WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE
 from .models import AdminSettings, FacetSearchSetting, Identifier, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
     RankingSettings, SearchManagement, StatisticsEmail
-from .permissions import admin_permission_factory
-from .utils import get_facet_search, get_item_mapping_list, \
+from .permissions import admin_permission_factory ,admin_permission
+from .utils import elasticsearch_remake_item_index, get_facet_search, get_item_mapping_list, \
     get_response_json, get_restricted_access, get_search_setting
 from .utils import get_user_report_data as get_user_report
-from .utils import package_reports, str_to_bool
+from .utils import package_reports, str_to_bool ,elasticsearch_reindex
+
+
+class ReindexElasticSearchView(BaseView):
+
+    @expose('/', methods=['GET'])
+    def index(self):
+        """show reindex_es"""
+        print("ReindexElasticSearchView.index called !")
+
+        try:
+
+            return self.render(
+                template=WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE
+                ,isError=False # TODO
+                ,isExecuting=False # TODO
+                #template=current_app.config['WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE']
+            )
+        except BaseException:
+            current_app.logger.error(
+                'Unexpected error: {}'.format(sys.exc_info()))
+        return abort(400)
+
+
+    @expose('/reindex_items', methods=['GET'])
+    @admin_permission.require(http_exception=403)
+    def reindex_items(self):
+        try:
+            ## TODO task 監視 排他
+            ## TODO permission 修正
+            responce = elasticsearch_reindex()
+            return jsonify(responce) ,200
+        
+        except BaseException as ex:
+            current_app.logger.error(
+                'Unexpected error: {}'.format(sys.exc_info()))
+            return abort(500 ,Response(ex.args))
+
+
+    @expose('/reindex_itemindexes', methods=['GET'])
+    @admin_permission.require(http_exception=403)
+    def reindex_item_indexes(self):
+        try:
+            responce = elasticsearch_remake_item_index()
+            return jsonify(responce) ,200
+        
+        except BaseException as ex:
+            current_app.logger.error(
+                'Unexpected error: {}'.format(sys.exc_info()))
+            return abort(500 ,Response(ex.args))
+
+
 
 
 # FIXME: Change all setting views' path to be under settings/
 class StyleSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
+        print("StyleSettingView called!")
         """Block style setting page."""
         body_bg = '#fff'
         panel_bg = '#fff'
@@ -1364,6 +1416,16 @@ facet_search_adminview = dict(
     endpoint='facet-search'
 )
 
+reindex_elasticsearch_adminview = {
+    'view_class': ReindexElasticSearchView,
+    'kwargs': {
+        'category': _('Maintenance'),
+        'name': _('ElasticSearch Index'),
+        'endpoint': 'reindex_es'
+    }
+}
+
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -1381,5 +1443,6 @@ __all__ = (
     'site_info_settings_adminview',
     'restricted_access_adminview',
     'identifier_adminview',
-    'facet_search_adminview'
+    'facet_search_adminview',
+    'reindex_elasticsearch_adminview'
 )

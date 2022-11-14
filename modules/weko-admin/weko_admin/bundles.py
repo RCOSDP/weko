@@ -161,3 +161,8 @@ weko_admin_facet_search_js = NpmBundle(
     'js/weko_admin/facet_search_admin.js',
     output='gen/facet_search.%(version)s.js',
 )
+
+reindex_elasticsearch_js = NpmBundle(
+    'js/weko_admin/reindex_elasticsearch.js',
+    output='gen/reindex_elasticsearch.%(version)s.js',
+)

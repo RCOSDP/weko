@@ -983,3 +983,13 @@ msgstr "制限公開"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Faceted Search"
 msgstr "ファセット検索"
+
+#: weko_admin/
+#: msgid "Maintenance"
+msgid "Admin menu_Maintenance"
+msgstr "メンテナンス"
+
+#: weko_admin/
+#: msgid "ElasticSearch Index"
+msgid "Admin menu_Maintenance_ElasticSearch Index"
+msgstr "ElasticSearchインデックス"
