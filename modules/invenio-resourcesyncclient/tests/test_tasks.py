@@ -13,6 +13,12 @@ from invenio_resourcesyncclient.tasks import (
     run_sync_auto
 )
 
+class MockSyncFunc:
+    def __init__(self):
+        pass
+    
+    def apply_async(self, **args):
+        pass
 
 #def run_sync_import(id):
 #        def sigterm_handler(*args):
@@ -58,6 +64,19 @@ def test_get_record(app):
 
 #def resync_sync(id):
 #        def sigterm_handler(*args):
+# .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_tasks.py::test_resync_sync -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
+def test_resync_sync(app, test_resync):
+    res = resync_sync(20)
+    assert res == ({'task_state': 'SUCCESS', 'task_id': None})
+
+    mock_sync_func = MagicMock(side_effect=MockSyncFunc)
+    with patch('invenio_resourcesyncclient.tasks.run_sync_import', mock_sync_func):
+        res = resync_sync(30)
+        res[0].pop('start_time')
+        res[0].pop('end_time')
+        res[0].pop('execution_time')
+        assert res == ({'task_state': 'SUCCESS', 'task_name': 'sync', 'task_type': 'sync', 'repository_name': 'weko', 'task_id': None},)
+
 #def prepare_log(resync, id, counter, task_id, log_type):
 #def finish(resync, resync_log, counter, start_time, request_id, log_type):
 #def init_counter():
@@ -65,13 +84,6 @@ def test_get_record(app):
 
 #def run_sync_auto():
 # .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_tasks.py::test_run_sync_auto -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
-class MockSyncFunc:
-    def __init__(self):
-        pass
-    
-    def apply_async(self, **args):
-        pass
-
 def test_run_sync_auto(app, test_resync):
     mock_sync_func = MagicMock(side_effect=MockSyncFunc)
     with patch('invenio_resourcesyncclient.tasks.resync_sync', mock_sync_func):
