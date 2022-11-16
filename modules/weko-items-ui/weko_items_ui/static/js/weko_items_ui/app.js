@@ -1198,11 +1198,32 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
       }
 
+      function get_subitem2(items, subitem) {
+        for (let i = 0; i < items.length; i++) {
+          const key = items[i].key
+          if (typeof key == 'string') {
+            if (key.split('.').slice(-1)[0] == subitem) {
+              return items[i]
+            }
+          }
+        }
+      }
+
       $scope.getFormByKey = function (key) {
         let forms = $rootScope.recordsVM.invenioRecordsForm;
         for (let i in forms) {
           if (forms[i].hasOwnProperty('key') && forms[i].key == key) {
             return forms[i];
+          }
+        }
+      }
+
+      $scope.getSubFormByKey = function (form, key) {
+        for (let i in form.items) {
+          if (form.items[i].hasOwnProperty('key')) {
+            const keys = form.items[i].key;
+            if (keys.length >= 3 && keys[2] == key)
+              return form.items[i];
           }
         }
       }
@@ -1324,14 +1345,25 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             $scope.loadUserGroups(fileContentGroupSchema, fileContentGroupForm);
           }
 
+          // Initialization role list
+          const roleSchema = filemeta_schema.items.properties['role'];
+          const roleForm = get_subitem2(filemeta_form.items, 'role');
+          if (roleSchema && roleForm) {
+            const roleSchema2 = roleSchema.items.properties['role'];
+            const roleForm2 = get_subitem2(roleForm.items, 'role');
+            if (roleSchema2 && roleForm2) {
+              $scope.loadRoles(roleSchema2, roleForm2);
+            }
+          }
+
           // Initialization role list for billing file
           const priceInfoSchema = filemeta_schema.items.properties['priceinfo'];
-          const priceInfoForm = get_subitem(filemeta_form.items, 'priceinfo');
+          const priceInfoForm = get_subitem2(filemeta_form.items, 'priceinfo');
           if (priceInfoSchema && priceInfoForm) {
-            const roleSchema = priceInfoSchema.items.properties['role'];
-            const roleForm = get_subitem(priceInfoForm.items, 'role');
-            if (roleSchema && roleForm) {
-              $scope.loadRoles(roleSchema, roleForm);
+            const roleSchema2 = priceInfoSchema.items.properties['role'];
+            const roleForm2 = get_subitem2(priceInfoForm.items, 'role');
+            if (roleSchema2 && roleForm2) {
+              $scope.loadRoles(roleSchema2, roleForm2);
             }
           }
         });
@@ -3817,94 +3849,115 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         // 課金ファイルチェックボックス取得
         const depositionForm = $('invenio-records-form').find('form[name="depositionForm"]');
         const billingFileCheck = $(depositionForm).find('[name="billing"]');
-        let biffingFileNum = 0; // 課金ファイル数
-        let biffingFileIdx = 0; // 課金ファイルのインデックス
+
+        let biffingFileNum = 0;
         billingFileCheck.each((i, e) => {
           if (e.checked) {
-            biffingFileNum += 1;
-            biffingFileIdx = i;
+            biffingFileNum++;
           }
         });
-        // 課金ファイルが2つ以上指定されていたらNG(課金ファイルに指定できるのは1つまで)
-        if (biffingFileNum > 1) {
-          const message = $("#multiple_billing_file_error").val();
-          $("#inputModal").html(message);
-          $("#allModal").modal("show");
+        // 課金ファイルなしの場合はチェック不要
+        if (biffingFileNum == 0) {
+          return true;
+        }
+
+        // 課金ファイルありでファイルが2つ以上入力されていたらNG
+        if ($rootScope.filesVM.files.length > 1) {
+          const message = $('#multiple_billing_file_error').val();
+          $('#inputModal').html(message);
+          $('#allModal').modal('show');
           return false;
         }
 
-        const schemaFileForm = $rootScope.recordsVM.invenioRecordsForm.find(e => e.title_i18n.en == "File");
-        if (biffingFileNum == 1) {
-          // 課金ファイルの表示形式取得
-          const schemaPreviewForm = schemaFileForm.items.find(e => e.title_i18n.en == "Preview");
-          const previewKey = "".concat(schemaPreviewForm.key[0], ".", biffingFileIdx, ".", schemaPreviewForm.key[2])
-          const previewForm = $scope.depositionForm[previewKey];
-          // 課金ファイルの表示形式がプレビューの場合はNG
-          if (previewForm.$viewValue == "preview") {
-            const message = $("#billing_file_display_type_error").val();
-            $("#inputModal").html(message);
-            $("#allModal").modal("show");
-            return false;
-          }
-        }
+        let displayTypeError = false;
+        let listNoInputError = [];
+        let listInvalidPriceError = [];
+        let selectedRoles = [];
+        $scope.filemeta_keys.forEach(filemeta_key => {
+          const filemetaForm = $scope.getFormByKey(filemeta_key);
 
-        // 価格情報の入力チェック
-        {
-          let listItemErrors = [];
-          const schemaPriceinfoForm = schemaFileForm.items.find(e => e.title_i18n_temp && e.title_i18n_temp.en == "Price");
-          const priceinfoKey = "".concat(schemaPriceinfoForm.key[0], ".", biffingFileIdx, ".", schemaPriceinfoForm.key[2]);
+          // 課金ファイルの表示形式取得
+          const previewForm = $scope.getSubFormByKey(filemetaForm, 'displaytype');
+          const previewKey = ''.concat(previewForm.key[0], '.0.', previewForm.key[2]);
+          const previewSelect = $scope.depositionForm[previewKey];
+          if (previewSelect && previewSelect.$viewValue == 'preview') {
+            displayTypeError = true;
+          }
+
+          // 価格情報
+          const priceinfoForm = $scope.getSubFormByKey(filemetaForm, 'priceinfo');
+          const priceinfoKey = ''.concat(priceinfoForm.key[0], '.0.', priceinfoForm.key[2]);
 
           // ロールの入力チェック
-          const roleSelect = $(depositionForm).find('select[name*="keyName"]'.replace("keyName", priceinfoKey));
-          const selectedRoles = [];
+          const roleSelect = $(depositionForm).find('select[name*="keyName"]'.replace('keyName', priceinfoKey));
           roleSelect.each((i, e) => {
             if ($scope.depositionForm[e.name].$viewValue) {
-              $(e).removeClass("ng-invalid");
+              $(e).removeClass('ng-invalid');
               selectedRoles.push($scope.depositionForm[e.name].$viewValue);
             } else {
-              $(e).addClass("ng-invalid");
-              listItemErrors.push(schemaPriceinfoForm.items[0].title);
+              $(e).addClass('ng-invalid');
+              listNoInputError.push(priceinfoForm.items[0].title);
             }
           });
-
-          // 税の入力チェック
-          const priceInfoNum = roleSelect.length;
-          for (let ii = 0; ii < priceInfoNum; ii++) {
-            const previewKey = priceinfoKey.concat(".", ii, ".", "tax");
-            const previewForm = $scope.depositionForm[previewKey];
-            if (!previewForm.$viewValue) {
-              listItemErrors.push(schemaPriceinfoForm.items[1].title);
-            }
-          }
 
           // 価格の入力チェック
-          const priceInput = $(depositionForm).find('input[type="text"][name*="keyName"]'.replace("keyName", priceinfoKey));
+          const priceInput = $(depositionForm).find('input[type="text"][name*="keyName"]'.replace('keyName', priceinfoKey));
           priceInput.each((i, e) => {
             if ($scope.depositionForm[e.name].$viewValue) {
-              $(e).removeClass("ng-invalid");
+              if (!isNaN($scope.depositionForm[e.name].$viewValue)) {
+                $(e).removeClass('ng-invalid');
+              } else {
+                $(e).addClass('ng-invalid');
+                listInvalidPriceError.push(priceinfoForm.items[2].title);
+              }
             } else {
-              $(e).addClass("ng-invalid");
-              listItemErrors.push(schemaPriceinfoForm.items[2].title);
+              $(e).addClass('ng-invalid');
+              listNoInputError.push(priceinfoForm.items[2].title);
             }
           });
-          listItemErrors = listItemErrors.filter((x, i, self) => self.indexOf(x) === i);  // 重複を除く
-          // ロール、価格が未入力の場合はNG
-          if (listItemErrors.length > 0) {
-            let message = $("#validate_error").val() + '<br/><br/>';
-            message += listItemErrors.join(', ');
-            $("#inputModal").html(message);
-            $("#allModal").modal("show");
-            return false;
-          }
+        });
 
-          // ロールの重複チェック
-          const selectedRoleNum = selectedRoles.filter((x, i, self) => self.indexOf(x) === i).length;
-          if (selectedRoleNum != selectedRoles.length) {
-            const message = $("#billing_file_role_duplication_error").val();
-            $("#inputModal").html(message);
-            $("#allModal").modal("show");
-            return false;
+        let message = ''
+
+        // 課金ファイルの表示形式がプレビューの場合はNG
+        if (displayTypeError) {
+          if (message != '') {
+            message += '<br/><br/>';
           }
+          message += $('#billing_file_display_type_error').val();
+        }
+
+        // ロール、価格が未入力の場合はNG
+        listNoInputError = Array.from(new Set(listNoInputError)); // 重複を除く
+        if (listNoInputError.length > 0) {
+          if (message != '') {
+            message += '<br/><br/>';
+          }
+          message += $('#validate_error').val() + '<br/>';
+          message += listNoInputError.join(', ');
+        }
+
+        // ロールが重複している場合はNG
+        const selectedRoleNum = Array.from(new Set(selectedRoles)).length;
+        if (selectedRoleNum != selectedRoles.length) {
+          if (message != '') {
+            message += '<br/><br/>';
+          }
+          message += $('#billing_file_role_duplication_error').val();
+        }
+
+        // 価格が数値でない場合はNG
+        if (listInvalidPriceError.length > 0) {
+          if (message != '') {
+            message += '<br/><br/>';
+          }
+          message += $('#billing_file_invalid_price_error').val();
+        }
+
+        if (message != '') {
+          $('#inputModal').html(message);
+          $('#allModal').modal('show');
+          return false;
         }
 
         return true;
