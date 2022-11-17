@@ -1389,7 +1389,7 @@ msgstr "Price"
 msgid "FileName"
 msgstr "File Name"
 
-msgid "role"
+msgid "billingrole"
 msgstr "Role"
 
 msgid "tax"

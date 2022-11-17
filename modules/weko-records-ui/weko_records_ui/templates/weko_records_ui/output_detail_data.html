@@ -284,11 +284,9 @@
     {%- endfor -%}
 {% endmacro %}
 
-{% macro output_price_info(record_detail_data, billing_file_index) %}
+{% macro output_price_info(record_detail_data) %}
     {%- for attribute_data in record_detail_data['attribute_value_mlt'] -%}
-        {%- if loop.index0 == billing_file_index -%}
-            {{ output_price_info_mlt(attribute_data) }}
-        {%- endif -%}
+        {{ output_price_info_mlt(attribute_data) }}
     {%- endfor -%}
 {% endmacro %}
 
@@ -323,6 +321,12 @@
                         {{ child_data(_(k.split('.')[2]), _(v), 1) }}
                     {%- else -%}
                         {{ child_data(_(k.split('.')[2]), v, 1) }}
+
+                        {%- if k.split('.')[2] == 'billingrole' -%}
+                            {%- if not k|replace("billingrole", "tax") in attribute_data.keys() -%}
+                                {{ child_data(_('tax'), _('without_tax'), 1) }}
+                            {%- endif -%}
+                        {%- endif -%}
                     {%- endif -%}
                 {%- endif -%}
             {%- endfor -%}

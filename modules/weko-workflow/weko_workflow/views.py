@@ -105,7 +105,7 @@ from .utils import IdentifierHandle, auto_fill_title, \
     save_activity_data, saving_doi_pidstore, \
     send_usage_application_mail_for_guest_user, set_files_display_type, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
-    validate_guest_activity_token, create_or_update_item_billing, get_billing_file_index
+    validate_guest_activity_token, create_or_update_item_billing
 
 workflow_blueprint = Blueprint(
     'weko_workflow',
@@ -979,8 +979,6 @@ def display_activity(activity_id="0"):
     if recid:
         _id = re.sub("\.[0-9]+", "", recid.pid_value)
 
-    billing_file_index = get_billing_file_index(record_detail_alt.get('record'))
-
     return render_template(
         'weko_workflow/activity_detail.html',
         action_endpoint_key=current_app.config.get(
@@ -1040,7 +1038,6 @@ def display_activity(activity_id="0"):
         term_and_condition_content=term_and_condition_content,
         user_profile=user_profile,
         display_billing_file_flg=True,
-        billing_file_index=billing_file_index,
         **ctx
     )
 

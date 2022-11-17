@@ -731,12 +731,18 @@ def get_all_items(nlst, klst, is_get_name=False):
                         item_name = get_name(k)
                         if item_name:
                             d[k + ".name"] = item_name
-                    if k.endswith("priceinfo[].role") and v.isdecimal():
+                    if k.endswith("priceinfo[].billingrole") and v.isdecimal():
                         role_name = get_role_name(int(v))
                         if role_name:
                             d[k] = role_name
                 else:
-                    _list.append(get_items(v))
+                    checkbox = []
+                    if isinstance(v, list):
+                        checkbox = [x for x in v if isinstance(x, str)]
+                    if len(checkbox) > 0:
+                        d[k] = ",".join(checkbox)
+                    else:
+                        _list.append(get_items(v))
             _list.append(d)
 
         return _list

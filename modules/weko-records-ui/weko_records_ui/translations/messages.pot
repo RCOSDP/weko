@@ -1256,7 +1256,7 @@ msgstr ""
 msgid "FileName"
 msgstr ""
 
-msgid "role"
+msgid "billingrole"
 msgstr ""
 
 msgid "tax"

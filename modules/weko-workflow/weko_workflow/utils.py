@@ -4013,10 +4013,9 @@ def create_or_update_item_billing(deposit):
                         if not file.get('priceinfo'):
                             continue
                         for priceinfo in file.get('priceinfo'):
-                            role = int(priceinfo.get('role'))
-                            include_tax = priceinfo.get('tax') == 'include_tax'
+                            role = int(priceinfo.get('billingrole'))
+                            include_tax = 'tax' in priceinfo
                             price = priceinfo.get('price')
-                            print(include_tax)
 
                             if role not in roles:
                                 # レコード作成
@@ -4047,21 +4046,3 @@ def create_or_update_item_billing(deposit):
     except SQLAlchemyError as ex:
         current_app.logger.debug(ex)
         db.session.rollback()
-
-
-def get_billing_file_index(record):
-    if not isinstance(record, dict):
-        return -1
-
-    for value in record.values():
-        if not isinstance(value, dict):
-            continue
-        if not value.get('attribute_type') or value.get('attribute_type') != 'file':
-            continue
-        if not value.get('attribute_value_mlt'):
-            continue
-        for count, file in enumerate(value.get('attribute_value_mlt')):
-            if file.get('billing') and len(file.get('billing')) > 0 and file.get('billing')[0] == 'billing_file':
-                return count
-
-    return -1

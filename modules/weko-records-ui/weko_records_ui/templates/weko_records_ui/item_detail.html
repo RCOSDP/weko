@@ -30,8 +30,7 @@
                             m_is_logged_in=False,
                             m_open_day_display_flg=true,
                             m_cur_step=None,
-                            m_display_billing_file_flg=False,
-                            m_billing_file_index=-1) %}
+                            m_display_billing_file_flg=False) %}
   {% autoescape False %}
   <table class="table table-bordered table-striped detail-table">
       {% if m_record.item_type_info %}
@@ -91,8 +90,8 @@
                       </tr>
                     {%- endif -%}
                   {% else %}
-                    {% if m_display_billing_file_flg and m_billing_file_index >= 0 %}
-                      {{ output_price_info(lst, m_billing_file_index) }}
+                    {% if m_display_billing_file_flg %}
+                      {{ output_price_info(lst) }}
                     {%- endif -%}
                   {%- endif -%}
                 {% elif (lst['attribute_name']|upper == 'RESOURCETYPE') %}

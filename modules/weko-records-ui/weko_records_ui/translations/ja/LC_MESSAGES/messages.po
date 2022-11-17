@@ -653,7 +653,7 @@ msgstr "価格情報"
 msgid "FileName"
 msgstr "ファイル名"
 
-msgid "role"
+msgid "billingrole"
 msgstr "ロール"
 
 msgid "tax"

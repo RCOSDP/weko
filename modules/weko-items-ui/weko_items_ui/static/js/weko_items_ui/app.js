@@ -1360,8 +1360,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           const priceInfoSchema = filemeta_schema.items.properties['priceinfo'];
           const priceInfoForm = get_subitem2(filemeta_form.items, 'priceinfo');
           if (priceInfoSchema && priceInfoForm) {
-            const roleSchema2 = priceInfoSchema.items.properties['role'];
-            const roleForm2 = get_subitem2(priceInfoForm.items, 'role');
+            const roleSchema2 = priceInfoSchema.items.properties['billingrole'];
+            const roleForm2 = get_subitem2(priceInfoForm.items, 'billingrole');
             if (roleSchema2 && roleForm2) {
               $scope.loadRoles(roleSchema2, roleForm2);
             }
