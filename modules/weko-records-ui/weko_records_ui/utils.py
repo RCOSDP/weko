@@ -56,7 +56,7 @@ from weko_records_ui.models import InstitutionName
 from .models import FileOnetimeDownload, FilePermission
 from .permissions import check_create_usage_report, \
     check_file_download_permission, check_user_group_permission, \
-    is_open_restricted
+    is_open_restricted, check_billing_file_permission
 
 
 
@@ -660,7 +660,10 @@ def get_file_info_list(record):
         access = p_file.get("accessrole", '')
         date = p_file.get('date')
         if access == "open_login" and not current_user.get_id():
-            p_file['future_date_message'] = _("Restricted Access")
+            if not 'billing' in p_file:
+                p_file['future_date_message'] = _("Restricted Access")
+            else:
+                p_file['future_date_message'] = _("Billing file")
         elif access == "open_date":
             if date and isinstance(date, list) and date[0]:
                 adt = date[0].get('dateValue')
@@ -679,6 +682,13 @@ def get_file_info_list(record):
         for item in array_json:
             if str(item.get('id')) == str(key):
                 return item.get(get_key)
+
+    def get_role_name(p_file):
+        """Get role name for billing file"""
+        for priceinfo in p_file['priceinfo']:
+            role = next(filter(lambda x: x['id'] == int(priceinfo['billingrole']), roles), None)
+            if role:
+                priceinfo['billingrole'] = role['name']
 
     workflows = get_workflows()
     roles = get_roles()
@@ -746,6 +756,13 @@ def get_file_info_list(record):
                                 p['role'] = get_data_by_key_array_json(
                                     role, roles, 'name')
                     f['file_order'] = file_order
+                    if 'billing' in f:
+                        # TODO: 効率が悪いので改善する
+                        f['billing_file_permission'] = check_file_download_permission(
+                            record, f, check_billing_file=True)
+                        f['billable'] = check_billing_file_permission(
+                            record['_deposit']['id'], f['filename']) == 'billable'
+                        get_role_name(f)
                     files.append(f)
                 file_order += 1
     return is_display_file_preview, files

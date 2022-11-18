@@ -1545,7 +1545,7 @@ def _export_item(record_id,
         if include_contents:
             # Get files
             for file in record.files:  # TODO: Temporary processing
-                if check_file_download_permission(record, file.info()):
+                if check_file_download_permission(record, file.info(), check_billing_file=True):
                     if file.info().get('accessrole') != 'open_restricted':
                         exported_item['files'].append(file.info())
                         # TODO: Then convert the item into the desired format

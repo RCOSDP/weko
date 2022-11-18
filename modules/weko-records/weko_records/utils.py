@@ -1065,6 +1065,13 @@ async def sort_meta_data_by_options(
             if "open_restricted" == f.get("accessrole", ""):
                 if label:
                     result.append({"label": label, "extention": extension, "url": ""})
+            elif 'billing' in f:
+                file_url = f.get("url", {}).get("url", "")
+                if extension and file_url:
+                    file_url = replace_fqdn(file_url)
+                has_billing_file_permission = check_file_download_permission(record, f, check_billing_file=True)
+                result.append({"label": label, "extention": extension, "url": file_url,
+                              "has_billing_file_permission": has_billing_file_permission})
             elif label and (
                 not extension or check_file_download_permission(record, f, False)
             ):

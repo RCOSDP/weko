@@ -27,11 +27,12 @@ from flask import abort, current_app
 from flask_babelex import get_locale, to_user_timezone, to_utc
 from flask_security import current_user
 from invenio_access import Permission, action_factory
-from invenio_accounts.models import User
+from invenio_accounts.models import User, Role
 from invenio_db import db
 from weko_groups.api import Group, Membership, MembershipState
 from weko_index_tree.utils import check_index_permissions, get_user_roles
 from weko_records.api import ItemTypes
+from weko_records.models import ItemBilling
 from weko_workflow.api import WorkActivity
 
 from .ipaddr import check_site_license_permission
@@ -76,12 +77,12 @@ def file_permission_factory(record, *args, **kwargs):
 
     def can(self):
         fjson = kwargs.get('fjson')
-        return check_file_download_permission(record, fjson)
+        return check_file_download_permission(record, fjson, check_billing_file=True)
 
     return type('FileDownLoadPermissionChecker', (), {'can': can})()
 
 
-def check_file_download_permission(record, fjson, is_display_file_info=False):
+def check_file_download_permission(record, fjson, is_display_file_info=False, check_billing_file=False):
     """Check file download."""
     def site_license_check():
         # site license permission check
@@ -180,6 +181,11 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     except BaseException:
                         is_can = False
 
+                    if is_can and check_billing_file and fjson.get('billing'):
+                        billing_file_permission = check_billing_file_permission(
+                            record['_deposit']['id'], fjson['filename'])
+                        is_can = billing_file_permission == 'accessible'
+
                     if not is_can:
                         # site license permission check
                         is_can = site_license_check()
@@ -213,6 +219,10 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                             if fjson.get('groups'):
                                 is_can = check_user_group_permission(
                                     fjson.get('groups'))
+                            elif check_billing_file and fjson.get('billing'):
+                                billing_file_permission = check_billing_file_permission(
+                                    record['_deposit']['id'], fjson['filename'])
+                                is_can = billing_file_permission == 'accessible'
                             else:
                                 is_can = True
                         if not is_can:
@@ -498,3 +508,48 @@ def __get_file_permission(record_id, file_name):
     list_permission = FilePermission.find_list_permission_by_date(
         user_id, record_id, file_name, duration)
     return list_permission
+
+
+def check_billing_file_permission(item_id, file_name):
+    if not (current_user and current_user.is_authenticated):
+        # 未ログインはアクセス不可能
+        return 'inaccessible'
+
+    # 課金済みチェック
+    # TODO: 課金チェックAPI実行
+    result = False
+    if result:
+        # 課金済みの場合はアクセス権限あり
+        return 'accessible'
+
+    # 課金可能なロール一覧
+    item_billing_list = ItemBilling.query.filter_by(item_id = item_id).all()
+    if not item_billing_list:
+        return 'inaccessible'
+
+    # ユーザーが持つロール一覧
+    user_role_name_list = list(current_user.roles or [])
+    user_role_list = Role.query.all()
+    user_role_id_list = [user_role.id for user_role in user_role_list if user_role.name in user_role_name_list]
+
+    # 有料のロールと無料のロールを振り分ける
+    free_role_list = []
+    paid_role_list = []
+    for item_billing in item_billing_list:
+        if item_billing.price == 0:
+            free_role_list.append(item_billing)
+        else:
+            paid_role_list.append(item_billing)
+
+    # 無料(価格0)のロールを持っていたらアクセス可能
+    for free_role in free_role_list:
+        if free_role.role_id in user_role_id_list:
+            return 'accessible'
+
+    # 有料のロールを持っていたら課金可能
+    for paid_role in paid_role_list:
+        if paid_role.role_id in user_role_id_list:
+            return 'billable'
+
+    return 'inaccessible'
+

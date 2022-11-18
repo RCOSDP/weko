@@ -204,6 +204,18 @@
                           {%- endif -%}
                           {%- if access_permission and billing_file_access_permission -%}
                             <!-- Show check sum -->
+
+                            {%- if 'billing' in file and not file.future_date_message-%}
+                              {%- set icon_class = "" -%}
+                              {%- if ('billing_file_permission' in file) and not file.billing_file_permission -%}
+                                {%- set icon_class = "fa fa-key" -%}
+                              {%- endif -%}
+                              <div class="panel-body panel-body2">
+                                <span class="{{icon_class}}"
+                                  style="font-size:18px;font-weight:bold">&nbsp;{{_('Billing file')}}</span>
+                              </div>
+                            {%- endif -%}
+
                           {%- else -%}
                             <!-- Show 'Restricted Access' message -->
                             {%- if not file.future_date_message -%}
@@ -257,16 +269,28 @@
                         {%- if file.version_id %}
                           {%- set download_id = 'download-' + file.version_id %}
                           {%- if (access_permission and billing_file_access_permission) or not clickable -%}
-                            <!-- User has permission download. -->
-                            <a class="action-anchor" href="{{file_url}}">
-                              <button class="img-rounded action-button button-sm" id="{{download_id}}">
-                                <i class="action-icon fa fa-download"></i>
-                                {{_('Download')}}
-                              </button>
-                            </a>
+                            {%- if (not 'billing_file_permission' in file) or file.billing_file_permission -%}
+                              <!-- User has permission download. -->
+                              <a class="action-anchor" href="{{file_url}}">
+                                <button class="img-rounded action-button button-sm" id="{{download_id}}">
+                                  <i class="action-icon fa fa-download"></i>
+                                  {{_('Download')}}
+                                </button>
+                              </a>
+                            {%- endif -%}
                           {%- elif clickable -%}
                             {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url, file_label) }}
                           {%- endif -%}
+                        {%- endif -%}
+                        <!-- Show button 'Charge' -->
+                        {%- if not file.billing_file_permission and file.billable -%}
+                          {# TODO: 課金処理の実装 #}
+                          <a class="action-anchor" href="{{file_url}}">
+                            <button class="img-rounded action-button button-sm" id="{{download_id}}">
+                              <i class="action-icon fa fa-jpy"></i>
+                              {{_('Charge')}}
+                            </button>
+                          </a>
                         {%- endif -%}
                         <!-- Show button 'Information' -->
                         {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value, filename=file.filename or '[No FileName]') %}
@@ -331,6 +355,31 @@
                         {%- endif -%}
                       </td>
                     </tr>
+
+                    {%- if 'billing' in file and 'priceinfo' in file -%}
+                      <tr>
+                        <td colspan="3">
+                          {# TODO: 通貨単位を設定ファイルから取得 #}
+                          {%- set currency_unit = '￥' -%}
+                          {# TODO: 税率を設定ファイルから取得 #}
+                          {%- set tax_rate = 1.1 -%}
+
+                          {%- for priceinfo in file.priceinfo -%}
+                            {%- if 'tax' in priceinfo -%}
+                              {%- set price = ((priceinfo.price|int) * tax_rate)|int -%}
+                            {%- else -%}
+                              {%- set price = priceinfo.price|int -%}
+                            {%- endif -%}
+
+                            {%- if loop.index != 1 -%}
+                              {{', '}}
+                            {%- endif -%}
+                            {{priceinfo.billingrole}}：{{currency_unit}}{{price}}
+                          {%- endfor -%}
+                        </td>
+                      </tr>
+                    {%- endif -%}
+
                   {%- endif -%}
                 {%- endfor -%}
               {%- endfor -%}

@@ -481,3 +481,18 @@ def update_text_and_textarea(item_type_id, new_schema, new_form):
                         else:
                             item['key'] = key_pattern.format(key, lang_key)
     return new_schema, new_form
+
+def check_billing_file_property(form):
+    billing_file_num = 0
+    for item in form:
+        if 'items' in item:
+            sub_items = item.get('items')
+            for sub_item in sub_items:
+                if sub_item.get('title') == '課金':
+                    billing_file_num += 1
+                    break
+
+    if billing_file_num > 1:
+        return False
+
+    return True
