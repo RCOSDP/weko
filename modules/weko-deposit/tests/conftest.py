@@ -30,6 +30,7 @@ from unittest.mock import patch
 from collections import OrderedDict
 from elasticsearch import Elasticsearch
 import time
+from datetime import datetime
 
 import pytest
 from flask import Flask
@@ -45,6 +46,7 @@ from invenio_admin import InvenioAdmin
 from invenio_assets import InvenioAssets
 from invenio_db import InvenioDB, db as db_
 from invenio_cache import InvenioCache
+from invenio_communities.models import Community
 from weko_user_profiles.models import UserProfile
 from invenio_deposit import InvenioDeposit
 from invenio_files_rest import InvenioFilesREST
@@ -59,6 +61,7 @@ from invenio_jsonschemas import InvenioJSONSchemas
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidstore import InvenioPIDStore
 from invenio_records import InvenioRecords
+from invenio_records_rest import InvenioRecordsREST
 from invenio_records_rest.utils import PIDConverter
 from invenio_search import InvenioSearch
 from invenio_search_ui import InvenioSearchUI
@@ -85,6 +88,10 @@ from weko_schema_ui.models import OAIServerSchema
 from weko_schema_ui.config import WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,WEKO_SCHEMA_DDI_SCHEMA_NAME
 from weko_deposit import WekoDeposit, WekoDepositREST
 from weko_records.utils import get_options_and_order_list
+from weko_user_profiles.models import UserProfile
+from weko_user_profiles.config import USERPROFILES_LANGUAGE_DEFAULT, \
+    USERPROFILES_TIMEZONE_DEFAULT
+from weko_workflow.models import Action, ActionStatus,Activity, WorkFlow,FlowAction,FlowDefine
 from weko_deposit.api import WekoRecord,_FormatSysBibliographicInformation
 from weko_deposit.views import blueprint
 from weko_deposit.storage import WekoFileStorage
@@ -175,7 +182,7 @@ def base_app(instance_path):
         },
         WEKO_INDEX_TREE_UPATED=True,
         WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
-        I18N_LANGUAGE=[("ja", "Japanese"), ("en", "English")],
+        I18N_LANGUAGE=[("ja", "Japanese"), ("en", "English"),("da", "Danish")],
         SERVER_NAME="TEST_SERVER",
         SEARCH_ELASTIC_HOSTS="elasticsearch",
         SEARCH_INDEX_PREFIX="test-",
@@ -207,6 +214,7 @@ def base_app(instance_path):
     InvenioSearchUI(app_)
     InvenioPIDRelations(app_)
     InvenioI18N(app_)
+    InvenioRecordsREST(app_)
     WekoRecords(app_)
     WekoItemsUI(app_)
     # WekoRecordsUI(app_)
@@ -452,7 +460,15 @@ def users(app, db):
         ds.add_role_to_user(originalroleuser, originalrole)
         ds.add_role_to_user(originalroleuser2, originalrole)
         ds.add_role_to_user(originalroleuser2, repoadmin_role)
-
+        
+    index = Index()
+    db.session.add(index)
+    db.session.commit()
+    comm = Community.create(community_id="test_com", role_id=sysadmin_role.id,
+                            id_user=sysadmin.id, title="test community",
+                            description=("this is test community"),
+                            root_node_id=index.id)
+    db.session.commit()
     return [
         {"email": contributor.email, "id": contributor.id, "obj": contributor},
         {"email": repoadmin.email, "id": repoadmin.id, "obj": repoadmin},
@@ -586,10 +602,6 @@ def db_itemtype(app, db):
         "item_type": item_type,
         "item_type_mapping": item_type_mapping,
     }
-
-
-
-
 
 
 @pytest.fixture()
@@ -727,3 +739,144 @@ def db_userprofile(app, db,users):
         profiles[user.email] = p
         db.session.add(p)
     return profiles
+
+@pytest.fixture()
+def db_actions(app,db):
+    action_datas=dict()
+    with open('tests/data/actions.json', 'r') as f:
+        action_datas = json.load(f)
+    actions_db = list()
+    with db.session.begin_nested():
+        for data in action_datas:
+            actions_db.append(Action(**data))
+        db.session.add_all(actions_db)
+    db.session.commit()
+
+    actionstatus_datas = dict()
+    with open('tests/data/action_status.json') as f:
+        actionstatus_datas = json.load(f)
+    actionstatus_db = list()
+    with db.session.begin_nested():
+        for data in actionstatus_datas:
+            actionstatus_db.append(ActionStatus(**data))
+        db.session.add_all(actionstatus_db)
+    db.session.commit()
+    return actions_db, actionstatus_db
+
+
+@pytest.fixture()
+def db_activity(app, db,users,location,db_itemtype,db_actions):
+    flow_define = FlowDefine(id=1,flow_id=uuid.uuid4(),
+                             flow_name='Registration Flow',
+                             flow_user=1)
+    with db.session.begin_nested():
+        db.session.add(flow_define)
+    db.session.commit()
+
+    flow_action1 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=1,
+                     action_version='1.0.0',
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    flow_action2 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=3,
+                     action_version='1.0.0',
+                     action_order=2,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    flow_action3 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=5,
+                     action_version='1.0.0',
+                     action_order=3,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    with db.session.begin_nested():
+        db.session.add(flow_action1)
+        db.session.add(flow_action2)
+        db.session.add(flow_action3)
+    db.session.commit()
+    no_location_workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test workflow1',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=1,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    location_workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test workflow2',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=1,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=int(location.id),
+                        is_gakuninrdm=False)
+    with db.session.begin_nested():
+        db.session.add(no_location_workflow)
+        db.session.add(location_workflow)
+    no_location_activity = Activity(activity_id='1',workflow_id=no_location_workflow.id, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    location_activity = Activity(activity_id='2',workflow_id=location_workflow.id, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    with db.session.begin_nested():
+        db.session.add(no_location_activity)
+        db.session.add(location_activity)
+    
+    db.session.commit()
+    
+    return no_location_activity, location_activity
+
+@pytest.fixture()
+def db_user_profiles(db,users):
+    all_data = UserProfile(
+        user_id=users[2]["id"],
+        _username="sysadmin",
+        _displayname="sysadmin user",
+        fullname="test taro",
+        timezone=USERPROFILES_TIMEZONE_DEFAULT,
+        language=USERPROFILES_LANGUAGE_DEFAULT,
+        university="test university",
+        department="test department",
+        position = "test position",
+        otherPosition="test other position",
+        phoneNumber="123-4567",
+        instituteName="test institute",
+        institutePosition="test institute position",
+        instituteName2="test institute2",
+        institutePosition2="test institute position2",
+        instituteName3="",
+        institutePosition3="",
+        instituteName4="",
+        institutePosition4="",
+        instituteName5="",
+        institutePosition5=""
+    )
+    db.session.add(all_data)
+    db.session.commit()
+    return all_data
