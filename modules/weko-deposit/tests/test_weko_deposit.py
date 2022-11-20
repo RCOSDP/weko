@@ -80,4 +80,3 @@ def test_ItemResource_put(app, db):
             res = client.put("/deposits/redirect/1",
                             data=json.dumps(data), headers=headers)
             assert res.status_code == 200
-            print(res)
