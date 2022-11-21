@@ -12,15 +12,30 @@ window.onload = function(){
   var accessKeyInput = getElementByXpath("//label[@for='access_key']/..//input")
   var secretKeyField = getElementByXpath("//label[@for='secret_key']/..")
   var secretKeyInput = getElementByXpath("//label[@for='secret_key']/..//input")
+  var s3EndpointUrlField = getElementByXpath("//label[@for='s3_endpoint_url']/..")
+  var s3EndpointUrlInput = getElementByXpath("//label[@for='s3_endpoint_url']/..//input")
+  var s3SendFileDirectlyField = getElementByXpath("//label[@for='s3_send_file_directly']/..")
+  var s3SendFileDirectlyInput = getElementByXpath("//label[@for='s3_send_file_directly']/..//input")
   function checkLocationType() {
     if (typeSpan.getAttribute('title') == 'Amazon S3') {
-      accessKeyField.style.display = ''
-      secretKeyField.style.display = ''
+      accessKeyField.style.display = 'none'
+      accessKeyInput.required = true
+      secretKeyField.style.display = 'none'
+      secretKeyInput.required = true
+      s3EndpointUrlField.style.display = ''
+      s3SendFileDirectlyField.style.display = ''
+      s3SendFileDirectlyInput.checked = true
     } else {
       accessKeyField.style.display = 'none'
       secretKeyField.style.display = 'none'
+      s3EndpointUrlField.style.display = 'none'
+      s3SendFileDirectlyField.style.display = 'none'
       accessKeyInput.value = null
+      accessKeyInput.required = false
       secretKeyInput.value = null
+      secretKeyInput.required = false
+      s3EndpointUrlInput.value = null
+      s3SendFileDirectlyInput.checked = true
     }
   }
   checkLocationType()
