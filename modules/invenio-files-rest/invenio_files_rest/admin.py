@@ -23,6 +23,8 @@ from invenio_admin.filters import FilterConverter
 from invenio_admin.forms import LazyChoices
 from markupsafe import Markup
 from wtforms.fields import PasswordField
+from wtforms.fields import StringField
+from wtforms.fields import BooleanField
 from wtforms.validators import ValidationError
 from wtforms.widgets import PasswordInput
 
@@ -72,7 +74,9 @@ class LocationModelView(ModelView):
         size=_('Size'),
         quota_size=_('Quota Size'),
         access_key=_('Access Key'),
-        secret_key=_('Secret Key')
+        secret_key=_('Secret Key'),
+        s3_endpoint_url=_('S3_ENDPOINT_URL'),
+        s3_send_file_directly=_('S3_SEND_FILE_DIRECTLY')
     )
     column_filters = ('default', 'created', 'updated', )
     column_searchable_list = ('uri', 'name')
@@ -80,6 +84,7 @@ class LocationModelView(ModelView):
     form_base_class = SecureForm
     form_columns = (
         'name', 'uri', 'type', 'access_key', 'secret_key',
+        's3_endpoint_url', 's3_send_file_directly',
         'quota_size', 'default')
     form_choices = {
         'type': LazyChoices(
@@ -89,7 +94,9 @@ class LocationModelView(ModelView):
         'access_key': PasswordField('access_key',
                                     widget=PasswordInput(hide_value=False)),
         'secret_key': PasswordField('secret_key',
-                                    widget=PasswordInput(hide_value=False))
+                                    widget=PasswordInput(hide_value=False)),
+        's3_endpoint_url': StringField('endpoint_url'),
+        's3_send_file_directly': BooleanField('send_file_directly')
     }
     form_args = dict(
         name=dict(validators=[require_slug])
