@@ -1303,6 +1303,8 @@ async def sort_meta_data_by_options(
                 record_hit["_source"]["_comment"] = items
         if files_info:
             record_hit["_source"]["_files_info"] = files_info
+            record_hit["_source"]["_file_num"] = sum(
+                1 for file_info in files_info if not 'has_billing_file_permission' in file_info or file_info['has_billing_file_permission'])
         if thumbnail:
             record_hit["_source"]["_thumbnail"] = thumbnail
     except Exception:
