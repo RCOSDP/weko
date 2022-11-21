@@ -1060,18 +1060,20 @@ async def sort_meta_data_by_options(
             return _label, _extension
 
         result = []
+        file_num = 0
         for f in files:
             label, extension = __get_label_extension()
             if "open_restricted" == f.get("accessrole", ""):
                 if label:
                     result.append({"label": label, "extention": extension, "url": ""})
+                    file_num += 1
             elif 'billing' in f:
                 file_url = f.get("url", {}).get("url", "")
                 if extension and file_url:
                     file_url = replace_fqdn(file_url)
-                has_billing_file_permission = check_file_download_permission(record, f, check_billing_file=True)
-                result.append({"label": label, "extention": extension, "url": file_url,
-                              "has_billing_file_permission": has_billing_file_permission})
+                result.append({"label": label, "extention": extension, "url": file_url})
+                if check_file_download_permission(record, f, check_billing_file=True):
+                    file_num += 1
             elif label and (
                 not extension or check_file_download_permission(record, f, False)
             ):
@@ -1079,7 +1081,8 @@ async def sort_meta_data_by_options(
                 if extension and file_url:
                     file_url = replace_fqdn(file_url)
                 result.append({"label": label, "extention": extension, "url": file_url})
-        return result
+                file_num += 1
+        return result, file_num
 
     def get_file_thumbnail(thumbnails):
         """Get file thumbnail."""
@@ -1234,6 +1237,7 @@ async def sort_meta_data_by_options(
         solst, meta_options = get_options_and_order_list(item_type_id, item_type_data)
         solst_dict_array = convert_data_to_dict(solst)
         files_info = []
+        file_num = 0
         thumbnail = None
         hide_item_metadata(src, settings, item_type_mapping, item_type_data)
         # Set value and parent option
@@ -1250,7 +1254,7 @@ async def sort_meta_data_by_options(
                     and not option.get("hidden")
                     and option.get("showlist")
                 ):
-                    files_info = get_file_comments(src, mlt)
+                    files_info, file_num = get_file_comments(src, mlt)
                     continue
                 is_thumbnail = any("subitem_thumbnail" in data for data in mlt)
                 if is_thumbnail and not option.get("hidden") and option.get("showlist"):
@@ -1303,8 +1307,7 @@ async def sort_meta_data_by_options(
                 record_hit["_source"]["_comment"] = items
         if files_info:
             record_hit["_source"]["_files_info"] = files_info
-            record_hit["_source"]["_file_num"] = sum(
-                1 for file_info in files_info if not 'has_billing_file_permission' in file_info or file_info['has_billing_file_permission'])
+            record_hit["_source"]["_file_num"] = file_num
         if thumbnail:
             record_hit["_source"]["_thumbnail"] = thumbnail
     except Exception:
