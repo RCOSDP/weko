@@ -14,9 +14,10 @@ fixtures are available.
 from __future__ import absolute_import, print_function
 
 import shutil
+import json
 import tempfile
 import os
-from os.path import join
+from os.path import join, dirname
 from io import BytesIO
 from zipfile import ZipFile, ZIP_DEFLATED
 import datetime
@@ -27,7 +28,6 @@ from flask_babelex import Babel
 from flask_mail import Mail
 from flask_menu import Menu
 from sqlalchemy_utils.functions import create_database, database_exists
-from werkzeug.security import gen_salt
 
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers,ActionRoles
@@ -35,15 +35,30 @@ from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
 from invenio_accounts.utils import jwt_create_token
 from invenio_accounts.testutils import create_test_user
+from invenio_admin import InvenioAdmin
+from invenio_cache import InvenioCache
 from invenio_communities.models import Community
 from invenio_db import InvenioDB
 from invenio_db import db as db_
+from invenio_files_rest import InvenioFilesREST
+from invenio_files_rest.models import Location
+from invenio_pidrelations import InvenioPIDRelations
+from invenio_pidstore import InvenioPIDStore
+from invenio_i18n import InvenioI18N
+from invenio_jsonschemas import InvenioJSONSchemas
 from invenio_oauth2server import InvenioOAuth2Server
-from invenio_oauth2server.proxies import current_oauth2server
-from invenio_oauth2server.models import Client, Scope, Token
+from invenio_oauth2server.models import Client, Token
+from invenio_records import InvenioRecords
+from invenio_search import InvenioSearch, current_search_client
 
+from weko_admin import WekoAdmin
+from weko_admin.models import Identifier
+from weko_authors import WekoAuthors
+from weko_deposit import WekoDeposit
 from weko_index_tree.models import Index
+from weko_records.models import ItemTypeName, ItemType,ItemTypeMapping
 from weko_search_ui import WekoSearchUI
+from weko_workflow import WekoWorkflow
 
 from weko_swordserver import WekoSWORDServer
 from weko_swordserver.views import blueprint
@@ -92,15 +107,55 @@ def base_app(instance_path):
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         OAUTH2_CACHE_TYPE='simple',
         OAUTHLIB_INSECURE_TRANSPORT=True,
+        SEARCH_ELASTIC_HOSTS=os.environ.get("SEARCH_ELASTIC_HOSTS", "elasticsearch"),
+        CACHE_TYPE="redis",
+        CACHE_REDIS_URL="redis://redis:6379/0",
+        CACHE_REDIS_DB="0",
+        CACHE_REDIS_HOST="redis",
+        REDIS_PORT="6379",
+        WEKO_BUCKET_QUOTA_SIZE = 50 * 1024 * 1024 * 1024,
+        WEKO_MAX_FILE_SIZE=50 * 1024 * 1024 * 1024,
+        WEKO_MAX_FILE_SIZE_FOR_ES = 1 * 1024 * 1024,
+        DEPOSIT_DEFAULT_JSONSCHEMA = 'deposits/deposit-v1.0.0.json',
+        SEARCH_UI_SEARCH_INDEX="test-weko",
+        INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
+        INDEXER_FILE_DOC_TYPE="content",
+        INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
+        WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME = 'jpcoar_v1_mapping',
+        WEKO_SCHEMA_DDI_SCHEMA_NAME='ddi_mapping',
+        THEME_SITEURL="https://localhost",
+        WEKO_MIMETYPE_WHITELIST_FOR_ES = [
+            'text/plain',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'application/pdf',
+        ]
     )
     Babel(app_)
     Mail(app_)
     Menu(app_)
     InvenioDB(app_)
+    InvenioI18N(app_)
     InvenioAccess(app_)
     InvenioAccounts(app_)
+    InvenioAdmin(app_)
+    InvenioCache(app_)
+    InvenioFilesREST(app_)
+    InvenioJSONSchemas(app_)
     InvenioOAuth2Server(app_)
+    InvenioRecords(app_)
+    InvenioSearch(app_)
+    InvenioPIDRelations(app_)
+    InvenioPIDStore(app_)
     WekoSearchUI(app_)
+    WekoWorkflow(app_)
+    WekoAdmin(app_)
+    WekoAuthors(app_)
+    WekoDeposit(app_)
     
     WekoSWORDServer(app_)
     app_.register_blueprint(blueprint)
@@ -118,6 +173,26 @@ def client(app):
     with app.test_client() as client:
         yield client
 
+@pytest.yield_fixture()
+def esindex(app):
+    app.config.update(
+        WEKO_AUTHORS_ES_INDEX_NAME="test-weko-author"
+    )
+    current_search_client.indices.delete(index="test-*")
+    mapping = json_data("data/author-v1.0.0.json")
+    current_search_client.indices.create(
+        app.config["WEKO_AUTHORS_ES_INDEX_NAME"], body=mapping
+    )
+    current_search_client.indices.put_alias(
+        index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"],name="test-weko-authors"
+    )
+    
+    
+    yield current_search_client
+    
+    current_search_client.indices.delete(index="test-*")
+
+
 @pytest.yield_fixture
 def db(app):
     """Database fixture."""
@@ -131,7 +206,6 @@ def db(app):
 
 @pytest.fixture
 def tokens(app,users,db):
-    print("start token")
     user = str(users[0]["id"])
     test_client = Client(client_id="dev",
                     client_secret="dev",
@@ -151,7 +225,6 @@ def tokens(app,users,db):
     db.session.add(test_client)
     db.session.add(test_token)
     db.session.commit()
-    print("end token")
     return {"token":test_token,"client":test_client}
 
 @pytest.fixture()
@@ -288,14 +361,107 @@ def users(app, db):
     ]
 
 @pytest.fixture()
+def item_type(app, db):
+    
+    item_type_name = ItemTypeName(id=1,
+        name="デフォルトアイテムタイプ（フル）", has_site_license=True, is_active=True
+    )
+    item_type_schema = json_data("data/item_type/schema_1.json")
+
+    item_type_form = json_data("data/item_type/form_1.json") 
+    
+    item_type_render = json_data("data/item_type/render_1.json")
+
+    item_type_mapping = json_data("data/item_type/mapping_1.json")
+    
+    item_type = ItemType(
+        id=1,
+        name_id=1,
+        harvesting_type=True,
+        schema=item_type_schema,
+        form=item_type_form,
+        render=item_type_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+    item_type_mapping = ItemTypeMapping(id=1,item_type_id=1, mapping=item_type_mapping)
+    
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
+        db.session.add(item_type)
+        db.session.add(item_type_mapping)
+    
+    db.session.commit()
+    
+    return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
+
+@pytest.fixture()
+def doi_identifier(app, db):
+    identifier = Identifier(
+        id=1,
+        repository="Root Index",
+        jalc_flag=True,
+        jalc_crossref_flag=True,
+        jalc_datacite_flag=True,
+        ndl_jalc_flag=True,
+        jalc_doi="1234",
+        jalc_crossref_doi="2345",
+        jalc_datacite_doi="3456",
+        ndl_jalc_doi="4567",
+        created_userId=1,
+        created_date=datetime.datetime.now(),
+        updated_userId=1,
+        updated_date=datetime.datetime.now()
+    )
+    db.session.add(identifier)
+    db.session.commit()
+    return identifier
+
+
+@pytest.fixture()
+def index(app, db):
+    index_ = Index(
+        id=1234567891011,
+        parent=0,
+        position=11,
+        index_name="test_index",
+        index_name_english="test_index",
+        index_link_name_english="New Index",
+        index_link_enabled=False,
+        more_check=False,
+        display_no=5,
+        harvest_public_state=True,
+        image_name="",
+        public_state=False,
+    )
+    db.session.add(index_)
+    db.session.commit()
+
+@pytest.fixture()
+def location(app,db):
+    """Create default location."""
+    tmppath = tempfile.mkdtemp()
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name='local', uri=tmppath, default=True)
+        db.session.add(loc)
+    db.session.commit()
+    return loc
+
+@pytest.fixture()
 def make_zip():
-    print("start zip")
     
     fp = BytesIO()
     with ZipFile(fp, 'w', compression=ZIP_DEFLATED) as new_zip:
-        new_zip.write("tests/data/zip_data/index.csv","data/index.csv")
-        new_zip.write("tests/data/zip_data/sample.html","data/sample.html")
-    print("end zip")
-    with ZipFile(fp)as z:
-        print(z.infolist())
+        for dir, subdirs, files in os.walk("tests/data/zip_data/data"):
+            new_zip.write(dir,dir.split("/")[-1])
+            for file in files:
+                new_zip.write(os.path.join(dir, file),os.path.join(dir.split("/")[-1],file))
+    fp.seek(0)
     return fp
+
+
+def json_data(filename):
+    with open(join(dirname(__file__),filename), "r") as f:
+        return json.load(f)
