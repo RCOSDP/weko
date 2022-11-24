@@ -667,3 +667,18 @@ msgstr "税抜"
 
 msgid "price"
 msgstr "価格"
+
+msgid "charge_confirmation"
+msgstr "かかります。 購入しますか？"
+
+msgid "charge_success"
+msgstr "課金しました。"
+
+msgid "charge_already"
+msgstr "課金済みです。"
+
+msgid "charge_credit_error"
+msgstr "課金に失敗しました。クレジットカード情報を確認してください。"
+
+msgid "charge_error"
+msgstr "課金に失敗しました。"

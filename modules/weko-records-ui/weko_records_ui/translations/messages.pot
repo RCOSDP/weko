@@ -1270,3 +1270,18 @@ msgstr ""
 
 msgid "price"
 msgstr ""
+
+msgid "charge_confirmation"
+msgstr ""
+
+msgid "charge_success"
+msgstr ""
+
+msgid "charge_already"
+msgstr ""
+
+msgid "charge_credit_error"
+msgstr ""
+
+msgid "charge_error"
+msgstr ""

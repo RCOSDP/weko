@@ -1403,3 +1403,18 @@ msgstr "Without tax"
 
 msgid "price"
 msgstr "Price"
+
+msgid "charge_confirmation"
+msgstr "will be charged. Do you really want to purchase?"
+
+msgid "charge_success"
+msgstr "Charge successful."
+
+msgid "charge_already"
+msgstr "Already charged."
+
+msgid "charge_credit_error"
+msgstr "Charge failed. Please check your credit card information."
+
+msgid "charge_error"
+msgstr "Charge failed."

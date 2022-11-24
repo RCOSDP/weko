@@ -283,14 +283,17 @@
                           {%- endif -%}
                         {%- endif -%}
                         <!-- Show button 'Charge' -->
-                        {%- if not file.billing_file_permission and file.billable -%}
-                          {# TODO: 課金処理の実装 #}
-                          <a class="action-anchor" href="{{file_url}}">
-                            <button class="img-rounded action-button button-sm" id="{{download_id}}">
+                        {%- if not file.billing_file_permission -%}
+                          {%- if 'file_price' in file and file.file_price is not none -%}
+                            <button class="img-rounded action-button button-sm" id="charge-button"
+                                data-itemid="{{pid.pid_value}}" data-filename="{{file.filename}}" data-title="{{title_name}}"
+                                data-price="{{file.file_price}}" data-unit="{{file.currency_unit}}">
                               <i class="action-icon fa fa-jpy"></i>
                               {{_('Charge')}}
                             </button>
-                          </a>
+                            {% include "weko_records_ui/modal_charge_confirmation.html" %}
+                            {% include "weko_records_ui/modal_charge_success.html" %}
+                          {%- endif -%}
                         {%- endif -%}
                         <!-- Show button 'Information' -->
                         {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value, filename=file.filename or '[No FileName]') %}
@@ -359,22 +362,19 @@
                     {%- if 'billing' in file and 'priceinfo' in file -%}
                       <tr>
                         <td colspan="3">
-                          {# TODO: 通貨単位を設定ファイルから取得 #}
-                          {%- set currency_unit = '￥' -%}
-                          {# TODO: 税率を設定ファイルから取得 #}
-                          {%- set tax_rate = 1.1 -%}
-
                           {%- for priceinfo in file.priceinfo -%}
-                            {%- if 'tax' in priceinfo -%}
-                              {%- set price = ((priceinfo.price|int) * tax_rate)|int -%}
-                            {%- else -%}
+                            {%- if priceinfo.has_role and file.billing_file_permission -%}
+                              {%- set price = 0 -%}
+                            {%- elif 'tax' in priceinfo -%}
                               {%- set price = priceinfo.price|int -%}
+                            {%- else -%}
+                              {%- set price = priceinfo.price|int + ((priceinfo.price|int) * billing_settings['tax_rate'])|int -%}
                             {%- endif -%}
 
                             {%- if loop.index != 1 -%}
                               {{', '}}
                             {%- endif -%}
-                            {{priceinfo.billingrole}}：{{currency_unit}}{{price}}
+                            {{priceinfo.billingrole}}：{{billing_settings['currency_unit']|safe}}{{price}}
                           {%- endfor -%}
                         </td>
                       </tr>

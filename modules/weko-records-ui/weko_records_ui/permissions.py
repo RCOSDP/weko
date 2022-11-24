@@ -20,6 +20,8 @@
 
 """Permissions for Detail Page."""
 
+import requests
+
 from datetime import datetime as dt
 from datetime import timedelta, timezone
 
@@ -29,6 +31,7 @@ from flask_security import current_user
 from invenio_access import Permission, action_factory
 from invenio_accounts.models import User, Role
 from invenio_db import db
+from weko_admin.models import AdminSettings
 from weko_groups.api import Group, Membership, MembershipState
 from weko_index_tree.utils import check_index_permissions, get_user_roles
 from weko_records.api import ItemTypes
@@ -182,9 +185,8 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
                         is_can = False
 
                     if is_can and check_billing_file and fjson.get('billing'):
-                        billing_file_permission = check_billing_file_permission(
+                        is_can = check_billing_file_permission(
                             record['_deposit']['id'], fjson['filename'])
-                        is_can = billing_file_permission == 'accessible'
 
                     if not is_can:
                         # site license permission check
@@ -220,9 +222,8 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
                                 is_can = check_user_group_permission(
                                     fjson.get('groups'))
                             elif check_billing_file and fjson.get('billing'):
-                                billing_file_permission = check_billing_file_permission(
+                                is_can = check_billing_file_permission(
                                     record['_deposit']['id'], fjson['filename'])
-                                is_can = billing_file_permission == 'accessible'
                             else:
                                 is_can = True
                         if not is_can:
@@ -513,43 +514,287 @@ def __get_file_permission(record_id, file_name):
 def check_billing_file_permission(item_id, file_name):
     if not (current_user and current_user.is_authenticated):
         # 未ログインはアクセス不可能
-        return 'inaccessible'
+        return False
 
     # 課金済みチェック
-    # TODO: 課金チェックAPI実行
-    result = False
-    if result:
+    charge_result = check_charge(current_user.id, item_id, file_name)
+    if charge_result == 'already':
         # 課金済みの場合はアクセス権限あり
-        return 'accessible'
+        return True
 
     # 課金可能なロール一覧
-    item_billing_list = ItemBilling.query.filter_by(item_id = item_id).all()
+    item_billing_list = ItemBilling.query.filter_by(item_id=item_id).all()
     if not item_billing_list:
-        return 'inaccessible'
+        return False
+    # 無料のロール一覧
+    free_role_list = [item_billing for item_billing in item_billing_list if item_billing.price == 0]
 
     # ユーザーが持つロール一覧
     user_role_name_list = list(current_user.roles or [])
     user_role_list = Role.query.all()
     user_role_id_list = [user_role.id for user_role in user_role_list if user_role.name in user_role_name_list]
 
-    # 有料のロールと無料のロールを振り分ける
-    free_role_list = []
-    paid_role_list = []
-    for item_billing in item_billing_list:
-        if item_billing.price == 0:
-            free_role_list.append(item_billing)
-        else:
-            paid_role_list.append(item_billing)
-
     # 無料(価格0)のロールを持っていたらアクセス可能
     for free_role in free_role_list:
         if free_role.role_id in user_role_id_list:
-            return 'accessible'
+            return True
 
-    # 有料のロールを持っていたら課金可能
-    for paid_role in paid_role_list:
-        if paid_role.role_id in user_role_id_list:
-            return 'billable'
+    return False
 
-    return 'inaccessible'
+def get_file_price(item_id):
+    """ファイルの支払い金額を取得する
 
+    Args:
+        item_id : Item ID
+
+    Returns:
+        price   (int) : 支払い金額(None:課金権限なし)
+        unit    (str) : 通貨単位
+    """
+
+    file_price = None
+    unit = None
+    
+    # 課金可能なロール一覧
+    item_billing_list = ItemBilling.query.filter_by(item_id = item_id).all()
+    if not item_billing_list:
+        return file_price, unit
+
+    # ユーザーが持つロール一覧
+    user_role_name_list = list(current_user.roles or [])
+    user_role_list = Role.query.all()
+    user_role_id_list = [user_role.id for user_role in user_role_list if user_role.name in user_role_name_list]
+
+    billing_settings = AdminSettings.get('billing_settings')
+    tax_rate = billing_settings.tax_rate
+
+    # ユーザーが持つロールの中の最安値を取得
+    for item_billing in item_billing_list:
+        if item_billing.role_id in user_role_id_list:
+            price = item_billing.price
+            if not item_billing.include_tax:
+                price = int(price + price * tax_rate)
+            if file_price is None:
+                file_price = price
+            elif file_price > price:
+                file_price = price
+
+    if file_price is not None:
+        unit = billing_settings.currency_unit
+                
+    return file_price, unit
+
+def check_charge(user_id, item_id, file_name):
+    """課金状態を確認する
+
+    Args:
+        user_id   : User ID
+        item_id   : Item ID
+        file_name : File name
+
+    Returns:
+        str:
+            not_billed   : 未課金
+            already      : 課金済み
+            unknown_user : クレジットカード情報なし
+            shared       : クレジットカード登録不可(共有アカウント)
+            credit_error : クレジットカード情報エラー
+            api_error    : APIエラー
+    """
+    
+    repository_charge_settings = AdminSettings.get('repository_charge_settings')
+    charge_fqdn = repository_charge_settings.fqdn
+    charge_user = repository_charge_settings.id
+    charge_pass = repository_charge_settings.password
+    sys_id = repository_charge_settings.sys_id
+    content_id = f'{item_id}_{file_name}'
+
+    url = f'https://{charge_user}:{charge_pass}@{charge_fqdn}/charge/show'
+    params = {
+        'sys_id': sys_id,
+        'user_id': user_id,
+        'content_id': content_id,
+    }
+
+    # プロキシ設定
+    proxy_settings = AdminSettings.get('proxy_settings')
+    proxy_host = proxy_settings.host
+    proxy_port = proxy_settings.port
+    proxy_user = proxy_settings.user
+    proxy_pass = proxy_settings.password
+    proxy_mode = proxy_settings.use_proxy
+    proxies = {
+        'http': f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}',
+        'https': f'https://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}',
+    }
+
+    # HTTPリクエスト実行
+    try:
+        if proxy_mode:
+            res = requests.get(url, params=params, timeout=10, proxies=proxies)
+        else:
+            res = requests.get(url, params=params, timeout=10)
+    except Exception:
+        return 'api_error'
+
+    res_json = res.json()
+    if not res_json:
+        return 'api_error'
+    if isinstance(res_json, dict):
+        if res_json.get('message') == 'unknown_user_id':
+            # クレジットカード情報なし
+            return 'unknown_user'
+        elif res_json.get('message') == 'this_user_is_not_permit_to_use_credit_card' \
+                or res_json.get('message') == 'this_user_does_not_have_permission_for_credit_card':
+            # クレジットカード登録不可(共有アカウント)
+            return 'shared'
+        elif not res_json.get('location'):
+            # クレジットカード情報エラー
+            return 'credit_error'
+    elif isinstance(res_json, list):
+        if len(res_json) > 0 and not res_json[0]:
+            # 課金済
+            return "already";
+
+    # 未課金
+    return 'not_billed'
+
+
+def create_charge(user_id, item_id, file_name, price, title, file_url):
+    """課金予約を行う
+
+    Args:
+        user_id   : User ID
+        item_id   : Item ID
+        file_name : File name
+        price     : File price
+        title     : Item title
+        file_url  : File download url
+
+    Returns:
+        str:
+            already          : 課金済み
+            credit_error     : クレジットカード情報エラー(カード番号が未登録か無効)
+            connection_error : 通信エラー
+            api_error        : APIエラー
+            上記以外         : 明細番号
+    """
+
+    repository_charge_settings = AdminSettings.get('repository_charge_settings')
+    charge_fqdn = repository_charge_settings.fqdn
+    charge_user = repository_charge_settings.id
+    charge_pass = repository_charge_settings.password
+    sys_id = repository_charge_settings.sys_id
+    content_id = f'{item_id}_{file_name}'
+
+    url = f'https://{charge_user}:{charge_pass}@{charge_fqdn}/charge/create'
+    params = {
+        'sys_id': sys_id,
+        'user_id': user_id,
+        'content_id': content_id,
+        'price': price,
+        'title': title,
+        'uri': file_url,
+    }
+
+    # プロキシ設定
+    proxy_settings = AdminSettings.get('proxy_settings')
+    proxy_host = proxy_settings.host
+    proxy_port = proxy_settings.port
+    proxy_user = proxy_settings.user
+    proxy_pass = proxy_settings.password
+    proxy_mode = proxy_settings.use_proxy
+    proxies = {
+        'http': f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}',
+        'https': f'https://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}',
+    }
+
+    # HTTPリクエスト実行
+    try:
+        if proxy_mode:
+            res = requests.get(url, params=params, timeout=10, proxies=proxies)
+        else:
+            res = requests.get(url, params=params, timeout=10)
+    except Exception:
+        return 'api_error'
+
+    res_json = res.json()
+    if not res_json:
+        return 'api_error'
+
+    if res.headers.get('WEKO_CHARGE_STATUS') == -128:
+        # クレジットカード情報エラー(カード番号が未登録か無効)
+        return 'credit_error'
+
+    if res.headers.get('WEKO_CHARGE_STATUS') == -64:
+        # GMO通信エラー
+        return 'connection_error'
+
+    if isinstance(res_json, dict):
+        if res_json.get('charge_status') == '1':
+            # 課金済み
+            return 'already'
+
+        # 課金予約成功
+        return res_json.get('trade_id')
+
+    return 'api_error'
+
+
+def close_charge(user_id: int, trade_id: int):
+    """課金確定を行う
+
+    Args:
+        user_id  : User ID
+        trade_id : Trade ID
+
+    Returns:
+        bool:
+            True  : 課金成功
+            False : 課金失敗
+    """
+
+    repository_charge_settings = AdminSettings.get('repository_charge_settings')
+    charge_fqdn = repository_charge_settings.fqdn
+    charge_user = repository_charge_settings.id
+    charge_pass = repository_charge_settings.password
+    sys_id = repository_charge_settings.sys_id
+
+    url = f'https://{charge_user}:{charge_pass}@{charge_fqdn}/charge/close'
+    params = {
+        'sys_id': sys_id,
+        'user_id': user_id,
+        'trade_id': trade_id,
+    }
+
+    # プロキシ設定
+    proxy_settings = AdminSettings.get('proxy_settings')
+    proxy_host = proxy_settings.host
+    proxy_port = proxy_settings.port
+    proxy_user = proxy_settings.user
+    proxy_pass = proxy_settings.password
+    proxy_mode = proxy_settings.use_proxy
+    proxies = {
+        'http': f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}',
+        'https': f'https://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}',
+    }
+
+    # HTTPリクエスト実行
+    try:
+        if proxy_mode:
+            res = requests.get(url, params=params, timeout=10, proxies=proxies)
+        else:
+            res = requests.get(url, params=params, timeout=10)
+    except Exception:
+        return False
+
+    res_json = res.json()
+    if not res_json:
+        return False
+
+    if isinstance(res_json, dict):
+        if res_json.get('charge_status') == '1':
+            # 課金成功
+            return True
+
+    return False

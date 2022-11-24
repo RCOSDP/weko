@@ -56,7 +56,7 @@ from weko_records_ui.models import InstitutionName
 from .models import FileOnetimeDownload, FilePermission
 from .permissions import check_create_usage_report, \
     check_file_download_permission, check_user_group_permission, \
-    is_open_restricted, check_billing_file_permission
+    is_open_restricted, get_file_price
 
 
 
@@ -685,10 +685,12 @@ def get_file_info_list(record):
 
     def get_role_name(p_file):
         """Get role name for billing file"""
+        user_role_name_list = list(current_user.roles or [])
         for priceinfo in p_file['priceinfo']:
             role = next(filter(lambda x: x['id'] == int(priceinfo['billingrole']), roles), None)
             if role:
                 priceinfo['billingrole'] = role['name']
+            priceinfo['has_role'] = priceinfo['billingrole'] in user_role_name_list
 
     workflows = get_workflows()
     roles = get_roles()
@@ -757,12 +759,13 @@ def get_file_info_list(record):
                                     role, roles, 'name')
                     f['file_order'] = file_order
                     if 'billing' in f:
-                        # TODO: 効率が悪いので改善する
                         f['billing_file_permission'] = check_file_download_permission(
                             record, f, check_billing_file=True)
-                        f['billable'] = check_billing_file_permission(
-                            record['_deposit']['id'], f['filename']) == 'billable'
+                        if not f['billing_file_permission']:
+                            f['file_price'], f['currency_unit'] = get_file_price(record['_deposit']['id'])
                         get_role_name(f)
+                    print('billing')
+                    print(f)
                     files.append(f)
                 file_order += 1
     return is_display_file_preview, files
