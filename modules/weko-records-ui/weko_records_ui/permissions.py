@@ -603,13 +603,14 @@ def check_charge(user_id, item_id, file_name):
     """
     
     repository_charge_settings = AdminSettings.get('repository_charge_settings')
+    charge_protocol = repository_charge_settings.protocol
     charge_fqdn = repository_charge_settings.fqdn
     charge_user = repository_charge_settings.user
     charge_pass = repository_charge_settings.password
     sys_id = repository_charge_settings.sys_id
     content_id = f'{item_id}_{file_name}'
 
-    url = f'https://{charge_user}:{charge_pass}@{charge_fqdn}/charge/show'
+    url = f'{charge_protocol}://{charge_user}:{charge_pass}@{charge_fqdn}/charge/show'
     params = {
         'sys_id': sys_id,
         'user_id': user_id,
@@ -681,13 +682,14 @@ def create_charge(user_id, item_id, file_name, price, title, file_url):
     """
 
     repository_charge_settings = AdminSettings.get('repository_charge_settings')
+    charge_protocol = repository_charge_settings.protocol
     charge_fqdn = repository_charge_settings.fqdn
     charge_user = repository_charge_settings.user
     charge_pass = repository_charge_settings.password
     sys_id = repository_charge_settings.sys_id
     content_id = f'{item_id}_{file_name}'
 
-    url = f'https://{charge_user}:{charge_pass}@{charge_fqdn}/charge/create'
+    url = f'{charge_protocol}://{charge_user}:{charge_pass}@{charge_fqdn}/charge/create'
     params = {
         'sys_id': sys_id,
         'user_id': user_id,
@@ -755,12 +757,13 @@ def close_charge(user_id: int, trade_id: int):
     """
 
     repository_charge_settings = AdminSettings.get('repository_charge_settings')
+    charge_protocol = repository_charge_settings.protocol
     charge_fqdn = repository_charge_settings.fqdn
     charge_user = repository_charge_settings.user
     charge_pass = repository_charge_settings.password
     sys_id = repository_charge_settings.sys_id
 
-    url = f'https://{charge_user}:{charge_pass}@{charge_fqdn}/charge/close'
+    url = f'{charge_protocol}://{charge_user}:{charge_pass}@{charge_fqdn}/charge/close'
     params = {
         'sys_id': sys_id,
         'user_id': user_id,
