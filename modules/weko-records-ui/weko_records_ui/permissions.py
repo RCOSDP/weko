@@ -604,7 +604,7 @@ def check_charge(user_id, item_id, file_name):
     
     repository_charge_settings = AdminSettings.get('repository_charge_settings')
     charge_fqdn = repository_charge_settings.fqdn
-    charge_user = repository_charge_settings.id
+    charge_user = repository_charge_settings.user
     charge_pass = repository_charge_settings.password
     sys_id = repository_charge_settings.sys_id
     content_id = f'{item_id}_{file_name}'
@@ -648,11 +648,11 @@ def check_charge(user_id, item_id, file_name):
                 or res_json.get('message') == 'this_user_does_not_have_permission_for_credit_card':
             # クレジットカード登録不可(共有アカウント)
             return 'shared'
-        elif not res_json.get('location'):
+        elif res_json.get('location'):
             # クレジットカード情報エラー
             return 'credit_error'
     elif isinstance(res_json, list):
-        if len(res_json) > 0 and not res_json[0]:
+        if len(res_json) > 0 and res_json[0]:
             # 課金済
             return "already";
 
@@ -682,7 +682,7 @@ def create_charge(user_id, item_id, file_name, price, title, file_url):
 
     repository_charge_settings = AdminSettings.get('repository_charge_settings')
     charge_fqdn = repository_charge_settings.fqdn
-    charge_user = repository_charge_settings.id
+    charge_user = repository_charge_settings.user
     charge_pass = repository_charge_settings.password
     sys_id = repository_charge_settings.sys_id
     content_id = f'{item_id}_{file_name}'
@@ -731,12 +731,12 @@ def create_charge(user_id, item_id, file_name, price, title, file_url):
         return 'connection_error'
 
     if isinstance(res_json, dict):
-        if res_json.get('charge_status') == '1':
+        if str(res_json.get('charge_status')) == '1':
             # 課金済み
             return 'already'
 
         # 課金予約成功
-        return res_json.get('trade_id')
+        return str(res_json.get('trade_id'))
 
     return 'api_error'
 
@@ -756,7 +756,7 @@ def close_charge(user_id: int, trade_id: int):
 
     repository_charge_settings = AdminSettings.get('repository_charge_settings')
     charge_fqdn = repository_charge_settings.fqdn
-    charge_user = repository_charge_settings.id
+    charge_user = repository_charge_settings.user
     charge_pass = repository_charge_settings.password
     sys_id = repository_charge_settings.sys_id
 
@@ -793,7 +793,7 @@ def close_charge(user_id: int, trade_id: int):
         return False
 
     if isinstance(res_json, dict):
-        if res_json.get('charge_status') == '1':
+        if str(res_json.get('charge_status')) == '1':
             # 課金成功
             return True
 
