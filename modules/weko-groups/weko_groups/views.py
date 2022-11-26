@@ -56,7 +56,7 @@ def get_group_name(id_group):
     """
     group = Group.query.get(id_group)
     if group is not None:
-        return group.name
+        return group.escape_name
 
 
 @blueprint.route('/groupcount', methods=['GET'])
