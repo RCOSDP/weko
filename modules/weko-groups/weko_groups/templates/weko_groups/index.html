@@ -85,7 +85,7 @@
             <b>{{group.get_id()}}-{{ group.name }}</b>
           </div>
           <br>
-          <small>{{ group.description|truncate(200, True)|safe }}</small>
+          <small>{{ group.description|truncate(200, True) | sanitize_html_group | safe }}</small>
         </td>
         <td class="text-center vcenter">{{ group.members_count() }}</td>
         <td class="text-center btn-toolbar vcenter">

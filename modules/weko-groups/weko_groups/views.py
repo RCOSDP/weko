@@ -22,7 +22,8 @@
 """Groups Settings Blueprint."""
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, \
-    request, url_for
+    request, url_for, current_app
+import bleach
 from flask_babelex import gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -45,6 +46,43 @@ blueprint = Blueprint(
 
 
 # default_breadcrumb_root(blueprint, '.settings.groups')
+
+
+allow_tags = [
+    'abbr',
+    'acronym',
+    'b',
+    'blockquote',
+    'br',
+    'code',
+    'div',
+    'em',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'i',
+    'li',
+    'ol',
+    'p',
+    'pre',
+    'span',
+    'strike',
+    'strong',
+    'sub',
+    'sup',
+    'u',
+    'ul',
+]
+@blueprint.app_template_filter('sanitize_html_group')
+def sanitize_html_group(value):
+    """Sanitizes HTML using the bleach library."""
+    return bleach.clean(
+        value,
+        tags=allow_tags,
+        strip=False
+    ).strip()
 
 
 def get_group_name(id_group):
