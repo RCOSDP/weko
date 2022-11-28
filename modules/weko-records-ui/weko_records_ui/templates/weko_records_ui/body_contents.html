@@ -198,30 +198,16 @@
                           <!-- Show future open date message -->
                           {%- if file.future_date_message -%}
                             <div class="panel-body panel-body2">
-                              <span class="fa fa-key"
-                                style="font-size:18px;font-weight:bold">&nbsp;{{file.future_date_message}}</span>
+                              <span class="fa fa-key">&nbsp;{{file.future_date_message}}</span>
                             </div>
                           {%- endif -%}
                           {%- if access_permission and billing_file_access_permission -%}
                             <!-- Show check sum -->
-
-                            {%- if 'billing' in file and not file.future_date_message-%}
-                              {%- set icon_class = "" -%}
-                              {%- if ('billing_file_permission' in file) and not file.billing_file_permission -%}
-                                {%- set icon_class = "fa fa-key" -%}
-                              {%- endif -%}
-                              <div class="panel-body panel-body2">
-                                <span class="{{icon_class}}"
-                                  style="font-size:18px;font-weight:bold">&nbsp;{{_('Billing file')}}</span>
-                              </div>
-                            {%- endif -%}
-
                           {%- else -%}
                             <!-- Show 'Restricted Access' message -->
-                            {%- if not file.future_date_message -%}
+                            {%- if not file.future_date_message and not 'billing' in file -%}
                               <div class="panel-body panel-body2">
-                                <span class="fa fa-key"
-                                  style="font-size:18px;font-weight:bold">&nbsp;{{_('Restricted Access')}}</span>
+                                <span class="fa fa-key">&nbsp;{{_('Restricted Access')}}</span>
                               </div>
                             {%- endif -%}
                           {%- endif -%}

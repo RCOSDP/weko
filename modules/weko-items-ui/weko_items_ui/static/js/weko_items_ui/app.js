@@ -3870,47 +3870,67 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
 
         let displayTypeError = false;
+        let duplicateRolesError = false;
         let listNoInputError = [];
         let listInvalidPriceError = [];
-        let selectedRoles = [];
         $scope.filemeta_keys.forEach(filemeta_key => {
           const filemetaForm = $scope.getFormByKey(filemeta_key);
 
-          // 課金ファイルの表示形式取得
+          // 課金ファイルの表示形式
           const previewForm = $scope.getSubFormByKey(filemetaForm, 'displaytype');
           const previewKey = ''.concat(previewForm.key[0], '.0.', previewForm.key[2]);
-          const previewSelect = $scope.depositionForm[previewKey];
-          if (previewSelect && previewSelect.$viewValue == 'preview') {
+          const previewSelect = $(depositionForm).find('select[name*="keyName"]'.replace('keyName', previewKey));
+          previewSelect.each((i, e) => $(e).removeClass('ng-invalid'));
+
+          // 課金ファイルで表示形式がプレビューの場合はNG
+          if ($scope.depositionForm[previewKey] && $scope.depositionForm[previewKey].$viewValue == 'preview') {
             displayTypeError = true;
+            previewSelect.each((i, e) => $(e).addClass('ng-invalid'));
           }
 
           // 価格情報
           const priceinfoForm = $scope.getSubFormByKey(filemetaForm, 'priceinfo');
           const priceinfoKey = ''.concat(priceinfoForm.key[0], '.0.', priceinfoForm.key[2]);
+          // ロール
+          const selectedRoles = []
+          const roleSelect = $(depositionForm).find('select[name*="keyName"]'.replace('keyName', priceinfoKey));
+          roleSelect.each((i, e) => $(e).removeClass('ng-invalid'));
+          // 価格
+          const priceInput = $(depositionForm).find('input[type="text"][name*="keyName"]'.replace('keyName', priceinfoKey));
+          priceInput.each((i, e) => $(e).removeClass('ng-invalid'));
 
           // ロールの入力チェック
-          const roleSelect = $(depositionForm).find('select[name*="keyName"]'.replace('keyName', priceinfoKey));
           roleSelect.each((i, e) => {
             if ($scope.depositionForm[e.name].$viewValue) {
-              $(e).removeClass('ng-invalid');
               selectedRoles.push($scope.depositionForm[e.name].$viewValue);
             } else {
+              // 未入力の場合はNG
               $(e).addClass('ng-invalid');
               listNoInputError.push(priceinfoForm.items[0].title);
             }
           });
 
+          // ロールの重複チェック
+          const duplicateRoles = selectedRoles.filter((val, i, array) => !(array.indexOf(val) == i));
+          if (duplicateRoles.length > 0) {
+            duplicateRolesError = true;
+            roleSelect.each((i, e) => {
+              if (duplicateRoles.includes($scope.depositionForm[e.name].$viewValue)) {
+                $(e).addClass('ng-invalid');
+              }
+            });
+          }
+
           // 価格の入力チェック
-          const priceInput = $(depositionForm).find('input[type="text"][name*="keyName"]'.replace('keyName', priceinfoKey));
           priceInput.each((i, e) => {
             if ($scope.depositionForm[e.name].$viewValue) {
-              if (!isNaN($scope.depositionForm[e.name].$viewValue)) {
-                $(e).removeClass('ng-invalid');
-              } else {
+              if (isNaN($scope.depositionForm[e.name].$viewValue)) {
+                // 数字でない場合はNG
                 $(e).addClass('ng-invalid');
                 listInvalidPriceError.push(priceinfoForm.items[2].title);
               }
             } else {
+              // 未入力の場合はNG
               $(e).addClass('ng-invalid');
               listNoInputError.push(priceinfoForm.items[2].title);
             }
@@ -3919,7 +3939,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
         let message = ''
 
-        // 課金ファイルの表示形式がプレビューの場合はNG
+        // 課金ファイルの表示形式がプレビューの場合のエラーメッセージ
         if (displayTypeError) {
           if (message != '') {
             message += '<br/><br/>';
@@ -3927,7 +3947,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           message += $('#billing_file_display_type_error').val();
         }
 
-        // ロール、価格が未入力の場合はNG
+        // ロール、価格が未入力の場合の場合のエラーメッセージ
         listNoInputError = Array.from(new Set(listNoInputError)); // 重複を除く
         if (listNoInputError.length > 0) {
           if (message != '') {
@@ -3937,16 +3957,15 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           message += listNoInputError.join(', ');
         }
 
-        // ロールが重複している場合はNG
-        const selectedRoleNum = Array.from(new Set(selectedRoles)).length;
-        if (selectedRoleNum != selectedRoles.length) {
+        // ロールが重複している場合のエラーメッセージ
+        if (duplicateRolesError) {
           if (message != '') {
             message += '<br/><br/>';
           }
           message += $('#billing_file_role_duplication_error').val();
         }
 
-        // 価格が数値でない場合はNG
+        // 価格が数値でない場合のエラーメッセージ
         if (listInvalidPriceError.length > 0) {
           if (message != '') {
             message += '<br/><br/>';

@@ -662,8 +662,6 @@ def get_file_info_list(record):
         if access == "open_login" and not current_user.get_id():
             if not 'billing' in p_file:
                 p_file['future_date_message'] = _("Restricted Access")
-            else:
-                p_file['future_date_message'] = _("Billing file")
         elif access == "open_date":
             if date and isinstance(date, list) and date[0]:
                 adt = date[0].get('dateValue')

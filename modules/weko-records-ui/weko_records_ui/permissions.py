@@ -184,7 +184,8 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
                     except BaseException:
                         is_can = False
 
-                    if is_can and check_billing_file and fjson.get('billing'):
+                    if check_billing_file and fjson.get('billing'):
+                        # 課金ファイルのアクセス権限がある場合、日付にかかわらずアクセス可能とする
                         is_can = check_billing_file_permission(
                             record['_deposit']['id'], fjson['filename'])
 
