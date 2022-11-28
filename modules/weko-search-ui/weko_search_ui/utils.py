@@ -2808,7 +2808,7 @@ def handle_fill_system_item(list_record):
         if identifierRegistration_key:
             item["identifier_key"] = identifierRegistration_key
             doi_setting = prepare_doi_setting()
-            if item_id is not None:
+            if item_id is not None and doi_setting is not None:
                 from weko_deposit.api import WekoRecord
                 rec = WekoRecord.get_record_by_pid(item_id)
                 pid_doi = rec.pid_doi
@@ -2831,7 +2831,7 @@ def handle_fill_system_item(list_record):
                 else:
                     existed_doi = False
             
-            if existed_doi==False:
+            if existed_doi==False and doi_setting is not None:
                 __doi = item_doi.rstrip("/")
                 if doi_setting.jalc_doi == __doi:
                     checked_doi_ra = (item_doi_ra == "JaLC")
