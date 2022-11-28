@@ -971,12 +971,27 @@ def get_uri():
 
 @blueprint.route("/charge", methods=['GET'])
 def charge():
+    '''課金処理を行う。
+
+    Request parameter:
+        item_id   : アイテムID
+        file_name : ファイル名
+        title     : タイトル
+        price     : 支払い金額
+
+    Response parameter(json):
+        status :
+            success      : 課金成功
+            already      : 課金済み
+            error        : 課金失敗
+            credit_error : 課金失敗(クレジットカード情報の不備)
+    '''
     item_id = request.values.get('item_id')
     file_name = request.values.get('file_name')
     title = request.values.get('title')
     price = request.values.get('price')
     file_url = current_app.config['THEME_SITEURL'] + f'/record/{item_id}/files/{file_name}'
-    
+
     # 課金チェック
     charge_result = check_charge(current_user.id, int(item_id), file_name)
     if charge_result == 'already':

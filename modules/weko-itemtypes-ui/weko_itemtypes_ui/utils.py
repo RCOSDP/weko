@@ -482,7 +482,18 @@ def update_text_and_textarea(item_type_id, new_schema, new_form):
                             item['key'] = key_pattern.format(key, lang_key)
     return new_schema, new_form
 
+
 def check_billing_file_property(form):
+    '''課金ファイルプロパティのチェック
+
+    以下のチェックを行う。
+    * 課金ファイルプロパティが複数存在する場合はNGとする。
+
+    Returns:
+        True  : チェックOK
+        False : チェックNG
+    '''
+
     billing_file_num = 0
     for item in form:
         if 'items' in item:

@@ -512,6 +512,17 @@ def __get_file_permission(record_id, file_name):
 
 
 def check_billing_file_permission(item_id, file_name):
+    '''課金ファイルのアクセス権限チェック
+
+    Args:
+        item_id   : アイテムID
+        file_name : ファイル名
+
+    Returns:
+        True  : アクセス権限あり
+        False : アクセス権限なし
+    '''
+
     if not (current_user and current_user.is_authenticated):
         # 未ログインはアクセス不可能
         return False
@@ -541,6 +552,7 @@ def check_billing_file_permission(item_id, file_name):
 
     return False
 
+
 def get_file_price(item_id):
     """ファイルの支払い金額を取得する
 
@@ -554,9 +566,9 @@ def get_file_price(item_id):
 
     file_price = None
     unit = None
-    
+
     # 課金可能なロール一覧
-    item_billing_list = ItemBilling.query.filter_by(item_id = item_id).all()
+    item_billing_list = ItemBilling.query.filter_by(item_id=item_id).all()
     if not item_billing_list:
         return file_price, unit
 
@@ -581,8 +593,9 @@ def get_file_price(item_id):
 
     if file_price is not None:
         unit = billing_settings.currency_unit
-                
+
     return file_price, unit
+
 
 def check_charge(user_id, item_id, file_name):
     """課金状態を確認する
@@ -601,7 +614,7 @@ def check_charge(user_id, item_id, file_name):
             credit_error : クレジットカード情報エラー
             api_error    : APIエラー
     """
-    
+
     repository_charge_settings = AdminSettings.get('repository_charge_settings')
     charge_protocol = repository_charge_settings.protocol
     charge_fqdn = repository_charge_settings.fqdn
@@ -655,7 +668,7 @@ def check_charge(user_id, item_id, file_name):
     elif isinstance(res_json, list):
         if len(res_json) > 0 and res_json[0]:
             # 課金済
-            return "already";
+            return "already"
 
     # 未課金
     return 'not_billed'

@@ -764,8 +764,6 @@ def get_file_info_list(record):
                         if not f['billing_file_permission']:
                             f['file_price'], f['currency_unit'] = get_file_price(record['_deposit']['id'])
                         get_role_name(f)
-                    print('billing')
-                    print(f)
                     files.append(f)
                 file_order += 1
     return is_display_file_preview, files

@@ -3994,6 +3994,11 @@ def check_doi_validation_not_pass(item_id, activity_id,
 
 
 def create_or_update_item_billing(deposit):
+    '''item_billingレコードの作成/更新/削除
+
+    Args:
+        deposit : record metadata
+    '''
     try:
         with db.session.begin_nested():
             item_id = int(float(deposit.get('_deposit').get('pid').get('value')))
