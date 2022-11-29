@@ -47,6 +47,7 @@ from weko_admin.models import AdminSettings
 from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.models import ItemBilling
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
 from weko_workflow.api import WorkActivity, WorkFlow
@@ -681,13 +682,28 @@ def get_file_info_list(record):
             if str(item.get('id')) == str(key):
                 return item.get(get_key)
 
-    def get_role_name(p_file):
-        """Get role name for billing file"""
+    def add_billing_info(p_file):
+        '''ファイル情報に課金ファイルに関する情報を追加する'''
+
+        # 課金ファイルのアクセス権限
+        p_file['billing_file_permission'] = check_file_download_permission(record, p_file, check_billing_file=True)
+        if not p_file['billing_file_permission']:
+            # 課金額
+            p_file['file_price'], p_file['currency_unit'] = get_file_price(record['_deposit']['id'])
+
         user_role_name_list = list(current_user.roles or [])
         for priceinfo in p_file['priceinfo']:
+            # 税込/税抜
+            itemBilling = ItemBilling.query.filter_by(
+                item_id=record['_deposit']['id'], role_id=int(priceinfo['billingrole'])).one_or_none()
+            priceinfo['tax'] = 'include_tax' if itemBilling.include_tax else 'without_tax'
+
+            # ロールIDをロール名に変換
             role = next(filter(lambda x: x['id'] == int(priceinfo['billingrole']), roles), None)
             if role:
                 priceinfo['billingrole'] = role['name']
+
+            # ユーザーがこのロールをもっているかどうか
             priceinfo['has_role'] = priceinfo['billingrole'] in user_role_name_list
 
     workflows = get_workflows()
@@ -757,11 +773,7 @@ def get_file_info_list(record):
                                     role, roles, 'name')
                     f['file_order'] = file_order
                     if 'billing' in f:
-                        f['billing_file_permission'] = check_file_download_permission(
-                            record, f, check_billing_file=True)
-                        if not f['billing_file_permission']:
-                            f['file_price'], f['currency_unit'] = get_file_price(record['_deposit']['id'])
-                        get_role_name(f)
+                        add_billing_info(f)
                     files.append(f)
                 file_order += 1
     return is_display_file_preview, files

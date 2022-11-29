@@ -28,6 +28,7 @@ from collections import OrderedDict
 
 import pytz
 from flask import current_app
+from flask_babelex import gettext as _
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore import current_pidstore
@@ -1617,7 +1618,10 @@ def get_attribute_value_all_items(
                             and isinstance(val[0], str)
                         ):
                             if not hide:
-                                temp.append({key: val})
+                                if key == 'billing':
+                                    temp.append({'priceinfo': [' ']})
+                                else:
+                                    temp.append({key: val})
                         else:
                             if check_has_attribute_value(val):
                                 if not hide:
@@ -1644,7 +1648,10 @@ def get_attribute_value_all_items(
                     item_name = get_name(key) or ""
                     if val and (isinstance(val, str) or (key == "nameIdentifier")):
                         # the last children level
-                        d[item_name] = val
+                        if key == 'tax':
+                            d[item_name] = _(val)
+                        else:
+                            d[item_name] = val
                     elif (
                         isinstance(val, list)
                         and len(val) > 0
