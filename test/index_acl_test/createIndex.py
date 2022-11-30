@@ -31,7 +31,7 @@ def createIndex(idx,_parent = 0,depth = 0):
         pri_oai_guest = Index(id=idx,parent=_parent, 
                               index_name="{}-private-oai-guest-{}".format(depth,idx),index_name_english="{}-private-oai-guest-{}".format(depth,idx),
                               index_link_name="{}-private-oai-guest-{}".format(depth,idx),index_link_name_english="{}-private-oai-guest-{}".format(depth,idx),
-                              position=1, public_state=False,harvest_public_state=False, recursive_browsing_role=False,browsing_role = "3,-98,-99")
+                              position=1, public_state=False,harvest_public_state=True, recursive_browsing_role=False,browsing_role = "3,-98,-99")
         idx = idx + 1
         pub_nooai_guest = Index(id=idx,parent=_parent, 
                                 index_name="{}-public-nooai-guest-{}".format(depth,idx),index_name_english="{}-public-nooai-guest-{}".format(depth,idx),
