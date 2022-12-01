@@ -22,7 +22,7 @@
 from __future__ import absolute_import, print_function
 
 import ast
-
+import re
 import redis
 from redis import RedisError
 import requests
@@ -70,8 +70,8 @@ def _is_crawler(user_info):
             redis_connection = RedisConnection()
             connection = redis_connection.connection(db=current_app.config['CRAWLER_REDIS_DB'], kv = False)
        
-            restrict_list = connection.smembers(restricted_agent_list.list_url)
-            if len(restrict_list) == 0:
+            bot_regex_str = connection.get(restricted_agent_list.list_url)
+            if bot_regex_str == "":
                 current_app.logger.info("Crawler List is expired : " + str(restricted_agent_list.list_url))
                 empty_list = True
         except RedisError:
@@ -83,14 +83,15 @@ def _is_crawler(user_info):
             if not raw_res:
                 continue
             crawler_list = raw_res.split('\n')
-            crawler_list = [agent for agent in crawler_list if not agent.startswith('#')]
-            for restrict_ip in crawler_list:
-                connection.sadd(restricted_agent_list.list_url,restrict_ip)
+            crawler_list = [agent.lower() for agent in crawler_list if agent and not agent.startswith('#')]
+            bot_regex_str = '|'.join(crawler_list)
+            connection.set(restricted_agent_list.list_url, bot_regex_str)
             connection.expire(restricted_agent_list.list_url, current_app.config["CRAWLER_REDIS_TTL"])
-            restrict_list = set(crawler_list)
 
-        if (user_info['user_agent']).encode('utf-8') in restrict_list or \
-           (user_info['ip_address']).encode('utf-8') in restrict_list:
+        if bot_regex_str and (
+                re.search(bot_regex_str, user_info['user_agent'].lower()) or
+                re.search(bot_regex_str, user_info['ip_address'].lower())
+            ):
             return True
     return False
 
