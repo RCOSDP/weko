@@ -274,6 +274,8 @@ def base_app(instance_path, search_class, request):
         SERVER_NAME="TEST_SERVER",
         LOGIN_DISABLED=False,
         INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
+        WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME = 'jpcoar_v1_mapping',
+        WEKO_SCHEMA_DDI_SCHEMA_NAME = "ddi_mapping",
         INDEXER_FILE_DOC_TYPE="content",
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
         INDEX_IMG="indextree/36466818-image.jpg",

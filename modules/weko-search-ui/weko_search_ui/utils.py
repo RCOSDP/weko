@@ -1227,6 +1227,24 @@ def register_item_metadata(item, root_path, is_gakuninrdm=False):
                 data["deleted_items"] = deleted_items
         return data
 
+    def escape_newline(data):
+        """Replace <br/> in metadata with \n.
+        
+        {"key1":["test<br/>test"]} -> {"key1":["test\ntest"]}
+        :argument
+            data     -- {obj} escape target
+        :return 
+            obj      -- Obj after escaping
+        """
+        if isinstance(data,list):
+            return [escape_newline(d) for d in data]
+        elif isinstance(data,dict):
+            return {d:escape_newline(data[d]) for d in data}
+        elif isinstance(data,str):
+            return data.replace("<br/>","\n")
+        else:
+            return data
+
     item_id = str(item.get("id"))
     pid = PersistentIdentifier.query.filter_by(
         pid_type="recid", pid_value=item_id
@@ -1244,6 +1262,7 @@ def register_item_metadata(item, root_path, is_gakuninrdm=False):
             "title": item.get("item_title"),
         }
     )
+    new_data = escape_newline(new_data)
     item_status = {
         "index": new_data["path"],
         "actions": "publish",
