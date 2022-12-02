@@ -38,6 +38,7 @@ from invenio_accounts.testutils import create_test_user
 from invenio_admin import InvenioAdmin
 from invenio_cache import InvenioCache
 from invenio_communities.models import Community
+from invenio_deposit import InvenioDeposit
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_files_rest import InvenioFilesREST
@@ -52,7 +53,7 @@ from invenio_records import InvenioRecords
 from invenio_search import InvenioSearch, current_search_client
 
 from weko_admin import WekoAdmin
-from weko_admin.models import Identifier
+from weko_admin.models import Identifier,SessionLifetime
 from weko_authors import WekoAuthors
 from weko_deposit import WekoDeposit
 from weko_index_tree.models import Index
@@ -63,27 +64,7 @@ from weko_workflow import WekoWorkflow
 from weko_swordserver import WekoSWORDServer
 from weko_swordserver.views import blueprint
 
-
-#@pytest.fixture(scope='module')
-#def celery_config():
-#    """Override pytest-invenio fixture.
-#
-#    TODO: Remove this fixture if you add Celery support.
-#    """
-#    return {}
-#
-#
-#@pytest.fixture(scope='module')
-#def create_app(instance_path):
-#    """Application factory fixture."""
-#    def factory(**config):
-#        app = Flask('testapp', instance_path=instance_path)
-#        app.config.update(**config)
-#        Babel(app)
-#        WekoSWORDServer(app)
-#        app.register_blueprint(blueprint)
-#        return app
-#    return factory
+from tests.helpers import json_data, create_record
 
 @pytest.yield_fixture()
 def instance_path():
@@ -144,6 +125,7 @@ def base_app(instance_path):
     InvenioAccounts(app_)
     InvenioAdmin(app_)
     InvenioCache(app_)
+    InvenioDeposit(app_)
     InvenioFilesREST(app_)
     InvenioJSONSchemas(app_)
     InvenioOAuth2Server(app_)
@@ -179,14 +161,21 @@ def esindex(app):
         WEKO_AUTHORS_ES_INDEX_NAME="test-weko-author"
     )
     current_search_client.indices.delete(index="test-*")
-    mapping = json_data("data/author-v1.0.0.json")
+    mapping_author = json_data("data/author-v1.0.0.json")
     current_search_client.indices.create(
-        app.config["WEKO_AUTHORS_ES_INDEX_NAME"], body=mapping
+        app.config["WEKO_AUTHORS_ES_INDEX_NAME"], body=mapping_author
     )
     current_search_client.indices.put_alias(
         index=app.config["WEKO_AUTHORS_ES_INDEX_NAME"],name="test-weko-authors"
     )
     
+    mapping_item = json_data("data/item-v1.0.0.json")
+    current_search_client.indices.create(
+        app.config["INDEXER_DEFAULT_INDEX"], body=mapping_item
+    )
+    current_search_client.indices.put_alias(
+        index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko"
+    )
     
     yield current_search_client
     
@@ -450,18 +439,43 @@ def location(app,db):
     return loc
 
 @pytest.fixture()
+def records(db,location):
+    record_data = json_data("data/records/test_records.json")
+    item_data = json_data("data/records/test_items.json")
+    record_num = len(record_data)
+    result = []
+    for d in range(record_num):
+        result.append(create_record(record_data[d], item_data[d]))
+        db.session.commit()
+    return result
+
+@pytest.fixture()
+def es_records(app, esindex, records):
+    for recid, depid, record, item, parent, doi, deposit in records:
+        esindex.index(
+            index=app.config["INDEXER_DEFAULT_INDEX"],
+            doc_type="item-v1.0.0",
+            id=record.id,
+            body=record,
+            refresh="true"
+        )
+    return records
+
+@pytest.fixture()
+def sessionlifetime(app, db):
+    session_lifetime = SessionLifetime(lifetime=60, is_delete=False)
+    with db.session.begin_nested():
+        db.session.add(session_lifetime)
+
+@pytest.fixture()
 def make_zip():
-    
-    fp = BytesIO()
-    with ZipFile(fp, 'w', compression=ZIP_DEFLATED) as new_zip:
-        for dir, subdirs, files in os.walk("tests/data/zip_data/data"):
-            new_zip.write(dir,dir.split("/")[-1])
-            for file in files:
-                new_zip.write(os.path.join(dir, file),os.path.join(dir.split("/")[-1],file))
-    fp.seek(0)
-    return fp
-
-
-def json_data(filename):
-    with open(join(dirname(__file__),filename), "r") as f:
-        return json.load(f)
+    def factory():
+        fp = BytesIO()
+        with ZipFile(fp, 'w', compression=ZIP_DEFLATED) as new_zip:
+            for dir, subdirs, files in os.walk("tests/data/zip_data/data"):
+                new_zip.write(dir,dir.split("/")[-1])
+                for file in files:
+                    new_zip.write(os.path.join(dir, file),os.path.join(dir.split("/")[-1],file))
+        fp.seek(0)
+        return fp
+    return factory
