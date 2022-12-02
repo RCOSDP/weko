@@ -1561,7 +1561,14 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
             current_app.logger.error("sqlalchemy error: ", ex)
             db.session.rollback()
             if item.get("id"):
-                handle_remove_es_metadata(item)
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type="recid", pid_value=item["id"]
+                ).first()
+                bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
+                bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
+                    PIDVersioning(child=pid).last_child.object_uuid
+                )
+                handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
             current_app.logger.error("item id: %s update error." % item["id"])
             traceback.print_exc(file=sys.stdout)
             error_id = None
@@ -1578,7 +1585,14 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
             current_app.logger.error("elasticsearch  error: ", ex)
             db.session.rollback()
             if item.get("id"):
-                handle_remove_es_metadata(item)
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type="recid", pid_value=item["id"]
+                ).first()
+                bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
+                bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
+                    PIDVersioning(child=pid).last_child.object_uuid
+                )
+                handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
             current_app.logger.error("item id: %s update error." % item["id"])
             traceback.print_exc(file=sys.stdout)
             error_id = None
@@ -1595,7 +1609,14 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
             current_app.logger.error("redis  error: ", ex)
             db.session.rollback()
             if item.get("id"):
-                handle_remove_es_metadata(item)
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type="recid", pid_value=item["id"]
+                ).first()
+                bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
+                bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
+                    PIDVersioning(child=pid).last_child.object_uuid
+                )
+                handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
             current_app.logger.error("item id: %s update error." % item["id"])
             traceback.print_exc(file=sys.stdout)
             error_id = None
@@ -1612,7 +1633,14 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
             current_app.logger.error("Unexpected error: {}".format(ex))
             db.session.rollback()
             if item.get("id"):
-                handle_remove_es_metadata(item)
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type="recid", pid_value=item["id"]
+                ).first()
+                bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
+                bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
+                    PIDVersioning(child=pid).last_child.object_uuid
+                )
+                handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
             current_app.logger.error("item id: %s update error." % item["id"])
             traceback.print_exc(file=sys.stdout)
             error_id = None
