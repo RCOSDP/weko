@@ -861,10 +861,10 @@ def users(app, db):
         comadmin = User.query.filter_by(email="comadmin@test.org").first()
         repoadmin = User.query.filter_by(email="repoadmin@test.org").first()
         sysadmin = User.query.filter_by(email="sysadmin@test.org").first()
-        generaluser = User.query.filter_by(email="generaluser@test.org")
-        originalroleuser = create_test_user(email="originalroleuser@test.org")
-        originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
-        noroleuser = create_test_user(email="noroleuser@test.org")
+        generaluser = User.query.filter_by(email="generaluser@test.org").first()
+        originalroleuser = User.query.filter_by(email="originalroleuser@test.org").first()
+        originalroleuser2 = User.query.filter_by(email="originalroleuser2@test.org").first()
+        noroleuser = User.query.filter_by(email="noroleuser@test.org").first()
 
     role_count = Role.query.filter_by(name="System Administrator").count()
     if role_count != 1:
