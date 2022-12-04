@@ -28,16 +28,27 @@ import uuid
 from datetime import date, datetime, timedelta
 from os.path import join
 from time import sleep
-
 import pytest
 import requests
 from elasticsearch import Elasticsearch
+from elasticsearch.exceptions import RequestError
 from flask import Flask, url_for
 from flask_babelex import Babel
 from flask_babelex import lazy_gettext as _
 from flask_celeryext import FlaskCeleryExt
 from flask_login import LoginManager, current_user, login_user
 from flask_menu import Menu
+from mock import Mock, patch, MagicMock
+from pytest_mock import mocker
+from simplekv.memory.redisstore import RedisStore
+from six import BytesIO
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import Session
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
+from werkzeug.local import LocalProxy
+from tests.helpers import create_record, json_data
+
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionRoles, ActionUsers
 from invenio_accounts import InvenioAccounts
@@ -104,19 +115,14 @@ from invenio_rest import InvenioREST
 from invenio_search import InvenioSearch, RecordsSearch, current_search, current_search_client
 from invenio_stats import InvenioStats
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
+from invenio_indexer.signals import before_record_index
+from invenio_indexer.api import RecordIndexer
 from invenio_stats.contrib.event_builders import (
     build_file_unique_id,
     build_record_unique_id,
     file_download_event_builder,
 )
-from mock import Mock, patch
-from pytest_mock import mocker
-from simplekv.memory.redisstore import RedisStore
-from six import BytesIO
-from sqlalchemy import event
-from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session
-from sqlalchemy_utils.functions import create_database, database_exists, drop_database
+
 from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS, WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_admin.models import FacetSearchSetting, Identifier, SessionLifetime
@@ -148,9 +154,6 @@ from weko_theme.config import THEME_BODY_TEMPLATE, WEKO_THEME_ADMIN_ITEM_MANAGEM
 from weko_theme.views import blueprint as weko_theme_blueprint
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Action, ActionStatus, ActionStatusPolicy, Activity, FlowAction, FlowDefine, WorkFlow
-from werkzeug.local import LocalProxy
-
-from tests.helpers import create_record, json_data
 from weko_search_ui import WekoSearchREST, WekoSearchUI
 from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX, WEKO_SEARCH_TYPE_DICT, WEKO_SEARCH_UI_BASE_TEMPLATE
 from weko_search_ui.rest import create_blueprint
@@ -271,6 +274,8 @@ def base_app(instance_path, search_class, request):
         SERVER_NAME="TEST_SERVER",
         LOGIN_DISABLED=False,
         INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
+        WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME = 'jpcoar_v1_mapping',
+        WEKO_SCHEMA_DDI_SCHEMA_NAME = "ddi_mapping",
         INDEXER_FILE_DOC_TYPE="content",
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
         INDEX_IMG="indextree/36466818-image.jpg",
@@ -345,7 +350,8 @@ def base_app(instance_path, search_class, request):
                 year=dict(
                     fields=["year"],
                 )
-            )
+            ),
+            "test-weko": {"test-weko": {"fields": [1,2,3], "nested": 1}}
         },
         FILES_REST_DEFAULT_MAX_FILE_SIZE=None,
         WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS=False,
@@ -855,10 +861,10 @@ def users(app, db):
         comadmin = User.query.filter_by(email="comadmin@test.org").first()
         repoadmin = User.query.filter_by(email="repoadmin@test.org").first()
         sysadmin = User.query.filter_by(email="sysadmin@test.org").first()
-        generaluser = User.query.filter_by(email="generaluser@test.org")
-        originalroleuser = create_test_user(email="originalroleuser@test.org")
-        originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
-        noroleuser = create_test_user(email="noroleuser@test.org")
+        generaluser = User.query.filter_by(email="generaluser@test.org").first()
+        originalroleuser = User.query.filter_by(email="originalroleuser@test.org").first()
+        originalroleuser2 = User.query.filter_by(email="originalroleuser2@test.org").first()
+        noroleuser = User.query.filter_by(email="noroleuser@test.org").first()
 
     role_count = Role.query.filter_by(name="System Administrator").count()
     if role_count != 1:
@@ -2684,6 +2690,64 @@ def identifier(db):
     db.session.add(doi_identifier)
     db.session.commit()
     return doi_identifier
+
+
+def record_indexer_receiver(sender, json=None, record=None, index=None,
+                            **kwargs):
+    """Mock-receiver of a before_record_index signal."""
+    if ES_VERSION[0] == 2:
+        suggest_byyear = {}
+        suggest_byyear['context'] = {
+            'year': json['year']
+        }
+        suggest_byyear['input'] = [json['title'], ]
+        suggest_byyear['output'] = json['title']
+        suggest_byyear['payload'] = copy.deepcopy(json)
+
+        suggest_title = {}
+        suggest_title['input'] = [json['title'], ]
+        suggest_title['output'] = json['title']
+        suggest_title['payload'] = copy.deepcopy(json)
+
+        json['suggest_byyear'] = suggest_byyear
+        json['suggest_title'] = suggest_title
+
+    elif ES_VERSION[0] >= 5:
+        suggest_byyear = {}
+        suggest_byyear['contexts'] = {
+            'year': [str(json['year'])]
+        }
+        suggest_byyear['input'] = [json['title'], ]
+
+        suggest_title = {}
+        suggest_title['input'] = [json['title'], ]
+        json['suggest_byyear'] = suggest_byyear
+        json['suggest_title'] = suggest_title
+
+    return json
+
+
+
+
+@pytest.yield_fixture()
+def es(app):
+    """Elasticsearch fixture."""
+    try:
+        list(current_search.create())
+    except RequestError:
+        list(current_search.delete(ignore=[404]))
+        list(current_search.create(ignore=[400]))
+    current_search_client.indices.refresh()
+    yield current_search_client
+    list(current_search.delete(ignore=[404]))
+
+
+@pytest.yield_fixture()
+def indexer(app, es):
+    """Create a record indexer."""
+    InvenioIndexer(app)
+    before_record_index.connect(record_indexer_receiver, sender=app)
+    yield RecordIndexer()
 
 
 def make_record(db, indexer, i, filepath, filename, mimetype, doi_prefix=None):
