@@ -49,9 +49,12 @@ FRIENDS_SCHEMA_LOCATION = 'http://www.openarchives.org/OAI/2.0/friends/'
 FRIENDS_SCHEMA_LOCATION_XSD = \
     'http://www.openarchives.org/OAI/2.0/friends/.xsd'
 
-OUTPUT_HARVEST = 3
+# OUTPUT_HARVEST = 3
+# HARVEST_PRIVATE = 2
+# PRIVATE_INDEX = 1
+OUTPUT_HARVEST = 1
 HARVEST_PRIVATE = 2
-PRIVATE_INDEX = 1
+PRIVATE_INDEX = 3
 
 
 @lru_cache(maxsize=100)
