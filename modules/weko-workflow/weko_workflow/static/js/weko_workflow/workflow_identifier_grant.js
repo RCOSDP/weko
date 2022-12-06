@@ -288,8 +288,8 @@ require([
           alert(response.msg);
         } else {
           alert('Server error');
-          endLoading(withdrawBtn);
         }
+        endLoading(withdrawBtn);
       }
     });
     event.preventDefault();
