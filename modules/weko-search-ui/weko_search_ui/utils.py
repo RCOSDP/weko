@@ -1480,7 +1480,7 @@ def send_item_created_event_to_es(item, request_info):
     # Prepare stored data.
     data = _prepare_stored_data(item, request_info)
     doc_type = "stats-item-create"
-    index = "{}-events-{}-{}".format(index_prefix, doc_type, timestamp.year)
+    index = "{}-events-{}".format(index_prefix, doc_type)
     id = hash_id(timestamp, data)
     # Save item to stats events.
     _push_item_to_elasticsearch(id, index, doc_type, data)
