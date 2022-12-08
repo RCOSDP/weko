@@ -1633,6 +1633,24 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           $rootScope.recordsVM.invenioRecordsModel[$scope.resourceTypeKey].resourceuri = resourceuri;
         }
       }
+      $scope.accessRoleChange = function () {
+        for (let key in $rootScope.recordsVM.invenioRecordsModel) {
+          if ($rootScope.recordsVM.invenioRecordsModel[key] instanceof Array) {
+            try {
+              if ($rootScope.recordsVM.invenioRecordsModel[key][0].accessrole !== undefined) {
+                // check value of accessrole if open date or not
+                if ($rootScope.recordsVM.invenioRecordsModel[key][0].accessrole !== 'open_date') {
+                  // change dataValue in $rootScope.recordsVM.invenioRecordsModel
+                  $scope.modifiedFileAccessRole = $rootScope.recordsVM.invenioRecordsModel[key][0].accessrole;
+                  $rootScope.recordsVM.invenioRecordsModel[key][0].date[0].dateValue = $rootScope.recordsVM.invenioRecordsModel.pubdate
+                }
+              }
+            } catch {
+              continue
+            }
+          }
+        }
+      }
       $scope.getBibliographicMetaKey = function () {
         let recordSchemaProperties = $rootScope.recordsVM.invenioRecordsSchema.properties;
         let bibliographicKey = $scope.bibliographic_titles;
