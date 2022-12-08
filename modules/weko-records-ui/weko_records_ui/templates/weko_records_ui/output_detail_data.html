@@ -283,3 +283,55 @@
         {%- endif -%}
     {%- endfor -%}
 {% endmacro %}
+
+{% macro output_price_info(record_detail_data) %}
+    {%- for attribute_data in record_detail_data['attribute_value_mlt'] -%}
+        {{ output_price_info_mlt(attribute_data) }}
+    {%- endfor -%}
+{% endmacro %}
+
+{% macro output_price_info_mlt(attribute_value_mlt, file_name) %}
+    {%- set ns = namespace(file_name=file_name, write_header=False) -%}
+    
+    {%- if not ns.file_name -%}
+        {%- for attribute_data in attribute_value_mlt -%}
+            {%- if attribute_data is mapping -%}
+                {%- for k, v in attribute_data.items() -%}
+                    {%- if k.split('.')|length > 1 and k.split('.')[1] == 'filename' -%}
+                        {%- set ns.file_name = v -%}
+                    {%- endif -%}
+                {%- endfor -%}
+            {%- endif -%}
+        {%- endfor -%}
+    {%- endif -%}
+
+    {%- for attribute_data in attribute_value_mlt -%}
+        {%- if attribute_data is mapping -%}
+            {%- for k, v in attribute_data.items() -%}
+                {%- if k.split('.')|length > 2 and k.split('.')[1] == 'priceinfo[]' -%}
+                    {%- if not ns.write_header -%}
+                        <tr>
+                            <th scope="row" colspan="6" style="border-bottom: none">{{_('PriceInfo')}}</th>
+                            <td></td>
+                        </tr>
+                        {{ child_data(_('FileName'), ns.file_name, 1) }}
+                        {%- set ns.write_header = True -%}
+                    {%- endif -%}
+                    {%- if k.split('.')[2] == 'tax' -%}
+                        {{ child_data(_(k.split('.')[2]), _(v), 1) }}
+                    {%- else -%}
+                        {{ child_data(_(k.split('.')[2]), v, 1) }}
+
+                        {%- if k.split('.')[2] == 'billingrole' -%}
+                            {%- if not k|replace("billingrole", "tax") in attribute_data.keys() -%}
+                                {{ child_data(_('tax'), _('without_tax'), 1) }}
+                            {%- endif -%}
+                        {%- endif -%}
+                    {%- endif -%}
+                {%- endif -%}
+            {%- endfor -%}
+        {%- elif attribute_data is iterable -%}
+            {{ output_price_info_mlt(attribute_data, ns.file_name) }}
+        {%- endif -%}
+    {%- endfor -%}
+{% endmacro %}

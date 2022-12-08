@@ -326,6 +326,7 @@
 $(function() {
     handleDownloadBillingFile();
     handleConfirmButton();
+    handleChargeBillingFile();
 });
 
 function handleDownloadBillingFile(isVersionTable) {
@@ -362,6 +363,83 @@ function handleConfirmButton() {
         link.click();
         $("#confirm_download").modal('toggle');
         $("#download_confirm_content").text("");
+    });
+}
+
+function handleChargeBillingFile() {
+    // 課金ボタン押下時の処理
+    $('button#charge-button').on('click', function () {
+        const data = $(this).data();
+        const message = data.unit + data.price + ' ' + $('#charge_confirmation').val();
+        $('#charge_confirmation_message').html(message);
+        $('#action_charge_confirmation').modal('show');
+    });
+
+    // 課金ボタン押下時の処理（課金確認メッセージOK時の処理）
+    $('button#modal_charge').on('click', function () {
+        $('#action_charge_confirmation').modal('hide');
+        const data = $('button#charge-button').data();
+        let params = {
+            'item_id': data.itemid,
+            'file_name': data.filename,
+            'title': data.title,
+            'price': data.price,
+        }
+        params = Object.keys(params).map(key => key + '=' + params[key]).join('&');
+        $.ajax({
+            url: '/charge' + '?' + params,
+            type: 'GET',
+            contentType: 'application/json',
+            success: function (data) {
+                if (data.status == 'success') {
+                    $('#success_flag').val('true')
+                    // 課金成功メッセージ表示
+                    const message = $('#charge_success').val();
+                    $('#charge_success_message').html(message);
+                    $('#action_charge_success').modal('show');
+                }
+                else if (data.status == 'already') {
+                    // 課金済みメッセージ表示
+                    const message = $('#charge_already').val();
+                    $('#charge_success_message').html(message);
+                    $('#action_charge_success').modal('show');
+                }
+                else if (data.status == 'credit_error') {
+                    // 課金失敗メッセージ表示
+                    const message = $('#charge_credit_error').val();
+                    $('#charge_success_message').html(message);
+                    $('#action_charge_success').modal('show');
+                }
+                else {
+                    // 課金失敗メッセージ表示
+                    const message = $('#charge_error').val();
+                    $('#charge_success_message').html(message);
+                    $('#action_charge_success').modal('show');
+                }
+            },
+            error: function (error) {
+                // 課金失敗メッセージ表示
+                const message = $('#charge_error').val();
+                $('#charge_success_message').html(message);
+                $('#action_charge_success').modal('show');
+            }
+        });
+    });
+
+    $('button#charge_modal_ok').on('click', function () {
+        $('#action_charge_success').modal('hide');
+        if ($('#success_flag').val() == 'true') {
+            // 画面を更新
+            location.reload();
+        }
+    });
+
+    $('button#charge_modal_close_icon').on('click', function () {
+        $('#action_charge_success').modal('hide');
+        if ($('#success_flag').val() == 'true') {
+            // 画面を更新
+            location.reload();
+        }
     });
 }
 

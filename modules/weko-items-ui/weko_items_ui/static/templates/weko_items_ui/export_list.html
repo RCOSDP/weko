@@ -35,7 +35,9 @@
               <p class="text-danger" id="bibtex_err_{{record.id}}" ></p>
               </td>
             <td>
-              {{ record.metadata.hasOwnProperty('_files_info') ? record.metadata._files_info.length : '0' }}
+              {{ record.metadata.hasOwnProperty('_file_num')
+                ? record.metadata._file_num
+                : record.metadata.hasOwnProperty('_files_info') ? record.metadata._files_info.length : '0' }}
             </td>
           </tr>
         </tbody>

@@ -47,6 +47,7 @@ from weko_admin.models import AdminSettings
 from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.models import ItemBilling
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
 from weko_workflow.api import WorkActivity, WorkFlow
@@ -56,7 +57,7 @@ from weko_records_ui.models import InstitutionName
 from .models import FileOnetimeDownload, FilePermission
 from .permissions import check_create_usage_report, \
     check_file_download_permission, check_user_group_permission, \
-    is_open_restricted
+    is_open_restricted, get_file_price
 
 
 
@@ -660,7 +661,8 @@ def get_file_info_list(record):
         access = p_file.get("accessrole", '')
         date = p_file.get('date')
         if access == "open_login" and not current_user.get_id():
-            p_file['future_date_message'] = _("Restricted Access")
+            if not 'billing' in p_file:
+                p_file['future_date_message'] = _("Restricted Access")
         elif access == "open_date":
             if date and isinstance(date, list) and date[0]:
                 adt = date[0].get('dateValue')
@@ -679,6 +681,30 @@ def get_file_info_list(record):
         for item in array_json:
             if str(item.get('id')) == str(key):
                 return item.get(get_key)
+
+    def add_billing_info(p_file):
+        '''ファイル情報に課金ファイルに関する情報を追加する'''
+
+        # 課金ファイルのアクセス権限
+        p_file['billing_file_permission'] = check_file_download_permission(record, p_file, check_billing_file=True)
+        if not p_file['billing_file_permission']:
+            # 課金額
+            p_file['file_price'], p_file['currency_unit'] = get_file_price(record['_deposit']['id'])
+
+        user_role_name_list = list(current_user.roles or [])
+        for priceinfo in p_file['priceinfo']:
+            # 税込/税抜
+            itemBilling = ItemBilling.query.filter_by(
+                item_id=record['_deposit']['id'], role_id=int(priceinfo['billingrole'])).one_or_none()
+            priceinfo['tax'] = 'include_tax' if itemBilling.include_tax else 'without_tax'
+
+            # ロールIDをロール名に変換
+            role = next(filter(lambda x: x['id'] == int(priceinfo['billingrole']), roles), None)
+            if role:
+                priceinfo['billingrole'] = role['name']
+
+            # ユーザーがこのロールをもっているかどうか
+            priceinfo['has_role'] = priceinfo['billingrole'] in user_role_name_list
 
     workflows = get_workflows()
     roles = get_roles()
@@ -746,6 +772,8 @@ def get_file_info_list(record):
                                 p['role'] = get_data_by_key_array_json(
                                     role, roles, 'name')
                     f['file_order'] = file_order
+                    if 'billing' in f:
+                        add_billing_info(f)
                     files.append(f)
                 file_order += 1
     return is_display_file_preview, files

@@ -491,6 +491,22 @@ msgstr ""
 msgid "Export"
 msgstr "インポート"
 
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:508
+msgid "multiple_billing_file_error"
+msgstr "課金ファイルに複数のファイルを登録することはできません。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:510
+msgid "billing_file_display_type_error"
+msgstr "課金ファイルの表示形式にプレビューを指定することはできません。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:512
+msgid "billing_file_role_duplication_error"
+msgstr "同じロールに複数の価格を設定することはできません。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:514
+msgid "billing_file_invalid_price_error"
+msgstr "価格に数値を入力してください。"
+
 #~ msgid "Item Test Data"
 #~ msgstr "アイテムテストデータ"
 

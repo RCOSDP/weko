@@ -346,10 +346,6 @@ def get_schema_form(item_type_id=0, activity_id=''):
 
         for elem in schema_form:
             set_multi_language_name(elem, cur_lang)
-            if 'items' in elem:
-                items = elem['items']
-                for item in items:
-                    set_multi_language_name(item, cur_lang)
 
         if 'default' != cur_lang:
             for elem in schema_form:

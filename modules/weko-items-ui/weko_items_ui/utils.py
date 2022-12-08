@@ -1545,7 +1545,7 @@ def _export_item(record_id,
         if include_contents:
             # Get files
             for file in record.files:  # TODO: Temporary processing
-                if check_file_download_permission(record, file.info()):
+                if check_file_download_permission(record, file.info(), check_billing_file=True):
                     if file.info().get('accessrole') != 'open_restricted':
                         exported_item['files'].append(file.info())
                         # TODO: Then convert the item into the desired format
@@ -1984,6 +1984,11 @@ def set_multi_language_name(item, cur_lang):
             if 'name_i18n' in value \
                     and len(value['name_i18n'][cur_lang]) > 0:
                 value['name'] = value['name_i18n'][cur_lang]
+
+    if 'items' in item:
+        items2 = item['items']
+        for item2 in items2:
+            set_multi_language_name(item2, cur_lang)
 
 
 def get_data_authors_prefix_settings():

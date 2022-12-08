@@ -1382,3 +1382,39 @@ msgstr ""
 
 msgid "This data is not available for this user."
 msgstr ""
+
+msgid "PriceInfo"
+msgstr "Price"
+
+msgid "FileName"
+msgstr "File Name"
+
+msgid "billingrole"
+msgstr "Role"
+
+msgid "tax"
+msgstr "Tax"
+
+msgid "include_tax"
+msgstr "Include tax"
+
+msgid "without_tax"
+msgstr "Without tax"
+
+msgid "price"
+msgstr "Price"
+
+msgid "charge_confirmation"
+msgstr "will be charged. Do you really want to purchase?"
+
+msgid "charge_success"
+msgstr "Charge successful."
+
+msgid "charge_already"
+msgstr "Already charged."
+
+msgid "charge_credit_error"
+msgstr "Charge failed. Please check your credit card information."
+
+msgid "charge_error"
+msgstr "Charge failed."

@@ -44,7 +44,8 @@ from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ATT, \
 from .permissions import item_type_permission
 from .utils import check_duplicate_mapping, fix_json_schema, \
     has_system_admin_access, remove_xsd_prefix, \
-    update_required_schema_not_exist_in_form, update_text_and_textarea
+    update_required_schema_not_exist_in_form, update_text_and_textarea, \
+    check_billing_file_property
 from zipfile import ZipFile, ZIP_DEFLATED
 from marshmallow import fields, missing, post_dump, Schema
 from weko_records.models import ItemType, ItemTypeName, ItemTypeMapping, ItemTypeProperty
@@ -185,6 +186,9 @@ class ItemTypeMetaDataView(BaseView):
 
             if not json_schema:
                 raise ValueError('Schema is in wrong format.')
+
+            if not check_billing_file_property(table_row_map.get('form')):
+                raise ValueError('Can\'t register multiple files for the billing file.')
 
             record = ItemTypes.update(id_=item_type_id,
                                       name=table_row_map.get('name'),
