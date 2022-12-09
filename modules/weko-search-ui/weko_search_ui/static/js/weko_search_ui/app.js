@@ -311,18 +311,11 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $scope.sort_index_list = function (data_list) {
     let temp_key_list = []
     $scope.sorted_child_list = []
-    if (child_list.length == 0) {
-      for (var j = 1; j < data_list.length; j++) {
-        $scope.sorted_child_list.push(data_list[j]);
-      }
-    }
-    else {
-      for (var i = 0; i < child_list.length; i++) {
-        for (var j = 0; j < data_list.length; j++) {
-          if (temp_key_list.indexOf(data_list[j].key) == -1 && child_list[i] == data_list[j].key.split('/').pop()) {
-            temp_key_list.push(data_list[j].key);
-            $scope.sorted_child_list.push(data_list[j]);
-          }
+    for (var i = 0; i < child_list.length; i++) {
+      for (var j = 0; j < data_list.length; j++) {
+        if (temp_key_list.indexOf(data_list[j].key) == -1 && child_list[i] == data_list[j].key.split('/').pop()) {
+          temp_key_list.push(data_list[j].key);
+          $scope.sorted_child_list.push(data_list[j]);
         }
       }
     }

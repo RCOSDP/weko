@@ -1063,3 +1063,17 @@ def test_membership_search(example_group):
             Membership.query, 'test2@example').one().user_id)
         assert member.get_id() == str(Membership.search(
             Membership.query, '@example').one().user_id)
+
+# .tox/c1/bin/pytest --cov=weko_groups tests/test_models.py::test_function_issue34801 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-groups/.tox/c1/tmp
+def test_function_issue34801(app):
+    with app.app_context():
+        from weko_groups.models import Group, \
+            GroupAdmin, Membership, SubscriptionPolicy, PrivacyPolicy
+        from weko_groups.views import get_group_name
+
+        g = Group.create(name="test<script>alert()</script>")
+        assert g.name == "test<script>alert()</script>"
+        result = get_group_name(g.id)
+        assert result == "test&lt;script&gt;alert()&lt;/script&gt;"
+        assert g.escape_name == "test&lt;script&gt;alert()&lt;/script&gt;"
+        assert g.name == "test<script>alert()</script>"
