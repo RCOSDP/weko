@@ -153,7 +153,6 @@ def schema(title='', multi_flag=multiple_flag):
                         'open_login',
                         'open_no'
                     ],
-                    'onChange': 'accessRoleChange()',
                     'title': 'アクセス'
                 },
                 'displaytype': {
