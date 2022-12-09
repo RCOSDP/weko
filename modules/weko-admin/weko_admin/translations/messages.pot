@@ -1575,3 +1575,15 @@ msgstr "実行中..."
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "haserror"
 msgstr "エラー発生中につき実行できません"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "validationMsg1"
+msgstr "実行モードが選ばれていません。"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "confirmMessage"
+msgstr "本処理の実行にはかなりの時間がかかることが予想されます。インデックスの再作成処理を実行してよいですか？"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "completed"
+msgstr "処理が完了しました。"

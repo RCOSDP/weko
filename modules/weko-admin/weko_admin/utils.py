@@ -27,6 +27,9 @@ import zipfile
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 from typing import Dict, Tuple, Union
+from invenio_search.api import RecordsSearch
+from elasticsearch.exceptions import NotFoundError
+from elasticsearch_dsl.query import QueryString
 
 import redis
 from redis import sentinel
@@ -41,6 +44,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
+
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.facets import terms_filter
 from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
@@ -48,10 +52,11 @@ from jinja2 import Template
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
+
 from weko_records.api import ItemsMetadata
 from weko_redis.redis import RedisConnection
 from elasticsearch import Elasticsearch
-
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 
 
 from . import config
@@ -2243,65 +2248,46 @@ def overwrite_the_memory_config_with_db(app, site_info):
                 site_info.addthis_user_id,
             )
 
-def elasticsearch_reindex():
-    """ reindex item index """
+def elasticsearch_reindex( is_db_to_es ):
+    """ 
+    elasticsearchのindex *-weko-item-*の再インデックスを行います。
+        注意: システム内での同時実行禁止です。同時実行した場合に*-weko-item-*の状態を保証できません。 
+        注意: 実行中に投入されたドキュメントが反映されない可能性があるため、稼働中の実行禁止です。メンテナンス期間中のみ実行可としてください。
+
+    Parameters
+    ----------
+    is_db_to_es : boolean
+        Trueの場合、DBから取得したデータからDocumentsを作成します。
+        Falseの場合、もともとの*-weko-item-*のDocumentsを再登録します。
+    
+    Returns
+    -------
+        'completed' : str
+        
+    Raises
+    ------
+    AssersionError 
+        ElasticSearchからのレスポンスコードが200でなかった場合
+        （後続処理は中断）
+    """
 
     # consts
     elasticsearch_host = os.environ.get('INVENIO_ELASTICSEARCH_HOST') 
-    prefix = os.environ.get('SEARCH_INDEX_PREFIX')
     base_url = 'http://' + elasticsearch_host + ':9200/'
     reindex_url = base_url + '_reindex?pretty&refresh=true&wait_for_completion=true'
-
-    index = "{}-weko-item-v1.0.0".format(prefix)
+    # index = "{}-weko-item-v1.0.0".format(prefix)
+    index = current_app.config['INDEXER_DEFAULT_INDEX']
     tmpindex = "{}-tmp".format(index)
     # alias_name = "{}-weko".format(prefix)
+    alias_name = current_app.config['SEARCH_UI_SEARCH_INDEX']
 
-    # aliasを取得
-    # mappingsを取得
-    # settingsを取得
-    # res = json.loads(requests.get(base_url + index).text)[index]
-    # FIXME! res get from @/code/modules/weko-schema-ui/weko_schema_ui/mappings/v6/weko/item-v1.0.0.json
-    # 下記は、今エラーが出ている。原因不明。
-    # http://192.168.56.103:29201/tenant1-weko-item-v1.0.0
-    res = {"aliases":{"tenant1-weko":{}},"mappings":{"item-v1.0.0":{"dynamic_templates":[{"weko_id":{"match":"^weko_id$","match_mapping_type":"string","match_pattern":"regex","mapping":{"copy_to":"weko_id","fielddata":True,"index":False,"type":"text"}}},{"string":{"match_mapping_type":"string","mapping":{"copy_to":"search_string","fields":{"raw":{"ignore_above":256,"type":"keyword"}},"index":False,"type":"text"}}},{"date_string":{"match_mapping_type":"date","mapping":{"copy_to":"search_string","fields":{"raw":{"ignore_above":256,"type":"keyword"}},"index":False,"type":"text"}}}],"properties":{"_created":{"type":"date"},"_item_metadata":{"properties":{"_oai":{"properties":{"id":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]},"sets":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]}}},"control_number":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]},"item_1617186331708":{"properties":{"attribute_name":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]},"attribute_value_mlt":{"properties":{"subitem_1551255647225":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]},"subitem_1551255648112":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]}}}}},"item_1617258105262":{"properties":{"attribute_name":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]},"attribute_value_mlt":{"properties":{"resourcetype":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]},"resourceuri":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]}}}}},"item_title":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]},"item_type_id":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]},"owner":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]},"path":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]},"pubdate":{"properties":{"attribute_name":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]},"attribute_value":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]}}},"publish_date":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]},"publish_status":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]},"relation_version_is_last":{"type":"boolean"},"title":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]},"weko_shared_id":{"type":"long"}}},"_oai":{"properties":{"id":{"type":"keyword"},"sets":{"type":"keyword"},"updated":{"type":"date"}}},"_updated":{"type":"date"},"accessRights":{"type":"keyword","copy_to":["search_other"]},"alternative":{"type":"keyword","copy_to":["search_title"]},"apc":{"type":"text","copy_to":["search_other"]},"author_link":{"type":"text","fields":{"raw":{"type":"keyword","ignore_above":256}}},"conference":{"properties":{"conferenceCountry":{"type":"keyword","copy_to":["search_other"]},"conferenceName":{"type":"keyword","copy_to":["search_other"]},"conferencePlace":{"type":"keyword","copy_to":["search_other"]},"conferenceSequence":{"type":"keyword","copy_to":["search_other"]}}},"content":{"type":"nested","properties":{"attachment":{"properties":{"content":{"type":"text","store":True,"term_vector":"with_positions_offsets","fields":{"ja":{"type":"text","store":True,"term_vector":"with_positions_offsets"}}}}},"display_name":{"type":"text","fields":{"ja":{"type":"text"}}},"file":{"type":"text","store":True,"term_vector":"with_positions_offsets","fields":{"ja":{"type":"text","store":True,"term_vector":"with_positions_offsets"}}},"file_id":{"type":"keyword"},"file_name":{"type":"text","fields":{"ja":{"type":"text"}}},"groups":{"type":"keyword"},"license_notation":{"type":"text"}}},"contributor":{"properties":{"@attributes":{"properties":{"contributorType":{"type":"keyword"}}},"affiliation":{"properties":{"affiliationName":{"type":"keyword","copy_to":["search_other"]},"nameIdentifier":{"type":"keyword","copy_to":["search_identifier"]}}},"contributorAlternative":{"type":"keyword","copy_to":["search_contributor"]},"contributorName":{"type":"keyword","copy_to":["search_contributor"]},"familyName":{"type":"keyword","copy_to":["search_contributor"]},"givenName":{"type":"keyword","copy_to":["search_contributor"]},"nameIdentifier":{"type":"keyword","copy_to":["search_contributor"]}}},"control_number":{"type":"keyword"},"creator":{"properties":{"affiliation":{"properties":{"affiliationName":{"type":"keyword","copy_to":["search_other"]},"nameIdentifier":{"type":"keyword","copy_to":["search_identifier"]}}},"creatorAlternative":{"type":"keyword","copy_to":["search_creator"]},"creatorName":{"type":"keyword","copy_to":["search_creator"]},"familyName":{"type":"keyword","copy_to":["search_creator"]},"givenName":{"type":"keyword","copy_to":["search_creator"]},"nameIdentifier":{"type":"keyword","copy_to":["search_creator"]}}},"date":{"type":"nested","properties":{"dateType":{"type":"keyword","copy_to":["search_attr"]},"value":{"type":"keyword"}}},"dateGranted":{"type":"keyword"},"date_range1":{"type":"date_range","format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"},"date_range2":{"type":"date_range","format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"},"date_range3":{"type":"date_range","format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"},"date_range4":{"type":"date_range","format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"},"date_range5":{"type":"date_range","format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"},"degreeGrantor":{"properties":{"degreeGrantorName":{"type":"keyword","copy_to":["search_other","dgName"]},"nameIdentifier":{"type":"keyword","copy_to":["search_identifier"]}}},"degreeName":{"type":"text","fields":{"ja":{"type":"text"}},"copy_to":["search_other"]},"description":{"properties":{"descriptionType":{"type":"keyword"},"value":{"type":"keyword","copy_to":["search_des"],"ignore_above":256}}},"dgName":{"type":"text","fields":{"ja":{"type":"text"}}},"dissertationNumber":{"type":"text","copy_to":["search_other"]},"feedback_mail_list":{"type":"nested","properties":{"author_id":{"type":"keyword"},"email":{"type":"keyword"}}},"file":{"properties":{"URI":{"type":"nested","properties":{"objectType":{"type":"keyword"},"value":{"type":"text"}}},"date":{"type":"nested","properties":{"dateType":{"type":"keyword"},"value":{"type":"keyword"}}},"extent":{"type":"keyword"},"mimeType":{"type":"keyword"},"version":{"type":"text"}}},"float_range1":{"type":"float_range"},"float_range2":{"type":"float_range"},"float_range3":{"type":"float_range"},"float_range4":{"type":"float_range"},"float_range5":{"type":"float_range"},"fundingReference":{"properties":{"awardNumber":{"type":"keyword","copy_to":["search_other"]},"awardTitle":{"type":"keyword","copy_to":["search_other"]},"funderIdentifier":{"type":"keyword","copy_to":["search_identifier"]},"funderName":{"type":"keyword","copy_to":["search_other"]}}},"geoLocation":{"properties":{"geoLocationBox":{"properties":{"eastBoundLongitude":{"type":"geo_point"},"northBoundLatitude":{"type":"geo_point"},"southBoundLatitude":{"type":"geo_point"},"westBoundLongitude":{"type":"geo_point"}}},"geoLocationPlace":{"type":"keyword","copy_to":["search_other"]},"geoLocationPoint":{"properties":{"pointLatitude":{"type":"geo_point"},"pointLongitude":{"type":"geo_point"}}}}},"geo_point1":{"type":"geo_point"},"geo_shape1":{"type":"geo_shape"},"identifier":{"type":"nested","properties":{"identifierType":{"type":"keyword","copy_to":["search_attr"]},"value":{"type":"text","copy_to":["search_other"]}}},"identifierRegistration":{"type":"nested","properties":{"identifierType":{"type":"keyword","copy_to":["search_attr"]},"value":{"type":"text","copy_to":["search_other"]}}},"integer_range1":{"type":"integer_range"},"integer_range2":{"type":"integer_range"},"integer_range3":{"type":"integer_range"},"integer_range4":{"type":"integer_range"},"integer_range5":{"type":"integer_range"},"issue":{"type":"text","copy_to":["search_other"]},"item_type_id":{"type":"keyword"},"itemtype":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}},"copy_to":["search_other"],"fielddata":True},"language":{"type":"keyword","copy_to":["search_other"]},"numPages":{"type":"text"},"pageEnd":{"type":"text"},"pageStart":{"type":"text"},"path":{"type":"keyword","fields":{"tree":{"type":"text","analyzer":"paths","fielddata":True}}},"publish_date":{"type":"date","format":"yyyy-MM-dd||yyyy-MM||yyyy"},"publish_status":{"type":"keyword"},"publisher":{"type":"text","copy_to":["search_publisher"]},"relation":{"properties":{"relatedIdentifier":{"type":"nested","properties":{"identifierType":{"type":"keyword","copy_to":["search_attr"]},"value":{"type":"text","copy_to":["search_other"]}}},"relatedTitle":{"type":"keyword","copy_to":["search_other"]},"relationType":{"type":"nested","properties":{"item_links":{"type":"keyword"},"item_title":{"type":"keyword"},"value":{"type":"text"}}}}},"relation_version_is_last":{"type":"boolean"},"rights":{"type":"text","copy_to":["search_other"]},"rightsHolder":{"properties":{"nameIdentifier":{"type":"keyword","copy_to":["search_identifier"]},"rightsHolderName":{"type":"keyword","copy_to":["search_other"]}}},"search_attr":{"type":"text"},"search_contributor":{"type":"text","fields":{"ja":{"type":"text"}}},"search_creator":{"type":"text","fields":{"ja":{"type":"text"}}},"search_des":{"type":"text","fields":{"ja":{"type":"text"}}},"search_identifier":{"type":"text"},"search_other":{"type":"text","fields":{"ja":{"type":"text"}}},"search_publisher":{"type":"text","fields":{"ja":{"type":"text"}}},"search_string":{"type":"text"},"search_title":{"type":"text","fields":{"ja":{"type":"text"}}},"sourceIdentifier":{"type":"nested","properties":{"identifierType":{"type":"keyword","copy_to":["search_attr"]},"value":{"type":"text","copy_to":["search_other"]}}},"sourceTitle":{"type":"text","fields":{"ja":{"type":"text"}},"copy_to":["search_other"]},"subject":{"properties":{"subjectScheme":{"type":"keyword","copy_to":["search_attr"]},"value":{"type":"keyword","copy_to":["search_other"]}}},"temporal":{"type":"keyword","copy_to":["search_other"]},"text1":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text10":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text11":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text12":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text13":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text14":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text15":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text16":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text17":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text18":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text19":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text2":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text20":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text21":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text22":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text23":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text24":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text25":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text26":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text27":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text28":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text29":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text3":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text30":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text4":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text5":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text6":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text7":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text8":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text9":{"type":"text","fields":{"raw":{"type":"keyword"}}},"title":{"type":"keyword","copy_to":["search_title"]},"type":{"type":"text","index":False,"fields":{"raw":{"type":"keyword","ignore_above":256}},"copy_to":["search_string"]},"version":{"type":"text","copy_to":["search_other"]},"versionType":{"type":"text","copy_to":["search_other"]},"volume":{"type":"text","copy_to":["search_other"]},"weko_creator_id":{"type":"text","fielddata":True},"weko_id":{"type":"text","fielddata":True},"weko_shared_id":{"type":"long"}}}},"settings":{"index":{"mapping":{"total_fields":{"limit":"50000"}},"number_of_shards":"5","provided_name":"tenant1-weko-item-v1.0.0","creation_date":"1668390684976","analysis":{"analyzer":{"default":{"filter":["kuromoji_baseform","kuromoji_part_of_speech","cjk_width","stop","kuromoji_stemmer","lowercase"],"char_filter":["weko_char_filter"],"tokenizer":"ngram_tokenizer"},"ngram_analyzer":{"filter":["cjk_width","lowercase"],"char_filter":["weko_char_filter","html_strip"],"type":"custom","tokenizer":"ngram_tokenizer"},"paths":{"tokenizer":"path_hierarchy"},"wk_analyzer":{"filter":["standard","lowercase","stop","cjk_width"],"char_filter":["html_strip"],"type":"custom","tokenizer":"standard"}},"char_filter":{"weko_char_filter":{"type":"mapping","mappings_path":"kui.txt"}},"tokenizer":{"ja_tokenizer":{"mode":"search","type":"kuromoji_tokenizer"},"ngram_tokenizer":{"token_chars":["letter","digit"],"min_gram":"1","type":"nGram","max_gram":"3"}}},"number_of_replicas":"1","uuid":"otnkmoN0Q7qXVA_rYS81MQ","version":{"created":"6082399"}}}}
-    # TODO @SEE https://redmine.devops.rcos.nii.ac.jp/attachments/32265/update_from_v0.9.11_%20to_v0.9.20v3.md
-    # TODO "アイテムインデックス更新" 周りの処理に合わせる。
-    # TODO curl -XPUT -H "Content-Type: application/json" http://elasticsearch:9200/tenant1-weko-item-v1.0.0/item-v1.0.0/_mappings -d '{ "properties": {"query": {"type": "percolator"}}}'
-    # TODO curl -XPUT -H "Content-Type: application/json" http://elasticsearch:9200/tenant1-weko-item-v1.0.0/item-v1.0.0/_mappings -d '{ "properties": {"content" : {"type" : "nested","properties" : {"attachment" : {"properties" : {"content" : {"type" : "text","store" : true,"term_vector" : "with_positions_offsets","fields" : {"ja" : {"type" : "text","store" : true,"term_vector" : "with_positions_offsets"}}}}}}}}}'
-    # 下記を参考にしているが、上記の形に書き直す必要あり。
-    # https://redmine.devops.rcos.nii.ac.jp/issues/30930
-
-    current_app.logger.debug(res)
-    alias = res.get("aliases") # dict
-    # mappings = res.get("mappings")
-    # settings = res.get("settings")
-    
-    # current_app.logger.info("--------------alias----------------")
-    # current_app.logger.info(alias)
-    alias_name = list(alias.keys())[0]
-
-    # current_app.logger.info("--------------mappings---------------")
-    # current_app.logger.info(mappings)
-    # mappings_key = list(mappings.keys())[0]
-    # mappings_value = mappings.get(mappings_key)
-    # # mappings_key = "item-v1.0.0"
-    # # mappings_value = {"properties":{"_created":{"type":"date"},"_item_metadata":{"properties":{"_oai":{"properties":{"id":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"sets":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}}}},"control_number":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"item_1617186331708":{"properties":{"attribute_name":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"attribute_value_mlt":{"properties":{"subitem_1551255647225":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"subitem_1551255648112":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}}}}}},"item_1617258105262":{"properties":{"attribute_name":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"attribute_value_mlt":{"properties":{"resourcetype":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"resourceuri":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}}}}}},"item_title":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"item_type_id":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"owner":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"path":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"pubdate":{"properties":{"attribute_name":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"attribute_value":{"type":"date"}}},"publish_date":{"type":"date"},"publish_status":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"relation_version_is_last":{"type":"boolean"},"title":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"weko_shared_id":{"type":"long"}}},"_oai":{"properties":{"id":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"sets":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}}}},"_updated":{"type":"date"},"control_number":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"itemtype":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"path":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"publish_date":{"type":"date"},"publish_status":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"relation_version_is_last":{"type":"boolean"},"title":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"type":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"weko_creator_id":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}}},"weko_shared_id":{"type":"long"}}}
-    # # mappings_value = {"dynamic_templates":[{"weko_id":{"match":"^weko_id$","match_mapping_type":"string","match_pattern":"regex","mapping":{"copy_to":"weko_id","fielddata":True,"index":False,"type":"text"}}},{"string":{"match_mapping_type":"string","mapping":{"copy_to":"search_string","fields":{"raw":{"ignore_above":256,"type":"keyword"}},"index":False,"type":"text"}}},{"date_string":{"match_mapping_type":"date","mapping":{"copy_to":"search_string","fields":{"raw":{"ignore_above":256,"type":"keyword"}},"index":False,"type":"text"}}}],"properties":{"_created":{"type":"date"},"_oai":{"properties":{"id":{"type":"keyword"},"sets":{"type":"keyword"},"updated":{"type":"date"}}},"_updated":{"type":"date"},"accessRights":{"type":"keyword","copy_to":["search_other"]},"alternative":{"type":"keyword","copy_to":["search_title"]},"apc":{"type":"text","copy_to":["search_other"]},"author_link":{"type":"text","fields":{"raw":{"type":"keyword","ignore_above":256}}},"conference":{"properties":{"conferenceCountry":{"type":"keyword","copy_to":["search_other"]},"conferenceName":{"type":"keyword","copy_to":["search_other"]},"conferencePlace":{"type":"keyword","copy_to":["search_other"]},"conferenceSequence":{"type":"keyword","copy_to":["search_other"]}}},"content":{"type":"nested","properties":{"attachment":{"properties":{"content":{"type":"text","store":True,"term_vector":"with_positions_offsets","fields":{"ja":{"type":"text","store":True,"term_vector":"with_positions_offsets"}}}}},"display_name":{"type":"text","fields":{"ja":{"type":"text"}}},"file":{"type":"text","store":True,"term_vector":"with_positions_offsets","fields":{"ja":{"type":"text","store":True,"term_vector":"with_positions_offsets"}}},"file_id":{"type":"keyword"},"file_name":{"type":"text","fields":{"ja":{"type":"text"}}},"groups":{"type":"keyword"},"license_notation":{"type":"text"}}},"contributor":{"properties":{"@attributes":{"properties":{"contributorType":{"type":"keyword"}}},"affiliation":{"properties":{"affiliationName":{"type":"keyword","copy_to":["search_other"]},"nameIdentifier":{"type":"keyword","copy_to":["search_identifier"]}}},"contributorAlternative":{"type":"keyword","copy_to":["search_contributor"]},"contributorName":{"type":"keyword","copy_to":["search_contributor"]},"familyName":{"type":"keyword","copy_to":["search_contributor"]},"givenName":{"type":"keyword","copy_to":["search_contributor"]},"nameIdentifier":{"type":"keyword","copy_to":["search_contributor"]}}},"control_number":{"type":"keyword"},"creator":{"properties":{"affiliation":{"properties":{"affiliationName":{"type":"keyword","copy_to":["search_other"]},"nameIdentifier":{"type":"keyword","copy_to":["search_identifier"]}}},"creatorAlternative":{"type":"keyword","copy_to":["search_creator"]},"creatorName":{"type":"keyword","copy_to":["search_creator"]},"familyName":{"type":"keyword","copy_to":["search_creator"]},"givenName":{"type":"keyword","copy_to":["search_creator"]},"nameIdentifier":{"type":"keyword","copy_to":["search_creator"]}}},"date":{"type":"nested","properties":{"dateType":{"type":"keyword","copy_to":["search_attr"]},"value":{"type":"keyword"}}},"dateGranted":{"type":"keyword"},"date_range1":{"type":"date_range","format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"},"date_range2":{"type":"date_range","format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"},"date_range3":{"type":"date_range","format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"},"date_range4":{"type":"date_range","format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"},"date_range5":{"type":"date_range","format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"},"degreeGrantor":{"properties":{"degreeGrantorName":{"type":"keyword","copy_to":["search_other","dgName"]},"nameIdentifier":{"type":"keyword","copy_to":["search_identifier"]}}},"degreeName":{"type":"text","fields":{"ja":{"type":"text"}},"copy_to":["search_other"]},"description":{"properties":{"descriptionType":{"type":"keyword"},"value":{"type":"keyword","copy_to":["search_des"],"ignore_above":256}}},"dgName":{"type":"text","fields":{"ja":{"type":"text"}}},"dissertationNumber":{"type":"text","copy_to":["search_other"]},"feedback_mail_list":{"type":"nested","properties":{"author_id":{"type":"keyword"},"email":{"type":"keyword"}}},"file":{"properties":{"URI":{"type":"nested","properties":{"objectType":{"type":"keyword"},"value":{"type":"text"}}},"date":{"type":"nested","properties":{"dateType":{"type":"keyword"},"value":{"type":"keyword"}}},"extent":{"type":"keyword"},"mimeType":{"type":"keyword"},"version":{"type":"text"}}},"float_range1":{"type":"float_range"},"float_range2":{"type":"float_range"},"float_range3":{"type":"float_range"},"float_range4":{"type":"float_range"},"float_range5":{"type":"float_range"},"fundingReference":{"properties":{"awardNumber":{"type":"keyword","copy_to":["search_other"]},"awardTitle":{"type":"keyword","copy_to":["search_other"]},"funderIdentifier":{"type":"keyword","copy_to":["search_identifier"]},"funderName":{"type":"keyword","copy_to":["search_other"]}}},"geoLocation":{"properties":{"geoLocationBox":{"properties":{"eastBoundLongitude":{"type":"geo_point"},"northBoundLatitude":{"type":"geo_point"},"southBoundLatitude":{"type":"geo_point"},"westBoundLongitude":{"type":"geo_point"}}},"geoLocationPlace":{"type":"keyword","copy_to":["search_other"]},"geoLocationPoint":{"properties":{"pointLatitude":{"type":"geo_point"},"pointLongitude":{"type":"geo_point"}}}}},"geo_point1":{"type":"geo_point"},"geo_shape1":{"type":"geo_shape"},"identifier":{"type":"nested","properties":{"identifierType":{"type":"keyword","copy_to":["search_attr"]},"value":{"type":"text","copy_to":["search_other"]}}},"identifierRegistration":{"type":"nested","properties":{"identifierType":{"type":"keyword","copy_to":["search_attr"]},"value":{"type":"text","copy_to":["search_other"]}}},"integer_range1":{"type":"integer_range"},"integer_range2":{"type":"integer_range"},"integer_range3":{"type":"integer_range"},"integer_range4":{"type":"integer_range"},"integer_range5":{"type":"integer_range"},"issue":{"type":"text","copy_to":["search_other"]},"item_type_id":{"type":"keyword"},"itemtype":{"type":"text","fields":{"keyword":{"type":"keyword","ignore_above":256}},"copy_to":["search_other"],"fielddata":True},"language":{"type":"keyword","copy_to":["search_other"]},"numPages":{"type":"text"},"pageEnd":{"type":"text"},"pageStart":{"type":"text"},"path":{"type":"keyword","fields":{"tree":{"type":"text","analyzer":"paths","fielddata":True}}},"publish_date":{"type":"date","format":"yyyy-MM-dd||yyyy-MM||yyyy"},"publish_status":{"type":"keyword"},"publisher":{"type":"text","copy_to":["search_publisher"]},"relation":{"properties":{"relatedIdentifier":{"type":"nested","properties":{"identifierType":{"type":"keyword","copy_to":["search_attr"]},"value":{"type":"text","copy_to":["search_other"]}}},"relatedTitle":{"type":"keyword","copy_to":["search_other"]},"relationType":{"type":"nested","properties":{"item_links":{"type":"keyword"},"item_title":{"type":"keyword"},"value":{"type":"text"}}}}},"rights":{"type":"text","copy_to":["search_other"]},"rightsHolder":{"properties":{"nameIdentifier":{"type":"keyword","copy_to":["search_identifier"]},"rightsHolderName":{"type":"keyword","copy_to":["search_other"]}}},"search_attr":{"type":"text"},"search_contributor":{"type":"text","fields":{"ja":{"type":"text"}}},"search_creator":{"type":"text","fields":{"ja":{"type":"text"}}},"search_des":{"type":"text","fields":{"ja":{"type":"text"}}},"search_identifier":{"type":"text"},"search_other":{"type":"text","fields":{"ja":{"type":"text"}}},"search_publisher":{"type":"text","fields":{"ja":{"type":"text"}}},"search_string":{"type":"text"},"search_title":{"type":"text","fields":{"ja":{"type":"text"}}},"sourceIdentifier":{"type":"nested","properties":{"identifierType":{"type":"keyword","copy_to":["search_attr"]},"value":{"type":"text","copy_to":["search_other"]}}},"sourceTitle":{"type":"text","fields":{"ja":{"type":"text"}},"copy_to":["search_other"]},"subject":{"properties":{"subjectScheme":{"type":"keyword","copy_to":["search_attr"]},"value":{"type":"keyword","copy_to":["search_other"]}}},"temporal":{"type":"keyword","copy_to":["search_other"]},"text1":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text10":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text11":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text12":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text13":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text14":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text15":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text16":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text17":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text18":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text19":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text2":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text20":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text21":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text22":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text23":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text24":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text25":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text26":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text27":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text28":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text29":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text3":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text30":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text4":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text5":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text6":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text7":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text8":{"type":"text","fields":{"raw":{"type":"keyword"}}},"text9":{"type":"text","fields":{"raw":{"type":"keyword"}}},"title":{"type":"keyword","copy_to":["search_title"]},"version":{"type":"text","copy_to":["search_other"]},"versionType":{"type":"text","copy_to":["search_other"]},"volume":{"type":"text","copy_to":["search_other"]},"weko_creator_id":{"type":"text","fielddata":True},"weko_id":{"type":"text","fielddata":True}}}
-
-    # current_app.logger.info("--------------settings-----------")
-    # current_app.logger.info(settings)
-    # # settings = {"index":{"mapping":{"total_fields":{"limit":"50000"}},"number_of_shards":"1","provided_name":"tenant1-weko-item-v1.0.0","creation_date":"1668137714610","analysis":{"analyzer":{"default":{"filter":["kuromoji_baseform","kuromoji_part_of_speech","cjk_width","stop","kuromoji_stemmer","lowercase"],"char_filter":["weko_char_filter"],"tokenizer":"ngram_tokenizer"},"ngram_analyzer":{"filter":["cjk_width","lowercase"],"char_filter":["weko_char_filter","html_strip"],"type":"custom","tokenizer":"ngram_tokenizer"},"paths":{"tokenizer":"path_hierarchy"},"wk_analyzer":{"filter":["standard","lowercase","stop","cjk_width"],"char_filter":["html_strip"],"type":"custom","tokenizer":"standard"}},"char_filter":{"weko_char_filter":{"type":"mapping","mappings_path":"kui.txt"}},"tokenizer":{"ja_tokenizer":{"mode":"search","type":"kuromoji_tokenizer"},"ngram_tokenizer":{"token_chars":["letter","digit"],"min_gram":"1","type":"nGram","max_gram":"3"}}},"number_of_replicas":"1","uuid":"Gcu-Ib4NSFqvpQ-RjiJOhA","version":{"created":"6082399"}}}
-
-    # # 設定できない項目を落とす。
-    # del settings.get("index")["creation_date"]
-    # del settings.get("index")["provided_name"]
-    # del settings.get("index")["uuid"]
-    # del settings.get("index")["version"]
-    # # del settings.get("index")["analysis"] # 変更にはindexのCloseが必要
-    # # number_of_shards = settings.get("index")["number_of_shards"]
-    # #del settings.get("index")["number_of_shards"] #TODO Putの際に指定する
-    current_app.logger.info("---------------------------------")
-
+    # get base_index_definition (mappings and settings)
+    import weko_schema_ui
+    current_path = os.path.dirname(os.path.abspath(weko_schema_ui.__file__))
+    file_path = os.path.join(current_path, 'mappings', 'v6', 'weko', 'item-v1.0.0.json')
+    with open(file_path,mode='r') as json_file:
+        json_data = json_file.read()
+        base_index_definition = json.loads(json_data)
 
     headers = {
         'Content-Type': 'application/json',
@@ -2330,23 +2316,37 @@ def elasticsearch_reindex():
 
     current_app.logger.info(' START elasticsearch reindex: {}.'.format(index))
 
-    # テスト用
-    # print("削除開始") 
-    # response = requests.delete(base_url + tmpindex)
-    # current_app.logger.info(response.text)
-    # print("削除終了")
-
     # トランザクションログをLucenceに保存。
     response = requests.post(base_url + index + "/_flush?wait_if_ongoing=true") 
-    current_app.logger.info(response.text)
+    current_app.logger.debug(response.text)
+    assert response.status_code == 200 ,response.text
+
+    response = requests.get(base_url + '_cat/indices/?h=index&index=' + tmpindex )
 
     # 一時保管用のインデックスを作成
     # create tmp index
     current_app.logger.debug("START create tmpindex") 
-    response = requests.put(base_url + tmpindex, headers=headers ,json=res)
-    current_app.logger.info(response.text)
-    assert response.status_code == 200 
+    current_app.logger.debug("PUT tmpindex") 
+    response = requests.put(base_url + tmpindex + "?pretty", headers=headers ,json=base_index_definition)
+    current_app.logger.debug(response.text)
+    assert response.status_code == 200 ,response.text
+    current_app.logger.debug("add setting percolator") 
+    response = requests.put(base_url + tmpindex + "/item-v1.0.0/_mappings", headers=headers ,json={ "properties": {"query": {"type": "percolator"}}})
+    current_app.logger.debug(response.text)
+    assert response.status_code == 200 ,response.text
+    current_app.logger.debug("add some setting") 
+    response = requests.put(base_url + tmpindex + "/item-v1.0.0/_mappings", headers=headers ,json={ "properties": {"content" : {"type" : "nested","properties" : {"attachment" : {"properties" : {"content" : {"type" : "text","store" : True,"term_vector" : "with_positions_offsets","fields" : {"ja" : {"type" : "text","store" : True,"term_vector" : "with_positions_offsets"}}}}}}}}})
+    current_app.logger.debug(response.text)
+    assert response.status_code == 200 ,response.text
+
+    # # 高速化を期待してインデックスの設定を変更。
+    # current_app.logger.debug("change setting for faster") 
+    # response = requests.put(base_url + tmpindex + "/item-v1.0.0/_settings", headers=headers ,json={ "index" : {"number_of_replicas" : 0, "refresh_interval": -1 }})
+    # current_app.logger.info(response.text)
+    # assert response.status_code == 200 
+
     current_app.logger.debug("END create tmpindex") 
+
     
     # document count
     current_app.logger.debug("index document count:{}".format(requests.get(base_url + "_cat/count/"+ index ).text)) 
@@ -2356,108 +2356,149 @@ def elasticsearch_reindex():
     # reindex from index to tmpindex
     current_app.logger.info("START reindex")
     response = requests.post(url=reindex_url, headers=headers, json=json_data_to_tmp)
-    current_app.logger.info(response.text)
-    assert response.status_code == 200 
+    current_app.logger.debug(response.text)
+    assert response.status_code == 200 ,response.text
     current_app.logger.info("END reindex")
 
     # document count
-    current_app.logger.debug("index document count:{}".format(requests.get(base_url + "_cat/count/"+ index ).text)) 
-    current_app.logger.debug("tmpindex document count:{}".format(requests.get(base_url + "_cat/count/"+ tmpindex ).text))
+    index_cnt = requests.get(base_url + "_cat/count/"+ index + "?h=count").text
+    tmpindex_cnt = requests.get(base_url + "_cat/count/"+ tmpindex + "?h=count").text
+    current_app.logger.debug("index document count:{}".format(index_cnt)) 
+    current_app.logger.debug("tmpindex document count:{}".format(tmpindex_cnt))
+    assert index_cnt == tmpindex_cnt,'Document counts do not match.'
 
     # 再インデックス前のインデックスを削除する
     current_app.logger.debug("START delete index") 
     response = requests.delete(base_url + index)
-    current_app.logger.info(response.text)
-    assert response.status_code == 200 
+    current_app.logger.debug(response.text)
+    assert response.status_code == 200 ,response.text
     current_app.logger.debug("END delete index") 
 
     # 新しくインデックスを作成する
     #create index
     current_app.logger.debug("START create index") 
-    response = requests.put(url = base_url+index, headers=headers ,json=res)
-    current_app.logger.info(response.text)
-    assert response.status_code == 200 
+    current_app.logger.debug("PUT index") 
+    response = requests.put(url = base_url + index + "?pretty", headers=headers ,json=base_index_definition)
+    current_app.logger.debug(response.text)
+    assert response.status_code == 200 ,response.text
+    current_app.logger.debug("add setting percolator") 
+    response = requests.put(base_url + index + "/item-v1.0.0/_mappings", headers=headers ,json={ "properties": {"query": {"type": "percolator"}}})
+    current_app.logger.debug(response.text)
+    assert response.status_code == 200 ,response.text
+    current_app.logger.debug("add some setting") 
+    response = requests.put(base_url + index + "/item-v1.0.0/_mappings", headers=headers ,json={ "properties": {"content" : {"type" : "nested","properties" : {"attachment" : {"properties" : {"content" : {"type" : "text","store" : True,"term_vector" : "with_positions_offsets","fields" : {"ja" : {"type" : "text","store" : True,"term_vector" : "with_positions_offsets"}}}}}}}}})
+    current_app.logger.debug(response.text)
+    assert response.status_code == 200 ,response.text
+
+    # # 高速化を期待してインデックスの設定を変更。
+    # current_app.logger.debug("change setting for faster") 
+    # response = requests.put(base_url + index + "/item-v1.0.0/_settings", headers=headers ,json={ "index" : {"number_of_replicas" : 0, "refresh_interval": -1 }})
+    # current_app.logger.info(response.text)
+    # assert response.status_code == 200 
+
     current_app.logger.debug("END create index") 
 
-    # # set settings
-    # current_app.logger.debug("START set settings")
-    # response = requests.post(base_url + index + "/_close")
-    # response = requests.put(base_url + index + "/_settings"  , headers=headers ,json=settings)
-    # current_app.logger.info(response.text)
-    # assert response.status_code == 200 
-    # current_app.logger.debug("END set settings")
-    # # set mappings
-    # current_app.logger.debug("START set mappings")
-    # response = requests.put(base_url + index + "/_mapping/" + mappings_key  , headers=headers ,json=mappings_value)
-    # current_app.logger.info(response.text)
-    # assert response.status_code == 200 
-    # current_app.logger.debug("END set mappings")
-    # response = requests.post(base_url + index + "/_open")
+    # aliasを再設定する。
+    current_app.logger.debug("START re-regist alias") 
+    response = requests.post(base_url + "_aliases", headers=headers, json=json_data_set_alias )
+    current_app.logger.debug(response.text)
+    assert response.status_code == 200 ,response.text
+    current_app.logger.debug("END re-regist alias") 
 
-
-    # 一時保管用のインデックスから、新しく作成したインデックスに再インデックスを行う
-    # reindex from tmpindex to index
+    # アイテムを再投入する。
     current_app.logger.debug("START reindex")
-    response = requests.post(url=reindex_url , headers=headers, json=json_data_to_dest)
-    current_app.logger.info(response.text)
-    assert response.status_code == 200 
+    if is_db_to_es :
+        current_app.logger.debug("reindex es from db")
+        response = _elasticsearch_remake_item_index(index_name=index)
+        current_app.logger.debug(response) # array
+
+
+        response = requests.post(url=base_url + "_refresh")
+        current_app.logger.debug(response.text)
+        assert response.status_code == 200 ,response.text
+    else :
+        current_app.logger.debug("reindex es from es")
+        # 一時保管用のインデックスから、新しく作成したインデックスに再インデックスを行う
+        # reindex from tmpindex to index
+        response = requests.post(url=reindex_url , headers=headers, json=json_data_to_dest)
+        current_app.logger.debug(response.text)
+        assert response.status_code == 200 ,response.text
     current_app.logger.debug("END reindex")
 
+    # # 高速化を期待して変更したインデックスの設定を元に戻す。
+    # current_app.logger.debug("revert setting for faster") 
+    # response = requests.put(base_url + index + "/item-v1.0.0/_settings", headers=headers ,json={ "index" : {"number_of_replicas" : 1, "refresh_interval": "1s" }})
+    # current_app.logger.info(response.text)
+    # assert response.status_code == 200 
+
     # document count
-    current_app.logger.debug("index document count:{}".format(requests.get(base_url + "_cat/count/"+ index ).text)) 
-    current_app.logger.debug("tmpindex document count:{}".format(requests.get(base_url + "_cat/count/"+ tmpindex ).text))
+    index_cnt = requests.get(base_url + "_cat/count/"+ index + "?h=count").text
+    tmpindex_cnt = requests.get(base_url + "_cat/count/"+ tmpindex + "?h=count").text
+    current_app.logger.debug("index document count:{}".format(index_cnt)) 
+    current_app.logger.debug("tmpindex document count:{}".format(tmpindex_cnt))
+    assert index_cnt == tmpindex_cnt ,'Document counts do not match.'
+
 
     # 一時保管用のインデックスを削除する 
     # delete tmp-index
     current_app.logger.debug("START delete tmpindex") 
     response = requests.delete(base_url + tmpindex)
-    current_app.logger.info(response.text)
-    assert response.status_code == 200 
+    current_app.logger.debug(response.text)
+    assert response.status_code == 200 ,response.text
     current_app.logger.debug("END delete tmpindex") 
 
-    # aliasを再設定する。
-    current_app.logger.debug("START re-regist alias") 
-    response = requests.post(base_url + "_aliases", headers=headers, json=json_data_set_alias )
-    assert response.status_code == 200 
-    current_app.logger.info(response.text)
-    current_app.logger.debug("END re-regist alias") 
-
     current_app.logger.info(' END elasticsearch reindex: {}.'.format(index))
-
-    return ""
-
-from weko_records.api import ItemTypes
-def elasticsearch_remake_item_index():
-
-    ##FIXME データにならない。
-    items = ItemTypes.get_all(with_deleted=True)
-    #ItemTypes().update() #__update_es_data()#__update_metadata()
-
-
-    #records = ItemTypes().__get_records_by_item_type_name(item_type_name)
-    records = items
-    print("print data")
-    for rec in records :
-        current_app.logger.debug(dir(rec))
     
-    es_data = []
-    
-    for record in records:
-        rec_id = record.get("_id")
-        _source = record.get("_source", {})
+    return 'completed'
 
-        current_app.logger.debug("rec_id:" + rec_id) 
-        current_app.logger.debug("_source:" + _source) 
 
-        es_data.append(dict(
-            _id=rec_id,
-            _source=_source
-        ))
+def _elasticsearch_remake_item_index(index_name):
+
+    returnlist = []
+
+    # インデックスを登録
+    current_app.logger.info(' START elasticsearch import from oaiserver_set')
+    from invenio_oaiserver.models import OAISet
+    from invenio_oaiserver.percolator import _new_percolator
+    # from weko_deposit.api import WekoDeposit
     from weko_deposit.api import WekoIndexer
-    # WekoIndexer().bulk_update(es_data)
-    
-            
-    
+    oaiset_ = OAISet.query.all()
+    for target in oaiset_ :
+        spec = target.spec
+        search_pattern = target.search_pattern
+        _new_percolator(spec , search_pattern)
+    current_app.logger.info(' END elasticsearch import from oaiserver_set')
 
-    return ""
+    # アイテムを登録
+    current_app.logger.info(' START elasticsearch import from records_metadata')
+    # get all registered record_metadata's ids
+    uuids = (x[0] for x in PersistentIdentifier.query.filter_by(
+        object_type='rec', status=PIDStatus.REGISTERED
+    ).filter(
+        PersistentIdentifier.pid_type.in_(['oai'])
+    ).values(
+        PersistentIdentifier.object_uuid
+    ))
+
+    create_docs = []
+    # wekodeposit = WekoDeposit(data=None , model=Record.model_cls)
+    for x in uuids:
+        # index records_metadata to elasticsearch
+        # prosess sync, not async
+        
+        # records_metadata = Record.get_record(x)
+        # item_metada , deldata = WekoDeposit.convert_item_metadata(
+        #     index_obj={"index":[index_name], 'actions': '1'} , data= records_metadata)
+        # create_docs.append(item_metada)
+        
+        res = WekoIndexer().index_by_id(x)
+        returnlist.append(res)
+    # WekoIndexer().bulk_update(create_docs)
+    current_app.logger.info(' END elasticsearch import from records_metadata')
+    
+    # # async
+    # RecordIndexer().bulk_index(query)
+    # RecordIndexer().process_bulk_queue(
+    #     es_bulk_kwargs={'raise_on_error': True})
+    return returnlist
 

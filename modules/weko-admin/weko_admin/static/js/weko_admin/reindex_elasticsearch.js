@@ -8,9 +8,9 @@ const executing = document.getElementById("executing").value;
 const run_label = document.getElementById("run").value;
 const cancel_label = document.getElementById("cancel").value;
 
-// TODO: poファイルへ
-const validationMsg1 = "どちらかチェックしてください。";
-const confirmMessage = "本処理の実行にはかなりの時間がかかることが予想されます。インデックスの再作成処理を実行してよいですか？";
+const validationMsg1 = document.getElementById("validationMsg1").value;
+const confirmMessage = document.getElementById("confirmMessage").value;
+const completed = document.getElementById("completed").value;
 
 /** close ErrorMessage area */
 function closeError() {
@@ -18,22 +18,23 @@ function closeError() {
 }
 
 /** show ErrorMessage */
-function showErrorMsg(msg) {
+function showErrorMsg(msg , success=false) {
     $('#errors').append(
-        '<div class="alert alert-danger alert-dismissable">' +
+        '<div class="alert ' + (success? "alert-success":"alert-danger") + ' alert-dismissable">' +
         '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
         '&times;</button>' + msg + '</div>');
 }
-
+let timerId = "";
 class MainLayout extends React.Component {
     constructor() {
         super();
         const err = JSON.parse(document.getElementById("isError").value.toLowerCase())
         const exe = JSON.parse(document.getElementById("isExecuting").value.toLowerCase())
+        const disabled_Btn = JSON.parse(document.getElementById("disabled_Btn").value.toLowerCase())
         this.state = {
             isError: err
             ,isExecuting: exe
-            ,disabled_Btn: err || exe
+            ,disabled_Btn: disabled_Btn
             ,showModal:false
             ,riiChecked : false
             ,riChecked : false
@@ -42,8 +43,31 @@ class MainLayout extends React.Component {
         this.handleCheckedChange = this.handleCheckedChange.bind(this);
         this.handleClose = this.handleClose.bind(this);
         this.handleExecute = this.handleExecute.bind(this);
+        this.handleCheckReindexIsRunning = this.handleCheckReindexIsRunning.bind(this);
 
     }
+
+    componentDidMount() {
+        /** set errorMessage Area */
+        const header = document.getElementsByClassName('content-header')[0];
+        if (header) {
+            const errorElement = document.createElement('div');
+            errorElement.setAttribute('id', 'errors');
+            header.insertBefore(errorElement, header.firstChild);
+        }
+
+        timerId = setInterval(this.handleCheckReindexIsRunning,5000);//5 seconds roop
+    }
+
+    componentWillUnmount(){
+        clearInterval(timerId);
+    }
+
+    componentDidCatch(error, info){
+        console.log(info.componentStack);
+        showErrorMsg(JSON.stringify(error));
+    }
+
 
     /** 画面実行ボタン押下 */
     handleClickExecute(event){
@@ -74,18 +98,17 @@ class MainLayout extends React.Component {
         }
     }
 
-    /** モーダル閉じる */
+    /** Modal閉じる */
     handleClose() {
         this.setState({
             showModal: false
-            // ,is_agree_doi: false
         });
     }
 
     /** モーダル実行ボタン押下 */
     handleExecute(){
 
-        //モーダル閉じる
+        //Clear error message
         closeError();
         const riiChecked = document.getElementById("reindex_item_index").checked;
         const riChecked  = document.getElementById("reindex_item").checked;
@@ -94,30 +117,34 @@ class MainLayout extends React.Component {
             ,isExecuting: true
             ,showModal: false
         });
-        return this.execRii(riiChecked)
+        return fetch(
+            new URL('reindex' , window.location.href) + "?es_to_es="+ riiChecked + "&db_to_es=" + riChecked
+            ,{method: 'POST'}
+        )
+        .then((res) => {return  res.ok ? Promise.resolve(res) : Promise.reject(res)})
         .then((res) => {
             console.log(res);
-            return this.execRi(riChecked);
-        })
-        .then((res) => {
-            showErrorMsg(res);
-            const execBtn = document.getElementById("execute");
-            execBtn.setAttribute("disabled",false);
-            this.setState({
-                disabled_Btn: false
-                ,isError: false
-                ,isExecuting: false
-            });
-            // this.render();
+            showErrorMsg(completed , true);
         })
         .catch((e) => {
-            showErrorMsg(e);
+            console.log(e);
+            showErrorMsg(JSON.stringify(e));
             this.setState({
                 disabled_Btn: true
                 ,isError: true
             });
         });
 
+    }
+
+    handleCheckReindexIsRunning(event){
+        return fetch(
+            new URL('is_reindex_running' , window.location.href)
+        ).then((res) => {
+            return res.text()
+        }).then((txt) => {
+            this.setState(JSON.parse(txt));
+        });
     }
 
     render() {
@@ -173,45 +200,6 @@ class MainLayout extends React.Component {
         );
         
         return html;
-    }
-
-    
-    /** 機能の実行 */
-    async execRii(riiChecked) {
-
-        const url = window.location.href;
-        if(riiChecked){
-            // TODO: うまく動作していない。
-            return $.ajax({
-                url: url + 'reindex_items',
-                type: 'GET',
-                dataType: "json",
-                async: false,
-                success: (response) => {
-                    return response.Body === 200 ? resolve(response) : reject(response)
-                },
-                error: (error) => {return reject(error)}
-            });
-        }
-        return this;
-    }
-    async execRi(riChecked) {
-
-        const url = window.location.href;
-        if(riChecked){
-            // TODO: うまく動作していない。
-            return $.ajax({
-                url: url + 'reindex_itemindexes',
-                type: 'GET',
-                dataType: "json",
-                async: false,
-                success: (response) => {
-                    return response.Body === 200 ? resolve(response) : reject(response)
-                },
-                error: (error) => {return reject(error)}
-            });
-        }
-        return this;
     }
 
 }

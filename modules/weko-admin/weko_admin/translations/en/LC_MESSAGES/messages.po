@@ -861,3 +861,15 @@ msgstr "executing..."
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "haserror"
 msgstr "Execution prohibited due to an error"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "validationMsg1"
+msgstr "Execution mode not selected"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "confirmMessage"
+msgstr "We expect this process to take a considerable amount of time to execute. May I run the reindexing process?"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "completed"
+msgstr "Completed!"

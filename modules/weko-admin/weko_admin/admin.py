@@ -52,65 +52,112 @@ from wtforms.fields import StringField
 from wtforms.validators import ValidationError
 
 from .config import WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR, \
-    WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR,WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE
+    WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR
 from .models import AdminSettings, FacetSearchSetting, Identifier, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
     RankingSettings, SearchManagement, StatisticsEmail
-from .permissions import admin_permission_factory ,admin_permission
-from .utils import elasticsearch_remake_item_index, get_facet_search, get_item_mapping_list, \
+from .permissions import admin_permission_factory ,superuser_access
+from .utils import get_facet_search, get_item_mapping_list, \
     get_response_json, get_restricted_access, get_search_setting
 from .utils import get_user_report_data as get_user_report
-from .utils import package_reports, str_to_bool ,elasticsearch_reindex
+from .utils import package_reports, str_to_bool 
+from .tasks import is_reindex_running ,reindex
 
 
 class ReindexElasticSearchView(BaseView):
 
     @expose('/', methods=['GET'])
+    @superuser_access.require(http_exception=403)
     def index(self):
-        """show reindex_es"""
-        print("ReindexElasticSearchView.index called !")
-
+        """Maintenance/ElasticSearch 画面表示処理"""
         try:
+            status =  json.loads(self.check_reindex_is_running().get_data(True))
+            is_error = status.get("isError")
+            is_executing = status.get("isExecuting")
+            disabled_btn = status.get("disabled_Btn")
 
             return self.render(
-                template=WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE
-                ,isError=False # TODO
-                ,isExecuting=False # TODO
-                #template=current_app.config['WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE']
+                template=current_app.config['WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE']
+                ,isError=is_error
+                ,isExecuting=is_executing
+                ,disabled_Btn=disabled_btn 
             )
         except BaseException:
             current_app.logger.error(
                 'Unexpected error: {}'.format(sys.exc_info()))
-        return abort(400)
+            return abort(500)
 
+    @expose('/reindex', methods=['POST'])
+    @superuser_access.require(http_exception=403)
+    def reindex(self):
+        """ 
+        Maintenance/ElasticSearch/Executing Button 押下時処理
 
-    @expose('/reindex_items', methods=['GET'])
-    @admin_permission.require(http_exception=403)
-    def reindex_items(self):
+        Parameters
+        ----------
+        db_to_es : boolean
+            Trueの場合、DBから取得したデータからDocumentsを作成します。
+        db_to_es : boolean
+            Trueの場合、もともとの*-weko-item-*のDocumentsを再登録します。
+        両方Trueの場合、順番に実行します。
+
+        Note
+        ----------
+        utils.py elasticsearch_reindexの注意事項を理解した上で運用、修正を行ってください。
+        """
+
+        ## exclusion check
+        status =  json.loads(self.check_reindex_is_running().get_data(True))
+        is_error = status.get("isError")
+        is_executing = status.get("isExecuting")
+        if is_error:
+            return jsonify({"error" : _('haserror')}) , 400
+        if is_executing:
+            return jsonify({"error" : _('executing...')}) , 400
+
+        # validation check
+        es_to_es=request.args.get('es_to_es') == 'true'
+        db_to_es=request.args.get('db_to_es') == 'true'
+        if not (es_to_es or db_to_es) :
+            return jsonify({"error" : _('validationMsg1')}) , 400
+        if es_to_es and db_to_es :
+            return jsonify({"error" : _('validationMsg1')}) , 400
+
         try:
-            ## TODO task 監視 排他
-            ## TODO permission 修正
-            responce = elasticsearch_reindex()
-            return jsonify(responce) ,200
-        
+            # execute in celery task
+            res = reindex.apply_async(args=(es_to_es, db_to_es))  # type: ignore
+            res_output = res.get() #wait until celery task
+            current_app.logger.debug(res_output)
+            return jsonify({"responce" : _('completed')}), 200
+
         except BaseException as ex:
-            current_app.logger.error(
-                'Unexpected error: {}'.format(sys.exc_info()))
-            return abort(500 ,Response(ex.args))
-
-
-    @expose('/reindex_itemindexes', methods=['GET'])
-    @admin_permission.require(http_exception=403)
-    def reindex_item_indexes(self):
+            current_app.logger.error('Unexpected error',ex)
+            return abort(500 ,Response(jsonify({"error" :ex.args})))
+            
+    @expose('/is_reindex_running', methods=['GET'])
+    @superuser_access.require(http_exception=403)
+    def check_reindex_is_running(self):
+        """
+        reindex 処理が実行中/エラーが発生している監視する。
+        Celeryタスクの監視によって実行状態を監視。
+        """
         try:
-            responce = elasticsearch_remake_item_index()
-            return jsonify(responce) ,200
-        
-        except BaseException as ex:
-            current_app.logger.error(
-                'Unexpected error: {}'.format(sys.exc_info()))
-            return abort(500 ,Response(ex.args))
+            ELASTIC_REINDEX_SETTINGS = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS']
+            HAS_ERRORED = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']
 
+            admin_setting = AdminSettings.get(ELASTIC_REINDEX_SETTINGS,False)
+            is_error = admin_setting.get(HAS_ERRORED)
+            is_executing = is_reindex_running()
+            result = dict({
+                "isError": is_error
+                ,"isExecuting": is_executing
+                ,"disabled_Btn": is_error or is_executing 
+            })
+
+            return jsonify(result)
+        except BaseException as ex:
+            current_app.logger.error('Unexpected error',ex)
+            return abort(500 ,Response(jsonify({"error" :ex.args})))
 
 
 

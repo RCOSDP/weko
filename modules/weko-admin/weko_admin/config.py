@@ -34,6 +34,11 @@ WEKO_ADMIN_BASE_TEMPLATE = 'weko_admin/base.html'
 WEKO_ADMIN_SETTINGS_TEMPLATE = None
 """Settings base template for weko-admin module."""
 
+WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS = 'elastic_reindex_settings'
+"""admin_settings record name"""
+WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED = 'has_errored'
+"""a json property name of admin_settings record 'lastic_reindex_settings'"""
+
 WEKO_ADMIN_LIFETIME_TEMPLATE = 'weko_admin/settings/lifetime.html'
 """Settings base template for weko-admin module."""
 

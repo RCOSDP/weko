@@ -37,10 +37,95 @@ from invenio_stats.utils import QueryCommonReportsHelper, \
 from weko_admin.api import TempDirInfo
 
 from .models import AdminSettings, StatisticsEmail
-from .utils import StatisticMail, get_user_report_data, package_reports
-from .views import manual_send_site_license_mail
+from .utils import StatisticMail, get_user_report_data, package_reports ,elasticsearch_reindex
+from .views import manual_send_site_license_mail 
+from celery.task.control import inspect
+from .config import WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS,\
+    WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED
+
 
 logger = get_task_logger(__name__)
+
+
+@shared_task(
+    name = "weko_admin.tasks.reindex" 
+    ,bind=True
+    ,acks_late=False
+    ,ignore_results=False)
+def reindex(self, es_to_es , db_to_es ):
+    """  
+    
+    note:elasticsearch_reindexの制限事項を理解した上で変更、修正を行ってください。
+    
+    Parameters
+    ----------
+    is_db_to_es : boolean
+        Trueの場合、DBから取得したデータからDocumentsを作成します。
+        Falseの場合、もともとの*-weko-item-*のDocumentsを再登録します。
+    
+    Returns
+    -------
+        'completed' : str
+        
+    Raises
+    ------
+    AssersionError 
+        ElasticSearchからのレスポンスコードが200でなかった場合
+        （後続処理は中断）
+    """
+
+    try:
+        res = {}
+        if es_to_es:
+            result = elasticsearch_reindex(False)
+            res.update({"es_to_es" : result})
+        if db_to_es :
+            # from .utils import _elasticsearch_remake_item_index
+            # result = _elasticsearch_remake_item_index()
+            result = elasticsearch_reindex(True)
+            res.update({"db_to_es" : result})
+        current_app.logger.info(res)
+        return res
+    except BaseException as ex:
+        current_app.logger.error('Unexpected error',ex)
+        # set error in admin_settings
+        AdminSettings.update(WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS 
+        , dict({WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED:True}))
+        raise
+
+def is_reindex_running():
+    """Check import is running."""
+    
+    if not _check_celery_is_run():
+        return False
+
+    active = inspect().active()
+    for worker in active:
+        for task in active[worker]:
+            current_app.logger.info("active")
+            current_app.logger.info(task)
+            if task["name"] == "weko_admin.tasks.reindex":
+                current_app.logger.info("weko_admin.tasks.reindex is active")
+                return True
+
+    reserved = inspect().reserved()
+    for worker in reserved:
+        for task in reserved[worker]:
+            current_app.logger.info("reserved")
+            current_app.logger.info(task)
+            if task["name"] == "weko_admin.tasks.reindex":
+                current_app.logger.info("weko_admin.tasks.reindex is reserved")
+                return True
+    
+    current_app.logger.info("weko_admin.tasks.reindex is not running")
+    return False
+
+def _check_celery_is_run():
+    """Check celery is running, or not."""
+    if not inspect().ping():
+        return False
+    else:
+        return True
 
 
 @shared_task(ignore_results=True)
