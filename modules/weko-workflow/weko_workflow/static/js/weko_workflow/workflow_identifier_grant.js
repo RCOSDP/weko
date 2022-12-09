@@ -283,17 +283,13 @@ require([
         }
       },
       error: function (jqXHR, status) {
-        if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.code){
-          if (jqXHR.responseJSON.code == -1){
-            endLoading(withdrawBtn);
-            $('#pwd').parent().addClass('has-error');
-            $('#error-info').html(data.msg);
-            $('#error-info').parent().show();
-          }
-        }else{
+        if (jqXHR.status === 500) {
+          var response = JSON.parse(jqXHR.responseText);
+          alert(response.msg);
+        } else {
           alert('Server error');
-          endLoading(withdrawBtn);
         }
+        endLoading(withdrawBtn);
       }
     });
     event.preventDefault();
