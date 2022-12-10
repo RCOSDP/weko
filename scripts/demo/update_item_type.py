@@ -368,6 +368,12 @@ def update_form(form_data):
                                 form_data[i]['titleMap'][map_index] = {'name': 'ISSN【非推奨】', 'value': 'ISSN【非推奨】'}
                                 update_flag = True
                                 break
+            if 'accessrole' in value['key']:
+                if 'type' in value:
+                    if value['type'] == "radios":
+                        form_data[i]['onChange'] = "accessRoleChange()"
+                        update_flag = True
+                        break
             elif 'items' in value:
                 update_flag = update_flag | update_form(form_data[i]['items'])
     elif isinstance(form_data, dict) and 'items' in form_data:
