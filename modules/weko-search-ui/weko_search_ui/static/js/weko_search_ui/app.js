@@ -297,7 +297,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     }
     $http({
       method: 'GET',
-      url: '/get_child_list/' + $rootScope.index_id_q + '?time=' + currentTime,
+      url: '/get_child_list/' + $rootScope.index_id_q,
       headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
       child_list = response.data;
@@ -335,7 +335,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     }
     $http({
       method: 'GET',
-      url: '/get_path_name_dict/' + path_str + '?time=' + currentTime,
+      url: '/get_path_name_dict/' + path_str,
       headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
       $rootScope.vm.invenioSearchResults.aggregations.path.buckets[0][0]['path_name_dict'] = response.data;
@@ -470,7 +470,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     let request_url = '';
 
     if (search_type == "2") {
-      request_url = '/api/index/?page=1&size=9999&search_type=' + search_type + '&q=' + q + "&time=" + currentTime;
+      request_url = '/api/index/?page=1&size=9999&search_type=' + search_type + '&q=' + q;
     } else {
       if (search_type === null) {
         search_type = "0";
@@ -478,7 +478,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
       if (q === null) {
         q = "";
       }
-      request_url = '/api/records/?page=1&size=9999&search_type=' + search_type + '&q=' + q + "&time=" + currentTime;
+      request_url = '/api/records/?page=1&size=9999&search_type=' + search_type + '&q=' + q;
     }
 
     let search_results = []
