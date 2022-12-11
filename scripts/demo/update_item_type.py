@@ -165,10 +165,11 @@ change_relation_text_key = [
 
 def main():
     print(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), '=== Update item type start. ===')
-    try:
-        # item type
-        itemtypes = ItemTypes.get_all(True)
-        for it in itemtypes:
+
+    # item type
+    itemtypes = ItemTypes.get_all(True)
+    for it in itemtypes:
+        try:
             _update_flag = False
             _schema = it.schema
             _form = it.form
@@ -213,17 +214,18 @@ def main():
                         datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
                         'Update item type {}({}) to db is fail.'.format(it.item_type_name.name, it.id),
                         e)
-    except Exception as ex:
-        print(
-            datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
-            'Change item type {}({}) data is fail.'.format(it.item_type_name.name, it.id),
-            ex)
+        except Exception as ex:
+            print(
+                datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                'Change item type {}({}) data is fail.'.format(it.item_type_name.name, it.id),
+                ex)
     print(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), '=== Update item type end. ===')
     print(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), '=== Update property start. ===')
-    try:
-        # property
-        props = ItemTypeProps.get_records([])
-        for prop in props:
+    
+    # property
+    props = ItemTypeProps.get_records([])
+    for prop in props:
+        try:
             _update_flag = False
             _schema = prop.schema
             _form = prop.form
@@ -251,11 +253,11 @@ def main():
                         datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
                         'Update propery {}({}) to db is fail.'.format(prop.name, prop.id),
                         e)
-    except Exception as ex:
-        print(
-            datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
-            'Change property {}({}) data is fail.'.format(prop.name, prop.id),
-            ex)
+        except Exception as ex:
+            print(
+                datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                'Change property {}({}) data is fail.'.format(prop.name, prop.id),
+                ex)
     print(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), '=== Update property end. ===')
 
 def update_schema(value):
@@ -368,6 +370,12 @@ def update_form(form_data):
                                 form_data[i]['titleMap'][map_index] = {'name': 'ISSN【非推奨】', 'value': 'ISSN【非推奨】'}
                                 update_flag = True
                                 break
+                if 'accessrole' in value['key']:
+                    if 'type' in value:
+                        if value['type'] == "radios":
+                            form_data[i]['onChange'] = "accessRoleChange()"
+                            update_flag = True
+                            break
             elif 'items' in value:
                 update_flag = update_flag | update_form(form_data[i]['items'])
     elif isinstance(form_data, dict) and 'items' in form_data:
