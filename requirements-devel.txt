@@ -26,7 +26,7 @@ cachelib==0.1
 cachetools==4.2.4
 cchardet==2.1.1
 celery==4.4.4
-certifi==2017.11.5
+certifi==2022.12.7
 cffi==1.11.2
 chardet==3.0.4
 charset-normalizer==2.0.12
