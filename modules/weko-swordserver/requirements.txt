@@ -79,7 +79,7 @@ jsonresolver==0.2.1
 jsonschema==2.6.0
 jsonpath_ng==1.5.2
 jupyter-client==5.2.2
-jupyter-core==4.4.0
+jupyter-core==4.11.2
 jsonpath-ng == 1.5.2
 kombu==4.6.10
 limits==1.2.1
