@@ -28,7 +28,7 @@
 {%- import "weko_groups/settings/helpers.html" as helpers with context -%}
 {%- from "weko_groups/_macros.html" import render_field with context %}
 
-{% set header = (group.name + " <small class='text-muted'>New member</small>") -%}
+{% set header = (group.escape_name + " <small class='text-muted'>New member</small>") -%}
 {% set panel_title = _("Groups") %}
 {% set panel_icon = "fa fa-group fa-fw" %}
 

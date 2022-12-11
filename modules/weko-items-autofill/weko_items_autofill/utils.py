@@ -188,6 +188,7 @@ def get_crossref_record_data(pid, doi, item_type_id):
     """
     result = list()
     api_response = CrossRefOpenURL(pid, doi).get_data()
+    current_app.logger.error("CrossRefOpenURL.get_data():{}".format(api_response))
     if api_response["error"]:
         return result
     api_response['response'] = convert_crossref_xml_data_to_dictionary(
