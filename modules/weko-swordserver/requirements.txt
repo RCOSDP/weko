@@ -84,7 +84,7 @@ jsonpath-ng == 1.5.2
 kombu==4.6.10
 limits==1.2.1
 lxml==4.1.1
-Mako==1.0.7
+Mako==1.2.2
 MarkupSafe==1.1.1
 marshmallow==2.20.1
 maxminddb==1.5.2
