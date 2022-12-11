@@ -83,7 +83,7 @@ jupyter-core==4.4.0
 jsonpath-ng == 1.5.2
 kombu==4.6.10
 limits==1.2.1
-lxml==4.1.1
+lxml==4.9.1
 Mako==1.0.7
 MarkupSafe==1.1.1
 marshmallow==2.20.1
