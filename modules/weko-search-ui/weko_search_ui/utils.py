@@ -2893,6 +2893,7 @@ def handle_fill_system_item(list_record):
 
             fixed_doi = False
             fixed_doi_ra = False
+            checked_doi_ra_list = ["JaLC", "Crossref", "DataCite", "NDL JaLC"]
                     
             if identifierRegistration_key in item["metadata"]:
                 if existed_doi:                    
@@ -2900,25 +2901,40 @@ def handle_fill_system_item(list_record):
                         _doi_ra = item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type']
                         if item.get("is_change_identifier", False) == True:
                             item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type'] = item_doi_ra
-                        elif _doi_ra != doi_ra and item.get("is_change_identifier",False)==False:
+                            if _doi_ra != item_doi_ra:
+                                if item_doi_ra not in checked_doi_ra_list:
+                                    fixed_doi_ra = True
+                        elif item.get("is_change_identifier",False)==False:
                             item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type'] = doi_ra
-                            fixed_doi_ra = True
+                            if _doi_ra != item_doi_ra:
+                                if item_doi_ra not in checked_doi_ra_list:
+                                    fixed_doi_ra = True
                     else:
-                        if item.get("is_change_identifier", False) == False:
+                        if item.get("is_change_identifier",False)==False:
                             item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type'] = doi_ra
-                            fixed_doi_ra = True
+                            if _doi_ra != item_doi_ra:
+                                if item_doi_ra not in checked_doi_ra_list:
+                                    fixed_doi_ra = True
+                        elif item.get("is_change_identifier", False) == True:
+                            item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type'] = item_doi_ra
+                            if _doi_ra != item_doi_ra:
+                                if item_doi_ra not in checked_doi_ra_list:
+                                    fixed_doi_ra = True
 
                     if 'subitem_identifier_reg_text' in item["metadata"][identifierRegistration_key]:    
                         _doi = item["metadata"][identifierRegistration_key]['subitem_identifier_reg_text']
                         if item.get("is_change_identifier", False) == True:
                             item["metadata"][identifierRegistration_key]['subitem_identifier_reg_text'] = item_doi
+                            if _doi != doi:
+                                fixed_doi = True
                         elif _doi != doi and item.get("is_change_identifier", False) == False:
                             item["metadata"][identifierRegistration_key]['subitem_identifier_reg_text'] = doi
                             fixed_doi = True
                     else:
                         if item.get("is_change_identifier", False) == False:
                             item["metadata"][identifierRegistration_key]['subitem_identifier_reg_text'] = doi
-                            fixed_doi = True                        
+                            if _doi != doi:
+                                fixed_doi = True                      
                 else:
                     del item["metadata"][identifierRegistration_key]
                 
@@ -2929,26 +2945,37 @@ def handle_fill_system_item(list_record):
                 if existed_doi:
                     if item.get("is_change_identifier", False) == True:
                         item["doi"] = item_doi
+                        if _doi != item_doi:
+                            fixed_doi = True
                     elif item.get("is_change_identifier", False) == False:
                         item["doi"] = doi
-                        fixed_doi = True
+                        if _doi != item_doi:
+                            fixed_doi = True
             else:
                 if item.get("is_change_identifier", False) == False:
                     if existed_doi:
                         item["doi"] = doi
-                        fixed_doi = True
+                        if _doi != item_doi:
+                            fixed_doi = True
             
             if item_doi_ra is not None:
                 if existed_doi:
                     if item.get("is_change_identifier", False) == True:
                         item["doi_ra"] = item_doi_ra
+                        if _doi_ra != item_doi_ra:
+                            if item_doi_ra not in checked_doi_ra_list:
+                                fixed_doi_ra = True
                     elif item.get("is_change_identifier", False) == False:
                         item["doi_ra"] = doi_ra
-                        fixed_doi_ra = True
+                        if _doi_ra != item_doi_ra:
+                            if item_doi_ra not in checked_doi_ra_list:
+                                fixed_doi_ra = True
             else:
                 if item.get("is_change_identifier", False) == False:
                     item["doi_ra"] = doi_ra
-                    fixed_doi_ra = True
+                    if _doi_ra != item_doi_ra:
+                        if item_doi_ra not in checked_doi_ra_list:
+                            fixed_doi_ra = True
 
             if fixed_doi:
                 warnings.append(_('The specified DOI is wrong and fixed with the registered DOI.'))
