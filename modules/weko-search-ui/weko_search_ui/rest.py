@@ -313,7 +313,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 private_count, public_count = count_items(_child_indexes)
                 current_idx["date_range"]["pub_cnt"] = public_count
                 current_idx["date_range"]["un_pub_cnt"] = private_count
-                nlst.append(current_idx)
+                if p.path in is_perm_paths:
+                    nlst.append(current_idx)
         else:
             for p in paths:
                 m = 0
@@ -351,7 +352,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 private_count, public_count = count_items(_child_indexes)
                 current_idx["date_range"]["pub_cnt"] = public_count
                 current_idx["date_range"]["un_pub_cnt"] = private_count
-                nlst.append(current_idx)
+                if p.path in is_perm_paths:
+                    nlst.append(current_idx)
         agp.clear()
         # process index tree image info
         if len(nlst):

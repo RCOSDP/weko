@@ -246,12 +246,12 @@ class ItemResource(ContentNegotiatedMethodView):
                 json.dumps(data).encode('utf-8'),
                 ttl_secs=ttl_sec)
         except SQLAlchemyError as ex:
-            current_app.logger.error('sqlalchemy error: ', ex)
+            current_app.logger.error('sqlalchemy error: %s', ex)
             db.session.rollback()
             abort(400, "Failed to register item!")
 
         except ElasticsearchException as ex:
-            current_app.logger.error('elasticsearch error: ', ex)
+            current_app.logger.error('elasticsearch error: %s', ex)
             db.session.rollback()
 
             # elasticseacrh remove
@@ -259,7 +259,7 @@ class ItemResource(ContentNegotiatedMethodView):
 
             abort(400, "Failed to register item!")
         except redis.RedisError as ex:
-            current_app.logger.error('redis error: ', ex)
+            current_app.logger.error('redis error: %s', ex)
             db.session.rollback()
 
             # elasticseacrh remove
@@ -267,7 +267,7 @@ class ItemResource(ContentNegotiatedMethodView):
 
             abort(400, "Failed to register item!")
         except BaseException as ex:
-            current_app.logger.error('Unexpected error: ', ex)
+            current_app.logger.error('Unexpected error: %s', ex)
             db.session.rollback()
             abort(400, "Failed to register item!")
 

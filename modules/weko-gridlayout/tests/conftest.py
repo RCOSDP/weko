@@ -16,21 +16,28 @@ from __future__ import absolute_import, print_function
 import os
 import shutil
 import tempfile
-
 import pytest
-from mock import patch
+from mock import patch, MagicMock
 from flask import Flask
 from flask_admin import Admin
 from flask_babelex import Babel
 from sqlalchemy_utils.functions import create_database, database_exists
+from datetime import datetime, timedelta
+from tests.helpers import create_record, json_data
 
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.testutils import create_test_user, login_user_via_session
 from invenio_access.models import ActionUsers
 from invenio_access import InvenioAccess
 from invenio_db import InvenioDB, db as db_
-
 from invenio_accounts.models import User, Role
+from invenio_communities.models import Community
+
+from weko_redis.redis import RedisConnection
+from weko_records.models import ItemTypeProperty
+from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
+from weko_records.api import Mapping
+from weko_index_tree.models import Index
 from weko_gridlayout import WekoGridLayout
 #from weko_admin import WekoAdmin
 from weko_gridlayout.views import blueprint, blueprint_api
@@ -38,6 +45,7 @@ from weko_gridlayout.services import WidgetItemServices
 from weko_gridlayout.admin import widget_adminview, WidgetSettingView
 from weko_gridlayout.models import WidgetType, WidgetItem,WidgetMultiLangData,WidgetDesignSetting,WidgetDesignPage
 from weko_admin.models import AdminLangSettings
+
 
 @pytest.fixture(scope='module')
 def celery_config():
@@ -75,7 +83,12 @@ def base_app(instance_path):
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         TESTING=True,
+        SEARCH_INDEX_PREFIX='test-',
+        INDEXER_DEFAULT_DOC_TYPE='testrecord',
+        SEARCH_UI_SEARCH_INDEX='tenant1-weko',
         SECRET_KEY='SECRET_KEY',
+        CACHE_REDIS_DB='0',
+        CACHE_TYPE='0'
     )
     Babel(app_)
     InvenioDB(app_)
@@ -93,10 +106,37 @@ def app(base_app):
     with base_app.app_context():
         yield base_app
 
+
+@pytest.yield_fixture()
+def i18n_app(app):
+    with app.test_request_context(
+        headers=[('Accept-Language','ja')]):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        app.extensions['invenio-search'] = MagicMock()
+        app.extensions['invenio-i18n'] = MagicMock()
+        app.extensions['invenio-i18n'].language = "ja"
+        yield app
+
+
 @pytest.yield_fixture()
 def client(app):
     with app.test_client() as client:
         yield client
+
+
+@pytest.yield_fixture()
+def client_request_args(app, file_instance_mock):
+    with app.test_client() as client:
+        with patch("flask.templating._render", return_value=""):
+            r = client.get('/', query_string={
+                'remote_addr': '0.0.0.0',
+                'referrer': 'test',
+                'host': '127.0.0.1',
+                'url_root': 'https://localhost/api/'
+                # 'search_type': WEKO_SEARCH_TYPE_DICT["FULL_TEXT"],
+                })
+        yield r
 
 
 @pytest.fixture()
@@ -187,6 +227,7 @@ def widget_item(db):
             "is_enabled": True,
             "is_deleted": False,
             "locked": False,
+            "is_main_layout": True,
             "locked_by_user": None,
             "multiLangSetting": {
                 "en": {
@@ -283,6 +324,8 @@ def admin_lang_settings(db):
     AdminLangSettings.create(lang_code="fil", lang_name="Filipino (Pilipinas)",
                              is_registered=False, sequence=0, is_active=True)
 
+
+@pytest.fixture()
 def db_register(users,db):
     widgettype_0 = WidgetType(type_id='Free description',type_name='Free description')
     widgettype_1 = WidgetType(type_id='Access counter',type_name='Access counter')
@@ -349,3 +392,104 @@ def db_register(users,db):
         db.session.add(widget_design_setting_2)
         db.session.add(widget_design_page_1)
         db.session.add(widget_design_page_2)
+
+
+@pytest.fixture
+def indices(app, db):
+    with db.session.begin_nested():
+        # Create a test Indices
+        testIndexOne = Index(index_name="testIndexOne",browsing_role="Contributor",public_state=True,id=11)
+        testIndexTwo = Index(index_name="testIndexTwo",browsing_group="group_test1",public_state=True,id=22)
+        testIndexThree = Index(
+            index_name="testIndexThree",
+            browsing_role="Contributor",
+            public_state=True,
+            harvest_public_state=True,
+            id=33,
+            item_custom_sort={'1': 1},
+            public_date=datetime.today() - timedelta(days=1)
+        )
+        testIndexThreeChild = Index(
+            index_name="testIndexThreeChild",
+            browsing_role="Contributor",
+            parent=33,
+            index_link_enabled=True,
+            index_link_name="test_link",
+            public_state=True,
+            harvest_public_state=False,
+            id=44,
+            public_date=datetime.today() - timedelta(days=1)
+        )
+        testIndexMore = Index(index_name="testIndexMore",parent=33,public_state=True,id='more')
+        testIndexPrivate = Index(index_name="testIndexPrivate",public_state=False,id=55)
+
+        db.session.add(testIndexThree)
+        db.session.add(testIndexThreeChild)
+        
+    return {
+        'index_dict': dict(testIndexThree),
+        'index_non_dict': testIndexThree,
+        'index_non_dict_child': testIndexThreeChild,
+    }
+
+
+@pytest.fixture()
+def item_type(db):
+    item_type_name = ItemTypeName(name='テストアイテムタイプ',
+                                  has_site_license=True,
+                                  is_active=True)
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
+    item_type = ItemType(name_id=1,harvesting_type=True,
+                         schema=json_data("data/item_type/15_schema.json"),
+                         form=json_data("data/item_type/15_form.json"),
+                         render=json_data("data/item_type/15_render.json"),
+                         tag=1,version_id=1,is_deleted=False)
+    itemtype_property_data = json_data("data/itemtype_properties.json")[0]
+    item_type_property = ItemTypeProperty(
+        name=itemtype_property_data["name"],
+        schema=itemtype_property_data["schema"],
+        form=itemtype_property_data["form"],
+        forms=itemtype_property_data["forms"],
+        delflg=False
+    )
+    with db.session.begin_nested():
+        db.session.add(item_type)
+        db.session.add(item_type_property)
+    mappin = Mapping.create(
+        item_type.id,
+        mapping = json_data("data/item_type/item_type_mapping.json")
+    )
+    db.session.commit()
+    return item_type
+
+
+@pytest.fixture()
+def user(app, db):
+    """Create a example user."""
+    return create_test_user(email='test@test.org')
+
+
+@pytest.fixture()
+def communities(app, db, user, indices):
+    """Create some example communities."""
+    user1 = db_.session.merge(user)
+    ds = app.extensions['invenio-accounts'].datastore
+    r = ds.create_role(name='superuser', description='1234')
+    ds.add_role_to_user(user1, r)
+    ds.commit()
+    db.session.commit()
+
+    comm0 = Community.create(community_id='comm1', role_id=r.id,
+                             id_user=user1.id, title='Title1',
+                             description='Description1',
+                             root_node_id=33)
+    db.session.add(comm0)
+
+    return comm0
+
+
+@pytest.fixture
+def redis_connect(app):
+    redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+    return redis_connection

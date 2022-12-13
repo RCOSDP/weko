@@ -1835,6 +1835,7 @@ def cache_schema(schema_name, delete=False):
                 dstore['namespaces'] = rec.model.namespaces.copy()
                 dstore['schema'] = json.loads(
                     rec.model.xsd, object_pairs_hook=OrderedDict)
+                
                 # why use clear()?
                 rec.model.namespaces.clear()
                 del rec
