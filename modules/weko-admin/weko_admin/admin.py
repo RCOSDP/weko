@@ -31,7 +31,7 @@ import ipaddress
 from datetime import datetime, timedelta
 
 from flask import abort, current_app, flash, jsonify, make_response, \
-    redirect, render_template, request, url_for ,Response
+    redirect, render_template, request, url_for 
 from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.fields import QuerySelectField
@@ -176,7 +176,6 @@ class ReindexElasticSearchView(BaseView):
 class StyleSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
-        print("StyleSettingView called!")
         """Block style setting page."""
         body_bg = '#fff'
         panel_bg = '#fff'
