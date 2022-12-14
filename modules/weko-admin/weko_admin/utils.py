@@ -655,7 +655,7 @@ class StatisticMail:
                     )
                     failed_mail += 1
         except Exception as ex:
-            current_app.logger.error('Error has occurred', ex)
+            current_app.logger.error('Error has occurred', str(ex))
         end_time = datetime.now()
         FeedbackMailHistory.create(
             session,

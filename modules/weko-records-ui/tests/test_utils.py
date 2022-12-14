@@ -8,15 +8,18 @@ import io
 from lxml import etree
 from fpdf import FPDF
 from invenio_records_files.utils import record_file_factory
-from flask import Flask, json, jsonify, session, url_for
+from flask import Flask, json, jsonify, session, url_for,current_app
 from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
 from weko_deposit.api import WekoRecord
 from weko_records_ui.models import FileOnetimeDownload
+from weko_records.api import ItemTypes,Mapping
 from werkzeug.exceptions import NotFound
 from weko_admin.models import AdminSettings
+from weko_records.serializers.utils import get_mapping
+from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 
@@ -65,6 +68,41 @@ def test_check_items_settings(app,db_admin_settings):
     setting = settings.get("items_display_settings")
     with app.test_request_context():
         assert check_items_settings(setting)==None
+        
+    setting = AdminSettings.get(name="items_display_settings")
+    assert isinstance(setting,AdminSettings.Dict2Obj)==True
+    with app.test_request_context():
+        current_app.config["EMAIL_DISPLAY_FLG"]=""
+        current_app.config["ITEM_SEARCH_FLG"]=""
+        current_app.config["OPEN_DATE_DISPLAY_FLG"]=""
+        assert check_items_settings(setting)==None
+        assert current_app.config["EMAIL_DISPLAY_FLG"]==setting.items_display_email
+        assert current_app.config["ITEM_SEARCH_FLG"]==setting.items_search_author
+        assert current_app.config["OPEN_DATE_DISPLAY_FLG"]==setting.item_display_open_date
+
+    setting = AdminSettings.get(name="items_display_settings",dict_to_object=False)
+    assert isinstance(setting,dict)==True
+    with app.test_request_context():
+        current_app.config["EMAIL_DISPLAY_FLG"]=""
+        current_app.config["ITEM_SEARCH_FLG"]=""
+        current_app.config["OPEN_DATE_DISPLAY_FLG"]=""
+        assert setting['items_display_email']==False
+        assert setting['items_search_author']=='name'
+        assert setting['item_display_open_date']==False
+        assert check_items_settings(setting)==None
+        assert current_app.config["EMAIL_DISPLAY_FLG"]==setting['items_display_email']
+        assert current_app.config["ITEM_SEARCH_FLG"]==setting['items_search_author']
+        assert current_app.config["OPEN_DATE_DISPLAY_FLG"]==setting['item_display_open_date']
+        current_app.config["EMAIL_DISPLAY_FLG"]=""
+        current_app.config["ITEM_SEARCH_FLG"]=""
+        current_app.config["OPEN_DATE_DISPLAY_FLG"]=""
+        setting['items_display_email']=True
+        setting['items_search_author']='id'
+        setting['item_display_open_date']=True
+        assert check_items_settings(setting)==None
+        assert current_app.config["EMAIL_DISPLAY_FLG"]==setting['items_display_email']
+        assert current_app.config["ITEM_SEARCH_FLG"]==setting['items_search_author']
+        assert current_app.config["OPEN_DATE_DISPLAY_FLG"]==setting['item_display_open_date']
 
 # def get_record_permalink(record):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_record_permalink -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -213,8 +251,59 @@ def test_hide_by_itemtype(app,records):
 #     def item_type_show_email(item_type_id):
 #     def item_setting_show_email():
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_show_email_of_creator -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_is_show_email_of_creator(app,itemtypes):
-    assert is_show_email_of_creator(1)==False
+@pytest.mark.parametrize(
+    "is_hide, is_display, is_show_email",
+    [(False,True,True),
+     (True,True,False),
+     (False,False,False),
+     (True,False,False)]
+)
+def test_is_show_email_of_creator(app,db,db_admin_settings,is_hide,is_display,is_show_email):
+    item_type_name = ItemTypeName(
+        id=1, name="テストアイテムタイプ", has_site_license=True, is_active=True
+    )
+    item_type_schema = dict()
+    with open("tests/data/itemtype_schema.json", "r") as f:
+        item_type_schema = json.load(f)
+
+    item_type_form = dict()
+    with open("tests/data/itemtype_form.json", "r") as f:
+        item_type_form = json.load(f)
+
+    item_type_render = dict()
+    with open("tests/data/itemtype_render.json", "r") as f:
+        item_type_render = json.load(f)
+    
+    item_type_render["schemaeditor"]["schema"]["item_1617186419668"]["properties"]["creatorMails"]["items"]["properties"]["creatorMail"]["isHide"] = is_hide
+    
+    item_type_mapping = dict()
+    with open("tests/data/itemtype_mapping.json", "r") as f:
+        item_type_mapping = json.load(f)
+
+    item_type = ItemType(
+        id=1,
+        name_id=1,
+        harvesting_type=True,
+        schema=item_type_schema,
+        form=item_type_form,
+        render=item_type_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_mapping = ItemTypeMapping(id=1, item_type_id=1, mapping=item_type_mapping)
+
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
+        db.session.add(item_type)
+        db.session.add(item_type_mapping)
+        
+    setting = AdminSettings.get(name="items_display_settings",dict_to_object=False)
+    setting['items_display_email'] = is_display
+    AdminSettings.update("items_display_settings",setting)
+    
+    assert is_show_email_of_creator(1)==is_show_email
 
 
 # def replace_license_free(record_metadata, is_change_label=True):

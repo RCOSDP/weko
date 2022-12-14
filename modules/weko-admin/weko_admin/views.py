@@ -79,6 +79,7 @@ def _has_admin_access():
 
 
 @blueprint.route('/session/lifetime/<int:minutes>', methods=['GET'])
+@login_required
 def set_lifetime(minutes):
     """Update session lifetime in db.
 

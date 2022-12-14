@@ -24,12 +24,12 @@
 {%- from "weko_groups/helpers.html" import searchbar with context -%}
 {%- from "weko_groups/helpers.html" import emptysearch with context -%}
 
-{% set panel_title = _(group.name) %}
+{% set panel_title = _(group.escape_name) %}
 {% set panel_icon = "fa fa-group fa-fw" %}
 
 {%- block settings_body %}
 {{ helpers.panel_start(
-    _("%s <small class='text-muted'>Members</small>" % group.name),
+    _("%s <small class='text-muted'>Members</small>" % group.escape_name),
     with_body=False,
     icon="fa fa-users fa-fw",
     btn=_("Manage"), btn_icon='fa fa-fw fa-wrench', btn_href=url_for('.manage', group_id=group.id),

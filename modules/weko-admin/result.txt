@@ -1,0 +1,903 @@
+GLOB sdist-make: /code/modules/weko-admin/setup.py
+c1 create: /code/modules/weko-admin/.tox/c1
+c1 installdeps: pytest>=3, pytest-cov, -rrequirements.txt
+c1 inst: /code/modules/weko-admin/.tox/.tmp/package/1/weko-admin-0.1.0.dev20170000.zip
+c1 installed: alabaster==0.7.12,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.7,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.4,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_iiif&subdirectory=modules/invenio-iiif,invenio-indexer==1.0.2,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,kombu==4.6.10,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_accounts&subdirectory=modules/weko-accounts,weko-admin @ file:///code/modules/weko-admin/.tox/.tmp/package/1/weko-admin-0.1.0.dev20170000.zip,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/ivis-miyachi/weko.git@606ac5b47e5b10d94e4888984dc5fc6c878e308d#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.0
+c1 run-test-pre: PYTHONHASHSEED='518602669'
+c1 run-test: commands[0] | pytest --cov=weko_admin tests -v -vv -s --cov-branch --cov-report=term --cov-report=xml --cov-report=html --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/weko-admin/.tox/c1/bin/python
+cachedir: .tox/c1/.pytest_cache
+rootdir: /code/modules/weko-admin
+plugins: celery-4.4.7, mock-3.6.1, cov-4.0.0
+collecting ... collected 75 items
+
+tests/test_views.py::test_get_email_author_sysadmin PASSED
+tests/test_views.py::test_get_email_author_repoadmin PASSED
+tests/test_views.py::test_get_email_author_comadmin FAILED
+tests/test_views.py::test_get_email_author_cont FAILED
+tests/test_views.py::test_get_email_author_gene FAILED
+tests/test_views.py::test_get_email_author_guest PASSED
+tests/test_views.py::test_get_usage_report_activities_sysadmin PASSED
+tests/test_views.py::test_get_usage_report_activities_repoadmin PASSED
+tests/test_views.py::test_get_usage_report_activities_comadmin FAILED
+tests/test_views.py::test_get_usage_report_activities_cont FAILED
+tests/test_views.py::test_get_usage_report_activities_gene FAILED
+tests/test_views.py::test_get_usage_report_activities_guest PASSED
+tests/test_views.py::test_manual_send_site_license_mail_sysadmin PASSED
+tests/test_views.py::test_manual_send_site_license_mail_repoadmin PASSED
+tests/test_views.py::test_manual_send_site_license_mail_comadmin FAILED
+tests/test_views.py::test_manual_send_site_license_mail_cont FAILED
+tests/test_views.py::test_manual_send_site_license_mail_gene FAILED
+tests/test_views.py::test_manual_send_site_license_mail_guest FAILED
+tests/test_views.py::test_remove_facet_search_sysadmin PASSED
+tests/test_views.py::test_remove_facet_search_repoadmin PASSED
+tests/test_views.py::test_remove_facet_search_comadmin FAILED
+tests/test_views.py::test_remove_facet_search_cont FAILED
+tests/test_views.py::test_remove_facet_search_gene FAILED
+tests/test_views.py::test_remove_facet_search_guest PASSED
+tests/test_views.py::test_resend_failed_mail_sysadmin PASSED
+tests/test_views.py::test_resend_failed_mail_repoadmin PASSED
+tests/test_views.py::test_resend_failed_mail_comadmin FAILED
+tests/test_views.py::test_resend_failed_mail_cont FAILED
+tests/test_views.py::test_resend_failed_mail_gene FAILED
+tests/test_views.py::test_resend_failed_mail_guest FAILED
+tests/test_views.py::test_save_api_cert_data_sysadmin PASSED
+tests/test_views.py::test_save_api_cert_data_repoadmin PASSED
+tests/test_views.py::test_save_api_cert_data_comadmin FAILED
+tests/test_views.py::test_save_api_cert_data_cont FAILED
+tests/test_views.py::test_save_api_cert_data_gene FAILED
+tests/test_views.py::test_save_api_cert_data_guest FAILED
+tests/test_views.py::test_save_facet_search_sysadmin PASSED
+tests/test_views.py::test_save_facet_search_repoadmin PASSED
+tests/test_views.py::test_save_facet_search_comadmin FAILED
+tests/test_views.py::test_save_facet_search_cont FAILED
+tests/test_views.py::test_save_facet_search_guest PASSED
+tests/test_views.py::test_save_lang_list_sysadmin PASSED
+tests/test_views.py::test_save_lang_list_repoadmin PASSED
+tests/test_views.py::test_save_lang_list_comadmin FAILED
+tests/test_views.py::test_save_lang_list_cont FAILED
+tests/test_views.py::test_save_lang_list_gene FAILED
+tests/test_views.py::test_save_lang_list_guest FAILED
+tests/test_views.py::test_save_restricted_access_sysadmin PASSED
+tests/test_views.py::test_save_restricted_access_repoadmin PASSED
+tests/test_views.py::test_save_restricted_access_comadmin FAILED
+tests/test_views.py::test_save_restricted_access_cont FAILED
+tests/test_views.py::test_save_restricted_access_gene FAILED
+tests/test_views.py::test_save_restricted_access_guest PASSED
+tests/test_views.py::test_send_mail_reminder_usage_report_sysadmin PASSED
+tests/test_views.py::test_send_mail_reminder_usage_report_repoadmin PASSED
+tests/test_views.py::test_send_mail_reminder_usage_report_comadmin FAILED
+tests/test_views.py::test_send_mail_reminder_usage_report_cont FAILED
+tests/test_views.py::test_send_mail_reminder_usage_report_gene FAILED
+tests/test_views.py::test_send_mail_reminder_usage_report_guest PASSED
+tests/test_views.py::test_update_feedback_mail_sysadmin PASSED
+tests/test_views.py::test_update_feedback_mail_repoadmin PASSED
+tests/test_views.py::test_update_feedback_mail_comadmin FAILED
+tests/test_views.py::test_update_feedback_mail_cont FAILED
+tests/test_views.py::test_update_feedback_mail_gene FAILED
+tests/test_views.py::test_update_feedback_mail_guest FAILED
+tests/test_views.py::test_update_site_info_sysadmin PASSED
+tests/test_views.py::test_update_site_info_repoadmin PASSED
+tests/test_views.py::test_update_site_info_comadmin FAILED
+tests/test_views.py::test_update_site_info_cont FAILED
+tests/test_views.py::test_update_site_info_gene FAILED
+tests/test_views.py::test_update_site_info_guest PASSED
+tests/test_weko_admin.py::test_version PASSED
+tests/test_weko_admin.py::test_init PASSED
+tests/test_weko_admin.py::test_view /accounts/settings/session/
+PASSED
+tests/test_weko_admin.py::test_set_lifetime /accounts/settings/session/lifetime/720
+PASSED
+
+=================================== FAILURES ===================================
+________________________ test_get_email_author_comadmin ________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_get_email_author_comadmin(client, users):
+        login_user_via_session(client=client, email=users[2]["email"])
+        with patch("weko_admin.views.FeedbackMail.search_author_mail",
+                   return_value={}
+                   ):
+            res = client.post('/api/admin/search_email',
+                              data=json.dumps({}),
+                              content_type="application/json"
+                              )
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:39: AssertionError
+__________________________ test_get_email_author_cont __________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_get_email_author_cont(client, users):
+        login_user_via_session(client=client, email=users[1]["email"])
+        with patch("weko_admin.views.FeedbackMail.search_author_mail",
+                   return_value={}
+                   ):
+            res = client.post('/api/admin/search_email',
+                              data=json.dumps({}),
+                              content_type="application/json"
+                              )
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:51: AssertionError
+__________________________ test_get_email_author_gene __________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_get_email_author_gene(client, users):
+        login_user_via_session(client=client, email=users[0]["email"])
+        with patch("weko_admin.views.FeedbackMail.search_author_mail",
+                   return_value={}
+                   ):
+            res = client.post('/api/admin/search_email',
+                              data=json.dumps({}),
+                              content_type="application/json"
+                              )
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:63: AssertionError
+__________________ test_get_usage_report_activities_comadmin ___________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_get_usage_report_activities_comadmin(client, users):
+        login_user_via_session(client=client, email=users[2]["email"])
+        mock_usagereport = MagicMock(side_effect=MockUsageReport)
+        with patch("weko_admin.views.UsageReport", mock_usagereport):
+            res = client.post("/api/admin/restricted_access/"\
+                              "get_usage_report_activities",
+                              data=json.dumps({}),
+                              content_type="application/json")
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:114: AssertionError
+____________________ test_get_usage_report_activities_cont _____________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_get_usage_report_activities_cont(client, users):
+        login_user_via_session(client=client, email=users[1]["email"])
+        mock_usagereport = MagicMock(side_effect=MockUsageReport)
+        with patch("weko_admin.views.UsageReport", mock_usagereport):
+            res = client.post("/api/admin/restricted_access/"\
+                              "get_usage_report_activities",
+                              data=json.dumps({}),
+                              content_type="application/json")
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:125: AssertionError
+____________________ test_get_usage_report_activities_gene _____________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_get_usage_report_activities_gene(client, users):
+        login_user_via_session(client=client, email=users[0]["email"])
+        mock_usagereport = MagicMock(side_effect=MockUsageReport)
+        with patch("weko_admin.views.UsageReport", mock_usagereport):
+            res = client.post("/api/admin/restricted_access/"\
+                              "get_usage_report_activities",
+                              data=json.dumps({}),
+                              content_type="application/json")
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:136: AssertionError
+_________________ test_manual_send_site_license_mail_comadmin __________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+test_site_license = [<SiteLicenseInfo 0>]
+
+    def test_manual_send_site_license_mail_comadmin(client, users, test_site_license):
+        login_user_via_session(client=client, email=users[2]["email"])
+        with patch("weko_admin.views.QueryCommonReportsHelper.get", return_value={"institution_name":[]}):
+            with patch("weko_admin.views.send_site_license_mail"):
+                res = client.post("/api/admin/sitelicensesendmail/send/202201/202203",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>               assert res.status_code == 403
+E               assert 200 == 403
+E                 +200
+E                 -403
+
+tests/test_views.py:176: AssertionError
+___________________ test_manual_send_site_license_mail_cont ____________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+test_site_license = [<SiteLicenseInfo 0>]
+
+    def test_manual_send_site_license_mail_cont(client, users, test_site_license):
+        login_user_via_session(client=client, email=users[1]["email"])
+        with patch("weko_admin.views.QueryCommonReportsHelper.get", return_value={"institution_name":[]}):
+            with patch("weko_admin.views.send_site_license_mail"):
+                res = client.post("/api/admin/sitelicensesendmail/send/202201/202203",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>               assert res.status_code == 403
+E               assert 200 == 403
+E                 +200
+E                 -403
+
+tests/test_views.py:186: AssertionError
+___________________ test_manual_send_site_license_mail_gene ____________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+test_site_license = [<SiteLicenseInfo 0>]
+
+    def test_manual_send_site_license_mail_gene(client, users, test_site_license):
+        login_user_via_session(client=client, email=users[0]["email"])
+        with patch("weko_admin.views.QueryCommonReportsHelper.get", return_value={"institution_name":[]}):
+            with patch("weko_admin.views.send_site_license_mail"):
+                res = client.post("/api/admin/sitelicensesendmail/send/202201/202203",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>               assert res.status_code == 403
+E               assert 200 == 403
+E                 +200
+E                 -403
+
+tests/test_views.py:196: AssertionError
+___________________ test_manual_send_site_license_mail_guest ___________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+test_site_license = [<SiteLicenseInfo 0>]
+
+    def test_manual_send_site_license_mail_guest(client, users, test_site_license):
+        with patch("weko_admin.views.QueryCommonReportsHelper.get", return_value={"institution_name":[]}):
+            with patch("weko_admin.views.send_site_license_mail"):
+                res = client.post("/api/admin/sitelicensesendmail/send/202201/202203",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>               assert res.status_code == 302
+E               assert 200 == 302
+E                 +200
+E                 -302
+
+tests/test_views.py:205: AssertionError
+______________________ test_remove_facet_search_comadmin _______________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_remove_facet_search_comadmin(client, users):
+        login_user_via_session(client=client, email=users[2]["email"])
+        data = {"id":[]}
+        with patch("weko_admin.views.store_facet_search_query_in_redis", return_value={}):
+            res = client.post("api/admin/facet-search/remove",
+                              data=json.dumps(data),
+                              content_type="application/json")
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:235: AssertionError
+________________________ test_remove_facet_search_cont _________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_remove_facet_search_cont(client, users):
+        login_user_via_session(client=client, email=users[1]["email"])
+        data = {"id":[]}
+        with patch("weko_admin.views.store_facet_search_query_in_redis", return_value={}):
+            res = client.post("api/admin/facet-search/remove",
+                              data=json.dumps(data),
+                              content_type="application/json")
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:245: AssertionError
+________________________ test_remove_facet_search_gene _________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_remove_facet_search_gene(client, users):
+        login_user_via_session(client=client, email=users[0]["email"])
+        data = {"id":[]}
+        with patch("weko_admin.views.store_facet_search_query_in_redis", return_value={}):
+            res = client.post("api/admin/facet-search/remove",
+                              data=json.dumps(data),
+                              content_type="application/json")
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:255: AssertionError
+_______________________ test_resend_failed_mail_comadmin _______________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_resend_failed_mail_comadmin(client, users):
+        login_user_via_session(client=client, email=users[3]["email"])
+        mock_feedbackmail = MagicMock(side_effect = Mock_FeedbackMail)
+        with patch("weko_admin.views.FeedbackMail", mock_feedbackmail):
+            with patch("weko_admin.views.StatisticMail.send_mail_to_all", return_value=""):
+                res = client.post("/api/admin/resend_failed_mail",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>               assert res.status_code == 403
+E               assert 200 == 403
+E                 +200
+E                 -403
+
+tests/test_views.py:307: AssertionError
+_________________________ test_resend_failed_mail_cont _________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_resend_failed_mail_cont(client, users):
+        login_user_via_session(client=client, email=users[2]["email"])
+        mock_feedbackmail = MagicMock(side_effect = Mock_FeedbackMail)
+        with patch("weko_admin.views.FeedbackMail", mock_feedbackmail):
+            with patch("weko_admin.views.StatisticMail.send_mail_to_all", return_value=""):
+                res = client.post("/api/admin/resend_failed_mail",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>               assert res.status_code == 403
+E               assert 200 == 403
+E                 +200
+E                 -403
+
+tests/test_views.py:318: AssertionError
+_________________________ test_resend_failed_mail_gene _________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_resend_failed_mail_gene(client, users):
+        login_user_via_session(client=client, email=users[1]["email"])
+        mock_feedbackmail = MagicMock(side_effect = Mock_FeedbackMail)
+        with patch("weko_admin.views.FeedbackMail", mock_feedbackmail):
+            with patch("weko_admin.views.StatisticMail.send_mail_to_all", return_value=""):
+                res = client.post("/api/admin/resend_failed_mail",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>               assert res.status_code == 403
+E               assert 200 == 403
+E                 +200
+E                 -403
+
+tests/test_views.py:329: AssertionError
+________________________ test_resend_failed_mail_guest _________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_resend_failed_mail_guest(client, users):
+        mock_feedbackmail = MagicMock(side_effect = Mock_FeedbackMail)
+        with patch("weko_admin.views.FeedbackMail", mock_feedbackmail):
+            with patch("weko_admin.views.StatisticMail.send_mail_to_all", return_value=""):
+                res = client.post("/api/admin/resend_failed_mail",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>               assert res.status_code == 302
+E               assert 200 == 302
+E                 +200
+E                 -302
+
+tests/test_views.py:338: AssertionError
+_______________________ test_save_api_cert_data_comadmin _______________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_save_api_cert_data_comadmin(client, users):
+        login_user_via_session(client=client, email=users[2]["email"])
+        res = client.post("/api/admin/save_api_cert_data",
+                          data=json.dumps({}),
+                          content_type="application/json")
+>       assert res.status_code == 403
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_views.py:362: AssertionError
+_________________________ test_save_api_cert_data_cont _________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_save_api_cert_data_cont(client, users):
+        login_user_via_session(client=client, email=users[1]["email"])
+        res = client.post("/api/admin/save_api_cert_data",
+                          data=json.dumps({}),
+                          content_type="application/json")
+>       assert res.status_code == 403
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_views.py:370: AssertionError
+_________________________ test_save_api_cert_data_gene _________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_save_api_cert_data_gene(client, users):
+        login_user_via_session(client=client, email=users[0]["email"])
+        res = client.post("/api/admin/save_api_cert_data",
+                          data=json.dumps({}),
+                          content_type="application/json")
+>       assert res.status_code == 403
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_views.py:378: AssertionError
+________________________ test_save_api_cert_data_guest _________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_save_api_cert_data_guest(client, users):
+        res = client.post("/api/admin/save_api_cert_data",
+                          data=json.dumps({}),
+                          content_type="application/json")
+>       assert res.status_code == 302
+E       assert 200 == 302
+E         +200
+E         -302
+
+tests/test_views.py:385: AssertionError
+_______________________ test_save_facet_search_comadmin ________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_save_facet_search_comadmin(client, users):
+        login_user_via_session(client=client, email=users[2]["email"])
+        with patch("weko_admin.views.is_exits_facet", return_value=True):
+            with patch("weko_admin.views.store_facet_search_query_in_redis", return_value=""):
+                res = client.post("/api/admin/facet-search/save",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>               assert res.status_code == 403
+E               assert 200 == 403
+E                 +200
+E                 -403
+
+tests/test_views.py:415: AssertionError
+_________________________ test_save_facet_search_cont __________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_save_facet_search_cont(client, users):
+        login_user_via_session(client=client, email=users[1]["email"])
+        with patch("weko_admin.views.is_exits_facet", return_value=True):
+            with patch("weko_admin.views.store_facet_search_query_in_redis", return_value=""):
+                res = client.post("/api/admin/facet-search/save",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>               assert res.status_code == 403
+E               assert 200 == 403
+E                 +200
+E                 -403
+
+tests/test_views.py:425: AssertionError
+_________________________ test_save_lang_list_comadmin _________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_save_lang_list_comadmin(client, users):
+        login_user_via_session(client=client, email=users[2]["email"])
+        with patch("weko_admin.views.update_admin_lang_setting", return_value=""):
+            res = client.post("/api/admin/save_lang",
+                              data=json.dumps({}),
+                              content_type="application/json")
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:470: AssertionError
+___________________________ test_save_lang_list_cont ___________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_save_lang_list_cont(client, users):
+        login_user_via_session(client=client, email=users[1]["email"])
+        with patch("weko_admin.views.update_admin_lang_setting", return_value=""):
+            res = client.post("/api/admin/save_lang",
+                              data=json.dumps({}),
+                              content_type="application/json")
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:479: AssertionError
+___________________________ test_save_lang_list_gene ___________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_save_lang_list_gene(client, users):
+        login_user_via_session(client=client, email=users[0]["email"])
+        with patch("weko_admin.views.update_admin_lang_setting", return_value=""):
+            res = client.post("/api/admin/save_lang",
+                              data=json.dumps({}),
+                              content_type="application/json")
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:488: AssertionError
+__________________________ test_save_lang_list_guest ___________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_save_lang_list_guest(client, users):
+        with patch("weko_admin.views.update_admin_lang_setting", return_value=""):
+            res = client.post("/api/admin/save_lang",
+                              data=json.dumps({}),
+                              content_type="application/json")
+>           assert res.status_code == 302
+E           assert 200 == 302
+E             +200
+E             -302
+
+tests/test_views.py:496: AssertionError
+_____________________ test_save_restricted_access_comadmin _____________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_save_restricted_access_comadmin(client, users):
+        login_user_via_session(client=client, email=users[2]["email"])
+        with patch("weko_admin.views.update_restricted_access",return_value=True):
+            res = client.post("/api/admin/restricted_access/save",
+                              data=json.dumps({}),
+                              content_type="application/json")
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:523: AssertionError
+_______________________ test_save_restricted_access_cont _______________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_save_restricted_access_cont(client, users):
+        login_user_via_session(client=client, email=users[1]["email"])
+        with patch("weko_admin.views.update_restricted_access",return_value=True):
+            res = client.post("/api/admin/restricted_access/save",
+                              data=json.dumps({}),
+                              content_type="application/json")
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:532: AssertionError
+_______________________ test_save_restricted_access_gene _______________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_save_restricted_access_gene(client, users):
+        login_user_via_session(client=client, email=users[0]["email"])
+        with patch("weko_admin.views.update_restricted_access",return_value=True):
+            res = client.post("/api/admin/restricted_access/save",
+                              data=json.dumps({}),
+                              content_type="application/json")
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:541: AssertionError
+________________ test_send_mail_reminder_usage_report_comadmin _________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_send_mail_reminder_usage_report_comadmin(client, users):
+        login_user_via_session(client=client, email=users[2]["email"])
+    
+        res = client.post("/api/admin/restricted_access/send_mail_reminder",
+                          data=json.dumps({}),
+                          content_type="application/json")
+>       assert res.status_code == 403
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_views.py:575: AssertionError
+__________________ test_send_mail_reminder_usage_report_cont ___________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_send_mail_reminder_usage_report_cont(client, users):
+        login_user_via_session(client=client, email=users[1]["email"])
+    
+        res = client.post("/api/admin/restricted_access/send_mail_reminder",
+                          data=json.dumps({}),
+                          content_type="application/json")
+>       assert res.status_code == 403
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_views.py:584: AssertionError
+__________________ test_send_mail_reminder_usage_report_gene ___________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_send_mail_reminder_usage_report_gene(client, users):
+        login_user_via_session(client=client, email=users[0]["email"])
+    
+        res = client.post("/api/admin/restricted_access/send_mail_reminder",
+                          data=json.dumps({}),
+                          content_type="application/json")
+>       assert res.status_code == 403
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_views.py:593: AssertionError
+______________________ test_update_feedback_mail_comadmin ______________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_update_feedback_mail_comadmin(client, users):
+        login_user_via_session(client=client, email=users[2]["email"])
+        with patch("weko_admin.views.FeedbackMail.update_feedback_email_setting", return_value={}):
+            res = client.post("/api/admin/update_feedback_mail",
+                              data=json.dumps({}),
+                              content_type="application/json")
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:625: AssertionError
+________________________ test_update_feedback_mail_cont ________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_update_feedback_mail_cont(client, users):
+        login_user_via_session(client=client, email=users[1]["email"])
+        with patch("weko_admin.views.FeedbackMail.update_feedback_email_setting", return_value={}):
+            res = client.post("/api/admin/update_feedback_mail",
+                              data=json.dumps({}),
+                              content_type="application/json")
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:634: AssertionError
+________________________ test_update_feedback_mail_gene ________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_update_feedback_mail_gene(client, users):
+        login_user_via_session(client=client, email=users[0]["email"])
+        with patch("weko_admin.views.FeedbackMail.update_feedback_email_setting", return_value={}):
+            res = client.post("/api/admin/update_feedback_mail",
+                              data=json.dumps({}),
+                              content_type="application/json")
+>           assert res.status_code == 403
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:643: AssertionError
+_______________________ test_update_feedback_mail_guest ________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_update_feedback_mail_guest(client, users):
+        with patch("weko_admin.views.FeedbackMail.update_feedback_email_setting", return_value={}):
+            res = client.post("/api/admin/update_feedback_mail",
+                              data=json.dumps({}),
+                              content_type="application/json")
+>           assert res.status_code == 302
+E           assert 200 == 302
+E             +200
+E             -302
+
+tests/test_views.py:651: AssertionError
+________________________ test_update_site_info_comadmin ________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_update_site_info_comadmin(client, users):
+        login_user_via_session(client=client, email=users[2]["email"])
+        with patch("weko_admin.views.format_site_info_data", return_value=""):
+            with patch("weko_admin.views.validation_site_info", return_value={"error":"error"}):
+                res = client.post("/api/admin/update_site_info",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>               assert res.status_code == 403
+E               assert 200 == 403
+E                 +200
+E                 -403
+
+tests/test_views.py:681: AssertionError
+__________________________ test_update_site_info_cont __________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_update_site_info_cont(client, users):
+        login_user_via_session(client=client, email=users[1]["email"])
+        with patch("weko_admin.views.format_site_info_data", return_value=""):
+            with patch("weko_admin.views.validation_site_info", return_value={"error":"error"}):
+                res = client.post("/api/admin/update_site_info",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>               assert res.status_code == 403
+E               assert 200 == 403
+E                 +200
+E                 -403
+
+tests/test_views.py:691: AssertionError
+__________________________ test_update_site_info_gene __________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_update_site_info_gene(client, users):
+        login_user_via_session(client=client, email=users[0]["email"])
+        with patch("weko_admin.views.format_site_info_data", return_value=""):
+            with patch("weko_admin.views.validation_site_info", return_value={"error":"error"}):
+                res = client.post("/api/admin/update_site_info",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>               assert res.status_code == 403
+E               assert 200 == 403
+E                 +200
+E                 -403
+
+tests/test_views.py:701: AssertionError
+=============================== warnings summary ===============================
+.tox/c1/lib/python3.6/site-packages/invenio_indexer/cli.py:96
+  /code/modules/weko-admin/.tox/c1/lib/python3.6/site-packages/invenio_indexer/cli.py:96: DeprecationWarning: 'resultcallback' has been renamed to 'result_callback'. The old name will be removed in Click 8.1.
+    @queue.resultcallback()
+
+.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3
+  /code/modules/weko-admin/.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3: DeprecationWarning: 'werkzeug.contrib.cache' is deprecated as of version 0.15 and will be removed in version 1.0. It has moved to https://github.com/pallets/cachelib.
+    from werkzeug.contrib.cache import NullCache, SimpleCache, FileSystemCache
+
+.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35
+  /code/modules/weko-admin/.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+    import imp
+
+.tox/c1/src/pypdf2/PyPDF2/generic.py:348
+  /code/modules/weko-admin/.tox/c1/src/pypdf2/PyPDF2/generic.py:348: DeprecationWarning: invalid escape sequence \c
+    b_("c") : b_("\c"),
+
+tests/test_views.py: 1846 warnings
+tests/test_weko_admin.py: 52 warnings
+  /code/modules/weko-admin/.tox/c1/lib/python3.6/site-packages/invenio_admin/ext.py:73: PendingDeprecationWarning: Usage of model and modelview kwargs are deprecated in favor of view_class, args and kwargs.
+    PendingDeprecationWarning
+
+tests/test_views.py: 71 warnings
+tests/test_weko_admin.py: 2 warnings
+  /code/modules/weko-admin/.tox/c1/lib/python3.6/site-packages/flask_admin/model/base.py:1416: UserWarning: Fields missing from ruleset: created_userId,created_date,updated_userId,updated_date
+    warnings.warn(text)
+
+tests/test_views.py: 66 warnings
+tests/test_weko_admin.py: 2 warnings
+  /code/modules/weko-admin/.tox/c1/lib/python3.6/site-packages/flask/sessions.py:208: UserWarning: "TEST_SERVER" is not a valid cookie domain, it must contain a ".". Add an entry to your hosts file, for example "TEST_SERVER.localdomain", and use that instead.
+    ' "{rv}.localdomain", and use that instead.'.format(rv=rv)
+
+-- Docs: https://docs.pytest.org/en/stable/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                        Stmts   Miss Branch BrPart  Cover
+-------------------------------------------------------------
+weko_admin/__init__.py          4      0      0      0   100%
+weko_admin/admin.py           602    466    180      0    22%
+weko_admin/api.py              79     57     20      0    24%
+weko_admin/bundles.py          24     24      0      0     0%
+weko_admin/cli.py             135    135      8      0     0%
+weko_admin/config.py           66      0      0      0   100%
+weko_admin/ext.py              95     29     34      9    66%
+weko_admin/models.py          856    602    174     17    30%
+weko_admin/permissions.py      14      7      0      0    50%
+weko_admin/tasks.py            81     81     20      0     0%
+weko_admin/utils.py          1048    930    433      1     8%
+weko_admin/version.py           2      0      0      0   100%
+weko_admin/views.py           341    182     70     14    43%
+-------------------------------------------------------------
+TOTAL                        3347   2513    939     41    23%
+Coverage HTML written to dir htmlcov
+Coverage XML written to file coverage.xml
+
+=========================== short test summary info ============================
+FAILED tests/test_views.py::test_get_email_author_comadmin - assert 200 == 403
+FAILED tests/test_views.py::test_get_email_author_cont - assert 200 == 403
+FAILED tests/test_views.py::test_get_email_author_gene - assert 200 == 403
+FAILED tests/test_views.py::test_get_usage_report_activities_comadmin - asser...
+FAILED tests/test_views.py::test_get_usage_report_activities_cont - assert 20...
+FAILED tests/test_views.py::test_get_usage_report_activities_gene - assert 20...
+FAILED tests/test_views.py::test_manual_send_site_license_mail_comadmin - ass...
+FAILED tests/test_views.py::test_manual_send_site_license_mail_cont - assert ...
+FAILED tests/test_views.py::test_manual_send_site_license_mail_gene - assert ...
+FAILED tests/test_views.py::test_manual_send_site_license_mail_guest - assert...
+FAILED tests/test_views.py::test_remove_facet_search_comadmin - assert 200 ==...
+FAILED tests/test_views.py::test_remove_facet_search_cont - assert 200 == 403
+FAILED tests/test_views.py::test_remove_facet_search_gene - assert 200 == 403
+FAILED tests/test_views.py::test_resend_failed_mail_comadmin - assert 200 == 403
+FAILED tests/test_views.py::test_resend_failed_mail_cont - assert 200 == 403
+FAILED tests/test_views.py::test_resend_failed_mail_gene - assert 200 == 403
+FAILED tests/test_views.py::test_resend_failed_mail_guest - assert 200 == 302
+FAILED tests/test_views.py::test_save_api_cert_data_comadmin - assert 200 == 403
+FAILED tests/test_views.py::test_save_api_cert_data_cont - assert 200 == 403
+FAILED tests/test_views.py::test_save_api_cert_data_gene - assert 200 == 403
+FAILED tests/test_views.py::test_save_api_cert_data_guest - assert 200 == 302
+FAILED tests/test_views.py::test_save_facet_search_comadmin - assert 200 == 403
+FAILED tests/test_views.py::test_save_facet_search_cont - assert 200 == 403
+FAILED tests/test_views.py::test_save_lang_list_comadmin - assert 200 == 403
+FAILED tests/test_views.py::test_save_lang_list_cont - assert 200 == 403
+FAILED tests/test_views.py::test_save_lang_list_gene - assert 200 == 403
+FAILED tests/test_views.py::test_save_lang_list_guest - assert 200 == 302
+FAILED tests/test_views.py::test_save_restricted_access_comadmin - assert 200...
+FAILED tests/test_views.py::test_save_restricted_access_cont - assert 200 == 403
+FAILED tests/test_views.py::test_save_restricted_access_gene - assert 200 == 403
+FAILED tests/test_views.py::test_send_mail_reminder_usage_report_comadmin - a...
+FAILED tests/test_views.py::test_send_mail_reminder_usage_report_cont - asser...
+FAILED tests/test_views.py::test_send_mail_reminder_usage_report_gene - asser...
+FAILED tests/test_views.py::test_update_feedback_mail_comadmin - assert 200 =...
+FAILED tests/test_views.py::test_update_feedback_mail_cont - assert 200 == 403
+FAILED tests/test_views.py::test_update_feedback_mail_gene - assert 200 == 403
+FAILED tests/test_views.py::test_update_feedback_mail_guest - assert 200 == 302
+FAILED tests/test_views.py::test_update_site_info_comadmin - assert 200 == 403
+FAILED tests/test_views.py::test_update_site_info_cont - assert 200 == 403
+FAILED tests/test_views.py::test_update_site_info_gene - assert 200 == 403
+=========== 40 failed, 35 passed, 2043 warnings in 598.91s (0:09:58) ===========
+ERROR: InvocationError for command /code/modules/weko-admin/.tox/c1/bin/pytest --cov=weko_admin tests -v -vv -s --cov-branch --cov-report=term --cov-report=xml --cov-report=html --basetemp=/code/modules/weko-admin/.tox/c1/tmp (exited with code 1)
+___________________________________ summary ____________________________________
+ERROR:   c1: commands failed

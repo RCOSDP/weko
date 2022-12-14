@@ -1,0 +1,29 @@
+{
+    "meta_system":{
+        "system_identifier_doi":{
+            "title_i18n":{"en":"system_identifier_doi_en"}
+        },
+        "system_identifier_hdl":{
+            "title_i18n":{
+                "en":"system_identifier_hdl_en",
+                "ja":"system_identifier_hdl_ja"}
+        }
+    },
+    "table_row":[
+        "test_key1",
+        "test_key2",
+        "test_key3",
+        "test_key4",
+        "test_key5",
+        "test_key6",
+        "test_key7",
+        "test_key8",
+        "test_key9",
+        "test1_subkey1",
+        "test2_subkey1",
+        "test3_subkey1",
+        "test4_subkey1",
+        "test5_subkey1",
+        "test_not_form"
+    ]
+}

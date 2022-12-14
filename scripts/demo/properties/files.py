@@ -447,6 +447,7 @@ def form(key='', title='', title_ja=name_ja, title_en=name_en, multi_flag=multip
                     'key': '{}.accessrole'.format(key),
                     'type': 'radios',
                     'title': 'アクセス',
+                    'onChange': 'accessRoleChange()',
                     'title_i18n': {
                         'en': 'Access',
                         'ja': 'アクセス'
