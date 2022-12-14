@@ -2250,35 +2250,38 @@ def overwrite_the_memory_config_with_db(app, site_info):
 
 def elasticsearch_reindex( is_db_to_es ):
     """ 
-    elasticsearchのindex *-weko-item-*の再インデックスを行います。
-        注意: システム内での同時実行禁止です。同時実行した場合に*-weko-item-*の状態を保証できません。 
-        注意: 実行中に投入されたドキュメントが反映されない可能性があるため、稼働中の実行禁止です。メンテナンス期間中のみ実行可としてください。
+    reindex *-weko-item-* of elasticsearch index
 
-    Parameters
-    ----------
+    Args:
     is_db_to_es : boolean
-        Trueの場合、DBから取得したデータからDocumentsを作成します。
-        Falseの場合、もともとの*-weko-item-*のDocumentsを再登録します。
+        if True,  index Documents from DB data
+        if False, index Documents from ES data itself
     
-    Returns
-    -------
-        'completed' : str
+    Returns:
+        str : 'completed' 
         
-    Raises
-    ------
+    Raises:
     AssersionError 
-        ElasticSearchからのレスポンスコードが200でなかった場合
-        （後続処理は中断）
+        In case of the response code from ElasticSearch is not 200,
+        Subsequent processing is interrupted.
+    
+    Todo:
+        warning: Simultaneous execution is prohibited. 
+        warning: Execution during operation is prohibited 
+                because documents submitted during execution may not be reflected. 
+                Please allow execution only during maintenance periods.
     """
 
     # consts
     elasticsearch_host = os.environ.get('INVENIO_ELASTICSEARCH_HOST') 
     base_url = 'http://' + elasticsearch_host + ':9200/'
     reindex_url = base_url + '_reindex?pretty&refresh=true&wait_for_completion=true'
-    # index = "{}-weko-item-v1.0.0".format(prefix)
+    
+    # "{}-weko-item-v1.0.0".format(prefix)
     index = current_app.config['INDEXER_DEFAULT_INDEX']
     tmpindex = "{}-tmp".format(index)
-    # alias_name = "{}-weko".format(prefix)
+    
+    # "{}-weko".format(prefix)
     alias_name = current_app.config['SEARCH_UI_SEARCH_INDEX']
 
     # get base_index_definition (mappings and settings)
@@ -2288,6 +2291,9 @@ def elasticsearch_reindex( is_db_to_es ):
     with open(file_path,mode='r') as json_file:
         json_data = json_file.read()
         base_index_definition = json.loads(json_data)
+
+    number_of_replicas = base_index_definition.get("settings").get("number_of_replicas")
+    refresh_interval = base_index_definition.get("settings").get("refresh_interval")
 
     headers = {
         'Content-Type': 'application/json',
@@ -2338,14 +2344,14 @@ def elasticsearch_reindex( is_db_to_es ):
     response = requests.put(base_url + tmpindex + "/item-v1.0.0/_mappings", headers=headers ,json={ "properties": {"content" : {"type" : "nested","properties" : {"attachment" : {"properties" : {"content" : {"type" : "text","store" : True,"term_vector" : "with_positions_offsets","fields" : {"ja" : {"type" : "text","store" : True,"term_vector" : "with_positions_offsets"}}}}}}}}})
     current_app.logger.debug(response.text)
     assert response.status_code == 200 ,response.text
-
-    # # 高速化を期待してインデックスの設定を変更。
-    # current_app.logger.debug("change setting for faster") 
-    # response = requests.put(base_url + tmpindex + "/item-v1.0.0/_settings", headers=headers ,json={ "index" : {"number_of_replicas" : 0, "refresh_interval": -1 }})
-    # current_app.logger.info(response.text)
-    # assert response.status_code == 200 
-
     current_app.logger.debug("END create tmpindex") 
+    
+    # 高速化を期待してインデックスの設定を変更。
+    current_app.logger.debug("START change setting for faster") 
+    response = requests.put(base_url + tmpindex + "/_settings?pretty", headers=headers ,json={ "index" : {"number_of_replicas" : 0, "refresh_interval": -1 }})
+    current_app.logger.error(response.text)
+    assert response.status_code == 200 ,response.text #
+    current_app.logger.debug("END change setting for faster") 
 
     
     # document count
@@ -2389,14 +2395,14 @@ def elasticsearch_reindex( is_db_to_es ):
     response = requests.put(base_url + index + "/item-v1.0.0/_mappings", headers=headers ,json={ "properties": {"content" : {"type" : "nested","properties" : {"attachment" : {"properties" : {"content" : {"type" : "text","store" : True,"term_vector" : "with_positions_offsets","fields" : {"ja" : {"type" : "text","store" : True,"term_vector" : "with_positions_offsets"}}}}}}}}})
     current_app.logger.debug(response.text)
     assert response.status_code == 200 ,response.text
-
-    # # 高速化を期待してインデックスの設定を変更。
-    # current_app.logger.debug("change setting for faster") 
-    # response = requests.put(base_url + index + "/item-v1.0.0/_settings", headers=headers ,json={ "index" : {"number_of_replicas" : 0, "refresh_interval": -1 }})
-    # current_app.logger.info(response.text)
-    # assert response.status_code == 200 
-
     current_app.logger.debug("END create index") 
+
+    # 高速化を期待してインデックスの設定を変更。
+    current_app.logger.debug("START change setting for faster") 
+    response = requests.put(base_url + index + "/_settings?pretty", headers=headers ,json={ "index" : {"number_of_replicas" : 0, "refresh_interval": -1 }})
+    current_app.logger.info(response.text)
+    assert response.status_code == 200 ,response.text
+    current_app.logger.debug("END change setting for faster") 
 
     # aliasを再設定する。
     current_app.logger.debug("START re-regist alias") 
@@ -2425,11 +2431,12 @@ def elasticsearch_reindex( is_db_to_es ):
         assert response.status_code == 200 ,response.text
     current_app.logger.debug("END reindex")
 
-    # # 高速化を期待して変更したインデックスの設定を元に戻す。
-    # current_app.logger.debug("revert setting for faster") 
-    # response = requests.put(base_url + index + "/item-v1.0.0/_settings", headers=headers ,json={ "index" : {"number_of_replicas" : 1, "refresh_interval": "1s" }})
-    # current_app.logger.info(response.text)
-    # assert response.status_code == 200 
+    # 高速化を期待して変更したインデックスの設定を元に戻す。
+    current_app.logger.debug("START revert setting for faster") 
+    response = requests.put(base_url + index + "/_settings?pretty", headers=headers ,json={ "index" : {"number_of_replicas" : number_of_replicas, "refresh_interval": refresh_interval }})
+    current_app.logger.info(response.text)
+    assert response.status_code == 200 ,response.text 
+    current_app.logger.debug("END revert setting for faster") 
 
     # document count
     index_cnt = requests.get(base_url + "_cat/count/"+ index + "?h=count").text
@@ -2453,6 +2460,7 @@ def elasticsearch_reindex( is_db_to_es ):
 
 
 def _elasticsearch_remake_item_index(index_name):
+    """ index Documents from DB (Private method) """
 
     returnlist = []
 
@@ -2460,8 +2468,7 @@ def _elasticsearch_remake_item_index(index_name):
     current_app.logger.info(' START elasticsearch import from oaiserver_set')
     from invenio_oaiserver.models import OAISet
     from invenio_oaiserver.percolator import _new_percolator
-    # from weko_deposit.api import WekoDeposit
-    from weko_deposit.api import WekoIndexer
+
     oaiset_ = OAISet.query.all()
     for target in oaiset_ :
         spec = target.spec
@@ -2479,26 +2486,13 @@ def _elasticsearch_remake_item_index(index_name):
     ).values(
         PersistentIdentifier.object_uuid
     ))
-
-    create_docs = []
-    # wekodeposit = WekoDeposit(data=None , model=Record.model_cls)
+    indexer = RecordIndexer()
     for x in uuids:
-        # index records_metadata to elasticsearch
-        # prosess sync, not async
-        
-        # records_metadata = Record.get_record(x)
-        # item_metada , deldata = WekoDeposit.convert_item_metadata(
-        #     index_obj={"index":[index_name], 'actions': '1'} , data= records_metadata)
-        # create_docs.append(item_metada)
-        
-        res = WekoIndexer().index_by_id(x)
+        res = indexer.index_by_id(x)
+        assert res != None ,'Index class is None.'
+        assert res._shards.failed == 0 ,'Index fail.'
         returnlist.append(res)
-    # WekoIndexer().bulk_update(create_docs)
     current_app.logger.info(' END elasticsearch import from records_metadata')
     
-    # # async
-    # RecordIndexer().bulk_index(query)
-    # RecordIndexer().process_bulk_queue(
-    #     es_bulk_kwargs={'raise_on_error': True})
     return returnlist
 

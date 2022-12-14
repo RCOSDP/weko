@@ -69,7 +69,12 @@ class ReindexElasticSearchView(BaseView):
     @expose('/', methods=['GET'])
     @superuser_access.require(http_exception=403)
     def index(self):
-        """Maintenance/ElasticSearch 画面表示処理"""
+        """ 
+        show view Maintenance/ElasticSearch 
+        
+        Returns:
+            'weko_admin/admin/reindex_elasticsearch.html'
+        """
         try:
             status =  json.loads(self.check_reindex_is_running().get_data(True))
             is_error = status.get("isError")
@@ -83,27 +88,28 @@ class ReindexElasticSearchView(BaseView):
                 ,disabled_Btn=disabled_btn 
             )
         except BaseException:
-            current_app.logger.error(
-                'Unexpected error: {}'.format(sys.exc_info()))
+            import traceback
+            estr = traceback.format_exc()
+            current_app.logger.error('Unexpected error: {}'.format( estr ))
             return abort(500)
 
     @expose('/reindex', methods=['POST'])
     @superuser_access.require(http_exception=403)
     def reindex(self):
         """ 
-        Maintenance/ElasticSearch/Executing Button 押下時処理
+        Processing when "Executing Button" is pressed
 
-        Parameters
-        ----------
-        db_to_es : boolean
-            Trueの場合、DBから取得したデータからDocumentsを作成します。
-        db_to_es : boolean
-            Trueの場合、もともとの*-weko-item-*のDocumentsを再登録します。
-        両方Trueの場合、順番に実行します。
+        Args:
+        is_db_to_es : boolean (GET paramater)
+            if True,  index Documents from DB data
+            if False, index Documents from ES data itself
 
-        Note
-        ----------
-        utils.py elasticsearch_reindexの注意事項を理解した上で運用、修正を行ってください。
+        Returns:
+            responce json text and responce code
+
+        Todo:
+        if you change this codes or operating, please keep in mind Todo of the method "elasticsearch_reindex"
+        in .utils.py .
         """
 
         ## exclusion check
@@ -115,31 +121,34 @@ class ReindexElasticSearchView(BaseView):
         if is_executing:
             return jsonify({"error" : _('executing...')}) , 400
 
-        # validation check
-        es_to_es=request.args.get('es_to_es') == 'true'
-        db_to_es=request.args.get('db_to_es') == 'true'
-        if not (es_to_es or db_to_es) :
-            return jsonify({"error" : _('validationMsg1')}) , 400
-        if es_to_es and db_to_es :
-            return jsonify({"error" : _('validationMsg1')}) , 400
-
+        is_db_to_es=request.args.get('is_db_to_es') == 'true'
+        
         try:
             # execute in celery task
-            res = reindex.apply_async(args=(es_to_es, db_to_es))  # type: ignore
-            res_output = res.get() #wait until celery task
-            current_app.logger.debug(res_output)
+            res = reindex.apply_async(args=(is_db_to_es,))
+            res_output = res.get() #wait until celery task finish
+            current_app.logger.info(res_output)
             return jsonify({"responce" : _('completed')}), 200
 
-        except BaseException as ex:
-            current_app.logger.error('Unexpected error',ex)
-            return abort(500 ,Response(jsonify({"error" :ex.args})))
+        except BaseException:
+            import traceback
+            estr = traceback.format_exc()
+            current_app.logger.error('Unexpected error: {}'.format( estr ))
+            return jsonify({"error" : estr }), 500
             
     @expose('/is_reindex_running', methods=['GET'])
     @superuser_access.require(http_exception=403)
     def check_reindex_is_running(self):
         """
-        reindex 処理が実行中/エラーが発生している監視する。
-        Celeryタスクの監視によって実行状態を監視。
+        Monitor whether the reindex process is running/error is occurred
+        by Celery task and admin_settings
+
+        Returns:
+            str : View state json text
+                isError      : boolean
+                isExecuting  : boolean
+                disabled_Btn : boolean
+            
         """
         try:
             ELASTIC_REINDEX_SETTINGS = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS']
@@ -155,9 +164,11 @@ class ReindexElasticSearchView(BaseView):
             })
 
             return jsonify(result)
-        except BaseException as ex:
-            current_app.logger.error('Unexpected error',ex)
-            return abort(500 ,Response(jsonify({"error" :ex.args})))
+        except BaseException:
+            import traceback
+            estr = traceback.format_exc()
+            current_app.logger.error('Unexpected error: {}'.format( estr ))
+            return abort(500)
 
 
 

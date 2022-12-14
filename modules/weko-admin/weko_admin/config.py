@@ -1107,8 +1107,7 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'indexjournal',
     'report',
     'itemexportsettings',
-    'items/import',
-    'reindex_es'
+    'items/import'
 ]
 """Classes Community Administrator can access."""
 

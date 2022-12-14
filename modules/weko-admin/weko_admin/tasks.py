@@ -52,72 +52,63 @@ logger = get_task_logger(__name__)
     ,bind=True
     ,acks_late=False
     ,ignore_results=False)
-def reindex(self, es_to_es , db_to_es ):
-    """  
-    
-    note:elasticsearch_reindexの制限事項を理解した上で変更、修正を行ってください。
-    
-    Parameters
-    ----------
+def reindex(self, is_db_to_es ):
+    """ 
+    Celery task to do elasticsearch_reindex
+    if error has occord in elasticsearch_reindex , update admin_settings
+
+    Args:
+    self : any
+        object assigned by "bind=True"
     is_db_to_es : boolean
-        Trueの場合、DBから取得したデータからDocumentsを作成します。
-        Falseの場合、もともとの*-weko-item-*のDocumentsを再登録します。
+        if True,  index Documents from DB data
+        if False, index Documents from ES data itself
     
-    Returns
-    -------
-        'completed' : str
+    Returns:
+        str : elasticsearch_reindex responce text
         
-    Raises
-    ------
-    AssersionError 
-        ElasticSearchからのレスポンスコードが200でなかった場合
-        （後続処理は中断）
+    Raises:
+        raises error in elasticsearch_reindex
+
+    Todo:
+        if you change this codes, please keep in mind Todo of the method "elasticsearch_reindex"
+        in .utils.py .
     """
 
     try:
-        res = {}
-        if es_to_es:
-            result = elasticsearch_reindex(False)
-            res.update({"es_to_es" : result})
-        if db_to_es :
-            # from .utils import _elasticsearch_remake_item_index
-            # result = _elasticsearch_remake_item_index()
-            result = elasticsearch_reindex(True)
-            res.update({"db_to_es" : result})
-        current_app.logger.info(res)
-        return res
+        return elasticsearch_reindex(is_db_to_es)
     except BaseException as ex:
-        current_app.logger.error('Unexpected error',ex)
+        current_app.logger.error('Unexpected error')
         # set error in admin_settings
         AdminSettings.update(WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS 
         , dict({WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED:True}))
-        raise
+        raise ex
 
 def is_reindex_running():
-    """Check import is running."""
+    """Check reindex is running."""
     
     if not _check_celery_is_run():
         return False
 
+    reserved = inspect().reserved()
     active = inspect().active()
     for worker in active:
         for task in active[worker]:
-            current_app.logger.info("active")
-            current_app.logger.info(task)
+            current_app.logger.debug("active")
+            current_app.logger.debug(task)
             if task["name"] == "weko_admin.tasks.reindex":
                 current_app.logger.info("weko_admin.tasks.reindex is active")
                 return True
 
-    reserved = inspect().reserved()
     for worker in reserved:
         for task in reserved[worker]:
-            current_app.logger.info("reserved")
-            current_app.logger.info(task)
+            current_app.logger.debug("reserved")
+            current_app.logger.debug(task)
             if task["name"] == "weko_admin.tasks.reindex":
                 current_app.logger.info("weko_admin.tasks.reindex is reserved")
                 return True
     
-    current_app.logger.info("weko_admin.tasks.reindex is not running")
+    current_app.logger.debug("weko_admin.tasks.reindex is not running")
     return False
 
 def _check_celery_is_run():

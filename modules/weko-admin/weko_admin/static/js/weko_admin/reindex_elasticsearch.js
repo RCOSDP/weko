@@ -10,7 +10,7 @@ const cancel_label = document.getElementById("cancel").value;
 
 const validationMsg1 = document.getElementById("validationMsg1").value;
 const confirmMessage = document.getElementById("confirmMessage").value;
-const completed = document.getElementById("completed").value;
+
 
 /** close ErrorMessage area */
 function closeError() {
@@ -24,7 +24,6 @@ function showErrorMsg(msg , success=false) {
         '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
         '&times;</button>' + msg + '</div>');
 }
-let timerId = "";
 class MainLayout extends React.Component {
     constructor() {
         super();
@@ -36,7 +35,7 @@ class MainLayout extends React.Component {
             ,isExecuting: exe
             ,disabled_Btn: disabled_Btn
             ,showModal:false
-            ,riiChecked : false
+            ,riiChecked : true
             ,riChecked : false
         }
         this.handleClickExecute = this.handleClickExecute.bind(this);
@@ -55,12 +54,6 @@ class MainLayout extends React.Component {
             errorElement.setAttribute('id', 'errors');
             header.insertBefore(errorElement, header.firstChild);
         }
-
-        timerId = setInterval(this.handleCheckReindexIsRunning,5000);//5 seconds roop
-    }
-
-    componentWillUnmount(){
-        clearInterval(timerId);
     }
 
     componentDidCatch(error, info){
@@ -74,7 +67,7 @@ class MainLayout extends React.Component {
         const riiChecked = document.getElementById("reindex_item_index").checked;
         const riChecked  = document.getElementById("reindex_item").checked;
         //validation
-        if(!(riiChecked || riChecked)){
+        if(riiChecked === riChecked){
             return showErrorMsg(validationMsg1);
         }
 
@@ -85,15 +78,10 @@ class MainLayout extends React.Component {
 
     /** チェックボックス変更 */
     handleCheckedChange(event){
-        if (event.target.id === 'reindex_item_index'){
+        if ( event.target.checked){
             this.setState({
-                riiChecked: event.target.checked
-            });
-        }
-
-        if (event.target.id === "reindex_item"){
-            this.setState({
-                riChecked: event.target.checked
+                riiChecked: event.target.id === 'reindex_item_index'
+                ,riChecked: event.target.id === 'reindex_item'
             });
         }
     }
@@ -112,27 +100,26 @@ class MainLayout extends React.Component {
         closeError();
         const riiChecked = document.getElementById("reindex_item_index").checked;
         const riChecked  = document.getElementById("reindex_item").checked;
+        
         this.setState({
             disabled_Btn: true
             ,isExecuting: true
             ,showModal: false
         });
         return fetch(
-            new URL('reindex' , window.location.href) + "?es_to_es="+ riiChecked + "&db_to_es=" + riChecked
+            new URL('reindex' , window.location.href) + "?is_db_to_es=" + riChecked
             ,{method: 'POST'}
         )
-        .then((res) => {return  res.ok ? Promise.resolve(res) : Promise.reject(res)})
+        .then((res) => {return  res.ok ? res.text() : res.text().then(e => Promise.reject(e))})
         .then((res) => {
-            console.log(res);
-            showErrorMsg(completed , true);
+            showErrorMsg(JSON.parse(res).responce , true);
+            return this.handleCheckReindexIsRunning();
         })
-        .catch((e) => {
-            console.log(e);
-            showErrorMsg(JSON.stringify(e));
-            this.setState({
-                disabled_Btn: true
-                ,isError: true
-            });
+        .catch((etext) => {
+            console.log(etext);
+            etext = JSON.parse(etext).error
+            showErrorMsg(etext);
+            this.handleCheckReindexIsRunning();
         });
 
     }
@@ -152,18 +139,19 @@ class MainLayout extends React.Component {
             <div>
                 <div class="panel">
                     <div class="panel-body">
-                        <div>
-                            <input type="checkbox" id="reindex_item_index" checked={this.state.riiChecked} onChange={this.handleCheckedChange} />
-                            <label for="reindex_item_index">
+                        <div class="row">
+                            <label for="reindex_item_index" class="radio-inline">
+                                <input type="radio" name="reindex_type" id="reindex_item_index" checked={this.state.riiChecked} onChange={this.handleCheckedChange} />
                                 {reindex_item_index}
                             </label>
                         </div>
-                        <div>
-                            <input type="checkbox" id="reindex_item" checked={this.state.riChecked} onChange={this.handleCheckedChange}/>
-                            <label for="reindex_item">
+                        <div class="row">
+                            <label for="reindex_item" class="radio-inline">
+                                <input type="radio" name="reindex_type" id="reindex_item" checked={this.state.riChecked} onChange={this.handleCheckedChange}/>
                                 {reindex_item}
                             </label>
                         </div>
+                        <br />
                         <div class="row">
                             <div class="form-actions">
                                 <button type="submit" id="execute" name="execute" value="save_ranking_settings" class="btn btn-primary" 
