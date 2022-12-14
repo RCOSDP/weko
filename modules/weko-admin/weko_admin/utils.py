@@ -2490,7 +2490,7 @@ def _elasticsearch_remake_item_index(index_name):
     for x in uuids:
         res = indexer.index_by_id(x)
         assert res != None ,'Index class is None.'
-        assert res._shards.failed == 0 ,'Index fail.'
+        assert res.get("_shards").get("failed") == 0 ,'Index fail.'
         returnlist.append(res)
     current_app.logger.info(' END elasticsearch import from records_metadata')
     
