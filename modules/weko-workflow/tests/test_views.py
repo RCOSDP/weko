@@ -3372,3 +3372,13 @@ def test_withdraw_confirm_passwd_delete_guestlogin(guest, client, users, db_regi
                         assert res.status_code == status_code
                         assert data["code"] == code
                         assert data["msg"] == msg
+
+
+# def get_roles():
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_get_roles -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
+def test_get_roles(client, db_register_roles):
+    url = url_for('weko_workflow.get_roles')
+    res = client.get(url)
+    res_json = json.loads(res.data.decode('utf-8'))
+    assert res.status_code == 200
+    assert len(res_json['roles']) == 3

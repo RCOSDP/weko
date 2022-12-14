@@ -1,3 +1,8 @@
+import json
+
+from flask import url_for
+from invenio_accounts.testutils import login_user_via_session as login
+
 # class ItemTypeMetaDataView(BaseView):
 #     def index(self, item_type_id=0):
 #     def render_itemtype(self, item_type_id=0):
@@ -44,3 +49,23 @@
             # # web_1            | [2022-09-15 02:45:23,833] ERROR in admin: session.get('selected_language', 'en'):en
 #     def mapping_register(self):
 #     def schema_list(self, SchemaName=None):
+
+
+# def register(self, item_type_id=0):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::test_register -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
+def test_register(client, users):
+    login(client=client, email=users[2]['email'])
+
+    url = url_for('itemtypesregister.register')
+    headers = [('Content-Type', 'application/json'), ('Accept', 'application/json')]
+    data = dict()
+    with open("tests/data/page_global.json", "r") as f:
+        data = json.load(f)
+        data = json.dumps(data)
+
+    res = client.post(url, headers=headers, data=data)
+
+    res_json = json.loads(res.data.decode('utf-8'))
+    res_msg = res_json['msg']
+    assert res.status_code == 400
+    assert res_msg == 'Failed to register Item type. Can\'t register multiple files for the billing file.'
