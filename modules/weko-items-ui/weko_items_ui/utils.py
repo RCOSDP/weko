@@ -330,7 +330,7 @@ def get_current_user():
     return current_id
 
 
-def find_hidden_items(item_id_list, idx_paths=None, check_creator_permission=False):
+def find_hidden_items(item_id_list, idx_paths=None, check_creator_permission=False, has_permission_indexes=[]):
     """
     Find items that should not be visible by the current user.
 
@@ -365,18 +365,23 @@ def find_hidden_items(item_id_list, idx_paths=None, check_creator_permission=Fal
         # Check if indices are public
         has_index_permission = False
         for idx in record.navi:
-            if str(idx.cid) in has_permission_index:
-                has_index_permission = True
-                break
-            elif idx.cid in no_permission_index:
-                continue
-            if check_index_permissions(None, idx.cid) \
-                    and (not idx_paths or idx.path in idx_paths):
-                has_permission_index.append(idx.cid)
-                has_index_permission = True
-                break
+            if has_permission_indexes:
+                if str(idx.cid) in has_permission_indexes:
+                    has_index_permission = True
+                    break
             else:
-                no_permission_index.append(idx.cid)
+                if str(idx.cid) in has_permission_index:
+                    has_index_permission = True
+                    break
+                elif idx.cid in no_permission_index:
+                    continue
+                if check_index_permissions(None, idx.cid) \
+                        and (not idx_paths or idx.path in idx_paths):
+                    has_permission_index.append(idx.cid)
+                    has_index_permission = True
+                    break
+                else:
+                    no_permission_index.append(idx.cid)
         if is_public and has_index_permission:
             continue
 
@@ -2403,7 +2408,19 @@ def get_ranking(settings):
     :param settings: ranking setting.
     :return:
     """
-    index_info = Indexes.get_browsing_info()
+    def _get_index_info(index_json, index_info):
+        for index in index_json:
+            index_info[index["id"]] = {
+                'index_name': index["name"],
+                'parent': str(index["pid"])
+            }
+            if index["children"]:
+                _get_index_info(index["children"], index_info)
+    print('{} ===== get_ranking start'.format(datetime.utcnow().strftime('%H:%M:%S.%f')))
+    index_json = Indexes.get_browsing_tree_ignore_more()
+    index_info = {}
+    _get_index_info(index_json, index_info)
+    has_permission_indexes = list(index_info.keys())
     # get statistical period
     end_date_original = date.today()  # - timedelta(days=1)
     start_date_original = end_date_original - timedelta(
@@ -2413,6 +2430,7 @@ def get_ranking(settings):
     end_date = end_date_original.strftime('%Y-%m-%d')
     pid_value_permissions = []
     # most_reviewed_items
+    print('{} ===== most_reviewed_items'.format(datetime.utcnow().strftime('%H:%M:%S.%f')))
     if settings.rankings['most_reviewed_items']:
         result = QueryRecordViewReportHelper.get(
             start_date=start_date,
@@ -2421,16 +2439,17 @@ def get_ranking(settings):
             agg_sort={'value': 'desc'},
             ranking=True)
 
-        
+        print('{} ===== get most_reviewed_items from es'.format(datetime.utcnow().strftime('%H:%M:%S.%f')))
         record_id_list = [item['record_id']  for item in result['all']]
-        hidden_items = find_hidden_items(record_id_list, check_creator_permission=True)
-
+        hidden_items = find_hidden_items(record_id_list, check_creator_permission=True, has_permission_indexes=has_permission_indexes)
+        print('{} ===== process most_reviewed_items by find_hidden_items'.format(datetime.utcnow().strftime('%H:%M:%S.%f')))
         for item in result['all']:
             if item['record_id'] not in hidden_items:
                 pid_value_permissions.append(item['pid_value'])
 
         permission_ranking(result, pid_value_permissions, settings.display_rank,
                            'all', 'pid_value')
+        print('{} ===== process most_reviewed_items by permission_ranking'.format(datetime.utcnow().strftime('%H:%M:%S.%f')))
         rankings['most_reviewed_items'] = \
             parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='all',
@@ -2438,6 +2457,7 @@ def get_ranking(settings):
                                   count_key='total_all', pid_key='pid_value')
 
     # most_downloaded_items
+    print('{} ===== most_downloaded_items'.format(datetime.utcnow().strftime('%H:%M:%S.%f')))
     if settings.rankings['most_downloaded_items']:
         result = QueryItemRegReportHelper.get(
             start_date=start_date,
@@ -2448,13 +2468,14 @@ def get_ranking(settings):
             agg_sort={'_count': 'desc'},
             ranking=True)
 
-        
+        print('{} ===== get most_downloaded_items from es'.format(datetime.utcnow().strftime('%H:%M:%S.%f')))
         _tmp = [item['col1']  for item in result['data']]
         for pid_value in _tmp:
             rec = WekoRecord.get_record_by_pid(pid_value)
             record_id_list.append(rec.id)
         
-        hidden_items = find_hidden_items(record_id_list, check_creator_permission=True)
+        hidden_items = find_hidden_items(record_id_list, check_creator_permission=True, has_permission_indexes=has_permission_indexes)
+        print('{} ===== process most_downloaded_items by find_hidden_items'.format(datetime.utcnow().strftime('%H:%M:%S.%f')))
         pid_value_permissions = []
         for pid_value in _tmp:
             rec = WekoRecord.get_record_by_pid(pid_value)
@@ -2464,12 +2485,14 @@ def get_ranking(settings):
         
         permission_ranking(result, pid_value_permissions, settings.display_rank,
                            'data', 'col1')
+        print('{} ===== process most_downloaded_items by permission_ranking'.format(datetime.utcnow().strftime('%H:%M:%S.%f')))
         rankings['most_downloaded_items'] = \
             parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='data', title_key='col2',
                                   count_key='col3', pid_key='col1')
 
     # created_most_items_user
+    print('{} ===== created_most_items_user'.format(datetime.utcnow().strftime('%H:%M:%S.%f')))
     if settings.rankings['created_most_items_user']:
         result = QueryItemRegReportHelper.get(
             start_date=start_date,
@@ -2478,13 +2501,14 @@ def get_ranking(settings):
             unit='User',
             agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
-        
+        print('{} ===== get created_most_items_user from es'.format(datetime.utcnow().strftime('%H:%M:%S.%f')))
         rankings['created_most_items_user'] = \
             parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='data',
                                   title_key='user_id', count_key='count')
 
     # most_searched_keywords
+    print('{} ===== most_searched_keywords'.format(datetime.utcnow().strftime('%H:%M:%S.%f')))
     if settings.rankings['most_searched_keywords']:
         result = QuerySearchReportHelper.get(
             start_date=start_date,
@@ -2492,13 +2516,14 @@ def get_ranking(settings):
             agg_size=settings.display_rank ,
             agg_sort={'value': 'desc'}
         )
-
+        print('{} ===== get most_searched_keywords from es'.format(datetime.utcnow().strftime('%H:%M:%S.%f')))
         rankings['most_searched_keywords'] = \
             parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='all',
                                   title_key='search_key', count_key='count')
 
     # new_items
+    print('{} ===== new_items'.format(datetime.utcnow().strftime('%H:%M:%S.%f')))
     if settings.rankings['new_items']:
         new_item_start_date = (
             end_date_original
@@ -2511,10 +2536,10 @@ def get_ranking(settings):
         result = get_new_items_by_date(
             new_item_start_date,
             end_date)
-
+        print('{} ===== get new_items from es'.format(datetime.utcnow().strftime('%H:%M:%S.%f')))
         item_id_list = [item["_id"] for item in result['hits']['hits']]
-        hidden_items = find_hidden_items(item_id_list,check_creator_permission=True)
-
+        hidden_items = find_hidden_items(item_id_list,check_creator_permission=True, has_permission_indexes=has_permission_indexes)
+        print('{} ===== get new_items from es'.format(datetime.utcnow().strftime('%H:%M:%S.%f')))
         for item_id in hidden_items:
             for index, item in enumerate(result['hits']['hits']):
                 if item_id == item['_id']:
@@ -2524,7 +2549,8 @@ def get_ranking(settings):
             parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='all', title_key='record_name',
                                   pid_key='pid_value', date_key='create_date')
-
+        print('{} ===== get_ranking end'.format(datetime.utcnow().strftime('%H:%M:%S.%f')))
+        print(' ===== ')
     return rankings
 
 
