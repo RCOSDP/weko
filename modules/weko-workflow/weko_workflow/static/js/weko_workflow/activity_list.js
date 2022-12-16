@@ -12,6 +12,19 @@ require([
   $('#filter_form_submit').on('click', function () {
     submitFilterSearch();
   });
+  $('#filter_form_download').on('click', function () {
+    downloadActivities();
+    submitFilterSearch();
+  });
+  $('#filter_form_claer').on('click', function () {
+    clearActivities();
+    submitFilterSearch();
+  }); 
+  $('#filter_form_target_claer').on('click', function () {
+    clearActivity();
+    submitFilterSearch();
+  }); 
+
   function changeParamPages() {
     if ($('#change_page_param').length == 1) {
       let result = [];
@@ -564,4 +577,83 @@ function analyzeParams(sURL) {
   }
   return (wfLst.length > 0 ? wfLst.indexOf(checkingConditions.workflow) > -1 : true) &&
     (statusLst.length > 0 ? statusLst.indexOf(checkingConditions.status.toLowerCase()) > -1 : true);
+}
+
+
+//download filtered activities
+function downloadActivities(){
+  let params = $('#filter_form').serializeArray();
+  let paramsAfterFilter = [];
+  jQuery.each(params, function (i, field) {
+    if (field.value) {
+      field.name += "_" + i;
+      field.value = field.value.trim();
+      paramsAfterFilter.push(field);
+    }
+  });
+
+  let urlEncodedDataPairs = [];
+  for (let key in paramsAfterFilter) {
+    paramsAfterFilter[key].name = decodeURIComponent(paramsAfterFilter[key].name.replace(/\+/g, ' '));
+    paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
+    urlEncodedDataPairs.push(encodeURIComponent(paramsAfterFilter[key].name) + '=' + encodeURIComponent(paramsAfterFilter[key].value));
+  }
+  downloadURL = window.location.pathname + 'download-activitylog/?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
+
+  $.ajax({
+    url: downloadURL,
+    method: 'GET',
+    success: function (res) {
+    },
+    error: function (error) {
+      console.error(error);
+    }
+  });
+
+}
+
+//clear all filtered activities
+function clearActivities(){
+  let params = $('#filter_form').serializeArray();
+  let paramsAfterFilter = [];
+  jQuery.each(params, function (i, field) {
+    if (field.value) {
+      field.name += "_" + i;
+      field.value = field.value.trim();
+      paramsAfterFilter.push(field);
+    }
+  });
+
+  let urlEncodedDataPairs = [];
+  for (let key in paramsAfterFilter) {
+    paramsAfterFilter[key].name = decodeURIComponent(paramsAfterFilter[key].name.replace(/\+/g, ' '));
+    paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
+    urlEncodedDataPairs.push(encodeURIComponent(paramsAfterFilter[key].name) + '=' + encodeURIComponent(paramsAfterFilter[key].value));
+  }
+  clearURL = window.location.pathname + 'clear-activitylog/?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
+
+  $.ajax({
+    url: clearURL,
+    method: 'GET',
+    success: function (res) {
+    },
+    error: function (error) {
+      console.error(error);
+    }
+  });
+}
+
+//clear seletected activity
+function clearActivitiy(){
+  clearURL = window.location.pathname + 'clear-activitylog/?activity_id=' + activity.activity_id;
+
+  $.ajax({
+    url: clearURL,
+    method: 'GET',
+    success: function (res) {
+    },
+    error: function (error) {
+      console.error(error);
+    }
+  });
 }

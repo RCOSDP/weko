@@ -3991,3 +3991,18 @@ def check_doi_validation_not_pass(item_id, activity_id,
             sessionstore.delete(
                 'updated_json_schema_{}'.format(activity_id))
         return False
+
+def make_activitylog_tsv(activities):
+    """make tsv for activitiy_log
+
+    Args:
+        activities: activities for download as tsv.
+    """
+    import csv 
+    from io import StringIO
+    file_output = StringIO()
+
+    tsv_writer = csv.writer(file_output, delimiter='\t', lineterminator="\n")
+    tsv_writer.writerows(activities)
+    return file_output
+    

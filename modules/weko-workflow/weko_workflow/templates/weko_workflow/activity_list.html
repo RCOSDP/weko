@@ -149,6 +149,8 @@
 </div>
 <div class="form-inline flow-root">
   <button type="submit" id="filter_form_submit" class="btn btn-primary">{{_('Apply')}}</button>
+  <button type="submit" id="filter_form_download" class="btn btn-primary">{{_('Download')}}</button>
+  <button type="submit" id="filter_form_clear" class="btn btn-danger">{{_('Clear')}}</button>
   <div class="pull-right">
     <div class="form-group">
       <label for="page_count">{{_('Display Number')}}</label>
@@ -190,6 +192,7 @@
                 <th>{{ _('User') }}</th>
               {%- endif %}
             {%- endfor %}
+            <th>{{_('Claer')}}</th>
           </tr>
         </thead>
         <tbody>
@@ -220,6 +223,9 @@
                   <td></td>
                 {%- endif %}
               {%- endif %}
+              <th>
+                <button type="submit" id="filter_form_target_clear" class="btn btn-danger">{{_('Claer')}}</button>
+              </th>
             {%- endfor %}
           </tr>
         {%- endfor %}
