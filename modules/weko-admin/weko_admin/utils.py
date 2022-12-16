@@ -2295,6 +2295,16 @@ def elasticsearch_reindex( is_db_to_es ):
     number_of_replicas = base_index_definition.get("settings").get("number_of_replicas")
     refresh_interval = base_index_definition.get("settings").get("refresh_interval")
 
+    file_path = os.path.join(current_path, 'mappings', 'v6', 'weko', 'item-v1.0.0_percolator.json')
+    with open(file_path,mode='r') as json_file:
+        json_data = json_file.read()
+        percolator_json=json.loads(json_data)
+
+    file_path = os.path.join(current_path, 'mappings', 'v6', 'weko', 'item-v1.0.0_content.json')
+    with open(file_path,mode='r') as json_file:
+        json_data = json_file.read()
+        content_json=json.loads(json_data)
+
     headers = {
         'Content-Type': 'application/json',
     }
@@ -2324,135 +2334,134 @@ def elasticsearch_reindex( is_db_to_es ):
 
     # トランザクションログをLucenceに保存。
     response = requests.post(base_url + index + "/_flush?wait_if_ongoing=true") 
-    current_app.logger.debug(response.text)
+    current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
 
     response = requests.get(base_url + '_cat/indices/?h=index&index=' + tmpindex )
 
     # 一時保管用のインデックスを作成
     # create tmp index
-    current_app.logger.debug("START create tmpindex") 
-    current_app.logger.debug("PUT tmpindex") 
+    current_app.logger.info("START create tmpindex") 
+    current_app.logger.info("PUT tmpindex") 
     response = requests.put(base_url + tmpindex + "?pretty", headers=headers ,json=base_index_definition)
-    current_app.logger.debug(response.text)
+    current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.debug("add setting percolator") 
-    response = requests.put(base_url + tmpindex + "/item-v1.0.0/_mappings", headers=headers ,json={ "properties": {"query": {"type": "percolator"}}})
-    current_app.logger.debug(response.text)
+    current_app.logger.info("add setting percolator") 
+    response = requests.put(base_url + tmpindex + "/item-v1.0.0/_mappings", headers=headers ,json=percolator_json)
+    current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.debug("add some setting") 
-    response = requests.put(base_url + tmpindex + "/item-v1.0.0/_mappings", headers=headers ,json={ "properties": {"content" : {"type" : "nested","properties" : {"attachment" : {"properties" : {"content" : {"type" : "text","store" : True,"term_vector" : "with_positions_offsets","fields" : {"ja" : {"type" : "text","store" : True,"term_vector" : "with_positions_offsets"}}}}}}}}})
-    current_app.logger.debug(response.text)
+    current_app.logger.info("add some setting") 
+    response = requests.put(base_url + tmpindex + "/item-v1.0.0/_mappings", headers=headers ,json=content_json)
+    current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.debug("END create tmpindex") 
+    current_app.logger.info("END create tmpindex") 
     
     # 高速化を期待してインデックスの設定を変更。
-    current_app.logger.debug("START change setting for faster") 
+    current_app.logger.info("START change setting for faster") 
     response = requests.put(base_url + tmpindex + "/_settings?pretty", headers=headers ,json={ "index" : {"number_of_replicas" : 0, "refresh_interval": -1 }})
-    current_app.logger.error(response.text)
+    current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text #
-    current_app.logger.debug("END change setting for faster") 
+    current_app.logger.info("END change setting for faster") 
 
     
     # document count
-    current_app.logger.debug("index document count:{}".format(requests.get(base_url + "_cat/count/"+ index ).text)) 
-    current_app.logger.debug("tmpindex document count:{}".format(requests.get(base_url + "_cat/count/"+ tmpindex ).text))
+    current_app.logger.info("index document count:{}".format(requests.get(base_url + "_cat/count/"+ index ).text)) 
+    current_app.logger.info("tmpindex document count:{}".format(requests.get(base_url + "_cat/count/"+ tmpindex ).text))
 
     # 一時保管用のインデックスに元のインデックスの再インデックスを行う
     # reindex from index to tmpindex
     current_app.logger.info("START reindex")
     response = requests.post(url=reindex_url, headers=headers, json=json_data_to_tmp)
-    current_app.logger.debug(response.text)
+    current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
     current_app.logger.info("END reindex")
 
     # document count
     index_cnt = requests.get(base_url + "_cat/count/"+ index + "?h=count").text
     tmpindex_cnt = requests.get(base_url + "_cat/count/"+ tmpindex + "?h=count").text
-    current_app.logger.debug("index document count:{}".format(index_cnt)) 
-    current_app.logger.debug("tmpindex document count:{}".format(tmpindex_cnt))
+    current_app.logger.info("index document count:{}".format(index_cnt)) 
+    current_app.logger.info("tmpindex document count:{}".format(tmpindex_cnt))
     assert index_cnt == tmpindex_cnt,'Document counts do not match.'
 
     # 再インデックス前のインデックスを削除する
-    current_app.logger.debug("START delete index") 
+    current_app.logger.info("START delete index") 
     response = requests.delete(base_url + index)
-    current_app.logger.debug(response.text)
+    current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.debug("END delete index") 
+    current_app.logger.info("END delete index") 
 
     # 新しくインデックスを作成する
     #create index
-    current_app.logger.debug("START create index") 
-    current_app.logger.debug("PUT index") 
+    current_app.logger.info("START create index") 
+    current_app.logger.info("PUT index") 
     response = requests.put(url = base_url + index + "?pretty", headers=headers ,json=base_index_definition)
-    current_app.logger.debug(response.text)
+    current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.debug("add setting percolator") 
-    response = requests.put(base_url + index + "/item-v1.0.0/_mappings", headers=headers ,json={ "properties": {"query": {"type": "percolator"}}})
-    current_app.logger.debug(response.text)
+    current_app.logger.info("add setting percolator") 
+    response = requests.put(base_url + index + "/item-v1.0.0/_mappings", headers=headers ,json=percolator_json)
+    current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.debug("add some setting") 
-    response = requests.put(base_url + index + "/item-v1.0.0/_mappings", headers=headers ,json={ "properties": {"content" : {"type" : "nested","properties" : {"attachment" : {"properties" : {"content" : {"type" : "text","store" : True,"term_vector" : "with_positions_offsets","fields" : {"ja" : {"type" : "text","store" : True,"term_vector" : "with_positions_offsets"}}}}}}}}})
-    current_app.logger.debug(response.text)
+    current_app.logger.info("add some setting") 
+    response = requests.put(base_url + index + "/item-v1.0.0/_mappings", headers=headers ,json=content_json)
+    current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.debug("END create index") 
+    current_app.logger.info("END create index") 
 
     # 高速化を期待してインデックスの設定を変更。
-    current_app.logger.debug("START change setting for faster") 
+    current_app.logger.info("START change setting for faster") 
     response = requests.put(base_url + index + "/_settings?pretty", headers=headers ,json={ "index" : {"number_of_replicas" : 0, "refresh_interval": -1 }})
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.debug("END change setting for faster") 
+    current_app.logger.info("END change setting for faster") 
 
     # aliasを再設定する。
-    current_app.logger.debug("START re-regist alias") 
+    current_app.logger.info("START re-regist alias") 
     response = requests.post(base_url + "_aliases", headers=headers, json=json_data_set_alias )
-    current_app.logger.debug(response.text)
+    current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.debug("END re-regist alias") 
+    current_app.logger.info("END re-regist alias") 
 
     # アイテムを再投入する。
-    current_app.logger.debug("START reindex")
+    current_app.logger.info("START reindex")
     if is_db_to_es :
-        current_app.logger.debug("reindex es from db")
+        current_app.logger.info("reindex es from db")
         response = _elasticsearch_remake_item_index(index_name=index)
-        current_app.logger.debug(response) # array
-
+        current_app.logger.info(response) # array
 
         response = requests.post(url=base_url + "_refresh")
-        current_app.logger.debug(response.text)
+        current_app.logger.info(response.text)
         assert response.status_code == 200 ,response.text
     else :
-        current_app.logger.debug("reindex es from es")
+        current_app.logger.info("reindex es from es")
         # 一時保管用のインデックスから、新しく作成したインデックスに再インデックスを行う
         # reindex from tmpindex to index
         response = requests.post(url=reindex_url , headers=headers, json=json_data_to_dest)
-        current_app.logger.debug(response.text)
+        current_app.logger.info(response.text)
         assert response.status_code == 200 ,response.text
-    current_app.logger.debug("END reindex")
+    current_app.logger.info("END reindex")
 
     # 高速化を期待して変更したインデックスの設定を元に戻す。
-    current_app.logger.debug("START revert setting for faster") 
+    current_app.logger.info("START revert setting for faster") 
     response = requests.put(base_url + index + "/_settings?pretty", headers=headers ,json={ "index" : {"number_of_replicas" : number_of_replicas, "refresh_interval": refresh_interval }})
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text 
-    current_app.logger.debug("END revert setting for faster") 
+    current_app.logger.info("END revert setting for faster") 
 
     # document count
     index_cnt = requests.get(base_url + "_cat/count/"+ index + "?h=count").text
     tmpindex_cnt = requests.get(base_url + "_cat/count/"+ tmpindex + "?h=count").text
-    current_app.logger.debug("index document count:{}".format(index_cnt)) 
-    current_app.logger.debug("tmpindex document count:{}".format(tmpindex_cnt))
+    current_app.logger.info("index document count:{}".format(index_cnt)) 
+    current_app.logger.info("tmpindex document count:{}".format(tmpindex_cnt))
     assert index_cnt == tmpindex_cnt ,'Document counts do not match.'
 
 
     # 一時保管用のインデックスを削除する 
     # delete tmp-index
-    current_app.logger.debug("START delete tmpindex") 
+    current_app.logger.info("START delete tmpindex") 
     response = requests.delete(base_url + tmpindex)
-    current_app.logger.debug(response.text)
+    current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.debug("END delete tmpindex") 
+    current_app.logger.info("END delete tmpindex") 
 
     current_app.logger.info(' END elasticsearch reindex: {}.'.format(index))
     

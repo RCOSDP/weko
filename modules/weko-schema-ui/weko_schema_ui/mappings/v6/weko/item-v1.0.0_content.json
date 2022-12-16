@@ -1,0 +1,1 @@
+{ "properties": {"content" : {"type" : "nested","properties" : {"attachment" : {"properties" : {"content" : {"type" : "text","store" : true,"term_vector" : "with_positions_offsets","fields" : {"ja" : {"type" : "text","store" : true,"term_vector" : "with_positions_offsets"}}}}}}}}}

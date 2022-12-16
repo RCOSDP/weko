@@ -40,6 +40,7 @@ from .models import AdminSettings, StatisticsEmail
 from .utils import StatisticMail, get_user_report_data, package_reports ,elasticsearch_reindex
 from .views import manual_send_site_license_mail 
 from celery.task.control import inspect
+from weko_search_ui.tasks import check_celery_is_run
 from .config import WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS,\
     WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED
 
@@ -78,7 +79,6 @@ def reindex(self, is_db_to_es ):
     try:
         return elasticsearch_reindex(is_db_to_es)
     except BaseException as ex:
-        current_app.logger.error('Unexpected error')
         # set error in admin_settings
         AdminSettings.update(WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS 
         , dict({WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED:True}))
@@ -87,7 +87,7 @@ def reindex(self, is_db_to_es ):
 def is_reindex_running():
     """Check reindex is running."""
     
-    if not _check_celery_is_run():
+    if not check_celery_is_run():
         return False
 
     reserved = inspect().reserved()
@@ -110,14 +110,6 @@ def is_reindex_running():
     
     current_app.logger.debug("weko_admin.tasks.reindex is not running")
     return False
-
-def _check_celery_is_run():
-    """Check celery is running, or not."""
-    if not inspect().ping():
-        return False
-    else:
-        return True
-
 
 @shared_task(ignore_results=True)
 def send_all_reports(report_type=None, year=None, month=None):

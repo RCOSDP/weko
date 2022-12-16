@@ -76,7 +76,7 @@ class ReindexElasticSearchView(BaseView):
             'weko_admin/admin/reindex_elasticsearch.html'
         """
         try:
-            status =  json.loads(self.check_reindex_is_running().get_data(True))
+            status =  self._check_reindex_is_running()
             is_error = status.get("isError")
             is_executing = status.get("isExecuting")
             disabled_btn = status.get("disabled_Btn")
@@ -113,7 +113,7 @@ class ReindexElasticSearchView(BaseView):
         """
 
         ## exclusion check
-        status =  json.loads(self.check_reindex_is_running().get_data(True))
+        status =  self._check_reindex_is_running()
         is_error = status.get("isError")
         is_executing = status.get("isExecuting")
         if is_error:
@@ -134,6 +134,8 @@ class ReindexElasticSearchView(BaseView):
             import traceback
             estr = traceback.format_exc()
             current_app.logger.error('Unexpected error: {}'.format( estr ))
+            AdminSettings.update(current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS'] 
+            , dict({current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']:True}))
             return jsonify({"error" : estr }), 500
             
     @expose('/is_reindex_running', methods=['GET'])
@@ -151,24 +153,30 @@ class ReindexElasticSearchView(BaseView):
             
         """
         try:
-            ELASTIC_REINDEX_SETTINGS = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS']
-            HAS_ERRORED = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']
-
-            admin_setting = AdminSettings.get(ELASTIC_REINDEX_SETTINGS,False)
-            is_error = admin_setting.get(HAS_ERRORED)
-            is_executing = is_reindex_running()
-            result = dict({
-                "isError": is_error
-                ,"isExecuting": is_executing
-                ,"disabled_Btn": is_error or is_executing 
-            })
-
-            return jsonify(result)
+            return jsonify(self._check_reindex_is_running())
         except BaseException:
             import traceback
             estr = traceback.format_exc()
             current_app.logger.error('Unexpected error: {}'.format( estr ))
             return abort(500)
+
+    def _check_reindex_is_running(self):
+        """
+        Monitor whether the reindex process is running/error is occurred
+        by Celery task and admin_settings
+        """
+        ELASTIC_REINDEX_SETTINGS = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS']
+        HAS_ERRORED = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']
+
+        admin_setting = AdminSettings.get(ELASTIC_REINDEX_SETTINGS,False)
+        is_error = admin_setting.get(HAS_ERRORED)
+        is_executing = is_reindex_running()
+        result = dict({
+            "isError": is_error
+            ,"isExecuting": is_executing
+            ,"disabled_Btn": is_error or is_executing 
+        })
+        return result
 
 
 
