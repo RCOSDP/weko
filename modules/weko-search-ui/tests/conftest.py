@@ -1852,50 +1852,16 @@ def db_activity(db, db_records2, db_itemtype, db_workflow, users):
 
 
 @pytest.fixture()
-def db_itemtype(app, db):
-    item_type_name = ItemTypeName(
-        id=1, name="テストアイテムタイプ", has_site_license=True, is_active=True
-    )
-    item_type_schema = dict()
-    with open("tests/data/itemtype_schema.json", "r") as f:
-        item_type_schema = json.load(f)
-
-    item_type_form = dict()
-    with open("tests/data/itemtype_form.json", "r") as f:
-        item_type_form = json.load(f)
-
-    item_type_render = dict()
-    with open("tests/data/itemtype_render.json", "r") as f:
-        item_type_render = json.load(f)
-
-    item_type_mapping = dict()
-    with open("tests/data/itemtype_mapping.json", "r") as f:
-        item_type_mapping = json.load(f)
-
-    item_type = ItemType(
-        id=1,
-        name_id=1,
-        harvesting_type=True,
-        schema=item_type_schema,
-        form=item_type_form,
-        render=item_type_render,
-        tag=1,
-        version_id=1,
-        is_deleted=False,
-    )
-
-    item_type_mapping = ItemTypeMapping(id=1, item_type_id=1, mapping=item_type_mapping)
-
-    with db.session.begin_nested():
-        db.session.add(item_type_name)
-        db.session.add(item_type)
-        db.session.add(item_type_mapping)
-
-    return {
-        "item_type_name": item_type_name,
-        "item_type": item_type,
-        "item_type_mapping": item_type_mapping,
+def db_itemtype(app, db, make_itemtype):
+    itemtype_id = 1
+    itemtype_data = {
+        "name": "テストアイテムタイプ",
+        "schema": "tests/data/itemtype_schema.json",
+        "form": "tests/data/itemtype_form.json",
+        "render": "tests/data/itemtype_render.json"
     }
+    
+    return make_itemtype(itemtype_id, itemtype_data)
 
 
 @pytest.fixture()
@@ -3867,3 +3833,47 @@ def make_record(db, indexer, i, filepath, filename, mimetype, doi_prefix=None):
         "mimetype": mimetype,
         "obj": obj,
     }
+
+@pytest.fixture
+def make_itemtype(app,db):
+    def factory(id,datas):
+        item_type_name = ItemTypeName(
+            id=id, name=datas["name"],has_site_license=True,is_active=True
+        )
+        item_type_schema=dict()
+        with open(datas["schema"],"r") as f:
+            item_type_schema = json.load(f)
+        item_type_form = dict()
+        with open(datas["form"], "r") as f:
+            item_type_form = json.load(f)
+
+        item_type_render = dict()
+        with open(datas["render"], "r") as f:
+            item_type_render = json.load(f)
+
+        item_type_mapping = dict()
+        with open(datas["mapping"], "r") as f:
+            item_type_mapping = json.load(f)
+        item_type = ItemType(
+            id=id,
+            name_id=id,
+            harvesting_type=True,
+            schema=item_type_schema,
+            form=item_type_form,
+            render=item_type_render,
+            tag=1,
+            version_id=1,
+            is_deleted=False,
+        )
+        item_type_mapping = ItemTypeMapping(id=id, item_type_id=id, mapping=item_type_mapping)
+        with db.session.begin_nested():
+            db.session.add(item_type_name)
+            db.session.add(item_type)
+            db.session.add(item_type_mapping)
+        db.session.commit()
+        return {
+            "item_type_name": item_type_name,
+            "item_type": item_type,
+            "item_type_mapping": item_type_mapping,
+        }
+    return factory

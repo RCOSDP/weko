@@ -3124,10 +3124,10 @@ def handle_check_consistence_with_mapping(mapping_ids, keys):
         ):
             result.append(_key)
 
-    clean_keys = list(map(lambda x: re.sub(r"\[\d+\]", "", x), keys))
-    for _id in mapping_ids:
-        if re.sub(r"\[\d+\]", "", _id) not in clean_keys:
-            result.append(_id)
+    # clean_keys = list(map(lambda x: re.sub(r"\[\d+\]", "", x), keys))
+    # for _id in mapping_ids:
+    #     if re.sub(r"\[\d+\]", "", _id) not in clean_keys:
+    #         result.append(_id)
 
     return list(set(result))
 
