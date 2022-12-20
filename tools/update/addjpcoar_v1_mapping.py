@@ -9,7 +9,8 @@ def main():
             mapping = pickle.loads(pickle.dumps(item_type.mapping,-1))
             for key in mapping.keys():
                 prop=mapping[key]
-                prop['jpcoar_v1_mapping']=pickle.loads(pickle.dumps(prop['jpcoar_mapping'],-1))
+                if 'jpcoar_mapping' in prop:
+                    prop['jpcoar_v1_mapping']=pickle.loads(pickle.dumps(prop['jpcoar_mapping'],-1))
             item_type.mapping=mapping
     db.session.commit()
 
