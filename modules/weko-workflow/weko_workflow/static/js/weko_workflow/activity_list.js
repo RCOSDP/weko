@@ -590,6 +590,19 @@ function downloadActivities(){
       paramsAfterFilter.push(field);
     }
   });
+  if (window.location.search != '') {
+    let locationParam = window.location.search.split('?')[1].split('&');
+    let listParamName = ['tab', 'sizetodo', 'sizeall', 'sizewait'];
+    for (let key in locationParam) {
+      let paramName = locationParam[key].split('=')[0];
+      if (listParamName.indexOf(paramName) >= 0) {
+        let param = {};
+        param.name = paramName;
+        param.value = locationParam[key].split('=')[1];
+        paramsAfterFilter.push(param);
+      }
+    }
+  }
 
   let urlEncodedDataPairs = [];
   for (let key in paramsAfterFilter) {
@@ -604,13 +617,14 @@ function downloadActivities(){
     method: 'GET',
     success: function (res) {
       activitylog_tsv = res;
+      setActivitylogSubmit(activitylog_tsv);
     },
     error: function (error) {
       console.error(error);
     }
   });
     
-  setActivitylogSubmit(activitylog_tsv);
+
 
 }
 
@@ -625,6 +639,19 @@ function clearActivities(){
       paramsAfterFilter.push(field);
     }
   });
+  if (window.location.search != '') {
+    let locationParam = window.location.search.split('?')[1].split('&');
+    let listParamName = ['tab', 'sizetodo', 'sizeall', 'sizewait'];
+    for (let key in locationParam) {
+      let paramName = locationParam[key].split('=')[0];
+      if (listParamName.indexOf(paramName) >= 0) {
+        let param = {};
+        param.name = paramName;
+        param.value = locationParam[key].split('=')[1];
+        paramsAfterFilter.push(param);
+      }
+    }
+  }
 
   let urlEncodedDataPairs = [];
   for (let key in paramsAfterFilter) {
@@ -635,31 +662,57 @@ function clearActivities(){
   clearURL = window.location.pathname + 'clear_activitylog/?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
 
   $.ajax({
-    url: clearURL,
+    url: downloadURL,
     method: 'GET',
     success: function (res) {
-      activitylog_tsv = res
+      activitylog_tsv = res;
+      setActivitylogSubmit(activitylog_tsv);
     },
     error: function (error) {
       console.error(error);
     }
   });
+    
+
 }
 
 //clear seletected activity
 function clearActivitiy(){
-  clearURL = window.location.pathname + 'clear_activitylog/?activity_id=' + activity.activity_id;
+  let paramsAfterFilter = [];
+  if (window.location.search != '') {
+    let locationParam = window.location.search.split('?')[1].split('&');
+    let listParamName = ['tab', 'sizetodo', 'sizeall', 'sizewait'];
+    for (let key in locationParam) {
+      let paramName = locationParam[key].split('=')[0];
+      if (listParamName.indexOf(paramName) >= 0) {
+        let param = {};
+        param.name = paramName;
+        param.value = locationParam[key].split('=')[1];
+        paramsAfterFilter.push(param);
+      }
+    }
+  }
+  let urlEncodedDataPairs = [];
+  for (let key in paramsAfterFilter) {
+    paramsAfterFilter[key].name = decodeURIComponent(paramsAfterFilter[key].name.replace(/\+/g, ' '));
+    paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
+    urlEncodedDataPairs.push(encodeURIComponent(paramsAfterFilter[key].name) + '=' + encodeURIComponent(paramsAfterFilter[key].value));
+  }
+  clearURL = window.location.pathname + 'clear_activitylog/?activity_id=' + activity.activity_id + "&" + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
 
   $.ajax({
-    url: clearURL,
+    url: downloadURL,
     method: 'GET',
     success: function (res) {
-      activitylog_tsv = res
+      activitylog_tsv = res;
+      setActivitylogSubmit(activitylog_tsv);
     },
     error: function (error) {
       console.error(error);
     }
   });
+    
+
 }
 
 function setActivitylogSubmit(activitylog) {
