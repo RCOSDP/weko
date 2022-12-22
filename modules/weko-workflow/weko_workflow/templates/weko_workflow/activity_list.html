@@ -149,8 +149,10 @@
 </div>
 <div class="form-inline flow-root">
   <button type="submit" id="filter_form_submit" class="btn btn-primary">{{_('Apply')}}</button>
-  <button type="submit" id="filter_form_download" class="btn btn-primary">{{_('Download')}}</button>
-  <button type="submit" id="filter_form_clear" class="btn btn-danger">{{_('Clear')}}</button>
+  {%- if current_user.is_authenticated and current_user.roles and (current_user.roles == "System Administrator" or current_user.roles == "Repository Administrator") %}
+    <button type="submit" id="filter_form_download" class="btn btn-primary">{{_('Download')}}</button>
+    <button type="submit" id="filter_form_clear" class="btn btn-danger">{{_('Clear')}}</button>
+  {%- endif %}
   <div class="pull-right">
     <div class="form-group">
       <label for="page_count">{{_('Display Number')}}</label>
@@ -192,7 +194,6 @@
                 <th>{{ _('User') }}</th>
               {%- endif %}
             {%- endfor %}
-            <th>{{_('Claer')}}</th>
           </tr>
         </thead>
         <tbody>
@@ -223,10 +224,12 @@
                   <td></td>
                 {%- endif %}
               {%- endif %}
+            {%- endfor %}
+            {%- if current_user.is_authenticated and current_user.roles and (current_user.roles == "System Administrator" or current_user.roles == "Repository Administrator") %}
               <th>
                 <button type="submit" id="filter_form_target_clear" class="btn btn-danger">{{_('Claer')}}</button>
               </th>
-            {%- endfor %}
+            {%- endif %}
           </tr>
         {%- endfor %}
         </tbody>
