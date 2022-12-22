@@ -149,9 +149,13 @@
 </div>
 <div class="form-inline flow-root">
   <button type="submit" id="filter_form_submit" class="btn btn-primary">{{_('Apply')}}</button>
-  {%- if current_user.is_authenticated and current_user.roles and (current_user.roles == "System Administrator" or current_user.roles == "Repository Administrator") %}
-    <button type="submit" id="filter_form_download" class="btn btn-primary">{{_('Download')}}</button>
-    <button type="submit" id="filter_form_clear" class="btn btn-danger">{{_('Clear')}}</button>
+  {%- if current_user.is_authenticated and current_user.roles %}
+    {%- for role in current_user.roles %}
+       {%- if role == "System Administrator" or role == "Repository Administrator" %}
+          <button type="submit" id="filter_form_download" class="btn btn-primary">{{_('Download')}}</button>                           
+          <button type="submit" id="filter_form_clear" class="btn btn-danger">{{_('Clear')}} </button>
+       {%- endif %}
+    {%- endfor %}
   {%- endif %}
   <div class="pull-right">
     <div class="form-group">
@@ -226,9 +230,13 @@
               {%- endif %}
             {%- endfor %}
             {%- if current_user.is_authenticated and current_user.roles and (current_user.roles == "System Administrator" or current_user.roles == "Repository Administrator") %}
-              <th>
-                <button type="submit" id="filter_form_target_clear" class="btn btn-danger">{{_('Claer')}}</button>
-              </th>
+              {%- for role in current_user.roles %}
+                {%- if role == "System Administrator" or role == "Repository Administrator" %}
+                  <th>
+                    <button type="submit" id="filter_form_target_clear" class="btn btn-danger">{{_('Claer')}}</button>
+                  </th>
+                {%- endif %}
+              {%- endfor %}
             {%- endif %}
           </tr>
         {%- endfor %}
