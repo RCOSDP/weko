@@ -3998,17 +3998,11 @@ def make_activitylog_tsv(activities):
     Args:
         activities: activities for download as tsv.
     """
-    import csv
+    import csv 
     from io import StringIO
     file_output = StringIO()
 
-    #tsv_writer = csv.writer(file_output, delimiter='\t', lineterminator="\n")
-    #tsv_writer.writerows(activities)
-
-    import pandas as pd
-    df = pd.DataFrame(td)
-    return df.to_csv('output.tsv', sep='\t', index=True, index_label='col0')
-
-
-    #return file_output
+    tsv_writer = csv.writer(file_output, delimiter='\t', lineterminator="\n")
+    tsv_writer.writerows(activities)
+    return file_output
     
