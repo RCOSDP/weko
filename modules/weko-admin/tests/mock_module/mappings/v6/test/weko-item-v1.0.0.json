@@ -1,0 +1,33 @@
+{
+  "mappings": {
+    "test-weko-item-v1.0.0": {
+      "_source" : { "enabled" : true },
+      "properties" : {
+        "title_statement": {
+          "properties": {
+            "title": {
+              "type": "text"
+            },
+            "body": {
+              "type": "text"
+            }
+          }
+        },
+        "_oai": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "keyword"
+            },
+            "sets": {
+              "type": "keyword"
+            }
+          }
+        },
+        "genre": {
+          "type": "text"
+        }
+      }
+    }
+  }
+}

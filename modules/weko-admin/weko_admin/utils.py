@@ -57,8 +57,7 @@ from weko_records.api import ItemsMetadata
 from weko_redis.redis import RedisConnection
 from elasticsearch import Elasticsearch
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-
-
+import weko_schema_ui
 from . import config
 from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
     FacetSearchSetting, FeedbackMailFailed, FeedbackMailHistory, \
@@ -2271,7 +2270,7 @@ def elasticsearch_reindex( is_db_to_es ):
                 because documents submitted during execution may not be reflected. 
                 Please allow execution only during maintenance periods.
     """
-
+    from invenio_oaiserver.percolator import _create_percolator_mapping
     # consts
     elasticsearch_host = os.environ.get('INVENIO_ELASTICSEARCH_HOST') 
     base_url = 'http://' + elasticsearch_host + ':9200/'
@@ -2285,7 +2284,6 @@ def elasticsearch_reindex( is_db_to_es ):
     alias_name = current_app.config['SEARCH_UI_SEARCH_INDEX']
 
     # get base_index_definition (mappings and settings)
-    import weko_schema_ui
     current_path = os.path.dirname(os.path.abspath(weko_schema_ui.__file__))
     file_path = os.path.join(current_path, 'mappings', 'v6', 'weko', 'item-v1.0.0.json')
     with open(file_path,mode='r') as json_file:
@@ -2294,16 +2292,6 @@ def elasticsearch_reindex( is_db_to_es ):
 
     number_of_replicas = base_index_definition.get("settings").get("number_of_replicas")
     refresh_interval = base_index_definition.get("settings").get("refresh_interval")
-
-    file_path = os.path.join(current_path, 'mappings', 'v6', 'weko', 'item-v1.0.0_percolator.json')
-    with open(file_path,mode='r') as json_file:
-        json_data = json_file.read()
-        percolator_json=json.loads(json_data)
-
-    file_path = os.path.join(current_path, 'mappings', 'v6', 'weko', 'item-v1.0.0_content.json')
-    with open(file_path,mode='r') as json_file:
-        json_data = json_file.read()
-        content_json=json.loads(json_data)
 
     headers = {
         'Content-Type': 'application/json',
@@ -2347,13 +2335,8 @@ def elasticsearch_reindex( is_db_to_es ):
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
     current_app.logger.info("add setting percolator") 
-    response = requests.put(base_url + tmpindex + "/item-v1.0.0/_mappings", headers=headers ,json=percolator_json)
-    current_app.logger.info(response.text)
-    assert response.status_code == 200 ,response.text
-    current_app.logger.info("add some setting") 
-    response = requests.put(base_url + tmpindex + "/item-v1.0.0/_mappings", headers=headers ,json=content_json)
-    current_app.logger.info(response.text)
-    assert response.status_code == 200 ,response.text
+
+    _create_percolator_mapping(tmpindex, "item-v1.0.0")
     current_app.logger.info("END create tmpindex") 
     
     # 高速化を期待してインデックスの設定を変更。
@@ -2398,13 +2381,7 @@ def elasticsearch_reindex( is_db_to_es ):
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
     current_app.logger.info("add setting percolator") 
-    response = requests.put(base_url + index + "/item-v1.0.0/_mappings", headers=headers ,json=percolator_json)
-    current_app.logger.info(response.text)
-    assert response.status_code == 200 ,response.text
-    current_app.logger.info("add some setting") 
-    response = requests.put(base_url + index + "/item-v1.0.0/_mappings", headers=headers ,json=content_json)
-    current_app.logger.info(response.text)
-    assert response.status_code == 200 ,response.text
+    _create_percolator_mapping(tmpindex, "item-v1.0.0")
     current_app.logger.info("END create index") 
 
     # 高速化を期待してインデックスの設定を変更。
@@ -2467,17 +2444,13 @@ def elasticsearch_reindex( is_db_to_es ):
     
     return 'completed'
 
-
 def _elasticsearch_remake_item_index(index_name):
     """ index Documents from DB (Private method) """
-
-    returnlist = []
-
-    # インデックスを登録
-    current_app.logger.info(' START elasticsearch import from oaiserver_set')
     from invenio_oaiserver.models import OAISet
     from invenio_oaiserver.percolator import _new_percolator
-
+    returnlist = []
+    # インデックスを登録
+    current_app.logger.info(' START elasticsearch import from oaiserver_set')
     oaiset_ = OAISet.query.all()
     for target in oaiset_ :
         spec = target.spec

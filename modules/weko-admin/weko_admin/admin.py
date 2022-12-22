@@ -112,18 +112,18 @@ class ReindexElasticSearchView(BaseView):
         in .utils.py .
         """
 
-        ## exclusion check
-        status =  self._check_reindex_is_running()
-        is_error = status.get("isError")
-        is_executing = status.get("isExecuting")
-        if is_error:
-            return jsonify({"error" : _('haserror')}) , 400
-        if is_executing:
-            return jsonify({"error" : _('executing...')}) , 400
-
-        is_db_to_es=request.args.get('is_db_to_es') == 'true'
         
         try:
+            ## exclusion check
+            status =  self._check_reindex_is_running()
+            is_error = status.get("isError")
+            is_executing = status.get("isExecuting")
+            if is_error:
+                return jsonify({"error" : _('haserror')}) , 400
+            if is_executing:
+                return jsonify({"error" : _('executing...')}) , 400
+
+            is_db_to_es=request.args.get('is_db_to_es') == 'true'
             # execute in celery task
             res = reindex.apply_async(args=(is_db_to_es,))
             res_output = res.get() #wait until celery task finish
