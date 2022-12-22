@@ -4006,7 +4006,7 @@ def make_activitylog_tsv(activities):
     #tsv_writer.writerows(activities)
 
     import pandas as pd
-    df = pd.DataFrame(activities)
+    df = pd.DataFrame(td)
     return df.to_csv('output.tsv', sep='\t', index=True, index_label='col0')
 
 
