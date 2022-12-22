@@ -184,10 +184,14 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
                     except BaseException:
                         is_can = False
 
-                    if check_billing_file and fjson.get('billing'):
-                        # 課金ファイルのアクセス権限がある場合、日付にかかわらずアクセス可能とする
-                        is_can = check_billing_file_permission(
-                            record['_deposit']['id'], fjson['filename'])
+                    if not is_can and check_billing_file and fjson.get('billing'):
+                        if '_deposit' in record:
+                            item_id = record['_deposit']['id']
+                        else:
+                            item_id = record['control_number']
+                        if 'filename' in fjson:
+                            # 課金ファイルのアクセス権限がある場合、日付にかかわらずアクセス可能とする
+                            is_can = check_billing_file_permission(item_id, fjson['filename'])
 
                     if not is_can:
                         # site license permission check
@@ -223,8 +227,12 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
                                 is_can = check_user_group_permission(
                                     fjson.get('groups'))
                             elif check_billing_file and fjson.get('billing'):
-                                is_can = check_billing_file_permission(
-                                    record['_deposit']['id'], fjson['filename'])
+                                if '_deposit' in record:
+                                    item_id = record['_deposit']['id']
+                                else:
+                                    item_id = record['control_number']
+                                if 'filename' in fjson:
+                                    is_can = check_billing_file_permission(item_id, fjson['filename'])
                             else:
                                 is_can = True
                         if not is_can:

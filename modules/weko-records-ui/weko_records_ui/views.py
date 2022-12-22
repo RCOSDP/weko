@@ -1000,7 +1000,7 @@ def charge():
 
     # 課金予約
     trade_id = create_charge(current_user.id, int(item_id), file_name, price, title, file_url)
-    if trade_id in ['credit_error', 'connection_error', 'api_error']:
+    if trade_id in ['connection_error', 'api_error']:
         # 課金失敗
         return jsonify({'status': 'error'})
     if trade_id == 'credit_error':

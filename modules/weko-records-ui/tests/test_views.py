@@ -416,7 +416,7 @@ def test_get_workflow_detail(app,workflows):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 #     """Display default view.
 #     def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
-def test_default_view_method(app, records, itemtypes, indexstyle):
+def test_default_view_method(app, records, itemtypes, indexstyle, db_admin_settings):
     indexer, results = records
     record = results[0]["record"]
     recid = results[0]["recid"]
@@ -752,3 +752,57 @@ def test_get_uri(app,client,db_sessionlifetime,records):
     res = client.post(url,data=json.dumps({"uri":"https://localhost/001.jpg","pid_value":"1","accessrole":"1"}), content_type='application/json')
     assert res.status_code == 200
     assert json.loads(res.data)=={'status': True}
+
+# def charge():
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_charge -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, result",
+    [
+        (0, True),
+        (1, True),
+        (2, True),
+        (3, True),
+        (4, True),
+        (5, True),
+        (6, True),
+        (7, True),
+        (8, True),
+    ],
+)
+def test_charge(users,client,id,result):
+    _data = {}
+    url = url_for("weko_records_ui.charge",_external=True)
+    _data['item_id'] = '1'
+    _data['file_name'] = 'file_name'
+    _data['title'] = 'title'
+    _data['price'] = '110'
+    
+    with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+        # 49
+        with patch('weko_records_ui.views.check_charge', return_value='already'):
+            res = client.get(url, data=_data)
+            assert json.loads(res.data) == {'status': 'already'}
+        
+        with patch('weko_records_ui.views.check_charge', return_value='not_billed'):
+            # 50
+            with patch('weko_records_ui.views.create_charge', return_value='connection_error'):
+                res = client.get(url, data=_data)
+                assert json.loads(res.data) == {'status': 'error'}
+            # 51
+            with patch('weko_records_ui.views.create_charge', return_value='credit_error'):
+                res = client.get(url, data=_data)
+                assert json.loads(res.data) == {'status': 'credit_error'}
+            # 52
+            with patch('weko_records_ui.views.create_charge', return_value='already'):
+                res = client.get(url, data=_data)
+                assert json.loads(res.data) == {'status': 'already'}
+
+            with patch('weko_records_ui.views.create_charge', return_value='1'):
+                # 53
+                with patch('weko_records_ui.views.close_charge', return_value=True):
+                    res = client.get(url, data=_data)
+                    assert json.loads(res.data) == {'status': 'success'}
+                # 54
+                with patch('weko_records_ui.views.close_charge', return_value=False):
+                    res = client.get(url, data=_data)
+                    assert json.loads(res.data) == {'status': 'error'}

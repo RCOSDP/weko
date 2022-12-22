@@ -1,0 +1,38 @@
+{
+    "url": {
+        "url": "https://weko3.example.org/record/8/files/課金ファイル.txt"
+    },
+    "date": [
+        {
+            "dateType": "Available",
+            "dateValue": "2022-12-01"
+        }
+    ],
+    "format": "text/plain",
+    "billing": [
+        "billing_file"
+    ],
+    "filename": "課金ファイル.txt",
+    "filesize": [
+        {
+            "value": "137 B"
+        }
+    ],
+    "priceinfo": [
+        {
+            "tax": "include_tax",
+            "price": "330",
+            "billingrole": "System Administrator",
+            "has_role": true
+        }
+    ],
+    "accessrole": "open_date",
+    "version_id": "73988a78-5b40-48d5-8cab-8f4e60af0d4b",
+    "is_thumbnail": false,
+    "future_date_message": "",
+    "download_preview_message": "",
+    "size": 137.0,
+    "mimetype": "text/plain",
+    "file_order": 0,
+    "billing_file_permission": true
+}
