@@ -258,7 +258,7 @@ def index():
         action_status=action_status,
         filters=filters,
         send_mail_user_group=send_mail_user_group,
-        delete_activity_log_enable=current_app.config.get("DELETE_ACTIVITY_LOG_ENABLE")
+        delete_activity_log_enable=current_app.config.get("DELETE_ACTIVITY_LOG_ENABLE"),
         **ctx
     )
 
