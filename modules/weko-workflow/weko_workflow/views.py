@@ -2692,7 +2692,7 @@ def get_data_init():
         init_terms=init_terms)
 
 
-@workflow_blueprint.route('/download_activitylog', methods=['GET'])
+@workflow_blueprint.route('/download_activitylog/', methods=['GET'])
 @login_required
 def download_activitylog():
     """download activitylog
@@ -2752,7 +2752,7 @@ def download_activitylog():
     response.mimetype = 'text/tsv'
     return response , 200
 
-@workflow_blueprint.route('/clear-activitylog', methods=['GET'])
+@workflow_blueprint.route('/clear_activitylog/', methods=['GET'])
 @login_required
 def clear_activitylog():
     """clear and download activitylog.

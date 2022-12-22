@@ -645,7 +645,7 @@ function clearActivities(){
 
 //clear seletected activity
 function clearActivitiy(){
-  clearURL = window.location.pathname + 'clear-activitylog/?activity_id=' + activity.activity_id;
+  clearURL = window.location.pathname + 'clear_activitylog/?activity_id=' + activity.activity_id;
 
   $.ajax({
     url: clearURL,
