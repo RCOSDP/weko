@@ -154,6 +154,9 @@
        {%- if role == "System Administrator" or role == "Repository Administrator" %}
           <button type="submit" id="filter_form_download" class="btn btn-primary">{{_('Download')}}</button>                           
           <button type="submit" id="filter_form_clear" class="btn btn-danger">{{_('Clear')}} </button>
+          <form method="POST" name="activitylog_file_form" id="activitylog_file_form">
+            <input type="hidden" id="activitylog_file_input" name="report" value="{}" />
+          </form>
        {%- endif %}
     {%- endfor %}
   {%- endif %}

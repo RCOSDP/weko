@@ -14,7 +14,6 @@ require([
   });
   $('#filter_form_download').on('click', function () {
     downloadActivities();
-    submitFilterSearch();
   });
   $('#filter_form_claer').on('click', function () {
     clearActivities();
@@ -604,11 +603,14 @@ function downloadActivities(){
     url: downloadURL,
     method: 'GET',
     success: function (res) {
+      activitylog_tsv = res;
     },
     error: function (error) {
       console.error(error);
     }
   });
+    
+  setActivitylogSubmit(activitylog_tsv);
 
 }
 
@@ -636,6 +638,7 @@ function clearActivities(){
     url: clearURL,
     method: 'GET',
     success: function (res) {
+      activitylog_tsv = res
     },
     error: function (error) {
       console.error(error);
@@ -651,9 +654,16 @@ function clearActivitiy(){
     url: clearURL,
     method: 'GET',
     success: function (res) {
+      activitylog_tsv = res
     },
     error: function (error) {
       console.error(error);
     }
   });
+}
+
+function setActivitylogSubmit(activitylog) {
+  $('#activitylog_file_input').val(JSON.stringify(activitylog));
+  $('#activitylog_file_form').submit();
+  $('#activitylog_file_input').val('');
 }

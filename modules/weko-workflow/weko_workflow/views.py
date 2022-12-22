@@ -39,7 +39,7 @@ from weko_workflow.schema.marshmallow import ActionSchema, \
 from weko_workflow.schema.utils import get_schema_action, type_null_check
 from marshmallow.exceptions import ValidationError
 
-from flask import Blueprint, abort, current_app, has_request_context, \
+from flask import Response, Blueprint, abort, current_app, has_request_context, \
     jsonify, make_response, render_template, request, session, url_for, send_file
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
@@ -2746,10 +2746,12 @@ def download_activitylog():
     if not activities:
         return {"code":-1, "msg":"no activity error"} ,400
 
-    response = make_response()
-    response.data = make_activitylog_tsv(activities)
-    response.headers = 'attachmet; filename=activitylog.tsv'
-    response.mimetype = 'text/tsv'
+
+    response = Response(
+                make_activitylog_tsv(activities),
+                mimetype='text/tsv',
+                headers={"Content-disposition": "attachment; filename=activitylog.tsv"},
+            )
     return response , 200
 
 @workflow_blueprint.route('/clear_activitylog/', methods=['GET'])

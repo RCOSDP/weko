@@ -4002,7 +4002,15 @@ def make_activitylog_tsv(activities):
     from io import StringIO
     file_output = StringIO()
 
-    tsv_writer = csv.writer(file_output, delimiter='\t', lineterminator="\n")
-    tsv_writer.writerows(activities)
+    keys = activities[0].__dict__.keys()
+
+    writer = csv.writer(file_output, delimiter="\t", lineterminator="\n")
+    writer.writerow(keys)
+    for item in activities:
+        term = []
+        for name in keys:
+            term.append(getattr(item,name))
+        writer.writerow(term)
+
     return file_output
     
