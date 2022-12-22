@@ -598,7 +598,7 @@ function downloadActivities(){
     paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
     urlEncodedDataPairs.push(encodeURIComponent(paramsAfterFilter[key].name) + '=' + encodeURIComponent(paramsAfterFilter[key].value));
   }
-  downloadURL = window.location.pathname + 'download-activitylog/?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
+  downloadURL = window.location.pathname + 'download_activitylog/?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
 
   $.ajax({
     url: downloadURL,
@@ -630,7 +630,7 @@ function clearActivities(){
     paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
     urlEncodedDataPairs.push(encodeURIComponent(paramsAfterFilter[key].name) + '=' + encodeURIComponent(paramsAfterFilter[key].value));
   }
-  clearURL = window.location.pathname + 'clear-activitylog/?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
+  clearURL = window.location.pathname + 'clear_activitylog/?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
 
   $.ajax({
     url: clearURL,

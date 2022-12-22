@@ -258,6 +258,7 @@ def index():
         action_status=action_status,
         filters=filters,
         send_mail_user_group=send_mail_user_group,
+        delete_activity_log_enable=current_app.config.get("DELETE_ACTIVITY_LOG_ENABLE")
         **ctx
     )
 
@@ -2691,7 +2692,7 @@ def get_data_init():
         init_terms=init_terms)
 
 
-@workflow_blueprint.route('/download-activitylog', methods=['GET'])
+@workflow_blueprint.route('/download_activitylog', methods=['GET'])
 @login_required
 def download_activitylog():
     """download activitylog
@@ -2722,11 +2723,10 @@ def download_activitylog():
     activity = WorkActivity()
     activities = []
     if current_user and current_user.roles:
-        from weko_user_profiles.config import WEKO_USERPROFILES_ADMINISTRATOR_ROLE
-        admin_role = WEKO_USERPROFILES_ADMINISTRATOR_ROLE
+        admin_roles = ["System Administrator","Repository Administrator"]
         has_admin_role = False
         for role in current_user.roles:
-            if role == admin_role:
+            if role in admin_roles:
                 has_admin_role = True
                 break
         if not has_admin_role:
@@ -2785,11 +2785,10 @@ def clear_activitylog():
     activities = []
     delete_activity_actions = []
     if current_user and current_user.roles:
-        from weko_user_profiles.config import WEKO_USERPROFILES_ADMINISTRATOR_ROLE
-        admin_role = WEKO_USERPROFILES_ADMINISTRATOR_ROLE
+        admin_roles = ["System Administrator","Repository Administrator"]
         has_admin_role = False
         for role in current_user.roles:
-            if role == admin_role:
+            if role in admin_roles:
                 has_admin_role = True
                 break
         if not has_admin_role:
