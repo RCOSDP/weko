@@ -155,7 +155,6 @@
           <button type="submit" id="filter_form_download" class="btn btn-primary">{{_('Download')}}</button>                           
           <button type="submit" id="filter_form_clear" class="btn btn-danger">{{_('Clear')}} </button>
           <form method="GET" name="activitylog_file_form" id="activitylog_file_form" action={{url_for('weko_workflow.download_activitylog')}}>
-            <input type="hidden" id="filter_form_query" name="Status" value="{}">
           </form>
        {%- endif %}
     {%- endfor %}

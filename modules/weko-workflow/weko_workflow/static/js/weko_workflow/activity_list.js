@@ -615,11 +615,9 @@ function downloadActivities(activity_id=''){
     for (let key in paramsAfterFilter) {
       paramsAfterFilter[key].name = decodeURIComponent(paramsAfterFilter[key].name.replace(/\+/g, ' '));
       paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
-      urlEncodedDataPairs.push(encodeURIComponent(paramsAfterFilter[key].name) + '=' + encodeURIComponent(paramsAfterFilter[key].value));
     }
-    downloadQuery= urlEncodedDataPairs.join('&').replace(/%20/g, '+');
   }
-  setActivitylogSubmit(downloadQuery);
+  setActivitylogSubmit(paramsAfterFilter);
 
   // $.ajax({
   //   url: downloadURL,
@@ -703,8 +701,25 @@ function clearActivity(activity_id){
 
 }
 
-function setActivitylogSubmit(downloadQuery) {
-  $('#filter_form_query').val(downloadQuery);
+function setActivitylogSubmit(paramsAfterFilter) {
+  let form = document.getElementById("activitylog_file_form")
+  for(let key in paramsAfterFilter){
+    const input = document.createElement('input');
+
+    //input要素にtype属性とvalue属性を設定
+    input.setAttribute('type', 'hidden');
+    input.setAttribute('name', paramsAfterFilter[key].name)
+    input.setAttribute('value', paramsAfterFilter[key].value);
+
+    form.appendChild(input)
+  }
   $('#activitylog_file_form').submit();
-  $('#filter_form_query').val('');
+  if(form.hasChildNodes()){
+    let children = form.childNodes;
+
+    for (let child in children) {
+      form.removeChild(child);
+    }
+  }
+
 }
