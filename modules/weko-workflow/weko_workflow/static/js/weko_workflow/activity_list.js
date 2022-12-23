@@ -17,14 +17,14 @@ require([
   });
   $('#filter_form_clear').on('click', function () {
     clearActivities();
-    submitFilterSearch();
+    //submitFilterSearch();
   }); 
   $('#filter_form_target_clear').on('click', function () {
     var activity_id=$(this).closest('tr').find('a').val();
 
     alert(activity_id)
     clearActivity(activity_id);
-    submitFilterSearch();
+    //submitFilterSearch();
   }); 
 
   function changeParamPages() {
@@ -687,7 +687,7 @@ function clearActivities(){
 }
 
 //clear seletected activity
-function clearActivitiy(activity_id){
+function clearActivity(activity_id){
 
   downloadActivities(activity_id);
   clearURL = window.location.pathname + 'clear_activitylog/?activity_id=' + activity_id;
