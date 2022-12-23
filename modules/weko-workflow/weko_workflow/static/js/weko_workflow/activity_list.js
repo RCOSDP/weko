@@ -18,9 +18,9 @@ require([
   $('#filter_form_clear').on('click', function () {
     clearActivities();
     //submitFilterSearch();
-  }); 
-  $('#filter_form_target_clear').on('click', function () {
-    var activity_id=$(this).closest('tr').find('a').val();
+  });   
+  function clear_Activity() {
+    var activity_id=$(this).closest('tr').find('a').text();
 
     alert(activity_id)
     clearActivity(activity_id);
@@ -585,7 +585,7 @@ function analyzeParams(sURL) {
 //download filtered activities
 function downloadActivities(activity_id=''){
   if (activity_id != '') {
-    downloadURL = window.location.pathname + 'download_activitylog/?activity_id=' + activity_id;
+    downloadQuery = 'activity_id=' + activity_id;
   } else {
 
     let params = $('#filter_form').serializeArray();
@@ -617,9 +617,9 @@ function downloadActivities(activity_id=''){
       paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
       urlEncodedDataPairs.push(encodeURIComponent(paramsAfterFilter[key].name) + '=' + encodeURIComponent(paramsAfterFilter[key].value));
     }
-    downloadURL = window.location.pathname + 'download_activitylog/?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
+    downloadQuery= urlEncodedDataPairs.join('&').replace(/%20/g, '+');
   }
-  setActivitylogSubmit(downloadURL);
+  setActivitylogSubmit(downloadQuery);
 
   // $.ajax({
   //   url: downloadURL,
@@ -633,8 +633,6 @@ function downloadActivities(activity_id=''){
   //   }
   // });
     
-
-
 }
 
 //clear all filtered activities
@@ -705,7 +703,8 @@ function clearActivity(activity_id){
 
 }
 
-function setActivitylogSubmit(downloadURL) {
-  document.activitylog_file_form.action=downloadURL;
+function setActivitylogSubmit(downloadQuery) {
+  $('#filter_form_query').val(downloadQuery);
   $('#activitylog_file_form').submit();
+  $('#filter_form_query').val('');
 }
