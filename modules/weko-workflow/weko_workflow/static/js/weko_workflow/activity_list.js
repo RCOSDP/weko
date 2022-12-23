@@ -19,13 +19,13 @@ require([
     clearActivities();
     //submitFilterSearch();
   });   
-  function clear_Activity() {
+  $('.clear_activity').on('click', function() {
     var activity_id=$(this).closest('tr').find('a').text();
 
     alert(activity_id)
     clearActivity(activity_id);
     //submitFilterSearch();
-  }; 
+  }); 
 
   function changeParamPages() {
     if ($('#change_page_param').length == 1) {

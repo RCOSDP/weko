@@ -2836,7 +2836,7 @@ def clear_activitylog():
             #     del_activity.activity_status = "F"
             #     db.session.update(del_activity)
             # db.session.commit()
-        delete_activity_actions.append(workflow_activity_action.query.filter(activity_id=del_activity.activity_id))
+        delete_activity_actions.append(workflow_activity_action.query.filter_by(activity_id=del_activity.activity_id))
         
         try:
             with db.session.begin():
@@ -2902,7 +2902,7 @@ def clear_activitylog():
             #     db.session.update(del_activity)
             # db.session.commit()
 
-        delete_activity_actions.append(workflow_activity_action.query.filter(activity_id=del_activity.activity_id))
+        delete_activity_actions.append(workflow_activity_action.query.filter_by(activity_id=del_activity.activity_id))
 
     try:   
         with db.session.begin():

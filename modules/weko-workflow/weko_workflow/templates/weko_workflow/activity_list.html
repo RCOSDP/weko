@@ -235,7 +235,7 @@
               {%- for role in current_user.roles %}
                 {%- if role == "System Administrator" or role == "Repository Administrator" %}
                   <th>
-                    <button ng-click="clear_Activity()" type="input" class="btn btn-danger">{{_('Clear')}}</button>
+                    <button type="input" name="clear_activity" class="btn btn-danger">{{_('Clear')}}</button>
                   </th>
                 {%- endif %}
               {%- endfor %}
