@@ -410,7 +410,9 @@ def get_permission_record(rank_type, es_data, display_rank, has_permission_index
             break
 
         add_flag = False
-        pid_value = data['key'] if 'key' in data else data['control_number']
+        pid_value = data['key'] \
+            if 'key' in data \
+            else data.get('_item_metadata').get('control_number')
         record = WekoRecord.get_record_by_pid(pid_value)
         if roles[0]:
             add_flag = True
