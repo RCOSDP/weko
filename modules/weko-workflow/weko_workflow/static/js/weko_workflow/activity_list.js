@@ -673,7 +673,7 @@ function clearActivities(){
   clearURL = window.location.pathname + 'clear_activitylog/?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
 
   $.ajax({
-    url: downloadURL,
+    url: clearURL,
     method: 'GET',
     success: function (res) {
       activitylog_tsv = res;
@@ -693,7 +693,7 @@ function clearActivity(activity_id){
   clearURL = window.location.pathname + 'clear_activitylog/?activity_id=' + activity_id;
 
   $.ajax({
-    url: downloadURL,
+    url: clearURL,
     method: 'GET',
     success: function (res) {
       activitylog_tsv = res;
@@ -702,7 +702,6 @@ function clearActivity(activity_id){
       console.error(error);
     }
   });
-    
 
 }
 
