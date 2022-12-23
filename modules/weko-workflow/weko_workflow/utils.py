@@ -4012,5 +4012,5 @@ def make_activitylog_tsv(activities):
             term.append(getattr(item,name))
         writer.writerow(term)
 
-    return file_output
+    return file_output.getvalue()
     

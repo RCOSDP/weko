@@ -2692,7 +2692,7 @@ def get_data_init():
         init_terms=init_terms)
 
 
-@workflow_blueprint.route('/download_activitylog/', methods=['GET'])
+@workflow_blueprint.route('/download_activitylog/', methods=['GET','POST'])
 @login_required
 def download_activitylog():
     """download activitylog
