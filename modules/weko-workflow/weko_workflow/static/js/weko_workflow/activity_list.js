@@ -15,11 +15,11 @@ require([
   $('#filter_form_download').on('click', function () {
     downloadActivities();
   });
-  $('#filter_form_claer').on('click', function () {
+  $('#filter_form_clear').on('click', function () {
     clearActivities();
     submitFilterSearch();
   }); 
-  $('#filter_form_target_claer').on('click', function () {
+  $('#filter_form_target_clear').on('click', function () {
     var activity_id=$(this).closest('tr').find('a').val();
 
     alert(activity_id)
