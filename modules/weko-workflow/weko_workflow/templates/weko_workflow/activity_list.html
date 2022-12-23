@@ -154,8 +154,7 @@
        {%- if role == "System Administrator" or role == "Repository Administrator" %}
           <button type="submit" id="filter_form_download" class="btn btn-primary">{{_('Download')}}</button>                           
           <button type="submit" id="filter_form_clear" class="btn btn-danger">{{_('Clear')}} </button>
-          <form method="POST" name="activitylog_file_form" id="activitylog_file_form" action={{url_for('weko_workflow.download_activitylog')}}>
-            <input type="hidden" id="activitylog_file_input" name="report" value="{}" />
+          <form method="GET" name="activitylog_file_form" id="activitylog_file_form" action=''>
           </form>
        {%- endif %}
     {%- endfor %}
@@ -236,7 +235,7 @@
               {%- for role in current_user.roles %}
                 {%- if role == "System Administrator" or role == "Repository Administrator" %}
                   <th>
-                    <button type="submit" id="filter_form_target_clear" class="btn btn-danger">{{_('Clear')}}</button>
+                    <button type="input" id="filter_form_target_clear" class="btn btn-danger">{{_('Clear')}}</button>
                   </th>
                 {%- endif %}
               {%- endfor %}

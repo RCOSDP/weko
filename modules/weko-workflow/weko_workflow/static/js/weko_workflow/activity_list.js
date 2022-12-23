@@ -20,7 +20,10 @@ require([
     submitFilterSearch();
   }); 
   $('#filter_form_target_claer').on('click', function () {
-    clearActivity();
+    var activity_id=$(this).closest('tr').find('a').val();
+
+    alert(activity_id)
+    clearActivity(activity_id);
     submitFilterSearch();
   }); 
 
@@ -580,49 +583,55 @@ function analyzeParams(sURL) {
 
 
 //download filtered activities
-function downloadActivities(){
-  let params = $('#filter_form').serializeArray();
-  let paramsAfterFilter = [];
-  jQuery.each(params, function (i, field) {
-    if (field.value) {
-      field.name += "_" + i;
-      field.value = field.value.trim();
-      paramsAfterFilter.push(field);
-    }
-  });
-  if (window.location.search != '') {
-    let locationParam = window.location.search.split('?')[1].split('&');
-    let listParamName = ['tab', 'sizetodo', 'sizeall', 'sizewait'];
-    for (let key in locationParam) {
-      let paramName = locationParam[key].split('=')[0];
-      if (listParamName.indexOf(paramName) >= 0) {
-        let param = {};
-        param.name = paramName;
-        param.value = locationParam[key].split('=')[1];
-        paramsAfterFilter.push(param);
+function downloadActivities(activity_id=''){
+  if (activity_id != '') {
+    downloadURL = window.location.pathname + 'download_activitylog/?activity_id=' + activity_id;
+  } else {
+
+    let params = $('#filter_form').serializeArray();
+    let paramsAfterFilter = [];
+    jQuery.each(params, function (i, field) {
+      if (field.value) {
+        field.name += "_" + i;
+        field.value = field.value.trim();
+        paramsAfterFilter.push(field);
+      }
+    });
+    if (window.location.search != '') {
+      let locationParam = window.location.search.split('?')[1].split('&');
+      let listParamName = ['tab', 'sizetodo', 'sizeall', 'sizewait'];
+      for (let key in locationParam) {
+        let paramName = locationParam[key].split('=')[0];
+        if (listParamName.indexOf(paramName) >= 0) {
+          let param = {};
+          param.name = paramName;
+          param.value = locationParam[key].split('=')[1];
+          paramsAfterFilter.push(param);
+        }
       }
     }
-  }
 
-  let urlEncodedDataPairs = [];
-  for (let key in paramsAfterFilter) {
-    paramsAfterFilter[key].name = decodeURIComponent(paramsAfterFilter[key].name.replace(/\+/g, ' '));
-    paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
-    urlEncodedDataPairs.push(encodeURIComponent(paramsAfterFilter[key].name) + '=' + encodeURIComponent(paramsAfterFilter[key].value));
-  }
-  downloadURL = window.location.pathname + 'download_activitylog/?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
-
-  $.ajax({
-    url: downloadURL,
-    method: 'GET',
-    success: function (res) {
-      activitylog_tsv = res;
-      setActivitylogSubmit(activitylog_tsv);
-    },
-    error: function (error) {
-      console.error(error);
+    let urlEncodedDataPairs = [];
+    for (let key in paramsAfterFilter) {
+      paramsAfterFilter[key].name = decodeURIComponent(paramsAfterFilter[key].name.replace(/\+/g, ' '));
+      paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
+      urlEncodedDataPairs.push(encodeURIComponent(paramsAfterFilter[key].name) + '=' + encodeURIComponent(paramsAfterFilter[key].value));
     }
-  });
+    downloadURL = window.location.pathname + 'download_activitylog/?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
+  }
+  setActivitylogSubmit(downloadURL);
+
+  // $.ajax({
+  //   url: downloadURL,
+  //   method: 'GET',
+  //   success: function (res) {
+  //     activitylog_tsv = res;
+  //     setActivitylogSubmit(activitylog_tsv);
+  //   },
+  //   error: function (error) {
+  //     console.error(error);
+  //   }
+  // });
     
 
 
@@ -630,6 +639,8 @@ function downloadActivities(){
 
 //clear all filtered activities
 function clearActivities(){
+
+  downloadActivities();
   let params = $('#filter_form').serializeArray();
   let paramsAfterFilter = [];
   jQuery.each(params, function (i, field) {
@@ -666,7 +677,6 @@ function clearActivities(){
     method: 'GET',
     success: function (res) {
       activitylog_tsv = res;
-      setActivitylogSubmit(activitylog_tsv);
     },
     error: function (error) {
       console.error(error);
@@ -677,35 +687,16 @@ function clearActivities(){
 }
 
 //clear seletected activity
-function clearActivitiy(){
-  let paramsAfterFilter = [];
-  if (window.location.search != '') {
-    let locationParam = window.location.search.split('?')[1].split('&');
-    let listParamName = ['tab', 'sizetodo', 'sizeall', 'sizewait'];
-    for (let key in locationParam) {
-      let paramName = locationParam[key].split('=')[0];
-      if (listParamName.indexOf(paramName) >= 0) {
-        let param = {};
-        param.name = paramName;
-        param.value = locationParam[key].split('=')[1];
-        paramsAfterFilter.push(param);
-      }
-    }
-  }
-  let urlEncodedDataPairs = [];
-  for (let key in paramsAfterFilter) {
-    paramsAfterFilter[key].name = decodeURIComponent(paramsAfterFilter[key].name.replace(/\+/g, ' '));
-    paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
-    urlEncodedDataPairs.push(encodeURIComponent(paramsAfterFilter[key].name) + '=' + encodeURIComponent(paramsAfterFilter[key].value));
-  }
-  clearURL = window.location.pathname + 'clear_activitylog/?activity_id=' + activity.activity_id + "&" + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
+function clearActivitiy(activity_id){
+
+  downloadActivities(activity_id);
+  clearURL = window.location.pathname + 'clear_activitylog/?activity_id=' + activity_id;
 
   $.ajax({
     url: downloadURL,
     method: 'GET',
     success: function (res) {
       activitylog_tsv = res;
-      setActivitylogSubmit(activitylog_tsv);
     },
     error: function (error) {
       console.error(error);
@@ -715,8 +706,7 @@ function clearActivitiy(){
 
 }
 
-function setActivitylogSubmit(activitylog) {
-  $('#activitylog_file_input').val(JSON.stringify(activitylog));
+function setActivitylogSubmit(downloadURL) {
+  document.activitylog_file_form.action=downloadURL;
   $('#activitylog_file_form').submit();
-  $('#activitylog_file_input').val('');
 }
