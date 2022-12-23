@@ -584,12 +584,14 @@ function analyzeParams(sURL) {
 
 //download filtered activities
 function downloadActivities(activity_id=''){
+  let paramsAfterFilter = [];
   if (activity_id != '') {
-    downloadQuery = 'activity_id=' + activity_id;
+      field.name += "_activity_id";
+      field.value = activity_id;
+      paramsAfterFilter.push(field);
   } else {
 
     let params = $('#filter_form').serializeArray();
-    let paramsAfterFilter = [];
     jQuery.each(params, function (i, field) {
       if (field.value) {
         field.name += "_" + i;
@@ -611,7 +613,6 @@ function downloadActivities(activity_id=''){
       }
     }
 
-    let urlEncodedDataPairs = [];
     for (let key in paramsAfterFilter) {
       paramsAfterFilter[key].name = decodeURIComponent(paramsAfterFilter[key].name.replace(/\+/g, ' '));
       paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
