@@ -578,7 +578,6 @@ class ESWekoRankingQuery(ESTermsQuery):
             query_q['query']['bool']['must_not'] = json.loads(kwargs.get('must_not'))
         else:
             del query_q['query']['bool']['must_not']
-        print('query_q: {}'.format(query_q))
         agg_query.update_from_dict(query_q)
         return agg_query
 
@@ -594,7 +593,6 @@ class ESWekoRankingQuery(ESTermsQuery):
 
             kwargs['start_date'] = start_date.isoformat()
             kwargs['end_date'] = end_date.isoformat()
-        print('kwargs: {}'.format(kwargs))
         agg_query = self.build_query(**kwargs)
 
         query_result = agg_query.execute().to_dict()

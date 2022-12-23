@@ -1257,10 +1257,8 @@ class QueryRankingHelper(object):
 
         except es_exceptions.NotFoundError as e:
             current_app.logger.debug(e)
-            print(e)
         except Exception as e:
             current_app.logger.debug(e)
-            print(e)
 
         return result
 
@@ -1288,10 +1286,8 @@ class QueryRankingHelper(object):
 
         except es_exceptions.NotFoundError as e:
             current_app.logger.debug(e)
-            print(e)
         except Exception as e:
             current_app.logger.debug(e)
-            print(e)
 
         return result
 
