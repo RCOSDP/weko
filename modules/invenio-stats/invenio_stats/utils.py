@@ -1282,7 +1282,8 @@ class QueryRankingHelper(object):
 
             all_res = all_query.run(**params)
             for r in all_res['hits']['hits']:
-                result.append(r['_source'])
+                if r.get('_source', {}).get('path'):
+                    result.append(r['_source'])
 
         except es_exceptions.NotFoundError as e:
             current_app.logger.debug(e)
