@@ -15,17 +15,27 @@ require([
   $('#filter_form_download').on('click', function () {
     downloadActivities();
   });
+
   $('#filter_form_clear').on('click', function () {
+    $('#activitylogs_clear_modal').addClass('in').css('display', 'block');
+  });   
+
+  $('#confirm_clear_activitylogs').on('click', function () {
+    $('activitylogs_clear_modal').removeClass('in').css('display', 'none');
     clearActivities();
     //submitFilterSearch();
+  });  
+
+  $('.clear-activitylog').on('click', function () {
+    $('#activitylog_clear_modal').addClass('in').css('display', 'block');
   });   
-  $('.clear_activity').on('click', function() {
+
+  $('#activitylog_clear_modal').on('click', function () {
+    $('activitylog_clear_modal').removeClass('in').css('display', 'none');
     var activity_id=$(this).closest('tr').find('a').text();
 
-    alert(activity_id)
     clearActivity(activity_id);
-    //submitFilterSearch();
-  }); 
+  });   
 
   function changeParamPages() {
     if ($('#change_page_param').length == 1) {
@@ -703,7 +713,8 @@ function clearActivity(activity_id){
 }
 
 function setActivitylogSubmit(paramsAfterFilter) {
-  let form = document.getElementById("activitylog_file_form")
+  let form = document.getElementById("activitylog_file_form");
+  let children = [];
   for(let key in paramsAfterFilter){
     const input = document.createElement('input');
 
@@ -712,14 +723,13 @@ function setActivitylogSubmit(paramsAfterFilter) {
     input.setAttribute('name', paramsAfterFilter[key].name)
     input.setAttribute('value', paramsAfterFilter[key].value);
 
-    form.appendChild(input)
+    form.appendChild(input);
+    children[key] = input;
   }
   $('#activitylog_file_form').submit();
   if(form.hasChildNodes()){
-    let children = form.childNodes;
-
-    for (let child in children) {
-      form.removeChild(child);
+    for (let key in children) {
+      form.removeChild(chirdren[key]);
     }
   }
 

@@ -235,7 +235,7 @@
               {%- for role in current_user.roles %}
                 {%- if role == "System Administrator" or role == "Repository Administrator" %}
                   <th>
-                    <button type="input" name="clear_activity" class="btn btn-danger">{{_('Clear')}}</button>
+                    <button type="input" class="clear-activitylog">{{_('Clear')}}</button>
                   </th>
                 {%- endif %}
               {%- endfor %}
@@ -468,6 +468,55 @@
         <div class="modal-footer">
           <div class="col text-center">
             <button type="button" class="btn-default btn-secondary btn btn_ok">
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div role="dialog" tabindex="-1" class="fade in modal" id='activitylogs_clear_modal'>
+    <div class="modal-dialog row popup_notice">
+      <div class="modal-content" role="document">
+        <div class="modal-header">
+          <h4 class="modal-title">JGSS</h4>
+        </div>
+        <div class="modal-body">
+          <div class="container-modal">
+            <div class="row">
+              <div class="col-sm-12 col-md-12">{{ _('Please contact your system administrator.') }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="col text-center">
+            <button type="submit" class="btn-default btn-secondary btn btn_ok" id="confirm_clear_activitylogs">
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div role="dialog" tabindex="-1" class="fade in modal" id='activitylog_clear_modal'>
+    <div class="modal-dialog row popup_notice">
+      <div class="modal-content" role="document">
+        <div class="modal-header">
+          <h4 class="modal-title">JGSS</h4>
+        </div>
+        <div class="modal-body">
+          <div class="container-modal">
+            <div class="row">
+              <div class="col-sm-12 col-md-12">{{ _('Please contact your system administrator.') }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="col text-center">
+            <button type="submit" class="btn-default btn-secondary btn btn_ok" id="confirm_clear_activitylogs">
               OK
             </button>
           </div>
