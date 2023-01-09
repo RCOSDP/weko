@@ -32,6 +32,7 @@ from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
 from flask_menu import register_menu
+from flask_wtf import Form,FlaskForm
 from invenio_admin.proxies import current_admin
 from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy.orm import session
@@ -126,7 +127,8 @@ def lifetime():
         if db_lifetime is None:
             db_lifetime = SessionLifetime(lifetime=30)
 
-        if request.method == 'POST':
+        form = FlaskForm(request.form)
+        if request.method == 'POST' and form.validate():
             # Process forms
             form = request.form.get('submit', None)
             if form == 'lifetime':
@@ -147,7 +149,8 @@ def lifetime():
                           ('180', _('180 mins')),
                           ('360', _('360 mins')),
                           ('720', _('720 mins')),
-                          ('1440', _('1440 mins'))]
+                          ('1440', _('1440 mins'))],
+            form=form
         )
     except ValueError as valueErr:
         current_app.logger.error(

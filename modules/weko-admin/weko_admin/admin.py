@@ -40,6 +40,7 @@ from flask_admin.helpers import get_redirect_target
 from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_mail import Attachment
+from flask_wtf import FlaskForm,Form
 from invenio_communities.models import Community
 from invenio_db import db
 from invenio_files_rest.storage.pyfs import remove_dir_with_file
@@ -50,6 +51,7 @@ from weko_records.models import SiteLicenseInfo
 from weko_records_ui.utils import check_items_settings
 from wtforms.fields import StringField
 from wtforms.validators import ValidationError
+
 
 from .config import WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR, \
     WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR
@@ -463,13 +465,15 @@ class StatsSettingsView(BaseView):
 class LogAnalysisSettings(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
-        if request.method == 'POST':
+        form = FlaskForm(request.form)
+        if request.method == 'POST' and form.validate():
             crawler_lists, new_ip_addresses = self.parse_form_data(
                 request.form)
             try:
                 LogAnalysisRestrictedIpAddress.update_table(new_ip_addresses)
                 LogAnalysisRestrictedCrawlerList.update_or_insert_list(
                     crawler_lists)
+                flash(_('Successfully Changed Settings.'))
             except Exception as e:
                 current_app.logger.error(
                     'Could not save restricted data: %s', e)
@@ -492,7 +496,8 @@ class LogAnalysisSettings(BaseView):
         return self.render(
             current_app.config["WEKO_ADMIN_LOG_ANALYSIS_SETTINGS_TEMPLATE"],
             restricted_ip_addresses=restricted_ip_addresses,
-            shared_crawlers=shared_crawlers
+            shared_crawlers=shared_crawlers,
+            form = form
         )
 
     def parse_form_data(self, raw_data):
@@ -521,7 +526,8 @@ class RankingSettingsView(BaseView):
 
     @expose('/', methods=['GET', 'POST'])
     def index(self):
-        if request.method == 'POST':
+        f = FlaskForm(request.form)
+        if request.method == 'POST' and f.validate():
             try:
                 form = request.form.get('submit', None)
                 if form == 'save_ranking_settings':
@@ -599,7 +605,8 @@ class RankingSettingsView(BaseView):
             new_item_period=new_item_period,
             statistical_period=statistical_period,
             display_rank=display_rank,
-            rankings=rankings
+            rankings=rankings,
+            form=f
         )
 
 
@@ -888,6 +895,8 @@ class SiteInfoView(BaseView):
 
 class IdentifierSettingView(ModelView):
     """Pidstore Identifier admin view."""
+    # use flask-wtf CSRF protection
+    form_base_class = Form
 
     can_create = True
     can_edit = True

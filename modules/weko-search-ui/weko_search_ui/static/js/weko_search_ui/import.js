@@ -177,6 +177,16 @@ class MainLayout extends React.Component {
     const that = this;
     closeError();
     this.setState({ isChecking: true });
+
+    var  csrf_token=$('#csrf_token').val();
+    $.ajaxSetup({
+      beforeSend: function(xhr, settings) {
+         if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain){
+             xhr.setRequestHeader("X-CSRFToken", csrf_token);
+         }
+      }
+    });
+
     $.ajax({
       url: urlCheck,
       type: 'POST',

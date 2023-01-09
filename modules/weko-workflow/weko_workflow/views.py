@@ -43,6 +43,8 @@ from flask import Blueprint, abort, current_app, has_request_context, \
     jsonify, make_response, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
+from weko_admin.api import validate_csrf_header
+from flask_wtf import FlaskForm
 from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from invenio_files_rest.utils import remove_file_cancel_action
@@ -660,8 +662,11 @@ def display_guest_activity(file_name=""):
         )
     )
 
+    form = FlaskForm(request.form)
+    
     return render_template(
         'weko_workflow/activity_detail.html',
+        form=form,
         **guest_activity
     )
 
@@ -978,6 +983,8 @@ def display_activity(activity_id="0"):
     _id = None
     if recid:
         _id = re.sub("\.[0-9]+", "", recid.pid_value)
+    
+    form = FlaskForm(request.form)
 
     return render_template(
         'weko_workflow/activity_detail.html',
@@ -1037,6 +1044,7 @@ def display_activity(activity_id="0"):
         temporary_journal=temporary_journal,
         term_and_condition_content=term_and_condition_content,
         user_profile=user_profile,
+        form=form,
         **ctx
     )
 
@@ -2376,7 +2384,9 @@ def lock_activity(activity_id="0"):
             if action_handler:
                 return int(current_user.get_id()) == int(action_handler)
         return False
-
+    
+    
+    validate_csrf_header(request)
 
     check_flg = type_null_check(activity_id, str)
     if not check_flg:

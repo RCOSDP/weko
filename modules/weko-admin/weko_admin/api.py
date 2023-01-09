@@ -31,6 +31,8 @@ from flask_babelex import lazy_gettext as _
 from invenio_db import db
 from invenio_mail.api import send_mail
 from weko_redis.redis import RedisConnection
+from flask_wtf import FlaskForm
+from flask_wtf.csrf import validate_csrf,same_origin,CSRFError
 
 from .models import LogAnalysisRestrictedCrawlerList, \
     LogAnalysisRestrictedIpAddress
@@ -187,3 +189,31 @@ class TempDirInfo(object):
             path = idx.decode("UTF-8")
             result[path] = ast.literal_eval(val.decode("UTF-8") or '{}')
         return result
+
+
+def validate_csrf_header(request,csrf_header="X-CSRFToken"):
+    """Validate CSRF header
+
+    Args:
+        csrf_header (str, optional): CSRF Token Header. Defaults to "X-CSRFToken".
+
+    Raises:
+        CSRFError: _description_
+        CSRFError: _description_
+        CSRFError: _description_
+    """    
+    try:
+        csrf_token = request.headers.get(csrf_header)
+        validate_csrf(csrf_token)
+    except ValidationError as e:
+        raise CSRFError(e.args[0])
+
+    if request.is_secure:
+        if not request.referrer:
+            raise CSRFError("The referrer header is missing.")
+
+        good_referrer = f"https://{request.host}/"
+
+        if not same_origin(request.referrer, good_referrer):
+            raise CSRFError("The referrer does not match the host.")
+        
