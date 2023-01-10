@@ -671,14 +671,11 @@ msgstr "承認却下通知メール"
 msgid "Download"
 msgstr "ダウンロード"
 
-msgid "Clear"
-msgstr "削除"
-
 msgid "Deleted activities cannot be restored."
 msgstr "削除したアクティビティは元に戻せません。"
 
 msgid "Are you sure you want to delete filtered activities?"
 msgstr "フィルターされたアクティビティを削除してもよろしいですか？"
 
-msgid "Are you sure you want to delete the filtered activity"
+msgid "Are you sure you want to delete the filtered activity?"
 msgstr "選択したアクティビティを削除してもよろしいですか？"

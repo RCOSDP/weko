@@ -339,3 +339,5 @@ WEKO_WORKFLOW_GAKUNINRDM_DATA = [
 
 WEKO_WORKFLOW_GAKUNINRDM_PREFIX = 'GakuninRDM'
 """GekuninRDM prefix for logging."""
+
+ACTIVITYLOG_ROLE_ENABLE = ["System Administrator","Repository Administrator"]

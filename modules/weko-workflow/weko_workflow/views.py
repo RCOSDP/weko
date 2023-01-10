@@ -259,6 +259,7 @@ def index():
         filters=filters,
         send_mail_user_group=send_mail_user_group,
         delete_activity_log_enable=current_app.config.get("DELETE_ACTIVITY_LOG_ENABLE"),
+        activitylog_roles=current_app.config.get("ACTIVITYLOG_ROLE_ENABLE"),
         **ctx
     )
 
@@ -2723,7 +2724,7 @@ def download_activitylog():
     activity = WorkActivity()
     activities = []
     if current_user and current_user.roles:
-        admin_roles = ["System Administrator","Repository Administrator"]
+        admin_roles = current_app.config.get("ACTIVITYLOG_ROLE_ENABLE")
         has_admin_role = False
         for role in current_user.roles:
             if role in admin_roles:
@@ -2733,18 +2734,20 @@ def download_activitylog():
             abort(403)
     
     if 'activity_id' in request.args:
-        activities.append(activity.query.filter(activity_id=request.args.get('activity_id')))
-        response = make_response()
-        response.data = make_activitylog_tsv(activities)
-        response.headers = 'attachmet; filename=activitylog.tsv'
-        response.mimetype = 'text/tsv'
-        return response , 200
+        if request.args.get('activity_id') == None:
+            return jsonify(code=-1, msg='no activity error') ,400
+        activities.append(activity.get_activity_metadata(activity_id=request.args.get('activity_id')))
+        response = Response(
+                make_activitylog_tsv(activities),
+                mimetype='text/tsv',
+                headers={"Content-disposition": "attachment; filename=activitylog.tsv"},
+            )
     
     conditions = filter_all_condition(request.args)
     activities, maxpage, size, pages, name_param = activity.get_activity_list(conditions=conditions)
 
     if not activities:
-        return {"code":-1, "msg":"no activity error"} ,400
+        return jsonify(code=-1, msg='no activity error') ,400
 
 
     response = Response(
@@ -2785,9 +2788,8 @@ def clear_activitylog():
     activity = WorkActivity()
     workflow_activity_action = ActivityAction()
     activities = []
-    delete_activity_actions = []
     if current_user and current_user.roles:
-        admin_roles = ["System Administrator","Repository Administrator"]
+        admin_roles = current_app.config.get("ACTIVITYLOG_ROLE_ENABLE")
         has_admin_role = False
         for role in current_user.roles:
             if role in admin_roles:
@@ -2797,7 +2799,9 @@ def clear_activitylog():
             abort(403)
     # delete a activity
     if 'activity_id' in request.args:
-        del_activity = activity.query.filter(activity_id=request.args.get('activity_id'))
+        if request.args.get('activity_id') == None:
+            return jsonify(code=-1, msg='no activity error') ,400
+        del_activity = activity.get_activity_metadata(activity_id=request.args.get('activity_id'))
         if del_activity.activity_status == "M":
 
             _activity = dict(
@@ -2817,52 +2821,24 @@ def clear_activitylog():
                     action_id=del_activity.action_id,
                     action_status=ActionStatusPolicy.ACTION_CANCELED,
                     action_order=del_activity.action_order)            
-            # cache_key = 'workflow_locked_activity_{}'.format(del_activity.activity_id)
-            # locked_value = str(data.data.get('locked_value'))
-            # # delete lock_cache
-            # if str(get_cache_data(cache_key)):
-            #     delete_cache_data(cache_key)
-            # # create lock_cache for delete_activitylog
-            # timeout = current_app.permanent_session_lifetime.seconds
-            # locked_value = str(current_user.get_id()) + '-' + \
-            # str(int(datetime.timestamp(datetime.now()) * 10 ** 3))
-            # update_cache_data(
-            #     cache_key,
-            #     locked_value,
-            #     timeout
-            # )
-
-            # with db.session.begin():
-            #     del_activity.activity_status = "F"
-            #     db.session.update(del_activity)
-            # db.session.commit()
-        delete_activity_actions.append(workflow_activity_action.query.filter_by(activity_id=del_activity.activity_id))
         
         try:
-            with db.session.begin():
+            with db.session.begin_nested():
+                workflow_activity_action.query.filter_by(activity_id=del_activity.activity_id).delete()                
                 db.session.delete(del_activity)
-                db.session.delete(delete_activity_actions)
             db.session.commit()
         except Exception as ex:
             db.session.rollback()
             current_app.logger.exception(str(ex))
-            return {"code":-1, "msg":"delete failed error"} ,400
+            return jsonify(code=-1, msg='delete failed error') ,400  
 
-        # cache_key = 'workflow_locked_activity_{}'.format(del_activity.activity_id)
-        # if str(get_cache_data(cache_key)):
-        #     delete_cache_data(cache_key)        
-
-        response = make_response()
-        response.data = make_activitylog_tsv(del_activity)
-        response.headers = 'attachmet; filename=activitylog.tsv'
-        response.mimetype = 'text/tsv'
-        return response , 200
+        return jsonify(code=1, msg='delete activitylogs success') ,200
     
     conditions = filter_all_condition(request.args)
     activities, maxpage, size, pages, name_param = activity.get_activity_list(conditions=conditions)
 
     if not activities:
-        return {"code":-1, "msg":"no activity error"} ,400
+        return jsonify(code=-1, msg='no activity error') ,400
 
     # delete all filitering activity
     for del_activity in activities:
@@ -2884,50 +2860,19 @@ def clear_activitylog():
                     action_id=del_activity.action_id,
                     action_status=ActionStatusPolicy.ACTION_CANCELED,
                     action_order=del_activity.action_order) 
-            # cache_key = 'workflow_locked_activity_{}'.format(del_activity.activity_id)
-            # # delete lock_cache
-            # if str(get_cache_data(cache_key)):
-            #     delete_cache_data(cache_key)
-            # # create lock_cache for delete_activitylog
-            # timeout = current_app.permanent_session_lifetime.seconds
-            # locked_value = str(current_user.get_id()) + '-' + \
-            # str(int(datetime.timestamp(datetime.now()) * 10 ** 3))
-            # update_cache_data(
-            #     cache_key,
-            #     locked_value,
-            #     timeout
-            # )
-            # with db.session.begin():
-            #     del_activity.activity_status = "F"
-            #     db.session.update(del_activity)
-            # db.session.commit()
-
-        delete_activity_actions.append(workflow_activity_action.query.filter_by(activity_id=del_activity.activity_id))
 
     try:   
-        with db.session.begin():
-            db.session.delete(activities)
-            db.session.delete(delete_activity_actions)
+        with db.session.begin_nested():
+            for activty in activities:
+                workflow_activity_action.query.filter_by(activity_id=activty.activity_id).delete()                
+                db.session.delete(activty)
         db.session.commit()
     except Exception as ex:
         db.session.rollback()
         current_app.logger.exception(str(ex))
-        return {"code":-1, "msg":"delete failed error"} ,400
+        return jsonify(code=-1, msg='delete failed error') ,400
 
-    # for del_activity in activities:
-    #     cache_key = 'workflow_locked_activity_{}'.format(del_activity.activity_id)
-    #     if str(get_cache_data(cache_key)):
-    #         delete_cache_data(cache_key)
-
-    response = make_response()
-    response.data = make_activitylog_tsv(activities)
-    response.headers = 'attachmet; filename=activitylog.tsv'
-    response.mimetype = 'text/tsv'
-    return response , 200
-
-
-
-
+    return jsonify(code=1, msg='delete activitylogs success') ,200
 
 class ActivityActionResource(ContentNegotiatedMethodView):
     """Workflow Activity Resource."""

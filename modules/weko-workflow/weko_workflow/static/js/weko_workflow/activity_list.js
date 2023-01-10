@@ -17,24 +17,35 @@ require([
   });
 
   $('#filter_form_clear').on('click', function () {
-    $('#activitylogs_clear_modal').addClass('in').css('display', 'block');
+    $('#activitylogs_clear_modal').fadeIn();
   });   
 
   $('#confirm_clear_activitylogs').on('click', function () {
-    $('activitylogs_clear_modal').removeClass('in').css('display', 'none');
+    $('#activitylogs_clear_modal').fadeOut();
     clearActivities();
-    //submitFilterSearch();
+    submitFilterSearch();
+  });
+
+  $('#cancel_clear_activitylogs').on('click', function () {
+    $('#activitylogs_clear_modal').fadeOut();
   });  
 
   $('.clear-activitylog').on('click', function () {
-    $('#activitylog_clear_modal').addClass('in').css('display', 'block');
-  });   
-
-  $('#activitylog_clear_modal').on('click', function () {
-    $('activitylog_clear_modal').removeClass('in').css('display', 'none');
+    $('#activitylog_clear_modal').fadeIn();
     var activity_id=$(this).closest('tr').find('a').text();
+    $('#activitylog_clear_modal').activity_id = activity_id;
+
+  });
+
+  $('#confirm_clear_activitylog').on('click', function () {
+    $('#activitylog_clear_modal').fadeOut();
+    var activity_id=$('#activitylog_clear_modal').activity_id;
 
     clearActivity(activity_id);
+    submitFilterSearch();
+  });
+  $('#cancel_clear_activitylog').on('click', function () {
+    $('#activitylog_clear_modal').fadeOut();
   });   
 
   function changeParamPages() {
@@ -729,7 +740,7 @@ function setActivitylogSubmit(paramsAfterFilter) {
   $('#activitylog_file_form').submit();
   if(form.hasChildNodes()){
     for (let key in children) {
-      form.removeChild(chirdren[key]);
+      form.removeChild(children[key]);
     }
   }
 

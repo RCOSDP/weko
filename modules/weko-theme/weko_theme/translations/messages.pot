@@ -638,3 +638,12 @@ msgstr "Faceted Search"
 
 msgid "Other"
 msgstr ""
+
+msgid "Deleted activities cannot be restored."
+msgstr ""
+
+msgid "Are you sure you want to delete filtered activities?"
+msgstr ""
+
+msgid "Are you sure you want to delete the filtered activity?"
+msgstr ""
