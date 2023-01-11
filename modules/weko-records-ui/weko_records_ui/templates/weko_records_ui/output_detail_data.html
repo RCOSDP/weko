@@ -290,8 +290,8 @@
     {%- endfor -%}
 {% endmacro %}
 
-{% macro output_price_info_mlt(attribute_value_mlt, file_name) %}
-    {%- set ns = namespace(file_name=file_name, write_header=False) -%}
+{% macro output_price_info_mlt(attribute_value_mlt, file_name, currency_unit) %}
+    {%- set ns = namespace(file_name=file_name, write_header=False, currency_unit=currency_unit) -%}
     
     {%- if not ns.file_name -%}
         {%- for attribute_data in attribute_value_mlt -%}
@@ -299,6 +299,18 @@
                 {%- for k, v in attribute_data.items() -%}
                     {%- if k.split('.')|length > 1 and k.split('.')[1] == 'filename' -%}
                         {%- set ns.file_name = v -%}
+                    {%- endif -%}
+                {%- endfor -%}
+            {%- endif -%}
+        {%- endfor -%}
+    {%- endif -%}
+
+    {%- if not ns.currency_unit -%}
+        {%- for attribute_data in attribute_value_mlt -%}
+            {%- if attribute_data is mapping -%}
+                {%- for k, v in attribute_data.items() -%}
+                    {%- if k == 'currency_unit' -%}
+                        {%- set ns.currency_unit = v -%}
                     {%- endif -%}
                 {%- endfor -%}
             {%- endif -%}
@@ -319,6 +331,12 @@
                     {%- endif -%}
                     {%- if k.split('.')[2] == 'tax' -%}
                         {{ child_data(_(k.split('.')[2]), _(v), 1) }}
+                    {%- elif k.split('.')[2] == 'price' -%}
+                        <tr style="border: 0px !important;">
+                            {{ out_table_th(1) }}
+                            <th scope="row" colspan="5" style="border: 0px !important;">{{ _(k.split('.')[2]) }}</th>
+                            <td class="multiple-line">{{ ns.currency_unit|safe }}{{ v }}</td>
+                        </tr>
                     {%- else -%}
                         {{ child_data(_(k.split('.')[2]), v, 1) }}
 
@@ -331,7 +349,7 @@
                 {%- endif -%}
             {%- endfor -%}
         {%- elif attribute_data is iterable -%}
-            {{ output_price_info_mlt(attribute_data, ns.file_name) }}
+            {{ output_price_info_mlt(attribute_data, ns.file_name, ns.currency_unit) }}
         {%- endif -%}
     {%- endfor -%}
 {% endmacro %}
