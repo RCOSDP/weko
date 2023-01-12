@@ -707,7 +707,7 @@ class SchemaTree:
                 elif atr_name == 'relation':
                     type_item = 'relationType'
                 for k, v in self.item_type_mapping.items():
-                    jpcoar = v.get("jpcoar_mapping")
+                    jpcoar = v.get(self.schema_name)
                     if isinstance(jpcoar, dict) and atr_name in jpcoar.keys():
                         value = jpcoar[atr_name]
                         if self._atr in value.keys():
@@ -1419,8 +1419,8 @@ class SchemaTree:
                 _idtf_key = "contributorAffiliationNameIdentifier"
 
             for _item in self._record.values():
-                if isinstance(_item, dict) and _item.get("jpcoar_mapping") \
-                        and _item.get("jpcoar_mapping", {}).get(key):
+                if isinstance(_item, dict) and _item.get(self._schema_name) \
+                        and _item.get(self._schema_name, {}).get(key):
                     if creator_idx >= len(_item.get("attribute_value_mlt", [])):
                         return None
 
