@@ -215,7 +215,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             search = search.post_filter({"terms": {query_key: params[param]}})
 
         search_result = search.execute()
-
         # Generate links for prev/next
         urlkwargs.update(
             size=size,
@@ -406,6 +405,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     hit["_source"]["pageEnd"] = []
         except Exception as ex:
             current_app.logger.error(ex)
+
         return self.make_response(
             pid_fetcher=self.pid_fetcher,
             search_result=rd,
