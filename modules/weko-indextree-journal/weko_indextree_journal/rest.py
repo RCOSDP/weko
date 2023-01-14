@@ -27,6 +27,7 @@ from flask import Blueprint, abort, current_app, jsonify, make_response, \
 from invenio_communities.models import Community
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
+from invenio_db import db
 
 from .api import Journals
 from .errors import JournalAddedRESTError, JournalBaseRESTError, \
@@ -72,6 +73,16 @@ def create_blueprint(app, endpoints):
         __name__,
         url_prefix='',
     )
+    
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+        current_app.logger.debug("weko_indextree_journal dbsession_clean: {}".format(exception))
+        if exception is None:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+        db.session.remove()
 
     for endpoint, options in (endpoints or {}).items():
         if 'record_serializers' in options:

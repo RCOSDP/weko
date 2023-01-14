@@ -39,6 +39,7 @@ from invenio_admin.proxies import current_admin
 from simplekv.memory.redisstore import RedisStore
 from weko_redis.redis import RedisConnection
 from werkzeug.local import LocalProxy
+from invenio_db import db
 
 from .api import ShibUser
 from .utils import generate_random_str, parse_attributes
@@ -349,3 +350,13 @@ def shib_logout():
     """
     ShibUser.shib_user_logout()
     return 'logout success'
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_accounts dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

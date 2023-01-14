@@ -1269,3 +1269,14 @@ def check_record_doi_indexes(pid_value='0'):
         })
 
     return jsonify({'code': 0})
+
+@blueprint.teardown_request
+@blueprint_api.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_items_ui dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

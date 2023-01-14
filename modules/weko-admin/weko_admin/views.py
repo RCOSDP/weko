@@ -35,6 +35,7 @@ from flask_menu import register_menu
 from flask_wtf import Form,FlaskForm
 from invenio_admin.proxies import current_admin
 from invenio_stats.utils import QueryCommonReportsHelper
+from invenio_db import db
 from sqlalchemy.orm import session
 from weko_accounts.utils import roles_required
 from weko_records.models import SiteLicenseInfo
@@ -725,3 +726,15 @@ def remove_facet_search():
     # Store query facet search in redis.
     store_facet_search_query_in_redis()
     return jsonify(result), 200
+
+
+@blueprint.teardown_request
+@blueprint_api.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_admin dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

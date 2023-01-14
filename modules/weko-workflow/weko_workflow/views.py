@@ -2928,3 +2928,15 @@ depositactivity_blueprint.add_url_rule(
     ),
     methods=['POST']
 )
+
+
+@workflow_blueprint.teardown_request
+@depositactivity_blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_workflow dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()
