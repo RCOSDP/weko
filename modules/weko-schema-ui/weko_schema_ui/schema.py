@@ -883,7 +883,7 @@ class SchemaTree:
                 attr_of_parent_item = {}
                 for k, v in vlist_item.items():
                     # get attribute of parent Node if any
-                    if self._atr in v:
+                    if v is not None and self._atr in v:
                         attr_of_parent_item = {self._atr: v[self._atr]}
                 # remove None value
                 # for ddi_mapping, we need to keep attribute data
