@@ -259,7 +259,7 @@ def index():
         filters=filters,
         send_mail_user_group=send_mail_user_group,
         delete_activity_log_enable=current_app.config.get("DELETE_ACTIVITY_LOG_ENABLE"),
-        activitylog_roles=current_app.config.get("ACTIVITYLOG_ROLE_ENABLE"),
+        activitylog_roles=current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE"),
         **ctx
     )
 
@@ -2724,7 +2724,7 @@ def download_activitylog():
     activity = WorkActivity()
     activities = []
     if current_user and current_user.roles:
-        admin_roles = current_app.config.get("ACTIVITYLOG_ROLE_ENABLE")
+        admin_roles = current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE")
         has_admin_role = False
         for role in current_user.roles:
             if role in admin_roles:
@@ -2789,7 +2789,7 @@ def clear_activitylog():
     workflow_activity_action = ActivityAction()
     activities = []
     if current_user and current_user.roles:
-        admin_roles = current_app.config.get("ACTIVITYLOG_ROLE_ENABLE")
+        admin_roles = current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE")
         has_admin_role = False
         for role in current_user.roles:
             if role in admin_roles:
@@ -2814,7 +2814,7 @@ def clear_activitylog():
             result = activity.quit_activity(_activity)
 
             if not result:
-                raise DeleteActivityFailedRESTError()
+                return jsonify(code=-1, msg=str(DeleteActivityFailedRESTError())) ,400 
             else:
                 activity.upt_activity_action_status(
                     activity_id=del_activity.activity_id,
@@ -2853,7 +2853,7 @@ def clear_activitylog():
             result = activity.quit_activity(_activity)
 
             if not result:
-                raise DeleteActivityFailedRESTError()
+               return jsonify(code=-1, msg=str(DeleteActivityFailedRESTError())) ,400 
             else:
                 activity.upt_activity_action_status(
                     activity_id=del_activity.activity_id,

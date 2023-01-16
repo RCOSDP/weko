@@ -4002,7 +4002,7 @@ def make_activitylog_tsv(activities):
     from io import StringIO
     file_output = StringIO()
 
-    keys = current_app.config.get("ACTIVITYLOG_XLS_COLUMNS")
+    keys = current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS")
 
     writer = csv.writer(file_output, delimiter="\t", lineterminator="\n")
     writer.writerow(keys)

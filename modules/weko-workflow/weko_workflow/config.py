@@ -340,9 +340,9 @@ WEKO_WORKFLOW_GAKUNINRDM_DATA = [
 WEKO_WORKFLOW_GAKUNINRDM_PREFIX = 'GakuninRDM'
 """GekuninRDM prefix for logging."""
 
-ACTIVITYLOG_ROLE_ENABLE = ["System Administrator","Repository Administrator"]
+WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE = ["System Administrator","Repository Administrator"]
 
-ACTIVITYLOG_XLS_COLUMNS = [
+WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS = [
     'activity_start',
     'workflow_id',
     'approval2',
