@@ -157,7 +157,6 @@
           <button type="submit" id="filter_form_clear" class="btn btn-danger">{{_('Clear')}} </button>
           <form method="GET" name="activitylog_file_form" id="activitylog_file_form" action={{url_for('weko_workflow.download_activitylog')}}>
           </form>
-          {% break %}
        {%- endif %}
     {%- endfor %}
   {%- endif %}
@@ -239,7 +238,6 @@
                   <th>
                     <button type="input" class="btn clear-activitylog">{{_('Clear')}}</button>
                   </th>
-                  {% break %}
                 {%- endif %}
               {%- endfor %}
             {%- endif %}
