@@ -27,7 +27,7 @@ from unittest.mock import MagicMock
 from weko_workflow.api import WorkActivity
 import pytest
 from mock import patch
-from flask import Flask, json, jsonify, url_for, session, make_response
+from flask import Flask, json, jsonify, url_for, session, make_response, current_app
 from flask_babelex import gettext as _
 from invenio_db import db
 from sqlalchemy import func
@@ -3372,3 +3372,90 @@ def test_withdraw_confirm_passwd_delete_guestlogin(guest, client, users, db_regi
                         assert res.status_code == status_code
                         assert data["code"] == code
                         assert data["msg"] == msg
+
+
+def test_download_activitylog_nologin(client,db_register2):
+    """_summary_
+
+    Args:
+        client (FlaskClient): flask test client
+    """
+    url = url_for('weko_workflow.download_activitylog')
+    res =  client.get(url)
+    assert res.status_code == 302
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 403),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 403),
+])
+def test_download_activitylog(client, users, db_register_fullaction, users_index, status_code):
+    """Test of withdraw confirm."""
+    login(client=client, email=users[users_index]['email'])
+
+    input = {}
+
+    #4
+    url = url_for('weko_workflow.download_activitylog',
+                activity_id='2')
+    res = client.get(url)
+    assert res.status_code == status_code
+
+    url = url_for('weko_workflow.download_activitylog',
+                activity_id='10')
+    res = client.get(url)
+    assert res.status_code == 400
+
+
+
+
+def test_clear_activitylog_nologin(client,db_register2):
+    """_summary_
+
+    Args:
+        client (FlaskClient): flask test client
+    """
+    url = url_for('weko_workflow.clear_activitylog')
+    res =  client.get(url)
+    assert res.status_code == 302
+
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 403),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 403),
+])
+def test_clear_activitylog(client, users, db_register_fullaction, users_index, status_code):
+    """Test of withdraw confirm."""
+    login(client=client, email=users[users_index]['email'])
+    url = url_for('weko_workflow.clear_activitylog',
+                  activity_id='1',
+                  action_id=1)
+    input = {}
+    current_app.config.update(
+        DELETE_ACTIVITY_LOG_ENABLE = False
+    )
+    roles = {
+        'allow': [],
+        'deny': []
+    }
+    action_users = {
+        'allow': [],
+        'deny': []
+    }
+    url = url_for('weko_workflow.clear_activitylog',
+                activity_id='1',
+                action_id=1)
+    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+               return_value=(roles, action_users)):
+        res = client.get(url, json=input)
+        assert res.status_code != status_code
+
