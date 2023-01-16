@@ -3374,7 +3374,7 @@ def test_withdraw_confirm_passwd_delete_guestlogin(guest, client, users, db_regi
                         assert data["msg"] == msg
 
 
-def test_download_activitylog_nologin(client,db_register2):
+def test_download_activitylog_nologin(client):
     """_summary_
 
     Args:
@@ -3385,19 +3385,17 @@ def test_download_activitylog_nologin(client,db_register2):
     assert res.status_code == 302
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 200),
+    (0, 403),
     (1, 200),
-    (2, 403),
+    (2, 200),
     (3, 403),
     (4, 403),
     (5, 403),
     (6, 403),
 ])
-def test_download_activitylog(client, users, db_register_fullaction, users_index, status_code):
+def test_download_activitylog(client, users, users_index, status_code):
     """Test of withdraw confirm."""
     login(client=client, email=users[users_index]['email'])
-
-    input = {}
 
     #4
     url = url_for('weko_workflow.download_activitylog',
@@ -3405,15 +3403,39 @@ def test_download_activitylog(client, users, db_register_fullaction, users_index
     res = client.get(url)
     assert res.status_code == status_code
 
+    #5
     url = url_for('weko_workflow.download_activitylog',
                 activity_id='10')
     res = client.get(url)
     assert res.status_code == 400
 
+    #6
+    url = url_for('weko_workflow.download_activitylog',
+                createdto='2023-01-17')
+    res = client.get(url)
+    assert res.status_code == status_code
+
+    #7
+    url = url_for('weko_workflow.download_activitylog',
+                createdto='1900-01-17')
+    res = client.get(url)
+    assert res.status_code == 400
+
+
+    #3
+    current_app.config.update(
+        DELETE_ACTIVITY_LOG_ENABLE = False
+    )
+
+    url = url_for('weko_workflow.download_activitylog',
+                createdto='2023-01-17')
+    res = client.get(url)
+    assert res.status_code == 403
 
 
 
-def test_clear_activitylog_nologin(client,db_register2):
+
+def test_clear_activitylog_nologin(client):
     """_summary_
 
     Args:
@@ -3425,37 +3447,173 @@ def test_clear_activitylog_nologin(client,db_register2):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 200),
+    (0, 403),
     (1, 200),
-    (2, 403),
+    (2, 200),
     (3, 403),
     (4, 403),
     (5, 403),
     (6, 403),
 ])
-def test_clear_activitylog(client, users, db_register_fullaction, users_index, status_code):
+def test_clear_activitylog_1(client, users, users_index, status_code):
     """Test of withdraw confirm."""
     login(client=client, email=users[users_index]['email'])
+
+    #11
     url = url_for('weko_workflow.clear_activitylog',
-                  activity_id='1',
-                  action_id=1)
-    input = {}
+                activity_id='A-00000001-10001')
+    res = client.get(url)
+    assert res.status_code == status_code
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 403),
+])
+def test_clear_activitylog_2(client, users, users_index, status_code):
+    """Test of withdraw confirm."""
+    login(client=client, email=users[users_index]['email'])
+    #12
+    url = url_for('weko_workflow.clear_activitylog',
+                activity_id='10')
+    res = client.get(url)
+    assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 403),
+])
+def test_clear_activitylog_3(client, users, users_index, status_code):
+    """Test of withdraw confirm."""
+    login(client=client, email=users[users_index]['email'])
+    #13
+    with patch('weko_workflow.views.WorkActivity.quit_activity', return_value=None):
+        url = url_for('weko_workflow.clear_activitylog',
+                    activity_id='A-00000001-10001')
+        res = client.get(url)
+        assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 403),
+])
+def test_clear_activitylog_4(client, users, users_index, status_code):
+    """Test of withdraw confirm."""
+    login(client=client, email=users[users_index]['email'])
+    #14
+    with patch('weko_workflow.views.ActivityAction.query.filter_by', side_effect=Exception("test error")):
+        url = url_for('weko_workflow.clear_activitylog',
+                    activity_id='A-00000001-10001')
+        res = client.get(url)
+        assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 403),
+])
+def test_clear_activitylog_5(client, users, users_index, status_code):
+    """Test of withdraw confirm."""
+    login(client=client, email=users[users_index]['email'])
+    #15
+    url = url_for('weko_workflow.clear_activitylog',
+                createdto='2023-01-17')
+    res = client.get(url)
+    assert res.status_code == status_code
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 403),
+])
+def test_clear_activitylog_6(client, users, users_index, status_code):
+    """Test of withdraw confirm."""
+    login(client=client, email=users[users_index]['email'])
+    #16
+    url = url_for('weko_workflow.clear_activitylog',
+                createdto='1900-01-17')
+    res = client.get(url)
+    assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 403),
+])
+def test_clear_activitylog_7(client, users, users_index, status_code):
+    """Test of withdraw confirm."""
+    login(client=client, email=users[users_index]['email'])
+    #17
+    with patch('weko_workflow.views.WorkActivity.quit_activity', return_value=None):
+        url = url_for('weko_workflow.clear_activitylog',
+                    createdto='2023-01-17')
+        res = client.get(url)
+        assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 403),
+])
+def test_clear_activitylog_8(client, users, users_index, status_code):
+    """Test of withdraw confirm."""
+    login(client=client, email=users[users_index]['email'])
+    #18
+    with patch('weko_workflow.views.ActivityAction.query.filter_by', side_effect=Exception("test error")):
+        url = url_for('weko_workflow.clear_activitylog',
+                    createdto='2023-01-17')
+        res = client.get(url)
+        assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 403),
+])
+def test_clear_activitylog_9(client, users, users_index, status_code):
+    """Test of withdraw confirm."""
+    login(client=client, email=users[users_index]['email'])
+    #9
     current_app.config.update(
         DELETE_ACTIVITY_LOG_ENABLE = False
     )
-    roles = {
-        'allow': [],
-        'deny': []
-    }
-    action_users = {
-        'allow': [],
-        'deny': []
-    }
+
     url = url_for('weko_workflow.clear_activitylog',
-                activity_id='1',
-                action_id=1)
-    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-               return_value=(roles, action_users)):
-        res = client.get(url, json=input)
-        assert res.status_code != status_code
+                createdto='2023-01-17')
+    res = client.get(url)
+    assert res.status_code == 403
 
