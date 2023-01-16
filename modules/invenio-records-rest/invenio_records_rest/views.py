@@ -146,6 +146,16 @@ def create_blueprint(endpoints):
         __name__,
         url_prefix='',
     )
+    
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+        current_app.logger.debug("invenio_records_rest dbsession_clean: {}".format(exception))
+        if exception is None:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+        db.session.remove()
 
     error_handlers_registry = defaultdict(dict)
     for endpoint, options in endpoints.items():

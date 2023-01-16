@@ -22,6 +22,7 @@ from weko_admin.api import TempDirInfo
 from weko_records_ui.utils import get_record_permalink, soft_delete
 from weko_search_ui.utils import check_import_items, import_items_to_system
 from werkzeug.http import parse_options_header
+from invenio_db import db
 
 from .decorators import *
 from .errors import *
@@ -422,3 +423,13 @@ def handle_exception(ex):
 def handle_weko_swordserver_exception(ex):
     current_app.logger.error(ex.message)
     return jsonify(_create_error_document(ex.errorType.type, ex.message)), ex.errorType.code
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_swordserver dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

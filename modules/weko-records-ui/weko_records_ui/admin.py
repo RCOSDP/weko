@@ -29,6 +29,7 @@ from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_babelex import gettext as _
 from flask_login import current_user
+from flask_wtf import FlaskForm
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
@@ -53,6 +54,7 @@ class ItemSettingView(BaseView):
     def index(self):
         """Index."""
         try:
+            form = FlaskForm(request.form)
             check_items_settings()
             email_display_flg = '0'
             search_author_flg = 'name'
@@ -66,7 +68,7 @@ class ItemSettingView(BaseView):
                 open_date_display_flg = current_app.config.get(
                     'OPEN_DATE_DISPLAY_VALUE')
 
-            if request.method == 'POST':
+            if request.method == 'POST' and form.validate():
                 # Process forms
                 form = request.form.get('submit', None)
                 if form == 'set_search_author_form':
@@ -89,7 +91,8 @@ class ItemSettingView(BaseView):
             return self.render(config.ADMIN_SET_ITEM_TEMPLATE,
                                search_author_flg=search_author_flg,
                                email_display_flg=email_display_flg,
-                               open_date_display_flg=open_date_display_flg)
+                               open_date_display_flg=open_date_display_flg,
+                               form=form)
         except BaseException:
             current_app.logger.error(
                 'Unexpected error: {}'.format(sys.exc_info()))
@@ -143,13 +146,14 @@ class InstitutionNameSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         """Index."""
-        if request.method == 'POST':
+        form = FlaskForm(request.form)
+        if request.method == 'POST' and form.validate():
             rf = request.form.to_dict()
             InstitutionName.set_institution_name(rf['institution_name'])
             flash(_('Institution Name was updated.'), category='success')
         institution_name = InstitutionName.get_institution_name()
         return self.render(config.INSTITUTION_NAME_SETTING_TEMPLATE,
-                           institution_name=institution_name)
+                           institution_name=institution_name,form=form)
 
 
 class ItemManagementBulkUpdate(BaseView):

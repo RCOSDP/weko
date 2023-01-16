@@ -14,6 +14,7 @@ from __future__ import absolute_import, print_function
 
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
+from invenio_db import db
 
 from .api import Handle
 
@@ -69,3 +70,16 @@ def register_handle():
         return jsonify({'code': -1, 'msg': 'error'})
     except Exception as e:
         current_app.logger.error('Unexpected error: ', e)
+
+
+
+@blueprint.teardown_request
+@blueprint_api.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_handle dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

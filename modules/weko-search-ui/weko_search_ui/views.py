@@ -423,3 +423,14 @@ def get_last_item_id():
     except Exception as ex:
         current_app.logger.error(ex)
     return jsonify(data=result), 200
+
+@blueprint.teardown_request
+@blueprint_api.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_search_ui dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

@@ -970,3 +970,13 @@ def get_uri():
         add_signals_info(record, file_obj)
         file_downloaded.send(current_app._get_current_object(), obj=file_obj)
     return jsonify({'status': True})
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_records_ui dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

@@ -20,7 +20,8 @@
 
 """Blueprint for weko-schema-ui."""
 
-from flask import Blueprint
+from flask import Blueprint,current_app
+from invenio_db import db
 
 blueprint = Blueprint(
     'weko_schema_ui',
@@ -28,3 +29,13 @@ blueprint = Blueprint(
     template_folder='templates',
     static_folder='static',
 )
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_schema_ui dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()
