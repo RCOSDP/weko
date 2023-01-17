@@ -1001,6 +1001,7 @@ def handle_check_exist_record(list_record) -> list:
                 errors.append(_("Specified URI and system" " URI do not match."))
                 item["status"] = None
             else:
+                item_exist = None
                 try:
                     item_exist = WekoRecord.get_record_by_pid(item_id)
                 except PIDDoesNotExistError:
@@ -2856,9 +2857,14 @@ def handle_fill_system_item(list_record):
             item["identifier_key"] = identifierRegistration_key
             doi_setting = prepare_doi_setting()
             if item_id is not None and doi_setting is not None:
-                from weko_deposit.api import WekoRecord
-                rec = WekoRecord.get_record_by_pid(item_id)
-                pid_doi = rec.pid_doi
+                pid_doi = None
+                try:
+                    from weko_deposit.api import WekoRecord
+                    rec = WekoRecord.get_record_by_pid(item_id)
+                    pid_doi = rec.pid_doi
+                except PIDDoesNotExistError:
+                    pid_doi=None
+                
                 if pid_doi is not None:
                     existed_doi = True
                     doi_value = pid_doi.pid_value

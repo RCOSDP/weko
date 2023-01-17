@@ -2159,3 +2159,214 @@ def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,mocke
     record = WekoDeposit.get_record(recid.object_uuid)
     assert record == {'_oai': {'id': 'oai:weko3.example.org:00000004', 'sets': ['1']}, 'path': ['1'], 'owner': '1', 'recid': '4', 'title': ['test item in br'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-11-21'}, '_buckets': {'deposit': '0796e490-6dcf-4e7d-b241-d7201c3de83a'}, '_deposit': {'id': '4', 'pid': {'type': 'depid', 'value': '4', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'draft', 'created_by': 1}, 'item_title': 'test item in br', 'author_link': [], 'item_type_id': '1', 'publish_date': '2022-11-21', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test item in br', 'subitem_1551255648112': 'ja'}]}, 'item_1617186626617': {'attribute_name': 'Description', 'attribute_value_mlt': [{'subitem_description': 'this is line1.\nthis is line2.', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}, 'relation_version_is_last': True, 'control_number': '4'}
 
+def test_function_issue_35315():
+    pass
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_function_issue34520 -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "item_id, before_doi,after_doi,warnings,errors,is_change_identifier",
+    [
+        (
+            1,
+            {"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},
+            {"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},
+            [],
+            [],
+            True
+        ),
+        (
+            1000,
+            {"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},
+            {"doi": "xyz.jalc/0000000001","doi_ra":"JaLC"},
+            [],
+            [],
+            True
+
+        )
+    ]
+)
+def test_handle_fill_system_item_issue34520(app, doi_records, item_id, before_doi, after_doi, warnings, errors, is_change_identifier):
+    before = {
+            "metadata": {
+                "path": ["1667004052852"],
+                "pubdate": "2022-10-29",
+                "item_1617186331708": [
+                    {"subitem_1551255647225": "title", "subitem_1551255648112": "en"}
+                ],
+                "item_1617258105262": {
+                    "resourcetype": "conference paper",
+                    "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+                },
+                "item_1617605131499": [
+                    {
+                        "accessrole": "open_access",
+                        "date": [{"dateType": "Available", "dateValue": "2022-10-29"}],
+                        "filename": "a.zip",
+                        "filesize": [{"value": "82 KB"}],
+                        "format": "application/zip",
+                    }
+                ],
+            },
+            "pos_index": ["IndexA"],
+            "publish_status": "public",
+            "edit_mode": "Keep",
+            "file_path": [""],
+            "item_type_name": "デフォルトアイテムタイプ（フル）",
+            "item_type_id": 1,
+            "$schema": "https://localhost/items/jsonschema/1",
+        }
+    
+    if item_id:
+        before["id"] = "{}".format(item_id)
+        before["uri"] = "https://localhost/records/{}".format(item_id)
+        before["metadata"]["item_1617605131499"][0]["url"] = {"url": "https://weko3.example.org/record/{}/files/a.zip".format(item_id)}
+
+    if before_doi.get("doi_ra2") is not None:
+        before["metadata"]["item_1617186819068"]=before["metadata"].get("item_1617186819068",{})
+        before["metadata"]["item_1617186819068"]["subitem_identifier_reg_type"]= "{}".format(before_doi['doi_ra2'])
+    
+    if before_doi.get("doi2") is not None:
+        before["metadata"]["item_1617186819068"]=before["metadata"].get("item_1617186819068",{})
+        before["metadata"]["item_1617186819068"]["subitem_identifier_reg_text"]= "{}".format(before_doi['doi2'])
+
+    if before_doi.get('doi_ra') is not None:
+        before["doi_ra"]="{}".format(before_doi['doi_ra'])
+    
+    if before_doi.get('doi') is not None:
+        before["doi"]="{}".format(before_doi['doi'])                       
+    
+    before_list = [before]
+    after = {
+            "metadata": {
+                "path": ["1667004052852"],
+                "pubdate": "2022-10-29",
+                "item_1617186331708": [
+                    {"subitem_1551255647225": "title", "subitem_1551255648112": "en"}
+                ],
+                "item_1617258105262": {
+                    "resourcetype": "conference paper",
+                    "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+                },
+                "item_1617605131499": [
+                    {
+                        "accessrole": "open_access",
+                        "date": [{"dateType": "Available", "dateValue": "2022-10-29"}],
+                        "filename": "a.zip",
+                        "filesize": [{"value": "82 KB"}],
+                        "format": "application/zip",
+                    }
+                ],
+            },
+            "pos_index": ["IndexA"],
+            "publish_status": "public",
+            "edit_mode": "Keep",
+            "file_path": [""],
+            "item_type_name": "デフォルトアイテムタイプ（フル）",
+            "item_type_id": 1,
+            "$schema": "https://localhost/items/jsonschema/1",
+            "identifier_key": "item_1617186819068",
+            "errors": errors,
+            "warnings": warnings,
+        }
+
+    if item_id:
+        after["id"] = "{}".format(item_id)
+        after["uri"] = "https://localhost/records/{}".format(item_id)
+        after["metadata"]["item_1617605131499"][0]["url"] = {"url": "https://weko3.example.org/record/{}/files/a.zip".format(item_id)}
+    
+    if after_doi.get("doi_ra") is not None:
+        after["doi_ra"]="{}".format(after_doi['doi_ra'])
+    
+    if after_doi.get("doi") is not None:
+        after["doi"]="{}".format(after_doi["doi"]) 
+        
+    if after_doi.get("doi_ra2") is not None:
+        after["metadata"]["item_1617186819068"]=after["metadata"].get("item_1617186819068",{})
+        after["metadata"]["item_1617186819068"]["subitem_identifier_reg_type"]= "{}".format(after_doi['doi_ra2'])
+    
+    if after_doi.get("doi2") is not None:
+        after["metadata"]["item_1617186819068"]= after["metadata"].get("item_1617186819068",{})
+        after["metadata"]["item_1617186819068"]["subitem_identifier_reg_text"]= "{}".format(after_doi['doi2'])
+
+    after_list = [after]
+    if is_change_identifier:
+        before_list[0]['is_change_identifier']=True
+        after_list[0]['is_change_identifier']=True
+
+    with app.test_request_context():
+        assert before_list != after_list
+        handle_fill_system_item(before_list)
+        assert after_list == before_list
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_exist_record_issue35315 -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, uri, warnings, errors,status",
+    [
+        (1, "http://TEST_SERVER/records/1",[],[],"keep"),
+        (1000, "http://TEST_SERVER/records/1",[],["Specified URI and system URI do not match."],None),
+        (1000, "http://TEST_SERVER/records/1000",[],["Item does not exits in the system"],None),
+        (None,None,[],[],"new")
+    ])
+def test_handle_check_exist_record_issue35315(app, doi_records, id, uri, warnings, errors, status):
+    before = {
+        "metadata": {
+            "path": ["1667004052852"],
+            "pubdate": "2022-10-29",
+            "item_1617186331708": [
+                { "subitem_1551255647225": "title", "subitem_1551255648112": "en" }
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794"
+            }
+        },
+        "pos_index": ["IndexA"],
+        "publish_status": "public",
+        "edit_mode": "Keep",
+        "file_path": [""],
+        "item_type_name": "デフォルトアイテムタイプ（フル）",
+        "item_type_id": 1,
+        "$schema": "https://localhost/items/jsonschema/1",
+        "errors":[],
+        "warnings":[]
+    }
+    if id is not None:
+        before["id"] = id
+    if uri is not None:
+        before["uri"] = uri
+    before_list = [before]
+    
+    after = {
+        "metadata": {
+            "path": ["1667004052852"],
+            "pubdate": "2022-10-29",
+            "item_1617186331708": [
+                { "subitem_1551255647225": "title", "subitem_1551255648112": "en" }
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794"
+            }
+        },
+        "pos_index": ["IndexA"],
+        "publish_status": "public",
+        "edit_mode": "Keep",
+        "file_path": [""],
+        "item_type_name": "デフォルトアイテムタイプ（フル）",
+        "item_type_id": 1,
+        "$schema": "https://localhost/items/jsonschema/1",
+        "errors": errors,
+        "warnings":warnings
+    }
+    after["id"] = id
+    if uri is not None:
+        after["uri"] = uri
+    after["status"] = status
+    
+    after_list = [after]
+    
+    with app.test_request_context():
+        assert before_list != after_list
+        result = handle_check_exist_record(before_list)
+        assert after_list == result
