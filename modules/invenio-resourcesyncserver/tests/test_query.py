@@ -18,7 +18,19 @@ from invenio_resourcesyncserver.query import (
 
 
 # def get_items_by_index_tree(index_tree_id):
+def test_get_items_by_index_tree(i18n_app, indices):
+    index_tree_id = 33
+
+    assert get_items_by_index_tree(index_tree_id) == []
+
+
 # def get_item_changes_by_index(index_tree_id, date_from, date_until):
+def test_get_item_changes_by_index(i18n_app, indices, es):
+    index_tree_id = 33
+    date_from = datetime.datetime.now() - datetime.timedelta(days=3)
+    date_until = datetime.datetime.now()
+
+    assert get_item_changes_by_index(index_tree_id, date_from, date_until)
 
 
 # def item_path_search_factory(search, index_id="0"):

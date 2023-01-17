@@ -52,15 +52,25 @@ def test_create_AdminResourceListView(i18n_app):
 
 #     def update(self, resource_id):
 def test_update_AdminResourceListView(i18n_app, db):
+    from invenio_resourcesyncserver.api import ResourceListHandler
     test = ResourceListIndexes(
         id=1,
-        repository_id=2
+        repository_id=2,
     )
     
     db.session.add(test)
     db.session.commit()
 
-    assert test_1.update(resource_id=1)
+    data = MagicMock()
+    data.success = True
+
+    with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_resource", return_value=data):
+        assert test_1.update(resource_id=1)
+
+    data = None
+
+    with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_resource", return_value=data):
+        assert test_1.update(resource_id=0)
 
 #     def delete(self, resource_id):
 def test_delete_AdminResourceListView(i18n_app, db):
@@ -97,16 +107,35 @@ def test_get_change_list_AdminChangeListView(i18n_app, db):
         assert test_2.get_change_list(1)
 
 #     def create(self):
-def test_create_AdminChangeListView(i18n_app):
-    sample_data = {
-        "id": 1,
-        "repository_id": 2,
-        "max_changes_size": 11,
-        "interval_by_date": 1,
-    }
+def test_create_AdminChangeListView(i18n_app, db): 
+    sample = MagicMock()
+    def to_dict():
+        return {"A": 1}
+    sample.to_dict = to_dict
 
-    with patch("flask.request.get_json", return_value=sample_data):
-        assert test_2.create()
+    data = {
+        "id": 2,
+        "status": "test",
+        "repository_id": 2,
+        "change_dump_manifest": "test",
+        "max_changes_size": 2,
+        "change_tracking_state": "test",
+        "url_path": "test",
+        "created": datetime.datetime.now().strftime("%Y%m%d"),
+        "updated": datetime.datetime.now().strftime("%Y%m%d"),
+        "index": 2,
+        "publish_date": datetime.datetime.now().strftime("%Y%m%d"),
+        "interval_by_date": datetime.datetime.now().strftime("%Y%m%d"),
+        "success": 1,
+        "message": "message"
+    }
+    
+    with patch("flask.request.get_json", return_value=data):
+        data["data"] = sample
+        with patch("invenio_resourcesyncserver.api.ChangeListHandler.save", return_value=data):
+            assert test_2.create()
+            data["success"] = False
+            assert test_2.create()
 
 #     def update(self, repo_id):
 def test_update_AdminChangeListView(i18n_app, db):

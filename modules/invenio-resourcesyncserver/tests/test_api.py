@@ -159,25 +159,48 @@ def test__validation_ResourceListHandler(i18n_app):
     test = sample_ResourceListHandler()
     test.index = MagicMock()
     test.index.public_state = MagicMock()
-    # return_data = {
-    #     'path': '/'
-    # }
+    return_data = MagicMock()
 
-    # with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=""):
-    assert test._validation()
-
+    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=return_data):
+        with patch("invenio_resourcesyncserver.utils.get_real_path", return_value=["33"]):
+            assert test._validation(record_id=1) == True
+        
+        with patch("invenio_resourcesyncserver.utils.get_real_path", return_value=[]):
+            assert test._validation(record_id=1) == False
+    
+    assert test._validation() == True
+    
+    test.repository_id = "Root Index"
+    
+    assert test._validation() == True
+    
 
 #     def get_resource_list_xml(self, from_date=None, to_date=None): ERR ~ 
-def test_get_resource_list_xml_ResourceListHandler(i18n_app):
+def test_get_resource_list_xml_ResourceListHandler(i18n_app, indices):
     test = sample_ResourceListHandler()
     test.repository_id = "Root Index"
-    return_data = [{}]
+
+    data1 = [MagicMock()]
+
+    data2 = MagicMock()
+    def as_xml():
+        return True
+    data2.as_xml = as_xml
+
+    data3 = {"_updated": True}
+
+    from_date = datetime.datetime.now() - datetime.timedelta(hours=11)
+    to_date = datetime.datetime.now()
 
     with patch("invenio_resourcesyncserver.api.ResourceListHandler._validation", return_value=""):
-        assert not test.get_resource_list_xml()
+        assert test.get_resource_list_xml() is None
+
     with patch("invenio_resourcesyncserver.api.ResourceListHandler._validation", return_value="test"):
-        with patch("invenio_resourcesyncserver.query.get_items_by_index_tree", return_value=return_data):
-            assert test.get_resource_list_xml()
+        with patch('invenio_resourcesyncserver.api.get_items_by_index_tree', return_value=data1):
+            with patch('invenio_resourcesyncserver.api.ResourceList', return_value=data2):
+                with patch('invenio_resourcesyncserver.api.str_to_datetime', return_value=from_date):
+                    with patch('invenio_resourcesyncserver.api.Resource', return_value=data3):
+                        assert test.get_resource_list_xml(from_date=from_date, to_date=to_date)
 
 
 #     def get_resource_dump_xml(self, from_date=None, to_date=None): ERR ~ 
@@ -185,13 +208,26 @@ def test_get_resource_dump_xml_ResourceListHandler(i18n_app):
     test = sample_ResourceListHandler()
     test.repository_id = "Root Index"
     from_date = "2022/11/3 0:00:00"
-    to_date = "2022/11/4 0:00:00"
+    to_date = "2022/11/6 0:00:00"
+
+    data1 = [{
+        "_source": {"_updated": "2022/11/4 0:00:00"}
+    }]
+
+    data2 = MagicMock()
+    def as_xml():
+        return True
+    data2.as_xml = as_xml
+
+    data3 = MagicMock()
+    data3.ln = []
 
     with patch("invenio_resourcesyncserver.api.ResourceListHandler._validation", return_value=""):
         assert not test.get_resource_dump_xml()
     with patch("invenio_resourcesyncserver.api.ResourceListHandler._validation", return_value="test"):
-        with patch("invenio_resourcesyncserver.query.get_items_by_index_tree", return_value=MagicMock()):
-            assert test.get_resource_dump_xml(from_date=from_date, to_date=to_date)
+        with patch('invenio_resourcesyncserver.api.get_items_by_index_tree', return_value=data1):
+            with patch('invenio_resourcesyncserver.api.Resource', return_value=data3):
+                assert test.get_resource_dump_xml(from_date=from_date, to_date=to_date)
 
 
 #     def get_capability_content(cls):
@@ -237,14 +273,31 @@ def test_get_resource_dump_manifest_ResourceListHandler(i18n_app):
 #     def get_record_content_file(self, record_id):
 def test_get_record_content_file_ResourceListHandler(i18n_app):
     test = sample_ResourceListHandler()
+    def get_resource_dump_manifest(item):
+        return "item"
+    test.get_resource_dump_manifest = get_resource_dump_manifest
+    data1 = MagicMock()
+    data2 = MagicMock()
+    data3 = MagicMock()
+    data4 = {
+        "a": 1,
+        "b": 1,
+        "c": 1,
+        "4": 1,
+    }
 
     with patch("invenio_resourcesyncserver.api.ResourceListHandler._validation", return_value=False):
         assert not test.get_record_content_file(1)
 
     with patch("invenio_resourcesyncserver.api.ResourceListHandler._validation", return_value=True):
-        with patch("weko_items_ui.utils._export_item", return_value=[MagicMock(), MagicMock()]):
-            # Exception coverage
-            assert not test.get_record_content_file(1)
+        with patch("invenio_resourcesyncserver.api._export_item", return_value=[data1, data2]):
+            with patch("weko_deposit.api.ItemTypes.get_by_id", return_value=data3):
+                with patch("invenio_resourcesyncserver.api.check_item_type_name", return_value=data3):
+                    with patch("invenio_resourcesyncserver.api.make_stats_file", return_value=[data4, data2]):
+                        assert test.get_record_content_file(1) is not None
+
+                    # Exception coverage
+                    assert not test.get_record_content_file(1)
 
 
 # class ChangeListHandler(object):

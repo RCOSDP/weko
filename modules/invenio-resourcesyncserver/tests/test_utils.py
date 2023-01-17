@@ -89,25 +89,27 @@ def test_render_well_know_resourcesync(i18n_app):
 
 
 # def query_record_changes(repository_id,
-# def test_query_record_changes(i18n_app, db, search_result):
-#     test = sample_ResourceListHandler()
+def test_query_record_changes(i18n_app, db, search_result, indices, es):
+    test = sample_ResourceListHandler()
 
-#     # db.session.add(test)
-#     # db.session.commit()
+    # db.session.add(test)
+    # db.session.commit()
 
-#     repository_id = 33
-#     date_from = datetime.datetime.now() - datetime.timedelta(days=1)
-#     date_until = datetime.datetime.now()
-#     max_changes_size = None
-#     change_tracking_state = None
+    repository_id = 33
+    date_from = datetime.datetime.now() - datetime.timedelta(days=1)
+    date_until = datetime.datetime.now()
+    max_changes_size = None
+    change_tracking_state = None
+    data = MagicMock()
 
-#     assert query_record_changes(
-#         repository_id=repository_id,
-#         date_from=date_from,
-#         date_until=date_until,
-#         max_changes_size=max_changes_size,
-#         change_tracking_state=change_tracking_state
-#     )
+    with patch("invenio_resourcesyncserver.query.get_item_changes_by_index", return_value=data):
+        assert query_record_changes(
+            repository_id=repository_id,
+            date_from=date_from,
+            date_until=date_until,
+            max_changes_size=max_changes_size,
+            change_tracking_state=change_tracking_state
+        )
 
 
 # def check_existing_record_in_list(record_id, results):
@@ -127,11 +129,11 @@ def test_check_existing_record_in_list(i18n_app):
 # def parse_date(date):
 def test_parse_date(i18n_app):
     date = str(datetime.datetime.now() - datetime.timedelta(days=1))
-    data_1 = datetime.datetime.now()
-    data_2 = str(datetime.datetime.now() - datetime.timedelta(days=1))
+    date_1 = str(datetime.datetime.now())
+    date_2 = str(datetime.datetime.now() - datetime.timedelta(days=1))
 
-    with patch("invenio_resourcesyncserver.utils.get_timezone", return_value=(data_1, data_2)):
-        assert parse_date(date)
+    with patch("invenio_resourcesyncserver.utils.get_timezone", return_value=(date_1, date_2)):
+        assert parse_date(date) == None
 
 
 # def get_timezone(date):
