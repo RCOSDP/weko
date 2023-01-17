@@ -2722,6 +2722,7 @@ def download_activitylog():
         abort(403)
 
     activity = WorkActivity()
+    _activity = Activity()
     activities = []
     if current_user and current_user.roles:
         admin_roles = current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE")
@@ -2736,7 +2737,7 @@ def download_activitylog():
     if 'activity_id' in request.args:
         if request.args.get('activity_id') == None:
             return jsonify(code=-1, msg='no activity error') ,400
-        tmp_activity = activity.query.filter_by(activity_id=request.args.get('activity_id')).one_or_none()
+        tmp_activity = _activity.query.filter_by(activity_id=request.args.get('activity_id')).one_or_none()
         if tmp_activity == None:
             return jsonify(code=-1, msg='no activity error') ,400
         activities.append(tmp_activity)
@@ -2789,6 +2790,7 @@ def clear_activitylog():
         abort(403)
 
     activity = WorkActivity()
+    _activity = Activity()
     workflow_activity_action = ActivityAction()
     activities = []
     if current_user and current_user.roles:
@@ -2805,7 +2807,7 @@ def clear_activitylog():
     if 'activity_id' in request.args:
         if request.args.get('activity_id') == None:
             return jsonify(code=-1, msg='no activity error') ,400
-        del_activity = activity.query.filter_by(activity_id=request.args.get('activity_id')).one_or_none()
+        del_activity = _activity.query.filter_by(activity_id=request.args.get('activity_id')).one_or_none()
         if del_activity == None:
             return jsonify(code=-1, msg='no activity error') ,400
         if del_activity.activity_status == "M":
