@@ -18,17 +18,16 @@ from weko_search_ui.tasks import (
     check_celery_is_run
 )
 
-# def check_import_items_task(file_path, is_change_identifier: bool, host_url, lang="en"): ~ GETS STUCK AND DELETES DATA FOLDER
-# def test_check_import_items_task(i18n_app, users):
-#     current_path = os.path.dirname(os.path.abspath(__file__))
-#     file_name = 'index.json'
-#     file_path = os.path.join(
-#             current_path,
-#             'data',
-#             file_name)
-#     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-#         assert check_import_items_task(file_path=file_path,is_change_identifier=True,host_url="https://localhost")
+# def check_import_items_task(file_path, is_change_identifier: bool, host_url, lang="en"):
+def test_check_import_items_task(i18n_app, users):
+    file_path = "/test/test/test.txt"
+    data = {"error": None}
 
+    with patch("weko_search_ui.utils.check_import_items", return_value=data):
+        with patch("shutil.rmtree", return_value=""):
+            with patch("weko_search_ui.tasks.remove_temp_dir_task.apply_async", return_value=""):
+                assert check_import_items_task(file_path=file_path,is_change_identifier=True,host_url="https://localhost")
+                
 
 # def import_item(item, request_info):
 def test_import_item(i18n_app, users):

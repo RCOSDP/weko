@@ -31,7 +31,7 @@
 {% set panel_icon = "fa fa-group fa-fw" %}
 
 {%- block settings_body %}
-{%- set header = (group.name + " <small class='text-muted'>Manage</small>") if group else "New group" -%}
+{%- set header = (group.escape_name + " <small class='text-muted'>Manage</small>") if group else "New group" -%}
 {{ helpers.panel_start(
     _(header),
     with_body=False,

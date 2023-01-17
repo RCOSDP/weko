@@ -1,0 +1,98 @@
+[
+  {
+    "affiliationInfo": [
+      {
+        "affiliationNameInfo": [
+          {
+            "affiliationName": "",
+            "affiliationNameLang": "ja",
+            "affiliationNameShowFlg": "true"
+          }
+        ],
+        "identifierInfo": [
+          {
+            "affiliationId": "5678",
+            "affiliationIdType": "1",
+            "identifierShowFlg": "true"
+          }
+        ]
+      }
+    ],
+    "authorIdInfo": [
+      { "authorId": "1", "authorIdShowFlg": "true", "idType": "1" },
+      { "authorId": "1234", "authorIdShowFlg": "true", "idType": "2" }
+    ],
+    "authorNameInfo": [
+      {
+        "familyName": "テスト",
+        "firstName": "太郎",
+        "fullName": "テスト 太郎",
+        "language": "ja",
+        "nameFormat": "familyNmAndNm",
+        "nameShowFlg": "true"
+      }
+    ],
+    "emailInfo": [{ "email": "test.taro@test.org" }],
+    "gather_flg": 0,
+    "id": {
+      "_id": "_Mlq7IMBh8i3T-5nc6w4",
+      "_index": "tenant1-authors-author-v1.0.0",
+      "_primary_term": 1,
+      "_seq_no": 0,
+      "_shards": { "failed": 0, "successful": 1, "total": 2 },
+      "_type": "author-v1.0.0",
+      "_version": 1,
+      "result": "created"
+    },
+    "is_deleted": "false",
+    "pk_id": "1"
+  },
+  {
+    "affiliationInfo": [
+      {
+        "affiliationNameInfo": [
+          {
+            "affiliationName": "",
+            "affiliationNameLang": "ja",
+            "affiliationNameShowFlg": "true"
+          }
+        ],
+        "identifierInfo": [
+          {
+            "affiliationId": "1234",
+            "affiliationIdType": "1",
+            "identifierShowFlg": "true"
+          }
+        ]
+      }
+    ],
+    "authorIdInfo": [
+      { "authorId": "2", "authorIdShowFlg": "true", "idType": "1" },
+      { "authorId": "5678", "authorIdShowFlg": "true", "idType": "2" }
+    ],
+    "authorNameInfo": [
+      {
+        "familyName": "test",
+        "firstName": "smith",
+        "fullName": "test smith",
+        "language": "en",
+        "nameFormat": "familyNmAndNm",
+        "nameShowFlg": "true"
+      }
+    ],
+    "emailInfo": [{ "email": "test.smith@test.org" }],
+    "gather_flg": 0,
+    "id": {
+      "_id": "_clr7IMBh8i3T-5nF6xR",
+      "_index": "tenant1-authors-author-v1.0.0",
+      "_primary_term": 1,
+      "_seq_no": 1,
+      "_shards": { "failed": 0, "successful": 1, "total": 2 },
+      "_type": "author-v1.0.0",
+      "_version": 1,
+      "result": "created"
+    },
+    "is_deleted": "false",
+    "pk_id": "2"
+  }
+]

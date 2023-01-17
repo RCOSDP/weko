@@ -29,28 +29,25 @@ class XSDValidator:
 
 
 def countListRecords(baseURL='https://localhost/oai',
-                     meta='oai_dc', setspec=''):
+                     meta='oai_dc', setspec=None):
     startTime = time.time()
     sickle = Sickle(endpoint=baseURL,
-                    max_retries=4, timeout=300, verify=False, iterator=OAIItemIterator)
-    ids = []
-    deletedIds = []
+                    max_retries=4, timeout=900, verify=False, iterator=OAIItemIterator)
+    ids = 0
+    deletedIds = 0
     records = sickle.ListRecords(metadataPrefix=meta, set=setspec)
     for r in records:
         if r.header.deleted == False:
-            ids.append(r.header.identifier)
-            with open("{0}.xml".format(r.header.identifier), 'w', encoding='UTF-8') as f:
-                f.writelines(r)
-                f.close()
+            ids=ids+1
         else:
-            deletedIds.append(r.header.identifier)
+            deletedIds=deletedIds+1
     elapsedTime = time.time() - startTime
-    print("# of items: {0}".format(len(ids)))
-    print("# of deleted items: {0}".format(len(deletedIds)))
+    print("# of items: {0}".format(ids))
+    print("# of deleted items: {0}".format(deletedIds))
     print("elapsed time: {0}".format(elapsedTime))
 
 
-def dumpListRecords(baseURL='https://localhost/oai', meta='oai_dc', setspec=''):
+def dumpListRecords(baseURL='https://localhost/oai', meta='oai_dc', setspec=None):
     startTime = time.time()
     sickle = Sickle(endpoint=baseURL,
                     max_retries=4, timeout=300, verify=False, iterator=OAIResponseIterator)

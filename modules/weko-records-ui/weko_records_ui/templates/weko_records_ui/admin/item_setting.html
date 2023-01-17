@@ -29,6 +29,7 @@
 {%- set cur_lifetime = current_lifetime %}
 {%- set lifetime_map = map_lifetime %}
 <form class="form-inline" method="POST" name="set_search_author_form" action={{url_for('itemsetting.index')}}>
+  {{ form.csrf_token }}
   <div class="row">
     <div class="col-sm-2 text-right">
       <label>{{_('Display Email')}}</label>

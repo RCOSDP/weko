@@ -9,7 +9,8 @@
 
 from __future__ import absolute_import, print_function
 
-from datetime import datetime
+from datetime import datetime, timedelta
+import shutil
 
 import sword3common
 from flask import Blueprint, current_app, jsonify, request, url_for
@@ -17,9 +18,11 @@ from invenio_deposit.scopes import write_scope
 from invenio_oauth2server.ext import verify_oauth_token_and_set_current_user
 from sword3common import ServiceDocument, StatusDocument, constants
 from sword3common.lib.seamless import SeamlessException
+from weko_admin.api import TempDirInfo
 from weko_records_ui.utils import get_record_permalink, soft_delete
 from weko_search_ui.utils import check_import_items, import_items_to_system
 from werkzeug.http import parse_options_header
+from invenio_db import db
 
 from .decorators import *
 from .errors import *
@@ -179,6 +182,10 @@ def post_service_document():
             file = value
     if file is None:
         raise WekoSwordserverException("Not found {0} in request body.".format(filename), ErrorType.BadRequest)
+    print("file1:{}".format(file))
+    from zipfile import ZipFile
+    with ZipFile(file)as z:
+        print(z.infolist())
     check_result = check_import_items(file, False)
     item = check_result.get('list_record')[0] if check_result.get('list_record') else None
     if check_result.get('error') or not item or item.get('errors'):
@@ -197,10 +204,18 @@ def post_service_document():
     if item.get('status') != 'new':
         raise WekoSwordserverException('This item is already registered: {0]'.format(item.get('item_title')), ErrorType.BadRequest)
 
+    data_path = check_result.get("data_path","")
+    expire = datetime.now() + timedelta(days=1)
+    TempDirInfo().set(data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
+    item["root_path"] = data_path+"/data"
+    
     # import item
     import_result = import_items_to_system(item, None)
     if not import_result.get('success'):
         raise WekoSwordserverException('Error in import_items_to_system: {0}'.format(item.get('error_id')), ErrorType.ServerError)
+    
+    shutil.rmtree(data_path)
+    TempDirInfo().delete(data_path)
     
     recid = import_result.get('recid')
 
@@ -408,3 +423,13 @@ def handle_exception(ex):
 def handle_weko_swordserver_exception(ex):
     current_app.logger.error(ex.message)
     return jsonify(_create_error_document(ex.errorType.type, ex.message)), ex.errorType.code
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_swordserver dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

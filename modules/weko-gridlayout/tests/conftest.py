@@ -31,7 +31,9 @@ from invenio_access.models import ActionUsers
 from invenio_access import InvenioAccess
 from invenio_db import InvenioDB, db as db_
 from invenio_accounts.models import User, Role
+from invenio_communities.models import Community
 
+from weko_redis.redis import RedisConnection
 from weko_records.models import ItemTypeProperty
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records.api import Mapping
@@ -85,6 +87,8 @@ def base_app(instance_path):
         INDEXER_DEFAULT_DOC_TYPE='testrecord',
         SEARCH_UI_SEARCH_INDEX='tenant1-weko',
         SECRET_KEY='SECRET_KEY',
+        CACHE_REDIS_DB='0',
+        CACHE_TYPE='0'
     )
     Babel(app_)
     InvenioDB(app_)
@@ -458,3 +462,34 @@ def item_type(db):
     )
     db.session.commit()
     return item_type
+
+
+@pytest.fixture()
+def user(app, db):
+    """Create a example user."""
+    return create_test_user(email='test@test.org')
+
+
+@pytest.fixture()
+def communities(app, db, user, indices):
+    """Create some example communities."""
+    user1 = db_.session.merge(user)
+    ds = app.extensions['invenio-accounts'].datastore
+    r = ds.create_role(name='superuser', description='1234')
+    ds.add_role_to_user(user1, r)
+    ds.commit()
+    db.session.commit()
+
+    comm0 = Community.create(community_id='comm1', role_id=r.id,
+                             id_user=user1.id, title='Title1',
+                             description='Description1',
+                             root_node_id=33)
+    db.session.add(comm0)
+
+    return comm0
+
+
+@pytest.fixture
+def redis_connect(app):
+    redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+    return redis_connection

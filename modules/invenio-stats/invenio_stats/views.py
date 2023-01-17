@@ -18,6 +18,7 @@ from flask import Blueprint, abort, current_app, jsonify, request
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_rest.views import ContentNegotiatedMethodView
+from invenio_db import db
 
 from . import config
 from .errors import InvalidRequestInputError, UnknownQueryError
@@ -592,3 +593,13 @@ blueprint.add_url_rule(
     '/<string:event>/<int:year>/<int:month>',
     view_func=common_reports,
 )
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("invenio_stats dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

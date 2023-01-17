@@ -29,6 +29,7 @@ from flask import Blueprint, current_app, jsonify, make_response, request, \
     session
 from flask_login import current_user
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
+from invenio_db import db
 
 from .api import Indexes
 from .config import WEKO_INDEX_TREE_RSS_COUNT_LIMIT, \
@@ -178,3 +179,14 @@ def create_index():
     except Exception as e:
         current_app.logger.error(e)
         return make_response(str(e), 400)
+
+@blueprint.teardown_request
+@blueprint_api.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_index_tree dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

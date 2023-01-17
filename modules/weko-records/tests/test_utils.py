@@ -1031,6 +1031,17 @@ def test_get_creator_by_languages(app):
                 'subitem_value': 'en_value_2',
                 'subitem_lang': 'en'
             }
+        ],
+        'item_3': [
+            {
+                'subitem_id': 3,
+                'subitem_value': 'en',
+            },
+            {
+                'subitem_id': 3,
+                'subitem_value': 'en_value_2',
+                'subitem_lang': 'en'
+            }
         ]
     }
     res = get_creator_by_languages(_creates_key, _create)
@@ -1056,6 +1067,8 @@ def test_get_affiliation(app):
     }]
     res = get_affiliation(_affiliations, {}, 'en', ['affiliationName', 'af_lang'])
     assert res=={'affiliationName': ['en_af']}
+    res = get_affiliation(_affiliations, {}, 'en', ['affiliationName2', 'af_lang'])
+    assert res=={}
 
 # def get_author_has_language(creator, result_end, current_lang, map_keys):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_author_has_language -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -1072,6 +1085,15 @@ def test_get_author_has_language(app):
     ]
     res = get_author_has_language(_create, {}, 'en', ['affiliationName', 'af_lang'])
     assert res=={'affiliationName': ['en_af']}
+    
+    res = get_author_has_language(_create, {}, 'fr', ['affiliationName', 'af_lang'])
+    assert res=={'affiliationName': ['en_af']}
+    
+    res = get_author_has_language(_create, {}, 'en', ['affiliationName', 'af_lang2'])
+    assert res=={'affiliationName': ['en_af']}
+    
+    res = get_author_has_language(_create, {}, 'en', ['affiliationName2', 'af_lang2'])
+    assert res=={}
 
 # def add_author(author_data, stt_key, is_specify_newline_array, s, value, data_result, is_specify_newline, is_hide, is_show_list):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_add_author -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -1142,11 +1164,16 @@ def test_custom_record_medata_for_export(app, db, item_type):
 # def replace_fqdn(url_path: str, host_url: str = None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_replace_fqdn -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_replace_fqdn(app):
+    assert app.config.get("THEME_SITEURL")=='https://localhost'
     url = replace_fqdn('http://test/a')
+    assert url=='https://localhost/a'
+    url = replace_fqdn('http://localhost/a')
     assert url=='https://localhost/a'
     url = replace_fqdn('http://test/a', 'https://nii.co.jp/')
     assert url=='https://nii.co.jp/a'
     url = replace_fqdn('http://weko3.ir.rcos.nii.ac.jp/a', 'https://weko3.ir.rcos.nii.co.jp/')
+    assert url=='https://weko3.ir.rcos.nii.co.jp/a'
+    url = replace_fqdn('http://weko3.ir.rcos.nii.ac.jp/a', 'https://weko3.ir.rcos.nii.co.jp')
     assert url=='https://weko3.ir.rcos.nii.co.jp/a'
 
 

@@ -19,10 +19,14 @@
 # MA 02111-1307, USA.
 
 """Module tests."""
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+
 
 import pytest
+import copy
 from datetime import datetime
-from mock import patch
+from mock import patch, Mock, MagicMock
+
 from elasticsearch.exceptions import NotFoundError
 from invenio_access.models import Role
 from invenio_communities.models import Community
@@ -219,7 +223,8 @@ def test_indexes_delete_by_action(app, db, user):
 #         def _re_order_tree(new_position):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_move -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_indexes_move(app, db, users, test_indices):
-    with app.test_client() as client:
+    with app.test_request_context(
+        headers=[('Accept-Language','en')]):
         with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
             _data = {
                 'pre_parent': 2,
@@ -238,7 +243,21 @@ def test_indexes_move(app, db, users, test_indices):
             res = Indexes.move(22, **_data)
             assert res['is_ok']==False
             assert res['msg']=='Fail move an index.'
-
+                        
+            _data = {
+                'pre_parent': 2,
+                'parent': 1,
+                'position': 1
+            }
+            res = Indexes.move(22, **_data)
+            assert res['is_ok']==False
+            assert res['msg']=="The index cannot be kept private because there are links from items that have a DOI."
+            
+            _index = dict(Indexes.get_index(1))
+            
+            assert _index["parent"] == 0
+            assert _index["position"] == 0
+            
             _data = {
                 'pre_parent': "0",
                 'parent': "0",
@@ -247,6 +266,37 @@ def test_indexes_move(app, db, users, test_indices):
             res = Indexes.move(1, **_data)
             assert res['is_ok']==True
             assert res['msg']==''
+            
+            _index = dict(Indexes.get_index(1))
+            assert _index["parent"] == 0
+            assert _index["position"] == 4
+
+            _data = {
+                'pre_parent': 0,
+                'parent': 0,
+                'position': 2
+            }
+            res = Indexes.move(1, **_data)
+            assert res['is_ok']==False
+            assert res['msg']=='Select an index to move.'
+            
+            _index = dict(Indexes.get_index(1))
+            assert _index["parent"] == 0
+            assert _index["position"] == 4
+            
+            
+            _data = {
+                'pre_parent': 0,
+                'parent': 0,
+                'position': 4
+            }
+            res = Indexes.move(1, **_data)
+            assert res['is_ok']==False
+            assert res['msg']=='Select an index to move.'
+            
+            _index = dict(Indexes.get_index(1))
+            assert _index["parent"] == 0
+            assert _index["position"] == 4
 
 
 # class Indexes(object):
@@ -303,7 +353,18 @@ def test_indexes_move(app, db, users, test_indices):
 #     def get_full_path_reverse(cls, index_id=0):
 #     def get_full_path(cls, index_id=0):
 #     def get_harverted_index_list(cls):
+
 #     def update_set_info(cls, index):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_update_set_info -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_update_set_info(i18n_app, db, users, test_indices):
+    _tmp = Indexes.get_index(1)
+    index_info = copy.deepcopy(dict(_tmp))
+    assert index_info["index_name"]=="Test index 1"
+    index_info["index_name"] = "TEST"
+    with patch("weko_index_tree.tasks.update_oaiset_setting.delay",side_effect = MagicMock()):
+        Indexes.update_set_info(index_info)
+    
+    
 #     def delete_set_info(cls, action, index_id, id_list):
 #     def get_public_indexes_list(cls):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_get_index_tree -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp

@@ -117,7 +117,8 @@ def search():
     sort_options, display_number = SearchSetting.get_results_setting()
 
     ts = time.time()
-    disply_setting = dict(size=display_number, timestamp=ts)
+    # disply_setting = dict(size=display_number, timestamp=ts)
+    disply_setting = dict(size=display_number)
 
     detail_condition = get_search_detail_keyword("")
 
@@ -241,7 +242,8 @@ def search():
                 if index_info:
                     index_display_format = index_info.display_format
                     if index_display_format == "2":
-                        disply_setting = dict(size=100, timestamp=ts)
+                        disply_setting = dict(size=100)
+                        # disply_setting = dict(size=100, timestamp=ts)
 
         index_link_list = get_index_link_list()
         # Get Facet search setting.
@@ -429,3 +431,14 @@ def get_last_item_id():
     except Exception as ex:
         current_app.logger.error(ex)
     return jsonify(data=result), 200
+
+@blueprint.teardown_request
+@blueprint_api.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_search_ui dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

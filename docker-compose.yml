@@ -59,8 +59,8 @@ services:
       - INVENIO_ROLE_CONTRIBUTOR=Contributor
       - INVENIO_ROLE_COMMUNITY=Community Administrator
       # production or development
-      - FLASK_ENV=development
-      # - FLASK_ENV=production
+      # - FLASK_ENV=development
+      - FLASK_ENV=production
       #- FLASK_DEBUG=True
       - SEARCH_INDEX_PREFIX=tenant1
       - INVENIO_DB_POOL_CLASS=QueuePool
@@ -68,6 +68,7 @@ services:
       - GOOGLE_TRACKING_ID_USER=
       - ADDTHIS_USER_ID=ra-5d8af23e9a3a2633
       - TMPDIR=/tmp
+      - TZ=Asia/Tokyo
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
