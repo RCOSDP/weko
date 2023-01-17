@@ -2736,7 +2736,10 @@ def download_activitylog():
     if 'activity_id' in request.args:
         if request.args.get('activity_id') == None:
             return jsonify(code=-1, msg='no activity error') ,400
-        activities.append(activity.get_activity_metadata(activity_id=request.args.get('activity_id')))
+        tmp_activity = activity.query.filter_by(activity_id=request.args.get('activity_id')).one_or_none()
+        if tmp_activity == None:
+            return jsonify(code=-1, msg='no activity error') ,400
+        activities.append(tmp_activity)
         response = Response(
                 make_activitylog_tsv(activities),
                 mimetype='text/tsv',
@@ -2797,11 +2800,14 @@ def clear_activitylog():
                 break
         if not has_admin_role:
             abort(403)
+
     # delete a activity
     if 'activity_id' in request.args:
         if request.args.get('activity_id') == None:
             return jsonify(code=-1, msg='no activity error') ,400
-        del_activity = activity.get_activity_metadata(activity_id=request.args.get('activity_id'))
+        del_activity = activity.query.filter_by(activity_id=request.args.get('activity_id')).one_or_none()
+        if del_activity == None:
+            return jsonify(code=-1, msg='no activity error') ,400
         if del_activity.activity_status == "M":
 
             _activity = dict(
