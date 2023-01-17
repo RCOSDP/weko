@@ -3391,9 +3391,9 @@ def test_download_activitylog_nologin(client):
     (3, 403),
     (4, 403),
     (5, 403),
-    (6, 403),
+    (6, 200),
 ])
-def test_download_activitylog(client, users, users_index, status_code):
+def test_download_activitylog_1(client, users, users_index, status_code):
     """Test of withdraw confirm."""
     login(client=client, email=users[users_index]['email'])
 
@@ -3402,6 +3402,33 @@ def test_download_activitylog(client, users, users_index, status_code):
                 activity_id='2')
     res = client.get(url)
     assert res.status_code == status_code
+
+    #3
+    current_app.config.update(
+        DELETE_ACTIVITY_LOG_ENABLE = False
+    )
+
+    url = url_for('weko_workflow.download_activitylog',
+                createdto='2023-01-17')
+    res = client.get(url)
+    assert res.status_code == 403
+
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200),
+    (2, 200),
+    (6, 200),
+])
+def test_download_activitylog_2(client, users, users_index, status_code):
+    """Test of withdraw confirm."""
+    login(client=client, email=users[users_index]['email'])
+
+    #4
+    url = url_for('weko_workflow.download_activitylog',
+                activity_id='2')
+    res = client.get(url)
+    assert res.status_code == status_code
+
 
     #5
     url = url_for('weko_workflow.download_activitylog',
@@ -3420,17 +3447,6 @@ def test_download_activitylog(client, users, users_index, status_code):
                 createdto='1900-01-17')
     res = client.get(url)
     assert res.status_code == 400
-
-
-    #3
-    current_app.config.update(
-        DELETE_ACTIVITY_LOG_ENABLE = False
-    )
-
-    url = url_for('weko_workflow.download_activitylog',
-                createdto='2023-01-17')
-    res = client.get(url)
-    assert res.status_code == 403
 
 
 
@@ -3453,7 +3469,7 @@ def test_clear_activitylog_nologin(client):
     (3, 403),
     (4, 403),
     (5, 403),
-    (6, 403),
+    (6, 200),
 ])
 def test_clear_activitylog_1(client, users, users_index, status_code):
     """Test of withdraw confirm."""
@@ -3466,13 +3482,9 @@ def test_clear_activitylog_1(client, users, users_index, status_code):
     assert res.status_code == status_code
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
     (1, 200),
     (2, 200),
-    (3, 403),
-    (4, 403),
-    (5, 403),
-    (6, 403),
+    (6, 200),
 ])
 def test_clear_activitylog_2(client, users, users_index, status_code):
     """Test of withdraw confirm."""
@@ -3484,13 +3496,9 @@ def test_clear_activitylog_2(client, users, users_index, status_code):
     assert res.status_code == 400
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
     (1, 200),
     (2, 200),
-    (3, 403),
-    (4, 403),
-    (5, 403),
-    (6, 403),
+    (6, 200),
 ])
 def test_clear_activitylog_3(client, users, users_index, status_code):
     """Test of withdraw confirm."""
@@ -3503,13 +3511,9 @@ def test_clear_activitylog_3(client, users, users_index, status_code):
         assert res.status_code == 400
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
     (1, 200),
     (2, 200),
-    (3, 403),
-    (4, 403),
-    (5, 403),
-    (6, 403),
+    (6, 200),
 ])
 def test_clear_activitylog_4(client, users, users_index, status_code):
     """Test of withdraw confirm."""
@@ -3528,7 +3532,7 @@ def test_clear_activitylog_4(client, users, users_index, status_code):
     (3, 403),
     (4, 403),
     (5, 403),
-    (6, 403),
+    (6, 200),
 ])
 def test_clear_activitylog_5(client, users, users_index, status_code):
     """Test of withdraw confirm."""
@@ -3540,13 +3544,9 @@ def test_clear_activitylog_5(client, users, users_index, status_code):
     assert res.status_code == status_code
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
     (1, 200),
     (2, 200),
-    (3, 403),
-    (4, 403),
-    (5, 403),
-    (6, 403),
+    (6, 200),
 ])
 def test_clear_activitylog_6(client, users, users_index, status_code):
     """Test of withdraw confirm."""
@@ -3558,13 +3558,9 @@ def test_clear_activitylog_6(client, users, users_index, status_code):
     assert res.status_code == 400
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
     (1, 200),
     (2, 200),
-    (3, 403),
-    (4, 403),
-    (5, 403),
-    (6, 403),
+    (6, 200),
 ])
 def test_clear_activitylog_7(client, users, users_index, status_code):
     """Test of withdraw confirm."""
@@ -3577,13 +3573,9 @@ def test_clear_activitylog_7(client, users, users_index, status_code):
         assert res.status_code == 400
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
     (1, 200),
     (2, 200),
-    (3, 403),
-    (4, 403),
-    (5, 403),
-    (6, 403),
+    (6, 200),
 ])
 def test_clear_activitylog_8(client, users, users_index, status_code):
     """Test of withdraw confirm."""
@@ -3602,7 +3594,7 @@ def test_clear_activitylog_8(client, users, users_index, status_code):
     (3, 403),
     (4, 403),
     (5, 403),
-    (6, 403),
+    (6, 200),
 ])
 def test_clear_activitylog_9(client, users, users_index, status_code):
     """Test of withdraw confirm."""
