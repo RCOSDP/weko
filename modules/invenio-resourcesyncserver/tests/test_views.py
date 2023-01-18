@@ -174,9 +174,68 @@ def test_resource_dump(client_api, users, indices):
 
 
 # def file_content(index_id, record_id):
+def test_file_content(i18n_app, indices):
+    index_id = 33
+    record_id = 1
+    data1 = MagicMock()
+    def get_record_content_file(item):
+        return item
+    data1.get_record_content_file = get_record_content_file
+
+    with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_resource_by_repository_id", return_value=data1):
+        assert file_content(index_id=index_id, record_id=record_id) is not None
+    
+    # Exception coverage
+    # file_content(index_id=index_id, record_id=record_id) is not None
+
+
 # def capability():
+def test_capability(i18n_app):
+    with patch("invenio_resourcesyncserver.views.render_capability_xml", return_value=[1,2,3]):
+        assert "Response" in str(type(capability()))
+
+    # Exception coverage
+    # capability()
+
+
 # def resource_dump_manifest(index_id, record_id):
+def test_resource_dump_manifest(i18n_app):
+    index_id = 33
+    record_id = 1
+    data1 = MagicMock()
+    def get_record_content_file(item):
+        return item
+    data1.get_record_content_file = get_record_content_file
+
+    with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_resource_by_repository_id", return_value=data1):
+        assert "Response" in str(type(resource_dump_manifest(index_id=index_id, record_id=record_id)))
+
+    # Exception coverage
+    # resource_dump_manifest(index_id=index_id, record_id=record_id)
+
+
 # def change_list_index(index_id):
+def test_change_list_index(i18n_app, indices):
+    index_id = 33
+    data1 = MagicMock()
+
+    def get_change_list_index():
+        return True
+
+    def get_change_list_by_repo_id(item):
+        data = MagicMock()
+        data.get_change_list_index = get_change_list_index
+        return data
+        
+    data1.get_change_list_by_repo_id = get_change_list_by_repo_id
+
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list_by_repo_id", return_value=data1):
+        assert "Response" in str(type(change_list_index(index_id=index_id)))
+
+    # Exception coverage
+    # change_list_index(index_id=index_id)    
+
+
 # def change_list(index_id, from_date):
 # def change_dump_index(index_id):
 # def change_dump(index_id, from_date):

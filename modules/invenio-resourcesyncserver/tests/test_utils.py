@@ -98,18 +98,48 @@ def test_query_record_changes(i18n_app, db, search_result, indices, es):
     repository_id = 33
     date_from = datetime.datetime.now() - datetime.timedelta(days=1)
     date_until = datetime.datetime.now()
-    max_changes_size = None
-    change_tracking_state = None
-    data = MagicMock()
+    max_changes_size = 9999
+    change_tracking_state = "created"
+    data1 = [{
+        "_source": {
+            "_created": datetime.datetime.now(),
+            "_updated": datetime.datetime.now(),
+            "control_number": 1.1
+        }
+    }]
 
-    with patch("invenio_resourcesyncserver.query.get_item_changes_by_index", return_value=data):
-        assert query_record_changes(
-            repository_id=repository_id,
-            date_from=date_from,
-            date_until=date_until,
-            max_changes_size=max_changes_size,
-            change_tracking_state=change_tracking_state
-        )
+    data2 = MagicMock()
+    data2.recid = MagicMock()
+    data2.recid.status = True
+
+    data3 = MagicMock()
+    data3.DELETED = True
+
+    with patch("invenio_resourcesyncserver.utils.get_item_changes_by_index", return_value=data1):
+        with patch("invenio_resourcesyncserver.utils.PersistentIdentifier", return_value=data2):
+            with patch("invenio_resourcesyncserver.utils.check_existing_record_in_list", return_value=True):
+                with patch("invenio_pidstore.models.PIDStatus", return_value=data3):
+                    assert len(query_record_changes(
+                        repository_id=repository_id,
+                        date_from=date_from,
+                        date_until=date_until,
+                        max_changes_size=max_changes_size,
+                        change_tracking_state=change_tracking_state
+                    )) == 1
+    
+    data1[0]["_source"]["control_number"] = 1
+
+    with patch("invenio_resourcesyncserver.utils.get_item_changes_by_index", return_value=data1):
+        with patch("invenio_resourcesyncserver.utils.PersistentIdentifier", return_value=data2):
+            with patch("invenio_resourcesyncserver.utils.check_existing_record_in_list", return_value=True):
+                with patch("invenio_pidstore.models.PIDStatus", return_value=data3):
+                    assert len(query_record_changes(
+                        repository_id=repository_id,
+                        date_from=date_from,
+                        date_until=date_until,
+                        max_changes_size=max_changes_size,
+                        change_tracking_state=change_tracking_state
+                    )) == 0
 
 
 # def check_existing_record_in_list(record_id, results):

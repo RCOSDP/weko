@@ -357,8 +357,7 @@ def test_get_change_list_content_xml_ChangeListHandler(i18n_app, db, users):
     from_date_args = "2022/11/3 0:00:00"
     to_date_args = "2022/11/4 0:00:00"
     return_data = MagicMock()
-    return_data.pid_value = "test"
-
+        
     with patch("invenio_resourcesyncserver.api.ChangeListHandler._validation", return_value=""):
         assert not test_str.get_change_list_content_xml(
             from_date=from_date,
@@ -369,14 +368,29 @@ def test_get_change_list_content_xml_ChangeListHandler(i18n_app, db, users):
         with patch("invenio_resourcesyncserver.query.get_items_by_index_tree", return_value=MagicMock()):
             with patch("invenio_resourcesyncserver.api.ChangeListHandler._get_record_changes_with_interval", return_value=[MagicMock()]):
                 with patch("invenio_pidstore.models.PersistentIdentifier.get", return_value=sample):
-                    with patch("invenio_pidrelations.contrib.versioning.PIDVersioning", return_value=return_data):
-                        # Exception coverage
-                        assert test_str.get_change_list_content_xml(
-                            from_date=from_date,
-                            from_date_args=from_date_args,
-                            to_date_args=to_date_args
-                        )
+                    # Exception coverage
+                    test_str.get_change_list_content_xml(
+                        from_date=from_date,
+                        from_date_args=from_date_args,
+                        to_date_args=to_date_args
+                    )
 
+                    with patch("invenio_resourcesyncserver.api.Resource", return_value=return_data):
+                        with patch("invenio_resourcesyncserver.api.PIDVersioning", return_value=return_data):
+                            assert "xml" in test_str.get_change_list_content_xml(
+                                from_date=from_date,
+                                from_date_args=from_date_args,
+                                to_date_args=to_date_args
+                            ) 
+
+                        with patch("invenio_resourcesyncserver.api.PIDVersioning", return_value=return_data):
+                            return_data.last_child = MagicMock()
+                            return_data.last_child.pid_value = "test"
+                            assert "xml" in test_str.get_change_list_content_xml(
+                                from_date=from_date,
+                                from_date_args=from_date_args,
+                                to_date_args=to_date_args
+                            )
 
 #     def get_change_list_index(self):
 def test_get_change_list_index_ChangeListHandler(i18n_app):
@@ -470,7 +484,7 @@ def test_get_change_dump_manifest_xml_ChangeListHandler(i18n_app):
     record_id = "8.9"
 
     def _validation():
-        return True
+        return MagicMock()
 
     def _is_record_in_index(key):
         return "8.9"
