@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 
 import pytest
 from flask import json, url_for
-from helpers import login, parse_redirect
+from tests.helpers import login, parse_redirect
 from invenio_accounts.models import User
 from invenio_db import db
 

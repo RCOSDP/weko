@@ -48,7 +48,7 @@ msgid "Specified item does not consistency with DB item.<br/>{}"
 msgstr ""
 
 #: weko_authors/utils.py:268
-msgid "Cannot read csv file correctly."
+msgid "Cannot read {} file correctly."
 msgstr ""
 
 #: weko_authors/utils.py:275
@@ -57,12 +57,12 @@ msgstr ""
 
 #: weko_authors/utils.py:278
 msgid ""
-"The CSV file could not be read. Make sure the file format is CSV and that"
+"The {} file could not be read. Make sure the file format is {} and that"
 " the file is UTF-8 encoded."
 msgstr ""
 
 #: weko_authors/utils.py:315
-msgid "There is duplicated data in the CSV file."
+msgid "There is duplicated data in the {} file."
 msgstr ""
 
 #: weko_authors/utils.py:338
@@ -83,7 +83,7 @@ msgstr ""
 
 #: weko_authors/utils.py:475
 msgid ""
-"The specified author has been deleted. Update author information with csv"
+"The specified author has been deleted. Update author information with {}"
 " content, but author remains deleted as it is."
 msgstr ""
 

@@ -35,9 +35,10 @@ from io import StringIO
 
 import bagit
 import redis
+from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, flash, redirect, request, send_file, \
-    url_for
+    url_for,jsonify
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
@@ -48,6 +49,7 @@ from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import RecordBase
+from invenio_accounts.models import User
 from invenio_search import RecordsSearch
 from invenio_stats.utils import QueryItemRegReportHelper, \
     QueryRecordViewReportHelper, QuerySearchReportHelper
@@ -64,8 +66,9 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
+from weko_redis.redis import RedisConnection
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
-from weko_search_ui.query import item_search_factory, item_search_with_limit
+from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
 from weko_user_profiles import UserProfile
@@ -77,26 +80,27 @@ from weko_workflow.models import Activity, FlowAction, FlowActionRole, \
     FlowDefine
 from weko_workflow.utils import IdentifierHandle
 
+from .config import WEKO_ITEMS_UI_RANKING_BUFFER
+
 
 def get_list_username():
     """Get list username.
 
     Query database to get all available username
     return: list of username
+    TODO: 
     """
     current_user_id = current_user.get_id()
-    user_index = 1
-    result = list()
-    while True:
-        try:
-            if not int(current_user_id) == user_index:
-                user_info = UserProfile.get_by_userid(user_index)
-                result.append(user_info.get_username)
-            user_index = user_index + 1
-        except Exception as e:
-            current_app.logger.error(e)
-            break
+    current_app.logger.debug("current_user:{}".format(current_user))
+    from weko_user_profiles.models import UserProfile
 
+    users = UserProfile.query.filter(UserProfile.user_id != current_user_id).all()
+    result = list()
+    for user in users:
+        username = user.get_username
+        if username:
+            result.append(username)
+    
     return result
 
 
@@ -108,21 +112,26 @@ def get_list_email():
     """
     current_user_id = current_user.get_id()
     result = list()
-    try:
-        metadata = MetaData()
-        metadata.reflect(bind=db.engine)
-        table_name = 'accounts_user'
+    users = User.query.filter(User.id != current_user_id).all()
+    for user in users:
+        email = user.email
+        if email:
+            result.append(email)
+    # try:
+    #     metadata = MetaData()
+    #     metadata.reflect(bind=db.engine)
+    #     table_name = 'accounts_user'
 
-        user_table = Table(table_name, metadata)
-        record = db.session.query(user_table)
+    #     user_table = Table(table_name, metadata)
+    #     record = db.session.query(user_table)
 
-        data = record.all()
+    #     data = record.all()
 
-        for item in data:
-            if not int(current_user_id) == item[0]:
-                result.append(item[1])
-    except Exception as e:
-        result = str(e)
+    #     for item in data:
+    #         if not int(current_user_id) == item[0]:
+    #             result.append(item[1])
+    # except Exception as e:
+    #     result = str(e)
 
     return result
 
@@ -321,13 +330,14 @@ def get_current_user():
     return current_id
 
 
-def find_hidden_items(item_id_list, idx_paths=None):
+def find_hidden_items(item_id_list, idx_paths=None, check_creator_permission=False):
     """
     Find items that should not be visible by the current user.
 
     parameter:
-        item_id_list: list of items ID to be checked.
+        item_id_list: list of uuid of items to be checked.
         idx_paths: List of index paths.
+        check_creator_permission: List of index paths.
     return: List of items ID that the user cannot access.
     """
     if not item_id_list:
@@ -338,20 +348,35 @@ def find_hidden_items(item_id_list, idx_paths=None):
     if roles[0]:
         return []
 
+    has_permission_index = []
+    no_permission_index = []
     hidden_list = []
     for record in WekoRecord.get_records(item_id_list):
-        # Check if user is owner of the item
-        if check_created_id(record):
-            continue
+        
+        if check_creator_permission:
+            # Check if user is owner of the item
+            if check_created_id(record):
+                continue
 
-        # Check if item and indices are public
-        is_public = check_publish_status(record)
+            # Check if item are public
+            is_public = check_publish_status(record)
+        else:
+            is_public = True
+        # Check if indices are public
         has_index_permission = False
         for idx in record.navi:
-            if check_index_permissions(None, idx.cid) \
-                    and (not idx_paths or idx.path in idx_paths):
+            if str(idx.cid) in has_permission_index:
                 has_index_permission = True
                 break
+            elif idx.cid in no_permission_index:
+                continue
+            if check_index_permissions(None, idx.cid) \
+                    and (not idx_paths or idx.path in idx_paths):
+                has_permission_index.append(idx.cid)
+                has_index_permission = True
+                break
+            else:
+                no_permission_index.append(idx.cid)
         if is_public and has_index_permission:
             continue
 
@@ -369,7 +394,22 @@ def parse_ranking_results(index_info,
                           pid_key=None,
                           search_key=None,
                           date_key=None):
-    """Parse the raw stats results to be usable by the view."""
+    """Parse the raw stats results to be usable by the view.
+
+    Args:
+        index_info (_type_): {'1660555749031': {'index_name': 'IndexA', 'parent': '0', 'public_date': None, 'harvest_public_state': True, 'browsing_role': ['3', '-98', '-99']}}
+        results (_type_): {'took': 7, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': 2, 'max_score': None, 'hits': [{'_index': 'tenant1-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': 'a64f4db8-b7d7-4cdf-a679-2b0e73f854c4', '_score': None, '_source': {'_created': '2022-08-20T06:05:56.806896+00:00', '_updated': '2022-08-20T06:06:24.602226+00:00', 'type': ['conference paper'], 'title': ['ff'], 'control_number': '3', '_oai': {'id': 'oai:weko3.example.org:00000003', 'sets': ['1660555749031']}, '_item_metadata': {'_oai': {'id': 'oai:weko3.example.org:00000003', 'sets': ['1660555749031']}, 'path': ['1660555749031'], 'owner': '1', 'title': ['ff'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}, 'item_title': 'ff', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-08-20', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'control_number': '3'}, 'itemtype': 'デフォルトアイテムタイプ（フル）', 'publish_date': '2022-08-20', 'author_link': [], 'weko_shared_id': -1, 'weko_creator_id': '1', 'relation_version_is_last': True, 'path': ['1660555749031'], 'publish_status': '0'}, 'sort': [1660953600000]}, {'_index': 'tenant1-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': '3cc6099a-4208-4528-80ce-eee7fe4296b7', '_score': None, '_source': {'_created': '2022-08-17T17:00:43.877778+00:00', '_updated': '2022-08-17T17:01:08.615488+00:00', 'type': ['conference paper'], 'title': ['2'], 'control_number': '1', '_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1660555749031']}, '_item_metadata': {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1660555749031']}, 'path': ['1660555749031'], 'owner': '1', 'title': ['2'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-18'}, 'item_title': '2', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-08-18', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': '2', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'control_number': '1'}, 'itemtype': 'デフォルトアイテムタイプ（フル）', 'publish_date': '2022-08-18', 'author_link': [], 'weko_shared_id': -1, 'weko_creator_id': '1', 'relation_version_is_last': True, 'path': ['1660555749031'], 'publish_status': '0'}, 'sort': [1660780800000]}]}}
+        display_rank (_type_): 10
+        list_name (str, optional): _description_. Defaults to 'all'.
+        title_key (str, optional): _description_. Defaults to 'title'.
+        count_key (_type_, optional): _description_. Defaults to None.
+        pid_key (_type_, optional): _description_. Defaults to None.
+        search_key (_type_, optional): _description_. Defaults to None.
+        date_key (_type_, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: [{'date': '2022-08-20', 'title': 'ff', 'url': '../records/3'}, {'date': '2022-08-18', 'title': '2', 'url': '../records/1'}]
+    """
     ranking_list = []
     if pid_key:
         url = '../records/{0}'
@@ -424,6 +464,7 @@ def parse_ranking_results(index_info,
                 ranking_list.append(t)
             if len(ranking_list) == display_rank:
                 break
+
     return ranking_list
 
 
@@ -472,16 +513,14 @@ def validate_form_input_data(
 
     :param result: result dictionary.
     :param item_id: item type identifier.
-    :param data: form input data
+    :param data: form input data 
     :param activity_id: activity id
     """
+    # current_app.logger.error("result: {}".format(result))
+    # current_app.logger.error("item_id: {}".format(item_id))
+    # current_app.logger.error("data: {}".format(data))
     item_type = ItemTypes.get_by_id(item_id)
     json_schema = item_type.schema.copy()
-
-    # current_app.logger.debug("json_schema")
-    # current_app.logger.debug(json_schema)
-    # current_app.logger.debug("data")
-    # current_app.logger.debug(data)
 
     # Remove excluded item in json_schema
     remove_excluded_items_in_json_schema(item_id, json_schema)
@@ -532,6 +571,10 @@ def update_json_schema_with_required_items(node: dict, json_data: dict):
     :param node: json schema return from def parse_node_str_to_json_schema
     :param json_data: The json schema
     """
+
+    # current_app.logger.error("node:{}".format(node))
+    # current_app.logger.error("json_data:{}".format(json_data))
+
     if not node.get('child'):
         if not json_data.get('required'):
             json_data['required'] = []
@@ -552,19 +595,17 @@ def update_json_schema_by_activity_id(json_data, activity_id):
     :param activity_id: Activity ID
     :return: json schema
     """
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
     if not sessionstore.redis.exists(
-        'updated_json_schema_{}'.format(activity_id)) \
-        and not sessionstore.get(
-            'updated_json_schema_{}'.format(activity_id)):
+        'updated_json_schema_{}'.format(activity_id)) or not sessionstore.get(
+        'updated_json_schema_{}'.format(activity_id)):
         return None
     session_data = sessionstore.get(
         'updated_json_schema_{}'.format(activity_id))
     error_list = json.loads(session_data.decode('utf-8'))
-
+    #current_app.logger.error("error_list:{}".format(error_list))
     if error_list:
         for item in error_list['required']:
             node = parse_node_str_to_json_schema(item)
@@ -584,13 +625,12 @@ def update_schema_form_by_activity_id(schema_form, activity_id):
     :param activity_id: Activity ID
     :return: schema form
     """
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
     if not sessionstore.redis.exists(
         'updated_json_schema_{}'.format(activity_id)) \
-        and not sessionstore.get(
+        or not sessionstore.get(
             'updated_json_schema_{}'.format(activity_id)):
         return None
     session_data = sessionstore.get(
@@ -714,21 +754,25 @@ def recursive_update_schema_form_with_condition(
 
 
 def package_export_file(item_type_data):
-    """Export CSV Files.
+    """Export TSV/CSV Files.
 
-    Arguments:
-        item_type_data  -- schema's Item Type
+    Args:
+        item_type_data (_type_): schema's Item Type
 
     Returns:
-        return          -- CSV file
-
+        _io.StringIO: TSV/CSV file
     """
-    csv_output = StringIO()
+    # current_app.logger.error("item_type_data:{}".format(item_type_data))
+    file_output = StringIO()
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+    file_delimiter = '\t' if file_format == 'tsv' else ','
     jsonschema_url = item_type_data.get('root_url') + item_type_data.get(
         'jsonschema')
 
-    csv_writer = csv.writer(csv_output, delimiter=',', lineterminator='\n')
-    csv_writer.writerow(['#ItemType',
+    file_writer = csv.writer(file_output,
+                             delimiter=file_delimiter,
+                             lineterminator='\n')
+    file_writer.writerow(['#ItemType',
                          item_type_data.get('name'),
                          jsonschema_url])
 
@@ -736,35 +780,41 @@ def package_export_file(item_type_data):
     labels = item_type_data['labels']
     is_systems = item_type_data['is_systems']
     options = item_type_data['options']
-    csv_metadata_writer = csv.DictWriter(csv_output,
-                                         fieldnames=keys,
-                                         delimiter=',', lineterminator='\n')
-    csv_metadata_label_writer = csv.DictWriter(csv_output,
-                                               fieldnames=labels,
-                                               delimiter=',', lineterminator='\n')
-    csv_metadata_is_system_writer = csv.DictWriter(csv_output,
-                                                   fieldnames=is_systems,
-                                                   delimiter=',', lineterminator='\n')
-    csv_metadata_option_writer = csv.DictWriter(csv_output,
-                                                fieldnames=options,
-                                                delimiter=',', lineterminator='\n')
-    csv_metadata_data_writer = csv.writer(csv_output,
-                                          delimiter=',', lineterminator='\n')
-    csv_metadata_writer.writeheader()
-    csv_metadata_label_writer.writeheader()
-    csv_metadata_is_system_writer.writeheader()
-    csv_metadata_option_writer.writeheader()
+    file_metadata_writer = csv.DictWriter(file_output,
+                                          fieldnames=keys,
+                                          delimiter=file_delimiter,
+                                          lineterminator='\n')
+    file_metadata_label_writer = csv.DictWriter(file_output,
+                                                fieldnames=labels,
+                                                delimiter=file_delimiter,
+                                                lineterminator='\n')
+    file_metadata_is_system_writer = csv.DictWriter(file_output,
+                                                    fieldnames=is_systems,
+                                                    delimiter=file_delimiter,
+                                                    lineterminator='\n')
+    file_metadata_option_writer = csv.DictWriter(file_output,
+                                                 fieldnames=options,
+                                                 delimiter=file_delimiter,
+                                                 lineterminator='\n')
+    file_metadata_data_writer = csv.writer(file_output,
+                                           delimiter=file_delimiter,
+                                           lineterminator='\n')
+    file_metadata_writer.writeheader()
+    file_metadata_label_writer.writeheader()
+    file_metadata_is_system_writer.writeheader()
+    file_metadata_option_writer.writeheader()
     for recid in item_type_data.get('recids'):
-        csv_metadata_data_writer.writerow(
+        file_metadata_data_writer.writerow(
             [recid, item_type_data.get('root_url') + 'records/' + str(recid)]
             + item_type_data['data'].get(recid)
         )
 
-    return csv_output
+    # current_app.logger.error("file_output: {}".format(file_output.getvalue()))
+    return file_output
 
 
-def make_stats_csv(item_type_id, recids, list_item_role):
-    """Prepare CSV data for each Item Types.
+def make_stats_file(item_type_id, recids, list_item_role):
+    """Prepare TSV/CSV data for each Item Types.
 
     Arguments:
         item_type_id    -- ItemType ID
@@ -773,6 +823,10 @@ def make_stats_csv(item_type_id, recids, list_item_role):
         ret             -- Key properties
         ret_label       -- Label properties
         records.attr_output -- Record data
+    Rises:
+        KeyError: 'EMAIL_DISPLAY_FLG'
+        KeyError: 'WEKO_RECORDS_UI_LICENSE_DICT'
+        NameError: name '_' is not defined
 
     """
     from weko_records_ui.views import escape_newline, escape_str
@@ -783,7 +837,7 @@ def make_stats_csv(item_type_id, recids, list_item_role):
         list_item_role.get(item_type_id))
     if no_permission_show_hide and item_type and item_type.get('table_row'):
         for name_hide in list_hide:
-            item_type['table_row'] = hide_table_row_for_csv(
+            item_type['table_row'] = hide_table_row(
                 item_type.get('table_row'), name_hide)
 
     table_row_properties = item_type['table_row_map']['schema'].get(
@@ -991,11 +1045,7 @@ def make_stats_csv(item_type_id, recids, list_item_role):
                             str(idx)))
                         key_label.insert(0, '.ファイルパス[{}]'.format(
                             str(idx)))
-                        if key_data[key_index]:
-                            key_data.insert(0, 'recid_{}/{}'.format(str(
-                                self.cur_recid), key_data[key_index]))
-                        else:
-                            key_data.insert(0, '')
+                        key_data.insert(0, '')
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
                             and len(item_key_split) == 2:
@@ -1146,10 +1196,13 @@ def make_stats_csv(item_type_id, recids, list_item_role):
                 if not keys:
                     keys = [item_key]
                 if not labels:
-                    labels = [item.get('title')]
-                data = records.attr_data[item_key].get(recid) or ['']
-                records.attr_output[recid].extend(
-                    data.get("attribute_value", ""))
+                    labels = [item.get('title')]                
+                data = records.attr_data[item_key].get(recid) or {}
+                attr_val = data.get("attribute_value", "")
+                if isinstance(attr_val,str):
+                    records.attr_output[recid].append(attr_val)
+                else:
+                    records.attr_output[recid].extend(attr_val)
 
         new_keys = []
         for key in keys:
@@ -1261,6 +1314,9 @@ def write_bibtex_files(item_types_data, export_path):
     @param export_path:
     @return:
     """
+    # current_app.logger.error("item_types_data:{}".format(item_types_data))
+    # current_app.logger.error("export_path:{}".format(export_path))
+    
     for item_type_id in item_types_data:
         item_type_data = item_types_data[item_type_id]
         output = make_bibtex_data(item_type_data['recids'])
@@ -1272,19 +1328,29 @@ def write_bibtex_files(item_types_data, export_path):
                 file.write(output)
 
 
-def write_csv_files(item_types_data, export_path, list_item_role):
-    """Write CSV data to files.
+def write_files(item_types_data, export_path, list_item_role):
+    """Write TSV/CSV data to files.
 
     @param item_types_data:
     @param export_path:
     @param list_item_role:
     @return:
     """
+    current_app.logger.debug("item_types_data:{}".format(item_types_data))
+    current_app.logger.debug("export_path:{}".format(export_path))
+    current_app.logger.debug("list_item_role:{}".format(list_item_role))
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+
     for item_type_id in item_types_data:
-        headers, records = make_stats_csv(
+        
+        current_app.logger.debug("item_type_id:{}".format(item_type_id))
+        current_app.logger.debug("item_types_data[item_type_id]['recids']:{}".format(item_types_data[item_type_id]['recids']))
+        headers, records = make_stats_file(
             item_type_id,
             item_types_data[item_type_id]['recids'],
             list_item_role)
+        current_app.logger.debug("headers:{}".format(headers))
+        current_app.logger.debug("records:{}".format(records))
         keys, labels, is_systems, options = headers
         item_types_data[item_type_id]['recids'].sort()
         item_types_data[item_type_id]['keys'] = keys
@@ -1293,11 +1359,12 @@ def write_csv_files(item_types_data, export_path, list_item_role):
         item_types_data[item_type_id]['options'] = options
         item_types_data[item_type_id]['data'] = records
         item_type_data = item_types_data[item_type_id]
-        with open('{}/{}.csv'.format(export_path,
-                                     item_type_data.get('name')),
+        with open('{}/{}.{}'.format(export_path,
+                                    item_type_data.get('name'),
+                                    file_format),
                   'w', encoding="utf-8-sig") as file:
-            csv_output = package_export_file(item_type_data)
-            file.write(csv_output.getvalue())
+            file_output = package_export_file(item_type_data)
+            file.write(file_output.getvalue())
 
 
 def check_item_type_name(name):
@@ -1314,19 +1381,23 @@ def export_items(post_data):
 
     :return: JSON, BIBTEX
     """
+    current_app.logger.debug("post_data:{}".format(post_data))
     include_contents = True if \
         post_data.get('export_file_contents_radio') == 'True' else False
     export_format = post_data['export_format_radio']
     record_ids = json.loads(post_data['record_ids'])
     invalid_record_ids = json.loads(post_data['invalid_record_ids'])
-    invalid_record_ids = [int(i) for i in invalid_record_ids]
+    if isinstance(invalid_record_ids,dict) or isinstance(invalid_record_ids,list):
+        invalid_record_ids = [int(i) for i in invalid_record_ids]
+    else:
+        invalid_record_ids = [invalid_record_ids]
     # Remove all invalid records
     record_ids = set(record_ids) - set(invalid_record_ids)
     record_metadata = json.loads(post_data['record_metadata'])
     if len(record_ids) > _get_max_export_items():
         return abort(400)
     elif len(record_ids) == 0:
-        return '', 204
+        return '',204
 
     result = {'items': []}
     temp_path = tempfile.TemporaryDirectory(
@@ -1373,7 +1444,7 @@ def export_items(post_data):
         if export_format == 'BIBTEX':
             write_bibtex_files(item_types_data, export_path)
         else:
-            write_csv_files(item_types_data, export_path, list_item_role)
+            write_files(item_types_data, export_path, list_item_role)
 
         # Create bag
         bagit.make_bag(export_path)
@@ -1419,7 +1490,20 @@ def _export_item(record_id,
                  include_contents,
                  tmp_path=None,
                  records_data=None):
-    """Exports files for record according to view permissions."""
+    """Exports files for record according to view permissions.
+
+    Args:
+        record_id (_type_): _description_
+        export_format (_type_): _description_
+        include_contents (bool): _description_
+        tmp_path (_type_, optional): _description_. Defaults to None.
+        records_data (dict, optional): _description_. Defaults to None.
+    """
+    # current_app.logger.error("record_id:{}".format(record_id))
+    # current_app.logger.error("export_format:{}".format(export_format))
+    # current_app.logger.error("include_contents:{}".format(include_contents))
+    # current_app.logger.error("tmp_path:{}".format(tmp_path))
+    # current_app.logger.error("records_data:{}".format(records_data))
     def del_hide_sub_metadata(keys, metadata):
         """Delete hide metadata."""
         if isinstance(metadata, dict):
@@ -1503,7 +1587,7 @@ def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,
         replace_license (bool): Replace license flag.
     """
     from weko_records_ui.utils import hide_item_metadata, replace_license_free
-
+    # current_app.logger.error("record_metadata:{}".format(record_metadata))
     # Hide private metadata
     if hide_item:
         hide_item_metadata(record_metadata)
@@ -1537,29 +1621,8 @@ def get_new_items_by_date(start_date: str, end_date: str, ranking=False) -> dict
                                                           start_date,
                                                           end_date,
                                                           indexes,
+                                                          query_with_publish_status=False,
                                                           ranking=ranking)
-        search_result = search_instance.execute()
-        result = search_result.to_dict()
-    except NotFoundError as e:
-        current_app.logger.debug("Indexes do not exist yet: ", str(e))
-
-    return result
-
-
-def get_latest_items(size: int) -> dict:
-    """Get latest publication items.
-
-    :param start_date:
-    :param end_date:
-    :return:
-    """
-    record_search = RecordsSearch(
-        index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
-    result = dict()
-
-    try:
-        search_instance, _qs_kwargs = item_search_with_limit(
-            None, record_search, None, size)
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError as e:
@@ -1596,6 +1659,7 @@ def get_files_from_metadata(record):
     @param record:
     @return:
     """
+    current_app.logger.debug("record: {}".format(record))
     files = OrderedDict()
     for key in record:
         meta_data = record.get(key)
@@ -1606,11 +1670,20 @@ def get_files_from_metadata(record):
                 if f.get("version_id"):
                     files[f["version_id"]] = f
             break
+    current_app.logger.debug("files: {}".format(files))
     return files
 
 
 def to_files_js(record):
-    """List files in a deposit."""
+    """List files in a deposit.
+
+    Args:
+        record (WekoDeposit): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    current_app.logger.debug("type: {}".format(type(record))) 
     res = []
     files = record.files or []
     files_content_dict = {}
@@ -1623,7 +1696,7 @@ def to_files_js(record):
     # Get files form meta_data, so that you can append any extra info to files
     # (which not contained by file_bucket) such as license below
     files_from_meta = get_files_from_metadata(record)
-
+    
     # get file with order similar metadata
     files_content = []
     for _k, f in files_from_meta.items():
@@ -1869,6 +1942,7 @@ def validate_user_mail_and_index(request_data):
     :param request_data:
     :return:
     """
+    # current_app.logger.error("request_data:{}".format(request_data))
     users = request_data.get('user_to_check', [])
     keys = request_data.get('user_key_to_check', [])
     auto_set_index_action = request_data.get('auto_set_index_action', False)
@@ -1960,6 +2034,7 @@ def hide_meta_data_for_role(record):
 
     # Admin users
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+
     roles = current_user.roles if current_user else []
     for role in list(roles):
         if role.name in supers:
@@ -2142,7 +2217,7 @@ def get_options_and_order_list(item_type_id, item_type_mapping=None,
     return meta_options, item_type_mapping
 
 
-def hide_table_row_for_csv(table_row, hide_key):
+def hide_table_row(table_row, hide_key):
     """Get Options by item type id.
 
     :param hide_key:
@@ -2197,6 +2272,7 @@ def set_validation_message(item, cur_lang):
     :param cur_lang: current language.
     :return: item, set validationMessage attribute for item.
     """
+    # current_app.logger.error("item:{}".format(item))
     i18n = 'validationMessage_i18n'
     message_attr = 'validationMessage'
     if i18n in item and cur_lang:
@@ -2210,6 +2286,9 @@ def translate_validation_message(item_property, cur_lang):
     :param cur_lang: .
     :return: .
     """
+    # current_app.logger.error("item_property:{}".format(item_property))
+    # current_app.logger.error("cur_lang:{}".format(cur_lang))
+    
     items_attr = 'items'
     properties_attr = 'properties'
     if isExistKeyInDict(items_attr, item_property):
@@ -2338,12 +2417,18 @@ def get_ranking(settings):
         result = QueryRecordViewReportHelper.get(
             start_date=start_date,
             end_date=end_date,
-            agg_size=settings.display_rank,
+            agg_size=settings.display_rank + WEKO_ITEMS_UI_RANKING_BUFFER,
             agg_sort={'value': 'desc'},
             ranking=True)
-        if not pid_value_permissions:
-            pid_value_permissions = parse_ranking_record(
-                get_new_items_by_date(start_date, end_date, ranking=True))
+
+        
+        record_id_list = [item['record_id']  for item in result['all']]
+        hidden_items = find_hidden_items(record_id_list, check_creator_permission=True)
+
+        for item in result['all']:
+            if item['record_id'] not in hidden_items:
+                pid_value_permissions.append(item['pid_value'])
+
         permission_ranking(result, pid_value_permissions, settings.display_rank,
                            'all', 'pid_value')
         rankings['most_reviewed_items'] = \
@@ -2359,12 +2444,24 @@ def get_ranking(settings):
             end_date=end_date,
             target_report='3',
             unit='Item',
-            agg_size=settings.display_rank,
+            agg_size=settings.display_rank + WEKO_ITEMS_UI_RANKING_BUFFER,
             agg_sort={'_count': 'desc'},
             ranking=True)
-        if not pid_value_permissions:
-            pid_value_permissions = parse_ranking_record(
-                get_new_items_by_date(start_date, end_date, ranking=True))
+
+        
+        _tmp = [item['col1']  for item in result['data']]
+        for pid_value in _tmp:
+            rec = WekoRecord.get_record_by_pid(pid_value)
+            record_id_list.append(rec.id)
+        
+        hidden_items = find_hidden_items(record_id_list, check_creator_permission=True)
+        pid_value_permissions = []
+        for pid_value in _tmp:
+            rec = WekoRecord.get_record_by_pid(pid_value)
+            _id = str(rec.id)
+            if _id not in hidden_items:
+                pid_value_permissions.append(pid_value)
+        
         permission_ranking(result, pid_value_permissions, settings.display_rank,
                            'data', 'col1')
         rankings['most_downloaded_items'] = \
@@ -2381,6 +2478,7 @@ def get_ranking(settings):
             unit='User',
             agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
+        
         rankings['created_most_items_user'] = \
             parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='data',
@@ -2391,35 +2489,37 @@ def get_ranking(settings):
         result = QuerySearchReportHelper.get(
             start_date=start_date,
             end_date=end_date,
-            agg_size=settings.display_rank + 1,
+            agg_size=settings.display_rank ,
             agg_sort={'value': 'desc'}
         )
+
         rankings['most_searched_keywords'] = \
             parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='all',
                                   title_key='search_key', count_key='count')
 
     # new_items
-    # if settings.rankings['new_items']:
-    #    new_item_start_date = (
-    #        end_date_original
-    #        - timedelta(
-    #            days=int(settings.new_item_period) - 1
-    #        )
-    #    )
-    #    if new_item_start_date < start_date_original:
-    #        new_item_start_date = start_date
-    #    result = get_new_items_by_date(
-    #        new_item_start_date,
-    #        end_date)
-    #    rankings['new_items'] = \
-    #        parse_ranking_results(result, settings.display_rank,
-    #                              list_name='all', title_key='record_name',
-    #                              pid_key='pid_value', date_key='create_date')
-
-    # new_items
     if settings.rankings['new_items']:
-        result = get_latest_items(10)
+        new_item_start_date = (
+            end_date_original
+            - timedelta(
+                days=int(settings.new_item_period) - 1
+            )
+        )
+        if new_item_start_date < start_date_original:
+            new_item_start_date = start_date
+        result = get_new_items_by_date(
+            new_item_start_date,
+            end_date)
+
+        item_id_list = [item["_id"] for item in result['hits']['hits']]
+        hidden_items = find_hidden_items(item_id_list,check_creator_permission=True)
+
+        for item_id in hidden_items:
+            for index, item in enumerate(result['hits']['hits']):
+                if item_id == item['_id']:
+                    del result['hits']['hits'][index]
+
         rankings['new_items'] = \
             parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='all', title_key='record_name',
@@ -2429,10 +2529,13 @@ def get_ranking(settings):
 
 
 def __sanitize_string(s: str):
-    """Sanitize string.
+    """Sanitize control characters without '\x09', '\x0a', '\x0d' and '0x7f'.
 
-    :param s:
-    :return:
+    Args:
+        s (str): target string
+
+    Returns:
+        str: sanitized string
     """
     s = s.strip()
     sanitize_str = ""
@@ -2443,10 +2546,11 @@ def __sanitize_string(s: str):
 
 
 def sanitize_input_data(data):
-    """Sanitize the input data.
+    """Sanitize control characters without '\x09', '\x0a', '\x0d' and '0x7f'.
 
-    :param data: input data.
-    """
+    Args:
+        data (dict or list): target dict or list
+    """    
     if isinstance(data, dict):
         for k, v in data.items():
             if isinstance(v, str):
@@ -2473,6 +2577,7 @@ def save_title(activity_id, request_data):
     item_type_id = db_activity.workflow.itemtype.id
     if item_type_id:
         item_type_mapping = Mapping.get_record(item_type_id)
+        # current_app.logger.debug("item_type_mapping:{}".format(item_type_mapping))
         key, key_child = get_key_title_in_item_type_mapping(item_type_mapping)
     if key and key_child:
         title = get_title_in_request(request_data, key, key_child)
@@ -2600,19 +2705,35 @@ def get_ignore_item(_item_type_id, item_type_mapping=None,
     return ignore_list
 
 
-def make_stats_csv_with_permission(item_type_id, recids,
+def make_stats_file_with_permission(item_type_id, recids,
                                    records_metadata, permissions):
-    """Prepare CSV data for each Item Types.
+    """Prepare TSV/CSV data for each Item Types.
+
+    Args:
+        item_type_id (_type_): ItemType ID
+        recids (_type_): List records ID
+        records_metadata (_type_): _description_
+        permissions (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """                                   
+    """
 
     Arguments:
-        item_type_id    -- ItemType ID
-        recids          -- List records ID
+        item_type_id    -- 
+        recids          -- 
     Returns:
         ret             -- Key properties
         ret_label       -- Label properties
         records.attr_output -- Record data
 
     """
+    # current_app.logger.error("item_type_id:{}".format(item_type_id))
+    # current_app.logger.error("recids:{}".format(recids))
+    # current_app.logger.error("records_metadata:{}".format(records_metadata))
+    # current_app.logger.error("records_metadata:{}".format(type(records_metadata)))
+    # current_app.logger.error("permissions:{}".format(permissions))
     from weko_records_ui.utils import check_items_settings, hide_by_email
     from weko_records_ui.views import escape_newline, escape_str
 
@@ -2862,11 +2983,7 @@ def make_stats_csv_with_permission(item_type_id, recids,
                             str(idx)))
                         key_label.insert(0, '.ファイルパス[{}]'.format(
                             str(idx)))
-                        if key_data[key_index]:
-                            key_data.insert(0, 'recid_{}/{}'.format(str(
-                                self.cur_recid), key_data[key_index]))
-                        else:
-                            key_data.insert(0, '')
+                        key_data.insert(0, '')
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
                             and len(item_key_split) == 2:
@@ -2985,6 +3102,9 @@ def make_stats_csv_with_permission(item_type_id, recids,
         labels = []
         for recid in recids:
             records.cur_recid = recid
+            # print("item.get(type):{}".format(item.get('type')))
+            # print("item_key:{}".format(item_key))
+            # print("records.attr_data[item_key]: {}".format(records.attr_data[item_key]))
             if item.get('type') == 'array':
                 key, label, data = records.get_subs_item(
                     item_key,
@@ -3015,9 +3135,12 @@ def make_stats_csv_with_permission(item_type_id, recids,
                     keys = [item_key]
                 if not labels:
                     labels = [item.get('title')]
-                data = records.attr_data[item_key].get(recid) or ['']
-                records.attr_output[recid].extend(
-                    data.get("attribute_value", ""))
+                data = records.attr_data[item_key].get(recid) or {}
+                attr_val = data.get("attribute_value", "")
+                if isinstance(attr_val,str):
+                    records.attr_output[recid].append(attr_val)
+                else:
+                    records.attr_output[recid].extend(attr_val)
 
         new_keys = []
         for key in keys:
@@ -3077,11 +3200,17 @@ def check_item_is_being_edit(
         activity=None):
     """Check an item is being edit.
 
-    @param recid:
-    @param post_workflow:
-    @param activity:
-    @return: True: editing, False: available
+    Args:
+        recid (PersistentIdentifier): _description_
+        post_workflow (Activity, optional): _description_. Defaults to None.
+        activity (activity:<weko_workflow.api.WorkActivity, optional): _description_. Defaults to None.
+
+    Returns:
+        bool: True: editing, False: available
     """
+    # current_app.logger.error("recid:{}".format(recid))
+    # current_app.logger.error("post_workflow:{}".format(post_workflow))
+    # current_app.logger.error("activity:{}".format(activity))
     if not activity:
         activity = WorkActivity()
     if not post_workflow:
@@ -3109,7 +3238,7 @@ def check_item_is_being_edit(
             return True
 
         pv = PIDVersioning(child=recid)
-        latest_pid = PIDVersioning(parent=pv.parent).get_children(
+        latest_pid = PIDVersioning(parent=pv.parent,child=recid).get_children(
             pid_status=PIDStatus.REGISTERED
         ).filter(PIDRelation.relation_type == 2).order_by(
             PIDRelation.index.desc()).first()
@@ -3127,9 +3256,12 @@ def check_item_is_being_edit(
 def check_item_is_deleted(recid):
     """Check an item is deleted.
 
-    @param recid:
-    @return: True: deleted, False: available
-    """
+    Args:
+        recid (str): recid or object_uuid of recid
+
+    Returns:
+        bool: True: deleted, False: available
+    """    
     pid = PersistentIdentifier.query.filter_by(
         pid_type='recid', pid_value=recid).first()
     if not pid:
@@ -3140,7 +3272,15 @@ def check_item_is_deleted(recid):
 
 def permission_ranking(result, pid_value_permissions, display_rank, list_name,
                        pid_value):
-    """Permission ranking."""
+    """Permission ranking.
+
+    Args:
+        result (_type_): _description_
+        pid_value_permissions (_type_): _description_
+        display_rank (_type_): _description_
+        list_name (_type_): _description_
+        pid_value (_type_): _description_
+    """                       
     list_result = list()
     for data in result.get(list_name, []):
         if data.get(pid_value, '') in pid_value_permissions:

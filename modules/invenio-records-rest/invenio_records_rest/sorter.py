@@ -20,7 +20,7 @@ https://www.elastic.co/guide/en/elasticsearch/reference/2.4/search-request-sort.
 
 from __future__ import absolute_import, print_function
 
-import copy
+import pickle
 
 import six
 from flask import current_app, request
@@ -94,7 +94,7 @@ def eval_field(field, asc, nested_sorting=None):
             return field
         else:
             # Field should only have one key and must have an order subkey.
-            field = copy.deepcopy(field)
+            field = pickle.loads(pickle.dumps(field, -1))
             key = list(field.keys())[0]
             field[key]['order'] = reverse_order(field[key]['order'])
             return field
@@ -104,7 +104,7 @@ def eval_field(field, asc, nested_sorting=None):
         key, key_asc = parse_sort_field(field)
         if not asc:
             key_asc = not key_asc
-        
+
         sorting = {key: {'order': 'asc' if key_asc else 'desc',
                          'unmapped_type': 'long'}}
 

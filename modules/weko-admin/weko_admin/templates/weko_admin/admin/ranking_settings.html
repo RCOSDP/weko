@@ -35,6 +35,7 @@
 <div class="panel">
     <div class="panel-body">
         <form method="POST" name="ranking_settings_form" action={{url_for('rankingsettings.index')}}>
+            {{ form.csrf_token }}
         <table style="width:80%">
             <tbody>
                 <tr>

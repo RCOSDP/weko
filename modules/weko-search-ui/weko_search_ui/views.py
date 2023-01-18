@@ -28,7 +28,10 @@ from flask import Blueprint, current_app, flash, jsonify, render_template, reque
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
+from invenio_db import db
+from invenio_pidstore.models import PIDStatus, PersistentIdentifier
 from invenio_i18n.ext import current_i18n
+from sqlalchemy.sql.expression import func
 from weko_admin.models import AdminSettings
 from weko_admin.utils import get_search_setting
 from weko_gridlayout.utils import (
@@ -69,7 +72,7 @@ blueprint = Blueprint(
 )
 
 blueprint_api = Blueprint(
-    "weko_search_ui",
+    "weko_search_api",
     __name__,
     template_folder="templates",
     static_folder="static",
@@ -98,7 +101,8 @@ def search():
 
         comm = GetCommunity.get_community_by_id(request.args.get("community"))
         ctx = {"community": comm}
-        community_id = comm.id
+        if comm is not None:
+            community_id = comm.id
 
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
@@ -113,7 +117,8 @@ def search():
     sort_options, display_number = SearchSetting.get_results_setting()
 
     ts = time.time()
-    disply_setting = dict(size=display_number, timestamp=ts)
+    # disply_setting = dict(size=display_number, timestamp=ts)
+    disply_setting = dict(size=display_number)
 
     detail_condition = get_search_detail_keyword("")
 
@@ -237,7 +242,8 @@ def search():
                 if index_info:
                     index_display_format = index_info.display_format
                     if index_display_format == "2":
-                        disply_setting = dict(size=100, timestamp=ts)
+                        disply_setting = dict(size=100)
+                        # disply_setting = dict(size=100, timestamp=ts)
 
         index_link_list = get_index_link_list()
         # Get Facet search setting.
@@ -393,3 +399,38 @@ def gettitlefacet():
     titles, order = get_title_facets()
     result = {"status": True, "data": {"titles": titles, "order": order}}
     return jsonify(result), 200
+
+
+@blueprint_api.route('/get_last_item_id', methods=['GET'])
+def get_last_item_id():
+    """Get last item id."""
+    result = {"last_id": ""}
+    try:
+        data = db.session.query(
+            func.max(
+                func.to_number(
+                    PersistentIdentifier.pid_value,
+                    current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+                )
+            )
+        ).filter(
+            PersistentIdentifier.status == PIDStatus.REGISTERED,
+            PersistentIdentifier.pid_type == 'recid',
+            PersistentIdentifier.pid_value.notlike("%.%")
+        ).one_or_none()
+        if data[0]:
+            result["last_id"] = str(data[0])
+    except Exception as ex:
+        current_app.logger.error(ex)
+    return jsonify(data=result), 200
+
+@blueprint.teardown_request
+@blueprint_api.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_search_ui dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

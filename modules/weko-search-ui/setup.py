@@ -60,11 +60,11 @@ install_requires = [
     "Flask-Assets>=0.12",
     "ipaddress>=1.0.19",
     "angular-gettext-babel>=0.3",
-    "elasticsearch_dsl<6.2.0,>=6.0.0",
+    # "elasticsearch-dsl<7.0.0,>=6.0.0",
     "invenio-assets>=1.0.0b7",
     "invenio-db>=1.0.0b9",
     "invenio-records-rest>=1.0.0b3",
-    "invenio-search>=1.0.0b4",
+    # "invenio-search>=1.0.0b4",
     "bagit>=1.7.0",
 ]
 

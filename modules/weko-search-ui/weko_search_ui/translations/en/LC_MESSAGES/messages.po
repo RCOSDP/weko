@@ -56,7 +56,7 @@ msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:94
 #: weko_search_ui/utils.py:482
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:46
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:50
 msgid "Internal server error"
 msgstr ""
 
@@ -68,18 +68,18 @@ msgstr ""
 
 #: weko_search_ui/utils.py:497
 msgid ""
-"The CSV file was not found in the specified file {}. Check if the "
+"The tsv/csv file was not found in the specified file {}. Check if the "
 "directory structure is correct."
 msgstr ""
 
 #: weko_search_ui/utils.py:560
 msgid ""
 "There is an error in the format of the first line of the header of the "
-"CSV file."
+"{} file."
 msgstr ""
 
 #: weko_search_ui/utils.py:576
-msgid "The item type ID specified in the CSV file does not exist."
+msgid "The item type ID specified in the {} file does not exist."
 msgstr ""
 
 #: weko_search_ui/utils.py:583
@@ -95,7 +95,7 @@ msgid "The item does not consistent with the specified item type.<br/>{}"
 msgstr ""
 
 #: weko_search_ui/utils.py:625
-msgid "Cannot read csv file correctly."
+msgid "Cannot read {} file correctly."
 msgstr ""
 
 #: weko_search_ui/utils.py:644
@@ -106,7 +106,7 @@ msgstr ""
 
 #: weko_search_ui/utils.py:651
 msgid ""
-"The CSV file could not be read. Make sure the file format is CSV and that"
+"The {} file could not be read. Make sure the file format is {} and that"
 " the file is UTF-8 encoded."
 msgstr ""
 
@@ -156,6 +156,10 @@ msgstr ""
 
 #: weko_search_ui/utils.py:1352
 msgid "Both of IndexID and POS_INDEX are not being set."
+msgstr ""
+
+#: weko_search_ui/utils.py:2470
+msgid "ID is specified for the newly registered item. Ignore the ID and register."
 msgstr ""
 
 #: weko_search_ui/utils.py:1426
@@ -244,7 +248,7 @@ msgstr ""
 #: weko_search_ui/utils.py:2714
 msgid ""
 "The file specified in ({}) does not exist.<br/>The file will not be "
-"updated. Update only the metadata with csv contents."
+"updated. Update only the metadata with csv/tsv contents."
 msgstr ""
 
 #: weko_search_ui/utils.py:2833
@@ -765,24 +769,34 @@ msgstr "Is the input contents discarded?"
 #~ msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/admin/export.html:40
-msgid "Export all item"
+msgid "The last item ID"
 msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/admin/export.html:41
+msgid "Filter"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:44
+msgid "Export item"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:45
 msgid "Download URL"
 msgstr ""
 
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:43
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:47
 msgid "Export message"
 msgstr "Are you sure you want to export all items?"
 
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:43
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:51
 msgid "Cancel export message"
 msgstr "Are you sure you want to cancel process of exporting all items?"
 
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:44
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:48
 msgid "Execute"
 msgstr ""
+
+
 
 msgid "import_error_msg_is_withdraw_doi"
 msgstr "This DOI was withdrawn. Please input another DOI."
@@ -802,3 +816,7 @@ msgstr ""
 
 msgid "DOI granting item(s) are including in the deletion items.<br/>DOI granting item(s) cannot be deleted without withdrawing the DOI.<br/>Do you want to continue deleting items that are not grant DOI?"
 msgstr ""
+
+msgid "Your role cannot register items in this index."
+msgstr ""
+

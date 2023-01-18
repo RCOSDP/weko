@@ -886,7 +886,7 @@ msgid "Rankings"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:91
-msgid "The Most Viewed Items"
+msgid "Most Viewed Items"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:102

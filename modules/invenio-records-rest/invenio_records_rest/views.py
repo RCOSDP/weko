@@ -10,7 +10,7 @@
 
 from __future__ import absolute_import, print_function
 
-import copy
+import pickle
 import inspect
 import traceback
 import uuid
@@ -146,6 +146,16 @@ def create_blueprint(endpoints):
         __name__,
         url_prefix='',
     )
+    
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+        current_app.logger.debug("invenio_records_rest dbsession_clean: {}".format(exception))
+        if exception is None:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+        db.session.remove()
 
     error_handlers_registry = defaultdict(dict)
     for endpoint, options in endpoints.items():
@@ -829,7 +839,7 @@ class SuggestResource(MethodView):
             val = request.values.get(k)
             if val:
                 # Get completion suggestions
-                opts = copy.deepcopy(self.suggesters[k])
+                opts = pickle.loads(pickle.dumps(self.suggesters[k], -1))
 
                 if 'context' in opts.get('completion', {}):
                     ctx_field = opts['completion']['context']
@@ -865,7 +875,7 @@ class SuggestResource(MethodView):
                 for resp in response[field]:
                     for op in resp['options']:
                         if 'payload' in op:
-                            op['_source'] = copy.deepcopy(op['payload'])
+                            op['_source'] = pickle.loads(pickle.dumps(op['payload'], -1))
         elif ES_VERSION[0] >= 5:
             response = s.execute().to_dict()['suggest']
 

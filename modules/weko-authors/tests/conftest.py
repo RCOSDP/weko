@@ -19,25 +19,63 @@
 # MA 02111-1307, USA.
 
 """Pytest configuration."""
-
-import os
+import os,sys
 import shutil
 import tempfile
+import json
+from os.path import dirname, join
+
+from elasticsearch import Elasticsearch
+from sqlalchemy import inspect
 
 import pytest
-from flask import Flask, request
+from flask import Flask, url_for, Response
 from flask_babelex import Babel
-from invenio_db import InvenioDB, db
-from invenio_accounts import InvenioAccounts
-from invenio_accounts.testutils import create_test_user
+from sqlalchemy_utils.functions import create_database, database_exists
+
 from invenio_access import InvenioAccess
-from simplekv.memory.redisstore import RedisStore
-from sqlalchemy import inspect
-from sqlalchemy_utils.functions import create_database, database_exists, \
-    drop_database
+from invenio_access.models import ActionUsers,ActionRoles
+from invenio_accounts import InvenioAccounts
+from invenio_accounts.models import User, Role
+from invenio_accounts.testutils import create_test_user, login_user_via_session
+
+from invenio_admin import InvenioAdmin
+from invenio_assets import InvenioAssets
+from invenio_cache import InvenioCache
+from invenio_communities.models import Community
+from invenio_db import InvenioDB, db as db_
+from invenio_files_rest import InvenioFilesREST
+from invenio_files_rest.models import Location
+from invenio_indexer import InvenioIndexer
+from invenio_search import InvenioSearch,RecordsSearch
+from weko_search_ui import WekoSearchUI
+from weko_index_tree.models import Index
 
 from weko_authors.views import blueprint_api
 from weko_authors import WekoAuthors
+from weko_authors.models import Authors, AuthorsPrefixSettings
+
+sys.path.append(os.path.dirname(__file__))
+
+class TestSearch(RecordsSearch):
+    """Test record search."""
+
+    class Meta:
+        """Test configuration."""
+
+        index = 'records'
+        doc_types = None
+
+    def __init__(self, **kwargs):
+        """Add extra options."""
+        super(TestSearch, self).__init__(**kwargs)
+        self._extra.update(**{'_source': {'excludes': ['_access']}})
+
+
+@pytest.yield_fixture(scope='session')
+def search_class():
+    """Search class."""
+    yield TestSearch
 
 
 @pytest.yield_fixture()
@@ -48,26 +86,93 @@ def instance_path():
     shutil.rmtree(path)
 
 
+class MockEs():
+    def __init__(self,**keywargs):
+        self.indices = self.MockIndices()
+        self.es = Elasticsearch()
+        self.cluster = self.MockCluster()
+    def index(self, id="",version="",version_type="",index="",doc_type="",body="",**arguments):
+        pass
+    def delete(self,id="",index="",doc_type="",**kwargs):
+        return Response(response=json.dumps({}),status=500)
+    @property
+    def transport(self):
+        return self.es.transport
+    class MockIndices():
+        def __init__(self,**keywargs):
+            self.mapping = dict()
+        def delete(self,index="", ignore=""):
+            pass
+        def delete_template(self,index=""):
+            pass
+        def create(self,index="",body={},ignore=""):
+            self.mapping[index] = body
+        def put_alias(self,index="", name="", ignore=""):
+            pass
+        def put_template(self,name="", body={}, ignore=""):
+            pass
+        def refresh(self,index=""):
+            pass
+        def exists(self, index="", **kwargs):
+            if index in self.mapping:
+                return True
+            else:
+                return False
+        def flush(self,index="",wait_if_ongoing=""):
+            pass
+        def delete_alias(self, index="", name="",ignore=""):
+            pass
+        
+        # def search(self,index="",doc_type="",body={},**kwargs):
+        #     pass
+    class MockCluster():
+        def __init__(self,**kwargs):
+            pass
+        def health(self, wait_for_status="", request_timeout=0):
+            pass
+
+
 @pytest.fixture()
-def base_app(instance_path, request):
+def base_app(instance_path,search_class):
     """Flask application fixture."""
     app_ = Flask('testapp', instance_path=instance_path)
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
+        SERVER_NAME='app',
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #    'SQLALCHEMY_DATABASE_URI',
+        #    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
         SQLALCHEMY_DATABASE_URI=os.environ.get(
-           'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
+        INDEX_IMG='indextree/36466818-image.jpg',
+        SEARCH_UI_SEARCH_INDEX='tenant1-weko',
         WEKO_AUTHORS_AFFILIATION_IDENTIFIER_ITEM_OTHER=4,
         WEKO_AUTHORS_LIST_SCHEME_AFFILIATION=[
             'ISNI', 'GRID', 'Ringgold', 'kakenhi', 'Other'],
+        CELERY_ALWAYS_EAGER=True,
+        CELERY_CACHE_BACKEND="memory",
+        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_RESULT_BACKEND="cache",
+        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_DB='0',
+        CACHE_REDIS_HOST="redis",
     )
     Babel(app_)
     InvenioDB(app_)
+    InvenioCache(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
+    InvenioAdmin(app_)
+    InvenioAssets(app_)
+    InvenioIndexer(app_)
+    InvenioFilesREST(app_)
+    
+    search = InvenioSearch(app_, client=MockEs())
+    search.register_mappings(search_class.Meta.index, 'mock_module.mapping')
     WekoAuthors(app_)
-    _database_setup(app_, request)
+    WekoSearchUI(app_)
 
     # app_.register_blueprint(blueprint)
     app_.register_blueprint(blueprint_api, url_prefix='/api/authors')
@@ -81,25 +186,16 @@ def app(base_app):
         yield base_app
 
 
-def _database_setup(app, request):
-    """Set up the database."""
-    with app.app_context():
-        if not database_exists(str(db.engine.url)):
-            create_database(str(db.engine.url))
-        db.create_all()
-
-    def teardown():
-        with app.app_context():
-            if database_exists(str(db.engine.url)):
-                drop_database(str(db.engine.url))
-            # Delete sessions in kvsession store
-            if hasattr(app, 'kvsession_store') and \
-                    isinstance(app.kvsession_store, RedisStore):
-                app.kvsession_store.redis.flushall()
-
-    request.addfinalizer(teardown)
-
-    return app
+@pytest.yield_fixture()
+def db(app):
+    """Database fixture."""
+    if not database_exists(str(db_.engine.url)):
+        create_database(str(db_.engine.url))
+    db_.create_all()
+    yield db_
+    db_.session.remove()
+    db_.drop_all()
+    # drop_database(str(db_.engine.url))
 
 
 @pytest.yield_fixture()
@@ -110,6 +206,181 @@ def client(app):
 
 
 @pytest.fixture()
+def users(app, db):
+    """Create users."""
+    ds = app.extensions['invenio-accounts'].datastore
+    user_count = User.query.filter_by(email='user@test.org').count()
+    if user_count != 1:
+        user = create_test_user(email='user@test.org')
+        contributor = create_test_user(email='contributor@test.org')
+        comadmin = create_test_user(email='comadmin@test.org')
+        repoadmin = create_test_user(email='repoadmin@test.org')
+        sysadmin = create_test_user(email='sysadmin@test.org')
+        generaluser = create_test_user(email='generaluser@test.org')
+        originalroleuser = create_test_user(email='originalroleuser@test.org')
+        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
+        student = create_test_user(email='student@test.org')
+    else:
+        user = User.query.filter_by(email='user@test.org').first()
+        contributor = User.query.filter_by(email='contributor@test.org').first()
+        comadmin = User.query.filter_by(email='comadmin@test.org').first()
+        repoadmin = User.query.filter_by(email='repoadmin@test.org').first()
+        sysadmin = User.query.filter_by(email='sysadmin@test.org').first()
+        generaluser = User.query.filter_by(email='generaluser@test.org')
+        originalroleuser = create_test_user(email='originalroleuser@test.org')
+        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
+        student = User.query.filter_by(email='student@test.org').first()
+        
+    role_count = Role.query.filter_by(name='System Administrator').count()
+    if role_count != 1:
+        sysadmin_role = ds.create_role(name='System Administrator')
+        repoadmin_role = ds.create_role(name='Repository Administrator')
+        contributor_role = ds.create_role(name='Contributor')
+        comadmin_role = ds.create_role(name='Community Administrator')
+        general_role = ds.create_role(name='General')
+        originalrole = ds.create_role(name='Original Role')
+        studentrole = ds.create_role(name='Student')
+    else:
+        sysadmin_role = Role.query.filter_by(name='System Administrator').first()
+        repoadmin_role = Role.query.filter_by(name='Repository Administrator').first()
+        contributor_role = Role.query.filter_by(name='Contributor').first()
+        comadmin_role = Role.query.filter_by(name='Community Administrator').first()
+        general_role = Role.query.filter_by(name='General').first()
+        originalrole = Role.query.filter_by(name='Original Role').first()
+        studentrole = Role.query.filter_by(name='Student').first()
+
+    ds.add_role_to_user(sysadmin, sysadmin_role)
+    ds.add_role_to_user(repoadmin, repoadmin_role)
+    ds.add_role_to_user(contributor, contributor_role)
+    ds.add_role_to_user(comadmin, comadmin_role)
+    ds.add_role_to_user(generaluser, general_role)
+    ds.add_role_to_user(originalroleuser, originalrole)
+    ds.add_role_to_user(originalroleuser2, originalrole)
+    ds.add_role_to_user(originalroleuser2, repoadmin_role)
+    ds.add_role_to_user(student,studentrole)
+
+    # Assign access authorization
+    with db.session.begin_nested():
+        action_users = [
+            ActionUsers(action='superuser-access', user=sysadmin),
+        ]
+        db.session.add_all(action_users)
+        action_roles = [
+            ActionRoles(action='superuser-access', role=sysadmin_role),
+            ActionRoles(action='admin-access', role=repoadmin_role),
+            ActionRoles(action='schema-access', role=repoadmin_role),
+            ActionRoles(action='index-tree-access', role=repoadmin_role),
+            ActionRoles(action='indextree-journal-access', role=repoadmin_role),
+            ActionRoles(action='item-type-access', role=repoadmin_role),
+            ActionRoles(action='item-access', role=repoadmin_role),
+            ActionRoles(action='files-rest-bucket-update', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-delete', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-delete-version', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-read', role=repoadmin_role),
+            ActionRoles(action='search-access', role=repoadmin_role),
+            ActionRoles(action='detail-page-acces', role=repoadmin_role),
+            ActionRoles(action='download-original-pdf-access', role=repoadmin_role),
+            ActionRoles(action='author-access', role=repoadmin_role),
+            ActionRoles(action='items-autofill', role=repoadmin_role),
+            ActionRoles(action='stats-api-access', role=repoadmin_role),
+            ActionRoles(action='read-style-action', role=repoadmin_role),
+            ActionRoles(action='update-style-action', role=repoadmin_role),
+            ActionRoles(action='detail-page-acces', role=repoadmin_role),
+
+            ActionRoles(action='admin-access', role=comadmin_role),
+            ActionRoles(action='index-tree-access', role=comadmin_role),
+            ActionRoles(action='indextree-journal-access', role=comadmin_role),
+            ActionRoles(action='item-access', role=comadmin_role),
+            ActionRoles(action='files-rest-bucket-update', role=comadmin_role),
+            ActionRoles(action='files-rest-object-delete', role=comadmin_role),
+            ActionRoles(action='files-rest-object-delete-version', role=comadmin_role),
+            ActionRoles(action='files-rest-object-read', role=comadmin_role),
+            ActionRoles(action='search-access', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='download-original-pdf-access', role=comadmin_role),
+            ActionRoles(action='author-access', role=comadmin_role),
+            ActionRoles(action='items-autofill', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+
+            ActionRoles(action='item-access', role=contributor_role),
+            ActionRoles(action='files-rest-bucket-update', role=contributor_role),
+            ActionRoles(action='files-rest-object-delete', role=contributor_role),
+            ActionRoles(action='files-rest-object-delete-version', role=contributor_role),
+            ActionRoles(action='files-rest-object-read', role=contributor_role),
+            ActionRoles(action='search-access', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='download-original-pdf-access', role=contributor_role),
+            ActionRoles(action='author-access', role=contributor_role),
+            ActionRoles(action='items-autofill', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+        ]
+        db.session.add_all(action_roles)
+    index = Index()
+    db.session.add(index)
+    db.session.commit()
+    comm = Community.create(community_id="comm01", role_id=sysadmin_role.id,
+                            id_user=sysadmin.id, title="test community",
+                            description=("this is test community"),
+                            root_node_id=index.id)
+    db.session.commit()
+    #return [
+    #    {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
+    #    {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
+    #    {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
+    #    {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
+    #    {'email': generaluser.email, 'id': generaluser.id, 'obj': generaluser},
+    #    {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
+    #    {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
+    #    {'email': user.email, 'id': user.id, 'obj': user},
+    #    {'email': student.email,'id': student.id, 'obj': student}
+    #]
+    return [
+        {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
+        {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
+        {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
+        {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
+        {'email': generaluser.email, 'id': generaluser.id, 'obj': generaluser},
+        {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
+        {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
+        {'email': user.email, 'id': user.id, 'obj': user},
+        {'email': student.email,'id': student.id, 'obj': student}
+    ]
+
+
+@pytest.fixture()
+def id_prefix(client, users):
+    """Create test prefix."""
+    # login for create prefix
+    login_user_via_session(client=client, email=users[2]['email'])
+    input = {'name': 'testprefix', 'scheme': 'testprefix',
+             'url': 'https://testprefix/##'}
+    client.put('/api/authors/add_prefix',
+               data=json.dumps(input),
+               content_type='application/json')
+    client.get(url_for('security.logout'))
+    authors_prefix = AuthorsPrefixSettings.query.filter_by(
+                        name='testprefix').first()
+    return authors_prefix.id
+
+
+@pytest.fixture()
+def create_author(db):
+    def _create_author(data, next_id):
+        with db.session.begin_nested():
+            # new_id = Authors.get_sequence(db.session)
+            new_id = next_id
+            data["id"] = str(new_id)
+            data["pk_id"] = str(new_id)
+            author = Authors(id=new_id, json=data)
+            db.session.add(author)
+        return new_id
+
+    # Return new author's id
+    return _create_author
+
+
 def user():
     """Create a example user."""
     return create_test_user(email='test@test.org')
@@ -119,3 +390,56 @@ def object_as_dict(obj):
     """Make a dict from SQLAlchemy object."""
     return {c.key: getattr(obj, c.key)
             for c in inspect(obj).mapper.column_attrs}
+
+
+def json_data(filename):
+    with open(join(dirname(__file__),filename), "r") as f:
+        return json.load(f)
+
+
+@pytest.fixture()
+def authors(db):
+    datas = json_data("data/author.json")
+    returns = list()
+    for data in datas:
+        returns.append(Authors(
+            gather_flg=0,
+            is_deleted=False,
+            json=json.dumps(data)
+        ))
+    
+    db.session.add_all(returns)
+    db.session.commit()
+    return returns
+
+
+@pytest.fixture()
+def prefix_settings(db):
+    weko = AuthorsPrefixSettings(
+        id=1,
+        name="WEKO",
+        scheme="WEKO"
+    )
+    orcid = AuthorsPrefixSettings(
+        id=2,
+        name="ORCID",
+        scheme="ORCID",
+        url="https://orcid.org/##"
+    )
+    db.session.add(weko)
+    db.session.add(orcid)
+    db.session.commit()
+    return {"weko":weko,"orcid":orcid}
+
+
+@pytest.fixture()
+def location(app,db):
+    """Create default location."""
+    tmppath = tempfile.mkdtemp()
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name='local', uri=tmppath, default=True)
+        db.session.add(loc)
+    db.session.commit()
+    return loc
+

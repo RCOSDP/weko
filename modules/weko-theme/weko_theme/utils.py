@@ -108,7 +108,8 @@ def get_community_id(getargs):  # TODO: Use this to refactor
         from weko_workflow.api import GetCommunity
         comm = GetCommunity.get_community_by_id(getargs.get('community'))
         ctx = {'community': comm}
-        community_id = comm.id
+        if comm is not None:
+            community_id = comm.id
     return community_id, ctx
 
 
@@ -118,9 +119,13 @@ def get_design_layout(repository_id):
     There will only be one page or main layout per repository which has the
     main contents widget. This returns the page, or if the main layout contains
     the main contents widget, render_widgets remains True.
-    :param repository_id
-    :returns page, render_widgets
-    """
+
+    Args:
+        repository_id (_type_): _description_
+
+    Returns:
+        _type_: page, render_widgets
+    """    
     if not repository_id:
         return None, False
 
@@ -282,6 +287,7 @@ class MainScreenInitDisplaySetting:
                     "q": init_disp_index,
                     "size": display_number,
                     "timestamp": time.time(),
+                    "is_search": 1,
                 },
                 "journal_info": get_journal_info(init_disp_index),
                 "allow_item_exporting": export_settings.allow_item_exporting,

@@ -107,8 +107,10 @@ class ExportView(BaseView):
         data = get_export_url()
         if data.get('file_uri'):
             file_instance = FileInstance.get_by_uri(data.get('file_uri'))
+            file_name = WEKO_AUTHORS_EXPORT_FILE_NAME + '.' + \
+                current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
             return file_instance.send_file(
-                WEKO_AUTHORS_EXPORT_FILE_NAME,
+                file_name,
                 mimetype='application/octet-stream',
                 as_attachment=True
             )

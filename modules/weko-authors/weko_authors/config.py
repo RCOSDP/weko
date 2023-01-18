@@ -23,10 +23,10 @@
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 
 WEKO_AUTHORS_LIST_SCHEME = ['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID',
-                            'kakenhi', 'Ringgold', 'GRID', 'Other']
+                            'kakenhi', 'Ringgold', 'GRID', 'ROR', 'Other']
 """ List of Author Name Identifier Scheme """
 
-WEKO_AUTHORS_INDEX_ITEM_OTHER = 9
+WEKO_AUTHORS_INDEX_ITEM_OTHER = 10
 """ Item other index """
 
 WEKO_AUTHORS_LIST_SCHEME_AFFILIATION = [
@@ -61,11 +61,11 @@ WEKO_AUTHORS_EXPORT_ENTRYPOINTS = {
     'check_status': '/admin/authors/export/check_status'
 }
 
-WEKO_AUTHORS_EXPORT_FILE_NAME = 'Creator_export_all.csv'
+WEKO_AUTHORS_EXPORT_FILE_NAME = 'Creator_export_all'
 WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY = 'weko_authors_export_status'
 WEKO_AUTHORS_EXPORT_CACHE_URL_KEY = 'weko_authors_exported_url'
 
-WEKO_AUTHORS_CSV_MAPPING = [
+WEKO_AUTHORS_FILE_MAPPING = [
     {
         'label_en': 'WEKO ID',
         'label_jp': 'WEKO ID',

@@ -90,7 +90,6 @@ def prepare_response(pid_value, fd=True):
     :return:
     """
     fn = request.view_args.get("filename")
-
     flst = FilesMetadata.get_records(pid_value)
     for fj in flst:
         if fj.dumps().get("display_name") == fn:

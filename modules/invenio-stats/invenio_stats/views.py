@@ -7,6 +7,7 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """InvenioStats views."""
+import uuid
 
 import calendar
 from datetime import datetime, timedelta
@@ -17,6 +18,7 @@ from flask import Blueprint, abort, current_app, jsonify, request
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_rest.views import ContentNegotiatedMethodView
+from invenio_db import db
 
 from . import config
 from .errors import InvalidRequestInputError, UnknownQueryError
@@ -345,9 +347,15 @@ class QueryFileStatsCount(WekoQuery):
         unknown_download = 0
         unknown_preview = 0
 
+        # get root_file_id for general file download/preview event
         if not root_file_id:
             obv = ObjectVersion.get(bucket_id, file_key)
-            root_file_id = str(obv.root_file_id) if obv else None
+            root_file_id = str(obv.root_file_id) if obv else ''
+        # get root_file_id for url file download/preview event
+        if not root_file_id and '{URL_SLASH}' in file_key:
+            file_key = file_key.replace('{URL_SLASH}', '/')
+            file_id_key = '{}_{}'.format(bucket_id, file_key)
+            root_file_id = str(uuid.uuid3(uuid.NAMESPACE_URL, file_id_key))
 
         params = {'bucket_id': bucket_id,
                   'file_key': file_key,
@@ -365,18 +373,24 @@ class QueryFileStatsCount(WekoQuery):
             })
 
         try:
-            # file download
-            query_download_total_cfg = current_stats.queries[
-                'bucket-file-download-total']
-            query_download_total = query_download_total_cfg.query_class(
-                **query_download_total_cfg.query_config)
-            res_download_total = query_download_total.run(**params)
-            # file preview
-            query_preview_total_cfg = current_stats.queries[
-                'bucket-file-preview-total']
-            query_preview_total = query_preview_total_cfg.query_class(
-                **query_preview_total_cfg.query_config)
-            res_preview_total = query_preview_total.run(**params)
+            try:
+                # file download
+                query_download_total_cfg = current_stats.queries[
+                    'bucket-file-download-total']
+                query_download_total = query_download_total_cfg.query_class(
+                    **query_download_total_cfg.query_config)
+                res_download_total = query_download_total.run(**params)
+            except Exception as e:
+                res_download_total = {'value': 0, 'buckets': []}
+            try:
+                # file preview
+                query_preview_total_cfg = current_stats.queries[
+                    'bucket-file-preview-total']
+                query_preview_total = query_preview_total_cfg.query_class(
+                    **query_preview_total_cfg.query_config)
+                res_preview_total = query_preview_total.run(**params)
+            except Exception as e:
+                res_preview_total = {'value': 0, 'buckets': []}
             # total
             result['download_total'] = res_download_total['value']
             result['preview_total'] = res_preview_total['value']
@@ -697,3 +711,13 @@ blueprint.add_url_rule(
     '/<string:event>/<int:year>/<int:month>',
     view_func=common_reports,
 )
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("invenio_stats dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

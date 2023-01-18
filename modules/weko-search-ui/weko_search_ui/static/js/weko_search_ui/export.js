@@ -1,4 +1,8 @@
-const export_all_label = document.getElementById("export_all").value;
+const last_item_id_label = document.getElementById("last_item_id").value;
+const add_filter_label = document.getElementById("add_filter").value;
+const item_type_label = document.getElementById("item_type").value;
+const item_id_label = document.getElementById("item_id").value;
+const export_item_label = document.getElementById("export_item").value;
 const download_url_label = document.getElementById("download_url").value;
 const export_label = document.getElementById("export").value;
 const export_messaage = document.getElementById("export_messaage").value;
@@ -6,6 +10,8 @@ const cancel_messaage = document.getElementById("cancel_messaage").value;
 const run_label = document.getElementById("run").value;
 const cancel_label = document.getElementById("cancel").value;
 const celery_not_run = document.getElementById("celery_not_run").value;
+const error_get_lstItemType = document.getElementById("error_get_lstItemType").value;
+const error_get_lastItemId = document.getElementById("error_get_lastItemId").value;
 
 const urlExportAll = window.location.origin + '/admin/items/bulk-export/export_all'
 const urlExportStatus = window.location.origin + '/admin/items/bulk-export/check_export_status'
@@ -45,6 +51,7 @@ class ExportComponent extends React.Component {
     super()
     this.state = {
       show: false,
+      esportRunMessage: "",
       exportStatus: false,
       uriStatus: false,
       checkExportSttInterval: null,
@@ -52,8 +59,16 @@ class ExportComponent extends React.Component {
       isDisableExport: false,
       isDisableCancel: true,
       isExport: false,
-      confirmMessage: ""
+      confirmMessage: "",
+      last_item_id: "",
+      item_types: null,
+      selected_item_type: '-1',
+      item_id_range: ""
     }
+    this.getLastItemId = this.getLastItemId.bind(this);
+    this.getListItemType = this.getListItemType.bind(this);
+    this.InputItemIdChange = this.InputItemIdChange.bind(this);
+    this.SelectItemTypeChange = this.SelectItemTypeChange.bind(this);
     this.handleExport = this.handleExport.bind(this);
     this.handleCancel = this.handleCancel.bind(this);
     this.handleClose = this.handleClose.bind(this);
@@ -62,7 +77,60 @@ class ExportComponent extends React.Component {
   }
 
   componentDidMount() {
+    this.getLastItemId();
+    this.getListItemType();
     this.checkExportStatus();
+  }
+
+  getLastItemId() {
+    const that = this;
+    $.ajax({
+      url: "/api/get_last_item_id",
+      type: 'GET',
+      dataType: "json",
+      success: function (response) {
+        if (response.data) {
+          that.setState({ last_item_id: response.data.last_id });
+        }
+      },
+      error: function (error) {
+        console.log(error);
+        alert(error_get_lastItemId);
+      }
+    });
+  }
+
+  getListItemType() {
+    const that = this;
+    $.ajax({
+      url: "/api/itemtypes/lastest?type=all_type",
+      type: 'GET',
+      dataType: "json",
+      success: function (data) {
+        data = [
+          null,
+          ...data
+        ];
+        that.setState({ item_types: data });
+      },
+      error: function (error) {
+        console.log(error);
+        alert(error_get_lstItemType);
+      }
+    });
+  }
+
+  SelectItemTypeChange(event) {
+    const me = this;
+    me.setState({ selected_item_type: event.target.value });
+  }
+
+  InputItemIdChange(event) {
+    const me = this;
+    let reg_value = event.target.value.match('[0-9]*-?[0-9]*');
+    if (reg_value) {
+      me.setState({ item_id_range: reg_value[0] });
+    }
   }
 
   handleExecute() {
@@ -113,10 +181,20 @@ class ExportComponent extends React.Component {
 
   handleExport() {
     const me = this;
+    const {
+      selected_item_type,
+      item_id_range,
+    } = me.state
     closeError();
     $.ajax({
       url: urlExportAll,
-      type: 'GET',
+      type: 'POST',
+      data: JSON.stringify({
+        item_type_id: selected_item_type,
+        item_id_range: item_id_range
+      }),
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
       success: function () {
         me.setState({
           isDisableExport: true,
@@ -150,6 +228,7 @@ class ExportComponent extends React.Component {
             });
           }
           me.setState({
+            esportRunMessage: response.data.export_run_msg,
             exportStatus: response.data.export_status,
             uriStatus: response.data.uri_status,
             isDisableExport: response.data.export_status || !response.data.celery_is_run,
@@ -162,10 +241,12 @@ class ExportComponent extends React.Component {
               '&times;</button>' + celery_not_run + '</div>');
           }
           if (response.data.error_message) {
+            if(response.data.error_message.length>0){
             $('#errors').append(
               '<div class="alert alert-danger alert-dismissable">' +
               '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
               '&times;</button>' + response.data.error_message + '</div>');
+            }
           }
         }
       },
@@ -189,23 +270,60 @@ class ExportComponent extends React.Component {
       show,
       isDisableExport,
       isDisableCancel,
+      esportRunMessage,
       exportStatus,
       uriStatus,
-      confirmMessage
+      confirmMessage,
+      last_item_id,
+      item_types,
+      selected_item_type,
+      item_id_range,
     } = this.state
+    const select_options = item_types && item_types.map(it => {
+      if (it === null) {
+        return <option value={'-1'} selected={true}>All</option>
+      } else {
+        return <option value={it.id} selected={it.id === selected_item_type}>{it.name} ({it.id})</option>
+      }
+    });
+
     return (
       <div className="export_component">
         <div className="row layout">
           <div className="col-xs-12">
             <div className="row">
               <div className="col-xs-12">
-                <label>{export_all_label}</label>
+                <label>{last_item_id_label}: {last_item_id}</label>
+              </div>
+            </div>
+            <br/>
+            <div className="row">
+              <div className="col-xs-12">
+                <label>{add_filter_label}</label>
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-xs-12 text-center">
+                <div class="form-inline">
+                  <label>{item_type_label}: </label>
+                  <select disabled={isDisableExport} class="form-control" onChange={this.SelectItemTypeChange}>{select_options}</select>&nbsp;
+                  <label>{item_id_label}: </label>
+                  <input disabled={isDisableExport} class="form-control" type="text" id="item_id_range" pattern="[0-9]*-[0-9]*" onChange={this.InputItemIdChange} value={item_id_range} placeholder="e.g.: 50 or 1-100 or 1- or -100"/>
+                </div>
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-xs-12">
+                <label>{export_item_label}</label>
               </div>
             </div>
             <div className="row">
               <div className="col-xs-12 text-center">
                 <button disabled={isDisableExport} variant="primary" type="button" className="btn btn-primary" onClick={() => this.handleConfirm(true)}>{export_label}</button>
                 <button disabled={isDisableCancel} variant="secondary" type="button" className="btn btn-primary cancel" onClick={() => this.handleConfirm(false)}>{cancel_label}</button>
+              </div>
+              <div className="col-xs-12">
+                <label>{esportRunMessage}</label>
               </div>
             </div>
             <div className="row">

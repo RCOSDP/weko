@@ -21,18 +21,21 @@
 """Weko Search-UI admin."""
 
 import codecs
-import copy
 import json
 import os
 import tempfile
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
+import pickle
 
 from blinker import Namespace
 from celery import chord
 from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
+from flask_login import current_user
+from flask_wtf import FlaskForm
+from weko_admin.api import validate_csrf_header
 from invenio_files_rest.models import FileInstance
 from invenio_i18n.ext import current_i18n
 from weko_admin.api import TempDirInfo
@@ -82,8 +85,8 @@ from .utils import (
     get_tree_items,
     handle_get_all_sub_id_and_name,
     handle_workflow,
-    make_stats_csv,
-    make_csv_by_line,
+    make_stats_file,
+    make_file_by_line,
 )
 
 _signals = Namespace()
@@ -245,7 +248,8 @@ class ItemManagementBulkSearch(BaseView):
 
             comm = GetCommunity.get_community_by_id(request.args.get("community"))
             ctx = {"community": comm}
-            community_id = comm.id
+            if comm is not None:
+                community_id = comm.id
 
         # Get index style
         style = IndexStyle.get(
@@ -317,17 +321,43 @@ class ItemImportView(BaseView):
         workflow = WorkFlow()
         workflows = workflow.get_workflow_list()
         workflows_js = [get_content_workflow(item) for item in workflows]
+        
+        form =FlaskForm(request.form)
 
         return self.render(
-            WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, workflows=json.dumps(workflows_js)
+            WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
+            workflows=json.dumps(workflows_js),
+            file_format=current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower(),
+            form=form
         )
 
     @expose("/check", methods=["POST"])
     def check(self) -> jsonify:
         """Validate item import."""
+        
+        validate_csrf_header(request)
+        
         data = request.form
         file = request.files["file"] if request.files else None
 
+        role_ids = []
+        can_edit_indexes = []
+        if current_user and current_user.is_authenticated:
+            for role in current_user.roles:
+                if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
+                    role_ids = []
+                    can_edit_indexes = [0]
+                    break
+                else:
+                    role_ids.append(role.id)
+        if role_ids:
+            from invenio_communities.models import Community
+            comm_data = Community.query.filter(
+                Community.id_role.in_(role_ids)
+            ).all()
+            for comm in comm_data:
+                can_edit_indexes += [i.cid for i in Indexes.get_self_list(comm.root_node_id)]
+            can_edit_indexes = list(set(can_edit_indexes))
         if data and file:
             temp_path = (
                 tempfile.gettempdir()
@@ -344,6 +374,8 @@ class ItemImportView(BaseView):
                     data.get("is_change_identifier") == "true",
                     request.host_url,
                     current_i18n.language,
+                    False,
+                    can_edit_indexes
                 ),
             )
         return jsonify(code=1, check_import_task_id=task.task_id)
@@ -371,21 +403,22 @@ class ItemImportView(BaseView):
         """Download report check result."""
         data = request.get_json()
         now = str(datetime.date(datetime.now()))
+        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
-        file_name = "check_" + now + ".csv"
+        file_name = "check_{}.{}".format(now, file_format)
         if data:
-            csv_file = make_stats_csv(
+            output_file = make_stats_file(
                 data.get("list_result"), WEKO_IMPORT_CHECK_LIST_NAME
             )
             return Response(
-                csv_file.getvalue(),
-                mimetype="text/csv",
+                output_file.getvalue(),
+                mimetype="text/{}".format(file_format),
                 headers={"Content-disposition": "attachment; filename=" + file_name},
             )
         else:
             return Response(
                 [],
-                mimetype="text/csv",
+                mimetype="text/{}".format(file_format),
                 headers={"Content-disposition": "attachment; filename=" + file_name},
             )
 
@@ -394,10 +427,12 @@ class ItemImportView(BaseView):
         """Import item into System."""
         data = request.get_json() or {}
         data_path = data.get("data_path")
+        user_id = current_user.get_id() if current_user else 1
         request_info = {
             "remote_addr": request.remote_addr,
             "referrer": request.referrer,
             "hostname": request.host,
+            "user_id": user_id
         }
         # update temp dir expire to 1 day from now
         expire = datetime.now() + timedelta(days=1)
@@ -455,6 +490,9 @@ class ItemImportView(BaseView):
                     if task.successful() or task.failed()
                     else ""
                 )
+                item_id = task_item.get("item_id", None)
+                if not item_id and task.result:
+                    item_id = task.result.get("recid", None)
                 result.append(
                     dict(
                         **{
@@ -463,7 +501,7 @@ class ItemImportView(BaseView):
                             "start_date": start_date,
                             "end_date": task_item.get("end_date") or end_date,
                             "task_id": task_id,
-                            "item_id": task_item.get("item_id"),
+                            "item_id": item_id,
                         }
                     )
                 )
@@ -483,18 +521,19 @@ class ItemImportView(BaseView):
         data = request.get_json()
         now = str(datetime.date(datetime.now()))
 
-        file_name = "List_Download " + now + ".csv"
+        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+        file_name = "List_Download {}.{}".format(now, file_format)
         if data:
-            csv_file = make_stats_csv(data.get("list_result"), WEKO_IMPORT_LIST_NAME)
+            output_file = make_stats_file(data.get("list_result"), WEKO_IMPORT_LIST_NAME)
             return Response(
-                csv_file.getvalue(),
-                mimetype="text/csv",
+                output_file.getvalue(),
+                mimetype="text/{}".format(file_format),
                 headers={"Content-disposition": "attachment; filename=" + file_name},
             )
         else:
             return Response(
                 [],
-                mimetype="text/csv",
+                mimetype="text/{}".format(file_format),
                 headers={"Content-disposition": "attachment; filename=" + file_name},
             )
 
@@ -507,26 +546,27 @@ class ItemImportView(BaseView):
     @expose("/export_template", methods=["POST"])
     def export_template(self):
         """Download item type template."""
+        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         file_name = None
-        csv_file = None
+        output_file = None
         data = request.get_json()
         if data:
             item_type_id = int(data.get("item_type_id", 0))
             if item_type_id > 0:
                 item_type = ItemTypes.get_by_id(id_=item_type_id, with_deleted=True)
                 if item_type:
-                    file_name = "{}({}).csv".format(
-                        item_type.item_type_name.name, item_type.id
+                    file_name = "{}({}).{}".format(
+                        item_type.item_type_name.name, item_type.id, file_format
                     )
                     item_type_line = [
                         "#ItemType",
                         "{}({})".format(item_type.item_type_name.name, item_type.id),
                         "{}items/jsonschema/{}".format(request.url_root, item_type.id),
                     ]
-                    ids_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_ID)
-                    names_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_NAME)
+                    ids_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_ID, -1))
+                    names_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_NAME, -1))
                     systems_line = ["#"] + ["" for _ in range(len(ids_line) - 1)]
-                    options_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_OPTION)
+                    options_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_OPTION, -1))
 
                     item_type = item_type.render
                     meta_list = {
@@ -631,7 +671,7 @@ class ItemImportView(BaseView):
                                 options_line.append(
                                     ", ".join(list(set(root_option + _option)))
                                 )
-                    csv_file = make_csv_by_line(
+                    output_file = make_file_by_line(
                         [
                             item_type_line,
                             ids_line,
@@ -642,13 +682,13 @@ class ItemImportView(BaseView):
                     )
         return Response(
             []
-            if not csv_file
+            if not output_file
             else codecs.BOM_UTF8.decode("utf8")
             + codecs.BOM_UTF8.decode()
-            + csv_file.getvalue(),
-            mimetype="text/csv",
+            + output_file.getvalue(),
+            mimetype="text/{}".format(file_format),
             headers={
-                "Content-type": "text/csv; charset=utf-8",
+                "Content-type": "text/{}; charset=utf-8".format(file_format),
                 "Content-disposition": "attachment; "
                 + (
                     "filename=" if not file_name else urlencode({"filename": file_name})
@@ -672,6 +712,7 @@ class ItemImportView(BaseView):
             )
 
 
+
 class ItemBulkExport(BaseView):
     """BaseView for Admin Export."""
 
@@ -684,36 +725,54 @@ class ItemBulkExport(BaseView):
         """
         _cache_prefix = current_app.config["WEKO_ADMIN_CACHE_PREFIX"]
         _msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_MSG"]
-        _msg_key = _cache_prefix.format(name=_msg_config)
+        _msg_key = _cache_prefix.format(
+            name=_msg_config,
+            user_id=current_user.get_id()
+        )
         reset_redis_cache(_msg_key, "")
         return self.render(WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE)
 
-    @expose("/export_all", methods=["GET"])
+    @expose("/export_all", methods=["POST"])
     def export_all(self):
         """Export all items."""
+        data = request.get_json()
+        user_id = current_user.get_id()
         _task_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_TASK"]
         _cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
-            name=_task_config
+            name=_task_config,
+            user_id=user_id
         )
-        export_status, download_uri, message = get_export_status()
+        export_status, download_uri, message, run_message = get_export_status()
 
         if not export_status:
-            export_task = export_all_task.apply_async(args=(request.url_root,))
+            export_task = export_all_task.apply_async(args=(request.url_root, user_id, data))
             reset_redis_cache(_cache_key, str(export_task.task_id))
 
-        return Response(status=200)
-
-    @expose("/check_export_status", methods=["GET"])
-    def check_export_status(self):
-        """Check export status."""
+        # return Response(status=200)
         check = check_celery_is_run()
-        export_status, download_uri, message = get_export_status()
+        export_status, download_uri, message, run_message = get_export_status()
         return jsonify(
             data={
                 "export_status": export_status,
                 "uri_status": True if download_uri else False,
                 "celery_is_run": check,
                 "error_message": message,
+                "export_run_msg": run_message,
+            }
+        )
+
+    @expose("/check_export_status", methods=["GET"])
+    def check_export_status(self):
+        """Check export status."""
+        check = check_celery_is_run()
+        export_status, download_uri, message, run_message = get_export_status()
+        return jsonify(
+            data={
+                "export_status": export_status,
+                "uri_status": True if download_uri else False,
+                "celery_is_run": check,
+                "error_message": message,
+                "export_run_msg": run_message,
             }
         )
 
@@ -728,7 +787,7 @@ class ItemBulkExport(BaseView):
 
         path: it was load from FileInstance
         """
-        export_status, download_uri, message = get_export_status()
+        export_status, download_uri, message, run_message = get_export_status()
         if not export_status and download_uri is not None:
             file_instance = FileInstance.get_by_uri(download_uri)
             return file_instance.send_file(

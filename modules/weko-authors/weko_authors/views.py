@@ -354,36 +354,39 @@ def mapping():
                     return affiliation_scheme, affiliation_uri
 
         affiliation_info = _source.get('affiliationInfo')
-        for affiliation_data in affiliation_info:
-            identifier_info = affiliation_data.get('identifierInfo')
-            affiliation_name_info = affiliation_data.get('affiliationNameInfo')
-            affiliation_tmp = {
-                'affiliationNameIdentifiers': [], 'affiliationNames': []}
+        if affiliation_info:
+            for affiliation_data in affiliation_info:
+                identifier_info = affiliation_data.get('identifierInfo')
+                affiliation_name_info = affiliation_data.get('affiliationNameInfo')
+                affiliation_tmp = {
+                    'affiliationNameIdentifiers': [], 'affiliationNames': []}
 
-            for identifier_data in identifier_info:
-                if identifier_data.get('identifierShowFlg') == 'true':
-                    scheme, uri = get_affiliation_name_identifier(
-                        int(identifier_data['affiliationIdType']))
-                    _affiliation_id = identifier_data.get('affiliationId')
-                    if _affiliation_id and uri:
-                        uri = re.sub(
-                            "#+$", _affiliation_id, uri, 1)
-                    identifier_tmp = {
-                        'affiliationNameIdentifier': _affiliation_id,
-                        'affiliationNameIdentifierScheme': scheme,
-                        'affiliationNameIdentifierURI': uri
-                    }
-                    affiliation_tmp['affiliationNameIdentifiers'].append(
-                        identifier_tmp)
+                for identifier_data in identifier_info:
+                    if identifier_data.get('affiliationId'):
+                        if identifier_data.get('identifierShowFlg') == 'true':
+                            scheme, uri = get_affiliation_name_identifier(
+                                int(identifier_data['affiliationIdType']))
+                            _affiliation_id = identifier_data.get('affiliationId')
+                            if _affiliation_id and uri:
+                                uri = re.sub(
+                                    "#+$", _affiliation_id, uri, 1)
+                            identifier_tmp = {
+                                'affiliationNameIdentifier': _affiliation_id,
+                                'affiliationNameIdentifierScheme': scheme,
+                                'affiliationNameIdentifierURI': uri
+                            }
+                            affiliation_tmp['affiliationNameIdentifiers'].append(
+                                identifier_tmp)
 
-            for af_name_data in affiliation_name_info:
-                if af_name_data.get('affiliationNameShowFlg') == 'true':
-                    affiliation_name = af_name_data.get('affiliationName')
-                    af_name_lang = af_name_data.get('affiliationNameLang')
-                    af_name_tmp = {'affiliationName': affiliation_name,
-                                   'affiliationNameLang': af_name_lang}
-                    affiliation_tmp['affiliationNames'].append(af_name_tmp)
-            res['creatorAffiliations'].append(affiliation_tmp)
+                for af_name_data in affiliation_name_info:
+                    if af_name_data.get('affiliationName'):
+                        if af_name_data.get('affiliationNameShowFlg') == 'true':
+                            affiliation_name = af_name_data.get('affiliationName')
+                            af_name_lang = af_name_data.get('affiliationNameLang')
+                            af_name_tmp = {'affiliationName': affiliation_name,
+                                        'affiliationNameLang': af_name_lang}
+                            affiliation_tmp['affiliationNames'].append(af_name_tmp)
+                res['creatorAffiliations'].append(affiliation_tmp)
 
     # get author data
     author_id = data.get('id', '')
@@ -647,3 +650,15 @@ def create_affiliation():
                 {'code': 400, 'msg': 'Specified scheme is already exist.'})
     except Exception:
         return jsonify({'code': 204, 'msg': 'Failed'})
+
+
+@blueprint.teardown_request
+@blueprint_api.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko-authors dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

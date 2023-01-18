@@ -1,0 +1,132 @@
+{
+  "date": ["pubdate"],
+  "system_file.URI.@value": ["system_file.subitem_systemfile_filename_uri"],
+  "system_file.URI.@attributes.label": [
+    "system_file.subitem_systemfile_filename_label"
+  ],
+  "system_file.URI.@attributes.objectType": [
+    "system_file.subitem_systemfile_filename_type"
+  ],
+  "system_file.date.@value": ["system_file.subitem_systemfile_datetime_date"],
+  "system_file.date.@attributes.dateType": [
+    "system_file.subitem_systemfile_datetime_type"
+  ],
+  "system_file.extent.@value": ["system_file.subitem_systemfile_size"],
+  "system_file.version.@value": ["system_file.subitem_systemfile_version"],
+  "system_file.mimeType.@value": ["system_file.subitem_systemfile_mimetype"],
+  "title.@value": [
+    "item_1551264308487.subitem_1551255647225",
+    "item_15512643084872.subitem_15512556472252"
+  ],
+  "title.@attributes.xml:lang": [
+    "item_1551264308487.subitem_1551255648112",
+    "item_15512643084872.subitem_1551255648112"
+  ],
+  "alternative.@value": ["item_1551264326373.subitem_1551255720400"],
+  "alternative.@attributes.xml:lang": [
+    "item_1551264326373.subitem_1551255721061"
+  ],
+  "creator.givenName.@value": [
+    "item_1551264340087.subitem_1551255991424.subitem_1551256006332"
+  ],
+  "creator.givenName.@attributes.xml:lang": [
+    "item_1551264340087.subitem_1551255991424.subitem_1551256007414"
+  ],
+  "creator.familyName.@value": [
+    "item_1551264340087.subitem_1551255929209.subitem_1551255938498"
+  ],
+  "creator.familyName.@attributes.xml:lang": [
+    "item_1551264340087.subitem_1551255929209.subitem_1551255964991"
+  ],
+  "creator.affiliation.nameIdentifier.@value": [
+    "item_1551264340087.subitem_1551256087090.subitem_1551256089084.subitem_1551256097891"
+  ],
+  "creator.affiliation.nameIdentifier.@attributes.nameIdentifierURI": [
+    "item_1551264340087.subitem_1551256087090.subitem_1551256089084.subitem_1551256147368"
+  ],
+  "creator.affiliation.nameIdentifier.@attributes.nameIdentifierScheme": [
+    "item_1551264340087.subitem_1551256087090.subitem_1551256089084.subitem_1551256145018"
+  ],
+  "creator.affiliation.affiliationName.@value": [
+    "item_1551264340087.subitem_1551256087090.subitem_1551256229037.subitem_1551256259183"
+  ],
+  "creator.affiliation.affiliationName.@attributes.xml:lang": [
+    "item_1551264340087.subitem_1551256087090.subitem_1551256229037.subitem_1551256259899"
+  ],
+  "creator.creatorName.@value": [
+    "item_1551264340087.subitem_1551255898956.subitem_1551255905565"
+  ],
+  "creator.creatorName.@attributes.xml:lang": [
+    "item_1551264340087.subitem_1551255898956.subitem_1551255907416"
+  ],
+  "creator.nameIdentifier.@value": [
+    "item_1551264340087.subitem_1551255789000.subitem_1551255793478"
+  ],
+  "creator.nameIdentifier.@attributes.nameIdentifierURI": [
+    "item_1551264340087.subitem_1551255789000.subitem_1551255795486"
+  ],
+  "creator.nameIdentifier.@attributes.nameIdentifierScheme": [
+    "item_1551264340087.subitem_1551255789000.subitem_1551255794292"
+  ],
+  "creator.creatorAlternative.@value": [
+    "item_1551264340087.subitem_1551256025394.subitem_1551256035730"
+  ],
+  "creator.creatorAlternative.@attributes.xml:lang": [
+    "item_1551264340087.subitem_1551256025394.subitem_1551256055588"
+  ],
+  "contributor.givenName.@value": [
+    "item_1551264418667.subitem_1551257339190.subitem_1551257342360"
+  ],
+  "contributor.givenName.@attributes.xml:lang": [
+    "item_1551264418667.subitem_1551257339190.subitem_1551257343979"
+  ],
+  "contributor.familyName.@value": [
+    "item_1551264418667.subitem_1551257272214.subitem_1551257314588"
+  ],
+  "contributor.familyName.@attributes.xml:lang": [
+    "item_1551264418667.subitem_1551257272214.subitem_1551257316910"
+  ],
+  "contributor.@attributes.contributorType": [
+    "item_1551264418667.subitem_1551257036415"
+  ],
+  "contributor.affiliation.nameIdentifier.@value": [
+    "item_1551264418667.subitem_1551257419251.subitem_1551257421633.subitem_1551261472867"
+  ],
+  "contributor.affiliation.nameIdentifier.@attributes.nameIdentifierURI": [
+    "item_1551264418667.subitem_1551257419251.subitem_1551257421633.subitem_1551261493409"
+  ],
+  "contributor.affiliation.nameIdentifier.@attributes.nameIdentifierScheme": [
+    "item_1551264418667.subitem_1551257419251.subitem_1551257421633.subitem_1551261485670"
+  ],
+  "contributor.affiliation.affiliationName.@value": [
+    "item_1551264418667.subitem_1551257419251.subitem_1551261534334.subitem_1551261542403"
+  ],
+  "contributor.affiliation.affiliationName.@attributes.xml:lang": [
+    "item_1551264418667.subitem_1551257419251.subitem_1551261534334.subitem_1551261546333"
+  ],
+  "contributor.nameIdentifier.@value": [
+    "item_1551264418667.subitem_1551257150927.subitem_1551257152742"
+  ],
+  "contributor.nameIdentifier.@attributes.nameIdentifierURI": [
+    "item_1551264418667.subitem_1551257150927.subitem_1551257228080"
+  ],
+  "contributor.nameIdentifier.@attributes.nameIdentifierScheme": [
+    "item_1551264418667.subitem_1551257150927.subitem_1551257172531"
+  ],
+  "contributor.contributorName.@value": [
+    "item_1551264418667.subitem_1551257245638.subitem_1551257276108"
+  ],
+  "contributor.contributorName.@attributes.xml:lang": [
+    "item_1551264418667.subitem_1551257245638.subitem_1551257279831"
+  ],
+  "contributor.contributorAlternative.@value": [
+    "item_1551264418667.subitem_1551257372442.subitem_1551257374288"
+  ],
+  "contributor.contributorAlternative.@attributes.xml:lang": [
+    "item_1551264418667.subitem_1551257372442.subitem_1551257375939"
+  ],
+  "accessRights.@value": ["item_1551264447183.subitem_1551257553743"],
+  "accessRights.@attributes.rdf:resource": [
+    "item_1551264447183.subitem_1551257578398"
+  ]
+}

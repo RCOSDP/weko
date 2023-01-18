@@ -51,6 +51,7 @@
   <div class="col-md-11">
     <div id="logAnalysis" class="table-responsive">
       <form id="log_analysis_form"  method="POST" action="{{url_for('loganalysissetting.index')}}" class="form-inline">
+        {{ form.csrf_token }}
         <table class="table table-bordered table-striped">
           <tr>
             <th class="column-header" colspan=2>{{_('Addresses to Filter')}}</th>

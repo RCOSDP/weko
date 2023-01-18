@@ -19,7 +19,7 @@
   #}
 
 {% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
-{% from "weko_records_ui/creator_detail_template.html" import output_creator_data %}
+{% from "weko_records_ui/creator_detail_template.html" import output_creator_data with context %}
 {% from "weko_records_ui/output_bibliographic_information_detail.html" import output_bibliographic_information %}
 {% macro output_item_detail(m_record,
                             m_files,
@@ -99,7 +99,7 @@
               {% endif %}
           {% endif %}
           {%- if 'is_thumbnail' in lst.keys() and lst.get('is_thumbnail') and m_files_thumbnail -%}
-            <tr>
+            <tr >
               <th scope="row"
                   colspan="6">{{ lst.get('attribute_name_i18n', _('Thumbnail')) }}</th>
               <td>

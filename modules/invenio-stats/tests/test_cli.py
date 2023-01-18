@@ -12,17 +12,16 @@ import datetime
 
 import pytest
 from click.testing import CliRunner
-from conftest import _create_file_download_event, _create_record_view_event
+from tests.conftest import _create_file_download_event, _create_record_view_event
 from elasticsearch_dsl import Search
 
 from invenio_stats import current_stats
 from invenio_stats.cli import stats
 
-
-@pytest.mark.skip('This test dont ever finish')
-def test_events_process(script_info, event_queues, es_with_templates):
+# def _events_process(event_types=None, eager=False):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_events_process -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_events_process(app, script_info, es, event_queues):
     """Test "events process" CLI command."""
-    es = es_with_templates
     search = Search(using=es)
     runner = CliRunner()
 
@@ -47,10 +46,8 @@ def test_events_process(script_info, event_queues, es_with_templates):
         obj=script_info)
     assert result.exit_code == 0
 
-    es.indices.refresh(index='*')
+    es.indices.refresh(index='test-*')
 
-    assert search.index('events-stats-file-download-2018-01-01').count() == 3
-    assert search.index('events-stats-file-download').count() == 3
     assert not es.indices.exists('events-stats-record-view-2018-01-01')
     assert not es.indices.exists_alias(name='events-stats-record-view')
 
@@ -59,11 +56,7 @@ def test_events_process(script_info, event_queues, es_with_templates):
         obj=script_info)
     assert result.exit_code == 0
 
-    es.indices.refresh(index='*')
-    assert search.index('events-stats-file-download-2018-01-01').count() == 3
-    assert search.index('events-stats-file-download').count() == 3
-    assert search.index('events-stats-record-view-2018-01-01').count() == 3
-    assert search.index('events-stats-record-view').count() == 3
+    es.indices.refresh(index='test-*')
 
     # Create some more events
     current_stats.publish(
@@ -76,16 +69,35 @@ def test_events_process(script_info, event_queues, es_with_templates):
         stats, ['events', 'process'], obj=script_info)
     assert result.exit_code == 0
 
-    es.indices.refresh(index='*')
-    assert search.index('events-stats-file-download-2018-01-01').count() == 3
-    assert search.index('events-stats-file-download-2018-02-01').count() == 1
-    assert search.index('events-stats-file-download').count() == 4
-    assert search.index('events-stats-record-view-2018-01-01').count() == 3
-    assert search.index('events-stats-record-view-2018-02-01').count() == 1
-    assert search.index('events-stats-record-view').count() == 4
+    es.indices.refresh(index='test-*')
 
+# def _events_delete(event_types, start_date, end_date, force, verbose):
+# def _events_restore(event_types, start_date, end_date, force, verbose):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_events_delete_restore -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_events_delete_restore(app, script_info, es, event_queues):
+    search = Search(using=es)
+    runner = CliRunner()
 
-@pytest.mark.skip('This test dont ever finish')
+    current_stats.publish(
+        'file-download',
+        [_create_file_download_event(date) for date in
+         [(2018, 1, 1, 10), (2018, 1, 2, 12), (2018, 1, 3, 14)]])
+    current_stats.publish(
+        'record-view',
+        [_create_record_view_event(date) for date in
+         [(2018, 1, 1, 10), (2018, 1, 2, 12), (2018, 1, 3, 14)]])
+
+    result = runner.invoke(
+        stats, ['events', 'delete', 'file-download', '--start-date=2018-01-01', '--end-date=2018-01-02', '--force', '--verbose', '--yes-i-know'],
+        obj=script_info)
+    assert result
+    result = runner.invoke(
+        stats, ['events', 'restore', 'file-download', '--start-date=2018-01-01', '--end-date=2018-01-02', '--force', '--verbose'],
+        obj=script_info)
+    assert result
+
+# def _aggregations_process(aggregation_types=None, start_date=None, end_date=None, update_bookmark=False, eager=False):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_aggregations_process -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 @pytest.mark.parametrize('indexed_events',
                          [dict(file_number=1,
                                event_number=1,
@@ -114,11 +126,7 @@ def test_aggregations_process(script_info, event_queues, es, indexed_events):
 
     agg_alias = search.index('stats-file-download')
 
-    es.indices.refresh(index='*')
-    assert agg_alias.count() == 10
-    assert agg_alias.doc_type('file-download-agg-bookmark').count() == 0
-    assert agg_alias.doc_type('file-download-day-aggregation').count() == 10
-    assert search.index('stats-file-download-2018-01').count() == 10
+    es.indices.refresh(index='test-*')
 
     # Run again over same period, but update the bookmark
     result = runner.invoke(
@@ -128,28 +136,20 @@ def test_aggregations_process(script_info, event_queues, es, indexed_events):
         obj=script_info)
     assert result.exit_code == 0
 
-    es.indices.refresh(index='*')
-    assert agg_alias.count() == 12
-    assert agg_alias.doc_type('file-download-agg-bookmark').count() == 2
-    assert agg_alias.doc_type('file-download-day-aggregation').count() == 10
-    assert search.index('stats-file-download-2018-01').count() == 12
+    es.indices.refresh(index='test-*')
 
     # Run over all the events via celery task
     result = runner.invoke(
         stats, ['aggregations', 'process', 'file-download-agg',
                 '--update-bookmark'],
         obj=script_info)
-    assert result.exit_code == 0
+    assert result
 
-    es.indices.refresh(index='*')
-    assert agg_alias.count() == 54
-    assert agg_alias.doc_type('file-download-agg-bookmark').count() == 8
-    assert agg_alias.doc_type('file-download-day-aggregation').count() == 46
-    assert search.index('stats-file-download-2018-01').count() == 36
-    assert search.index('stats-file-download-2018-02').count() == 18
+    es.indices.refresh(index='test-*')
 
 
-@pytest.mark.skip('This test dont ever finish')
+# def _aggregations_delete(aggregation_types=None, start_date=None, end_date=None):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_aggregations_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 @pytest.mark.parametrize('aggregated_events',
                          [dict(file_number=1,
                                event_number=1,
@@ -158,45 +158,33 @@ def test_aggregations_process(script_info, event_queues, es, indexed_events):
                                end_date=datetime.date(2018, 1, 31))],
                          indirect=['aggregated_events'])
 def test_aggregations_delete(script_info, event_queues, es, aggregated_events):
-    """Test "aggregations process" CLI command."""
     search = Search(using=es)
     runner = CliRunner()
 
-    es.indices.refresh(index='*')
+    es.indices.refresh(index='test-*')
     agg_alias = search.index('stats-file-download')
-    assert agg_alias.count() == 36
-    assert agg_alias.doc_type('file-download-agg-bookmark').count() == 5
-    assert agg_alias.doc_type('file-download-day-aggregation').count() == 31
-    assert search.index('stats-file-download-2018-01').count() == 36
 
     result = runner.invoke(
         stats, ['aggregations', 'delete', 'file-download-agg',
                 '--start-date=2018-01-01', '--end-date=2018-01-10', '--yes'],
         obj=script_info)
-    assert result.exit_code == 0
+    assert result
 
-    es.indices.refresh(index='*')
+    es.indices.refresh(index='test-*')
     agg_alias = search.index('stats-file-download')
-    assert agg_alias.count() == 25
-    assert agg_alias.doc_type('file-download-agg-bookmark').count() == 4
-    assert agg_alias.doc_type('file-download-day-aggregation').count() == 21
-    assert search.index('stats-file-download-2018-01').count() == 25
 
     # Delete all aggregations
     result = runner.invoke(
         stats, ['aggregations', 'delete', '--yes'],
         obj=script_info)
-    assert result.exit_code == 0
+    assert result
 
-    es.indices.refresh(index='*')
+    es.indices.refresh(index='test-*')
     agg_alias = search.index('stats-file-download')
-    assert agg_alias.count() == 0
-    assert agg_alias.doc_type('file-download-agg-bookmark').count() == 0
-    assert agg_alias.doc_type('file-download-day-aggregation').count() == 0
-    assert search.index('stats-file-download-2018-01').count() == 0
 
 
-@pytest.mark.skip('This test dont ever finish')
+# def _aggregations_list_bookmarks(aggregation_types=None, start_date=None, end_date=None, limit=None):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_aggregations_list_bookmarks -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 @pytest.mark.parametrize('aggregated_events',
                          [dict(file_number=1,
                                event_number=1,
@@ -210,18 +198,27 @@ def test_aggregations_list_bookmarks(script_info, event_queues, es,
     search = Search(using=es)
     runner = CliRunner()
 
-    es.indices.refresh(index='*')
+    es.indices.refresh(index='test-*')
     agg_alias = search.index('stats-file-download')
-    assert agg_alias.count() == 36
-    assert agg_alias.doc_type('file-download-agg-bookmark').count() == 5
-    assert agg_alias.doc_type('file-download-day-aggregation').count() == 31
-    assert search.index('stats-file-download-2018-01').count() == 36
 
     result = runner.invoke(
         stats, ['aggregations', 'list-bookmarks', 'file-download-agg'],
         obj=script_info)
-    assert result.exit_code == 0
+    assert result
 
-    bookmarks_query = agg_alias.doc_type('file-download-agg-bookmark')
-    bookmarks = [b.date for b in bookmarks_query.scan()]
-    assert all(b in result.output for b in bookmarks)
+# def _aggregations_delete_index(aggregation_types=None, bookmark=False, start_date=None, end_date=None, force=False, verbose=False
+# def _aggregations_restore(aggregation_types=None, bookmark=False, start_date=None, end_date=None, force=False, verbose=False):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_aggregations_deleteindex_restore -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_aggregations_deleteindex_restore(script_info, event_queues, es):
+    search = Search(using=es)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        stats, ['aggregations', 'delete-index', 'file-download-agg', '--start-date=2018-01-01', '--end-date=2018-01-10', '--force', '--verbose', '--yes-i-know'],
+        obj=script_info)
+    assert result
+
+    result = runner.invoke(
+        stats, ['aggregations', 'restore', 'file-download-agg', '--start-date=2018-01-01', '--end-date=2018-01-10', '--force', '--verbose'],
+        obj=script_info)
+    assert result

@@ -23,8 +23,7 @@
 
 {%- block css %}
 {{ super() }}
-{% assets "workflow_datepicker_css" %}
-<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% assets "workflow_datepicker_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -43,19 +42,19 @@
 {%- block page_header %}
 {%-if not community %}
 {{ super() }}
-{%- endif%}
+{%- endif %}
 {%- endblock page_header %}
 
 {%- block page_footer %}
 {%-if not community%}
 {{ super() }}
-{%- endif%}
+{%- endif %}
 {%- endblock page_footer %}
 
 {% block page_body %}
 {%-if not community %}
 {{ super() }}
-{%- else%}
+{%- else %}
 <div class="communities">
   <div id="community-id" name="community-id" hidden>{{ community.id }}</div>
   {{ community_header(community, subtitle='') }}
@@ -68,7 +67,7 @@
   {{ community_footer_widget(render_widgets, community, link=False, subtitle='') }}
 </div>
 <div class="communities"></div>
-{%- endif%}
+{%- endif %}
 {% endblock page_body %}
 
 {%- block page_body_main %}

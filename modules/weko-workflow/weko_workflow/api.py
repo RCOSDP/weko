@@ -181,7 +181,7 @@ class Flow(object):
                     flow_id=flow_id).one_or_none()
                 if flow:
                     # logical delete
-                    #flow.is_deleted = True
+                    # flow.is_deleted = True
                     # db.session.merge(flow)
                     # physical delete
                     _FlowAction.query.filter_by(flow_id=flow_id).delete()
@@ -237,10 +237,12 @@ class Flow(object):
                             'role_deny') if '0' != action.get(
                             'role') else False,
                         action_user=action.get(
-                            'user') if '0' != action.get('user') else None,
+                            'user') if '0' != action.get(
+                                'user') else None,
                         specify_property=None,
                         action_user_exclude=action.get(
-                            'user_deny') if '0' != action.get('user') else False
+                            'user_deny') if '0' != action.get(
+                                'user') else False
                     )
                 else:
                     flowactionrole = _FlowActionRole(
@@ -780,8 +782,9 @@ class WorkActivity(object):
         :return: activity ID.
         """
         # Table lock for calculate new activity id
-        db.session.execute(
-            'LOCK TABLE ' + _Activity.__tablename__ + ' IN EXCLUSIVE MODE')
+        if db.get_engine().driver!='pysqlite':
+            db.session.execute(
+                'LOCK TABLE ' + _Activity.__tablename__ + ' IN EXCLUSIVE MODE')
 
         # Calculate activity_id based on id
         utc_now = datetime.utcnow()
@@ -792,7 +795,9 @@ class WorkActivity(object):
         max_id = db.session.query(func.count(_Activity.id)).filter(
             _Activity.created >= '{}'.format(current_date_start),
             _Activity.created < '{}'.format(next_date_start),
-        ).scalar()  # Cannot use '.with_for_update()'. FOR UPDATE is not allowed with aggregate functions
+        ).scalar()  
+        # Cannot use '.with_for_update()'. FOR UPDATE is not allowed 
+        # with aggregate functions
 
         if max_id:
             # Calculate aid
@@ -838,14 +843,18 @@ class WorkActivity(object):
         :param action_status:
         :return:
         """
-        with db.session.begin_nested():
-            activity = self.get_activity_by_id(activity_id)
-            activity.action_id = action_id
-            activity.action_status = action_status
-            if action_order:
-                activity.action_order = action_order
-            db.session.merge(activity)
-        db.session.commit()
+        try:
+            with db.session.begin_nested():
+                activity = self.get_activity_by_id(activity_id)
+                activity.action_id = action_id
+                activity.action_status = action_status
+                if action_order:
+                    activity.action_order = action_order
+                db.session.merge(activity)
+            db.session.commit()
+            return True
+        except Exception as ex:
+            return False
 
     def upt_activity_metadata(self, activity_id, metadata):
         """Update metadata to activity table.
@@ -887,16 +896,20 @@ class WorkActivity(object):
         :param action_status:
         :return:
         """
-        with db.session.begin_nested():
-            query = ActivityAction.query.filter_by(
-                activity_id=activity_id,
-                action_id=action_id)
-            if action_order:
-                query = query.filter_by(action_order=action_order)
-            activity_action = query.first()
-            activity_action.action_status = action_status
-            db.session.merge(activity_action)
-        db.session.commit()
+        try:
+            with db.session.begin_nested():
+                query = ActivityAction.query.filter_by(
+                    activity_id=activity_id,
+                    action_id=action_id)
+                if action_order:
+                    query = query.filter_by(action_order=action_order)
+                activity_action = query.first()
+                activity_action.action_status = action_status
+                db.session.merge(activity_action)
+            db.session.commit()
+            return True
+        except Exception as ex:
+            return False
 
     def upt_activity_action_comment(self, activity_id, action_id, comment,
                                     action_order):
@@ -1119,9 +1132,13 @@ class WorkActivity(object):
             query = ActivityAction.query.filter_by(activity_id=activity_id,
                                                    action_id=action_id)
             if action_order:
-                query = query.filter_by(action_order=action_order)
-            activity_ac = query.first()
-            action_stus = activity_ac.action_status
+                query_with_order = query.filter_by(action_order=action_order)
+            activity_ac = query_with_order.first()
+            if activity_ac:
+                action_stus = activity_ac.action_status
+            else:
+                activity_ac = query.first()
+                action_stus = activity_ac.action_status
             return action_stus
 
     def upt_activity_item(self, activity, item_id):
@@ -1463,12 +1480,14 @@ class WorkActivity(object):
                         ),
                         and_(
                             _Activity.shared_user_id == self_user_id,
-                            _FlowActionRole.action_user != _Activity.activity_login_user,
+                            _FlowActionRole.action_user 
+                            != _Activity.activity_login_user,
                             _FlowActionRole.action_user_exclude == '0'
                         ),
                         and_(
                             _Activity.shared_user_id == self_user_id,
-                            ActivityAction.action_handler != _Activity.activity_login_user
+                            ActivityAction.action_handler 
+                            != _Activity.activity_login_user
                         ),
                     )
                 )
@@ -1531,8 +1550,9 @@ class WorkActivity(object):
     def check_current_user_role():
         """Check current user role.
 
-        :return:
-        """
+        Returns:
+            _type_: _description_
+        """        
         is_admin = False
         is_community_admin = False
         # Super admin roles
@@ -1721,7 +1741,13 @@ class WorkActivity(object):
                           is_get_all=False):
         """Get activity list info.
 
-        :return:
+        Args:
+            community_id (_type_, optional): community id. Defaults to None.
+            conditions (_type_, optional): _description_. Defaults to None.
+            is_get_all (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            _type_: _description_
         """
         with db.session.no_autoflush:
             is_admin, is_community_admin = self.check_current_user_role()
@@ -1877,6 +1903,8 @@ class WorkActivity(object):
         steps = []
         his = WorkActivityHistory()
         histories = his.get_activity_history_list(activity_id)
+        if not histories:
+            abort(404)
         history_dict = {}
         activity = WorkActivity()
         activity_detail = activity.\
@@ -2077,7 +2105,8 @@ class WorkActivity(object):
             comm = GetCommunity.get_community_by_id(
                 request.args.get('community'))
             ctx = {'community': comm}
-            community_id = comm.id
+            if comm is not None:
+                community_id = comm.id
 
         # display_activity of Identifier grant
         if action_endpoint == 'identifier_grant' and item:

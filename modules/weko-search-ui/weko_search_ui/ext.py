@@ -62,8 +62,11 @@ class WekoSearchUI(object):
                 app.config["BASE_PAGE_TEMPLATE"],
             )
 
-        app.config.setdefault("INDEX_IMG", app.config["INDEX_IMG"])
-
+        if "INDEX_IMG" in app.config:
+            app.config.setdefault("INDEX_IMG", app.config["INDEX_IMG"])
+        else:
+            app.config.setdefault("INDEX_IMG", getattr(config, "INDEX_IMG"))
+        
         app.config.update(
             SEARCH_UI_SEARCH_TEMPLATE=getattr(config, "WEKO_SEARCH_UI_SEARCH_TEMPLATE"),
             SEARCH_UI_JSTEMPLATE_LIST_RESULTS=getattr(

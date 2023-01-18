@@ -22,6 +22,7 @@
 
 from datetime import datetime
 
+from flask import current_app, escape
 from flask_babelex import gettext as _
 from flask_login import UserMixin, current_user
 from invenio_accounts.models import User
@@ -535,7 +536,27 @@ class Group(db.Model):
         :returns: Number of memberships.
         """
         return Membership.query_by_group(self.get_id()).count()
+    
+    def _escape_value(self,text):
+        html_escape = {
+            "&": "&amp;",
+            '"': "&quot;",
+            "'": "&apos;",
+            ">": "&gt;",
+            "<": "&lt;",
+        }
+        _text = text
+        try:
+            for key, value in html_escape.items():
+                _text = _text.replace(key, value)
+        except Exception as e:
+            current_app.logger.debug(e)
 
+        return _text
+    @property
+    def escape_name(self):
+        return self._escape_value(self.name)
+    
 
 class Membership(db.Model):
     """Represent a users membership of a group."""

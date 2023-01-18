@@ -23,3 +23,9 @@ recursive-include docs Makefile
 recursive-include invenio_iiif *.html
 recursive-include invenio_iiif *.po *.pot *.mo
 recursive-include tests *.py *.jpg
+
+# added by check-manifest
+include *.properties
+include tox.ini
+recursive-include examples *.jpg
+recursive-include examples *.png

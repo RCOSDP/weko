@@ -21,6 +21,7 @@ from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy.orm.exc import NoResultFound
 from weko_theme.utils import get_community_id, get_weko_contents
 from werkzeug.exceptions import NotFound
+from invenio_db import db
 
 from .api import WidgetItems
 from .config import WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE
@@ -47,7 +48,7 @@ blueprint_rss = Blueprint(
 )
 
 blueprint_api = Blueprint(
-    'weko_gridlayout',
+    'weko_gridlayout_api',
     __name__,
     url_prefix='/admin',
     template_folder='templates',
@@ -342,7 +343,7 @@ def get_new_arrivals_data(widget_id):
         _suffix = _suffix.rstrip('_')
 
     # cache by role
-    cache_name = 'cache_new_arrivals'.format(_suffix)
+    cache_name = 'cache_new_arrivals'
     cached_data = current_cache.get(cache_name)
     if not cached_data:
         cached_data = jsonify(
@@ -567,3 +568,16 @@ def unlocked_widget():
         return jsonify(success=True), 200
     else:
         return jsonify(success=False, msg=_("Can't unlock widget.")), 200
+
+@blueprint.teardown_request
+@blueprint_api.teardown_request
+@blueprint_pages.teardown_request
+@blueprint_rss.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_gridlayout dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

@@ -11,7 +11,7 @@
 
 from __future__ import absolute_import, print_function
 
-import copy
+import pickle
 
 from flask import request
 from pyld import jsonld
@@ -52,7 +52,7 @@ class JSONLDTransformerMixin(TransformerMixinInterface):
 
     def transform_jsonld(self, obj):
         """Compact JSON according to context."""
-        rec = copy.deepcopy(obj)
+        rec = pickle.loads(pickle.dumps(obj, -1))
         rec.update(self.context)
         compacted = jsonld.compact(rec, self.context)
         if not self.expanded:

@@ -1429,6 +1429,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
       }
       $scope.resourceTypeSelect = function () {
+        $scope.accessRoleChange()
         let resourcetype = $("select[name$='resourcetype']").val();
         resourcetype = resourcetype.split("string:").pop();
         let resourceuri = "";
@@ -1591,10 +1592,80 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             case 'manuscript':
               resourceuri = "http://purl.org/coar/resource_type/c_0040";
               break;
+            case 'aggregated data':
+              resourceuri = "http://purl.org/coar/resource_type/ACF7-8YT9";
+              break;
+            case 'clinical trial data':
+              resourceuri = "http://purl.org/coar/resource_type/c_cb28";
+              break;
+            case 'compiled data':
+              resourceuri = "http://purl.org/coar/resource_type/FXF3-D3G7";
+              break;
+            case 'encoded data':
+              resourceuri = "http://purl.org/coar/resource_type/AM6W-6QAW";
+              break;
+            case 'experimental data':
+              resourceuri = "http://purl.org/coar/resource_type/63NG-B465";
+              break;
+            case 'genomic data':
+              resourceuri = "http://purl.org/coar/resource_type/A8F1-NPV9";
+              break;
+            case 'geospatial data':
+              resourceuri = "http://purl.org/coar/resource_type/2H0M-X761";
+              break;
+            case 'laboratory notebook':
+              resourceuri = "http://purl.org/coar/resource_type/H41Y-FW7B";
+              break;
+            case 'measurement and test data':
+              resourceuri = "http://purl.org/coar/resource_type/DD58-GFSX";
+              break;
+            case 'observational data':
+              resourceuri = "http://purl.org/coar/resource_type/FF4C-28RK";
+              break;
+            case 'recorded data':
+              resourceuri = "http://purl.org/coar/resource_type/CQMR-7K63";
+              break;
+            case 'simulation data':
+              resourceuri = "http://purl.org/coar/resource_type/W2XT-7017";
+              break;
+            case 'survey data':
+              resourceuri = "http://purl.org/coar/resource_type/NHD0-W6SY";
+              break;
             default:
               resourceuri = "";
           }
           $rootScope.recordsVM.invenioRecordsModel[$scope.resourceTypeKey].resourceuri = resourceuri;
+        }
+      }
+      $scope.accessRoleChange = function () {
+        for (let key in $rootScope.recordsVM.invenioRecordsModel) {
+          if ($rootScope.recordsVM.invenioRecordsModel[key] instanceof Array) {
+            try {
+              if ($rootScope.recordsVM.invenioRecordsModel[key].length > 1) {
+                for (let [idx, value] in $rootScope.recordsVM.invenioRecordsModel[key]) {
+                  if (($rootScope.recordsVM.invenioRecordsModel[key][idx].accessrole !== undefined)) {
+                    // check value of accessrole if open date or not
+                    if ($rootScope.recordsVM.invenioRecordsModel[key][idx].accessrole !== 'open_date') {
+                      // change dataValue in $rootScope.recordsVM.invenioRecordsModel
+                      $scope.modifiedFileAccessRole = $rootScope.recordsVM.invenioRecordsModel[key][idx].accessrole;
+                      $rootScope.recordsVM.invenioRecordsModel[key][idx].date[0].dateValue = $rootScope.recordsVM.invenioRecordsModel.pubdate
+                    }
+                  }
+                }
+              } else {
+                if ($rootScope.recordsVM.invenioRecordsModel[key][0].accessrole !== undefined) {
+                  // check value of accessrole if open date or not
+                  if ($rootScope.recordsVM.invenioRecordsModel[key][0].accessrole !== 'open_date') {
+                    // change dataValue in $rootScope.recordsVM.invenioRecordsModel
+                    $scope.modifiedFileAccessRole = $rootScope.recordsVM.invenioRecordsModel[key][0].accessrole;
+                    $rootScope.recordsVM.invenioRecordsModel[key][0].date[0].dateValue = $rootScope.recordsVM.invenioRecordsModel.pubdate
+                  }
+                }
+              }
+            } catch {
+              continue
+            }
+          }
         }
       }
       $scope.getBibliographicMetaKey = function () {
@@ -2896,22 +2967,22 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       }
 
       $scope.hiddenPubdate = function () {
-        if ($("#is_hidden_pubdate").val() !== "True") {
-          return;
-        }
         let model = $rootScope["recordsVM"].invenioRecordsModel;
-        $rootScope["recordsVM"]["invenioRecordsForm"].forEach(function (item) {
-          if (item.key === "pubdate") {
-            item['condition'] = true;
-            item['required'] = false;
-          }
-        });
         if (!model["pubdate"]) {
           let now = new Date();
           let day = ("0" + now.getDate()).slice(-2);
           let month = ("0" + (now.getMonth() + 1)).slice(-2);
           model["pubdate"] = now.getFullYear() + "-" + (month) + "-" + (day);
         }
+        if ($("#is_hidden_pubdate").val() !== "True") {
+          return;
+        }
+        $rootScope["recordsVM"]["invenioRecordsForm"].forEach(function (item) {
+          if (item.key === "pubdate") {
+            item['condition'] = true;
+            item['required'] = false;
+          }
+        });
       };
 
       $scope.setValueToField = function (id, value) {
