@@ -350,7 +350,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-search'.format(search_index_prefix),
                 doc_type='search-day-aggregation',
-                aggregated_fields=['search_key', 'count'],
+                group_fields=['search_key', 'count'],
             )
         ),
         dict(
@@ -359,8 +359,8 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-file-download'.format(search_index_prefix),
                 doc_type='file-download-day-aggregation',
-                aggregated_fields=['file_key', 'index_list',
-                                   'userrole', 'site_license_flag'],
+                group_fields=['file_key', 'index_list', 'userrole',
+                              'site_license_flag', 'count'],
             )
         ),
         dict(
@@ -369,9 +369,9 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-file-download'.format(search_index_prefix),
                 doc_type='file-download-day-aggregation',
-                aggregated_fields=['file_key', 'index_list',
-                                   'userrole', 'site_license_flag',
-                                   'user_group_names'],
+                group_fields=['file_key', 'index_list',
+                              'userrole', 'site_license_flag',
+                              'user_group_names', 'count'],
                 required_filters=dict(
                     is_billing_item='is_billing_item',
                 ),
@@ -383,8 +383,8 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-file-download'.format(search_index_prefix),
                 doc_type='file-download-day-aggregation',
-                aggregated_fields=['file_key', 'index_list',
-                                   'userrole', 'site_license_flag'],
+                group_fields=['file_key', 'index_list', 'userrole',
+                              'site_license_flag', 'count'],
                 required_filters=dict(
                     accessrole='accessrole',
                 ),
@@ -396,8 +396,8 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-file-preview'.format(search_index_prefix),
                 doc_type='file-preview-day-aggregation',
-                aggregated_fields=['file_key', 'index_list',
-                                   'userrole', 'site_license_flag'],
+                group_fields=['file_key', 'index_list', 'userrole',
+                              'site_license_flag', 'count'],
             )
         ),
         dict(
@@ -406,9 +406,9 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-file-preview'.format(search_index_prefix),
                 doc_type='file-preview-day-aggregation',
-                aggregated_fields=['file_key', 'index_list',
-                                   'userrole', 'site_license_flag',
-                                   'user_group_names'],
+                group_fields=['file_key', 'index_list',
+                              'userrole', 'site_license_flag',
+                              'user_group_names', 'count'],
                 required_filters=dict(
                     is_billing_item='is_billing_item',
                 ),
@@ -420,8 +420,8 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-file-preview'.format(search_index_prefix),
                 doc_type='file-preview-day-aggregation',
-                aggregated_fields=['file_key', 'index_list',
-                                   'userrole', 'site_license_flag'],
+                group_fields=['file_key', 'index_list', 'userrole',
+                              'site_license_flag', 'count'],
                 required_filters=dict(
                     accessrole='accessrole',
                     # is_billing_item='is_billing_item',
@@ -598,7 +598,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-file-download'.format(search_index_prefix),
                 doc_type='file-download-day-aggregation',
-                aggregated_fields=['cur_user_id', 'file_id'],
+                group_fields=['cur_user_id', 'count'],
             )
         ),
         dict(
@@ -607,7 +607,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-file-preview'.format(search_index_prefix),
                 doc_type='file-preview-day-aggregation',
-                aggregated_fields=['cur_user_id', 'file_id'],
+                group_fields=['cur_user_id', 'count'],
             )
         ),
         dict(
@@ -616,8 +616,8 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-record-view'.format(search_index_prefix),
                 doc_type='record-view-day-aggregation',
-                aggregated_fields=['record_id', 'record_index_names',
-                                   'cur_user_id', 'pid_value', 'record_name'],
+                group_fields=['record_id', 'record_index_names',
+                               'cur_user_id', 'pid_value', 'record_name', 'count'],
             )
         ),
         dict(
@@ -759,7 +759,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-top-view'.format(search_index_prefix),
                 doc_type='top-view-day-aggregation',
-                aggregated_fields=['remote_addr', 'hostname']
+                group_fields=['remote_addr', 'hostname', 'count']
             )
         ),
         dict(
@@ -777,7 +777,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-top-view'.format(search_index_prefix),
                 doc_type='top-view-day-aggregation',
-                aggregated_fields=['site_license_name'],
+                group_fields=['site_license_name', 'count'],
             )
         ),
         dict(
@@ -786,7 +786,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-record-view'.format(search_index_prefix),
                 doc_type='record-view-day-aggregation',
-                aggregated_fields=['site_license_name'],
+                group_fields=['site_license_name', 'count'],
             )
         ),
         dict(
@@ -795,7 +795,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-search'.format(search_index_prefix),
                 doc_type='search-day-aggregation',
-                aggregated_fields=['site_license_name'],
+                group_fields=['site_license_name', 'count'],
             )
         ),
         dict(
@@ -804,7 +804,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-file-download'.format(search_index_prefix),
                 doc_type='file-download-day-aggregation',
-                aggregated_fields=['site_license_name'],
+                group_fields=['site_license_name', 'count'],
             )
         ),
         dict(
@@ -813,7 +813,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-file-preview'.format(search_index_prefix),
                 doc_type='file-preview-day-aggregation',
-                aggregated_fields=['site_license_name'],
+                group_fields=['site_license_name', 'count'],
             )
         )
     ]

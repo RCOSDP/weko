@@ -65,7 +65,7 @@ Babel(app)
 WekoSearchUI(app)
 
 
-@app.route('/')
+@app.route("/")
 def index():
     """Example index page route."""
-    return 'Welcome to weko-search-ui'
+    return "Welcome to weko-search-ui"

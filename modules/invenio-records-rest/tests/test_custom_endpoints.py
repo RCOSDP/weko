@@ -16,7 +16,7 @@ These tests check if it is possible to do it.
 
 import pytest
 from flask import Blueprint, url_for
-from helpers import get_json
+from tests.helpers import get_json
 from invenio_search import RecordsSearch
 
 from invenio_records_rest import utils

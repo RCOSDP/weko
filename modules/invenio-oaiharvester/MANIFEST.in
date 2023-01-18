@@ -42,3 +42,9 @@ recursive-include invenio_oaiharvester *.html
 recursive-include invenio_oaiharvester *.py
 recursive-include tests *.py
 recursive-include tests *.xml
+
+# added by check-manifest
+include *.properties
+include babel.ini
+recursive-include invenio_oaiharvester *.po
+recursive-include invenio_oaiharvester *.pot

@@ -8,8 +8,8 @@
 
 """OAI-PMH 2.0 response generator."""
 import copy
-import traceback
 import pickle
+import traceback
 from datetime import MINYEAR, datetime, timedelta
 
 from flask import current_app, request, url_for
@@ -336,13 +336,12 @@ def is_pubdate_in_future(record):
     """Check pubdate of workflow is in future."""
     adt = record.get('publish_date')
     pdt = to_utc(datetime.strptime(adt, '%Y-%m-%d'))
-    return pdt > datetime.today()
+    return pdt > datetime.utcnow()
 
 
 def is_private_index(record):
     """Check index of workflow is private."""
-    pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
-    paths = pickle_copy(record.get('path'))
+    paths = pickle.loads(pickle.dumps(record.get('path'), -1))
     return not Indexes.is_public_state_and_not_in_future(paths)
 
 
@@ -444,8 +443,7 @@ def getrecord(**kwargs):
     e_metadata = SubElement(e_record,
                             etree.QName(NS_OAIPMH, 'metadata'))
 
-    pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
-    etree_record = pickle_copy(record)
+    etree_record = pickle.loads(pickle.dumps(record, -1))
 
     if not etree_record.get('system_identifier_doi', None):
         etree_record['system_identifier_doi'] = get_identifier(record)
@@ -552,14 +550,13 @@ def listidentifiers(**kwargs):
 
 def listrecords(**kwargs):
     """Create OAI-PMH response for verb ListRecords."""
-    current_app.logger.debug("kwargs: {}".format(kwargs))
     record_dumper = serializer(kwargs['metadataPrefix'])
     e_tree, e_listrecords = verb(**kwargs)
 
     identify = OaiIdentify.get_all()
     if not identify or not identify.outPutSetting:
         current_app.logger.debug(
-            "identify.outPutSetting: {}".format(identify.outPutSetting))
+            "No identify.outPutSetting")
         return error(get_error_code_msg(), **kwargs)
 
     index_state = get_index_state()
@@ -614,8 +611,10 @@ def listrecords(**kwargs):
                     is_deleted_workflow(pid_object) or \
                     is_private_workflow(record) or \
                     is_pubdate_in_future(record):
+                e_record = SubElement(
+                    e_listrecords, etree.QName(NS_OAIPMH, 'record'))
                 header(
-                    e_listrecords,
+                    e_record,
                     identifier=pid.pid_value,
                     datestamp=r['updated'],
                     deleted=True
@@ -633,8 +632,7 @@ def listrecords(**kwargs):
                 )
                 e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
                                                               'metadata'))
-                pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
-                etree_record = pickle_copy(record)
+                etree_record = pickle.loads(pickle.dumps(record, -1))
                 if not etree_record.get('system_identifier_doi', None):
                     etree_record['system_identifier_doi'] = get_identifier(
                         record)

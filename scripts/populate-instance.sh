@@ -104,6 +104,11 @@ if [ "${INVENIO_WORKER_HOST}" = "" ]; then
     echo "[ERROR] Example: export INVENIO_WORKER_HOST=192.168.50.15"
     exit 1
 fi
+if [ "${SEARCH_INDEX_PREFIX}" = "" ]; then
+    echo "[ERROR] Please set environment variable SEARCH_INDEX_PREFIX before runnning this script."
+    echo "[ERROR] Example: export SEARCH_INDEX_PREFIX=tenant1"
+    exit 1
+fi
 
 # load virtualenvrapper:
 # shellcheck source=/dev/null
@@ -123,7 +128,7 @@ ${INVENIO_WEB_INSTANCE} db create -v
 # sphinxdoc-create-database-end
 
 # sphinxdoc-index-initialisation-begin
-#${INVENIO_WEB_INSTANCE} index destroy --yes-i-know
+# ${INVENIO_WEB_INSTANCE} index destroy --yes-i-know
 ${INVENIO_WEB_INSTANCE} index init
 sleep 20
 ${INVENIO_WEB_INSTANCE} index queue init
@@ -161,6 +166,43 @@ curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/_ingest/pipeline/item-fi
  ]
 }'
 # sphinxdoc-pipeline-registration-end
+
+# elasticsearch-ilm-setting-begin
+curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/_ilm/policy/weko_stats_policy' -H 'Content-Type: application/json' -d '
+{
+  "policy":{
+    "phases":{
+      "hot":{
+        "actions":{
+          "rollover":{
+            "max_size":"50gb"
+          }
+        }
+      }
+    }
+  }
+}'
+event_list=('celery-task' 'item-create' 'top-view' 'record-view' 'file-download' 'file-preview' 'search')
+for event_name in ${event_list[@]}
+do
+  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'-000001' -H 'Content-Type: application/json' -d '
+  {
+    "aliases": {
+      "'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'": {
+        "is_write_index": true
+      }
+    }
+  }'
+  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'-000001' -H 'Content-Type: application/json' -d '
+  {
+    "aliases": {
+      "'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'": {
+        "is_write_index": true
+      }
+    }
+  }'
+done
+# elasticsearch-ilm-setting-end
 
 # sphinxdoc-populate-with-demo-records-begin
 #${INVENIO_WEB_INSTANCE} demo init
@@ -428,12 +470,25 @@ ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "WEKO" "WEKO" ""
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
-       "ORCID" "ORCID" "https://orcid.org/"
+       "ORCID" "ORCID" "https://orcid.org/##"
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
-       "CiNii" "CiNii" "https://ci.nii.ac.jp/"
+       "CiNii" "CiNii" "https://ci.nii.ac.jp/author/##"
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
-       "KAKEN2" "KAKEN2" "https://kaken.nii.ac.jp/"
+       "KAKEN2" "KAKEN2" "https://nrid.nii.ac.jp/nrid/##"
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "ROR" "ROR" "https://ror.org/##"
 # create-default-authors-prefix-settings-end
+
+# create-default-authors-affiliation-settings-begin
+${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
+       "ISNI" "ISNI" "http://www.isni.org/isni/##"
+${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
+       "GRID" "GRID" "https://www.grid.ac/institutes/##"
+${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
+       "Ringgold" "Ringgold" ""
+${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
+       "kakenhi" "kakenhi" ""
+# create-default-authors-affiliation-settings-end
 
 # create-widget-bucket-begin
 ${INVENIO_WEB_INSTANCE} widget init

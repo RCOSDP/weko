@@ -33,7 +33,7 @@ def test_init(pywarnlogger):
 
     :param pywarnlogger: Py warn logger object.
     """
-    app = Flask('testapp')
+    app = Flask("testapp")
     ext = WekoLoggingBase(app)
     assert len(pywarnlogger.handlers) == 0
 

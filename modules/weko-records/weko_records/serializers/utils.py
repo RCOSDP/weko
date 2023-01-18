@@ -20,11 +20,10 @@
 
 """WEKO Search Serializer."""
 
-import copy
+import pickle
 from datetime import datetime
 
 import pytz
-import pickle
 from flask import request
 from invenio_db import db
 from weko_index_tree.api import Index
@@ -47,11 +46,11 @@ def get_mapping(item_type_mapping, mapping_type):
     :return:
     """
     def get_schema_key_info(schema, parent_key, schema_json={}):
-        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
+
         for k, v in schema.items():
             key = parent_key + '.' + k if parent_key else k
             if isinstance(v, dict):
-                child_key = pickle_copy(key)
+                child_key = pickle.loads(pickle.dumps(key, -1))
                 get_schema_key_info(v, child_key, schema_json)
             else:
                 schema_json[key] = v
@@ -78,11 +77,10 @@ def get_full_mapping(item_type_mapping, mapping_type):
     :return:
     """
     def get_schema_key_info(schema, parent_key, schema_json={}):
-        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
         for k, v in schema.items():
             key = parent_key + '.' + k if parent_key else k
             if isinstance(v, dict):
-                child_key = pickle_copy(key)
+                child_key = pickle.loads(pickle.dumps(key, -1))
                 get_schema_key_info(v, child_key, schema_json)
             else:
                 properties = schema_json.get(key, [])
@@ -117,7 +115,7 @@ def get_mapping_inactive_show_list(item_type_mapping, mapping_type):
         for k, v in schema.items():
             key = parent_key + '.' + k if parent_key else k
             if isinstance(v, dict):
-                child_key = copy.deepcopy(key)
+                child_key = pickle.loads(pickle.dumps(key, -1))
                 get_schema_key_info(v, child_key, schema_json)
             else:
                 schema_json[key] = v

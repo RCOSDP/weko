@@ -78,6 +78,11 @@ def get_itemtypes():
             item for item in item_types
             if not (item['is_deleted'] or item['harvesting_type'])
         ]
+    elif filter_type == 'all_type':
+        item_types = [
+            item for item in item_types
+            if not (item['is_deleted'])
+        ]
 
     return jsonify(item_types)
 

@@ -12,7 +12,7 @@ from __future__ import absolute_import, print_function
 
 import datetime
 from collections import OrderedDict
-from copy import deepcopy
+import pickle
 from functools import wraps
 
 import six
@@ -82,7 +82,7 @@ class BookmarkAPI:
 
     # NOTE: For ES7 mappings need one-level of less nesting
     MAPPINGS_ES7 = {
-        "mappings": deepcopy(MAPPINGS['mappings']['aggregation-bookmark'])
+        "mappings": pickle.loads(pickle.dumps(MAPPINGS['mappings']['aggregation-bookmark'], -1))
     }
 
     def __init__(self, client, agg_type, agg_interval):
@@ -288,7 +288,7 @@ class StatAggregator(object):
             return None
         return parser.parse(result[0]['timestamp'])
 
-    def agg_iter(self, lower_limit=None, upper_limit=None):
+    def agg_iter(self, lower_limit=None, upper_limit=None, manual=False):
         """Aggregate and return dictionary to be indexed in ES."""
         logger = get_task_logger(__name__)
 
@@ -356,29 +356,33 @@ class StatAggregator(object):
                             aggregation_data
                         )
 
-                index_name = '{0}-stats-{1}-{2}'.\
-                             format(self.search_index_prefix, self.event,
-                                    interval_date.strftime(
-                                        self.index_name_suffix))
+                index_name = '{0}-stats-{1}'.\
+                             format(self.search_index_prefix, self.event)
                 logger.debug("index_name: {}".format(index_name))
-                self.indices.add(index_name)
+
+                if manual:
+                    res = Search(using=self.client,
+                                 index=index_name).\
+                        filter('term', unique_id=aggregation['key']).\
+                        execute()
+                    
+                    if res.hits.total > 0:
+                        index_name = res.hits.hits[0]['_index']
+
                 rtn_data = dict(
-                    _id='{0}-{1}'.
-                        format(aggregation['key'],
-                               interval_date.strftime(
-                                   self.doc_id_suffix)),
+                    _id='{0}'.format(aggregation['key']),
                     _index=index_name,
                     _type=self.aggregation_doc_type,
                     _source=aggregation_data
                 )
-
+                self.indices.add(index_name)
                 if current_app.config['STATS_WEKO_DB_BACKUP_AGGREGATION']:
                     # Save stats aggregation into Database.
                     StatsAggregation.save(rtn_data, delete=True)
 
                 yield rtn_data
 
-    def run(self, start_date=None, end_date=None, update_bookmark=True):
+    def run(self, start_date=None, end_date=None, update_bookmark=True, manual=False):
         """Calculate statistics aggregations."""
         # If no events have been indexed there is nothing to aggregate
         if not Index(self.event_index, using=self.client).exists():
@@ -404,7 +408,7 @@ class StatAggregator(object):
         while upper_limit <= datetime.datetime.utcnow():
             self.indices = set()
             bulk(self.client,
-                 self.agg_iter(lower_limit, upper_limit),
+                 self.agg_iter(lower_limit, upper_limit, manual),
                  stats_only=True,
                  chunk_size=50)
             # Flush all indices which have been modified

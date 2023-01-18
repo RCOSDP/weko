@@ -1,4 +1,48 @@
 {
+    "Author_Button_Clear": [
+        null,
+        "Clear"
+    ],
+    "Author_Button_Save": [
+        null,
+        "Save"
+    ],
+    "Author_Button_Edit": [
+        null,
+        "Edit"
+    ],
+    "Author_Button_Search": [
+        null,
+        "Search"
+    ],
+    "Author_Button_Back": [
+        null,
+        "Back"
+    ],
+    "Author_Button_Execute": [
+        null,
+        "Execute"
+    ],
+    "Author_Control": [
+        null,
+        "Control"
+    ],
+    "Author_Button_Cancel": [
+        null,
+        "Cancel"
+    ],
+    "Author_Button_Delete": [
+        null,
+        "Delete"
+    ],
+    "Author_Select": [
+        null,
+        "Select"
+    ],
+    "Author_Button_Add": [
+        null,
+        "Add"
+    ],  
     "Author_Add_New_Author": [
         null,
         "Author"
@@ -43,13 +87,29 @@
         null,
         "Add E-mail"
     ],
-    "Author_Button_Clear": [
+    "Author_Identifier": [
         null,
-        "Clear"
+        "Identifier"
     ],
-    "Author_Button_Save": [
+    "Author_Add_Identifier": [
         null,
-        "Save"
+        "Add Identifier"
+    ],
+    "Author_Affiliation_Name": [
+        null,
+        "Affiliation Name"
+    ],
+    "Author_Add_Affiliation_Name": [
+        null,
+        "Add Affiliation Name"
+    ],
+    "Author_Affiliation": [
+        null,
+        "Affiliation"
+    ],
+    "Author_Add_Affiliation": [
+        null,
+        "Add Affiliation"
     ],
     "Author_familyNmAndNm": [
         null,
@@ -63,21 +123,33 @@
         null,
         "Add Organization"
     ],
+    "Author_Button_Merge": [
+        null,
+        "Merge"
+    ],
     "Author_Add_Author": [
         null,
         "Add Author"
     ],
-    "Author_Search": [
+    "Author_Display_Number": [
         null,
-        "Search"
+        "Display Number"
+    ],
+    "Author_Origin": [
+        null,
+        "Origin"
+    ],
+    "Author_Target": [
+        null,
+        "Target"
     ],
     "Author_Mail_Address": [
         null,
         "Mail Address"
     ],
-    "Author_Edit": [
+    "Author_Item_Count": [
         null,
-        "Edit"
+        "Item Count"
     ],
     "Author_Search_No_Result": [
         null,
@@ -98,5 +170,29 @@
     "Author_Confirm_Msg": [
         null,
         "The confirmation site cannot be opened because the URL is not set for the specified identifier."
+    ],
+    "Prefix_Name": [
+        null,
+        "Name"
+    ],
+    "Prefix_Scheme": [
+        null,
+        "Scheme"
+    ],
+    "Prefix_URL": [
+        null,
+        "URL"
+    ],
+    "Affiliation_Name": [
+        null,
+        "Name"
+    ],
+    "Affiliation_Scheme": [
+        null,
+        "Scheme"
+    ],
+    "Affiliation_URL": [
+        null,
+        "URL"
     ]
 }

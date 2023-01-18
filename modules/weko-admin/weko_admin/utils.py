@@ -29,6 +29,7 @@ from io import BytesIO, StringIO
 from typing import Dict, Tuple, Union
 
 import redis
+from redis import sentinel
 import requests
 from flask import current_app, request
 from flask_babelex import gettext as __
@@ -48,6 +49,8 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
+from weko_redis.redis import RedisConnection
+
 
 from . import config
 from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
@@ -335,24 +338,25 @@ def get_user_report_data():
 
 def package_reports(all_stats, year, month):
     """Package the .csv files into one zip file."""
-    csv_files = []
+    output_files = []
     zip_stream = BytesIO()
     year = str(year)
     month = str(month)
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
     try:  # TODO: Make this into one loop, no need for two
         for stats_type, stats in all_stats.items():
             file_name = current_app.config['WEKO_ADMIN_REPORT_FILE_NAMES'].get(
                 stats_type, '_')
-            file_name = 'logReport_' + file_name + year + '-' + month + '.csv'
-            csv_files.append({
+            file_name = 'logReport_' + file_name + year + '-' + month + '.' + file_format
+            output_files.append({
                 'file_name': file_name,
-                'stream': make_stats_csv(stats, stats_type, year, month)})
+                'stream': make_stats_file(stats, stats_type, year, month)})
 
         # Dynamically create zip from StringIO data into BytesIO
         report_zip = zipfile.ZipFile(zip_stream, 'w')
-        for csv_file in csv_files:
-            report_zip.writestr(csv_file['file_name'],
-                                csv_file['stream'].getvalue().encode('utf-8-sig'))
+        for f in output_files:
+            report_zip.writestr(f['file_name'],
+                                f['stream'].getvalue().encode('utf-8-sig'))
         report_zip.close()
     except Exception as e:
         current_app.logger.error('Unexpected error: ', e)
@@ -360,14 +364,15 @@ def package_reports(all_stats, year, month):
     return zip_stream
 
 
-def make_stats_csv(raw_stats, file_type, year, month):
-    """Make CSV report file for stats."""
+def make_stats_file(raw_stats, file_type, year, month):
+    """Make TSV/CSV report file for stats."""
     header_row = current_app.config['WEKO_ADMIN_REPORT_HEADERS'].get(file_type)
     sub_header_row = current_app.config['WEKO_ADMIN_REPORT_SUB_HEADERS'].get(
         file_type)
-    csv_output = StringIO()
-
-    writer = csv.writer(csv_output, delimiter=',',
+    file_output = StringIO()
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+    file_delimiter = '\t' if file_format == 'tsv' else ','
+    writer = csv.writer(file_output, delimiter=file_delimiter,
                         lineterminator="\n")
     writer.writerows([[header_row],
                       [_('Aggregation Month'), year + '-' + month],
@@ -385,41 +390,41 @@ def make_stats_csv(raw_stats, file_type, year, month):
     # Special cases:
     # Write total for per index views
     if file_type == 'index_access':
-        write_report_csv_rows(writer, raw_stats.get(
+        write_report_file_rows(writer, raw_stats.get(
             'all'), file_type, raw_stats.get('index_name'))
         writer.writerow([_('Total Detail Views'), raw_stats.get('total')])
 
     elif file_type in ['billing_file_download', 'billing_file_preview']:
-        write_report_csv_rows(writer, raw_stats.get('all'), file_type,
+        write_report_file_rows(writer, raw_stats.get('all'), file_type,
                               raw_stats.get('all_groups'))  # Pass all groups
     elif file_type == 'site_access':
-        write_report_csv_rows(writer,
+        write_report_file_rows(writer,
                               raw_stats.get('site_license'),
                               file_type,
                               _('Site license member'))
-        write_report_csv_rows(writer,
+        write_report_file_rows(writer,
                               raw_stats.get('other'),
                               file_type,
                               _('Other than site license'))
     else:
-        write_report_csv_rows(writer, raw_stats.get('all'), file_type)
+        write_report_file_rows(writer, raw_stats.get('all'), file_type)
 
     # Write open access stats
     if sub_header_row is not None:
         writer.writerows([[''], [sub_header_row]])
         if 'open_access' in raw_stats:
             writer.writerow(cols)
-            write_report_csv_rows(writer, raw_stats.get('open_access'))
+            write_report_file_rows(writer, raw_stats.get('open_access'))
         elif 'institution_name' in raw_stats:
             writer.writerows([[_('Institution Name')] + cols])
-            write_report_csv_rows(writer,
+            write_report_file_rows(writer,
                                   raw_stats.get('institution_name'),
                                   file_type)
-    return csv_output
+    return file_output
 
 
-def write_report_csv_rows(writer, records, file_type=None, other_info=None):
-    """Write csv rows for stats."""
+def write_report_file_rows(writer, records, file_type=None, other_info=None):
+    """Write tsv/csv rows for stats."""
     from weko_items_ui.utils import get_user_information
     if not records:
         return
@@ -489,14 +494,17 @@ def write_report_csv_rows(writer, records, file_type=None, other_info=None):
                                  record.get('file_preview')])
 
 
-def reset_redis_cache(cache_key, value):
+def reset_redis_cache(cache_key, value, ttl=None):
     """Delete and then reset a cache value to Redis."""
     try:
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         if datastore.redis.exists(cache_key):
             datastore.delete(cache_key)
-        datastore.put(cache_key, value.encode('utf-8'))
+        if ttl is None:
+            datastore.put(cache_key, value.encode('utf-8'))
+        else:
+            datastore.put(cache_key, value.encode('utf-8'),ttl)
     except Exception as e:
         current_app.logger.error('Could not reset redis value', e)
         raise
@@ -505,8 +513,8 @@ def reset_redis_cache(cache_key, value):
 def is_exists_key_in_redis(key):
     """Check key exist in redis."""
     try:
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         return datastore.redis.exists(key)
     except Exception as e:
         current_app.logger.error('Could get value for ' + key, e)
@@ -516,8 +524,8 @@ def is_exists_key_in_redis(key):
 def is_exists_key_or_empty_in_redis(key):
     """Check key exist in redis."""
     try:
-        datastore = RedisStore(
-            redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         return datastore.redis.exists(key) and datastore.redis.get(key) != b''
     except Exception as e:
         current_app.logger.error('Could get value for ' + key, e)
@@ -527,8 +535,8 @@ def is_exists_key_or_empty_in_redis(key):
 def get_redis_cache(cache_key):
     """Check and then retrieve the value of a Redis cache key."""
     try:
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         if datastore.redis.exists(cache_key):
             return datastore.get(cache_key).decode('utf-8')
     except Exception as e:
@@ -2191,11 +2199,17 @@ def get_title_facets():
     lang = current_i18n.language
     titles = {}
     order = {}
+    uiTypes = {}
+    isOpens = {}
+    displayNumbers = {}
     activated_facets = FacetSearchSetting.get_activated_facets()
     for item in activated_facets:
         titles[item.name_en] = item.name_jp if lang == 'ja' else item.name_en
         order[item.id] = item.name_en
-    return titles, order
+        uiTypes[item.name_en] = item.ui_type
+        isOpens[item.name_en] = item.is_open
+        displayNumbers[item.name_en] = item.display_number
+    return titles, order, uiTypes, isOpens, displayNumbers
 
 
 def is_exits_facet(data, id):

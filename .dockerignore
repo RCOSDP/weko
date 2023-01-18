@@ -7,7 +7,7 @@
 *.swp
 *.swo
 *.~
-*.log
+**.log
 *.sh
 
 .dockerignore
@@ -21,3 +21,9 @@ test
 uml
 weko-migration
 weko-demodata
+metrix
+
+**/.tox
+**/.eggs
+**/.pytest_cache
+**/tests

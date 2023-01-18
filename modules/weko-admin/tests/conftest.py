@@ -29,22 +29,41 @@ from flask import Flask
 from flask_babelex import Babel
 from flask_mail import Mail
 from flask_menu import Menu
+from invenio_db import InvenioDB
+from invenio_db import db as db_
 from invenio_accounts import InvenioAccounts
+from invenio_accounts.testutils import create_test_user, login_user_via_session
+from invenio_access.models import ActionUsers
+from invenio_access import InvenioAccess
 from invenio_admin import InvenioAdmin
-from invenio_db import InvenioDB, db
+from invenio_i18n import InvenioI18N
+from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 
+from weko_workflow import WekoWorkflow
+from weko_records_ui import WekoRecordsUI
+from weko_records import WekoRecords
+from weko_records.models import SiteLicenseInfo
 from weko_admin import WekoAdmin
-from weko_admin.views import blueprint
+from weko_admin.views import blueprint_api
+from weko_admin.models import FacetSearchSetting
+from tests.helpers import json_data
+
+@pytest.yield_fixture()
+def instance_path():
+    """Temporary instance path."""
+    path = tempfile.mkdtemp()
+    yield path
+    shutil.rmtree(path)
 
 
 @pytest.fixture()
-def base_app():
+def base_app(instance_path, request):
     """Flask application fixture."""
-    instance_path = tempfile.mkdtemp()
     app_ = Flask('test_weko_admin_app', instance_path=instance_path)
     app_.config.update(
+        SERVER_NAME='TEST_SERVER',
         ACCOUNTS_USE_CELERY=False,
         LOGIN_DISABLED=False,
         SECRET_KEY='testing_key',
@@ -62,28 +81,136 @@ def base_app():
     app_.testing = True
     app_.login_manager = dict(_login_disabled=True)
     Babel(app_)
+    InvenioI18N(app_)
+    InvenioDB(app_)
     Mail(app_)
     Menu(app_)
     InvenioDB(app_)
     InvenioAccounts(app_)
+    InvenioAccess(app_)
     InvenioAdmin(app_)
-    WekoAdmin(app_)
-    app_.register_blueprint(blueprint)
+    WekoWorkflow(app_)
+    WekoRecords(app_)
+    WekoRecordsUI(app_)
+    yield app_
 
-    with app_.app_context():
-        if str(db.engine.url) != "sqlite://" \
-                and not database_exists(str(db.engine.url)):
+
+@pytest.yield_fixture()
+def app(base_app):
+    """Flask application fixture."""
+    with base_app.app_context():
+        yield base_app
+
+
+@pytest.yield_fixture()
+def db(app):
+    # if not database_exists(str(db_.engine.url)) and \
+    #         app.config['SQLALCHEMY_DATABASE_URI'] != 'sqlite://':
+    #     create_database(db_.engine.url)
+    if not database_exists(str(db_.engine.url)):
+        create_database(str(db_.engine.url))
+    db_.create_all()
+    yield db_
+    db_.session.remove()
+    db_.drop_all()
+
+@pytest.yield_fixture()
+def i18n_app(app):
+    with app.test_request_context(
+        headers=[('Accept-Language','ja')]):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        yield app
+
+@pytest.fixture()
+def test_site_license(db):
+    results = list()
+    result = SiteLicenseInfo(
+        organization_id=0,
+        organization_name="test data",
+        receive_mail_flag="T",
+        mail_address="test@mail.com",
+        domain_name="test_domain",
+    )
+    db.session.add(result)
+    results.append(result)
+    db.session.commit()
+    yield results
+
+
+def _database_setup(app, request):
+    """Set up the database."""
+    with app.app_context():
+        if not database_exists(str(db.engine.url)):
             create_database(str(db.engine.url))
         db.create_all()
 
-    yield app_
+    def teardown():
+        with app.app_context():
+            if database_exists(str(db.engine.url)):
+                drop_database(str(db.engine.url))
+            # Delete sessions in kvsession store
+            if hasattr(app, 'kvsession_store') and \
+                    isinstance(app.kvsession_store, RedisStore):
+                app.kvsession_store.redis.flushall()
 
-    with app_.app_context():
-        drop_database(str(db.engine.url))
-    shutil.rmtree(instance_path)
+    request.addfinalizer(teardown)
+    return a
+
+
+@pytest.yield_fixture()
+def client(app):
+    """Get test client."""
+    app.register_blueprint(blueprint_api, url_prefix='/api/admin')
+    with app.test_client() as client:
+        yield client
 
 
 @pytest.fixture()
-def app(base_app):
-    """Flask application fixture."""
-    return base_app
+def users(app, db):
+    """Create users."""
+    ds = app.extensions['invenio-accounts'].datastore
+    user = create_test_user(email='test@test.org')
+    contributor = create_test_user(email='test2@test.org')
+    comadmin = create_test_user(email='test3@test.org')
+    repoadmin = create_test_user(email='test4@test.org')
+    sysadmin = create_test_user(email='test5@test.org')
+
+    r1 = ds.create_role(name='System Administrator')
+    ds.add_role_to_user(sysadmin, r1)
+    r2 = ds.create_role(name='Repository Administrator')
+    ds.add_role_to_user(repoadmin, r2)
+    r3 = ds.create_role(name='Contributor')
+    ds.add_role_to_user(contributor, r3)
+    r4 = ds.create_role(name='Community Administrator')
+    ds.add_role_to_user(comadmin, r4)
+
+    # Assign access authorization
+    with db.session.begin_nested():
+        action_users = [
+            ActionUsers(action='superuser-access', user=sysadmin)
+        ]
+        db.session.add_all(action_users)
+
+    return [
+        {'email': user.email, 'id': user.id,
+         'password': user.password_plaintext, 'obj': user},
+        {'email': contributor.email, 'id': contributor.id,
+         'password': contributor.password_plaintext, 'obj': contributor},
+        {'email': comadmin.email, 'id': comadmin.id,
+         'password': comadmin.password_plaintext, 'obj': comadmin},
+        {'email': repoadmin.email, 'id': repoadmin.id,
+         'password': repoadmin.password_plaintext, 'obj': repoadmin},
+        {'email': sysadmin.email, 'id': sysadmin.id,
+         'password': sysadmin.password_plaintext, 'obj': sysadmin},
+    ]
+
+@pytest.fixture()
+def facet_search_setting(db):
+    datas = json_data("data/facet_search_setting.json")
+    settings = list()
+
+    for setting in datas:
+        settings.append(FacetSearchSetting(**datas[setting]))
+    with db.session.begin_nested():
+        db.session.add_all(settings)

@@ -239,14 +239,32 @@ OAISERVER_METADATA_FORMATS = {
     #        'schema': 'http://irdb.nii.ac.jp/oai/junii2-3-1.xsd',
     #        'namespace': 'http://irdb.nii.ac.jp/oai',
     #    },
+    'jpcoar': {
+        'serializer': (
+            'weko_schema_ui.utils:dumps_oai_etree', {
+                'schema_type': 'jpcoar_v1',
+            }
+        ),
+        'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
+        'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/jpcoar_scm.xsd',
+    },
     'jpcoar_1.0': {
+        'serializer': (
+            'weko_schema_ui.utils:dumps_oai_etree', {
+                'schema_type': 'jpcoar_v1',
+            }
+        ),
+        'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
+        'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/jpcoar_scm.xsd',
+    },
+    'jpcoar_2.0': {
         'serializer': (
             'weko_schema_ui.utils:dumps_oai_etree', {
                 'schema_type': 'jpcoar',
             }
         ),
-        'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
-        'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/jpcoar_scm.xsd',
+        'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/2.0/',
+        'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/2.0/jpcoar_scm.xsd',
     },
     'oai_dc': {
         'serializer': (
@@ -502,7 +520,7 @@ WEKO_RECORDS_UI_EMAIL_ITEM_KEYS = ['creatorMails', 'contributorMails', 'mails']
 RECORDS_UI_TOMBSTONE_TEMPLATE = 'weko_records_ui/tombstone.html'
 # Setting the template of showing deleted record
 
-WEKO_RECORDS_UI_LANG_DISP_FLG = True
+WEKO_RECORDS_UI_LANG_DISP_FLG = False 
 """ Enable function of switching metadata by language of metadata """
 
 WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE = [

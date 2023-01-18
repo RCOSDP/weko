@@ -1,0 +1,29 @@
+{
+  "_source": {
+    "_item_metadata": {
+      "item_type_id": "1",
+      "item_test1_creator": {
+        "attribute_name": "creator",
+        "attribute_type": "creator",
+        "attribute_value_mlt": [
+          {
+            "creatorNames":[
+              {
+                "creatorName":"takasi",
+                "creatorNameLang":"en"
+              }
+            ]
+          }
+        ]
+      },
+      "item_test2_title":{
+        "attribute_name":"Title",
+        "attribute_value_mlt":[
+          {
+            "test_title":"this is test item title"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -20,8 +20,8 @@
 
 """Service for widget modules."""
 import copy
-import json
 import pickle
+import json
 from datetime import date, datetime, timedelta
 from operator import itemgetter
 
@@ -165,9 +165,7 @@ class WidgetItemServices:
             return result
 
         session = db.session
-        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
-        
-        multi_lang_data = pickle_copy(widget_data.get('multiLangSetting'))
+        multi_lang_data = pickle.loads(pickle.dumps(widget_data.get('multiLangSetting'), -1))
         if not multi_lang_data:
             result['error'] = 'Multiple language data is empty'
             return result
@@ -211,9 +209,7 @@ class WidgetItemServices:
             result['error'] = 'Widget data is empty!'
             return result
 
-        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
-        
-        multi_lang_data = pickle_copy(widget_data.get('multiLangSetting'))
+        multi_lang_data = pickle.loads(pickle.dumps(widget_data.get('multiLangSetting'), -1))
         if not multi_lang_data:
             result['error'] = 'Multiple language data is empty'
             return result
@@ -1095,7 +1091,7 @@ class WidgetDataLoaderServices:
             end_date = current_date.strftime("%Y-%m-%d")
             start_date = (current_date - timedelta(days=term)).strftime(
                 "%Y-%m-%d")
-            rd = get_elasticsearch_result_by_date(start_date, end_date)
+            rd = get_elasticsearch_result_by_date(start_date, end_date, True)
             hits = rd.get('hits')
             if not hits:
                 result['error'] = 'Cannot search data'

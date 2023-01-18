@@ -101,13 +101,14 @@
 
 {% macro child_data(label, content, level) %}
     {%- set label_colspan_default = 6 -%}
-  <tr>
+ {%- if content -%}
+  <tr  style="border: 0px !important;">
       {{ out_table_th(level) }}
       {% set labels = label.split('.') %}
       {%- if labels|length > 1 -%}
           {% set label = labels[1] %}
       {%- endif -%}
-      <th scope="row" colspan="{{ label_colspan_default - level }}" style="border-bottom: none">{{ label }}</th>
+      <th scope="row" colspan="{{ label_colspan_default - level }}" style="border: 0px !important;">{{ label }}</th>
         {% autoescape false %}
             {%- if label == 'URL' -%}
                 <td><a href="{{content}}">{{ content | escape_str }}</a></td>
@@ -118,12 +119,13 @@
             {%- endif -%}
         {% endautoescape %}
   </tr>
+  {%- endif -%}
 {% endmacro %}
 
 {% macro out_table_th(parrent_length) %}
     {%- if parrent_length > 0 -%}
       <th scope="row"
-          style="border-top: none; border-bottom: none"></th>
+      style="border: 0px !important;"></th>
         {{ out_table_th(parrent_length - 1) }}
     {%- endif -%}
 {% endmacro %}

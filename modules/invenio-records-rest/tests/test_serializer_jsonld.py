@@ -18,7 +18,7 @@ from invenio_records import Record
 from marshmallow import Schema, fields
 
 from invenio_records_rest.serializers.jsonld import JSONLDSerializer
-
+from tests.helpers import create_record
 
 class _TestSchema(Schema):
     """Test schema."""
@@ -38,7 +38,7 @@ CONTEXT = {
 }
 
 
-def test_serialize():
+def test_serialize(db):
     """Test JSON serialize."""
     data = json.loads(
         JSONLDSerializer(CONTEXT, schema_class=_TestSchema).serialize(
@@ -109,3 +109,35 @@ def test_serialize_search():
             ]}],
         total=2
     )
+
+
+def test_transform_jsonld(test_records, mocker):
+    record = test_records[0]
+    obj={
+        "http://localhost/record/":"test server",
+        "dct:title":"test record01",
+        "@id":"12345"
+        }
+    mocker.patch("invenio_records_rest.serializers.jsonld.JSONLDTransformerMixin.expanded", return_value=False,  new_callable=mocker.PropertyMock)
+    data = JSONLDSerializer(CONTEXT, schema_class=_TestSchema).transform_jsonld(obj)
+    result = {
+        "@context": {
+            "dct": "http://purl.org/dc/terms/",
+            "@base": "http://localhost/record/",
+            "recid": "@id",
+            "title": "dct:title"
+        },
+        "recid": "12345",
+        "http://localhost/record/": "test server",
+        "title": "test record01"
+    }
+    assert data == result
+    
+    mocker.patch("invenio_records_rest.serializers.jsonld.JSONLDTransformerMixin.expanded", return_value=True, new_callable=mocker.PropertyMock)
+    data = JSONLDSerializer(CONTEXT, schema_class=_TestSchema).transform_jsonld(obj)
+    result = {
+        "http://localhost/record/":[{"@value": "test server"}],
+        "@id": "12345",
+        "http://purl.org/dc/terms/title":[{"@value": "test record01"}]
+    }
+    assert data == result

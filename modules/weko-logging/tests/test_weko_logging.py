@@ -24,4 +24,5 @@
 def test_version():
     """Test version import."""
     from weko_logging import __version__
+
     assert __version__
