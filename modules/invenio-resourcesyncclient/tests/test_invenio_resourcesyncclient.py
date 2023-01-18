@@ -10,7 +10,7 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Flask
+from flask import Flask, url_for
 
 from invenio_resourcesyncclient import INVENIOResourceSyncClient
 
@@ -34,8 +34,7 @@ def test_init():
     assert 'invenio-resourcesyncclient' in app.extensions
 
 
-def test_view(base_client):
+def test_view(app, db, client):
     """Test view."""
-    res = base_client.get("/")
-    assert res.status_code == 200
-    assert 'Welcome to INVENIO-ResourceSyncClient' in str(res.data)
+    res = client.get('/resync/')
+    assert res.status_code == 404

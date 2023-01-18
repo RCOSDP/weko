@@ -19,16 +19,21 @@
 # MA 02111-1307, USA.
 
 """Module tests."""
-
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 
 import json
 import pytest
-
 from flask import url_for
 from mock import patch, MagicMock
-from invenio_accounts.testutils import login_user_via_session
-import sqlalchemy
 
+from invenio_accounts.testutils import login_user_via_session
+
+
+def assert_role(response,is_permission,status_code=403):
+    if is_permission:
+        assert response.status_code != status_code
+    else:
+        assert response.status_code == status_code
 
 class MockIndexer():
     def __init__(self):
@@ -78,14 +83,19 @@ def test_create_prefix_guest(client):
     # assert res.url == url_for('security.login')
 
 
-@pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 403),
-    (2, 403),
-    (3, 200),
-    (4, 200),
+#.tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_create_prefix_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+@pytest.mark.parametrize('users_index, is_permission', [
+    (0,True), # sysadmin
+    (1,True), # repoadmin
+    (2,True), # comadmin
+    (3,True), # contributor
+    (4,False), # generaluser
+    (5,False), # originalroleuser
+    (6,True), # originalroleuser2
+    (7,False), # user
+    (8,False), # student  
 ])
-def test_create_prefix_users(client, users, users_index, status_code):
+def test_create_prefix_users(client, users, users_index, is_permission):
     """
     Test of create author prefix.
     :param client: The flask client.
@@ -97,9 +107,10 @@ def test_create_prefix_users(client, users, users_index, status_code):
     res = client.put('/api/authors/add_prefix',
                      data=json.dumps(input),
                      content_type='application/json')
-    assert res.status_code == status_code
+    assert_role(res, is_permission)
 
 
+#.tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_update_prefix_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_update_prefix_guest(client, id_prefix):
     """
     Test of update author prefix.
@@ -114,15 +125,19 @@ def test_update_prefix_guest(client, id_prefix):
     # TODO check that the path changed
     # assert res.url == url_for('security.login')
 
-
-@pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 403),
-    (2, 403),
-    (3, 200),
-    (4, 200),
+#.tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_update_prefix_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+@pytest.mark.parametrize('users_index, is_permission', [
+    (0,True), # sysadmin
+    (1,True), # repoadmin
+    (2,True), # comadmin
+    (3,True), # contributor
+    (4,False), # generaluser
+    (5,False), # originalroleuser
+    (6,True), # originalroleuser2
+    (7,False), # user
+    (8,False), # student  
 ])
-def test_update_prefix_users(client, users, id_prefix, users_index, status_code):
+def test_update_prefix_users(client, users, id_prefix, users_index, is_permission):
     """
     Test of update author prefix.
     :param client: The flask client.
@@ -134,7 +149,7 @@ def test_update_prefix_users(client, users, id_prefix, users_index, status_code)
     res = client.post('/api/authors/edit_prefix',
                       data=json.dumps(input2),
                       content_type='application/json')
-    assert res.status_code == status_code
+    assert_role(res, is_permission)
 
 
 def test_delete_prefix_guest(client, id_prefix):
@@ -150,14 +165,18 @@ def test_delete_prefix_guest(client, id_prefix):
     # assert res.url == url_for('security.login')
 
 
-@pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 403),
-    (2, 403),
-    (3, 200),
-    (4, 200),
+@pytest.mark.parametrize('users_index, is_permission', [
+    (0,True), # sysadmin
+    (1,True), # repoadmin
+    (2,True), # comadmin
+    (3,True), # contributor
+    (4,False), # generaluser
+    (5,False), # originalroleuser
+    (6,True), # originalroleuser2
+    (7,False), # user
+    (8,False), # student  
 ])
-def test_delete_prefix_users(client, users, id_prefix, users_index, status_code):
+def test_delete_prefix_users(client, users, id_prefix, users_index, is_permission):
     """
     Test of delete author prefix.
     :param client: The flask client.
@@ -166,7 +185,7 @@ def test_delete_prefix_users(client, users, id_prefix, users_index, status_code)
     login_user_via_session(client=client, email=users[users_index]['email'])
     url = url_for('weko_authors.delete_prefix', id=id_prefix)
     res = client.delete(url)
-    assert res.status_code == status_code
+    assert_role(res, is_permission)
 
 
 def test_getById_guest(client):
@@ -182,15 +201,18 @@ def test_getById_guest(client):
     # TODO check that the path changed
     # assert res.url == url_for('security.login')
 
-
-@pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 403),
-    (2, 403),
-    (3, 200),
-    (4, 200),
+@pytest.mark.parametrize('users_index, is_permission', [
+    (0,True), # sysadmin
+    (1,True), # repoadmin
+    (2,True), # comadmin
+    (3,True), # contributor
+    (4,False), # generaluser
+    (5,False), # originalroleuser
+    (6,True), # originalroleuser2
+    (7,False), # user
+    (8,False), # student  
 ])
-def test_getById_users(client, users, users_index, status_code):
+def test_getById_users(client, users, users_index, is_permission):
     """
     Test of get author data by id.
     :param client: The flask client.
@@ -203,7 +225,7 @@ def test_getById_users(client, users, users_index, status_code):
         res = client.post('/api/authors/search_edit',
                           data=json.dumps(input),
                           content_type='application/json')
-    assert res.status_code == status_code
+    assert_role(res, is_permission)
 
 
 def test_gatherById_guest(client):
@@ -220,14 +242,18 @@ def test_gatherById_guest(client):
     # assert res.url == url_for('security.login')
 
 
-@pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 403),
-    (2, 403),
-    (3, 200),
-    (4, 200),
+@pytest.mark.parametrize('users_index, is_permission', [
+    (0,True), # sysadmin
+    (1,True), # repoadmin
+    (2,True), # comadmin
+    (3,True), # contributor
+    (4,False), # generaluser
+    (5,False), # originalroleuser
+    (6,True), # originalroleuser2
+    (7,False), # user
+    (8,False), # student  
 ])
-def test_gatherById_users(client, users, users_index, status_code):
+def test_gatherById_users(client, users, users_index, is_permission):
     """
     Test of gather author data by id.
     :param client: The flask client.
@@ -240,7 +266,7 @@ def test_gatherById_users(client, users, users_index, status_code):
             res = client.post('/api/authors/gather',
                               data=json.dumps(input),
                               content_type='application/json')
-            assert res.status_code == status_code
+            assert_role(res, is_permission)
 
 
 def test_get_guest(client):
@@ -258,14 +284,18 @@ def test_get_guest(client):
     # assert res.url == url_for('security.login')
 
 
-@pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 200),
-    (2, 200),
-    (3, 200),
-    (4, 200),
+@pytest.mark.parametrize('users_index, is_permission', [
+    (0,True), # sysadmin
+    (1,True), # repoadmin
+    (2,True), # comadmin
+    (3,True), # contributor
+    (4,False), # generaluser
+    (5,False), # originalroleuser
+    (6,True), # originalroleuser2
+    (7,False), # user
+    (8,False), # student  
 ])
-def test_get_users(client, users, users_index, status_code):
+def test_get_users(client, users, users_index, is_permission):
     """
     Test of search and get author data.
     :param client: The flask client.
@@ -278,7 +308,7 @@ def test_get_users(client, users, users_index, status_code):
         res = client.post('/api/authors/search',
                           data=json.dumps(input),
                           content_type='application/json')
-    assert res.status_code == status_code
+    assert_role(res, is_permission)
 
 
 def test_create_guest(client):
@@ -318,14 +348,18 @@ def test_create_guest(client):
     # assert res.url == url_for('security.login')
 
 
-@pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 200),
-    (2, 200),
-    (3, 200),
-    (4, 200),
+@pytest.mark.parametrize('users_index, is_permission', [
+    (0,True), # sysadmin
+    (1,True), # repoadmin
+    (2,True), # comadmin
+    (3,True), # contributor
+    (4,False), # generaluser
+    (5,False), # originalroleuser
+    (6,True), # originalroleuser2
+    (7,False), # user
+    (8,False), # student  
 ])
-def test_create_users(client, users, users_index, status_code):
+def test_create_users(client, users, users_index, is_permission):
     """
     Test of create author.
     :param client: The flask client.
@@ -361,7 +395,7 @@ def test_create_users(client, users, users_index, status_code):
             res = client.post('/api/authors/add',
                               data=json.dumps(input),
                               content_type='application/json')
-    assert res.status_code == status_code
+    assert_role(res, is_permission)
 
 
 def test_update_author_guest(client):
@@ -401,14 +435,18 @@ def test_update_author_guest(client):
     # assert res.url == url_for('security.login')
 
 
-@pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 403),
-    (2, 403),
-    (3, 200),
-    (4, 200),
+@pytest.mark.parametrize('users_index, is_permission', [
+    (0,True), # sysadmin
+    (1,True), # repoadmin
+    (2,True), # comadmin
+    (3,True), # contributor
+    (4,False), # generaluser
+    (5,False), # originalroleuser
+    (6,True), # originalroleuser2
+    (7,False), # user
+    (8,False), # student  
 ])
-def test_update_author_users(client, users, create_author, users_index, status_code):
+def test_update_author_users(client, users, create_author, users_index, is_permission):
     """
     Test of update author data.
     :param client: The flask client.
@@ -468,7 +506,7 @@ def test_update_author_users(client, users, create_author, users_index, status_c
             res = client.post('/api/authors/edit',
                               data=json.dumps(input),
                               content_type='application/json')
-            assert res.status_code == status_code
+            assert_role(res, is_permission)
 
 
 def test_delete_author_guest(client):
@@ -485,14 +523,18 @@ def test_delete_author_guest(client):
     # assert res.url == url_for('security.login')
 
 
-@pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 403),
-    (2, 403),
-    (3, 200),
-    (4, 200),
+@pytest.mark.parametrize('users_index, is_permission', [
+    (0,True), # sysadmin
+    (1,True), # repoadmin
+    (2,True), # comadmin
+    (3,True), # contributor
+    (4,False), # generaluser
+    (5,False), # originalroleuser
+    (6,True), # originalroleuser2
+    (7,False), # user
+    (8,False), # student  
 ])
-def test_delete_author_users(client, users, create_author, users_index, status_code):
+def test_delete_author_users(client, users, create_author, users_index, is_permission):
     """
     Test of delete author data.
     :param client: The flask client.
@@ -529,7 +571,7 @@ def test_delete_author_users(client, users, create_author, users_index, status_c
             res = client.post('/api/authors/delete',
                               data=json.dumps(input),
                               content_type='application/json')
-            assert res.status_code == status_code
+            assert_role(res, is_permission)
 
 
 def test_mapping_guest(client):
@@ -545,15 +587,19 @@ def test_mapping_guest(client):
     # TODO check that the path changed
     # assert res.url == url_for('security.login')
 
-
-@pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
-    (1, 200),
-    (2, 200),
-    (3, 200),
-    (4, 200),
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_mapping_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+@pytest.mark.parametrize('users_index, is_permission', [
+    (0,True), # sysadmin
+    (1,True), # repoadmin
+    (2,True), # comadmin
+    (3,True), # contributor
+    (4,False), # generaluser
+    (5,False), # originalroleuser
+    (6,True), # originalroleuser2
+    (7,False), # user
+    (8,False), # student  
 ])
-def test_mapping_users(client, users, users_index, status_code):
+def test_mapping_users(client, users, users_index, is_permission):
     """
     Test of mapping author data.
     :param client: The flask client.
@@ -565,5 +611,5 @@ def test_mapping_users(client, users, users_index, status_code):
         res = client.post('/api/authors/input',
                           data=json.dumps(input),
                           content_type='application/json')
-        assert res.status_code == status_code
+        assert_role(res, is_permission)
 

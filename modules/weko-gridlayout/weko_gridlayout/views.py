@@ -342,7 +342,7 @@ def get_new_arrivals_data(widget_id):
         _suffix = _suffix.rstrip('_')
 
     # cache by role
-    cache_name = 'cache_new_arrivals'.format(_suffix)
+    cache_name = 'cache_new_arrivals'
     cached_data = current_cache.get(cache_name)
     if not cached_data:
         cached_data = jsonify(

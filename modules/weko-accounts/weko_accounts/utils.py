@@ -41,11 +41,31 @@ def get_remote_addr():
 
     # current_app.logger.debug('{0} {1} {2}: {3}'.format(
     #     __file__, 'get_remote_addr()', 'request.headers', request.headers))
-    address = request.headers.get('X-Real-IP', None)
-    if address is None:
-        address = request.headers.get('X-Forwarded-For', request.remote_addr)
+    
+    address = None
+    if "WEKO_ACCOUNTS_REAL_IP" not in current_app.config or current_app.config["WEKO_ACCOUNTS_REAL_IP"] == None:
+        address = request.headers.get('X-Real-IP', None)
+        if address is None:
+            address = request.headers.get('X-Forwarded-For', None)
+            if address is not None:
+                address = address.encode('utf-8').split(b',')[0].strip().decode()
+    elif current_app.config["WEKO_ACCOUNTS_REAL_IP"] == "remote_addr":
+        address =request.remote_addr
+    elif current_app.config["WEKO_ACCOUNTS_REAL_IP"] == "x_real_ip":
+        address = request.headers.get('X-Real-IP', None)
+    elif current_app.config["WEKO_ACCOUNTS_REAL_IP"] == "x_forwarded_for":
+        address = request.headers.get('X-Forwarded-For', None)
         if address is not None:
-            address = address.encode('utf-8').split(b',')[0].strip().decode()
+            _tmp = address.encode('utf-8').split(b',')
+            address = _tmp[0].strip().decode()            
+    elif current_app.config["WEKO_ACCOUNTS_REAL_IP"] == "x_forwarded_for_rev":
+        address = request.headers.get('X-Forwarded-For', None)
+        if address is not None:
+            _tmp = address.encode('utf-8').split(b',')
+            address = _tmp[len(_tmp)-1].strip().decode()
+
+    if address == None or len(address)==0:
+        address = request.remote_addr
 
     current_app.logger.debug("IP Address:{}".format(address))
 
