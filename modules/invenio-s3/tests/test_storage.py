@@ -402,6 +402,13 @@ def test_send_file(base_app, location, s3fs, database):
         base_app.config['S3_SEND_FILE_DIRECTLY'] = False
         test_send_indirectly()
 
+        checksum = 'md5:value'
+        test_send_indirectly()
+
+        with patch('invenio_s3.storage.redirect_stream') as rs:
+            rs.side_effect = Exception
+            pytest.raises(StorageError, s3fs.send_file, 'test.txt')
+
         base_app.config['S3_SEND_FILE_DIRECTLY'] = True
         default_location.s3_send_file_directly = True
         database.session.commit()
