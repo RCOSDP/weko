@@ -1,9 +1,13 @@
 
 import pytest
+from mock import patch
 import json
 from flask import make_response
 from invenio_accounts.testutils import login_user_via_session
 from weko_admin.models import ApiCertificate
+from weko_records.models import ItemTypeName
+
+from weko_items_autofill.views import dbsession_clean
 
 user_results = [
     (0,True),
@@ -237,3 +241,25 @@ def test_get_item_auto_fill_journal(client_api,users,mocker):
     url = "/autofill/get_auto_fill_journal/1"
     res = client_api.get(url)
     assert json.loads(res.data) == {"result":{"key":"value"}}
+
+# def dbsession_clean(exception):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_views.py::test_dbsession_clean -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_dbsession_clean(app, db):
+    # exist exception
+    itemtype_name1 = ItemTypeName(id=1,name="テスト1",has_site_license=True, is_active=True)
+    db.session.add(itemtype_name1)
+    dbsession_clean(None)
+    assert ItemTypeName.query.filter_by(id=1).first().name == "テスト1"
+    
+    # raise Exception
+    itemtype_name2 = ItemTypeName(id=2,name="テスト2",has_site_license=True, is_active=True)
+    db.session.add(itemtype_name2)
+    with patch("weko_items_autofill.views.db.session.commit",side_effect=Exception):
+        dbsession_clean(None)
+        assert ItemTypeName.query.filter_by(id=2).first() is None
+
+    # not exist exception
+    itemtype_name3 = ItemTypeName(id=3,name="テスト3",has_site_license=True, is_active=True)
+    db.session.add(itemtype_name3)
+    dbsession_clean(Exception)
+    assert ItemTypeName.query.filter_by(id=3).first() is None

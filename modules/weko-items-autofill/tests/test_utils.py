@@ -1,15 +1,16 @@
 
 from mock import patch
+import pytest
 from lxml import etree
 from invenio_cache import current_cache
 
+from weko_records.models import ItemType, ItemTypeName
 from weko_workflow.models import ActionJournal
 
 from weko_items_autofill.utils import (
     is_update_cache,
     cached_api_json,
     get_item_id,
-    convert_html_escape,
     _get_title_data,
     get_title_pubdate_path,
     get_crossref_record_data,
@@ -52,10 +53,18 @@ from weko_items_autofill.utils import (
     is_multiple,
     get_workflow_journal,
     convert_crossref_xml_data_to_dictionary,
-    _get_contributor_and_author_names
+    _get_contributor_and_author_names,
+    get_wekoid_record_data,
+    build_record_model_for_wekoid,
+    is_multiple_item,
+    get_record_model,
+    set_val_for_record_model,
+    set_val_for_all_child,
+    remove_sub_record_model_no_value
 )
 
-from tests.helpers import json_data
+from tests.helpers import json_data, login, logout
+
 # def is_update_cache():
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_is_update_cache -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_is_update_cache(app):
@@ -84,20 +93,8 @@ def test_get_item_id(app,itemtypes,mocker):
     result = get_item_id(1)
     assert result == test
     
-    result = get_item_id(2)
+    result = get_item_id(100)
     assert result == {"error":"'NoneType' object has no attribute 'items'"}
-
-
-# def convert_html_escape(text):
-# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_convert_html_escape -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_convert_html_escape():
-    # text is not str
-    result = convert_html_escape(None)
-    assert result == None
-    
-    text = "test&amp;test&apos;test&gt;test&lt;"
-    result = convert_html_escape(text)
-    assert result == "test&test'test>test<"
 
 
 # def _get_title_data(jpcoar_data, key, rtn_title):
@@ -113,6 +110,7 @@ def test_get_title_data(app):
     rtn_title={}
     _get_title_data(jpcoar_data,key,rtn_title)
     assert rtn_title == {"title_parent_key":"test_item1","title_value_lst_key":["test1_subitem1"],"title_lang_lst_key":["test1_subitem2"]}
+    
     jpcoar_data={
             "title":{
                 "@attributes":{}
@@ -129,10 +127,19 @@ def test_get_title_data(app):
     _get_title_data(jpcoar_data,key,rtn_title)
     assert rtn_title == {"title_parent_key":"test_item1"}
     
+    # not contain 'item' in key
     jpcoar_data={}
     key="test"
     rtn_title={}
     _get_title_data(jpcoar_data,key,rtn_title)
+    assert rtn_title == {}
+    
+    # raise Exception
+    jpcoar_data={}
+    key="item_test"
+    rtn_title={}
+    _get_title_data(jpcoar_data,key,rtn_title)
+    assert rtn_title == {"title_parent_key":"item_test"}
 
 
 # def get_title_pubdate_path(item_type_id):
@@ -140,13 +147,20 @@ def test_get_title_data(app):
 def test_get_title_pubdate_path(app,itemtypes):
     result = get_title_pubdate_path(1)
     assert result == {"title":{"title_parent_key":"test_item1","title_value_lst_key":["test1_subitem1"],"title_lang_lst_key":["test1_subitem2"]},"pubDate":""}
+    
+    # not reached break
+    all_false_mapping = {"test1":{},"test2":{}}
+    with patch("weko_items_autofill.utils.Mapping.get_record", return_value=all_false_mapping):
+        result = get_title_pubdate_path(1)
+        assert result == {"pubDate":"", "title":{}}
 
 
 # def get_crossref_record_data(pid, doi, item_type_id):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_crossref_record_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_crossref_record_data(itemtypes,mocker):
+def test_get_crossref_record_data(db,itemtypes,mocker):
     current_cache.delete("crossref_datatest_pidtest_doi1")
     current_cache.delete("crossref_datatest_pidtest_doi300")
+    current_cache.delete("crossref_datatest_pidtest_doi2")
     mocker.patch("weko_items_autofill.utils.convert_crossref_xml_data_to_dictionary")
     mocker.patch("weko_items_autofill.utils.get_crossref_data_by_key")
     mocker.patch("weko_items_autofill.utils.sort_by_item_type_order")
@@ -164,11 +178,12 @@ def test_get_crossref_record_data(itemtypes,mocker):
         result = get_crossref_record_data("test_pid","test_doi",itemtypes[0][0].id)
         assert result == []
     current_cache.delete("crossref_datatest_pidtest_doi1")
-    # not exist itemtype
+    
     with patch("weko_items_autofill.utils.CrossRefOpenURL.get_data",return_value={"error":None,"response":""}):
+        # not exist itemtype
         result = get_crossref_record_data("test_pid","test_doi",300)
         assert result == []
-
+        
         result = get_crossref_record_data("test_pid","test_doi",itemtypes[0][0].id)
         assert result == [
             {'test_item1': {'test1_subitem1': 'test_article_title', 'test1_subitem2': 'en'}},
@@ -176,11 +191,17 @@ def test_get_crossref_record_data(itemtypes,mocker):
             {'test_item7': {'contributorNames': {'contributorName': 'B.Test2', 'lang': 'en'}}},
             {'test_item8': {'test8_subitem1': {'test8_subitem2': '10.1103/PhysRev.47.777', 'test8_subitem3': 'DOI'}}},
             {'test_item16': {'test16_subitem1': '47'}}]
+        
+        # not exist itemtype.form
+        itemtypes[1][0].form = None
+        db.session.merge(itemtypes[1][0])
+        result = get_crossref_record_data("test_pid","test_doi",itemtypes[1][0].id)
+        assert result == []
 
 
 # def get_cinii_record_data(naid, item_type_id):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_record_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_cinii_record_data(itemtypes,mocker):
+def test_get_cinii_record_data(db, itemtypes,mocker):
     current_cache.delete("cinii_datatest_naid1")
     current_cache.delete("cinii_datatest_naid100")
     mocker.patch("weko_items_autofill.utils.get_cinii_data_by_key")
@@ -193,22 +214,32 @@ def test_get_cinii_record_data(itemtypes,mocker):
         {'test_item8': {'test8_subitem1': {'test8_subitem2': "10.1016/j.test.2022.146234", 'test8_subitem3': 'DOI'}}},
         {'test_item16': {'test16_subitem1': '10'}}]
     mocker.patch("weko_items_autofill.utils.build_record_model",return_value=data)
-
+    
+    # get_data is error
     with patch("weko_items_autofill.utils.CiNiiURL.get_data",return_value={"error":"test_error","response":""}):
-        result = get_cinii_record_data("test_naid",1)
+        result = get_cinii_record_data("test_naid",itemtypes[0][0].id)
         assert result == []
     current_cache.delete("cinii_datatest_naid1")
+    
     with patch("weko_items_autofill.utils.CiNiiURL.get_data",return_value={"error":None,"response":{}}):
+        # not exist itemtype
         result = get_cinii_record_data("test_naid",100)
         assert result == []
         
-        result = get_cinii_record_data("test_naid",1)
+        result = get_cinii_record_data("test_naid",itemtypes[0][0].id)
         assert result == [
             {'test_item1': {'test1_subitem1': "this is test Dissertation", 'test1_subitem2': 'ja'}},
             {'test_item6': {'creatorNames': {'creatorName': 'テスト 太郎', 'creatorNameLang': 'ja'}}},
             {'test_item7': {'contributorNames': {'contributorName': 'テスト組織', 'lang': 'ja'}}},
             {'test_item8': {'test8_subitem1': {'test8_subitem2': '10.1016/j.test.2022.146234', 'test8_subitem3': 'DOI'}}},
             {'test_item16': {'test16_subitem1': '10'}}]
+        
+        # not exist itemtype.form
+        itemtypes[1][0].form = None
+        db.session.merge(itemtypes[1][0])
+        db.session.commit()
+        result = get_cinii_record_data("test_naid",itemtypes[1][0].id)
+        assert result == []
 
 
 # def get_basic_cinii_data(data):
@@ -390,6 +421,9 @@ def test_get_cinii_data_by_key(app,mocker):
     result = get_cinii_data_by_key(api,"all")
 
     assert result == test
+    
+    result = get_cinii_data_by_key(api, "other_key")
+    assert result == {}
 
 
 # def get_crossref_title_data(data):
@@ -621,6 +655,17 @@ def test_get_autofill_key_tree(mocker):
     result = get_autofill_key_tree({},item)
     assert result == test
 
+    # not exist creatorName, contributorName, relatedIdentifier, key_data
+    # not dict and list
+    item = {
+        "creator":{"model_id":"test_item6"},
+        "contributor":{"model_id":"test_item7"},
+        "relation":{"model_id":"test_item8"},
+        "str_key":"str_value"
+    }
+    result = get_autofill_key_tree({},item)
+    assert result == {}
+
 
 # def sort_by_item_type_order(item_forms, autofill_key_tree):
 #     def get_parent_key(_item):
@@ -635,12 +680,14 @@ def test_sort_by_item_type_order():
             {"@value":"test_item6.creatorNames.creatorName","@language":"test_item6.creatorNames.creatorNameLang"},
         ],
         "contributor":{"@value":"test_item7.contributorNames.contributorName","@language":"test_item7.contributorNames.lang"},
+        "relation":[1,2,3,4]
     }
     form = [{"key":"test_item1"}]
     test = {
         "title":[{"title":{"@value":"test_item1.test1_subitem1","@language":"test_item1.test1_subitem2"}}],
         "creator":[],
         "contributor":{"@value":"test_item7.contributorNames.contributorName","@language":"test_item7.contributorNames.lang"},
+        "relation":[]
     }
     sort_by_item_type_order(form,autofill_key_tree)
     assert autofill_key_tree == test
@@ -692,10 +739,18 @@ def test_get_autofill_key_path(app):
     data = json_data("data/itemtypes/forms.json")[:2]
     parent_key="test_item5"
     child_key="test5_subitem2"
+    
+    # nomal
     with patch("weko_items_autofill.utils.get_specific_key_path",side_effect=[(True,"test_item5.test5_subitem2")]):
         result = get_autofill_key_path(data,parent_key,child_key)
         assert result == {"key":"test_item5.test5_subitem2"}
-    
+        
+    # not exist
+    with patch("weko_items_autofill.utils.get_specific_key_path",side_effect=[(False,None),(False,None)]):
+        result = get_autofill_key_path(data,parent_key,child_key)
+        assert result == {"key":None}
+        
+    # raise Exception
     with patch("weko_items_autofill.utils.get_specific_key_path",side_effect=Exception("test_error")):
         result = get_autofill_key_path(data,parent_key,child_key)
         assert result == {"key":None,"error":"test_error"}
@@ -732,13 +787,39 @@ def test_get_specific_key_path():
                 "titleMap":[
                     {"name":"ja","value":"ja"},{"name":"en","value":"en"}
                 ]
+            },
+            {
+                "key":"test_item1[].test1_subitem3",
+                "type":"select",
+                "title":"Language2",
+                "titleMap":[
+                    {"name":"ja","value":"ja"},{"name":"en","value":"en"}
+                ]
             }
         ]
     }
     existed, path_result = get_specific_key_path(des_key,form)
     assert existed == True
     assert path_result == "test_item1[].test1_subitem2"
-
+    
+    # not existed key in form
+    form = {}
+    existed, path_result = get_specific_key_path(des_key, form)
+    assert existed == False
+    assert path_result == None
+    
+    # not existed key
+    form = []
+    existed, path_result = get_specific_key_path(des_key, form)
+    assert existed == False
+    assert path_result == None
+    
+    # form is not list, not dict
+    form = "test_form"
+    existed, path_result = get_specific_key_path(des_key, form)
+    assert existed == False
+    assert path_result == None
+    
 
 # def build_record_model(item_autofill_key, api_data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_build_record_model -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
@@ -759,7 +840,8 @@ def test_build_record_model():
         'pageStart': {'@value': 777}, 
         'pageEnd': {'@value': 780}, 
         'date': {'@value': '1935', '@type': 'Issued'}, 
-        'relation': [{'@value': '10.1103/PhysRev.47.777', '@type': 'DOI'}]
+        'relation': [{'@value': '10.1103/PhysRev.47.777', '@type': 'DOI'}],
+        "not_dict_list":{"@value":"value"}
         }
     item_autofill_key = {
         "title":[{"title":{"@value":"test_item1.test1_subitem1","@language":"test_item1.test1_subitem2"}},
@@ -769,7 +851,8 @@ def test_build_record_model():
         "creator":{"@value":"test_item6.creatorNames.creatorName","@language":"test_item6.creatorNames.creatorNameLang"},
         "contributor":{"@value":"test_item7.contributorNames.contributorName","@language":"test_item7.contributorNames.lang"},
         "relation":{"@value":"test_item8.test8_subitem1.test8_subitem2","@type":"test_item8.test8_subitem1.test8_subitem3"},
-        "volume":{"@value":"test_item16.test16_subitem1"}
+        "volume":{"@value":"test_item16.test16_subitem1"},
+        "not_dict_list":"value"
     }
     test = [
         {'test_item1': {'test1_subitem1': 'test_article_title', 'test1_subitem2': 'en'}},
@@ -805,17 +888,56 @@ def test_build_model():
 # def build_form_model(form_model, form_key, autofill_key=None):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_build_form_model -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_build_form_model():
+    # form_key is dict
     form_model = {}
-    form_key = {"@value":"test_item7.contributorNames.contributorName","@language":"test_item7.contributorNames.lang"}
+    form_key = {"@value":"test_item7.contributorNames.contributorName","@language":"test_item7.contributorNames.lang","not_str":["not_str_value"]}
     test = {
         "@value":{"test_item7":{"contributorNames":{"contributorName":"@value"}}},
         "@language":{"test_item7":{"contributorNames":{"lang":"@language"}}}
     }
     build_form_model(form_model,form_key)
     assert form_model == test
+    
+    # form_key is list
     form_model = []
     form_key = ["test_item7","contributorNames"]
     test = [{"test_item7":{"contributorNames":"test_key"}}]
+    build_form_model(form_model,form_key,"test_key")
+    assert form_model == test
+    
+    # form_key is list, form_key.length = 0
+    form_model = []
+    form_key = []
+    test = []
+    build_form_model(form_model,form_key,"test_key")
+    assert form_model == test
+
+    # form_key is list, form_key.length = 1
+    ## form_model is list
+    form_model = []
+    form_key = ["test_item7"]
+    test = [{"test_item7": "test_key"}]
+    build_form_model(form_model,form_key,"test_key")
+    assert form_model == test
+    
+    ## form_model is dict
+    form_model = {}
+    form_key = ["test_item7"]
+    test = {"test_item7": "test_key"}
+    build_form_model(form_model,form_key,"test_key")
+    assert form_model == test
+
+    ## form_model is not list, dict
+    form_model = 123
+    form_key = ["test_item7"]
+    test = 123
+    build_form_model(form_model,form_key,"test_key")
+    assert form_model == test
+    
+    # form_key is not list, dict
+    form_model = {}
+    form_key = "str_key"
+    test = {}
     build_form_model(form_model,form_key,"test_key")
     assert form_model == test
 
@@ -840,7 +962,7 @@ def test_merge_dict(app):
         'test_item4': 'test1', 
         'test_item1': {'test1_subitem1': {'test1_subitem2': '@value'}}}
     ]
-    merge_dict(original_dict,merged_dict)
+    merge_dict(original_dict,merged_dict, over_write=True)
     assert original_dict == test
     original_dict=[{
         "test_item2":{"test2_subitem1":{"test2_subitem2":"@language"}},
@@ -862,6 +984,23 @@ def test_merge_dict(app):
     merge_dict(original_dict,merged_dict,over_write=False)
     assert original_dict == test
 
+    # over_write is False, raise conflict
+    original_dict = {
+        "test_item4":"test1"
+    }
+    merged_dict = {
+        "test_item4":"test4"
+    }
+    test = ""
+    merge_dict(original_dict, merged_dict, over_write=False)
+    assert original_dict == {"test_item4":"test1"}
+    
+    # not type dict and dict, list and list
+    original_dict = {"test_item2":{"test2_subitem1":{"test2_subitem2":"@language"}}}
+    merged_dict = [{"test_item1":{"test1_subitem1":{"test1_subitem2":"@value"}}}]
+    merge_dict(original_dict, merged_dict)
+    assert original_dict == {"test_item2":{"test2_subitem1":{"test2_subitem2":"@language"}}}
+
 
 # def deepcopy(original_object, new_object):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_deepcopy -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
@@ -872,7 +1011,7 @@ def test_deepcopy():
     assert result == None
     
     new_object={}
-    original_object=[{"test1":["test1_1","test1_2"],"test2":"value2"},{"test3":["test3_1","test3_2"],"test4":"value4"}]
+    original_object=[{"test1":["test1_1","test1_2"],"test2":"value2"},{"test3":["test3_1","test3_2"],"test4":"value4"},"test_str"]
     result = deepcopy(original_object,new_object)
     assert new_object == {"test1":["test1_1","test1_2"],"test2":"value2","test3":["test3_1","test3_2"],"test4":"value4"}
 
@@ -880,6 +1019,7 @@ def test_deepcopy():
 # def fill_data(form_model, autofill_data, is_multiple_data=False):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_fill_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_fill_data():
+    # autofill_data is not dict, list
     form_model = ""
     autofill_data =""
     result = fill_data(form_model,autofill_data)
@@ -918,25 +1058,38 @@ def test_fill_data():
     ]
     fill_data(form_model,autofill_data)
     assert form_model == test
+    
+    autofill_data = {"@value": "47"}
+    form_model = "test"
+    fill_data(form_model, autofill_data)
 
 
 # def is_multiple(form_model, autofill_data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_is_multiple -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_is_multiple():
+    # autofill_data is not list
     form_model = {}
     autofill_data = {}
     result = is_multiple(form_model,autofill_data)
     assert result == False
     
+    # autofill_data is list and form_model[0] is list
     form_model = {"test1":[1,2,3],"test2":"value2"}
     autofill_data = [1,2,3]
     result = is_multiple(form_model,autofill_data)
     assert result == True
     
+    # autofill_data is list and form_model[0] is dict
     form_model = {"test1":"value2","test2":[1,2,3]}
     autofill_data = [1,2,3]
     result = is_multiple(form_model,autofill_data)
     assert result == False
+    
+    # autofill_data is list and form_model.length = 0
+    form_model = []
+    autofill_data = [1,2,3]
+    result = is_multiple(form_model, autofill_data)
+    assert result == None
 
 
 # def get_workflow_journal(activity_id):
@@ -1029,9 +1182,216 @@ def test_get_contributor_and_author_names():
 
 
 # def get_wekoid_record_data(recid, item_type_id):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_wekoid_record_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_get_wekoid_record_data(app, client, users, records, itemtypes):
+    item_type_id = itemtypes[2][0].id
+    recid = records[0][0].pid_value
+    # raise permission error
+    with pytest.raises(ValueError) as e:
+        get_wekoid_record_data(recid, item_type_id)
+        assert str(e) == "The item cannot be copied because you do not have permission to view it."
+    
+    login(app,client, obj=users[0]["obj"])
+    test = [{"item_1617186331708": [{"subitem_1551255647225": "title", "subitem_1551255648112": "ja"}]}, {"item_1617186476635": {"subitem_1600958577026": "test_access_url"}}, {"item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}}]
+    result = get_wekoid_record_data(recid, item_type_id)
+    assert result == test
+    logout(app,client)
+
 # def build_record_model_for_wekoid(item_type_id, item_map_data):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_build_record_model_for_wekoid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_build_record_model_for_wekoid(db):
+
+    
+    schema = {"properties":{
+        "item01":{}, # not existed props
+        "item02":{"properties":{"subitem02_1":{"title":"SubItem02_1"},"subitem02_2":{"title":"SubItem02_1"}}}, # is_multiple_item is false, props existed
+        "item03":{"items":{"properties":{"subitem03_1":{"title":"SubItem03_1"},"subitem03_2":{"title":"SubItem03_2"}}}}, # is_multiple_item is true, props existed
+        "item04":{} # not in item_has_val
+    }}
+    
+    itemtype_name = ItemTypeName(id=1,name="テスト",has_site_license=True, is_active=True)
+    itemtype = ItemType(id=1,name_id=itemtype_name.id,
+             harvesting_type=True,schema=schema,form={},render={},tag=1,version_id=1,is_deleted=False)
+    db.session.add(itemtype_name)
+    db.session.add(itemtype)
+    db.session.commit()
+    
+    item_map_data = {"item01":[],"item02.subitem02_1":[],"item03.subitem03_1":[]}
+    result = build_record_model_for_wekoid(itemtype.id,item_map_data)
+    test = [{"item01": {}}, {"item02": {"subitem02_1": {}, "subitem02_2": {}}}, {"item03": [{"subitem03_1": {}, "subitem03_2":{}}]}]
+    assert result == test
+    
 # def is_multiple_item(val):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_is_multiple_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_is_multiple_item():
+    # val is not dict
+    val = ["val1","val2"]
+    result = is_multiple_item(val)
+    assert result == False
+    
+    # exist val.items.properties
+    val = {
+            "type": "array",
+            "items":{
+                "type":"object",
+                "properties":{
+                    "sub_item_0001":{
+                        "type":"string",
+                        "title":"Title"
+                    },
+                    "sub_item_0002":{
+                        "type":["null","string"],
+                        "title":"Language"
+                    }
+                }
+            }
+        }
+    result = is_multiple_item(val)
+    assert result == True
+    # not exist val.items.properties
+    val = {
+        "type": "object",
+        "title":"Identifier Registration",
+        "properties":{
+            "sub_item_0001":{
+                "type":"string",
+                "title":"ID登録"
+            },
+            "subitem_0002":{
+                "type":["null","string"],
+                "title":"ID登録タイプ"
+            }
+        }
+    }
+    result = is_multiple_item(val)
+    assert result == False
+
 # def get_record_model(res_temp, key, properties):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_record_model -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_get_record_model():
+    res_temp = {"key1":[]}
+    key = "key1"
+    properties = {
+        "prop1":{"items":{"properties":{# is multiple
+            "name":"Prop1",
+            "prop1_1":{"name":"Prop1_1"}
+            }}},
+        "prop2":{"properties":{# is not multiple
+            "name":"prop2",
+            "prop2_1":{"items":{"properties":{
+                "prop2_1_1":{"name":"Prop2_1_1"}
+                }}},
+            "prop2_2":{"properties":{"name":"Prop2_2"}}}}, 
+        "prop3":{"name":"Prop3"},
+        "propx":"value2"
+    }
+    get_record_model(res_temp,key,properties)
+    test = {"key1":[{"prop1": [{"prop1_1": {}}], "prop2": {"prop2_1": [{"prop2_1_1": {}}], "prop2_2": {}}, "prop3": {}}]}
+    assert res_temp == test
+
+    res_temp = [{"key2":[],"key3":{}},{"key1":[],"key2":[]}]
+    test = [{'key2': [], 'key3': {}}, {'key1': [], 'key2': [], 'prop1': [{'prop1_1': {}}], 'prop2': {'prop2_1': [{'prop2_1_1': {}}], 'prop2_2': {}}, 'prop3': {}}]
+    get_record_model(res_temp,key,properties)
+    assert res_temp == test
+
+    res_temp = [{"key2":[],"key3":{}},{"key2":[],"key3":{}},{}]
+    test = [{'key2': [], 'key3': {}}, {'key2': [], 'key3': {}}, {'prop1': [{'prop1_1': {}}], 'prop2': {'prop2_1': [{'prop2_1_1': {}}], 'prop2_2': {}}, 'prop3': {}}]
+    get_record_model(res_temp,key,properties)
+    assert res_temp == test
+
 # def set_val_for_record_model(record_model, item_map_data):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_set_val_for_record_model -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_set_val_for_record_model():
+    map_data={'item_1617186331708.subitem_1551255647225': ['title'], 'item_1617186331708.subitem_1551255648112': ['ja'], 'item_1617258105262.resourcetype': ['conference paper'], 'item_1617258105262.resourceuri': ['http://purl.org/coar/resource_type/c_5794']}
+    model = [{'item_1617186331708': [{'subitem_1551255647225': {}, 'subitem_1551255648112': {}}]}, {'item_1617258105262': {'resourceuri': {}, 'resourcetype': {}}}]
+    
+    model = [{"key1":{"key1":{},"subkey1_1":{}}},{"key2":[
+            {"subkey2_1":{}},
+            {"subkey2_2":{"subkey2_1":{}}},
+        ]}]
+    map_data = {"key1.subkey1_1":["value1"],"key2.subkey2_1":["value1","value2"]}
+    test = [{"key1":{"subkey1_1":"value1"}},{"key2":[{"subkey2_1":"value1"},{"subkey2_2":{"subkey2_1":"value2"}}]}]
+    record_model = set_val_for_record_model(model, map_data)
+    assert record_model == test
+    
 # def set_val_for_all_child(keys, models, values):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_set_val_for_all_child -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_set_val_for_all_child():
+    # model_temp is dict
+    keys = ["key1", "subkey1_1"]
+    values = ["value1"]
+    models = [{"key1": {"key1": {}, "subkey1_1": {}}}]
+    test = [{"key1": {"key1": {}, "subkey1_1": "value1"}}]
+    set_val_for_all_child(keys, models, values)
+    assert models == test
+    
+    # model_temp is list
+    ## len(model_temp) = len(values)
+    keys = ["key2", "subkey2_1"]
+    values = ["value1", "value2", "value3", "value4"]
+    models = [{"key2": [
+            {"subkey2_1": {}},
+            {"subkey2_2": {"subkey2_1": {}}},
+            {"subkey2_3": [{"subkey2_1": {}}]},
+            {"subkey2_4": ""}
+        ]}]
+    test = [{"key2": [
+        {"subkey2_1": "value1"},
+        {"subkey2_2": {"subkey2_1": "value2"}},
+        {"subkey2_3": [{"subkey2_1": "value3"}]},
+        {"subkey2_4":  ""}
+        ]}]
+    set_val_for_all_child(keys, models, values)
+    assert models == test
+    
+    ## len(model_temp) != len(volumes)
+    ### not temp.get(keys[-1]) is None and temp[keys[-1]].get(keys[-1]) is None:
+    keys = ["key3", "subkey3_1"]
+    values = ["value1", "value2", "value3"]
+    models = [{"key3":[
+            {"subkey3_1": {}}
+                ]
+    }]
+    test = [{"key3":[
+        {"subkey3_1": "value1"},
+        {"subkey3_1": "value2"},
+        {"subkey3_1": "value3"}
+    ]}]
+    set_val_for_all_child(keys, models, values)
+    assert models == test
+    
+    ### not(not temp.get(keys[-1]) is None and temp[keys[-1]].get(keys[-1]) is None:)
+    #### v is list
+    keys = ["key4", "subkey4_1"]
+    values = ["value1", "value2", "value3"]
+    models = [{"key4": [{"subkey4_2": [{"subkey4_1": ""}]}]}]
+    test = [{"key4": [
+        {"subkey4_2": [{"subkey4_1": "value1"}]},
+        {"subkey4_2": [{"subkey4_1": "value2"}]},
+        {"subkey4_2": [{"subkey4_1": "value3"}]}
+    ]}]
+    set_val_for_all_child(keys, models, values)
+    assert models == test
+    
+    #### v is dict
+    keys = ["key5", "subkey5_1_1"]
+    values = ["value1", "value2", "value3"]
+    models = [{"key5": [{"subkey5_1": {"subkey5_1_1": {}}}]}]
+    test = [{"key5":[
+        {"subkey5_1": {"subkey5_1_1": "value1"}},
+        {"subkey5_1": {"subkey5_1_1": "value2"}},
+        {"subkey5_1": {"subkey5_1_1": "value3"}}
+    ]}]
+    set_val_for_all_child(keys, models, values)
+    assert models == test
+    
 # def remove_sub_record_model_no_value(item, condition):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_remove_sub_record_model_no_value -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_remove_sub_record_model_no_value():
+    models = []
+    condition = [[], {}, [{}], '']
+    
+    models = [{"key1": [], "key2": {"key2_1": "value2_1", "key2_2": ""}}]
+    test = [{"key2": {"key2_1": "value2_1"}}]
+    remove_sub_record_model_no_value(models, condition)
+    assert models == test
