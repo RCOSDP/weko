@@ -783,46 +783,38 @@ class WorkActivity(object):
         :return: activity ID.
         """
         number = 1
-        with db.session.begin():
-            try:
-                # Table lock for calculate new activity id
-                if db.get_engine().driver!='pysqlite':
-                    db.session.execute(
-                        'LOCK TABLE ' + ActivityCount.__tablename__ + ' IN EXCLUSIVE MODE')
+        try:
+            # Table lock for calculate new activity id
+            if db.get_engine().driver!='pysqlite':
+                db.session.execute(
+                    'LOCK TABLE ' + ActivityCount.__tablename__ + ' IN EXCLUSIVE MODE')
 
-                # Calculate activity_id based on id
-                utc_now = datetime.utcnow()
-                current_date = date(utc_now.strftime("%Y-%m-%d"))
+            # Calculate activity_id based on id
+            utc_now = datetime.utcnow()
+            current_date = utc_now.strftime("%Y-%m-%d")       
+            today_count = ActivityCount.query.filter_by(date=current_date).one_or_none()
+            # Cannot use '.with_for_update()'. FOR UPDATE is not allowed 
+            # with aggregate functions
 
-                max_id = db.session.query(ActivityCount.count).filter(
-                    ActivityCount.date == '{}'.format(current_date)
-                ).scalar()  
-                # Cannot use '.with_for_update()'. FOR UPDATE is not allowed 
-                # with aggregate functions
-
-                if max_id:
-                    # Calculate aid
-                    number = max_id + 1
-                    if number > current_app.config['WEKO_WORKFLOW_MAX_ACTIVITY_ID']:
-                        raise IndexError('The number is out of range \
-                            (maximum is {}, current is {}'.format(current_app.config['WEKO_WORKFLOW_MAX_ACTIVITY_ID'],number))
-                    today_count = ActivityCount.query.filter_by(date=current_date).one_or_none()
-                    today_count.activity_count = number       
-                    db.session.commit()       
-                else:
-                    # The default activity Id of the current day
-                    _activty_count = ActivityCount(date=current_date, activity_count=number)
-                    db.session.add(_activty_count)
-                    prev_count = ActivityCount.query.filter_by(ActivityCount.date != current_date)
-                    if prev_count:
+            if today_count:
+                # Calculate aid
+                number = today_count.activity_count + 1
+                if number > current_app.config['WEKO_WORKFLOW_MAX_ACTIVITY_ID']:
+                    raise IndexError('The number is out of range \
+                        (maximum is {}, current is {}'.format(current_app.config['WEKO_WORKFLOW_MAX_ACTIVITY_ID'],number))
+                today_count.activity_count = number          
+            else:
+                # The default activity Id of the current day
+                _activty_count = ActivityCount(date=current_date, activity_count=number)
+                db.session.add(_activty_count)
+                prev_counts = ActivityCount.query.filter(ActivityCount.date<current_date).all()
+                if prev_counts:
+                    for prev_count in prev_counts:
                         db.session.delete(prev_count)
-                    db.session.commit()
-            except SQLAlchemyError as ex:
-                db.session.rollback()
-                raise ex
-            except IndexError as ex:
-                db.session.rollback()
-                raise ex            
+        except SQLAlchemyError as ex:
+            raise ex
+        except IndexError as ex:
+            raise ex          
 
         # Activity Id's format
         activity_id_format = current_app.\
@@ -1753,7 +1745,7 @@ class WorkActivity(object):
         return community_user_ids
 
     def get_activity_list(self, community_id=None, conditions=None,
-                          is_get_all=False):
+                          is_get_all=False, activitylog = False):
         """Get activity list info.
 
         Args:
@@ -1827,6 +1819,10 @@ class WorkActivity(object):
             # Filter conditions
             query_action_activities = self.filter_conditions(
                 conditions, query_action_activities)
+
+            if activitylog:
+                page = 1
+                size = current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_BULK_MAX")
 
             # Count all result
             count = query_action_activities.distinct(_Activity.id).count()

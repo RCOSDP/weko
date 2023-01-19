@@ -2745,7 +2745,7 @@ def download_activitylog():
         return response , 200
     
     conditions = filter_all_condition(request.args)
-    activities, maxpage, size, pages, name_param = activity.get_activity_list(conditions=conditions)
+    activities, maxpage, size, pages, name_param = activity.get_activity_list(conditions=conditions, activitylog=True)
 
     if not activities:
         return jsonify(code=-1, msg='no activity error') ,400
@@ -2836,7 +2836,7 @@ def clear_activitylog():
         return jsonify(code=1, msg='delete activitylogs success') ,200
     
     conditions = filter_all_condition(request.args)
-    activities, maxpage, size, pages, name_param = activity.get_activity_list(conditions=conditions)
+    activities, maxpage, size, pages, name_param = activity.get_activity_list(conditions=conditions, activitylog=True)
 
     if not activities:
         return jsonify(code=-1, msg='no activity error') ,400

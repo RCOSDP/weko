@@ -232,7 +232,7 @@
                 {%- endif %}
               {%- endif %}
             {%- endfor %}
-            {%- if current_user.is_authenticated and current_user.roles and delete_activity_log_enable == True %}
+            {%- if current_user.is_authenticated and current_user.roles and delete_activity_log_enable == True and tab=="all"%}
               {%- for role in current_user.roles %}
                 {%- if role in activitylog_roles %}
                   <th>

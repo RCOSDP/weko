@@ -344,6 +344,10 @@ WEKO_WORKFLOW_GAKUNINRDM_PREFIX = 'GakuninRDM'
 """GekuninRDM prefix for logging."""
 
 WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE = ["System Administrator","Repository Administrator"]
+""" Roles that can output activitylog"""
+
+WEKO_WORKFLOW_ACTIVITYLOG_BULK_MAX = 100000
+""" Maximum activitylog output at one time"""
 
 WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS = [
     'activity_start',

@@ -602,7 +602,7 @@ function analyzeParams(sURL) {
 
 
 //download filtered activities
-function downloadActivities(activity_id=''){
+async function downloadActivities(activity_id=''){
   let paramsAfterFilter = [];
   if (activity_id != '') {
 	    let tmp = {};
@@ -638,59 +638,57 @@ function downloadActivities(activity_id=''){
       paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
     }
   }
-  for (let key in paramsAfterFilter) {
-    alert(paramsAfterFilter[key].name);
-    alert(paramsAfterFilter[key].value);
-  }
-  setActivitylogSubmit(paramsAfterFilter);
+  return  setActivitylogSubmit(paramsAfterFilter);
     
 }
 
 //clear all filtered activities
 function clearActivities(){
 
-  downloadActivities();
-  let params = $('#filter_form').serializeArray();
-  let paramsAfterFilter = [];
-  jQuery.each(params, function (i, field) {
-    if (field.value) {
-      field.name += "_" + i;
-      field.value = field.value.trim();
-      paramsAfterFilter.push(field);
-    }
-  });
-  if (window.location.search != '') {
-    let locationParam = window.location.search.split('?')[1].split('&');
-    let listParamName = ['tab', 'sizetodo', 'sizeall', 'sizewait'];
-    for (let key in locationParam) {
-      let paramName = locationParam[key].split('=')[0];
-      if (listParamName.indexOf(paramName) >= 0) {
-        let param = {};
-        param.name = paramName;
-        param.value = locationParam[key].split('=')[1];
-        paramsAfterFilter.push(param);
+  downloadActivities().then(()=>{
+
+    let params = $('#filter_form').serializeArray();
+    let paramsAfterFilter = [];
+    jQuery.each(params, function (i, field) {
+      if (field.value) {
+        field.name += "_" + i;
+        field.value = field.value.trim();
+        paramsAfterFilter.push(field);
+      }
+    });
+    if (window.location.search != '') {
+      let locationParam = window.location.search.split('?')[1].split('&');
+      let listParamName = ['tab', 'sizetodo', 'sizeall', 'sizewait'];
+      for (let key in locationParam) {
+        let paramName = locationParam[key].split('=')[0];
+        if (listParamName.indexOf(paramName) >= 0) {
+          let param = {};
+          param.name = paramName;
+          param.value = locationParam[key].split('=')[1];
+          paramsAfterFilter.push(param);
+        }
       }
     }
-  }
-
-  let urlEncodedDataPairs = [];
-  for (let key in paramsAfterFilter) {
-    paramsAfterFilter[key].name = decodeURIComponent(paramsAfterFilter[key].name.replace(/\+/g, ' '));
-    paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
-    urlEncodedDataPairs.push(encodeURIComponent(paramsAfterFilter[key].name) + '=' + encodeURIComponent(paramsAfterFilter[key].value));
-  }
-  clearURL = window.location.pathname + 'clear_activitylog/?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
-
-  $.ajax({
-    url: clearURL,
-    method: 'GET',
-    success: function (res) {
-      activitylog_tsv = res;
-      location.reload();
-    },
-    error: function (error) {
-      console.error(error);
+  
+    let urlEncodedDataPairs = [];
+    for (let key in paramsAfterFilter) {
+      paramsAfterFilter[key].name = decodeURIComponent(paramsAfterFilter[key].name.replace(/\+/g, ' '));
+      paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
+      urlEncodedDataPairs.push(encodeURIComponent(paramsAfterFilter[key].name) + '=' + encodeURIComponent(paramsAfterFilter[key].value));
     }
+    clearURL = window.location.pathname + 'clear_activitylog/?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
+  
+    $.ajax({
+      url: clearURL,
+      method: 'GET',
+      success: function (res) {
+        activitylog_tsv = res;
+        location.reload();
+      },
+      error: function (error) {
+        console.error(error);
+      }
+    });
   });
     
 
@@ -699,21 +697,23 @@ function clearActivities(){
 //clear seletected activity
 function clearActivity(activity_id){
 
-  downloadActivities(activity_id);
+  downloadActivities(activity_id).then(()=>{
 
-  clearURL = window.location.pathname + 'clear_activitylog/?activity_id=' + activity_id;
-
-  $.ajax({
-    url: clearURL,
-    method: 'GET',
-    success: function (res) {
-      activitylog_tsv = res;
-      location.reload();
-    },
-    error: function (error) {
-      console.error(error);
-    }
+    clearURL = window.location.pathname + 'clear_activitylog/?activity_id=' + activity_id;
+  
+    $.ajax({
+      url: clearURL,
+      method: 'GET',
+      success: function (res) {
+        activitylog_tsv = res;
+        location.reload();
+      },
+      error: function (error) {
+        console.error(error);
+      }
+    });
   });
+
 
 }
 
