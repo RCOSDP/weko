@@ -2656,10 +2656,10 @@ def test_get_index_id():
 
 def test_make_activitylog_tsv(db_register,db_records):
     """test make_activitylog_tsv"""
-    activity = WorkActivity()
+    activity = Activity()
     activities = []
-    activities.append(activity.get_activity_metadata(activity_id='2'))
-    activities.append(activity.get_activity_metadata(activity_id='3'))
+    activities.append(activity.query.filter_by(activity_id='2'))
+    activities.append(activity.query.filter_by(activity_id='3'))
     
 
     output_tsv = make_activitylog_tsv(activities)

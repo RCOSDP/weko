@@ -2722,7 +2722,6 @@ def download_activitylog():
         abort(403)
 
     activity = WorkActivity()
-    _activity = Activity()
     activities = []
     if current_user and current_user.roles:
         admin_roles = current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE")
@@ -2733,11 +2732,8 @@ def download_activitylog():
                 break
         if not has_admin_role:
             abort(403)
-    
     if 'activity_id' in request.args:
-        if request.args.get('activity_id') == None:
-            return jsonify(code=-1, msg='no activity error') ,400
-        tmp_activity = _activity.query.filter_by(activity_id=request.args.get('activity_id')).one_or_none()
+        tmp_activity = activity.get_activity_by_id(activity_id=request.args.get('activity_id'))
         if tmp_activity == None:
             return jsonify(code=-1, msg='no activity error') ,400
         activities.append(tmp_activity)
@@ -2746,13 +2742,13 @@ def download_activitylog():
                 mimetype='text/tsv',
                 headers={"Content-disposition": "attachment; filename=activitylog.tsv"},
             )
+        return response , 200
     
     conditions = filter_all_condition(request.args)
     activities, maxpage, size, pages, name_param = activity.get_activity_list(conditions=conditions)
 
     if not activities:
         return jsonify(code=-1, msg='no activity error') ,400
-
 
     response = Response(
                 make_activitylog_tsv(activities),
@@ -2790,7 +2786,6 @@ def clear_activitylog():
         abort(403)
 
     activity = WorkActivity()
-    _activity = Activity()
     workflow_activity_action = ActivityAction()
     activities = []
     if current_user and current_user.roles:
@@ -2805,12 +2800,10 @@ def clear_activitylog():
 
     # delete a activity
     if 'activity_id' in request.args:
-        if request.args.get('activity_id') == None:
-            return jsonify(code=-1, msg='no activity error') ,400
-        del_activity = _activity.query.filter_by(activity_id=request.args.get('activity_id')).one_or_none()
+        del_activity = activity.get_activity_by_id(activity_id=request.args.get('activity_id'))
         if del_activity == None:
             return jsonify(code=-1, msg='no activity error') ,400
-        if del_activity.activity_status == "M":
+        if del_activity.activity_status in [ActivityStatusPolicy.ACTIVITY_MAKING, ActivityStatusPolicy.ACTIVITY_BEGIN]:
 
             _activity = dict(
                 activity_id=del_activity.activity_id,
@@ -2850,7 +2843,7 @@ def clear_activitylog():
 
     # delete all filitering activity
     for del_activity in activities:
-        if del_activity.activity_status == "M":
+        if del_activity.activity_status in [ActivityStatusPolicy.ACTIVITY_MAKING, ActivityStatusPolicy.ACTIVITY_BEGIN]:
             _activity = dict(
                 activity_id=del_activity.activity_id,
                 action_id=del_activity.action_id,

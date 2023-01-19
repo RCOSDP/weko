@@ -23,7 +23,6 @@ require([
   $('#confirm_clear_activitylogs').on('click', function () {
     $('#activitylogs_clear_modal').fadeOut();
     clearActivities();
-    submitFilterSearch();
   });
 
   $('#cancel_clear_activitylogs').on('click', function () {
@@ -33,16 +32,15 @@ require([
   $('.clear-activitylog').on('click', function () {
     $('#activitylog_clear_modal').fadeIn();
     var activity_id=$(this).closest('tr').find('a').text();
-    $('#activitylog_clear_modal').activity_id = activity_id;
+    $('#del_activity_id').text(activity_id);
 
   });
 
   $('#confirm_clear_activitylog').on('click', function () {
+    var activity_id=document.getElementById("del_activity_id").textContent;
     $('#activitylog_clear_modal').fadeOut();
-    var activity_id=$('#activitylog_clear_modal').activity_id;
 
     clearActivity(activity_id);
-    submitFilterSearch();
   });
   $('#cancel_clear_activitylog').on('click', function () {
     $('#activitylog_clear_modal').fadeOut();
@@ -607,9 +605,10 @@ function analyzeParams(sURL) {
 function downloadActivities(activity_id=''){
   let paramsAfterFilter = [];
   if (activity_id != '') {
-      field.name += "_activity_id";
-      field.value = activity_id;
-      paramsAfterFilter.push(field);
+	    let tmp = {};
+      tmp.name = "activity_id";
+      tmp.value = activity_id;
+      paramsAfterFilter.push(tmp);
   } else {
 
     let params = $('#filter_form').serializeArray();
@@ -639,19 +638,11 @@ function downloadActivities(activity_id=''){
       paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
     }
   }
+  for (let key in paramsAfterFilter) {
+    alert(paramsAfterFilter[key].name);
+    alert(paramsAfterFilter[key].value);
+  }
   setActivitylogSubmit(paramsAfterFilter);
-
-  // $.ajax({
-  //   url: downloadURL,
-  //   method: 'GET',
-  //   success: function (res) {
-  //     activitylog_tsv = res;
-  //     setActivitylogSubmit(activitylog_tsv);
-  //   },
-  //   error: function (error) {
-  //     console.error(error);
-  //   }
-  // });
     
 }
 
@@ -695,6 +686,7 @@ function clearActivities(){
     method: 'GET',
     success: function (res) {
       activitylog_tsv = res;
+      location.reload();
     },
     error: function (error) {
       console.error(error);
@@ -708,6 +700,7 @@ function clearActivities(){
 function clearActivity(activity_id){
 
   downloadActivities(activity_id);
+
   clearURL = window.location.pathname + 'clear_activitylog/?activity_id=' + activity_id;
 
   $.ajax({
@@ -715,6 +708,7 @@ function clearActivity(activity_id){
     method: 'GET',
     success: function (res) {
       activitylog_tsv = res;
+      location.reload();
     },
     error: function (error) {
       console.error(error);
@@ -723,7 +717,7 @@ function clearActivity(activity_id){
 
 }
 
-function setActivitylogSubmit(paramsAfterFilter) {
+async function setActivitylogSubmit(paramsAfterFilter) {
   let form = document.getElementById("activitylog_file_form");
   let children = [];
   for(let key in paramsAfterFilter){
@@ -738,6 +732,7 @@ function setActivitylogSubmit(paramsAfterFilter) {
     children[key] = input;
   }
   $('#activitylog_file_form').submit();
+  await setTimeout( 1000 );
   if(form.hasChildNodes()){
     for (let key in children) {
       form.removeChild(children[key]);

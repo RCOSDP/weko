@@ -3374,7 +3374,7 @@ def test_withdraw_confirm_passwd_delete_guestlogin(guest, client, users, db_regi
                         assert data["msg"] == msg
 
 
-def test_download_activitylog_nologin(client):
+def test_download_activitylog_nologin(client,db_register2):
     """_summary_
 
     Args:
@@ -3393,8 +3393,8 @@ def test_download_activitylog_nologin(client):
     (5, 403),
     (6, 200),
 ])
-def test_download_activitylog_1(client, users, users_index, status_code):
-    """Test of withdraw confirm."""
+def test_download_activitylog_1(client, db_register , users, users_index, status_code):
+    """Test of download_activitylog."""
     login(client=client, email=users[users_index]['email'])
 
     #4
@@ -3409,7 +3409,7 @@ def test_download_activitylog_1(client, users, users_index, status_code):
     )
 
     url = url_for('weko_workflow.download_activitylog',
-                createdto='2023-01-17')
+                tab='all')
     res = client.get(url)
     assert res.status_code == 403
 
@@ -3419,8 +3419,8 @@ def test_download_activitylog_1(client, users, users_index, status_code):
     (2, 200),
     (6, 200),
 ])
-def test_download_activitylog_2(client, users, users_index, status_code):
-    """Test of withdraw confirm."""
+def test_download_activitylog_2(client, db_register , users, users_index, status_code):
+    """Test of download_activitylog."""
     login(client=client, email=users[users_index]['email'])
 
     #4
@@ -3438,7 +3438,7 @@ def test_download_activitylog_2(client, users, users_index, status_code):
 
     #6
     url = url_for('weko_workflow.download_activitylog',
-                createdto='2023-01-17')
+                tab='all')
     res = client.get(url)
     assert res.status_code == status_code
 
@@ -3448,10 +3448,7 @@ def test_download_activitylog_2(client, users, users_index, status_code):
     res = client.get(url)
     assert res.status_code == 400
 
-
-
-
-def test_clear_activitylog_nologin(client):
+def test_clear_activitylog_nologin(client,db_register2):
     """_summary_
 
     Args:
@@ -3471,8 +3468,8 @@ def test_clear_activitylog_nologin(client):
     (5, 403),
     (6, 200),
 ])
-def test_clear_activitylog_1(client, users, users_index, status_code):
-    """Test of withdraw confirm."""
+def test_clear_activitylog_1(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
     login(client=client, email=users[users_index]['email'])
 
     #11
@@ -3486,8 +3483,8 @@ def test_clear_activitylog_1(client, users, users_index, status_code):
     (2, 200),
     (6, 200),
 ])
-def test_clear_activitylog_2(client, users, users_index, status_code):
-    """Test of withdraw confirm."""
+def test_clear_activitylog_2(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
     login(client=client, email=users[users_index]['email'])
     #12
     url = url_for('weko_workflow.clear_activitylog',
@@ -3500,8 +3497,8 @@ def test_clear_activitylog_2(client, users, users_index, status_code):
     (2, 200),
     (6, 200),
 ])
-def test_clear_activitylog_3(client, users, users_index, status_code):
-    """Test of withdraw confirm."""
+def test_clear_activitylog_3(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
     login(client=client, email=users[users_index]['email'])
     #13
     with patch('weko_workflow.views.WorkActivity.quit_activity', return_value=None):
@@ -3515,11 +3512,11 @@ def test_clear_activitylog_3(client, users, users_index, status_code):
     (2, 200),
     (6, 200),
 ])
-def test_clear_activitylog_4(client, users, users_index, status_code):
-    """Test of withdraw confirm."""
+def test_clear_activitylog_4(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
     login(client=client, email=users[users_index]['email'])
     #14
-    with patch('weko_workflow.views.ActivityAction.query.filter_by', side_effect=Exception("test error")):
+    with patch('invenio_db.db.session.delete', side_effect=Exception("test error")):
         url = url_for('weko_workflow.clear_activitylog',
                     activity_id='A-00000001-10001')
         res = client.get(url)
@@ -3534,12 +3531,12 @@ def test_clear_activitylog_4(client, users, users_index, status_code):
     (5, 403),
     (6, 200),
 ])
-def test_clear_activitylog_5(client, users, users_index, status_code):
-    """Test of withdraw confirm."""
+def test_clear_activitylog_5(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
     login(client=client, email=users[users_index]['email'])
     #15
     url = url_for('weko_workflow.clear_activitylog',
-                createdto='2023-01-17')
+                tab='all')
     res = client.get(url)
     assert res.status_code == status_code
 
@@ -3548,8 +3545,8 @@ def test_clear_activitylog_5(client, users, users_index, status_code):
     (2, 200),
     (6, 200),
 ])
-def test_clear_activitylog_6(client, users, users_index, status_code):
-    """Test of withdraw confirm."""
+def test_clear_activitylog_6(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
     login(client=client, email=users[users_index]['email'])
     #16
     url = url_for('weko_workflow.clear_activitylog',
@@ -3562,13 +3559,13 @@ def test_clear_activitylog_6(client, users, users_index, status_code):
     (2, 200),
     (6, 200),
 ])
-def test_clear_activitylog_7(client, users, users_index, status_code):
-    """Test of withdraw confirm."""
+def test_clear_activitylog_7(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
     login(client=client, email=users[users_index]['email'])
     #17
     with patch('weko_workflow.views.WorkActivity.quit_activity', return_value=None):
         url = url_for('weko_workflow.clear_activitylog',
-                    createdto='2023-01-17')
+                    tab='all')
         res = client.get(url)
         assert res.status_code == 400
 
@@ -3577,13 +3574,13 @@ def test_clear_activitylog_7(client, users, users_index, status_code):
     (2, 200),
     (6, 200),
 ])
-def test_clear_activitylog_8(client, users, users_index, status_code):
-    """Test of withdraw confirm."""
+def test_clear_activitylog_8(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
     login(client=client, email=users[users_index]['email'])
     #18
-    with patch('weko_workflow.views.ActivityAction.query.filter_by', side_effect=Exception("test error")):
+    with patch('invenio_db.db.session.delete', side_effect=Exception("test error")):
         url = url_for('weko_workflow.clear_activitylog',
-                    createdto='2023-01-17')
+                    tab='all')
         res = client.get(url)
         assert res.status_code == 400
 
@@ -3596,8 +3593,8 @@ def test_clear_activitylog_8(client, users, users_index, status_code):
     (5, 403),
     (6, 200),
 ])
-def test_clear_activitylog_9(client, users, users_index, status_code):
-    """Test of withdraw confirm."""
+def test_clear_activitylog_9(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
     login(client=client, email=users[users_index]['email'])
     #9
     current_app.config.update(
@@ -3605,7 +3602,6 @@ def test_clear_activitylog_9(client, users, users_index, status_code):
     )
 
     url = url_for('weko_workflow.clear_activitylog',
-                createdto='2023-01-17')
+                tab='all')
     res = client.get(url)
     assert res.status_code == 403
-

@@ -150,7 +150,7 @@
 </div>
 <div class="form-inline flow-root">
   <button type="submit" id="filter_form_submit" class="btn btn-primary">{{_('Apply')}}</button>
-  {%- if current_user.is_authenticated and current_user.roles and delete_activity_log_enable == True %}
+  {%- if current_user.is_authenticated and current_user.roles and delete_activity_log_enable == True and tab=="all"%}
     {%- for role in current_user.roles %}
        {%- if role in activitylog_roles %}
           <button type="submit" id="filter_form_download" class="btn btn-primary">{{_('Download')}}</button>                           
@@ -515,7 +515,8 @@
       <div class="modal-body">
         <div class="container-modal">
           <div class="row">
-            <div class="col-sm-12 col-md-12">{{ _('Deleted activities cannot be restored.') }}</div>
+            <div class="col-sm-12 col-md-12">{{ _('Deleted activity cannot be restored.') }}</div>
+            <div class="col-sm-12 col-md-12" id="del_activity_id"></div>
             <div class="col-sm-12 col-md-12">{{ _('Are you sure you want to delete the filtered activity?') }}</div>
           </div>
         </div>
