@@ -32,6 +32,9 @@ WEKO_WORKFLOW_OAPOLICY_SEARCH = 'oa_policy_{keyword}'
 WEKO_WORKFLOW_OAPOLICY_CACHE_TTL = 24 * 60 * 60
 """ cache default timeout 1 day"""
 
+WEKO_WORKFLOW_MAX_ACTIVITY_ID = 99999
+""" max activity id per day"""
+
 WEKO_WORKFLOW_ACTIVITY_ID_FORMAT = 'A-{}-{}'
 """Activity Id's format (A-YYYYMMDD-NNNNN with NNNNN starts from 00001)."""
 
