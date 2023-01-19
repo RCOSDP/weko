@@ -70,7 +70,11 @@ def location(location_path, database):
         name='testloc',
         uri=location_path,
         default=True,
-        type='s3'
+        type='s3',
+        access_key='',
+        secret_key='',
+        s3_endpoint_url="",
+        s3_send_file_directly=True
     )
     database.session.add(loc)
     database.session.commit()
