@@ -3380,6 +3380,7 @@ def test_download_activitylog_nologin(client,db_register2):
     Args:
         client (FlaskClient): flask test client
     """
+    #2
     url = url_for('weko_workflow.download_activitylog')
     res =  client.get(url)
     assert res.status_code == 302
@@ -3397,7 +3398,7 @@ def test_download_activitylog_1(client, db_register , users, users_index, status
     """Test of download_activitylog."""
     login(client=client, email=users[users_index]['email'])
 
-    #4
+    #1
     url = url_for('weko_workflow.download_activitylog',
                 activity_id='2')
     res = client.get(url)
@@ -3454,6 +3455,7 @@ def test_clear_activitylog_nologin(client,db_register2):
     Args:
         client (FlaskClient): flask test client
     """
+    #10
     url = url_for('weko_workflow.clear_activitylog')
     res =  client.get(url)
     assert res.status_code == 302
@@ -3472,7 +3474,7 @@ def test_clear_activitylog_1(client, db_register , users, users_index, status_co
     """Test of clear_activitylog."""
     login(client=client, email=users[users_index]['email'])
 
-    #11
+    #9,11
     url = url_for('weko_workflow.clear_activitylog',
                 activity_id='A-00000001-10001')
     res = client.get(url)
@@ -3596,7 +3598,7 @@ def test_clear_activitylog_8(client, db_register , users, users_index, status_co
 def test_clear_activitylog_9(client, db_register , users, users_index, status_code):
     """Test of clear_activitylog."""
     login(client=client, email=users[users_index]['email'])
-    #9
+    #19
     current_app.config.update(
         DELETE_ACTIVITY_LOG_ENABLE = False
     )
