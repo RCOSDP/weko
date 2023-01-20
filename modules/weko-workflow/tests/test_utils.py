@@ -2664,3 +2664,4 @@ def test_make_activitylog_tsv(db_register,db_records):
 
     output_tsv = make_activitylog_tsv(activities)
     assert isinstance(output_tsv,str)
+    assert len(output_tsv.splitlines()) == 3
