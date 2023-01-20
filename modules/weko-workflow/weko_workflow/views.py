@@ -1401,13 +1401,12 @@ def next_action(activity_id='0', action_id=0):
             journal=post_json.get('journal')
         )
 
-
     if action_endpoint == 'approval' and item_id:
         last_idt_setting = work_activity.get_action_identifier_grant(
             activity_id=activity_id,
             action_id=get_actionid('identifier_grant'))
         if not post_json.get('temporary_save') and last_idt_setting \
-            and last_idt_setting.get('action_identifier_select') \
+                and last_idt_setting.get('action_identifier_select') \
                 and last_idt_setting.get('action_identifier_select') > 0:
 
             _pid = pid_without_ver.pid_value
@@ -1422,6 +1421,15 @@ def next_action(activity_id='0', action_id=0):
                 record_without_version,
                 prepare_doi_link_workflow(_pid, last_idt_setting),
                 int(last_idt_setting['action_identifier_select']))
+        elif last_idt_setting \
+                and last_idt_setting.get('action_identifier_select'):
+            without_ver_identifier_handle = IdentifierHandle(item_id)
+            if last_idt_setting.get('action_identifier_select') == -2:
+                del_doi = without_ver_identifier_handle.delete_pidstore_doi()
+                current_app.logger.debug(
+                    'delete_pidstore_doi: {0}'.format(del_doi))
+            elif last_idt_setting.get('action_identifier_select') == -3:
+                without_ver_identifier_handle.remove_idt_registration_metadata()
 
         action_feedbackmail = work_activity.get_action_feedbackmail(
             activity_id=activity_id,
@@ -1777,6 +1785,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
         "next": {},
         "approval": False,
         "reject": True}
+
     process_send_approval_mails(activity_detail, action_mails_setting, -1, {})
     try:
         pid_identifier = PersistentIdentifier.get_by_object(
@@ -1795,6 +1804,19 @@ def previous_action(activity_id='0', action_id=0, req=0):
         pre_action = flow.get_previous_flow_action(
             activity_detail.flow_define.flow_id, action_id,
             action_order)
+        # update action_identifier_select
+        identifier_actionid = get_actionid('identifier_grant')
+        identifier = work_activity.get_action_identifier_grant(
+            activity_id,
+            identifier_actionid)
+        if identifier and identifier['action_identifier_select'] == -2:
+            identifier['action_identifier_select'] = \
+                current_app.config.get(
+                    "WEKO_WORKFLOW_IDENTIFIER_GRANT_CAN_WITHDRAW", -1)
+            work_activity.create_or_update_action_identifier(
+                activity_id,
+                identifier_actionid,
+                identifier)
     else:
         pre_action = flow.get_next_flow_action(
             activity_detail.flow_define.flow_id, 1, 1)
@@ -2151,69 +2173,28 @@ def withdraw_confirm(activity_id='0', action_id=0):
         post_json = schema_load.data
 
         password = post_json.get('passwd', None)
-        wekouser = ShibUser()
+        # wekouser = ShibUser()
         if password == 'DELETE':
-            # if wekouser.check_weko_user(current_user.email, password):
             activity = WorkActivity()
-            activity_detail = activity.get_activity_detail(activity_id)
-            if activity_detail is None:
-                current_app.logger.error("withdraw_confirm: can not get activity detail info")
-                res = ResponseMessageSchema().load({"code":-1,"msg":"can not get activity detail info"})
-                return jsonify(res.data), 500
-            item_id = activity_detail.item_id
             identifier_actionid = get_actionid('identifier_grant')
             identifier = activity.get_action_identifier_grant(
                 activity_id,
                 identifier_actionid)
-            identifier_handle = IdentifierHandle(item_id)
-            if not isinstance(identifier, dict) or "action_identifier_select" in identifier:
-                current_app.logger.error("withdraw_confirm: bad identifier data")
-                res = ResponseMessageSchema().load({"code":-1,"msg":"bad identifier data"})
-                return jsonify(res.data), 500
-            if identifier_handle.delete_pidstore_doi():
-                identifier['action_identifier_select'] = \
-                    current_app.config.get(
-                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING", -2)
-                activity.create_or_update_action_identifier(
-                    activity_id,
-                    identifier_actionid,
-                    identifier)
-                try:
-                    current_pid = PersistentIdentifier.get_by_object(
-                        pid_type='recid',
-                        object_type='rec',
-                        object_uuid=item_id)
-                except PIDDoesNotExistError:
-                    current_app.logger.error("withdraw_confirm: can not get PersistentIdentifier")
-                    res = ResponseMessageSchema().load({"code":-1,"msg":"can not get PersistentIdentifier"})
-                    return jsonify(res.data), 500
-                recid = get_record_identifier(current_pid.pid_value)
-                if recid is None:
-                    pid_without_ver = get_record_without_version(
-                        current_pid)
-                    record_without_ver_activity_id = \
-                        get_activity_id_of_record_without_version(
-                            pid_without_ver)
-                    if record_without_ver_activity_id is not None:
-                        without_ver_identifier_handle = IdentifierHandle(
-                            item_id)
-                        without_ver_identifier_handle \
-                            .remove_idt_registration_metadata()
-                        activity.create_or_update_action_identifier(
-                            record_without_ver_activity_id,
-                            identifier_actionid,
-                            identifier)
+            identifier['action_identifier_select'] = \
+                current_app.config.get(
+                    "WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING", -2)
+            activity.create_or_update_action_identifier(
+                activity_id,
+                identifier_actionid,
+                identifier)
 
-                if session.get("guest_url"):
-                    url = session.get("guest_url")
-                else:
-                    url = url_for('weko_workflow.display_activity',
-                                  activity_id=activity_id)
-                res = ResponseMessageSchema().load({"code":0,"msg":_("success"),"data":{"redirect":url}})
-                return jsonify(res.data), 200
+            if session.get("guest_url"):
+                url = session.get("guest_url")
             else:
-                res = ResponseMessageSchema().load({"code":-1,"msg":_('DOI Persistent is not exist.')})
-                return jsonify(res.data), 500
+                url = url_for('weko_workflow.display_activity',
+                              activity_id=activity_id)
+            res = ResponseMessageSchema().load({"code":0, "msg": _("success"), "data": {"redirect": url}})
+            return jsonify(res.data), 200
         else:
             res = ResponseMessageSchema().load({"code":-1, "msg":_('Invalid password')})
             return jsonify(res.data), 500

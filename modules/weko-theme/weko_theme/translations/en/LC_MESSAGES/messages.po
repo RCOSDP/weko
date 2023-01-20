@@ -945,3 +945,13 @@ msgstr "Restricted Access"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Faceted Search"
 msgstr "Faceted Search"
+
+#: weko_admin/
+#: msgid "Maintenance"
+msgid "Admin menu_Maintenance"
+msgstr "Maintenance"
+
+#: weko_admin/
+#: msgid "ElasticSearch Index"
+msgid "Admin menu_Maintenance_ElasticSearch Index"
+msgstr "ElasticSearch Index"

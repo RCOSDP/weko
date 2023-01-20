@@ -37,12 +37,25 @@ def sign_up(app, client, email=None, password=None):
     ), environ_base={'REMOTE_ADDR': '127.0.0.1'})
 
 
-def login(app, client, email=None, password=None):
+def login(app, client, obj = None, email=None, password=None):
     """Log the user in with the test client."""
     with app.test_request_context():
         login_url = url_for('security.login')
 
-    client.post(login_url, data=dict(
-        email=email or app.config['TEST_USER_EMAIL'],
-        password=password or app.config['TEST_USER_PASSWORD'],
-    ))
+    if obj:
+        email = obj.email
+        password = obj.password_plaintext
+        client.post(login_url, data=dict(
+            email=email or app.config['TEST_USER_EMAIL'],
+            password=password or app.config['TEST_USER_PASSWORD'],
+        ))
+    else:
+        client.post(login_url, data=dict(
+            email=email or app.config['TEST_USER_EMAIL'],
+            password=password or app.config['TEST_USER_PASSWORD'],
+        ))
+
+def logout(app,client):
+    with app.test_request_context():
+        logout_url = url_for("security.logout")
+    client.get(logout_url)
