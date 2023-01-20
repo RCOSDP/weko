@@ -1426,6 +1426,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
       }
       $scope.resourceTypeSelect = function () {
+        $scope.accessRoleChange()
         let resourcetype = $("select[name$='resourcetype']").val();
         resourcetype = resourcetype.split("string:").pop();
         let resourceuri = "";
@@ -1631,6 +1632,37 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               resourceuri = "";
           }
           $rootScope.recordsVM.invenioRecordsModel[$scope.resourceTypeKey].resourceuri = resourceuri;
+        }
+      }
+      $scope.accessRoleChange = function () {
+        for (let key in $rootScope.recordsVM.invenioRecordsModel) {
+          if ($rootScope.recordsVM.invenioRecordsModel[key] instanceof Array) {
+            try {
+              if ($rootScope.recordsVM.invenioRecordsModel[key].length > 1) {
+                for (let [idx, value] in $rootScope.recordsVM.invenioRecordsModel[key]) {
+                  if (($rootScope.recordsVM.invenioRecordsModel[key][idx].accessrole !== undefined)) {
+                    // check value of accessrole if open date or not
+                    if ($rootScope.recordsVM.invenioRecordsModel[key][idx].accessrole !== 'open_date') {
+                      // change dataValue in $rootScope.recordsVM.invenioRecordsModel
+                      $scope.modifiedFileAccessRole = $rootScope.recordsVM.invenioRecordsModel[key][idx].accessrole;
+                      $rootScope.recordsVM.invenioRecordsModel[key][idx].date[0].dateValue = $rootScope.recordsVM.invenioRecordsModel.pubdate
+                    }
+                  }
+                }
+              } else {
+                if ($rootScope.recordsVM.invenioRecordsModel[key][0].accessrole !== undefined) {
+                  // check value of accessrole if open date or not
+                  if ($rootScope.recordsVM.invenioRecordsModel[key][0].accessrole !== 'open_date') {
+                    // change dataValue in $rootScope.recordsVM.invenioRecordsModel
+                    $scope.modifiedFileAccessRole = $rootScope.recordsVM.invenioRecordsModel[key][0].accessrole;
+                    $rootScope.recordsVM.invenioRecordsModel[key][0].date[0].dateValue = $rootScope.recordsVM.invenioRecordsModel.pubdate
+                  }
+                }
+              }
+            } catch {
+              continue
+            }
+          }
         }
       }
       $scope.getBibliographicMetaKey = function () {

@@ -1,0 +1,2150 @@
+GLOB sdist-make: /code/modules/weko-admin/setup.py
+c1 inst-nodeps: /code/modules/weko-admin/.tox/.tmp/package/1/weko-admin-0.1.0.dev20170000.zip
+c1 installed: alabaster==0.7.12,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.8,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.4,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_iiif&subdirectory=modules/invenio-iiif,invenio-indexer==1.0.2,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,kombu==4.6.10,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_accounts&subdirectory=modules/weko-accounts,weko-admin @ file:///code/modules/weko-admin/.tox/.tmp/package/1/weko-admin-0.1.0.dev20170000.zip,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/iviskazukiakashi/weko.git@c1863e7e6c369300085f691ff33986b28036de46#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='2087380049'
+c1 run-test: commands[0] | pytest --cov=weko_admin tests -v -vv -s --cov-branch --cov-report=term --cov-report=xml --cov-report=html --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/weko-admin/.tox/c1/bin/python
+cachedir: .tox/c1/.pytest_cache
+rootdir: /code/modules/weko-admin
+plugins: celery-4.4.7, mock-3.6.1, cov-4.0.0
+collecting ... collected 257 items
+
+tests/test_admin.py::TestStyleSettingView::test_index /admin/stylesetting/
+PASSED
+tests/test_admin.py::TestStyleSettingView::test_get_contents FAILED
+tests/test_admin.py::TestStyleSettingView::test_cmp_files PASSED
+tests/test_admin.py::TestReportView::test_index /admin/report/
+PASSED
+tests/test_admin.py::TestReportView::test_get_file_stats_output /admin/report/stats_file_output
+PASSED
+tests/test_admin.py::TestReportView::test_get_user_report_data /admin/report/user_report_data
+PASSED
+tests/test_admin.py::TestReportView::test_set_email_schedule /admin/report/set_email_schedule
+PASSED
+tests/test_admin.py::TestReportView::test_get_email_address /admin/report/get_email_address
+PASSED
+tests/test_admin.py::test_FeedbackMailView_index /admin/feedbackmail/
+PASSED
+tests/test_admin.py::test_LanguageSettingView_index /admin/language/
+PASSED
+tests/test_admin.py::test_WebApiAccount_index /admin/webapiaccount/
+PASSED
+tests/test_admin.py::test_StatsSettingsView_index /admin/statssettings/
+PASSED
+tests/test_admin.py::TestLogAnalysisSettings::test_index /admin/loganalysissetting/
+PASSED
+tests/test_admin.py::TestLogAnalysisSettings::test_parse_form_data PASSED
+tests/test_admin.py::test_RankingSettingsView_indes /admin/rankingsettings/
+PASSED
+tests/test_admin.py::test_SearchSettingsView_index /admin/searchsettings/
+PASSED
+tests/test_admin.py::test_SiteLicenseSettingsView_index /admin/sitelicensesettings/
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_index_acl[0-False-200] /admin/reindex_es/
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_index_acl[1-False-403] /admin/reindex_es/
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_index_acl[2-False-403] /admin/reindex_es/
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_index_acl[3-False-403] /admin/reindex_es/
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_index_acl[4-False-403] /admin/reindex_es/
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_index_guest /admin/reindex_es/
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_index_raise /admin/reindex_es/
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_acl[0-False-200] /admin/reindex_es/reindex
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_acl[1-False-403] /admin/reindex_es/reindex
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_acl[2-False-403] /admin/reindex_es/reindex
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_acl[3-False-403] /admin/reindex_es/reindex
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_acl[4-False-403] /admin/reindex_es/reindex
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_guest /admin/reindex_es/reindex
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_param1 /admin/reindex_es/reindex
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_param2 /admin/reindex_es/reindex
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_param3 /admin/reindex_es/reindex
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_param4 /admin/reindex_es/reindex
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_chk_executing /admin/reindex_es/reindex
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_chk_err /admin/reindex_es/reindex
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_return /admin/reindex_es/reindex
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_return2 /admin/reindex_es/reindex
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_check_reindex_is_running_acl[0-False-200] /admin/reindex_es/is_reindex_running
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_check_reindex_is_running_acl[1-False-403] /admin/reindex_es/is_reindex_running
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_check_reindex_is_running_acl[2-False-403] /admin/reindex_es/is_reindex_running
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_check_reindex_is_running_acl[3-False-403] /admin/reindex_es/is_reindex_running
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_check_reindex_is_running_acl[4-False-403] /admin/reindex_es/is_reindex_running
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_check_reindex_is_running_running /admin/reindex_es/is_reindex_running
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_check_reindex_iserror /admin/reindex_es/is_reindex_running
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_check_reindex_is_running_guest /admin/reindex_es/is_reindex_running
+PASSED
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_check_reindex_is_running_err /admin/reindex_es/is_reindex_running
+PASSED
+tests/test_api.py::test_is_restricted_user PASSED
+tests/test_api.py::test_is_crawler PASSED
+tests/test_api.py::test_send_site_license_mail PASSED
+tests/test_api.py::TestTempDirInfo::test_init PASSED
+tests/test_api.py::TestTempDirInfo::test_set PASSED
+tests/test_api.py::TestTempDirInfo::test_delete PASSED
+tests/test_api.py::TestTempDirInfo::test_get PASSED
+tests/test_api.py::TestTempDirInfo::test_get_all PASSED
+tests/test_cli.py::test_init_lifetime PASSED
+tests/test_cli.py::test_insert_lang_to_db PASSED
+tests/test_cli.py::test_save_api_certification PASSED
+tests/test_cli.py::test_update_api_certification PASSED
+tests/test_cli.py::test_save_report_unit PASSED
+tests/test_cli.py::test_save_report_target PASSED
+tests/test_cli.py::test_add_billing_user PASSED
+tests/test_cli.py::test_toggle_active_billing_user PASSED
+tests/test_cli.py::test_create_settings PASSED
+tests/test_cli.py::test_create_default_settings PASSED
+tests/test_cli.py::test_create_default_affiliation_settings PASSED
+tests/test_cli.py::test_insert_facet_search_to_db PASSED
+tests/test_tasks.py::test_is_reindex_running_not_running PASSED
+tests/test_tasks.py::test_is_reindex_running_active PASSED
+tests/test_tasks.py::test_is_reindex_running_reserved PASSED
+tests/test_tasks.py::test_is_reindex_running_waiting PASSED
+tests/test_tasks.py::test_reindex_EStoES PASSED
+tests/test_tasks.py::test_reindex_DBtoES PASSED
+tests/test_tasks.py::test_reindex_raise PASSED
+tests/test_utils.py::test_get_response_json PASSED
+tests/test_utils.py::test_allowed_file PASSED
+tests/test_utils.py::test_get_search_setting PASSED
+tests/test_utils.py::test_get_admin_lang_setting PASSED
+tests/test_utils.py::test_update_admin_lang_setting PASSED
+tests/test_utils.py::test_get_selected_language PASSED
+tests/test_utils.py::test_get_api_certification_type PASSED
+tests/test_utils.py::test_get_current_api_certification PASSED
+tests/test_utils.py::test_save_api_certification PASSED
+tests/test_utils.py::test_create_crossref_url PASSED
+tests/test_utils.py::test_validate_certification PASSED
+tests/test_utils.py::test_get_initial_stats_report PASSED
+tests/test_utils.py::test_get_unit_stats_report PASSED
+tests/test_utils.py::test_get_user_report_data PASSED
+tests/test_utils.py::test_package_reports PASSED
+tests/test_utils.py::test_make_stats_file PASSED
+tests/test_utils.py::test_write_report_file_rows PASSED
+tests/test_utils.py::test_reset_redis_cache PASSED
+tests/test_utils.py::test_is_exists_key_in_redis PASSED
+tests/test_utils.py::test_is_exists_key_or_empty_in_redis PASSED
+tests/test_utils.py::test_get_redis_cache PASSED
+tests/test_utils.py::test_get_system_default_language PASSED
+tests/test_utils.py::TestStatisticMail::test_get_send_time PASSED
+tests/test_utils.py::TestStatisticMail::test_send_mail_to_all PASSED
+tests/test_utils.py::TestStatisticMail::test_get_banned_mail PASSED
+tests/test_utils.py::TestStatisticMail::test_convert_download_count_to_int PASSED
+tests/test_utils.py::TestStatisticMail::test_get_list_statistic_data PASSED
+tests/test_utils.py::TestStatisticMail::test_get_item_information PASSED
+tests/test_utils.py::TestStatisticMail::test_get_item_view PASSED
+tests/test_utils.py::TestStatisticMail::test_get_item_download PASSED
+tests/test_utils.py::TestStatisticMail::test_find_value_in_dict PASSED
+tests/test_utils.py::TestStatisticMail::test_get_file_in_item PASSED
+tests/test_utils.py::TestStatisticMail::test_fill_email_data PASSED
+tests/test_utils.py::TestStatisticMail::test_send_mail PASSED
+tests/test_utils.py::TestStatisticMail::test_build_statistic_mail_subject PASSED
+tests/test_utils.py::TestStatisticMail::test_build_mail_data_to_string PASSED
+tests/test_utils.py::TestStatisticMail::test_get_author_name PASSED
+tests/test_utils.py::test_str_to_bool PASSED
+tests/test_utils.py::TestFeedbackMail::test_search_author_mail PASSED
+tests/test_utils.py::TestFeedbackMail::test_get_feed_back_email_setting PASSED
+tests/test_utils.py::TestFeedbackMail::test_update_feedback_email_setting PASSED
+tests/test_utils.py::TestFeedbackMail::test_convert_feedback_email_data_to_string PASSED
+tests/test_utils.py::TestFeedbackMail::test_get_list_manual_email PASSED
+tests/test_utils.py::TestFeedbackMail::test_handle_update_message PASSED
+tests/test_utils.py::TestFeedbackMail::test_validate_feedback_mail_setting PASSED
+tests/test_utils.py::TestFeedbackMail::test_load_feedback_mail_history FAILED
+tests/test_utils.py::TestFeedbackMail::test_get_email_name PASSED
+tests/test_utils.py::TestFeedbackMail::test_get_newest_email PASSED
+tests/test_utils.py::TestFeedbackMail::test_get_total_page PASSED
+tests/test_utils.py::TestFeedbackMail::test_get_mail_data_by_history_id PASSED
+tests/test_utils.py::TestFeedbackMail::test_update_history_after_resend PASSED
+tests/test_utils.py::test_validation_site_info PASSED
+tests/test_utils.py::test_format_site_info_data PASSED
+tests/test_utils.py::test_get_site_name_for_current_language PASSED
+tests/test_utils.py::test_get_notify_for_current_language PASSED
+tests/test_utils.py::test_build_init_display_index PASSED
+tests/test_utils.py::test_get_init_display_index PASSED
+tests/test_utils.py::test_get_restricted_access PASSED
+tests/test_utils.py::test_update_restricted_access PASSED
+tests/test_utils.py::test_get_facet_search PASSED
+tests/test_utils.py::test_get_item_mapping_list PASSED
+tests/test_utils.py::test_create_facet_search_query PASSED
+tests/test_utils.py::test_store_facet_search_query_in_redis PASSED
+tests/test_utils.py::test_get_query_key_by_permission PASSED
+tests/test_utils.py::test_get_title_facets PASSED
+tests/test_utils.py::test_is_exits_facet PASSED
+tests/test_utils.py::test_overwrite_the_memory_config_with_db PASSED
+tests/test_views.py::test_has_admin_access /login/
+PASSED
+tests/test_views.py::test_set_lifetime /accounts/settings/session/lifetime/100
+FAILED
+tests/test_views.py::test_lifetime /accounts/settings/session/
+PASSED
+tests/test_views.py::test_session_info_offline /accounts/settings/session/offline/info
+PASSED
+tests/test_views.py::test_get_lang_list PASSED
+tests/test_views.py::test_save_lang_list_acl[0-True] PASSED
+tests/test_views.py::test_save_lang_list_acl[1-True] PASSED
+tests/test_views.py::test_save_lang_list_acl[2-False] FAILED
+tests/test_views.py::test_save_lang_list_acl[3-False] FAILED
+tests/test_views.py::test_save_lang_list_acl[4-False] FAILED
+tests/test_views.py::test_save_lang_list_acl_guest FAILED
+tests/test_views.py::test_save_lang_list PASSED
+tests/test_views.py::test_get_selected_lang PASSED
+tests/test_views.py::test_get_api_cert_type PASSED
+tests/test_views.py::test_get_curr_api_cert PASSED
+tests/test_views.py::test_save_api_cert_data_acl[0-True] PASSED
+tests/test_views.py::test_save_api_cert_data_acl[1-True] PASSED
+tests/test_views.py::test_save_api_cert_data_acl[2-False] FAILED
+tests/test_views.py::test_save_api_cert_data_acl[3-False] FAILED
+tests/test_views.py::test_save_api_cert_data_acl[4-False] FAILED
+tests/test_views.py::test_save_api_cert_data_acl_guest FAILED
+tests/test_views.py::test_save_api_cert_data PASSED
+tests/test_views.py::test_get_init_selection FAILED
+tests/test_views.py::test_get_email_author_acl[0-True] PASSED
+tests/test_views.py::test_get_email_author_acl[1-True] PASSED
+tests/test_views.py::test_get_email_author_acl[2-False] FAILED
+tests/test_views.py::test_get_email_author_acl[3-False] FAILED
+tests/test_views.py::test_get_email_author_acl[4-False] FAILED
+tests/test_views.py::test_get_email_author_acl_guest PASSED
+tests/test_views.py::test_get_email_author PASSED
+tests/test_views.py::test_update_feedback_mail_acl[0-True] PASSED
+tests/test_views.py::test_update_feedback_mail_acl[1-True] PASSED
+tests/test_views.py::test_update_feedback_mail_acl[2-False] FAILED
+tests/test_views.py::test_update_feedback_mail_acl[3-False] FAILED
+tests/test_views.py::test_update_feedback_mail_acl[4-False] FAILED
+tests/test_views.py::test_update_feedback_mail_guest FAILED
+tests/test_views.py::test_update_feedback_mail PASSED
+tests/test_views.py::test_get_feedback_mail_acl[0-True] PASSED
+tests/test_views.py::test_get_feedback_mail_acl[1-True] PASSED
+tests/test_views.py::test_get_feedback_mail_acl[2-False] PASSED
+tests/test_views.py::test_get_feedback_mail_acl[3-False] PASSED
+tests/test_views.py::test_get_feedback_mail_acl[4-False] PASSED
+tests/test_views.py::test_get_feedback_mail_acl_guest PASSED
+tests/test_views.py::test_get_feedback_mail PASSED
+tests/test_views.py::test_get_send_mail_history PASSED
+tests/test_views.py::test_get_failed_mail_acl[0-True] PASSED
+tests/test_views.py::test_get_failed_mail_acl[1-True] PASSED
+tests/test_views.py::test_get_failed_mail_acl[2-False] PASSED
+tests/test_views.py::test_get_failed_mail_acl[3-False] PASSED
+tests/test_views.py::test_get_failed_mail_acl[4-False] PASSED
+tests/test_views.py::test_get_failed_mail_acl_guest PASSED
+tests/test_views.py::test_get_failed_mail PASSED
+tests/test_views.py::test_resend_failed_mail_acl[0-True] PASSED
+tests/test_views.py::test_resend_failed_mail_acl[1-True] PASSED
+tests/test_views.py::test_resend_failed_mail_acl[2-False] FAILED
+tests/test_views.py::test_resend_failed_mail_acl[3-False] FAILED
+tests/test_views.py::test_resend_failed_mail_acl[4-False] FAILED
+tests/test_views.py::test_resend_failed_mail_guest FAILED
+tests/test_views.py::test_resend_failed_mail PASSED
+tests/test_views.py::test_manual_send_site_license_mail_acl[0-True] PASSED
+tests/test_views.py::test_manual_send_site_license_mail_acl[1-True] PASSED
+tests/test_views.py::test_manual_send_site_license_mail_acl[2-False] FAILED
+tests/test_views.py::test_manual_send_site_license_mail_acl[3-False] FAILED
+tests/test_views.py::test_manual_send_site_license_mail_acl[4-False] FAILED
+tests/test_views.py::test_manual_send_site_license_mail_guest FAILED
+tests/test_views.py::test_manual_send_site_license_mail PASSED
+tests/test_views.py::test_update_site_info_acl[0-True] PASSED
+tests/test_views.py::test_update_site_info_acl[1-True] PASSED
+tests/test_views.py::test_update_site_info_acl[2-False] FAILED
+tests/test_views.py::test_update_site_info_acl[3-False] FAILED
+tests/test_views.py::test_update_site_info_acl[4-False] FAILED
+tests/test_views.py::test_update_site_info_guest PASSED
+tests/test_views.py::test_update_site_info PASSED
+tests/test_views.py::test_get_site_info PASSED
+tests/test_views.py::test_get_avatar PASSED
+tests/test_views.py::test_get_ogp_image PASSED
+tests/test_views.py::test_get_search_init_display_index PASSED
+tests/test_views.py::test_save_restricted_access_acl[0-True] PASSED
+tests/test_views.py::test_save_restricted_access_acl[1-True] PASSED
+tests/test_views.py::test_save_restricted_access_acl[2-False] FAILED
+tests/test_views.py::test_save_restricted_access_acl[3-False] FAILED
+tests/test_views.py::test_save_restricted_access_acl[4-False] FAILED
+tests/test_views.py::test_save_restricted_access_guest PASSED
+tests/test_views.py::test_save_restricted_access PASSED
+tests/test_views.py::test_get_usage_report_activities_acl[0-True] PASSED
+tests/test_views.py::test_get_usage_report_activities_acl[1-True] PASSED
+tests/test_views.py::test_get_usage_report_activities_acl[2-False] FAILED
+tests/test_views.py::test_get_usage_report_activities_acl[3-False] FAILED
+tests/test_views.py::test_get_usage_report_activities_acl[4-False] FAILED
+tests/test_views.py::test_get_usage_report_activities_guest PASSED
+tests/test_views.py::test_get_usage_report_activities PASSED
+tests/test_views.py::test_send_mail_reminder_usage_report_acl[0-True] PASSED
+tests/test_views.py::test_send_mail_reminder_usage_report_acl[1-True] PASSED
+tests/test_views.py::test_send_mail_reminder_usage_report_acl[2-False] FAILED
+tests/test_views.py::test_send_mail_reminder_usage_report_acl[3-False] FAILED
+tests/test_views.py::test_send_mail_reminder_usage_report_acl[4-False] FAILED
+tests/test_views.py::test_send_mail_reminder_usage_report_guest PASSED
+tests/test_views.py::test_send_mail_reminder_usage_report PASSED
+tests/test_views.py::test_save_facet_search_acl[0-True] PASSED
+tests/test_views.py::test_save_facet_search_acl[1-True] PASSED
+tests/test_views.py::test_save_facet_search_acl[2-False] FAILED
+tests/test_views.py::test_save_facet_search_acl[3-False] FAILED
+tests/test_views.py::test_save_facet_search_acl[4-False] FAILED
+tests/test_views.py::test_save_facet_search_guest PASSED
+tests/test_views.py::test_save_facet_search PASSED
+tests/test_views.py::test_remove_facet_search_acl[0-True] PASSED
+tests/test_views.py::test_remove_facet_search_acl[1-True] PASSED
+tests/test_views.py::test_remove_facet_search_acl[2-False] FAILED
+tests/test_views.py::test_remove_facet_search_acl[3-False] FAILED
+tests/test_views.py::test_remove_facet_search_acl[4-False] FAILED
+tests/test_views.py::test_remove_facet_search_guest PASSED
+tests/test_views.py::test_remove_facet_search PASSED
+tests/test_weko_admin.py::test_version PASSED
+tests/test_weko_admin.py::test_init PASSED
+tests/test_weko_admin.py::test_view /accounts/settings/session/
+PASSED
+tests/test_weko_admin.py::test_set_lifetime /accounts/settings/session/lifetime/360
+FAILED
+
+=================================== FAILURES ===================================
+____________________ TestStyleSettingView.test_get_contents ____________________
+
+self = <tests.test_admin.TestStyleSettingView object at 0x7f1f2dd14d30>
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+
+    def test_get_contents(self,client):
+        path = join(current_app.instance_path,dirname(__file__),"data/_variables.scss")
+        result = StyleSettingView().get_contents(path)
+        test = [
+            "$body-bg: #ffff;\n",
+            "$panel-bg: #ffff;\n",
+            "$footer-default-bg: #0d5f89;\n",
+            "$navbar-default-bg: #0d5f89;\n",
+            "$panel-default-border: #dddddd;\n",
+            "$input-bg-transparent: rgba(255, 255, 255, 0);"
+        ]
+>       assert result == test
+E       AssertionError: assert ['$body-bg: #ffff;\n',\n '$panel-bg: #fff;\n',\n '$footer-default-bg: #0d5f89;\n',\n '$navbar-default-bg: #0d5f89;\n',\n '$panel-default-border: #dddddd;\n',\n '$input-bg-transparent: rgba(255, 255, 255, 0);'] == ['$body-bg: #ffff;\n',\n '$panel-bg: #ffff;\n',\n '$footer-default-bg: #0d5f89;\n',\n '$navbar-default-bg: #0d5f89;\n',\n '$panel-default-border: #dddddd;\n',\n '$input-bg-transparent: rgba(255, 255, 255, 0);']
+E         At index 1 diff: '$panel-bg: #fff;\n' != '$panel-bg: #ffff;\n'
+E         Full diff:
+E           [
+E            '$body-bg: #ffff;\n',
+E         -  '$panel-bg: #ffff;\n',
+E         ?               -
+E         +  '$panel-bg: #fff;\n',
+E            '$footer-default-bg: #0d5f89;\n',
+E            '$navbar-default-bg: #0d5f89;\n',
+E            '$panel-default-border: #dddddd;\n',
+E            '$input-bg-transparent: rgba(255, 255, 255, 0);',
+E           ]
+
+tests/test_admin.py:73: AssertionError
+_______________ TestFeedbackMail.test_load_feedback_mail_history _______________
+
+self = <tests.test_utils.TestFeedbackMail object at 0x7f1f20277160>
+feedback_mail_histories = [<FeedbackMailHistory 1>, <FeedbackMailHistory 2>]
+
+    def test_load_feedback_mail_history(self,feedback_mail_histories):
+        test = {
+            "data":[
+                {"start_time":"2022-10-01 01:02:03.045","end_time":"2022-10-01 02:03:04.056","count":2,"error":0,"id":1,"is_latest":True,"success":2},
+                {"start_time":"2022-10-01 01:02:03.045","end_time":"2022-10-01 02:03:04.056","count":2,"error":0,"id":2,"is_latest":True,"success":2}],
+            "error":"",
+            "records_per_page":20,
+            "selected_page":1,
+            "total_page":1
+        }
+        result = FeedbackMail.load_feedback_mail_history(1)
+>       assert result ==test
+E       AssertionError: assert {'data': [{'count': 2,\n           'end_time': '2022-10-01 02:03:04.056',\n           'error': 0,\n           'id': 2,\n           'is_latest': True,\n           'start_time': '2022-10-01 01:02:03.045',\n           'success': 2},\n          {'count': 2,\n           'end_time': '2022-10-01 02:03:04.056',\n           'error': 0,\n           'id': 1,\n           'is_latest': True,\n           'start_time': '2022-10-01 01:02:03.045',\n           'success': 2}],\n 'error': '',\n 'records_per_page': 20,\n 'selected_page': 1,\n 'total_page': 1} == {'data': [{'count': 2,\n           'end_time': '2022-10-01 02:03:04.056',\n           'error': 0,\n           'id': 1,\n           'is_latest': True,\n           'start_time': '2022-10-01 01:02:03.045',\n           'success': 2},\n          {'count': 2,\n           'end_time': '2022-10-01 02:03:04.056',\n           'error': 0,\n           'id': 2,\n           'is_latest': True,\n           'start_time': '2022-10-01 01:02:03.045',\n           'success': 2}],\n 'error': '',\n 'records_per_page': 20,\n 'selected_page': 1,\n 'total_page': 1}
+E         Common items:
+E         {'error': '', 'records_per_page': 20, 'selected_page': 1, 'total_page': 1}
+E         Differing items:
+E         {'data': [{'count': 2, 'end_time': '2022-10-01 02:03:04.056', 'error': 0, 'id': 2, ...}, {'count': 2, 'end_time': '2022-10-01 02:03:04.056', 'error': 0, 'id': 1, ...}]} != {'data': [{'count': 2, 'end_time': '2022-10-01 02:03:04.056', 'error': 0, 'id': 1, ...}, {'count': 2, 'end_time': '2022-10-01 02:03:04.056', 'error': 0, 'id': 2, ...}]}
+E         Full diff:
+E           {
+E            'data': [{'count': 2,
+E                      'end_time': '2022-10-01 02:03:04.056',
+E                      'error': 0,
+E         -            'id': 1,
+E         ?                  ^
+E         +            'id': 2,
+E         ?                  ^
+E                      'is_latest': True,
+E                      'start_time': '2022-10-01 01:02:03.045',
+E                      'success': 2},
+E                     {'count': 2,
+E                      'end_time': '2022-10-01 02:03:04.056',
+E                      'error': 0,
+E         -            'id': 2,
+E         ?                  ^
+E         +            'id': 1,
+E         ?                  ^
+E                      'is_latest': True,
+E                      'start_time': '2022-10-01 01:02:03.045',
+E                      'success': 2}],
+E            'error': '',
+E            'records_per_page': 20,
+E            'selected_page': 1,
+E            'total_page': 1,
+E           }
+
+tests/test_utils.py:1079: AssertionError
+______________________________ test_set_lifetime _______________________________
+
+client = <FlaskClient <Flask 'test_weko_admin_app'>>
+db = <SQLAlchemy engine=sqlite:////code/modules/weko-admin/test.db>
+
+    def test_set_lifetime(client,db):
+        url = url_for("weko_admin.set_lifetime",minutes=100,_external=False)
+    
+        # not exist session life time
+        res = client.get(url)
+>       assert response_data(res) == {"code":0,"msg":"Session lifetime was updated."}
+
+tests/test_views.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_views.py:24: in response_data
+    return json.loads(response.data)
+/usr/local/lib/python3.6/json/__init__.py:354: in loads
+    return _default_decoder.decode(s)
+/usr/local/lib/python3.6/json/decoder.py:339: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0x7f1f3bed6c88>
+s = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>Y...Fsession%2Flifetime%2F100">/login/?next=%2Faccounts%2Fsettings%2Fsession%2Flifetime%2F100</a>.  If not click the link.'
+idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.6/json/decoder.py:357: JSONDecodeError
+_______________________ test_save_lang_list_acl[2-False] _______________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 2, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_save_lang_list_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.save_lang_list")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.update_admin_lang_setting", return_value=""):
+            res = api.post(url,data=json.dumps({}),
+                            content_type="application/json")
+>           assert_role(res,is_permission)
+
+tests/test_views.py:152: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+_______________________ test_save_lang_list_acl[3-False] _______________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 3, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_save_lang_list_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.save_lang_list")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.update_admin_lang_setting", return_value=""):
+            res = api.post(url,data=json.dumps({}),
+                            content_type="application/json")
+>           assert_role(res,is_permission)
+
+tests/test_views.py:152: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+_______________________ test_save_lang_list_acl[4-False] _______________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 4, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_save_lang_list_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.save_lang_list")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.update_admin_lang_setting", return_value=""):
+            res = api.post(url,data=json.dumps({}),
+                            content_type="application/json")
+>           assert_role(res,is_permission)
+
+tests/test_views.py:152: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+________________________ test_save_lang_list_acl_guest _________________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+
+    def test_save_lang_list_acl_guest(api, users):
+        url = url_for("weko_admin.save_lang_list")
+        with patch("weko_admin.views.update_admin_lang_setting", return_value=""):
+            res = api.post(url,data=json.dumps({}),
+                              content_type="application/json")
+>           assert res.status_code == 302
+E           assert 200 == 302
+E             +200
+E             -302
+
+tests/test_views.py:160: AssertionError
+_____________________ test_save_api_cert_data_acl[2-False] _____________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 2, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_save_api_cert_data_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.save_api_cert_data")
+        login_user_via_session(client=api, email=users[index]["email"])
+        res = api.post(url,data=json.dumps({}),content_type="application/json")
+>       assert_role(res,is_permission)
+
+tests/test_views.py:230: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+_____________________ test_save_api_cert_data_acl[3-False] _____________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 3, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_save_api_cert_data_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.save_api_cert_data")
+        login_user_via_session(client=api, email=users[index]["email"])
+        res = api.post(url,data=json.dumps({}),content_type="application/json")
+>       assert_role(res,is_permission)
+
+tests/test_views.py:230: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+_____________________ test_save_api_cert_data_acl[4-False] _____________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 4, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_save_api_cert_data_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.save_api_cert_data")
+        login_user_via_session(client=api, email=users[index]["email"])
+        res = api.post(url,data=json.dumps({}),content_type="application/json")
+>       assert_role(res,is_permission)
+
+tests/test_views.py:230: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+______________________ test_save_api_cert_data_acl_guest _______________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+
+    def test_save_api_cert_data_acl_guest(api):
+        url = url_for("weko_admin.save_api_cert_data")
+        res = api.post(url,data=json.dumps({}),content_type="application/json")
+>       assert res.status_code == 302
+E       assert 200 == 302
+E         +200
+E         -302
+
+tests/test_views.py:236: AssertionError
+___________________________ test_get_init_selection ____________________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+mocker = <pytest_mock.plugin.MockerFixture object at 0x7f1f170b2e80>
+
+    def test_get_init_selection(api,mocker):
+        mocker.patch("weko_admin.views.get_initial_stats_report",return_value={"target":[{"id":"1","data":"test_data"}]})
+        mocker.patch("weko_admin.views.get_unit_stats_report",return_value={"unit":["test_value"]})
+    
+        # selection = target
+        url = url_for("weko_admin.get_init_selection",selection="target")
+        res = api.get(url)
+        assert response_data(res) == {"target":[{"id":"1","data":"test_data"}]}
+    
+        # selection == ""
+        url = url_for("weko_admin.get_init_selection",selection="")
+        res = api.get(url)
+>       assert response_data(res) == {"error":"Request URL is incorrectly"}
+
+tests/test_views.py:279: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_views.py:24: in response_data
+    return json.loads(response.data)
+/usr/local/lib/python3.6/json/__init__.py:354: in loads
+    return _default_decoder.decode(s)
+/usr/local/lib/python3.6/json/decoder.py:339: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0x7f1f3bed6c88>
+s = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n<title>404 Not Found</title>\n<h1>Not Found</h1>\n<p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>\n'
+idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.6/json/decoder.py:357: JSONDecodeError
+______________________ test_get_email_author_acl[2-False] ______________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 2, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_get_email_author_acl(api,users,index,is_permission):
+        login_user_via_session(api,email=users[index]["email"])
+        url = url_for("weko_admin.get_email_author")
+        with patch("weko_admin.views.FeedbackMail.search_author_mail",return_value={}):
+            res = api.post(url,json={},)
+>           assert_role(res, is_permission)
+
+tests/test_views.py:300: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+______________________ test_get_email_author_acl[3-False] ______________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 3, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_get_email_author_acl(api,users,index,is_permission):
+        login_user_via_session(api,email=users[index]["email"])
+        url = url_for("weko_admin.get_email_author")
+        with patch("weko_admin.views.FeedbackMail.search_author_mail",return_value={}):
+            res = api.post(url,json={},)
+>           assert_role(res, is_permission)
+
+tests/test_views.py:300: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+______________________ test_get_email_author_acl[4-False] ______________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 4, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_get_email_author_acl(api,users,index,is_permission):
+        login_user_via_session(api,email=users[index]["email"])
+        url = url_for("weko_admin.get_email_author")
+        with patch("weko_admin.views.FeedbackMail.search_author_mail",return_value={}):
+            res = api.post(url,json={},)
+>           assert_role(res, is_permission)
+
+tests/test_views.py:300: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+____________________ test_update_feedback_mail_acl[2-False] ____________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 2, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_update_feedback_mail_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.update_feedback_mail")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.FeedbackMail.update_feedback_email_setting", return_value={}):
+            res = api.post(url,json={})
+>           assert_role(res,is_permission)
+
+tests/test_views.py:332: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+____________________ test_update_feedback_mail_acl[3-False] ____________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 3, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_update_feedback_mail_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.update_feedback_mail")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.FeedbackMail.update_feedback_email_setting", return_value={}):
+            res = api.post(url,json={})
+>           assert_role(res,is_permission)
+
+tests/test_views.py:332: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+____________________ test_update_feedback_mail_acl[4-False] ____________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 4, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_update_feedback_mail_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.update_feedback_mail")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.FeedbackMail.update_feedback_email_setting", return_value={}):
+            res = api.post(url,json={})
+>           assert_role(res,is_permission)
+
+tests/test_views.py:332: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+_______________________ test_update_feedback_mail_guest ________________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+
+    def test_update_feedback_mail_guest(api):
+        url = url_for("weko_admin.update_feedback_mail")
+        with patch("weko_admin.views.FeedbackMail.update_feedback_email_setting", return_value={}):
+            res = api.post(url,json={})
+>           assert res.status_code == 302
+E           assert 200 == 302
+E             +200
+E             -302
+
+tests/test_views.py:339: AssertionError
+_____________________ test_resend_failed_mail_acl[2-False] _____________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 2, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_resend_failed_mail_acl(api, users, index, is_permission):
+        login_user_via_session(client=api, email=users[index]["email"])
+        url = url_for("weko_admin.resend_failed_mail")
+        mock_feedbackmail = MagicMock(side_effect = Mock_FeedbackMail)
+        with patch("weko_admin.views.FeedbackMail", mock_feedbackmail):
+            with patch("weko_admin.views.StatisticMail.send_mail_to_all", return_value=""):
+                res = api.post(url,data=json.dumps({}),content_type="application/json")
+>               assert_role(res, is_permission)
+
+tests/test_views.py:465: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+_____________________ test_resend_failed_mail_acl[3-False] _____________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 3, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_resend_failed_mail_acl(api, users, index, is_permission):
+        login_user_via_session(client=api, email=users[index]["email"])
+        url = url_for("weko_admin.resend_failed_mail")
+        mock_feedbackmail = MagicMock(side_effect = Mock_FeedbackMail)
+        with patch("weko_admin.views.FeedbackMail", mock_feedbackmail):
+            with patch("weko_admin.views.StatisticMail.send_mail_to_all", return_value=""):
+                res = api.post(url,data=json.dumps({}),content_type="application/json")
+>               assert_role(res, is_permission)
+
+tests/test_views.py:465: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+_____________________ test_resend_failed_mail_acl[4-False] _____________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 4, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_resend_failed_mail_acl(api, users, index, is_permission):
+        login_user_via_session(client=api, email=users[index]["email"])
+        url = url_for("weko_admin.resend_failed_mail")
+        mock_feedbackmail = MagicMock(side_effect = Mock_FeedbackMail)
+        with patch("weko_admin.views.FeedbackMail", mock_feedbackmail):
+            with patch("weko_admin.views.StatisticMail.send_mail_to_all", return_value=""):
+                res = api.post(url,data=json.dumps({}),content_type="application/json")
+>               assert_role(res, is_permission)
+
+tests/test_views.py:465: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+________________________ test_resend_failed_mail_guest _________________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+
+    def test_resend_failed_mail_guest(api):
+        mock_feedbackmail = MagicMock(side_effect = Mock_FeedbackMail)
+        url = url_for("weko_admin.resend_failed_mail")
+        with patch("weko_admin.views.FeedbackMail", mock_feedbackmail):
+            with patch("weko_admin.views.StatisticMail.send_mail_to_all", return_value=""):
+                res = api.post(url,data=json.dumps({}),content_type="application/json")
+>               assert res.status_code == 302
+E               assert 200 == 302
+E                 +200
+E                 -302
+
+tests/test_views.py:474: AssertionError
+_______________ test_manual_send_site_license_mail_acl[2-False] ________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+site_license = [{'Info': <SiteLicenseInfo 0>, 'address': [<SiteLicenseIpAddress 0>]}]
+index = 2, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_manual_send_site_license_mail_acl(api,users,site_license,index,is_permission):
+        url = url_for("weko_admin.manual_send_site_license_mail",start_month="202201",end_month="202203")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.QueryCommonReportsHelper.get", return_value={"institution_name":[]}):
+            with patch("weko_admin.views.send_site_license_mail"):
+                res = api.post(url,data=json.dumps({}),content_type="application/json")
+>               assert_role(res, is_permission)
+
+tests/test_views.py:503: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+_______________ test_manual_send_site_license_mail_acl[3-False] ________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+site_license = [{'Info': <SiteLicenseInfo 0>, 'address': [<SiteLicenseIpAddress 0>]}]
+index = 3, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_manual_send_site_license_mail_acl(api,users,site_license,index,is_permission):
+        url = url_for("weko_admin.manual_send_site_license_mail",start_month="202201",end_month="202203")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.QueryCommonReportsHelper.get", return_value={"institution_name":[]}):
+            with patch("weko_admin.views.send_site_license_mail"):
+                res = api.post(url,data=json.dumps({}),content_type="application/json")
+>               assert_role(res, is_permission)
+
+tests/test_views.py:503: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+_______________ test_manual_send_site_license_mail_acl[4-False] ________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+site_license = [{'Info': <SiteLicenseInfo 0>, 'address': [<SiteLicenseIpAddress 0>]}]
+index = 4, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_manual_send_site_license_mail_acl(api,users,site_license,index,is_permission):
+        url = url_for("weko_admin.manual_send_site_license_mail",start_month="202201",end_month="202203")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.QueryCommonReportsHelper.get", return_value={"institution_name":[]}):
+            with patch("weko_admin.views.send_site_license_mail"):
+                res = api.post(url,data=json.dumps({}),content_type="application/json")
+>               assert_role(res, is_permission)
+
+tests/test_views.py:503: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+___________________ test_manual_send_site_license_mail_guest ___________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+site_license = [{'Info': <SiteLicenseInfo 0>, 'address': [<SiteLicenseIpAddress 0>]}]
+
+    def test_manual_send_site_license_mail_guest(api, site_license):
+        url = url_for("weko_admin.manual_send_site_license_mail",start_month="202201",end_month="202203")
+        with patch("weko_admin.views.QueryCommonReportsHelper.get", return_value={"institution_name":[]}):
+            with patch("weko_admin.views.send_site_license_mail"):
+                res = api.post(url,data=json.dumps({}),content_type="application/json")
+>               assert res.status_code == 302
+E               assert 200 == 302
+E                 +200
+E                 -302
+
+tests/test_views.py:511: AssertionError
+______________________ test_update_site_info_acl[2-False] ______________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 2, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_update_site_info_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.update_site_info")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.format_site_info_data", return_value=""):
+            with patch("weko_admin.views.validation_site_info", return_value={"error":"error"}):
+                res = api.post(url,data=json.dumps({}),content_type="application/json")
+>               assert_role(res, is_permission)
+
+tests/test_views.py:562: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+______________________ test_update_site_info_acl[3-False] ______________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 3, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_update_site_info_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.update_site_info")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.format_site_info_data", return_value=""):
+            with patch("weko_admin.views.validation_site_info", return_value={"error":"error"}):
+                res = api.post(url,data=json.dumps({}),content_type="application/json")
+>               assert_role(res, is_permission)
+
+tests/test_views.py:562: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+______________________ test_update_site_info_acl[4-False] ______________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 4, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_update_site_info_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.update_site_info")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.format_site_info_data", return_value=""):
+            with patch("weko_admin.views.validation_site_info", return_value={"error":"error"}):
+                res = api.post(url,data=json.dumps({}),content_type="application/json")
+>               assert_role(res, is_permission)
+
+tests/test_views.py:562: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+___________________ test_save_restricted_access_acl[2-False] ___________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 2, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_save_restricted_access_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.save_restricted_access")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.update_restricted_access",return_value=True):
+            res = api.post(url,data=json.dumps({}),content_type="application/json")
+>           assert_role(res, is_permission)
+
+tests/test_views.py:688: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+___________________ test_save_restricted_access_acl[3-False] ___________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 3, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_save_restricted_access_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.save_restricted_access")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.update_restricted_access",return_value=True):
+            res = api.post(url,data=json.dumps({}),content_type="application/json")
+>           assert_role(res, is_permission)
+
+tests/test_views.py:688: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+___________________ test_save_restricted_access_acl[4-False] ___________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 4, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_save_restricted_access_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.save_restricted_access")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.update_restricted_access",return_value=True):
+            res = api.post(url,data=json.dumps({}),content_type="application/json")
+>           assert_role(res, is_permission)
+
+tests/test_views.py:688: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+________________ test_get_usage_report_activities_acl[2-False] _________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 2, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_get_usage_report_activities_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.get_usage_report_activities")
+        login_user_via_session(client=api, email=users[index]["email"])
+        mock_usagereport = MagicMock(side_effect=MockUsageReport)
+        with patch("weko_admin.views.UsageReport", mock_usagereport):
+            res = api.post(url,data=json.dumps({}),content_type="application/json")
+>           assert_role(res, is_permission)
+
+tests/test_views.py:731: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+________________ test_get_usage_report_activities_acl[3-False] _________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 3, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_get_usage_report_activities_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.get_usage_report_activities")
+        login_user_via_session(client=api, email=users[index]["email"])
+        mock_usagereport = MagicMock(side_effect=MockUsageReport)
+        with patch("weko_admin.views.UsageReport", mock_usagereport):
+            res = api.post(url,data=json.dumps({}),content_type="application/json")
+>           assert_role(res, is_permission)
+
+tests/test_views.py:731: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+________________ test_get_usage_report_activities_acl[4-False] _________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 4, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_get_usage_report_activities_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.get_usage_report_activities")
+        login_user_via_session(client=api, email=users[index]["email"])
+        mock_usagereport = MagicMock(side_effect=MockUsageReport)
+        with patch("weko_admin.views.UsageReport", mock_usagereport):
+            res = api.post(url,data=json.dumps({}),content_type="application/json")
+>           assert_role(res, is_permission)
+
+tests/test_views.py:731: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+______________ test_send_mail_reminder_usage_report_acl[2-False] _______________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 2, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_send_mail_reminder_usage_report_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.send_mail_reminder_usage_report")
+        login_user_via_session(client=api, email=users[index]["email"])
+        res = api.post(url,data=json.dumps({}),content_type="application/json")
+>       assert_role(res, is_permission)
+
+tests/test_views.py:765: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+______________ test_send_mail_reminder_usage_report_acl[3-False] _______________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 3, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_send_mail_reminder_usage_report_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.send_mail_reminder_usage_report")
+        login_user_via_session(client=api, email=users[index]["email"])
+        res = api.post(url,data=json.dumps({}),content_type="application/json")
+>       assert_role(res, is_permission)
+
+tests/test_views.py:765: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+______________ test_send_mail_reminder_usage_report_acl[4-False] _______________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 4, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_send_mail_reminder_usage_report_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.send_mail_reminder_usage_report")
+        login_user_via_session(client=api, email=users[index]["email"])
+        res = api.post(url,data=json.dumps({}),content_type="application/json")
+>       assert_role(res, is_permission)
+
+tests/test_views.py:765: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+_____________________ test_save_facet_search_acl[2-False] ______________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 2, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_save_facet_search_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.save_facet_search")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.is_exits_facet", return_value=True):
+            with patch("weko_admin.views.store_facet_search_query_in_redis", return_value=""):
+                res = api.post(url,data=json.dumps({}),content_type="application/json")
+>               assert_role(res, is_permission)
+
+tests/test_views.py:805: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+_____________________ test_save_facet_search_acl[3-False] ______________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 3, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_save_facet_search_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.save_facet_search")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.is_exits_facet", return_value=True):
+            with patch("weko_admin.views.store_facet_search_query_in_redis", return_value=""):
+                res = api.post(url,data=json.dumps({}),content_type="application/json")
+>               assert_role(res, is_permission)
+
+tests/test_views.py:805: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+_____________________ test_save_facet_search_acl[4-False] ______________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 4, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_save_facet_search_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.save_facet_search")
+        login_user_via_session(client=api, email=users[index]["email"])
+        with patch("weko_admin.views.is_exits_facet", return_value=True):
+            with patch("weko_admin.views.store_facet_search_query_in_redis", return_value=""):
+                res = api.post(url,data=json.dumps({}),content_type="application/json")
+>               assert_role(res, is_permission)
+
+tests/test_views.py:805: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+____________________ test_remove_facet_search_acl[2-False] _____________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 2, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_remove_facet_search_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.remove_facet_search")
+        login_user_via_session(client=api, email=users[index]["email"])
+        data = {"id":[]}
+        with patch("weko_admin.views.store_facet_search_query_in_redis", return_value={}):
+            res = api.post(url,data=json.dumps(data),content_type="application/json")
+>           assert_role(res, is_permission)
+
+tests/test_views.py:855: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+____________________ test_remove_facet_search_acl[3-False] _____________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 3, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_remove_facet_search_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.remove_facet_search")
+        login_user_via_session(client=api, email=users[index]["email"])
+        data = {"id":[]}
+        with patch("weko_admin.views.store_facet_search_query_in_redis", return_value={}):
+            res = api.post(url,data=json.dumps(data),content_type="application/json")
+>           assert_role(res, is_permission)
+
+tests/test_views.py:855: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+____________________ test_remove_facet_search_acl[4-False] _____________________
+
+api = <FlaskClient <Flask 'test_weko_admin_app'>>
+users = [{'email': 'sysadmin@test.org', 'id': 5, 'obj': <User 5>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>}, ...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+index = 4, is_permission = False
+
+    @pytest.mark.parametrize("index,is_permission",[
+                             (0,True),# sysadmin
+                             (1,True),# repoadmin
+                             (2,False),# comadmin
+                             (3,False),# contributor
+                             (4,False),# generaluser
+                             ])
+    def test_remove_facet_search_acl(api,users,index,is_permission):
+        url = url_for("weko_admin.remove_facet_search")
+        login_user_via_session(client=api, email=users[index]["email"])
+        data = {"id":[]}
+        with patch("weko_admin.views.store_facet_search_query_in_redis", return_value={}):
+            res = api.post(url,data=json.dumps(data),content_type="application/json")
+>           assert_role(res, is_permission)
+
+tests/test_views.py:855: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response streamed [200 OK]>, is_permission = False
+status_code = 403
+
+    def assert_role(response,is_permission,status_code=403):
+        if is_permission:
+            assert response.status_code != status_code
+        else:
+>           assert response.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:21: AssertionError
+______________________________ test_set_lifetime _______________________________
+
+app = <Flask 'test_weko_admin_app'>
+db = <SQLAlchemy engine=sqlite:////code/modules/weko-admin/test.db>
+
+    def test_set_lifetime(app, db):
+        """Test set lifetime."""
+        valid_time = (15, 30, 45, 60, 180, 360, 720, 1440)
+        set_time = random.choice(valid_time)
+        WekoAdmin(app)
+        with app.test_client() as client:
+            hello_url = url_for('weko_admin.set_lifetime', minutes=set_time)
+            res = client.get(hello_url)
+>           assert res.status_code == 200
+E           assert 302 == 200
+E             +302
+E             -200
+
+tests/test_weko_admin.py:74: AssertionError
+=============================== warnings summary ===============================
+.tox/c1/lib/python3.6/site-packages/invenio_indexer/cli.py:96
+  /code/modules/weko-admin/.tox/c1/lib/python3.6/site-packages/invenio_indexer/cli.py:96: DeprecationWarning: 'resultcallback' has been renamed to 'result_callback'. The old name will be removed in Click 8.1.
+    @queue.resultcallback()
+
+.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3
+  /code/modules/weko-admin/.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3: DeprecationWarning: 'werkzeug.contrib.cache' is deprecated as of version 0.15 and will be removed in version 1.0. It has moved to https://github.com/pallets/cachelib.
+    from werkzeug.contrib.cache import NullCache, SimpleCache, FileSystemCache
+
+.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35
+  /code/modules/weko-admin/.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+    import imp
+
+tests/test_admin.py: 1196 warnings
+tests/test_api.py: 208 warnings
+tests/test_cli.py: 312 warnings
+tests/test_tasks.py: 182 warnings
+tests/test_utils.py: 1222 warnings
+tests/test_views.py: 2912 warnings
+tests/test_weko_admin.py: 52 warnings
+  /code/modules/weko-admin/.tox/c1/lib/python3.6/site-packages/invenio_admin/ext.py:73: PendingDeprecationWarning: Usage of model and modelview kwargs are deprecated in favor of view_class, args and kwargs.
+    PendingDeprecationWarning
+
+tests/test_admin.py: 46 warnings
+tests/test_api.py: 8 warnings
+tests/test_cli.py: 12 warnings
+tests/test_tasks.py: 7 warnings
+tests/test_utils.py: 47 warnings
+tests/test_views.py: 112 warnings
+tests/test_weko_admin.py: 2 warnings
+  /code/modules/weko-admin/.tox/c1/lib/python3.6/site-packages/flask_admin/model/base.py:1416: UserWarning: Fields missing from ruleset: created_userId,created_date,updated_userId,updated_date
+    warnings.warn(text)
+
+tests/test_admin.py: 46 warnings
+tests/test_api.py: 8 warnings
+tests/test_cli.py: 12 warnings
+tests/test_tasks.py: 7 warnings
+tests/test_utils.py: 47 warnings
+tests/test_views.py: 112 warnings
+tests/test_weko_admin.py: 2 warnings
+  /code/modules/invenio-oaiserver/invenio_oaiserver/ext.py:135: UserWarning: Please specify the OAISERVER_ID_PREFIX configuration.default value is: oai:3849a75276a7:recid/
+    app.config.get('OAISERVER_ID_PREFIX')))
+
+tests/test_admin.py: 44 warnings
+tests/test_views.py: 91 warnings
+tests/test_weko_admin.py: 2 warnings
+  /code/modules/weko-admin/.tox/c1/lib/python3.6/site-packages/flask/sessions.py:208: UserWarning: "test_server" is not a valid cookie domain, it must contain a ".". Add an entry to your hosts file, for example "test_server.localdomain", and use that instead.
+    ' "{rv}.localdomain", and use that instead.'.format(rv=rv)
+
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_index_acl[0-False-200]
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_index_acl[1-False-403]
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_index_acl[2-False-403]
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_index_acl[3-False-403]
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_index_acl[4-False-403]
+  /code/modules/weko-admin/tests/test_admin.py:764: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_index_guest
+  /code/modules/weko-admin/tests/test_admin.py:783: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_index_raise
+  /code/modules/weko-admin/tests/test_admin.py:792: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.admin.is_reindex_running", side_effect=BaseException("test_error")):
+
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_acl[0-False-200]
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_acl[1-False-403]
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_acl[2-False-403]
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_acl[3-False-403]
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_acl[4-False-403]
+  /code/modules/weko-admin/tests/test_admin.py:808: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_acl[0-False-200]
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_acl[1-False-403]
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_acl[2-False-403]
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_acl[3-False-403]
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_acl[4-False-403]
+  /code/modules/weko-admin/tests/test_admin.py:813: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_param1
+  /code/modules/weko-admin/tests/test_admin.py:833: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_param2
+  /code/modules/weko-admin/tests/test_admin.py:841: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_param3
+  /code/modules/weko-admin/tests/test_admin.py:849: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_param4
+  /code/modules/weko-admin/tests/test_admin.py:857: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_chk_err
+  /code/modules/weko-admin/tests/test_admin.py:875: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_return
+  /code/modules/weko-admin/tests/test_admin.py:887: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.admin.is_reindex_running", side_effect=BaseException("test_error")):
+
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_return2
+  /code/modules/weko-admin/tests/test_admin.py:897: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_reindex_return2
+  /code/modules/weko-admin/tests/test_admin.py:898: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.admin.reindex.apply_async", side_effect=BaseException("test_error")):
+
+tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_check_reindex_iserror
+  /code/modules/weko-admin/tests/test_admin.py:935: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+
+tests/test_tasks.py::test_is_reindex_running_not_running
+  /code/modules/weko-admin/.tox/c1/lib/python3.6/site-packages/kombu/utils/compat.py:93: DeprecationWarning: SelectableGroups dict interface is deprecated. Use select.
+    for ep in importlib_metadata.entry_points().get(namespace, [])
+
+tests/test_tasks.py::test_reindex_EStoES
+  /code/modules/weko-admin/tests/test_tasks.py:37: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.utils.requests.put" , return_value=return_value):
+
+tests/test_tasks.py::test_reindex_EStoES
+  /code/modules/weko-admin/tests/test_tasks.py:38: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.utils.requests.post" , return_value=return_value):
+
+tests/test_tasks.py::test_reindex_EStoES
+  /code/modules/weko-admin/tests/test_tasks.py:39: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.utils.requests.delete" , return_value=return_value):
+
+tests/test_tasks.py::test_reindex_EStoES
+  /code/modules/weko-admin/tests/test_tasks.py:40: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.utils.requests.get" , return_value=return_value):
+
+tests/test_tasks.py: 144 warnings
+tests/test_utils.py: 1152 warnings
+  /code/modules/invenio-oaiserver/invenio_oaiserver/receivers.py:28: DeprecationWarning: generator 'get_record_sets' raised StopIteration
+    new_sets = set(get_record_sets(record=record))
+
+tests/test_tasks.py::test_reindex_DBtoES
+  /code/modules/weko-admin/tests/test_tasks.py:50: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.utils.requests.put" , return_value=return_value):
+
+tests/test_tasks.py::test_reindex_DBtoES
+  /code/modules/weko-admin/tests/test_tasks.py:51: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.utils.requests.post" , return_value=return_value):
+
+tests/test_tasks.py::test_reindex_DBtoES
+  /code/modules/weko-admin/tests/test_tasks.py:52: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.utils.requests.delete" , return_value=return_value):
+
+tests/test_tasks.py::test_reindex_DBtoES
+  /code/modules/weko-admin/tests/test_tasks.py:53: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.utils.requests.get" , return_value=return_value):
+
+tests/test_tasks.py::test_reindex_DBtoES
+  /code/modules/weko-admin/tests/test_tasks.py:54: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("invenio_oaiserver.receivers.update_affected_records" , return_value=""):
+
+tests/test_tasks.py::test_reindex_raise
+  /code/modules/weko-admin/tests/test_tasks.py:65: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.tasks.elasticsearch_reindex" , side_effect=BaseException("test_error")):
+
+tests/test_utils.py::test_reset_redis_cache
+  /code/modules/weko-admin/tests/test_utils.py:483: PytestMockWarning: Mocks returned by pytest-mock do not need to be used as context managers. The mocker fixture automatically undoes mocking at the end of a test. This warning can be ignored if it was triggered by mocking a context manager. https://github.com/pytest-dev/pytest-mock#note-about-usage-as-context-manager
+    with mocker.patch("weko_admin.utils.RedisConnection.connection",side_effect=Exception("test_error")):
+
+-- Docs: https://docs.pytest.org/en/stable/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                        Stmts   Miss Branch BrPart  Cover
+-------------------------------------------------------------
+weko_admin/__init__.py          4      0      0      0   100%
+weko_admin/admin.py           656    198    186      8    69%
+weko_admin/api.py              79      4     20      1    95%
+weko_admin/bundles.py          25     25      0      0     0%
+weko_admin/cli.py             135      0      8      0   100%
+weko_admin/config.py           69      0      0      0   100%
+weko_admin/ext.py              95     16     34      8    80%
+weko_admin/models.py          856    297    174     31    64%
+weko_admin/permissions.py      16      7      0      0    56%
+weko_admin/tasks.py           111     58     34      4    43%
+weko_admin/utils.py          1177    135    441     28    87%
+weko_admin/version.py           2      0      0      0   100%
+weko_admin/views.py           342     27     70      6    91%
+-------------------------------------------------------------
+TOTAL                        3567    767    967     86    77%
+Coverage HTML written to dir htmlcov
+Coverage XML written to file coverage.xml
+
+=========================== short test summary info ============================
+FAILED tests/test_admin.py::TestStyleSettingView::test_get_contents - Asserti...
+FAILED tests/test_utils.py::TestFeedbackMail::test_load_feedback_mail_history
+FAILED tests/test_views.py::test_set_lifetime - json.decoder.JSONDecodeError:...
+FAILED tests/test_views.py::test_save_lang_list_acl[2-False] - assert 200 == 403
+FAILED tests/test_views.py::test_save_lang_list_acl[3-False] - assert 200 == 403
+FAILED tests/test_views.py::test_save_lang_list_acl[4-False] - assert 200 == 403
+FAILED tests/test_views.py::test_save_lang_list_acl_guest - assert 200 == 302
+FAILED tests/test_views.py::test_save_api_cert_data_acl[2-False] - assert 200...
+FAILED tests/test_views.py::test_save_api_cert_data_acl[3-False] - assert 200...
+FAILED tests/test_views.py::test_save_api_cert_data_acl[4-False] - assert 200...
+FAILED tests/test_views.py::test_save_api_cert_data_acl_guest - assert 200 ==...
+FAILED tests/test_views.py::test_get_init_selection - json.decoder.JSONDecode...
+FAILED tests/test_views.py::test_get_email_author_acl[2-False] - assert 200 =...
+FAILED tests/test_views.py::test_get_email_author_acl[3-False] - assert 200 =...
+FAILED tests/test_views.py::test_get_email_author_acl[4-False] - assert 200 =...
+FAILED tests/test_views.py::test_update_feedback_mail_acl[2-False] - assert 2...
+FAILED tests/test_views.py::test_update_feedback_mail_acl[3-False] - assert 2...
+FAILED tests/test_views.py::test_update_feedback_mail_acl[4-False] - assert 2...
+FAILED tests/test_views.py::test_update_feedback_mail_guest - assert 200 == 302
+FAILED tests/test_views.py::test_resend_failed_mail_acl[2-False] - assert 200...
+FAILED tests/test_views.py::test_resend_failed_mail_acl[3-False] - assert 200...
+FAILED tests/test_views.py::test_resend_failed_mail_acl[4-False] - assert 200...
+FAILED tests/test_views.py::test_resend_failed_mail_guest - assert 200 == 302
+FAILED tests/test_views.py::test_manual_send_site_license_mail_acl[2-False]
+FAILED tests/test_views.py::test_manual_send_site_license_mail_acl[3-False]
+FAILED tests/test_views.py::test_manual_send_site_license_mail_acl[4-False]
+FAILED tests/test_views.py::test_manual_send_site_license_mail_guest - assert...
+FAILED tests/test_views.py::test_update_site_info_acl[2-False] - assert 200 =...
+FAILED tests/test_views.py::test_update_site_info_acl[3-False] - assert 200 =...
+FAILED tests/test_views.py::test_update_site_info_acl[4-False] - assert 200 =...
+FAILED tests/test_views.py::test_save_restricted_access_acl[2-False] - assert...
+FAILED tests/test_views.py::test_save_restricted_access_acl[3-False] - assert...
+FAILED tests/test_views.py::test_save_restricted_access_acl[4-False] - assert...
+FAILED tests/test_views.py::test_get_usage_report_activities_acl[2-False] - a...
+FAILED tests/test_views.py::test_get_usage_report_activities_acl[3-False] - a...
+FAILED tests/test_views.py::test_get_usage_report_activities_acl[4-False] - a...
+FAILED tests/test_views.py::test_send_mail_reminder_usage_report_acl[2-False]
+FAILED tests/test_views.py::test_send_mail_reminder_usage_report_acl[3-False]
+FAILED tests/test_views.py::test_send_mail_reminder_usage_report_acl[4-False]
+FAILED tests/test_views.py::test_save_facet_search_acl[2-False] - assert 200 ...
+FAILED tests/test_views.py::test_save_facet_search_acl[3-False] - assert 200 ...
+FAILED tests/test_views.py::test_save_facet_search_acl[4-False] - assert 200 ...
+FAILED tests/test_views.py::test_remove_facet_search_acl[2-False] - assert 20...
+FAILED tests/test_views.py::test_remove_facet_search_acl[3-False] - assert 20...
+FAILED tests/test_views.py::test_remove_facet_search_acl[4-False] - assert 20...
+FAILED tests/test_weko_admin.py::test_set_lifetime - assert 302 == 200
+========== 46 failed, 211 passed, 8026 warnings in 1437.28s (0:23:57) ==========
+ERROR: InvocationError for command /code/modules/weko-admin/.tox/c1/bin/pytest --cov=weko_admin tests -v -vv -s --cov-branch --cov-report=term --cov-report=xml --cov-report=html --basetemp=/code/modules/weko-admin/.tox/c1/tmp (exited with code 1)
+___________________________________ summary ____________________________________
+ERROR:   c1: commands failed

@@ -464,6 +464,16 @@ WEKO_THEME_ADMIN_MENU = [
                 'order': 2
             }
         ]
+    },
+    {
+        'name': 'Maintenance',
+        'order': 16,
+        'submenu': [
+            {
+                'name': 'ElasticSearch Index',
+                'order': 1
+            }
+        ]
     }
 ]
 

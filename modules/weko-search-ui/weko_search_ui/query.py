@@ -1157,7 +1157,7 @@ def item_search_factory(
     start_date,
     end_date,
     list_index_id=None,
-    ignore_publish_status=False,
+    query_with_publish_status=False,
     ranking=False,
 ):
     """Factory for opensearch.
@@ -1167,7 +1167,7 @@ def item_search_factory(
     :param start_date: Start date for search
     :param end_date: End date for search
     :param list_index_id: index tree list or None
-    :param ignore_publish_status: both public and private
+    :param query_with_publish_status: Only query public items
     :param ranking: Ranking check
     :return:
     """
@@ -1176,7 +1176,7 @@ def item_search_factory(
         query_string = "_type:{} AND relation_version_is_last:true ".format(
             current_app.config["INDEXER_DEFAULT_DOC_TYPE"]
         )
-        if not ignore_publish_status:
+        if not query_with_publish_status:
             query_string += " AND publish_status:0 "
         query_string += " AND publish_date:[{} TO {}]".format(start_term, end_term)
 

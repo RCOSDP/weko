@@ -1,0 +1,53 @@
+{# -*- coding: utf-8 -*-
+    #
+    # This file is file is part of WEKO3.
+    # Copyright (C) 2017 National Institute of Informatics.
+    #
+    # WEKO3 is free software; you can redistribute it
+    # and/or modify it under the terms of the GNU General Public License as
+    # published by the Free Software Foundation; either version 2 of the
+    # License, or (at your option) any later version.
+    #
+    # WEKO3 is distributed in the hope that it will be
+    # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+    # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    # General Public License for more details.
+    #
+    # You should have received a copy of the GNU General Public License
+    # along with WEKO3; if not, write to the
+    # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+    # MA 02111-1307, USA.
+    #}
+    
+    {%- extends admin_base_template %}
+    {% block css %}
+    {{ super() }}
+    {% endblock %}
+    
+    {%- block javascript %}
+    {{ super() }}
+    {% assets "weko_admin_reindex_elasticsearch_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "weko_admin_statistics_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "weko_moment_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {%- endblock javascript %}
+    
+    {%- block body %}
+    <!-- React Component start -->
+    <div id="root"></div>
+    <input id="reindex_item_index" type="hidden" value="{{_('reindex item_index')}}" />
+    <input id="reindex_item" type="hidden" value="{{_('reindex item')}}" />
+    <input id="execute" type="hidden" value="{{_('execute')}}" />
+    <input id="waiting" type="hidden" value="{{_('waiting...')}}" />
+    <input id="haserror" type="hidden" value="{{_('haserror')}}" />
+    <input id="executing" type="hidden" value="{{_('executing...')}}" />
+    <input id="isError" type="hidden" value="{{isError}}" />
+    <input id="isExecuting" type="hidden" value="{{isExecuting}}" />
+    <input id="disabled_Btn" type="hidden" value="{{disabled_Btn}}" />
+    <input id="run" type="hidden" value="{{_('Execute')}}" />
+    <input id="cancel" type="hidden" value="{{_('Cancel')}}" />
+    <input id="validationMsg1" type="hidden" value="{{_('validationMsg1')}}" />
+    <input id="confirmMessage" type="hidden" value="{{_('confirmMessage')}}" />
+    {%- endblock body %}
+    
+    

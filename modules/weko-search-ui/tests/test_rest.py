@@ -3,7 +3,7 @@
 """
 import json
 import pytest
-from mock import patch
+from mock import patch, MagicMock
 from flask import current_app
 from elasticsearch_dsl import response, Search
 from tests.conftest import json_data
@@ -140,8 +140,6 @@ def test_IndexSearchResource_get_MaxResultWindowRESTError(client_rest):
         res =  client_rest.get(url("/index/", param))
         assert res.status_code == 404
 
-
-
 # def create_blueprint(app, endpoints):
 def test_create_blueprint(i18n_app, app, users):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
@@ -152,16 +150,170 @@ def test_create_blueprint(i18n_app, app, users):
 # class IndexSearchResource(ContentNegotiatedMethodView):
 # def __init__
 # def get(self, **kwargs):
-# def test_IndexSearchResource_get(i18n_app, users, client_request_args):
-#     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-#         test = IndexSearchResource(ContentNegotiatedMethodView)
-#         assert test.get()
+def test_IndexSearchResource_get(i18n_app, users, client_request_args):
+    total_hit_count = 30
+    top_page = "http://test_server/index/?page=1&size=20"
+    next_page = "http://test_server/index/?page=2&size=20"
+
+    return_data_1 = MagicMock()
+    return_data_1.path = ""
+    return_data_1.name = "test"
+
+    return_data_2 = MagicMock()
+    return_data_2.path = "q"
+    return_data_2.name = "test"
+
+    with patch("invenio_pidstore.current_pidstore.fetchers", return_value=1):
+    
+        def search_class():
+            search_class_data = MagicMock()
+
+            return search_class_data
+
+        def search_factory(x, y):
+            def execute():
+                def to_dict():
+                    dict_1 = {
+                        "hits": {
+                            "total": total_hit_count,
+                            "hits": [{
+                                "_source": {
+                                    "title": [1],
+                                    "_comment": "test",
+                                    "control_number": 1,
+                                    "custom_sort": "custom_sort",
+                                    "_item_metadata": {"item_type_id": 1}
+                                }
+                            }]
+                        },
+                        "aggregations": {
+                            "path": {
+                                "buckets": [{
+                                    "key": "",
+                                    "doc_count": 1,
+                                    "no_available": {
+                                        "doc_count": 1
+                                    },
+                                    "date_range": {
+                                        "available": {
+                                            "buckets": [{}]
+                                        }
+                                    }
+                                }]
+                            }
+                        }
+                    }
+
+                    return dict_1
+
+                data_3 = MagicMock()
+                data_3.hits = MagicMock()
+                data_3.hits.total = 30
+                data_3.to_dict = to_dict
+
+                return data_3
+
+            data_1 = MagicMock()
+            data_1.execute = execute
+
+            data_2 = MagicMock()
+
+            return (data_1, data_2)
+
+        def make_response(pid_fetcher, search_result, links, item_links_factory):
+            return (pid_fetcher, search_result, links, item_links_factory)
+        
+
+        ctx = {
+            "pid_fetcher": "",
+            "max_result_window": 10000,
+            "search_class": search_class,
+            "search_factory": search_factory,
+            "links_factory": "test",
+            "make_response": make_response
+        }
+
+        test = IndexSearchResource(
+            ctx=ctx,
+            search_serializers=None, 
+            record_serializers=None, 
+            default_media_type=None
+        )
+
+        with patch("weko_index_tree.api.Indexes.get_index", return_value=MagicMock()):
+            with patch("weko_index_tree.api.Indexes.get_self_list", return_value=[return_data_1]):
+                assert isinstance(test.get(), tuple)
+                assert isinstance(test.get()[1], dict)
+                assert test.get()[1]["hits"]["total"] == total_hit_count
+                assert test.get()[2]["self"] == top_page
+                assert test.get()[2]["next"] == next_page
+
+            with patch("weko_index_tree.api.Indexes.get_self_list", return_value=[return_data_2]):
+                assert isinstance(test.get(), tuple)
+                assert isinstance(test.get()[1], dict)
+                assert test.get()[1]["hits"]["total"] == total_hit_count
+                assert test.get()[2]["self"] == top_page
+                assert test.get()[2]["next"] == next_page
 
 # def get_heading_info(data, lang, item_type):
-def test_get_heading_info(i18n_app, app, users, item_type, records):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        it = ItemTypes.get_by_id(1)
-        assert not get_heading_info(records['hits']['hits'][0], "en", item_type=it)
+def test_get_heading_info(i18n_app):
+    subitem_heading_banner_headline = "test1"
+    subitem_heading_headline = "test2"
 
-        # Test 2
-        # assert get_heading_info(records['hits']['hits'][0], "en", db_itemtype['item_type'])
+    data_1 = {
+        "_source": {
+            "_item_metadata": {
+                "prop1": {
+                    "attribute_value_mlt": [
+                        {
+                            "subitem_heading_banner_headline": subitem_heading_banner_headline,
+                            "subitem_heading_headline": subitem_heading_headline,
+                            "subitem_heading_language": "en"
+                        },
+                        {
+                            "subitem_heading_banner_headline": subitem_heading_banner_headline,
+                            "subitem_heading_headline": subitem_heading_headline,
+                            "subitem_heading_language": "en"
+                        },
+                    ]
+                }
+            }
+        }
+    }
+
+    data_2 = MagicMock()
+    data_2.schema = {
+        "properties": {
+            "prop1": {
+                "properties": ["subitem_heading_banner_headline"],
+                "type": "object"
+            },
+        }
+    }
+
+    data_3 = MagicMock()
+    data_3.schema = {
+        "properties": {
+            "prop1": {
+                "items": {"properties": ["subitem_heading_banner_headline"]},
+                "type": "array"
+            },
+        }
+    }
+
+    assert subitem_heading_banner_headline in get_heading_info(data_1, "en", data_2)
+    assert subitem_heading_headline in get_heading_info(data_1, "en", data_2)
+
+    data_1["_source"]["_item_metadata"]["prop1"]["attribute_value_mlt"] = [{
+        "subitem_heading_banner_headline": subitem_heading_banner_headline,
+        "subitem_heading_headline": subitem_heading_headline,
+        "subitem_heading_language": "en"
+    }]
+
+    assert subitem_heading_banner_headline in get_heading_info(data_1, "en", data_3)
+    assert subitem_heading_headline in get_heading_info(data_1, "en", data_3)
+
+    data_1["_source"]["_item_metadata"] = {}
+
+    assert not subitem_heading_banner_headline in get_heading_info(data_1, "en", data_3)
+    assert not subitem_heading_headline in get_heading_info(data_1, "en", data_3)

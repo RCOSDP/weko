@@ -551,6 +551,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         display_stats = display_setting.get('display_stats')
     else:
         display_stats = True
+    
+    items_display_settings = AdminSettings.get(name='items_display_settings',
+                                        dict_to_object=False)
+    if items_display_settings:
+        search_author_flg = items_display_settings.get('items_search_author')
+    else:
+        search_author_flg = "name"
 
     groups_price = get_groups_price(record)
     billing_files_permission = get_billing_file_download_permission(
@@ -659,7 +666,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             'WEKO_RECORDS_UI_ONLINE_ANALYSIS_URL'),
         flg_display_itemtype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE') ,
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
-        
+        search_author_flg=search_author_flg,
         
         **ctx,
         **kwargs
@@ -759,7 +766,7 @@ def set_pdfcoverpage_header():
         flash(_('PDF cover page settings have been updated.'),
               category='success')
         return redirect('/admin/pdfcoverpage')
-
+    
     return redirect('/admin/pdfcoverpage')
 
 

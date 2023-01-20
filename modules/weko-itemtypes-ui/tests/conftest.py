@@ -23,6 +23,7 @@
 import copy
 import json
 import os
+import re
 import shutil
 import tempfile
 import time
@@ -30,12 +31,14 @@ import uuid
 from datetime import datetime
 from os.path import dirname, exists, join
 from re import T
+from glob import glob
 
 import pytest
 from celery.messaging import establish_connection
 from click.testing import CliRunner
 from flask import Blueprint, Flask
 from flask_assets import assets
+from flask_admin import Admin
 from flask_babelex import Babel
 from flask_menu import Menu
 from invenio_access import InvenioAccess
@@ -50,6 +53,7 @@ from invenio_assets import InvenioAssets
 from invenio_assets.cli import collect, npm
 from invenio_cache import InvenioCache
 from invenio_communities import InvenioCommunities
+from invenio_communities.models import Community
 from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_db import InvenioDB
 from invenio_db import db as db_
@@ -89,7 +93,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy_utils.functions import create_database, database_exists
 from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
-from weko_admin.models import RankingSettings, SessionLifetime
+from weko_admin.models import RankingSettings, SessionLifetime, AdminSettings
 from weko_authors.models import Authors, AuthorsAffiliationSettings, AuthorsPrefixSettings
 from weko_deposit import WekoDeposit
 from weko_deposit.api import WekoIndexer
@@ -103,7 +107,7 @@ from weko_items_ui import WekoItemsUI
 from weko_items_ui.views import blueprint as weko_items_ui_blueprint
 from weko_items_ui.views import blueprint_api as weko_items_ui_blueprint_api
 from weko_records import WekoRecords
-from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
+from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName,ItemTypeProperty
 from weko_records_ui import WekoRecordsUI
 from weko_records_ui.config import WEKO_RECORDS_UI_LICENSE_DICT
 from weko_schema_ui import WekoSchemaUI
@@ -125,7 +129,10 @@ from weko_workflow.models import Action, ActionStatus, ActionStatusPolicy, Activ
 from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
 from werkzeug.local import LocalProxy
 
-# from tests.helpers import create_record, json_data
+from weko_itemtypes_ui import WekoItemtypesUI
+from weko_itemtypes_ui.admin import itemtype_meta_data_adminview,itemtype_properties_adminview,itemtype_mapping_adminview
+ 
+from tests.helpers import json_data
 
 """Pytest configuration."""
 
@@ -228,6 +235,7 @@ def base_app(instance_path):
         DEPOSIT_JSONSCHEMAS_PREFIX=DEPOSIT_JSONSCHEMAS_PREFIX,
         WEKO_SEARCH_REST_ENDPOINTS=WEKO_SEARCH_REST_ENDPOINTS,
         INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
+        I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
     )
     
     app_.config['WEKO_SEARCH_REST_ENDPOINTS']['recid']['search_index']='test-weko'
@@ -236,6 +244,7 @@ def base_app(instance_path):
     # Babel(app_)
     InvenioI18N(app_)
     InvenioAssets(app_)
+    #InvenioAdmin(app_)
     InvenioDB(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
@@ -264,7 +273,7 @@ def base_app(instance_path):
     WekoDeposit(app_)
     WekoWorkflow(app_)
     WekoGroups(app_)
-    # WekoAdmin(app_)
+    WekoAdmin(app_)
     # WekoTheme(app_)
     # WekoRecordsUI(app_)
     # InvenioCommunities(app_)
@@ -326,7 +335,16 @@ def client(app):
     with app.test_client() as client:
         yield client
 
-
+@pytest.fixture()
+def admin_view(app):
+    WekoItemtypesUI(app)
+    admin = Admin(app)
+    meta_viewclass=itemtype_meta_data_adminview["view_class"]
+    admin.add_view(meta_viewclass(**itemtype_meta_data_adminview["kwargs"]))
+    properties_viewclass = itemtype_properties_adminview["view_class"]
+    admin.add_view(properties_viewclass(**itemtype_properties_adminview["kwargs"]))
+    mapping_viewclass = itemtype_mapping_adminview["view_class"]
+    admin.add_view(mapping_viewclass(**itemtype_mapping_adminview["kwargs"]))
 @pytest.fixture()
 def db(app):
     """Database fixture."""
@@ -341,128 +359,234 @@ def db(app):
 @pytest.fixture()
 def users(app, db):
     """Create users."""
-    ds = app.extensions["invenio-accounts"].datastore
-    user_count = User.query.filter_by(email="user@test.org").count()
+    ds = app.extensions['invenio-accounts'].datastore
+    user_count = User.query.filter_by(email='user@test.org').count()
     if user_count != 1:
-        user = create_test_user(email="user@test.org")
-        contributor = create_test_user(email="contributor@test.org")
-        comadmin = create_test_user(email="comadmin@test.org")
-        repoadmin = create_test_user(email="repoadmin@test.org")
-        sysadmin = create_test_user(email="sysadmin@test.org")
-        generaluser = create_test_user(email="generaluser@test.org")
-        originalroleuser = create_test_user(email="originalroleuser@test.org")
-        originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
+        user = create_test_user(email='user@test.org')
+        contributor = create_test_user(email='contributor@test.org')
+        comadmin = create_test_user(email='comadmin@test.org')
+        repoadmin = create_test_user(email='repoadmin@test.org')
+        sysadmin = create_test_user(email='sysadmin@test.org')
+        generaluser = create_test_user(email='generaluser@test.org')
+        originalroleuser = create_test_user(email='originalroleuser@test.org')
+        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
+        student = create_test_user(email='student@test.org')
     else:
-        user = User.query.filter_by(email="user@test.org").first()
-        contributor = User.query.filter_by(email="contributor@test.org").first()
-        comadmin = User.query.filter_by(email="comadmin@test.org").first()
-        repoadmin = User.query.filter_by(email="repoadmin@test.org").first()
-        sysadmin = User.query.filter_by(email="sysadmin@test.org").first()
-        generaluser = User.query.filter_by(email="generaluser@test.org")
-        originalroleuser = create_test_user(email="originalroleuser@test.org")
-        originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
-
-    role_count = Role.query.filter_by(name="System Administrator").count()
+        user = User.query.filter_by(email='user@test.org').first()
+        contributor = User.query.filter_by(email='contributor@test.org').first()
+        comadmin = User.query.filter_by(email='comadmin@test.org').first()
+        repoadmin = User.query.filter_by(email='repoadmin@test.org').first()
+        sysadmin = User.query.filter_by(email='sysadmin@test.org').first()
+        generaluser = User.query.filter_by(email='generaluser@test.org')
+        originalroleuser = create_test_user(email='originalroleuser@test.org')
+        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
+        student = User.query.filter_by(email='student@test.org').first()
+        
+    role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
-        sysadmin_role = ds.create_role(name="System Administrator")
-        repoadmin_role = ds.create_role(name="Repository Administrator")
-        contributor_role = ds.create_role(name="Contributor")
-        comadmin_role = ds.create_role(name="Community Administrator")
-        general_role = ds.create_role(name="General")
-        originalrole = ds.create_role(name="Original Role")
+        sysadmin_role = ds.create_role(name='System Administrator')
+        repoadmin_role = ds.create_role(name='Repository Administrator')
+        contributor_role = ds.create_role(name='Contributor')
+        comadmin_role = ds.create_role(name='Community Administrator')
+        general_role = ds.create_role(name='General')
+        originalrole = ds.create_role(name='Original Role')
+        studentrole = ds.create_role(name='Student')
     else:
-        sysadmin_role = Role.query.filter_by(name="System Administrator").first()
-        repoadmin_role = Role.query.filter_by(name="Repository Administrator").first()
-        contributor_role = Role.query.filter_by(name="Contributor").first()
-        comadmin_role = Role.query.filter_by(name="Community Administrator").first()
-        general_role = Role.query.filter_by(name="General").first()
-        originalrole = Role.query.filter_by(name="Original Role").first()
+        sysadmin_role = Role.query.filter_by(name='System Administrator').first()
+        repoadmin_role = Role.query.filter_by(name='Repository Administrator').first()
+        contributor_role = Role.query.filter_by(name='Contributor').first()
+        comadmin_role = Role.query.filter_by(name='Community Administrator').first()
+        general_role = Role.query.filter_by(name='General').first()
+        originalrole = Role.query.filter_by(name='Original Role').first()
+        studentrole = Role.query.filter_by(name='Student').first()
+
+    ds.add_role_to_user(sysadmin, sysadmin_role)
+    ds.add_role_to_user(repoadmin, repoadmin_role)
+    ds.add_role_to_user(contributor, contributor_role)
+    ds.add_role_to_user(comadmin, comadmin_role)
+    ds.add_role_to_user(generaluser, general_role)
+    ds.add_role_to_user(originalroleuser, originalrole)
+    ds.add_role_to_user(originalroleuser2, originalrole)
+    ds.add_role_to_user(originalroleuser2, repoadmin_role)
+    ds.add_role_to_user(student,studentrole)
 
     # Assign access authorization
     with db.session.begin_nested():
         action_users = [
-            ActionUsers(action="superuser-access", user=sysadmin),
+            ActionUsers(action='superuser-access', user=sysadmin),
         ]
         db.session.add_all(action_users)
         action_roles = [
-            ActionRoles(action="superuser-access", role=sysadmin_role),
-            ActionRoles(action="admin-access", role=repoadmin_role),
-            ActionRoles(action="schema-access", role=repoadmin_role),
-            ActionRoles(action="index-tree-access", role=repoadmin_role),
-            ActionRoles(action="indextree-journal-access", role=repoadmin_role),
-            ActionRoles(action="item-type-access", role=repoadmin_role),
-            ActionRoles(action="item-access", role=repoadmin_role),
-            ActionRoles(action="files-rest-bucket-update", role=repoadmin_role),
-            ActionRoles(action="files-rest-object-delete", role=repoadmin_role),
-            ActionRoles(action="files-rest-object-delete-version", role=repoadmin_role),
-            ActionRoles(action="files-rest-object-read", role=repoadmin_role),
-            ActionRoles(action="search-access", role=repoadmin_role),
-            ActionRoles(action="detail-page-acces", role=repoadmin_role),
-            ActionRoles(action="download-original-pdf-access", role=repoadmin_role),
-            ActionRoles(action="author-access", role=repoadmin_role),
-            ActionRoles(action="items-autofill", role=repoadmin_role),
-            ActionRoles(action="stats-api-access", role=repoadmin_role),
-            ActionRoles(action="read-style-action", role=repoadmin_role),
-            ActionRoles(action="update-style-action", role=repoadmin_role),
-            ActionRoles(action="detail-page-acces", role=repoadmin_role),
-            ActionRoles(action="admin-access", role=comadmin_role),
-            ActionRoles(action="index-tree-access", role=comadmin_role),
-            ActionRoles(action="indextree-journal-access", role=comadmin_role),
-            ActionRoles(action="item-access", role=comadmin_role),
-            ActionRoles(action="files-rest-bucket-update", role=comadmin_role),
-            ActionRoles(action="files-rest-object-delete", role=comadmin_role),
-            ActionRoles(action="files-rest-object-delete-version", role=comadmin_role),
-            ActionRoles(action="files-rest-object-read", role=comadmin_role),
-            ActionRoles(action="search-access", role=comadmin_role),
-            ActionRoles(action="detail-page-acces", role=comadmin_role),
-            ActionRoles(action="download-original-pdf-access", role=comadmin_role),
-            ActionRoles(action="author-access", role=comadmin_role),
-            ActionRoles(action="items-autofill", role=comadmin_role),
-            ActionRoles(action="detail-page-acces", role=comadmin_role),
-            ActionRoles(action="detail-page-acces", role=comadmin_role),
-            ActionRoles(action="item-access", role=contributor_role),
-            ActionRoles(action="files-rest-bucket-update", role=contributor_role),
-            ActionRoles(action="files-rest-object-delete", role=contributor_role),
-            ActionRoles(
-                action="files-rest-object-delete-version", role=contributor_role
-            ),
-            ActionRoles(action="files-rest-object-read", role=contributor_role),
-            ActionRoles(action="search-access", role=contributor_role),
-            ActionRoles(action="detail-page-acces", role=contributor_role),
-            ActionRoles(action="download-original-pdf-access", role=contributor_role),
-            ActionRoles(action="author-access", role=contributor_role),
-            ActionRoles(action="items-autofill", role=contributor_role),
-            ActionRoles(action="detail-page-acces", role=contributor_role),
-            ActionRoles(action="detail-page-acces", role=contributor_role),
+            ActionRoles(action='superuser-access', role=sysadmin_role),
+            ActionRoles(action='admin-access', role=repoadmin_role),
+            ActionRoles(action='schema-access', role=repoadmin_role),
+            ActionRoles(action='index-tree-access', role=repoadmin_role),
+            ActionRoles(action='indextree-journal-access', role=repoadmin_role),
+            ActionRoles(action='item-type-access', role=repoadmin_role),
+            ActionRoles(action='item-access', role=repoadmin_role),
+            ActionRoles(action='files-rest-bucket-update', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-delete', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-delete-version', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-read', role=repoadmin_role),
+            ActionRoles(action='search-access', role=repoadmin_role),
+            ActionRoles(action='detail-page-acces', role=repoadmin_role),
+            ActionRoles(action='download-original-pdf-access', role=repoadmin_role),
+            ActionRoles(action='author-access', role=repoadmin_role),
+            ActionRoles(action='items-autofill', role=repoadmin_role),
+            ActionRoles(action='stats-api-access', role=repoadmin_role),
+            ActionRoles(action='read-style-action', role=repoadmin_role),
+            ActionRoles(action='update-style-action', role=repoadmin_role),
+            ActionRoles(action='detail-page-acces', role=repoadmin_role),
+
+            ActionRoles(action='admin-access', role=comadmin_role),
+            ActionRoles(action='index-tree-access', role=comadmin_role),
+            ActionRoles(action='indextree-journal-access', role=comadmin_role),
+            ActionRoles(action='item-access', role=comadmin_role),
+            ActionRoles(action='files-rest-bucket-update', role=comadmin_role),
+            ActionRoles(action='files-rest-object-delete', role=comadmin_role),
+            ActionRoles(action='files-rest-object-delete-version', role=comadmin_role),
+            ActionRoles(action='files-rest-object-read', role=comadmin_role),
+            ActionRoles(action='search-access', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='download-original-pdf-access', role=comadmin_role),
+            ActionRoles(action='author-access', role=comadmin_role),
+            ActionRoles(action='items-autofill', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+
+            ActionRoles(action='item-access', role=contributor_role),
+            ActionRoles(action='files-rest-bucket-update', role=contributor_role),
+            ActionRoles(action='files-rest-object-delete', role=contributor_role),
+            ActionRoles(action='files-rest-object-delete-version', role=contributor_role),
+            ActionRoles(action='files-rest-object-read', role=contributor_role),
+            ActionRoles(action='search-access', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='download-original-pdf-access', role=contributor_role),
+            ActionRoles(action='author-access', role=contributor_role),
+            ActionRoles(action='items-autofill', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
         ]
         db.session.add_all(action_roles)
-        ds.add_role_to_user(sysadmin, sysadmin_role)
-        ds.add_role_to_user(repoadmin, repoadmin_role)
-        ds.add_role_to_user(contributor, contributor_role)
-        ds.add_role_to_user(comadmin, comadmin_role)
-        ds.add_role_to_user(generaluser, general_role)
-        ds.add_role_to_user(originalroleuser, originalrole)
-        ds.add_role_to_user(originalroleuser2, originalrole)
-        ds.add_role_to_user(originalroleuser2, repoadmin_role)
-
+    db.session.commit()
+    index = Index()
+    db.session.add(index)
+    db.session.commit()
+    comm = Community.create(community_id="comm01", role_id=sysadmin_role.id,
+                            id_user=sysadmin.id, title="test community",
+                            description=("this is test community"),
+                            root_node_id=index.id)
+    db.session.commit()
     return [
-        {"email": contributor.email, "id": contributor.id, "obj": contributor},
-        {"email": repoadmin.email, "id": repoadmin.id, "obj": repoadmin},
-        {"email": sysadmin.email, "id": sysadmin.id, "obj": sysadmin},
-        {"email": comadmin.email, "id": comadmin.id, "obj": comadmin},
-        {"email": generaluser.email, "id": generaluser.id, "obj": sysadmin},
-        {
-            "email": originalroleuser.email,
-            "id": originalroleuser.id,
-            "obj": originalroleuser,
-        },
-        {
-            "email": originalroleuser2.email,
-            "id": originalroleuser2.id,
-            "obj": originalroleuser2,
-        },
-        {"email": user.email, "id": user.id, "obj": user},
+        {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
+        {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
+        {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
+        {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
+        {'email': generaluser.email, 'id': generaluser.id, 'obj': generaluser},
+        {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
+        {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
+        {'email': user.email, 'id': user.id, 'obj': user},
+        {'email': student.email,'id': student.id, 'obj': student}
     ]
+
+
+@pytest.fixture()
+def item_type(app,db):
+    files = [p.split("/")[-1] for p in glob(join(dirname(__file__),"data/item_types","*"))]
+    itemtype_data = {}
+    for file in files:
+        if re.search(r"itemtype",file):
+            num = re.search(r"itemtype(\d)",file).group(1)
+            ty = re.search(r"_(.*).json",file).group(1)
+            if num not in itemtype_data:
+                itemtype_data[num]={}
+            itemtype_data[num][ty]="data/item_types/"+file
+    itemtype_list = []
+    for num in range(len(itemtype_data)):
+        data = itemtype_data[str(num)]
+        id = int(num)+1
+        item_type_name = ItemTypeName(
+            id=id, name="テストアイテムタイプ"+str(id), has_site_license=True, is_active=True
+        )
+
+        
+        schema = json_data(data["schema"])
+        form = json_data(data["form"])
+        render = json_data(data["render"])
+        mapping = json_data(data["mapping"])
+        
+        item_type = ItemType(
+            id=id,
+            name_id=item_type_name.id,
+            harvesting_type=True,
+            schema=schema,
+            form=form,
+            render=render,
+            tag=1,
+            version_id=1,
+            is_deleted=False,
+        )
+
+        item_type_mapping = ItemTypeMapping(id=id, item_type_id=item_type.id, mapping=mapping)
+
+        with db.session.begin_nested():
+            db.session.add(item_type_name)
+            db.session.add(item_type)
+            db.session.add(item_type_mapping)
+        itemtype_list.append(
+            {"item_type_name":item_type_name,"item_type":item_type,"item_type_mapping":item_type_mapping}
+        )
+    db.session.commit()
+    return itemtype_list
+@pytest.fixture()
+def itemtype_props(app,db):
+    data = json_data("data/item_type_props.json")
+
+    props = list()
+    for d in data:
+        prop = ItemTypeProperty(**data[d])
+        props.append(prop)
+    db.session.add_all(props)
+    db.session.commit()
+    return props
+    
+    
+@pytest.fixture()
+def admin_settings(db):
+    with db.session.begin_nested():
+        items_display = AdminSettings(id=1,name='items_display_settings',settings={"items_display_email": False, "items_search_author": "name", "item_display_open_date": False})
+        storage_check = AdminSettings(id=2,name='storage_check_settings',settings={"day": 0, "cycle": "weekly", "threshold_rate": 80})
+        site_license_mail = AdminSettings(id=3,name='site_license_mail_settings',settings={"auto_send_flag": False})
+        default_properties = AdminSettings(id=4,name='default_properties_settings',settings={"show_flag": True})
+        item_expost = AdminSettings(id=5,name='item_export_settings',settings={"allow_item_exporting": True, "enable_contents_exporting": True})
+        db.session.add(items_display)
+        db.session.add(storage_check)
+        db.session.add(site_license_mail)
+        db.session.add(default_properties)
+        db.session.add(item_expost)
+    db.session.commit()
+    
+    return {"items_display":items_display,"storage_check":storage_check,"site_license_mail":site_license_mail,"default_properties":default_properties,"item_expost":item_expost}
+
+@pytest.fixture()
+def oaiserver_schema(db):
+    id = uuid.uuid4()
+    schema = OAIServerSchema(
+        id = id,
+        schema_name="oai_dc_mapping",
+        form_data={"name":"oai_dc_mapping","xsd_file":"http://dublincore.org/schemas/xmls/simpledc20021212.xsd","file_name":"oai_dc.xsd","root_name":"dc"},
+        xsd="{\"dc:title\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:creator\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:subject\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:description\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:publisher\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:contributor\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:date\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:type\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:format\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:identifier\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:source\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:language\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:relation\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:coverage\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}, \"dc:rights\": {\"type\": {\"minOccurs\": 1, \"maxOccurs\": 1, \"attributes\": [{\"ref\": \"xml:lang\", \"name\": \"xml:lang\", \"use\": \"optional\"}]}}}",
+        namespaces={"":"http://www.w3.org/2001/XMLSchema","dc":"http://purl.org/dc/elements/1.1/","xml":"http://www.w3.org/XML/1998/namespace","oai_dc":"http://www.openarchives.org/OAI/2.0/oai_dc/"},
+        schema_location="http://www.openarchives.org/OAI/2.0/oai_dc/",
+        isvalid=True,
+        is_mapping=False,
+        isfixed=False,
+        version_id=1,
+        target_namespace="oai_dc"
+    )
+    db.session.add(schema)
+    db.session.commit()
+    return schema
 
 
 @pytest.fixture()
@@ -471,19 +595,19 @@ def db_itemtype1(app, db):
         id=1, name="テストアイテムタイプ1", has_site_license=True, is_active=True
     )
     item_type_schema = dict()
-    with open("tests/data/itemtype_schema.json", "r") as f:
+    with open("tests/data/item_types/itemtype_schema0.json", "r") as f:
         item_type_schema = json.load(f)
 
     item_type_form = dict()
-    with open("tests/data/itemtype_form.json", "r") as f:
+    with open("tests/data/item_types/itemtype_form0.json", "r") as f:
         item_type_form = json.load(f)
 
     item_type_render = dict()
-    with open("tests/data/itemtype_render.json", "r") as f:
+    with open("tests/data/item_types/itemtype_render0.json", "r") as f:
         item_type_render = json.load(f)
 
     item_type_mapping = dict()
-    with open("tests/data/itemtype_mapping.json", "r") as f:
+    with open("tests/data/item_types/itemtype_mapping0.json", "r") as f:
         item_type_mapping = json.load(f)
 
     item_type = ItemType(
@@ -504,7 +628,7 @@ def db_itemtype1(app, db):
         db.session.add(item_type_name)
         db.session.add(item_type)
         db.session.add(item_type_mapping)
-
+    db.session.commit()
     return {
         "item_type_name": item_type_name,
         "item_type": item_type,
@@ -519,19 +643,19 @@ def db_itemtype2(app, db):
         id=2, name="テストアイテムタイプ2", has_site_license=True, is_active=True
     )
     item_type_schema = dict()
-    with open("tests/data/itemtype1_schema.json", "r") as f:
+    with open("tests/data/item_types/itemtype1_schema.json", "r") as f:
         item_type_schema = json.load(f)
 
     item_type_form = dict()
-    with open("tests/data/itemtype1_form.json", "r") as f:
+    with open("tests/data/item_types/itemtype1_form.json", "r") as f:
         item_type_form = json.load(f)
 
     item_type_render = dict()
-    with open("tests/data/itemtype1_render.json", "r") as f:
+    with open("tests/data/item_types/itemtype1_render.json", "r") as f:
         item_type_render = json.load(f)
 
     item_type_mapping = dict()
-    with open("tests/data/itemtype1_mapping.json", "r") as f:
+    with open("tests/data/item_types/itemtype1_mapping.json", "r") as f:
         item_type_mapping = json.load(f)
 
     item_type = ItemType(
@@ -568,19 +692,19 @@ def db_itemtype2(app, db):
         id=3, name="テストアイテムタイプ3", has_site_license=True, is_active=True
     )
     item_type_schema = dict()
-    with open("tests/data/itemtype2_schema.json", "r") as f:
+    with open("tests/data/item_types/itemtype2_schema.json", "r") as f:
         item_type_schema = json.load(f)
 
     item_type_form = dict()
-    with open("tests/data/itemtype2_form.json", "r") as f:
+    with open("tests/data/item_types/itemtype2_form.json", "r") as f:
         item_type_form = json.load(f)
 
     item_type_render = dict()
-    with open("tests/data/itemtype2_render.json", "r") as f:
+    with open("tests/data/item_types/itemtype2_render.json", "r") as f:
         item_type_render = json.load(f)
 
     item_type_mapping = dict()
-    with open("tests/data/itemtype2_mapping.json", "r") as f:
+    with open("tests/data/item_types/itemtype2_mapping.json", "r") as f:
         item_type_mapping = json.load(f)
 
     item_type = ItemType(
@@ -616,19 +740,19 @@ def db_itemtype1(app, db):
         id=4, name="テストアイテムタイプ4", has_site_license=True, is_active=True
     )
     item_type_schema = dict()
-    with open("tests/data/itemtype3_schema.json", "r") as f:
+    with open("tests/data/item_types/itemtype3_schema.json", "r") as f:
         item_type_schema = json.load(f)
 
     item_type_form = dict()
-    with open("tests/data/itemtype3_form.json", "r") as f:
+    with open("tests/data/item_types/itemtype3_form.json", "r") as f:
         item_type_form = json.load(f)
 
     item_type_render = dict()
-    with open("tests/data/itemtype3_render.json", "r") as f:
+    with open("tests/data/item_types/itemtype3_render.json", "r") as f:
         item_type_render = json.load(f)
 
     item_type_mapping = dict()
-    with open("tests/data/itemtype3_mapping.json", "r") as f:
+    with open("tests/data/item_types/itemtype3_mapping.json", "r") as f:
         item_type_mapping = json.load(f)
 
     item_type = ItemType(
@@ -663,19 +787,19 @@ def db_itemtype5(app, db):
         id=5, name="テストアイテムタイプ5", has_site_license=True, is_active=True
     )
     item_type_schema = dict()
-    with open("tests/data/itemtype4_schema.json", "r") as f:
+    with open("tests/data/item_types/itemtype4_schema.json", "r") as f:
         item_type_schema = json.load(f)
 
     item_type_form = dict()
-    with open("tests/data/itemtype4_form.json", "r") as f:
+    with open("tests/data/item_types/itemtype4_form.json", "r") as f:
         item_type_form = json.load(f)
 
     item_type_render = dict()
-    with open("tests/data/itemtype4_render.json", "r") as f:
+    with open("tests/data/item_types/itemtype4_render.json", "r") as f:
         item_type_render = json.load(f)
 
     item_type_mapping = dict()
-    with open("tests/data/itemtype4_mapping.json", "r") as f:
+    with open("tests/data/item_types/itemtype4_mapping.json", "r") as f:
         item_type_mapping = json.load(f)
 
     item_type = ItemType(
@@ -712,19 +836,19 @@ def db_itemtype6(app, db):
         id=6, name="テストアイテムタイプ6", has_site_license=True, is_active=True
     )
     item_type_schema = dict()
-    with open("tests/data/itemtype5_schema.json", "r") as f:
+    with open("tests/data/item_types/itemtype5_schema.json", "r") as f:
         item_type_schema = json.load(f)
 
     item_type_form = dict()
-    with open("tests/data/itemtype5_form.json", "r") as f:
+    with open("tests/data/item_types/itemtype5_form.json", "r") as f:
         item_type_form = json.load(f)
 
     item_type_render = dict()
-    with open("tests/data/itemtype5_render.json", "r") as f:
+    with open("tests/data/item_types/itemtype5_render.json", "r") as f:
         item_type_render = json.load(f)
 
     item_type_mapping = dict()
-    with open("tests/data/itemtype5_mapping.json", "r") as f:
+    with open("tests/data/item_types/itemtype5_mapping.json", "r") as f:
         item_type_mapping = json.load(f)
 
     item_type = ItemType(

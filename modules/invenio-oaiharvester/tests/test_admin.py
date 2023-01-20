@@ -18,7 +18,7 @@ from invenio_oaiharvester.admin import harvest_admin_view
 from invenio_oaiharvester.models import HarvestSettings
 
 
-def test_admin(app):
+def test_admin(app, db):
     """Test Flask-Admin interace."""
     admin = Admin(app, name='Test')
 

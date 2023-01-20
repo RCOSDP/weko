@@ -3991,3 +3991,26 @@ def check_doi_validation_not_pass(item_id, activity_id,
             sessionstore.delete(
                 'updated_json_schema_{}'.format(activity_id))
         return False
+
+def make_activitylog_tsv(activities):
+    """make tsv for activitiy_log
+
+    Args:
+        activities: activities for download as tsv.
+    """
+    import csv 
+    from io import StringIO
+    file_output = StringIO()
+
+    keys = current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS")
+
+    writer = csv.writer(file_output, delimiter="\t", lineterminator="\n")
+    writer.writerow(keys)
+    for item in activities:
+        term = []
+        for name in keys:
+            term.append(getattr(item,name))
+        writer.writerow(term)
+
+    return file_output.getvalue()
+    
