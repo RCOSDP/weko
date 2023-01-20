@@ -151,12 +151,14 @@
 <div class="form-inline flow-root">
   <button type="submit" id="filter_form_submit" class="btn btn-primary">{{_('Apply')}}</button>
   {%- if current_user.is_authenticated and current_user.roles and delete_activity_log_enable == True and tab=="all"%}
+    {% set flag_1=True %}
     {%- for role in current_user.roles %}
-       {%- if role in activitylog_roles %}
+       {%- if role in activitylog_roles and flag_1 == True %}
           <button type="submit" id="filter_form_download" class="btn btn-primary">{{_('Download')}}</button>                           
           <button type="submit" id="filter_form_clear" class="btn btn-danger">{{_('Clear')}} </button>
           <form method="GET" name="activitylog_file_form" id="activitylog_file_form" action={{url_for('weko_workflow.download_activitylog')}}>
           </form>
+          {% set flag_1= False %}
        {%- endif %}
     {%- endfor %}
   {%- endif %}
@@ -233,11 +235,13 @@
               {%- endif %}
             {%- endfor %}
             {%- if current_user.is_authenticated and current_user.roles and delete_activity_log_enable == True and tab=="all"%}
+              {% set flag_2=True %}
               {%- for role in current_user.roles %}
-                {%- if role in activitylog_roles %}
+                {%- if role in activitylog_roles and flag_2==True%}
                   <th>
                     <button type="input" class="btn clear-activitylog">{{_('Clear')}}</button>
                   </th>
+                  {% set flag_2= False %}
                 {%- endif %}
               {%- endfor %}
             {%- endif %}
@@ -482,7 +486,7 @@
   <div class="modal-dialog row popup_notice">
     <div class="modal-content" role="document">
       <div class="modal-header">
-        <h4 class="modal-title">JGSS</h4>
+        <h4 class="modal-title">{{_(' Clear Confirm')}}</h4>
       </div>
       <div class="modal-body">
         <div class="container-modal">
@@ -510,7 +514,7 @@
   <div class="modal-dialog row popup_notice">
     <div class="modal-content" role="document">
       <div class="modal-header">
-        <h4 class="modal-title">JGSS</h4>
+        <h4 class="modal-title">{{_('Clear Confirm')}}</h4>
       </div>
       <div class="modal-body">
         <div class="container-modal">

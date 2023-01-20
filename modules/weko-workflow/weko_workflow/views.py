@@ -2737,18 +2737,12 @@ def download_activitylog():
         if tmp_activity == None:
             return jsonify(code=-1, msg='no activity error') ,400
         activities.append(tmp_activity)
-        response = Response(
-                make_activitylog_tsv(activities),
-                mimetype='text/tsv',
-                headers={"Content-disposition": "attachment; filename=activitylog.tsv"},
-            )
-        return response , 200
-    
-    conditions = filter_all_condition(request.args)
-    activities, maxpage, size, pages, name_param = activity.get_activity_list(conditions=conditions, activitylog=True)
+    else:
+        conditions = filter_all_condition(request.args)
+        activities, maxpage, size, pages, name_param = activity.get_activity_list(conditions=conditions, activitylog=True)
 
-    if not activities:
-        return jsonify(code=-1, msg='no activity error') ,400
+        if not activities:
+            return jsonify(code=-1, msg='no activity error') ,400
 
     response = Response(
                 make_activitylog_tsv(activities),
@@ -2782,6 +2776,27 @@ def clear_activitylog():
                 description: "permittion error"
     
     """
+    def _quit_activity(del_activity):
+        """ quit activity"""
+        _activity = dict(
+            activity_id=del_activity.activity_id,
+            action_id=del_activity.action_id,
+            action_status=ActionStatusPolicy.ACTION_CANCELED,
+            action_order=del_activity.action_order
+        )
+
+        result = activity.quit_activity(_activity)
+
+        if not result:
+            return False
+        else:
+            activity.upt_activity_action_status(
+                activity_id=del_activity.activity_id,
+                action_id=del_activity.action_id,
+                action_status=ActionStatusPolicy.ACTION_CANCELED,
+                action_order=del_activity.action_order)    
+            return True
+
     if not current_app.config.get("DELETE_ACTIVITY_LOG_ENABLE"):
         abort(403)
 
@@ -2804,25 +2819,9 @@ def clear_activitylog():
         if del_activity == None:
             return jsonify(code=-1, msg='no activity error') ,400
         if del_activity.activity_status in [ActivityStatusPolicy.ACTIVITY_MAKING, ActivityStatusPolicy.ACTIVITY_BEGIN]:
-
-            _activity = dict(
-                activity_id=del_activity.activity_id,
-                action_id=del_activity.action_id,
-                action_status=ActionStatusPolicy.ACTION_CANCELED,
-                action_order=del_activity.action_order
-            )
-
-            result = activity.quit_activity(_activity)
-
+            result = _quit_activity(del_activity)
             if not result:
-                return jsonify(code=-1, msg=str(DeleteActivityFailedRESTError())) ,400 
-            else:
-                activity.upt_activity_action_status(
-                    activity_id=del_activity.activity_id,
-                    action_id=del_activity.action_id,
-                    action_status=ActionStatusPolicy.ACTION_CANCELED,
-                    action_order=del_activity.action_order)            
-        
+                return jsonify(code=-1, msg=str(DeleteActivityFailedRESTError())) ,400         
         try:
             with db.session.begin_nested():
                 workflow_activity_action.query.filter_by(activity_id=del_activity.activity_id).delete()                
@@ -2831,47 +2830,32 @@ def clear_activitylog():
         except Exception as ex:
             db.session.rollback()
             current_app.logger.exception(str(ex))
-            return jsonify(code=-1, msg='delete failed error') ,400  
-
-        return jsonify(code=1, msg='delete activitylogs success') ,200
-    
-    conditions = filter_all_condition(request.args)
-    activities, maxpage, size, pages, name_param = activity.get_activity_list(conditions=conditions, activitylog=True)
-
-    if not activities:
-        return jsonify(code=-1, msg='no activity error') ,400
-
+            return jsonify(code=-1, msg='delete failed error') ,400
     # delete all filitering activity
-    for del_activity in activities:
-        if del_activity.activity_status in [ActivityStatusPolicy.ACTIVITY_MAKING, ActivityStatusPolicy.ACTIVITY_BEGIN]:
-            _activity = dict(
-                activity_id=del_activity.activity_id,
-                action_id=del_activity.action_id,
-                action_status=ActionStatusPolicy.ACTION_CANCELED,
-                action_order=del_activity.action_order
-            )
+    else:
+    
+        conditions = filter_all_condition(request.args)
+        activities, maxpage, size, pages, name_param = activity.get_activity_list(conditions=conditions, activitylog=True)
 
-            result = activity.quit_activity(_activity)
+        if not activities:
+            return jsonify(code=-1, msg='no activity error') ,400
 
-            if not result:
-               return jsonify(code=-1, msg=str(DeleteActivityFailedRESTError())) ,400 
-            else:
-                activity.upt_activity_action_status(
-                    activity_id=del_activity.activity_id,
-                    action_id=del_activity.action_id,
-                    action_status=ActionStatusPolicy.ACTION_CANCELED,
-                    action_order=del_activity.action_order) 
+        for del_activity in activities:
+            if del_activity.activity_status in [ActivityStatusPolicy.ACTIVITY_MAKING, ActivityStatusPolicy.ACTIVITY_BEGIN]:
+                result = _quit_activity(del_activity)
+                if not result:
+                   return jsonify(code=-1, msg=str(DeleteActivityFailedRESTError())) ,400 
 
-    try:   
-        with db.session.begin_nested():
-            for activty in activities:
-                workflow_activity_action.query.filter_by(activity_id=activty.activity_id).delete()                
-                db.session.delete(activty)
-        db.session.commit()
-    except Exception as ex:
-        db.session.rollback()
-        current_app.logger.exception(str(ex))
-        return jsonify(code=-1, msg='delete failed error') ,400
+        try:   
+            with db.session.begin_nested():
+                for activty in activities:
+                    workflow_activity_action.query.filter_by(activity_id=activty.activity_id).delete()                
+                    db.session.delete(activty)
+            db.session.commit()
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+            return jsonify(code=-1, msg='delete failed error') ,400
 
     return jsonify(code=1, msg='delete activitylogs success') ,200
 

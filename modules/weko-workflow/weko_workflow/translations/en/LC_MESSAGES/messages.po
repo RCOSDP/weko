@@ -635,6 +635,11 @@ msgstr ""
 msgid "Are you sure you want to delete filtered activities?"
 msgstr ""
 
+msgid "Deleted activity cannot be restored."
+msgstr ""
+
 msgid "Are you sure you want to delete the filtered activity?"
 msgstr ""
 
+msgid "Clear Confirm"
+msgstr ""

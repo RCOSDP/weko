@@ -677,5 +677,11 @@ msgstr "削除したアクティビティは元に戻せません。"
 msgid "Are you sure you want to delete filtered activities?"
 msgstr "フィルターされたアクティビティを削除してもよろしいですか？"
 
+msgid "Deleted activity cannot be restored."
+msgstr "削除したアクティビティは元に戻せません。"
+
 msgid "Are you sure you want to delete the filtered activity?"
 msgstr "選択したアクティビティを削除してもよろしいですか？"
+
+msgid "Clear Confirm"
+msgstr "削除の確認"
