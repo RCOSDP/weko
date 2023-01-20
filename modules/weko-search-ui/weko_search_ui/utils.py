@@ -1725,39 +1725,52 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
     errors = []
     warnings = []
 
-    def check(index_id, index_name):
+    def check(index_id, index_name_path):
         """Check index_id/index_name.
 
         Args:
             index_id (str): Index id.
-            index_name (str): Index name.
+            index_name_path (str): Index name path.
 
         Returns:
             [bool]: Check result.
 
         """
         result = None
-        index = None
+        index_info = None
         try:
-            index = Indexes.get_index(index_id)
+            index_info = Indexes.get_path_list([index_id])
         except Exception:
+            db.session.rollback()
             current_app.logger.warning("Specified IndexID is invalid!")
 
-        if index:
-            if index_name and index_name not in [
-                index.index_name,
-                index.index_name_english,
+        if index_info and len(index_info) == 1:
+            if index_name_path and index_name_path not in [
+                index_info[0].name.replace(
+                    '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']),
+                index_info[0].name_en.replace(
+                    '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']),
             ]:
                 warnings.append(
                     _("Specified {} does not match with existing index.").format(
                         "POS_INDEX"
                     )
                 )
-            result = index.id
-        elif index_name:
-            index = Indexes.get_index_by_all_name(index_name)
+            result = index_info[0].cid
+        elif index_name_path:
+            index_path_list = index_name_path.split(
+                current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT'])
+            index_all_name = Indexes.get_index_by_all_name(index_path_list[-1])
+            index_infos = Indexes.get_path_list([i.id for i in index_all_name])
+            index_info = None
+            for info in index_infos:
+                if index_name_path == \
+                        info.name.replace(
+                            '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']):
+                    index_info = info
+                    break
             msg_not_exist = _("The specified {} does not exist in system.")
-            if not index:
+            if not index_info:
                 if index_id:
                     errors.append(msg_not_exist.format("IndexID, POS_INDEX"))
                 else:
@@ -1766,7 +1779,7 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
                 if index_id:
                     errors.append(msg_not_exist.format("IndexID"))
                 else:
-                    result = index.id
+                    result = index_info.cid
         if result and not all_index_permission:
             msg_can_not_edit = _("Your role cannot register items in this index.")
             if not can_edit_indexes:
@@ -1790,13 +1803,13 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
             if not index_ids:
                 index_ids = ["" for _ in range(len(pos_index))]
             for x, index_id in enumerate(index_ids):
-                index_name = ""
+                index_name_path = ""
                 if pos_index and x <= len(pos_index) - 1:
-                    index_name = pos_index[x].strip()
+                    index_name_path = pos_index[x].strip()
                 else:
-                    index_name = ""
+                    index_name_path = ""
 
-                _index_id = check(index_id, index_name)
+                _index_id = check(index_id, index_name_path)
                 if _index_id:
                     indexes.append(_index_id)
 
