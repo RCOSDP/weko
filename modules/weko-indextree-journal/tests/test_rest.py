@@ -7,6 +7,7 @@ import pytest
 from mock import patch, MagicMock
 from invenio_accounts.testutils import login_user_via_session
 from weko_indextree_journal.api import Journals
+from weko_indextree_journal.rest import need_record_permission, create_blueprint
 
 
 # .tox/c1/bin/pytest --cov=weko_indextree_journal tests/test_rest.py::test_api_get_journal -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-indextree-journal/.tox/c1/tmp
@@ -121,3 +122,8 @@ def test_JournalActionResource_delete_guest(client_rest, users):
                                   data=json.dumps({'test':'test'}),
                                   content_type='application/json')
             assert res.status_code == 401
+
+
+def test_create_blueprint(i18n_app):
+    # with patch("weko_indextree_journal.rest.permission_factory", return_value=data1):
+    create_blueprint("test")
