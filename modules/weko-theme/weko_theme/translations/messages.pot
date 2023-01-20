@@ -646,3 +646,4 @@ msgstr "Maintenance"
 #: weko_admin/
 msgid "ElasticSearch Index"
 msgstr "ElasticSearch Index"
+

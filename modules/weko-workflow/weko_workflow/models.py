@@ -1182,3 +1182,17 @@ class GuestActivity(db.Model, Timestamp):
         )
 
         return query.all()
+
+class ActivityCount(db.Model, TimestampMixin):
+    """today Activity count."""
+
+    __tablename__ = 'workflow_activity_count'
+
+    date = db.Column(db.Date(), nullable=False,
+                   primary_key=True)
+    """Activity_id date"""
+
+    activity_count = db.Column(
+        db.Integer(), default=1,
+        nullable=False, unique=False)
+    """today count"""

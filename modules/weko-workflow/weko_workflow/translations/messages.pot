@@ -563,3 +563,15 @@ msgstr ""
 
 msgid "Approval Rejection Notification Email"
 msgstr ""
+
+msgid "Download"
+msgstr ""
+
+msgid "Deleted activities cannot be restored."
+msgstr ""
+
+msgid "Are you sure you want to delete filtered activities?"
+msgstr ""
+
+msgid "Are you sure you want to delete the filtered activity?"
+msgstr ""
