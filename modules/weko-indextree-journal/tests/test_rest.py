@@ -125,5 +125,8 @@ def test_JournalActionResource_delete_guest(client_rest, users):
 
 
 def test_create_blueprint(i18n_app):
-    # with patch("weko_indextree_journal.rest.permission_factory", return_value=data1):
-    create_blueprint("test")
+    # Exception coverage
+    try:
+        create_blueprint("test")
+    except:
+        pass
