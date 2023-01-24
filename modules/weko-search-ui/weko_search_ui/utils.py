@@ -1736,7 +1736,7 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
             [bool]: Check result.
 
         """
-        result = None
+        temp_res = []
         index_info = None
         try:
             index_info = Indexes.get_path_list([index_id])
@@ -1756,39 +1756,52 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
                         "POS_INDEX"
                     )
                 )
-            result = index_info[0].cid
+            temp_res = [index_info[0].cid]
         elif index_name_path:
             index_path_list = index_name_path.split(
                 current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT'])
             index_all_name = Indexes.get_index_by_all_name(index_path_list[-1])
             index_infos = Indexes.get_path_list([i.id for i in index_all_name])
-            index_info = None
-            for info in index_infos:
-                if index_name_path == \
-                        info.name.replace(
-                            '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']):
-                    index_info = info
-                    break
             msg_not_exist = _("The specified {} does not exist in system.")
-            if not index_info:
+            print('=============== index_name_path: {}'.format(index_name_path))
+            print('=============== index_infos: {}'.format(index_infos))
+            if index_infos:
+                for info in index_infos:
+                    index_info = None
+                    if index_name_path == \
+                            info.name.replace(
+                                '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']):
+                        index_info = info
+                    
+                    if not index_info:
+                        if index_id:
+                            errors.append(msg_not_exist.format("IndexID, POS_INDEX"))
+                        else:
+                            errors.append(msg_not_exist.format("POS_INDEX"))
+                    else:
+                        if index_id:
+                            errors.append(msg_not_exist.format("IndexID"))
+                        else:
+                            temp_res.append(index_info.cid)
+            else:
                 if index_id:
                     errors.append(msg_not_exist.format("IndexID, POS_INDEX"))
                 else:
                     errors.append(msg_not_exist.format("POS_INDEX"))
-            else:
-                if index_id:
-                    errors.append(msg_not_exist.format("IndexID"))
-                else:
-                    result = index_info.cid
-        if result and not all_index_permission:
+        result = []
+        if temp_res and not all_index_permission:
+            print('=============== can_edit_indexes: {}'.format(can_edit_indexes))
+            print('=============== temp_res: {}'.format(temp_res))
             msg_can_not_edit = _("Your role cannot register items in this index.")
             if not can_edit_indexes:
                 errors.append(msg_can_not_edit)
-                result = None
+                result = []
             elif can_edit_indexes[0] != 0:
-                if result not in can_edit_indexes:
-                    errors.append(msg_can_not_edit)
-                    result = None
+                for i in temp_res:
+                    if i not in can_edit_indexes:
+                        errors.append(msg_can_not_edit)
+                    else:
+                        result.append(i)
 
         return result
 
@@ -1809,9 +1822,10 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
                 else:
                     index_name_path = ""
 
-                _index_id = check(index_id, index_name_path)
-                if _index_id:
-                    indexes.append(_index_id)
+                _index_ids = check(index_id, index_name_path)
+                for i in _index_ids:
+                    if i not in indexes:
+                        indexes.append(i)
 
         if indexes:
             item["metadata"]["path"] = indexes
