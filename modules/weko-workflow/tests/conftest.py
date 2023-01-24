@@ -60,7 +60,7 @@ from weko_theme import WekoTheme
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime,Identifier 
 from weko_admin.views import blueprint as weko_admin_blueprint
-from weko_records.models import ItemTypeName, ItemType,FeedbackMailList,ItemTypeMapping,ItemTypeProperty
+from weko_records.models import ItemTypeName, ItemType,FeedbackMailList,ItemTypeMapping,ItemTypeProperty, ItemBilling
 from weko_records.api import Mapping
 from weko_records_ui.models import FilePermission
 from weko_user_profiles import WekoUserProfiles
@@ -1539,9 +1539,32 @@ def db_guestactivity(db):
     with db.session.begin_nested():
         db.session.add(record)
     db.session.commit()
-    
 
 
+@pytest.fixture()
+def db_register_item_billing(db):
+    role1 = Role(id=1, name='role1')
+    role2 = Role(id=2, name='role2')
+    role3 = Role(id=3, name='role3')
+    record2 = ItemBilling(item_id=10, role_id=2, include_tax=True, price=100)
+    record3 = ItemBilling(item_id=10, role_id=3, include_tax=False, price=100)
+    with db.session.begin_nested():
+        db.session.add(role1)
+        db.session.add(role2)
+        db.session.add(role3)
+    with db.session.begin_nested():
+        db.session.add(record2)
+        db.session.add(record3)
+    db.session.commit()
 
 
-
+@pytest.fixture()
+def db_register_roles(db):
+    role1 = Role(id=1, name='role1')
+    role2 = Role(id=2, name='role2')
+    role3 = Role(id=3, name='role3')
+    with db.session.begin_nested():
+        db.session.add(role1)
+        db.session.add(role2)
+        db.session.add(role3)
+    db.session.commit()

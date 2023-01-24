@@ -1,0 +1,1312 @@
+[
+    {
+        "key": "pubdate",
+        "type": "template",
+        "title": "PubDate",
+        "title_i18n": {
+            "ja": "公開日",
+            "en": "PubDate"
+        },
+        "required": true,
+        "format": "yyyy-MM-dd",
+        "templateUrl": "/static/templates/weko_deposit/datepicker.html"
+    },
+    {
+        "add": "New",
+        "items": [
+            {
+                "fieldHtmlClass": "file-name",
+                "key": "item_1670830739765[].filename",
+                "onChange": "fileNameSelect(this, form, modelValue)",
+                "templateUrl": "/static/templates/weko_deposit/datalist.html",
+                "title": "表示名",
+                "titleMap": [],
+                "title_i18n": {
+                    "en": "FileName",
+                    "ja": "表示名"
+                },
+                "type": "template",
+                "title_i18n_temp": {
+                    "en": "FileName",
+                    "ja": "表示名"
+                }
+            },
+            {
+                "items": [
+                    {
+                        "disableSuccessState": true,
+                        "feedback": false,
+                        "fieldHtmlClass": "file-text-url",
+                        "key": "item_1670830739765[].url.url",
+                        "title": "本文URL",
+                        "title_i18n": {
+                            "en": "Text URL",
+                            "ja": "本文URL"
+                        },
+                        "type": "text",
+                        "title_i18n_temp": {
+                            "en": "Text URL",
+                            "ja": "本文URL"
+                        }
+                    },
+                    {
+                        "disableSuccessState": true,
+                        "feedback": false,
+                        "key": "item_1670830739765[].url.label",
+                        "title": "ラベル",
+                        "title_i18n": {
+                            "en": "Label",
+                            "ja": "ラベル"
+                        },
+                        "type": "text",
+                        "title_i18n_temp": {
+                            "en": "Label",
+                            "ja": "ラベル"
+                        }
+                    },
+                    {
+                        "disableSuccessState": true,
+                        "feedback": false,
+                        "key": "item_1670830739765[].url.objectType",
+                        "title": "オブジェクトタイプ",
+                        "titleMap": [
+                            {
+                                "name": "abstract",
+                                "value": "abstract"
+                            },
+                            {
+                                "name": "summary",
+                                "value": "summary"
+                            },
+                            {
+                                "name": "fulltext",
+                                "value": "fulltext"
+                            },
+                            {
+                                "name": "thumbnail",
+                                "value": "thumbnail"
+                            },
+                            {
+                                "name": "other",
+                                "value": "other"
+                            }
+                        ],
+                        "title_i18n": {
+                            "en": "Object Type",
+                            "ja": "オブジェクトタイプ"
+                        },
+                        "type": "select",
+                        "title_i18n_temp": {
+                            "en": "Object Type",
+                            "ja": "オブジェクトタイプ"
+                        }
+                    }
+                ],
+                "key": "item_1670830739765[].url",
+                "title": "本文URL",
+                "title_i18n": {
+                    "en": "Text URL",
+                    "ja": "本文URL"
+                },
+                "type": "fieldset",
+                "title_i18n_temp": {
+                    "en": "Text URL",
+                    "ja": "本文URL"
+                }
+            },
+            {
+                "key": "item_1670830739765[].format",
+                "title": "フォーマット",
+                "title_i18n": {
+                    "en": "Format",
+                    "ja": "フォーマット"
+                },
+                "type": "text",
+                "title_i18n_temp": {
+                    "en": "Format",
+                    "ja": "フォーマット"
+                }
+            },
+            {
+                "add": "New",
+                "items": [
+                    {
+                        "key": "item_1670830739765[].filesize[].value",
+                        "title": "サイズ",
+                        "title_i18n": {
+                            "en": "Size",
+                            "ja": "サイズ"
+                        },
+                        "type": "text",
+                        "title_i18n_temp": {
+                            "en": "Size",
+                            "ja": "サイズ"
+                        }
+                    }
+                ],
+                "key": "item_1670830739765[].filesize",
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "サイズ",
+                "title_i18n": {
+                    "en": "Size",
+                    "ja": "サイズ"
+                },
+                "title_i18n_temp": {
+                    "en": "Size",
+                    "ja": "サイズ"
+                }
+            },
+            {
+                "add": "New",
+                "items": [
+                    {
+                        "key": "item_1670830739765[].fileDate[].fileDateType",
+                        "title": "日付タイプ",
+                        "titleMap": [
+                            {
+                                "name": "Accepted",
+                                "value": "Accepted"
+                            },
+                            {
+                                "name": "Collected",
+                                "value": "Collected"
+                            },
+                            {
+                                "name": "Copyrighted",
+                                "value": "Copyrighted"
+                            },
+                            {
+                                "name": "Created",
+                                "value": "Created"
+                            },
+                            {
+                                "name": "Issued",
+                                "value": "Issued"
+                            },
+                            {
+                                "name": "Submitted",
+                                "value": "Submitted"
+                            },
+                            {
+                                "name": "Updated",
+                                "value": "Updated"
+                            },
+                            {
+                                "name": "Valid",
+                                "value": "Valid"
+                            }
+                        ],
+                        "title_i18n": {
+                            "en": "Date Type",
+                            "ja": "日付タイプ"
+                        },
+                        "type": "select",
+                        "title_i18n_temp": {
+                            "en": "Date Type",
+                            "ja": "日付タイプ"
+                        }
+                    },
+                    {
+                        "format": "yyyy-MM-dd",
+                        "key": "item_1670830739765[].fileDate[].fileDateValue",
+                        "templateUrl": "/static/templates/weko_deposit/datepicker_multi_format.html",
+                        "title": "日付",
+                        "title_i18n": {
+                            "en": "Date",
+                            "ja": "日付"
+                        },
+                        "type": "template",
+                        "title_i18n_temp": {
+                            "en": "Date",
+                            "ja": "日付"
+                        }
+                    }
+                ],
+                "key": "item_1670830739765[].fileDate",
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "日付",
+                "title_i18n": {
+                    "en": "Date",
+                    "ja": "日付"
+                },
+                "title_i18n_temp": {
+                    "en": "Date",
+                    "ja": "日付"
+                }
+            },
+            {
+                "key": "item_1670830739765[].version",
+                "title": "バージョン情報",
+                "title_i18n": {
+                    "en": "Version Information",
+                    "ja": "バージョン情報"
+                },
+                "type": "text",
+                "title_i18n_temp": {
+                    "en": "Version Information",
+                    "ja": "バージョン情報"
+                }
+            },
+            {
+                "key": "item_1670830739765[].displaytype",
+                "title": "表示形式",
+                "titleMap": [
+                    {
+                        "name": "詳細表示",
+                        "name_i18n": {
+                            "en": "Detail",
+                            "ja": "詳細表示"
+                        },
+                        "value": "detail"
+                    },
+                    {
+                        "name": "簡易表示",
+                        "name_i18n": {
+                            "en": "Simple",
+                            "ja": "簡易表示"
+                        },
+                        "value": "simple"
+                    },
+                    {
+                        "name": "プレビュー",
+                        "name_i18n": {
+                            "en": "Preview",
+                            "ja": "プレビュー"
+                        },
+                        "value": "preview"
+                    }
+                ],
+                "title_i18n": {
+                    "en": "Preview",
+                    "ja": "表示形式"
+                },
+                "type": "select",
+                "title_i18n_temp": {
+                    "en": "Preview",
+                    "ja": "表示形式"
+                }
+            },
+            {
+                "key": "item_1670830739765[].licensetype",
+                "title": "ライセンス",
+                "titleMap": [],
+                "title_i18n": {
+                    "en": "License",
+                    "ja": "ライセンス"
+                },
+                "type": "select",
+                "title_i18n_temp": {
+                    "en": "License",
+                    "ja": "ライセンス"
+                }
+            },
+            {
+                "condition": "model.item_1670830739765[arrayIndex].licensetype == 'license_free'",
+                "key": "item_1670830739765[].licensefree",
+                "notitle": true,
+                "type": "textarea",
+                "title_i18n": {
+                    "en": "自由ライセンス",
+                    "ja": "自由ライセンス"
+                }
+            },
+            {
+                "template": "<div class='text-center' style='display:none;'><a class='btn btn-primary' href='/ezas/pdf-detect-weko.html' target='_blank' role='button'>{{ form.title }}</a></div>",
+                "title": "剽窃チェック",
+                "title_i18n": {
+                    "en": "Check Plagiarism",
+                    "ja": "剽窃チェック"
+                },
+                "type": "template"
+            },
+            {
+                "key": "item_1670830739765[].accessrole",
+                "title": "アクセス",
+                "titleMap": [
+                    {
+                        "name": "オープンアクセス",
+                        "name_i18n": {
+                            "en": "Open access",
+                            "ja": "オープンアクセス"
+                        },
+                        "value": "open_access"
+                    },
+                    {
+                        "name": "オープンアクセス日を指定する",
+                        "name_i18n": {
+                            "en": "Input Open Access Date",
+                            "ja": "オープンアクセス日を指定する"
+                        },
+                        "value": "open_date"
+                    },
+                    {
+                        "name": "ログインユーザのみ",
+                        "name_i18n": {
+                            "en": "Registered User Only",
+                            "ja": "ログインユーザのみ"
+                        },
+                        "value": "open_login"
+                    },
+                    {
+                        "name": "公開しない",
+                        "name_i18n": {
+                            "en": "Do not Publish",
+                            "ja": "公開しない"
+                        },
+                        "value": "open_no"
+                    }
+                ],
+                "title_i18n": {
+                    "en": "Access",
+                    "ja": "アクセス"
+                },
+                "type": "radios",
+                "title_i18n_temp": {
+                    "en": "Access",
+                    "ja": "アクセス"
+                }
+            },
+            {
+                "condition": "model.item_1670830739765[arrayIndex].accessrole == 'open_date'",
+                "format": "yyyy-MM-dd",
+                "key": "item_1670830739765[].date[0].dateValue",
+                "templateUrl": "/static/templates/weko_deposit/datepicker.html",
+                "title": "公開日",
+                "title_i18n": {
+                    "en": "Opendate",
+                    "ja": "公開日"
+                },
+                "type": "template"
+            },
+            {
+                "condition": "model.item_1670830739765[arrayIndex].accessrole == 'open_date' || model.item_1670830739765[arrayIndex].accessrole == 'open_login'",
+                "key": "item_1670830739765[].billing",
+                "templateUrl": "/static/templates/weko_deposit/checkboxes.html",
+                "title": "課金",
+                "titleMap": [
+                    {
+                        "name": "課金ファイル",
+                        "name_i18n": {
+                            "en": "Billing file",
+                            "ja": "課金ファイル"
+                        },
+                        "value": "billing_file"
+                    }
+                ],
+                "title_i18n": {
+                    "en": "Billing",
+                    "ja": "課金"
+                },
+                "type": "template",
+                "title_i18n_temp": {
+                    "en": "Billing",
+                    "ja": "課金"
+                }
+            },
+            {
+                "add": "New",
+                "condition": "model.item_1670830739765[arrayIndex].accessrole == 'open_login' && model.item_1670830739765[arrayIndex].billing != 'billing_file'",
+                "items": [
+                    {
+                        "key": "item_1670830739765[].role[].role",
+                        "title": "ロール",
+                        "titleMap": [],
+                        "title_i18n": {
+                            "en": "Role",
+                            "ja": "ロール"
+                        },
+                        "type": "select",
+                        "title_i18n_temp": {
+                            "en": "Role",
+                            "ja": "ロール"
+                        }
+                    }
+                ],
+                "key": "item_1670830739765[].role",
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "ロール",
+                "title_i18n": {
+                    "en": "Role",
+                    "ja": "ロール"
+                },
+                "title_i18n_temp": {
+                    "en": "Role",
+                    "ja": "ロール"
+                }
+            },
+            {
+                "add": "New",
+                "condition": "(model.item_1670830739765[arrayIndex].accessrole == 'open_date' || model.item_1670830739765[arrayIndex].accessrole == 'open_login') && model.item_1670830739765[arrayIndex].billing == 'billing_file'",
+                "items": [
+                    {
+                        "key": "item_1670830739765[].priceinfo[].billingrole",
+                        "title": "ロール",
+                        "titleMap": [],
+                        "title_i18n": {
+                            "en": "Role",
+                            "ja": "ロール"
+                        },
+                        "type": "select",
+                        "title_i18n_temp": {
+                            "en": "Role",
+                            "ja": "ロール"
+                        }
+                    },
+                    {
+                        "key": "item_1670830739765[].priceinfo[].tax",
+                        "templateUrl": "/static/templates/weko_deposit/checkboxes.html",
+                        "title": "税",
+                        "titleMap": [
+                            {
+                                "name": "税込",
+                                "name_i18n": {
+                                    "en": "Include tax",
+                                    "ja": "税込"
+                                },
+                                "value": "include_tax"
+                            }
+                        ],
+                        "title_i18n": {
+                            "en": "Tax",
+                            "ja": "税"
+                        },
+                        "type": "template",
+                        "title_i18n_temp": {
+                            "en": "Tax",
+                            "ja": "税"
+                        }
+                    },
+                    {
+                        "key": "item_1670830739765[].priceinfo[].price",
+                        "title": "価格",
+                        "title_i18n": {
+                            "en": "Price",
+                            "ja": "価格"
+                        },
+                        "type": "text",
+                        "title_i18n_temp": {
+                            "en": "Price",
+                            "ja": "価格"
+                        }
+                    }
+                ],
+                "key": "item_1670830739765[].priceinfo",
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "価格情報",
+                "title_i18n": {
+                    "en": "Price",
+                    "ja": "価格情報"
+                },
+                "title_i18n_temp": {
+                    "en": "Price",
+                    "ja": "価格情報"
+                }
+            }
+        ],
+        "key": "item_1670830739765",
+        "style": {
+            "add": "btn-success"
+        },
+        "title_i18n": {
+            "ja": "",
+            "en": ""
+        },
+        "title": "test"
+    },
+    {
+        "add": "New",
+        "items": [
+            {
+                "key": "item_1670831530226[].filename",
+                "onChange": "fileNameSelect(this, form, modelValue)",
+                "templateUrl": "/static/templates/weko_deposit/datalist.html",
+                "title": "表示名",
+                "titleMap": [],
+                "title_i18n": {
+                    "en": "FileName",
+                    "ja": "表示名"
+                },
+                "type": "template"
+            },
+            {
+                "disableSuccessState": true,
+                "feedback": false,
+                "fieldHtmlClass": "file-text-url",
+                "key": "item_1670831530226[].url.url",
+                "title": "本文URL",
+                "title_i18n": {
+                    "en": "Text URL",
+                    "ja": "本文URL"
+                },
+                "type": "text"
+            },
+            {
+                "disableSuccessState": true,
+                "feedback": false,
+                "key": "item_1670831530226[].url.label",
+                "title": "ラベル",
+                "title_i18n": {
+                    "en": "Label",
+                    "ja": "ラベル"
+                },
+                "type": "text"
+            },
+            {
+                "disableSuccessState": true,
+                "feedback": false,
+                "key": "item_1670831530226[].url.objectType",
+                "title": "オブジェクトタイプ",
+                "titleMap": [
+                    {
+                        "name": "abstract",
+                        "name_i18n": {
+                            "en": "abstract",
+                            "ja": "abstract"
+                        },
+                        "value": "abstract"
+                    },
+                    {
+                        "name": "dataset",
+                        "name_i18n": {
+                            "en": "dataset",
+                            "ja": "dataset"
+                        },
+                        "value": "dataset"
+                    },
+                    {
+                        "name": "fulltext",
+                        "name_i18n": {
+                            "en": "fulltext",
+                            "ja": "fulltext"
+                        },
+                        "value": "fulltext"
+                    },
+                    {
+                        "name": "software",
+                        "name_i18n": {
+                            "en": "software",
+                            "ja": "software"
+                        },
+                        "value": "software"
+                    },
+                    {
+                        "name": "summary",
+                        "name_i18n": {
+                            "en": "summary",
+                            "ja": "summary"
+                        },
+                        "value": "summary"
+                    },
+                    {
+                        "name": "thumbnail",
+                        "name_i18n": {
+                            "en": "thumbnail",
+                            "ja": "thumbnail"
+                        },
+                        "value": "thumbnail"
+                    },
+                    {
+                        "name": "other",
+                        "name_i18n": {
+                            "en": "other",
+                            "ja": "other"
+                        },
+                        "value": "other"
+                    }
+                ],
+                "title_i18n": {
+                    "en": "Object Type",
+                    "ja": "オブジェクトタイプ"
+                },
+                "type": "select"
+            },
+            {
+                "key": "item_1670831530226[].format",
+                "title": "フォーマット",
+                "title_i18n": {
+                    "en": "Format",
+                    "ja": "フォーマット"
+                },
+                "type": "text"
+            },
+            {
+                "add": "New",
+                "items": [
+                    {
+                        "key": "item_1670831530226[].filesize[].value",
+                        "title": "サイズ",
+                        "title_i18n": {
+                            "en": "Size",
+                            "ja": "サイズ"
+                        },
+                        "type": "text"
+                    }
+                ],
+                "key": "item_1670831530226[].filesize",
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "サイズ",
+                "title_i18n": {
+                    "en": "Size",
+                    "ja": "サイズ"
+                }
+            },
+            {
+                "add": "New",
+                "items": [
+                    {
+                        "key": "item_1670831530226[].fileDate[].fileDateType",
+                        "title": "日付タイプ",
+                        "titleMap": [
+                            {
+                                "name": "Accepted",
+                                "value": "Accepted"
+                            },
+                            {
+                                "name": "Collected",
+                                "value": "Collected"
+                            },
+                            {
+                                "name": "Copyrighted",
+                                "value": "Copyrighted"
+                            },
+                            {
+                                "name": "Issued",
+                                "value": "Issued"
+                            },
+                            {
+                                "name": "Submitted",
+                                "value": "Submitted"
+                            },
+                            {
+                                "name": "Updated",
+                                "value": "Updated"
+                            },
+                            {
+                                "name": "Valid",
+                                "value": "Valid"
+                            }
+                        ],
+                        "title_i18n": {
+                            "en": "Date Type",
+                            "ja": "日付タイプ"
+                        },
+                        "type": "select"
+                    },
+                    {
+                        "format": "yyyy-MM-dd",
+                        "key": "item_1670831530226[].fileDate[].fileDateValue",
+                        "templateUrl": "/static/templates/weko_deposit/datepicker.html",
+                        "title": "日付",
+                        "title_i18n": {
+                            "en": "Date",
+                            "ja": "日付"
+                        },
+                        "type": "template"
+                    }
+                ],
+                "key": "item_1670831530226[].fileDate",
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "日付",
+                "title_i18n": {
+                    "en": "Date",
+                    "ja": "日付"
+                }
+            },
+            {
+                "key": "item_1670831530226[].version",
+                "title": "バージョン情報",
+                "title_i18n": {
+                    "en": "Version Information",
+                    "ja": "バージョン情報"
+                },
+                "type": "text"
+            },
+            {
+                "key": "item_1670831530226[].displaytype",
+                "title": "表示形式",
+                "titleMap": [
+                    {
+                        "name": "詳細表示",
+                        "name_i18n": {
+                            "en": "Detail",
+                            "ja": "詳細表示"
+                        },
+                        "value": "detail"
+                    },
+                    {
+                        "name": "簡易表示",
+                        "name_i18n": {
+                            "en": "Simple",
+                            "ja": "簡易表示"
+                        },
+                        "value": "simple"
+                    },
+                    {
+                        "name": "プレビュー",
+                        "name_i18n": {
+                            "en": "Preview",
+                            "ja": "プレビュー"
+                        },
+                        "value": "preview"
+                    }
+                ],
+                "title_i18n": {
+                    "en": "Preview",
+                    "ja": "表示形式"
+                },
+                "type": "select"
+            },
+            {
+                "key": "item_1670831530226[].licensetype",
+                "title": "ライセンス",
+                "titleMap": [],
+                "title_i18n": {
+                    "en": "License",
+                    "ja": "ライセンス"
+                },
+                "type": "select"
+            },
+            {
+                "condition": "model.item_1670831530226[arrayIndex].licensetype == 'license_free'",
+                "key": "item_1670831530226[].licensefree",
+                "title": " ",
+                "type": "textarea",
+                "title_i18n": {
+                    "ja": " ",
+                    "en": " "
+                }
+            },
+            {
+                "default": "open_restricted",
+                "key": "item_1670831530226[].accessrole",
+                "title": "アクセス",
+                "titleMap": [
+                    {
+                        "name": "オープンアクセス",
+                        "name_i18n": {
+                            "en": "Open Access",
+                            "ja": "オープンアクセス"
+                        },
+                        "value": "open_access"
+                    },
+                    {
+                        "name": "オープンアクセス日を指定する",
+                        "name_i18n": {
+                            "en": "Input Open Access Date",
+                            "ja": "オープンアクセス日を指定する"
+                        },
+                        "value": "open_date"
+                    },
+                    {
+                        "name": "ログインユーザのみ",
+                        "name_i18n": {
+                            "en": "Registered User Only",
+                            "ja": "ログインユーザのみ"
+                        },
+                        "value": "open_login"
+                    },
+                    {
+                        "name": "公開しない",
+                        "name_i18n": {
+                            "en": "Do Not Publish",
+                            "ja": "公開しない"
+                        },
+                        "value": "open_no"
+                    },
+                    {
+                        "name": "制限公開",
+                        "name_i18n": {
+                            "en": "Limited Access",
+                            "ja": "制限公開"
+                        },
+                        "value": "open_restricted"
+                    }
+                ],
+                "title_i18n": {
+                    "en": "Access",
+                    "ja": "アクセス"
+                },
+                "type": "radios"
+            },
+            {
+                "condition": "model.item_1670831530226[arrayIndex].accessrole == 'open_date'",
+                "format": "yyyy-MM-dd",
+                "key": "item_1670831530226[].accessdate",
+                "templateUrl": "/static/templates/weko_deposit/datepicker.html",
+                "title": "公開日",
+                "title_i18n": {
+                    "en": "Opendate",
+                    "ja": "公開日"
+                },
+                "type": "template"
+            },
+            {
+                "condition": "model.item_1670831530226[arrayIndex].accessrole == 'open_restricted'",
+                "key": "item_1670831530226[].dataType",
+                "title": "データタイプ",
+                "titleMap": [
+                    {
+                        "name": "Life",
+                        "name_i18n": {
+                            "en": "Life",
+                            "ja": "ライフ"
+                        },
+                        "value": "life"
+                    },
+                    {
+                        "name": "Accumulation",
+                        "name_i18n": {
+                            "en": "Accumulation",
+                            "ja": "累積"
+                        },
+                        "value": "accumulation"
+                    },
+                    {
+                        "name": "Combinational Analysis",
+                        "name_i18n": {
+                            "en": "Combinational Analysis",
+                            "ja": "組合せ分析"
+                        },
+                        "value": "combinational_analysis"
+                    },
+                    {
+                        "name": "Perfectures",
+                        "name_i18n": {
+                            "en": "Perfectures",
+                            "ja": "都道府県"
+                        },
+                        "value": "perfectures"
+                    },
+                    {
+                        "name": "Location Information",
+                        "name_i18n": {
+                            "en": "Location Information",
+                            "ja": "地点情報"
+                        },
+                        "value": "location_information"
+                    }
+                ],
+                "title_i18n": {
+                    "en": "Data Type",
+                    "ja": "データタイプ"
+                },
+                "type": "select"
+            },
+            {
+                "add": "New",
+                "condition": "model.item_1670831530226[arrayIndex].accessrole == 'open_restricted'",
+                "items": [
+                    {
+                        "key": "item_1670831530226[].provide[].workflow",
+                        "title": "ワークフロー",
+                        "titleMap": [],
+                        "title_i18n": {
+                            "en": "WorkFlow",
+                            "ja": "ワークフロー"
+                        },
+                        "type": "select"
+                    },
+                    {
+                        "key": "item_1670831530226[].provide[].role",
+                        "title": "ロール",
+                        "titleMap": [],
+                        "title_i18n": {
+                            "en": "Role",
+                            "ja": "ロール"
+                        },
+                        "type": "select"
+                    }
+                ],
+                "key": "item_1670831530226[].provide",
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "提供方法",
+                "title_i18n": {
+                    "en": "Providing Method",
+                    "ja": "提供方法"
+                }
+            },
+            {
+                "condition": "model.item_1670831530226[arrayIndex].accessrole == 'open_restricted'",
+                "key": "item_1670831530226[].terms",
+                "title": "利用規約",
+                "titleMap": [],
+                "title_i18n": {
+                    "en": "Terms and Conditions",
+                    "ja": "利用規約"
+                },
+                "type": "select"
+            },
+            {
+                "condition": "model.item_1670831530226[arrayIndex].accessrole == 'open_restricted' && model.item_1670831530226[arrayIndex].terms== 'term_free'",
+                "key": "item_1670831530226[].termsDescription",
+                "title": " ",
+                "type": "textarea",
+                "title_i18n": {
+                    "ja": " ",
+                    "en": " "
+                }
+            },
+            {
+                "condition": "model.item_1670831530226[arrayIndex].accessrole == 'open_date' || model.item_1670831530226[arrayIndex].accessrole == 'open_login'",
+                "key": "item_1670831530226[].billing",
+                "templateUrl": "/static/templates/weko_deposit/checkboxes.html",
+                "title": "課金",
+                "titleMap": [
+                    {
+                        "name": "課金ファイル",
+                        "name_i18n": {
+                            "en": "Billing file",
+                            "ja": "課金ファイル"
+                        },
+                        "value": "billing_file"
+                    }
+                ],
+                "title_i18n": {
+                    "en": "Billing",
+                    "ja": "課金"
+                },
+                "type": "template"
+            },
+            {
+                "add": "New",
+                "condition": "model.item_1670831530226[arrayIndex].accessrole == 'open_login' && model.item_1670831530226[arrayIndex].billing != 'billing_file'",
+                "items": [
+                    {
+                        "key": "item_1670831530226[].role[].role",
+                        "title": "ロール",
+                        "titleMap": [],
+                        "title_i18n": {
+                            "en": "Role",
+                            "ja": "ロール"
+                        },
+                        "type": "select"
+                    }
+                ],
+                "key": "item_1670831530226[].role",
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "ロール",
+                "title_i18n": {
+                    "en": "Role",
+                    "ja": "ロール"
+                }
+            },
+            {
+                "add": "New",
+                "condition": "(model.item_1670831530226[arrayIndex].accessrole == 'open_date' || model.item_1670831530226[arrayIndex].accessrole == 'open_login') && model.item_1670831530226[arrayIndex].billing == 'billing_file'",
+                "items": [
+                    {
+                        "key": "item_1670831530226[].priceinfo[].billingrole",
+                        "title": "ロール",
+                        "titleMap": [],
+                        "title_i18n": {
+                            "en": "Role",
+                            "ja": "ロール"
+                        },
+                        "type": "select"
+                    },
+                    {
+                        "key": "item_1670831530226[].priceinfo[].tax",
+                        "templateUrl": "/static/templates/weko_deposit/checkboxes.html",
+                        "title": "税",
+                        "titleMap": [
+                            {
+                                "name": "税込",
+                                "name_i18n": {
+                                    "en": "Include tax",
+                                    "ja": "税込"
+                                },
+                                "value": "include_tax"
+                            }
+                        ],
+                        "title_i18n": {
+                            "en": "Tax",
+                            "ja": "税"
+                        },
+                        "type": "template"
+                    },
+                    {
+                        "key": "item_1670831530226[].priceinfo[].price",
+                        "title": "価格",
+                        "title_i18n": {
+                            "en": "Price",
+                            "ja": "価格"
+                        },
+                        "type": "text"
+                    }
+                ],
+                "key": "item_1670831530226[].priceinfo",
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "価格情報",
+                "title_i18n": {
+                    "en": "Price",
+                    "ja": "価格情報"
+                }
+            }
+        ],
+        "key": "item_1670831530226",
+        "style": {
+            "add": "btn-success"
+        },
+        "title_i18n": {
+            "ja": "",
+            "en": ""
+        },
+        "title": "test2"
+    },
+    {
+        "items": [
+            {
+                "key": "parentkey.subitem_systemidt_identifier",
+                "title": "SYSTEMIDT Identifier",
+                "type": "text"
+            },
+            {
+                "key": "parentkey.subitem_systemidt_identifier_type",
+                "title": "SYSTEMIDT Identifier Type",
+                "titleMap": [
+                    {
+                        "name": "DOI",
+                        "value": "DOI"
+                    },
+                    {
+                        "name": "HDL",
+                        "value": "HDL"
+                    },
+                    {
+                        "name": "URI",
+                        "value": "URI"
+                    }
+                ],
+                "type": "select"
+            }
+        ],
+        "key": "system_identifier_doi",
+        "type": "fieldset",
+        "title": "Persistent Identifier(DOI)",
+        "title_i18n": {
+            "ja": "永続識別子（DOI）",
+            "en": "Persistent Identifier(DOI)"
+        }
+    },
+    {
+        "items": [
+            {
+                "key": "parentkey.subitem_systemidt_identifier",
+                "title": "SYSTEMIDT Identifier",
+                "type": "text"
+            },
+            {
+                "key": "parentkey.subitem_systemidt_identifier_type",
+                "title": "SYSTEMIDT Identifier Type",
+                "titleMap": [
+                    {
+                        "name": "DOI",
+                        "value": "DOI"
+                    },
+                    {
+                        "name": "HDL",
+                        "value": "HDL"
+                    },
+                    {
+                        "name": "URI",
+                        "value": "URI"
+                    }
+                ],
+                "type": "select"
+            }
+        ],
+        "key": "system_identifier_hdl",
+        "type": "fieldset",
+        "title": "Persistent Identifier(HDL)",
+        "title_i18n": {
+            "ja": "永続識別子（HDL）",
+            "en": "Persistent Identifier(HDL)"
+        }
+    },
+    {
+        "items": [
+            {
+                "key": "parentkey.subitem_systemidt_identifier",
+                "title": "SYSTEMIDT Identifier",
+                "type": "text"
+            },
+            {
+                "key": "parentkey.subitem_systemidt_identifier_type",
+                "title": "SYSTEMIDT Identifier Type",
+                "titleMap": [
+                    {
+                        "name": "DOI",
+                        "value": "DOI"
+                    },
+                    {
+                        "name": "HDL",
+                        "value": "HDL"
+                    },
+                    {
+                        "name": "URI",
+                        "value": "URI"
+                    }
+                ],
+                "type": "select"
+            }
+        ],
+        "key": "system_identifier_uri",
+        "type": "fieldset",
+        "title": "Persistent Identifier(URI)",
+        "title_i18n": {
+            "ja": "永続識別子（URI）",
+            "en": "Persistent Identifier(URI)"
+        }
+    },
+    {
+        "items": [
+            {
+                "add": "New",
+                "items": [
+                    {
+                        "key": "parentkey.subitem_systemfile_filename[].subitem_systemfile_filename_label",
+                        "title": "SYSTEMFILE Filename Label",
+                        "type": "text"
+                    },
+                    {
+                        "key": "parentkey.subitem_systemfile_filename[].subitem_systemfile_filename_type",
+                        "title": "SYSTEMFILE Filename Type",
+                        "titleMap": [
+                            {
+                                "name": "Abstract",
+                                "value": "Abstract"
+                            },
+                            {
+                                "name": "Fulltext",
+                                "value": "Fulltext"
+                            },
+                            {
+                                "name": "Summary",
+                                "value": "Summary"
+                            },
+                            {
+                                "name": "Thumbnail",
+                                "value": "Thumbnail"
+                            },
+                            {
+                                "name": "Other",
+                                "value": "Other"
+                            }
+                        ],
+                        "type": "select"
+                    },
+                    {
+                        "key": "parentkey.subitem_systemfile_filename[].subitem_systemfile_filename_uri",
+                        "title": "SYSTEMFILE Filename URI",
+                        "type": "text"
+                    }
+                ],
+                "key": "parentkey.subitem_systemfile_filename",
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "SYSTEMFILE Filename"
+            },
+            {
+                "key": "parentkey.subitem_systemfile_mimetype",
+                "title": "SYSTEMFILE MimeType",
+                "type": "text"
+            },
+            {
+                "key": "parentkey.subitem_systemfile_size",
+                "title": "SYSTEMFILE Size",
+                "type": "text"
+            },
+            {
+                "add": "New",
+                "items": [
+                    {
+                        "format": "yyyy-MM-dd",
+                        "key": "parentkey.subitem_systemfile_datetime[].subitem_systemfile_datetime_date",
+                        "templateUrl": "/static/templates/weko_deposit/datepicker.html",
+                        "title": "SYSTEMFILE DateTime Date",
+                        "type": "template"
+                    },
+                    {
+                        "key": "parentkey.subitem_systemfile_datetime[].subitem_systemfile_datetime_type",
+                        "title": "SYSTEMFILE DateTime Type",
+                        "titleMap": [
+                            {
+                                "name": "Accepted",
+                                "value": "Accepted"
+                            },
+                            {
+                                "name": "Available",
+                                "value": "Available"
+                            },
+                            {
+                                "name": "Collected",
+                                "value": "Collected"
+                            },
+                            {
+                                "name": "Copyrighted",
+                                "value": "Copyrighted"
+                            },
+                            {
+                                "name": "Created",
+                                "value": "Created"
+                            },
+                            {
+                                "name": "Issued",
+                                "value": "Issued"
+                            },
+                            {
+                                "name": "Submitted",
+                                "value": "Submitted"
+                            },
+                            {
+                                "name": "Updated",
+                                "value": "Updated"
+                            },
+                            {
+                                "name": "Valid",
+                                "value": "Valid"
+                            }
+                        ],
+                        "type": "select"
+                    }
+                ],
+                "key": "parentkey.subitem_systemfile_datetime",
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "SYSTEMFILE DateTime"
+            },
+            {
+                "key": "parentkey.subitem_systemfile_version",
+                "title": "SYSTEMFILE Version",
+                "type": "text"
+            }
+        ],
+        "key": "system_file",
+        "type": "fieldset",
+        "title": "File Information",
+        "title_i18n": {
+            "ja": "ファイル情報",
+            "en": "File Information"
+        }
+    }
+]

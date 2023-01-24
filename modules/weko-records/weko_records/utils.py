@@ -39,7 +39,7 @@ from jsonpath_ng import jsonpath
 from jsonpath_ng.ext import parse
 from lxml import etree
 from weko_admin import config as ad_config
-from weko_admin.models import SearchManagement as sm
+from weko_admin.models import SearchManagement as sm, AdminSettings
 from weko_schema_ui.schema import SchemaTree
 from invenio_accounts.models import Role
 
@@ -717,6 +717,16 @@ def get_all_items(nlst, klst, is_get_name=False):
         if role:
             return role.name
 
+    def set_currency_unit(nlst):
+        billing_settings = AdminSettings.get('billing_settings')
+        if billing_settings:
+            currency_unit = billing_settings.currency_unit
+
+        if isinstance(nlst, list):
+            for lst in nlst:
+                if isinstance(lst, dict) and 'billing' in lst:
+                    lst['currency_unit'] = currency_unit
+
     def get_items(nlst):
         _list = []
 
@@ -747,6 +757,8 @@ def get_all_items(nlst, klst, is_get_name=False):
             _list.append(d)
 
         return _list
+
+    set_currency_unit(nlst)
 
     to_orderdict(nlst, klst)
     alst = get_items(nlst)
