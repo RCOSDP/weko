@@ -1763,8 +1763,6 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
             index_all_name = Indexes.get_index_by_all_name(index_path_list[-1])
             index_infos = Indexes.get_path_list([i.id for i in index_all_name])
             msg_not_exist = _("The specified {} does not exist in system.")
-            print('=============== index_name_path: {}'.format(index_name_path))
-            print('=============== index_infos: {}'.format(index_infos))
             if index_infos:
                 for info in index_infos:
                     index_info = None
@@ -1790,8 +1788,6 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
                     errors.append(msg_not_exist.format("POS_INDEX"))
         result = []
         if temp_res and not all_index_permission:
-            print('=============== can_edit_indexes: {}'.format(can_edit_indexes))
-            print('=============== temp_res: {}'.format(temp_res))
             msg_can_not_edit = _("Your role cannot register items in this index.")
             if not can_edit_indexes:
                 errors.append(msg_can_not_edit)
