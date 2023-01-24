@@ -1794,10 +1794,10 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
                 result = []
             elif can_edit_indexes[0] != 0:
                 for i in temp_res:
-                    if i not in can_edit_indexes:
-                        errors.append(msg_can_not_edit)
-                    else:
+                    if i in can_edit_indexes:
                         result.append(i)
+                if not result:
+                    errors.append(msg_can_not_edit)
 
         return result
 
