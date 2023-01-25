@@ -21,7 +21,7 @@ from weko_index_tree.models import Index
 from weko_records.api import Mapping
 
 from invenio_oaiserver.response import is_private_index, getrecord, listrecords, \
-    NS_DC, NS_OAIDC, NS_OAIPMH, is_pubdate_in_future
+    NS_DC, NS_OAIDC, NS_OAIPMH, is_pubdate_in_future, listidentifiers
 from invenio_oaiserver.models import Identify, OAISet
 from invenio_oaiserver.utils import HARVEST_PRIVATE, datetime_to_datestamp
 
@@ -511,3 +511,198 @@ def test_is_pubdate_in_future():
 # def combine_record_file_urls(record, object_uuid, meta_prefix):
 # def create_files_url(root_url, record_id, filename):
 # def get_identifier(record):
+
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_response.py::test_issue34851_listrecords -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_issue34851_listrecords(app, records, item_type, mock_execute,mocker):
+    with app.app_context():
+        identify = Identify(
+            outPutSetting=True
+        )
+        oaiset = OAISet(
+            spec="1557819692844"
+        )
+        index_metadata = {
+            "id":1557819692844,
+            "parent":0,
+            "position":0,
+            "index_name":"コンテンツタイプ (Contents Type)",
+            "index_name_english":"Contents Type",
+            "index_link_name":"",
+            "index_link_name_english":"New Index",
+            "index_link_enabled":False,
+            "more_check":False,
+            "display_no":5,
+            "harvest_public_state":True,
+            "display_format":1,
+            "image_name":"",
+            "public_state":True,
+            "recursive_public_state":True,
+            "rss_status":False,
+            "coverpage_state":False,
+            "recursive_coverpage_check":False,
+            "browsing_role":"3,-98,-99",
+            "recursive_browsing_role":False,
+            "contribute_role":"1,2,3,4,-98,-99",
+            "recursive_contribute_role":False,
+            "browsing_group":"",
+            "recursive_browsing_group":False,
+            "recursive_contribute_group":False,
+            "owner_user_id":1,
+            "item_custom_sort":{"2":1}
+        }
+        index = Index(**index_metadata)
+        mapping = Mapping.create(
+            item_type_id=item_type.id,
+            mapping={}
+        )
+        with db.session.begin_nested():
+            db.session.add(identify)
+            db.session.add(index)
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="ListRecords",
+            set="1557819692844"
+        )
+        dummy_data={
+            "hits":{
+                "total":4,
+                "hits":[
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[0][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[0][2].id,
+                    },
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[1][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[1][2].id,
+                    },
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[2][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[2][2].id,
+                    },
+                ]
+            }
+        }
+
+        ns={"root_name": "jpcoar", "namespaces":{'': 'https://github.com/JPCOAR/schema/blob/master/1.0/',
+            'dc': 'http://purl.org/dc/elements/1.1/', 'xs': 'http://www.w3.org/2001/XMLSchema',
+            'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'xml': 'http://www.w3.org/XML/1998/namespace',
+            'dcndl': 'http://ndl.go.jp/dcndl/terms/', 'oaire': 'http://namespace.openaire.eu/schema/oaire/',
+            'jpcoar': 'https://github.com/JPCOAR/schema/blob/master/1.0/', 'dcterms': 'http://purl.org/dc/terms/',
+            'datacite': 'https://schema.datacite.org/meta/kernel-4/', 'rioxxterms': 'http://www.rioxx.net/schema/v2.0/rioxxterms/'}}
+        mocker.patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=oaiset)
+        mocker.patch("invenio_oaiserver.response.to_utc",side_effect=lambda x:x)
+        mocker.patch("weko_index_tree.utils.get_user_groups",return_value=[])
+        mocker.patch("weko_index_tree.utils.check_roles",return_value=True)
+        mocker.patch("invenio_oaiserver.response.get_identifier",return_value=None)
+        mocker.patch("weko_schema_ui.schema.cache_schema",return_value=ns)
+        with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
+            res=listrecords(**kwargs)
+            assert res.xpath("/x:OAI-PMH/x:ListRecords/x:record[1]/x:header/x:datestamp/text()",namespaces=NAMESPACES) == [records[1][2].updated.replace(microsecond=0).isoformat()+"Z"]
+            assert res.xpath("/x:OAI-PMH/x:ListRecords/x:record[2]/x:header/x:datestamp/text()",namespaces=NAMESPACES) == [records[2][2].updated.replace(microsecond=0).isoformat()+"Z"]
+
+
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_response.py::test_issue34851_listidentifiers -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_issue34851_listidentifiers(app, records, item_type, mock_execute,mocker):
+    with app.app_context():
+        identify = Identify(
+            outPutSetting=True
+        )
+        oaiset = OAISet(
+            spec="1557819692844"
+        )
+        index_metadata = {
+            "id":1557819692844,
+            "parent":0,
+            "position":0,
+            "index_name":"コンテンツタイプ (Contents Type)",
+            "index_name_english":"Contents Type",
+            "index_link_name":"",
+            "index_link_name_english":"New Index",
+            "index_link_enabled":False,
+            "more_check":False,
+            "display_no":5,
+            "harvest_public_state":True,
+            "display_format":1,
+            "image_name":"",
+            "public_state":True,
+            "recursive_public_state":True,
+            "rss_status":False,
+            "coverpage_state":False,
+            "recursive_coverpage_check":False,
+            "browsing_role":"3,-98,-99",
+            "recursive_browsing_role":False,
+            "contribute_role":"1,2,3,4,-98,-99",
+            "recursive_contribute_role":False,
+            "browsing_group":"",
+            "recursive_browsing_group":False,
+            "recursive_contribute_group":False,
+            "owner_user_id":1,
+            "item_custom_sort":{"2":1}
+        }
+        index = Index(**index_metadata)
+        mapping = Mapping.create(
+            item_type_id=item_type.id,
+            mapping={}
+        )
+        with db.session.begin_nested():
+            db.session.add(identify)
+            db.session.add(index)
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="ListIdentifiers",
+            set="1557819692844"
+        )
+        dummy_data={
+            "hits":{
+                "total":4,
+                "hits":[
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[0][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[0][2].id,
+                    },
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[1][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[1][2].id,
+                    },
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[2][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[2][2].id,
+                    },
+                ]
+            }
+        }
+
+        ns={"root_name": "jpcoar", "namespaces":{'': 'https://github.com/JPCOAR/schema/blob/master/1.0/',
+            'dc': 'http://purl.org/dc/elements/1.1/', 'xs': 'http://www.w3.org/2001/XMLSchema',
+            'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'xml': 'http://www.w3.org/XML/1998/namespace',
+            'dcndl': 'http://ndl.go.jp/dcndl/terms/', 'oaire': 'http://namespace.openaire.eu/schema/oaire/',
+            'jpcoar': 'https://github.com/JPCOAR/schema/blob/master/1.0/', 'dcterms': 'http://purl.org/dc/terms/',
+            'datacite': 'https://schema.datacite.org/meta/kernel-4/', 'rioxxterms': 'http://www.rioxx.net/schema/v2.0/rioxxterms/'}}
+        mocker.patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=oaiset)
+        mocker.patch("invenio_oaiserver.response.to_utc",side_effect=lambda x:x)
+        mocker.patch("weko_index_tree.utils.get_user_groups",return_value=[])
+        mocker.patch("weko_index_tree.utils.check_roles",return_value=True)
+        mocker.patch("invenio_oaiserver.response.get_identifier",return_value=None)
+        mocker.patch("weko_schema_ui.schema.cache_schema",return_value=ns)
+        with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
+            res=listidentifiers(**kwargs)
+            assert res.xpath("/x:OAI-PMH/x:ListIdentifiers/x:header[1]/x:datestamp/text()",namespaces=NAMESPACES) == [records[1][2].updated.replace(microsecond=0).isoformat()+"Z"]
+            assert res.xpath("/x:OAI-PMH/x:ListIdentifiers/x:header[2]/x:datestamp/text()",namespaces=NAMESPACES) == [records[2][2].updated.replace(microsecond=0).isoformat()+"Z"]

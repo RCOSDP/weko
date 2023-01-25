@@ -130,6 +130,12 @@
 
 	var SchemaText = React.createClass({
 		displayName: 'SchemaText',
+		export: function _export() {
+			return {
+				type: "string",
+				format: "text",
+			};
+		},
 
 		render: function render() {
 			return React.createElement('div', null);
@@ -138,7 +144,12 @@
 
 	var SchemaTextarea = React.createClass({
 		displayName: 'SchemaTextarea',
-
+		export: function _export() {
+			return {
+				type: "string",
+				format: "textarea"
+			};
+		},
 		render: function render() {
 			return React.createElement('div', null);
 		}
@@ -146,7 +157,12 @@
 
 	var SchemaDateTime = React.createClass({
 		displayName: 'SchemaDateTime',
-
+		export: function _export() {
+			return {
+				type: "string",
+				format: "datetime",
+			};
+		},
 		render: function render() {
 			return React.createElement('div', null);
 		}
@@ -194,15 +210,15 @@
 				arr = this.state.enum.split('|');
 			}
 			return {
-        type: "array",
-        format: "checkboxes",
-        enum: arr,
-        items: {
-          type: "string",
-          enum: arr
-        }
-      };
-    },
+				type: "array",
+				format: "checkboxes",
+				enum: arr,
+				items: {
+					type: "string",
+					enum: arr
+				}
+		};
+		},
 		render: function render() {
 			var self = this;
 			let is_write = self.state.hasOwnProperty('editAble') ? self.state.editAble : false;
@@ -814,22 +830,22 @@
 							templateUrl: "/static/templates/weko_deposit/datepicker.html",
 							title: value.title
 						};
-          } else if ('checkboxes' === value.format) {
-            sub_form = {
-              key: parentkey + itemKey,
-              type: "template",
-              templateUrl: "/static/templates/weko_deposit/checkboxes.html",
-              title: value.title,
-              titleMap: self.refs['subitem' + index].exportTitleMap()
-            };
-          } else if ('select' === value.format || 'radios' === value.format) {
-            sub_form = {
-              key: parentkey + itemKey,
-              type: value.format,
-              title: value.title,
-              titleMap: self.refs['subitem' + index].exportTitleMap()
-            };
-          }  else if ('array' === value.format) {
+					} else if ('checkboxes' === value.format) {
+					  	sub_form = {
+					  	  	key: parentkey + itemKey,
+					  	  	type: "template",
+					  	  	templateUrl: "/static/templates/weko_deposit/checkboxes.html",
+					  	  	title: value.title,
+					  	  	titleMap: self.refs['subitem' + index].exportTitleMap()
+					  	};
+					} else if ('select' === value.format || 'radios' === value.format) {
+						sub_form = {
+							key: parentkey + itemKey,
+							type: value.format,
+							title: value.title,
+							titleMap: self.refs['subitem' + index].exportTitleMap()
+						};
+					}  else if ('array' === value.format) {
 						sub_form = {
 							key: parentkey + itemKey,
 							add: "New",
@@ -883,7 +899,20 @@
 						itemKey = self.createSubItemName(value.title);
 					}
 					if ('text' === value.format || 'textarea' === value.format || 'datetime' === value.format) {
-						properties[itemKey] = value;
+						//properties[itemKey] = value;
+						if (typeof self.refs['subitem'+ index] != 'undefined') {
+							properties[itemKey] = self.refs['subitem' + index].export();
+							properties[itemKey].title = value.title;
+						} else {
+							properties[itemKey] = {
+								type: value.type,
+								format: value.format,
+								title: value.title
+							}
+						}
+						if (value.title_i18n){
+							properties[itemKey].title_i18n=value.title_i18n
+						}
 					} else if ('checkboxes' === value.format || 'radios' === value.format || 'select' === value.format) {
 						properties[itemKey] = self.refs['subitem' + index].export();
 						properties[itemKey].title = value.title;
