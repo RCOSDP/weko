@@ -19,7 +19,7 @@ from invenio_stats.contrib.event_builders import build_celery_task_unique_id, \
 from invenio_stats.processors import EventsIndexer, anonymize_user, \
     flag_restricted, flag_robots
 from invenio_stats.queries import ESDateHistogramQuery, ESTermsQuery, \
-    ESWekoFileStatsQuery, ESWekoTermsQuery
+    ESWekoFileStatsQuery, ESWekoTermsQuery, ESWekoRankingQuery
 
 
 def register_events():
@@ -814,6 +814,98 @@ def register_queries():
                 index='{}-stats-file-preview'.format(search_index_prefix),
                 doc_type='file-preview-day-aggregation',
                 group_fields=['site_license_name', 'count'],
+            )
+        ),
+        dict(
+            query_name='get-ranking-data',
+            query_class=ESWekoRankingQuery,
+            query_config=dict(
+                index='{}-stats-{}',
+                doc_type='{}-day-aggregation',
+                main_fields=['start_date', 'end_date', 'group_field', 'agg_size', 'count_field'],
+                metric_fields=dict(),
+                main_query={
+                    "size": 0,
+                    "query": {
+                        "bool": {
+                            "must": [
+                                {
+                                    "range": {
+                                        "timestamp": {
+                                            "gte": "@start_date",
+                                            "lte": "@end_date",
+                                            "time_zone": "@time_zone"
+                                        }
+                                    }
+                                }
+                            ],
+                            "must_not": "@must_not"
+                        }
+                    },
+                    "aggs": {
+                        "my_buckets": {
+                            "terms": {
+                                "field": "@group_field",
+                                "size": "@agg_size",
+                                "order": {
+                                    "my_sum": "desc" 
+                                }
+                            },
+                            "aggs": {
+                                "my_sum": {
+                                    "sum": {
+                                        "field": "@count_field" 
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        ),
+        dict(
+            query_name='get-new-items-data',
+            query_class=ESWekoRankingQuery,
+            query_config=dict(
+                index='{}-weko',
+                doc_type='item-v1.0.0',
+                main_fields=['start_date', 'end_date', 'agg_size'],
+                metric_fields=dict(),
+                main_query={
+                    "size": "@agg_size",
+                    "sort": [
+                        {
+                            "publish_date":{
+                                "order": "desc"
+                            }
+                        }
+                    ],
+                    "query":{
+                        "bool":{
+                            "must":[
+                                {
+                                    "range": {
+                                        "publish_date": {
+                                            "gte": "@start_date",
+                                            "lte": "@end_date"
+                                        }
+                                    }
+                                },
+                                {
+                                    "term": {
+                                        "relation_version_is_last": True
+                                    }
+                                },
+                                {
+                                    "term": {
+                                        "publish_status": 0
+                                    }
+                                }
+                            ],
+                            "must_not": "@must_not"
+                        }
+                    }
+                }
             )
         )
     ]

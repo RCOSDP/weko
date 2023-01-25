@@ -1218,6 +1218,81 @@ class QueryItemRegReportHelper(object):
         return new_result if new_result else []
 
 
+class QueryRankingHelper(object):
+    """QueryRankingHelper helper class."""
+
+    @classmethod
+    def Calculation(cls, res, data_list):
+        """Create response object."""
+        for item in res['aggregations']['my_buckets']['buckets']: 
+            data = { 
+                'key': item['key'],
+                'count': int(item['my_sum']['value'])
+            }
+            data_list.append(data)
+
+    @classmethod
+    def get(cls, **kwargs):
+        """Get ranking data."""
+        result = []
+
+        try:
+            start_date = kwargs.get('start_date')
+            end_date = kwargs.get('end_date')
+            params = {
+                'start_date': start_date,
+                'end_date': end_date + 'T23:59:59',
+                'agg_size': str(kwargs.get('agg_size', 10)),
+                'event_type': kwargs.get('event_type', ''),
+                'group_field': kwargs.get('group_field', ''),
+                'count_field': kwargs.get('count_field', ''),
+                'must_not': kwargs.get('must_not', ''),
+                'new_items': False
+            }
+            all_query_cfg = current_stats.queries['get-ranking-data']
+            all_query = all_query_cfg.query_class(**all_query_cfg.query_config)
+
+            all_res = all_query.run(**params)
+            cls.Calculation(all_res, result)
+
+        except es_exceptions.NotFoundError as e:
+            current_app.logger.debug(e)
+        except Exception as e:
+            current_app.logger.debug(e)
+
+        return result
+
+    @classmethod
+    def get_new_items(cls, **kwargs):
+        """Get new items."""
+        result = []
+
+        try:
+            start_date = kwargs.get('start_date')
+            end_date = kwargs.get('end_date')
+            params = {
+                'start_date': start_date,
+                'end_date': end_date,
+                'agg_size': str(kwargs.get('agg_size', 10)),
+                'must_not': kwargs.get('must_not', ''),
+                'new_items': True
+            }
+            all_query_cfg = current_stats.queries['get-new-items-data']
+            all_query = all_query_cfg.query_class(**all_query_cfg.query_config)
+
+            all_res = all_query.run(**params)
+            for r in all_res['hits']['hits']:
+                if r.get('_source', {}).get('path'):
+                    result.append(r['_source'])
+
+        except es_exceptions.NotFoundError as e:
+            current_app.logger.debug(e)
+        except Exception as e:
+            current_app.logger.debug(e)
+
+        return result
+
+
 class StatsCliUtil:
     """Stats CLI utilities."""
 
