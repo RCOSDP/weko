@@ -48,6 +48,7 @@ from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records.api import RecordBase
 from invenio_accounts.models import User
 from invenio_search import RecordsSearch
@@ -413,17 +414,22 @@ def get_permission_record(rank_type, es_data, display_rank, has_permission_index
         pid_value = data['key'] \
             if 'key' in data \
             else data.get('_item_metadata').get('control_number')
-        record = WekoRecord.get_record_by_pid(pid_value)
-        if roles[0]:
-            add_flag = True
-        else:
-            is_public = roles[0] or check_created_id(record) or check_publish_status(record)
-            has_index_permission = False
-            for idx in record.navi:
-                if str(idx.cid) in has_permission_indexes:
-                    has_index_permission = True
-                    break
-            add_flag = is_public and has_index_permission
+        try:
+            record = WekoRecord.get_record_by_pid(pid_value)
+            if roles[0]:
+                add_flag = True
+            else:
+                is_public = roles[0] or check_created_id(record) or check_publish_status(record)
+                has_index_permission = False
+                for idx in record.navi:
+                    if str(idx.cid) in has_permission_indexes:
+                        has_index_permission = True
+                        break
+                add_flag = is_public and has_index_permission
+        except PIDDoesNotExistError:
+            # do not add deleted items into ranking list. 
+            add_flag = False
+            current_app.logger.debug("PID {} does not exist.".format(pid_value))
 
         if add_flag:
             if rank_type == 'new_items':
