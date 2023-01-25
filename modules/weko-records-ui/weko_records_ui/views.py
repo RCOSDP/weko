@@ -689,17 +689,9 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         thumbnail_width=current_app.config.get('WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL'),
         analysis_url=current_app.config.get(
             'WEKO_RECORDS_UI_ONLINE_ANALYSIS_URL'),
-<<<<<<< HEAD
-        flg_display_itemtype=current_app.config.get('WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE'),
-        flg_display_resourcetype=current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE'),
-
-
-=======
         flg_display_itemtype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE') ,
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
-        
->>>>>>> origin/release
         **ctx,
         **kwargs
     )

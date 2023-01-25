@@ -130,16 +130,10 @@
         </div>
       </ul>
     </div>
-<<<<<<< HEAD
-    <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')" style="display: flex">
-      <img ng-if="$last" ng-src="{{vm.invenioSearchResults.aggregations.path.buckets[0][0].img}}"
-        class="img-thumbnail ng-hide" id="thumbnail_img" style="width: 128px;" 
-=======
     <div ng-if="typeIndexList() != 'root'">
     <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img') || (vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 1 && !journal_info) || vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 2" style="display: flex">
       <img ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')" ng-src="{{vm.invenioSearchResults.aggregations.path.buckets[0][0].img}}"
         class="img-thumbnail ng-hide" id="thumbnail_img" style="max-width: 512px;" 
->>>>>>> origin/release
         alt={{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('-/-')[$index]}}
         ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index">
       <span ng-if="(vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 1 && !journal_info) || 
