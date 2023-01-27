@@ -28,7 +28,20 @@ def terms_filter(field):
     :param field: Field name.
     :returns: Function that returns the Terms query.
     """
+    return terms_condition_filter(field, False)
+
+def terms_condition_filter(field, isAndFileter):
+    """Create a term filter.
+
+    :param field: Field name.
+    :returns: Function that returns the Terms query.
+    """
     def inner(values):
+        if len(values) > 1 and isAndFileter:
+            q_list = []
+            for value in values:
+                q_list.append(Q('term', **{field: value}))
+            return Q('bool', **{'must': q_list})
         return Q('terms', **{field: values})
     return inner
 
@@ -98,7 +111,6 @@ def _post_filter(search, urlkwargs, definitions):
 
     for filter_ in filters:
         search = search.post_filter(filter_)
-
     return (search, urlkwargs)
 
 
@@ -108,7 +120,6 @@ def _query_filter(search, urlkwargs, definitions):
 
     for filter_ in filters:
         search = search.filter(filter_)
-
     return (search, urlkwargs)
 
 
@@ -130,10 +141,17 @@ def default_facets_factory(search, index):
     """
     urlkwargs = MultiDict()
 
+    #import traceback
+    #try:
+    #    raise Exception
+    #except:
+    #    traceback.print_exc()
+        
     from weko_admin.utils import get_facet_search_query
     from weko_search_ui.permissions import search_permission
     facets = get_facet_search_query(search_permission.can()).get(index)
-
+    current_app.logger.warning('==========   facets   ==========')
+    current_app.logger.warning(facets)
     if facets is not None:
         # Aggregations.
         search = _aggregations(search, facets.get("aggs", {}))

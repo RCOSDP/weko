@@ -32,7 +32,7 @@ function Layout({isEditScreen}) {
 
 function FacetSearchLayout(
   {
-    name_en, name_jp, mapping, active, ui_type, is_open, display_number, aggregations, mapping_list
+    name_en, name_jp, mapping, active, ui_type, is_open, display_number, search_condition, aggregations, mapping_list
   }
 ) {
   const [_nameEN, _setNameEN] = useState(name_en);
@@ -42,6 +42,7 @@ function FacetSearchLayout(
   const [_uiType, _setUiType] = useState(ui_type);
   const [_isOpen, _setIsOpen] = useState(is_open);
   const [_displayNumber, _setDisplayNumber] = useState(display_number);
+  const [_searchCondition, _setSearchCondition] = useState(search_condition);
   const [_aggregations, _setAggregations] = useState(aggregations);
 
   function handleSaveFacetSearch() {
@@ -71,6 +72,7 @@ function FacetSearchLayout(
       ui_type: _uiType,
       is_open: _isOpen,
       display_number: _displayNumber,
+      search_condition: _searchCondition,
       aggregations: _aggregations,
       id:LABELS['lblFacetSearchId']
     }
@@ -219,6 +221,10 @@ function FacetSearchLayout(
         <InputOpenCloseComponent value={_isOpen} setValue={_setIsOpen}
                               idName={LABELS['lblOpenClose']}/>
       </div>
+      <div className="row">
+        <InputSearchConditionComponent value={_searchCondition} setValue={_setSearchCondition}
+                              idName={LABELS['lblSearchCondition']}/>
+      </div>
       <br/>
       <div className="row">
           <div className="form-group row">
@@ -314,6 +320,34 @@ function InputOpenCloseComponent({value, setValue, idName}) {
           <input type="radio" id="openCloseClose" checked={value === false}
                  onChange={handleChangeDisplay}/>
           {LABELS['lblOpenCloseClose']}
+        </label>
+      </div>
+    </div>
+  )
+}
+
+function InputSearchConditionComponent({value, setValue, idName}) {
+
+  function handleChangeDisplay(event) {
+    event.preventDefault();
+    setValue(event.target.value);
+  }
+
+  return (
+    <div className="form-group">
+      <label htmlFor={idName} className="control-label col-xs-2 text-right">
+        {idName}
+      </label>
+      <div className="controls col-xs-6">
+        <label className="radio-inline" htmlFor="searchConditionOR">
+          <input type="radio" id="searchConditionOR" checked={value === "OR"} value="OR"
+                 onChange={handleChangeDisplay}/>
+          {LABELS['lblSearchConditionOR']}
+        </label>
+        <label className="radio-inline" htmlFor="searchConditionAND">
+          <input type="radio" id="searchConditionAND" checked={value === "AND"} value="AND"
+                 onChange={handleChangeDisplay}/>
+          {LABELS['lblSearchConditionAND']}
         </label>
       </div>
     </div>
@@ -467,7 +501,7 @@ function CustomAggregations({aggregations, setAggregations, mappingList}) {
 
 function FacetSearchDetailsLayout(
   {
-    name_en, name_jp, mapping, active, ui_type, is_open, display_number, aggregations
+    name_en, name_jp, mapping, active, ui_type, is_open, display_number, search_condition, aggregations
   }
 ) {
 
@@ -516,6 +550,10 @@ function FacetSearchDetailsLayout(
           <tr>
             <td><b>{LABELS['lblOpenClose']}</b></td>
             <td>{is_open ? LABELS['lblOpenCloseOpen'] : LABELS['lblOpenCloseClose']}</td>
+          </tr>
+          <tr>
+            <td><b>{LABELS['lblSearchCondition']}</b></td>
+            <td>{search_condition}</td>
           </tr>
           </tbody>
         </table>
