@@ -24,13 +24,24 @@ from weko_admin.models import FacetSearchSetting
 
 from invenio_records_rest.facets import _aggregations, _create_filter_dsl, \
     _post_filter, _query_filter, default_facets_factory, range_filter, \
-    terms_filter
+    terms_filter, terms_condition_filter
 
 
 def test_terms_filter():
     """Test terms filter."""
     f = terms_filter('test')
     assert f(['a', 'b']).to_dict() == dict(terms={'test': ['a', 'b']})
+
+def test_terms_codition_filter():
+    """Test terms filter."""
+    f1 = terms_condition_filter('test', False)
+    assert f1(['a']).to_dict() == dict(terms={'test': ['a']})
+    assert f1(['a', 'b']).to_dict() == dict(terms={'test': ['a', 'b']})
+
+    f2 = terms_condition_filter('test', True)
+    assert f2(['a']).to_dict() == dict(terms={'test': ['a']})
+    assert f2(['a', 'b']).to_dict() == dict(bool={'must':[dict(term={'test': 'a'}), dict(term={'test': 'b'})]})
+
 
 
 def test_range_filter():

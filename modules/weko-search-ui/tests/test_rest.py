@@ -149,12 +149,38 @@ def test_create_blueprint(i18n_app, app, users):
         endpoints = app.config['WEKO_SEARCH_REST_ENDPOINTS']
         assert create_blueprint(app, endpoints)
 
+def test_IndexSearchResource_get_facet(i18n_app,client_rest, db, users, item_type, facet_search_setting):
+    i18n_app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
+    sname = current_app.config["SERVER_NAME"]
+    def dummy_response(data):
+        if isinstance(data, str):
+            data = json_data(data)
+        dummy=response.Response(Search(), data)
+        return dummy
+    param = {"page":"1",
+            "size":"20",
+            "sort":"wtl",
+            "Data Language":"jpn",
+            "Time Period(s)":"1899--2018",
+            "Data Type":"公的統計: 集計データ、統計表",
+            "is_facet_search":"true"}
+    titleFacet={},{},{},{},{},{'Data Language': 'OR', 'Access': 'OR', 'Location': 'OR', 'Time Period(s)': 'AND', 'Topic': 'OR', 'Distributor': 'OR', 'Data Type': 'AND'}
+    facets_mapping={'Data Language': 'language', 'Access': 'accessRights', 'Location': 'geoLocation.geoLocationPlace', 'Time Period(s)': 'temporal', 'Topic': 'subject.value', 'Distributor': 'contributor.contributorName', 'Data Type': 'description.value'}
+    facet = json_data("data/search/facet_02.json")
+    with patch("weko_admin.utils.get_facet_search_query", return_value=facet):
+        with patch("weko_search_ui.rest.Indexes.get_self_list",side_effect=mock_path(**path1)):
+            with patch("weko_admin.utils.get_title_facets", return_value=titleFacet):
+                with patch("weko_admin.models.FacetSearchSetting.get_activated_facets_mapping", return_value=facets_mapping):
+                    with patch("invenio_search.api.RecordsSearch.execute", return_value=dummy_response("data/search/execute_result01_02_03.json")):
+                        res =  client_rest.get(url("/index/", param))
+                        assert res.status_code == 200
+
 
 # class IndexSearchResource(ContentNegotiatedMethodView):
 # def __init__
 # def get(self, **kwargs):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResource_get -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_IndexSearchResource_get(i18n_app, users, client_request_args):
+def test_IndexSearchResource_get(app,i18n_app, users, client_request_args):
     total_hit_count = 30
     top_page = "http://test_server/index/?page=1&size=20"
     next_page = "http://test_server/index/?page=2&size=20"

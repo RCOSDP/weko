@@ -7,7 +7,8 @@
         "display_number":null,
         "aggregations":[],
         "active":true,
-        "is_open":true
+        "is_open":true,
+        "search_condition":"OR"
     },
     "Access":{
         "name_en":"Access",
@@ -17,7 +18,8 @@
         "display_number":null,
         "aggregations":[],
         "active":true,
-        "is_open":true
+        "is_open":true,
+        "search_condition":"OR"
     },
     "Location":{
         "name_en":"Location",
@@ -27,7 +29,8 @@
         "display_number":5,
         "aggregations":[],
         "active":true,
-        "is_open":true
+        "is_open":true,
+        "search_condition":"OR"
     },
     "Temporal":{
         "name_en":"Temporal",
@@ -37,7 +40,8 @@
         "display_number":null,
         "aggregations":[],
         "active":true,
-        "is_open":true
+        "is_open":true,
+        "search_condition":"AND"
     },
     "Topic":{
         "name_en":"Topic",
@@ -47,7 +51,8 @@
         "mapping":"subject.value",
         "aggregations":[],
         "active":true,
-        "is_open":false
+        "is_open":false,
+        "search_condition":"OR"
     },
     "Distributor":{
         "name_en":"Distributor",
@@ -57,7 +62,8 @@
         "display_number":null,
         "aggregations":[{"agg_value": "Distributor", "agg_mapping": "contributor.@attributes.contributorType"}],
         "active":true,
-        "is_open":true
+        "is_open":true,
+        "search_condition":"OR"
     },
     "Data Type":{
         "name_en":"Data Type",
@@ -67,6 +73,7 @@
         "display_number":null,
         "aggregations":[{"agg_value": "Other", "agg_mapping": "description.descriptionType"}],
         "active":true,
-        "is_open":false
+        "is_open":false,
+        "search_condition":"AND"
     }
 }

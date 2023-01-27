@@ -46,6 +46,7 @@ from invenio_records_rest.views import (
     need_record_permission,
     pass_record,
 )
+from invenio_records_rest.facets import terms_condition_filter, range_filter
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
 from webargs import fields
@@ -221,10 +222,22 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         
         # Execute search
         weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
+        from weko_admin.utils import get_title_facets
+        titles, order, uiTypes, isOpens, displayNumbers, searchConditions = get_title_facets()
+        current_app.logger.warning(search)
         for param in params:
             query_key = weko_faceted_search_mapping[param]
-            search = search.post_filter({"terms": {query_key: params[param]}})
-
+            if query_key == 'temporal':
+                range_value = params[param][0].split('--')
+                search = search.post_filter({"range": {"date_range1": {"gte": range_value[0], "lte": range_value[1]}}})
+            else:
+                if searchConditions[param]  == 'AND':
+                    q_list = []
+                    for value in params[param]:
+                        q_list.append({ "term": {query_key: value}})
+                    search = search.post_filter({"bool": {"must": q_list}})
+                else: 
+                    search = search.post_filter({"terms": {query_key: params[param]}})
         search_result = search.execute()
         # Generate links for prev/next
         urlkwargs.update(
