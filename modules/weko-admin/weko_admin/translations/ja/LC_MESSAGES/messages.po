@@ -1943,11 +1943,27 @@ msgstr "開"
 msgid "OpenClose Close"
 msgstr "閉"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:67
 #, python-format
 msgid "DisplayNumber Validation1"
 msgstr "表示件数は1以上99以下の整数値で入力する必要があります。"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:68
 msgid "DisplayNumber Validation2"
 msgstr "CheckboxListを選択した場合は表示件数を入力する必要があります。"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+msgid "Search Condition"
+msgstr "検索条件"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+msgid "Search Condition or"
+msgstr "OR"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:66
+msgid "Search Condition and"
+msgstr "AND"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:69
+msgid "NameEN Validation"
+msgstr "項目名（英）の値は使用出来ません。"

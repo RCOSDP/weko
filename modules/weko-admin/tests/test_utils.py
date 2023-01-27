@@ -59,7 +59,8 @@ from weko_admin.utils import (
     get_facet_search_query,
     get_title_facets,
     is_exits_facet,
-    overwrite_the_memory_config_with_db
+    overwrite_the_memory_config_with_db,
+    get_detail_search_list
 )
 
 from tests.helpers import json_data
@@ -2072,15 +2073,16 @@ def test_get_facet_search(client,facet_search_settings):
         "mapping": "",
         "active": True,
         "aggregations": [],
-        "display_number": 5,
-        "is_open":True,
-        "ui_type": "CheckboxList"
+        "ui_type": "",
+        "display_naumber": "",
+        "is_open": "",
+        "search_condition": ""
     }
     result = get_facet_search(None)
     assert result == test
     
     result  = get_facet_search(1)
-    assert result == {"name_en":"Data Language","name_jp":"データの言語","mapping":"language","aggregations":[],"active":True}
+    assert result == {"name_en":"Data Language","name_jp":"データの言語","mapping":"language","aggregations":[],"active":True, "display_number": 5, "is_open": True, 'search_condition': 'OR', 'ui_type': 'CheckboxList'}
 
 
 # def get_item_mapping_list():
@@ -2173,24 +2175,54 @@ def test_get_facet_search_query(app,mocker):
             "aggs": {"Data Language": { "terms": { "field": "language", "size": 1000 } }}},
           "Data Type": {"filter": {"bool": {"must": [{ "term": { "description.descriptionType": "Other" } },{ "term": { "publish_status": "0" } }]}},
             "aggs": {"Data Type": {"terms": { "field": "description.value", "size": 1000 }}}},
+          "Time Period(s)": {"filter": {"bool": {"must": [{ "term": { "temporal": "Other" } },{ "term": { "publish_status": "0" } }]}},
+            "aggs": {"Time Period(s)": {"terms": { "field": "temporal", "size": 1000 }}}},
           "raw_test": {"filter": {"bool": { "must": [{ "term": { "publish_status": "0" } }] }},
             "aggs": {"raw_test": { "terms": { "field": "test.fields.raw", "size": 1000 } }}}
         },
-        "post_filters": {"Data Language": "language","Data Type": "description.value","raw_test": "test.raw"}
+        "post_filters": {"Data Language": "language","Data Type": "description.value","raw_test": "test.raw","Time Period(s)": "temporal"}
       }
     }
     cache_data = json.dumps(cache_data)
-    
+    titleFacet={},{},{},{},{},{'Data Language': 'OR', 'Access': 'OR', 'Location': 'OR','raw_test': 'OR', 'Time Period(s)': 'AND', 'Topic': 'OR', 'Distributor': 'OR', 'Data Type': 'AND'}
     # not exist cache
-    with patch("weko_admin.utils.is_exists_key_or_empty_in_redis", return_value=False):
-        with patch("weko_admin.utils.get_redis_cache", side_effect=[None, cache_data]):
-            result = get_facet_search_query()
-            assert result
-            
-    with patch("weko_admin.utils.is_exists_key_or_empty_in_redis", return_value=True):
-        with patch("weko_admin.utils.get_redis_cache", side_effect=[cache_data, cache_data]):
-            result = get_facet_search_query()
-            assert result
+    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+        with patch("weko_admin.utils.get_title_facets", return_value=titleFacet):
+            with patch("weko_admin.utils.is_exists_key_or_empty_in_redis", return_value=False):
+                with patch("weko_admin.utils.get_redis_cache", side_effect=[None, cache_data]):
+                    result = get_facet_search_query()
+                    assert result
+                    
+            with patch("weko_admin.utils.is_exists_key_or_empty_in_redis", return_value=True):
+                with patch("weko_admin.utils.get_redis_cache", side_effect=[cache_data, cache_data]):
+                    result = get_facet_search_query()
+                    assert result
+
+# def test_get_facet_search_query_facet(i18n_app,client_rest, db, users, item_type, facet_search_setting):
+#     i18n_app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
+#     sname = current_app.config["SERVER_NAME"]
+#     def dummy_response(data):
+#         if isinstance(data, str):
+#             data = json_data(data)
+#         dummy=response.Response(Search(), data)
+#         return dummy
+#     param = {"page":"1",
+#             "size":"20",
+#             "sort":"wtl",
+#             "Data Language":"jpn",
+#             "Time Period(s)":"1899--2018",
+#             "Data Type":"公的統計: 集計データ、統計表",
+#             "is_facet_search":"true"}
+#     titleFacet={},{},{},{},{},{'Data Language': 'OR', 'Access': 'OR', 'Location': 'OR', 'Time Period(s)': 'AND', 'Topic': 'OR', 'Distributor': 'OR', 'Data Type': 'AND'}
+#     facets_mapping={'Data Language': 'language', 'Access': 'accessRights', 'Location': 'geoLocation.geoLocationPlace', 'Time Period(s)': 'temporal', 'Topic': 'subject.value', 'Distributor': 'contributor.contributorName', 'Data Type': 'description.value'}
+#     facet = json_data("data/search/facet_02.json")
+#     with patch("weko_admin.utils.get_facet_search_query", return_value=facet):
+#         with patch("weko_search_ui.rest.Indexes.get_self_list",side_effect=mock_path(**path1)):
+#             with patch("weko_admin.utils.get_title_facets", return_value=titleFacet):
+#                 with patch("weko_admin.models.FacetSearchSetting.get_activated_facets_mapping", return_value=facets_mapping):
+#                     with patch("invenio_search.api.RecordsSearch.execute", return_value=dummy_response("data/search/execute_result01_02_03.json")):
+#                         res =  client_rest.get(url("/index/", param))
+#                         assert res.status_code == 200
 
 
 # def get_title_facets():
@@ -2267,9 +2299,18 @@ from weko_admin.utils import (
 )
 
 # def get_title_facets():
-def test_get_title_facets(i18n_app, users, facet_search_settings):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        titles, order, uiTypes, isOpens, displayNumbers = get_title_facets()
+def test_get_title_facets(app, users, facet_search_settings):
+    #facet_search_setting = json_data("data/test_facet.json")
+    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+        #with patch("weko_admin.models.FacetSearchSetting.get_activated_facets", return_value=facet_search_setting):
+        titles, order, uiTypes, isOpens, displayNumbers, searchConditions = get_title_facets()
         assert uiTypes
         assert isOpens
         assert displayNumbers
+        assert searchConditions
+
+# def get_detail_search_list():
+def test_get_detail_search_list(i18n_app, users):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        result =  get_detail_search_list()
+        assert result

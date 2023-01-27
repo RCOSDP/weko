@@ -830,3 +830,44 @@ msgstr "The item name/mapping is already exists. Please input other faceted item
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:81
 msgid "SecretURL Enabled"
 msgstr "Enable"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:60
+msgid "DisplayNumber"
+msgstr "Display Number"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
+msgid "OpenClose"
+msgstr "Open/Close"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
+msgid "OpenClose Open"
+msgstr "Open"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
+msgid "OpenClose Close"
+msgstr "Close"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:67
+#, python-format
+msgid "DisplayNumber Validation1"
+msgstr "Display Number must be an integer value from 1 to 99."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:68
+msgid "DisplayNumber Validation2"
+msgstr "If CheckboxList is selected, Display Number must be entered."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+msgid "Search Condition"
+msgstr "search condition "
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+msgid "Search Condition or"
+msgstr "OR"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:66
+msgid "Search Condition and"
+msgstr "AND"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:69
+msgid "NameEN Validation"
+msgstr "The value of Item Name(EN) cannot be used."

@@ -202,28 +202,28 @@ def test_create_default_affiliation_settings(db,script_info):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_cli.py::test_insert_facet_search_to_db -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_insert_facet_search_to_db(db, script_info):
     runner = CliRunner()
-    result = runner.invoke(insert_facet_search_to_db,["Data Language","データの言語","language","[]","True","SelectBox","1","True"],obj=script_info)
+    result = runner.invoke(insert_facet_search_to_db,["Data Language","データの言語","language","[]","True","SelectBox","1","True","OR"],obj=script_info)
     assert result.exit_code == 0
     assert result.output == "insert facet search\n"
     assert FacetSearchSetting.query.filter_by(name_en="Data Language").one_or_none().active== True
     
-    result = runner.invoke(insert_facet_search_to_db,["Distributor","配布者","contributor.contributorName","[{'agg_value': 'Distributor', 'agg_mapping': 'contributor.@attributes.contributorType'}]","True","CheckboxList","2","True"],obj=script_info)
+    result = runner.invoke(insert_facet_search_to_db,["Distributor","配布者","contributor.contributorName","[{'agg_value': 'Distributor', 'agg_mapping': 'contributor.@attributes.contributorType'}]","True","CheckboxList","2","True","OR"],obj=script_info)
     assert result.exit_code == 0
     assert result.output == "insert facet search\n"
     assert FacetSearchSetting.query.filter_by(name_en="Distributor").one_or_none().active== True
     
-    result = runner.invoke(insert_facet_search_to_db,["Temporal","時間的範囲","temporal","[]","True","RangeSlider","3","True"],obj=script_info)
+    result = runner.invoke(insert_facet_search_to_db,["Temporal","時間的範囲","temporal","[]","True","RangeSlider","3","True","AND"],obj=script_info)
     assert result.exit_code == 0
     assert result.output == "insert facet search\n"
     assert FacetSearchSetting.query.filter_by(name_en="Temporal").one_or_none().active== True
     
     
-    result = runner.invoke(insert_facet_search_to_db,["Topic","トピック","subject.value","[]","True","SelectBox","4"],obj=script_info)
+    result = runner.invoke(insert_facet_search_to_db,["Topic","トピック","subject.value","[]","True","SelectBox","4","False"],obj=script_info)
     assert result.exit_code == 2
     assert 'Usage: create [OPTIONS] NAME_EN NAME_JP MAPPING AGGREGATIONS ACTIVE UI_TYPE' in result.output
     assert FacetSearchSetting.query.filter_by(name_en="Topic").one_or_none()==None
     
     with patch("weko_admin.cli.FacetSearchSetting.create",side_effect=Exception("test_error")):
-        result = runner.invoke(insert_facet_search_to_db,["Data Language","データの言語","language","[]","True","SelectBox","1","True"],obj=script_info)
+        result = runner.invoke(insert_facet_search_to_db,["Data Language","データの言語","language","[]","True","SelectBox","1","True","OR"],obj=script_info)
         assert result.exit_code == 0
         assert result.output == "test_error\n"
