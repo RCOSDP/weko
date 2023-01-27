@@ -46,7 +46,7 @@ from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
 
 from invenio_records.models import RecordMetadata
-from invenio_records_rest.facets import terms_filter
+from invenio_records_rest.facets import terms_filter, terms_condition_filter
 from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
 from jinja2 import Template
 from simplekv.memory.redisstore import RedisStore
@@ -2171,7 +2171,11 @@ def get_query_key_by_permission(has_permission):
 def get_facet_search_query(has_permission=True):
     """Get facet search query in redis."""
     search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
+    current_app.logger.warning('---   search_index   ---') 
+    current_app.logger.warning(search_index) 
     key = get_query_key_by_permission(has_permission)
+    current_app.logger.warning('---   key   ---') 
+    current_app.logger.warning(key) 
     # Check query exists in redis.
     query = json.loads(get_redis_cache(key) or '{}')
     if not is_exists_key_or_empty_in_redis(key) \
@@ -2182,8 +2186,19 @@ def get_facet_search_query(has_permission=True):
     result = json.loads(get_redis_cache(key)) or {}
     # Update terms filter function for post filters.
     post_filters = result.get(search_index).get('post_filters')
+    from weko_admin.utils import get_title_facets
+    titles, order, uiTypes, isOpens, displayNumbers, searchConditions = get_title_facets()
     for k, v in post_filters.items():
-        post_filters.update({k: terms_filter(v)})
+        current_app.logger.warning('==================   searchConditions   ==================')
+        current_app.logger.warning('---   value k:   ---')
+        current_app.logger.warning(k)
+        current_app.logger.warning('---   value v:   ---')
+        current_app.logger.warning(v)
+        current_app.logger.warning(searchConditions)
+        current_app.logger.warning(searchConditions[k])
+        post_filters.update({k: terms_condition_filter(v, searchConditions[k] == 'AND')})
+    current_app.logger.warning('---   query-result   ---')
+    current_app.logger.warning(result) 
     return result
 
 
@@ -2202,6 +2217,7 @@ def get_title_facets():
     uiTypes = {}
     isOpens = {}
     displayNumbers = {}
+    searchConditions = {}
     activated_facets = FacetSearchSetting.get_activated_facets()
     for item in activated_facets:
         titles[item.name_en] = item.name_jp if lang == 'ja' else item.name_en
@@ -2209,7 +2225,8 @@ def get_title_facets():
         uiTypes[item.name_en] = item.ui_type
         isOpens[item.name_en] = item.is_open
         displayNumbers[item.name_en] = item.display_number
-    return titles, order, uiTypes, isOpens, displayNumbers
+        searchConditions[item.name_en] = item.search_condition
+    return titles, order, uiTypes, isOpens, displayNumbers, searchConditions
 
 
 def is_exits_facet(data, id):
