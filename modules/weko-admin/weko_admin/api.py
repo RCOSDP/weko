@@ -32,6 +32,7 @@ from invenio_db import db
 from invenio_mail.api import send_mail
 from weko_redis.redis import RedisConnection
 from flask_wtf import FlaskForm
+from wtforms import ValidationError
 from flask_wtf.csrf import validate_csrf,same_origin,CSRFError
 
 from .models import LogAnalysisRestrictedCrawlerList, \

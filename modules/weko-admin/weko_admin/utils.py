@@ -71,12 +71,11 @@ def get_response_json(result_list, n_lst):
         newlst = []
         for rlst in result_list:
             adr_lst = rlst.get('addresses')
-            if isinstance(adr_lst, list):
-                for alst in adr_lst:
-                    alst['start_ip_address'] = alst['start_ip_address'].split(
-                        '.')
-                    alst['finish_ip_address'] = alst[
-                        'finish_ip_address'].split('.')
+            for alst in adr_lst:
+                alst['start_ip_address'] = alst['start_ip_address'].split(
+                    '.')
+                alst['finish_ip_address'] = alst[
+                    'finish_ip_address'].split('.')
             newlst.append(rlst.dumps())
         result.update(dict(site_license=newlst))
         del result_list
@@ -303,11 +302,9 @@ def get_unit_stats_report(target_id):
 
     list_unit = list()
     for unit in units:
-        try:
-            if target_units.index(unit['id']) is not None:
-                list_unit.append(unit)
-        except Exception:
-            pass
+        if target_units.find(unit['id']) != -1:
+            list_unit.append(unit)
+
     result['unit'] = list_unit
     return result
 
@@ -359,7 +356,7 @@ def package_reports(all_stats, year, month):
                                 f['stream'].getvalue().encode('utf-8-sig'))
         report_zip.close()
     except Exception as e:
-        current_app.logger.error('Unexpected error: ', e)
+        current_app.logger.error('Unexpected error: {}'.format(e))
         raise
     return zip_stream
 
@@ -506,7 +503,7 @@ def reset_redis_cache(cache_key, value, ttl=None):
         else:
             datastore.put(cache_key, value.encode('utf-8'),ttl)
     except Exception as e:
-        current_app.logger.error('Could not reset redis value', e)
+        current_app.logger.error('Could not reset redis value: {}'.format(e))
         raise
 
 
@@ -517,7 +514,7 @@ def is_exists_key_in_redis(key):
         datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         return datastore.redis.exists(key)
     except Exception as e:
-        current_app.logger.error('Could get value for ' + key, e)
+        current_app.logger.error('Could get value for ' + key + ": {}".format(e))
     return False
 
 
@@ -528,7 +525,7 @@ def is_exists_key_or_empty_in_redis(key):
         datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         return datastore.redis.exists(key) and datastore.redis.get(key) != b''
     except Exception as e:
-        current_app.logger.error('Could get value for ' + key, e)
+        current_app.logger.error('Could get value for ' + key + ": {}".format(e))
     return False
 
 
@@ -540,7 +537,7 @@ def get_redis_cache(cache_key):
         if datastore.redis.exists(cache_key):
             return datastore.get(cache_key).decode('utf-8')
     except Exception as e:
-        current_app.logger.error('Could get value for ' + cache_key, e)
+        current_app.logger.error('Could get value for ' + cache_key + ": {}".format(e))
     return None
 
 
@@ -648,7 +645,7 @@ class StatisticMail:
                     )
                     failed_mail += 1
         except Exception as ex:
-            current_app.logger.error('Error has occurred', str(ex))
+            current_app.logger.error('Error has occurred: {}'.format(ex))
         end_time = datetime.now()
         FeedbackMailHistory.create(
             session,
@@ -696,7 +693,7 @@ class StatisticMail:
             return int(download_count)
         except Exception as ex:
             current_app.logger.error(
-                'Cannot convert download count to int', ex)
+                'Cannot convert download count to int: {}'.format(ex))
             return 0
 
     @classmethod
@@ -1632,16 +1629,13 @@ def get_site_name_for_current_language(site_name):
     """
     lang_code_english = 'en'
     if site_name:
-        if hasattr(current_i18n, 'language'):
-            for sn in site_name:
-                if sn.get('language') == current_i18n.language:
-                    return sn.get("name")
-            for sn in site_name:
-                if sn.get('language') == lang_code_english:
-                    return sn.get("name")
-            return site_name[0].get("name")
-        else:
-            return site_name[0].get("name")
+        for sn in site_name:
+            if sn.get('language') == current_i18n.language:
+                return sn.get("name")
+        for sn in site_name:
+            if sn.get('language') == lang_code_english:
+                return sn.get("name")
+        return site_name[0].get("name")
     else:
         return ''
 
