@@ -29,6 +29,7 @@
 
 {% block create_form %}
   {% call lib.form_tag(None) %}
+      
       {{ lib.render_form_fields(form, form_opts) }}      
       {% block toggle_from %}
       {% endblock %}
@@ -58,6 +59,7 @@
           </span>
         </span>
       </div>
+      
       {{ lib.render_form_buttons(return_url, extra()) }}
   {% endcall %}
 {% endblock %}

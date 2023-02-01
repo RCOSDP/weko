@@ -161,6 +161,17 @@ class WekoSitemap(Sitemap):
 
         ext.blueprint = Blueprint('flask_sitemap',
                                   'flask_sitemap', template_folder='templates')
+        
+        @ext.blueprint .teardown_request
+        def dbsession_clean(exception):
+            current_app.logger.debug("weko_sitemap dbsession_clean: {}".format(exception))
+            if exception is None:
+                try:
+                    db.session.commit()
+                except:
+                    db.session.rollback()
+            db.session.remove()
+        
         ext.blueprint.add_url_rule(  # Return cached sitemap or update it
             app.config.get('SITEMAP_ENDPOINT_URL'),
             'sitemap',

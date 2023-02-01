@@ -38,6 +38,7 @@
 
 {%- block body %}
 <div id="root" class="col-xs-12"></div>
+{{ form.csrf_token }}
 <input id="import" type="hidden" value="{{_('Import')}}" />
 <input id="list" type="hidden" value="{{_('List')}}" />
 <input id="import_file" type="hidden" value="{{_('Import File')}}" />

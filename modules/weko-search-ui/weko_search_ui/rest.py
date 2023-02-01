@@ -70,6 +70,17 @@ def create_blueprint(app, endpoints):
         __name__,
         url_prefix="",
     )
+    
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+        current_app.logger.debug("weko_search_ui dbsession_clean: {}".format(exception))
+        if exception is None:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+        db.session.remove()
+    
 
     for endpoint, options in (endpoints or {}).items():
         if "record_serializers" in options:
@@ -215,7 +226,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             search = search.post_filter({"terms": {query_key: params[param]}})
 
         search_result = search.execute()
-
         # Generate links for prev/next
         urlkwargs.update(
             size=size,
@@ -406,6 +416,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     hit["_source"]["pageEnd"] = []
         except Exception as ex:
             current_app.logger.error(ex)
+
         return self.make_response(
             pid_fetcher=self.pid_fetcher,
             search_result=rd,

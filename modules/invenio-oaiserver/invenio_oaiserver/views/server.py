@@ -10,9 +10,10 @@
 
 from __future__ import absolute_import
 
-from flask import Blueprint, make_response
+from flask import Blueprint, make_response,current_app
 from invenio_pidstore.errors import PIDDoesNotExistError
 from itsdangerous import BadSignature
+from invenio_db import db
 from lxml import etree
 from marshmallow.exceptions import ValidationError
 from webargs.flaskparser import use_args
@@ -99,3 +100,13 @@ def response(args):
     ))
     response.headers['Content-Type'] = 'text/xml'
     return response
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("invenio_oaiserver dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

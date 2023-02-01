@@ -24,11 +24,13 @@ import json
 import re
 import sys
 from datetime import datetime
+from datetime import timezone
 from functools import partial
 
 from elasticsearch_dsl.query import Bool, Q
 from flask import current_app, request
 from flask_security import current_user
+from flask_babelex import get_timezone
 from invenio_communities.models import Community
 from invenio_records_rest.errors import InvalidQueryRESTError
 from weko_index_tree.api import Indexes
@@ -63,7 +65,8 @@ def get_permission_filter(index_id: str = None):
     is_perm = search_permission.can()
     match = Q("match", publish_status="0")
     version = Q("match", relation_version_is_last="true")
-    rng = Q("range", **{"publish_date": {"lte": "now/d"}})
+
+    rng = Q("range", **{"publish_date": {"lte": "now/d","time_zone":str(get_timezone())}})
     term_list = []
     mst = []
     is_perm_paths = Indexes.get_browsing_tree_paths()

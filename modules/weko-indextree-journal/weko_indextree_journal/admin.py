@@ -26,7 +26,7 @@ import json
 import os
 import sys
 
-from flask import Blueprint, abort, current_app, json, jsonify, session
+from flask import abort, current_app, json, jsonify, session
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import login_required

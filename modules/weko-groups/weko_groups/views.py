@@ -32,6 +32,7 @@ from invenio_accounts.models import User
 from invenio_admin.proxies import current_admin
 from six.moves.urllib.parse import urlparse
 from sqlalchemy.exc import IntegrityError
+from invenio_db import db
 
 from .forms import GroupForm, NewMemberForm
 from .models import Group, Membership
@@ -580,3 +581,13 @@ def remove_csrf(form):
         if key != 'csrf_token':
             map[key] = val
     return map
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_groups dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

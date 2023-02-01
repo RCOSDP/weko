@@ -27,6 +27,7 @@ from blinker import Namespace
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
+from invenio_db import db
 from weko_admin.models import SiteInfo
 from weko_admin.utils import get_search_setting
 from weko_records_ui.ipaddr import check_site_license_permission
@@ -151,3 +152,13 @@ def get_init_display_setting(settings):
     init_display_setting = MainScreenInitDisplaySetting() \
         .get_init_display_setting()
     return init_display_setting
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_theme dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

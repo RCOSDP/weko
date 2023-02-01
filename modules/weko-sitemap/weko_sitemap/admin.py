@@ -19,29 +19,38 @@ from flask import abort, current_app, jsonify, render_template, request, \
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
+from flask_wtf import FlaskForm,Form
+from weko_admin.api import validate_csrf_header
+from wtforms import ValidationError
+
 from weko_accounts.utils import get_remote_addr
+
+
 
 
 class SitemapSettingView(BaseView):
     """Sitemap setting view."""
-
     @expose('/', methods=['GET'])
     def index(self):
         """Update sitemap page."""
-        return self.render(current_app.config["WEKO_SITEMAP_ADMIN_TEMPLATE"])
+        form = Form()
+        return self.render(current_app.config["WEKO_SITEMAP_ADMIN_TEMPLATE"],form=form)
 
     @expose('/update_sitemap', methods=['POST'])
     def update_sitemap(self):
         """Start the task to update the sitemap."""
         from .tasks import update_sitemap, link_success_handler, link_error_handler
+        
+        validate_csrf_header(request)
+                
         # Celery cannot access config
         task = update_sitemap.apply_async(args=(
             datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),
             {'ip_address': get_remote_addr(),
-             'user_agent': request.user_agent.string,
-             'user_id': (
-                 current_user.get_id() if current_user.is_authenticated else None),
-             'session_id': session.get('sid_s')}),
+            'user_agent': request.user_agent.string,
+            'user_id': (
+                current_user.get_id() if current_user.is_authenticated else None),
+            'session_id': session.get('sid_s')}),
             link=link_success_handler.s(),
             link_error=link_error_handler.s())
         # Get all tasks:
@@ -71,6 +80,7 @@ class SitemapSettingView(BaseView):
                 'state': task_result.state
             }
         return jsonify(response)
+
 
 
 sitemap_adminview = {

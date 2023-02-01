@@ -10,6 +10,7 @@
 
 import pytest
 import uuid
+import json
 
 from sqlalchemy.exc import UnsupportedCompilationError
 from mock import patch
@@ -35,6 +36,7 @@ from invenio_stats.utils import (
     QueryRecordViewPerIndexReportHelper,
     QueryRecordViewReportHelper,
     QueryItemRegReportHelper,
+    QueryRankingHelper,
     StatsCliUtil,
     )
 
@@ -440,6 +442,21 @@ def test_query_item_reg_report_helper(app, db):
     ]
     res = QueryItemRegReportHelper.merge_items_results(_results)
     assert res==[{'col1': 1.0, 'col3': 5}, {'col1': 2.0, 'col3': 4}]
+
+# class QueryRankingHelper(object):
+#     def Calculation(cls, res, data_list):
+#     def get(cls, **kwargs):
+#     get_new_items(cls, **kwargs):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_ranking_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_query_ranking_helper(app, db):
+    # need to fix
+    # get
+    res = QueryRankingHelper.get(event_type='record-view', group_field='pid_value', count_field='count', start_date='2022-09-01', end_date='2022-09-15')
+    assert res==[]
+    # get_new_items
+    res = QueryRankingHelper.get_new_items(must_not=json.dumps([{"wildcard": {"control_number": "*.*"}}]), start_date='2022-09-01', end_date='2022-09-15')
+    assert res==[]
+
 
 # class StatsCliUtil:
 #     def __init__(

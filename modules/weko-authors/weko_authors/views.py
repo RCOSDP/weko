@@ -650,3 +650,15 @@ def create_affiliation():
                 {'code': 400, 'msg': 'Specified scheme is already exist.'})
     except Exception:
         return jsonify({'code': 204, 'msg': 'Failed'})
+
+
+@blueprint.teardown_request
+@blueprint_api.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko-authors dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()
