@@ -45,6 +45,7 @@ from weko_items_ui.utils import (
     check_item_type_name,
     export_items,
     find_hidden_items,
+    get_permission_record,
     get_current_user,
     get_current_user_role,
     get_data_authors_affiliation_settings,
@@ -286,190 +287,67 @@ def test_find_hidden_items(app, users, db_records):
                     target.pop(i)
             assert target == [str(record0.id), str(record1.id)]
 
+    with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+        with app.test_request_context():
+            assert users[1]["email"] == "repoadmin@test.org"
+            result = find_hidden_items([record0.id, record1.id], None, True)
+            target = [str(record0.id), str(record1.id)]
+            for item in result:
+                if item in target:
+                    i = target.index(item)
+                    target.pop(i)
+            assert target == [str(record0.id), str(record1.id)]
+
+    with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+        with app.test_request_context():
+            assert users[1]["email"] == "repoadmin@test.org"
+            result = find_hidden_items([record0.id, record1.id],[1,2], False, [1, 2])
+            target = [str(record0.id), str(record1.id)]
+            for item in result:
+                if item in target:
+                    i = target.index(item)
+                    target.pop(i)
+            assert target == [str(record0.id), str(record1.id)]
+
+
+# def get_permission_record(index_info,
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_permission_record -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_permission_record(app, users, db_itemtype, db_records):
+    es_data = [
+        {
+            'key': '6',
+            '_item_metadata': {
+                'control_number': 6
+            },
+            'publish_date': '2022-09-02',
+            'count': 1
+        }
+    ]
+
+    with app.test_request_context():
+        res = get_permission_record('most_reviewed_items', es_data, 1, [1])
+        assert res == []
+
+    with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+        with app.test_request_context():
+            res = get_permission_record('most_downloaded_items', es_data, 1, [1])
+            assert res == [{'rank': 1, 'count': 1, 'title': 'title', 'url': '../records/6'}]
+
+    with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+        with app.test_request_context():
+            res = get_permission_record('new_items', es_data, 1, [1])
+            assert res == [{'date': '2022-09-02', 'title': 'title', 'url': '../records/6'}]
+
+
 
 # def parse_ranking_results(index_info,
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_parse_ranking_results -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_parse_ranking_results(app, db_itemtype, db_records):
-    depid0, recid0, parent0, doi0, record0, item0 = db_records[0]
-    depid1, recid1, parent1, doi1, record1, item1 = db_records[1]
-    depid2, recid2, parent2, doi2, record2, item2 = db_records[2]
-    depid3, recid3, parent3, doi3, record3, item3 = db_records[3]
-    index_info = {
-        "1": {
-            "index_name": "IndexA",
-            "parent": "0",
-            "public_date": None,
-            "harvest_public_state": True,
-            "browsing_role": ["3", "-98", "-99"],
-        }
-    }
-    results = {
-        "took": 7,
-        "timed_out": False,
-        "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
-        "hits": {
-            "total": 2,
-            "max_score": None,
-            "hits": [
-                {
-                    "_index": "tenant1-weko-item-v1.0.0",
-                    "_type": "item-v1.0.0",
-                    "_id": str(record0.id),
-                    "_score": None,
-                    "_source": {
-                        "_created": "2022-08-20T06:05:56.806896+00:00",
-                        "_updated": "2022-08-20T06:06:24.602226+00:00",
-                        "type": ["conference paper"],
-                        "title": ["ff"],
-                        "control_number": "1",
-                        "_oai": {
-                            "id": "oai:weko3.example.org:00000003",
-                            "sets": ["1"],
-                        },
-                        "_item_metadata": {
-                            "_oai": {
-                                "id": "oai:weko3.example.org:00000003",
-                                "sets": ["1"],
-                            },
-                            "path": ["1"],
-                            "owner": "1",
-                            "title": ["ff"],
-                            "pubdate": {
-                                "attribute_name": "PubDate",
-                                "attribute_value": "2022-08-20",
-                            },
-                            "item_title": "ff",
-                            "author_link": [],
-                            "item_type_id": "1",
-                            "publish_date": "2022-08-20",
-                            "publish_status": "0",
-                            "weko_shared_id": -1,
-                            "item_1617186331708": {
-                                "attribute_name": "Title",
-                                "attribute_value_mlt": [
-                                    {
-                                        "subitem_1551255647225": "ff",
-                                        "subitem_1551255648112": "ja",
-                                    }
-                                ],
-                            },
-                            "item_1617258105262": {
-                                "attribute_name": "Resource Type",
-                                "attribute_value_mlt": [
-                                    {
-                                        "resourceuri": "http://purl.org/coar/resource_type/c_5794",
-                                        "resourcetype": "conference paper",
-                                    }
-                                ],
-                            },
-                            "relation_version_is_last": True,
-                            "control_number": "1",
-                        },
-                        "itemtype": "デフォルトアイテムタイプ（フル）",
-                        "publish_date": "2022-08-20",
-                        "author_link": [],
-                        "weko_shared_id": -1,
-                        "weko_creator_id": "1",
-                        "relation_version_is_last": True,
-                        "path": ["1660555749031"],
-                        "publish_status": "0",
-                    },
-                    "sort": [1660953600000],
-                },
-                {
-                    "_index": "tenant1-weko-item-v1.0.0",
-                    "_type": "item-v1.0.0",
-                    "_id": str(record2.id),
-                    "_score": None,
-                    "_source": {
-                        "_created": "2022-08-17T17:00:43.877778+00:00",
-                        "_updated": "2022-08-17T17:01:08.615488+00:00",
-                        "type": ["conference paper"],
-                        "title": ["2"],
-                        "control_number": "2",
-                        "_oai": {
-                            "id": "oai:weko3.example.org:00000001",
-                            "sets": ["1"],
-                        },
-                        "_item_metadata": {
-                            "_oai": {
-                                "id": "oai:weko3.example.org:00000001",
-                                "sets": ["1"],
-                            },
-                            "path": ["1"],
-                            "owner": "1",
-                            "title": ["2"],
-                            "pubdate": {
-                                "attribute_name": "PubDate",
-                                "attribute_value": "2022-08-18",
-                            },
-                            "item_title": "2",
-                            "author_link": [],
-                            "item_type_id": "15",
-                            "publish_date": "2022-08-18",
-                            "publish_status": "0",
-                            "weko_shared_id": -1,
-                            "item_1617186331708": {
-                                "attribute_name": "Title",
-                                "attribute_value_mlt": [
-                                    {
-                                        "subitem_1551255647225": "2",
-                                        "subitem_1551255648112": "ja",
-                                    }
-                                ],
-                            },
-                            "item_1617258105262": {
-                                "attribute_name": "Resource Type",
-                                "attribute_value_mlt": [
-                                    {
-                                        "resourceuri": "http://purl.org/coar/resource_type/c_5794",
-                                        "resourcetype": "conference paper",
-                                    }
-                                ],
-                            },
-                            "relation_version_is_last": True,
-                            "control_number": "1",
-                        },
-                        "itemtype": "デフォルトアイテムタイプ（フル）",
-                        "publish_date": "2022-08-18",
-                        "author_link": [],
-                        "weko_shared_id": -1,
-                        "weko_creator_id": "1",
-                        "relation_version_is_last": True,
-                        "path": ["1"],
-                        "publish_status": "0",
-                    },
-                    "sort": [1660780800000],
-                },
-            ],
-        },
-    }
-    display_rank = 10
-    list_name = "all"
-    title_key = "record_name"
-    count_key = None
-    pid_key = "pid_value"
-    search_key = None
-    date_key = "create_date"
-    ranking_list = [
-        {"date": "2022-08-20", "title": "title", "url": "../records/1"},
-        {"date": "2022-08-18", "title": "title2", "url": "../records/2"},
-    ]
-    with app.test_request_context():
-        assert (
-            parse_ranking_results(
-                index_info,
-                results,
-                display_rank,
-                list_name,
-                title_key,
-                count_key,
-                pid_key,
-                search_key,
-                date_key,
-            )
-            == ranking_list
-        )
+def test_parse_ranking_results(app, users):
+    res = parse_ranking_results('most_searched_keywords', 'search_key', 2, 1)
+    assert res == {'rank': 1, 'count': 2, 'title': 'search_key', 'url': '../search?page=1&size=20&search_type=1&q=search_key'}
+
+    res = parse_ranking_results('created_most_items_user', 1, 2, 1)
+    assert res == {'rank': 1, 'count': 2, 'title': 'None', 'url': None}
 
 
 # def parse_ranking_new_items(result_data):
@@ -7677,7 +7555,7 @@ def test_translate_schema_form(db_itemtype):
 
 # def get_ranking(settings):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_ranking -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_ranking(app, db_ranking):
+def test_get_ranking(app, db_records, db_ranking):
     settings = db_ranking['settings']
     with app.test_request_context():
         assert get_ranking(settings)=={'most_reviewed_items': [], 'most_downloaded_items': [], 'created_most_items_user': [], 'most_searched_keywords': [], 'new_items': []}

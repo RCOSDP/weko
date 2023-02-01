@@ -26,6 +26,7 @@ import sys
 from flask import abort, current_app, flash, jsonify, request, session, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
+from flask_wtf import FlaskForm
 from invenio_db import db
 
 from .api import Indexes
@@ -41,6 +42,7 @@ class IndexLinkSettingView(BaseView):
     def index(self):
         """Index."""
         try:
+            form = FlaskForm(request.form)
             style = IndexStyle.get(
                 current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
             if not style:
@@ -50,7 +52,7 @@ class IndexLinkSettingView(BaseView):
                     height=None)
                 style = IndexStyle.get(
                     current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
-            if request.method == 'POST':
+            if request.method == 'POST' and form.validate():
                 if request.form.get('indexlink') == 'enable':
                     style.index_link_enabled = True
                 else:
@@ -59,7 +61,7 @@ class IndexLinkSettingView(BaseView):
                 flash(_('IndexLink flag was updated.'), category='success')
             return self.render(
                 current_app.config['WEKO_INDEX_TREE_LINK_ADMIN_TEMPLATE'],
-                enable=style.index_link_enabled)
+                enable=style.index_link_enabled,form=form)
         except BaseException:
             current_app.logger.error(
                 "Unexpected error: {}".format(sys.exc_info()))

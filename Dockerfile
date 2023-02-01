@@ -74,6 +74,8 @@ FROM stage_3 AS stage_4
 # Create Weko instance:
 RUN chmod +x /code/scripts/create-instance.sh;/code/scripts/create-instance.sh
 
+
+
 FROM stage_4 AS stage_5
 # Create Weko instance2:
 USER invenio
@@ -89,8 +91,12 @@ ENV VIRTUALENVWRAPPER_PYTHON=/home/invenio/.virtualenvs/invenio/bin/python
 #RUN echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc ; echo "workon invenio" >> ~/.bashrc
 RUN pip install virtualenvwrapper
 RUN echo "source /home/invenio/.virtualenvs/invenio/bin/virtualenvwrapper.sh" >> ~/.bashrc ; echo "workon invenio" >> ~/.bashrc
+<<<<<<< HEAD
 
 RUN mv /home/invenio/.virtualenvs/invenio/var/instance/static /home/invenio/.virtualenvs/invenio/var/instance/static.org
+=======
+#RUN mv /home/invenio/.virtualenvs/invenio/var/instance/static /home/invenio/.virtualenvs/invenio/var/instance/static.org
+>>>>>>> upstream/master
 
 # CMD ["/bin/bash", "-c", "gunicorn invenio_app.wsgi --workers=4 --worker-class=meinheld.gmeinheld.MeinheldWorker -b 0.0.0.0:5000 "]
 #CMD ["/bin/bash","-c","uwsgi --ini /code/scripts/uwsgi.ini"]

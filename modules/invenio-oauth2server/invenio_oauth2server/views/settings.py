@@ -14,7 +14,7 @@ from __future__ import absolute_import
 from functools import wraps
 
 from flask import Blueprint, abort, flash, redirect, render_template, \
-    request, session, url_for
+    request, session, url_for,current_app
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -275,3 +275,13 @@ def token_permission_view(token):
         token=token,
         scopes=scopes,
     )
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("invenio_oauth2server dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

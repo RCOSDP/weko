@@ -34,6 +34,8 @@ from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
+from flask_wtf import FlaskForm
+from weko_admin.api import validate_csrf_header
 from invenio_files_rest.models import FileInstance
 from invenio_i18n.ext import current_i18n
 from weko_admin.api import TempDirInfo
@@ -319,16 +321,22 @@ class ItemImportView(BaseView):
         workflow = WorkFlow()
         workflows = workflow.get_workflow_list()
         workflows_js = [get_content_workflow(item) for item in workflows]
+        
+        form =FlaskForm(request.form)
 
         return self.render(
             WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
             workflows=json.dumps(workflows_js),
-            file_format=current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+            file_format=current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower(),
+            form=form
         )
 
     @expose("/check", methods=["POST"])
     def check(self) -> jsonify:
         """Validate item import."""
+        
+        validate_csrf_header(request)
+        
         data = request.form
         file = request.files["file"] if request.files else None
 
@@ -702,6 +710,7 @@ class ItemImportView(BaseView):
                     "error_id": check,
                 }
             )
+
 
 
 class ItemBulkExport(BaseView):
