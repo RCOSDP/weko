@@ -4,6 +4,14 @@ elasticsearch_host = os.environ.get('INVENIO_ELASTICSEARCH_HOST')
 prefix = os.environ.get('SEARCH_INDEX_PREFIX')
 con = Elasticsearch(host=elasticsearch_host, verify_certs=False)
 
+# Delete all aliases
+indices = con.cat.aliases(h='index',s='index').splitlines()
+aliases = con.cat.aliases(h='alias',s='index').splitlines()
+zipped = zip(indices,aliases)
+for index, alias in zipped:
+    con.indices.delete_alias(index=index, name=alias)
+
+# Create aliases for WEKO3
 alias_name = "{}-weko".format(prefix)
 indices = con.cat.indices(index='{}-weko*'.format(prefix), h='index',s='creation.date.string').splitlines()
 for index in indices:

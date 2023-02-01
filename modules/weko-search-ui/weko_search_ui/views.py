@@ -28,6 +28,7 @@ from flask import Blueprint, current_app, flash, jsonify, render_template, reque
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
+from flask_wtf import FlaskForm
 from invenio_db import db
 from invenio_pidstore.models import PIDStatus, PersistentIdentifier
 from invenio_i18n.ext import current_i18n
@@ -184,7 +185,7 @@ def search():
                 thumbnails_org=record_detail_alt.get("files_thumbnail"),
             )
         )
-
+        form = FlaskForm(request.form)
         return render_template(
             "weko_workflow/activity_detail.html",
             action_id=action_id,
@@ -203,6 +204,7 @@ def search():
             item=item,
             page=page,
             pid=pid,
+            form=form,
             record=approval_record,
             render_widgets=render_widgets,
             res_check=res_check,

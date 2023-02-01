@@ -517,7 +517,8 @@ def listidentifiers(**kwargs):
                 header(
                     e_listidentifiers,
                     identifier=pid.pid_value,
-                    datestamp=r['updated'],
+                    #datestamp=r['updated'],
+                    datestamp=record.updated,
                     deleted=True
                 )
             else:
@@ -616,7 +617,8 @@ def listrecords(**kwargs):
                 header(
                     e_record,
                     identifier=pid.pid_value,
-                    datestamp=r['updated'],
+                    #datestamp=r['updated'],
+                    datestamp=record.updated,
                     deleted=True
                 )
             else:
