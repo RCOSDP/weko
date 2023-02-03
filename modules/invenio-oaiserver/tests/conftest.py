@@ -10,11 +10,14 @@
 
 from __future__ import absolute_import, print_function
 
+import copy
 import os
 import shutil
 import tempfile
 import pytest
 import json
+from os.path import join, dirname
+from mock import patch
 
 from elasticsearch import Elasticsearch
 from flask import Flask
@@ -35,6 +38,7 @@ from weko_records.models import ItemTypeName
 from weko_records_ui.config import WEKO_RECORDS_UI_LICENSE_DICT
 
 from invenio_oaiserver import InvenioOAIServer
+from invenio_oaiserver.models import Identify, OAISet
 from invenio_oaiserver.views.server import blueprint
 from invenio_oaiserver.provider import OAIIDProvider
 from .helpers import load_records, remove_records, create_record_oai
@@ -113,11 +117,25 @@ class MockEs():
         def health(self, wait_for_status="", request_timeout=0):
             pass
 
-
+@pytest.fixture()
+def mock_signal(mocker):
+    mocker.patch("invenio_oaiserver.receivers.after_insert_oai_set")
+    mocker.patch("invenio_oaiserver.receivers.after_update_oai_set")
+    mocker.patch("invenio_oaiserver.receivers.after_delete_oai_set")
+@pytest.yield_fixture()
+def mock_env():
+    #env_dict = copy.deepcopy(os.environ)
+    #env_dict["SEARCH_INDEX_PREFIX"] = "test"
+    #with patch.dict("os.environ",env_dict):
+    #    yield
+    with patch("weko_search_ui.config.INDEXER_DEFAULT_INDEX","test-weko-item-v1.0.0"):
+        yield
 @pytest.yield_fixture
-def app(search_class):
+def app(search_class,mock_signal,mock_env,mocker):
     """Flask application fixture."""
+   
     instance_path = tempfile.mkdtemp()
+    mocker.patch("weko_search_ui.config.INDEXER_DEFAULT_INDEX","test-weko-item-v1.0.0")
     app = Flask('testapp', instance_path=instance_path)
     app.config.update(
         CELERY_ALWAYS_EAGER=True,
@@ -147,7 +165,11 @@ def app(search_class):
             'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/jpcoar_scm.xsd',
             }
         },
-        WEKO_RECORDS_UI_LICENSE_DICT=WEKO_RECORDS_UI_LICENSE_DICT
+        WEKO_RECORDS_UI_LICENSE_DICT=WEKO_RECORDS_UI_LICENSE_DICT,
+        INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
+        SEARCH_UI_SEARCH_INDEX="{}-weko".format("test"),
+        SEARCH_ELASTIC_HOSTS="elasticsearch",
+        SEARCH_INDEX_PREFIX="test-"
     )
     if not hasattr(app, 'cli'):
         from flask_cli import FlaskCLI
@@ -177,9 +199,33 @@ def app(search_class):
         list(search.create(ignore=[400]))
         search.flush_and_refresh('_all')
 
+
+    #with open(join(dirname(__file__),"data/mappings/item-v1.0.0.json"), "r") as f:
+    #    mapping = json.load(f)
+    #es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
+    #
+    #es.indices.create(
+    #    index=app.config["INDEXER_DEFAULT_INDEX"], 
+    #    body=mapping, ignore=[400, 404]
+    #)
+    #
+    #es.indices.put_alias(
+    #    index=app.config["INDEXER_DEFAULT_INDEX"],
+    #    name=app.config["SEARCH_UI_SEARCH_INDEX"],
+    #    ignore=[400, 404],
+    #)
+    #search = InvenioSearch(app, client=es)
+    #search.register_mappings('records', 'tests.data')
     with app.app_context():
         yield app
-
+    #es.indices.delete_alias(
+    #    index=app.config["INDEXER_DEFAULT_INDEX"],
+    #    name=app.config["SEARCH_UI_SEARCH_INDEX"],
+    #    ignore=[400, 404],
+    #)
+    #es.indices.delete(
+    #    index=app.config["INDEXER_DEFAULT_INDEX"], 
+    #    ignore=[400, 404])
     with app.app_context():
         db.session.close()
         if str(db.engine.url) != 'sqlite://':
@@ -189,6 +235,35 @@ def app(search_class):
     shutil.rmtree(instance_path)
 
 
+@pytest.yield_fixture()
+def es_app(app):
+    with open("tests/data/mappings/item-v1.0.0.json","r") as f:
+        mapping = json.load(f)
+    es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
+    
+    es.indices.create(
+        index=app.config["INDEXER_DEFAULT_INDEX"], 
+        body=mapping, ignore=[400, 404]
+    )
+    
+    es.indices.put_alias(
+        index=app.config["INDEXER_DEFAULT_INDEX"],
+        name=app.config["SEARCH_UI_SEARCH_INDEX"],
+        ignore=[400, 404],
+    )
+    search = InvenioSearch(app, client=es)
+    search.register_mappings('records', 'tests.data')
+    yield app
+    
+    es.indices.delete_alias(
+        index=app.config["INDEXER_DEFAULT_INDEX"],
+        name=app.config["SEARCH_UI_SEARCH_INDEX"],
+        ignore=[400, 404],
+    )
+    es.indices.delete(
+        index=app.config["INDEXER_DEFAULT_INDEX"], 
+        ignore=[400, 404])
+    
 def mock_record_validate(self):
     """Mock validation."""
     pass
@@ -351,3 +426,29 @@ def records(app):
         returns.append(create_record_oai(record_data[i],item_data[i]))
     db.session.commit()
     yield returns
+
+
+@pytest.fixture()
+def identify(app):
+    iden = Identify(
+            id=1,
+            outPutSetting=True,
+            emails="test@test.org",
+            repositoryName="test_repository"
+        )
+    db.session.add(iden)
+    db.session.commit()
+    
+    return [iden]
+
+@pytest.fixture()
+def oaiset(app):
+    oai = OAISet(id=1,
+        spec='test',
+        name='test_name',
+        description='some test description',
+        search_pattern='test search')
+    
+    db.session.add(oai)
+    db.session.commit()
+    return [oai]

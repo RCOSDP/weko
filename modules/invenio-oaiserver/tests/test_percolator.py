@@ -16,11 +16,20 @@ from invenio_records.models import RecordMetadata
 from invenio_search import current_search
 from mock import patch
 
+
+from weko_search_ui.config import INDEXER_DEFAULT_INDEX
+
 from invenio_oaiserver import current_oaiserver
 from invenio_oaiserver.errors import OAISetSpecUpdateError
 from invenio_oaiserver.models import OAISet
 from invenio_oaiserver.receivers import after_delete_oai_set, \
     after_insert_oai_set, after_update_oai_set
+from invenio_oaiserver.percolator import (
+    _create_percolator_mapping,
+    _get_percolator_doc_type
+)
+
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_percolator.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
 
 @pytest.mark.skip(reason="")
 def test_search_pattern_change(app, without_oaiset_signals, schema):
@@ -265,3 +274,32 @@ def test_oaiset_add_remove_record(app):
         assert 'abc' not in rec1['_oai']['sets']
         assert not oaiset1.has_record(rec1)
         assert dt3 > dt2
+
+
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_percolator.py::test_create_percolator_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_create_percolator_mapping(app):
+    index = "test-weko-item-v1.0.0"
+    # es_version = 6
+    _create_percolator_mapping(index,"percolators")
+    
+    with patch("invenio_oaiserver.percolator.VERSION",return_value=[2]):
+        _create_percolator_mapping(index,"percolators")
+    
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_percolator.py::test_get_percolator_doc_type -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_get_percolator_doc_type(app):
+    index = "test-weko-item-v1.0.0"
+    
+    # es_version = 2
+    with patch("invenio_oaiserver.percolator.VERSION",return_value=[2]):
+        result = _get_percolator_doc_type(index)
+        assert result == ".percolator"
+    
+    # es_version = 5
+    with patch("invenio_oaiserver.percolator.VERSION",return_value=[5]):
+        result = _get_percolator_doc_type(index)
+        assert result == "percolators"
+
+    # es_version = 6
+    result = _get_percolator_doc_type(index)
+    assert result == "item-v1.0.0"
+    
