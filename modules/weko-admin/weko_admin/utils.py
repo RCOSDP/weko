@@ -2381,7 +2381,7 @@ def elasticsearch_reindex( is_db_to_es ):
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
     current_app.logger.info("add setting percolator") 
-    _create_percolator_mapping(tmpindex, "item-v1.0.0")
+    _create_percolator_mapping(index, "item-v1.0.0")
     current_app.logger.info("END create index") 
 
     # 高速化を期待してインデックスの設定を変更。
