@@ -1,10 +1,13 @@
 import pytest
+import json
+import copy
 from flask import request, url_for
 from re import L
 from elasticsearch_dsl.query import Match, Range, Terms, Bool
 from mock import patch, MagicMock
 from werkzeug import ImmutableMultiDict
 from werkzeug.datastructures import MultiDict, CombinedMultiDict
+from invenio_accounts.testutils import login_user_via_session
 
 from invenio_search import RecordsSearch
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
@@ -168,3 +171,154 @@ def test_feedback_email_search_factory(i18n_app, users, indices):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         res = feedback_email_search_factory(self=None, search=search)
         assert res
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_query.py::test_function_issue35902 -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_function_issue35902(app, users, communities, mocker):
+    with app.test_client() as client:
+        login_user_via_session(client, email=users[3]["email"])
+        search = RecordsSearch()
+        app.config['WEKO_SEARCH_KEYWORDS_DICT'] = WEKO_SEARCH_KEYWORDS_DICT
+        app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
+        mocker.patch("weko_search_ui.query.search_permission",side_effect=MockSearchPerm)
+        mocker.patch("weko_search_ui.permissions.search_permission",side_effect=MockSearchPerm)
+        test = [
+            {"bool":{"should":[{"match":{"weko_creator_id":None}},{"match":{"weko_shared_id":None}},{"bool":{"must":[{"match":{"publish_status":"0"}},{"range":{"publish_date":{"lte":"now/d","time_zone":"UTC"}}}]}}],"must":[{"terms":{"path":[]}}]}},
+            {"bool":{"must":[{"match":{"relation_version_is_last":"true"}}]}},
+        ]
+        # not exist community
+        # full text, detail search
+        data = {
+            "page":"1","size":"20","sort":"-createdate","creator":"","subject":"","sbjscheme":"","id":"","id_attr":"","type":"","itemtype":"","lang":"",
+            "search_type":"0",
+            "q":"test_data",
+            "title":"aaa",
+        }
+        with app.test_request_context(headers=[("Accept-Language","en")],data=data):
+            app.extensions['invenio-oauth2server'] = 1
+            app.extensions['invenio-queues'] = 1
+            test1 = copy.deepcopy(test)
+            test1.append(
+                {"multi_match":{"query":"aaa","type":"most_fields","minimum_should_match":"75%","operator":"and","fields":["search_title","search_title.ja"]}}
+            )
+            test1.append(
+                {"bool":{"should":[
+                    {"nested":{"query":{"multi_match":{"query":"test_data","operator":"and","fields":["content.attachment.content"]}},"path":"content"}},
+                    {"query_string":{"query":"test_data","default_operator":"and","fields":["search_*","search_*.ja"]}}
+                ]}}
+            )
+            res,urlkwargs = default_search_factory(self=None, search=search)
+            result = (res.query()).to_dict()
+            result = result["query"]["bool"]["filter"][0]["bool"]["must"]
+            assert result == test1
+        
+        # detail search
+        data = {
+            "page":"1","size":"20","sort":"-createdate","creator":"","subject":"","sbjscheme":"","id":"","id_attr":"","type":"","itemtype":"","lang":"",
+            "search_type":"0",
+            "q":"",
+            "title":"aaa",
+        }
+        with app.test_request_context(headers=[("Accept-Language","en")],data=data):
+            app.extensions['invenio-oauth2server'] = 1
+            app.extensions['invenio-queues'] = 1
+            test2 = copy.deepcopy(test)
+            test2.append(
+                {"multi_match":{"query":"aaa","type":"most_fields","minimum_should_match":"75%","operator":"and","fields":["search_title","search_title.ja"]}}
+            )
+            res,urlkwargs = default_search_factory(self=None, search=search)
+            result = (res.query()).to_dict()
+            result = result["query"]["bool"]["filter"][0]["bool"]["must"]
+            assert result == test2
+            
+        # full text search
+        data = {
+            "page":"1","size":"20","sort":"-createdate",
+            "search_type":"0","q":"test_data"
+        }
+        with app.test_request_context(headers=[("Accept-Language","en")],data=data):
+            app.extensions['invenio-oauth2server'] = 1
+            app.extensions['invenio-queues'] = 1
+            test3 = copy.deepcopy(test)
+            test3.append(
+                {"bool":{"should":[
+                    {"nested":{"query":{"multi_match":{"query":"test_data","operator":"and","fields":["content.attachment.content"]}},"path":"content"}},
+                    {"query_string":{"query":"test_data","default_operator":"and","fields":["search_*","search_*.ja"]}}
+                ]}}
+            )
+            res,urlkwargs = default_search_factory(self=None, search=search)
+            result = (res.query()).to_dict()
+            result = result["query"]["bool"]["filter"][0]["bool"]["must"]
+            assert result == test3
+        
+        # exist community
+        test = [
+            {"bool":{"should":[{"match":{"weko_creator_id":None}},{"match":{"weko_shared_id":None}},{"bool":{"must":[{"match":{"publish_status":"0"}},{"range":{"publish_date":{"lte":"now/d","time_zone":"UTC"}}}]}}],"must":[{"bool":{}}]}},
+            {"bool":{"must":[{"match":{"relation_version_is_last":"true"}}]}},
+        ]
+        # full text, detail search
+        data = {
+            "page":"1","size":"20","sort":"-createdate","creator":"","subject":"","sbjscheme":"","id":"","id_attr":"","type":"","itemtype":"","lang":"",
+            "search_type":"0",
+            "q":"test_data",
+            "title":"aaa",
+            "community":"comm1"
+        }
+        with app.test_request_context(headers=[("Accept-Language","en")],data=data):
+            app.extensions['invenio-oauth2server'] = 1
+            app.extensions['invenio-queues'] = 1
+            test1 = copy.deepcopy(test)
+            test1.append(
+                {"multi_match":{"query":"aaa","type":"most_fields","minimum_should_match":"75%","operator":"and","fields":["search_title","search_title.ja"]}}
+            )
+            test1.append(
+                {"bool":{"should":[
+                    {"nested":{"query":{"multi_match":{"query":"test_data","operator":"and","fields":["content.attachment.content"]}},"path":"content"}},
+                    {"query_string":{"query":"test_data","default_operator":"and","fields":["search_*","search_*.ja"]}}
+                ]}}
+            )
+            res,urlkwargs = default_search_factory(self=None, search=search)
+            result = (res.query()).to_dict()
+            result = result["query"]["bool"]["filter"][0]["bool"]["must"]
+            assert result == test1
+        
+        # detail search
+        data = {
+            "page":"1","size":"20","sort":"-createdate","creator":"","subject":"","sbjscheme":"","id":"","id_attr":"","type":"","itemtype":"","lang":"",
+            "search_type":"0",
+            "q":"",
+            "title":"aaa",
+            "community":"comm1"
+        }
+        with app.test_request_context(headers=[("Accept-Language","en")],data=data):
+            app.extensions['invenio-oauth2server'] = 1
+            app.extensions['invenio-queues'] = 1
+            test2 = copy.deepcopy(test)
+            test2.append(
+                {"multi_match":{"query":"aaa","type":"most_fields","minimum_should_match":"75%","operator":"and","fields":["search_title","search_title.ja"]}}
+            )
+            res,urlkwargs = default_search_factory(self=None, search=search)
+            result = (res.query()).to_dict()
+            result = result["query"]["bool"]["filter"][0]["bool"]["must"]
+            assert result == test2
+            
+        # full text search
+        data = {
+            "page":"1","size":"20","sort":"-createdate",
+            "search_type":"0","q":"test_data",
+            "community":"comm1"
+        }
+        with app.test_request_context(headers=[("Accept-Language","en")],data=data):
+            app.extensions['invenio-oauth2server'] = 1
+            app.extensions['invenio-queues'] = 1
+            test3 = copy.deepcopy(test)
+            test3.append(
+                {"bool":{"should":[
+                    {"nested":{"query":{"multi_match":{"query":"test_data","operator":"and","fields":["content.attachment.content"]}},"path":"content"}},
+                    {"query_string":{"query":"test_data","default_operator":"and","fields":["search_*","search_*.ja"]}}
+                ]}}
+            )
+            res,urlkwargs = default_search_factory(self=None, search=search)
+            result = (res.query()).to_dict()
+            result = result["query"]["bool"]["filter"][0]["bool"]["must"]
+            assert result == test3
+        
