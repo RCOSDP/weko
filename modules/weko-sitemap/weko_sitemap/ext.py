@@ -162,7 +162,7 @@ class WekoSitemap(Sitemap):
         ext.blueprint = Blueprint('flask_sitemap',
                                   'flask_sitemap', template_folder='templates')
         
-        @ext.blueprint .teardown_request
+        @ext.blueprint.teardown_request
         def dbsession_clean(exception):
             current_app.logger.debug("weko_sitemap dbsession_clean: {}".format(exception))
             if exception is None:
