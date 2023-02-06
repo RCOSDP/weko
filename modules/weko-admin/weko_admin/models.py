@@ -348,8 +348,6 @@ class AdminLangSettings(db.Model):
         """
         with db.session.begin_nested():
             lang_setting_data = cls.query.filter_by(lang_code=lang_code).one()
-            if lang_code is not None:
-                lang_setting_data.lang_code = lang_code
             if lang_name is not None:
                 lang_setting_data.lang_name = lang_name
             if is_registered is not None:
@@ -361,23 +359,6 @@ class AdminLangSettings(db.Model):
             db.session.merge(lang_setting_data)
 
         db.session.commit()
-        return cls
-
-    @classmethod
-    def get_lang_code(cls):
-        """Get language code.
-
-        :return: the language code
-        """
-        return cls.lang_code
-
-    @classmethod
-    def get_lang_name(cls):
-        """Get language full name.
-
-        :return: language full name
-        """
-        return cls.lang_name
 
     @classmethod
     def get_registered_language(cls):
@@ -793,7 +774,7 @@ class LogAnalysisRestrictedCrawlerList(db.Model):
                 id = data.get('id', 0)
                 is_active = data.get('is_active', True)
                 with db.session.begin_nested():
-                    current_record = cls.query.filter_by(id=id).one()
+                    current_record = cls.query.filter_by(id=id).one_or_none()
                     if current_record:
                         current_record.list_url = new_list
                         current_record.is_active = is_active
@@ -868,13 +849,18 @@ class BillingPermission(db.Model):
         """
         try:
             with db.session.begin_nested():
+                new_data_flg = False
                 billing_data = cls.query.filter_by(
                     user_id=user_id).one_or_none()
-                if billing_data:
-                    billing_data.is_active = is_active
-                    db.session.merge(billing_data)
+                if not billing_data:
+                    new_data_flg = True
+                    billing_data = BillingPermission()
+                    billing_data.user_id = user_id
+                billing_data.is_active = is_active
+                if new_data_flg:
+                    db.session.add(billing_data)
                 else:
-                    cls.create(user_id, is_active)
+                    db.session.merge(billing_data)
             db.session.commit()
         except BaseException as ex:
             db.session.rollback()

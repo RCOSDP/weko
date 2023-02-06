@@ -476,7 +476,7 @@ class LogAnalysisSettings(BaseView):
                 flash(_('Successfully Changed Settings.'))
             except Exception as e:
                 current_app.logger.error(
-                    'Could not save restricted data: %s', e)
+                    'Could not save restricted data: {}'.format(e))
                 flash(_('Could not save data.'), 'error')
 
         # Get most current restricted addresses/user agents
@@ -676,7 +676,7 @@ class SearchSettingsView(BaseView):
                 jfy['status'] = 201
                 jfy['message'] = 'Search setting was successfully updated.'
             except BaseException as e:
-                current_app.logger.error('Could not save search settings', e)
+                current_app.logger.error('Could not save search settings: {}'.format(e))
                 jfy['status'] = 500
                 jfy['message'] = 'Failed to update search setting.'
             return make_response(jsonify(jfy), jfy['status'])
@@ -691,7 +691,7 @@ class SearchSettingsView(BaseView):
                 lists=lists,
             )
         except BaseException as e:
-            current_app.logger.error('Could not save search settings %s', e)
+            current_app.logger.error('Could not save search settings: {}'.format(e))
             abort(500)
             # flash(_('Unable to change search settings.'), 'error')
 
@@ -735,7 +735,7 @@ class SiteLicenseSettingsView(BaseView):
                 jfy['status'] = 201
                 jfy['message'] = 'Site license was successfully updated.'
             except BaseException as ex:
-                current_app.logger.error('Failed to update site license', ex)
+                current_app.logger.error('Failed to update site license: {}'.format(ex))
                 jfy['status'] = 500
                 jfy['message'] = 'Failed to update site license.'
             return make_response(jsonify(jfy), jfy['status'])
@@ -750,7 +750,7 @@ class SiteLicenseSettingsView(BaseView):
                 current_app.config['WEKO_ADMIN_SITE_LICENSE_TEMPLATE'],
                 result=json.dumps(result))
         except BaseException as e:
-            current_app.logger.error('Could not save site license settings %s', e)
+            current_app.logger.error('Could not save site license settings {}'.format(e))
             abort(500)
 
 
@@ -1100,6 +1100,7 @@ class IdentifierSettingView(ModelView):
         return form
 
     def _get_community_list(self):
+        query_data = []
         try:
             query_data = Community.query.all()
             query_data.insert(0, Community(id='Root Index'))
