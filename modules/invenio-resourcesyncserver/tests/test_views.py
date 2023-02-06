@@ -1,5 +1,7 @@
 import json
 import pytest
+import datetime
+from lxml import etree
 from flask import current_app, make_response, request
 from flask_login import current_user
 from mock import patch, MagicMock
@@ -174,14 +176,203 @@ def test_resource_dump(client_api, users, indices):
 
 
 # def file_content(index_id, record_id):
+def test_file_content(i18n_app, indices):
+    index_id = 33
+    record_id = 1
+    data1 = MagicMock()
+    def get_record_content_file(item):
+        return item
+    data1.get_record_content_file = get_record_content_file
+
+    with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_resource_by_repository_id", return_value=data1):
+        assert file_content(index_id=index_id, record_id=record_id) is not None
+    
+    # Exception coverage
+    # file_content(index_id=index_id, record_id=record_id) is not None
+
+
 # def capability():
+def test_capability(i18n_app):
+    with patch("invenio_resourcesyncserver.views.render_capability_xml", return_value=[1,2,3]):
+        assert "Response" in str(type(capability()))
+
+    # Exception coverage
+    # capability()
+
+
 # def resource_dump_manifest(index_id, record_id):
+def test_resource_dump_manifest(i18n_app):
+    index_id = 33
+    record_id = 1
+    data1 = MagicMock()
+    def get_record_content_file(item):
+        return item
+    data1.get_record_content_file = get_record_content_file
+
+    with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_resource_by_repository_id", return_value=data1):
+        assert "Response" in str(type(resource_dump_manifest(index_id=index_id, record_id=record_id)))
+
+    # Exception coverage
+    # resource_dump_manifest(index_id=index_id, record_id=record_id)
+
+
 # def change_list_index(index_id):
+def test_change_list_index(i18n_app, indices):
+    index_id = 33
+    data1 = MagicMock()
+
+    def get_change_list_index():
+        return True
+
+    def get_change_list_by_repo_id(item):
+        data = MagicMock()
+        data.get_change_list_index = get_change_list_index
+        return data
+        
+    data1.get_change_list_by_repo_id = get_change_list_by_repo_id
+
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list_by_repo_id", return_value=data1):
+        assert "Response" in str(type(change_list_index(index_id=index_id)))
+
+    # Exception coverage
+    # change_list_index(index_id=index_id)
+
+
 # def change_list(index_id, from_date):
+def test_change_list(i18n_app, indices):
+    index_id = 33
+    from_date = datetime.datetime.now() - datetime.timedelta(days=2)
+    data1 = MagicMock()
+
+    def get_change_list_content_xml():
+        return True
+
+    def get_change_list_by_repo_id(item):
+        data = MagicMock()
+        data.get_change_list_content_xml = get_change_list_content_xml
+        return data
+        
+    data1.get_change_list_by_repo_id = get_change_list_by_repo_id
+
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list_by_repo_id", return_value=data1):
+        assert "Response" in str(type(change_list(index_id=index_id, from_date=from_date)))
+
+    # Exception coverage
+    # change_list_index(index_id=index_id)
+
+
 # def change_dump_index(index_id):
+def test_change_dump_index(i18n_app, indices):
+    index_id = 33
+    from_date = datetime.datetime.now() - datetime.timedelta(days=2)
+    data1 = MagicMock()
+
+    def get_change_dump_index():
+        return True
+
+    def get_change_list_by_repo_id(item):
+        data = MagicMock()
+        data.get_change_dump_index = get_change_list_content_xml
+        return data
+        
+    data1.get_change_list_by_repo_id = get_change_list_by_repo_id
+
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list_by_repo_id", return_value=data1):
+        assert "Response" in str(type(change_dump_index(index_id=index_id)))
+
+    # Exception coverage
+    # change_dump_index(index_id=index_id)
+
+
 # def change_dump(index_id, from_date):
+def test_change_dump(i18n_app, indices):
+    index_id = 33
+    from_date = datetime.datetime.now() - datetime.timedelta(days=2)
+    data1 = MagicMock()
+
+    def get_change_dump_xml():
+        return True
+
+    def get_change_list_by_repo_id(item):
+        data = MagicMock()
+        data.get_change_dump_xml = get_change_dump_xml
+        return data
+        
+    data1.get_change_list_by_repo_id = get_change_list_by_repo_id
+
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list_by_repo_id", return_value=data1):
+        assert "Response" in str(type(change_dump(index_id=index_id, from_date=from_date)))
+
+    # Exception coverage
+    # change_dump(index_id=index_id)
+
+
 # def change_dump_manifest(index_id, record_id):
+def test_change_dump_manifest(i18n_app, indices):
+    index_id = 33
+    record_id = 1
+    data1 = MagicMock()
+
+    def get_change_dump_manifest_xml():
+        return True
+
+    def get_change_list_by_repo_id(item):
+        data = MagicMock()
+        data.get_change_dump_manifest_xml = get_change_dump_manifest_xml
+        return data
+        
+    data1.get_change_list_by_repo_id = get_change_list_by_repo_id
+
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list_by_repo_id", return_value=data1):
+        assert "Response" in str(type(change_dump_manifest(index_id=index_id, record_id=record_id)))
+
+    # Exception coverage
+    # change_dump_manifest(index_id=index_id)
+
+
 # def change_dump_content(index_id, record_id):
+def test_change_dump_content(i18n_app, indices):
+    index_id = 33
+    record_id = 1
+    data1 = MagicMock()
+
+    def get_record_content_file():
+        return True
+
+    def get_change_list_by_repo_id(item):
+        data = MagicMock()
+        data.get_record_content_file = get_record_content_file
+        return data
+        
+    data1.get_change_list_by_repo_id = get_change_list_by_repo_id
+
+    with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list_by_repo_id", return_value=data1):
+        assert str(type(change_dump_content(index_id=index_id, record_id=record_id))) == str(type(get_change_list_by_repo_id(index_id)))
+
+    # Exception coverage
+    # change_dump_content(index_id=index_id)
+
+
 # def well_know_resourcesync():
+def test_well_know_resourcesync(i18n_app):
+    assert "Response" in str(type(well_know_resourcesync()))
+
+
 # def source_description():
+def test_source_description(i18n_app):
+    assert "Response" in str(type(source_description()))
+
+
 # def record_detail_in_index(index_id, record_id):
+def test_record_detail_in_index(i18n_app, indices):
+    index_id = 33
+    record_id = MagicMock()
+    def zfill(item):
+        return "item"
+    record_id.zfill = zfill
+
+    test = etree.Element("test")
+    test.append( etree.Element("test1") )
+
+    with patch("invenio_resourcesyncserver.views.getrecord", return_value=test):
+        assert "Response" in str(type(record_detail_in_index(index_id=index_id, record_id=record_id)))
