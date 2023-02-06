@@ -1,45 +1,21 @@
+
 import json
+from os.path import join, dirname
 import copy
 import uuid
-from os.path import dirname, join
-from flask import url_for
 
 from invenio_db import db
-from invenio_pidstore import current_pidstore
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdentifier
-from invenio_pidrelations.models import PIDRelation
-from weko_records.api import ItemsMetadata, WekoRecord
+from weko_records.api import ItemsMetadata 
 from weko_deposit.api import WekoDeposit,WekoRecord
-
+from invenio_pidrelations.models import PIDRelation
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdentifier
+from invenio_pidstore.errors import PIDDoesNotExistError
 
 def json_data(filename):
     with open(join(dirname(__file__),filename), "r") as f:
         return json.load(f)
 
 
-#def create_record(record_data, item_data):
-#    """Create a test record."""
-#    with db.session.begin_nested():
-#        record_data = copy.deepcopy(record_data)
-#        item_data = copy.deepcopy(item_data)
-#        rec_uuid = uuid.uuid4()
-#        recid = PersistentIdentifier.create(
-#            'recid',
-#            record_data['recid'],
-#            object_type='rec',
-#            object_uuid=rec_uuid,
-#            status=PIDStatus.REGISTERED
-#        )
-#        depid = PersistentIdentifier.create(
-#            'depid',
-#            record_data['recid'],
-#            object_type='rec',
-#            object_uuid=rec_uuid,
-#            status=PIDStatus.REGISTERED
-#        )
-#        record = WekoRecord.create(record_data, id_=rec_uuid)
-#        item = ItemsMetadata.create(item_data, id_=rec_uuid)
-#    return recid, record, item
 def create_record(record_data, item_data):
     """Create a test record."""
     with db.session.begin_nested():
@@ -74,26 +50,3 @@ def create_record(record_data, item_data):
         deposit.commit()
 
     return recid, depid, record, item, parent, doi, deposit
-
-def login(app, client, obj = None, email=None, password=None):
-    """Log the user in with the test client."""
-    with app.test_request_context():
-        login_url = url_for('security.login')
-
-    if obj:
-        email = obj.email
-        password = obj.password_plaintext
-        client.post(login_url, data=dict(
-            email=email or app.config['TEST_USER_EMAIL'],
-            password=password or app.config['TEST_USER_PASSWORD'],
-        ))
-    else:
-        client.post(login_url, data=dict(
-            email=email or app.config['TEST_USER_EMAIL'],
-            password=password or app.config['TEST_USER_PASSWORD'],
-        ))
-
-def logout(app,client):
-    with app.test_request_context():
-        logout_url = url_for("security.logout")
-    client.get(logout_url)
