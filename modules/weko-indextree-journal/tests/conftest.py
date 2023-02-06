@@ -19,7 +19,7 @@ from os.path import dirname, exists, join
 import json
 import shutil
 import tempfile
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 import pytest
 from flask import Flask
@@ -321,4 +321,57 @@ def db_itemtype(app, db):
         "item_type_name": item_type_name,
         "item_type": item_type,
         "item_type_mapping": item_type_mapping,
+    }
+
+
+@pytest.fixture
+def indices(app, db):
+    with db.session.begin_nested():
+        # Create a test Indices
+        testIndexOne = Index(
+            index_name="testIndexOne",
+            browsing_role="Contributor",
+            public_state=True,
+            id=11,
+        )
+        testIndexTwo = Index(
+            index_name="testIndexTwo",
+            browsing_group="group_test1",
+            public_state=True,
+            id=22,
+        )
+        testIndexThree = Index(
+            index_name="testIndexThree",
+            browsing_role="Contributor",
+            public_state=True,
+            harvest_public_state=True,
+            id=33,
+            item_custom_sort={"1": 1},
+            public_date=datetime.today() - timedelta(days=1),
+        )
+        testIndexThreeChild = Index(
+            index_name="testIndexThreeChild",
+            browsing_role="Contributor",
+            parent=33,
+            index_link_enabled=True,
+            index_link_name="test_link",
+            public_state=True,
+            harvest_public_state=False,
+            id=44,
+            public_date=datetime.today() - timedelta(days=1),
+        )
+        testIndexMore = Index(
+            index_name="testIndexMore", parent=33, public_state=True, id="more"
+        )
+        testIndexPrivate = Index(
+            index_name="testIndexPrivate", public_state=False, id=55
+        )
+
+        db.session.add(testIndexThree)
+        db.session.add(testIndexThreeChild)
+
+    return {
+        "index_dict": dict(testIndexThree),
+        "index_non_dict": testIndexThree,
+        "index_non_dict_child": testIndexThreeChild,
     }
