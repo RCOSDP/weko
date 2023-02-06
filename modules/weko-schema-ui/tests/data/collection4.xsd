@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified"
+  elementFormDefault="qualified"
+  targetNamespace="ddi:codebook:2_5"
+  xmlns="ddi:codebook:2_5"
+  xmlns:dc="http://purl.org/dc/terms/"
+  xmlns:fn="http://www.w3.org/2005/xpath-functions"
+  xmlns:saxon="http://xml.apache.org/xslt"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:group name="TestGroup">
+    <xs:sequence>
+      <xs:element name="test" type="xs:string"/>
+    </xs:sequence>
+  </xs:group>
+  <xs:element name="test">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="object" type="xs:string" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="collection">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="object" type="objType" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="person" type="personType"/>
+  <xs:complexType name="personType">
+    <xs:sequence>
+      <xs:element name="name" type="xs:string"/>
+      <xs:element name="born" type="xs:date"/>
+      <xs:element name="dead" type="xs:date" minOccurs="0"/>
+      <xs:element name="qualification" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:ID" use="required"/>
+  </xs:complexType>
+  <xs:complexType name="objType">
+    <xs:sequence>
+      <xs:element name="position" type="xs:int"/>
+      <xs:element name="title" type="xs:string"/>
+      <xs:element name="year" type="xs:gYear"/>
+      <xs:element name="author" type="personType"/>
+      <xs:element name="estimation" type="xs:decimal" minOccurs="0"/>
+      <xs:element name="characters" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="person" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="age">
+        <xs:simpleType>
+          <xs:restriction base="xs:integer">
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="100"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="initials">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[a-zA-Z][a-zA-Z][a-zA-Z]"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="car">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="Audi"/>
+            <xs:enumeration value="Golf"/>
+            <xs:enumeration value="BMW"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:ID" use="required"/>
+    <xs:attribute name="available" type="xs:boolean" use="required"/>
+    <xs:attribute name="xml-lang" type="xs:string" use="required"/>
+  </xs:complexType>
+</xs:schema>
