@@ -241,7 +241,7 @@ def delete_records(index_tree_id, ignore_items):
 
                 # Indexing
                 indexer = WekoIndexer()
-                indexer.update_path(record, update_revision=False)
+                indexer.update_es_data(record, update_revision=False)
 
                 if len(paths) == 0 and removed_path is not None:
                     WekoDeposit.delete_by_index_tree_id(removed_path, ignore_items)
