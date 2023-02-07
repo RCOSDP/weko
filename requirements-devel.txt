@@ -40,7 +40,7 @@ cookies==2.2.1
 counter-robots==2018.6
 coverage==4.5.4
 coveralls==3.3.1
-cryptography==2.1.4
+cryptography==39.0.1
 datacite==1.0.1
 dataclasses==0.8
 DateTime==4.4
