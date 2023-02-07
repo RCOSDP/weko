@@ -23,7 +23,7 @@ citeproc-py-styles==0.1.2
 click>=6.7
 cookiecutter==1.6.0
 counter-robots==2018.6
-cryptography==2.1.4
+cryptography==39.0.1
 datacite==1.0.1
 dcxml==0.1.0
 decorator==4.1.2
