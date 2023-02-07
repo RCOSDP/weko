@@ -1,0 +1,27 @@
+{
+  "mappings": {
+    "testrecord-v1.0.0": {
+      "properties": {
+        "control_number": {
+          "type": "keyword"
+        },
+        "description": {
+          "type": "text"
+        },
+        "participants": {
+          "type": "long"
+        },
+        "title": {
+          "type": "text",
+          "copy_to": "suggest_title"
+        },
+        "type": {
+          "type": "keyword"
+        },
+        "suggest_title": {
+          "type": "completion"
+        }
+      }
+    }
+  }
+}
