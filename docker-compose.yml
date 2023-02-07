@@ -82,6 +82,7 @@ services:
       - /code/modules/invenio-accounts/invenio_accounts.egg-info
       - /code/modules/invenio-oauth2server/invenio_oauth2server.egg-info
       - /code/modules/invenio-files-rest/invenio_files_rest.egg-info
+      - /code/modules/invenio-indexer/invenio_indexer.egg-info
       - /code/modules/invenio-s3/invenio_s3.egg-info
       - /code/modules/invenio-oaiharvester/invenio_oaiharvester.egg-info
       - /code/modules/invenio-oaiserver/invenio_oaiserver.egg-info
