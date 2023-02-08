@@ -236,17 +236,19 @@ def delete_records(index_tree_id, ignore_items):
 
                 # Do update the path on record
                 record.update({"path": paths})
-                record.commit()
-                db.session.commit()
 
                 # Indexing
                 indexer = WekoIndexer()
                 indexer.update_es_data(record, update_revision=False)
 
                 if len(paths) == 0 and removed_path is not None:
+                    record.update({"publish_status": "-1"})
+                    indexer.update_es_data(record, update_revision=False, field='publish_status')
                     WekoDeposit.delete_by_index_tree_id(removed_path, ignore_items)
                     Record.get_record(recid).delete()  # flag as deleted
-                    db.session.commit()  # terminate the transaction
+                
+                record.commit()
+                db.session.commit()
 
                 result.append(pid)
 
@@ -1361,7 +1363,7 @@ def update_publish_status(item_id, status):
     record["publish_status"] = status
     record.commit()
     indexer = WekoIndexer()
-    indexer.update_publish_status(record)
+    indexer.update_es_data(record, update_revision=False, field='publish_status')
 
 
 def handle_workflow(item: dict):
