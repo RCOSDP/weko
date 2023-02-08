@@ -322,7 +322,8 @@ def restore(recid):
                 rec = RecordMetadata.query.filter_by(
                     id=ver.object_uuid).first()
                 dep = WekoDeposit(rec.json, rec)
-                dep.indexer.update_es_data(dep, update_revision=False)
+                dep['publish_status'] = '0'
+                dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
                 dep.commit()
             pids = PersistentIdentifier.query.filter_by(
                 object_uuid=ver.object_uuid)
