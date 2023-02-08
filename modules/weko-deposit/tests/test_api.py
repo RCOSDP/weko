@@ -187,13 +187,6 @@ class TestWekoIndexer:
         with pytest.raises(NotFoundError):
             indexer.get_metadata_by_item_id(record.pid)
 
-    # def update_publish_status(self, record):
-    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_update_publish_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_update_publish_status(self,app,es_records):
-        indexer, records = es_records
-        record = records[0]['record']
-        with app.test_request_context():
-            assert indexer.update_publish_status(record)=={'_index': 'test-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': '{}'.format(record.id), '_version': 2, 'result': 'noop', '_shards': {'total': 0, 'successful': 0, 'failed': 0}}
 
     # def update_relation_version_is_last(self, version):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_update_relation_version_is_last -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1601,8 +1594,6 @@ def test_weko_indexer(app, db, location):
     indexer = WekoIndexer()
     indexer.client=MockClient()
     indexer.client.update_get_error(True)
-    with pytest.raises(NotFoundError):
-        indexer.update_publish_status(deposit)
     indexer.client.update_get_error(False)
     indexer.get_es_index()
 
@@ -1633,8 +1624,6 @@ def test_weko_indexer(app, db, location):
     indexer = WekoIndexer()
     indexer.client=MockClient()
     indexer.client.update_get_error(True)
-    with pytest.raises(NotFoundError):
-        indexer.update_publish_status(deposit)
     indexer.client.update_get_error(False)
     indexer.get_es_index()
 

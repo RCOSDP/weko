@@ -189,18 +189,6 @@ class WekoIndexer(RecordIndexer):
             except BaseException:
                 pass
 
-    def update_publish_status(self, record):
-        """Update publish status."""
-        self.get_es_index()
-        pst = 'publish_status'
-        body = {'doc': {pst: record.get(pst)}}
-        return self.client.update(
-            index=self.es_index,
-            doc_type=self.es_doc_type,
-            id=str(record.id),
-            body=body
-        )
-
     def update_relation_version_is_last(self, version):
         """Update relation version is_last."""
         self.get_es_index()
