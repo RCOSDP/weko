@@ -214,16 +214,16 @@ function FacetSearchLayout(
                             mappingList={mapping_list}/>
       </div>
       <div className="row">
+        <InputSearchConditionComponent value={_searchCondition} setValue={_setSearchCondition}
+                              idName={LABELS['lblSearchCondition']}/>
+      </div>
+      <div className="row">
         <InputRadioComponent value={_active} setValue={_setActive}
                               idName={LABELS['lblActive']}/>
       </div>
       <div className="row">
         <InputOpenCloseComponent value={_isOpen} setValue={_setIsOpen}
                               idName={LABELS['lblOpenClose']}/>
-      </div>
-      <div className="row">
-        <InputSearchConditionComponent value={_searchCondition} setValue={_setSearchCondition}
-                              idName={LABELS['lblSearchCondition']}/>
       </div>
       <br/>
       <div className="row">
@@ -544,16 +544,16 @@ function FacetSearchDetailsLayout(
             }</td>
           </tr>
           <tr>
+            <td><b>{LABELS['lblSearchCondition']}</b></td>
+            <td>{search_condition}</td>
+          </tr>
+          <tr>
             <td><b>{LABELS['lblActive']}</b></td>
             <td>{active ? LABELS['lblDisplay'] : LABELS['lblHide']}</td>
           </tr>
           <tr>
             <td><b>{LABELS['lblOpenClose']}</b></td>
             <td>{is_open ? LABELS['lblOpenCloseOpen'] : LABELS['lblOpenCloseClose']}</td>
-          </tr>
-          <tr>
-            <td><b>{LABELS['lblSearchCondition']}</b></td>
-            <td>{search_condition}</td>
           </tr>
           </tbody>
         </table>
