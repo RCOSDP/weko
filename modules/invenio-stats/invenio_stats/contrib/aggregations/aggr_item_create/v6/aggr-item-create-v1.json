@@ -3,7 +3,9 @@
   "settings": {
     "index.mapper.dynamic": false,
     "index": {
-      "refresh_interval": "1m"
+      "refresh_interval": "1m",
+      "lifecycle.name": "weko_stats_policy",
+      "lifecycle.rollover_alias": "__SEARCH_INDEX_PREFIX__stats-item-create"
     }
   },
   "mappings": {
@@ -31,7 +33,7 @@
           "index": true
         },
         "cur_user_id": {
-          "type": "integer",
+          "type": "keyword",
           "index": true
         },
         "hostname": {
@@ -56,8 +58,5 @@
         }
       }
     }
-  },
-  "aliases": {
-    "__SEARCH_INDEX_PREFIX__stats-item-create": {}
   }
 }

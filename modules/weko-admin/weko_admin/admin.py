@@ -27,6 +27,7 @@ import os
 import re
 import sys
 import unicodedata
+import ipaddress
 from datetime import datetime, timedelta
 
 from flask import abort, current_app, flash, jsonify, make_response, \
@@ -39,6 +40,7 @@ from flask_admin.helpers import get_redirect_target
 from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_mail import Attachment
+from flask_wtf import FlaskForm,Form
 from invenio_communities.models import Community
 from invenio_db import db
 from invenio_files_rest.storage.pyfs import remove_dir_with_file
@@ -49,6 +51,7 @@ from weko_records.models import SiteLicenseInfo
 from weko_records_ui.utils import check_items_settings
 from wtforms.fields import StringField
 from wtforms.validators import ValidationError
+
 
 from .config import WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR, \
     WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR
@@ -117,7 +120,8 @@ class StyleSettingView(BaseView):
                         fp.writelines('\n'.join(form_lines))
                     flash(_('Successfully update color.'), category="success")
         except BaseException:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
         return self.render(
             current_app.config["WEKO_ADMIN_BlOCK_STYLE_TEMPLATE"],
             body_bg=body_bg,
@@ -161,7 +165,8 @@ class StyleSettingView(BaseView):
             with open(write_path, 'w+', encoding='utf-8') as fp:
                 fp.writelines(wysiwyg_html)
         except Exception:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
             abort(500)
         return jsonify({'code': 0, 'msg': 'success'})
 
@@ -173,7 +178,8 @@ class StyleSettingView(BaseView):
                 for line in fp.readlines():
                     array.append(line)
         except Exception:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
             abort(500)
         return array
 
@@ -187,7 +193,8 @@ class StyleSettingView(BaseView):
             with open(f_path2, 'rb') as fp2:
                 checksum2 = hashlib.md5(fp2.read()).hexdigest()
         except Exception:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
             abort(500)
         return checksum1 == checksum2
 
@@ -307,11 +314,11 @@ class ReportView(BaseView):
                 frequency_options=current_app.config[
                     'WEKO_ADMIN_REPORT_FREQUENCIES'])
         except Exception as e:
-            current_app.logger.error('Unexpected error: ', e)
+            current_app.logger.error("Unexpected error: {}".format(e))
         return abort(400)
 
-    @expose('/stats_file_tsv', methods=['POST'])
-    def get_file_stats_tsv(self):
+    @expose('/stats_file_output', methods=['POST'])
+    def get_file_stats_output(self):
         """Get file download/preview stats report."""
         stats_json = json.loads(request.form.get('report'))
         year = request.form.get('year')
@@ -351,7 +358,7 @@ class ReportView(BaseView):
                                                       + zip_name
                 return resp
         except Exception as e:
-            current_app.logger.error('Unexpected error: ', e)
+            current_app.logger.error("Unexpected error: {}".format(e))
             flash(_('Unexpected error occurred.'), 'error')
         return redirect(url_for('report.index'))
 
@@ -458,16 +465,18 @@ class StatsSettingsView(BaseView):
 class LogAnalysisSettings(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
-        if request.method == 'POST':
+        form = FlaskForm(request.form)
+        if request.method == 'POST' and form.validate():
             crawler_lists, new_ip_addresses = self.parse_form_data(
                 request.form)
             try:
                 LogAnalysisRestrictedIpAddress.update_table(new_ip_addresses)
                 LogAnalysisRestrictedCrawlerList.update_or_insert_list(
                     crawler_lists)
+                flash(_('Successfully Changed Settings.'))
             except Exception as e:
                 current_app.logger.error(
-                    'Could not save restricted data: ', e)
+                    'Could not save restricted data: %s', e)
                 flash(_('Could not save data.'), 'error')
 
         # Get most current restricted addresses/user agents
@@ -479,7 +488,7 @@ class LogAnalysisSettings(BaseView):
                     "WEKO_ADMIN_DEFAULT_CRAWLER_LISTS"])
                 shared_crawlers = LogAnalysisRestrictedCrawlerList.get_all()
         except Exception as e:
-            current_app.logger.error(_('Could not get restricted data: '), e)
+            current_app.logger.error(_('Could not get restricted data: %s'), e)
             flash(_('Could not get restricted data.'), 'error')
             restricted_ip_addresses = []
             shared_crawlers = []
@@ -487,7 +496,8 @@ class LogAnalysisSettings(BaseView):
         return self.render(
             current_app.config["WEKO_ADMIN_LOG_ANALYSIS_SETTINGS_TEMPLATE"],
             restricted_ip_addresses=restricted_ip_addresses,
-            shared_crawlers=shared_crawlers
+            shared_crawlers=shared_crawlers,
+            form = form
         )
 
     def parse_form_data(self, raw_data):
@@ -516,7 +526,8 @@ class RankingSettingsView(BaseView):
 
     @expose('/', methods=['GET', 'POST'])
     def index(self):
-        if request.method == 'POST':
+        f = FlaskForm(request.form)
+        if request.method == 'POST' and f.validate():
             try:
                 form = request.form.get('submit', None)
                 if form == 'save_ranking_settings':
@@ -530,13 +541,13 @@ class RankingSettingsView(BaseView):
                         raise
                     settings.new_item_period = new_item_period
                     new_statistical_period = int(request.form.get('statistical_period',
-                                                           365))
+                                                                  365))
                     if new_statistical_period < 1 or new_statistical_period > 3650:
                         current_app.logger.debug(new_statistical_period)
                         raise
                     settings.statistical_period = new_statistical_period
                     new_display_rank = int(request.form.get('display_rank',
-                                                           10))
+                                                            10))
                     if new_display_rank < 1 or new_display_rank > 100:
                         current_app.logger.debug(new_display_rank)
                         raise
@@ -594,7 +605,8 @@ class RankingSettingsView(BaseView):
             new_item_period=new_item_period,
             statistical_period=statistical_period,
             display_rank=display_rank,
-            rankings=rankings
+            rankings=rankings,
+            form=f
         )
 
 
@@ -679,7 +691,7 @@ class SearchSettingsView(BaseView):
                 lists=lists,
             )
         except BaseException as e:
-            current_app.logger.error('Could not save search settings', e)
+            current_app.logger.error('Could not save search settings %s', e)
             abort(500)
             # flash(_('Unable to change search settings.'), 'error')
 
@@ -707,6 +719,12 @@ class SiteLicenseSettingsView(BaseView):
                                         err_addr = True
                                         # break for item addresses
                                         break
+                                    addr_check = '.'.join(item)
+                                    try:
+                                        ip_check = ipaddress.ip_address(addr_check)
+                                    except ValueError:
+                                        err_addr = True
+                                        break    
                                 if err_addr:
                                     # break for addresses
                                     break
@@ -716,7 +734,8 @@ class SiteLicenseSettingsView(BaseView):
                 SiteLicense.update(data)
                 jfy['status'] = 201
                 jfy['message'] = 'Site license was successfully updated.'
-            except BaseException:
+            except BaseException as ex:
+                current_app.logger.error('Failed to update site license', ex)
                 jfy['status'] = 500
                 jfy['message'] = 'Failed to update site license.'
             return make_response(jsonify(jfy), jfy['status'])
@@ -731,7 +750,7 @@ class SiteLicenseSettingsView(BaseView):
                 current_app.config['WEKO_ADMIN_SITE_LICENSE_TEMPLATE'],
                 result=json.dumps(result))
         except BaseException as e:
-            current_app.logger.error('Could not save site license settings', e)
+            current_app.logger.error('Could not save site license settings %s', e)
             abort(500)
 
 
@@ -876,6 +895,8 @@ class SiteInfoView(BaseView):
 
 class IdentifierSettingView(ModelView):
     """Pidstore Identifier admin view."""
+    # use flask-wtf CSRF protection
+    form_base_class = Form
 
     can_create = True
     can_edit = True

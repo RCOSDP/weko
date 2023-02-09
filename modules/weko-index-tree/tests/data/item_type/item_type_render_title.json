@@ -1,0 +1,32 @@
+{
+    "meta_fix":{
+  
+    },
+    "meta_list":{
+      "item_test2_title":{
+        "title":"Title",
+        "option": {
+          "crtf": true,
+          "hidden": false,
+          "multiple": true,
+          "required": true,
+          "showlist": true
+        },
+        "input_type": "cus_67",
+        "title_i18n": { "en": "Title", "ja": "タイトル" },
+        "input_value": "",
+        "input_maxItems": "9999",
+        "input_minItems": "1"
+      },
+      "item_test2_title.test_title":{
+        "title":"Title",
+        "option": {
+          "crtf": true,
+          "hidden": false,
+          "multiple": true,
+          "required": true,
+          "showlist": true
+        }
+      }
+    }
+  }

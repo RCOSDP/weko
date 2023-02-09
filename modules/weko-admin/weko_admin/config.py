@@ -122,8 +122,11 @@ WEKO_ADMIN_REPORT_DELIVERY_SCHED = {
 }
 """Default report email delivery schedule."""
 
-WEKO_ADMIN_CACHE_PREFIX = 'admin_cache_{name}'
+WEKO_ADMIN_CACHE_PREFIX = 'admin_cache_{name}_{user_id}'
 """Redis cache."""
+
+WEKO_ADMIN_OUTPUT_FORMAT = 'tsv'
+"""Output file format."""
 
 WEKO_ADMIN_REPORT_HEADERS = {
     'file_download': _('No. Of File Downloads'),
@@ -250,6 +253,12 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
         {'id': 'relevance_desc',
          'contents': 'Relevance(desc)',
          'disableFlg': False},
+        {'id': 'temporal_asc',
+         'contents': 'Temporal(asc)',
+         'disableFlg': False},
+        {'id': 'temporal_desc',
+         'contents': 'Temporal(desc)',
+         'disableFlg': False},
     ],
     'dlt_index_sort_selected': 'controlnumber_asc',
     'dlt_keyword_sort_options': [
@@ -297,6 +306,12 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
         {'id': 'relevance_desc',
          'contents': 'Relevance(desc)',
          'disableFlg': False},
+        {'id': 'temporal_asc',
+         'contents': 'Temporal(asc)',
+         'disableFlg': False},
+        {'id': 'temporal_desc',
+         'contents': 'Temporal(desc)',
+         'disableFlg': False},
     ],
     'dlt_keyword_sort_selected': 'createdate_desc',
     'sort_options': {
@@ -311,6 +326,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
             {'id': 'pyear_asc', 'contents': 'Date Of Issued(asc/desc)'},
             {'id': 'custom_sort_asc', 'contents': 'Custom(asc/desc)'},
             {'id': 'relevance_asc', 'contents': 'Relevance(asc/desc)'},
+            {'id': 'temporal_asc', 'contents': 'Temporal(asc/desc)'},
         ]
     },
     'display_control': {
@@ -1077,12 +1093,13 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'identifier',
     'widgetitem',
     'widgetdesign',
-    'community',
     'items/custom_sort',
+    'items/search',
     'indexedit',
     'indexjournal',
     'report',
-    'itemexportsettings'
+    'itemexportsettings',
+    'items/import'
 ]
 """Classes Community Administrator can access."""
 
@@ -1117,7 +1134,6 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'itemtypesregister',
     'itemtypesmapping',
     'itemtypes/mapping',
-    'items/import',
     'items/bulk-export',
     'feedbackmail',
     'sitelicensesendmail',
@@ -1129,6 +1145,8 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'facet-search',
     'restricted_access',
     'mailtemplates'
+    'community',
+    'restricted_access'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 

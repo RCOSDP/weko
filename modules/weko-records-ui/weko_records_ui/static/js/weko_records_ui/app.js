@@ -369,3 +369,24 @@ function handleConfirmButton() {
 if (Number($('#preview_count').val()) == 0) {
     $('#preview_carousel_panel').addClass('hide')
 }
+
+function OnLinkClick(uri, pid_value, accessrole) {
+    let data = {
+        uri: uri,
+        pid_value: pid_value,
+        accessrole: accessrole
+    };
+    $.ajax({
+        url: '/get_uri',
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(data),
+        success: function(data) {
+            console.log(data);
+        },
+        error: function(error) {
+          console.log(error);
+        }
+      });
+    window.open(uri);
+}

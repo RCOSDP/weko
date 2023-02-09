@@ -70,12 +70,12 @@ def test_admin_createuser(app, admin_view):
 
     with app.test_client() as client:
         # Test empty mail form
-
         res = client.post(
             url_for('user.create_view'),
             data={'email': ''},
             follow_redirects=True
         )
+        print(res.data)
         assert b'This field is required.' in res.data
 
         # Reproduces the workflow described in #154

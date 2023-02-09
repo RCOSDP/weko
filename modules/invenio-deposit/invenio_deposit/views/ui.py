@@ -29,6 +29,7 @@ from __future__ import absolute_import, print_function
 from copy import deepcopy
 
 from flask import Blueprint, current_app, render_template, request
+from invenio_db import db
 from flask_login import login_required
 from invenio_pidstore.errors import PIDDeletedError
 from invenio_records_ui.signals import record_viewed
@@ -53,6 +54,16 @@ def create_blueprint(endpoints):
         template_folder='../templates',
         url_prefix='',
     )
+    
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+        current_app.logger.debug("invenio_deposit dbsession_clean: {}".format(exception))
+        if exception is None:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+        db.session.remove()
 
     @blueprint.errorhandler(PIDDeletedError)
     def tombstone_errorhandler(error):

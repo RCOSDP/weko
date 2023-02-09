@@ -12,7 +12,7 @@ import pytest
 import logging
 
 from blinker import Namespace
-from helpers import get_queue_size
+from tests.helpers import get_queue_size
 from invenio_queues.proxies import current_queues
 
 from invenio_stats import InvenioStats

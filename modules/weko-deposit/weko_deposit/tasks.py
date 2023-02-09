@@ -31,7 +31,7 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
 from sqlalchemy.exc import SQLAlchemyError
-from weko_authors.models import AuthorsPrefixSettings
+from weko_authors.models import AuthorsPrefixSettings, AuthorsAffiliationSettings
 from weko_records.api import ItemsMetadata
 
 from .api import WekoDeposit
@@ -55,7 +55,18 @@ def update_items_by_authorInfo(origin_list, target):
                 }
         return result
 
-    def _change_to_meta(target, author_prefix, key_map):
+    def _get_affiliation_id():
+        result = {}
+        settings = AuthorsAffiliationSettings.query.all()
+        if settings:
+            for s in settings:
+                result[str(s.id)] = {
+                    'scheme': s.scheme,
+                    'url': s.url
+                }
+        return result    
+
+    def _change_to_meta(target, author_prefix, affiliation_id, key_map):
         target_id = None
         meta = {}
         if target:
@@ -64,6 +75,9 @@ def update_items_by_authorInfo(origin_list, target):
             full_names = []
             identifiers = []
             mails = []
+            affiliation_identifiers = []
+            affiliation_names = []
+            affiliations = []
 
             for name in target['authorNameInfo']:
                 if not bool(name['nameShowFlg']):
@@ -107,6 +121,37 @@ def update_items_by_authorInfo(origin_list, target):
                 mails.append({
                     key_map['mail_key']: email['email']
                 })
+            for affiliation in target['affiliationInfo']:
+                for identifier in affiliation['identifierInfo']:
+                    if not bool(identifier['identifierShowFlg']):
+                        continue
+                    affiliation_id_info = affiliation_id.get(identifier['affiliationIdType'], {})
+                    if affiliation_id_info:
+                        id_info = {
+                            key_map['affiliation_id_scheme_key']: affiliation_id_info['scheme'],
+                            key_map['affiliation_id_key']: identifier['affiliationId']
+                        }
+                        if affiliation_id_info['url']:
+                            if '##' in affiliation_id_info['url']:
+                                url = affiliation_id_info['url'].replace(
+                                    '##', identifier['affiliationId'])
+                            else:
+                                url = affiliation_id_info['url']
+                            id_info.update({key_map['affiliation_id_uri_key']: url})
+                        affiliation_identifiers.append(id_info)
+
+                for name in affiliation['affiliationNameInfo']:
+                    if not bool(name['affiliationNameShowFlg']):
+                        continue
+                    affiliation_names.append({
+                        key_map['affiliation_name_key']: name['affiliationName'],
+                        key_map['affiliation_name_lang_key']: name['affiliationNameLang']
+                    })
+
+                affiliations.append({
+                    key_map['affiliation_ids_key']: affiliation_identifiers,
+                    key_map['affiliation_names_key']: affiliation_names
+                })
 
             if family_names:
                 meta.update({
@@ -127,6 +172,10 @@ def update_items_by_authorInfo(origin_list, target):
             if mails:
                 meta.update({
                     key_map['mails_key']: mails
+                })
+            if affiliations:
+                meta.update({
+                    key_map['affiliations_key']: affiliations
                 })
         return target_id, meta
 
@@ -167,7 +216,7 @@ def update_items_by_authorInfo(origin_list, target):
                                     continue
                             if change_flag:
                                 target_id, new_meta = _change_to_meta(
-                                    target, author_prefix, key_map[prop_type])
+                                    target, author_prefix, affiliation_id, key_map[prop_type])
                                 dep[k]['attribute_value_mlt'][index].update(
                                     new_meta)
                                 author_data.update(
@@ -202,7 +251,7 @@ def update_items_by_authorInfo(origin_list, target):
                             }
                         }, {
                             "terms": {
-                                "author_link": origin_list
+                                "author_link.raw": origin_list
                             }
                         }]
                 }
@@ -264,7 +313,15 @@ def update_items_by_authorInfo(origin_list, target):
             "gname_key": "givenName",
             "gname_lang_key": "givenNameLang",
             "mails_key": "creatorMails",
-            "mail_key": "creatorMail"
+            "mail_key": "creatorMail",
+            "affiliations_key": "creatorAffiliations",
+            "affiliation_ids_key": "affiliationNameIdentifiers",
+            "affiliation_id_key": "affiliationNameIdentifier",
+            "affiliation_id_uri_key": "affiliationNameIdentifierURI",            
+            "affiliation_id_scheme_key": "affiliationNameIdentifierScheme",
+            "affiliation_names_key": "affiliationNames",
+            "affiliation_name_key": "affiliationName",
+            "affiliation_name_lang_key": "affiliationNameLang"
         },
         "contributor": {
             "ids_key": "nameIdentifiers",
@@ -281,7 +338,15 @@ def update_items_by_authorInfo(origin_list, target):
             "gname_key": "givenName",
             "gname_lang_key": "givenNameLang",
             "mails_key": "contributorMails",
-            "mail_key": "contributorMail"
+            "mail_key": "contributorMail",
+            "affiliations_key": "contributorAffiliations",
+            "affiliation_ids_key": "contributorAffiliationNameIdentifiers",
+            "affiliation_id_key": "contributorAffiliationNameIdentifier",
+            "affiliation_id_uri_key": "contributorAffiliationURI",            
+            "affiliation_id_scheme_key": "contributorAffiliationScheme",
+            "affiliation_names_key": "contributorAffiliationNames",
+            "affiliation_name_key": "contributorAffiliationName",
+            "affiliation_name_lang_key": "contributorAffiliationNameLang"
         },
         "full_name": {
             "ids_key": "nameIdentifiers",
@@ -298,10 +363,19 @@ def update_items_by_authorInfo(origin_list, target):
             "gname_key": "givenName",
             "gname_lang_key": "givenNameLang",
             "mails_key": "mails",
-            "mail_key": "mail"
+            "mail_key": "mail",
+            "affiliations_key": "affiliations",
+            "affiliation_ids_key": "nameIdentifiers",
+            "affiliation_id_key": "nameIdentifier",
+            "affiliation_id_uri_key": "nameIdentifierURI",            
+            "affiliation_id_scheme_key": "nameIdentifierScheme",
+            "affiliation_names_key": "affiliationNames",
+            "affiliation_name_key": "affiliationName",
+            "affiliation_name_lang_key": "lang"
         }
     }
     author_prefix = _get_author_prefix()
+    affiliation_id = _get_affiliation_id()
 
     try:
         data_from = 0

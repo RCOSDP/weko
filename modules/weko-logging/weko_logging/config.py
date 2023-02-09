@@ -52,13 +52,13 @@ for further details):
 # ----------
 # FILESYSTEM
 # ----------
-WEKO_LOGGING_FS_LOGFILE = '{instance_path}/weko-logging.log'
+WEKO_LOGGING_FS_LOGFILE = "{instance_path}/weko-logging.log"
 """Enable logging to the filesystem."""
 
-WEKO_LOGGING_FS_PYWARNINGS = False
+WEKO_LOGGING_FS_PYWARNINGS = None
 """Enable logging of Python warnings to filesystem logging."""
 
-WEKO_LOGGING_FS_WHEN = 'D'
+WEKO_LOGGING_FS_WHEN = "D"
 """Number of rotated log files to keep.
 
 Set to a valid Python level: ``H``, ``D``.
@@ -72,7 +72,7 @@ WEKO_LOGGING_FS_INTERVAL = 1
 WEKO_LOGGING_FS_BACKUPCOUNT = 31
 """Number of rotated log files to keep."""
 
-WEKO_LOGGING_FS_LEVEL = 'ERROR'
+WEKO_LOGGING_FS_LEVEL = "ERROR"
 """Filesystem logging level.
 
 Set to a valid Python logging level: ``CRITICAL``, ``ERROR``, ``WARNING``,

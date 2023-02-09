@@ -286,7 +286,7 @@ class Location(db.Model, Timestamp):
     access_key = db.Column(db.String(128), nullable=True)
 
     secret_key = db.Column(db.String(128), nullable=True)
-
+    
     size = db.Column(db.BigInteger, default=0, nullable=True)
 
     quota_size = db.Column(db.BigInteger, nullable=True)

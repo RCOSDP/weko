@@ -41,7 +41,7 @@ from flask_breadcrumbs import Breadcrumbs
 from flask_celeryext import FlaskCeleryExt
 from flask_oauthlib.provider import OAuth2Provider
 from flask_security import login_user
-from helpers import fill_oauth2_headers, make_pdf_fixture
+from .helpers import fill_oauth2_headers, make_pdf_fixture
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers
 from invenio_accounts import InvenioAccounts

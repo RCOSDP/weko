@@ -31,6 +31,16 @@ $(document).ready(function () {
   var cur_step = $('input#cur_step_for_lock').val();
   var permission = $('#hide-res-check').text(); // 0: allow, <> 0: deny
 
+
+  var  csrf_token=$('#csrf_token').val();
+  $.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+       if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain){
+           xhr.setRequestHeader("X-CSRFToken", csrf_token);
+       }
+    }
+  });
+
   if ('end_action' !== cur_step && permission == 0 && !guestEmail) {
     $.ajax({
       type: "POST",
@@ -65,6 +75,9 @@ $(document).ready(function () {
           locked_value = result.locked_value;
           sessionStorage.setItem('locked_value', locked_value);
         }
+      },
+      error: function(jqXHR, status){
+        alert(jqXHR.responseJSON.msg)
       }
     });
   } else if (locked_value) {

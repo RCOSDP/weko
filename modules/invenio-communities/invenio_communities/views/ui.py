@@ -700,3 +700,13 @@ def community_list():
         page=render_page,
         render_widgets=render_widgets,
         **ctx)
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("invenio_communities dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

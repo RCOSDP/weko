@@ -20,7 +20,9 @@
 
 """Blueprint for weko-records-ui."""
 
+import re
 import os
+import uuid
 
 import six
 import werkzeug
@@ -31,7 +33,7 @@ from flask_login import login_required
 from flask_security import current_user
 from invenio_cache import cached_unless_authenticated
 from invenio_db import db
-from invenio_files_rest.models import ObjectVersion
+from invenio_files_rest.models import ObjectVersion, FileInstance
 from invenio_files_rest.permissions import has_update_version_role
 from invenio_i18n.ext import current_i18n
 from invenio_oaiserver.response import getrecord
@@ -39,6 +41,7 @@ from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records_ui.signals import record_viewed
+from invenio_files_rest.signals import file_downloaded
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from weko_accounts.views import _redirect_method
@@ -57,6 +60,7 @@ from weko_records.utils import custom_record_medata_for_export, \
 from weko_search_ui.api import get_search_detail_keyword
 from weko_workflow.api import WorkFlow
 
+from weko_records_ui.fd import add_signals_info
 from weko_records_ui.utils import check_items_settings, get_file_info_list
 
 from .ipaddr import check_site_license_permission
@@ -70,6 +74,7 @@ from .utils import get_billing_file_download_permission, \
     is_show_email_of_creator
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
+
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -269,10 +274,11 @@ def check_permission(record):
 def check_file_permission(record, fjson):
     """Check File Download Permission.
 
-    :param record
-    :param fjson
-    :return: result
-    """
+    Args:
+        record (weko_deposit.api.WekoRecord): _description_
+        fjson (dict): _description_
+    
+    """    
     return check_file_download_permission(record, fjson)
 
 
@@ -359,11 +365,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
         """Get multi-lang rights title."""
         item_key = rights_key.split('.')[0]
-        item_title = meta_options[item_key]['title']
-        if meta_options[item_key]['title_i18n'].get(current_lang, None):
-            item_title = meta_options[item_key]['title_i18n'][current_lang]
-        elif meta_options[item_key]['title_i18n'].get('en', None):
-            item_title = meta_options[item_key]['title_i18n']['en']
+        if item_key in meta_options:
+            if meta_options[item_key].get('title'):
+                item_title = meta_options[item_key]['title']
+            if meta_options[item_key]['title_i18n'].get(current_lang, None):
+                item_title = meta_options[item_key]['title_i18n'][current_lang]
+            elif meta_options[item_key]['title_i18n'].get('en', None):
+                item_title = meta_options[item_key]['title_i18n']['en']
         if rights_values:
             result[item_key] = {
                 'item_title': item_title,
@@ -371,13 +379,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             }
 
     # Check file permision if request is File Information page.
+    file_order = int(request.args.get("file_order", -1))
     if filename:
         check_file = None
         _files = record.get_file_data()
         if not _files:
             abort(404)
 
-        file_order = int(request.args.get("file_order", -1))
         if filename == '[No FileName]':
             if file_order == -1 or file_order >= len(_files):
                 abort(404)
@@ -435,6 +443,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         if hasattr(current_user, 'site_license_flag') else False
     send_info['site_license_name'] = current_user.site_license_name \
         if hasattr(current_user, 'site_license_name') else ''
+    
     record_viewed.send(
         current_app._get_current_object(),
         pid=pid,
@@ -448,7 +457,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         from weko_workflow.api import GetCommunity
         comm = GetCommunity.get_community_by_id(community_arg)
         ctx = {'community': comm}
-        community_id = comm.id
+        if comm is not None:
+            community_id = comm.id
 
     # Get index style
     style = IndexStyle.get(
@@ -464,15 +474,24 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         record["relation"] = res
     else:
         record["relation"] = {}
-
-    google_scholar_meta = get_google_scholar_meta(record)
-    google_dataset_meta = get_google_detaset_meta(record)
-
+    
+    recstr = etree.tostring(
+        getrecord(
+            identifier=record['_oai'].get('id'),
+            metadataPrefix='jpcoar',
+            verb='getrecord'
+        )
+    )
+    et=etree.fromstring(recstr)
+    google_scholar_meta = get_google_scholar_meta(record,record_tree=et)
+    google_dataset_meta = get_google_detaset_meta(record,record_tree=et)
+    
     current_lang = current_i18n.language \
         if hasattr(current_i18n, 'language') else None
     # get title name
     from weko_records.utils import get_options_and_order_list
     from weko_search_ui.utils import get_data_by_property
+    from weko_records.utils import get_options_and_order_list
     title_name = ''
     rights_values = {}
     accessRight = ''
@@ -540,6 +559,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         display_stats = display_setting.get('display_stats')
     else:
         display_stats = True
+    
+    items_display_settings = AdminSettings.get(name='items_display_settings',
+                                        dict_to_object=False)
+    if items_display_settings:
+        search_author_flg = items_display_settings.get('items_search_author')
+    else:
+        search_author_flg = "name"
 
     groups_price = get_groups_price(record)
     billing_files_permission = get_billing_file_download_permission(
@@ -573,7 +599,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     open_day_display_flg = current_app.config.get('OPEN_DATE_DISPLAY_FLG')
     # Hide email of creator in pdf cover page
-    item_type_id = record['item_type_id']
+    if record.get('item_type_id'):
+        item_type_id = record['item_type_id']
     is_show_email = is_show_email_of_creator(item_type_id)
     if not is_show_email:
         # list_hidden = get_ignore_item(record['item_type_id'])
@@ -601,6 +628,12 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         "display_community": display_community
     })
 
+    current_app.logger.debug("template :{}".format(template))
+
+    file_url = ''
+    if file_order >= 0 and files and files[file_order].get('url') and files[file_order]['url'].get('url'):
+        file_url = files[file_order]['url']['url']
+
     return render_template(
         template,
         pid=pid,
@@ -609,6 +642,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         all_versions=all_versions,
         record=record,
         files=files,
+        file_url=file_url,
         display_stats=display_stats,
         filename=filename,
         can_download_original_pdf=can_download_original,
@@ -635,8 +669,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         title_name=title_name,
         rights_values=rights_values,
         accessRight=accessRight,
+        thumbnail_width = current_app.config.get('WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL') ,
         analysis_url=current_app.config.get(
             'WEKO_RECORDS_UI_ONLINE_ANALYSIS_URL'),
+        flg_display_itemtype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE') ,
+        flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
+        search_author_flg=search_author_flg,
+        
         **ctx,
         **kwargs
     )
@@ -735,7 +774,7 @@ def set_pdfcoverpage_header():
         flash(_('PDF cover page settings have been updated.'),
               category='success')
         return redirect('/admin/pdfcoverpage')
-
+    
     return redirect('/admin/pdfcoverpage')
 
 
@@ -864,10 +903,29 @@ def escape_newline(s):
 
     return s
 
+def json_string_escape(s):
+    opt = ''
+    if s.endswith('"'):
+        opt = '"'
+    s = json.dumps(s, ensure_ascii=False)
+    s = s.strip('"')
+    return s+opt
+
+
+def xml_string_escape(s):
+    return escape(s)
+
 
 @blueprint.app_template_filter('preview_able')
 def preview_able(file_json):
-    """Check whether file can be previewed or not."""
+    """Check whether file can be previewed or not.
+
+    Args:
+        file_json (dict): _description_
+
+    Returns:
+        bool: _description_
+    """
     file_type = ''
     file_size = file_json.get('size')
     file_format = file_json.get('format', '')
@@ -884,3 +942,49 @@ def preview_able(file_json):
         if file_size > file_size_limit:
             return False
     return True
+
+@blueprint.route("/get_uri", methods=['POST'])
+def get_uri():
+    """_summary_
+    ---
+      post:
+        description: 
+        requestBody:
+            required: true
+            content:
+            application/json: {"uri":"https://localhost/record/1/files/001.jpg","pid_value":"1","accessrole":"1"}
+        responses:
+          200:
+    """  
+    data = request.get_json()
+    uri = data.get('uri')
+    pid_value = data.get('pid_value')
+    accessrole = data.get('accessrole')
+    pattern = re.compile('^/record/{}/files/.*'.format(pid_value))
+    if not pattern.match(uri):
+        pid = PersistentIdentifier.get('recid', pid_value)
+        record = WekoRecord.get_record_by_pid(pid_value)
+        bucket_id = record.get('_buckets', {}).get('deposit')
+        file_id_key = '{}_{}'.format(bucket_id, uri)
+
+        file_obj = ObjectVersion()
+        file_obj.file = FileInstance()
+        file_obj.file.size = 0
+        file_obj.file.json = {'url':{'url':uri}, 'accessrole': accessrole}
+        file_obj.bucket_id = bucket_id
+        file_obj.file_id = uuid.uuid3(uuid.NAMESPACE_URL, file_id_key)
+        file_obj.root_file_id = uuid.uuid3(uuid.NAMESPACE_URL, file_id_key)
+        file_obj.key = uri
+        add_signals_info(record, file_obj)
+        file_downloaded.send(current_app._get_current_object(), obj=file_obj)
+    return jsonify({'status': True})
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_records_ui dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

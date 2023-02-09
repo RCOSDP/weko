@@ -19,6 +19,7 @@ from flask_breadcrumbs import register_breadcrumb
 from flask_login import login_required
 from flask_principal import Identity, identity_changed
 from oauthlib.oauth2.rfc6749.errors import InvalidClientError, OAuth2Error
+from invenio_db import db
 
 from ..models import Client
 from ..provider import oauth2
@@ -107,6 +108,7 @@ def access_token():
         error = InvalidClientError()
         response = jsonify(dict(error.twotuples))
         response.status_code = error.status_code
+        current_app.logger.debug(response)
         abort(response)
 
     # Return None or a dictionary. Dictionary will be merged with token
@@ -157,3 +159,14 @@ def invalid():
         return jsonify(dict(ding="dong"))
     else:
         abort(404)
+
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("invenio_oauth2server dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

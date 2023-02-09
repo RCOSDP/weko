@@ -29,6 +29,7 @@ from io import BytesIO, StringIO
 from typing import Dict, Tuple, Union
 
 import redis
+from redis import sentinel
 import requests
 from flask import current_app, request
 from flask_babelex import gettext as __
@@ -48,6 +49,8 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
+from weko_redis.redis import RedisConnection
+
 
 from . import config
 from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
@@ -334,25 +337,26 @@ def get_user_report_data():
 
 
 def package_reports(all_stats, year, month):
-    """Package the .tsv files into one zip file."""
-    tsv_files = []
+    """Package the .csv files into one zip file."""
+    output_files = []
     zip_stream = BytesIO()
     year = str(year)
     month = str(month)
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
     try:  # TODO: Make this into one loop, no need for two
         for stats_type, stats in all_stats.items():
             file_name = current_app.config['WEKO_ADMIN_REPORT_FILE_NAMES'].get(
                 stats_type, '_')
-            file_name = 'logReport_' + file_name + year + '-' + month + '.tsv'
-            tsv_files.append({
+            file_name = 'logReport_' + file_name + year + '-' + month + '.' + file_format
+            output_files.append({
                 'file_name': file_name,
-                'stream': make_stats_tsv(stats, stats_type, year, month)})
+                'stream': make_stats_file(stats, stats_type, year, month)})
 
         # Dynamically create zip from StringIO data into BytesIO
         report_zip = zipfile.ZipFile(zip_stream, 'w')
-        for tsv_file in tsv_files:
-            report_zip.writestr(tsv_file['file_name'],
-                                tsv_file['stream'].getvalue())
+        for f in output_files:
+            report_zip.writestr(f['file_name'],
+                                f['stream'].getvalue().encode('utf-8-sig'))
         report_zip.close()
     except Exception as e:
         current_app.logger.error('Unexpected error: ', e)
@@ -360,14 +364,15 @@ def package_reports(all_stats, year, month):
     return zip_stream
 
 
-def make_stats_tsv(raw_stats, file_type, year, month):
-    """Make TSV report file for stats."""
+def make_stats_file(raw_stats, file_type, year, month):
+    """Make TSV/CSV report file for stats."""
     header_row = current_app.config['WEKO_ADMIN_REPORT_HEADERS'].get(file_type)
     sub_header_row = current_app.config['WEKO_ADMIN_REPORT_SUB_HEADERS'].get(
         file_type)
-    tsv_output = StringIO()
-
-    writer = csv.writer(tsv_output, delimiter='\t',
+    file_output = StringIO()
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+    file_delimiter = '\t' if file_format == 'tsv' else ','
+    writer = csv.writer(file_output, delimiter=file_delimiter,
                         lineterminator="\n")
     writer.writerows([[header_row],
                       [_('Aggregation Month'), year + '-' + month],
@@ -385,38 +390,41 @@ def make_stats_tsv(raw_stats, file_type, year, month):
     # Special cases:
     # Write total for per index views
     if file_type == 'index_access':
+        write_report_file_rows(writer, raw_stats.get(
+            'all'), file_type, raw_stats.get('index_name'))
         writer.writerow([_('Total Detail Views'), raw_stats.get('total')])
+
     elif file_type in ['billing_file_download', 'billing_file_preview']:
-        write_report_tsv_rows(writer, raw_stats.get('all'), file_type,
+        write_report_file_rows(writer, raw_stats.get('all'), file_type,
                               raw_stats.get('all_groups'))  # Pass all groups
     elif file_type == 'site_access':
-        write_report_tsv_rows(writer,
+        write_report_file_rows(writer,
                               raw_stats.get('site_license'),
                               file_type,
                               _('Site license member'))
-        write_report_tsv_rows(writer,
+        write_report_file_rows(writer,
                               raw_stats.get('other'),
                               file_type,
                               _('Other than site license'))
     else:
-        write_report_tsv_rows(writer, raw_stats.get('all'), file_type)
+        write_report_file_rows(writer, raw_stats.get('all'), file_type)
 
     # Write open access stats
     if sub_header_row is not None:
         writer.writerows([[''], [sub_header_row]])
         if 'open_access' in raw_stats:
             writer.writerow(cols)
-            write_report_tsv_rows(writer, raw_stats.get('open_access'))
+            write_report_file_rows(writer, raw_stats.get('open_access'))
         elif 'institution_name' in raw_stats:
             writer.writerows([[_('Institution Name')] + cols])
-            write_report_tsv_rows(writer,
+            write_report_file_rows(writer,
                                   raw_stats.get('institution_name'),
                                   file_type)
-    return tsv_output
+    return file_output
 
 
-def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
-    """Write tsv rows for stats."""
+def write_report_file_rows(writer, records, file_type=None, other_info=None):
+    """Write tsv/csv rows for stats."""
     from weko_items_ui.utils import get_user_information
     if not records:
         return
@@ -486,14 +494,17 @@ def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
                                  record.get('file_preview')])
 
 
-def reset_redis_cache(cache_key, value):
+def reset_redis_cache(cache_key, value, ttl=None):
     """Delete and then reset a cache value to Redis."""
     try:
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         if datastore.redis.exists(cache_key):
             datastore.delete(cache_key)
-        datastore.put(cache_key, value.encode('utf-8'))
+        if ttl is None:
+            datastore.put(cache_key, value.encode('utf-8'))
+        else:
+            datastore.put(cache_key, value.encode('utf-8'),ttl)
     except Exception as e:
         current_app.logger.error('Could not reset redis value', e)
         raise
@@ -502,8 +513,8 @@ def reset_redis_cache(cache_key, value):
 def is_exists_key_in_redis(key):
     """Check key exist in redis."""
     try:
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         return datastore.redis.exists(key)
     except Exception as e:
         current_app.logger.error('Could get value for ' + key, e)
@@ -513,8 +524,8 @@ def is_exists_key_in_redis(key):
 def is_exists_key_or_empty_in_redis(key):
     """Check key exist in redis."""
     try:
-        datastore = RedisStore(
-            redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         return datastore.redis.exists(key) and datastore.redis.get(key) != b''
     except Exception as e:
         current_app.logger.error('Could get value for ' + key, e)
@@ -524,8 +535,8 @@ def is_exists_key_or_empty_in_redis(key):
 def get_redis_cache(cache_key):
     """Check and then retrieve the value of a Redis cache key."""
     try:
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         if datastore.redis.exists(cache_key):
             return datastore.get(cache_key).decode('utf-8')
     except Exception as e:
@@ -637,7 +648,7 @@ class StatisticMail:
                     )
                     failed_mail += 1
         except Exception as ex:
-            current_app.logger.error('Error has occurred', ex)
+            current_app.logger.error('Error has occurred', str(ex))
         end_time = datetime.now()
         FeedbackMailHistory.create(
             session,
@@ -1604,7 +1615,8 @@ def format_site_info_data(site_info):
     result['favicon'] = site_info.get('favicon')
     result['favicon_name'] = site_info.get('favicon_name')
     result['notify'] = notify
-    result['google_tracking_id_user'] = site_info.get('google_tracking_id_user')
+    result['google_tracking_id_user'] = site_info.get(
+        'google_tracking_id_user')
     result['addthis_user_id'] = site_info.get('addthis_user_id')
     result['ogp_image'] = site_info.get('ogp_image')
     result['ogp_image_name'] = site_info.get('ogp_image_name')
@@ -2041,7 +2053,7 @@ def get_facet_search(id: int = None):
 
 
 def get_item_mapping_list():
-    """Get Item Mapping list.
+    """Get Item Mapping list in Facet search setting.
 
     Returns:
         object:
@@ -2050,7 +2062,7 @@ def get_item_mapping_list():
     def handle_prefix_key(pre_key, key):
         if key == 'properties':
             return pre_key
-        pre_key = pre_key.replace('.fields','')
+        pre_key = pre_key.replace('.fields', '')
         return "{}.{}".format(pre_key, key) if pre_key else key
 
     def get_mapping(pre_key, key, value, mapping_list):

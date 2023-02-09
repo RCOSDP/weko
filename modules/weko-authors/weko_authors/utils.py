@@ -42,7 +42,7 @@ from weko_authors.contrib.validation import validate_by_extend_validator, \
     validate_external_author_identifier, validate_map, validate_required
 
 from .api import WekoAuthors
-from .config import WEKO_AUTHORS_CSV_MAPPING, \
+from .config import WEKO_AUTHORS_FILE_MAPPING, \
     WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY, WEKO_AUTHORS_EXPORT_CACHE_URL_KEY
 from .models import AuthorsPrefixSettings
 
@@ -136,19 +136,24 @@ def export_authors():
     """Export all authors."""
     file_uri = None
     try:
-        mappings = deepcopy(WEKO_AUTHORS_CSV_MAPPING)
+        mappings = deepcopy(WEKO_AUTHORS_FILE_MAPPING)
         authors = WekoAuthors.get_all(with_deleted=False, with_gather=False)
         schemes = WekoAuthors.get_identifier_scheme_info()
         row_header, row_label_en, row_label_jp, row_data = \
             WekoAuthors.prepare_export_data(mappings, authors, schemes)
 
-        # write csv data to a stream
-        csv_io = io.StringIO()
-        writer = csv.writer(csv_io, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+        # write file data to a stream
+        file_io = io.StringIO()
+        if current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower() == 'csv':
+            writer = csv.writer(file_io, delimiter=',',
+                                quotechar='"', quoting=csv.QUOTE_MINIMAL,
+                                lineterminator='\n')
+        else:
+            writer = csv.writer(file_io, delimiter='\t',
+                                quotechar='"', quoting=csv.QUOTE_MINIMAL)
         writer.writerows([row_header, row_label_en, row_label_jp, *row_data])
         reader = io.BufferedReader(io.BytesIO(
-            csv_io.getvalue().encode("utf-8-sig")))
+            file_io.getvalue().encode("utf-8-sig")))
 
         # save data into location
         cache_url = get_export_url()
@@ -172,7 +177,7 @@ def export_authors():
 
 
 def check_import_data(file_name: str, file_content: str):
-    """Validation importing csv file.
+    """Validation importing tsv/csv file.
 
     :argument
         file_name -- file name.
@@ -189,11 +194,12 @@ def check_import_data(file_name: str, file_content: str):
         temp_file.flush()
 
         flat_mapping_all, flat_mapping_ids = flatten_authors_mapping(
-            WEKO_AUTHORS_CSV_MAPPING)
-        csv_data = unpackage_and_check_import_file(
-            file_name, temp_file.name, flat_mapping_ids)
+            WEKO_AUTHORS_FILE_MAPPING)
+        file_format = file_name.split('.')[-1].lower()
+        file_data = unpackage_and_check_import_file(
+            file_format, file_name, temp_file.name, flat_mapping_ids)
         result['list_import_data'] = validate_import_data(
-            csv_data, flat_mapping_ids, flat_mapping_all)
+            file_format, file_data, flat_mapping_ids, flat_mapping_all)
     except Exception as ex:
         error = _('Internal server error')
         if isinstance(ex, UnicodeDecodeError):
@@ -221,21 +227,24 @@ def getEncode(filepath):
     Returns:
         [type]: [description]
     """
-    encs = "iso-2022-jp euc-jp shift_jis utf-8".split()
+    encs = ["iso-2022-jp", "euc-jp", "shift_jis", "utf-8","utf-8-sig","utf-16be","utf-16le","utf-32be","utf-32le",""]
     for enc in encs:
-        with open(filepath, encoding=enc) as fr:
-            try:
-                fr = fr.read()
-            except UnicodeDecodeError:
-                continue
-        return enc
+        if enc != "":
+            with open(filepath, encoding=enc) as fr:
+                try:
+                    fr = fr.read()
+                except UnicodeDecodeError:
+                    continue
+            return enc
+    return enc
 
 
-def unpackage_and_check_import_file(csv_file_name, temp_file, mapping_ids):
+def unpackage_and_check_import_file(file_format, file_name, temp_file, mapping_ids):
     """Unpackage and check format of import file.
 
     Args:
-        csv_file_name (str): File uploaded name.
+        file_format (str): File format.
+        file_name (str): File uploaded name.
         temp_file (str): Temp file path.
         mapping_ids (list): List only mapping ids.
 
@@ -246,14 +255,16 @@ def unpackage_and_check_import_file(csv_file_name, temp_file, mapping_ids):
     from weko_search_ui.utils import handle_check_consistence_with_mapping, \
         handle_check_duplication_item_id, parse_to_json_form
     header = []
-    csv_data = []
-
+    file_data = []
     current_app.logger.debug("temp_file:{}".format(temp_file))
     enc = getEncode(temp_file)
     with open(temp_file, 'r', newline="", encoding=enc) as file:
-        csv_reader = csv.reader(file, dialect='excel', delimiter=',')
+        if file_format == 'csv':
+            file_reader = csv.reader(file, dialect='excel', delimiter=',')
+        else:
+            file_reader = csv.reader(file, dialect='excel', delimiter='\t')
         try:
-            for num, data_row in enumerate(csv_reader, start=1):
+            for num, data_row in enumerate(file_reader, start=1):
                 if num == 1:
                     header = data_row
                     header[0] = header[0].replace('#', '', 1)
@@ -290,31 +301,32 @@ def unpackage_and_check_import_file(csv_file_name, temp_file, mapping_ids):
 
                     if not data_parse_metadata:
                         raise Exception({
-                            'error_msg': _('Cannot read csv file correctly.')
+                            'error_msg': _('Cannot read {} file correctly.').format(file_format.upper())
                         })
 
-                    csv_data.append(dict(**data_parse_metadata))
+                    file_data.append(dict(**data_parse_metadata))
 
-            if not csv_data:
+            if not file_data:
                 raise Exception({
                     'error_msg': _('There is no data to import.')
                 })
         except UnicodeDecodeError as ex:
-            ex.reason = _('The CSV file could not be read. Make sure the file'
-                          + ' format is CSV and that the file is'
-                          + ' UTF-8 encoded.').format(csv_file_name)
+            ex.reason = _('{} could not be read. Make sure the file'
+                          + ' format is {} and that the file is'
+                          + ' UTF-8 encoded.').format(file_name, file_format.upper())
             raise ex
         except Exception as ex:
             raise ex
 
-    return csv_data
+    return file_data
 
 
-def validate_import_data(csv_data, mapping_ids, mapping):
+def validate_import_data(file_format, file_data, mapping_ids, mapping):
     """Validate import data.
 
     Args:
-        csv_data (list): Author data from csv.
+        file_format (str): File format.
+        file_data (list): Author data from tsv/csv.
         mapping_ids (list): List only mapping ids.
         mapping (list): List mapping.
     """
@@ -328,7 +340,7 @@ def validate_import_data(csv_data, mapping_ids, mapping):
     existed_authors_id, existed_external_authors_id = \
         WekoAuthors.get_author_for_validation()
 
-    for item in csv_data:
+    for item in file_data:
         errors = []
         warnings = []
 
@@ -337,10 +349,10 @@ def validate_import_data(csv_data, mapping_ids, mapping):
         if weko_id and weko_id not in list_import_id:
             list_import_id.append(weko_id)
         elif weko_id:
-            errors.append(_('There is duplicated data in the CSV file.'))
+            errors.append(_('There is duplicated data in the {} file.').format(file_format))
 
         # set status
-        set_record_status(existed_authors_id, item, errors, warnings)
+        set_record_status(file_format, existed_authors_id, item, errors, warnings)
 
         # get data folow by mapping
         data_by_mapping = {}
@@ -406,7 +418,7 @@ def validate_import_data(csv_data, mapping_ids, mapping):
             item['warnings'] = item['warnings'] + warnings \
                 if item.get('warnings') else warnings
 
-    return csv_data
+    return file_data
 
 
 def get_values_by_mapping(keys, data, parent_key=None):
@@ -480,7 +492,7 @@ def convert_scheme_to_id(item, values, authors_prefix):
                 authors_prefix.get(value['value'], None)
 
 
-def set_record_status(list_existed_author_id, item, errors, warnings):
+def set_record_status(file_format, list_existed_author_id, item, errors, warnings):
     """Set status to import data."""
     item['status'] = 'new'
     pk_id = item.get('pk_id')
@@ -498,8 +510,8 @@ def set_record_status(list_existed_author_id, item, errors, warnings):
             item['status'] = 'update'
             if not list_existed_author_id.get(pk_id):
                 warnings.append(_('The specified author has been deleted.'
-                                  ' Update author information with csv content'
-                                  ', but author remains deleted as it is.'))
+                                  ' Update author information with {} content'
+                                  ', but author remains deleted as it is.').format(file_format))
         else:
             errors.append(err_msg)
 
@@ -536,7 +548,7 @@ def import_author_to_system(author):
     """Import author to DB and ES.
 
     Args:
-        author (object): Author metadata from csv.
+        author (object): Author metadata from tsv/csv.
     """
     if author:
         try:
@@ -579,7 +591,7 @@ def get_count_item_link(pk_id):
     """Get count of item link of author."""
     count = 0
     query_q = {
-        "query": {"term": {"author_link": pk_id}},
+        "query": {"term": {"author_link.raw": pk_id}},
         "_source": ["control_number"]
     }
     result_itemCnt = RecordIndexer().client.search(

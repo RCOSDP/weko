@@ -34,6 +34,7 @@
 {%- set cur_lifetime = current_lifetime %}
 {%- set lifetime_map = map_lifetime %}
 <form method="POST" name="lifetime_form">
+  {{ form.csrf_token }}
   {%- for key, val in lifetime_map %}
     {%- if key == cur_lifetime %}
       <div class="radio">

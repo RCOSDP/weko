@@ -59,18 +59,18 @@ extras_require = {
     'oai': [
         'invenio-oaiserver>=1.0.3',
     ],
-    'elasticsearch2': [
-        'invenio-search[elasticsearch2]>={}'.format(invenio_search_version),
-    ],
-    'elasticsearch5': [
-        'invenio-search[elasticsearch5]>={}'.format(invenio_search_version),
-    ],
-    'elasticsearch6': [
-        'invenio-search[elasticsearch6]>={}'.format(invenio_search_version),
-    ],
-    'elasticsearch7': [
-        'invenio-search[elasticsearch7]>={}'.format(invenio_search_version),
-    ],
+    # 'elasticsearch2': [
+    #     'invenio-search[elasticsearch2]>={}'.format(invenio_search_version),
+    # ],
+    # 'elasticsearch5': [
+    #     'invenio-search[elasticsearch5]>={}'.format(invenio_search_version),
+    # ],
+    # 'elasticsearch6': [
+    #     'invenio-search[elasticsearch6]>={}'.format(invenio_search_version),
+    # ],
+    # 'elasticsearch7': [
+    #     'invenio-search[elasticsearch7]>={}'.format(invenio_search_version),
+    # ],
     'tests': tests_require,
 }
 
@@ -92,8 +92,8 @@ install_requires = [
     'bleach>=2.1.3',
     'Flask-BabelEx>=0.9.3',
     'Flask>=0.11.1',
-    'elasticsearch-dsl>=6.0.0,<6.2.0',
-    'elasticsearch>=6.0.0,<7.0.0',
+    # 'elasticsearch-dsl>=6.0.0,<7.0.0',
+    # 'elasticsearch>=6.0.0,<7.0.0',
     'invenio-access>=1.1.0',
     'invenio-accounts>=1.1.0',
     'invenio-files-rest>=1.0.0b1',
@@ -101,7 +101,7 @@ install_requires = [
     'invenio-pidstore>=1.0.0',
     'invenio-records>=1.2.0',
     'invenio-rest[cors]>=1.0.0',
-    'invenio-search>=1.0.0a9',
+    # 'invenio-search>=1.0.0a9',
     'marshmallow>=2.15.0,<3',
 ]
 

@@ -19,7 +19,7 @@
   #}
 
 {% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
-{% from "weko_records_ui/creator_detail_template.html" import output_creator_data %}
+{% from "weko_records_ui/creator_detail_template.html" import output_creator_data with context %}
 {% from "weko_records_ui/output_bibliographic_information_detail.html" import output_bibliographic_information %}
 {% macro output_item_detail(m_record,
                             m_files,
@@ -33,14 +33,16 @@
   {% autoescape False %}
   <table class="table table-bordered table-striped detail-table">
       {% if m_record.item_type_info %}
+	    {% if flg_display_itemtype %}
         <tr>
           <th scope="row" colspan="6">{{ _('Item type') }}</th>
           <td>{{ m_record.item_type_info }}</td>
         </tr>
+		{% endif %}
       {% endif %}
       {% for lst in m_items_show_list %}
           {% if 'attribute_name_hidden' not in lst.keys() %}
-              {% if lst['attribute_name'] == 'Reference' %}
+		  	  {% if lst['attribute_name'] == 'Reference' %}
                 <tr>
                   <th scope="row" colspan="6">{{ lst['attribute_name_i18n'] }}</th>
                   <td>
@@ -87,13 +89,17 @@
                       </tr>
                     {%- endif -%}
                   {%- endif -%}
-                {% else %}
+                {% elif (lst['attribute_name']|upper == 'RESOURCETYPE') %}
+				   {% if flg_display_resourcetype %}
+					{{ output_detail_data(lst) }}
+				   {% endif %}
+				{% else %}
                   {{ output_detail_data(lst) }}
                 {% endif %}
               {% endif %}
           {% endif %}
           {%- if 'is_thumbnail' in lst.keys() and lst.get('is_thumbnail') and m_files_thumbnail -%}
-            <tr>
+            <tr >
               <th scope="row"
                   colspan="6">{{ lst.get('attribute_name_i18n', _('Thumbnail')) }}</th>
               <td>
@@ -117,7 +123,7 @@
                     <span>{{ thumb_name }}</span><br>
                     <img src={{ thumb_url }}
                          alt={{ thumb_name }}
-                         style="max-width: {{ config.WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL }}px;"
+                         style="max-width: {{ thumbnail_width }}px;"
                     />
                   </p>
                 {% endfor %}

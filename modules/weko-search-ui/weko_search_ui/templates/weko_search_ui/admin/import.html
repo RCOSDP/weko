@@ -38,6 +38,7 @@
 
 {%- block body %}
 <div id="root" class="col-xs-12"></div>
+{{ form.csrf_token }}
 <input id="import" type="hidden" value="{{_('Import')}}" />
 <input id="list" type="hidden" value="{{_('List')}}" />
 <input id="import_file" type="hidden" value="{{_('Import File')}}" />
@@ -100,5 +101,6 @@
 <input id="item_is_deleted" type="hidden" value="{{_('The corresponding item has been deleted.')}}" />
 <input id="item_is_being_edit" type="hidden" value="{{_('Cannot update because the corresponding item is being edited.')}}" />
 
+<pre class="hide" id="file_format">{{file_format}}</pre>
 <pre class="hide" id="workflows">{{workflows}}</pre>
 {%- endblock body %}

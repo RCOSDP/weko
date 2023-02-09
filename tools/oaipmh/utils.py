@@ -1,6 +1,7 @@
 import glob
 import sys
 import time
+import random
 import xml.dom.minidom
 
 from lxml import etree
@@ -29,37 +30,44 @@ class XSDValidator:
 
 
 def countListRecords(baseURL='https://localhost/oai',
-                     meta='oai_dc', setspec=''):
+                     meta='oai_dc', setspec=None):
     startTime = time.time()
     sickle = Sickle(endpoint=baseURL,
-                    max_retries=4, timeout=300, verify=False, iterator=OAIItemIterator)
-    ids = []
-    deletedIds = []
+                    max_retries=4, timeout=900, verify=False, iterator=OAIItemIterator)
+    ids = 0
+    deletedIds = 0
     records = sickle.ListRecords(metadataPrefix=meta, set=setspec)
     for r in records:
         if r.header.deleted == False:
-            ids.append(r.header.identifier)
-            with open("{0}.xml".format(r.header.identifier), 'w', encoding='UTF-8') as f:
-                f.writelines(r)
-                f.close()
+            ids=ids+1
         else:
-            deletedIds.append(r.header.identifier)
+            deletedIds=deletedIds+1
     elapsedTime = time.time() - startTime
-    print("# of items: {0}".format(len(ids)))
-    print("# of deleted items: {0}".format(len(deletedIds)))
+    print("# of items: {0}".format(ids))
+    print("# of deleted items: {0}".format(deletedIds))
     print("elapsed time: {0}".format(elapsedTime))
 
 
-def dumpListRecords(baseURL='https://localhost/oai', meta='oai_dc', setspec=''):
+def dumpListRecords(baseURL='https://localhost/oai', meta='oai_dc', setspec=None,max_retries=4,timeout=300,interval=30,max_interval=120):
     startTime = time.time()
     sickle = Sickle(endpoint=baseURL,
-                    max_retries=4, timeout=300, verify=False, iterator=OAIResponseIterator)
+                    max_retries=max_retries, timeout=timeout, verify=False, iterator=OAIResponseIterator)
     n = 0
     responses = sickle.ListRecords(metadataPrefix=meta)
-    for r in responses:
-        with open("responses{0:04}.xml".format(n), 'w', encoding='UTF-8') as f:
-            f.write(xml.dom.minidom.parseString(r.raw).toprettyxml())
-        n = n+1
+    try:
+        for r in responses:
+            with open("responses{0:04}.xml".format(n), 'w', encoding='UTF-8') as f:
+                f.write(xml.dom.minidom.parseString(r.raw).toprettyxml())
+                sec = random.uniform(interval,max_interval)
+                time.sleep(sec)
+                print("sleep: {} ".format(sec))
+                elapsedTime = time.time() - startTime
+                print("elapsed time: {0}".format(elapsedTime))
+                n = n+1
+    except Exception as e:
+        print("{}".format(e))
+    elapsedTime = time.time() - startTime
+    print("elapsed time: {0}".format(elapsedTime))
 
 
 def OAIResponseFileValidator(filepath: str, validator: XSDValidator, debug: bool = False):

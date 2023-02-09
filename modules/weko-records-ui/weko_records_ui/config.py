@@ -239,14 +239,32 @@ OAISERVER_METADATA_FORMATS = {
     #        'schema': 'http://irdb.nii.ac.jp/oai/junii2-3-1.xsd',
     #        'namespace': 'http://irdb.nii.ac.jp/oai',
     #    },
+    'jpcoar': {
+        'serializer': (
+            'weko_schema_ui.utils:dumps_oai_etree', {
+                'schema_type': 'jpcoar_v1',
+            }
+        ),
+        'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
+        'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/jpcoar_scm.xsd',
+    },
     'jpcoar_1.0': {
+        'serializer': (
+            'weko_schema_ui.utils:dumps_oai_etree', {
+                'schema_type': 'jpcoar_v1',
+            }
+        ),
+        'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
+        'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/jpcoar_scm.xsd',
+    },
+    'jpcoar_2.0': {
         'serializer': (
             'weko_schema_ui.utils:dumps_oai_etree', {
                 'schema_type': 'jpcoar',
             }
         ),
-        'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
-        'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/jpcoar_scm.xsd',
+        'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/2.0/',
+        'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/2.0/jpcoar_scm.xsd',
     },
     'oai_dc': {
         'serializer': (
@@ -502,7 +520,7 @@ WEKO_RECORDS_UI_EMAIL_ITEM_KEYS = ['creatorMails', 'contributorMails', 'mails']
 RECORDS_UI_TOMBSTONE_TEMPLATE = 'weko_records_ui/tombstone.html'
 # Setting the template of showing deleted record
 
-WEKO_RECORDS_UI_LANG_DISP_FLG = True
+WEKO_RECORDS_UI_LANG_DISP_FLG = False 
 """ Enable function of switching metadata by language of metadata """
 
 WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE = [
@@ -556,6 +574,24 @@ WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE = [
 ]
 """Define of resouce types list will be used for google scholar output."""
 
+WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE = ["dataset"]
+"""Define of resouce types list will be used for google dataset output."""
+
+WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN = 50
+""" minimum length of google dataset description """
+WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX = 5000
+""" maximum length of google dataset description """
+
+WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE = [
+    {'contentUrl':'https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt',
+    'encodingFormat':'text/plain'},
+    {'contentUrl':'https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml',
+    'encodingFormat':'application/x-yaml'},
+    {'contentUrl':'https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild',
+    'encodingFormat':'text/x-shellscript'}
+    ]
+""" List of force budle files in google dataset DISTRIBUTION """
+
 WEKO_RECORDS_UI_GOOGLE_DATASET_DISP_FLG = True
 """Enable function of google dataset metadata output."""
 
@@ -564,3 +600,18 @@ WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG = False
 
 WEKO_RECORDS_UI_ONLINE_ANALYSIS_URL = 'https://binder.cs.rcos.nii.ac.jp/v2/weko3/'
 """ URL for online analysis button. """
+
+WEKO_RECORDS_UI_DISPLAY_SHARE_BOX_FLG = True
+""" Display Share box on item detail. """
+
+WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG = True
+""" Display Version box on item detail. """
+
+WEKO_RECORDS_UI_DISPLAY_EXPORT_BOX_FLG = True
+""" Display Export box on item detail. """
+
+WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False 
+""" Display resource type on item detail. """
+
+WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
+""" Display item type name on item detail. """

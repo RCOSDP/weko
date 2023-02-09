@@ -67,19 +67,19 @@ msgstr "指定されたファイル{}の形式はインポートに対応して�
 
 #: weko_search_ui/utils.py:497
 msgid ""
-"The CSV file was not found in the specified file {}. Check if the "
+"The tsv/csv file was not found in the specified file {}. Check if the "
 "directory structure is correct."
-msgstr "指定されたファイル{}にCSVファイルが見つかりませんでした。ディレクトリ構成が正しいか確認してください。"
+msgstr "指定されたファイル{}にtsv/csvファイルが見つかりませんでした。ディレクトリ構成が正しいか確認してください。"
 
 #: weko_search_ui/utils.py:560
 msgid ""
 "There is an error in the format of the first line of the header of the "
-"CSV file."
-msgstr "CSVファイルのヘッダ１行目の形式に誤りがあります。"
+"{} file."
+msgstr "{}ファイルのヘッダ１行目の形式に誤りがあります。"
 
 #: weko_search_ui/utils.py:576
-msgid "The item type ID specified in the CSV file does not exist."
-msgstr "CSVファイルで指定されたアイテムタイプIDは存在しません。"
+msgid "The item type ID specified in the {} file does not exist."
+msgstr "{}ファイルで指定されたアイテムタイプIDは存在しません。"
 
 #: weko_search_ui/utils.py:583
 msgid "Cannot register because the specified item type is not the latest version."
@@ -94,8 +94,8 @@ msgid "The item does not consistent with the specified item type.<br/>{}"
 msgstr "指定されたアイテムタイプと項目が一致しません。<br/>{}"
 
 #: weko_search_ui/utils.py:625
-msgid "Cannot read csv file correctly."
-msgstr "CSVファイルが正しく読み込めません。"
+msgid "Cannot read {} file correctly."
+msgstr "{}ファイルが正しく読み込めません。"
 
 #: weko_search_ui/utils.py:644
 msgid ""
@@ -105,9 +105,9 @@ msgstr "次の項目指定されたアイテムタイプに存在しないため
 
 #: weko_search_ui/utils.py:651
 msgid ""
-"The CSV file could not be read. Make sure the file format is CSV and that"
+"The {} file could not be read. Make sure the file format is {} and that"
 " the file is UTF-8 encoded."
-msgstr "CSVファイルを読み込めませんでした。ファイル形式がCSVであること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
+msgstr "{}ファイルを読み込めませんでした。ファイル形式が{}であること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
 
 #: weko_search_ui/utils.py:713
 msgid "Please specify item ID by half-width number."
@@ -156,6 +156,10 @@ msgstr "指定された{}はシステムに存在しません。"
 #: weko_search_ui/utils.py:1352
 msgid "Both of IndexID and POS_INDEX are not being set."
 msgstr "IndexID, POS_INDEXがどちらも設定されていません。"
+
+#: weko_search_ui/utils.py:2470
+msgid "ID is specified for the newly registered item. Ignore the ID and register."
+msgstr "新規登録アイテムにIDが指定されています。IDを無視して登録を行います。"
 
 #: weko_search_ui/utils.py:1426
 msgid "Specified {} is invalid."
@@ -243,8 +247,8 @@ msgstr "（{}）に指定したファイルが存在しません。"
 #: weko_search_ui/utils.py:2714
 msgid ""
 "The file specified in ({}) does not exist.<br/>The file will not be "
-"updated. Update only the metadata with csv contents."
-msgstr "（{}）に指定したファイルが存在しません。<br/>ファイルの更新はしません。csv内容でメタデータのみ更新します。"
+"updated. Update only the metadata with csv/tsv contents."
+msgstr "（{}）に指定したファイルが存在しません。<br/>ファイルの更新はしません。csv/tsv内容でメタデータのみ更新します。"
 
 #: weko_search_ui/utils.py:2833
 msgid "The file name specified in {} and {} do not match."
@@ -786,18 +790,28 @@ msgstr "削除対象にDOI付与済みアイテムが含まれています。<br
 #~ msgid "\"<\" and \">\" are cannot be used for searching"
 #~ msgstr ""
 
-#~ msgid "Export all item"
-#~ msgstr "全件エクスポート"
+msgid "The last item ID"
+msgstr "最新のアイテムID"
 
-#~ msgid "Download URL"
-#~ msgstr "ダウンロードURL"
+msgid "Filter"
+msgstr "フィルター"
 
-#~ msgid "Export message"
-#~ msgstr "全体エクスポートを実行してよいですか？"
+msgid "Export item"
+msgstr "エクスポート"
 
-#~ msgid "Cancel export message"
-#~ msgstr "全件エクスポートの処理をキャンセルしてよいですか？"
+msgid "Download URL"
+msgstr "ダウンロードURL"
 
-#~ msgid "Execute"
-#~ msgstr "実行"
+msgid "Export message"
+msgstr "全体エクスポートを実行してよいですか？"
+
+msgid "Cancel export message"
+msgstr "全件エクスポートの処理をキャンセルしてよいですか？"
+
+msgid "Execute"
+msgstr "実行"
+
+msgid "Your role cannot register items in this index."
+msgstr "ロールの権限が足りずこのインデックスにアイテム登録ができません。"
+
 

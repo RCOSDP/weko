@@ -32,8 +32,10 @@ from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
 from flask_menu import register_menu
+from flask_wtf import Form,FlaskForm
 from invenio_admin.proxies import current_admin
 from invenio_stats.utils import QueryCommonReportsHelper
+from invenio_db import db
 from sqlalchemy.orm import session
 from weko_accounts.utils import roles_required
 from weko_records.models import SiteLicenseInfo
@@ -79,6 +81,7 @@ def _has_admin_access():
 
 
 @blueprint.route('/session/lifetime/<int:minutes>', methods=['GET'])
+@login_required
 def set_lifetime(minutes):
     """Update session lifetime in db.
 
@@ -96,7 +99,7 @@ def set_lifetime(minutes):
             minutes=db_lifetime.lifetime)
         return jsonify(code=0, msg='Session lifetime was updated.')
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         return abort(400)
 
 
@@ -125,7 +128,8 @@ def lifetime():
         if db_lifetime is None:
             db_lifetime = SessionLifetime(lifetime=30)
 
-        if request.method == 'POST':
+        form = FlaskForm(request.form)
+        if request.method == 'POST' and form.validate():
             # Process forms
             form = request.form.get('submit', None)
             if form == 'lifetime':
@@ -146,13 +150,14 @@ def lifetime():
                           ('180', _('180 mins')),
                           ('360', _('360 mins')),
                           ('720', _('720 mins')),
-                          ('1440', _('1440 mins'))]
+                          ('1440', _('1440 mins'))],
+            form=form
         )
     except ValueError as valueErr:
         current_app.logger.error(
             'Could not convert data to an integer: {0}'.format(valueErr))
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         return abort(400)
 
 
@@ -393,7 +398,7 @@ def get_send_mail_history():
         data = request.args
         page = int(data.get('page'))
     except Exception as ex:
-        current_app.logger.debug('Cannot convert parameter', ex)
+        current_app.logger.debug("Cannot convert parameter: {}".format(ex))
         page = 1
     result = FeedbackMail.load_feedback_mail_history(page)
     return jsonify(result)
@@ -414,7 +419,7 @@ def get_failed_mail():
         page = int(data.get('page'))
         history_id = int(data.get('id'))
     except Exception as ex:
-        current_app.logger.debug('Cannot convert parameter', ex)
+        current_app.logger.debug("Cannot convert parameter: {}".format(ex))
         page = 1
         history_id = 1
     result = FeedbackMail.load_feedback_failed_mail(history_id, page)
@@ -441,7 +446,7 @@ def resend_failed_mail():
         )
         FeedbackMail.update_history_after_resend(history_id)
     except Exception as ex:
-        current_app.logger.debug('Cannot resend mail', ex)
+        current_app.logger.debug("Cannot resend mail:{}".format(ex))
         result['success'] = False
         result['error'] = 'Request package is invalid'
     return jsonify(result)
@@ -546,7 +551,7 @@ def get_site_info():
     if site_info.ogp_image and site_info.ogp_image_name:
         ts = time.time()
         result['ogp_image'] = request.host_url + \
-            'api/admin/ogp_image?timestamp=' + str(ts)
+            'api/admin/ogp_image'
         result['ogp_image_name'] = site_info.ogp_image_name
     return jsonify(result)
 
@@ -721,3 +726,15 @@ def remove_facet_search():
     # Store query facet search in redis.
     store_facet_search_query_in_redis()
     return jsonify(result), 200
+
+
+@blueprint.teardown_request
+@blueprint_api.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_admin dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

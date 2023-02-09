@@ -598,7 +598,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.outputapplication_keys = [];
       $scope.authors_keys = [];
       $scope.data_author = [];
-      $scope.sub_item_keys = ['nameIdentifiers', 'affiliation', 'contributorAffiliations'];
+      $scope.sub_item_keys = ['nameIdentifiers', 'creatorAffiliations', 'contributorAffiliations'];
       $scope.scheme_uri_mapping = [
         {
           scheme : 'nameIdentifierScheme',
@@ -1426,6 +1426,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
       }
       $scope.resourceTypeSelect = function () {
+        $scope.accessRoleChange()
         let resourcetype = $("select[name$='resourcetype']").val();
         resourcetype = resourcetype.split("string:").pop();
         let resourceuri = "";
@@ -1588,10 +1589,80 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             case 'manuscript':
               resourceuri = "http://purl.org/coar/resource_type/c_0040";
               break;
+            case 'aggregated data':
+              resourceuri = "http://purl.org/coar/resource_type/ACF7-8YT9";
+              break;
+            case 'clinical trial data':
+              resourceuri = "http://purl.org/coar/resource_type/c_cb28";
+              break;
+            case 'compiled data':
+              resourceuri = "http://purl.org/coar/resource_type/FXF3-D3G7";
+              break;
+            case 'encoded data':
+              resourceuri = "http://purl.org/coar/resource_type/AM6W-6QAW";
+              break;
+            case 'experimental data':
+              resourceuri = "http://purl.org/coar/resource_type/63NG-B465";
+              break;
+            case 'genomic data':
+              resourceuri = "http://purl.org/coar/resource_type/A8F1-NPV9";
+              break;
+            case 'geospatial data':
+              resourceuri = "http://purl.org/coar/resource_type/2H0M-X761";
+              break;
+            case 'laboratory notebook':
+              resourceuri = "http://purl.org/coar/resource_type/H41Y-FW7B";
+              break;
+            case 'measurement and test data':
+              resourceuri = "http://purl.org/coar/resource_type/DD58-GFSX";
+              break;
+            case 'observational data':
+              resourceuri = "http://purl.org/coar/resource_type/FF4C-28RK";
+              break;
+            case 'recorded data':
+              resourceuri = "http://purl.org/coar/resource_type/CQMR-7K63";
+              break;
+            case 'simulation data':
+              resourceuri = "http://purl.org/coar/resource_type/W2XT-7017";
+              break;
+            case 'survey data':
+              resourceuri = "http://purl.org/coar/resource_type/NHD0-W6SY";
+              break;
             default:
               resourceuri = "";
           }
           $rootScope.recordsVM.invenioRecordsModel[$scope.resourceTypeKey].resourceuri = resourceuri;
+        }
+      }
+      $scope.accessRoleChange = function () {
+        for (let key in $rootScope.recordsVM.invenioRecordsModel) {
+          if ($rootScope.recordsVM.invenioRecordsModel[key] instanceof Array) {
+            try {
+              if ($rootScope.recordsVM.invenioRecordsModel[key].length > 1) {
+                for (let [idx, value] in $rootScope.recordsVM.invenioRecordsModel[key]) {
+                  if (($rootScope.recordsVM.invenioRecordsModel[key][idx].accessrole !== undefined)) {
+                    // check value of accessrole if open date or not
+                    if ($rootScope.recordsVM.invenioRecordsModel[key][idx].accessrole !== 'open_date') {
+                      // change dataValue in $rootScope.recordsVM.invenioRecordsModel
+                      $scope.modifiedFileAccessRole = $rootScope.recordsVM.invenioRecordsModel[key][idx].accessrole;
+                      $rootScope.recordsVM.invenioRecordsModel[key][idx].date[0].dateValue = $rootScope.recordsVM.invenioRecordsModel.pubdate
+                    }
+                  }
+                }
+              } else {
+                if ($rootScope.recordsVM.invenioRecordsModel[key][0].accessrole !== undefined) {
+                  // check value of accessrole if open date or not
+                  if ($rootScope.recordsVM.invenioRecordsModel[key][0].accessrole !== 'open_date') {
+                    // change dataValue in $rootScope.recordsVM.invenioRecordsModel
+                    $scope.modifiedFileAccessRole = $rootScope.recordsVM.invenioRecordsModel[key][0].accessrole;
+                    $rootScope.recordsVM.invenioRecordsModel[key][0].date[0].dateValue = $rootScope.recordsVM.invenioRecordsModel.pubdate
+                  }
+                }
+              }
+            } catch {
+              continue
+            }
+          }
         }
       }
       $scope.getBibliographicMetaKey = function () {
@@ -2887,13 +2958,13 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
       $scope.hiddenPubdate = function () {
         let model = $rootScope["recordsVM"].invenioRecordsModel;
-	if (!model["pubdate"]) {
+        if (!model["pubdate"]) {
           let now = new Date();
           let day = ("0" + now.getDate()).slice(-2);
           let month = ("0" + (now.getMonth() + 1)).slice(-2);
           model["pubdate"] = now.getFullYear() + "-" + (month) + "-" + (day);
         }
-	if ($("#is_hidden_pubdate").val() !== "True") {
+        if ($("#is_hidden_pubdate").val() !== "True") {
           return;
         }
         $rootScope["recordsVM"]["invenioRecordsForm"].forEach(function (item) {
@@ -3099,13 +3170,15 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let creatorModel;
         var author_name = authorInfoObj[0].author_name;
         var author_mail = authorInfoObj[0].author_mail;
+        var author_affiliation = authorInfoObj[0].author_affiliation;
+        console.log("authorInfo: " + authorInfo)
         if (arrayFlg == 'true' && Number.isInteger(parseInt(array_index))) {
           creatorModel = $rootScope.recordsVM.invenioRecordsModel[modelId][array_index];
         } else {
           creatorModel = $rootScope.recordsVM.invenioRecordsModel[modelId];
         }
         angular.forEach(authorInfoObj, function (value, key) {
-          creatorModel.affiliation = value.hasOwnProperty('affiliation') ? value.affiliation : [{}];
+          //creatorModel.creatorAffiliations = value.hasOwnProperty('creatorAffiliations') ? value.creatorAffiliations : [{}];
           creatorModel.creatorAlternatives = value.hasOwnProperty('creatorAlternatives') ? value.creatorAlternatives : [{}];
           creatorModel.familyNames = value.hasOwnProperty('familyNames') ? value.familyNames : [{}];
           creatorModel.givenNames = value.hasOwnProperty('givenNames') ? value.givenNames : [{}];
@@ -3135,6 +3208,38 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               let subMail = value.hasOwnProperty('creatorMails') ? value.creatorMails : [{}];
               subMail = JSON.parse(JSON.stringify(subMail).replace('creatorMail', v));
               creatorModel[k] = subMail;
+            }
+          });
+          angular.forEach(author_affiliation, function (v, k) {
+            if (creatorModel.hasOwnProperty(k)) {
+              const namesKey = v.names.key;
+              const namesNameKey = v.names.values.name;
+              const namesLangKey = v.names.values.lang;
+              const identifiersKey = v.identifiers.key;
+              const identifiersIdentifierKey = v.identifiers.values.identifier;
+              const identifiersUriKey = v.identifiers.values.uri;
+              const identifiersSchemeKey = v.identifiers.values.scheme;
+              creatorModel[k] = [];
+              for (var i = 0; i < value.creatorAffiliations.length; i++) {
+                let affiliation = value.creatorAffiliations[i];
+                let affiliationData = {[namesKey]: [], [identifiersKey]: []};
+                for (var j = 0; j < affiliation.affiliationNames.length; j++) {
+                  let affiliationNames = affiliation.affiliationNames[j];
+                  let affiliationNamesData = {};
+                  affiliationNamesData[namesNameKey] = affiliationNames.affiliationName;
+                  affiliationNamesData[namesLangKey] = affiliationNames.affiliationNameLang;
+                  affiliationData[namesKey].push(affiliationNamesData)
+                }
+                for (var j = 0; j < affiliation.affiliationNameIdentifiers.length; j++) {
+                  let affiliationIdentifiers = affiliation.affiliationNameIdentifiers[j];
+                  let affiliationIdentifiersData = {};
+                  affiliationIdentifiersData[identifiersIdentifierKey] = affiliationIdentifiers.affiliationNameIdentifier;
+                  affiliationIdentifiersData[identifiersUriKey] = affiliationIdentifiers.affiliationNameIdentifierURI;
+                  affiliationIdentifiersData[identifiersSchemeKey] = affiliationIdentifiers.affiliationNameIdentifierScheme;
+                  affiliationData[identifiersKey].push(affiliationIdentifiersData)
+                }
+                creatorModel[k].push(affiliationData)
+              }
             }
           });
         });

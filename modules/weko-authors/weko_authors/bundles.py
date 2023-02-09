@@ -64,6 +64,20 @@ author_prefix_js = Bundle(
     output="gen/authorPrefix.%(version)s.js",
 )
 
+author_affiliation_css = Bundle(
+    'css/weko_authors/styles.affiliation.bundle.css',
+    filters='cleancss',
+    output="gen/authorAffiliation.%(version)s.css",
+)
+
+author_affiliation_js = Bundle(
+    'js/weko_authors/inline.affiliation.bundle.js',
+    'js/weko_authors/polyfills.affiliation.bundle.js',
+    'js/weko_authors/main.affiliation.bundle.js',
+    filters='jsmin',
+    output="gen/authorAffiliation.%(version)s.js",
+)
+
 author_export_css = Bundle(
     'css/weko_authors/app-author-export.main.chunk.css',
     filters='jsmin',

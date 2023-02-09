@@ -28,6 +28,7 @@ from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
 from invenio_db import db
+from invenio_files_rest.models import Location
 from invenio_i18n.ext import current_i18n
 from invenio_mail.models import MailTemplates
 from weko_index_tree.models import Index
@@ -265,6 +266,7 @@ class WorkFlowSettingView(BaseView):
         flow_api = Flow()
         flow_list = flow_api.get_flow_list()
         index_list = Index().get_all()
+        location_list = Location.query.order_by(Location.id.asc()).all()
         hide = []
         role = Role.query.all()
         display_label = self.get_language_workflows("display")
@@ -279,6 +281,7 @@ class WorkFlowSettingView(BaseView):
                 itemtype_list=itemtype_list,
                 flow_list=flow_list,
                 index_list=index_list,
+                location_list=location_list,
                 hide_list=hide,
                 display_list=role,
                 display_label=display_label,
@@ -305,6 +308,7 @@ class WorkFlowSettingView(BaseView):
             itemtype_list=itemtype_list,
             flow_list=flow_list,
             index_list=index_list,
+            location_list=location_list,
             hide_list=hide,
             display_list=display,
             display_label=display_label,
@@ -325,6 +329,7 @@ class WorkFlowSettingView(BaseView):
             itemtype_id=json_data.get('itemtype_id', 0),
             flow_id=json_data.get('flow_id', 0),
             index_tree_id=json_data.get('index_id'),
+            location_id=json_data.get('location_id'),
             open_restricted=json_data.get('open_restricted'),
             is_gakuninrdm=json_data.get('is_gakuninrdm')
         )
@@ -394,7 +399,7 @@ class WorkFlowSettingView(BaseView):
         :param list_hide:
 
         :return: displays, hides.
-        """
+        """        
         displays = []
         hides = []
         if isinstance(role, list):
@@ -427,6 +432,9 @@ class WorkFlowSettingView(BaseView):
 
         :return:
         """
+        current_app.logger.error("wf_id:{}".format(wf_id))
+        # ['4']
+        current_app.logger.error("list_hide:{}".format(list_hide))
         with db.session.begin_nested():
             db.session.query(WorkflowRole).filter_by(
                 workflow_id=wf_id).delete()

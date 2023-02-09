@@ -212,7 +212,7 @@ $(document).ready(function () {
       success: function (data, status) {
         var modalcontent = data.msg;
         $('#inputModal').text(modalcontent);
-        $('#allModal').modal('show');
+        $('#modalSendEmailSuccess').modal('show');
       },
       error: function (jqXHR, status) {
         var modalcontent = 'Update failed.';
@@ -234,7 +234,7 @@ $(document).ready(function () {
       success: function (data, status) {
         if (0 != data.code) {
           $("#inputModal").html(data.msg);
-          $("#allModal").modal("show");
+          $("#modalSendEmailSuccess").modal("show");
         } else {
           document.location.href = data.data.redirect;
         }

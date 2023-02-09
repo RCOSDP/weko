@@ -77,10 +77,20 @@ USA. #}
                 <div ng-if="sub_data.key_value.inputType=='checkbox_list'" id="sele_[[$index]]" class="checkbox">
                   <div class="panel panel-default">
                     <div class="panel-body">
-                      <label ng-repeat="sub_check in sub_data.key_value.check_val track by $index" class="col-sm-3">
-                        <input type="checkbox" id="[[sub_data.key_value.id]]" value="[[sub_check.id]]"
-                          ng-model="sub_check.checkStus">{{_('[[sub_check.contents]]')}}　
-                      </label>
+                      <div ng-if="sub_data.key_value.limit >= load_delimiter">
+                        <div class="content_[[$index]] " when-scrolled="loadMore($index)" style="overflow-y:scroll; height:400px;">
+                          <label ng-repeat="sub_check in sub_data.key_value.check_val | limitTo:sub_data.key_value.limit track by $index " class="col-sm-3">
+                            <input type="checkbox" id="[[sub_data.key_value.id]]" value="[[sub_check.id]]"
+                              ng-model="sub_check.checkStus">{{_('[[sub_check.contents]]')}}
+                          </label>
+                        </div>
+                      </div>
+                      <div ng-if="sub_data.key_value.limit < load_delimiter">
+                        <label ng-repeat="sub_check in sub_data.key_value.check_val track by $index " class="col-sm-3">
+                          <input type="checkbox" id="[[sub_data.key_value.id]]" value="[[sub_check.id]]"
+                            ng-model="sub_check.checkStus">{{_('[[sub_check.contents]]')}}
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>

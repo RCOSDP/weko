@@ -65,7 +65,7 @@
           "type": "text"
         },
         "control_number": {
-          "type": "text"
+          "type": "keyword"
         }
       }
     }

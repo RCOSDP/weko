@@ -11,6 +11,8 @@
 import datetime
 
 import pytest
+import json
+from mock import patch
 
 from invenio_stats.contrib.registrations import register_queries
 from invenio_stats.queries import ESDateHistogramQuery, ESTermsQuery
@@ -38,19 +40,35 @@ def test_histogram_query(app, event_queues, aggregated_events):
         assert int(day_result['value']) == 2
 
 
-@pytest.mark.skip('This test dont ever finish')
 @pytest.mark.parametrize('aggregated_events',
                          [dict(file_number=1,
                                event_number=7,
                                start_date=datetime.date(2017, 1, 1),
                                end_date=datetime.date(2017, 1, 7))],
                          indirect=['aggregated_events'])
-def test_terms_query(app, event_queues, aggregated_events):
+@pytest.mark.parametrize("mock_execute, config_num, res_file",
+                         [(["tests/data/ESTermsQuery_execute01.json"],
+                           1,
+                           "tests/data/ESTermsQuery_result01.json"),
+                          (["tests/data/ESTermsQuery_execute02.json", 
+                            "tests/data/ESTermsQuery_execute01.json"],
+                           1,
+                           "tests/data/ESTermsQuery_result02.json"),
+                          (["tests/data/ESTermsQuery_execute03.json"],
+                           16,
+                           "tests/data/ESTermsQuery_result03.json")])
+def test_terms_query(app,mock_es_execute, event_queues,
+                     aggregated_events, mock_execute, config_num, res_file):
     """Test that the terms query returns the correct total count."""
     query_configs = register_queries()
     terms_query = ESTermsQuery(query_name='test_total_count',
-                               **query_configs[1]['query_config'])
-    results = terms_query.run(bucket_id='B0000000000000000000000000000001',
-                              start_date=datetime.datetime(2017, 1, 1),
-                              end_date=datetime.datetime(2017, 1, 7))
-    assert int(results['buckets'][0]['value']) == 49
+                               **query_configs[config_num]['query_config'])
+
+    with patch("invenio_stats.queries.Search.execute", side_effect=[mock_es_execute(data) for data in mock_execute]):
+      results = terms_query.run(bucket_id='B0000000000000000000000000000001',
+                                start_date=datetime.datetime(2017, 1, 1),
+                                end_date=datetime.datetime(2017, 1, 7))
+      with open(res_file, "r") as f:
+            data = json.load(f)
+      # assert int(results['buckets'][0]['value']) == 49
+      assert results == data

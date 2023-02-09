@@ -11,7 +11,7 @@
 from __future__ import absolute_import, print_function
 
 from flask import url_for
-from helpers import get_json, record_url, to_relative_url
+from tests.helpers import get_json, record_url, to_relative_url
 
 
 def test_item_get(app, test_records):

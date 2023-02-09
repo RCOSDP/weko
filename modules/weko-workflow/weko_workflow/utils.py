@@ -29,6 +29,7 @@ from datetime import datetime, timedelta
 from typing import NoReturn, Optional, Tuple, Union
 
 import redis
+from redis import sentinel
 from celery.task.control import inspect
 from flask import current_app, request, session
 from flask_babelex import gettext as _
@@ -59,18 +60,19 @@ from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
 from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
-from weko_records_ui.utils import create_onetime_download_url, \
-    generate_one_time_download_url, get_list_licence
+from weko_redis import RedisConnection
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
 from werkzeug.utils import import_string
+from weko_deposit.pidstore import get_record_without_version
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST, \
     WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST
+
 
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow
@@ -230,11 +232,17 @@ def register_hdl(activity_id):
     :return cnri_pidstore: HDL pidstore object or None
     """
     activity = WorkActivity().get_activity_detail(activity_id)
-    item_uuid = activity.item_id
+    # https://nii.backlog.jp/view/WEKO3_APP-84
+    current_pid = PersistentIdentifier.get_by_object(pid_type='recid',
+                                                 object_type='rec',
+                                                 object_uuid=activity.item_id)
+    pid_without_ver = get_record_without_version(current_pid)
+    item_uuid  = pid_without_ver.object_uuid
+    # item_uuid = activity.item_id
     current_app.logger.debug(
         "register_hdl: {0} {1}".format(activity_id, item_uuid))
     record = WekoRecord.get_record(item_uuid)
-
+    
     if record.pid_cnri:
         current_app.logger.info('This record was registered HDL!')
         return
@@ -246,7 +254,6 @@ def register_hdl(activity_id):
 
     weko_handle = Handle()
     handle = weko_handle.register_handle(location=record_url)
-
     if handle:
         handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
         identifier = IdentifierHandle(item_uuid)
@@ -271,7 +278,7 @@ def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
 
     weko_handle = Handle()
     handle = weko_handle.register_handle(location=record_url)
-
+    
     if handle:
         handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
         identifier = IdentifierHandle(item_uuid)
@@ -308,13 +315,20 @@ def register_hdl_by_handle(hdl, item_uuid, item_uri):
 
 
 def item_metadata_validation(item_id, identifier_type, record=None,
-                             is_import=False, without_ver_id=None):
+                             is_import=False, without_ver_id=None, file_path=None):
     """
     Validate item metadata.
 
     :param: item_id, identifier_type, record
     :return: error_list
     """
+    current_app.logger.debug("item_id: {}".format(item_id))
+    current_app.logger.debug("identifier_type: {}".format(identifier_type))
+    current_app.logger.debug("record: {}".format(record))
+    current_app.logger.debug("is_import: {}".format(is_import))
+    current_app.logger.debug("without_ver_id: {}".format(without_ver_id))
+    current_app.logger.debug("file_path: {}".format(file_path))
+
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
         return None
 
@@ -345,8 +359,8 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     type_key, resource_type = metadata_item.get_first_data_by_mapping(
         'type.@value')
 
-    error_list = {'required': [], 'pattern': [],
-                  'either': [], 'mapping': [], 'other': ''}
+    error_list = {'required': [], 'required_key': [], 'pattern': [],
+                  'either': [],  'either_key': [], 'mapping': [], 'other': ''}
     # check resource type request
     if not resource_type and not type_key:
         error_list['mapping'].append('dc:type')
@@ -385,16 +399,14 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 or resource_type in elearning_type \
                 or resource_type in datageneral_types:
             required_properties = ['title']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
-            either_properties = ['version']
+            # remove 20220207
+            # either_properties = ['version']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif resource_type in dataset_type:
             required_properties = ['title',
                                    'givenName']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
-            either_properties = ['geoLocation']
+            # remove 20220207
+            # either_properties = ['geoLocation']
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['Crossref']:
         if resource_type in journalarticle_type:
@@ -402,21 +414,28 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                                    'publisher',
                                    'sourceIdentifier',
                                    'sourceTitle']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
         elif resource_type in report_types \
                 or resource_type in thesis_types:
             required_properties = ['title']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
     # DataCite DOI identifier registration
-    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCite'] \
-            and item_type.item_type_name.name != ddi_item_type_name:
-        required_properties = ['fileURI']
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCite']:
+        if resource_type in dataset_type:
+            required_properties = ['title',
+                                   'givenName']
+            # remove 20220207
+            # either_properties = ['geoLocation']
     # NDL JaLC DOI identifier registration
-    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC'] \
-            and item_type.item_type_name.name != ddi_item_type_name:
-        required_properties = ['fileURI']
+
+    # 本文URL条件
+    # DDIはスキップ
+    # 新規登録(item_idなし、かつfile_pathがある場合は本文URL:があるとみなす
+    # それ以外はfileURIが必須
+    if item_type.item_type_name.name != ddi_item_type_name:
+        if item_id is None:
+            if len(file_path) == 0:
+                required_properties.append('fileURI')
+        else:
+            required_properties.append('fileURI')
 
     if required_properties:
         properties['required'] = required_properties
@@ -443,8 +462,18 @@ def merge_doi_error_list(current, new):
     """Merge DOI validation error list."""
     if new['required']:
         current['required'].extend(new['required'])
+    if 'required_key' in new and new['required_key']:
+        if 'required_key' in current:
+            current['required_key'].extend(new['required_key'])
+        else:
+            current['required_key'] = new['required_key']
     if new['either']:
         current['either'].extend(new['either'])
+    if 'either_key' in new and new['either_key']:
+        if 'either_key' in current:
+            current['either_key'].extend(new['either_key'])
+        else:
+            current['either_key'] = new['either_key']
     if new['pattern']:
         current['pattern'].extend(new['pattern'])
     if new['mapping']:
@@ -460,7 +489,8 @@ def validation_item_property(mapping_data, properties):
     :param properties: Property's keywords
     :return: error_list or None
     """
-    error_list = {'required': [], 'pattern': [], 'either': [], 'mapping': []}
+    error_list = {'required': [], 'required_key': [],
+                  'pattern': [], 'either': [], 'either_key': [], 'mapping': []}
     empty_list = deepcopy(error_list)
 
     if properties.get('required'):
@@ -486,6 +516,9 @@ def handle_check_required_data(mapping_data, mapping_key):
     keys = []
     values = []
     requirements = []
+    current_app.logger.debug("mapping_data: {}".format(mapping_data))
+    current_app.logger.debug("mapping_key: {}".format(mapping_key))
+
     data = mapping_data.get_data_by_mapping(mapping_key)
     for key, value in data.items():
         keys.append(key)
@@ -506,8 +539,8 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
     if not (mapping_data and mapping_keys):
         return
     if not error_list:
-        error_list = {'required': [], 'pattern': [],
-                      'either': [], 'mapping': []}
+        error_list = {'required': [], 'required_key': [], 'pattern': [],
+                      'either': [], 'either_key': [], 'mapping': []}
     empty_list = deepcopy(error_list)
     keys = []
     num_map = 0
@@ -533,9 +566,11 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
     if requirements:
         if num_map == 1 and not is_either:
             error_list['required'].extend(requirements)
+            error_list['required_key'].append(mapping_key)
         else:
-            filter_root_keys = list(set([
-                key.split('.')[0] for key in keys[:num_map]]))
+            error_list['either_key'].append(mapping_key)
+            filter_root_keys = list(
+                set([key.split('.')[0] for key in keys[:num_map]]))
             either_list = []
             for key in filter_root_keys:
                 either_list.append([
@@ -545,6 +580,10 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
             else:
                 error_list['either'].append(either_list)
 
+    current_app.logger.debug("mapping_data: {}".format(mapping_data))
+    current_app.logger.debug("mapping_keys: {}".format(mapping_keys))
+    current_app.logger.debug("error_list: {}".format(error_list))
+    current_app.logger.debug("is_either: {}".format(is_either))
     if empty_list != error_list:
         return error_list
 
@@ -558,7 +597,8 @@ def validattion_item_property_required(
     :param properties: Property's keywords
     :return: error_list or None
     """
-    error_list = {'required': [], 'pattern': [], 'either': [], 'mapping': []}
+    error_list = {'required': [], 'required_key': [],
+                  'pattern': [], 'either': [], 'either_key': [], 'mapping': []}
     empty_list = deepcopy(error_list)
 
     # check file jpcoar:URI
@@ -615,7 +655,8 @@ def validattion_item_property_either_required(
     :param properties: Property's keywords
     :return: either_list
     """
-    error_list = {'required': [], 'pattern': [], 'either': [], 'mapping': []}
+    error_list = {'required': [], 'required_key': [],
+                  'pattern': [], 'either': [], 'either_key': [], 'mapping': []}
 
     # For Dataset
     geo_location = None
@@ -652,15 +693,16 @@ def validattion_item_property_either_required(
 
     # For other resource type
     version = None
+    current_app.logger.debug("properties: {}".format(properties))
     if 'version' in properties:
         # check フォーマット jpcoar:mimeType
         mapping_keys = ['jpcoar:mimeType']
         version = handle_check_required_pattern_and_either(
             mapping_data, mapping_keys, None, True)
 
-        # check バージョン datacite:version
-        mapping_keys = ['datacite:version']
         if version:
+            # check バージョン datacite:version
+            mapping_keys = ['datacite:version']
             errors = handle_check_required_pattern_and_either(
                 mapping_data, mapping_keys, None, True)
             if not errors:
@@ -668,8 +710,8 @@ def validattion_item_property_either_required(
             else:
                 merge_doi_error_list(version, errors)
 
-        # check 出版タイプ oaire:version
         if version:
+            # check 出版タイプ oaire:version
             mapping_keys = ['oaire:version']
             errors = handle_check_required_pattern_and_either(
                 mapping_data, mapping_keys, None, True)
@@ -978,14 +1020,19 @@ class IdentifierHandle(object):
 
         """
         try:
-            if not pid_value:
-                pid_value = self.get_pidstore().pid_value
-            doi_pidstore = self.check_pidstore_exist('doi', pid_value)
+            pids = []
+            record = WekoRecord.get_record(self.item_uuid)
+            with db.session.no_autoflush:
+                pids = PersistentIdentifier.query.filter_by(
+                    pid_type='doi',
+                    status=PIDStatus.REGISTERED,
+                    object_uuid=record.pid_parent.object_uuid).all()
 
-            if doi_pidstore and doi_pidstore.status == PIDStatus.REGISTERED:
-                doi_pidstore.delete()
+            if pids:
+                for _item in pids:
+                    _item.delete()
                 self.remove_idt_registration_metadata()
-                return doi_pidstore.status == PIDStatus.DELETED
+                return True
         except PIDDoesNotExistError as pidNotEx:
             current_app.logger.error(pidNotEx)
             return False
@@ -1039,7 +1086,6 @@ class IdentifierHandle(object):
             "identifierRegistration.@value")
         key_type = self.metadata_mapping.get_first_property_by_mapping(
             "identifierRegistration.@attributes.identifierType")
-
         self.commit(key_id=key_value.split('.')[0],
                     key_val=key_value.split('.')[1],
                     key_typ=key_type.split('.')[1],
@@ -1273,31 +1319,32 @@ def get_parent_pid_with_type(pid_type, object_uuid):
 
 
 def filter_all_condition(all_args):
-    """
-    Filter conditions.
+    """make a json data from request parameters that filtered by config['WEKO_WORKFLOW_FILTER_PARAMS'].
 
-    :param all_args:
-    :return:
-    """
+    Args:
+        all_args (werkzeug.datastructures.ImmutableMultiDict): request paramaters
+
+    Returns:
+        dict: a json data of filtered request parameters.
+    """    
     conditions = {}
     list_key_condition = current_app.config.get('WEKO_WORKFLOW_FILTER_PARAMS',
                                                 [])
     for args in all_args:
         for key in list_key_condition:
             if key in args:
-                filter_condition(conditions, key, request.args.get(args))
+                filter_condition(conditions, key, all_args.get(args))
     return conditions
 
 
 def filter_condition(json, name, condition):
-    """
-    Add conditions to json object.
+    """Add conditions to json object.
 
-    :param json:
-    :param name:
-    :param condition:
-    :return:
-    """
+    Args:
+        json (dict): _description_
+        name (string): _description_
+        condition (string): _description_
+    """    
     if json.get(name):
         json[name].append(condition)
     else:
@@ -1334,11 +1381,13 @@ def convert_record_to_item_metadata(record_metadata):
     for key, meta in item_type.get('meta_list', {}).items():
         if key in record_metadata:
             if meta.get('option', {}).get('multiple'):
-                item_metadata[key] = \
-                    record_metadata[key]['attribute_value_mlt']
+                if 'attribute_value_mlt' in record_metadata[key]:
+                    item_metadata[key] = \
+                        record_metadata[key]['attribute_value_mlt']
             else:
-                item_metadata[key] = \
-                    record_metadata[key]['attribute_value_mlt'][0]
+                if 'attribute_value_mlt' in record_metadata[key]:
+                    item_metadata[key] = \
+                        record_metadata[key]['attribute_value_mlt'][0]
 
     return item_metadata
 
@@ -1378,19 +1427,30 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         try:
             _deposit = WekoDeposit.get_record(draft_pid.object_uuid)
             _bucket = Bucket.get(_deposit.files.bucket.id)
+
+            if not _bucket:
+                _bucket = Bucket.create(
+                    quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
+                    max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
+                )
+                RecordsBuckets.create(record=_deposit.model, bucket=_bucket)
+                _deposit.files.bucket.id = _bucket
+
             bucket = deposit.files.bucket
 
             sync_bucket = RecordsBuckets.query.filter_by(
                 bucket_id=_deposit.files.bucket.id
             ).first()
+
             snapshot = bucket.snapshot(lock=False)
             snapshot.locked = False
             _bucket.locked = False
 
             sync_bucket.bucket_id = snapshot.id
             _deposit['_buckets']['deposit'] = str(snapshot.id)
-            _bucket.remove()
+
             db.session.add(sync_bucket)
+            _bucket.remove()
 
             # update metadata
             _metadata = convert_record_to_item_metadata(deposit)
@@ -1508,7 +1568,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                 _deposit.publish()
 
                 pv = PIDVersioning(child=pid_without_ver)
-                last_ver = PIDVersioning(parent=pv.parent).get_children(
+                last_ver = PIDVersioning(parent=pv.parent,child=pid_without_ver).get_children(
                     pid_status=PIDStatus.REGISTERED
                 ).filter(PIDRelation.relation_type == 2).order_by(
                     PIDRelation.index.desc()).first()
@@ -1668,7 +1728,10 @@ def get_url_root():
 
     :return: url root.
     """
-    site_url = current_app.config['THEME_SITEURL'] + '/'
+    site_url = current_app.config['THEME_SITEURL']
+    if not site_url.endswith('/'):
+        site_url = site_url + '/'
+        
     return request.host_url if request else site_url
 
 
@@ -2862,6 +2925,7 @@ def create_onetime_download_url_to_guest(activity_id: str,
         user_mail = extra_info.get('guest_mail')
         is_guest_user = True
     if file_name and record_id and user_mail:
+        from weko_records_ui.utils import generate_one_time_download_url
         onetime_file_url = generate_one_time_download_url(
             file_name, record_id, user_mail)
 
@@ -2869,6 +2933,7 @@ def create_onetime_download_url_to_guest(activity_id: str,
         delete_guest_activity(activity_id)
 
         # Save onetime to Database.
+        from weko_records_ui.utils import create_onetime_download_url
         one_time_obj = create_onetime_download_url(
             activity_id, file_name, record_id, user_mail, is_guest_user)
         expiration_tmp = {
@@ -2907,11 +2972,23 @@ def delete_guest_activity(activity_id: str) -> bool:
 
 
 def get_activity_display_info(activity_id: str):
-    """Get activity.
+    """_summary_
 
-    @param activity_id:
-    @return:
-    """
+    Args:
+        activity_id (str): _description_
+
+    Returns:
+        _type_: _description_
+        action_endpoint
+        int: action_id
+        Activity: activity_detail
+        Action: cur_action
+        ActivityHistory: histories
+        _type_: item {'lang': 'ja', 'owner': '1', 'title': 'ddd', '$schema': '/items/jsonschema/15', 'pubdate': '2022-08-21', 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'ddd', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_beb9', 'resourcetype': 'data paper'}}
+        _type_: steps
+        _type_: temporary_comment [{'ActivityId': 'A-20220821-00003', 'ActionId': 1, 'ActionName': 'Start', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'begin_action', 'Author': 'wekosoftware@nii.ac.jp', 'Status': 'action_done', 'ActionOrder': 1}, {'ActivityId': 'A-20220821-00003', 'ActionId': 3, 'ActionName': 'Item Registration', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_login', 'Author': '', 'Status': ' ', 'ActionOrder': 2}, {'ActivityId': 'A-20220821-00003', 'ActionId': 4, 'ActionName': 'Approval', 'ActionVersion': '2.0.0', 'ActionEndpoint': 'approval', 'Author': '', 'Status': ' ', 'ActionOrder': 3}, {'ActivityId': 'A-20220821-00003', 'ActionId': 5, 'ActionName': 'Item Link', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_link', 'Author': '', 'Status': ' ', 'ActionOrder': 4}, {'ActivityId': 'A-20220821-00003', 'ActionId': 7, 'ActionName': 'Identifier Grant', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'identifier_grant', 'Author': '', 'Status': ' ', 'ActionOrder': 5}, {'ActivityId': 'A-20220821-00003', 'ActionId': 2, 'ActionName': 'End', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'end_action', 'Author': '', 'Status': ' ', 'ActionOrder': 6}]
+        Workflow: workflow_detail
+    """    
     activity = WorkActivity()
     activity_detail = activity.get_activity_detail(activity_id)
     item = None
@@ -2944,6 +3021,17 @@ def get_activity_display_info(activity_id: str):
         action_order=activity_detail.action_order)
     if action_data:
         temporary_comment = action_data.action_comment
+
+    current_app.logger.debug("action_endpoint:{}".format(action_endpoint))
+    current_app.logger.debug("action_id:{}".format(action_id))
+    current_app.logger.debug("activity_detail:{}".format(activity_detail))
+    current_app.logger.debug("cur_action:{}".format(cur_action))
+    current_app.logger.debug("histories:{}".format(histories))
+    current_app.logger.debug("item:{}".format(item))
+    current_app.logger.debug("steps:{}".format(steps))
+    current_app.logger.debug("temporary_comment:{}".format(temporary_comment))
+    current_app.logger.debug("workflow_detail:{}".format(workflow_detail))
+
     return action_endpoint, action_id, activity_detail, cur_action, histories, \
         item, steps, temporary_comment, workflow_detail
 
@@ -3124,7 +3212,7 @@ def prepare_data_for_guest_activity(activity_id: str) -> dict:
         item = get_items_metadata_by_activity_detail(activity_detail)
         approval_record = []
         if item:
-            _, approval_record = get_pid_and_record(item)
+            _, approval_record = get_pid_and_record(item.id)
         # be use for index tree and comment page.
         session['itemlogin_item'] = ctx['item']
         session['itemlogin_steps'] = ctx['steps']
@@ -3524,26 +3612,22 @@ def check_authority_by_admin(activity):
     # If user has community role
     # and the user who created activity is member of community
     # role -> has permission:
-    community_role_name = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-    community_user_ids = []
-    if isinstance(community_role_name, str):
-        community_role_name = (community_role_name,)
-    for name in community_role_name:
+    community_role_names = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    for community_role_name in community_role_names:
         # Get the list of users who has the community role
         community_users = User.query.outerjoin(userrole).outerjoin(Role) \
-            .filter(name == Role.name) \
+            .filter(community_role_name == Role.name) \
             .filter(userrole.c.role_id == Role.id) \
             .filter(User.id == userrole.c.user_id) \
             .all()
-        tmp = [community_user.id for community_user in community_users]
-        community_user_ids.extend(tmp)
-
-    for role in list(current_user.roles or []):
-        if role.name in community_role_name:
-            # User has community role
-            if activity.activity_login_user in community_user_ids:
-                return True
-            break
+        community_user_ids = [
+            community_user.id for community_user in community_users]
+        for role in list(current_user.roles or []):
+            if role.name in community_role_name:
+                # User has community role
+                if activity.activity_login_user in community_user_ids:
+                    return True
+                break
     return False
 
 
@@ -3584,14 +3668,22 @@ def get_files_and_thumbnail(activity_id, item):
     return files, files_thumbnail
 
 
-def get_pid_and_record(item):
-    """Get record data for the first time access to editing item screen.
-
+def get_pid_and_record(item_id):
+    """
+    get_pid_and_record Get record data for the first time access to editing item screen.
+    
     Args:
-        item: Item metadata.
+        item_id (_type_): id of Item metadata.
+
+    Returns:
+        _type_: A tuple containing (pid, object).
+    
+    Raises:
+        invenio_pidstore.errors.PIDDoesNotExistError: if no PID is found.
+        invenio_pidstore.errors.PIDDeletedError: if PID is deleted.
     """
     recid = PersistentIdentifier.get_by_object(
-        pid_type='recid', object_type='rec', object_uuid=item.id)
+        pid_type='recid', object_type='rec', object_uuid=item_id)
     record_class = import_string('weko_deposit.api:WekoRecord')
     resolver = Resolver(pid_type='recid', object_type='rec',
                         getter=record_class.get_record)
@@ -3647,7 +3739,7 @@ def get_main_record_detail(activity_id,
         else:
             item = get_items_metadata_by_activity_detail(activity_detail)
     if item and not approval_record:
-        recid, approval_record = get_pid_and_record(item)
+        recid, approval_record = get_pid_and_record(item.id)
     if item and not files:
         files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
 
@@ -3837,10 +3929,9 @@ def check_doi_validation_not_pass(item_id, activity_id,
     if isinstance(error_list, str):
         return error_list
 
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+
     if error_list:
         sessionstore.put(
             'updated_json_schema_{}'.format(activity_id),

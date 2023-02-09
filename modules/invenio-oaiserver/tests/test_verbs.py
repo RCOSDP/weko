@@ -14,7 +14,7 @@ import uuid
 from copy import deepcopy
 from datetime import timedelta
 
-from helpers import run_after_insert_oai_set
+from .helpers import run_after_insert_oai_set
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.minters import recid_minter

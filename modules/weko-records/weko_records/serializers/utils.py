@@ -20,7 +20,7 @@
 
 """WEKO Search Serializer."""
 
-import copy
+import pickle
 from datetime import datetime
 
 import pytz
@@ -50,7 +50,7 @@ def get_mapping(item_type_mapping, mapping_type):
         for k, v in schema.items():
             key = parent_key + '.' + k if parent_key else k
             if isinstance(v, dict):
-                child_key = copy.deepcopy(key)
+                child_key = pickle.loads(pickle.dumps(key, -1))
                 get_schema_key_info(v, child_key, schema_json)
             else:
                 schema_json[key] = v
@@ -80,7 +80,7 @@ def get_full_mapping(item_type_mapping, mapping_type):
         for k, v in schema.items():
             key = parent_key + '.' + k if parent_key else k
             if isinstance(v, dict):
-                child_key = copy.deepcopy(key)
+                child_key = pickle.loads(pickle.dumps(key, -1))
                 get_schema_key_info(v, child_key, schema_json)
             else:
                 properties = schema_json.get(key, [])
@@ -115,7 +115,7 @@ def get_mapping_inactive_show_list(item_type_mapping, mapping_type):
         for k, v in schema.items():
             key = parent_key + '.' + k if parent_key else k
             if isinstance(v, dict):
-                child_key = copy.deepcopy(key)
+                child_key = pickle.loads(pickle.dumps(key, -1))
                 get_schema_key_info(v, child_key, schema_json)
             else:
                 schema_json[key] = v

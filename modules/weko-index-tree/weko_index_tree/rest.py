@@ -22,6 +22,7 @@
 
 import os
 from functools import wraps
+from wsgiref.util import request_uri
 
 from flask import Blueprint, abort, current_app, jsonify, make_response, \
     request
@@ -29,13 +30,14 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
+from invenio_db import db
 
 from .api import Indexes
 from .errors import IndexAddedRESTError, IndexNotFoundRESTError, \
     IndexUpdatedRESTError, InvalidDataRESTError
 from .models import Index
 from .utils import check_doi_in_index, check_index_permissions, \
-    is_index_locked, perform_delete_index
+    is_index_locked, perform_delete_index, save_index_trees_to_redis
 
 
 def need_record_permission(factory_name):
@@ -78,6 +80,16 @@ def create_blueprint(app, endpoints):
         __name__,
         url_prefix='',
     )
+    
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+        current_app.logger.debug("weko_index_tree dbsession_clean: {}".format(exception))
+        if exception is None:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+        db.session.remove()
 
     for endpoint, options in (endpoints or {}).items():
         if 'record_serializers' in options:
@@ -179,11 +191,35 @@ class IndexActionResource(ContentNegotiatedMethodView):
     def get(self, index_id):
         """Get a tree index record."""
         try:
-            index = self.record_class.get_index_with_role(index_id)
-            have_children = Index.have_children(index_id)
-            index['have_children'] = have_children
-            if not have_children:
-                index['more_check'] = False
+            if str(index_id) != '0':
+                index = self.record_class.get_index_with_role(index_id)
+                have_children = Index.have_children(index_id)
+                index['have_children'] = have_children
+                if not have_children:
+                    index['more_check'] = False
+            else:
+                index = {}
+
+            can_edit = False
+            role_ids = []
+            if current_user and current_user.is_authenticated:
+                for role in current_user.roles:
+                    if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
+                        role_ids = []
+                        can_edit = True
+                        break
+                    else:
+                        role_ids.append(role.id)
+            if not can_edit and role_ids and str(index_id) != '0':
+                from invenio_communities.models import Community
+                indexes = [i.id for i in Indexes.get_all_parent_indexes(index_id)]
+                comm_data = Community.query.filter(
+                    Community.root_node_id.in_(indexes),
+                    Community.id_role.in_(role_ids)
+                ).all()
+                if comm_data:
+                    can_edit = True
+            index["can_edit"] = can_edit
 
             return make_response(jsonify(index), 200)
         except Exception:
@@ -206,6 +242,9 @@ class IndexActionResource(ContentNegotiatedMethodView):
                 raise IndexAddedRESTError()
             status = 201
             msg = 'Index created successfully.'
+
+            tree = self.record_class.get_index_tree()
+            save_index_trees_to_redis(tree)
         return make_response(
             jsonify({'status': status, 'message': msg, 'errors': errors}),
             status)
@@ -250,6 +289,11 @@ class IndexActionResource(ContentNegotiatedMethodView):
                 raise IndexUpdatedRESTError()
             msg = 'Index updated successfully.'
 
+            #roles = get_account_role()
+            #for role in roles:
+            tree = self.record_class.get_index_tree()
+            save_index_trees_to_redis(tree)
+
         return make_response(jsonify(
             {'status': status, 'message': msg, 'errors': errors,
              'delete_flag': delete_flag}), status)
@@ -262,6 +306,9 @@ class IndexActionResource(ContentNegotiatedMethodView):
 
         action = request.values.get('action', 'all')
         msg, errors = perform_delete_index(index_id, self.record_class, action)
+
+        tree = self.record_class.get_index_tree()
+        save_index_trees_to_redis(tree)
 
         return make_response(jsonify(
             {'status': 200, 'message': msg, 'errors': errors}), 200)
@@ -295,7 +342,6 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
     def get(self, **kwargs):
         """Get tree json."""
         from invenio_communities.models import Community
-
         try:
             action = request.values.get('action')
             comm_id = request.values.get('community')
@@ -333,7 +379,32 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                             pid=int(comm.root_node_id), more_ids=more_ids)
 
             else:
-                tree = self.record_class.get_index_tree()
+                tree = []
+                role_ids = []
+                if current_user and current_user.is_authenticated:
+                    for role in current_user.roles:
+                        if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
+                            role_ids = []
+                            tree = self.record_class.get_index_tree()
+                            break
+                        else:
+                            role_ids.append(role.id)
+                if role_ids:
+                    from invenio_communities.models import Community
+                    comm_list = Community.query.filter(
+                        Community.id_role.in_(role_ids)
+                    ).all()
+                    check_list = []
+                    for comm in comm_list:
+                        indexes = [
+                            i.id for i in Indexes.get_all_parent_indexes(comm.root_node_id)
+                            if i.parent == 0
+                        ]
+                        for index_id in indexes:
+                            if index_id not in check_list:
+                                tree += self.record_class.get_index_tree(index_id)
+                                check_list.append(index_id)
+                        
             return make_response(jsonify(tree), 200)
         except Exception as ex:
             current_app.logger.error('IndexTree Action Exception: ', ex)
@@ -354,5 +425,7 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
             status = 201
             msg = _('Index moved successfully.')
 
+            tree = self.record_class.get_index_tree()
+            save_index_trees_to_redis(tree)
         return make_response(
             jsonify({'status': status, 'message': msg}), status)

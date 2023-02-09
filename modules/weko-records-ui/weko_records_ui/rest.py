@@ -56,6 +56,16 @@ def create_blueprint(endpoints):
         __name__,
         url_prefix='',
     )
+    
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+        current_app.logger.debug("weko_records_ui dbsession_clean: {}".format(exception))
+        if exception is None:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+        db.session.remove()
 
     create_error_handlers(blueprint)
 
@@ -94,7 +104,6 @@ def create_blueprint(endpoints):
             ctx=ctx,
             default_media_type=options.get('default_media_type'),
         )
-
         blueprint.add_url_rule(
             options.pop('cites_route'),
             view_func=cites,

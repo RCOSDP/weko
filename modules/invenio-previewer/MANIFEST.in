@@ -53,3 +53,10 @@ recursive-include invenio_previewer *.png
 recursive-include invenio_previewer *.properties
 recursive-include invenio_previewer *.svg
 recursive-include tests *.py
+
+# added by check-manifest
+include *.properties
+include tox.ini
+recursive-include invenio_previewer *.ico
+recursive-include invenio_previewer *.json
+recursive-include invenio_previewer *.map

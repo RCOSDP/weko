@@ -100,6 +100,9 @@ setup(
         'invenio_db.models': [
             'invenio_resourcesyncserver = invenio_resourcesyncserver.models',
         ],
+         'invenio_db.alembic': [
+            'invenio_resourcesyncserver = invenio_resourcesyncserver:alembic',
+        ],
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
         # 'invenio_admin.actions': [],

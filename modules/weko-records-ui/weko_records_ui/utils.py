@@ -21,11 +21,12 @@
 """Module of weko-records-ui utils."""
 
 import base64
+import os
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
 from typing import NoReturn, Tuple
-from urllib.parse import urlparse
+from urllib.parse import urlparse,quote
 
 from flask import abort, current_app, json, request, url_for
 from flask_babelex import get_locale
@@ -58,17 +59,28 @@ from .permissions import check_create_usage_report, \
     is_open_restricted
 
 
+
+
 def check_items_settings(settings=None):
     """Check items setting."""
     if settings is None:
-        settings = AdminSettings.get('items_display_settings')
-    if hasattr(settings, 'item_display_email'):
-        current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
-    if hasattr(settings, 'item_search_author'):
-        current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
-    if hasattr(settings, 'item_display_open_date'):
-        current_app.config['OPEN_DATE_DISPLAY_FLG'] = \
-            settings.item_display_open_date
+        settings = AdminSettings.get('items_display_settings',dict_to_object=False)
+    if settings is not None:
+        if isinstance(settings,dict):
+            if 'items_display_email' in settings:
+                current_app.config['EMAIL_DISPLAY_FLG'] = settings['items_display_email']
+            if 'items_search_author' in settings:    
+                current_app.config['ITEM_SEARCH_FLG'] = settings['items_search_author']
+            if 'item_display_open_date' in settings:    
+                current_app.config['OPEN_DATE_DISPLAY_FLG'] = \
+                settings['item_display_open_date']
+        else:
+            if hasattr(settings,'items_display_email'):
+                current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
+            if hasattr(settings,'items_search_author'):
+                current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
+            if hasattr(settings,'item_display_open_date'):
+                current_app.config['OPEN_DATE_DISPLAY_FLG'] = settings.item_display_open_date
 
 
 def get_record_permalink(record):
@@ -114,9 +126,13 @@ def get_groups_price(record: dict) -> list:
 def get_billing_file_download_permission(groups_price: list) -> dict:
     """Get billing file download permission.
 
-    :param groups_price: The prices of Billing files set in each group
-    :return:Billing file permission dictionary.
-    """
+    Args:
+        groups_price (list): The prices of Billing files set in each group [{'file_name': '003.jpg', 'groups_price': [{'group': '1', 'price': '100'}]}]
+
+    Returns:
+        dict: Billing file permission dictionary.
+    """    
+    # current_app.logger.debug("groups_price:{}".format(groups_price))
     billing_file_permission = dict()
     for data in groups_price:
         file_name = data.get('file_name')
@@ -142,6 +158,8 @@ def get_min_price_billing_file_download(groups_price: list,
     :param billing_file_permission: Billing file permission dictionary.
     :return:Billing file permission dictionary.
     """
+    # current_app.logger.debug("groups_price:{}".format(groups_price))
+    # current_app.logger.debug("billing_file_permission:{}".format(billing_file_permission))
     min_prices = dict()
     for data in groups_price:
         file_name = data.get('file_name')
@@ -237,7 +255,7 @@ def soft_delete(recid):
 
         if draft_pid:
             all_ver.append(draft_pid)
-
+        del_files = {}
         for ver in all_ver:
             depid = PersistentIdentifier.query.filter_by(
                 pid_type='depid', object_uuid=ver.object_uuid).first()
@@ -249,12 +267,19 @@ def soft_delete(recid):
                 dep.indexer.update_path(dep, update_revision=False)
                 FeedbackMailList.delete(ver.object_uuid)
                 dep.remove_feedback_mail()
+                for i in range(len(dep.files)):
+                    if dep.files[i].file.uri not in del_files:
+                        del_files[dep.files[i].file.uri] = dep.files[i].file.storage()
+                        dep.files[i].bucket.location.size -= dep.files[i].file.size
+                    dep.files[i].bucket.deleted = True
                 dep.commit()
             pids = PersistentIdentifier.query.filter_by(
                 object_uuid=ver.object_uuid)
             for p in pids:
                 p.status = PIDStatus.DELETED
             db.session.commit()
+        for file_storage in del_files.values():
+            file_storage.delete()
 
         current_app.logger.info(
             'user({0}) deleted record id({1}).'.format(current_user_id, recid))
@@ -336,6 +361,16 @@ def get_license_pdf(license, item_metadata_json, pdf, file_item_id, footer_w,
     @param item:
     @return:
     """
+
+    # current_app.logger.debug("license:{}".format(license))
+    # current_app.logger.debug("item_metadata_json:{}".format(item_metadata_json))
+    # current_app.logger.debug("pdf:{}".format(pdf))
+    # current_app.logger.debug("file_item_id:{}".format(file_item_id))
+    # current_app.logger.debug("footer_w:{}".format(footer_w))
+    # current_app.logger.debug("footer_h:{}".format(footer_h))
+    # current_app.logger.debug("cc_logo_xposition:{}".format(cc_logo_xposition))
+    # current_app.logger.debug("item:{}".format(item))
+        
     from .views import blueprint
     license_icon_pdf_location = \
         current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION']
@@ -368,6 +403,10 @@ def get_pair_value(name_keys, lang_keys, datas):
     :param datas:
     :return:
     """
+    current_app.logger.debug("name_keys:{}".format(name_keys))
+    current_app.logger.debug("lang_keys:{}".format(lang_keys))
+    current_app.logger.debug("datas:{}".format(datas))
+    
     if len(name_keys) == 1 and len(lang_keys) == 1:
         if isinstance(datas, list):
             for data in datas:
@@ -407,9 +446,17 @@ def hide_item_metadata(record, settings=None, item_type_mapping=None,
             record['item_type_id'], item_type_mapping, item_type_data
         )
         record = hide_by_itemtype(record, list_hidden)
+        
+        hide_email = hide_meta_data_for_role(record)
+        if hide_email:
+            # Hidden owners_ext.email
+            if record.get('_deposit') and \
+                record['_deposit'].get('owners_ext') and record['_deposit']['owners_ext'].get('email'):
+                del record['_deposit']['owners_ext']['email']
 
-        if not current_app.config['EMAIL_DISPLAY_FLG']:
+        if hide_email and not current_app.config['EMAIL_DISPLAY_FLG']:
             record = hide_by_email(record)
+
 
         record = hide_by_file(record)
 
@@ -429,11 +476,16 @@ def hide_item_metadata_email_only(record):
     check_items_settings()
 
     record['weko_creator_id'] = record.get('owner')
+    
+    hide_email = hide_meta_data_for_role(record)
+    if hide_email:
+        # Hidden owners_ext.email
+        if record.get('_deposit') and \
+            record['_deposit'].get('owners_ext') and record['_deposit']['owners_ext'].get('email'):
+            del record['_deposit']['owners_ext']['email']
 
-    if hide_meta_data_for_role(record) and \
-            not current_app.config['EMAIL_DISPLAY_FLG']:
+    if hide_email and not current_app.config['EMAIL_DISPLAY_FLG']:
         record = hide_by_email(record)
-
         return True
 
     record.pop('weko_creator_id')
@@ -470,7 +522,7 @@ def hide_by_email(item_metadata):
 
     # Hidden owners_ext.email
     if item_metadata.get('_deposit') and \
-            item_metadata['_deposit'].get('owners_ext'):
+        item_metadata['_deposit'].get('owners_ext') and item_metadata['_deposit']['owners_ext'].get('email'):
         del item_metadata['_deposit']['owners_ext']['email']
 
     for item in item_metadata:
@@ -557,15 +609,16 @@ def is_show_email_of_creator(item_type_id):
 
     def item_setting_show_email():
         # Display email from setting item admin.
-        settings = AdminSettings.get('items_display_settings')
-        if hasattr(settings, 'item_display_email'):
-            is_display = settings.items_display_email
+        settings = AdminSettings.get('items_display_settings',dict_to_object=False)
+        if settings and 'items_display_email' in settings:
+            is_display = settings['items_display_email']
         else:
             is_display = False
         return is_display
 
     is_hide = item_type_show_email(item_type_id)
     is_display = item_setting_show_email()
+    
     return not is_hide and is_display
 
 
@@ -617,7 +670,10 @@ def get_file_info_list(record):
             size_num = file_size_value.split(' ')[0]
             size_unit = file_size_value.split(' ')[1]
             unit_num = defined_unit.get(size_unit.lower(), 0)
-            file_size_value = float(size_num) * unit_num
+            try:
+                file_size_value = float(size_num) * unit_num
+            except:
+                file_size_value = -1
         return file_size_value
 
     def set_message_for_file(p_file):
@@ -634,7 +690,7 @@ def get_file_info_list(record):
                 if adt is None:
                     adt = dt.date.max
                 pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
-                if pdt > dt.today():
+                if pdt > dt.utcnow():
                     message = "Download is available from {}/{}/{}."
                     p_file['future_date_message'] = _(message).format(
                         pdt.year, pdt.month, pdt.day)
@@ -669,11 +725,7 @@ def get_file_info_list(record):
                     # Check Opendate is future date.
                     set_message_for_file(f)
                     # Check show preview area.
-                    # If f is uploaded in this system => show 'Preview' area.
-                    # remove port number from url_root
-                    o = urlparse(request.url_root)
-                    base_url = "{}/record/{}/files/{}".format(
-                        o.hostname,
+                    base_url = "/record/{}/files/{}".format(
                         record.get('recid'),
                         f.get("filename")
                     )
@@ -685,8 +737,8 @@ def get_file_info_list(record):
                     if base_url in url:
                         is_display_file_preview = True
 
-                    # current_app.logger.debug("base_url: {0}".format(base_url))
-                    # current_app.logger.debug("url: {0}".format(url))
+                    #current_app.logger.error("base_url: {0}".format(base_url))
+                    #current_app.logger.error("url: {0}".format(url))
                     # current_app.logger.debug(
                     #     "is_display_file_preview: {0}".format(is_display_file_preview))
 
@@ -747,6 +799,7 @@ def create_usage_report_for_user(onetime_download_extra_info: dict):
     @param onetime_download_extra_info:
     @return:
     """
+    current_app.logger.debug("onetime_download_extra_info:{}".format(onetime_download_extra_info))
     activity_id = onetime_download_extra_info.get(
         'usage_application_activity_id')
     is_guest = onetime_download_extra_info.get('is_guest', False)
@@ -816,6 +869,9 @@ def get_data_usage_application_data(record_metadata, data_result: dict):
         record_metadata (Union[list, dict]):
         data_result (dict):
     """
+    current_app.logger.debug("record_metadata:{}".format(record_metadata))
+    current_app.logger.debug("data_result:{}".format(data_result))
+
     if isinstance(record_metadata, dict):
         for k, v in record_metadata.items():
             if isinstance(v, str) and k.startswith("subitem_") \
@@ -835,6 +891,8 @@ def send_usage_report_mail_for_user(guest_mail: str, temp_url: str):
     @param temp_url:
     @return:
     """
+    current_app.logger.debug("guest_mail:{}".format(guest_mail))
+    current_app.logger.debug("temp_url:{}".format(temp_url))
     # Mail information
     mail_info = {
         'template': current_app.config.get(
@@ -853,6 +911,9 @@ def check_and_send_usage_report(extra_info, user_mail):
     @param user_mail:
     @return:
     """
+    current_app.logger.debug("extra_info:{}".format(extra_info))
+    current_app.logger.debug("user_mail:{}".format(user_mail))
+
     if not extra_info.get('send_usage_report'):
         return
     activity = create_usage_report_for_user(extra_info)
@@ -875,7 +936,7 @@ def generate_one_time_download_url(
     :param record_id: File Version ID
     :param guest_mail: guest email
     :return:
-    """
+    """    
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
     download_pattern = current_app.config[
         'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
@@ -900,6 +961,7 @@ def parse_one_time_download_token(token: str) -> Tuple[str, Tuple]:
     @param token:
     @return:
     """
+    # current_app.logger.debug("token:{}".format(token))
     error = _("Token is invalid.")
     if token is None:
         return error, ()
@@ -929,6 +991,13 @@ def validate_onetime_download_token(
     @param token:
     @return:
     """
+    # current_app.logger.debug("onetime_download:{}".format(onetime_download))
+    # current_app.logger.debug("file_name:{}".format(file_name))
+    # current_app.logger.debug("record_id:{}".format(record_id))
+    # current_app.logger.debug("guest_mail:{}".format(guest_mail))
+    # current_app.logger.debug("date:{}".format(date))
+    # current_app.logger.debug("token:{}".format(token))
+
     token_invalid = _("Token is invalid.")
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
     download_pattern = current_app.config[
@@ -1117,7 +1186,7 @@ def display_oaiset_path(record_metadata):
     record_metadata['_oai']['sets'] = index_paths
 
 
-def get_google_scholar_meta(record):
+def get_google_scholar_meta(record, record_tree=None):
     """
     _get_google_scholar_meta [make a google scholar metadata]
 
@@ -1125,6 +1194,7 @@ def get_google_scholar_meta(record):
 
     Args:
         record ([type]): [description]
+        record_tree (etree): Return value of getrecord method
 
     Returns:
         [type]: [description]
@@ -1142,12 +1212,16 @@ def get_google_scholar_meta(record):
 
     if '_oai' not in record and 'id' not in record['_oai']:
         return
-    recstr = etree.tostring(
-        getrecord(
-            identifier=record['_oai'].get('id'),
-            metadataPrefix='jpcoar',
-            verb='getrecord'))
-    et = etree.fromstring(recstr)
+    if record_tree is None:
+        recstr = etree.tostring(
+            getrecord(
+                identifier=record['_oai'].get('id'),
+                metadataPrefix='jpcoar',
+                verb='getrecord'))
+        et = etree.fromstring(recstr)
+    else:
+        et = record_tree
+
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     if mtdata is None:
         return
@@ -1195,7 +1269,7 @@ def get_google_scholar_meta(record):
     for pdf_url in mtdata.findall('jpcoar:file/jpcoar:URI',
                                   namespaces=mtdata.nsmap):
         res.append({'name': 'citation_pdf_url',
-                    'data': pdf_url.text})
+                    'data': quote(pdf_url.text,'/:%')})
 
     res.append({'name': 'citation_dissertation_institution',
                 'data': InstitutionName.get_institution_name()})
@@ -1208,8 +1282,7 @@ def get_google_scholar_meta(record):
     res.append({'name': 'citation_abstract_html_url', 'data': record_url})
     return res
 
-
-def get_google_detaset_meta(record):
+def get_google_detaset_meta(record,record_tree=None):
     """
     _get_google_detaset_meta [summary]
 
@@ -1217,47 +1290,65 @@ def get_google_detaset_meta(record):
 
     Args:
         record ([type]): [description]
+        record_tree (etree): Return value of getrecord method
 
     Returns:
         [type]: [description]
     """
+    from .config import WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE, \
+    WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN, \
+    WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX, \
+    WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE
+
+    current_app.logger.debug("get_google_detaset_meta: {}".format(record.id))
+
     if not current_app.config['WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE']:
         return
 
     if '_oai' not in record and 'id' not in record['_oai']:
         return
-    recstr = etree.tostring(
-        getrecord(
-            identifier=record['_oai'].get('id'),
-            metadataPrefix='jpcoar',
-            verb='getrecord'))
-    et = etree.fromstring(recstr)
+    if record_tree is None:
+        recstr = etree.tostring(
+            getrecord(
+                identifier=record['_oai'].get('id'),
+                metadataPrefix='jpcoar',
+                verb='getrecord'))
+        et = etree.fromstring(recstr)
+    else:
+        et = record_tree
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     if mtdata is None:
         return
 
+    output_resource_types = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE',WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE)
     # Check resource type is 'dataset'
     resource_type_allowed = False
     for resource_type in mtdata.findall('dc:type', namespaces=mtdata.nsmap):
-        if resource_type.text == "dataset":
+        if resource_type.text in output_resource_types:
             resource_type_allowed = True
             break
 
     if not resource_type_allowed:
+        current_app.logger.debug("resource_type_allowed: {}".format(resource_type_allowed))
         return
 
     res_data = {'@context': 'https://schema.org/', '@type': 'Dataset'}
 
     # Required property check
+    min_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN)
+    max_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX)
+    
     for title in mtdata.findall('dc:title', namespaces=mtdata.nsmap):
         res_data['name'] = title.text
     for description in mtdata.findall('datacite:description', namespaces=mtdata.nsmap):
         description_text = description.text
-        if len(description_text) >= 50:
-            if len(description_text) > 5000:
-                description_text = description_text[:5000]
+        if len(description_text) >= min_length:
+            if len(description_text) > max_length:
+                description_text = description_text[:max_length]
             res_data['description'] = description_text
+
     if 'name' not in res_data or 'description' not in res_data:
+        current_app.logger.debug("resource_type_allowed: {}".format(resource_type_allowed))
         return
 
     # includedInDataCatalog
@@ -1395,11 +1486,22 @@ def get_google_detaset_meta(record):
 
         distribution = {'@type': 'DataDownload'}
         if uri is not None and len(uri.text) > 0:
-            distribution['contentUrl'] = uri.text
+            distribution['contentUrl'] = quote(uri.text,'/:%')
         if mime_type is not None and len(mime_type.text) > 0:
             distribution['encodingFormat'] = mime_type.text
         distributions.append(distribution)
     if len(distributions) > 0:
+        adding_bundles = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE',WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE)
+        if adding_bundles is not None:
+            for bundle in adding_bundles:
+                distribution = {'@type': 'DataDownload'}
+                if 'contentUrl' in bundle:
+                    distribution['contentUrl'] = quote(bundle['contentUrl'],'/:%')
+                    if 'encodingFormat' in bundle:
+                        distribution['encodingFormat'] = bundle['encodingFormat']
+                    distributions.append(distribution)
         res_data['distribution'] = distributions
+
+    current_app.logger.debug("res_data: {}".format(json.dumps(res_data, ensure_ascii=False)))
 
     return json.dumps(res_data, ensure_ascii=False)
