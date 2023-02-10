@@ -148,7 +148,7 @@ invenio-search-ui==1.0.0a9
 -e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_stats&subdirectory=modules/invenio-stats
 invenio-theme==1.0.0b4
 ipaddress==1.0.19
-ipython==6.2.1
+ipython==8.10.0
 ipython-genutils==0.2.0
 isort==5.10.1
 itsdangerous==0.24
