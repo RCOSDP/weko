@@ -153,12 +153,12 @@ def get_init_display_setting(settings):
         .get_init_display_setting()
     return init_display_setting
 
-@blueprint.teardown_request
-def dbsession_clean(exception):
-    current_app.logger.debug("weko_theme dbsession_clean: {}".format(exception))
-    if exception is None:
-        try:
-            db.session.commit()
-        except:
-            db.session.rollback()
-    db.session.remove()
+# @blueprint.teardown_request
+# def dbsession_clean(exception):
+#     current_app.logger.debug("weko_theme dbsession_clean: {}".format(exception))
+#     if exception is None:
+#         try:
+#             db.session.commit()
+#         except:
+#             db.session.rollback()
+#     db.session.remove()
