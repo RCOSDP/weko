@@ -1,4 +1,5 @@
 import pytest
+from mock import patch, MagicMock
 
 from datetime import datetime, timezone
 from weko_records.serializers.entry import WekoFeedEntry
@@ -34,3 +35,120 @@ def test_weko_feed_entry():
     # ttl
     assert feed_entry.ttl(100)==100
 
+
+sample = WekoFeedEntry()
+
+
+# def atom_entry(self, extensions=True):
+def test_atom_entry(app):
+    # Exception coverage ~ 90 raise ValueError('Required fields not set') 
+    try:
+        sample.atom_entry()
+    except:
+        pass
+    
+    sample._WekoFeedEntry__atom_id = "test"
+    sample._WekoFeedEntry__atom_title = "test"
+
+    # Exception coverage ~ 103 raise ValueError('Entry must contain an alternate link or '
+    try:
+        sample.atom_entry()
+    except:
+        pass
+
+    def isoformat():
+        return "<xml>test</xml>"
+
+    def values():
+        sample_obj = MagicMock()
+        
+        def extend_atom(item):
+            return str(item)
+        
+        sample_obj.extend_atom
+        return [{"atom": "test", "inst": sample_obj}]
+
+    data1 = MagicMock()
+    data1.text = "text"
+    data1.isoformat = isoformat
+    data1.values = values
+
+    sample._WekoFeedEntry__atom_content = {
+        "content": "<xml>test</xml>",
+        "src": "src",
+        "type": "xhtml",
+        "lang": "en",
+    }
+
+    sample._WekoFeedEntry__atom_link = [{
+        "href": "href",
+        "rel": "test",
+        "type": "test",
+        "hreflang": "test",
+        "title": "test",
+        "length": "test",
+    }]
+
+    sample._WekoFeedEntry__atom_category = [{
+        "scheme": "scheme",
+        "label": "label",
+        "term": "term"
+    }]
+
+    sample._WekoFeedEntry__atom_summary = "<xml>test</xml>"
+
+    sample._WekoFeedEntry__atom_author = [{
+        "name": "name",
+        "author": "author",
+        "email": "email",
+        "uri": "uri",
+        "lang": "en",
+    }]
+
+    sample._WekoFeedEntry__atom_contributor = [{
+        "name": "name",
+        "author": "author",
+        "email": "email",
+        "uri": "uri",
+        "lang": "en",
+    }]
+
+    sample._WekoFeedEntry__atom_source = {
+        "title": "title",
+        "link": "link"
+    }
+
+    sample._WekoFeedEntry__extensions = data1
+
+    sample._WekoFeedEntry__atom_published = data1
+
+    sample._WekoFeedEntry__atom_rights = "<xml>test</xml>"
+
+
+    with patch("lxml.etree.SubElement", return_value=data1):
+        assert sample.atom_entry() != None
+
+    sample._WekoFeedEntry__atom_author[0]["name"] = False
+    sample._WekoFeedEntry__atom_contributor[0]["name"] = False
+    assert sample.atom_entry() != None
+    sample._WekoFeedEntry__atom_author[0]["name"] = "name"
+    sample._WekoFeedEntry__atom_contributor[0]["name"] = "name"
+
+    del sample._WekoFeedEntry__atom_content["src"]
+    assert sample.atom_entry() != None
+    
+    sample._WekoFeedEntry__atom_content["type"] = "CDATA"
+    assert sample.atom_entry() != None
+
+    sample._WekoFeedEntry__atom_content["type"] = "text"
+    assert sample.atom_entry() != None
+
+    sample._WekoFeedEntry__atom_content["type"] = "+xml"
+    assert sample.atom_entry() != None
+
+    sample._WekoFeedEntry__atom_content["type"] = "<xml>test</xml>"
+    # Exception coverage ~ 148 raise ValueError('base64 encoded content is not '
+    try:
+        sample.atom_entry()
+    except:
+        pass
