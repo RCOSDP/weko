@@ -97,8 +97,12 @@ def record_from_pid(pid_value):
 
 @blueprint.app_template_filter()
 def url_to_link(field):
+    pattern = ".*/record/\d+/files/.*"
     if field.startswith("http"):
-        return True
+        if re.match(pattern, field):
+            return False
+        else:
+            return True
     return False
 
 

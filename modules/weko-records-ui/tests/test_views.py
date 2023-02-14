@@ -68,6 +68,7 @@ def test_url_to_link():
     assert url_to_link("file://localhost") == False
     assert url_to_link("http://localhost") == True
     assert url_to_link("https://localhost") == True
+    assert url_to_link("https://localhost/records/123/files/file.pdf") == False
 
 
 # def pid_value_version(pid_value):
