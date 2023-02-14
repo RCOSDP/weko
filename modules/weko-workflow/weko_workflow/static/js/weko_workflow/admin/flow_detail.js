@@ -187,8 +187,9 @@ $(document).ready(function () {
       contentType: 'application/json',
       data: JSON.stringify({ 'flow_name': flow_name }),
       success: function (data, status) {
-        var modalcontent = data.msg;
-        $('#inputModal').text(modalcontent);
+        document.querySelectorAll('#inputModal').forEach(element => {
+          element.innerHTML = data.msg
+        })
         $('#modalSendEmailSuccess').modal('show');
       },
       error: function (jqXHR, status) {
@@ -197,7 +198,9 @@ $(document).ready(function () {
           var response = JSON.parse(jqXHR.responseText);
           modalcontent += ' ' + response.msg;
         }
-        $('#inputModal').text(modalcontent);
+        document.querySelectorAll('#inputModal').forEach(element => {
+          element.innerHTML = modalcontent
+        })
         $('#allModal').modal('show');
       }
     });
@@ -210,7 +213,9 @@ $(document).ready(function () {
       contentType: 'application/json',
       success: function (data, status) {
         if (0 != data.code) {
-          $("#inputModal").html(data.msg);
+          document.querySelectorAll('#inputModal').forEach(element => {
+            element.innerHTML = data.msg
+          })
           $("#modalSendEmailSuccess").modal("show");
         } else {
           document.location.href = data.data.redirect;
@@ -218,7 +223,9 @@ $(document).ready(function () {
       },
       error: function (jqXHE, status) {
         var modalcontent = "Delete Failed";
-        $("#inputModal").html(modalcontent);
+        document.querySelectorAll('#inputModal').forEach(element => {
+          element.innerHTML = modalcontent
+        })
         $("#allModal").modal("show");
       }
     });
