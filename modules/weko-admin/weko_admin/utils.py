@@ -26,7 +26,7 @@ import os
 import zipfile
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
-from typing import Dict, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
 import redis
 from redis import sentinel
@@ -1713,13 +1713,13 @@ def get_init_display_index(init_disp_index: str) -> list:
     return init_display_indexes
 
 
-def get_restricted_access(key: str = None):
+def get_restricted_access(key: Optional[str] = None) -> Optional[dict]:
     """Get registered access settings.
 
     :param key:setting key.
     :return:
     """
-    restricted_access = AdminSettings.get('restricted_access', False)
+    restricted_access:dict = AdminSettings.get('restricted_access', False)
     if not restricted_access:
         restricted_access = current_app.config[
             'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
@@ -1735,11 +1735,36 @@ def update_restricted_access(restricted_access: dict):
 
     :param restricted_access:
     """
+    def parse_secret_URL_file_download():
+        if secret_URL_file_download.get('secret_expiration_date_unlimited_chk'):
+            secret_URL_file_download['secret_expiration_date'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
+        if secret_URL_file_download.get('secret_download_limit_unlimited_chk'):
+            secret_URL_file_download['secret_download_limit'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
+
+        secret_URL_file_download['secret_expiration_date'] = int(
+            secret_URL_file_download['secret_expiration_date'])
+        secret_URL_file_download['secret_download_limit'] = int(
+            secret_URL_file_download['secret_download_limit'])
+
+    def validate_secret_URL_file_download():
+        if not secret_URL_file_download.get(
+            'secret_expiration_date_unlimited_chk') and not secret_URL_file_download[
+            'secret_expiration_date'] or not secret_URL_file_download.get(
+            'secret_download_limit_unlimited_chk') and not \
+                secret_URL_file_download['secret_download_limit']:
+            return False
+        if secret_URL_file_download['secret_expiration_date'] and int(
+            secret_URL_file_download['secret_expiration_date']) < 1 or \
+            secret_URL_file_download['secret_download_limit'] and int(
+                secret_URL_file_download['secret_download_limit']) < 1:
+            return False
+        return True
+        
     def parse_content_file_download():
         if content_file_download.get('expiration_date_unlimited_chk'):
-            content_file_download['expiration_date'] = 9999999
+            content_file_download['expiration_date'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
         if content_file_download.get('download_limit_unlimited_chk'):
-            content_file_download['download_limit'] = 9999999
+            content_file_download['download_limit'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
 
         content_file_download['expiration_date'] = int(
             content_file_download['expiration_date'])
@@ -1772,10 +1797,17 @@ def update_restricted_access(restricted_access: dict):
 
     def parse_usage_report_wf_access():
         if usage_report_wf_access.get('expiration_date_access_unlimited_chk'):
-            usage_report_wf_access['expiration_date_access'] = 9999999
+            usage_report_wf_access['expiration_date_access'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
 
         usage_report_wf_access['expiration_date_access'] = int(
             usage_report_wf_access['expiration_date_access'])
+
+    # Secret URL file download.
+    if 'secret_URL_file_download' in restricted_access:
+        secret_URL_file_download = restricted_access['secret_URL_file_download']
+        if not validate_secret_URL_file_download():
+            return False
+        parse_secret_URL_file_download()
 
     # Content file download.
     if 'content_file_download' in restricted_access:

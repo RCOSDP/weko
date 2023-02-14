@@ -20,6 +20,7 @@
 
 """Blueprint for weko-records-ui."""
 
+from datetime import datetime
 import re
 import os
 import uuid
@@ -62,13 +63,14 @@ from weko_workflow.api import WorkFlow
 
 from weko_records_ui.fd import add_signals_info
 from weko_records_ui.utils import check_items_settings, get_file_info_list
+from weko_workflow.utils import get_item_info, process_send_mail, set_mail_info
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
 from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
     check_permission_period, file_permission_factory, get_permission
-from .utils import get_billing_file_download_permission, \
+from .utils import create_secret_url, get_billing_file_download_permission, \
     get_google_detaset_meta, get_google_scholar_meta, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
     is_show_email_of_creator
@@ -675,11 +677,90 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_itemtype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE') ,
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
-        
+        show_secret_URL=_get_show_secret_url_button(record,filename),
         **ctx,
         **kwargs
     )
 
+
+def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
+    """on click button 'Secret URL' 
+    generate secret URL and send mail.
+    about entrypoint settings, see at .config RECORDS_UI_ENDPOINTS.recid_secret_url
+    
+    Args:
+        pid: PID object.
+        record: Record object.
+        filename: File name.
+
+    Returns:
+        result status and message text.
+    """
+    current_app.logger.info("pid:" + pid.pid_value)
+    current_app.logger.info("record:" + str(record.id))
+    current_app.logger.info("filename:" + filename)
+
+    #permission check
+    # "Someone who can show Secret URL button" can also use generate Secret URL function.
+    if not _get_show_secret_url_button(record ,filename):
+        abort(403)
+
+    #generate url and regist db(FileSecretDownload)
+    result = create_secret_url(pid.pid_value,filename,current_user.email)
+    
+    #send mail
+    mail_pattern_name:str = current_app.config.get('WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL')
+
+    mail_info = set_mail_info(get_item_info(pid.object_uuid), type("" ,(object,),dict(activity_id = '')))
+    mail_info.update(result)
+    if process_send_mail( mail_info = mail_info, mail_pattern_name=mail_pattern_name) :
+        return _('Success Secret URL Generate')
+    else:
+        abort(500)
+
+def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
+    """ 
+        Args:
+            WekoRecord : records_metadata for target item
+            str : target content name
+        Returns:
+            bool : return true if be able to show Secret URL button. or false.
+    """
+
+    #1.check secret url function is enabled
+    restricted_access = AdminSettings.get('restricted_access', False)
+    if not restricted_access:
+        restricted_access = current_app.config[
+            'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
+        
+    enable:bool = restricted_access.get('secret_URL_file_download',{}).get('secret_enable',False)
+
+    #2.check the user has permittion
+    has_parmission = False
+    # Registered user
+    user_id_list = [int(record['owner'])] if record.get('owner') else []
+    if current_user and current_user.is_authenticated and \
+        current_user.id in user_id_list:
+        has_parmission = True
+    # Super users
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] 
+    for role in list(current_user.roles or []):
+        if role.name in supers:
+            has_parmission = True
+
+    #3.check the file's accessrole is "open_no" ,or "open_date" and not open yet.
+    is_secret_file = False
+    current_app.logger.info(record.get_file_data())
+    for content in record.get_file_data():
+        if content.get('filename') == filename:
+            if content.get('accessrole') == "open_no":
+                is_secret_file = True
+        elif content.get('accessrole') == "open_date" and \
+                datetime.now() < datetime.strptime(content.get('date',[{"dateValue" :'1970-01-01'}])[0].get("dateValue" ,'1970-01-01'), '%Y-%m-%d')  :
+                is_secret_file = True
+
+    # all true is show
+    return enable and has_parmission and is_secret_file
 
 @blueprint.route('/r/<parent_pid_value>', methods=['GET'])
 @blueprint.route('/r/<parent_pid_value>.<int:version>', methods=['GET'])

@@ -588,7 +588,7 @@ msgid "Your session has timed out. Please login again."
 msgstr "セッションが切れました。再度ログインしてください。"
 
 msgid "Restricted Access Flag"
-msgstr "制限公開フラグ"
+msgstr "利用申請フラグ"
 
 msgid "Enable Full"
 msgstr "有効にする"

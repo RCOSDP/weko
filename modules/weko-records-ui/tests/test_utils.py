@@ -1,5 +1,5 @@
 import pytest
-from weko_records_ui.utils import create_usage_report_for_user,get_data_usage_application_data,send_usage_report_mail_for_user,check_and_send_usage_report,check_and_create_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,is_show_email_of_creator,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings
+from weko_records_ui.utils import create_usage_report_for_user,get_data_usage_application_data,send_usage_report_mail_for_user,check_and_send_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,is_show_email_of_creator,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings
 import base64
 from unittest.mock import MagicMock
 import copy
@@ -389,20 +389,6 @@ def test_get_file_info_list(app,records):
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         ret =  get_file_info_list(record)
         assert len(ret)==2
-
-
-# def check_and_create_usage_report(record, file_object):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_check_and_create_usage_report -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_check_and_create_usage_report(app,records):
-    indexer, results = records
-    pid = results[0]["recid"]
-    record = results[0]["record"]
-    filename = results[0]["filename"]
-    fileobj = record_file_factory(
-        pid, record, filename
-    )
-    assert check_and_create_usage_report(record,fileobj)==None
-
 
 # def create_usage_report_for_user(onetime_download_extra_info: dict):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
