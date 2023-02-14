@@ -135,6 +135,10 @@ $(document).ready(function () {
           userMailElement.val('');
           userMailConfirmElement.val('');
           $('#email_modal').modal('hide');
+          if(1 === res.code && res.data.is_download){
+            document.location.href = res.data.redirect;
+            return;
+          }
           $("#modalSendEmailSuccess #inputModal").html(res.msg);
           $("#modalSendEmailSuccess").modal("show");
         },

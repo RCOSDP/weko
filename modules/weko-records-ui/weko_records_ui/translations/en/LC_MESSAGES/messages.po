@@ -1382,3 +1382,6 @@ msgstr ""
 
 msgid "This data is not available for this user."
 msgstr ""
+
+msgid "Success Secret URL Generate"
+msgstr "Success: Secret URL Generate is succeed. Sent the URL to your email adress."

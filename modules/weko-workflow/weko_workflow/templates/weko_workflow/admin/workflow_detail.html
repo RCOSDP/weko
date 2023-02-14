@@ -87,6 +87,7 @@
           </div>
         </div>
       </div>
+      {%- if is_sysadmin %}
         <div class="form-group">
           <div class="col-sm-offset-2">
             <label class="col-sm-2 control-label">{{_('Restricted Access Flag')}}</label>
@@ -98,6 +99,7 @@
             </div>
           </div>
         </div>
+      {%- endif %}
         <div class="form-group">
           <div class="col-sm-offset-2">
             <label class="col-sm-2 control-label">{{_('GakuNinRDM Flag')}}</label>

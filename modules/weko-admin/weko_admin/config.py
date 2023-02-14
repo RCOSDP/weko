@@ -1220,6 +1220,12 @@ WEKO_INDEX_TREE_STYLE_OPTIONS = {
 }
 
 WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
+    "secret_URL_file_download": {
+        "secret_expiration_date": 30,
+        "secret_expiration_date_unlimited_chk": False,
+        "secret_download_limit": 10,
+        "secret_download_limit_unlimited_chk": False,
+    },
     "content_file_download": {
         "expiration_date": 30,
         "expiration_date_unlimited_chk": False,
@@ -1233,6 +1239,8 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
     "terms_and_conditions": []
 }
 """Default restricted access settings."""
+
+WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER = 9999999
 
 WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER = 25
 """Default number of usage report activities results that display in one page."""
