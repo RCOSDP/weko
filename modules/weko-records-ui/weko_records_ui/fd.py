@@ -225,7 +225,7 @@ def file_ui(
     obj = fileobj.obj
 
     # Check file contents permission
-    is_terms_of_use_only = _is_terms_of_use_only(fileobj,request.args)
+    is_terms_of_use_only = _is_terms_of_use_only(fileobj)
     if not file_permission_factory(record, fjson=fileobj).can():
         # [利用規約のみ]の場合、アクセス権無しでもファイルダウンロード可能。
         if not is_terms_of_use_only:
@@ -482,21 +482,7 @@ def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):
     return _download_file(file_object, False, 'en', file_object.obj, pid,
                           record)
 
-def _is_terms_of_use_only(file_obj:dict , req :dict) -> bool:
-    """
-        return true if the user can apply and apply workflow is terms_of_use_only
-        in case of terms_of_use_only download terms of use is agreed (or terms of use is not setted) 
-    Args
-        dict:file_obj :file object
-        dict:req :request.args
-    Returns
-        bool
-    """
-
-    consent:bool = req.get('terms_of_use_only',False)
-    if not consent :
-        return False
-
+def _is_terms_of_use_only(file_obj):
     provides = file_obj.get("provide" , [])
     workflow_id = ""
     for provide in provides :
@@ -539,14 +525,15 @@ def file_download_secret(pid, record, _record_file_factory=None, **kwargs):
 
     # Get secret download record.
     secret_download :FileSecretDownload = get_secret_download(
-        file_name=filename, record_id=pid.pid_value, id=id , created=date
+        file_name=filename, record_id=pid, id=id , created=date
     )
 
     # Validate token
     is_valid, error = validate_secret_download_token(
-        secret_download, filename, pid.pid_value, id, secret_download.created, secret_token)
+        secret_download, filename, pid, id, date, secret_token)
     if not is_valid:
         return render_template(error_template, error=error)
+
     _record_file_factory = _record_file_factory or record_file_factory
 
     # Get file object
@@ -557,8 +544,8 @@ def file_download_secret(pid, record, _record_file_factory=None, **kwargs):
 
     # Create updated data
     update_data = dict(
-        file_name=filename, record_id=record_id, id=id, created=date,
-        download_count=secret_download.download_count - 1
+        file_name=filename, record_id=record_id, id=id,
+        download_count=secret_download.download_count - 1,
     )
 
     # Update download data

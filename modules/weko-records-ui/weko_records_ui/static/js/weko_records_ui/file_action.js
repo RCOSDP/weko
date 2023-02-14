@@ -136,9 +136,7 @@ $(document).ready(function () {
           userMailConfirmElement.val('');
           $('#email_modal').modal('hide');
           if(1 === res.code && res.data.is_download){
-            const url = new URL(res.data.redirect, document.location.origin);
-            url.searchParams.append('terms_of_use_only',true);
-            document.location.href = url;
+            document.location.href = res.data.redirect;
             return;
           }
           $("#modalSendEmailSuccess #inputModal").html(res.msg);

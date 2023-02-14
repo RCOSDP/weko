@@ -340,6 +340,12 @@ class WorkFlowSettingView(BaseView):
             display = role
             hide = []
         
+        # the workflow that open_restricted is true can update by system administrator only
+        is_sysadmin = False
+        for role in current_user.roles:
+            if role.name in current_app.config['WEKO_SYS_USER']:
+                is_sysadmin =True
+                break
         if workflows.open_restricted and not is_sysadmin:
             abort(403)
 

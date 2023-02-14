@@ -706,12 +706,8 @@ def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord,
     if not _get_show_secret_url_button(record ,filename):
         abort(403)
 
-    userprof:UserProfile = UserProfile.get_by_userid(current_user.id)
-    restricted_fullname = userprof._displayname or '' if userprof else ''
-    restricted_data_name = record.get('item_title','')
-
     #generate url and regist db(FileSecretDownload)
-    result = create_secret_url(pid.pid_value,filename,current_user.email , restricted_fullname , restricted_data_name)
+    result = create_secret_url(pid.pid_value,filename,current_user.email)
     
     #send mail
     mail_pattern_name:str = current_app.config.get('WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL')
@@ -760,7 +756,7 @@ def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
         if content.get('filename') == filename:
             if content.get('accessrole') == "open_no":
                 is_secret_file = True
-            elif content.get('accessrole') == "open_date" and \
+        elif content.get('accessrole') == "open_date" and \
                 datetime.now() < datetime.strptime(content.get('date',[{"dateValue" :'1970-01-01'}])[0].get("dateValue" ,'1970-01-01'), '%Y-%m-%d')  :
                 is_secret_file = True
 

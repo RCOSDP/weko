@@ -1518,7 +1518,7 @@ def get_google_detaset_meta(record,record_tree=None):
 
     return json.dumps(res_data, ensure_ascii=False)
 
-def create_secret_url(record_id:str ,file_name:str ,user_mail:str ,restricted_fullname='',restricted_data_name='') -> dict:
+def create_secret_url(record_id:str ,file_name:str ,user_mail:str) -> dict:
     """
     Save in FileSecretDownload
     and Generate Secret Download URL.
@@ -1527,20 +1527,18 @@ def create_secret_url(record_id:str ,file_name:str ,user_mail:str ,restricted_fu
         str :record_id:
         str :file_name:
         str :user_mail
-        str :restricted_fullname  :embed mail string
-        str :restricted_data_name :embed mail string
     Return: 
         dict: created info 
     """
     # Save to Database.
-    secret_obj:FileSecretDownload = _create_secret_download_url(
+    one_time_obj:FileSecretDownload = _create_secret_download_url(
         file_name, record_id, user_mail)
     
     # generate url
     secret_file_url = _generate_secret_download_url(
-        file_name, record_id, secret_obj.id , secret_obj.created)
+        file_name, record_id, one_time_obj.id , one_time_obj.created)
 
-    return_dict:dict = {
+    retrun_dict:dict = {
         "restricted_download_link":"",
         "mail_recipient":"",
         "file_name":file_name,
@@ -1550,30 +1548,28 @@ def create_secret_url(record_id:str ,file_name:str ,user_mail:str ,restricted_fu
         "restricted_download_count":"",
         "restricted_download_count_ja":"",
         "restricted_download_count_en":"",
-        "restricted_fullname" :restricted_fullname,
-        "restricted_data_name" :restricted_data_name,
     }
-    return_dict["mail_recipient"] = secret_obj.user_mail
-    return_dict["restricted_download_link"] = secret_file_url
+    retrun_dict["mail_recipient"] = one_time_obj.user_mail
+    retrun_dict["restricted_download_link"] = secret_file_url
 
     max_int :int = current_app.config["WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER"]
-    if secret_obj.expiration_date < max_int:
-        expiration_date = timedelta(days=secret_obj.expiration_date)
+    if one_time_obj.expiration_date < max_int:
+        expiration_date = timedelta(days=one_time_obj.expiration_date)
         expiration_date = dt.today() + expiration_date
         expiration_date = expiration_date.strftime("%Y-%m-%d")
-        return_dict['restricted_expiration_date'] = expiration_date
+        retrun_dict['restricted_expiration_date'] = expiration_date
     else:
-        return_dict["restricted_expiration_date_ja"] = "無制限"
-        return_dict["restricted_expiration_date_en"] = "Unlimited"
+        retrun_dict["restricted_expiration_date_ja"] = "無制限"
+        retrun_dict["restricted_expiration_date_en"] = "Unlimited"
             
 
-    if secret_obj.download_count < max_int :
-        return_dict["restricted_download_count"] = str(secret_obj.download_count)
+    if one_time_obj.download_count < max_int :
+        retrun_dict["restricted_download_count"] = str(one_time_obj.download_count)
     else:
-        return_dict["restricted_download_count_ja"] = "無制限"
-        return_dict["restricted_download_count_en"] = "Unlimited"
+        retrun_dict["restricted_download_count_ja"] = "無制限"
+        retrun_dict["restricted_download_count_en"] = "Unlimited"
             
-    return return_dict
+    return retrun_dict
 
 
 def _generate_secret_download_url(file_name: str, record_id: str, id: str ,created :dt) -> str:
@@ -1591,7 +1587,7 @@ def _generate_secret_download_url(file_name: str, record_id: str, id: str ,creat
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
     download_pattern = current_app.config[
         'WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN']
-    current_date = created
+    current_date = created.strftime("%Y-%m-%d")
     hash_value = download_pattern.format(file_name, record_id, id,
                                          current_date)
     secret_token = oracle10.hash(secret_key, hash_value)
@@ -1622,9 +1618,10 @@ def parse_secret_download_token(token: str) -> Tuple[str, Tuple]:
     try:
         decode_token = base64.b64decode(token.encode()).decode()
         param = decode_token.split(" ")
-        if not param or len(param) != 5:
+        if not param or len(param) != 4:
             return error, ()
-        return "", (param[0], param[1], param[2] + " " + param[3] , param[4]) #record_id, id, current_date(date + time), secret_token
+
+        return "", (param[0], param[1], param[2], param[3]) #record_id, id, current_date, secret_token
     except Exception as err:
         current_app.logger.error(err)
         return error, ()
@@ -1662,7 +1659,7 @@ def validate_secret_download_token(
             return False, token_invalid
         try:
             expiration_date = timedelta(secret_download.expiration_date)
-            download_date = secret_download.created.date() + expiration_date
+            download_date = secret_download.created + expiration_date
             current_date = dt.utcnow().date()
             if current_date > download_date:
                 return False, _(
@@ -1712,8 +1709,8 @@ def _create_secret_download_url(file_name: str, record_id: str, user_mail: str) 
     """
     secret_url_file_download:dict = get_restricted_access('secret_URL_file_download')
         
-    expiration_date = secret_url_file_download.get("secret_expiration_date")
-    download_limit = secret_url_file_download.get("secret_download_limit")
+    expiration_date = secret_url_file_download.get("secret_expiration_date", 30)
+    download_limit = secret_url_file_download.get("secret_download_limit", 10)
 
     file_secret = FileSecretDownload.create(**{
         "file_name": file_name,

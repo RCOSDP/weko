@@ -240,6 +240,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
             elif 'open_restricted' in acsrole:
                 is_can = check_open_restricted_permission(record, fjson)
         except BaseException:
+            current_app.logger.error(traceback.print_exc())
             abort(500)
         return is_can
 
@@ -496,6 +497,36 @@ def check_create_usage_report(record, file_json):
         if check_usage_report_in_permission(permission):
             return permission
     return None
+
+def is_owners_or_superusers(record) -> bool:
+    """ 
+    return true if the user can download the record's contents unconditionally
+
+    Args
+        record: The record metadata.
+
+    Returns
+        bool: is owners or superusers
+    """
+    # Get email list of created workflow user.
+    user_id_list = [int(record['owner'])] if record.get('owner') else []
+    if record.get('weko_shared_id'):
+        user_id_list.append(record.get('weko_shared_id'))
+
+    # Registered user
+    if current_user and \
+            current_user.is_authenticated and \
+            current_user.id in user_id_list:
+        return True
+
+    # Super users
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
+        current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    for role in list(current_user.roles or []):
+        if role.name in supers:
+            return True
+    
+    return False
 
 def is_owners_or_superusers(record) -> bool:
     """ 
