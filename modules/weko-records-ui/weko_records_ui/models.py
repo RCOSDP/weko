@@ -914,6 +914,122 @@ class FileSecretDownload(db.Model, Timestamp):
     expiration_date = db.Column(db.Integer, nullable=False, default=0)
     """Expiration Date"""
 
+    created = db.Column(db.Date, nullable=False, default=datetime.now)
+    updated = db.Column(db.Date, nullable=False, default=datetime.now)
+
+    extra_info = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """Extra info."""
+
+    def __init__(self, file_name, user_mail, record_id, download_count=0,
+                 expiration_date=0):
+        """Init.
+
+        :param file_name: File name
+        :param user_mail: User mail
+        :param record_id: Record identifier
+        :param download_count: Download count
+        :param expiration_date: Expiration date
+        """
+        self.file_name = file_name
+        self.user_mail = user_mail
+        self.record_id = record_id
+        self.download_count = download_count
+        self.expiration_date = expiration_date
+
+    @classmethod
+    def create(cls, **data):
+        """Create data."""
+        try:
+            file_download = cls(**data)
+            db.session.add(file_download)
+            db.session.commit()
+            db.session.flush()
+            return file_download
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise ex
+
+    @classmethod
+    def update_download(cls, **data):
+        """Update download count.
+
+        :param data:
+        :return:
+        """
+        try:
+            file_name = data.get("file_name")
+            id = data.get("id")
+            record_id = data.get("record_id")
+            file_permission = cls.find(file_name=file_name, id=id,
+                                        record_id=record_id)
+            if len(file_permission) == 1:
+                file = file_permission[0]
+                if data.get("download_count") is not None:
+                    file.download_count = data.get("download_count")
+                if data.get("expiration_date") is not None:
+                    file.expiration_date = data.get("expiration_date")
+                db.session.merge(file)
+                db.session.commit()
+                return file_permission
+            else:
+                return None
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(traceback.format_exc())
+            raise ex
+
+    @classmethod
+    def find(cls, **obj) -> list:
+        """Find file onetime download.
+
+        :param obj:
+        :return:
+        """
+        query = db.session.query(cls).filter(
+            cls.id == obj.get("id"),
+            cls.file_name == obj.get("file_name"),
+            cls.record_id == obj.get("record_id"),
+            cls.created == obj.get("created")
+        )
+        return query.order_by(desc(cls.id)).all()
+
+class FileSecretDownload(db.Model, Timestamp):
+    """File secret download."""
+
+    __tablename__ = 'file_secret_download'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    """Identifier"""
+
+    file_name = db.Column(db.String(255), nullable=False)
+    """File name"""
+
+    user_mail = db.Column(db.String(255), nullable=False)
+    """User mail"""
+
+    record_id = db.Column(db.String(255), nullable=False)
+    """Record identifier."""
+
+    download_count = db.Column(db.Integer, nullable=False, default=0)
+    """Download count"""
+
+    expiration_date = db.Column(db.Integer, nullable=False, default=0)
+    """Expiration Date"""
+
     def __init__(self, file_name, user_mail, record_id, download_count=0,
                  expiration_date=0):
         """Init.
