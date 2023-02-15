@@ -569,15 +569,15 @@ def unlocked_widget():
     else:
         return jsonify(success=False, msg=_("Can't unlock widget.")), 200
 
-@blueprint.teardown_request
-@blueprint_api.teardown_request
-@blueprint_pages.teardown_request
-@blueprint_rss.teardown_request
-def dbsession_clean(exception):
-    current_app.logger.debug("weko_gridlayout dbsession_clean: {}".format(exception))
-    if exception is None:
-        try:
-            db.session.commit()
-        except:
-            db.session.rollback()
-    db.session.remove()
+# @blueprint.teardown_request
+# @blueprint_api.teardown_request
+# @blueprint_pages.teardown_request
+# @blueprint_rss.teardown_request
+# def dbsession_clean(exception):
+#     current_app.logger.debug("weko_gridlayout dbsession_clean: {}".format(exception))
+#     if exception is None:
+#         try:
+#             db.session.commit()
+#         except:
+#             db.session.rollback()
+#     db.session.remove()
