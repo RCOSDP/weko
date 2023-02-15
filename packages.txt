@@ -146,7 +146,7 @@ Wand==0.6.1
 webargs==5.5.2
 webassets==0.12.1
 webencodings==0.5.1
-Werkzeug==0.15.2
+Werkzeug==2.2.3
 whichcraft==0.4.1
 WTForms==2.1
 WTForms-Alchemy==0.16.5

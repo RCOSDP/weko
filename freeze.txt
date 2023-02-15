@@ -261,7 +261,7 @@ webencodings==0.5.1
 -e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_theme&subdirectory=modules/weko-theme
 -e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles
 -e git+https://mhaya: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@github.com/RCOSDP/weko.git@2639d2cfb8ba23ccfb2da1b5e47fcd571dbcff73#egg=weko_workflow&subdirectory=modules/weko-workflow
-Werkzeug==0.15.2
+Werkzeug==2.2.3
 whichcraft==0.4.1
 WTForms==2.1
 WTForms-Alchemy==0.16.5
