@@ -271,6 +271,12 @@ class ReportView(BaseView):
                                 {
                                     "field": "path"
                                 }
+                            },
+                            {
+                                "terms":
+                                {
+                                    "publish_status": ["0", "1"]
+                                }
                             }
                         ]
                     }

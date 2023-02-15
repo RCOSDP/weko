@@ -895,11 +895,6 @@ def register_queries():
                                     "term": {
                                         "relation_version_is_last": True
                                     }
-                                },
-                                {
-                                    "term": {
-                                        "publish_status": 0
-                                    }
                                 }
                             ],
                             "must_not": "@must_not"
