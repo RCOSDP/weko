@@ -11,10 +11,11 @@
 from __future__ import absolute_import, print_function
 
 import os
+from flask_login import current_user
 
 from kombu import Exchange
 
-from .utils import default_permission_factory, weko_permission_factory
+from .permissions import stats_api_permission
 
 STATS_REGISTER_RECEIVERS = True
 """Enable the registration of signal receivers.
@@ -143,6 +144,14 @@ STATS_QUERIES = {
     'get-file-preview-per-site-license': {}
 }
 
+
+def weko_permission_factory(*args, **kwargs):  # All queries have same perms
+    """Permission factory for weko queries."""
+
+    def can(self):
+        return current_user.is_authenticated and stats_api_permission.can()
+
+    return type('WekoStatsPermissionChecker', (), {'can': can})()
 STATS_PERMISSION_FACTORY = weko_permission_factory
 """Permission factory used by the statistics REST API.
 

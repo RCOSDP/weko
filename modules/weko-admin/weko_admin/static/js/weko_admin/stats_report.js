@@ -33,7 +33,6 @@ $(document).ready(function () {
       let options = ['file_download',
         'file_preview',
         'billing_file_download',
-        'billing_file_preview',
         'detail_view',
         'index_access',
         'file_using_per_user',
