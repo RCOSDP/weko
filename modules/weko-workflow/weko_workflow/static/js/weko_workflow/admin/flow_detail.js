@@ -174,8 +174,6 @@ $(document).ready(function () {
     });
   });
   $('#btn-upt-flow').on('click', function () {
-    let sidebar_menu = document.querySelectorAll(".sidebar-menu")
-    let admin_page_home_text = sidebar_menu[0].children[0].children[0].innerHTML
     let flow_name = $('#txt_flow_name').val();
     if (flow_name.length == 0) {
       $('#div_flow_name').addClass('has-error');
@@ -189,9 +187,6 @@ $(document).ready(function () {
       contentType: 'application/json',
       data: JSON.stringify({ 'flow_name': flow_name }),
       success: function (data, status) {
-        if (admin_page_home_text.includes("ホーム")){
-          data.msg = "フローを更新しました"
-        }
         document.querySelectorAll('#inputModal').forEach(element => {
           element.innerHTML = data.msg
         })
@@ -202,9 +197,6 @@ $(document).ready(function () {
         if (jqXHR.status === 400) {
           var response = JSON.parse(jqXHR.responseText);
           modalcontent += ' ' + response.msg;
-        }
-        if (admin_page_home_text.includes("ホーム")){
-          modalcontent = "更新がしっぱいしました。"
         }
         document.querySelectorAll('#inputModal').forEach(element => {
           element.innerHTML = modalcontent
@@ -222,9 +214,6 @@ $(document).ready(function () {
       async: true,
       contentType: 'application/json',
       success: function (data, status) {
-        if (admin_page_home_text.includes("ホーム")){
-          data.msg = "ワークフローに紐づくフローは削除できません。"
-        }
         if (0 != data.code) {
           document.querySelectorAll('#inputModal').forEach(element => {
             element.innerHTML = data.msg
@@ -236,9 +225,6 @@ $(document).ready(function () {
       },
       error: function (jqXHE, status) {
         var modalcontent = "Delete Failed";
-        if (admin_page_home_text.includes("ホーム")){
-          modalcontent = "ワークフローに紐づくフローは削除できません。"
-        }
         document.querySelectorAll('#inputModal').forEach(element => {
           element.innerHTML = modalcontent
         })
