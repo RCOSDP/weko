@@ -157,7 +157,7 @@ def get_records(**kwargs):
             search = search.filter('range', **{'_updated': time_range})
 
         search = search.query('match', **{'relation_version_is_last': 'true'})
-        #search = search.query('match', **{'publish_status': '0'})
+        search = search.query('terms', **{'publish_status': ['-1', '0', '1']})
         #search = search.query('range', **{'publish_date': {'lte': 'now/d'}})
         query_filter = []
         if indexes and 'set' not in kwargs:

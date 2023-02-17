@@ -1349,7 +1349,7 @@ class WekoDeposit(Deposit):
             # es setting
             sub_sort[pth[-13:]] = ""
         dc.update(dict(path=index_lst))
-        pubs = '1'
+        pubs = '2'
         actions = index_obj.get('actions')
         if actions == 'publish' or actions == '0':
             pubs = '0'
