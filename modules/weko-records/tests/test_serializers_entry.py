@@ -296,3 +296,44 @@ def test_contributor(app):
     assert sample_copy.contributor(contributor=None, name="name") != None
     assert sample_copy.contributor(contributor={"name": "name", "email": "email", "uri": "uri"}, replace=True) != None
 
+
+# def load_extension(self, name, atom=True, rss=True):
+def test_load_extension(app):
+    sample_copy = deepcopy(sample)
+
+    # Exception coverage
+    try:
+        sample_copy._WekoFeedEntry__extensions = {'test': 'test'}
+        sample_copy.load_extension(name="test")
+    except:
+        pass
+
+    # ERROR ~ ModuleNotFoundError: No module named 'feedgen.ext.test'
+    sample_copy._WekoFeedEntry__extensions = [{'test': 'test'}]
+    sample_copy.load_extension(name="test")
+
+    
+# def register_extension(self, namespace, extension_class_entry=None, atom=True, rss=True, jpcoar=True): 
+def test_register_extension(app):
+    sample_copy = deepcopy(sample)
+
+    def extension_class_entry():
+        return "test"
+
+    sample_copy._WekoFeedEntry__extensions = {'test': 'test'}
+    sample_copy.register_extension(namespace="sample", extension_class_entry=extension_class_entry)
+
+    # Exception coverage
+    try:
+        sample_copy._WekoFeedEntry__extensions = {'test': 'test'}
+        sample_copy.register_extension(namespace="test")
+    except:
+        pass
+
+    # Exception coverage
+    try:
+        sample_copy._WekoFeedEntry__extensions = [{'test': 'test'}]
+        sample_copy.register_extension(namespace="test")
+    except:
+        pass
+
