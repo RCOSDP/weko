@@ -88,6 +88,7 @@ def base_app(instance_path):
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         TESTING=True,
+        SERVER_NAME="TEST_SERVER",
         SEARCH_INDEX_PREFIX='test-',
         INDEXER_DEFAULT_DOC_TYPE='testrecord',
         SEARCH_UI_SEARCH_INDEX='tenant1-weko',
@@ -242,7 +243,7 @@ def widget_item(db):
             "is_enabled": True,
             "is_deleted": False,
             "locked": False,
-            "is_main_layout": True,
+            # "is_main_layout": True,
             "locked_by_user": None,
             "multiLangSetting": {
                 "en": {
