@@ -655,18 +655,13 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         # multi keywords search filter
         mkq = _get_detail_keywords_query()
 
-        # detail search
         if mkq:
+            # details search
             mst.extend(mkq)
-            q = _get_search_qs_query(qs)
 
-            if q:
-                mst.append(q)
-        else:
-            # Full Text Search
-            if qstr:
-                q_s = _get_file_content_query(qstr)
-                mst.append(q_s)
+        if qstr:
+            q_s = _get_file_content_query(qstr)
+            mst.append(q_s)
 
         return Q("bool", must=mst) if mst else Q()
 
@@ -687,18 +682,13 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         # multi keywords search filter
         mkq = _get_detail_keywords_query()
 
-        # detail search
         if mkq:
+            # details search
             mst.extend(mkq)
-            q = _get_search_qs_query(qs)
 
-            if q:
-                mst.append(q)
-        else:
-            # Full Text Search
-            if qstr:
-                q_s = _get_file_content_query(qstr)
-                mst.append(q_s)
+        if qstr:
+            q_s = _get_file_content_query(qstr)
+            mst.append(q_s)
 
         return Q("bool", must=mst) if mst else Q()
 
