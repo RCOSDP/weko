@@ -756,7 +756,7 @@ def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
         if content.get('filename') == filename:
             if content.get('accessrole') == "open_no":
                 is_secret_file = True
-        elif content.get('accessrole') == "open_date" and \
+            elif content.get('accessrole') == "open_date" and \
                 datetime.now() < datetime.strptime(content.get('date',[{"dateValue" :'1970-01-01'}])[0].get("dateValue" ,'1970-01-01'), '%Y-%m-%d')  :
                 is_secret_file = True
 
