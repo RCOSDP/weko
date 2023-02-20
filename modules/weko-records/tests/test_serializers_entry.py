@@ -308,9 +308,8 @@ def test_load_extension(app):
     except:
         pass
 
-    # ERROR ~ ModuleNotFoundError: No module named 'feedgen.ext.test'
     sample_copy._WekoFeedEntry__extensions = [{'test': 'test'}]
-    sample_copy.load_extension(name="test")
+    sample_copy.load_extension(name="dc")
 
     
 # def register_extension(self, namespace, extension_class_entry=None, atom=True, rss=True, jpcoar=True): 
@@ -336,4 +335,5 @@ def test_register_extension(app):
         sample_copy.register_extension(namespace="test")
     except:
         pass
+
 

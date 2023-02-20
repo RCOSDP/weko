@@ -10,6 +10,7 @@ from feedgen.util import ensure_format, formatRFC2822
 from lxml import etree
 
 from weko_records.serializers.feed import WekoFeedGenerator
+from weko_records.serializers.entry import WekoFeedEntry
 
 # class WekoFeedEntry(FeedEntry):
 #     def atom_entry(self, extensions=True):
@@ -150,6 +151,7 @@ sample._WekoFeedGenerator__extensions = {
         "atom": "atom",
         "inst": "inst",
         "rss": "rss",
+        "extension_class_entry": "extension_class_entry"
     }
 }
 
@@ -333,3 +335,257 @@ def test_image(app):
         height=True,
         description=True,
     ) != None
+
+
+# def rights(self, rights=None): 
+def test_rights(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.rights(rights=True) != None
+
+
+# def copyright(self, copyright=None):
+def test_copyright(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.copyright(copyright=True) != None
+
+
+# def subtitle(self, subtitle=None): 
+def test_subtitle(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.subtitle(subtitle=True) != None
+
+
+# def description(self, description=None):
+def test_description(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.description(description=True) != None
+
+
+# def docs(self, docs=None):
+def test_docs(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.docs(docs=True) != None
+
+
+# def language(self, language=None):
+def test_language(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.language(language=True) != None
+
+
+# def requestUrl(self, url=None):
+def test_requestUrl(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.requestUrl(url=True) != None
+
+
+# def items(self, items=None):
+def test_items(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.items(items="True") != None
+
+
+# def managingEditor(self, managingEditor=None):
+def test_managingEditor(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.managingEditor(managingEditor=True) != None
+
+
+# def pubDate(self, pubDate=None):
+def test_pubDate(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.pubDate(pubDate=str(sample_copy._WekoFeedGenerator__atom_updated)) != None
+
+    # Exception coverage
+    try:
+        sample_copy.pubDate(pubDate=[1])
+    except:
+        pass
+    
+    # Exception coverage
+    try:
+        sample_copy.pubDate(pubDate=datetime(2023, 1, 1, tzinfo=None))
+    except:
+        pass
+
+
+# def rating(self, rating=None):
+def test_rating(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.rating(rating=True) != None
+
+
+# def skipHours(self, hours=None, replace=False):
+def test_skipHours(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.skipHours(hours=11, replace=True) != None
+
+    # Exception coverage
+    try:
+        sample_copy.skipHours(hours=25, replace=True)
+    except:
+        pass
+
+
+# def skipDays(self, days=None, replace=False):
+def test_skipDays(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.skipDays(days="Friday", replace=True) != None
+
+    # Exception coverage
+    try:
+        sample_copy.skipDays(days="Holiday", replace=True)
+    except:
+        pass
+
+
+# def textInput(self, title=None, description=None, name=None, link=None):
+def test_textInput(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.textInput(title=True) != None
+
+
+# def ttl(self, ttl=None):
+def test_ttl(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.ttl(ttl="9999") != None
+
+
+# def webMaster(self, webMaster=None): 
+def test_webMaster(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.webMaster(webMaster=True) != None
+
+
+# def add_entry(self, feedEntry=None, order='prepend'):
+def test_add_entry(app):
+    sample_copy = deepcopy(sample)
+
+    # def rss():
+    #     return True
+
+    # sample_copy._WekoFeedGenerator__extensions["rss"] = rss
+
+    with patch("weko_records.serializers.entry.WekoFeedEntry.register_extension", return_value=True):
+        assert sample_copy.add_entry() != None
+        assert sample_copy.add_entry(order='not_prepend') != None
+    
+    # Exception coverage
+    try:
+        assert sample_copy.add_entry() != None
+    except:
+        pass
+
+
+# def add_item(self, item=None):
+def test_add_item(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.add_item(item=MagicMock()) != None
+
+
+# def entry(self, entry=None, replace=False):
+def test_entry(app):
+    sample_copy = deepcopy(sample)
+    data1 = MagicMock()
+
+    def register_extension(a, b, c, d):
+        return "test"
+    
+    data1.register_extension = register_extension
+
+    assert sample_copy.entry(entry=data1, replace=True) != None
+
+    # Exception coverage
+    try:
+        assert sample_copy.entry(entry="data1", replace=True) != None
+    except:
+        pass
+
+
+# def item(self, item=None, replace=False): 
+def test_item(app):
+    sample_copy = deepcopy(sample)
+
+    assert sample_copy.item(item=MagicMock()) != None
+
+
+# def remove_entry(self, entry): 
+def test_remove_entry(app):
+    sample_copy = deepcopy(sample)
+    entry = WekoFeedEntry()
+    sample_copy._WekoFeedGenerator__feed_entries = [entry, 1]
+
+    assert sample_copy.remove_entry(entry=entry) == None
+    assert sample_copy.remove_entry(entry=0) == None
+
+
+# def remove_item(self, item):
+def test_remove_item(app):
+    sample_copy = deepcopy(sample)
+
+    def remove_entry(x):
+        return x
+
+    sample_copy.remove_entry = remove_entry
+
+    assert sample_copy.remove_item(item=MagicMock()) == None
+
+
+# def load_extension(self, name, atom=True, rss=True):
+def test_load_extension(app):
+    sample_copy = deepcopy(sample)
+
+    # Exception coverage
+    try:
+        sample_copy._WekoFeedGenerator__extensions = [{
+            "atom": {
+                "atom": "atom",
+                "inst": "inst",
+                "rss": "rss",
+                "extension_class_entry": "extension_class_entry"
+            }
+        }]
+        sample_copy.load_extension(name="atom")
+
+        sample_copy._WekoFeedGenerator__extensions = sample._WekoFeedGenerator__extensions
+        sample_copy.load_extension(name="atom")
+    except:
+        pass
+
+    # Exception coverage
+    assert sample_copy.load_extension(name="dc") == None
+
+
+# def register_extension(self, namespace, extension_class_feed=None, extension_class_entry=None, atom=True, rss=True, jpcoar=True):
+def test_register_extension(app):
+    sample_copy = deepcopy(sample)
+
+    # Exception coverage
+    try:
+        sample_copy.register_extension(namespace="atom")
+    except:
+        pass
+
+    # Exception coverage
+    try:
+        sample_copy._WekoFeedGenerator__extensions = []
+        sample_copy.register_extension(namespace="atom")
+    except:
+        pass

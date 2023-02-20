@@ -123,6 +123,10 @@ def test_itemtypenames(app, db, item_type, item_type2):
     assert item_type_name.id == 2
     assert item_type_name.name == "test2 updated"
 
+    data1 = {"id": 1}
+    data2 = {"test": [data1]}
+    ItemTypeNames.update(data2)
+
     # def delete(self, force=False):
     ItemTypeNames.delete(item_type_name)
     assert item_type_name.id == 2
@@ -164,6 +168,7 @@ def test_itemtypenames(app, db, item_type, item_type2):
     assert item_type_name.name == "test2 updated"
     assert item_type_name.has_site_license == True
     assert item_type_name.is_active== True
+
 
 # class ItemTypes(RecordBase):
 #     def create(cls, item_type_name=None, name=None, schema=None, form=None, render=None, tag=1):
@@ -288,7 +293,7 @@ def test_itemtypes_update(app, db):
 # class ItemTypes(RecordBase):
 #     def update_item_type(cls, form, id_, name, render, result, schema):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_itemtypes_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_itemtypes_update_item_type(app, db, location, mocker):
+def test_itemtypes_update_item_type(app, db, location):
     _form = {
         'items': []
     }
@@ -1654,3 +1659,8 @@ def test_item_link_bulk_delete(app, db, records):
     assert r[0]['item_links']=='3'
     assert r[0]['item_title']==records[2][1]['item_title']
     assert r[0]['value']=='HDL'
+
+
+
+
+
