@@ -539,15 +539,14 @@ def file_download_secret(pid, record, _record_file_factory=None, **kwargs):
 
     # Get secret download record.
     secret_download :FileSecretDownload = get_secret_download(
-        file_name=filename, record_id=pid, id=id , created=date
+        file_name=filename, record_id=pid.pid_value, id=id , created=date
     )
 
     # Validate token
     is_valid, error = validate_secret_download_token(
-        secret_download, filename, pid, id, date, secret_token)
+        secret_download, filename, pid.pid_value, id, secret_download.created, secret_token)
     if not is_valid:
         return render_template(error_template, error=error)
-
     _record_file_factory = _record_file_factory or record_file_factory
 
     # Get file object
@@ -558,8 +557,8 @@ def file_download_secret(pid, record, _record_file_factory=None, **kwargs):
 
     # Create updated data
     update_data = dict(
-        file_name=filename, record_id=record_id, id=id,
-        download_count=secret_download.download_count - 1,
+        file_name=filename, record_id=record_id, id=id, created=date,
+        download_count=secret_download.download_count - 1
     )
 
     # Update download data
