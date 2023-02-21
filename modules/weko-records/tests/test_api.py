@@ -769,6 +769,13 @@ def test_itemtypes_restore(app, db):
     assert it2.model.tag==1
     assert it2.model.is_deleted==False
 
+def test_itemtypes___update_metadata(app, db):
+    sample = ItemTypes.create(name='test')
+    data__json = {1: 1}
+    data_diff_keys = [1]
+    assert sample.__update_metadata(1,2,3,4).__del_data(data__json, data_diff_keys) == True
+
+
 # class ItemTypes(RecordBase):
 #     def revisions(self):
 

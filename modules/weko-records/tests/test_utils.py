@@ -6,7 +6,8 @@ import json
 # from tkinter import W
 import pytest
 import os
-from mock import patch
+import copy
+from mock import patch, MagicMock
 from tests.helpers import json_data
 
 from invenio_accounts import testutils
@@ -135,12 +136,50 @@ def test_copy_field_test(app, meta, k_v):
         'text3': ['概要', 'その他', 'materials: text']
     }
 
+    k_v1 = copy.deepcopy(k_v)
+    del k_v1[1]
+    k_v1[0]['inputType'] = "range"
+    with patch("weko_records.utils.get_values_from_dict", return_value=[1,2,3,4,5]):
+        with patch("weko_records.utils.convert_range_value", return_value=[1,2,3,4,5]):
+            assert copy_field_test(meta[0], k_v1, _jrc) == None
+
+            k_v1[0]['inputType'] = "geo_point"
+            k_v1[0]['item_value']['1']['path']['lat'] = '99.99'
+            k_v1[0]['item_value']['1']['path']['lon'] = '99.99'
+            k_v1[0]['item_value']['1']['path_type']['lat'] = '99.99'
+            k_v1[0]['item_value']['1']['path_type']['lon'] = '99.99'
+            k_v1[0]['item_value']['12']['path']['lat'] = '99.99'
+            k_v1[0]['item_value']['12']['path']['lon'] = '99.99'
+            k_v1[0]['item_value']['12']['path_type']['lat'] = '99.99'
+            k_v1[0]['item_value']['12']['path_type']['lon'] = '99.99'
+            assert copy_field_test(meta[0], k_v1, _jrc) == None
+
+            k_v1[0]['inputType'] = "geo_shape"
+            k_v1[0]['item_value']['1']['path']['coordinates'] = '99.99'
+            k_v1[0]['item_value']['1']['path']['type'] = '99.99'
+            k_v1[0]['item_value']['1']['path_type']['coordinates'] = '99.99'
+            k_v1[0]['item_value']['1']['path_type']['type'] = '99.99'
+            k_v1[0]['item_value']['12']['path']['coordinates'] = '99.99'
+            k_v1[0]['item_value']['12']['path']['type'] = '99.99'
+            k_v1[0]['item_value']['12']['path_type']['coordinates'] = '99.99'
+            k_v1[0]['item_value']['12']['path_type']['type'] = '99.99'
+            assert copy_field_test(meta[0], k_v1, _jrc) == None
+
 # def convert_range_value(start, end=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_convert_range_value -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_convert_range_value():
     assert convert_range_value('1')=={'gte': '1', 'lte': '1'}
     assert convert_range_value(None, '2')=={'gte': '2', 'lte': '2'}
     assert convert_range_value('1', '2')=={'gte': '1', 'lte': '2'}
+    assert convert_range_value('2', '1')=={'gte': '1', 'lte': '2'}
+    assert convert_range_value("1.1", "9.9")!={'gte': '1', 'lte': '2'}
+    assert convert_range_value("9.9", "1.1")!={'gte': '1', 'lte': '2'}
+
+    # Exception coverage
+    try:
+        assert convert_range_value('a', 'b')!={'gte': '1', 'lte': '2'}
+    except:
+        pass
 
 # def convert_date_range_value(start, end=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_convert_date_range_value -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -214,6 +253,25 @@ def test_get_values_from_dict(app, meta, jsonpath):
 def test_copy_value_xml_path(meta):
     res = copy_value_xml_path(meta[0], '')
     assert res==None
+
+    data1 = "<test>test<\test>"
+    data2 = MagicMock()
+
+    def text():
+        return(9999)
+
+    data3 = MagicMock()
+    data3.text = text
+
+    def findall(x, y):
+        return [data3]
+
+    data2.findall = findall
+
+    with patch("lxml.etree.tostring", return_value=data1):
+        with patch("invenio_oaiserver.response.getrecord", return_value=data1):
+            with patch("weko_records.utils.ET.fromstring", return_value=data2):
+                copy_value_xml_path(meta[0], ['/test', '/test/test'], iid=1)
 
 # def copy_value_json_path(meta, jsonpath):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_copy_value_json_path -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -376,6 +434,13 @@ def test_get_all_items():
     res = get_all_items(_nlst, _klst)
     assert res==[[{'item_1.subitem_1': 'en_value', 'item_1.subitem_1_lang': 'en'}], [{'item_1.subitem_1': 'ja_value', 'item_1.subitem_1_lang': 'ja'}]]
 
+    data1 = {
+        "key": "value",
+    }
+    data2 = ['key', ['k.e.y.s']]
+
+    assert get_all_items(_nlst, _klst, is_get_name=True) != None
+    assert get_all_items(data1, [data2], is_get_name=True) != None
 
 # def get_all_items2(nlst, klst):
 #     def get_items(nlst):
