@@ -137,7 +137,7 @@ $(document).ready(function () {
           $('#email_modal').modal('hide');
           if(1 === res.code && res.data.is_download){
             const url = new URL(res.data.redirect, document.location.origin);
-            url.searchParams.append('consent',true);
+            url.searchParams.append('terms_of_use_only',true);
             document.location.href = url;
             return;
           }

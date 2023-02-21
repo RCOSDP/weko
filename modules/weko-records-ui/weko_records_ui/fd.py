@@ -485,7 +485,7 @@ def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):
 def _is_terms_of_use_only(file_obj:dict , req :dict) -> bool:
     """
         return true if the user can apply and apply workflow is terms_of_use_only
-        in case of terms_of_use_only download terms of service is agreed (or terms of service is not setted) 
+        in case of terms_of_use_only download terms of use is agreed (or terms of use is not setted) 
     Args
         dict:file_obj :file object
         dict:req :request.args
@@ -493,7 +493,7 @@ def _is_terms_of_use_only(file_obj:dict , req :dict) -> bool:
         bool
     """
 
-    consent:bool = req.get('consent',False)
+    consent:bool = req.get('terms_of_use_only',False)
     if not consent :
         return False
 
