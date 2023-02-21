@@ -225,7 +225,7 @@ def file_ui(
     obj = fileobj.obj
 
     # Check file contents permission
-    is_terms_of_use_only = _is_terms_of_use_only(fileobj)
+    is_terms_of_use_only = _is_terms_of_use_only(fileobj,request.args)
     if not file_permission_factory(record, fjson=fileobj).can():
         # [利用規約のみ]の場合、アクセス権無しでもファイルダウンロード可能。
         if not is_terms_of_use_only:
@@ -482,7 +482,21 @@ def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):
     return _download_file(file_object, False, 'en', file_object.obj, pid,
                           record)
 
-def _is_terms_of_use_only(file_obj):
+def _is_terms_of_use_only(file_obj:dict , req :dict) -> bool:
+    """
+        return true if the user can apply and apply workflow is terms_of_use_only
+        in case of terms_of_use_only download terms of service is agreed (or terms of service is not setted) 
+    Args
+        dict:file_obj :file object
+        dict:req :request.args
+    Returns
+        bool
+    """
+
+    consent:bool = req.get('consent',False)
+    if not consent :
+        return False
+
     provides = file_obj.get("provide" , [])
     workflow_id = ""
     for provide in provides :
