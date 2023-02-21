@@ -1587,7 +1587,7 @@ def _generate_secret_download_url(file_name: str, record_id: str, id: str ,creat
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
     download_pattern = current_app.config[
         'WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN']
-    current_date = created.strftime("%Y-%m-%d")
+    current_date = created
     hash_value = download_pattern.format(file_name, record_id, id,
                                          current_date)
     secret_token = oracle10.hash(secret_key, hash_value)

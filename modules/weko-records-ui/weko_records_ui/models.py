@@ -317,8 +317,6 @@ class FileOnetimeDownload(db.Model, Timestamp):
     expiration_date = db.Column(db.Integer, nullable=False, default=0)
     """Expiration Date"""
 
-    created = db.Column(db.Date, nullable=False, default=datetime.now)
-
     extra_info = db.Column(
         db.JSON().with_variant(
             postgresql.JSONB(none_as_null=True),
@@ -450,25 +448,6 @@ class FileSecretDownload(db.Model, Timestamp):
     expiration_date = db.Column(db.Integer, nullable=False, default=0)
     """Expiration Date"""
 
-    created = db.Column(db.Date, nullable=False, default=datetime.now)
-    updated = db.Column(db.Date, nullable=False, default=datetime.now)
-
-    extra_info = db.Column(
-        db.JSON().with_variant(
-            postgresql.JSONB(none_as_null=True),
-            'postgresql',
-        ).with_variant(
-            JSONType(),
-            'sqlite',
-        ).with_variant(
-            JSONType(),
-            'mysql',
-        ),
-        default=lambda: dict(),
-        nullable=True
-    )
-    """Extra info."""
-
     def __init__(self, file_name, user_mail, record_id, download_count=0,
                  expiration_date=0):
         """Init.
@@ -516,8 +495,6 @@ class FileSecretDownload(db.Model, Timestamp):
                 file = file_permission[0]
                 if data.get("download_count") is not None:
                     file.download_count = data.get("download_count")
-                if data.get("expiration_date") is not None:
-                    file.expiration_date = data.get("expiration_date")
                 db.session.merge(file)
                 db.session.commit()
                 return file_permission

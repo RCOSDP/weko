@@ -60,7 +60,7 @@ from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
 from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
-from weko_records_ui.models import FilePermission
+from weko_records_ui.models import FilePermission, InstitutionName
 from weko_redis import RedisConnection
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
@@ -2122,6 +2122,8 @@ def replace_characters(data, content):
         '[data_download_date]': 'data_download_date',
         '[usage_report_url]': 'usage_report_url',
         '[restricted_usage_activity_id]': 'restricted_usage_activity_id',
+        '[restricted_institution_name_ja]':'restricted_institution_name_ja',
+        '[restricted_institution_name_en]':'restricted_institution_name_en',
         '[file_name]' : 'file_name',
         '[restricted_download_count]':'restricted_download_count',
         '[restricted_download_count_ja]':'restricted_download_count_ja',
@@ -2230,6 +2232,8 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
     if not guest_user:
         register_user, register_date = get_register_info(
             activity_detail.activity_id)
+    
+    institution_name = InstitutionName.get_institution_name()
 
     mail_info = dict(
         university_institution=item_info.get('subitem_university/institution'),
@@ -2263,6 +2267,8 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
             'subitem_restricted_access_application_date'),
         restricted_mail_address=item_info.get(
             'subitem_restricted_access_mail_address'),
+        restricted_institution_name_ja = institution_name,
+        restricted_institution_name_en = institution_name,
         restricted_download_link='',
         restricted_expiration_date='',
         restricted_approver_name='',
