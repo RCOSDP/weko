@@ -543,4 +543,4 @@ class FileSecretDownload(db.Model, Timestamp):
         )
         return query.order_by(desc(cls.id)).all()
 
-__all__ = ('PDFCoverPageSettings', 'FilePermission', 'FileOnetimeDownload')
+__all__ = ('PDFCoverPageSettings', 'FilePermission', 'FileOnetimeDownload' ,'FileSecretDownload')

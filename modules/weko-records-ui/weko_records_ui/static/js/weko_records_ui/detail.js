@@ -106,7 +106,9 @@ require([
           init_permission(recordId, fileName, activity_id);
           document.location.href = data.data.redirect;
         } else if(1 === data.code && data.data.is_download){
-          document.location.href = data.data.redirect;
+          const url = new URL(data.data.redirect , document.location.origin);
+          url.searchParams.append('consent',true);
+          document.location.href = url;
         } else {
           alert(data.msg);
         }
