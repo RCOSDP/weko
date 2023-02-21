@@ -1618,10 +1618,9 @@ def parse_secret_download_token(token: str) -> Tuple[str, Tuple]:
     try:
         decode_token = base64.b64decode(token.encode()).decode()
         param = decode_token.split(" ")
-        if not param or len(param) != 4:
+        if not param or len(param) != 5:
             return error, ()
-
-        return "", (param[0], param[1], param[2], param[3]) #record_id, id, current_date, secret_token
+        return "", (param[0], param[1], param[2] + " " + param[3] , param[4]) #record_id, id, current_date(date + time), secret_token
     except Exception as err:
         current_app.logger.error(err)
         return error, ()
