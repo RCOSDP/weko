@@ -254,7 +254,7 @@ class FilePermission(db.Model):
         return cls
 
     @classmethod
-    def update_status(cls, permission , status):
+    def update_status(cls, permission, status):
         """Update a permission 's status."""
         permission.status = status
         db.session.merge(permission)
