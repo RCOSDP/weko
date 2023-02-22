@@ -1860,7 +1860,8 @@ def db_itemtype(app, db, make_itemtype):
         "name": "テストアイテムタイプ",
         "schema": "tests/data/itemtype_schema.json",
         "form": "tests/data/itemtype_form.json",
-        "render": "tests/data/itemtype_render.json"
+        "render": "tests/data/itemtype_render.json",
+        "mapping":"tests/data/itemtype_mapping.json"
     }
     
     return make_itemtype(itemtype_id, itemtype_data)
