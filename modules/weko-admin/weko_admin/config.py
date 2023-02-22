@@ -1241,6 +1241,8 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
 """Default restricted access settings."""
 
 WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER = 9999999
+"""max value of expiration_date and download_limit. 
+    Any more than this and the datetime may overflow. """
 
 WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER = 25
 """Default number of usage report activities results that display in one page."""
