@@ -1708,8 +1708,8 @@ def _create_secret_download_url(file_name: str, record_id: str, user_mail: str) 
     """
     secret_url_file_download:dict = get_restricted_access('secret_URL_file_download')
         
-    expiration_date = secret_url_file_download.get("secret_expiration_date", 30)
-    download_limit = secret_url_file_download.get("secret_download_limit", 10)
+    expiration_date = secret_url_file_download.get("secret_expiration_date")
+    download_limit = secret_url_file_download.get("secret_download_limit")
 
     file_secret = FileSecretDownload.create(**{
         "file_name": file_name,
