@@ -349,6 +349,31 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     $scope.getPathName();
     $rootScope.display_comment_jounal();
   });
+
+  $scope.reSearchInvenio = () => {
+    let search = new URLSearchParams(window.location.search);
+    //TODO PAGE と TimeStampを入れ替える。
+    search.set('page','1');
+    search.set('size', $scope.vm.invenioSearchArgs.size);
+    search.set('timestamp',Date.now().toString());
+
+    window.history.pushState(null,document.title,"/search?" + search);
+    let url = search.get('search_type') == 2 ? "/api/index/" : "/api/records/";
+
+    if(window.facetSearchFunctions && window.facetSearchFunctions.useFacetSearch()) {
+      window.facetSearchFunctions.resetFacetData();
+    }
+
+    $scope.$apply(function() {
+      $scope.vm.invenioSearchCurrentArgs.url = url;
+      $scope.vm.invenioSearchArgs.page = 1;
+      $scope.vm.invenioSearchLoading = true;
+      $scope.vm.invenioSearchCurrentArgs.params = search;
+      $scope.vm.invenioSearchHiddenParams = [];
+    })
+  }
+  window.invenioSearchFunctions = {};
+  window.invenioSearchFunctions.reSearchInvenio = $scope.reSearchInvenio;
 }
 
 // Item export controller
