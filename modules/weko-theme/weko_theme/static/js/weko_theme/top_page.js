@@ -190,7 +190,13 @@ require([
                 search = insertParam(search, "item_management", "delete");
                 window.location.href = "/admin/items/search" + search;
             } else {
-                window.location.href = "/search" + search + getFacetParameter();
+                search = search + getFacetParameter();
+                if(window.invenioSearchFunctions) {
+                  window.history.pushState(null,document.title,"/search" + search);
+                  window.invenioSearchFunctions.reSearchInvenio();
+                }else {
+                    window.location.href = "/search" + search;
+                }
             }
 
             // stop the form from submitting the normal way and refreshing the page

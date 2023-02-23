@@ -318,6 +318,14 @@
                     url = '/admin/items' + url + '&item_management=delete';
                 } else {
                     url += getFacetParameter();
+                    url = url.replace(/\+/g, encodeURIComponent('+'))
+                    if(window.invenioSearchFunctions) {
+                      window.history.pushState(null,document.title,url);
+                      window.invenioSearchFunctions.reSearchInvenio();
+                    }else {
+                        window.location.href = url;
+                    }
+                    return;
                 }
 
                 // URI-encode '+' in advance for preventing from being converted to '%20'(space)
