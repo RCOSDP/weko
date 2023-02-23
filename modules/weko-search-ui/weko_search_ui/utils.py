@@ -2849,63 +2849,91 @@ def handle_fill_system_item(list_record):
         identifierRegistration_key = identifierRegistration_key.split(".")[0]
         
         item_doi = item.get("doi","")
+        item_doi_prefix = ""
+        item_doi_suffix = ""
+        
+        if item_doi and "/" in item_doi:
+            item_doi_prefix, item_doi_suffix = item_doi.split("/")
+        else:
+            item_doi_prefix = item_doi
+        
         item_doi_ra = item.get("doi_ra","")
-        item_id = item.get('id',None)
-        checked_doi_ra = False
+        item_id = item.get('id',"")
+        checked_registerd_doi_ra = False
         existed_doi = False
         
         if identifierRegistration_key:
             item["identifier_key"] = identifierRegistration_key
+            is_change_identifier = item.get("is_change_identifier", False)
             doi_setting = prepare_doi_setting()
-            if item_id is not None and doi_setting is not None:
-                pid_doi = None
+            
+            pid_doi = None
+            if item_id:
                 try:
                     from weko_deposit.api import WekoRecord
                     rec = WekoRecord.get_record_by_pid(item_id)
                     pid_doi = rec.pid_doi
                 except PIDDoesNotExistError:
                     pid_doi=None
-                
-                if pid_doi is not None:
-                    existed_doi = True
-                    doi_value = pid_doi.pid_value
-                    registerd_doi = doi_value.replace("https://doi.org/","")
-                    doi_prefix, doi_suffix = registerd_doi.split("/")
-                    checked_doi_ra = True
-                    if doi_setting.jalc_doi == doi_prefix:
-                        doi_ra = "JaLC"
-                    elif doi_setting.jalc_crossref_doi == doi_prefix:
-                        doi_ra = "Crossref"
-                    elif doi_setting.jalc_datacite_doi == doi_prefix:
-                        doi_ra = "DataCite"
-                    elif doi_setting.ndl_jalc_doi == doi_prefix:
-                        doi_ra = "NDL JaLC"
-                    else:
-                        checked_doi_ra = False
-                else:
-                    existed_doi = False
             
-            if existed_doi==False and doi_setting is not None:
-                if item_doi is not "":
-                    __doi = item_doi.rstrip("/")
-                    if doi_setting.jalc_doi == __doi:
-                        checked_doi_ra = (item_doi_ra == "JaLC")
-                    elif doi_setting.jalc_crossref_doi == __doi:
-                        checked_doi_ra = (item_doi_ra == "Crossref")
-                    elif doi_setting.jalc_datacite_doi == __doi:
-                        checked_doi_ra = (item_doi_ra == "DataCite")
-                    elif doi_setting.ndl_jalc_doi == __doi:
-                        checked_doi_ra = (item_doi_ra == "NDL JaLC")
-                    else:
-                        checked_doi_ra = False
+            registerd_doi = None
+            registerd_doi_prefix = None
+            registerd_doi_suffix = None
+            registerd_doi_ra = None
+            
+            if pid_doi and doi_setting:
+                doi_value = pid_doi.pid_value
+                registerd_doi = doi_value.replace("https://doi.org/","")
+                registerd_doi_prefix, registerd_doi_suffix = registerd_doi.split("/")
+                existed_doi = True
+                checked_registerd_doi_ra = True
+                if doi_setting.jalc_doi == registerd_doi_prefix:
+                    registerd_doi_ra = "JaLC"
+                elif doi_setting.jalc_crossref_doi == registerd_doi_prefix:
+                    registerd_doi_ra = "Crossref"
+                elif doi_setting.jalc_datacite_doi == registerd_doi_prefix:
+                    registerd_doi_ra = "DataCite"
+                elif doi_setting.ndl_jalc_doi == registerd_doi_prefix:
+                    registerd_doi_ra = "NDL JaLC"
                 else:
-                    checked_doi_ra = (item_doi_ra in ("","JaLC","Crossref","DataCite","NDL JaLC"))
+                    checked_registerd_doi_ra = False
+            else:
+                existed_doi = False
+            
+            checked_item_doi_ra = False
+            if item_doi_prefix is not "" and doi_setting:
+                if doi_setting.jalc_doi == item_doi_prefix:
+                    checked_item_doi_ra = (item_doi_ra == "JaLC")
+                elif doi_setting.jalc_crossref_doi == item_doi_prefix:
+                    checked_item_doi_ra = (item_doi_ra == "Crossref")
+                elif doi_setting.jalc_datacite_doi == item_doi_prefix:
+                    checked_item_doi_ra = (item_doi_ra == "DataCite")
+                elif doi_setting.ndl_jalc_doi == item_doi_prefix:
+                    checked_item_doi_ra = (item_doi_ra == "NDL JaLC")
+            elif item_doi == "" and item_doi_ra == "":
+                checked_item_doi_ra = True
 
             fixed_doi = False
             fixed_doi_ra = False
-                    
+            
+            if is_change_identifier:
+                item["doi"] = item_doi
+            elif is_change_identifier == False:
+                if existed_doi:
+                    item["doi"] = registerd_doi
+                    if registerd_doi != item_doi:
+                        fixed_doi = True
+            
+            if is_change_identifier == True:
+                item["doi_ra"] = item_doi_ra
+            elif is_change_identifier == False:
+                if existed_doi:
+                    item["doi_ra"] = registerd_doi_ra
+                    if registerd_doi_ra != item_doi_ra:
+                        fixed_doi_ra = True
+            
             if identifierRegistration_key in item["metadata"]:
-                if existed_doi and checked_doi_ra:                    
+                if existed_doi and checked_registerd_doi_ra and checked_item_doi_ra:                    
                     if 'subitem_identifier_reg_type' in item["metadata"][identifierRegistration_key]:
                         _doi_ra = item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type']
                         if item.get("is_change_identifier", False) == True:
@@ -2913,17 +2941,17 @@ def handle_fill_system_item(list_record):
                             if _doi_ra != "" and _doi_ra != item_doi_ra:
                                 fixed_doi_ra = True
                         elif item.get("is_change_identifier",False) == False:
-                            item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type'] = doi_ra
-                            if item_doi_ra != doi_ra:
+                            item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type'] = registerd_doi_ra
+                            if item_doi_ra != registerd_doi_ra:
                                 fixed_doi_ra = True
-                            if _doi_ra != "" and _doi_ra != doi_ra:
+                            if _doi_ra != "" and _doi_ra != registerd_doi_ra:
                                 fixed_doi_ra = True
                     else:
                         if item.get("is_change_identifier", False) == True:
                             item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type'] = item_doi_ra
                         elif item.get("is_change_identifier",False) == False:
-                            item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type'] = doi_ra
-                            if doi_ra != item_doi_ra:
+                            item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type'] = registerd_doi_ra
+                            if registerd_doi_ra != item_doi_ra:
                                 fixed_doi_ra = True
 
                     if 'subitem_identifier_reg_text' in item["metadata"][identifierRegistration_key]:    
@@ -2949,35 +2977,7 @@ def handle_fill_system_item(list_record):
                 if item_doi_ra and item_doi_ra in ("JaLC","Crossref","DataCite","NDL JaLC"):
                     item["metadata"][identifierRegistration_key]={'subitem_identifier_reg_type':item_doi_ra, 'subitem_identifier_reg_text': item_doi}
             elif existed_doi:
-                item["metadata"][identifierRegistration_key]={'subitem_identifier_reg_type':doi_ra, 'subitem_identifier_reg_text': registerd_doi}
-            
-            if item_doi is not None:
-                if existed_doi:
-                    if item.get("is_change_identifier", False) == True:
-                        item["doi"] = item_doi
-                    elif item.get("is_change_identifier", False) == False:
-                        item["doi"] = registerd_doi
-                        if registerd_doi != item_doi:
-                            fixed_doi = True
-            else:
-                if existed_doi:
-                    if item.get("is_change_identifier", False) == False:
-                        item["doi"] = registerd_doi
-                        if registerd_doi != item_doi:
-                            fixed_doi = True
-            
-            if item_doi_ra is not None:
-                if existed_doi and checked_doi_ra:
-                    if item.get("is_change_identifier", False) == True:
-                        item["doi_ra"] = item_doi_ra
-                    elif item.get("is_change_identifier", False) == False:
-                        item["doi_ra"] = doi_ra
-                        if doi_ra != item_doi_ra:
-                            fixed_doi_ra = True
-            else:
-                if item.get("is_change_identifier", False) == False:
-                    item["doi_ra"] = doi_ra
-
+                item["metadata"][identifierRegistration_key]={'subitem_identifier_reg_type':registerd_doi_ra, 'subitem_identifier_reg_text': registerd_doi}
 
             if fixed_doi:
                 warnings.append(_('The specified DOI is wrong and fixed with the registered DOI.'))
@@ -2985,11 +2985,20 @@ def handle_fill_system_item(list_record):
             if fixed_doi_ra:
                 warnings.append(_('The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'))
             
-            if checked_doi_ra is False and item_doi_ra is not "" and existed_doi is False:
-                errors.append(_('Specified Prefix of DOI is incorrect.'))
-                 
-            if (fixed_doi_ra is False and item_doi_ra not in ("","JaLC","Crossref","DataCite","NDL JaLC")) or (fixed_doi_ra is False and item_doi is not "" and item_doi_ra not in ("JaLC","Crossref","DataCite","NDL JaLC")):
-                errors.append(_('DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'))
+            if is_change_identifier:
+                if item_doi is "":
+                    errors.append(_('Please specify DOI prefix/suffix.'))
+                elif item_doi_suffix is "":
+                    errors.append(_('Please specify DOI suffix.'))
+            else:
+                if item_doi_suffix and existed_doi is False:
+                    errors.append(_('Do not specify DOI suffix.'))
+
+            if checked_item_doi_ra is False:
+                if item_doi_ra not in ("JaLC","Crossref","DataCite","NDL JaLC"):
+                    errors.append(_('DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'))
+                elif item_doi_prefix:
+                    errors.append(_('Specified Prefix of DOI is incorrect.'))     
                     
         item['errors'] = errors
         item['warnings'] = warnings
