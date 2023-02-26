@@ -2,8 +2,9 @@
 
 {%- if config.GOOGLE_TRACKING_ID_SYSTEM %}
 <!-- Global site tag (gtag.js) - Google Analytics -->
-<script async data-type="application/javascript" type="text/plain" data-name="jairocloud" src="https://www.googletagmanager.com/gtag/js?id={{ config.GOOGLE_TRACKING_ID_SYSTEM }}"></script>
-<script type="text/plain" data-type="application/javascript" data-name="jairocloud" >
+<script async data-type="application/javascript" type="text/plain" data-name="jairocloud"
+    src="https://www.googletagmanager.com/gtag/js?id={{ config.GOOGLE_TRACKING_ID_SYSTEM }}"></script>
+<script type="text/plain" data-type="application/javascript" data-name="jairocloud">
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
@@ -11,7 +12,8 @@
 </script>
 {%- endif %}
 {%- if config.GOOGLE_TRACKING_ID_USER %}
-<script async data-type="application/javascript" type="text/plain" data-name="google-analytics" src="https://www.googletagmanager.com/gtag/js?id={{ config.GOOGLE_TRACKING_ID_USER }}"></script>
+<script async data-type="application/javascript" type="text/plain" data-name="google-analytics"
+    src="https://www.googletagmanager.com/gtag/js?id={{ config.GOOGLE_TRACKING_ID_USER }}"></script>
 <script type="text/plain" data-type="application/javascript" data-name="google-analytics">
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
@@ -23,6 +25,8 @@
 {%- else %}
 {%- if config.GOOGLE_TRACKING_ID_SYSTEM %}
 <!-- Global site tag (gtag.js) - Google Analytics -->
+{%- set site_info = site_info|get_site_info %}
+{%- set google_tracking_id_user = site_info.get("google_tracking_id_user",config.GOOGLE_TRACKING_ID_USER) %}
 <script async src="https://www.googletagmanager.com/gtag/js?id={{ config.GOOGLE_TRACKING_ID_SYSTEM }}"></script>
 <script>
     window.dataLayer = window.dataLayer || [];
@@ -32,12 +36,12 @@
 </script>
 {%- endif %}
 {%- if config.GOOGLE_TRACKING_ID_USER %}
-<script async src="https://www.googletagmanager.com/gtag/js?id={{ config.GOOGLE_TRACKING_ID_USER }}"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ google_tracking_id_user }}"></script>
 <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
-    gtag('config', '{{ config.GOOGLE_TRACKING_ID_USER }}');
+    gtag('config', '{{ google_tracking_id_user }}');
 
 </script>
 {%- endif %}
