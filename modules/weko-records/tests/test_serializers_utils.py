@@ -1,4 +1,5 @@
 import pytest
+from mock import patch, MagicMock
 from tests.helpers import json_data
 
 from invenio_pidstore.models import PersistentIdentifier
@@ -47,6 +48,40 @@ def test_get_metadata_from_map(meta):
     _item_id = 'item_1551264308487'
     result = get_metadata_from_map(meta[0]['item_1551264308487'], _item_id)
     assert result == {'item_1551264308487.subitem_1551255647225': ['タイトル日本語', 'Title'], 'item_1551264308487.subitem_1551255648112': ['ja', 'en']}
+
+    item_data_1 = {
+        "attribute_name": "Title",
+        "attribute_value_mlt": [
+            {
+                "subitem_1551255647225": "タイトル日本語",
+                "subitem_1551255648112": "ja"
+            },
+            {
+                "subitem_1551255647225": "Title",
+                "subitem_1551255648112": "en"
+            },
+            {
+                "test": [{"test": ["test"]}],
+                "test": [{"test": "test"}]
+            },
+        ],
+    }
+    item_data_2 = {
+        "attribute_name": "Title",
+        "attribute_value_mlt": {
+            "test": [{"test": [{"key": "values"}]}],
+        },
+    }
+    item_data_3 = {
+        "attribute_name": "Title",
+        "attribute_value_mlt": {
+            "test": [{"test": [{"test": {"test": "test"}}]}],
+        },
+    }
+
+    get_metadata_from_map(item_data_1, _item_id)
+    get_metadata_from_map(item_data_2, _item_id)
+    get_metadata_from_map(item_data_3, _item_id)
 
 # def get_attribute_schema(schema_id):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_get_attribute_schema -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -112,3 +147,42 @@ def test_open_search_detail_data(app, db, db_index, render, form, mapping, hit, 
     data = OpenSearchDetailData(fetcher, _search_result, 'rss')
     with app.test_request_context():
         assert data.output_open_search_detail_data()
+
+sample = OpenSearchDetailData(
+    pid_fetcher = MagicMock(),
+    search_result = MagicMock(),
+    output_type = "atom",
+    links = MagicMock(),
+    item_links_factory = MagicMock(),
+    kwargs = MagicMock(),
+)
+
+# class OpenSearchDetailData:
+#     def _set_publication_date(self, fe, item_map, item_metadata):
+def test__set_publication_date_OpenSearchDetailData(app):
+    fe = MagicMock()
+    item_map = {
+        "date.@value": "date.@value",
+        "date.@attributes.dateType": "date.@attributes.dateType"
+    }
+    item_metadata = {"date": "date"}
+
+    with patch("weko_records.serializers.utils.get_metadata_from_map", return_value=["date"]):
+        sample._set_publication_date(fe=fe, item_map=item_map, item_metadata=item_metadata)
+    
+    with patch("weko_records.serializers.utils.get_metadata_from_map", return_value={"date.@value": "date.@value"}):
+        sample._set_publication_date(fe=fe, item_map=item_map, item_metadata=item_metadata)
+    
+    with patch("weko_records.serializers.utils.get_metadata_from_map", return_value={"date.@value": ["date.@value"]}):
+        sample._set_publication_date(fe=fe, item_map=item_map, item_metadata=item_metadata)
+
+    sample.output_type = "test"
+    sample._set_publication_date(fe=fe, item_map=item_map, item_metadata=item_metadata)
+
+    data1 = {
+        "date.@attributes.dateType": "date.@attributes.dateType",
+        "date.@value": ["date.@value", "Issued"]
+    }
+
+    with patch("weko_records.serializers.utils.get_metadata_from_map", return_value=data1):
+        sample._set_publication_date(fe=fe, item_map=item_map, item_metadata=item_metadata)

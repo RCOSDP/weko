@@ -435,11 +435,14 @@ def test_get_all_items():
     assert res==[[{'item_1.subitem_1': 'en_value', 'item_1.subitem_1_lang': 'en'}], [{'item_1.subitem_1': 'ja_value', 'item_1.subitem_1_lang': 'ja'}]]
 
     data1 = {
-        "key": "value",
+        "k": "k",
     }
-    data2 = ['key', ['k.e.y.s']]
+    data2 = ['k', ['k']]
 
     assert get_all_items(_nlst, _klst, is_get_name=True) != None
+    assert get_all_items(data1, [data2], is_get_name=True) != None
+
+    data1['k'] = ['k']
     assert get_all_items(data1, [data2], is_get_name=True) != None
 
 # def get_all_items2(nlst, klst):
@@ -1216,6 +1219,27 @@ def test_convert_bibliographic():
 
 
 # def add_biographic(sys_bibliographic, bibliographic_key, s, stt_key, data_result, 
+def test_add_biographic(app):
+    def get_bibliographic_list(x):
+        return x
+
+    sys_bibliographic = MagicMock()
+    sys_bibliographic.get_bibliographic_list = get_bibliographic_list
+    bibliographic_key = "test"
+    s = {"key": "key"}
+    stt_key = []
+    data_result = {}
+    is_specify_newline_array = []
+
+    with patch("weko_records.utils.convert_bibliographic", return_value="test"):
+        add_biographic(
+            sys_bibliographic=sys_bibliographic,
+            bibliographic_key=bibliographic_key,
+            s=s,
+            stt_key=stt_key,
+            data_result=data_result,
+            is_specify_newline_array=is_specify_newline_array
+        )
 
 # def custom_record_medata_for_export(record_metadata: dict):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_custom_record_medata_for_export -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
