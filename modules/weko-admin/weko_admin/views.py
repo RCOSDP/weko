@@ -514,6 +514,7 @@ def update_site_info():
     site_info = request.get_json()
     format_data = format_site_info_data(site_info)
     validate = validation_site_info(format_data)
+    
     if validate.get('error'):
         return jsonify(validate)
     else:
@@ -531,6 +532,7 @@ def get_site_info():
 
     """
     site_info = SiteInfo.get()
+
     result = dict()
     if not site_info:
         try:
@@ -543,6 +545,7 @@ def get_site_info():
         except BaseException:
             pass
         return jsonify(result)
+
     result['copy_right'] = site_info.copy_right
     result['description'] = site_info.description
     result['keyword'] = site_info.keyword
@@ -551,23 +554,21 @@ def get_site_info():
     result['site_name'] = site_info.site_name
     result['notify'] = site_info.notify
     try:
-        result['google_tracking_id_user'] = site_info.google_tracking_id_user \
-            if site_info.google_tracking_id_user \
-            else current_app.config['GOOGLE_TRACKING_ID_USER']
+        result['google_tracking_id_user'] = site_info.google_tracking_id_user
     except BaseException:
-        result['google_tracking_id_user'] = ""
+        result['google_tracking_id_user'] = current_app.get('GOOGLE_TRACKING_ID_USER','')
 
     try:
-        result['addthis_user_id'] = site_info.addthis_user_id if \
-            site_info.addthis_user_id else current_app.config['ADDTHIS_USER_ID']
+        result['addthis_user_id'] = site_info.addthis_user_id
     except BaseException:
-        result['addthis_user_id'] = ""
+        result['addthis_user_id'] = current_app.get('ADDTHIS_USER_ID',"")
 
     if site_info.ogp_image and site_info.ogp_image_name:
         ts = time.time()
         result['ogp_image'] = request.host_url + \
             'api/admin/ogp_image'
         result['ogp_image_name'] = site_info.ogp_image_name
+    current_app.logger.error("result:{}".format(result))
     return jsonify(result)
 
 
