@@ -1134,12 +1134,16 @@ def test_convert_crossref_xml_data_to_dictionary(mocker):
     def mock_cont_data(elem,roles,rtn_data):
         rtn_data.update({'contributor': [{'given':'A.','family': 'Test1'}]})
     mocker.patch("weko_items_autofill.utils._get_contributor_and_author_names",side_effect=mock_cont_data)
-    test = {"doi":"10.1103/PhysRev.47.777",
+    test = {
+        "response": {
+            "doi":"10.1103/PhysRev.47.777",
             "issn":"0031-899X",
             'contributor': [{'given':'A.','family': 'Test1'}],
             "year":"1936",
             "article_title":"this is article title",
-            }
+        },
+        "error": ""
+    }
     result = convert_crossref_xml_data_to_dictionary(data)
     assert result == test
 
