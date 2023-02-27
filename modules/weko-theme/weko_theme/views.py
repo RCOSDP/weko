@@ -50,6 +50,7 @@ blueprint = Blueprint(
 def index():
     """Simplistic front page view."""
     check_site_license_permission()
+    
     send_info = {}
     send_info['site_license_flag'] = True \
         if hasattr(current_user, 'site_license_flag') else False
@@ -65,7 +66,7 @@ def index():
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'],
         current_i18n.language)
     page = None
-
+    
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
         page=page,

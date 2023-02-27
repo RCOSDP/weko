@@ -396,6 +396,7 @@ def get_widget_page_endpoints(widget_id, lang=''):
 # Based on invenio_pages.views
 def view_widget_page():
     """View user-created WidgetDesignPages."""
+
     community_id, ctx = get_community_id(request.args)
     try:
         page = WidgetDesignPage.get_by_url(request.path)

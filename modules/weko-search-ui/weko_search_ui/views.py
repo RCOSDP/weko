@@ -85,6 +85,7 @@ blueprint_api = Blueprint(
 def search():
     """Index Search page ui."""
     search_type = request.args.get("search_type", WEKO_SEARCH_TYPE_DICT["FULL_TEXT"])
+    current_app.logger.error("hoge search_type:{}".format(search_type))
     get_args = request.args
     community_id = ""
     ctx = {"community": None}
