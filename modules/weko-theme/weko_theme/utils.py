@@ -270,7 +270,7 @@ class MainScreenInitDisplaySetting:
                 display_format = current_index.display_format
         if display_format == '2':
             display_number = 100
-
+        
         if not init_disp_index:
             # In case is not found the index
             # set main screen initial display to the default

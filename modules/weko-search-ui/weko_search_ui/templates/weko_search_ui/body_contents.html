@@ -258,6 +258,9 @@
         var url = new URL(location.href);
         var params = new URLSearchParams(url.search.slice(1));
         params.set('size', pagesize.value);
+        if(params.get('search_type') == null){
+          params.set('search_type', 2);
+        }
         location.href=location.pathname+"?"+params;
       };
     </script>

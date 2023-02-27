@@ -67,6 +67,7 @@ def index():
         current_i18n.language)
     page = None
     
+
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
         page=page,
