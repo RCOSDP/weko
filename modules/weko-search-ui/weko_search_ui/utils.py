@@ -1176,7 +1176,7 @@ def get_file_name(file_path):
     return file_path.split("/")[-1] if file_path.split("/")[-1] else ""
 
 
-def register_item_metadata(item, root_path, is_gakuninrdm=False):
+def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
     """Upload file content.
 
     :argument
@@ -1313,6 +1313,9 @@ def register_item_metadata(item, root_path, is_gakuninrdm=False):
                 new_data["deleted_items"] = deleted_items
 
     deposit.update(item_status, new_data)
+    deposit['_deposit']['owners'] = [int(owner)]
+    deposit['_deposit']['created_by'] = int(owner)
+    deposit['owner'] = str(owner)
     deposit.commit()
 
     feedback_mail_list = item["metadata"].get("feedback_mail_list")
@@ -1499,12 +1502,15 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
 
     """
 
+    owner = 1
+    if request_info and 'user_id' in request_info:
+        owner = request_info['user_id']
     if not request_info and request:
         request_info = {
             "remote_addr": request.remote_addr,
             "referrer": request.referrer,
             "hostname": request.host,
-            "user_id": 1
+            "user_id": owner
         }
 
     if not item:
@@ -1530,7 +1536,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                     PIDVersioning(child=pid).last_child.object_uuid
                 )
 
-            register_item_metadata(item, root_path, is_gakuninrdm)
+            register_item_metadata(item, root_path, owner, is_gakuninrdm)
             if not is_gakuninrdm:
                 if current_app.config.get("WEKO_HANDLE_ALLOW_REGISTER_CNRI"):
                     register_item_handle(item)
