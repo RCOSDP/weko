@@ -553,22 +553,15 @@ def get_site_info():
     result['favicon_name'] = site_info.favicon_name
     result['site_name'] = site_info.site_name
     result['notify'] = site_info.notify
-    try:
-        result['google_tracking_id_user'] = site_info.google_tracking_id_user
-    except BaseException:
-        result['google_tracking_id_user'] = current_app.get('GOOGLE_TRACKING_ID_USER','')
-
-    try:
-        result['addthis_user_id'] = site_info.addthis_user_id
-    except BaseException:
-        result['addthis_user_id'] = current_app.get('ADDTHIS_USER_ID',"")
-
+    result['google_tracking_id_user'] = site_info.google_tracking_id_user
+    result['addthis_user_id'] = site_info.addthis_user_id
+    
     if site_info.ogp_image and site_info.ogp_image_name:
         ts = time.time()
         result['ogp_image'] = request.host_url + \
             'api/admin/ogp_image'
         result['ogp_image_name'] = site_info.ogp_image_name
-    current_app.logger.error("result:{}".format(result))
+    
     return jsonify(result)
 
 

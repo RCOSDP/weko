@@ -667,8 +667,8 @@ def test_get_site_info(api,db,users,site_info,mocker):
         "favicon_name":"test favicon name2",
         "site_name":{"name":"name21"},
         "notify":{"name":"notify21"},
-        "google_tracking_id_user":"test_tracking_id",
-        "addthis_user_id":"ra-5d8af23e9a3a2633",
+        "google_tracking_id_user":None,
+        "addthis_user_id":None,
     }
     SiteInfo.query.delete()
     db.session.commit()
@@ -688,8 +688,8 @@ def test_get_site_info(api,db,users,site_info,mocker):
         "favicon_name":"test favicon name2",
         "site_name":{"name":"name21"},
         "notify":{"name":"notify21"},
-        "google_tracking_id_user":"",
-        "addthis_user_id":"",
+        "google_tracking_id_user":None,
+        "addthis_user_id":None,
     }
     res = api.get(url)
     assert response_data(res) == test
