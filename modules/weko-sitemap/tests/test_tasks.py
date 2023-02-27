@@ -1,9 +1,11 @@
 
 from flask import current_app
+from mock import patch
 from datetime import datetime
 from celery.worker.request import Request
 from weko_sitemap.tasks import link_success_handler,link_error_handler,update_sitemap
 
+# .tox/c1/bin/pytest --cov=weko_sitemap tests/test_tasks.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-sitemap/.tox/c1/tmp
 
 # def link_success_handler(retval):
 # .tox/c1/bin/pytest --cov=weko_sitemap tests/test_tasks.py::test_link_success_handler -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-sitemap/.tox/c1/tmp
@@ -80,15 +82,30 @@ def test_update_sitemap(app,db,mocker):
 
         
         current_app.config.update(
-            SITEMAP_MAX_URL_COUNT=10
+            SITEMAP_MAX_URL_COUNT=4
         )
         mock_send = mocker.patch("weko_sitemap.tasks.sitemap_page_needed.send")
         result,user_data = update_sitemap(start_time=start)
-        mock_send.assert_called_with(
-            current_app._get_current_object(),
-            page=1,
-            urlset=["http://test0.com","http://test1.com","http://test2.com","http://test3.com","http://test4.com","http://test5.com","http://test6.com","http://test7.com","http://test8.com","http://test9.com"]
-        )
-        assert result["total"] == 10
+        mock_send.assert_has_calls([
+            mocker.call(current_app._get_current_object(),page=1,urlset=["http://test0.com","http://test1.com","http://test2.com","http://test3.com"]),
+            mocker.call(current_app._get_current_object(),page=2,urlset=["http://test4.com","http://test5.com","http://test6.com","http://test7.com"]),
+            mocker.call(current_app._get_current_object(),page=3,urlset=["http://test8.com","http://test9.com"]),
+        ])
+        assert result["total"] == 4
         assert result["start_time"] == "2022-10-01T01:02:03"
         assert user_data == {"user_id":"System"}
+        
+        # raise StopIteration
+        def none_url():
+            for i in range(0,0):
+                yield "test{}".format(i)
+        with patch("weko_sitemap.ext.WekoSitemap._generate_all_item_urls",side_effect=none_url):
+            mock_send = mocker.patch("weko_sitemap.tasks.sitemap_page_needed.send")
+            result,user_data = update_sitemap(start_time=start)
+            mock_send.assert_called_with(
+                current_app._get_current_object(),
+                page=1,
+                urlset=[]
+            )
+            assert result["total"] == 0
+            assert user_data == {"user_id":"System"}

@@ -60,8 +60,6 @@ class SitemapSettingView(BaseView):
     @expose('/task_status/<string:task_id>', methods=['GET'])
     def get_task_status(self, task_id):
         """Get the status of the sitemap update task."""
-        if not task_id:
-            return abort(500)
 
         # TODO: Change the responses and the logic
         task_result = AsyncResult(task_id)
