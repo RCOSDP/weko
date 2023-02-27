@@ -490,6 +490,22 @@ msgstr ""
 msgid "Export"
 msgstr ""
 
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:508
+msgid "multiple_billing_file_error"
+msgstr "Can&#39;t register multiple files for the billing file."
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:510
+msgid "billing_file_display_type_error"
+msgstr "Preview can&#39;t be selected as the billing file display type."
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:512
+msgid "billing_file_role_duplication_error"
+msgstr "Can&#39;t set multiple prices on a role."
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:514
+msgid "billing_file_invalid_price_error"
+msgstr "Please enter a number for the price."
+
 #~ msgid "Author_Add_Author"
 #~ msgstr "Add Author"
 

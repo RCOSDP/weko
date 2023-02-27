@@ -709,6 +709,44 @@ def db_itemtype5(app, db):
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
 
+
+@pytest.fixture()
+def db_itemtype6(app):
+    item_type_name = ItemTypeName(id=6, name="テストアイテムタイプ6", has_site_license=True, is_active=True)
+
+    item_type_schema = dict()
+    with open("tests/data/itemtype5_schema.json", "r") as f:
+        item_type_schema = json.load(f)
+
+    item_type_form = dict()
+    with open("tests/data/itemtype5_form.json", "r") as f:
+        item_type_form = json.load(f)
+
+    item_type_render = dict()
+    with open("tests/data/itemtype5_render.json", "r") as f:
+        item_type_render = json.load(f)
+
+    item_type_mapping = dict()
+    with open("tests/data/itemtype5_mapping.json", "r") as f:
+        item_type_mapping = json.load(f)
+
+    item_type = ItemType(
+        id=6,
+        name_id=6,
+        harvesting_type=True,
+        schema=item_type_schema,
+        form=item_type_form,
+        render=item_type_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_mapping = ItemTypeMapping(id=6, item_type_id=6, mapping=item_type_mapping)
+
+    return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping": item_type_mapping}
+
+
 @pytest.fixture()
 def db_itemtype(app, db):
     item_type_name = ItemTypeName(id=1,

@@ -438,7 +438,21 @@ def test_replace_license_free(app,records):
 #     def set_message_for_file(p_file):
 #     def get_data_by_key_array_json(key, array_json, get_key):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_file_info_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_file_info_list(app,records):
+@pytest.mark.parametrize(
+    "id, result",
+    [
+        (0, True),
+        (1, True),
+        (2, True),
+        (3, True),
+        (4, True),
+        (5, True),
+        (6, True),
+        (7, True),
+        (8, True),
+    ],
+)
+def test_get_file_info_list(app,records,users,id,result,db_item_billing):
     indexer, results = records
     record = results[0]["record"]
     
@@ -1004,6 +1018,19 @@ def test_get_file_info_list(app,records):
         record["item_1617605131499"]["attribute_value_mlt"][0]['provide'] = [{"workflow": "workflow", "role": 1}]
         get_file_info_list(record)
 
+
+    with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+
+        # 47
+        with app.test_request_context(headers=[("Accept-Language", "en")]):
+            with open("tests/data/record_d.json","r") as f:
+                record_d = json.load(f)
+            with patch("weko_records_ui.utils.check_file_download_permission", return_value=True):
+                is_display_file_preview, files = get_file_info_list(record_d)
+                priceinfo = files[0]['priceinfo']
+                billing_file_permission = files[0]['billing_file_permission']
+                assert priceinfo[0]['has_role'] != None
+                assert billing_file_permission != None
 
 # def check_and_create_usage_report(record, file_object):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_check_and_create_usage_report -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

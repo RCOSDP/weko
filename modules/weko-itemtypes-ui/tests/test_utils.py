@@ -19,6 +19,7 @@ from weko_itemtypes_ui.utils import (
     update_text_and_textarea
 )
 
+from weko_itemtypes_ui.utils import check_duplicate_mapping, check_billing_file_property
 
 # def remove_xsd_prefix(jpcoar_lists):
 #     def remove_prefix(jpcoar_src, jpcoar_dst):
@@ -414,3 +415,17 @@ def test_update_text_and_textarea(client,db):
     ns,nf = update_text_and_textarea(item_type_id,new_schema,new_form)
     assert ns == {'properties': {'key1': {'properties': {'subitem_text_value': {'type': 'string', 'title': '値', 'format': 'text'}, 'subitem_text_language': {'type': ['null', 'string'], 'title': '言語', 'format': 'select', 'editAble': True}}}, 'key2': {'items': {'properties': {'subitem_text_value': {'type': 'string', 'title': '値', 'format': 'text'}, 'subitem_text_language': {'type': ['null', 'string'], 'title': '言語', 'format': 'select', 'editAble': True}}}, 'maxItems': 2}}}
     assert nf == [{'key': 'key1', 'items': [{'type': 'text', 'key': 'key1.subitem_text_value'}, {'type': 'select', 'key': 'key1.subitem_text_language'}]}]
+
+
+# def check_billing_file_property(form):
+#  .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_check_billing_file_property -v --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
+def test_check_billing_file_property(db_itemtype7, db_itemtype8):
+    item_type7 = db_itemtype7['item_type']
+    form7 = item_type7.form
+    result7 = check_billing_file_property(form7)
+    assert result7
+
+    item_type8 = db_itemtype8['item_type']
+    form8 = item_type8.form
+    result8 = check_billing_file_property(form8)
+    assert not result8

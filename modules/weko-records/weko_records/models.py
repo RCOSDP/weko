@@ -712,6 +712,39 @@ class ItemReference(db.Model, Timestamp):
             reference_type=reference_type).count() > 0
 
 
+class ItemBilling(db.Model, Timestamp):
+    """Model of billing file information"""
+
+    __tablename__ = 'item_billing'
+
+    item_id = db.Column(
+        db.Integer(),
+        primary_key=True,
+    )
+    """Item ID"""
+
+    role_id = db.Column(
+        db.Integer(),
+        db.ForeignKey(
+            'accounts_role.id',
+            name='fk_item_billing_role_id_accounts_role'
+        ),
+        primary_key=True,
+    )
+    """Role ID"""
+
+    include_tax = db.Column(
+        db.Boolean(),
+        default=False,
+    )
+    """Whether tax is included"""
+
+    price = db.Column(
+        db.Integer(),
+    )
+    """File price"""
+
+
 __all__ = (
     'Timestamp',
     'ItemType',
@@ -724,5 +757,6 @@ __all__ = (
     'SiteLicenseInfo',
     'SiteLicenseIpAddress',
     'FeedbackMailList',
-    'ItemReference'
+    'ItemReference',
+    'ItemBilling',
 )

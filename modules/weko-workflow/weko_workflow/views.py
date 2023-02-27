@@ -107,7 +107,7 @@ from .utils import IdentifierHandle, auto_fill_title, \
     save_activity_data, saving_doi_pidstore, \
     send_usage_application_mail_for_guest_user, set_files_display_type, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
-    validate_guest_activity_token
+    validate_guest_activity_token, create_or_update_item_billing
 
 workflow_blueprint = Blueprint(
     'weko_workflow',
@@ -1045,6 +1045,7 @@ def display_activity(activity_id="0"):
         term_and_condition_content=term_and_condition_content,
         user_profile=user_profile,
         form=form,
+        display_billing_file_flg=True,
         **ctx
     )
 
@@ -1596,6 +1597,8 @@ def next_action(activity_id='0', action_id=0):
         if new_activity_id is None:
             res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
             return jsonify(res.data), 500
+
+        create_or_update_item_billing(deposit)
 
         # Remove to file permission
         permission = FilePermission.find_by_activity(activity_id)
@@ -2680,6 +2683,15 @@ def get_data_init():
         init_workflows=init_workflows,
         init_roles=init_roles,
         init_terms=init_terms)
+
+
+@workflow_blueprint.route('/roles', methods=['GET'])
+def get_roles():
+    """Get roles."""
+    from weko_records_ui.utils import get_roles
+    roles = get_roles()
+    roles = [x for x in roles if type(x.get('id')) is int]
+    return jsonify(roles=roles)
 
 
 class ActivityActionResource(ContentNegotiatedMethodView):

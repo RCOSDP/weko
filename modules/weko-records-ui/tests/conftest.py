@@ -105,7 +105,7 @@ from weko_items_ui import WekoItemsUI
 from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
 from weko_records import WekoRecords
 from weko_records.api import ItemsMetadata
-from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList,SiteLicenseIpAddress
+from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList,SiteLicenseIpAddress,ItemBilling
 from weko_records.utils import get_options_and_order_list
 from weko_records_ui.config import WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,RECORDS_UI_ENDPOINTS,WEKO_RECORDS_UI_SECRET_KEY,WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN
 from weko_records_ui.models import PDFCoverPageSettings,FileOnetimeDownload, FilePermission
@@ -371,6 +371,7 @@ def users(app, db):
         generaluser = create_test_user(email="generaluser@test.org")
         originalroleuser = create_test_user(email="originalroleuser@test.org")
         originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
+        originalroleuser3 = create_test_user(email="originalroleuser3@test.org")
     else:
         user = User.query.filter_by(email="user@test.org").first()
         contributor = User.query.filter_by(email="contributor@test.org").first()
@@ -380,6 +381,7 @@ def users(app, db):
         generaluser = User.query.filter_by(email="generaluser@test.org")
         originalroleuser = create_test_user(email="originalroleuser@test.org")
         originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
+        originalroleuser3 = create_test_user(email="originalroleuser3@test.org")
 
     role_count = Role.query.filter_by(name="System Administrator").count()
     if role_count != 1:
@@ -463,6 +465,10 @@ def users(app, db):
         ds.add_role_to_user(originalroleuser, originalrole)
         ds.add_role_to_user(originalroleuser2, originalrole)
         ds.add_role_to_user(originalroleuser2, repoadmin_role)
+        ds.add_role_to_user(originalroleuser3, sysadmin_role)
+        ds.add_role_to_user(originalroleuser3, repoadmin_role)
+        ds.add_role_to_user(originalroleuser3, contributor_role)
+        ds.add_role_to_user(originalroleuser3, comadmin_role)
 
     return [
         {"email": contributor.email, "id": contributor.id, "obj": contributor},
@@ -481,6 +487,11 @@ def users(app, db):
             "obj": originalroleuser2,
         },
         {"email": user.email, "id": user.id, "obj": user},
+        {
+            "email": originalroleuser3.email,
+            "id": originalroleuser3.id,
+            "obj": originalroleuser3,
+        },
     ]
 
 
@@ -2051,4 +2062,19 @@ def db_admin_settings(db):
         db.session.add(AdminSettings(id=3,name='site_license_mail_settings',settings={"auto_send_flag": False}))
         db.session.add(AdminSettings(id=4,name='default_properties_settings',settings={"show_flag": True}))
         db.session.add(AdminSettings(id=5,name='item_export_settings',settings={"allow_item_exporting": True, "enable_contents_exporting": True}))
+        db.session.add(AdminSettings(id=6,name='billing_settings',settings={"tax_rate": 0.1, "currency_unit": "&yen;"}))
+        db.session.add(AdminSettings(id=7,name='proxy_settings',settings={"host": "", "port": "", "user": "", "password": "", "use_proxy": False}))
+        db.session.add(AdminSettings(id=8,name='repository_charge_settings',settings={"fqdn": "192.168.56.103", "user": "user", "sys_id": "sys", "password": "pass", "protocol": "http"}))
+    db.session.commit()
+
+
+@pytest.fixture()
+def db_item_billing(db):
+    with db.session.begin_nested():
+        db.session.add(ItemBilling(created=datetime(2022,12,13,2,30,30),updated=datetime(2022,12,13,2,30,30),item_id=1,role_id=1,include_tax=True,price=110))
+        db.session.add(ItemBilling(created=datetime(2022,12,13,2,30,30),updated=datetime(2022,12,13,2,30,30),item_id=1,role_id=2,include_tax=True,price=0))
+        db.session.add(ItemBilling(created=datetime(2022,12,13,2,30,30),updated=datetime(2022,12,13,2,30,30),item_id=2,role_id=1,include_tax=True,price=110))
+        db.session.add(ItemBilling(created=datetime(2022,12,13,2,30,30),updated=datetime(2022,12,13,2,30,30),item_id=2,role_id=2,include_tax=False,price=200))
+        db.session.add(ItemBilling(created=datetime(2022,12,13,2,30,30),updated=datetime(2022,12,13,2,30,30),item_id=2,role_id=3,include_tax=True,price=330))
+        db.session.add(ItemBilling(created=datetime(2022,12,13,2,30,30),updated=datetime(2022,12,13,2,30,30),item_id=2,role_id=4,include_tax=True,price=440))
     db.session.commit()
