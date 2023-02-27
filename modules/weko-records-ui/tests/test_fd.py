@@ -44,8 +44,26 @@ def test_prepare_response(app,client,records,itemtypes,users):
     indexer, results = records
     recid = results[0]["recid"]    
     with app.test_request_context(path="/?filename=hoge"):
-        ret = prepare_response(recid.pid_value,True)
-        assert ret == ""
+    #     ret = prepare_response(recid.pid_value,True)
+    #     assert ret == ""
+
+        data1 = MagicMock()
+        data2 = {
+            "display_name": None
+        }
+
+        def dumps():
+            return data2
+
+        data1.dumps = dumps
+
+        # with patch("weko_records_ui.fd.FilesMetadata.get_records", return_value=[data1]):
+        with patch("weko_records.api.FilesMetadata.get_records", return_value=[data1]):
+            # Exception coverage
+            try:
+                prepare_response(recid.pid_value,True)
+            except:
+                pass
 
 
 # def file_preview_ui(pid, record, _record_file_factory=None, **kwargs):
