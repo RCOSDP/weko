@@ -398,9 +398,17 @@ def get_path_name_dict(path_str=""):
 def gettitlefacet():
     """Soft getname Facet Search."""
     from weko_admin.utils import get_title_facets
-
-    titles, order = get_title_facets()
-    result = {"status": True, "data": {"titles": titles, "order": order}}
+    titles, order, uiTypes, isOpens, displayNumbers = get_title_facets()
+    result = {
+        "status": True,
+        "data": {
+            "titles": titles,
+            "order": order,
+            "uiTypes": uiTypes,
+            "isOpens": isOpens,
+            "displayNumbers": displayNumbers
+        }
+    }
     return jsonify(result), 200
 
 
