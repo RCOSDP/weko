@@ -190,40 +190,20 @@ require([
                 search = insertParam(search, "item_management", "delete");
                 window.location.href = "/admin/items/search" + search;
             } else {
-                search = search + getFacetParameter();
-                if(window.invenioSearchFunctions) {
-                  window.history.pushState(null,document.title,"/search" + search);
-                  window.invenioSearchFunctions.reSearchInvenio();
-                }else {
-                    window.location.href = "/search" + search;
-                }
+                let searchParam = new URLSearchParams(sessionStorage.getItem('weko_search_param') != null ?
+                sessionStorage.getItem('weko_search_param') : window.location.search);
+
+                let appendSearchParam = new URLSearchParams(search);
+                searchParam.set('search_type', appendSearchParam.get('search_type'));
+                searchParam.set('q', appendSearchParam.get('q'));
+
+                sessionStorage.setItem('weko_search_param', searchParam.toString());
+                window.invenioSearchFunctions.reSearchInvenio();
             }
 
             // stop the form from submitting the normal way and refreshing the page
             event.preventDefault();
         })
-    }
-
-    /**
-     * Returns faceted search parameters.
-     * This function was created for the purpose of giving faceted search parameters to simple searches.
-     * Returns parameters for faceted searches from existing URLs, excluding simple, advanced, and INDEX searches.
-     * 
-     * @returns Faceted search parameters.
-     */
-    function getFacetParameter() {
-        let result = "";
-        let params = window.location.search.substring(1).split('&');
-        const conds = ['page', 'size', 'sort', 'timestamp', 'search_type', 'q', 'title', 'creator', 'date_range1_from', 'date_range1_to','time'];
-        for (let i = 0; i < params.length; i++) {
-            var keyValue = decodeURIComponent(params[i]).split('=');
-            var key = keyValue[0];
-            var value = keyValue[1];
-            if(key && !conds.includes(key) && !key.startsWith("text")) {
-                result += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(value);
-            }
-        }
-        return result;
     }
 
     function insertParam(search, key, value) {
@@ -357,7 +337,9 @@ require([
         // 詳細検索ボタン：入力値をseesionStorageに保存する
         $('#detail-search-btn').on('click', function () {
             sessionStorage.setItem('btn', 'detail-search');
-            SearchSubmit();
+            //SearchSubmit();
+            window.invenioSearchFunctions.reSearchInvenio();
+            event.preventDefault();
         });
 
         // 詳細検索ボタン：フォームのテキスト入力でエンターキーを押したら検索する

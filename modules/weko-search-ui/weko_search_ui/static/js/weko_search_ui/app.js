@@ -346,29 +346,34 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
 
   // Check all records for restricted content
   $scope.$on('invenio.search.finished', function (evt) {
+    console.log("=== invenio.search.finished ");
     $scope.getPathName();
     $rootScope.display_comment_jounal();
+    if(sessionStorage.getItem('weko_search_param') &&
+      window.facetSearchFunctions && window.facetSearchFunctions.useFacetSearch()) {
+        console.log("=== resetFacetData ");
+        window.facetSearchFunctions.resetFacetData(evt.targetScope.vm.invenioSearchResults.aggregations);
+    }
   });
 
   $scope.reSearchInvenio = () => {
-    let search = new URLSearchParams(window.location.search);
+    console.log("============ $scope.reSearchInvenio ");
+    let search = new URLSearchParams(sessionStorage.getItem('weko_search_param') != null ?
+    sessionStorage.getItem('weko_search_param') : window.location.search);
+
     //TODO PAGE と TimeStampを入れ替える。
     search.set('page','1');
     search.set('size', $scope.vm.invenioSearchArgs.size);
     search.set('timestamp',Date.now().toString());
+    sessionStorage.setItem('weko_search_param', search.toString());
 
     window.history.pushState(null,document.title,"/search?" + search);
     let url = search.get('search_type') == 2 ? "/api/index/" : "/api/records/";
-
-    if(window.facetSearchFunctions && window.facetSearchFunctions.useFacetSearch()) {
-      window.facetSearchFunctions.resetFacetData();
-    }
 
     $scope.$apply(function() {
       $scope.vm.invenioSearchCurrentArgs.url = url;
       $scope.vm.invenioSearchArgs.page = 1;
       $scope.vm.invenioSearchLoading = true;
-      $scope.vm.invenioSearchCurrentArgs.params = search;
       $scope.vm.invenioSearchHiddenParams = [];
     })
   }

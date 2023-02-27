@@ -301,14 +301,14 @@
                 } else if (angular.element('#item_management_bulk_delete').length != 0) {
                     url = '/admin/items' + url + '&item_management=delete';
                 } else {
-                    url += getFacetParameter();
-                    url = url.replace(/\+/g, encodeURIComponent('+'))
-                    if(window.invenioSearchFunctions) {
-                      window.history.pushState(null,document.title,url);
-                      window.invenioSearchFunctions.reSearchInvenio();
-                    }else {
-                        window.location.href = url;
+                    let searchParam = new URLSearchParams(sessionStorage.getItem('weko_search_param') != null ?
+                    sessionStorage.getItem('weko_search_param') : window.location.search);
+
+                    for(var entry of new URLSearchParams(query_str).entries()) {
+                        searchParam.set(entry[0], entry[1]);
                     }
+                    sessionStorage.setItem('weko_search_param', searchParam.toString());
+
                     return;
                 }
 
@@ -420,27 +420,5 @@
         );
         angular.bootstrap(
             document.getElementById('search_detail'), ['searchDetailModule']);
-        
-        /**
-         * Returns faceted search parameters.
-         * This function was created for the purpose of providing faceted search parameters for detailed search.
-         * Returns parameters for faceted searches from existing URLs, excluding simple, advanced, and INDEX searches.
-         * 
-         * @returns Faceted search parameters.
-         */
-        function getFacetParameter() {
-            let result = "";
-            let params = window.location.search.substring(1).split('&');
-            const conds = ['page', 'size', 'sort', 'timestamp', 'search_type', 'q', 'title', 'creator', 'date_range1_from', 'date_range1_to','time'];
-            for (let i = 0; i < params.length; i++) {
-                var keyValue = decodeURIComponent(params[i]).split('=');
-                var key = keyValue[0];
-                var value = keyValue[1];
-                if(key && !conds.includes(key) && !key.startsWith("text")) {
-                    result += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(value);
-                }
-            }
-            return result;
-        }
     });
 })(angular);
