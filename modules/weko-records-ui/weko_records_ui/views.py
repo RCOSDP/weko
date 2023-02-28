@@ -59,6 +59,7 @@ from weko_records.serializers.utils import get_mapping
 from weko_records.utils import custom_record_medata_for_export, \
     remove_weko2_special_character, selected_value_by_language
 from weko_search_ui.api import get_search_detail_keyword
+from weko_user_profiles.models import UserProfile
 from weko_workflow.api import WorkFlow
 
 from weko_records_ui.fd import add_signals_info
@@ -705,8 +706,12 @@ def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord,
     if not _get_show_secret_url_button(record ,filename):
         abort(403)
 
+    userprof:UserProfile = UserProfile.get_by_userid(current_user.id)
+    restricted_fullname = userprof._displayname or '' if userprof else ''
+    restricted_data_name = record.get('item_title','')
+
     #generate url and regist db(FileSecretDownload)
-    result = create_secret_url(pid.pid_value,filename,current_user.email)
+    result = create_secret_url(pid.pid_value,filename,current_user.email , restricted_fullname , restricted_data_name)
     
     #send mail
     mail_pattern_name:str = current_app.config.get('WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL')
