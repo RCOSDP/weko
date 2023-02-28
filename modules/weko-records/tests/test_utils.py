@@ -668,6 +668,90 @@ def test_get_attribute_value_all_items(app):
     res = get_attribute_value_all_items('item_1', _nlst, _klst)
     assert res==[[[[{'en_item_1_title': 'en_value'}], [{'en_item_1_lang': 'en'}]]], [[[{'en_item_1_title': 'ja_value'}], [{'en_item_1_lang': 'ja'}]]]]
 
+    _nlst = [
+        {
+            'subitem_1': 'en_value',
+            'subitem_1_lang': 'en',
+            'creatorMail': "test_creatorMail",
+        },
+        {
+            'subitem_1': 'ja_value',
+            'subitem_1_lang': 'ja',
+            'creatorMail': "test_creatorMail",
+        },
+        {
+            'subitem_1': 'ja_value',
+            'subitem_1_lang': ['ja'],
+            'creatorMail': "test_creatorMail",
+        },
+        {
+            'subitem_1': 'ja_value',
+            'subitem_1_lang': {"ja": "ja"},
+            'creatorMail': "test_creatorMail",
+        },
+        {
+            'subitem_1': 'ja_value',
+            'subitem_1_lang': {"ja": "ja"},
+            'creatorMail': "test_creatorMail",
+        },
+    ]
+
+    _klst = [
+        [
+            "item_1.subitem_1_lang",
+            "item_1_title",
+            "en_item_1_title",
+            {
+                "required": False,
+                "show_list": False,
+                "specify_newline": False,
+                "hide": False,
+                "non_display": False,
+            },
+            "",
+        ],
+        [
+            "creatorMail.mail",
+            "item_1_title",
+            "en_item_1_title",
+            {
+                "required": False,
+                "show_list": False,
+                "specify_newline": False,
+                "hide": False,
+                "non_display": False,
+            },
+            "",
+        ],
+        [
+            "creatorMail.nameIdentifier",
+            "item_1_lang",
+            "en_item_1_lang",
+            {
+                "required": False,
+                "show_list": False,
+                "specify_newline": False,
+                "hide": False,
+                "non_display": False,
+            },
+            "",
+        ],
+    ]
+
+    app.config["WEKO_RECORDS_TIME_PERIOD_TITLES"] = ["item_1_title", "item_1_lang"]
+
+    get_attribute_value_all_items(
+        'item_1',
+        _nlst,
+        _klst,
+        is_author=False,
+        hide_email_flag=True,
+        non_display_flag=False,
+        one_line_flag=True,
+    )
+    raise BaseException
+
+
 # def check_input_value(old, new):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_check_input_value -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_check_input_value():
@@ -762,6 +846,24 @@ def test_check_to_upgrade_version(app):
     res = check_to_upgrade_version(_old_render, _new_render)
     assert res==True
 
+    _old_render = {
+        'meta_list': {"1": 1},
+    }
+    _new_render = {
+        'meta_list': {"2": 2},
+    }
+
+    res = check_to_upgrade_version(_old_render, _new_render)
+    assert res == True
+
+    _new_render = {
+        'meta_list': {"1": 1},
+    }
+
+    with patch("weko_records.utils.check_input_value", return_value=True):
+        res = check_to_upgrade_version(_old_render, _new_render)
+        assert res == True
+
 # def remove_weko2_special_character(s: str):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_remove_weko2_special_character -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_remove_weko2_special_character():
@@ -770,6 +872,10 @@ def test_remove_weko2_special_character():
     assert remove_weko2_special_character("HOGE,&EMPTY&")=="HOGE"
     assert remove_weko2_special_character("&EMPTY&,HOGE")=="HOGE"
     assert remove_weko2_special_character("HOGE,&EMPTY&,HOGE")=="HOGE,,HOGE"
+
+    with patch("re.sub", return_value=","):
+        assert remove_weko2_special_character(",,,,") == None
+        raise BaseException
 
 #     def __remove_special_character(_s_str: str):
 
@@ -790,6 +896,18 @@ def test_selected_value_by_language(app, meta):
     app.config['WEKO_RECORDS_UI_LANG_DISP_FLG'] = True
     res = selected_value_by_language(['en'], ['Creator'], _lang_id, _val_id, 'en', meta[0])
     assert res=='Creator'
+
+    with patch("weko_records.utils.check_info_in_metadata", return_value="en"):
+        res = selected_value_by_language(["ja-Latn"], ['ja-Latn'], _lang_id, _val_id, 'en', meta[0])
+        assert res=='en'
+
+def test_selected_value_by_language_2(app, meta):
+    _lang_id = 'item_1551264308487.subitem_15512556481122'
+    _val_id = 'item_1551264308487.subitem_15512556472252'
+
+    with patch("weko_records.utils.check_info_in_metadata", return_value="en"):
+        res = selected_value_by_language(["en"], ['ja'], _lang_id, _val_id, 'ja', meta[0])
+        assert res=='en'
 
 # def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_check_info_in_metadata -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -1162,6 +1280,10 @@ def test_get_author_has_language(app):
     
     res = get_author_has_language(_create, {}, 'en', ['affiliationName2', 'af_lang2'])
     assert res=={}
+
+    with patch("weko_records.utils.get_value_by_selected_lang", return_value="test"):
+        res = get_author_has_language(_create, {}, 'en', ['test1', 'test1'])
+        assert res=={}
 
 # def add_author(author_data, stt_key, is_specify_newline_array, s, value, data_result, is_specify_newline, is_hide, is_show_list):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_add_author -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
