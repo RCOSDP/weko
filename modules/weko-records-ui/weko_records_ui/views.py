@@ -706,8 +706,12 @@ def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord,
     if not _get_show_secret_url_button(record ,filename):
         abort(403)
 
+    userprof:UserProfile = UserProfile.get_by_userid(current_user.id)
+    restricted_fullname = userprof._displayname or '' if userprof else ''
+    restricted_data_name = record.get('item_title','')
+
     #generate url and regist db(FileSecretDownload)
-    result = create_secret_url(pid.pid_value,filename,current_user.email)
+    result = create_secret_url(pid.pid_value,filename,current_user.email , restricted_fullname , restricted_data_name)
     
     #send mail
     mail_pattern_name:str = current_app.config.get('WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL')

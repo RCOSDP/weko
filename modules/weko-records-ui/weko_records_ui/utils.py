@@ -1518,7 +1518,7 @@ def get_google_detaset_meta(record,record_tree=None):
 
     return json.dumps(res_data, ensure_ascii=False)
 
-def create_secret_url(record_id:str ,file_name:str ,user_mail:str) -> dict:
+def create_secret_url(record_id:str ,file_name:str ,user_mail:str ,restricted_fullname='',restricted_data_name='') -> dict:
     """
     Save in FileSecretDownload
     and Generate Secret Download URL.
@@ -1527,6 +1527,8 @@ def create_secret_url(record_id:str ,file_name:str ,user_mail:str) -> dict:
         str :record_id:
         str :file_name:
         str :user_mail
+        str :restricted_fullname  :embed mail string
+        str :restricted_data_name :embed mail string
     Return: 
         dict: created info 
     """
@@ -1548,6 +1550,8 @@ def create_secret_url(record_id:str ,file_name:str ,user_mail:str) -> dict:
         "restricted_download_count":"",
         "restricted_download_count_ja":"",
         "restricted_download_count_en":"",
+        "restricted_fullname" :restricted_fullname,
+        "restricted_data_name" :restricted_data_name,
     }
     retrun_dict["mail_recipient"] = one_time_obj.user_mail
     retrun_dict["restricted_download_link"] = secret_file_url
@@ -1659,7 +1663,7 @@ def validate_secret_download_token(
             return False, token_invalid
         try:
             expiration_date = timedelta(secret_download.expiration_date)
-            download_date = secret_download.created + expiration_date
+            download_date = secret_download.created.date() + expiration_date
             current_date = dt.utcnow().date()
             if current_date > download_date:
                 return False, _(
