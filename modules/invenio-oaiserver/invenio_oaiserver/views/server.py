@@ -33,9 +33,10 @@ blueprint = Blueprint(
 @blueprint.errorhandler(422)
 def validation_error(exception):
     """Return formatter validation error."""
-    messages = getattr(exception, 'messages', None)
-    if messages is None:
-        messages = getattr(exception, 'data', {'messages': None})['messages']
+    messages = getattr(exception, 'messages', [])
+    if not messages:
+        messages = getattr(exception, 'data', {'messages': []})['messages']
+
 
     def extract_errors():
         """Extract errors from exception."""

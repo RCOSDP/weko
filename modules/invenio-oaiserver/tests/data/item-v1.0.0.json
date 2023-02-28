@@ -132,9 +132,6 @@
             }
           }
         },
-        "relation_version_is_last" : {
-          "type" : "boolean"
-        },
         "control_number": {
           "type": "keyword",
           "index": true

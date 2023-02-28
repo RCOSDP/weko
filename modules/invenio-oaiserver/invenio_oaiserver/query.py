@@ -111,14 +111,13 @@ def get_records(**kwargs):
         index_ids = index_ids_has_future_date()
         records = get_records_has_doi()
         for record in records:
-            if record is RecordMetadata:
-                paths = record.json.get('path', [])
-                for path in paths:
-                    if path in index_ids:
-                        query = query.post_filter(
-                            'bool',
-                            **{'must_not': [
-                                {'term': {'_id': str(record.id)}}]})
+            paths = record.json.get('path', [])
+            for path in paths:
+                if path in index_ids:
+                    query = query.post_filter(
+                        'bool',
+                        **{'must_not': [
+                            {'term': {'_id': str(record.id)}}]})
 
     page_ = kwargs.get('resumptionToken', {}).get('page', 1)
     size_ = current_app.config['OAISERVER_PAGE_SIZE']

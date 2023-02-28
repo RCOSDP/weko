@@ -1,5 +1,4 @@
 
-from invenio_db import db
 
 from invenio_oaiserver.models import Identify
 
