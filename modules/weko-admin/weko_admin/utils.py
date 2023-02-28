@@ -491,6 +491,59 @@ def write_report_file_rows(writer, records, file_type=None, other_info=None):
                                  record.get('file_preview')])
 
 
+def package_site_access_stats_file(stats, agg_date):
+    """Package the tsv files into one zip file."""
+
+    from .config import WEKO_ADMIN_OUTPUT_FORMAT
+
+    zip_stream = BytesIO()
+    try:
+        # Create file name
+        file_format = WEKO_ADMIN_OUTPUT_FORMAT.lower()
+        file_name = 'SiteAccess_' + agg_date + '.' + file_format
+
+        # Create stats file
+        stream = make_site_access_stats_file(stats, agg_date)
+
+        # Package zip file
+        report_zip = zipfile.ZipFile(zip_stream, 'w')
+        report_zip.writestr(file_name, stream.getvalue().encode('utf-8-sig'))
+        report_zip.close()
+    except Exception as e:
+        current_app.logger.error('Unexpected error: ', e)
+        raise
+
+    return zip_stream
+
+
+def make_site_access_stats_file(stats, agg_date):
+    """Make tsv site access report file for 1 organization."""
+
+    from .config import WEKO_ADMIN_REPORT_HEADERS, \
+                        WEKO_ADMIN_OUTPUT_FORMAT, \
+                        WEKO_ADMIN_REPORT_COLS
+
+    file_type = 'site_access'
+    header_row = WEKO_ADMIN_REPORT_HEADERS.get(file_type)
+
+    file_output = StringIO()
+    file_format = WEKO_ADMIN_OUTPUT_FORMAT.lower()
+    file_delimiter = '\t' if file_format == 'tsv' else ','
+    writer = csv.writer(file_output, delimiter=file_delimiter, lineterminator="\n")
+
+    writer.writerows([[header_row],
+                      [_('Aggregation Month'), agg_date],
+                      ['']])
+
+    cols = WEKO_ADMIN_REPORT_COLS.get(file_type, [])
+    cols = [[_('Institution Name')] + cols]
+    writer.writerows(cols)
+
+    write_report_file_rows(writer, [stats], file_type)
+
+    return file_output
+
+
 def reset_redis_cache(cache_key, value, ttl=None):
     """Delete and then reset a cache value to Redis."""
     try:
