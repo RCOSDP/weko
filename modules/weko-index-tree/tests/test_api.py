@@ -429,10 +429,10 @@ def test_indexes_get_index_tree(i18n_app, db, users, test_indices):
 
         # get_index_by_all_name
         res = Indexes.get_index_by_all_name()
-        assert res==None
+        assert res==[]
         res = Indexes.get_index_by_all_name("Test index 1")
-        assert res.id==1
-        assert res.index_name=='Test index 1'
+        assert res[0].id==1
+        assert res[0].index_name=='Test index 1'
 
         # get_root_index_count
         res = Indexes.get_root_index_count()
