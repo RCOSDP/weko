@@ -124,7 +124,8 @@ from weko_workflow.utils import (
     get_current_date,
     update_system_data_for_item_metadata,
     update_approval_date_for_deposit,
-    update_system_data_for_activity
+    update_system_data_for_activity,
+    make_activitylog_tsv
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
 from weko_workflow.models import Activity
@@ -2652,3 +2653,15 @@ def test_get_index_id():
     # else:
     #     index_tree_id = None
     raise BaseException
+
+def test_make_activitylog_tsv(db_register,db_records):
+    """test make_activitylog_tsv"""
+    activity = Activity()
+    activities = []
+    activities.append(activity.query.filter_by(activity_id='2'))
+    activities.append(activity.query.filter_by(activity_id='3'))
+    
+
+    output_tsv = make_activitylog_tsv(activities)
+    assert isinstance(output_tsv,str)
+    assert len(output_tsv.splitlines()) == 3

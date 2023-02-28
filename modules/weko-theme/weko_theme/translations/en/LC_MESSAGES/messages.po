@@ -946,3 +946,12 @@ msgstr "Restricted Access"
 msgid "Admin menu_Setting_Faceted Search"
 msgstr "Faceted Search"
 
+#: weko_admin/
+#: msgid "Maintenance"
+msgid "Admin menu_Maintenance"
+msgstr "Maintenance"
+
+#: weko_admin/
+#: msgid "ElasticSearch Index"
+msgid "Admin menu_Maintenance_ElasticSearch Index"
+msgstr "ElasticSearch Index"
