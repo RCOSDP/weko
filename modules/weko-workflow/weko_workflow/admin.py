@@ -84,6 +84,10 @@ class FlowSettingView(BaseView):
         workflow = Flow()
         flow = workflow.get_flow_detail(flow_id)
         specified_properties = self.get_specified_properties()
+
+        if not self._check_auth(flow_id) :
+            abort(403)
+
         return self.render(
             'weko_workflow/admin/flow_detail.html',
             flow_id=flow_id,
@@ -131,6 +135,8 @@ class FlowSettingView(BaseView):
     @expose('/<string:flow_id>', methods=['POST'])
     def new_flow(self, flow_id='0'):
         if flow_id != '0':
+            if not self._check_auth(flow_id) :
+                abort(403)
             return self.update_flow(flow_id)
 
         post_data = request.get_json()
@@ -151,6 +157,9 @@ class FlowSettingView(BaseView):
         if '0' == flow_id:
             return jsonify(code=500, msg='No data to delete.',
                            data={'redirect': url_for('flowsetting.index')})
+        
+        if not self._check_auth(flow_id) :
+            abort(403)
 
         code = 0
         msg = ''
@@ -186,6 +195,8 @@ class FlowSettingView(BaseView):
     @expose('/action/<string:flow_id>', methods=['POST'])
     def upt_flow_action(self, flow_id=0):
         """Update FlowAction Info."""
+        if not self._check_auth(str(flow_id)) :
+            abort(403)
         actions = request.get_json()
         workflow = Flow()
         workflow.upt_flow_action(flow_id, actions)
@@ -201,6 +212,28 @@ class FlowSettingView(BaseView):
             msg=_('Updated flow action successfully'),
             actions=actions)
 
+    @staticmethod
+    def _check_auth(flow_id:str ):
+        """  
+        if the flow is used in open_restricted workflow , 
+        the flow can Update by System Administrator.
+
+        Args FlowDefine
+        """
+        if flow_id == '0':
+            return True
+
+        flow = Flow().get_flow_detail(flow_id)
+        is_sysadmin = False
+        for r in current_user.roles:
+            if r.name in current_app.config['WEKO_SYS_USER']:
+                is_sysadmin =True
+                break
+        if not is_sysadmin :
+            wfs:list = WorkFlow().get_workflow_by_flow_id(flow.id)
+            if 0 < len(list(filter(lambda wf : wf.open_restricted ,wfs ))):
+                return False
+        return True
 
 class WorkFlowSettingView(BaseView):
     MULTI_LANGUAGE = {
