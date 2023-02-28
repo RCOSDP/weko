@@ -346,8 +346,6 @@ def add_signals_info(record, obj):
         user_groups = Group.query_by_user(current_user).all()
         if len(current_user.roles) == 0:
             userrole = 'user'
-        elif len(current_user.roles) == 1:
-            userrole = current_user.roles[0].name
         else:
             if obj.is_billing_item:
                 userrole, billing_file_price = get_billing_role(record)

@@ -349,7 +349,7 @@ class QueryFileReportsHelper(object):
                 data_list.update({item['cur_user_id']: data})
 
     @classmethod
-    def Calculation(cls, res, data_list, event=None, all_groups=set()):
+    def Calculation(cls, res, data_list, all_groups=set(), event=None):
         """Calculation."""
         if 'buckets' in res and res['buckets'] is not None:
             if event == 'billing_file_download':

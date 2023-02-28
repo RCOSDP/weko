@@ -31,7 +31,7 @@ from elasticsearch_dsl import Q
 from flask import abort, current_app, json, request
 from flask_babelex import gettext as _
 from flask_babelex import to_utc
-from flask_login import current_user
+from flask_security import current_user
 from invenio_accounts.models import Role
 from invenio_cache import current_cache
 from invenio_db import db
@@ -1512,26 +1512,31 @@ def get_billing_role(record: Dict) -> Tuple[str, str]:
         tuple[str, str]: role, price(min)
     """
     user_roles = current_user.roles
+    user_role_ids = [role.id for role in user_roles]
+
+    price_info_key = 'priceinfo'
 
     billing_role_key = 'billingrole'
     billing_price_key = 'price'
 
     min_price_info = None
+    role_prices = []
     for _, value in record.items():
         if not isinstance(value, dict):
             continue
 
         if value.get('attribute_type') == 'file':
-            attribute_value_mlt = value.get('attribute_value_mlt')
-            if attribute_value_mlt is None:
-                continue
+            for file_item in value.get('attribute_value_mlt', []):
+                price_info = file_item.get(price_info_key, [])
+                role_prices.extend([role_price for role_price in price_info \
+                                    if int(role_price.get(billing_role_key, '-1')) in user_role_ids \
+                                        and billing_price_key in role_price.keys()])
 
-            price_info = attribute_value_mlt.get(billing_role_key, [])
-            price_info_filtered = [info for info in price_info \
-                                   if price_info.get() in user_roles and billing_price_key in price_info.keys()]
-            if len(price_info_filtered) > 0:
-                min_price_info = min(price_info_filtered, lambda info: info[billing_price_key])
+    if len(role_prices) > 0:
+        min_price_info = min(role_prices, key=lambda info: int(info[billing_price_key]))
 
-    if min_price_info is None:
+    if min_price_info is None or billing_role_key not in min_price_info.keys():
         return 'guest', ''
-    return min_price_info.get(billing_role_key, 'guest'), min_price_info.get(billing_price_key, '')
+
+    min_role = Role.query.get(int(min_price_info.get(billing_role_key)))
+    return min_role.name, min_price_info.get(billing_price_key, '')
