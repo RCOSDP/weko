@@ -617,6 +617,100 @@ async def test_sort_meta_data_by_options_no_item_type_id(i18n_app, db, admin_set
 #         def append_parent_key_for_list(parent_key, attr_val_mlt):
 #     def get_title_option(solst_dict_array):
 
+@pytest.mark.asyncio
+async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
+    record_hit = {
+        "_source":{
+            "item_item_id":"",
+            "_item_metadata":{}
+        }
+    }
+    _item_type_name=ItemTypeName(name="test")
+    item_type=ItemTypes.create(
+        name="test",
+        item_type_name=_item_type_name,
+        schema={},
+        render={},
+        form={},
+        tag=1
+    )
+    item_type_mapping=Mapping.create(
+        item_type_id=item_type.id,
+        mapping={}
+    )
+    settings = AdminSettings.get("items_display_settings")
+    
+    data1 = {
+        "key1.@attributes.xml:lang": "test",
+    }
+
+    data2 = MagicMock()
+    data2.model = MagicMock()
+    data2.model.form = {
+        "key": "item_type_id",
+        "title": "title_9999",
+    }
+    data2.model.render = {
+        "meta_fix": {
+            "meta_fix_9999": "meta_fix_9999",
+            "item_type_id": {
+                "option": None,
+            },
+        },
+        "meta_list": {
+            "meta_list_9999": "meta_list_9999",
+        }
+    } 
+    
+    with patch("weko_records.serializers.utils.get_mapping", return_value=data1):
+        with patch("weko_search_ui.utils.get_data_by_property", return_value=("1", "2")):
+            await sort_meta_data_by_options(record_hit,settings,item_type_mapping,item_type)
+
+            record_hit_2 = {
+                "_source": {
+                    "item_item_id": "8888",
+                    "_item_metadata": {
+                        "item_type_id": {
+                            "attribute_value_mlt": [{
+                                "url": {
+                                    "label": "label_9999",
+                                },
+                                "filename": "filename_9999",
+                                "version_id": "version_id_9999",
+                            }],
+                            "attribute_type": "file"
+                        },
+                    }
+                }
+            }
+
+            data2.model.render["meta_fix"]["item_type_id"]["option"] = {
+                "showlist": True,
+                "hidden": False,
+            }
+
+            await sort_meta_data_by_options(
+                record_hit=record_hit_2,
+                settings=settings,
+                item_type_mapping=item_type_mapping,
+                item_type_data=data2
+            )
+
+            # coverage
+            # 806    if ojson is None:
+            # 807        ojson = ItemTypes.get_record(item_type_id)
+            try:
+                await sort_meta_data_by_options(
+                    record_hit=record_hit_2,
+                    settings=settings,
+                    item_type_mapping=item_type_mapping,
+                    item_type_data=None
+                )
+            except:
+                pass
+    
+    raise BaseException
+
 # def get_keywords_data_load(str):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_keywords_data_load -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_get_keywords_data_load(app, db, item_type, item_type2):
@@ -633,6 +727,7 @@ def test_is_valid_openaire_type(app, db):
     assert str(e.value)=="name 'current_openaire' is not defined"
     res = is_valid_openaire_type({}, [])
     assert res==True
+
 
 # def check_has_attribute_value(node):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_check_has_attribute_value -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -691,7 +786,18 @@ def test_get_attribute_value_all_items(app):
         },
         {
             'subitem_1': 'ja_value',
-            'subitem_1_lang': {"ja": "ja"},
+            'subitem_1_lang': {
+                "item_name": "Language",
+                "non_display": "non_display",
+            },
+            'creatorMail': "test_creatorMail",
+        },
+        {
+            'subitem_1': 'ja_value',
+            'subitem_1_lang': {
+                "item_name": "Event",
+                "non_display": "non_display",
+            },
             'creatorMail': "test_creatorMail",
         },
     ]
@@ -699,14 +805,14 @@ def test_get_attribute_value_all_items(app):
     _klst = [
         [
             "item_1.subitem_1_lang",
-            "item_1_title",
+            "Event",
             "en_item_1_title",
             {
                 "required": False,
                 "show_list": False,
                 "specify_newline": False,
                 "hide": False,
-                "non_display": False,
+                "non_display": "AAAA",
             },
             "",
         ],
@@ -719,7 +825,7 @@ def test_get_attribute_value_all_items(app):
                 "show_list": False,
                 "specify_newline": False,
                 "hide": False,
-                "non_display": False,
+                "non_display": "BBBB",
             },
             "",
         ],
@@ -732,7 +838,7 @@ def test_get_attribute_value_all_items(app):
                 "show_list": False,
                 "specify_newline": False,
                 "hide": False,
-                "non_display": False,
+                "non_display": "CCCC",
             },
             "",
         ],
@@ -749,8 +855,8 @@ def test_get_attribute_value_all_items(app):
         non_display_flag=False,
         one_line_flag=True,
     )
-    raise BaseException
 
+    raise BaseException
 
 # def check_input_value(old, new):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_check_input_value -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
