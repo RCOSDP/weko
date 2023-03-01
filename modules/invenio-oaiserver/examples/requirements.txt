@@ -7,7 +7,8 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 invenio-db>=1.0.0b2
-invenio-indexer>=1.0.0a7
 invenio-pidstore>=1.0.0a9
 invenio-records>=1.0.0a17
 invenio-search>=1.0.0a7
+
+-e ../invenio-indexer

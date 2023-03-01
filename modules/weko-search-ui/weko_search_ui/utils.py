@@ -59,6 +59,7 @@ from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import Record
+from invenio_records.models import RecordMetadata
 from invenio_records_rest.errors import InvalidQueryRESTError
 from invenio_search import RecordsSearch
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
@@ -87,6 +88,7 @@ from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_mapping
+from weko_records_ui.utils import soft_delete
 from weko_redis.redis import RedisConnection
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import (
@@ -225,28 +227,34 @@ def delete_records(index_tree_id, ignore_items):
 
         if record and record["path"] and pid not in ignore_items:
             paths = record["path"]
+            del_flag = False
             if len(paths) > 0:
                 # Remove the element which matches the index_tree_id
                 removed_path = None
                 for index_id in paths:
                     if index_id == str(index_tree_id):
                         removed_path = index_id
-                        paths.remove(index_id)
+                        if len(paths) == 1:
+                            del_flag = True
+                            pass
+                        else:
+                            paths.remove(index_id)
                         break
 
-                # Do update the path on record
-                record.update({"path": paths})
-                record.commit()
-                db.session.commit()
-
-                # Indexing
+                
                 indexer = WekoIndexer()
-                indexer.update_path(record, update_revision=False)
 
-                if len(paths) == 0 and removed_path is not None:
-                    WekoDeposit.delete_by_index_tree_id(removed_path, ignore_items)
-                    Record.get_record(recid).delete()  # flag as deleted
-                    db.session.commit()  # terminate the transaction
+                if not del_flag:
+                    # Do update the path on record
+                    record.update({"path": paths})
+                    # Update to ES
+                    indexer.update_es_data(record, update_revision=False)
+                    record.commit()
+                    db.session.commit()
+                elif del_flag and removed_path is not None:
+                    soft_delete(pid)
+                else:
+                    pass
 
                 result.append(pid)
 
@@ -1365,7 +1373,7 @@ def update_publish_status(item_id, status):
     record["publish_status"] = status
     record.commit()
     indexer = WekoIndexer()
-    indexer.update_publish_status(record)
+    indexer.update_es_data(record, update_revision=False, field='publish_status')
 
 
 def handle_workflow(item: dict):
@@ -3322,10 +3330,15 @@ def export_all(root_url, user_id, data):
                 # get all record id
                 if toid:
                     recids = db.session.query(
-                        PersistentIdentifier.pid_value, PersistentIdentifier.object_uuid
+                        PersistentIdentifier.pid_value,
+                        PersistentIdentifier.object_uuid,
+                        RecordMetadata.json
                     ).join(
                         ItemMetadata,
                         PersistentIdentifier.object_uuid == ItemMetadata.id,
+                    ).join(
+                        RecordMetadata,
+                        PersistentIdentifier.object_uuid == RecordMetadata.id,
                     ).filter(
                         PersistentIdentifier.pid_type == "recid",
                         PersistentIdentifier.status == PIDStatus.REGISTERED,
@@ -3345,10 +3358,15 @@ def export_all(root_url, user_id, data):
                     )).all()
                 else:
                     recids = db.session.query(
-                        PersistentIdentifier.pid_value, PersistentIdentifier.object_uuid
+                        PersistentIdentifier.pid_value,
+                        PersistentIdentifier.object_uuid,
+                        RecordMetadata.json
                     ).join(
                         ItemMetadata,
                         PersistentIdentifier.object_uuid == ItemMetadata.id,
+                    ).join(
+                        RecordMetadata,
+                        PersistentIdentifier.object_uuid == RecordMetadata.id,
                     ).filter(
                         PersistentIdentifier.pid_type == "recid",
                         PersistentIdentifier.status == PIDStatus.REGISTERED,
@@ -3367,7 +3385,9 @@ def export_all(root_url, user_id, data):
                     item_types.remove(it)
                     continue
 
-                record_ids = [(recid.pid_value, recid.object_uuid) for recid in recids]
+                record_ids = [(recid.pid_value, recid.object_uuid) 
+                    for recid in recids if 'publish_status' in recid.json 
+                    and recid.json['publish_status'] in ['0', '1']]
                 for recid, uuid in record_ids:
                     if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
                         # Create export info file

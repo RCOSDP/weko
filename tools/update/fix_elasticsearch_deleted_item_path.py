@@ -86,7 +86,7 @@ def update_elasticsearch_index():
         deposit = WekoDeposit(rec.json, rec)
         deposit['path'] = []
         try:
-            deposit.indexer.update_path(deposit, update_revision=False)
+            deposit.indexer.update_es_data(deposit, update_revision=False)
             ok_count += 1
         except TransportError as ex:
             current_app.logger.info(' ERROR-TransportError: {}.'.format(ex))

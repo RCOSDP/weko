@@ -416,6 +416,9 @@ def get_permission_record(rank_type, es_data, display_rank, has_permission_index
             else data.get('_item_metadata').get('control_number')
         try:
             record = WekoRecord.get_record_by_pid(pid_value)
+            if (record.pid and record.pid.status == PIDStatus.DELETED) or \
+                    ('publish_status' in record and record['publish_status'] == '-1'):
+                continue
             if roles[0]:
                 add_flag = True
             else:
