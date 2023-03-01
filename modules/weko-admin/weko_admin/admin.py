@@ -1253,6 +1253,7 @@ class FacetSearchSettingView(ModelView):
         'name_en',
         'name_jp',
         'mapping',
+        'ui_type',
         'active',
     )
     column_searchable_list = (
@@ -1260,6 +1261,7 @@ class FacetSearchSettingView(ModelView):
         'name_en',
         'name_jp',
         'mapping',
+        'ui_type',
         'active',
     )
 
@@ -1268,6 +1270,7 @@ class FacetSearchSettingView(ModelView):
         'name_en',
         'name_jp',
         'mapping',
+        'ui_type',
         'active',
     )
     column_labels = dict(
@@ -1275,6 +1278,7 @@ class FacetSearchSettingView(ModelView):
         name_en=_('Item Name(EN)'),
         name_jp=_('Item Name(JP)'),
         mapping=_('Mapping'),
+        ui_type=_('UI'),
         active=_('Active')
     )
 

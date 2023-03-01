@@ -2058,3 +2058,20 @@ def test_overwrite_the_memory_config_with_db(app,client,site_info):
     overwrite_the_memory_config_with_db(app, site_info_google2)
     assert app.config["GOOGLE_TRACKING_ID_USER"] == "test_tracking_id2"
     assert app.config["ADDTHIS_USER_ID"] == "ra-5d8af23e9a3a2633_2"
+import json
+import pytest
+from flask import current_app, make_response, request, url_for
+from flask_login import current_user
+from mock import patch
+
+from weko_admin.utils import (
+    get_title_facets
+)
+
+# def get_title_facets():
+def test_get_title_facets(i18n_app, users, facet_search_setting):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        titles, order, uiTypes, isOpens, displayNumbers = get_title_facets()
+        assert uiTypes
+        assert isOpens
+        assert displayNumbers

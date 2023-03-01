@@ -873,3 +873,31 @@ msgstr "We expect this process to take a considerable amount of time to execute.
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "completed"
 msgstr "Completed!"
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
+msgid "UiType"
+msgstr "UI"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:60
+msgid "DisplayNumber"
+msgstr "Display Number"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
+msgid "OpenClose"
+msgstr "Open/Close"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
+msgid "OpenClose Open"
+msgstr "Open"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
+msgid "OpenClose Close"
+msgstr "Close"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+#, python-format
+msgid "DisplayNumber Validation1"
+msgstr "Display Number must be an integer value from 1 to 99."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+msgid "DisplayNumber Validation2"
+msgstr "If CheckboxList is selected, Display Number must be entered."

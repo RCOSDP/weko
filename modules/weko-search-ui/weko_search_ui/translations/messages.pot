@@ -768,6 +768,10 @@ msgstr ""
 msgid "Go to"
 msgstr "Go to"
 
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:27
+msgid "search"
+msgstr ""
+
 msgid "The following item(s) cannot be deleted."
 msgstr ""
 

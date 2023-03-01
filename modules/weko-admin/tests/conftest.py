@@ -89,6 +89,8 @@ from weko_admin.models import SessionLifetime,SiteInfo,SearchManagement,\
 from weko_admin.views import blueprint_api
 
 from tests.helpers import json_data, create_record
+from weko_admin.models import FacetSearchSetting
+from tests.helpers import json_data
 
 @pytest.yield_fixture()
 def instance_path():
@@ -212,6 +214,13 @@ def db(app):
     db_.session.remove()
     db_.drop_all()
 
+@pytest.yield_fixture()
+def i18n_app(app):
+    with app.test_request_context(
+        headers=[('Accept-Language','ja')]):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        yield app
 
 def _database_setup(app, request):
     """Set up the database."""
@@ -1025,6 +1034,7 @@ def identifier(db):
     db.session.add(iden)
     db.session.commit()
     return iden
+
 @pytest.yield_fixture()
 def i18n_app(app):
     with app.test_request_context(headers=[("Accept-Language", "ja")]):
@@ -1130,3 +1140,12 @@ def _create_record(app, item_dict, mint_oaiid=True):
         indexer.index(record)
         return record
 
+
+def facet_search_setting(db):
+    datas = json_data("data/facet_search_setting.json")
+    settings = list()
+
+    for setting in datas:
+        settings.append(FacetSearchSetting(**datas[setting]))
+    with db.session.begin_nested():
+        db.session.add_all(settings)
