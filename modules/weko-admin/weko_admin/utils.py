@@ -375,13 +375,12 @@ def make_stats_file(raw_stats, file_type, year, month):
                       [_('Aggregation Month'), year + '-' + month],
                       [''], [header_row]])
 
-    if file_type in ['billing_file_download', 'billing_file_preview']:
+    if file_type == 'billing_file_download':
         col_dict_key = file_type.split('_', 1)[1]
-        cols = copy.copy(current_app.config['WEKO_ADMIN_REPORT_COLS'].get(col_dict_key,
-                                                                []))
+        cols_base = copy.copy(current_app.config['WEKO_ADMIN_REPORT_COLS'].get(col_dict_key, []))
         roles = Role.query.all()
-        role_name_list = [_('Guest')] + [_(role.name) for role in roles]
-        cols[3:1] = role_name_list
+        role_name_list = [role.name for role in roles]
+        cols = cols_base[:4] + role_name_list + cols_base[5:]
     else:
         cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(file_type, [])
     writer.writerow(cols)
@@ -393,9 +392,7 @@ def make_stats_file(raw_stats, file_type, year, month):
             'all'), file_type, raw_stats.get('index_name'))
         writer.writerow([_('Total Detail Views'), raw_stats.get('total')])
 
-    elif file_type in ['billing_file_download', 'billing_file_preview']:
-        current_app.logger.debug(file_type)
-        current_app.logger.debug(json.dumps(raw_stats))
+    elif file_type == 'billing_file_download':
         write_report_file_rows(writer, raw_stats.get('all'), file_type,
                               raw_stats.get('all_groups'))  # Pass all groups
     elif file_type == 'site_access':
@@ -440,17 +437,17 @@ def write_report_file_rows(writer, records, file_type=None, other_info=None):
                              record.get('login'), record.get('site_license'),
                              record.get('admin'), record.get('reg')])
 
-        elif file_type in ['billing_file_download', 'billing_file_preview']:
+        elif file_type == 'billing_file_download':
             row = [record.get('file_key'), record.get('index_list'),
                    record.get('total'), record.get('no_login'),
-                   record.get('login'), record.get('site_license'),
-                   record.get('admin'), record.get('reg')]
+                   record.get('site_license'), record.get('admin'),
+                   record.get('reg')]
             roles = Role.query.all()
-            role_name_list = ['guest'] + [role.name for role in roles]
+            role_name_list = [role.name for role in roles]
             role_counts = []
             for role_name in role_name_list:
                 role_counts.append(record.get(role_name))
-            row[3:1] = role_counts
+            row[4:1] = role_counts
             writer.writerow(row)
 
         elif file_type == 'index_access':
