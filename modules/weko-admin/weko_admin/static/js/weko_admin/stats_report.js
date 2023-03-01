@@ -15,7 +15,6 @@ $(document).ready(function () {
         file_download:'/api/stats/report/file/file_download',
         file_preview:'/api/stats/report/file/file_preview',
         billing_file_download:'/api/stats/report/file/billing_file_download',
-        billing_file_preview:'/api/stats/report/file/billing_file_preview',
         index_access:'/api/stats/report/record/record_view_per_index',
         detail_view:'/api/stats/report/record/record_view',
         file_using_per_user:'/api/stats/report/file/file_using_per_user',
