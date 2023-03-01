@@ -194,7 +194,7 @@ def get_current_api_certification(api_code):
     """Get current API certification.
 
     :param api_code: API code
-    :return: API certification data if exist
+    :return: API certification data if exist 
     """
     results = {
         'api_code': api_code,
