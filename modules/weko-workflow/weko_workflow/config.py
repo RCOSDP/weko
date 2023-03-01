@@ -32,6 +32,9 @@ WEKO_WORKFLOW_OAPOLICY_SEARCH = 'oa_policy_{keyword}'
 WEKO_WORKFLOW_OAPOLICY_CACHE_TTL = 24 * 60 * 60
 """ cache default timeout 1 day"""
 
+WEKO_WORKFLOW_MAX_ACTIVITY_ID = 99999
+""" max activity id per day"""
+
 WEKO_WORKFLOW_ACTIVITY_ID_FORMAT = 'A-{}-{}'
 """Activity Id's format (A-YYYYMMDD-NNNNN with NNNNN starts from 00001)."""
 
@@ -339,3 +342,43 @@ WEKO_WORKFLOW_GAKUNINRDM_DATA = [
 
 WEKO_WORKFLOW_GAKUNINRDM_PREFIX = 'GakuninRDM'
 """GekuninRDM prefix for logging."""
+
+WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE = ["System Administrator","Repository Administrator"]
+""" Roles that can output activitylog"""
+
+WEKO_WORKFLOW_ACTIVITYLOG_BULK_MAX = 100000
+""" Maximum activitylog output at one time"""
+
+WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS = [
+    'activity_start',
+    'workflow_id',
+    'approval2',
+    'status',
+    'activity_end',
+    'workflow_status',
+    'extra_info',
+    'activity_community_id',
+    'created',
+    'flow_id',
+    'action_order',
+    'updated',
+    'activity_confirm_term_of_use',
+    'action_id',
+    'id',
+    'title',
+    'action_status',
+    'activity_id',
+    'shared_user_id',
+    'activity_login_user',
+    'activity_name',
+    'temp_data',
+    'activity_update_user',
+    'item_id',
+    'approval1',
+    'activity_status',
+    'StatusDesc',
+    'email',
+    'flows_name',
+    'action_name',
+    'role_name'
+]

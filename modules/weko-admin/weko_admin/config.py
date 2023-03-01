@@ -34,6 +34,11 @@ WEKO_ADMIN_BASE_TEMPLATE = 'weko_admin/base.html'
 WEKO_ADMIN_SETTINGS_TEMPLATE = None
 """Settings base template for weko-admin module."""
 
+WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS = 'elastic_reindex_settings'
+"""admin_settings record name"""
+WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED = 'has_errored'
+"""a json property name of admin_settings record 'lastic_reindex_settings'"""
+
 WEKO_ADMIN_LIFETIME_TEMPLATE = 'weko_admin/settings/lifetime.html'
 """Settings base template for weko-admin module."""
 
@@ -61,6 +66,9 @@ WEKO_ADMIN_LANG_SETTINGS = 'weko_admin/admin/lang_settings.html'
 
 WEKO_ADMIN_FEEDBACK_MAIL = 'weko_admin/admin/feedback_mail.html'
 """Language template."""
+
+WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE = 'weko_admin/admin/reindex_elasticsearch.html'
+"""reindex elasticSearch template."""
 
 WEKO_ADMIN_WEB_API_ACCOUNT = 'weko_admin/admin/web_api_account.html'
 """Web Api Account template."""
