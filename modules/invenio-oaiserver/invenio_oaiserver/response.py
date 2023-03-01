@@ -665,6 +665,7 @@ def listrecords(**kwargs):
 
 def get_error_code_msg(code=''):
     """Return list error message."""
+    msg = ""
     if code == '':
         code = current_app.config.get('OAISERVER_CODE_NO_RECORDS_MATCH')
         msg = current_app.config.get('OAISERVER_MESSAGE_NO_RECORDS_MATCH')
@@ -737,7 +738,7 @@ def combine_record_file_urls(record, object_uuid, meta_prefix):
     mapping_type = metadata_formats[meta_prefix]['serializer'][1]['schema_type']
     item_map = get_mapping(type_mapping,
                            "{}_mapping".format(mapping_type))
-
+    file_keys = None
     if item_map:
         file_props = current_app.config["OAISERVER_FILE_PROPS_MAPPING"]
         if mapping_type in file_props:
