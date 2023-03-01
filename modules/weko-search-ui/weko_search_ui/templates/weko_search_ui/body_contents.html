@@ -261,7 +261,15 @@
         if(params.get('search_type') == null){
           params.set('search_type', 2);
         }
-        location.href=location.pathname+"?"+params;
+        if(params.get('q') == null){
+          var index_id_q= document.getElementById('index_id_q').value;
+          params.set('q', index_id_q);
+        }
+        newpath = location.pathname
+        if(location.pathname=="/"){
+          newpath="/search"
+        }
+        location.href=newpath+"?"+params;
       };
     </script>
   </div>
