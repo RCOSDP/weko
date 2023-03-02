@@ -98,16 +98,6 @@ function FacetSearchLayout(
   }
 
   /**
-   * Returns whether or not RangeSlider is disabled for the specified UI type.
-   * 
-   * @param {string} value UI Type
-   * @returns True if the UI type does not allow RangeSlider selection; false otherwise.
-   */
-  function isDisableRangeUi(value) {
-    return value!=="temporal";
-  }
-
-  /**
    * Returns whether or not the UI type allows displayNumber to be entered.
    * @param {string} value UI Type
    * @returns True if the UI type does not allow displayNumber input; false otherwise.
@@ -121,23 +111,32 @@ function FacetSearchLayout(
    */
   function handleChangeMapping(event) {
     _setMapping(event.target.value);
-    handleUiTypeRange(event.target.value);
+    handleUiTypeRange(event.target.type);
   }
 
   /**
-   * Controls the UI type when Mapping is changed.
-   * If the facet item has RangeSlider selected as the UI type and
-   * is changed to a mapping that does not allow RangeSlider to be selected,
-   * the UI type is forcibly changed to CheckboxList.
+   * When Mapping is modified, it controls the UI type according to the Mapping type.
+   * The "keyword" type cannot select RangeSlider, and the "integer_range", "float_range"
+   * and "date_range" types can only select RangeSlider.
    * 
-   * @param {string} value Value of selected Mapping.
+   * @param {string} type type of selected Mapping.
    */
-  function handleUiTypeRange(value) {
-    let isDisable = isDisableRangeUi(value);
-    if(isDisable && _uiType==='RangeSlider') {
-      _setUiType("CheckboxList");
+  function handleUiTypeRange(type) {
+    if(type==='keyword') {
+      $("#uiType_Checkbox").prop("disabled",false);
+      $("#uiType_Select").prop("disabled",false);
+      $("#uiType_Range").prop("disabled",true);
+      if(_uiType==='RangeSlider') {
+        _setUiType("CheckboxList");
+      }
+    }else {
+      $("#uiType_Checkbox").prop("disabled",true);
+      $("#uiType_Select").prop("disabled",true);
+      $("#uiType_Range").prop("disabled",false);
+      _setUiType("RangeSlider");
     }
-    $("#uiType_Range").prop("disabled",isDisable);
+
+    
   }
 
   /**
@@ -177,7 +176,7 @@ function FacetSearchLayout(
                     onChange={handleChangeMapping}>
               {
                 mapping_list.map((item) =>
-                  <option value={item}>{item}</option>)
+                  <option type={item[0]} value={item[1]}>{item[1]}</option>)
               }
             </select>
           </div>
@@ -194,7 +193,7 @@ function FacetSearchLayout(
                     value={_uiType}
                     onChange={handleChangeUiType}>
               <option id='uiType_Checkbox' value="CheckboxList">CheckboxList</option>
-              <option value="SelectBox">SelectBox</option>
+              <option id='uiType_Select' value="SelectBox">SelectBox</option>
               {isDisableRangeUi(_mapping) && 
                 <option id='uiType_Range' value="RangeSlider" disabled>RangeSlider</option>}
               {!isDisableRangeUi(_mapping) &&
@@ -469,7 +468,7 @@ function CustomAggregations({aggregations, setAggregations, mappingList}) {
                     onChange={e => setAggMapping(e.target.value)}>
               {
                 mappingList.map((item) =>
-                  <option key={item} value={item} >{item}</option>)
+                  <option key={item[1]} value={item[1]} >{item[1]}</option>)
               }
             </select>
           </div>

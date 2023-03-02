@@ -2061,7 +2061,13 @@ def get_item_mapping_list():
 
     def get_mapping(pre_key, key, value, mapping_list):
         if isinstance(value, dict) and value.get('type') == 'keyword':
-            mapping_list.append(handle_prefix_key(pre_key, key))
+            mapping_list.append(['keyword',handle_prefix_key(pre_key, key)])
+        if isinstance(value, dict) and value.get('type') == 'date_range':
+            mapping_list.append(['date_range',handle_prefix_key(pre_key, key)])
+        if isinstance(value, dict) and value.get('type') == 'integer_range':
+            mapping_list.append(['integer_range',handle_prefix_key(pre_key, key)])
+        if isinstance(value, dict) and value.get('type') == 'float_range':
+            mapping_list.append(['float_range',handle_prefix_key(pre_key, key)])
         if isinstance(value, dict):
             for k1, v1 in value.items():
                 get_mapping(handle_prefix_key(
