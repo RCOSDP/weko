@@ -181,16 +181,16 @@ WEKO_ADMIN_REPORT_COLS = {
 """Columns for the report .csv files"""
 
 WEKO_ADMIN_REPORT_FILE_NAMES = {
-    'file_download': _('FileDownload_'),
-    'file_preview': _('FilePreview_'),
-    'billing_file_download': _('PayFileDownload_'),
-    'index_access': _('IndexAccess_'),
-    'detail_view': _('DetailView_'),
-    'file_using_per_user': _('FileUsingPerUser_'),
-    'search_count': _('SearchCount_'),
-    'user_roles': _('UserAffiliate_'),
-    'site_access': _('SiteAccess_'),
-    'top_page_access': _('TopPageAccess_'),
+    'file_download': 'FileDownload_',
+    'file_preview': 'FilePreview_',
+    'billing_file_download': 'PayFileDownload_',
+    'index_access': 'IndexAccess_',
+    'detail_view': 'DetailView_',
+    'file_using_per_user': 'FileUsingPerUser_',
+    'search_count': 'SearchCount_',
+    'user_roles': 'UserAffiliate_',
+    'site_access': 'SiteAccess_',
+    'top_page_access': 'TopPageAccess_',
 }
 """File names for the report .csv files"""
 
