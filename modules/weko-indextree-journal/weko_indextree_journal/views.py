@@ -22,6 +22,7 @@ from flask import Blueprint, abort, current_app, json, jsonify, render_template
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_i18n.ext import current_i18n
+from invenio_db import db
 from weko_groups.api import Group
 from weko_records.api import ItemTypes
 
@@ -87,3 +88,15 @@ def check_view(item_type_id=0):
     """Render a check view."""
     result = export_journal_task(p_path='')
     return jsonify(result)
+
+
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_indextree_journal dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

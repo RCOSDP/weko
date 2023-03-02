@@ -141,7 +141,9 @@ STATS_QUERIES = {
     'get-record-view-per-site-license': {},
     'get-search-per-site-license': {},
     'get-file-download-per-site-license': {},
-    'get-file-preview-per-site-license': {}
+    'get-file-preview-per-site-license': {},
+    'get-ranking-data': {},
+    'get-new-items-data': {}
 }
 
 

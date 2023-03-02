@@ -451,21 +451,21 @@ class SchemaTree:
 
                         set_value(va, nv)
 
-        def get_sub_item_value(atr_vm, key, p=None):
-            # current_app.logger.debug("atr_vm:{0}".format(atr_vm))
-            # current_app.logger.debug("key:{0}".format(key))
-            # current_app.logger.debug("p:{0}".format(p))
-            if isinstance(atr_vm, dict):
-                for ke, va in atr_vm.items():
-                    if key == ke:
-                        yield va, id(p)
-                    else:
-                        for z, w in get_sub_item_value(va, key, atr_vm):
-                            yield z, w
-            elif isinstance(atr_vm, list):
-                for n in atr_vm:
-                    for k, x in get_sub_item_value(n, key, atr_vm):
-                        yield k, x
+        # def get_sub_item_value(atr_vm, key, p=None):
+        #     # current_app.logger.debug("atr_vm:{0}".format(atr_vm))
+        #     # current_app.logger.debug("key:{0}".format(key))
+        #     # current_app.logger.debug("p:{0}".format(p))
+        #     if isinstance(atr_vm, dict):
+        #         for ke, va in atr_vm.items():
+        #             if key == ke:
+        #                 yield va, id(p)
+        #             else:
+        #                 for z, w in get_sub_item_value(va, key, atr_vm):
+        #                     yield z, w
+        #     elif isinstance(atr_vm, list):
+        #         for n in atr_vm:
+        #             for k, x in get_sub_item_value(n, key, atr_vm):
+        #                 yield k, x
 
         def get_value_from_content_by_mapping_key(atr_vm, list_key):
             # current_app.logger.debug("atr_vm: {0}".format(atr_vm))
@@ -707,7 +707,7 @@ class SchemaTree:
                 elif atr_name == 'relation':
                     type_item = 'relationType'
                 for k, v in self.item_type_mapping.items():
-                    jpcoar = v.get("jpcoar_mapping")
+                    jpcoar = v.get('jpcoar_mapping')
                     if isinstance(jpcoar, dict) and atr_name in jpcoar.keys():
                         value = jpcoar[atr_name]
                         if self._atr in value.keys():
@@ -777,13 +777,13 @@ class SchemaTree:
                 if key_item_type in atr_vm.keys():
                     item_type = atr_vm[key_item_type]
                     if item_type in list_type:
-                        vlst[0]['stdyDscr'] = get_item_by_type(
-                            vlst[0]['stdyDscr'], item_type)
+                        vlst['stdyDscr'] = get_item_by_type(
+                            vlst['stdyDscr'], item_type)
                     else:
-                        vlst[0]['stdyDscr'] = {}
+                        vlst['stdyDscr'] = {}
                 else:
-                    vlst[0]['stdyDscr'] = {}
-                return vlst[0]['stdyDscr']
+                    vlst['stdyDscr'] = {}
+                return vlst['stdyDscr']
 
             def clean_none_value(dct):
                 # current_app.logger.debug("dct:{0}".format(dct))
@@ -883,7 +883,7 @@ class SchemaTree:
                 attr_of_parent_item = {}
                 for k, v in vlist_item.items():
                     # get attribute of parent Node if any
-                    if self._atr in v:
+                    if v is not None and self._atr in v:
                         attr_of_parent_item = {self._atr: v[self._atr]}
                 # remove None value
                 # for ddi_mapping, we need to keep attribute data
@@ -895,7 +895,7 @@ class SchemaTree:
                         if attr_of_parent_item:
                             v.update(attr_of_parent_item)
 
-                if isinstance(atr_vm, dict) and isinstance(vlist_item, list) \
+                if isinstance(atr_vm, dict) and isinstance(vlist_item, dict) \
                         and 'stdyDscr' in vlist_item.keys():
                     if atr_name == 'Contributor':
                         list_contributor_type = ['Distributor', 'Other',
@@ -1419,8 +1419,8 @@ class SchemaTree:
                 _idtf_key = "contributorAffiliationNameIdentifier"
 
             for _item in self._record.values():
-                if isinstance(_item, dict) and _item.get("jpcoar_mapping") \
-                        and _item.get("jpcoar_mapping", {}).get(key):
+                if isinstance(_item, dict) and _item.get(self._schema_name) \
+                        and _item.get(self._schema_name, {}).get(key):
                     if creator_idx >= len(_item.get("attribute_value_mlt", [])):
                         return None
 
@@ -1707,31 +1707,31 @@ class SchemaTree:
 
         return elst
 
-    def get_node(self, dc, key=None):
-        """
-        Create generator for get node.
+    # def get_node(self, dc, key=None):
+    #     """
+    #     Create generator for get node.
 
-        :param dc:
-        :param key:
-        :return: node
+    #     :param dc:
+    #     :param key:
+    #     :return: node
 
-        """
-        if key:
-            yield key
+    #     """
+    #     if key:
+    #         yield key
 
-        if isinstance(dc, dict):
-            for k, v in dc.items():
-                for x in self.get_node(v, k):
-                    yield x
+    #     if isinstance(dc, dict):
+    #         for k, v in dc.items():
+    #             for x in self.get_node(v, k):
+    #                 yield x
 
     def find_nodes(self, mlst):
         """Find_nodes."""
-        def del_type(nid):
-            if isinstance(nid, dict):
-                if nid.get("type"):
-                    nid.pop("type")
-                for v in nid.values():
-                    del_type(v)
+        # def del_type(nid):
+        #     if isinstance(nid, dict):
+        #         if nid.get("type"):
+        #             nid.pop("type")
+        #         for v in nid.values():
+        #             del_type(v)
 
         def cut_pre(str):
             return str.split(':')[-1] if ':' in str else str
@@ -1835,6 +1835,7 @@ def cache_schema(schema_name, delete=False):
                 dstore['namespaces'] = rec.model.namespaces.copy()
                 dstore['schema'] = json.loads(
                     rec.model.xsd, object_pairs_hook=OrderedDict)
+                
                 # why use clear()?
                 rec.model.namespaces.clear()
                 del rec

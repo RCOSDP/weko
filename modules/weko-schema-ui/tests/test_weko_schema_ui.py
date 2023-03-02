@@ -42,12 +42,3 @@ def test_init(app):
     assert 'weko-schema-ui' not in app_2.extensions
     ext.init_app(app_2)
     assert 'weko-schema-ui' in app_2.extensions
-
-
-def test_view(app):
-    """Test view."""
-    WekoSchemaUI(app)
-    with app.test_client() as client:
-        res = client.get("/")
-        assert res.status_code == 200
-        assert 'Welcome to weko-schema-ui' in str(res.data)

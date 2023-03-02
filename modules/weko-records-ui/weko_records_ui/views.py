@@ -98,8 +98,12 @@ def record_from_pid(pid_value):
 
 @blueprint.app_template_filter()
 def url_to_link(field):
+    pattern = ".*/record/\d+/files/.*"
     if field.startswith("http"):
-        return True
+        if re.match(pattern, field):
+            return False
+        else:
+            return True
     return False
 
 
@@ -475,10 +479,18 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         record["relation"] = res
     else:
         record["relation"] = {}
-
-    google_scholar_meta = get_google_scholar_meta(record)
-    google_dataset_meta = get_google_detaset_meta(record)
-
+    
+    recstr = etree.tostring(
+        getrecord(
+            identifier=record['_oai'].get('id'),
+            metadataPrefix='jpcoar',
+            verb='getrecord'
+        )
+    )
+    et=etree.fromstring(recstr)
+    google_scholar_meta = get_google_scholar_meta(record,record_tree=et)
+    google_dataset_meta = get_google_detaset_meta(record,record_tree=et)
+    
     current_lang = current_i18n.language \
         if hasattr(current_i18n, 'language') else None
     # get title name
@@ -552,6 +564,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         display_stats = display_setting.get('display_stats')
     else:
         display_stats = True
+    
+    items_display_settings = AdminSettings.get(name='items_display_settings',
+                                        dict_to_object=False)
+    if items_display_settings:
+        search_author_flg = items_display_settings.get('items_search_author')
+    else:
+        search_author_flg = "name"
 
     groups_price = get_groups_price(record)
     billing_files_permission = get_billing_file_download_permission(
@@ -663,6 +682,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             'WEKO_RECORDS_UI_ONLINE_ANALYSIS_URL'),
         flg_display_itemtype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE') ,
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
+        search_author_flg=search_author_flg,
         billing_settings=billing_settings,
         
         **ctx,
@@ -763,7 +783,7 @@ def set_pdfcoverpage_header():
         flash(_('PDF cover page settings have been updated.'),
               category='success')
         return redirect('/admin/pdfcoverpage')
-
+    
     return redirect('/admin/pdfcoverpage')
 
 
@@ -968,6 +988,15 @@ def get_uri():
         file_downloaded.send(current_app._get_current_object(), obj=file_obj)
     return jsonify({'status': True})
 
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_records_ui dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()
 
 @blueprint.route("/charge", methods=['GET'])
 def charge():

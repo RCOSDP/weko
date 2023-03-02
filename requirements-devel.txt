@@ -190,7 +190,7 @@ nbconvert==5.3.1
 nbformat==4.4.0
 netaddr==0.8.0
 node-semver==0.1.1
-numpy==1.16.1
+numpy==1.22.0
 oauthlib==2.1.0
 ordereddict==1.1
 packaging==21.3

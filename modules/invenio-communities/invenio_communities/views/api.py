@@ -35,6 +35,7 @@ from invenio_communities.links import default_links_item_factory, \
     default_links_pagination_factory
 from invenio_communities.models import Community
 from invenio_communities.serializers import community_response
+from invenio_db import db
 
 blueprint = Blueprint(
     'invenio_communities_rest',
@@ -208,3 +209,13 @@ blueprint.add_url_rule(
     ),
     methods=['GET']
 )
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("invenio_communities dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

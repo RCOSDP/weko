@@ -48,11 +48,11 @@ from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records.api import RecordBase
 from invenio_accounts.models import User
 from invenio_search import RecordsSearch
-from invenio_stats.utils import QueryItemRegReportHelper, \
-    QueryRecordViewReportHelper, QuerySearchReportHelper
+from invenio_stats.utils import QueryRankingHelper, QuerySearchReportHelper
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
@@ -328,13 +328,14 @@ def get_current_user():
     return current_id
 
 
-def find_hidden_items(item_id_list, idx_paths=None):
+def find_hidden_items(item_id_list, idx_paths=None, check_creator_permission=False, has_permission_indexes=[]):
     """
     Find items that should not be visible by the current user.
 
     parameter:
         item_id_list: list of uuid of items to be checked.
         idx_paths: List of index paths.
+        check_creator_permission: List of index paths.
     return: List of items ID that the user cannot access.
     """
     if not item_id_list:
@@ -345,20 +346,40 @@ def find_hidden_items(item_id_list, idx_paths=None):
     if roles[0]:
         return []
 
+    has_permission_index = []
+    no_permission_index = []
     hidden_list = []
     for record in WekoRecord.get_records(item_id_list):
-        # Check if user is owner of the item
-        if check_created_id(record):
-            continue
+        
+        if check_creator_permission:
+            # Check if user is owner of the item
+            if check_created_id(record):
+                continue
 
-        # Check if item and indices are public
-        is_public = check_publish_status(record)
+            # Check if item are public
+            is_public = check_publish_status(record)
+        else:
+            is_public = True
+        # Check if indices are public
         has_index_permission = False
         for idx in record.navi:
-            if check_index_permissions(None, idx.cid) \
-                    and (not idx_paths or idx.path in idx_paths):
-                has_index_permission = True
-                break
+            if has_permission_indexes:
+                if str(idx.cid) in has_permission_indexes:
+                    has_index_permission = True
+                    break
+            else:
+                if str(idx.cid) in has_permission_index:
+                    has_index_permission = True
+                    break
+                elif idx.cid in no_permission_index:
+                    continue
+                if check_index_permissions(None, idx.cid) \
+                        and (not idx_paths or idx.path in idx_paths):
+                    has_permission_index.append(idx.cid)
+                    has_index_permission = True
+                    break
+                else:
+                    no_permission_index.append(idx.cid)
         if is_public and has_index_permission:
             continue
 
@@ -367,87 +388,132 @@ def find_hidden_items(item_id_list, idx_paths=None):
     return hidden_list
 
 
-def parse_ranking_results(index_info,
-                          results,
-                          display_rank,
-                          list_name='all',
-                          title_key='title',
-                          count_key=None,
-                          pid_key=None,
-                          search_key=None,
-                          date_key=None):
-    """Parse the raw stats results to be usable by the view.
+def get_permission_record(rank_type, es_data, display_rank, has_permission_indexes):
+    """
+    Find items that should be visible by the current user.
 
-    Args:
-        index_info (_type_): {'1660555749031': {'index_name': 'IndexA', 'parent': '0', 'public_date': None, 'harvest_public_state': True, 'browsing_role': ['3', '-98', '-99']}}
-        results (_type_): {'took': 7, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': 2, 'max_score': None, 'hits': [{'_index': 'tenant1-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': 'a64f4db8-b7d7-4cdf-a679-2b0e73f854c4', '_score': None, '_source': {'_created': '2022-08-20T06:05:56.806896+00:00', '_updated': '2022-08-20T06:06:24.602226+00:00', 'type': ['conference paper'], 'title': ['ff'], 'control_number': '3', '_oai': {'id': 'oai:weko3.example.org:00000003', 'sets': ['1660555749031']}, '_item_metadata': {'_oai': {'id': 'oai:weko3.example.org:00000003', 'sets': ['1660555749031']}, 'path': ['1660555749031'], 'owner': '1', 'title': ['ff'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}, 'item_title': 'ff', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-08-20', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'control_number': '3'}, 'itemtype': 'デフォルトアイテムタイプ（フル）', 'publish_date': '2022-08-20', 'author_link': [], 'weko_shared_id': -1, 'weko_creator_id': '1', 'relation_version_is_last': True, 'path': ['1660555749031'], 'publish_status': '0'}, 'sort': [1660953600000]}, {'_index': 'tenant1-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': '3cc6099a-4208-4528-80ce-eee7fe4296b7', '_score': None, '_source': {'_created': '2022-08-17T17:00:43.877778+00:00', '_updated': '2022-08-17T17:01:08.615488+00:00', 'type': ['conference paper'], 'title': ['2'], 'control_number': '1', '_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1660555749031']}, '_item_metadata': {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1660555749031']}, 'path': ['1660555749031'], 'owner': '1', 'title': ['2'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-18'}, 'item_title': '2', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-08-18', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': '2', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'control_number': '1'}, 'itemtype': 'デフォルトアイテムタイプ（フル）', 'publish_date': '2022-08-18', 'author_link': [], 'weko_shared_id': -1, 'weko_creator_id': '1', 'relation_version_is_last': True, 'path': ['1660555749031'], 'publish_status': '0'}, 'sort': [1660780800000]}]}}
-        display_rank (_type_): 10
-        list_name (str, optional): _description_. Defaults to 'all'.
-        title_key (str, optional): _description_. Defaults to 'title'.
-        count_key (_type_, optional): _description_. Defaults to None.
-        pid_key (_type_, optional): _description_. Defaults to None.
-        search_key (_type_, optional): _description_. Defaults to None.
-        date_key (_type_, optional): _description_. Defaults to None.
+    parameter:
+        rank_type: Ranking Type. e.g. 'most_reviewed_items' or 'most_downloaded_items' or 'created_most_items_user' or 'most_searched_keywords' or 'new_items'
+        es_data: List of ranking data.
+        display_rank: Number of ranking display.
+        has_permission_indexes: List of can be view by the current user.
+    return: List of ranking data that the user can access.
+    """
+
+    if not es_data:
+        return []
+
+    result = []
+    roles = get_user_roles()
+    date_list = []
+    for data in es_data:
+        if len(result) == display_rank:
+            break
+
+        add_flag = False
+        pid_value = data['key'] \
+            if 'key' in data \
+            else data.get('_item_metadata').get('control_number')
+        try:
+            record = WekoRecord.get_record_by_pid(pid_value)
+            if roles[0]:
+                add_flag = True
+            else:
+                is_public = roles[0] or check_created_id(record) or check_publish_status(record)
+                has_index_permission = False
+                for idx in record.navi:
+                    if str(idx.cid) in has_permission_indexes:
+                        has_index_permission = True
+                        break
+                add_flag = is_public and has_index_permission
+        except PIDDoesNotExistError:
+            # do not add deleted items into ranking list. 
+            add_flag = False
+            current_app.logger.debug("PID {} does not exist.".format(pid_value))
+
+        if add_flag:
+            if rank_type == 'new_items':
+                if data['publish_date'] not in date_list:
+                    ranking_data = parse_ranking_results(
+                        rank_type,
+                        pid_value,
+                        record=record,
+                        date=data['publish_date']
+                    )
+                    date_list.append(data['publish_date'])
+                else:
+                    ranking_data = parse_ranking_results(
+                        rank_type,
+                        pid_value,
+                        record=record
+                    )
+            else:
+                ranking_data = parse_ranking_results(
+                    rank_type,
+                    pid_value,
+                    count=data['count'],
+                    rank=len(result) + 1,
+                    record=record
+                )
+            result.append(ranking_data)
+
+    return result
+
+def parse_ranking_results(rank_type,
+                          key,
+                          count=-1,
+                          rank=-1,
+                          record=None,
+                          date=''):
+    """
+    Parse the raw stats results to be usable by the view.
+
+    parameter:
+        rank_type: Ranking Type. e.g. 'most_reviewed_items' or 'most_downloaded_items' or 'created_most_items_user' or 'most_searched_keywords' or 'new_items'
+        key: key value. e.g. pid_value or search_key or user_id ...
+        count: Count of rank data. Defaults to -1.
+        rank: Rank number of rank data. Defaults to -1.
+        record: WekoRecord object. Defaults to 'None'.
+        date: Date of new item. Defaults to ''. e.g. '2022-10-01'
 
     Returns:
-        _type_: [{'date': '2022-08-20', 'title': 'ff', 'url': '../records/3'}, {'date': '2022-08-18', 'title': '2', 'url': '../records/1'}]
+        Rank data.
+        e.g. {'rank': 1, 'count': 100, 'title': 'ff', 'url': '../records/3'} or {'date': '2022-08-18', 'title': '2', 'url': '../records/1'}
     """
-    ranking_list = []
-    if pid_key:
-        url = '../records/{0}'
-        key = pid_key
-    elif search_key:
-        url = '../search?page=1&size=20&search_type=1&q={0}'
-        key = search_key
-    else:
+
+    if rank_type in ['most_reviewed_items', 'most_downloaded_items', 'new_items']:
+        url = '../records/{0}'.format(key)
+        title = record.get_titles
+    elif rank_type == 'most_searched_keywords':
+        url = '../search?page=1&size=20&search_type=1&q={0}'.format(key)
+        title = key
+    elif rank_type == 'created_most_items_user':
         url = None
-    if date_key == 'create_date':
-        data_list = parse_ranking_new_items(results)
-        results = dict()
-        results['all'] = data_list
+        user_info = UserProfile.get_by_userid(key)
+        title = '{}'.format(user_info.username) if user_info else 'None'
 
-    if results and list_name in results:
-        rank = 1
-        count = 0
-        date = ''
-        for item in results[list_name]:
-            t = {}
-            if count_key:
-                if not count == int(item[count_key]):
-                    rank = len(ranking_list) + 1
-                    count = int(item[count_key])
-                t['rank'] = rank
-                t['count'] = count
-            elif date_key:
-                new_date = item[date_key]
-                if new_date == date:
-                    t['date'] = ''
-                else:
-                    t['date'] = new_date
-                    date = new_date
-            if pid_key == 'col1':
-                pid_value = item.get(pid_key, '')
-            else:
-                pid_value = item.get('pid_value', '')
-            if pid_value:
-                record = WekoRecord.get_record_by_pid(pid_value)
-                title = record.get_titles
-            else:
-                title = item.get(title_key)
-            if title_key == 'user_id':
-                user_info = UserProfile.get_by_userid(title)
-                if user_info:
-                    title = user_info.username
-                else:
-                    title = 'None'
-            t['title'] = title if title else 'None'
-            t['url'] = url.format(item[key]) if url and key in item else None
-            if title != '':  # Do not add empty searches
-                ranking_list.append(t)
-            if len(ranking_list) == display_rank:
-                break
+    if rank == -1:
+        if date:
+            res = dict(
+                date=date,
+                title=title,
+                url=url
+            )
+        else:
+            res = dict(
+                title=title,
+                url=url
+            )
+    else:
+        res = dict(
+            rank=rank,
+            count=count,
+            title=title,
+            url=url
+        )
+    
+    return res
 
-    return ranking_list
 
 
 def parse_ranking_new_items(result_data):
@@ -1603,7 +1669,9 @@ def get_new_items_by_date(start_date: str, end_date: str, ranking=False) -> dict
                                                           start_date,
                                                           end_date,
                                                           indexes,
+                                                          query_with_publish_status=False,
                                                           ranking=ranking)
+        print(search_instance.to_dict())
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError as e:
@@ -2389,8 +2457,23 @@ def get_ranking(settings):
     :param settings: ranking setting.
     :return:
     """
-    current_app.logger.error("settings:{}".format(settings))
-    index_info = Indexes.get_browsing_info()
+    
+    def _get_index_info(index_json, index_info):
+        for index in index_json:
+            index_info[index["id"]] = {
+                'index_name': index["name"],
+                'parent': str(index["pid"])
+            }
+            if index["children"]:
+                _get_index_info(index["children"], index_info)
+
+    current_app.logger.debug("get_ranking start")
+
+    rank_buffer = current_app.config['WEKO_ITEMS_UI_RANKING_BUFFER']
+    index_json = Indexes.get_browsing_tree_ignore_more()
+    index_info = {}
+    _get_index_info(index_json, index_info)
+    has_permission_indexes = list(index_info.keys())
     # get statistical period
     end_date_original = date.today()  # - timedelta(days=1)
     start_date_original = end_date_original - timedelta(
@@ -2398,74 +2481,90 @@ def get_ranking(settings):
     rankings = {}
     start_date = start_date_original.strftime('%Y-%m-%d')
     end_date = end_date_original.strftime('%Y-%m-%d')
-    pid_value_permissions = []
     # most_reviewed_items
+    current_app.logger.debug("get most_reviewed_items start")
     if settings.rankings['most_reviewed_items']:
-        result = QueryRecordViewReportHelper.get(
+        result = QueryRankingHelper.get(
             start_date=start_date,
             end_date=end_date,
-            agg_size=settings.display_rank,
-            agg_sort={'value': 'desc'},
-            ranking=True)
-        if not pid_value_permissions:
-            pid_value_permissions = parse_ranking_record(
-                get_new_items_by_date(start_date, end_date, ranking=True))
-        permission_ranking(result, pid_value_permissions, settings.display_rank,
-                           'all', 'pid_value')
-        rankings['most_reviewed_items'] = \
-            parse_ranking_results(index_info, result, settings.display_rank,
-                                  list_name='all',
-                                  title_key='record_name',
-                                  count_key='total_all', pid_key='pid_value')
+            agg_size=settings.display_rank + rank_buffer,
+            event_type='record-view',
+            group_field='pid_value',
+            count_field='count'
+        )
+
+        current_app.logger.debug("finished getting most_reviewed_items data from ES")
+        rankings['most_reviewed_items'] = get_permission_record('most_reviewed_items', result, settings.display_rank, has_permission_indexes)
 
     # most_downloaded_items
+    current_app.logger.debug("get most_downloaded_items start")
     if settings.rankings['most_downloaded_items']:
-        result = QueryItemRegReportHelper.get(
+        result = QueryRankingHelper.get(
             start_date=start_date,
             end_date=end_date,
-            target_report='3',
-            unit='Item',
-            agg_size=settings.display_rank,
-            agg_sort={'_count': 'desc'},
-            ranking=True)
-        if not pid_value_permissions:
-            pid_value_permissions = parse_ranking_record(
-                get_new_items_by_date(start_date, end_date, ranking=True))
-        permission_ranking(result, pid_value_permissions, settings.display_rank,
-                           'data', 'col1')
-        rankings['most_downloaded_items'] = \
-            parse_ranking_results(index_info, result, settings.display_rank,
-                                  list_name='data', title_key='col2',
-                                  count_key='col3', pid_key='col1')
+            agg_size=settings.display_rank + rank_buffer,
+            event_type='file-download',
+            group_field='item_id',
+            count_field='count'
+        )
 
+        current_app.logger.debug("finished getting most_downloaded_items data from ES")
+        rankings['most_downloaded_items'] = get_permission_record('most_downloaded_items', result, settings.display_rank, has_permission_indexes)
+    
     # created_most_items_user
+    current_app.logger.debug("get created_most_items_user start")
     if settings.rankings['created_most_items_user']:
-        result = QueryItemRegReportHelper.get(
+        result = QueryRankingHelper.get(
             start_date=start_date,
             end_date=end_date,
-            target_report='0',
-            unit='User',
             agg_size=settings.display_rank,
-            agg_sort={'_count': 'desc'})
-        rankings['created_most_items_user'] = \
-            parse_ranking_results(index_info, result, settings.display_rank,
-                                  list_name='data',
-                                  title_key='user_id', count_key='count')
+            event_type='item-create',
+            group_field='cur_user_id',
+            count_field='count',
+            must_not=json.dumps([{"wildcard": {"pid_value": "*.*"}}])
+        )
+
+        current_app.logger.debug("finished getting created_most_items_user data from ES")
+        ranking_data = []
+        for s in result:
+            ranking_data.append(parse_ranking_results(
+                'created_most_items_user',
+                s['key'],
+                count=s['count'],
+                rank=len(ranking_data) + 1
+            ))
+        rankings['created_most_items_user'] = ranking_data
 
     # most_searched_keywords
+    current_app.logger.debug("get most_searched_keywords start")
     if settings.rankings['most_searched_keywords']:
-        result = QuerySearchReportHelper.get(
+        filter_list = current_app.config['WEKO_ITEMS_UI_SEARCH_RANK_KEY_FILTER']
+        must_not = [{"wildcard": {"search_type": "2*"}}]
+        for f in filter_list:
+            must_not.append({"match": {"search_key": f}})
+        result = QueryRankingHelper.get(
             start_date=start_date,
             end_date=end_date,
-            agg_size=settings.display_rank + 1,
-            agg_sort={'value': 'desc'}
+            agg_size=settings.display_rank,
+            event_type='search',
+            group_field='search_key',
+            count_field='count',
+            must_not=json.dumps(must_not)
         )
-        rankings['most_searched_keywords'] = \
-            parse_ranking_results(index_info, result, settings.display_rank,
-                                  list_name='all',
-                                  title_key='search_key', count_key='count')
+
+        current_app.logger.debug("finished getting most_searched_keywords data from ES")
+        ranking_data = []
+        for s in result:
+            ranking_data.append(parse_ranking_results(
+                'most_searched_keywords',
+                s['key'],
+                count=s['count'],
+                rank=len(ranking_data) + 1
+            ))
+        rankings['most_searched_keywords'] = ranking_data
 
     # new_items
+    current_app.logger.debug("get new_items start")
     if settings.rankings['new_items']:
         new_item_start_date = (
             end_date_original
@@ -2475,14 +2574,16 @@ def get_ranking(settings):
         )
         if new_item_start_date < start_date_original:
             new_item_start_date = start_date
-        result = get_new_items_by_date(
-            new_item_start_date,
-            end_date)
-        rankings['new_items'] = \
-            parse_ranking_results(index_info, result, settings.display_rank,
-                                  list_name='all', title_key='record_name',
-                                  pid_key='pid_value', date_key='create_date')
-
+        result = QueryRankingHelper.get_new_items(
+            start_date=new_item_start_date.strftime('%Y-%m-%d'),
+            end_date=end_date,
+            agg_size=settings.display_rank + rank_buffer,
+            must_not=json.dumps([{"wildcard": {"control_number": "*.*"}}])
+        )
+        
+        current_app.logger.debug("finished getting new_items data from ES")
+        rankings['new_items'] = get_permission_record('new_items', result, settings.display_rank, has_permission_indexes)
+        
     return rankings
 
 

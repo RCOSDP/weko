@@ -31,7 +31,7 @@ from invenio_indexer.api import RecordIndexer
 from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsAffiliationSettings, AuthorsPrefixSettings
 from .permissions import author_permission
-from .utils import get_author_setting_obj, get_count_item_link
+from .utils import get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link
 
 blueprint = Blueprint(
     'weko_authors',
@@ -274,6 +274,13 @@ def getById():
         match = []
         match.append({"match": {"_id": search_key}})
         query = {"bool": {"must": match}}
+    else:
+        should = [
+            {"bool": {"must": [{"term": {"is_deleted": {"value": "false"}}}]}},
+            {"bool": {"must_not": {"exists": {"field": "is_deleted"}}}}
+        ]
+        match = [{"term": {"gather_flg": 0}}, {"bool": {"should": should}}]
+        query = {"bool": {"must": match}}
 
     body = {
         "query": query
@@ -352,6 +359,7 @@ def mapping():
                     affiliation_scheme = affiliation.scheme
                     affiliation_uri = affiliation.url
                     return affiliation_scheme, affiliation_uri
+            return affiliation_scheme, affiliation_uri
 
         affiliation_info = _source.get('affiliationInfo')
         if affiliation_info:
@@ -514,8 +522,7 @@ def get_prefix_list():
     if settings:
         for s in settings:
             tmp = s.__dict__
-            if '_sa_instance_state' in tmp:
-                tmp.pop('_sa_instance_state')
+            tmp.pop('_sa_instance_state', None)
             data.append(tmp)
     return jsonify(data)
 
@@ -531,8 +538,7 @@ def get_affiliation_list():
     if settings:
         for s in settings:
             tmp = s.__dict__
-            if '_sa_instance_state' in tmp:
-                tmp.pop('_sa_instance_state')
+            tmp.pop('_sa_instance_state', None)
             data.append(tmp)
     return jsonify(data)
 
@@ -569,7 +575,7 @@ def update_prefix():
     """Update authors prefix settings."""
     try:
         data = request.get_json()
-        check = get_author_setting_obj(data['scheme'])
+        check = get_author_prefix_obj(data['scheme'])
         if check is None or check.id == data['id']:
             AuthorsPrefixSettings.update(**data)
             return jsonify({'code': 200, 'msg': 'Success'})
@@ -596,7 +602,7 @@ def create_prefix():
     """Add new authors prefix settings."""
     try:
         data = request.get_json()
-        check = get_author_setting_obj(data['scheme'])
+        check = get_author_prefix_obj(data['scheme'])
         if check is None:
             AuthorsPrefixSettings.create(**data)
             return jsonify({'code': 200, 'msg': 'Success'})
@@ -614,7 +620,7 @@ def update_affiliation():
     """Update authors affiliation settings."""
     try:
         data = request.get_json()
-        check = get_author_setting_obj(data['scheme'])
+        check = get_author_affiliation_obj(data['scheme'])
         if check is None or check.id == data['id']:
             AuthorsAffiliationSettings.update(**data)
             return jsonify({'code': 200, 'msg': 'Success'})
@@ -641,7 +647,7 @@ def create_affiliation():
     """Add new authors affiliation settings."""
     try:
         data = request.get_json()
-        check = get_author_setting_obj(data['scheme'])
+        check = get_author_affiliation_obj(data['scheme'])
         if check is None:
             AuthorsAffiliationSettings.create(**data)
             return jsonify({'code': 200, 'msg': 'Success'})
@@ -650,3 +656,15 @@ def create_affiliation():
                 {'code': 400, 'msg': 'Specified scheme is already exist.'})
     except Exception:
         return jsonify({'code': 204, 'msg': 'Failed'})
+
+
+@blueprint.teardown_request
+@blueprint_api.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko-authors dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

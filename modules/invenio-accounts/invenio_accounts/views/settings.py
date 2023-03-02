@@ -13,6 +13,7 @@ from __future__ import absolute_import, print_function
 from flask import Blueprint, current_app
 from flask_babelex import lazy_gettext as _
 from flask_menu import current_menu
+from invenio_db import db
 
 blueprint = Blueprint(
     'invenio_accounts',
@@ -88,3 +89,13 @@ def check_security_settings():
             "SESSION_COOKIE_SECURE setting must be set to True to prevent the "
             "session cookie from being leaked over an insecure channel."
         )
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("invenio_accounts dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

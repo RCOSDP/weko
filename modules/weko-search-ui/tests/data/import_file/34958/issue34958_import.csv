@@ -1,0 +1,6 @@
+#ItemType,test_import(34958),http://TEST_SERVER/items/jsonschema/34958
+.publish_status,.metadata.path[0],.pos_index[0],.metadata.pubdate,.metadata.item_1671508244520.subitem_1551255647225,.metadata.item_1671508244520.subitem_1551255648112,.edit_mode,.metadata.item_1671508260839.resourcetype,.metadata.item_1671508260839.resourceuri,.metadata.item_1671508308460[0].interim,.metadata.item_1671508308460[1].interim,.metadata.item_1671606815997,.metadata.item_1617186626617.subitem_description
+.PUBLISH_STATUS,IndexID[0],POS_INDEX[0],PubDate,Title.Title,Title.Language,Keep/Upgrade Version,Resource Type.Resource Type,Resource Type.Resource Type Identifier,test_text_array[0].None,test_text_array[1].None,test_text,description
+,,,,,,,,System,,,,
+Required,Allow Multiple,Allow Multiple,Required,Required,Required,Required,Required,Required,Allow Multiple,Allow Multiple,,
+public,,Index A,2022-11-11,Extra items test,en,keep,conference paper,,test_text_value0,test_text_value1,test_text,test_description

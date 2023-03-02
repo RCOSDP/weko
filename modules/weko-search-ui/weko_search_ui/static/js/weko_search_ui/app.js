@@ -297,7 +297,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     }
     $http({
       method: 'GET',
-      url: '/get_child_list/' + $rootScope.index_id_q + '?time=' + currentTime,
+      url: '/get_child_list/' + $rootScope.index_id_q,
       headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
       child_list = response.data;
@@ -311,18 +311,11 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $scope.sort_index_list = function (data_list) {
     let temp_key_list = []
     $scope.sorted_child_list = []
-    if (child_list.length == 0) {
-      for (var j = 1; j < data_list.length; j++) {
-        $scope.sorted_child_list.push(data_list[j]);
-      }
-    }
-    else {
-      for (var i = 0; i < child_list.length; i++) {
-        for (var j = 0; j < data_list.length; j++) {
-          if (temp_key_list.indexOf(data_list[j].key) == -1 && child_list[i] == data_list[j].key.split('/').pop()) {
-            temp_key_list.push(data_list[j].key);
-            $scope.sorted_child_list.push(data_list[j]);
-          }
+    for (var i = 0; i < child_list.length; i++) {
+      for (var j = 0; j < data_list.length; j++) {
+        if (temp_key_list.indexOf(data_list[j].key) == -1 && child_list[i] == data_list[j].key.split('/').pop()) {
+          temp_key_list.push(data_list[j].key);
+          $scope.sorted_child_list.push(data_list[j]);
         }
       }
     }
@@ -342,7 +335,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     }
     $http({
       method: 'GET',
-      url: '/get_path_name_dict/' + path_str + '?time=' + currentTime,
+      url: '/get_path_name_dict/' + path_str,
       headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
       $rootScope.vm.invenioSearchResults.aggregations.path.buckets[0][0]['path_name_dict'] = response.data;
@@ -477,7 +470,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     let request_url = '';
 
     if (search_type == "2") {
-      request_url = '/api/index/?page=1&size=9999&search_type=' + search_type + '&q=' + q + "&time=" + currentTime;
+      request_url = '/api/index/?page=1&size=9999&search_type=' + search_type + '&q=' + q;
     } else {
       if (search_type === null) {
         search_type = "0";
@@ -485,7 +478,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
       if (q === null) {
         q = "";
       }
-      request_url = '/api/records/?page=1&size=9999&search_type=' + search_type + '&q=' + q + "&time=" + currentTime;
+      request_url = '/api/records/?page=1&size=9999&search_type=' + search_type + '&q=' + q;
     }
 
     let search_results = []

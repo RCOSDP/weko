@@ -496,10 +496,22 @@ def check_schedules_and_run():
     """Check schedules and run."""
     settings = HarvestSettings.query.all()
     now = datetime.utcnow()
+    user_data = {
+            'ip_address': "",
+            'user_agent': "",
+            'user_id': "",
+            'session_id': ""
+    }
+    request_info = {
+            "remote_addr": "",
+            "referrer": "",
+            "hostname": "",
+            "user_id": ""
+    }
     for h in settings:
         if h.schedule_enable is True:
             if (h.schedule_frequency == 'daily') or \
                (h.schedule_frequency == 'weekly' and h.schedule_details == now.weekday()) or \
                (h.schedule_frequency == 'monthly' and h.schedule_details == now.day):
                 run_harvesting.delay(
-                    h.id, now.strftime('%Y-%m-%dT%H:%M:%S%z'), {})
+                    h.id, now.strftime('%Y-%m-%dT%H:%M:%S%z'), user_data,request_info)

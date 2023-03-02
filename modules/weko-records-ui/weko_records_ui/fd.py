@@ -91,6 +91,10 @@ def prepare_response(pid_value, fd=True):
     """
     fn = request.view_args.get("filename")
     flst = FilesMetadata.get_records(pid_value)
+    print('\n\n')
+    print(fn)
+    print(flst[0].dumps().get("display_name"))
+    print('\n\n')
     for fj in flst:
         if fj.dumps().get("display_name") == fn:
             stream = fj.model.contents[:]

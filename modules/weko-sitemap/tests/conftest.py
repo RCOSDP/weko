@@ -16,11 +16,16 @@ from __future__ import absolute_import, print_function
 import shutil
 import tempfile
 import os
+from os.path import dirname, join
+import json
+import copy
+import uuid
 
 import pytest
-from flask import Flask
+from flask import Flask, current_app
 from flask_babelex import Babel
 from flask_menu import Menu
+from flask_celeryext import FlaskCeleryExt
 
 from invenio_admin import InvenioAdmin
 from invenio_cache import InvenioCache
@@ -30,6 +35,7 @@ from weko_sitemap.views import blueprint
 from weko_sitemap.config import WEKO_SITEMAP_ADMIN_TEMPLATE
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime
+from weko_theme import WekoTheme
 from invenio_assets import InvenioAssets
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
@@ -39,7 +45,15 @@ from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers, ActionRoles
 from invenio_db import InvenioDB
 from invenio_db import db as db_
+from invenio_pidstore import InvenioPIDStore
 from sqlalchemy_utils.functions import create_database, database_exists, drop_database
+
+from invenio_pidrelations.models import PIDRelation
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus,RecordIdentifier
+from invenio_pidstore.errors import PIDDoesNotExistError
+from weko_deposit.api import WekoDeposit,WekoRecord
+from weko_records.api import ItemsMetadata
+from invenio_records_ui import InvenioRecordsUI 
 
 @pytest.fixture(scope='module')
 def celery_config():
@@ -86,15 +100,28 @@ def base_app(instance_path):
         SQLALCHEMY_ECHO=False,
         TESTING=True,
         WEKO_SITEMAP_ADMIN_TEMPLATE=WEKO_SITEMAP_ADMIN_TEMPLATE,
+        CELERY_ALWAYS_EAGER=True,
+        CELERY_CACHE_BACKEND="memory",
+        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_RESULT_BACKEND="cache",
+        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_DB='0',
+        CACHE_REDIS_HOST="redis",
+        REDIS_PORT='6379',
+        ACCOUNTS_SESSION_REDIS_DB_NO = 1,
     )
     Babel(app_)
     Menu(app_)
+    FlaskCeleryExt(app_)
     InvenioDB(app_)
     InvenioCache(app_)
     InvenioAdmin(app_)
     InvenioAssets(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
+    InvenioPIDStore(app_)
+    InvenioRecordsUI(app_)
+    WekoTheme(app_)
     WekoSitemap(app_)
     WekoAdmin(app_)
     app_.register_blueprint(blueprint)
@@ -258,3 +285,53 @@ def db_sessionlifetime(app, db):
     session_lifetime = SessionLifetime(lifetime=60, is_delete=False)
     with db.session.begin_nested():
         db.session.add(session_lifetime)
+
+@pytest.fixture()
+def records(app, db):
+    current_app.config.update(
+        SEARCH_UI_SEARCH_INDEX="test-weko",
+        INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
+        INDEXER_FILE_DOC_TYPE="content",
+    )
+    
+    item_datas = list()
+    with open(join(dirname(__file__),"data/test_items.json"), "r") as f:
+        item_datas = json.load(f)
+    record_datas = list()
+    with open(join(dirname(__file__),"data/test_records.json"), "r") as f:
+        record_datas = json.load(f)
+        
+    result = list()
+    record_num = len(record_datas)
+    for i in range(record_num):
+        record_data = copy.deepcopy(record_datas[i])
+        item_data = copy.deepcopy(item_datas[i])
+        rec_uuid = uuid.uuid4()
+        recid = PersistentIdentifier.create('recid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        depid = PersistentIdentifier.create('depid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        rel = PIDRelation.create(recid,depid,3)
+        db.session.add(rel)
+        parent=None
+        doi = None
+        if "item_1617186819068" in record_data:
+            doi_url = "https://doi.org/"+record_data["item_1617186819068"]["attribute_value_mlt"][0]["subitem_identifier_reg_text"]
+            try:
+                PersistentIdentifier.get("doi",doi_url)
+            except PIDDoesNotExistError:
+                doi = PersistentIdentifier.create('doi',doi_url,object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        if '.' in record_data["recid"]:
+            parent = PersistentIdentifier.get("recid",int(float(record_data["recid"])))
+            recid_p = PIDRelation.get_child_relations(parent).one_or_none()
+            PIDRelation.create(recid_p.parent, recid,2)
+        else:
+            parent = PersistentIdentifier.create('parent', "parent:{}".format(record_data["recid"]),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            rel = PIDRelation.create(parent, recid,2,0)
+            db.session.add(rel)
+            RecordIdentifier.next()
+        record = WekoRecord.create(record_data, id_=rec_uuid)
+        item = ItemsMetadata.create(item_data, id_=rec_uuid)
+        deposit = WekoDeposit(record, record.model)
+        deposit.commit()
+        
+        result.append([recid, depid, record, item, parent, doi, deposit])
+    return result

@@ -1262,3 +1262,6 @@ WEKO_ADMIN_FACET_SEARCH_SETTING_BUCKET_SIZE = 1000
 
 WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 """Default Cache Temporary Directory Information Key."""
+
+WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST = False
+""" If True, enable regex function in crawler list processing. """
