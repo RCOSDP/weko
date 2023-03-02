@@ -1,0 +1,65 @@
+{
+    "all": [
+        {
+            "admin": 0,
+            "file_key": "test1.pdf",
+            "group_counts": {
+                "test1": 1,
+                "test2": 1
+            },
+            "index_list": "index1",
+            "login": 0,
+            "no_login": 1,
+            "reg": 0,
+            "site_license": 1,
+            "guest": 1,
+            "System Administrator": 0,
+            "Repository Administrator": 0,
+            "Contributor": 0,
+            "Community Administrator": 0,
+            "total": 1
+        },
+        {
+            "admin": 0,
+            "file_key": "test2.pdf",
+            "group_counts": {
+                "test2": 2,
+                "test3": 2
+            },
+            "index_list": "index2",
+            "login": 2,
+            "no_login": 0,
+            "reg": 2,
+            "site_license": 0,
+            "guest": 0,
+            "System Administrator": 0,
+            "Repository Administrator": 0,
+            "Contributor": 2,
+            "Community Administrator": 0,
+            "total": 2
+        },
+        {
+            "admin": 3,
+            "file_key": "test3.pdf",
+            "group_counts": {
+                "test3": 3
+            },
+            "index_list": "index3",
+            "login": 3,
+            "no_login": 0,
+            "reg": 0,
+            "site_license": 0,
+            "guest": 0,
+            "System Administrator": 3,
+            "Repository Administrator": 0,
+            "Contributor": 0,
+            "Community Administrator": 0,
+            "total": 3
+        }
+    ],
+    "all_groups": [
+        "test1",
+        "test2",
+        "test3"
+    ]
+}

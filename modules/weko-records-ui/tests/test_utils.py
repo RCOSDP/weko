@@ -1,21 +1,30 @@
 import pytest
-from weko_records_ui.utils import create_usage_report_for_user,get_data_usage_application_data,send_usage_report_mail_for_user,check_and_send_usage_report,check_and_create_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,is_show_email_of_creator,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings
+from weko_records_ui.utils import (
+    check_and_create_usage_report,
+    check_items_settings, create_onetime_download_url,
+    create_usage_report_for_user, display_oaiset_path,
+    generate_one_time_download_url, get_billing_file_download_permission,
+    get_billing_role, get_file_info_list, get_google_detaset_meta,
+    get_google_scholar_meta, get_groups_price, get_license_pdf,
+    get_list_licence, get_min_price_billing_file_download,
+    get_onetime_download, get_pair_value, get_record_permalink, get_roles,
+    get_terms, get_workflows, hide_by_email, hide_by_file, hide_by_itemtype,
+    hide_item_metadata, hide_item_metadata_email_only, is_billing_item,
+    is_private_index, is_show_email_of_creator,
+    parse_one_time_download_token, replace_license_free, restore,
+    send_usage_report_mail_for_user, soft_delete, update_onetime_download,
+    validate_download_record, validate_onetime_download_token
+)
 import base64
 from unittest.mock import MagicMock
 import copy
-import pytest
-import io
+from flask import json
+from invenio_pidstore.models import PIDStatus
+from invenio_records_files.utils import record_file_factory
 from lxml import etree
 from fpdf import FPDF
-from invenio_records_files.utils import record_file_factory
-from flask import Flask, json, jsonify, session, url_for
-from flask_security.utils import login_user
-from invenio_accounts.testutils import login_user_via_session
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
-from weko_deposit.api import WekoRecord
 from weko_records_ui.models import FileOnetimeDownload
-from werkzeug.exceptions import NotFound
 from weko_admin.models import AdminSettings
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -99,10 +108,19 @@ def test_get_min_price_billing_file_download(users):
         assert get_min_price_billing_file_download(groups_price,billing_file_permission)=={}
 
 
-# def is_billing_item(item_type_id):
+# def is_billing_item(record: dict) -> bool:
+#     def billing_file_search_factory(search):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_billing_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_is_billing_item(app,itemtypes):
-    assert is_billing_item(1)==False
+def test_is_billing_item(i18n_app,records, mock_es_execute):
+    _, results = records
+    record = results[0]['record']
+
+    with patch('flask_principal.Permission.can', MagicMock(return_value=True)):
+        with patch('elasticsearch_dsl.Search.execute', return_value=mock_es_execute('tests/data/execute_result1.json')):
+            assert is_billing_item(record)==True
+        with patch('elasticsearch_dsl.Search.execute', return_value=mock_es_execute('tests/data/execute_result2.json')):
+            assert is_billing_item(record)==False
+
 
 # def soft_delete(recid):
 #     def get_cache_data(key: str):
@@ -444,3 +462,23 @@ def test_get_google_detaset_meta(app, records, itemtypes, oaischema, oaiidentify
             indexer, results = records
             record = results[0]["record"]
             assert get_google_detaset_meta(record)=='{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point longitude test", "longitude": "point latitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}'
+
+
+# def get_billing_role(record):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_google_detaset_meta -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_billing_role(records, users):
+    _, results = records
+    record = results[0]['record']
+    with patch('flask_login.utils._get_user', return_value=users[8]['obj']):
+        user_role, min_price = get_billing_role(record)
+        assert user_role == 'guest'
+        assert min_price == ''
+    billing_record = results[3]['record']
+    with patch('flask_login.utils._get_user', return_value=users[8]['obj']):
+        user_role, min_price = get_billing_role(billing_record)
+        assert user_role == 'System Administrator'
+        assert min_price == '200'
+    with patch('flask_login.utils._get_user', return_value=users[5]['obj']):
+        user_role, min_price = get_billing_role(billing_record)
+        assert user_role == 'guest'
+        assert min_price == ''
