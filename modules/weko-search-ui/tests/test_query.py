@@ -1,5 +1,4 @@
 import pytest
-import json
 import copy
 from flask import request, url_for
 from re import L
@@ -68,42 +67,195 @@ def test_default_search_factory(app, users, communities):
     }
     with app.test_client() as client:
         login_user_via_session(client, email=users[3]["email"])
-        search = RecordsSearch()
-        app.config['WEKO_SEARCH_KEYWORDS_DICT'] = WEKO_SEARCH_KEYWORDS_DICT
-        app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
-        with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
-            app.extensions['invenio-oauth2server'] = 1
-            app.extensions['invenio-queues'] = 1
+    search = RecordsSearch()
+    app.config['WEKO_SEARCH_KEYWORDS_DICT'] = WEKO_SEARCH_KEYWORDS_DICT
+    app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
+    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
             mock_searchperm = MagicMock(side_effect=MockSearchPerm)
             with patch('weko_search_ui.query.search_permission', mock_searchperm):
                 _rv = (search, MultiDict([]))
                 with patch('invenio_records_rest.facets.default_facets_factory', return_value=_rv):
                     res = default_search_factory(self=None, search=search)
                     assert res
-        _data['community'] = 'comm1'
-        with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
-            app.extensions['invenio-oauth2server'] = 1
-            app.extensions['invenio-queues'] = 1
+    _data['index_id'] = '1616224532673'
+    _data['idx'] = '1616224532673,1676951564445'
+    _data['recursive'] = '1'
+    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
             mock_searchperm = MagicMock(side_effect=MockSearchPerm)
             with patch('weko_search_ui.query.search_permission', mock_searchperm):
                 _rv = (search, MultiDict([]))
                 with patch('invenio_records_rest.facets.default_facets_factory', return_value=_rv):
                     res = default_search_factory(self=None, search=search)
                     assert res
-        _data['search_type'] = '0'
-        with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
-            app.extensions['invenio-oauth2server'] = 1
-            app.extensions['invenio-queues'] = 1
+    _data['community'] = 'comm1'
+    _data['all'] = 'information'
+    _data['meta'] = 'information'
+    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
             mock_searchperm = MagicMock(side_effect=MockSearchPerm)
             with patch('weko_search_ui.query.search_permission', mock_searchperm):
                 _rv = (search, MultiDict([]))
                 with patch('invenio_records_rest.facets.default_facets_factory', return_value=_rv):
                     res = default_search_factory(self=None, search=search)
                     assert res
-        _data['community'] = None
-        with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
-            app.extensions['invenio-oauth2server'] = 1
-            app.extensions['invenio-queues'] = 1
+    _data['search_type'] = '0'
+    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            mock_searchperm = MagicMock(side_effect=MockSearchPerm)
+            with patch('weko_search_ui.query.search_permission', mock_searchperm):
+                _rv = (search, MultiDict([]))
+                with patch('invenio_records_rest.facets.default_facets_factory', return_value=_rv):
+                    res = default_search_factory(self=None, search=search)
+                    assert res
+
+    # _get_opensearch_parameter
+    _data = {
+        'pub': 'pub1'
+    }
+    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            mock_searchperm = MagicMock(side_effect=MockSearchPerm)
+            with patch('weko_search_ui.query.search_permission', mock_searchperm):
+                _rv = (search, MultiDict([]))
+                with patch('invenio_records_rest.facets.default_facets_factory', return_value=_rv):
+                    assert default_search_factory(self=None, search=search)
+    _data = {
+        'cname': 'con1'
+    }
+    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            mock_searchperm = MagicMock(side_effect=MockSearchPerm)
+            with patch('weko_search_ui.query.search_permission', mock_searchperm):
+                _rv = (search, MultiDict([]))
+                with patch('invenio_records_rest.facets.default_facets_factory', return_value=_rv):
+                    assert default_search_factory(self=None, search=search)
+    _data = {
+        'mimetype': 'text'
+    }
+    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            mock_searchperm = MagicMock(side_effect=MockSearchPerm)
+            with patch('weko_search_ui.query.search_permission', mock_searchperm):
+                _rv = (search, MultiDict([]))
+                with patch('invenio_records_rest.facets.default_facets_factory', return_value=_rv):
+                    assert default_search_factory(self=None, search=search)
+    _data = {
+        'srctitle': 'jtitle'
+    }
+    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            mock_searchperm = MagicMock(side_effect=MockSearchPerm)
+            with patch('weko_search_ui.query.search_permission', mock_searchperm):
+                _rv = (search, MultiDict([]))
+                with patch('invenio_records_rest.facets.default_facets_factory', return_value=_rv):
+                    assert default_search_factory(self=None, search=search)
+    _data = {
+        'spatial': 'sp'
+    }
+    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            mock_searchperm = MagicMock(side_effect=MockSearchPerm)
+            with patch('weko_search_ui.query.search_permission', mock_searchperm):
+                _rv = (search, MultiDict([]))
+                with patch('invenio_records_rest.facets.default_facets_factory', return_value=_rv):
+                    assert default_search_factory(self=None, search=search)
+    _data = {
+        'temporal': 'era'
+    }
+    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            mock_searchperm = MagicMock(side_effect=MockSearchPerm)
+            with patch('weko_search_ui.query.search_permission', mock_searchperm):
+                _rv = (search, MultiDict([]))
+                with patch('invenio_records_rest.facets.default_facets_factory', return_value=_rv):
+                    assert default_search_factory(self=None, search=search)
+    _data = {
+        'version': 'textver'
+    }
+    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            mock_searchperm = MagicMock(side_effect=MockSearchPerm)
+            with patch('weko_search_ui.query.search_permission', mock_searchperm):
+                _rv = (search, MultiDict([]))
+                with patch('invenio_records_rest.facets.default_facets_factory', return_value=_rv):
+                    assert default_search_factory(self=None, search=search)
+    _data = {
+        'dissno': 'grantid'
+    }
+    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            mock_searchperm = MagicMock(side_effect=MockSearchPerm)
+            with patch('weko_search_ui.query.search_permission', mock_searchperm):
+                _rv = (search, MultiDict([]))
+                with patch('invenio_records_rest.facets.default_facets_factory', return_value=_rv):
+                    assert default_search_factory(self=None, search=search)
+    _data = {
+        'dgname': 'grantor'
+    }
+    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            mock_searchperm = MagicMock(side_effect=MockSearchPerm)
+            with patch('weko_search_ui.query.search_permission', mock_searchperm):
+                _rv = (search, MultiDict([]))
+                with patch('invenio_records_rest.facets.default_facets_factory', return_value=_rv):
+                    assert default_search_factory(self=None, search=search)
+    _data = {
+        'itemtype': 'itemTypeList'
+    }
+    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            mock_searchperm = MagicMock(side_effect=MockSearchPerm)
+            with patch('weko_search_ui.query.search_permission', mock_searchperm):
+                _rv = (search, MultiDict([]))
+                with patch('invenio_records_rest.facets.default_facets_factory', return_value=_rv):
+                    assert default_search_factory(self=None, search=search)
+    _data = {
+        'language': 'eng'
+    }
+    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            mock_searchperm = MagicMock(side_effect=MockSearchPerm)
+            with patch('weko_search_ui.query.search_permission', mock_searchperm):
+                _rv = (search, MultiDict([]))
+                with patch('invenio_records_rest.facets.default_facets_factory', return_value=_rv):
+                    assert default_search_factory(self=None, search=search)
+    _data['community'] = None
+    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
             mock_searchperm = MagicMock(side_effect=MockSearchPerm)
             with patch('weko_search_ui.query.search_permission', mock_searchperm):
                 _rv = (search, MultiDict([]))

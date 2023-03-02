@@ -150,6 +150,10 @@
 				}
 			]
 		},
+		"item_1551265302121": {
+			"attribute_name": "Temporal2",
+			"attribute_value_mlt": ["testtest"]
+		},
 		"item_title": "\u30bf\u30a4\u30c8\u30eb\u65e5\u672c\u8a9e",
 		"item_type_id": "12",
 		"control_number": "870"

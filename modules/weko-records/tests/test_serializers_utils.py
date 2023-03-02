@@ -12,6 +12,7 @@ from weko_records.serializers.utils import (
     get_attribute_schema,
     get_item_type_name_id,
     get_item_type_name,
+    get_wekolog,
     OpenSearchDetailData)
 
 # def get_mapping(item_type_mapping, mapping_type):
@@ -47,6 +48,9 @@ def test_get_metadata_from_map(meta):
     _item_id = 'item_1551264308487'
     result = get_metadata_from_map(meta[0]['item_1551264308487'], _item_id)
     assert result == {'item_1551264308487.subitem_1551255647225': ['タイトル日本語', 'Title'], 'item_1551264308487.subitem_1551255648112': ['ja', 'en']}
+    _item_id = 'item_1551265302121'
+    result = get_metadata_from_map(meta[0]['item_1551265302121'], _item_id)
+    assert result == {'item_1551265302121' : 'testtest'}
 
 # def get_attribute_schema(schema_id):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_get_attribute_schema -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -80,6 +84,20 @@ def test_get_item_type_name(db, item_type):
     result = get_item_type_name(2)
     assert result == None
 
+# def get_wekolog(hit, log_term):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_get_wekolog -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_wekolog(db, record1):
+    hit = {'_id': record1[0].object_uuid }
+    result = get_wekolog(hit, '2022-01')
+    assert result == {'terms': '2022-01', 'view': '0', 'download': '0'}
+
+# def get_wekolog(hit, log_term):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_get_wekolog_2 -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_wekolog_2(db, record2):
+    hit = {'_id': record2[0].object_uuid }
+    result = get_wekolog(hit, '2022-01')
+    assert result == {'terms': '2022-01', 'view': '0', 'download': '0'}
+
 # class OpenSearchDetailData:
 #     def output_open_search_detail_data(self):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_open_search_detail_data -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -112,3 +130,13 @@ def test_open_search_detail_data(app, db, db_index, render, form, mapping, hit, 
     data = OpenSearchDetailData(fetcher, _search_result, 'rss')
     with app.test_request_context():
         assert data.output_open_search_detail_data()
+
+    # add request parameter log_term
+    _data = {
+        'lang': 'en',
+        'log_term': '2021-01'
+    }
+    _search_result = {'hits': {'total': 1, 'hits': [json_data(hit)]}}
+    detail = OpenSearchDetailData(fetcher, _search_result, 'rss')
+    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+        assert detail.output_open_search_detail_data()
