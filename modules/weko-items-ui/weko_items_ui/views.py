@@ -24,6 +24,7 @@ import json
 import os
 import sys
 from copy import deepcopy
+import pickle
 from datetime import date, datetime, timedelta
 
 import redis
@@ -224,9 +225,10 @@ def iframe_save_model():
     """
     try:
         data = request.get_json()
+        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
         # remove either check temp data
         if data and data.get('metainfo'):
-            metainfo = deepcopy(data.get('metainfo'))
+            metainfo = pickle_copy(data.get('metainfo'))
             for key in metainfo.keys():
                 if key.startswith('either_valid_'):
                     del data['metainfo'][key]
