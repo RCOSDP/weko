@@ -184,7 +184,6 @@ WEKO_ADMIN_REPORT_FILE_NAMES = {
     'file_download': 'FileDownload_',
     'file_preview': 'FilePreview_',
     'billing_file_download': 'PayFileDownload_',
-    'billing_file_preview': 'PayFilePreview_',
     'index_access': 'IndexAccess_',
     'detail_view': 'DetailView_',
     'file_using_per_user': 'FileUsingPerUser_',
