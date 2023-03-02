@@ -125,6 +125,8 @@ set -o errexit
 ${INVENIO_WEB_INSTANCE} db drop --yes-i-know
 ${INVENIO_WEB_INSTANCE} db init
 ${INVENIO_WEB_INSTANCE} db create -v
+${INVENIO_WEB_INSTANCE} stats partition create $(date +%Y)
+${INVENIO_WEB_INSTANCE} stats partition create $(date -d 'year' +%Y)
 # sphinxdoc-create-database-end
 
 # sphinxdoc-index-initialisation-begin

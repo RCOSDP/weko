@@ -112,6 +112,9 @@ class WekoAdmin(object):
             # avoid ping request
             if request.path == "/ping":
                 return
+            if request.path == "/oai":
+                return
+            
             if "selected_language" not in session:
                 registered_languages = AdminLangSettings\
                     .get_registered_language()
