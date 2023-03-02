@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """Utilities for convert response json."""
+import copy
 import csv
 import json
 import math
@@ -28,14 +29,11 @@ from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 from typing import Dict, Tuple, Union
 
-import redis
-from redis import sentinel
 import requests
 from flask import current_app, request
 from flask_babelex import gettext as __
 from flask_babelex import lazy_gettext as _
 from invenio_accounts.models import Role, userrole
-from invenio_cache import cached_unless_authenticated
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
@@ -45,7 +43,6 @@ from invenio_records.models import RecordMetadata
 from invenio_records_rest.facets import terms_filter
 from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
 from jinja2 import Template
-from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
@@ -375,11 +372,12 @@ def make_stats_file(raw_stats, file_type, year, month):
                       [_('Aggregation Month'), year + '-' + month],
                       [''], [header_row]])
 
-    if file_type in ['billing_file_download', 'billing_file_preview']:
+    if file_type == 'billing_file_download':
         col_dict_key = file_type.split('_', 1)[1]
-        cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(col_dict_key,
-                                                                [])
-        cols[3:1] = raw_stats.get('all_groups')  # Insert group columns
+        cols_base = copy.copy(current_app.config['WEKO_ADMIN_REPORT_COLS'].get(col_dict_key, []))
+        roles = Role.query.all()
+        role_name_list = [role.name for role in roles]
+        cols = cols_base[:4] + role_name_list + cols_base[5:]
     else:
         cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(file_type, [])
     writer.writerow(cols)
@@ -391,7 +389,7 @@ def make_stats_file(raw_stats, file_type, year, month):
             'all'), file_type, raw_stats.get('index_name'))
         writer.writerow([_('Total Detail Views'), raw_stats.get('total')])
 
-    elif file_type in ['billing_file_download', 'billing_file_preview']:
+    elif file_type == 'billing_file_download':
         write_report_file_rows(writer, raw_stats.get('all'), file_type,
                               raw_stats.get('all_groups'))  # Pass all groups
     elif file_type == 'site_access':
@@ -413,7 +411,7 @@ def make_stats_file(raw_stats, file_type, year, month):
             writer.writerow(cols)
             write_report_file_rows(writer, raw_stats.get('open_access'))
         elif 'institution_name' in raw_stats:
-            writer.writerows([[_('Institution Name')] + cols])
+            writer.writerow([_('Institution Name')] + cols)
             write_report_file_rows(writer,
                                   raw_stats.get('institution_name'),
                                   file_type)
@@ -436,17 +434,17 @@ def write_report_file_rows(writer, records, file_type=None, other_info=None):
                              record.get('login'), record.get('site_license'),
                              record.get('admin'), record.get('reg')])
 
-        elif file_type in ['billing_file_download', 'billing_file_preview']:
+        elif file_type == 'billing_file_download':
             row = [record.get('file_key'), record.get('index_list'),
                    record.get('total'), record.get('no_login'),
-                   record.get('login'), record.get('site_license'),
-                   record.get('admin'), record.get('reg')]
-            group_counts = []
-            for group_name in other_info:  # Add group counts in
-                if record.get('group_counts'):
-                    group_counts.append(
-                        record.get('group_counts').get(group_name, 0))
-            row[3:1] = group_counts
+                   record.get('site_license'), record.get('admin'),
+                   record.get('reg')]
+            roles = Role.query.all()
+            role_name_list = [role.name for role in roles]
+            role_counts = []
+            for role_name in role_name_list:
+                role_counts.append(record.get(role_name))
+            row[4:1] = role_counts
             writer.writerow(row)
 
         elif file_type == 'index_access':
@@ -505,17 +503,6 @@ def reset_redis_cache(cache_key, value, ttl=None):
     except Exception as e:
         current_app.logger.error('Could not reset redis value: {}'.format(e))
         raise
-
-
-def is_exists_key_in_redis(key):
-    """Check key exist in redis."""
-    try:
-        redis_connection = RedisConnection()
-        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
-        return datastore.redis.exists(key)
-    except Exception as e:
-        current_app.logger.error('Could get value for ' + key + ": {}".format(e))
-    return False
 
 
 def is_exists_key_or_empty_in_redis(key):

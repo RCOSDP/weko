@@ -1,0 +1,102 @@
+{
+    "_source": {
+        "includes": [
+            "content.filename",
+            "_item_metadata.owner",
+            "_oai.id"
+        ]
+    },
+    "query": {
+        "bool": {
+            "filter": [
+                {
+                    "bool": {
+                        "must": [
+                            {
+                                "bool": {
+                                    "must": [
+                                        {
+                                            "terms": {
+                                                "path": [
+                                                    "1",
+                                                    "2",
+                                                    "3",
+                                                    "4"
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "should": [
+                                        {
+                                            "match": {
+                                                "weko_creator_id": "3"
+                                            }
+                                        },
+                                        {
+                                            "match": {
+                                                "weko_shared_id": "3"
+                                            }
+                                        },
+                                        {
+                                            "bool": {
+                                                "must": [
+                                                    {
+                                                        "match": {
+                                                            "publish_status": "0"
+                                                        }
+                                                    },
+                                                    {
+                                                        "range": {
+                                                            "publish_date": {
+                                                                "lte": "now/d"
+                                                            }
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "bool": {
+                                    "must": [
+                                        {
+                                            "match": {
+                                                "relation_version_is_last": "true"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "bool": {
+                                    "should": [
+                                        {
+                                            "nested": {
+                                                "path": "content",
+                                                "query": {
+                                                    "bool": {
+                                                        "must": [
+                                                            {
+                                                                "terms": {
+                                                                    "content.billing.raw": [
+                                                                        "billing_file"
+                                                                    ]
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+}
