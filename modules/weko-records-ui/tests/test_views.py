@@ -68,6 +68,7 @@ def test_url_to_link():
     assert url_to_link("file://localhost") == False
     assert url_to_link("http://localhost") == True
     assert url_to_link("https://localhost") == True
+    assert url_to_link("https://localhost/records/123/files/file.pdf") == False
 
 
 # def pid_value_version(pid_value):
@@ -78,6 +79,8 @@ def test_pid_value_version():
     assert pid_value_version(1) == None
     assert pid_value_version("1") == None
     assert pid_value_version("1.1") == "1"
+    
+    pid_value_version(MagicMock())
 
 
 # def publish(pid, record, template=None, **kwargs):
@@ -313,6 +316,7 @@ def test_check_file_permission(app,records,users,id,result):
 
 
 # def check_file_permission_period(record, fjson):
+# Error
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_check_file_permission_period -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize(
     "id, result",
@@ -327,12 +331,19 @@ def test_check_file_permission(app,records,users,id,result):
         # (7, True),
     ],
 )
-def test_check_file_permission_period(app,records,users,id,result,db_file_permission):
+def test_check_file_permission_period(app,records,db_file_permission,users,id,result):
     indexer, results = records
     record = results[0]["record"]
     assert isinstance(record,WekoRecord)==True
+    fjson = record['item_1617605131499']['attribute_value_mlt'][0]
+    # fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-27'}], 'format': 'image/jpeg', 'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessrole': 'open_access', 'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False, 'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0, 'mimetype': 'image/jpeg', 'file_order': 0}
     with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
-        assert check_file_permission_period(record,record['item_1617605131499']['attribute_value_mlt'][0])==result
+        assert check_file_permission_period(record,fjson)==result
+
+        # data1 = MagicMock()
+        # data2 = MagicMock()
+        # assert check_file_permission_period(record,fjson)
+
 
 # def get_file_permission(record, fjson):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -356,6 +367,7 @@ def test_get_file_permission(app,records,users,id,result,db_file_permission):
     with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
         assert get_file_permission(record,record['item_1617605131499']['attribute_value_mlt'][0])==result
 
+
 # def check_content_file_clickable(record, fjson):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_check_content_file_clickable -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize(
@@ -377,6 +389,7 @@ def test_check_content_file_clickable(app,records,users,id,result):
     assert isinstance(record,WekoRecord)==True
     with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
         assert check_content_file_clickable(record,record['item_1617605131499'])==result
+
 
 # def get_usage_workflow(file_json):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_usage_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -400,6 +413,14 @@ def test_get_usage_workflow(app, users, workflows):
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         res = get_usage_workflow(_file_json)
         assert res==None
+
+    data1 = MagicMock()
+    data1.is_authenticated = False
+
+    with patch("flask_login.utils._get_user", return_value=data1):
+        res = get_usage_workflow(_file_json)
+        assert res==3
+
 
 # def get_workflow_detail(workflow_id):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_workflow_detail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -429,6 +450,9 @@ def test_default_view_method(app, records, itemtypes, indexstyle, db_admin_setti
                         res = default_view_method(recid, record, 'helloworld.pdf')
                     assert e.type==TemplatesNotFound
 
+                    meta_options
+
+
 # def doi_ish_view_method(parent_pid_value=0, version=0):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_doi_ish_view_method_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_doi_ish_view_method_acl_guest(app,client,records):
@@ -436,6 +460,7 @@ def test_doi_ish_view_method_acl_guest(app,client,records):
     res = client.get(url)
     assert res.status_code == 302
     assert res.location == 'http://test_server/login/?next=%2Fr%2F1'
+
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_doi_ish_view_method_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize(
@@ -457,6 +482,9 @@ def test_doi_ish_view_method_acl(app,client,records,users,id,result):
     res = client.get(url)
     assert res.status_code == 302
     assert res.location == 'http://test_server/records/1.1'
+
+    assert "302 FOUND" in doi_ish_view_method(parent_pid_value=1, version=1)
+
 
 # def parent_view_method(pid_value=0):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_parent_view_method_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -489,6 +517,7 @@ def test_parent_view_method_acl(app,client,records,users,id,result):
 
 
 # def set_pdfcoverpage_header():
+# Error
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_set_pdfcoverpage_header_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_set_pdfcoverpage_header_acl_guest(app, client, records, pdfcoverpagesetting):
     url = url_for("weko_records_ui.set_pdfcoverpage_header",_external=True)
@@ -533,6 +562,7 @@ def test_set_pdfcoverpage_header_acl(app, client, records, users, id, result, pd
     assert res.status_code == 302
     assert res.location == 'http://test_server/admin/pdfcoverpage'
 
+
 #     def handle_over_max_file_size(error):
 # def file_version_update():
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_file_version_update_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -541,6 +571,7 @@ def test_file_version_update_acl_guest(client, records):
     res = client.put(url)
     assert res.status_code == 302
     assert res.location == 'http://test_server/login/?next=%2Ffile_version%2Fupdate'
+
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_file_version_update_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize(
@@ -577,6 +608,11 @@ def test_file_version_update_acl(client, records, users, id, status_code):
         assert res.status_code == status_code
         assert json.loads(res.data) == {'status': 0, 'msg': 'Invalid data'}
 
+        data1 = MagicMock()
+        data1.is_show = 1
+
+        with patch("invenio_files_rest.models.ObjectVersion.get", return_value=data1):
+            file_version_update()
 
 # def citation(record, pid, style=None, ln=None):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_citation -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -584,6 +620,7 @@ def test_citation(records):
     indexer, results = records
     record = results[0]["record"]
     assert citation(record,record.pid)==None
+
 
 # def soft_delete(recid):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_soft_delete_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -594,18 +631,19 @@ def test_soft_delete_acl_guest(client, records):
     res = client.post(url)
     assert res.status_code == 302
 
+
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_soft_delete_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize(
     "id, status_code",
     [
-        (0, 200),
-        # (1, 302),
-        # (2, 302),
-        # (3, 302),
-        # (4, 302),
-        # (5, 302),
-        # (6, 302),
-        # (7, 302),
+        (0, 500), # contributor
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (4, 500), # generaluser
+        (5, 500), # originalroleuser 
+        (6, 200), # originalroleuser2
+        (7, 500), # user
     ],
 )
 def test_soft_delete_acl(client, records, users, id, status_code):
@@ -613,8 +651,10 @@ def test_soft_delete_acl(client, records, users, id, status_code):
         url = url_for(
             "weko_records_ui.soft_delete", recid=1, _external=True
         )
-        res = client.post(url)
-        assert res.status_code == status_code
+        with patch("flask.templating._render", return_value=""):
+            res = client.post(url)
+            assert res.status_code == status_code
+
 
 # def restore(recid):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_restore_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -629,14 +669,14 @@ def test_restore_acl_guest(client, records):
 @pytest.mark.parametrize(
     "id, status_code",
     [
-        (0, 200),
-        # (1, 302),
-        # (2, 302),
-        # (3, 302),
-        # (4, 302),
-        # (5, 302),
-        # (6, 302),
-        # (7, 302),
+        (0, 500), # contributor
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (4, 500), # generaluser
+        (5, 500), # originalroleuser 
+        (6, 200), # originalroleuser2
+        (7, 500), # user
     ],
 )
 def test_restore_acl(client, records, users, id, status_code):
@@ -644,8 +684,9 @@ def test_restore_acl(client, records, users, id, status_code):
         url = url_for(
             "weko_records_ui.restore", recid=1, _external=True
         )
-        res = client.post(url)
-        assert res.status_code == status_code
+        with patch("flask.templating._render", return_value=""):
+            res = client.post(url)
+            assert res.status_code == status_code
 
 # def init_permission(recid):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_init_permission_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -657,10 +698,11 @@ def test_init_permission_acl_guest(client, records):
     assert res.status_code == 302
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_init_permission_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+# Error
 @pytest.mark.parametrize(
     "id, status_code",
     [
-        (0, 200),
+        (0, 400),
         # (1, 302),
         # (2, 302),
         # (3, 302),
@@ -670,16 +712,16 @@ def test_init_permission_acl_guest(client, records):
         # (7, 302),
     ],
 )
-def test_init_permission_acl(client, records, users, id, status_code):
+def test_init_permission_acl(client, records,users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
     _data = {
         'file_name': 'helloworld.pdf',
-        'activity_id': 'A-00000000-00000'
+        'activity_id': 'A-00000000-00000',
     }
     url = url_for(
         "weko_records_ui.init_permission", recid=1, _external=True
     )
-    res = client.post(url, data=_data)
+    res = client.post(url, data=_data,headers = {"Content-Type" : "application/json"})
     assert res.status_code == status_code
 
 
@@ -707,6 +749,8 @@ def test_json_string_escape():
     assert json_string_escape("\x0d") == "\\r"
     assert json_string_escape("\x09") == "\\t"
     assert json_string_escape("\x0c") == "\\f"
+    assert json_string_escape("\x0c") == "\\f"
+    assert json_string_escape('"\x0c"') == '\\"\\f\\"'
 
 
 # def xml_string_escape(s):

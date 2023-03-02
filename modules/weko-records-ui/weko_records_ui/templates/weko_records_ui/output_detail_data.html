@@ -110,10 +110,10 @@
       {%- endif -%}
       <th scope="row" colspan="{{ label_colspan_default - level }}" style="border: 0px !important;">{{ label }}</th>
         {% autoescape false %}
-            {%- if label == 'URL' -%}
+            {%- if label == 'URL'  -%}
                 <td><a href="{{content}}">{{ content | escape_str }}</a></td>
             {%- elif content|url_to_link -%}
-<td><a href="{{content}}" target='_blank'>{{ content | escape_str }}</a></td>
+            <td><a href="{{content}}" target='_blank'>{{ content | escape_str }}</a></td>
 	    {%- else -%}
                 <td class="multiple-line">{{ content | escape_str }}</td>
             {%- endif -%}

@@ -13,6 +13,7 @@ from __future__ import absolute_import, print_function
 from copy import deepcopy
 
 from flask import Blueprint, current_app, render_template
+from invenio_db import db
 
 from .utils import ui_iiif_image_url
 
@@ -46,3 +47,13 @@ def preview(file):
             **params
         )
     )
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("invenio_iiif dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

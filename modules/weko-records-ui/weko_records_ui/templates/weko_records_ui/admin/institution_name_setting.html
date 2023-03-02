@@ -37,6 +37,7 @@
     <div class="panel-body">
       <form method="POST" name="institution_name_form"
             action={{ url_for('others.index') }}>
+            {{ form.csrf_token }}
         <div class="row">
           <div class="col-sm-2 text-right">
             <label for="institution_name">{{ _("Institution Name") }}</label>

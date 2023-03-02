@@ -133,7 +133,6 @@ WEKO_ADMIN_REPORT_HEADERS = {
     'file_download': _('No. Of File Downloads'),
     'file_preview': _('No. Of File Previews'),
     'billing_file_download': _('No. Of Paid File Downloads'),
-    'billing_file_preview': _('No. Of Paid File Previews'),
     'index_access': _('Detail Views Per Index'),
     'detail_view': _('Detail Views Count'),
     'file_using_per_user': _('Usage Count By User'),
@@ -1264,3 +1263,6 @@ WEKO_ADMIN_FACET_SEARCH_SETTING_BUCKET_SIZE = 1000
 
 WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 """Default Cache Temporary Directory Information Key."""
+
+WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST = False
+""" If True, enable regex function in crawler list processing. """

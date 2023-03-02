@@ -28,6 +28,7 @@ from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import \
     create_error_handlers as records_rest_error_handlers
 from invenio_rest import ContentNegotiatedMethodView
+from invenio_db import db
 from invenio_rest.views import create_api_errorhandler
 from weko_deposit.api import WekoRecord
 from weko_records.serializers import citeproc_v1
@@ -56,6 +57,16 @@ def create_blueprint(endpoints):
         __name__,
         url_prefix='',
     )
+    
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+        current_app.logger.debug("weko_records_ui dbsession_clean: {}".format(exception))
+        if exception is None:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+        db.session.remove()
 
     create_error_handlers(blueprint)
 

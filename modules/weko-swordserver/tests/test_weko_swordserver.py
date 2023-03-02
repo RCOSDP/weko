@@ -33,8 +33,8 @@ def test_init():
     assert 'weko-swordserver' in app.extensions
 
 
-def test_view(base_client):
+def test_view(client,sessionlifetime):
     """Test view."""
-    res = base_client.get("/")
+    res = client.get("/")
     assert res.status_code == 200
     assert 'Welcome to WEKO-SWORDServer' in str(res.data)

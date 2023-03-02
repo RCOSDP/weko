@@ -406,3 +406,6 @@ RECORDS_REST_DEFAULT_MAPPING_LANG = {
 RECORDS_REST_DEFAULT_MAPPING_DICT = \
     dict(RECORDS_REST_DEFAULT_MAPPING_KEY, **RECORDS_REST_DEFAULT_MAPPING_LANG)
 """Dictionary mapping key and language default."""
+
+RECORDS_REST_DEFAULT_TTL_VALUE = 3600
+"""Default number of seconds for ttl value"""

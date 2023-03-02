@@ -22,7 +22,8 @@
 """Groups Settings Blueprint."""
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, \
-    request, url_for
+    request, url_for, current_app
+import bleach
 from flask_babelex import gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -31,6 +32,7 @@ from invenio_accounts.models import User
 from invenio_admin.proxies import current_admin
 from six.moves.urllib.parse import urlparse
 from sqlalchemy.exc import IntegrityError
+from invenio_db import db
 
 from .forms import GroupForm, NewMemberForm
 from .models import Group, Membership
@@ -47,6 +49,43 @@ blueprint = Blueprint(
 # default_breadcrumb_root(blueprint, '.settings.groups')
 
 
+allow_tags = [
+    'abbr',
+    'acronym',
+    'b',
+    'blockquote',
+    'br',
+    'code',
+    'div',
+    'em',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'i',
+    'li',
+    'ol',
+    'p',
+    'pre',
+    'span',
+    'strike',
+    'strong',
+    'sub',
+    'sup',
+    'u',
+    'ul',
+]
+@blueprint.app_template_filter('sanitize_html_group')
+def sanitize_html_group(value):
+    """Sanitizes HTML using the bleach library."""
+    return bleach.clean(
+        value,
+        tags=allow_tags,
+        strip=False
+    ).strip()
+
+
 def get_group_name(id_group):
     """
     Use for breadcrumb dynamic_list_constructor.
@@ -56,7 +95,7 @@ def get_group_name(id_group):
     """
     group = Group.query.get(id_group)
     if group is not None:
-        return group.name
+        return group.escape_name
 
 
 @blueprint.route('/groupcount', methods=['GET'])
@@ -542,3 +581,13 @@ def remove_csrf(form):
         if key != 'csrf_token':
             map[key] = val
     return map
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_groups dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

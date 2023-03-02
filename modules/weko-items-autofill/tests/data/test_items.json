@@ -1,0 +1,56 @@
+[
+  {
+    "id": "1",
+    "pid": { "type": "depid", "value": "1", "revision_id": 0 },
+    "lang": "ja",
+    "owner": "1",
+    "title": "title",
+    "owners": [1],
+    "status": "published",
+    "$schema": "/items/jsonschema/3",
+    "pubdate": "2022-08-20",
+    "created_by": 1,
+    "owners_ext": {
+      "email": "wekosoftware@nii.ac.jp",
+      "username": "",
+      "displayname": ""
+    },
+    "shared_user_id": -1,
+    "item_1617186331708": [
+      { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
+    ],
+    "item_1617258105262": {
+      "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+      "resourcetype": "conference paper"
+    },
+    "item_1617186476635": {
+      "subitem_1522299639480": null,
+      "subitem_1600958577026": "test_access_url"
+    }
+  },
+  {
+    "id": "1.1",
+    "pid": { "type": "depid", "value": "1.1", "revision_id": 0 },
+    "lang": "ja",
+    "owner": "1",
+    "title": "title",
+    "owners": [1],
+    "status": "published",
+    "$schema": "/items/jsonschema/3",
+    "pubdate": "2022-08-20",
+    "created_by": 1,
+    "owners_ext": {
+      "email": "wekosoftware@nii.ac.jp",
+      "username": "",
+      "displayname": ""
+    },
+    "shared_user_id": -1,
+    "item_1617186331708": [
+      { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
+    ],
+    "item_1617258105262": {
+      "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+      "resourcetype": "conference paper"
+    }
+  }
+]

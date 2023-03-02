@@ -24,11 +24,13 @@ import json
 import re
 import sys
 from datetime import datetime
+from datetime import timezone
 from functools import partial
 
 from elasticsearch_dsl.query import Bool, Q
 from flask import current_app, request
 from flask_security import current_user
+from flask_babelex import get_timezone
 from invenio_communities.models import Community
 from invenio_records_rest.errors import InvalidQueryRESTError
 from weko_index_tree.api import Indexes
@@ -63,7 +65,8 @@ def get_permission_filter(index_id: str = None):
     is_perm = search_permission.can()
     match = Q("match", publish_status="0")
     version = Q("match", relation_version_is_last="true")
-    rng = Q("range", **{"publish_date": {"lte": "now/d"}})
+
+    rng = Q("range", **{"publish_date": {"lte": "now/d","time_zone":str(get_timezone())}})
     term_list = []
     mst = []
     is_perm_paths = Indexes.get_browsing_tree_paths()
@@ -652,18 +655,13 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         # multi keywords search filter
         mkq = _get_detail_keywords_query()
 
-        # detail search
         if mkq:
+            # details search
             mst.extend(mkq)
-            q = _get_search_qs_query(qs)
 
-            if q:
-                mst.append(q)
-        else:
-            # Full Text Search
-            if qstr:
-                q_s = _get_file_content_query(qstr)
-                mst.append(q_s)
+        if qstr:
+            q_s = _get_file_content_query(qstr)
+            mst.append(q_s)
 
         return Q("bool", must=mst) if mst else Q()
 
@@ -684,18 +682,13 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         # multi keywords search filter
         mkq = _get_detail_keywords_query()
 
-        # detail search
         if mkq:
+            # details search
             mst.extend(mkq)
-            q = _get_search_qs_query(qs)
 
-            if q:
-                mst.append(q)
-        else:
-            # Full Text Search
-            if qstr:
-                q_s = _get_file_content_query(qstr)
-                mst.append(q_s)
+        if qstr:
+            q_s = _get_file_content_query(qstr)
+            mst.append(q_s)
 
         return Q("bool", must=mst) if mst else Q()
 
@@ -1157,7 +1150,7 @@ def item_search_factory(
     start_date,
     end_date,
     list_index_id=None,
-    ignore_publish_status=False,
+    query_with_publish_status=False,
     ranking=False,
 ):
     """Factory for opensearch.
@@ -1167,7 +1160,7 @@ def item_search_factory(
     :param start_date: Start date for search
     :param end_date: End date for search
     :param list_index_id: index tree list or None
-    :param ignore_publish_status: both public and private
+    :param query_with_publish_status: Only query public items
     :param ranking: Ranking check
     :return:
     """
@@ -1176,7 +1169,7 @@ def item_search_factory(
         query_string = "_type:{} AND relation_version_is_last:true ".format(
             current_app.config["INDEXER_DEFAULT_DOC_TYPE"]
         )
-        if not ignore_publish_status:
+        if not query_with_publish_status:
             query_string += " AND publish_status:0 "
         query_string += " AND publish_date:[{} TO {}]".format(start_term, end_term)
 

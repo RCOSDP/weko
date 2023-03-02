@@ -79,7 +79,8 @@ def fix_min_max_multiple_item(json_schema):
             try:
                 item_data['maxItems'] = int(max_item)
             except Exception as e:
-                current_app.logger.error('Cannot parse maxItems: ', str(e))
+                error_msg='Cannot parse maxItems: '+str(e)
+                current_app.logger.error(error_msg)
                 return None
         if 'minItems' in properties[item].keys():
             min_item = item_data.get('minItems')
@@ -88,7 +89,8 @@ def fix_min_max_multiple_item(json_schema):
             try:
                 item_data['minItems'] = int(min_item)
             except Exception as e:
-                current_app.logger.error('Cannot parse minItems: ', str(e))
+                error_msg='Cannot parse minItems: '+str(e)
+                current_app.logger.error(error_msg)
                 return None
     json_schema['properties'] = properties
     return json_schema

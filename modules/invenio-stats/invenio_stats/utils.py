@@ -33,12 +33,14 @@ from flask_login import current_user
 from geolite2 import geolite2
 from invenio_cache import current_cache
 from invenio_search import current_search_client
+from invenio_search.api import RecordsSearch
+from invenio_accounts.models import Role
+from invenio_stats.utils_search import billing_file_search_factory
 from weko_accounts.utils import get_remote_addr
 from werkzeug.utils import import_string
 
 from . import config
 from .models import StatsAggregation, StatsBookmark, StatsEvents
-from .permissions import stats_api_permission
 from .proxies import current_stats
 
 
@@ -127,15 +129,6 @@ def default_permission_factory(query_name, params):
         return current_stats.queries[query_name].permission_factory(
             query_name, params
         )
-
-
-def weko_permission_factory(*args, **kwargs):  # All queries have same perms
-    """Permission factory for weko queries."""
-
-    def can(self):
-        return current_user.is_authenticated and stats_api_permission.can()
-
-    return type('WekoStatsPermissionChecker', (), {'can': can})()
 
 
 def get_aggregations(index, aggs_query):
@@ -269,9 +262,72 @@ class QueryFileReportsHelper(object):
                 group_list = i['user_group_names']
                 data['group_counts'] = cls.calc_per_group_counts(
                     group_list, data['group_counts'], count)
-            
+
             # Keep track of groups seen
             all_groups.update(data['group_counts'].keys())
+
+    @classmethod
+    def calc_billing_file_stats_reports(cls, res, data_list, all_groups):
+        """Create response object for billing_file_download."""
+        # Get all role names.
+        roles = Role.query.all()
+        role_name_list = ['guest'] + [role.name for role in roles]
+
+        search, _ = billing_file_search_factory(RecordsSearch(
+            index=current_app.config['SEARCH_UI_SEARCH_INDEX']
+        ))
+        search_result = search.execute().to_dict().get('hits', {}).get('hits', [])
+        billing_file_metadata_list = [result.get('_source', {}) for result in search_result]
+        mapper = {}
+        # Aggregate billing file download stats.
+        for bucket in res['buckets']:
+            key_str = '{}_{}'.format(bucket['file_key'], bucket['index_list'])
+            if key_str in mapper:
+                data = data_list[mapper[key_str]]
+            else:
+                mapper[key_str] = len(data_list)
+                data = {}
+                data['group_counts'] = {}  # Keep track of downloads per group
+                data['file_key'] = bucket['file_key']
+                data['index_list'] = bucket['index_list']
+                data['total'] = 0
+                data['admin'] = 0
+                data['reg'] = 0
+                data['login'] = 0
+                data['no_login'] = 0
+                data['site_license'] = 0
+                for role_name in role_name_list:
+                    data[role_name] = 0
+                data_list.append(data)
+
+            count = bucket['count']
+            data['total'] += count
+            if bucket['site_license_flag'] == 1:
+                data['site_license'] += count
+            if bucket['userrole'] == 'guest':
+                data['no_login'] += count
+            elif 'Administrator' in bucket['userrole']:
+                data['admin'] += count
+                data['login'] += count
+            else:
+                data['login'] += count
+
+            # count number depending on user role
+            data[bucket['userrole']] += count
+
+            # Get groups counts
+            if 'user_group_names' in bucket:
+                group_list = bucket['user_group_names']
+                data['group_counts'] = cls.calc_per_group_counts(
+                    group_list, data['group_counts'], count)
+
+            # Keep track of groups seen
+            all_groups.update(data['group_counts'].keys())
+
+            # Search file owner id
+            if any([metadata.get('_item_metadata', {}).get('owner', -1) == bucket['cur_user_id'] for metadata in billing_file_metadata_list \
+                if any([content.get('filename', '') == bucket['file_key'] for content in metadata.get('content', [{}])])]):
+                data['reg'] += count
 
     @classmethod
     def calc_file_per_using_report(cls, res, data_list):
@@ -293,16 +349,19 @@ class QueryFileReportsHelper(object):
                 data_list.update({item['cur_user_id']: data})
 
     @classmethod
-    def Calculation(cls, res, data_list, all_groups=set()):
+    def Calculation(cls, res, data_list, all_groups=set(), event=None):
         """Calculation."""
         if 'buckets' in res and res['buckets'] is not None:
-            cls.calc_file_stats_reports(res, data_list, all_groups)
+            if event == 'billing_file_download':
+                cls.calc_billing_file_stats_reports(res, data_list, all_groups)
+            else:
+                cls.calc_file_stats_reports(res, data_list, all_groups)
         elif res['get-file-download-per-user-report'] is not None \
                 and res['get-file-preview-per-user-report'] is not None:
             cls.calc_file_per_using_report(res, data_list)
 
     @classmethod
-    def get_file_stats_report(cls, is_billing_item=False, **kwargs):
+    def get_file_stats_report(cls, **kwargs):
         """Get file download/preview report."""
         result = {}
         all_list = []
@@ -334,15 +393,15 @@ class QueryFileReportsHelper(object):
             elif event == 'file_preview':
                 all_query_name = 'get-file-preview-report'
                 open_access_query_name = 'get-file-preview-open-access-report'
-            elif event in ['billing_file_download', 'billing_file_preview']:
-                all_params['is_billing_item'] = is_billing_item
+            elif event == 'billing_file_download':
+                all_params['is_billing_item'] = True
                 all_query_name = 'get-' + event.replace('_', '-') + '-report'
 
             # all
             all_query_cfg = current_stats.queries[all_query_name]
             all_query = all_query_cfg.query_class(**all_query_cfg.query_config)
             all_res = all_query.run(**all_params)
-            cls.Calculation(all_res, all_list, all_groups=all_groups)
+            cls.Calculation(all_res, all_list, event=event, all_groups=all_groups)
 
             # open access -- Only run for non-billed items
             if open_access_query_name:
@@ -367,6 +426,7 @@ class QueryFileReportsHelper(object):
         all_list = {}
         all_res = {}
 
+        event = kwargs.get('event')
         year = kwargs.get('year')
         month = kwargs.get('month')
 
@@ -384,7 +444,7 @@ class QueryFileReportsHelper(object):
                 all_query = all_query_cfg.\
                     query_class(**all_query_cfg.query_config)
                 all_res[query] = all_query.run(**params)
-            cls.Calculation(all_res, all_list)
+            cls.Calculation(all_res, all_list, event)
 
         except Exception as e:
             current_app.logger.debug(e)
@@ -398,10 +458,8 @@ class QueryFileReportsHelper(object):
     def get(cls, **kwargs):
         """Get file reports."""
         event = kwargs.get('event')
-        if event == 'file_download' or event == 'file_preview':
+        if event == 'file_download' or event == 'file_preview' or event == 'billing_file_download':
             return cls.get_file_stats_report(**kwargs)
-        elif event in ['billing_file_download', 'billing_file_preview']:
-            return cls.get_file_stats_report(is_billing_item=True, **kwargs)
         elif event == 'file_using_per_user':
             return cls.get_file_per_using_report(**kwargs)
         else:
@@ -1216,6 +1274,81 @@ class QueryItemRegReportHelper(object):
             else:
                 new_result.append(i)
         return new_result if new_result else []
+
+
+class QueryRankingHelper(object):
+    """QueryRankingHelper helper class."""
+
+    @classmethod
+    def Calculation(cls, res, data_list):
+        """Create response object."""
+        for item in res['aggregations']['my_buckets']['buckets']: 
+            data = { 
+                'key': item['key'],
+                'count': int(item['my_sum']['value'])
+            }
+            data_list.append(data)
+
+    @classmethod
+    def get(cls, **kwargs):
+        """Get ranking data."""
+        result = []
+
+        try:
+            start_date = kwargs.get('start_date')
+            end_date = kwargs.get('end_date')
+            params = {
+                'start_date': start_date,
+                'end_date': end_date + 'T23:59:59',
+                'agg_size': str(kwargs.get('agg_size', 10)),
+                'event_type': kwargs.get('event_type', ''),
+                'group_field': kwargs.get('group_field', ''),
+                'count_field': kwargs.get('count_field', ''),
+                'must_not': kwargs.get('must_not', ''),
+                'new_items': False
+            }
+            all_query_cfg = current_stats.queries['get-ranking-data']
+            all_query = all_query_cfg.query_class(**all_query_cfg.query_config)
+
+            all_res = all_query.run(**params)
+            cls.Calculation(all_res, result)
+
+        except es_exceptions.NotFoundError as e:
+            current_app.logger.debug(e)
+        except Exception as e:
+            current_app.logger.debug(e)
+
+        return result
+
+    @classmethod
+    def get_new_items(cls, **kwargs):
+        """Get new items."""
+        result = []
+
+        try:
+            start_date = kwargs.get('start_date')
+            end_date = kwargs.get('end_date')
+            params = {
+                'start_date': start_date,
+                'end_date': end_date,
+                'agg_size': str(kwargs.get('agg_size', 10)),
+                'must_not': kwargs.get('must_not', ''),
+                'new_items': True
+            }
+            all_query_cfg = current_stats.queries['get-new-items-data']
+            all_query = all_query_cfg.query_class(**all_query_cfg.query_config)
+
+            all_res = all_query.run(**params)
+            for r in all_res['hits']['hits']:
+                if r.get('_source', {}).get('path'):
+                    result.append(r['_source'])
+
+        except es_exceptions.NotFoundError as e:
+            current_app.logger.debug(e)
+        except Exception as e:
+            current_app.logger.debug(e)
+
+        return result
 
 
 class StatsCliUtil:

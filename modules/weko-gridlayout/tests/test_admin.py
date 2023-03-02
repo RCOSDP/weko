@@ -16,7 +16,9 @@ from flask_admin.model.base import ViewArgs
 from weko_gridlayout.utils import get_register_language
 from weko_gridlayout.admin import WidgetSettingView
 
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
 
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_admin.py::test_index_view_can_delete -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
 @pytest.mark.parametrize("can_delete", [True, False, None])
 def test_index_view_can_delete(app, client, admin_view, widget_items,
                                view_instance, can_delete):
@@ -115,6 +117,7 @@ def test_pager_url(app, client, admin_view, view_instance,
             assert res.status_code == 200
 
 
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_admin.py::test_sort_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
 #一つのパラメータセットにつき複数回呼び出されている模様
 @pytest.mark.parametrize("desc, invert, sort_desc",
                          [(1, False, 1), (1, False, 0), (1, False, None),
@@ -189,4 +192,70 @@ def test_get_label_display_to_list(admin_view, widget_items, admin_lang_settings
 
 
 def test_search_placeholder(app, admin_view, widget_items, view_instance):
+
+    # Error
     assert view_instance.search_placeholder() == "Search"
+
+
+# WidgetSettingView.index_view
+def test_index_view_WidgetSettingView(i18n_app, view_instance):
+
+    # Error
+    assert view_instance.index_view()
+
+
+# WidgetSettingView.create_view
+def test_create_view_WidgetSettingView(i18n_app, view_instance):
+    with patch("flask_admin.helpers.get_redirect_target", return_value="/"):
+
+        # Error
+        assert view_instance.create_view()
+
+
+# WidgetSettingView.edit_view
+def test_edit_view_WidgetSettingView(i18n_app, view_instance):
+
+    # Error
+    assert view_instance.edit_view()
+
+
+# WidgetSettingView.get_detail_value
+def test_get_detail_value_WidgetSettingView(i18n_app, view_instance):
+    context = MagicMock()
+    model = MagicMock()
+    name = "text_color"
+
+    assert not view_instance.get_detail_value(context, model, name)
+    assert view_instance.get_detail_value(context, model, "name")
+
+
+# WidgetSettingView.details_view
+def test_details_view_WidgetSettingView(i18n_app, view_instance):
+    # Error
+    with patch("flask_admin.helpers.get_redirect_target", return_value="/"):
+
+        assert view_instance.details_view()
+
+
+# WidgetSettingView.action_delete
+def test_action_delete_WidgetSettingView(i18n_app, view_instance):
+    ids = MagicMock()
+
+    assert not view_instance.action_delete(ids)
+    # Exception coverage
+    assert not view_instance.action_delete(0)
+
+
+# WidgetSettingView.get_count_query
+def test_get_count_query_WidgetSettingView(i18n_app, view_instance):
+    
+    assert view_instance.get_count_query()
+
+
+# WidgetSettingView.delete_model
+def test_delete_model_WidgetSettingView(i18n_app, view_instance, widget_items, db):
+    model = widget_items[0]
+    data = MagicMock()
+    data.widget_id = 222
+    assert view_instance.delete_model(model, db.session)
+    assert view_instance.delete_model(model)

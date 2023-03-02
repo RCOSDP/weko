@@ -50,7 +50,7 @@ from .utils import check_and_create_usage_report, \
     get_groups_price, get_min_price_billing_file_download, \
     get_onetime_download, is_billing_item, parse_one_time_download_token, \
     update_onetime_download, validate_download_record, \
-    validate_onetime_download_token
+    validate_onetime_download_token, get_billing_role
 
 
 def weko_view_method(pid, record, template=None, **kwargs):
@@ -91,6 +91,10 @@ def prepare_response(pid_value, fd=True):
     """
     fn = request.view_args.get("filename")
     flst = FilesMetadata.get_records(pid_value)
+    print('\n\n')
+    print(fn)
+    print(flst[0].dumps().get("display_name"))
+    print('\n\n')
     for fj in flst:
         if fj.dumps().get("display_name") == fn:
             stream = fj.model.contents[:]
@@ -328,54 +332,47 @@ def add_signals_info(record, obj):
     """Add event signals info.
 
     Add user role, site license flag, item index list.
+    If file type is billing file, also get billing file price.
 
-    :param record: the record metadate.
+    :param record: the record metadata.
     :param obj: send object.
     """
-    # Add user role info to send_obj
+    # Check whether billing file or not
+    obj.is_billing_item = is_billing_item(record)
 
+    # Add user role info to send_obj
     userrole = 'guest'
     userid = 0
+    billing_file_price = ''
     user_groups = []
     if hasattr(current_user, 'id'):
         userid = current_user.id
         user_groups = Group.query_by_user(current_user).all()
         if len(current_user.roles) == 0:
             userrole = 'user'
-        elif len(current_user.roles) == 1:
-            userrole = current_user.roles[0].name
         else:
-            max_power_role_id = 2147483646
-            for r in current_user.roles:
-                if max_power_role_id > r.id:
-                    if max_power_role_id == 2147483646 or r.id > 0:
-                        max_power_role_id = r.id
-                        userrole = r.name
+            if obj.is_billing_item:
+                userrole, billing_file_price = get_billing_role(record)
+
+            if userrole == 'guest' or billing_file_price == '':
+                max_power_role_id = 2147483646
+                for r in current_user.roles:
+                    if max_power_role_id > r.id:
+                        if max_power_role_id == 2147483646 or r.id > 0:
+                            max_power_role_id = r.id
+                            userrole = r.name
     obj.userrole = userrole
     obj.userid = userid
+
+    # # Add billing file price
+    obj.billing_file_price = billing_file_price
 
     # Add groups of current users
     groups = [{'group_id': g.id, 'group_name': g.name} for g in user_groups]
     obj.user_group_list = groups if groups else None
 
-    # Check whether billing file or not
-    obj.is_billing_item = is_billing_item(record['item_type_id'])
-
-    # Add billing file price
-    billing_file_price = ''
-    if obj.is_billing_item:
-        groups_price = get_groups_price(record)
-        billing_files_permission = \
-            get_billing_file_download_permission(groups_price)
-        min_price_dict = \
-            get_min_price_billing_file_download(groups_price,
-                                                billing_files_permission)
-        if isinstance(min_price_dict, dict):
-            billing_file_price = min_price_dict.get(obj.key)
-    obj.billing_file_price = billing_file_price
-
     # Add site license flag to send_obj
-    obj.site_license_flag = True if hasattr(current_user, 'site_licese_flag') \
+    obj.site_license_flag = True if hasattr(current_user, 'site_license_flag') \
         else False
     obj.site_license_name = current_user.site_license_name \
         if hasattr(current_user, 'site_license_name') else ''

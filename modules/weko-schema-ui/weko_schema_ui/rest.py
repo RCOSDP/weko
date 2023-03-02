@@ -67,6 +67,16 @@ def create_blueprint(endpoints):
         __name__,
         url_prefix='',
     )
+    
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+        current_app.logger.debug("weko_schema_ui dbsession_clean: {}".format(exception))
+        if exception is None:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+        db.session.remove()
 
     create_error_handlers(blueprint)
 
@@ -113,17 +123,6 @@ def create_blueprint(endpoints):
             ctx=ctx,
         )
 
-        # schema_formats_edit = SchemaFormatEditResource.as_view(
-        #     SchemaFormatEditResource.view_name.format(endpoint),
-        #     ctx=ctx,
-        # )
-        #
-        # blueprint.add_url_rule(
-        #     options.pop('schemas_formats_route'),
-        #     view_func=schema_formats_edit,
-        #     methods=['POST'],
-        # )
-
         blueprint.add_url_rule(
             options.pop('schemas_route'),
             view_func=schema_xsd_files,
@@ -141,12 +140,6 @@ def create_blueprint(endpoints):
             view_func=schema_xsd_files,
             methods=['PUT'],
         )
-
-        # blueprint.add_url_rule(
-        #     options.pop('schema_del_route'),
-        #     view_func=schema_xsd_files,
-        #     methods=['DELETE'],
-        # )
 
     return blueprint
 
@@ -233,17 +226,6 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
             except BaseException:
                 abort(400, 'Schema of the same name already exists.')
 
-            # set the schema to be vaild
-            # for k, v in current_app.config["RECORDS_UI_EXPORT_FORMATS"].items():
-            #     if isinstance(v, dict):
-            #         for k1, v1 in v.items():
-            #             if isinstance(v1, dict):
-            #                 v1 = v1.copy()
-            #                 v1["title"] = sn.upper()
-            #                 v1["order"] = len(v)
-            #                 v.update({sn: v1})
-            #                 break
-
             # update oai metadata formats
             oad = get_oai_metadata_formats(current_app)
             sel = list(oad.values())[0].get('serializer')
@@ -308,33 +290,3 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
                                               mimetype='application/json')
         response.status_code = 200
         return response
-
-
-class SchemaFormatEditResource(ContentNegotiatedMethodView):
-    """Edit metadata formats for OAI ListMetadataFormats."""
-
-    view_name = '{0}_formats_edit'
-
-    def __init__(self, ctx, *args, **kwargs):
-        """Constructor."""
-        super(SchemaFormatEditResource, self).__init__(
-            *args,
-            **kwargs
-        )
-        for key, value in ctx.items():
-            setattr(self, key, value)
-
-    def post(self, **kwargs):
-        """
-        Post Method.
-
-        :param kwargs:
-        :return:
-
-        """
-        if request.mimetype not in self.loaders:
-            raise UnsupportedMediaRESTError(request.mimetype)
-
-        data = self.loaders[request.mimetype]()
-        if data is None:
-            raise InvalidDataRESTError()

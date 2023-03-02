@@ -30,8 +30,10 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
+from invenio_stats.utils import QueryRankingHelper
 from sqlalchemy.orm.exc import NoResultFound
 from weko_admin.config import WEKO_ADMIN_DEFAULT_LIFETIME
+from weko_index_tree.api import Indexes
 
 from .config import WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE, \
     WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
@@ -1051,6 +1053,15 @@ class WidgetDesignPageServices:
 
 class WidgetDataLoaderServices:
     """Services for load data to page."""
+    @classmethod
+    def _get_index_info(cls, index_json, index_info):
+        for index in index_json:
+            index_info[index["id"]] = {
+                'index_name': index["name"],
+                'parent': str(index["pid"])
+            }
+            if index["children"]:
+                cls._get_index_info(index["children"], index_info)
 
     @classmethod
     def get_new_arrivals_data(cls, widget_id):
@@ -1060,7 +1071,8 @@ class WidgetDataLoaderServices:
             dictionary -- new arrivals data
 
         """
-        from weko_items_ui.utils import find_hidden_items
+        from weko_items_ui.utils import get_permission_record
+
 
         result = {
             'data': '',
@@ -1091,33 +1103,26 @@ class WidgetDataLoaderServices:
             end_date = current_date.strftime("%Y-%m-%d")
             start_date = (current_date - timedelta(days=term)).strftime(
                 "%Y-%m-%d")
-            rd = get_elasticsearch_result_by_date(start_date, end_date)
-            hits = rd.get('hits')
-            if not hits:
-                result['error'] = 'Cannot search data'
-                return result
-            es_data = [record for record in hits.get(
-                'hits', []) if record.get('_source').get('path')]
+            res = QueryRankingHelper.get_new_items(
+                start_date=start_date,
+                end_date=end_date,
+                agg_size=int(number_result) + 100,
+                must_not=json.dumps([{"wildcard": {"control_number": "*.*"}}])
+            )
+            if not res:
+                res['error'] = 'Cannot search data'
+                return res
 
-            item_id_list = list(map(itemgetter('_id'), es_data))
-            hidden_items = find_hidden_items(item_id_list)
+            print('res: {}'.format(res))
+            index_json = Indexes.get_browsing_tree_ignore_more()
+            index_info = {}
+            cls._get_index_info(index_json, index_info)
+            has_permission_indexes = list(index_info.keys())
+            data = get_permission_record('new_items', res, int(number_result), has_permission_indexes)
 
-            for es_item in es_data:
-                if len(data) >= int(number_result):
-                    break
-                if es_item['_id'] in hidden_items:
-                    continue
-                new_data = dict()
-                source = es_item.get('_source')
-                if not source:
-                    continue
-                item_metadata = source.get('_item_metadata')
-                if not item_metadata:
-                    continue
-                new_data['name'] = item_metadata.get('item_title')
-                new_data['url'] = '/records/' + item_metadata.get(
-                    'control_number')
-                data.append(new_data)
+            print('data: {}'.format(data))
+            for d in data:
+                d['name'] = d['title']
             result['data'] = data
         except Exception as e:
             result['error'] = str(e)

@@ -10,6 +10,8 @@
             $scope.search_type = "0";
             $scope.default_condition_data = [];
 
+            $scope.load_delimiter = 50;
+
             // page init
             $scope.initData = function (data) {
                 json_obj = angular.fromJson(data)
@@ -53,6 +55,13 @@
                     obj_of_condition.selected_key = item.id;
                     obj_of_condition.key_options = $scope.detail_search_key;
                     obj_of_condition.key_value = angular.copy(db_data[item.inx]);
+                    if (db_data[item.inx].inputType == 'checkbox_list'){
+                        if (db_data[item.inx].check_val.length>$scope.load_delimiter){
+                            obj_of_condition.key_value.limit=$scope.load_delimiter;
+                        }else{
+                            obj_of_condition.key_value.limit=db_data[item.inx].check_val.length;
+                        }
+                    }
                     $scope.condition_data.push(obj_of_condition)
                 });
 
@@ -93,6 +102,13 @@
                         obj_of_condition.selected_key = $scope.detail_search_key[sub_detail].id;
                         obj_of_condition.key_options = $scope.detail_search_key;
                         obj_of_condition.key_value = angular.copy(db_data[$scope.detail_search_key[sub_detail].inx]);
+                        if (db_data[$scope.detail_search_key[sub_detail].inx].inputType == 'checkbox_list'){
+                            if (db_data[$scope.detail_search_key[sub_detail].inx].check_val.length>$scope.load_delimiter){
+                                obj_of_condition.key_value.limit=$scope.load_delimiter;
+                            }else{
+                                obj_of_condition.key_value.limit=db_data[$scope.detail_search_key[sub_detail].inx].check_val.length;
+                            }
+                        }
                         $scope.condition_data.push(obj_of_condition)
                         break;
                     }
@@ -352,12 +368,28 @@
                     obj_of_condition.selected_key = item.id;
                     obj_of_condition.key_options = $scope.detail_search_key;
                     obj_of_condition.key_value = angular.copy(db_data[item.inx]);
+                    if (db_data[item.inx].inputType == 'checkbox_list'){
+                        if (db_data[item.inx].check_val.length>$scope.load_delimiter){
+                            obj_of_condition.key_value.limit=$scope.load_delimiter;
+                        }else{
+                            obj_of_condition.key_value.limit=db_data[item.inx].check_val.length;
+                        }
+                    }
                     $scope.condition_data.push(obj_of_condition);
                 });
 
                 $scope.update_disabled_flg();
             }
-
+            $scope.loadMore = function(index){
+                var now = $scope.condition_data[index].key_value.limit;
+                var next = 0;
+                if($scope.condition_data[index].key_value.check_val.length < now+$scope.load_delimiter){
+                    next = $scope.condition_data[index].key_value.check_val.length;
+                }else{
+                    next = now + $scope.load_delimiter;
+                }
+                $scope.condition_data[index].key_value.limit = next;
+            }
             // set search options
             $scope.get_search_key = function (search_key) {
                 var obj_of_condition = {
@@ -407,7 +439,16 @@
                 $interpolateProvider.startSymbol('[[');
                 $interpolateProvider.endSymbol(']]');
             }]
-        );
+        ).directive('whenScrolled',function(){
+            return function(scope, elem, attr){
+                var raw = elem[0];
+                elem.bind('scroll',  function() {
+                  if (raw.scrollTop + raw.offsetHeight + 1 >= raw.scrollHeight) {
+                    scope.$apply(attr.whenScrolled);
+                  }
+                });
+            }
+        });
         angular.bootstrap(
             document.getElementById('search_detail'), ['searchDetailModule']);
     });

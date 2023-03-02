@@ -56,7 +56,7 @@ class WekoAdmin(object):
                     user_id=current_user.get_id()).all()
             except Exception as e:
                 current_app.logger.error(
-                    'Could not determine roles - returning False: ', e)
+                    'Could not determine roles - returning False: {}'.format(e))
                 roles = []
             for role in roles:  # Check if role can view endpoint
                 access_list = access_table[role.name] if role.name in access_table \
@@ -148,8 +148,6 @@ class WekoAdmin(object):
         for k in dir(config):
             if k.startswith('WEKO_ADMIN_') and k not in excludes:
                 app.config.setdefault(k, getattr(config, k))
-            elif k.startswith('BABEL_'):
-                app.config.setdefault(k, getattr(config, k))
 
         app.config.setdefault(
             'WEKO_ADMIN_SETTINGS_TEMPLATE',
@@ -172,12 +170,9 @@ class WekoAdmin(object):
             session.permanent = True
             db_lifetime = SessionLifetime.get_validtime()
             if db_lifetime is None:
-                if isinstance(config.WEKO_ADMIN_DEFAULT_LIFETIME, int):
-                    db_lifetime = SessionLifetime(
-                        lifetime=int(getattr(config,
-                                             'WEKO_ADMIN_DEFAULT_LIFETIME')))
-                else:
-                    db_lifetime = SessionLifetime(lifetime=30)
+                db_lifetime = SessionLifetime(
+                    lifetime=int(getattr(config,
+                                         'WEKO_ADMIN_DEFAULT_LIFETIME')))
                 db_lifetime.create()
             app.permanent_session_lifetime = timedelta(
                 minutes=db_lifetime.lifetime)
