@@ -34,7 +34,7 @@ class InvenioS3(object):
         )
         s3_endpoint_url = current_app.config.get('S3_ENDPOINT_URL', None)
         if s3_endpoint_url:
-            info['client_kwargs']['s3_endpoint_url'] = s3_endpoint_url
+            info['client_kwargs']['endpoint_url'] = s3_endpoint_url
         default_location = Location.query.filter_by(default=True).first()
         if default_location.type == 's3':
             if default_location.access_key != '':
@@ -42,7 +42,7 @@ class InvenioS3(object):
             if default_location.secret_key != '':
                 info['secret'] = default_location.secret_key
             if default_location.s3_endpoint_url != '':
-                info['client_kwargs']['s3_endpoint_url'] = default_location.s3_endpoint_url
+                info['client_kwargs']['endpoint_url'] = default_location.s3_endpoint_url
                 
         return info
 

@@ -30,7 +30,7 @@ def test_init(base_app, location, database):
         base_app.config['S3_ENDPOINT_URL'] = 'https://example.com:1234'
         s3_connection_info = base_app.extensions['invenio-s3'].init_s3f3_info
         assert s3_connection_info['client_kwargs'][
-            's3_endpoint_url'] == 'https://example.com:1234'
+            'endpoint_url'] == 'https://example.com:1234'
 
 
 def test_init2(location, database):
@@ -47,4 +47,4 @@ def test_init2(location, database):
     assert s3_connection_info['key'] == 'accesskey'
     assert s3_connection_info['secret'] == 'secretkey'
     assert s3_connection_info['client_kwargs'][
-        's3_endpoint_url'] == 'https://example.com:5678'
+        'endpoint_url'] == 'https://example.com:5678'
