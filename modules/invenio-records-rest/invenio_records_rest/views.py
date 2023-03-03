@@ -577,13 +577,11 @@ class RecordsListResource(ContentNegotiatedMethodView):
         try:
             sort_element = search.to_dict()["sort"]
         except KeyError:
-            raise ValueError
             # Since "relevance" sort type has no "sort" key, it will produce a "KeyError"
             # This exception is for when sort type "relevance" is used
             sort_element = "control_number"
             relevance_sort_is_used = True
-        except:
-            current_app.logger.error(traceback.format_exc())
+        
         if relevance_sort_is_used:
             sort_key = sort_element
             sort_key_arrangement = "desc"
