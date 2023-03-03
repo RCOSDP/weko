@@ -648,13 +648,16 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
     data2.model = MagicMock()
     data2.model.form = {
         "key": "item_type_id",
-        "title": "title_9999",
+        "title": "Title",
     }
     data2.model.render = {
         "meta_fix": {
             "meta_fix_9999": "meta_fix_9999",
             "item_type_id": {
-                "option": None,
+                "option": {
+                    "showlist": True,
+                    "hidden": False,
+                },
             },
         },
         "meta_list": {
@@ -668,15 +671,20 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
 
             record_hit_2 = {
                 "_source": {
+                    "file": "file_9999",
+                    "_comment": "_comment_9999",
                     "item_item_id": "8888",
                     "_item_metadata": {
                         "item_type_id": {
                             "attribute_value_mlt": [{
                                 "url": {
-                                    "label": "label_9999",
+                                    "label": "",
+                                    "url": "url_9999",
                                 },
                                 "filename": "filename_9999",
                                 "version_id": "version_id_9999",
+                                "accessrole": "open_restricted",
+                                "subitem_thumbnail": ""
                             }],
                             "attribute_type": "file"
                         },
@@ -684,10 +692,76 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
                 }
             }
 
-            data2.model.render["meta_fix"]["item_type_id"]["option"] = {
-                "showlist": True,
-                "hidden": False,
-            }
+            data3 = copy.deepcopy(data2)
+            data3.model.render["meta_fix"]["item_type_id"]["option"] = None
+
+            await sort_meta_data_by_options(
+                record_hit=record_hit_2,
+                settings=settings,
+                item_type_mapping=item_type_mapping,
+                item_type_data=data3
+            )
+
+            await sort_meta_data_by_options(
+                record_hit=record_hit_2,
+                settings=settings,
+                item_type_mapping=item_type_mapping,
+                item_type_data=data2
+            )
+
+            record_hit_2["_source"]["_item_metadata"]["item_type_id"]["attribute_value_mlt"][0]["version_id"] = ""
+            record_hit_2["_source"]["_item_metadata"]["item_type_id"]["attribute_value_mlt"][0]["accessrole"] = ""
+            record_hit_2["_source"]["_item_metadata"]["item_type_id"]["attribute_value_mlt"][0]["url"]["label"] = ""
+
+            await sort_meta_data_by_options(
+                record_hit=record_hit_2,
+                settings=settings,
+                item_type_mapping=item_type_mapping,
+                item_type_data=data2
+            )
+
+            data2.model.form["key"] = "1"
+
+            await sort_meta_data_by_options(
+                record_hit=record_hit_2,
+                settings=settings,
+                item_type_mapping=item_type_mapping,
+                item_type_data=data2
+            )
+
+            data2.model.form["key"] = "item_type_id.item_type_id_9999"
+            record_hit_2["_source"]["_item_metadata"]["item_type_id"]["attribute_value_mlt"][0]["version_id"] = "version_id_9999"
+            record_hit_2["_source"]["_item_metadata"]["item_type_id"]["attribute_value_mlt"][0]["url"]["label"] = "label_9999"
+
+            await sort_meta_data_by_options(
+                record_hit=record_hit_2,
+                settings=settings,
+                item_type_mapping=item_type_mapping,
+                item_type_data=data2
+            )
+
+            data2.model.form["key"] = "item_type_id"
+            record_hit_2["_source"]["_item_metadata"]["item_type_id"]["attribute_type"] = "not_file"
+            i18n_app.config["WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL"] = 99
+            record_hit_2["_source"]["_item_metadata"]["item_type_id"]["attribute_value_mlt"][0]["subitem_thumbnail"] = [{"thumbnail_label": "thumbnail_label_9999"}]
+
+            await sort_meta_data_by_options(
+                record_hit=record_hit_2,
+                settings=settings,
+                item_type_mapping=item_type_mapping,
+                item_type_data=data2
+            )
+
+            del record_hit_2["_source"]["_item_metadata"]["item_type_id"]["attribute_value_mlt"][0]["subitem_thumbnail"]
+
+            await sort_meta_data_by_options(
+                record_hit=record_hit_2,
+                settings=settings,
+                item_type_mapping=item_type_mapping,
+                item_type_data=data2
+            )
+
+
 
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
