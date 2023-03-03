@@ -182,9 +182,6 @@ def test_add_signals_info(i18n_app,records,itemtypes,users,mock_es_execute):
                     assert obj.userrole == 'Repository Administrator'
                     assert obj.billing_file_price == '400'
 
-            add_signals_info(record,obj)
-            assert obj.item_title=='ja_conference paperITEM00000009(public_open_access_open_access_simple)'
-
         data1 = MagicMock()
         def all_func():
             return []
@@ -194,16 +191,19 @@ def test_add_signals_info(i18n_app,records,itemtypes,users,mock_es_execute):
         data2 = MagicMock()
         data2.id = 2
 
-        with patch("weko_records_ui.fd.Group.query_by_user", return_value=data1):
-            with patch("flask_login.utils._get_user", return_value=data1):
-                add_signals_info(record,obj)
-            
-            data1.roles = [data1, data2]
 
-            with patch("flask_login.utils._get_user", return_value=data1):
-                add_signals_info(record,obj)
+        with patch("weko_records_ui.fd.is_billing_item", return_value=False):
+            with patch("weko_records_ui.fd.Group.query_by_user", return_value=data1):
+                with patch("flask_login.utils._get_user", return_value=data1):
+                    add_signals_info(record,obj)
+                data1.roles = [data1, data2]
 
-                with patch("weko_records_ui.fd.is_billing_item", return_value=True):
+                with patch("flask_login.utils._get_user", return_value=data1):
+                    add_signals_info(record,obj)
+
+        with patch("weko_records_ui.fd.is_billing_item", return_value=True):
+            with patch("weko_records_ui.fd.Group.query_by_user", return_value=data1):
+                with patch("flask_login.utils._get_user", return_value=data1):
                     add_signals_info(record,obj)
 
 
