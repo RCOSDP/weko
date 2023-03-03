@@ -7,6 +7,7 @@ import json
 import pytest
 import os
 import copy
+import mock
 from mock import patch, MagicMock
 from tests.helpers import json_data
 
@@ -235,6 +236,8 @@ def test_get_value_from_dict(app, meta, jsonpath):
     assert get_value_from_dict(meta[0], jsonpath[1], 'json')=='2000-01-01/2021-03-30'
     assert get_value_from_dict(meta[0], jsonpath[2], 'json')=='概要'
     assert get_value_from_dict(meta[0], jsonpath[3], 'json')=='その他'
+    assert get_value_from_dict(meta[0], jsonpath[3], 'json')=='その他'
+    assert get_value_from_dict(meta[0], jsonpath[3], 'xml')==None
 
 # def get_values_from_dict(dc, path, path_type, iid=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_values_from_dict -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -247,6 +250,8 @@ def test_get_values_from_dict(app, meta, jsonpath):
         meta[0], jsonpath[2], 'json')==['概要', 'その他', 'materials: text']
     assert get_values_from_dict(
         meta[0], jsonpath[3], 'json')==['その他', 'materials: text']
+    assert get_values_from_dict(
+        meta[0], jsonpath[3], 'xml')==None
 
 # def copy_value_xml_path(dc, xml_path, iid=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_copy_value_xml_path -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -443,7 +448,13 @@ def test_get_all_items():
     assert get_all_items(data1, [data2], is_get_name=True) != None
 
     data1['k'] = ['k']
+
     assert get_all_items(data1, [data2], is_get_name=True) != None
+
+    data2 = ['k.k.k', ['k']]
+
+    assert get_all_items(data1, [data2], is_get_name=True) != None
+
 
 # def get_all_items2(nlst, klst):
 #     def get_items(nlst):
@@ -649,6 +660,7 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
     data2.model.form = {
         "key": "item_type_id",
         "title": "Title",
+        "isShowList": True,
     }
     data2.model.render = {
         "meta_fix": {
@@ -663,7 +675,7 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
         "meta_list": {
             "meta_list_9999": "meta_list_9999",
         }
-    } 
+    }
     
     with patch("weko_records.serializers.utils.get_mapping", return_value=data1):
         with patch("weko_search_ui.utils.get_data_by_property", return_value=("1", "2")):
@@ -677,9 +689,11 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
                     "_item_metadata": {
                         "item_type_id": {
                             "attribute_value_mlt": [{
+                                "value": "value_7777",
                                 "url": {
                                     "label": "",
                                     "url": "url_9999",
+                                    "value": "value_6666",
                                 },
                                 "filename": "filename_9999",
                                 "version_id": "version_id_9999",
@@ -761,13 +775,36 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
                 item_type_data=data2
             )
 
+            # data4.model.form["key"] = "bibliographic_titles"
 
+            data4 = MagicMock()
+            data4.model = MagicMock()
+            data4.model.form = {
+                "key": "item_type_id",
+                "title": "Title",
+                "isShowList": True,
+                "value": [{"value": "value"}],
+            }
+            data4.model.render = {
+                "meta_fix": {
+                    "meta_fix_9999": "meta_fix_9999",
+                    "item_type_id": {
+                        "option": {
+                            "showlist": True,
+                            "hidden": False,
+                        },
+                    },
+                },
+                "meta_list": {
+                    "meta_list_9999": "meta_list_9999",
+                }
+            } 
 
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
                 settings=settings,
                 item_type_mapping=item_type_mapping,
-                item_type_data=data2
+                item_type_data=data4
             )
 
             # coverage
@@ -783,7 +820,6 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
             except:
                 pass
     
-    raise BaseException
 
 # def get_keywords_data_load(str):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_keywords_data_load -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -896,7 +932,7 @@ def test_get_attribute_value_all_items(app):
             "en_item_1_title",
             {
                 "required": False,
-                "show_list": False,
+                "show_list": True,
                 "specify_newline": False,
                 "hide": False,
                 "non_display": "BBBB",
@@ -930,7 +966,6 @@ def test_get_attribute_value_all_items(app):
         one_line_flag=True,
     )
 
-    raise BaseException
 
 # def check_input_value(old, new):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_check_input_value -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
