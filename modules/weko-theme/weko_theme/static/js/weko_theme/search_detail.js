@@ -437,9 +437,14 @@
         angular.module('searchDetailModule', ['searchDetail.controllers']);
         angular.module('searchDetailModule', ['searchDetail.controllers']).config(
             [
-                '$interpolateProvider', function ($interpolateProvider) {
+                '$interpolateProvider','$locationProvider', function ($interpolateProvider,$locationProvider) {
                 $interpolateProvider.startSymbol('[[');
                 $interpolateProvider.endSymbol(']]');
+                $locationProvider.html5Mode({
+                    enabled: true,
+                    requireBase: false,
+                    rewriteLinks: false,
+                  });
             }]
         ).directive('whenScrolled',function(){
             return function(scope, elem, attr){
