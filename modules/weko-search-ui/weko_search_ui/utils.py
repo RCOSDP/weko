@@ -3283,6 +3283,7 @@ def export_all(root_url, user_id, data):
             item_datas["recids"],
             item_datas["data"],
             permissions,
+            export_path
         )
         keys, labels, is_systems, options = headers
         item_datas["recids"].sort()
