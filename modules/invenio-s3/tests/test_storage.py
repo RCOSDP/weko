@@ -20,6 +20,7 @@ from flask import url_for
 from invenio_files_rest.errors import FileSizeError, StorageError, \
     UnexpectedFileSizeError
 from invenio_files_rest.limiters import FileSizeLimit
+from invenio_files_rest.models import Location
 from invenio_files_rest.storage import PyFSFileStorage
 from mock import patch
 from s3fs import S3File, S3FileSystem
@@ -320,56 +321,97 @@ def test_copy(s3_bucket, location, s3fs):
     shutil.rmtree(tmppath)
 
 
-def test_send_file(base_app, location, s3fs):
+def test_send_file(base_app, location, s3fs, database):
     """Test send file."""
+    default_location = Location.query.filter_by(default=True).first()
+    default_location.type = ''
+    database.session.commit()
+
     data = b'sendthis'
     uri, size, checksum = s3fs.save(BytesIO(data))
-    with base_app.test_request_context():
+
+    def test_send_directly():
         res = s3fs.send_file(
-            'test.txt', mimetype='text/plain', checksum=checksum)
+        'test.txt', mimetype='text/plain', checksum=checksum)
+        assert res.status_code == 200
+        h = res.headers
+        assert h['Content-Type'] == 'text/plain; charset=utf-8'
+        assert h['Content-Length'] == str(size)
+        # assert h['Content-MD5'] == checksum[4:]
+        # assert h['ETag'] == '"{0}"'.format(checksum)
 
-        if config.S3_SEND_FILE_DIRECTLY:
-            assert res.status_code == 200
-            h = res.headers
-            assert h['Content-Type'] == 'text/plain; charset=utf-8'
-            assert h['Content-Length'] == str(size)
-            # assert h['Content-MD5'] == checksum[4:]
-            # assert h['ETag'] == '"{0}"'.format(checksum)
+        # Content-Type: application/octet-stream
+        # ETag: "b234ee4d69f5fce4486a80fdaf4a4263"
+        # Last-Modified: Sat, 23 Jan 2016 06:21:04 GMT
+        # Cache-Control: max-age=43200, public
+        # Expires: Sat, 23 Jan 2016 19:21:04 GMT
+        # Date: Sat, 23 Jan 2016 07:21:04 GMT
 
-            # Content-Type: application/octet-stream
-            # ETag: "b234ee4d69f5fce4486a80fdaf4a4263"
-            # Last-Modified: Sat, 23 Jan 2016 06:21:04 GMT
-            # Cache-Control: max-age=43200, public
-            # Expires: Sat, 23 Jan 2016 19:21:04 GMT
-            # Date: Sat, 23 Jan 2016 07:21:04 GMT
+        res = s3fs.send_file(
+            'myfilename.txt', mimetype='text/plain', checksum='crc32:test')
+        assert res.status_code == 200
+        assert 'Content-MD5' not in dict(res.headers)
 
-            res = s3fs.send_file(
-                'myfilename.txt', mimetype='text/plain', checksum='crc32:test')
-            assert res.status_code == 200
-            assert 'Content-MD5' not in dict(res.headers)
+        # Test for absence of Content-Disposition header to make sure that
+        # it's not present when as_attachment=False
+        res = s3fs.send_file('myfilename.txt', mimetype='text/plain',
+                                checksum=checksum, as_attachment=False)
+        assert res.status_code == 200
+        assert 'attachment' not in res.headers['Content-Disposition']
 
-            # Test for absence of Content-Disposition header to make sure that
-            # it's not present when as_attachment=False
-            res = s3fs.send_file('myfilename.txt', mimetype='text/plain',
-                                 checksum=checksum, as_attachment=False)
-            assert res.status_code == 200
-            assert 'attachment' not in res.headers['Content-Disposition']
+    def test_send_indirectly():
+        res = s3fs.send_file(
+        'test.txt', mimetype='text/plain', checksum=checksum)
+        assert res.status_code == 302
+        h = res.headers
+        assert 'Location' in h
+        assert h['Content-Type'] == 'text/plain; charset=utf-8'
+        # FIXME: the lenght is modified somewhere somehow
+        # assert h['Content-Length'] == str(size)
+        # assert h['Content-MD5'] == checksum[4:]
+        # assert h['ETag'] == '"{0}"'.format(checksum)
 
-        else:
-            assert res.status_code == 302
-            h = res.headers
-            assert 'Location' in h
-            assert h['Content-Type'] == 'text/plain; charset=utf-8'
-            # FIXME: the lenght is modified somewhere somehow
-            # assert h['Content-Length'] == str(size)
-            # assert h['Content-MD5'] == checksum[4:]
-            # assert h['ETag'] == '"{0}"'.format(checksum)
+        res = s3fs.send_file(
+            'myfilename.txt', mimetype='text/plain', checksum='crc32:test')
+        assert res.status_code == 302
+        assert 'Content-MD5' not in dict(res.headers)
 
-            res = s3fs.send_file(
-                'myfilename.txt', mimetype='text/plain', checksum='crc32:test')
-            assert res.status_code == 302
-            assert 'Content-MD5' not in dict(res.headers)
+    with base_app.test_request_context():
 
+        base_app.config['S3_SEND_FILE_DIRECTLY'] = True
+        test_send_directly()
+
+        base_app.config['S3_SEND_FILE_DIRECTLY'] = False
+        test_send_indirectly()
+
+        default_location.type = 's3'
+        database.session.commit()
+        
+        base_app.config['S3_SEND_FILE_DIRECTLY'] = True
+        test_send_directly()
+        
+        base_app.config['S3_SEND_FILE_DIRECTLY'] = False
+        test_send_directly()
+
+        default_location.s3_send_file_directly = False
+        database.session.commit()
+        
+        base_app.config['S3_SEND_FILE_DIRECTLY'] = True
+        test_send_indirectly()
+        
+        base_app.config['S3_SEND_FILE_DIRECTLY'] = False
+        test_send_indirectly()
+
+        checksum = 'md5:value'
+        test_send_indirectly()
+
+        with patch('invenio_s3.storage.redirect_stream') as rs:
+            rs.side_effect = Exception
+            pytest.raises(StorageError, s3fs.send_file, 'test.txt')
+
+        base_app.config['S3_SEND_FILE_DIRECTLY'] = True
+        default_location.s3_send_file_directly = True
+        database.session.commit()
 
 def test_send_file_fail(base_app, location, s3fs):
     """Test send file."""

@@ -161,7 +161,9 @@ class FlowSettingView(BaseView):
             workflows = workflow.get_workflow_by_flow_id(flow_detail.id)
             if workflows and len(workflows) > 0:
                 code = 500
-                msg = 'Cannot be deleted because flow is used.'
+                # msg = 'Cannot be deleted because flow is used.'
+                msg = _('Cannot be deleted because flow is used.')
+
             else:
                 """Delete flow"""
                 result = flow.del_flow(flow_id)

@@ -156,6 +156,7 @@ def lifetime():
     except ValueError as valueErr:
         current_app.logger.error(
             'Could not convert data to an integer: {0}'.format(valueErr))
+        abort(400)
     except BaseException:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         return abort(400)
@@ -191,6 +192,9 @@ def get_lang_list():
 
 
 @blueprint_api.route('/save_lang', methods=['POST'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def save_lang_list():
     """Save Language List."""
     if request.headers['Content-Type'] != 'application/json':
@@ -272,6 +276,8 @@ def get_curr_api_cert(api_code=''):
 
 
 @blueprint_api.route('/save_api_cert_data', methods=['POST'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM])
 def save_api_cert_data():
     """Save api certification data to database.
 
@@ -312,8 +318,6 @@ def get_init_selection(selection=""):
     try:
         if selection == 'target':
             result = get_initial_stats_report()
-        elif selection == "":
-            raise ValueError("Request URL is incorrectly")
         else:
             result = get_unit_stats_report(selection)
     except Exception as e:
@@ -333,6 +337,9 @@ def get_email_author():
 
 
 @blueprint_api.route('/update_feedback_mail', methods=['POST'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def update_feedback_mail():
     """API allow to save feedback mail setting.
 
@@ -427,6 +434,9 @@ def get_failed_mail():
 
 
 @blueprint_api.route('/resend_failed_mail', methods=['POST'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def resend_failed_mail():
     """Resend failed mail.
 
@@ -454,6 +464,9 @@ def resend_failed_mail():
 
 @blueprint_api.route('/sitelicensesendmail/send/<start_month>/<end_month>',
                      methods=['POST'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def manual_send_site_license_mail(start_month, end_month):
     """Send site license mail by manual."""
     send_list = SiteLicenseInfo.query.filter_by(receive_mail_flag='T').all()
@@ -490,6 +503,8 @@ def manual_send_site_license_mail(start_month, end_month):
 
 @blueprint_api.route('/update_site_info', methods=['POST'])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def update_site_info():
     """Update site info.
 
@@ -499,6 +514,7 @@ def update_site_info():
     site_info = request.get_json()
     format_data = format_site_info_data(site_info)
     validate = validation_site_info(format_data)
+    
     if validate.get('error'):
         return jsonify(validate)
     else:
@@ -516,6 +532,7 @@ def get_site_info():
 
     """
     site_info = SiteInfo.get()
+
     result = dict()
     if not site_info:
         try:
@@ -528,6 +545,7 @@ def get_site_info():
         except BaseException:
             pass
         return jsonify(result)
+
     result['copy_right'] = site_info.copy_right
     result['description'] = site_info.description
     result['keyword'] = site_info.keyword
@@ -535,24 +553,15 @@ def get_site_info():
     result['favicon_name'] = site_info.favicon_name
     result['site_name'] = site_info.site_name
     result['notify'] = site_info.notify
-    try:
-        result['google_tracking_id_user'] = site_info.google_tracking_id_user \
-            if site_info.google_tracking_id_user \
-            else current_app.config['GOOGLE_TRACKING_ID_USER']
-    except BaseException:
-        result['google_tracking_id_user'] = ""
-
-    try:
-        result['addthis_user_id'] = site_info.addthis_user_id if \
-            site_info.addthis_user_id else current_app.config['ADDTHIS_USER_ID']
-    except BaseException:
-        result['addthis_user_id'] = ""
-
+    result['google_tracking_id_user'] = site_info.google_tracking_id_user
+    result['addthis_user_id'] = site_info.addthis_user_id
+    
     if site_info.ogp_image and site_info.ogp_image_name:
         ts = time.time()
         result['ogp_image'] = request.host_url + \
             'api/admin/ogp_image'
         result['ogp_image_name'] = site_info.ogp_image_name
+    
     return jsonify(result)
 
 
@@ -587,7 +596,7 @@ def get_ogp_image():
     from invenio_files_rest.models import FileInstance
 
     site_info = SiteInfo.get()
-    if not site_info and site_info.ogp_image and site_info.ogp_image_name:
+    if not site_info or not( site_info.ogp_image and site_info.ogp_image_name):
         return jsonify({})
     file_instance = FileInstance.get_by_uri(site_info.ogp_image)
     if not file_instance:
@@ -613,6 +622,8 @@ def get_search_init_display_index(selected_index=None):
 
 @blueprint_api.route("/restricted_access/save", methods=['POST'])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def save_restricted_access():
     """Save registered access settings.
 
@@ -632,6 +643,8 @@ def save_restricted_access():
 @blueprint_api.route("/restricted_access/get_usage_report_activities",
                      methods=["GET", "POST"])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def get_usage_report_activities():
     """Get usage report activities.
 
@@ -655,6 +668,8 @@ def get_usage_report_activities():
 
 @blueprint_api.route("/restricted_access/send_mail_reminder", methods=["POST"])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def send_mail_reminder_usage_report():
     """Send email to request user for register usage report.
 
@@ -672,6 +687,8 @@ def send_mail_reminder_usage_report():
 
 @blueprint_api.route("/facet-search/save", methods=['POST'])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def save_facet_search():
     """Save facet search.
 
@@ -705,6 +722,8 @@ def save_facet_search():
 
 @blueprint_api.route("/facet-search/remove", methods=['POST'])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def remove_facet_search():
     """Remove facet search.
 

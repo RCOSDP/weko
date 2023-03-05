@@ -89,7 +89,7 @@ def get_weko_contents(getargs):
     ctx.update({
         "display_community": display_community
     })
-
+    
     return dict(
         community_id=community_id,
         detail_condition=detail_condition,
@@ -270,7 +270,7 @@ class MainScreenInitDisplaySetting:
                 display_format = current_index.display_format
         if display_format == '2':
             display_number = 100
-
+        
         if not init_disp_index:
             # In case is not found the index
             # set main screen initial display to the default

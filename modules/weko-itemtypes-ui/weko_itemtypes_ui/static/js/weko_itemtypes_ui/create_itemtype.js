@@ -753,7 +753,7 @@ $(document).ready(function () {
         }
       } else if(tmp && tmp.input_type.indexOf('cus_') != -1) {
         editor = page_json_editor['schema_'+row_id];
-        page_global.schemaeditor.schema[row_id] = editor.getValue();
+        page_global.schemaeditor.schema[row_id] = JSON.parse(JSON.stringify(editor.getValue()));
         removeEnumForCheckboxes(page_global.schemaeditor.schema[row_id].properties);
         if(tmp.option.multiple) {
           page_global.table_row_map.schema.properties[row_id] = {
@@ -790,7 +790,7 @@ $(document).ready(function () {
 
             //'Meta' screen: Get title_i18n from input controls set to form
             // let schemaProperties = page_global.schemaeditor.schema[row_id].properties;
-            let schemaProperties = editor.react.props.data.properties
+            let schemaProperties = JSON.parse(JSON.stringify(editor.react.props.data.properties));
             setTitleI18nFromPropertiesSchemaToForm(schemaProperties, object_forms);
 
             page_global.table_row_map.form.push(
@@ -816,7 +816,7 @@ $(document).ready(function () {
 
           //'Meta' screen: Get title_i18n from input controls set to form
           // let schemaProperties = page_global.schemaeditor.schema[row_id].properties;
-          let schemaProperties = editor.react.props.data.properties
+          let schemaProperties = JSON.parse(JSON.stringify(editor.react.props.data.properties));
           setTitleI18nFromPropertiesSchemaToForm(schemaProperties, object_form);
 
           page_global.table_row_map.form.push(

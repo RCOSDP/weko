@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from flask import current_app, Markup
 from io import StringIO
 import pytest
+import json
 
 from invenio_indexer.api import RecordIndexer
 from invenio_cache import current_cache
@@ -14,7 +15,7 @@ from weko_records.api import ItemTypes, SiteLicense,ItemsMetadata
 from weko_user_profiles import UserProfile
 
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
-from weko_admin.models import AdminLangSettings
+from weko_admin.models import AdminLangSettings, FeedbackMailHistory, FeedbackMailFailed, SiteInfo
 from weko_admin.utils import (
     get_response_json,
     allowed_file,
@@ -35,6 +36,7 @@ from weko_admin.utils import (
     write_report_file_rows,
     reset_redis_cache,
     is_exists_key_in_redis,
+    is_exists_key_or_empty_in_redis,
     get_redis_cache,
     StatisticMail,
     get_system_default_language,
@@ -54,7 +56,7 @@ from weko_admin.utils import (
     create_facet_search_query,
     store_facet_search_query_in_redis,
     get_query_key_by_permission,
-    
+    get_facet_search_query,
     get_title_facets,
     is_exits_facet,
     overwrite_the_memory_config_with_db
@@ -68,11 +70,12 @@ from tests.helpers import json_data
 # def get_response_json(result_list, n_lst):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_response_json -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_get_response_json(app,site_license,item_type):
-    n_lst = ItemTypes.get_latest()
-    result_list = SiteLicense.get_records()
+    # result_list is not list
     result = get_response_json("","")
     assert result == {}
     
+    n_lst = ItemTypes.get_latest()
+    result_list = SiteLicense.get_records()
     test = {
         "site_license":[
             {"addresses":[{"finish_ip_address":["987","654","321","098"],"start_ip_address":["123","456","789","012"]}],
@@ -85,6 +88,10 @@ def test_get_response_json(app,site_license,item_type):
     }
     result = get_response_json(result_list,n_lst)
     assert result == test
+    
+    result_list = [
+        "test"
+    ]
 
 
 # def allowed_file(filename):
@@ -240,6 +247,9 @@ def test_get_unit_stats_report(statistic_target, statistic_unit):
 # def get_user_report_data():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_user_report_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_get_user_report_data(users):
+    with patch("weko_admin.utils.func.count", side_effect=Exception("test_error")):
+        result = get_user_report_data()
+        assert result == {}
     test = {
         "all":[
             {"role_name":"System Administrator","count":1},
@@ -267,6 +277,10 @@ def test_package_reports(client,mocker):
     }
     result = package_reports(all_stats,"2022","10")
 
+    # raise Exception
+    mocker.patch("weko_admin.utils.make_stats_file",side_effect=Exception("test_error"))
+    with pytest.raises(Exception) as e:
+        result = package_reports(all_stats,"2022","10")
 
 # def make_stats_file(raw_stats, file_type, year, month):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_make_stats_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -336,7 +350,7 @@ def test_make_stats_file(client,mocker):
     
     ## open_access not in raw_stats,institution_name not in raw_stats
     file_type = "site_access"
-    raw_stats={"institution_name":"test_institution_name"}
+    raw_stats={"other_raw":"test_institution_name"}
     test = \
         'Access Count By Site License\n'\
         'Aggregation Month,2022-10\n'\
@@ -344,8 +358,7 @@ def test_make_stats_file(client,mocker):
         'Access Count By Site License\n'\
         'WEKO Top Page Access Count,Number Of Searches,Number Of Views,Number Of File download,Number Of File Regeneration\n'\
         '""\n'\
-        'Access Number Breakdown By Site License\n'\
-        'Institution Name,WEKO Top Page Access Count,Number Of Searches,Number Of Views,Number Of File download,Number Of File Regeneration\n'
+        'Access Number Breakdown By Site License\n'
     result = make_stats_file(raw_stats,file_type,year,month)
     assert result.getvalue() == test
     
@@ -385,19 +398,21 @@ def test_write_report_file_rows(db,users):
     # filetype is billiing_file_download
     output = StringIO()
     writer = csv.writer(output,delimiter=",",lineterminator="\n")
-    record = [{"file_key":"test_file_key1",
+    record = {
+        "record1": {"file_key":"test_file_key1",
                "index_list":"test_index_list1",
                "total":1,"no_login":"True",
                "login":"False",
                "site_license":"test_site_license1",
                "admin":"False","reg":"test_reg1"},
-              {"file_key":"test_file_key2",
+        "record2": {"file_key":"test_file_key2",
                "index_list":"test_index_list2",
                "total":1,"no_login":"True",
                "login":"False",
                "site_license":"test_site_license2",
                "admin":"False","reg":"test_reg2",
-               "group_counts":{"test_group":10}}]
+               "group_counts":{"test_group":10}}
+    }
     other_info = ["test_group"]
     write_report_file_rows(writer,record,"billing_file_download",other_info)
     assert output.getvalue() == "test_file_key1,test_index_list1,1,True,False,test_site_license1,False,test_reg1\n"\
@@ -459,12 +474,20 @@ def test_write_report_file_rows(db,users):
     write_report_file_rows(writer,record,"site_access","test_other_info")
     assert output.getvalue() == "test_other_info,test_top_view,test_search,test_record_view,test_file_download,test_file_preview\n"
     
+    # filetype is others
+    record = [{"top_view":"test_top_view","search":"test_search","record_view":"test_record_view","file_download":"test_file_download","file_preview":"test_file_preview"}]
+    output = StringIO()
+    writer = csv.writer(output,delimiter=",",lineterminator="\n")
+    write_report_file_rows(writer,record,"others","test_other_info")
+    assert output.getvalue() == ""
+    
     ## not other_info
     record = [{"name":"test_name","top_view":"test_top_view","search":"test_search","record_view":"test_record_view","file_download":"test_file_download","file_preview":"test_file_preview"}]
     output = StringIO()
     writer = csv.writer(output,delimiter=",",lineterminator="\n")
     write_report_file_rows(writer,record,"site_access")
     assert output.getvalue() == "test_name,test_top_view,test_search,test_record_view,test_file_download,test_file_preview\n"
+    
 
 
 # def reset_redis_cache(cache_key, value, ttl=None):
@@ -472,14 +495,15 @@ def test_write_report_file_rows(db,users):
 def test_reset_redis_cache(redis_connect,mocker):
     redis_connect.put("test_cache",bytes("test_value","utf-8"))
     mocker.patch("weko_admin.utils.RedisConnection.connection",return_value=redis_connect)
-    
+    # cache_key exist, ttl is None
     reset_redis_cache("test_cache","new_value1")
     assert redis_connect.get("test_cache") == b"new_value1"
-    
+    # cache_key not exist, ttl is not None
     redis_connect.delete("test_cache")
     reset_redis_cache("test_cache","new_value2",10)
     assert redis_connect.get("test_cache") == b"new_value2"
-    
+
+    # raise Exception
     with mocker.patch("weko_admin.utils.RedisConnection.connection",side_effect=Exception("test_error")):
         with pytest.raises(Exception):
             reset_redis_cache("test_cache","")
@@ -492,15 +516,29 @@ def test_is_exists_key_in_redis(redis_connect,mocker):
     redis_connect.put("test_key",bytes("test_value","utf-8"))
     result = is_exists_key_in_redis("test_key")
     assert result == True
+    
+    # raise Exception
+    with patch("weko_admin.utils.RedisConnection.connection", side_effect=Exception("test_error")):
+        result = is_exists_key_in_redis("test_key")
+        assert result == False
 
 
 # def is_exists_key_or_empty_in_redis(key):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_is_exists_key_or_empty_in_redis -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_is_exists_key_or_empty_in_redis(redis_connect,mocker):
     mocker.patch("weko_admin.utils.RedisConnection.connection",return_value=redis_connect)
-    redis_connect.put("test_key",bytes("test_value","utf-8"))
-    result = is_exists_key_in_redis("test_key")
+    redis_connect.put("test_key1",bytes("test_value1","utf-8"))
+    result = is_exists_key_or_empty_in_redis("test_key1")
     assert result == True
+    
+    redis_connect.put("test_key2",bytes("","utf-8"))
+    result = is_exists_key_or_empty_in_redis("test_key2")
+    assert result == False
+    
+    # raise Exception
+    with patch("weko_admin.utils.RedisConnection.connection", side_effect=Exception("test_error")):
+        result = is_exists_key_or_empty_in_redis("test_key1")
+        assert result == False
 
 
 # def get_redis_cache(cache_key):
@@ -508,13 +546,19 @@ def test_is_exists_key_or_empty_in_redis(redis_connect,mocker):
 def test_get_redis_cache(redis_connect,mocker):
     mocker.patch("weko_admin.utils.RedisConnection.connection",return_value=redis_connect)
     redis_connect.delete("test_key")
+    # cache_key is not exist
     result = get_redis_cache("test_key")
     assert result == None
     
+    # cache_key is exist
     redis_connect.put("test_key",bytes("test_value","utf-8"))
     result = get_redis_cache("test_key")
     assert result == "test_value"
-
+    
+    # raise Exception
+    with patch("weko_admin.utils.RedisConnection.connection", side_effect=Exception("test_error")):
+        result = get_redis_cache("test_key")
+        assert result == None
 
 # def get_system_default_language():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_system_default_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -542,7 +586,7 @@ class TestStatisticMail:
 
 #     def send_mail_to_all(cls, list_mail_data=None, stats_date=None):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestStatisticMail::test_send_mail_to_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-    def test_send_mail_to_all(self,client,feedback_mail_settings,mocker):
+    def test_send_mail_to_all(self,client,feedback_mail_settings,site_info,mocker):
         setting = {
                 "data":[{"author_id":"2","email":"banned@test.org"}],
                 "error":"",
@@ -550,7 +594,7 @@ class TestStatisticMail:
                 "root_url":"http://test_server"
             }
         mocker.patch("weko_admin.utils.FeedbackMail.get_feed_back_email_setting",return_value=setting)
-        mocker.patch("weko_admin.utils.StatisticMail.get_banned_mail",return_value=[None])
+        mocker.patch("weko_admin.utils.StatisticMail.get_banned_mail",return_value=["banned@test.org"])
         mocker.patch("weko_admin.utils.StatisticMail.get_send_time",return_value="2022-10")
         mocker.patch("weko_admin.utils.StatisticMail.get_list_statistic_data")
         mocker.patch("weko_admin.utils.FeedbackMailHistory.get_sequence",return_value="1")
@@ -566,19 +610,42 @@ class TestStatisticMail:
         }
         mocker.patch("weko_admin.utils.StatisticMail.fill_email_data",return_value=body)
         mocker.patch("weko_admin.utils.StatisticMail.send_mail",return_value=True)
-        with patch("weko_admin.utils.get_system_default_language",return_value="ja"):
-            mocker.patch("weko_admin.utils.StatisticMail.build_statistic_mail_subject",return_value="[No Site Name]2022-10 利用統計レポート")
+        mocker.patch("weko_admin.utils.get_system_default_language",return_value="en")
+        mocker.patch("weko_admin.utils.StatisticMail.build_statistic_mail_subject",return_value="[No Site Name]2022-10 利用統計レポート")
+        
+        # is_sending_feedback is False, stats_date is None
+        with patch("weko_admin.utils.FeedbackMail.get_feed_back_email_setting",return_value={"is_sending_feedback":False}):
+            result = StatisticMail.send_mail_to_all(None,None)
+            assert result == None
             
-            # not stats_date
-            with patch("weko_admin.utils.FeedbackMail.get_feed_back_email_setting",return_value={"is_sending_feedback":False}):
-                result = StatisticMail.send_mail_to_all(None,None)
-                assert result == None
-            
-            list_mail_data = {
-                "banned@test.org":{},
-                "test.taro@test.org":{"author_id":"1","items":{}}
-            }
-            StatisticMail.send_mail_to_all(list_mail_data,None)
+        # list_mail_data is None, get_feedback_mail_list is None
+        with patch("weko_search_ui.utils.get_feedback_mail_list", return_value=None):
+            result = StatisticMail.send_mail_to_all(None,None)
+            assert result == None
+        
+        mail_data = {
+            "banned@test.org":{},
+            "test.taro@test.org":{"author_id":"1","items":{}},
+            "test.hanako@test.org":{"author_id":"2","items":{}}
+        }
+        mocker.patch("weko_search_ui.utils.get_feedback_mail_list", return_value=mail_data)
+        # system_default_language is ja
+        with patch("weko_admin.utils.get_system_default_language", return_value="ja"):
+            result = StatisticMail.send_mail_to_all(None,"2022-11")
+        # system_default_language is other
+        with patch("weko_admin.utils.get_system_default_language", return_value="du"):
+            result = StatisticMail.send_mail_to_all(None,"2022-11")
+        
+        # system_default_language is en
+        # host_url[-1] is "/"
+        current_app.config.update(THEME_SITEURL="https://localhost/")
+        result = StatisticMail.send_mail_to_all(None,"2022-11")
+        
+        with patch("weko_admin.utils.StatisticMail.send_mail", side_effect=[True, False]):
+            StatisticMail.send_mail_to_all(mail_data,"2022-11")
+        
+        with patch("weko_admin.utils.StatisticMail.build_statistic_mail_subject", side_effect=Exception("test_error")):
+            StatisticMail.send_mail_to_all(mail_data,"2022-11")
 
 
 #     def get_banned_mail(cls, list_banned_mail):
@@ -603,6 +670,11 @@ class TestStatisticMail:
         download_count = "12.234"
         result = StatisticMail.convert_download_count_to_int(download_count)
         assert result == 12
+        
+        # raise Exception
+        download_count = "test.1"
+        result = StatisticMail.convert_download_count_to_int(download_count)
+        assert result == 0
 
 
 #     def get_list_statistic_data(cls, list_item_id, time, root_url):
@@ -700,11 +772,14 @@ class TestStatisticMail:
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestStatisticMail::test_find_value_in_dict -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_find_value_in_dict(self):
         data = {
-            "data":[
-            "test",
-            {"not_find_key":"not_find_value","find_key":"find_value1"},
-            {"not_find_key":"not_find_value","find_key":"find_value2"}
-            ]
+            "data1":[
+                "test",
+                {"not_find_key":"not_find_value","find_key":"find_value1"},
+                {"not_find_key":"not_find_value","find_key":"find_value2"}
+            ],
+            "data2":{
+                "find_key":"find_value3"
+            }
         }
         result = StatisticMail.find_value_in_dict("find_key",data)
         
@@ -713,6 +788,8 @@ class TestStatisticMail:
                 assert r == "find_value1"
             elif i==1:
                 assert r == "find_value2"
+            elif i==3:
+                assert r == "find_value3"
 
 
 #     def get_file_in_item(cls, data):
@@ -754,6 +831,8 @@ class TestStatisticMail:
             "organization":"No Site Name",
             "time":"2022-10"
         }
+        
+        # system_default_language is ja
         data_content_ja = '----------------------------------------\n[Title] : title2\n[URL] : http://test.com/records/2\n[DetailView] : 3\n[FileDownload] : \n    test_file2_1.tsv(10)\n    test_file2_2.tsv(20)\n'
         mocker.patch("weko_admin.utils.StatisticMail.build_mail_data_to_string",return_value=data_content_ja)
         mock_render = mocker.patch("weko_admin.utils.Template.render")
@@ -770,8 +849,7 @@ class TestStatisticMail:
         StatisticMail.fill_email_data(statistic_data,mail_data,"ja")
         mock_render.assert_called_with(test)
         
-        
-        
+        # system_default_language is en
         data_content_en = '----------------------------------------\n[Title] : title2\n[URL] : http://test.com/records/2\n[DetailView] : 3\n[FileDownload] : \n    test_file2_1.tsv(10)\n    test_file2_2.tsv(20)\n'
         mocker.patch("weko_admin.utils.StatisticMail.build_mail_data_to_string",return_value=data_content_en)
         mock_render = mocker.patch("weko_admin.utils.Template.render")
@@ -786,6 +864,23 @@ class TestStatisticMail:
             "total_download":30
         }
         StatisticMail.fill_email_data(statistic_data,mail_data,"en")
+        mock_render.assert_called_with(test)
+        
+        # system_default_language is other
+        data_content_en = '----------------------------------------\n[Title] : title2\n[URL] : http://test.com/records/2\n[DetailView] : 3\n[FileDownload] : \n    test_file2_1.tsv(10)\n    test_file2_2.tsv(20)\n'
+        mocker.patch("weko_admin.utils.StatisticMail.build_mail_data_to_string",return_value=data_content_en)
+        mock_render = mocker.patch("weko_admin.utils.Template.render")
+        test = {
+            "user_name":"テスト 太郎",
+            "organization":"No Site Name",
+            "time":"2022-10",
+            "data":data_content_en,
+            "total_item":1,
+            "total_file":2,
+            "total_detail_view":3,
+            "total_download":30
+        }
+        StatisticMail.fill_email_data(statistic_data,mail_data,"du")
         mock_render.assert_called_with(test)
 
 
@@ -907,15 +1002,12 @@ class MockClient:
         if index == "test_weko-authors":
             return {
                 "hits":{
-                    "hits":[
-                        {"_source":self.data[0]},
-                        {"_source":self.data[1]}
-                    ]
+                    "hits":[{"_source": d} for d in self.data]
                 },
-                "item_cnt":2
+                "item_cnt":3
             }
         elif index == "test-weko":
-            return {"item_cnt":2}
+            return {"item_cnt":3}
 # class FeedbackMail:
 class TestFeedbackMail:
 #     def search_author_mail(cls, request_data: dict) -> dict:
@@ -923,6 +1015,7 @@ class TestFeedbackMail:
     def test_search_author_mail(self,client,mocker):
         mock_indexer = RecordIndexer()
         data = json_data("data/test_authors.json")
+        data.append({"authorIdInfo":None})
         mock_indexer.client=MockClient(data)
         mocker.patch("weko_admin.utils.RecordIndexer",return_value=mock_indexer)
         
@@ -932,22 +1025,33 @@ class TestFeedbackMail:
             "pageNumber":"1"
         }
         author_data = json_data("data/test_authors.json")
+        author_data.append({"authorIdInfo":None})
         test = {
-            "hits":{"hits":[
-                {"_source":author_data[0]},
-                {"_source":author_data[1]}
-            ]},
-            "item_cnt":{"item_cnt":2}
+            "hits":{"hits":[{"_source":d} for d in author_data]},
+            "item_cnt":{"item_cnt":3}
+        }
+        # not exist search_key
+        result = FeedbackMail.search_author_mail(request_data)
+        assert result == test
+        
+        # exist search_key
+        request_data = {
+            "searchKey":"test_key",
+            "numOfPage":"10",
+            "pageNumber":"1"
         }
         result = FeedbackMail.search_author_mail(request_data)
-        
         assert result == test
 #     def get_feed_back_email_setting(cls):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestFeedbackMail::test_get_feed_back_email_setting -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_get_feed_back_email_setting(self, feedback_mail_settings):
+        
+        # len(setting) = 0
         with patch("weko_admin.utils.FeedbackMailSetting.get_all_feedback_email_setting",return_value=[]):
             result = FeedbackMail.get_feed_back_email_setting()
             assert result == {"data":"","is_sending_feedback":"","root_url":"","error":""}
+        
+        # not exist manual_email
         with patch("weko_admin.utils.FeedbackMailSetting.get_all_feedback_email_setting",return_value=[feedback_mail_settings[1]]):
             test = {
                 "data":[{"author_id":"2","email":None}],
@@ -957,6 +1061,8 @@ class TestFeedbackMail:
             }
             result = FeedbackMail.get_feed_back_email_setting()
             assert result == test
+        
+        # exist manual_email
         test = {
                 "data":[{"author_id":"1","email":"test.taro@test.org"},
                         {"author_id":"2","email":None},
@@ -1003,15 +1109,16 @@ class TestFeedbackMail:
 
         
 #     def convert_feedback_email_data_to_string(cls, data, keyword='author_id'):
-#             keyword {str} -- search keyword (default: {'author_id'})
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestFeedbackMail::test_convert_feedback_email_data_to_string -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_convert_feedback_email_data_to_string(self):
+        # data is not list
         result = FeedbackMail.convert_feedback_email_data_to_string("not list")
         assert result == None
         
         data = [
             { "author_id": "1", "email": "test.taro@test.org" },
-            { "author_id": "2", "email": "test.smith@test.org" }
+            { "author_id": "2", "email": "test.smith@test.org" },
+            { "email": "not.author_id@test.org"}
         ]
         result = FeedbackMail.convert_feedback_email_data_to_string(data)
         assert result == "1,2"
@@ -1065,11 +1172,23 @@ class TestFeedbackMail:
 
 #     def load_feedback_mail_history(cls, page_num):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestFeedbackMail::test_load_feedback_mail_history -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-    def test_load_feedback_mail_history(self,feedback_mail_histories):
+    def test_load_feedback_mail_history(self,db,feedback_mail_histories):
+        # page_num_start > len(all_history)
+        with patch("weko_admin.utils.FeedbackMailHistory.get_all_history",return_value = ["test_history1"]):
+            test = {
+                'data': [],
+                'total_page': 0,
+                'selected_page': 0,
+                'records_per_page': 0,
+                'error': 'Cannot get data. Detail: Page out of range'
+            }
+            result = FeedbackMail.load_feedback_mail_history(20)
+            assert result == test
+        
         test = {
             "data":[
-                {"start_time":"2022-10-01 01:02:03.045","end_time":"2022-10-01 02:03:04.056","count":2,"error":0,"id":1,"is_latest":True,"success":2},
-                {"start_time":"2022-10-01 01:02:03.045","end_time":"2022-10-01 02:03:04.056","count":2,"error":0,"id":2,"is_latest":True,"success":2}],
+                {"start_time":"2022-10-01 01:02:03.045","end_time":"2022-10-01 02:03:04.056","count":2,"error":0,"id":2,"is_latest":True,"success":2},
+                {"start_time":"2022-10-01 01:02:03.045","end_time":"2022-10-01 02:03:04.056","count":2,"error":0,"id":1,"is_latest":True,"success":2}],
             "error":"",
             "records_per_page":20,
             "selected_page":1,
@@ -1078,18 +1197,65 @@ class TestFeedbackMail:
         result = FeedbackMail.load_feedback_mail_history(1)
         assert result ==test
         
-        with patch("weko_admin.utils.FeedbackMailHistory.get_all_history",side_effect=Exception("test_error")):
-            test = {
-                "data":[],
-                "error":"Cannot get data. Detail: test_error",
-                "records_per_page":0,
-                "selected_page":0,
-                "total_page":0
-            }
-            result = FeedbackMail.load_feedback_mail_history(1)
-            assert result ==test
-#     @classmethod
+        # not path break
+        history_data = []
+        for i in range(len(feedback_mail_histories),41):
+            history_data.append(
+                FeedbackMailHistory(
+                    start_time=datetime(2022,10,1,1,2,3,45678),
+                    end_time=datetime(2022,10,1,2,3,4,56789),
+                    stats_time="2022-10",
+                    count=i,
+                    error=0,
+                    is_latest=True
+                )
+            )
+        db.session.add_all(history_data)
+        db.session.commit()
+        result = FeedbackMail.load_feedback_mail_history(2)
+        assert len(result["data"]) == 20
+        
+        
 #     def load_feedback_failed_mail(cls, id, page_num):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestFeedbackMail::test_load_feedback_failed_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_load_feedback_failed_mail(self, db, feedback_mail_faileds):
+        # page_num_start > len(feedbackmail_failed)
+        with patch("weko_admin.utils.FeedbackMailFailed.get_by_history_id", return_value=["test_history"]):
+            test = {
+                'data': [],
+                'total_page': 0,
+                'selected_page': 0,
+                'records_per_page': 0,
+                'error': 'Cannot get data. Detail: Page out of range'
+            }
+            result = FeedbackMail.load_feedback_failed_mail(1,20)
+            assert result == test
+        
+        test = {
+                'data': [{'mail': 'test.taro@test.org', 'name': 'テスト 太郎'}],
+                'total_page': 1,
+                'selected_page': 1,
+                'records_per_page': 10,
+                'error': ''
+            }
+        result = FeedbackMail.load_feedback_failed_mail(1,1)
+        assert result == test
+        
+        # not path break
+        history_data = []
+        for i in range(len(feedback_mail_faileds), 21):
+            history_data.append(
+                FeedbackMailFailed(
+                    history_id=1,
+                    author_id=1,
+                    mail="test.test1@test.org"
+                )
+            )
+        db.session.add_all(history_data)
+        db.session.commit()
+        result = FeedbackMail.load_feedback_failed_mail(1,2)
+        assert len(result["data"]) == 10
+
 
 #     def get_email_name(cls, author_id, mail):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestFeedbackMail::test_get_email_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -1217,12 +1383,12 @@ def test_validation_site_info(mocker):
         "site_name":[
             {'index': 0, 'language': 'en', "name":"test site1"},
             {'index': 1, 'language': 'ja', "name":"テスト サイト"},
-            {'index': 2, 'language': 'zh', "name":"テスト サイト2"}
+            {'index': 3, 'language': 'du', "name":"テスト サイト3"}
         ],
     }
     result = validation_site_info(site_info)
     assert result == {"error":'Language is deleted from Registered Language of system.',
-                      "data":["site_name_2"],"status":False}
+                      "data":["site_name_3"],"status":False}
     
     # language in item not in lang_list
     site_info = {
@@ -1394,7 +1560,6 @@ def test_build_init_display_index(app,indexes):
             {"id":"0","parent":"#","text":"Root Index","state":{"opened":True}},
             {'id': '1557819692844','parent': '0','text': Markup('Contents Type')},
             {'a_attr': {'class': 'jstree-clicked'},'id': '1557819733276','parent': '1557819692844','state': {'selected': True},'text': Markup('conference paper')},
-            {'id': '1557820086539','parent': '0','text': Markup('Faculty of Humanities and Social Sciences')},
         ]
         assert init_display_indexes == test
 
@@ -1537,19 +1702,170 @@ def test_update_restricted_access(admin_settings):
 
 
 # class UsageReport:
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestUsageReport -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+class TestUsageReport:
 #     def __init__(self):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestUsageReport::test_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_init(self):
+        usage_report = UsageReport()
+        
 #     def get_activities_per_page(
-#     def __count_activities(self):
-#     def __format_usage_report_data(self) -> list:
-#     def send_reminder_mail(self, activities_id: list,
-#         site_mail = self.__get_default_mail_sender()
-#     def __get_site_info():
-#     def __get_usage_report_email_and_url(self, activity) -> Tuple[str, str]:
-#     def __build_user_info(self, record_data: Union[RecordMetadata, list],
-#     def __get_default_mail_sender():
-#         """Get default mail sender.
-#         return mail_config.get('mail_default_sender', '')
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestUsageReport::test_get_activities_per_page -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_get_activities_per_page(self, activities, mocker):
+        mocker.patch("weko_admin.utils.UsageReport._UsageReport__count_activities")
+        usage_report = UsageReport()
+        usage_report._UsageReport__activities_number = 1
+        # activities_id is None, page> self.__page_number
+        result = usage_report.get_activities_per_page(activities_id=None, size=1, page=2)
+        assert result == {'page': 1, 'size': 1, 'activities': [{'activity_id': '31001', 'item_name': 'test item31001', 'workflow_name': 'test workflow31001', 'action_status': 'action_doing', 'user_mail': None}], 'number_of_pages': 1}
+        usage_report._UsageReport__activities_number = 2
+        result = usage_report.get_activities_per_page(activities_id=[activities[0].id], size=1, page=1)
+        assert result == {'page': 1, 'size': 1, 'activities': [{'activity_id': '1', 'item_name': 'test item1', 'workflow_name': 'test workflow1', 'action_status': 'action_doing', 'user_mail': None}], 'number_of_pages': 2}
 
+
+#     def __count_activities(self):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestUsageReport::test_count_activities -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_count_activities(self, activities):
+        usage_report = UsageReport()
+        usage_report._UsageReport__count_activities()
+        assert usage_report._UsageReport__activities_number == 1
+
+#     def __format_usage_report_data(self) -> list:
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestUsageReport::test_format_usage_report_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_format_usage_report_data(self, activities):
+        usage_report = UsageReport()
+        test = [
+            {'action_status': 'action_doing',
+                'activity_id': '1',
+                'item_name': 'test item1',
+                'user_mail': None,
+                'workflow_name': 'test workflow1'},
+            {'action_status': 'action_doing',
+                'activity_id': '31001',
+                'item_name': 'test item31001',
+                'user_mail': None,
+                'workflow_name': 'test workflow31001'},
+            {'action_status': 'action_doing',
+                'activity_id': '2',
+                'item_name': 'test item1',
+                'user_mail': 'test.guest@test.org',
+                'workflow_name': 'test workflow1'},
+            {'action_status': 'action_doing',
+                'activity_id': '3',
+                'item_name': 'test item1',
+                'user_mail': None,
+                'workflow_name': 'test workflow1'},
+        ]
+        usage_report._UsageReport__usage_report_activities_data = activities
+        result = usage_report._UsageReport__format_usage_report_data()
+        assert result == test
+
+
+#     def send_reminder_mail(self, activities_id: list,
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestUsageReport::test_send_reminder_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_send_reminder_mail(self, app, activities, mocker):
+        mail_template = current_app.config.get(
+            "WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT")
+        def mock_email_and_url(activity):
+            url = "http://test_server/workflow/activity/detail/{}".format(activity.id)
+            return url, "test.test@test.org"
+        mocker.patch("weko_admin.utils.UsageReport._UsageReport__get_usage_report_email_and_url", side_effect=mock_email_and_url)
+        mocker.patch("weko_workflow.utils.get_mail_data", return_value=("test_subject", "test_body"))
+        mocker.patch("weko_workflow.utils.replace_characters", return_value="test_body")
+        usage_report = UsageReport()
+        acts = [
+            activities[1],# not exist item_id, extra_info
+            activities[3], # exist item_id, extra_info
+        ]
+        mocker.patch("weko_workflow.utils.send_mail", return_value=True)
+        result = usage_report.send_reminder_mail([],mail_template, acts)
+        assert result == True
+        
+        # not exist activities and mail_template, failed send mail
+        mocker.patch("weko_workflow.utils.send_mail", return_value=False)
+        result = usage_report.send_reminder_mail(["1","2"],None, None)
+        assert result == False
+
+#     def __get_site_info():
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestUsageReport::test_get_site_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_get_site_info(self):
+        usage_report = UsageReport()
+        # len(site_info.site_name) == 1
+        site_info = SiteInfo(
+            site_name=[{"name":"test_site_name"}],
+            notify={"name":"test_notify"}
+        )
+        with patch("weko_admin.utils.SiteInfo.get", return_value=site_info):
+            name_en, name_ja = usage_report._UsageReport__get_site_info()
+            assert name_en == "test_site_name"
+            assert name_ja == "test_site_name"
+        
+        # len(site_info.site_name) == 2
+        site_info = SiteInfo(
+            site_name=[{"name":"test_site_name","language":"en"},{"name":"テストサイト名","language":"ja"}],
+            notify={"name":"test_notify"}
+        )
+        with patch("weko_admin.utils.SiteInfo.get", return_value=site_info):
+            name_en, name_ja = usage_report._UsageReport__get_site_info()
+            assert name_en == "test_site_name"
+            assert name_ja == "テストサイト名"
+        
+        # len(site_info.site_name) == 3
+        site_info = SiteInfo(
+            site_name=[
+                {"name":"test_site_name","language":"en"},
+                {"name":"テストサイト名","language":"ja"},
+                {"name":"test_site_name","language":"en2"}
+            ],
+            notify={"name":"test_notify"}
+        )
+        with patch("weko_admin.utils.SiteInfo.get", return_value=site_info):
+            name_en, name_ja = usage_report._UsageReport__get_site_info()
+            assert name_en == ""
+            assert name_ja == ""
+        
+        # not exist site_name
+        with patch("weko_admin.utils.SiteInfo.get", return_value={}):
+            name_en, name_ja = usage_report._UsageReport__get_site_info()
+            assert name_en == ""
+            assert name_ja == ""
+            
+        
+#     def __get_usage_report_email_and_url(self, activity) -> Tuple[str, str]:
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestUsageReport::test_get_usage_report_email_and_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_get_usage_report_email_and_url(self, app, activities, mocker):
+        usage_report = UsageReport()
+        with app.test_request_context():
+            # not is_guest
+            url, email = usage_report._UsageReport__get_usage_report_email_and_url(activities[0])
+            assert url
+            assert email == None
+            
+            # is_guest
+            url, email = usage_report._UsageReport__get_usage_report_email_and_url(activities[2])
+            assert url
+            assert email == "test.guest@test.org"
+
+
+#     def __build_user_info(self, record_data: Union[RecordMetadata, list],
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestUsageReport::test_build_user_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_build_user_info(self):
+        record_data = {
+            "subitem_restricted_access_name":"test_value",
+            "subitem_test_item":["subitem_test_item1"]
+        }
+        usage_report = UsageReport()
+        result = {}
+        usage_report._UsageReport__build_user_info(record_data, result)
+        assert result == {"restricted_fullname": "test_value"}
+        
+#     def __get_default_mail_sender():
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestUsageReport::test_get_default_mail_sender -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_get_default_mail_sender(self,mail_config):
+        usage_report = UsageReport()
+        
+        result = usage_report._UsageReport__get_default_mail_sender()
+        assert result == "test_sender"
 
 # def get_facet_search(id: int = None):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_facet_search -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -1589,9 +1905,10 @@ def test_create_facet_search_query(facet_search_settings):
         "test-weko":{
             "aggs":{"Data Language":{"terms":{"field":"language","size":1000}},
                     "Data Type":{"aggs":{"Data Type":{"terms":{"field":"description.value","size":1000}}},
-                                 "filter":{"bool":{"must":[{"term":{"description.descriptionType":"Other"}}]}}}
+                                 "filter":{"bool":{"must":[{"term":{"description.descriptionType":"Other"}}]}}},
+                    "raw_test": {"terms": {"field": "test.fields.raw","size": 1000}}
             },
-            "post_filters":{"Data Language":"language","Data Type":"description.value"}
+            "post_filters":{"Data Language":"language","Data Type":"description.value","raw_test":"test.raw"}
         }
     }
     test_no_permission = {
@@ -1599,9 +1916,13 @@ def test_create_facet_search_query(facet_search_settings):
             'aggs': {'Data Language': {'aggs': {'Data Language': {'terms': {'field': 'language','size': 1000}}},
                                         'filter': {'bool': {'must': [{'term': {'publish_status': '0'}}]}}},
                     'Data Type': {'aggs': {'Data Type': {'terms': {'field': 'description.value','size': 1000}}},
-                                'filter': {'bool': {'must': [{'term': {'description.descriptionType': 'Other'}},{'term': {'publish_status': '0'}}]}}}},
+                                'filter': {'bool': {'must': [{'term': {'description.descriptionType': 'Other'}},{'term': {'publish_status': '0'}}]}}},
+                    'raw_test': {'aggs': {'raw_test': {'terms':{'field': 'test.fields.raw','size':1000}}},
+                                 'filter':{'bool':{'must':[{'term':{'publish_status':'0'}}]}}}
+                    },
                    'post_filters': {'Data Language': 'language',
-                                    'Data Type': 'description.value'}},
+                                    'Data Type': 'description.value',
+                                    'raw_test':'test.raw'}},
     }
     assert has_permission == test_has_permission
     assert no_permission == test_no_permission
@@ -1644,6 +1965,34 @@ def test_get_query_key_by_permission():
 
 
 # def get_facet_search_query(has_permission=True):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_facet_search_query -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_get_facet_search_query(app,mocker):
+    mocker.patch("weko_admin.utils.store_facet_search_query_in_redis")
+    cache_data = {
+      "test-weko": {
+        "aggs": {
+          "Data Language": {"filter": {"bool": { "must": [{ "term": { "publish_status": "0" } }] }},
+            "aggs": {"Data Language": { "terms": { "field": "language", "size": 1000 } }}},
+          "Data Type": {"filter": {"bool": {"must": [{ "term": { "description.descriptionType": "Other" } },{ "term": { "publish_status": "0" } }]}},
+            "aggs": {"Data Type": {"terms": { "field": "description.value", "size": 1000 }}}},
+          "raw_test": {"filter": {"bool": { "must": [{ "term": { "publish_status": "0" } }] }},
+            "aggs": {"raw_test": { "terms": { "field": "test.fields.raw", "size": 1000 } }}}
+        },
+        "post_filters": {"Data Language": "language","Data Type": "description.value","raw_test": "test.raw"}
+      }
+    }
+    cache_data = json.dumps(cache_data)
+    
+    # not exist cache
+    with patch("weko_admin.utils.is_exists_key_or_empty_in_redis", return_value=False):
+        with patch("weko_admin.utils.get_redis_cache", side_effect=[None, cache_data]):
+            result = get_facet_search_query()
+            assert result
+            
+    with patch("weko_admin.utils.is_exists_key_or_empty_in_redis", return_value=True):
+        with patch("weko_admin.utils.get_redis_cache", side_effect=[cache_data, cache_data]):
+            result = get_facet_search_query()
+            assert result
 
 
 # def get_title_facets():
@@ -1651,8 +2000,8 @@ def test_get_query_key_by_permission():
 def test_get_title_facets(app,facet_search_settings):
     with app.test_request_context(headers=[('Accept-Language', 'en')]):
         titles, order = get_title_facets()
-        assert titles == {"Data Language":"Data Language","Data Type":"Data Type"}
-        assert order == {1:"Data Language",3:"Data Type"}
+        assert titles == {"Data Language":"Data Language","Data Type":"Data Type","raw_test":"raw_test"}
+        assert order == {1:"Data Language",3:"Data Type",4:"raw_test"}
 
 
 # def is_exits_facet(data, id):
@@ -1674,6 +2023,55 @@ def test_is_exits_facet(app, facet_search_settings):
 # def overwrite_the_memory_config_with_db(app, site_info):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_overwrite_the_memory_config_with_db -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_overwrite_the_memory_config_with_db(app,client,site_info):
-    overwrite_the_memory_config_with_db(app,None)
-    overwrite_the_memory_config_with_db(app,site_info[0])
-    overwrite_the_memory_config_with_db(app,site_info[1])
+    from flask import Flask
+    
+    site_info_not_google = SiteInfo(
+        site_name=[{"name":"test_site_info"}],
+        notify={"name":"test_notify"}
+    )
+    
+    site_info_google1 = SiteInfo(
+        site_name=[{"name":"test_site_info"}],
+        notify={"name":"test_notify"},
+        google_tracking_id_user="test_tracking_id1",
+        addthis_user_id="ra-5d8af23e9a3a2633_1",
+    )
+    site_info_google2 = SiteInfo(
+        site_name=[{"name":"test_site_info"}],
+        notify={"name":"test_notify"},
+        google_tracking_id_user="test_tracking_id2",
+        addthis_user_id="ra-5d8af23e9a3a2633_2",
+    )
+
+    app = Flask("test_weko_admin_app")
+    # site_info is None
+    overwrite_the_memory_config_with_db(app, None)
+    
+    # site_info.google_tracking_id_user, addthis_user_id is not exist
+    overwrite_the_memory_config_with_db(app, site_info_not_google)
+    
+    # GOOGLE_TRACKING_ID_USER, ADDTHIS_USER_ID is not exist
+    overwrite_the_memory_config_with_db(app, site_info_google1)
+    assert app.config["GOOGLE_TRACKING_ID_USER"] == "test_tracking_id1"
+    assert app.config["ADDTHIS_USER_ID"] == "ra-5d8af23e9a3a2633_1"
+
+    overwrite_the_memory_config_with_db(app, site_info_google2)
+    assert app.config["GOOGLE_TRACKING_ID_USER"] == "test_tracking_id2"
+    assert app.config["ADDTHIS_USER_ID"] == "ra-5d8af23e9a3a2633_2"
+import json
+import pytest
+from flask import current_app, make_response, request, url_for
+from flask_login import current_user
+from mock import patch
+
+from weko_admin.utils import (
+    get_title_facets
+)
+
+# def get_title_facets():
+def test_get_title_facets(i18n_app, users, facet_search_setting):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        titles, order, uiTypes, isOpens, displayNumbers = get_title_facets()
+        assert uiTypes
+        assert isOpens
+        assert displayNumbers

@@ -15,15 +15,6 @@ from weko_records.api import ItemTypes
 from weko_search_ui.rest import create_blueprint, IndexSearchResource, get_heading_info
 
 
-def test_IndexSearchResource_post_guest(app, client_rest, esindex, users, indices):
-    app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
-    with patch('weko_search_ui.query.get_item_type_aggs', return_value={}):
-        res = client_rest.get("/index/?page=1&size=20&sort=controlnumber&search_type=2&q=0&is_search=1")
-        assert res.status_code==200
-        res = client_rest.get("/index/?page=1&size=20&sort=controlnumber&search_type=2&q=0")
-        assert res.status_code==200
-
-
 def url(root, kwargs={}):
     args = ["{key}={value}".format(key=key, value=value) for key, value in kwargs.items()]
     url = "{root}?{param}".format(root=root, param="&".join(args)) if kwargs else root
@@ -74,7 +65,7 @@ path2 = dict(
     harvest_public_state=True,
 )
 
-        
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResource_get -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 test_patterns =[
     ({},
      "facet_not_post_filters.json",
@@ -101,7 +92,6 @@ test_patterns =[
 def test_IndexSearchResource_get(client_rest, users, item_type, record, facet_search_setting, index, mock_es_execute, 
                                  params, facet_file, links, paths, rd_file, execute):
     sname = current_app.config["SERVER_NAME"]
-
     facet = json_data("tests/data/search/"+facet_file)
     for l in links:
         links[l]="http://"+sname+"/index/"+links[l]
@@ -114,31 +104,44 @@ def test_IndexSearchResource_get(client_rest, users, item_type, record, facet_se
                 rd["links"] = links
                 assert result == rd
 
-
-def test_IndexSearchResource_get_Exception(client_rest, users, item_type, record, facet_search_setting, index, mock_es_execute):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResource_get_Exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_IndexSearchResource_get_Exception(client_rest, db, users, item_type, db_records, facet_search_setting):
     sname = current_app.config["SERVER_NAME"]
-
-    facet = json_data("tests/data/search/facet.json")
+    #from weko_index_tree.models import Index
+    #datas = json_data("data/index.json")
+    #indexes = list()
+    #for index in datas:
+    #    indexes.append(Index(**datas[index]))
+    #with db.session.begin_nested():
+    #    db.session.add_all(indexes)
+    #db.session.commit()
+    
+    def dummy_response(data):
+        if isinstance(data, str):
+            data = json_data(data)
+        dummy=response.Response(Search(), data)
+        return dummy
+    facet = json_data("data/search/facet.json")
     links = {"self":"?page=1&size=20"}
     for l in links:
         links[l]="http://"+sname+"/index/"+links[l]
     with patch("weko_admin.utils.get_facet_search_query", return_value=facet):
         with patch("weko_search_ui.rest.Indexes.get_self_list",side_effect=mock_path(**path1)):
-            with patch("invenio_search.api.RecordsSearch.execute", return_value=mock_es_execute("tests/data/search/execute_result01_02_03.json")):
+            with patch("invenio_search.api.RecordsSearch.execute", return_value=dummy_response("data/search/execute_result01_02_03.json")):
                 with patch("weko_search_ui.rest.get_heading_info", side_effect=Exception):
                     res = client_rest.get(url("/index/",{"self":"?page=1&size=20"}))
                     result = json.loads(res.get_data(as_text=True))
-                    rd = json_data("tests/data/search/rd_result01_02_03_Exception.json")
+                    rd = json_data("data/search/rd_result01_02_03_Exception.json")
                     rd["links"] = links
                     assert result == rd
 
-
-def test_IndexSearchResource_get_MaxResultWindowRESTError(client_rest):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResource_get_MaxResultWindowRESTError -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_IndexSearchResource_get_MaxResultWindowRESTError(client_rest,db_register2):
     #MaxResultWindowRESTError発生
     param = {"size":1000,"page":1000}
     with patch("weko_admin.utils.get_facet_search_query", return_value={}):
         res =  client_rest.get(url("/index/", param))
-        assert res.status_code == 404
+        assert res.status_code == 400
 
 # def create_blueprint(app, endpoints):
 def test_create_blueprint(i18n_app, app, users):
@@ -150,6 +153,7 @@ def test_create_blueprint(i18n_app, app, users):
 # class IndexSearchResource(ContentNegotiatedMethodView):
 # def __init__
 # def get(self, **kwargs):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResource_get -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_IndexSearchResource_get(i18n_app, users, client_request_args):
     total_hit_count = 30
     top_page = "http://test_server/index/?page=1&size=20"

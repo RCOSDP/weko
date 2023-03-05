@@ -109,29 +109,6 @@ def get_item_id(item_type_id):
     return results
 
 
-def convert_html_escape(text):
-    """Convert escape HTML to character.
-
-    :type text: String
-    """
-    if not isinstance(text, str):
-        return
-    html_escape = {
-        "&amp;": "&",
-        "&quot;": '"',
-        "&apos;": "'",
-        "&gt;": ">",
-        "&lt;": "<",
-    }
-    try:
-        for key, value in html_escape.items():
-            text = text.replace(key, value)
-    except Exception as e:
-        current_app.logger.debug(e)
-
-    return text
-
-
 def _get_title_data(jpcoar_data, key, rtn_title):
     """Get title data.
 
@@ -140,7 +117,7 @@ def _get_title_data(jpcoar_data, key, rtn_title):
     @param rtn_title: title list
     """
     try:
-        if str(key).index('item') is not None:
+        if str(key).find('item') != -1:
             rtn_title['title_parent_key'] = key
             title_value = jpcoar_data['title']
             if '@value' in title_value.keys():
@@ -151,6 +128,9 @@ def _get_title_data(jpcoar_data, key, rtn_title):
                 if 'xml:lang' in title_lang.keys():
                     rtn_title['title_lang_lst_key'] = title_lang[
                         'xml:lang'].split('.')
+        else:
+            #current_app.logger.debug("not contain 'item' in key:{}".format(key))
+            return
     except Exception as e:
         current_app.logger.debug(e)
 
@@ -188,17 +168,20 @@ def get_crossref_record_data(pid, doi, item_type_id):
     """
     result = list()
     api_response = CrossRefOpenURL(pid, doi).get_data()
-    current_app.logger.error("CrossRefOpenURL.get_data():{}".format(api_response))
+    current_app.logger.debug("CrossRefOpenURL.get_data():{}".format(api_response))
     if api_response["error"]:
         return result
-    api_response['response'] = convert_crossref_xml_data_to_dictionary(
+    api_response = convert_crossref_xml_data_to_dictionary(
         api_response['response'])
+    current_app.logger.debug("convert_crossref_xml_data_to_dictionary():{}".format(api_response))
+    if api_response["error"]:
+        return result
     api_data = get_crossref_data_by_key(api_response, 'all')
     with db.session.no_autoflush:
         items = ItemTypes.get_by_id(item_type_id)
     if items is None:
         return result
-    elif items.form is not None:
+    if items.form is not None:
         autofill_key_tree = sort_by_item_type_order(
             items.form,
             get_autofill_key_tree(
@@ -1148,11 +1131,7 @@ def deepcopy(original_object, new_object):
     import copy
     if isinstance(original_object, dict):
         for k, v in original_object.items():
-            if not isinstance(new_object, (dict, list)):
-                new_object = {}
-                deepcopy(copy.deepcopy(v), new_object[k])
-            else:
-                new_object[k] = copy.deepcopy(v)
+            new_object[k] = copy.deepcopy(v)
     elif isinstance(original_object, list):
         for original_data in original_object:
             if isinstance(original_data, (dict, list)):
@@ -1224,33 +1203,41 @@ def get_workflow_journal(activity_id):
     return journal_data
 
 
-def convert_crossref_xml_data_to_dictionary(api_data):
+def convert_crossref_xml_data_to_dictionary(api_data, encoding='utf-8'):
     """Convert CrossRef XML data to dictionary.
 
     :param api_data: CrossRef xml data
+    :param encoding: Encoding type
     :return: CrossRef data is converted to dictionary.
     """
-    rtn_data = {}
-    result = api_data.split('\n')[1]
-    root = etree.fromstring(result)
-    crossref_xml_data_keys = config.WEKO_ITEMS_AUTOFILL_CROSSREF_XML_DATA_KEYS
-    contributor_roles = config.WEKO_ITEMS_AUTOFILL_CROSSREF_CONTRIBUTOR
-    for elem in root.getiterator():
-        if etree.QName(elem).localname in crossref_xml_data_keys:
-            if etree.QName(elem).localname == "contributor" or etree.QName(
-                    elem).localname == "organization":
-                _get_contributor_and_author_names(elem, contributor_roles,
-                                                  rtn_data)
-            elif etree.QName(elem).localname == "year":
-                if 'media_type' in elem.attrib \
-                        and elem.attrib['media_type'] == "print":
-                    rtn_data.update({etree.QName(elem).localname: elem.text})
-            elif etree.QName(elem).localname in ["issn", "isbn"]:
-                if 'type' in elem.attrib \
-                        and elem.attrib['type'] == "print":
-                    rtn_data.update({etree.QName(elem).localname: elem.text})
-            else:
-                rtn_data.update({etree.QName(elem).localname: elem.text})
+    result = {}
+    rtn_data = {
+        'response': {},
+        'error': ''
+    }
+    try:
+        root = etree.XML(api_data.encode(encoding))
+        crossref_xml_data_keys = config.WEKO_ITEMS_AUTOFILL_CROSSREF_XML_DATA_KEYS
+        contributor_roles = config.WEKO_ITEMS_AUTOFILL_CROSSREF_CONTRIBUTOR
+        for elem in root.getiterator():
+            if etree.QName(elem).localname in crossref_xml_data_keys:
+                if etree.QName(elem).localname == "contributor" or etree.QName(
+                        elem).localname == "organization":
+                    _get_contributor_and_author_names(elem, contributor_roles,
+                                                      result)
+                elif etree.QName(elem).localname == "year":
+                    if 'media_type' in elem.attrib \
+                            and elem.attrib['media_type'] == "print":
+                        result.update({etree.QName(elem).localname: elem.text})
+                elif etree.QName(elem).localname in ["issn", "isbn"]:
+                    if 'type' in elem.attrib \
+                            and elem.attrib['type'] == "print":
+                        result.update({etree.QName(elem).localname: elem.text})
+                else:
+                    result.update({etree.QName(elem).localname: elem.text})
+        rtn_data['response'] = result
+    except Exception as e:
+        rtn_data['error'] = str(e)
     return rtn_data
 
 

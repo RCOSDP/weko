@@ -63,3 +63,9 @@
     margin-top: -5px;
     margin-bottom: -5px;
 }
+
+.clear-activitylog {
+  color: #fff;
+  background-color: #dc3545;
+  border-color: #dc3545;
+}

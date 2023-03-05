@@ -625,3 +625,21 @@ msgstr ""
 #: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:44
 msgid "Are you sure you want to withdraw DOI?"
 msgstr ""
+
+msgid "Download"
+msgstr ""
+
+msgid "Deleted activities cannot be restored."
+msgstr ""
+
+msgid "Are you sure you want to delete filtered activities?"
+msgstr ""
+
+msgid "Deleted activity cannot be restored."
+msgstr ""
+
+msgid "Are you sure you want to delete the filtered activity?"
+msgstr ""
+
+msgid "Clear Confirm"
+msgstr ""

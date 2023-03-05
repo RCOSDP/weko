@@ -4,6 +4,7 @@ from mock import patch, MagicMock
 from flask import Flask, json, jsonify, session, url_for
 from jinja2.exceptions import TemplateSyntaxError
 from invenio_accounts.testutils import login_user_via_session
+from weko_indextree_journal.admin import IndexJournalSettingView
 
 # .tox/c1/bin/pytest --cov=weko_indextree_journal tests/test_admin.py::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-indextree-journal/.tox/c1/tmp
 user_results = [
@@ -82,3 +83,32 @@ def test_get_schema_form(i18n_app, db, users, test_indices, id, status_code):
             i18n_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'] = ''
             res = client.get(url_for("indexjournal.get_schema_form"))
             assert res.status_code == 500
+
+
+def test_get_journal_by_index_id_IndexJournalSettingView(i18n_app, indices):
+    test = IndexJournalSettingView()
+    index_id = 33
+
+    assert "Response" in str(type(test.get_journal_by_index_id(index_id=index_id)))
+
+    with patch("weko_indextree_journal.api.Journals.get_journal_by_index_id", return_value=None):
+        assert "Response" in str(type(test.get_journal_by_index_id(index_id=1)))
+    
+    # Exception coverage
+    try:
+        assert "Response" in str(type(test.get_journal_by_index_id(index_id="a")))
+    except:
+        pass
+
+
+def test_get_schema_form_IndexJournalSettingView(i18n_app):
+    test = IndexJournalSettingView()
+    
+    assert "Response" in str(type(test.get_schema_form()))
+
+    # Exception coverage
+    try:
+        i18n_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'] = ""
+        test.get_schema_form()
+    except:
+        pass

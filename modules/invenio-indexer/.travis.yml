@@ -1,0 +1,88 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio.
+# Copyright (C) 2016-2018 CERN.
+#
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+
+notifications:
+  email: false
+
+sudo: false
+
+language: python
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - env: REQUIREMENTS=devel EXTRAS=all,elasticsearch5 BROKER_URL=redis://localhost:6379/0 ES_URL=$ES5_DOWNLOAD_URL
+    - env: REQUIREMENTS=devel EXTRAS=all,elasticsearch5 BROKER_URL=amqp://localhost:5672// ES_URL=$ES5_DOWNLOAD_URL
+    - env: REQUIREMENTS=devel EXTRAS=all,elasticsearch2 BROKER_URL=redis://localhost:6379/0 ES_URL=$ES2_DOWNLOAD_URL
+
+cache:
+  - pip
+
+services:
+  - redis
+  - rabbitmq
+
+env:
+  global:
+    - ES2_DOWNLOAD_URL="https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.4.2/elasticsearch-2.4.2.tar.gz"
+    - ES5_DOWNLOAD_URL="https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.4.tar.gz"
+    - ES6_DOWNLOAD_URL="https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.2.0.tar.gz"
+    - ES_HOST=127.0.0.1
+  matrix:
+    # ES 6: Redis vs RabbitMQ
+    - REQUIREMENTS=release EXTRAS=all,elasticsearch6 BROKER_URL=redis://localhost:6379/0 ES_URL=$ES6_DOWNLOAD_URL
+    - REQUIREMENTS=devel EXTRAS=all,elasticsearch6 BROKER_URL=amqp://localhost:5672// ES_URL=$ES6_DOWNLOAD_URL
+    # ES 5: Redis vs RabbitMQ
+    - REQUIREMENTS=lowest EXTRAS=all,elasticsearch5 BROKER_URL=redis://localhost:6379/0 ES_URL=$ES5_DOWNLOAD_URL
+    - REQUIREMENTS=lowest EXTRAS=all,elasticsearch5 BROKER_URL=amqp://localhost:5672// ES_URL=$ES5_DOWNLOAD_URL
+    - REQUIREMENTS=release EXTRAS=all,elasticsearch5 BROKER_URL=redis://localhost:6379/0 ES_URL=$ES5_DOWNLOAD_URL
+    - REQUIREMENTS=release EXTRAS=all,elasticsearch5 BROKER_URL=amqp://localhost:5672// ES_URL=$ES5_DOWNLOAD_URL DEPLOY=true
+    # ES 2: Redis only
+    - REQUIREMENTS=lowest EXTRAS=all,elasticsearch2 BROKER_URL=redis://localhost:6379/0 ES_URL=$ES2_DOWNLOAD_URL
+    - REQUIREMENTS=release EXTRAS=all,elasticsearch2 BROKER_URL=redis://localhost:6379/0 ES_URL=$ES2_DOWNLOAD_URL
+
+jdk:
+  - "oraclejdk8"
+
+python:
+  - "2.7"
+  - "3.5"
+
+before_install:
+  - "nvm install 6; nvm use 6"
+  - "mkdir /tmp/elasticsearch"
+  - "wget -O - $ES_URL | tar xz --directory=/tmp/elasticsearch --strip-components=1"
+  - "/tmp/elasticsearch/bin/elasticsearch &"
+  - "sleep 20"
+  - "travis_retry pip install --upgrade pip setuptools py"
+  - "travis_retry pip install twine wheel coveralls requirements-builder"
+  - "requirements-builder -e $EXTRAS --level=min setup.py > .travis-lowest-requirements.txt"
+  - "requirements-builder -e $EXTRAS --level=pypi setup.py > .travis-release-requirements.txt"
+  - "requirements-builder -e $EXTRAS --level=dev --req requirements-devel.txt setup.py > .travis-devel-requirements.txt"
+
+
+install:
+  - "travis_retry pip install -r .travis-${REQUIREMENTS}-requirements.txt"
+  - "travis_retry pip install -e .[$EXTRAS]"
+
+script:
+  - "./run-tests.sh"
+
+after_success:
+  - coveralls
+
+deploy:
+  provider: pypi
+  user: inveniosoftware
+  password:
+    secure: "fa13DKZ+lLH6SMc1y2W+6++OTF0Ee8FLorSySIirrxrSs4tSgAHwCgi0obWtd2d6CQNk4k+IAzrT0inURNPBD8IXLu2rKGsZ/qC4pbq7MxMG3yYnmBNMF2MLbpqQpsIYnfbol5UzLDbsdMyw02Hdbi/WtiR677kB71ynOUzf9768BgiX15BsX8GJ3ULi+p0sbzXW/FYZLQIwneVt1H+NbCAy6pfh9RlW3prHN8c0h/WgU93A+l/sYyrJJVGHa1P/tY/Cbc5Glb6nWNVFsEB6vbG4J1/KIImcEd8eyaINeiNxIb+vn66ekMOaCfKV0YRGq1I0ZdblJ94xF7OcF1mIPnTDVd5lTT7iI5jsu+xOW+dqKqRkfRhaLOd2gxe3STo/cauj4xfQIAXiYc3P56vuo0/yBJjNEoSURmp13m9xr9bBw7STT02DVMYyE3zFzMt5+u7PbjV+c1VwhshzgAefoX2bdREePRD4dpCAf0ODB1rvsiBohQ6HHq1ndE8u28KYARXY28roX0TnHIjejQjX616bCWnVuKqsIk01HG6DI/86+bT2KMMoWjq8NogR/knUMMrFLItkRjOS/jnMeevtx9TNJUEfk/KXeHOrZU9eOVkwdQVi33BeCvx4gdzmoZZPG+E+3ZixpK6M7PVg4Qj48gbnq6AwFrNNAuQMPeuo4Is="
+  on:
+    tags: true
+    python: "2.7"
+    repo: inveniosoftware/invenio-indexer
+    condition: $DEPLOY = true

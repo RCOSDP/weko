@@ -94,7 +94,7 @@ def get_rss_data():
     es_data = hits.get('hits')
     item_id_list = list(map(itemgetter('_id'), es_data))
     idx_tree_full_ids = generate_path(Indexes.get_recursive_tree(index_id))
-    hidden_items = find_hidden_items(item_id_list, idx_tree_full_ids)
+    hidden_items = find_hidden_items(item_id_list, idx_tree_full_ids, True)
 
     rss_data = []
     for es_item in es_data:

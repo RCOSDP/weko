@@ -125,6 +125,8 @@ set -o errexit
 ${INVENIO_WEB_INSTANCE} db drop --yes-i-know
 ${INVENIO_WEB_INSTANCE} db init
 ${INVENIO_WEB_INSTANCE} db create -v
+${INVENIO_WEB_INSTANCE} stats partition create $(date +%Y)
+${INVENIO_WEB_INSTANCE} stats partition create $(date -d 'year' +%Y)
 # sphinxdoc-create-database-end
 
 # sphinxdoc-index-initialisation-begin
@@ -464,6 +466,9 @@ ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
 ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
        4 "default_properties_settings" \
        "{'show_flag': True}"
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       5 "elastic_reindex_settings" \
+       "{'has_errored': False}"
 # create-admin-settings-end
 
 # create-default-authors-prefix-settings-begin

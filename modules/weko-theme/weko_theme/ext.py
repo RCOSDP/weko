@@ -67,3 +67,10 @@ class WekoTheme(object):
 
         app.config.setdefault('WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER',
                               getattr(config, 'WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER'))
+
+
+        app.config.setdefault('DISPLAY_LOGIN',
+                              getattr(config, 'DISPLAY_LOGIN'))
+        
+        app.config.setdefault('ENABLE_COOKIE_CONSENT',
+                              getattr(config, 'ENABLE_COOKIE_CONSENT'))

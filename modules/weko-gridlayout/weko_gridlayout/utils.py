@@ -1082,7 +1082,7 @@ class WidgetBucket:
             obj = ObjectVersion.get(self.bucket_id, key)
             if not obj:
                 abort(404, '{} does not exists.'.format(file_name))
-        obj.key = file_name
+        #obj.key = file_name
         return obj.send_file()
 
 

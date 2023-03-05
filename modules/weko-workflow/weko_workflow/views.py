@@ -39,8 +39,8 @@ from weko_workflow.schema.marshmallow import ActionSchema, \
 from weko_workflow.schema.utils import get_schema_action, type_null_check
 from marshmallow.exceptions import ValidationError
 
-from flask import Blueprint, abort, current_app, has_request_context, \
-    jsonify, make_response, render_template, request, session, url_for
+from flask import Response, Blueprint, abort, current_app, has_request_context, \
+    jsonify, make_response, render_template, request, session, url_for, send_file
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from weko_admin.api import validate_csrf_header
@@ -107,7 +107,7 @@ from .utils import IdentifierHandle, auto_fill_title, \
     save_activity_data, saving_doi_pidstore, \
     send_usage_application_mail_for_guest_user, set_files_display_type, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
-    validate_guest_activity_token
+    validate_guest_activity_token, make_activitylog_tsv
 
 workflow_blueprint = Blueprint(
     'weko_workflow',
@@ -260,6 +260,8 @@ def index():
         action_status=action_status,
         filters=filters,
         send_mail_user_group=send_mail_user_group,
+        delete_activity_log_enable=current_app.config.get("DELETE_ACTIVITY_LOG_ENABLE"),
+        activitylog_roles=current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE"),
         **ctx
     )
 
@@ -2681,6 +2683,172 @@ def get_data_init():
         init_roles=init_roles,
         init_terms=init_terms)
 
+
+@workflow_blueprint.route('/download_activitylog/', methods=['GET','POST'])
+@login_required
+def download_activitylog():
+    """download activitylog
+
+    Args:
+        filters: activity filters.
+    Returns:
+        object: tsv file of activitiylog
+
+    ---
+    get:
+        responses:
+            200:
+                description: "success"
+                content:
+                    test/tsv:
+
+            400: 
+                description: "no activity error"
+
+            403:
+                description: "permittion error"
+    
+    """
+    if not current_app.config.get("DELETE_ACTIVITY_LOG_ENABLE"):
+        abort(403)
+
+    activity = WorkActivity()
+    activities = []
+    if current_user and current_user.roles:
+        admin_roles = current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE")
+        has_admin_role = False
+        for role in current_user.roles:
+            if role in admin_roles:
+                has_admin_role = True
+                break
+        if not has_admin_role:
+            abort(403)
+    if 'activity_id' in request.args:
+        tmp_activity = activity.get_activity_by_id(activity_id=request.args.get('activity_id'))
+        if tmp_activity == None:
+            return jsonify(code=-1, msg='no activity error') ,400
+        activities.append(tmp_activity)
+    else:
+        conditions = filter_all_condition(request.args)
+        activities, maxpage, size, pages, name_param = activity.get_activity_list(conditions=conditions, activitylog=True)
+
+        if not activities:
+            return jsonify(code=-1, msg='no activity error') ,400
+
+    response = Response(
+                make_activitylog_tsv(activities),
+                mimetype='text/tsv',
+                headers={"Content-disposition": "attachment; filename=activitylog.tsv"},
+            )
+    return response , 200
+
+@workflow_blueprint.route('/clear_activitylog/', methods=['GET'])
+@login_required
+def clear_activitylog():
+    """clear and download activitylog.
+
+    Args:
+        filters(optional): activity filters.
+        activity_id(optional): activity_id.
+    Returns:
+        object: tsv file of activitiylog
+
+    ---
+    get:
+        responses:
+            200:
+                description: "success"
+                content:
+                    test/tsv:
+            400: 
+                description: "no activity error"  or "delete failed error"
+
+            403:
+                description: "permittion error"
+    
+    """
+    def _quit_activity(del_activity):
+        """ quit activity"""
+        _activity = dict(
+            activity_id=del_activity.activity_id,
+            action_id=del_activity.action_id,
+            action_status=ActionStatusPolicy.ACTION_CANCELED,
+            action_order=del_activity.action_order
+        )
+
+        result = activity.quit_activity(_activity)
+
+        if not result:
+            return False
+        else:
+            activity.upt_activity_action_status(
+                activity_id=del_activity.activity_id,
+                action_id=del_activity.action_id,
+                action_status=ActionStatusPolicy.ACTION_CANCELED,
+                action_order=del_activity.action_order)    
+            return True
+
+    if not current_app.config.get("DELETE_ACTIVITY_LOG_ENABLE"):
+        abort(403)
+
+    activity = WorkActivity()
+    workflow_activity_action = ActivityAction()
+    activities = []
+    if current_user and current_user.roles:
+        admin_roles = current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE")
+        has_admin_role = False
+        for role in current_user.roles:
+            if role in admin_roles:
+                has_admin_role = True
+                break
+        if not has_admin_role:
+            abort(403)
+
+    # delete a activity
+    if 'activity_id' in request.args:
+        del_activity = activity.get_activity_by_id(activity_id=request.args.get('activity_id'))
+        if del_activity == None:
+            return jsonify(code=-1, msg='no activity error') ,400
+        if del_activity.activity_status in [ActivityStatusPolicy.ACTIVITY_MAKING, ActivityStatusPolicy.ACTIVITY_BEGIN]:
+            result = _quit_activity(del_activity)
+            if not result:
+                return jsonify(code=-1, msg=str(DeleteActivityFailedRESTError())) ,400         
+        try:
+            with db.session.begin_nested():
+                workflow_activity_action.query.filter_by(activity_id=del_activity.activity_id).delete()                
+                db.session.delete(del_activity)
+            db.session.commit()
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+            return jsonify(code=-1, msg='delete failed error') ,400
+    # delete all filitering activity
+    else:
+    
+        conditions = filter_all_condition(request.args)
+        activities, maxpage, size, pages, name_param = activity.get_activity_list(conditions=conditions, activitylog=True)
+
+        if not activities:
+            return jsonify(code=-1, msg='no activity error') ,400
+
+        for del_activity in activities:
+            if del_activity.activity_status in [ActivityStatusPolicy.ACTIVITY_MAKING, ActivityStatusPolicy.ACTIVITY_BEGIN]:
+                result = _quit_activity(del_activity)
+                if not result:
+                   return jsonify(code=-1, msg=str(DeleteActivityFailedRESTError())) ,400 
+
+        try:   
+            with db.session.begin_nested():
+                for activty in activities:
+                    workflow_activity_action.query.filter_by(activity_id=activty.activity_id).delete()                
+                    db.session.delete(activty)
+            db.session.commit()
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+            return jsonify(code=-1, msg='delete failed error') ,400
+
+    return jsonify(code=1, msg='delete activitylogs success') ,200
 
 class ActivityActionResource(ContentNegotiatedMethodView):
     """Workflow Activity Resource."""
