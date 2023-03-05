@@ -14,7 +14,8 @@ CREATE TABLE workflow_activity_count (
 INSERT INTO workflow_activity_count (status,created,updated,date,activity_count) VALUES('N',now(),now(),CURRENT_DATE,(select count(*) from workflow_activity as a where a.created >= CURRENT_DATE and a.created < CURRENT_DATE + 1));
 
 --#34073 reindex
-insert into public.admin_settings(id,name,settings) values 
- (5,'elastic_reindex_settings','{"has_errored": false}')
+SELECT setval('admin_settings_id_seq', (SELECT MAX(ID) FROM admin_settings));
+insert into public.admin_settings(name,settings) values 
+ ('elastic_reindex_settings','{"has_errored": false}')
 ;
 
