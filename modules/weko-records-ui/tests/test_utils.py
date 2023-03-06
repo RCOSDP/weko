@@ -182,17 +182,14 @@ def test_get_min_price_billing_file_download(users):
 
 
 # def is_billing_item(record: dict) -> bool:
-#     def billing_file_search_factory(search):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_billing_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_is_billing_item(i18n_app,records, mock_es_execute):
     _, results = records
-    record = results[0]['record']
+    non_billing_record = results[0]['record']
+    billing_record = results[3]['record']
 
-    with patch('flask_principal.Permission.can', MagicMock(return_value=True)):
-        with patch('elasticsearch_dsl.Search.execute', return_value=mock_es_execute('tests/data/execute_result1.json')):
-            assert is_billing_item(record)==True
-        with patch('elasticsearch_dsl.Search.execute', return_value=mock_es_execute('tests/data/execute_result2.json')):
-            assert is_billing_item(record)==False
+    assert is_billing_item(non_billing_record)==False
+    assert is_billing_item(billing_record)==True
 
 
 # def soft_delete(recid):

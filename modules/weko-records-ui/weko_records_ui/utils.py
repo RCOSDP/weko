@@ -40,8 +40,6 @@ from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
-from invenio_search import RecordsSearch
-from invenio_stats.utils_search import billing_file_search_factory
 from lxml import etree
 from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
@@ -191,13 +189,17 @@ def get_min_price_billing_file_download(groups_price: list,
 def is_billing_item(record: Dict) -> bool:
     """Checks if item is a billing item based on its meta data schema."""
 
-    search, _ = billing_file_search_factory(RecordsSearch(
-        index=current_app.config['SEARCH_UI_SEARCH_INDEX']
-    ))
-    search = search.filter(Q('match', _oai__id=record['_oai']['id']))
-    search_results = search.execute()
+    for value in record.values():
+        if not isinstance(value, dict):
+            continue
+        if value.get('attribute_type', '') != 'file':
+            continue
+        for file in value.get('attribute_value_mlt', []):
+            if file.get('billing') and len(file.get('billing')) > 0 and file.get('billing')[0] == 'billing_file':
+                if file.get('priceinfo'):
+                    return True
 
-    return search_results.hits.total > 0
+    return False
 
 
 def soft_delete(recid):
