@@ -22,6 +22,9 @@
 
 import pkg_resources
 from flask_principal import ActionNeed
+from invenio_access import Permission, action_factory
+
+superuser_access = Permission(action_factory('superuser-access'))
 
 action_admin_access = ActionNeed('read-style-action')
 action_admin_update = ActionNeed('update-style-action')

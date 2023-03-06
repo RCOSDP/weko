@@ -1191,9 +1191,11 @@ def get_authors_prefix_settings():
     if author_prefix_settings is not None:
         results = []
         for prefix in author_prefix_settings:
+            name = prefix.name
             scheme = prefix.scheme
             url = prefix.url
             result = dict(
+                name=name,
                 scheme=scheme,
                 url=url
             )

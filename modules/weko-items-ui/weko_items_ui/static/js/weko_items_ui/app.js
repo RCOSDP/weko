@@ -762,7 +762,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.getValueAuthor = function () {
         var data_author = {}
         $scope.data_author.map(function (item) {
-          data_author[item.scheme] = item.url
+          data_author[item.scheme] = {"url": item.url, "name": item.name};
         })
         $scope.authors_keys.map(function (key) {
           let list_nameIdentifiers = []
@@ -776,7 +776,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                     if (form.hasOwnProperty(scheme)) {
                       $scope.scheme_uri_mapping.map(function (mapping) {
                         if (mapping.scheme == scheme) {
-                          form[mapping.uri] = data_author[form[scheme]]
+                          form[mapping.uri] = data_author[form[scheme]]["url"]
                         }
                       })
                     }
@@ -796,7 +796,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                       if (form.hasOwnProperty(scheme)) {
                         $scope.scheme_uri_mapping.map(function (mapping) {
                           if (mapping.scheme == scheme) {
-                            form[mapping.uri] = data_author[form[scheme]]
+                            form[mapping.uri] = data_author[form[scheme]]["url"]
                           }
                         })
                       }
@@ -825,7 +825,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         var data_author = {};
         let model = $rootScope.recordsVM.invenioRecordsModel;
         $scope.data_author.map(function (item) {
-          data_author[item.scheme] = item.url;
+          data_author[item.scheme] = {"url": item.url, "name": item.name};
         })
 
         let key = identifier_key.replace("[]", "");
@@ -929,11 +929,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           let schemaMappingKey = $scope.scheme_identifier_mapping;
           let idMappingKey = $scope.identifier_mapping;
           let uriMappingKey = $scope.uri_identifier_mapping;
-          let isFillIdentifierURI = checkFillCreatorIdentifierURI(data_author[form[schemaMappingKey]], form[idMappingKey])
+          let isFillIdentifierURI = checkFillCreatorIdentifierURI(data_author[form[schemaMappingKey]]["url"], form[idMappingKey])
           if (form[schemaMappingKey] && isFillIdentifierURI) {
-            form[uriMappingKey] = data_author[form[schemaMappingKey]].replace(/#+$/, form[idMappingKey]);
+            form[uriMappingKey] = data_author[form[schemaMappingKey]]["url"].replace(/#+$/, form[idMappingKey]);
           } else {
-            form[uriMappingKey] = data_author[form[schemaMappingKey]];
+            form[uriMappingKey] = data_author[form[schemaMappingKey]]["url"];
           }
         }
         $scope.commonHandleForAuthorIdentifier(identifier_key, handleGetValueForAuthorIdentifierURI, currentForm);
@@ -1028,7 +1028,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                                 if (author_schema.properties[key]) {
                                   author_schema.properties[key]['enum'].push(value_scheme['scheme']);
                                   author_form.items[numberTitleMap].titleMap.push({
-                                    name: value_scheme['scheme'],
+                                    name: value_scheme['name'],
                                     value: value_scheme['scheme']
                                   });
                                 }

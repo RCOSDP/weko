@@ -679,26 +679,26 @@ def records(app, db, esindex, indextree, location, itemtypes, oaischema):
     indexer = WekoIndexer()
     indexer.get_es_index()
     results = []
-    with app.test_request_context():
-        i = 1
-        filename = "helloworld.pdf"
-        mimetype = "application/pdf"
-        filepath = "tests/data/helloworld.pdf"
-        results.append(make_record(db, indexer, i, filepath, filename, mimetype))
+    # with app.test_request_context():
+    i = 1
+    filename = "helloworld.pdf"
+    mimetype = "application/pdf"
+    filepath = "tests/data/helloworld.pdf"
+    results.append(make_record(db, indexer, i, filepath, filename, mimetype))
 
-        i = 2
-        filename = "helloworld.docx"
-        mimetype = (
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        )
-        filepath = "tests/data/helloworld.docx"
-        results.append(make_record(db, indexer, i, filepath, filename, mimetype))
+    i = 2
+    filename = "helloworld.docx"
+    mimetype = (
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    filepath = "tests/data/helloworld.docx"
+    results.append(make_record(db, indexer, i, filepath, filename, mimetype))
 
-        i = 3
-        filename = "helloworld.zip"
-        mimetype = "application/zip"
-        filepath = "tests/data/helloworld.zip"
-        results.append(make_record(db, indexer, i, filepath, filename, mimetype))
+    i = 3
+    filename = "helloworld.zip"
+    mimetype = "application/zip"
+    filepath = "tests/data/helloworld.zip"
+    results.append(make_record(db, indexer, i, filepath, filename, mimetype))
 
     return indexer, results
 
@@ -1797,6 +1797,8 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
     ]
     indexer.upload_metadata(record_data_v1, rec_uuid2, 1, False)
     item_v1 = ItemsMetadata.create(item_data, id_=rec_uuid2, item_type_id=1)
+
+    # db.session.expunge_all()
 
     return {
         "depid": depid,

@@ -189,18 +189,6 @@ class WekoIndexer(RecordIndexer):
             except BaseException:
                 pass
 
-    def update_publish_status(self, record):
-        """Update publish status."""
-        self.get_es_index()
-        pst = 'publish_status'
-        body = {'doc': {pst: record.get(pst)}}
-        return self.client.update(
-            index=self.es_index,
-            doc_type=self.es_doc_type,
-            id=str(record.id),
-            body=body
-        )
-
     def update_relation_version_is_last(self, version):
         """Update relation version is_last."""
         self.get_es_index()
@@ -213,29 +201,33 @@ class WekoIndexer(RecordIndexer):
             body=body, ignore=[400, 404]
         )
 
-    def update_path(self, record, update_revision=True,
-                    update_oai=False, is_deleted=False):
-        """Update path.
+    def update_es_data(self, record, update_revision=True,
+                    update_oai=False, is_deleted=False,
+                    field='path'):
+        """Update es data.
 
         Args:
             record ([type]): [description]
             update_revision (bool, optional): [description]. Defaults to True.
             update_oai (bool, optional): [description]. Defaults to False.
             is_deleted (bool, optional): [description]. Defaults to False.
+            field (str, optional): [description]. Defaults to 'path'.
 
         Returns:
             [type]: [description]
 
         """
         self.get_es_index()
-        path = 'path'
         _oai = '_oai'
         sets = 'sets'
         body = {}
         if not update_oai:
             body = {
                 'doc': {
-                    path: record.get(path),
+                    '_item_metadata': {
+                        field: record.get(field)
+                    },
+                    field: record.get(field),
                     '_updated': datetime.utcnow().replace(
                         tzinfo=timezone.utc).isoformat()
                 }
@@ -250,9 +242,9 @@ class WekoIndexer(RecordIndexer):
                         _oai: {
                             sets: record.get(_oai, {}).get(sets, []),
                         } if record.get(_oai) else {},
-                        path: record.get(path)
+                        field: record.get(field)
                     },
-                    path: record.get(path) if not is_deleted else [],
+                    field: record.get(field) if not is_deleted else [],
                     '_updated': datetime.utcnow().replace(
                         tzinfo=timezone.utc).isoformat()
                 }
@@ -1357,7 +1349,7 @@ class WekoDeposit(Deposit):
             # es setting
             sub_sort[pth[-13:]] = ""
         dc.update(dict(path=index_lst))
-        pubs = '1'
+        pubs = '2'
         actions = index_obj.get('actions')
         if actions == 'publish' or actions == '0':
             pubs = '0'
@@ -1516,7 +1508,7 @@ class WekoDeposit(Deposit):
                     soft_delete(obj_uuid)
                 else:
                     dep = WekoDeposit(r.json, r)
-                    dep.indexer.update_path(dep, update_revision=False)
+                    dep.indexer.update_es_data(dep, update_revision=False)
             db.session.commit()
         except Exception as ex:
             current_app.logger.error(ex)

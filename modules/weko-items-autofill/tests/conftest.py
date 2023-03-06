@@ -32,15 +32,19 @@ from invenio_cache import InvenioCache
 from invenio_communities.models import Community
 from invenio_db import InvenioDB
 from invenio_db import db as db_
+from invenio_files_rest.models import Location
 
+from weko_search_ui.config import INDEXER_DEFAULT_DOCTYPE,INDEXER_FILE_DOC_TYPE
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records_ui import WekoRecordsUI
 from weko_index_tree.models import Index
 from weko_workflow.models import ActionStatus, Action
 
+from weko_admin.models import ApiCertificate
+
 from weko_items_autofill import WekoItemsAutofill
 
-from tests.helpers import json_data
+from tests.helpers import json_data, create_record
 
 @pytest.fixture()
 def celery_config():
@@ -79,18 +83,29 @@ def base_app(instance_path):
     app_ = Flask('testapp', instance_path=instance_path)
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
+        LOGIN_DISABLED=False,
+        WTF_CSRF_ENABLED=False,
         TESTING=True,
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         CACHE_REDIS_URL='redis://redis:6379/0',
         CACHE_REDIS_DB='0',
-        CACHE_REDIS_HOST="redis"
+        CACHE_REDIS_HOST="redis",
+        SEARCH_UI_SEARCH_INDEX="test-weko",
+        INDEXER_DEFAULT_DOCTYPE=INDEXER_DEFAULT_DOCTYPE,
+        INDEXER_FILE_DOC_TYPE=INDEXER_FILE_DOC_TYPE,
+        WEKO_PERMISSION_SUPER_ROLE_USER=[
+            "System Administrator",
+            "Repository Administrator",
+        ],
     )
     Babel(app_)
     InvenioDB(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
+    #search = InvenioSearch(app_)
     InvenioCache(app_)
+    #WekoSearchUI(app_)
     WekoRecordsUI(app_)
     WekoItemsAutofill(app_)
     return app_
@@ -301,12 +316,30 @@ def itemtypes(db):
         version_id=1,
         is_deleted=False,
     )
+    item_type_mapping2 = ItemTypeMapping(id=2, item_type_id=item_type2.id, mapping={})   
     with db.session.begin_nested():
         db.session.add(item_type_name2)
         db.session.add(item_type2)
-    
+        db.session.add(item_type_mapping2)
+    itemtype_name15 = ItemTypeName(name='テストアイテムタイプ3',
+                                  has_site_license=True,
+                                  is_active=True)
+    with db.session.begin_nested():
+        db.session.add(itemtype_name15)
+    item_type15 = ItemType(id=3,name_id=itemtype_name15.id,harvesting_type=True,
+                     schema=json_data("data/itemtypes/15_schema.json"),
+                     form=json_data("data/itemtypes/15_form.json"),
+                     render=json_data("data/itemtypes/15_render.json"),
+                     tag=1,version_id=1,is_deleted=False)
+    item_type_mapping3 = ItemTypeMapping(id=3, item_type_id=item_type15.id, mapping=json_data("data/itemtypes/15_item_type_mapping.json"))
+
+    with db.session.begin_nested():
+        db.session.add(item_type15)
+        db.session.add(item_type_mapping3)
+        
     db.session.commit()
-    return [(item_type,item_type_name,item_type_mapping),(item_type2,item_type_name2)]
+
+    return [(item_type,item_type_name,item_type_mapping),(item_type2,item_type_name2),(item_type15,itemtype_name15)]
 
 @pytest.fixture()
 def actions(db):
@@ -326,3 +359,35 @@ def actions(db):
         db.session.add_all(status)
     db.session.commit()
     return action, status
+
+@pytest.fixture()
+def location(app, db, instance_path):
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name='local', uri=instance_path, default=True)
+        db.session.add(loc)
+    db.session.commit()
+    return loc
+
+@pytest.fixture()
+def records(db):
+    record_data = json_data("data/test_records.json")
+    item_data = json_data("data/test_items.json")
+    
+    record_num = len(record_data)
+    result = []
+    for d in range(record_num):
+        result.append(create_record(record_data[d], item_data[d]))
+        db.session.commit()
+    yield result
+
+@pytest.fixture()
+def api_certificate(db):
+    api = ApiCertificate(
+        api_code="crf",
+        api_name="CrossRef",
+        cert_data="test.test@test.org"
+    )
+    db.session.add(api)
+    db.session.commit()
+    return api
