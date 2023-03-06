@@ -16,7 +16,9 @@ from flask_admin.model.base import ViewArgs
 from weko_gridlayout.utils import get_register_language
 from weko_gridlayout.admin import WidgetSettingView
 
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
 
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_admin.py::test_index_view_can_delete -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
 @pytest.mark.parametrize("can_delete", [True, False, None])
 def test_index_view_can_delete(app, client, admin_view, widget_items,
                                view_instance, can_delete):
@@ -115,6 +117,7 @@ def test_pager_url(app, client, admin_view, view_instance,
             assert res.status_code == 200
 
 
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_admin.py::test_sort_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
 #一つのパラメータセットにつき複数回呼び出されている模様
 @pytest.mark.parametrize("desc, invert, sort_desc",
                          [(1, False, 1), (1, False, 0), (1, False, None),

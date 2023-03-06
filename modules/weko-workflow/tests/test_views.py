@@ -18,8 +18,6 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-
-
 """Module tests."""
 from re import M
 import threading
@@ -29,7 +27,7 @@ from unittest.mock import MagicMock
 from weko_workflow.api import WorkActivity
 import pytest
 from mock import patch
-from flask import Flask, json, jsonify, url_for, session, make_response
+from flask import Flask, json, jsonify, url_for, session, make_response, current_app
 from flask_babelex import gettext as _
 from invenio_db import db
 from sqlalchemy import func
@@ -3238,3 +3236,237 @@ def test_withdraw_confirm_passwd_delete_guestlogin(guest, client, users, db_regi
                             assert data["code"] == code
                             assert data["msg"] == msg
                             assert data["data"] == {"redirect": "guest_url"}
+
+def test_download_activitylog_nologin(client,db_register2):
+    """_summary_
+
+    Args:
+        client (FlaskClient): flask test client
+    """
+    #2
+    url = url_for('weko_workflow.download_activitylog')
+    res =  client.get(url)
+    assert res.status_code == 302
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 200),
+])
+def test_download_activitylog_1(client, db_register , users, users_index, status_code):
+    """Test of download_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+
+    #1
+    url = url_for('weko_workflow.download_activitylog',
+                activity_id='2')
+    res = client.get(url)
+    assert res.status_code == status_code
+
+    #3
+    current_app.config.update(
+        DELETE_ACTIVITY_LOG_ENABLE = False
+    )
+
+    url = url_for('weko_workflow.download_activitylog',
+                tab='all')
+    res = client.get(url)
+    assert res.status_code == 403
+
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200),
+    (2, 200),
+    (6, 200),
+])
+def test_download_activitylog_2(client, db_register , users, users_index, status_code):
+    """Test of download_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+
+    #4
+    url = url_for('weko_workflow.download_activitylog',
+                activity_id='2')
+    res = client.get(url)
+    assert res.status_code == status_code
+
+
+    #5
+    url = url_for('weko_workflow.download_activitylog',
+                activity_id='10')
+    res = client.get(url)
+    assert res.status_code == 400
+
+    #6
+    url = url_for('weko_workflow.download_activitylog',
+                tab='all')
+    res = client.get(url)
+    assert res.status_code == status_code
+
+    #7
+    url = url_for('weko_workflow.download_activitylog',
+                createdto='1900-01-17')
+    res = client.get(url)
+    assert res.status_code == 400
+
+def test_clear_activitylog_nologin(client,db_register2):
+    """_summary_
+
+    Args:
+        client (FlaskClient): flask test client
+    """
+    #10
+    url = url_for('weko_workflow.clear_activitylog')
+    res =  client.get(url)
+    assert res.status_code == 302
+
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 200),
+])
+def test_clear_activitylog_1(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+
+    #9,11
+    url = url_for('weko_workflow.clear_activitylog',
+                activity_id='A-00000001-10001')
+    res = client.get(url)
+    assert res.status_code == status_code
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200),
+    (2, 200),
+    (6, 200),
+])
+def test_clear_activitylog_2(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+    #12
+    url = url_for('weko_workflow.clear_activitylog',
+                activity_id='10')
+    res = client.get(url)
+    assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200),
+    (2, 200),
+    (6, 200),
+])
+def test_clear_activitylog_3(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+    #13
+    with patch('weko_workflow.views.WorkActivity.quit_activity', return_value=None):
+        url = url_for('weko_workflow.clear_activitylog',
+                    activity_id='A-00000001-10001')
+        res = client.get(url)
+        assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200),
+    (2, 200),
+    (6, 200),
+])
+def test_clear_activitylog_4(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+    #14
+    with patch('invenio_db.db.session.delete', side_effect=Exception("test error")):
+        url = url_for('weko_workflow.clear_activitylog',
+                    activity_id='A-00000001-10001')
+        res = client.get(url)
+        assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 200),
+])
+def test_clear_activitylog_5(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+    #15
+    url = url_for('weko_workflow.clear_activitylog',
+                tab='all')
+    res = client.get(url)
+    assert res.status_code == status_code
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200),
+    (2, 200),
+    (6, 200),
+])
+def test_clear_activitylog_6(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+    #16
+    url = url_for('weko_workflow.clear_activitylog',
+                createdto='1900-01-17')
+    res = client.get(url)
+    assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200),
+    (2, 200),
+    (6, 200),
+])
+def test_clear_activitylog_7(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+    #17
+    with patch('weko_workflow.views.WorkActivity.quit_activity', return_value=None):
+        url = url_for('weko_workflow.clear_activitylog',
+                    tab='all')
+        res = client.get(url)
+        assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200),
+    (2, 200),
+    (6, 200),
+])
+def test_clear_activitylog_8(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+    #18
+    with patch('invenio_db.db.session.delete', side_effect=Exception("test error")):
+        url = url_for('weko_workflow.clear_activitylog',
+                    tab='all')
+        res = client.get(url)
+        assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 200),
+])
+def test_clear_activitylog_9(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+    #19
+    current_app.config.update(
+        DELETE_ACTIVITY_LOG_ENABLE = False
+    )
+
+    url = url_for('weko_workflow.clear_activitylog',
+                tab='all')
+    res = client.get(url)
+    assert res.status_code == 403

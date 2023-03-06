@@ -258,7 +258,7 @@ def facet_search_setting():
 @click.argument('active')
 @click.option('--active', is_flag=True, default=False)
 @with_appcontext
-def insert_facet_search_to_db(name_en, name_jp, mapping, aggregations, active):
+def insert_facet_search_to_db(name_en, name_jp, mapping, aggregations, active, ui_type, display_number, is_open):
     """Insert facet search."""
     try:
         facet_search = {
@@ -266,7 +266,10 @@ def insert_facet_search_to_db(name_en, name_jp, mapping, aggregations, active):
             'name_jp': name_jp,
             'mapping': mapping,
             'aggregations': ast.literal_eval(aggregations),
-            'active': active
+            'active': active,
+            'ui_type': ui_type,
+            'display_number': display_number,
+            'is_open': is_open
         }
         FacetSearchSetting.create(facet_search)
         click.secho('insert facet search')

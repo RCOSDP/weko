@@ -416,6 +416,9 @@ def get_permission_record(rank_type, es_data, display_rank, has_permission_index
             else data.get('_item_metadata').get('control_number')
         try:
             record = WekoRecord.get_record_by_pid(pid_value)
+            if (record.pid and record.pid.status == PIDStatus.DELETED) or \
+                    ('publish_status' in record and record['publish_status'] == '-1'):
+                continue
             if roles[0]:
                 add_flag = True
             else:
@@ -1151,18 +1154,11 @@ def make_stats_file(item_type_id, recids, list_item_role):
     for recid in recids:
         record = records.records[recid]
         paths = records.attr_data['path'][recid]
-        for path in paths:
-            records.attr_output[recid].append(path)
-            index_ids = path.split('/')
-            pos_index = []
-            for index_id in index_ids:
-                index_tree = Indexes.get_index(index_id)
-                index_name = ''
-                if index_tree:
-                    index_name = index_tree.index_name_english.replace(
-                        '/', r'\/')
-                pos_index.append(index_name)
-            records.attr_output[recid].append('/'.join(pos_index))
+        index_infos = Indexes.get_path_list(paths)
+        for info in index_infos:
+            records.attr_output[recid].append(info.cid)
+            records.attr_output[recid].append(info.name.replace(
+                '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
         records.attr_output[recid].extend(
             [''] * (max_path * 2 - len(records.attr_output[recid]))
         )
@@ -3091,18 +3087,11 @@ def make_stats_file_with_permission(item_type_id, recids,
     for recid in recids:
         record = records.records[recid]
         paths = records.attr_data['path'][recid]
-        for path in paths:
-            records.attr_output[recid].append(path)
-            index_ids = path.split('/')
-            pos_index = []
-            for index_id in index_ids:
-                index_tree = Indexes.get_index(index_id)
-                index_name = ''
-                if index_tree:
-                    index_name = index_tree.index_name_english.replace(
-                        '/', r'\/')
-                pos_index.append(index_name)
-            records.attr_output[recid].append('/'.join(pos_index))
+        index_infos = Indexes.get_path_list(paths)
+        for info in index_infos:
+            records.attr_output[recid].append(info.cid)
+            records.attr_output[recid].append(info.name.replace(
+                '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
         records.attr_output[recid].extend(
             [''] * (max_path * 2 - len(records.attr_output[recid]))
         )

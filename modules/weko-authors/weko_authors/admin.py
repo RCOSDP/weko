@@ -223,7 +223,7 @@ class ImportView(BaseView):
     def import_authors(self) -> jsonify:
         """Import author into System."""
         data = request.get_json() or {}
-
+        
         # check import feature is available before import
         result_check = check_is_import_available(data.get('group_task_id'))
         if not result_check['is_available']:
@@ -232,21 +232,20 @@ class ImportView(BaseView):
         tasks = []
         records = [item for item in data.get(
             'records', []) if not item.get('errors')]
+        
+        group_tasks = []
+        for author in records:
+            group_tasks.append(import_author.s(author))
 
-        if records:
-            group_tasks = []
-            for author in records:
-                group_tasks.append(import_author.s(author))
-
-            # handle import tasks
-            import_task = group(group_tasks).apply_async()
-            import_task.save()
-            for idx, task in enumerate(import_task.children):
-                tasks.append({
-                    'task_id': task.task_id,
-                    'record_id': records[idx].get('pk_id'),
-                    'status': 'PENDING'
-                })
+        # handle import tasks
+        import_task = group(group_tasks).apply_async()
+        import_task.save()
+        for idx, task in enumerate(import_task.children):
+            tasks.append({
+                'task_id': task.task_id,
+                'record_id': records[idx].get('pk_id'),
+                'status': 'PENDING'
+            })
 
         response_data = {
             'group_task_id': import_task.id,

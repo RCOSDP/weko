@@ -85,6 +85,7 @@ blueprint_api = Blueprint(
 def search():
     """Index Search page ui."""
     search_type = request.args.get("search_type", WEKO_SEARCH_TYPE_DICT["FULL_TEXT"])
+    current_app.logger.error("hoge search_type:{}".format(search_type))
     get_args = request.args
     community_id = ""
     ctx = {"community": None}
@@ -397,9 +398,17 @@ def get_path_name_dict(path_str=""):
 def gettitlefacet():
     """Soft getname Facet Search."""
     from weko_admin.utils import get_title_facets
-
-    titles, order = get_title_facets()
-    result = {"status": True, "data": {"titles": titles, "order": order}}
+    titles, order, uiTypes, isOpens, displayNumbers = get_title_facets()
+    result = {
+        "status": True,
+        "data": {
+            "titles": titles,
+            "order": order,
+            "uiTypes": uiTypes,
+            "isOpens": isOpens,
+            "displayNumbers": displayNumbers
+        }
+    }
     return jsonify(result), 200
 
 

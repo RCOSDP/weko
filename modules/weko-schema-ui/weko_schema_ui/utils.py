@@ -69,7 +69,7 @@ def dumps_etree(records, schema_type):
         return stree.create_xml()
 
 
-def dumps(records, schema_type=None, **kwargs):
+def dumps(records, schema_type='jpcoar', **kwargs):
     """
     Dumps.
 
@@ -81,6 +81,8 @@ def dumps(records, schema_type=None, **kwargs):
     """
     if records["metadata"].get("@export_schema_type"):
         est = records["metadata"].pop("@export_schema_type")
+    else:
+        est = schema_type
 
     oid = records["metadata"].get('_oai').get('id')
     root = export_tree(

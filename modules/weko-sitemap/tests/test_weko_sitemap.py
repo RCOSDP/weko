@@ -19,15 +19,21 @@ def test_version():
     from weko_sitemap import __version__
     assert __version__
 
-
+# .tox/c1/bin/pytest --cov=weko_sitemap tests/test_weko_sitemap.py::test_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-sitemap/.tox/c1/tmp
 def test_init():
     """Test extension initialization."""
     app = Flask('testapp')
     ext = WekoSitemap(app)
     assert 'weko-sitemap' in app.extensions
+    
 
     app = Flask('testapp')
     ext = WekoSitemap()
     assert 'weko-sitemap' not in app.extensions
     ext.init_app(app)
     assert 'weko-sitemap' in app.extensions
+    
+    ext.init_config(app)
+    
+    app.config["BASE_TEMPLATE"] = ""
+    ext.init_config(app)

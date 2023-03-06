@@ -15,7 +15,7 @@ class TestCrossRefOpenURL:
             assert str(e) == 'PID is required.'
         # doi is none
         with pytest.raises(ValueError) as e:
-            cross_ref = CrossRefOpenURL(None,None)
+            cross_ref = CrossRefOpenURL(1,None)
             assert str(e) == 'DOI is required.'
         
         # not exist response_format,timeout,http_proxy,https_proxy

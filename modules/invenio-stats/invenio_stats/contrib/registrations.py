@@ -897,8 +897,8 @@ def register_queries():
                                     }
                                 },
                                 {
-                                    "term": {
-                                        "publish_status": 0
+                                    "terms": {
+                                        "publish_status": ["0", "1"]
                                     }
                                 }
                             ],

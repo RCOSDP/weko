@@ -348,8 +348,6 @@ class AdminLangSettings(db.Model):
         """
         with db.session.begin_nested():
             lang_setting_data = cls.query.filter_by(lang_code=lang_code).one()
-            if lang_code is not None:
-                lang_setting_data.lang_code = lang_code
             if lang_name is not None:
                 lang_setting_data.lang_name = lang_name
             if is_registered is not None:
@@ -361,23 +359,6 @@ class AdminLangSettings(db.Model):
             db.session.merge(lang_setting_data)
 
         db.session.commit()
-        return cls
-
-    @classmethod
-    def get_lang_code(cls):
-        """Get language code.
-
-        :return: the language code
-        """
-        return cls.lang_code
-
-    @classmethod
-    def get_lang_name(cls):
-        """Get language full name.
-
-        :return: language full name
-        """
-        return cls.lang_name
 
     @classmethod
     def get_registered_language(cls):
@@ -793,7 +774,7 @@ class LogAnalysisRestrictedCrawlerList(db.Model):
                 id = data.get('id', 0)
                 is_active = data.get('is_active', True)
                 with db.session.begin_nested():
-                    current_record = cls.query.filter_by(id=id).one()
+                    current_record = cls.query.filter_by(id=id).one_or_none()
                     if current_record:
                         current_record.list_url = new_list
                         current_record.is_active = is_active
@@ -868,13 +849,18 @@ class BillingPermission(db.Model):
         """
         try:
             with db.session.begin_nested():
+                new_data_flg = False
                 billing_data = cls.query.filter_by(
                     user_id=user_id).one_or_none()
-                if billing_data:
-                    billing_data.is_active = is_active
-                    db.session.merge(billing_data)
+                if not billing_data:
+                    new_data_flg = True
+                    billing_data = BillingPermission()
+                    billing_data.user_id = user_id
+                billing_data.is_active = is_active
+                if new_data_flg:
+                    db.session.add(billing_data)
                 else:
-                    cls.create(user_id, is_active)
+                    db.session.merge(billing_data)
             db.session.commit()
         except BaseException as ex:
             db.session.rollback()
@@ -1793,7 +1779,16 @@ class FacetSearchSetting(db.Model):
     active = db.Column(db.Boolean(name='active'), default=True)
     """True: display this facet search on screen, else hide this."""
 
-    def __init__(self, name_en, name_jp, mapping, aggregations, active):
+    ui_type = db.Column(db.String(20), nullable=False)
+    """Indicates the type of Facet search UI component."""
+
+    display_number = db.Column(db.Integer)
+    """Indicates the number of items displayed in the list view in CheckboxUI."""
+
+    is_open = db.Column(db.Boolean(name='is_open'), default=True, nullable=False)
+    """Indicates whether the faceted search item is open or closed, and if true, it is open."""
+
+    def __init__(self, name_en, name_jp, mapping, aggregations, active, ui_type, display_number, is_open):
         """Initial Facet search setting.
 
         Args:
@@ -1802,12 +1797,18 @@ class FacetSearchSetting(db.Model):
             mapping:
             aggregations:
             active:
+            ui_type:
+            display_number:
+            is_open:
         """
         self.name_en = name_en
         self.name_jp = name_jp
         self.mapping = mapping
         self.aggregations = aggregations
         self.active = active
+        self.ui_type = ui_type
+        self.display_number = display_number
+        self.is_open = is_open
 
     def to_dict(self) -> dict:
         """Convert object to dictionary.
@@ -1821,7 +1822,10 @@ class FacetSearchSetting(db.Model):
             "name_jp": self.name_jp,
             "mapping": self.mapping,
             "aggregations": self.aggregations,
-            "active": self.active
+            "active": self.active,
+            "ui_type": self.ui_type,
+            "display_number": self.display_number,
+            "is_open": self.is_open
         }
 
     @classmethod

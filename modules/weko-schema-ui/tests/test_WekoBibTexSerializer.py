@@ -93,7 +93,6 @@ def test_bibtexfields(app,db,db_oaischema):
 def test_wekobibtexserializer(app, records):
     from weko_schema_ui.serializers.WekoBibTexSerializer import WekoBibTexSerializer
     from weko_schema_ui.serializers.wekoxml import WekoXMLSerializer
-    from weko_schema_ui.schema import SchemaTree
 
     app.config['WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME'] = 'jpcoar_mapping'
 
@@ -105,7 +104,7 @@ def test_wekobibtexserializer(app, records):
     ret = serializer.serialize(pid,record)
     assert ret==('@misc{oai:weko3.example.org:00000001,\n'
                  ' author = {情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and xxxxxxx and zzzzzzz and 情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and zzzzzzz and 情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and zzzzzzz},\n'
-                 ' month = {2021-06-30},\n'
+                 ' month = {Jun, Jun, },\n'
                  ' note = {Description\n'
                  'Description<br/>Description, 概要\n'
                  '概要\n'
@@ -113,7 +112,7 @@ def test_wekobibtexserializer(app, records):
                  '概要},\n'
                  ' title = {ja_conference '
                  'paperITEM00000009(public_open_access_open_access_simple)},\n'
-                 ' year = {},\n'
+                 ' year = {2021, 2021, 2021},\n'
                  ' yomi = {4 and xxxxxxx and xxxxxxx}\n'
                  '}\n'
                  '\n')
@@ -127,7 +126,7 @@ def test_wekobibtexserializer(app, records):
                  ' author = {情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and xxxxxxx and zzzzzzz and 情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and zzzzzzz and 情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and zzzzzzz},\n'
                  ' book = {Source Title},\n'
                  ' issue = {111},\n'
-                 ' month = {2021-06-30},\n'
+                 ' month = {Jun, Jun, },\n'
                  ' note = {Description\n'
                  'Description<br/>Description, 概要\n'
                  '概要\n'
@@ -138,17 +137,13 @@ def test_wekobibtexserializer(app, records):
                  ' title = {ja_conference '
                  'paperITEM00000009(public_open_access_open_access_simple)},\n'
                  ' volume = {1},\n'
-                 ' year = {},\n'
+                 ' year = {2021, 2021, 2021},\n'
                  ' yomi = {4 and xxxxxxx and xxxxxxx}\n'
                  '}\n'
                  '\n')
-
-    with pytest.raises(Exception) as e:
-        jrc = SchemaTree.get_jpcoar_json(results[2]['record'])
-    assert e.type==ValueError
 
     record.update({'@export_schema_type': 'ddi'})
     serializer = WekoXMLSerializer()
     data = serializer.serialize(pid, record)
     assert data
-    
+

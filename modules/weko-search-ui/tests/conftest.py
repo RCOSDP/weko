@@ -155,7 +155,7 @@ from weko_theme.views import blueprint as weko_theme_blueprint
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Action, ActionStatus, ActionStatusPolicy, Activity, FlowAction, FlowDefine, WorkFlow
 from weko_search_ui import WekoSearchREST, WekoSearchUI
-from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX, WEKO_SEARCH_TYPE_DICT, WEKO_SEARCH_UI_BASE_TEMPLATE
+from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX, WEKO_SEARCH_TYPE_DICT, WEKO_SEARCH_UI_BASE_TEMPLATE, WEKO_SEARCH_KEYWORDS_DICT
 from weko_search_ui.rest import create_blueprint
 from weko_search_ui.views import blueprint_api
 
@@ -656,6 +656,7 @@ def base_app(instance_path, search_class, request):
         WEKO_INDEX_TREE_API="/api/tree/index/",
         WEKO_SEARCH_UI_TO_NUMBER_FORMAT="99999999999999.99",
         WEKO_SEARCH_UI_BASE_TEMPLATE=WEKO_SEARCH_UI_BASE_TEMPLATE,
+        WEKO_SEARCH_KEYWORDS_DICT=WEKO_SEARCH_KEYWORDS_DICT
     )
     app_.url_map.converters["pid"] = PIDConverter
     app_.config["RECORDS_REST_ENDPOINTS"]["recid"]["search_class"] = search_class
@@ -1161,6 +1162,7 @@ def db_register(app, db):
 
     index_private = Index(
         id=999,
+        parent=1,
         public_state=False,
         public_date=datetime.strptime("2099/04/24 0:00:00", "%Y/%m/%d %H:%M:%S"),
     )
@@ -1813,7 +1815,7 @@ def facet_search_setting(db):
 
 @pytest.fixture()
 def db_activity(db, db_records2, db_itemtype, db_workflow, users):
-    user = users[3]["obj"]
+    user = users[3]["id"]
     depid, recid, parent, doi, record, item = db_records2[0]
     rec_uuid = uuid.uuid4()
     draft = PersistentIdentifier.create(
@@ -1831,9 +1833,9 @@ def db_activity(db, db_records2, db_itemtype, db_workflow, users):
         workflow_id=workflow.id,
         flow_id=flow_define.id,
         action_id=2,
-        activity_login_user=user.id,
+        activity_login_user=user,
         action_status=ActionStatusPolicy.ACTION_DOING,
-        activity_update_user=user.id,
+        activity_update_user=user,
         item_id=draft.object_uuid,
         activity_start=datetime.strptime(
             "2022/04/14 3:01:53.931", "%Y/%m/%d %H:%M:%S.%f"
@@ -1858,7 +1860,8 @@ def db_itemtype(app, db, make_itemtype):
         "name": "テストアイテムタイプ",
         "schema": "tests/data/itemtype_schema.json",
         "form": "tests/data/itemtype_form.json",
-        "render": "tests/data/itemtype_render.json"
+        "render": "tests/data/itemtype_render.json",
+        "mapping":"tests/data/itemtype_mapping.json"
     }
     
     return make_itemtype(itemtype_id, itemtype_data)
@@ -3837,6 +3840,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype, doi_prefix=None):
 @pytest.fixture
 def make_itemtype(app,db):
     def factory(id,datas):
+        result = dict()
         item_type_name = ItemTypeName(
             id=id, name=datas["name"],has_site_license=True,is_active=True
         )
@@ -3851,9 +3855,7 @@ def make_itemtype(app,db):
         with open(datas["render"], "r") as f:
             item_type_render = json.load(f)
 
-        item_type_mapping = dict()
-        with open(datas["mapping"], "r") as f:
-            item_type_mapping = json.load(f)
+
         item_type = ItemType(
             id=id,
             name_id=id,
@@ -3865,15 +3867,21 @@ def make_itemtype(app,db):
             version_id=1,
             is_deleted=False,
         )
-        item_type_mapping = ItemTypeMapping(id=id, item_type_id=id, mapping=item_type_mapping)
+        
+        if "mapping" in datas:
+            item_type_mapping = dict()
+            with open(datas["mapping"], "r") as f:
+                item_type_mapping = json.load(f)
+            item_type_mapping = ItemTypeMapping(id=id, item_type_id=id, mapping=item_type_mapping)
+            db.session.add(item_type_mapping)
+            result["item_type_mapping"] = item_type_mapping
         with db.session.begin_nested():
             db.session.add(item_type_name)
             db.session.add(item_type)
-            db.session.add(item_type_mapping)
+            
         db.session.commit()
-        return {
-            "item_type_name": item_type_name,
-            "item_type": item_type,
-            "item_type_mapping": item_type_mapping,
-        }
+        result["item_type_name"] = item_type_name
+        result["item_type"] = item_type
+        
+        return result
     return factory

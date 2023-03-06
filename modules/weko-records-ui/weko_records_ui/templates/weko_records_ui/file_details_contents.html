@@ -98,7 +98,7 @@
                             {%- endif -%}
                           {%- endif -%}
                           <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
-                              href="{{file_url}}">{{ file.filename }} ({{ file.size|filesizeformat }})</a>
+                          {% if file_url %} href="javascript:OnLinkClick('{{ file_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')" {% endif %}>{{ file.filename }} ({{ file.size|filesizeformat }})</a>
 
                           <span>{{file.checksum.split(':')[0]}}</span>
                           <span class="break-word">{{file.checksum.split(':')[1]}}</span>
@@ -113,7 +113,8 @@
                             {%- endif -%}
                           {%- endif -%}
                           <div class="text-right">
-                            <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}} href="{{original_file_url}}">{{_('Original')}}</a>
+                            <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}} 
+                            {% if original_file_url %} href="javascript:OnLinkClick('{{ original_file_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')" {% endif %}>{{_('Original')}}</a>
                           </div>
                         {%- endif -%}
                       </td>
@@ -159,7 +160,7 @@
                 <!-- Output Pubdate -->
                 {{output_attribute_value_mlt(display_file_info[0]['attribute_value_mlt'], 0)}}
                 <!-- Output File Information -->
-                {{output_attribute_value_mlt(display_file_info[1]['attribute_value_mlt'], 0)}}
+                {{output_attribute_value_mlt(display_file_info[1]['attribute_value_mlt'], 0,false)}}
               </table>
             </div>
 

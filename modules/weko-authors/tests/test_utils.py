@@ -9,7 +9,8 @@ from invenio_cache import current_cache
 
 from weko_authors.config import WEKO_AUTHORS_FILE_MAPPING
 from weko_authors.utils import (
-    get_author_setting_obj,
+    get_author_prefix_obj,
+    get_author_affiliation_obj,
     check_email_existed,
     get_export_status,
     set_export_status,
@@ -31,7 +32,7 @@ from weko_authors.utils import (
     get_count_item_link
 )
 
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 
 
 class MockClient():
@@ -40,12 +41,29 @@ class MockClient():
     def search(self,index,doc_type,body):
         return self.return_value
 
-# def get_author_setting_obj(scheme):
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_get_author_setting_obj -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_get_author_setting_obj(prefix_settings):
-    result = get_author_setting_obj("ORCID")
-    assert result == prefix_settings["orcid"]
+# def get_author_prefix_obj(scheme):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_get_author_prefix_obj -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_get_author_prefix_obj(authors_prefix_settings):
+    result = get_author_prefix_obj("ORCID")
+    assert result == authors_prefix_settings[1]
+    
+    # raise Exception
+    with patch("weko_authors.utils.db.session.query") as mock_query:
+        mock_query.return_value.filter.return_value.one_or_none.side_effect=Exception("test_error")
+        result = get_author_prefix_obj("ORCID")
+        assert result == None
 
+# def get_author_affiliation_obj(scheme):
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_get_author_affiliation_obj -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_get_author_affiliation_obj(authors_affiliation_settings):
+    result = get_author_affiliation_obj("ISNI")
+    assert result == authors_affiliation_settings[0]
+    
+    # raise Exception
+    with patch("weko_authors.utils.db.session.query") as mock_query:
+        mock_query.return_value.filter.return_value.one_or_none.side_effect=Exception("test_error")
+        result = get_author_affiliation_obj("ISNI")
+        assert result == None
 
 # def check_email_existed(email: str):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_check_email_existed -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -112,7 +130,7 @@ def test_save_export_url(app):
 
 # def export_authors():
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_export_authors -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_export_authors(app,authors,location,mocker):
+def test_export_authors(app,authors,location,file_instance,mocker):
     mocker.patch("weko_authors.utils.WekoAuthors.get_all",return_value=authors)
     scheme_info={"1":{"scheme":"WEKO","url":None},"2":{"scheme":"ORCID","url":"https://orcid.org/##"}}
     mocker.patch("weko_authors.utils.WekoAuthors.get_identifier_scheme_info",return_value=scheme_info)
@@ -122,13 +140,20 @@ def test_export_authors(app,authors,location,mocker):
     row_data = [["1","テスト","太郎","ja","familyNmAndNm","Y","ORCID","1234","Y","test.taro@test.org",""],
             ["2","test","smith","en","familyNmAndNm","Y","ORCID","5678","Y","test.smith@test.org",""]]
     mocker.patch("weko_authors.utils.WekoAuthors.prepare_export_data",return_value=(header,label_en,label_jp,row_data))
-    
-    result = export_authors()
+    with patch("weko_authors.utils.get_export_url",return_value={}):
+        result = export_authors()
+        assert result
     
     current_app.config.update(WEKO_ADMIN_OUTPUT_FORMAT="csv")
-    mocker.patch("weko_authors.utils.get_export_url",return_value=None)
-    result = export_authors()
-
+    cache_url = {"file_uri":"/var/tmp/test_dir"}
+    with patch("weko_authors.utils.get_export_url",return_value=cache_url):
+        result = export_authors()
+        assert result == "/var/tmp/test_dir"
+    
+    # raise Exception
+    with patch("weko_authors.utils.WekoAuthors.get_all", side_effect=Exception("test_error")):
+        result = export_authors()
+        assert result == None
 
 # def check_import_data(file_name: str, file_content: str):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_check_import_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -171,16 +196,45 @@ def test_check_import_data(app,mocker):
     result = check_import_data(file_name,file_content)
     assert result == test
 
-    mocker.patch("weko_authors.utils.flatten_authors_mapping",side_effect=Exception({"error_msg":"test_error"}))
-    result = check_import_data(file_name,file_content)
-    assert result == {"error":"test_error"}
+    # raise Exception with args[0] is dict
+    with patch("weko_authors.utils.flatten_authors_mapping",side_effect=Exception({"error_msg":"test_error"})):
+        result = check_import_data(file_name,file_content)
+        assert result == {"error":"test_error"}
+    
+    # raise Exception with args[0] is not dict
+    with patch("weko_authors.utils.flatten_authors_mapping",side_effect=AttributeError("test_error")):
+        result = check_import_data(file_name,file_content)
+        assert result == {"error":"Internal server error"}
+    
+    # raise UnicodeDecodeError
+    with patch("weko_authors.utils.flatten_authors_mapping",side_effect=UnicodeDecodeError("utf-8",b"test",0,1,"test_reason")):
+        result = check_import_data(file_name,file_content)
+        assert result == {"error":"test_reason"}
 
 
 # def getEncode(filepath):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_getEncode -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_getEncode():
-    result = getEncode(join(dirname(__file__),"data/test_files/test_shift_jis.txt"))
-    assert result == "shift_jis"
+    result = getEncode(join(dirname(__file__),"data/test_files/test_utf-8.txt"))
+    assert result == "utf-8"
+    
+    class MockOpen:
+        def __init__(self, path, encoding=None):
+            self.path=path
+            self.encoding = encoding
+        def read(self):
+            if self.encoding!="not_exist_encode":
+                raise UnicodeDecodeError(self.encoding,b"test",0,1,"test_reason")
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc_value, traceback):
+            pass
+    def mock_open(path, encoding=None):
+        return MockOpen(path,encoding)
+    
+    with patch("builtins.open",side_effect=mock_open):
+        result = getEncode("test_path")
+        assert result == ""
 
 
 # def unpackage_and_check_import_file(file_format, file_name, temp_file, mapping_ids):
@@ -204,36 +258,54 @@ def test_unpackage_and_check_import_file(app):
     temp_file=join(dirname(__file__),"data/test_files/duplicated_header.tsv")
     with pytest.raises(Exception) as e:
         unpackage_and_check_import_file(file_format,file_name,temp_file,mapping_ids)
+    assert e.value.args[0] == {"error_msg":"The following metadata keys are duplicated.<br/>pk_id"}
     
-    # item does not consistency
+    # exist not_consistent_list
     temp_file=join(dirname(__file__),"data/test_files/not_consistency.tsv")
-    with pytest.raises(Exception) as e:
-        unpackage_and_check_import_file(file_format,file_name,temp_file,mapping_ids)
-    
+    with patch("weko_search_ui.utils.handle_check_consistence_with_mapping", return_value=["exist_not_consistent_value"]):
+        with pytest.raises(Exception) as e:
+            unpackage_and_check_import_file(file_format,file_name,temp_file,mapping_ids)
+        assert e.value.args[0] == {"error_msg":"Specified item does not consistency with DB item.<br/>exist_not_consistent_value"}
+
     # nomal
     temp_file=join(dirname(__file__),"data/test_files/import_data.tsv")
     result = unpackage_and_check_import_file(file_format,file_name,temp_file,mapping_ids)
     test = [{'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'language': 'ja', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'Y'}], 'authorIdInfo': [{'idType': 'ORCID', 'authorId': '1234', 'authorIdShowFlg': 'Y'}], 'emailInfo': [{'email': 'test.taro@test.org'}], 'is_deleted': ''}, {'pk_id': '2', 'authorNameInfo': [{'familyName': 'test', 'firstName': 'smith', 'language': 'en', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'Y'}], 'authorIdInfo': [{'idType': 'ORCID', 'authorId': '5678', 'authorIdShowFlg': 'Y'}], 'emailInfo': [{'email': 'test.smith@test.org'}], 'is_deleted': ''}]
     assert result == test
 
+    # data_parse_metadata is None
+    with patch("weko_search_ui.utils.parse_to_json_form", return_value=[]):
+        with pytest.raises(Exception) as e:
+            result = unpackage_and_check_import_file(file_format,file_name,temp_file,mapping_ids)
+        assert e.value.args[0] == {"error_msg": "Cannot read TSV file correctly." }
+    
+    # raise UnicodeDecodeError
+    with patch("weko_search_ui.utils.parse_to_json_form", side_effect=UnicodeDecodeError("utf-8",b"test",0,1,"test_reason")):
+        with pytest.raises(UnicodeDecodeError) as e:
+            result = unpackage_and_check_import_file(file_format,file_name,temp_file,mapping_ids)
+        assert e.value.reason == "test_file.txt could not be read. Make sure the file format is TSV and that the file is UTF-8 encoded."
+    
     # not data
     temp_file=join(dirname(__file__),"data/test_files/not_data.tsv")
-    with pytest.raises(Exception):
+    with pytest.raises(Exception) as e:
         unpackage_and_check_import_file(file_format,file_name,temp_file,mapping_ids)
+    assert e.value.args[0] == {"error_msg":"There is no data to import."}
     
     # file format = csv
     temp_file=join(dirname(__file__),"data/test_files/import_data.csv")
     result = unpackage_and_check_import_file("csv",file_name,temp_file,mapping_ids)
     test = [{'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'language': 'ja', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'Y'}], 'authorIdInfo': [{'idType': 'ORCID', 'authorId': '1234', 'authorIdShowFlg': 'Y'}], 'emailInfo': [{'email': 'test.taro@test.org'}], 'is_deleted': ''}, {'pk_id': '2', 'authorNameInfo': [{'familyName': 'test', 'firstName': 'smith', 'language': 'en', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'Y'}], 'authorIdInfo': [{'idType': 'ORCID', 'authorId': '5678', 'authorIdShowFlg': 'Y'}], 'emailInfo': [{'email': 'test.smith@test.org'}], 'is_deleted': ''}]
     assert result == test
+    
 
 # def validate_import_data(file_format, file_data, mapping_ids, mapping):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_validate_import_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_validate_import_data(prefix_settings,mocker):
+def test_validate_import_data(authors_prefix_settings,mocker):
     mocker.patch("weko_authors.utils.WekoAuthors.get_author_for_validation",return_value=({"1":True,"2":True},{"2":{"1234":["1"],"5678":["2"]}}))
     
     file_format = "tsv"
     file_data = [
+        {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'language': 'ja', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'Y'}], 'authorIdInfo': [{'idType': 'ORCID', 'authorId': '1234', 'authorIdShowFlg': 'Y'}], 'emailInfo': [{'email': 'test.taro@test.org'}], 'is_deleted': ''},
         {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'language': 'ja', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'Y'}], 'authorIdInfo': [{'idType': 'ORCID', 'authorId': '1234', 'authorIdShowFlg': 'Y'}], 'emailInfo': [{'email': 'test.taro@test.org'}], 'is_deleted': ''},
         ]
     mapping_ids = ["pk_id",
@@ -262,7 +334,10 @@ def test_validate_import_data(prefix_settings,mocker):
         {"key":"is_deleted","label":{"en":"Delete Flag","jp":"削除フラグ"},"mask":{'true': 'D','false': ''},"validation":{'map': ['D']},"autofill":""},
     ]
     
-    test = [{'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'language': 'ja', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'true'}], 'authorIdInfo': [{'idType': 2, 'authorId': '1234', 'authorIdShowFlg': 'true'}], 'emailInfo': [{'email': 'test.taro@test.org'}], 'is_deleted': '', 'status': 'update'}]
+    test = [
+        {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'language': 'ja', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'true'}], 'authorIdInfo': [{'idType': 2, 'authorId': '1234', 'authorIdShowFlg': 'true'}], 'emailInfo': [{'email': 'test.taro@test.org'}], 'is_deleted': '', 'status': 'update'},
+        {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'language': 'ja', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'Y'}], 'authorIdInfo': [{'idType': 2, 'authorId': '1234', 'authorIdShowFlg': 'Y'}], 'emailInfo': [{'email': 'test.taro@test.org'}], 'is_deleted': '', 'status': 'update', 'errors': ['There is duplicated data in the tsv file.']}
+    ]
     result = validate_import_data(file_format,file_data,mapping_ids,mappings)
     assert result == test
     
@@ -289,6 +364,8 @@ def test_validate_import_data(prefix_settings,mocker):
     test = [{'pk_id': None, 'authorIdInfo': [{'idType': 2, 'authorId': '1234', 'authorIdShowFlg': 'Y'}], 'is_deleted': '', 'status': 'new', 'errors': ['validator error', 'required item is required item.', "map item should be set by one of ['Y', 'N'].", "map item should be set by one of ['D']."], 'warnings': ['idType warning']}]
     result = validate_import_data(file_format,file_data,mapping_ids,mappings)
     assert result == test
+
+
 # def get_values_by_mapping(keys, data, parent_key=None):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_get_values_by_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_get_values_by_mapping():
@@ -308,32 +385,61 @@ def test_get_values_by_mapping():
     keys = ["authorNameInfo[0]","familyName"]
     test = [{"key":"authorNameInfo[0].familyName","reduce_keys":["authorNameInfo",0,"familyName"],"value":"テスト"}]
     result = get_values_by_mapping(keys,data)
+    assert result == test
     
+    data = {
+        "emailInfo": {"email":"test.taro@test.org"}
+    }
+    keys = ["emailInfo[0]","email"]
+    test = [{"key":"emailInfo.email","reduce_keys":["emailInfo","email"],"value":"test.taro@test.org"}]
+    result = get_values_by_mapping(keys,data)
     assert result == test
     
 # def autofill_data(item, values, autofill_data):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_autofill_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_autofill_data():
     item = {
-        'pk_id': '1',
+        'authorNameInfo': [{'familyName': '', 
+                            'firstName': '', 
+                            'language': 'ja', 
+                            'nameFormat': '', 
+                            'nameShowFlg': 'Y'}]
+        }
+    
+    # value["value"] is not none
+    values = [{"key":"authorNameInfo[0].nameFormat","reduce_keys":["authorNameInfo",0,"nameFormat"],"value":"familyNmAndNm"}]
+    data = {'condition': {'either_required': ['familyName', 'firstName']},'value': 'familyNmAndNm'}
+    test = {"authorNameInfo":
+        [{"familyName":"","firstName":"","language":"ja",
+          "nameFormat":"","nameShowFlg":"Y"}]}
+    autofill_data(item, values, data)
+    assert item == test
+    
+    # not exist either_required
+    values = [{"key":"authorNameInfo[0].nameFormat","reduce_keys":["authorNameInfo",0,"nameFormat"],"value":""}]
+    data = {'value': 'familyNmAndNm'}
+    autofill_data(item, values, data)
+    assert item == test
+    
+    # not check
+    data = {'condition': {'either_required': ['familyName', 'firstName']},'value': 'familyNmAndNm'}
+    autofill_data(item, values, data)
+    assert item == test
+    
+    # not exist value["value"]
+    item = {
         'authorNameInfo': [{'familyName': 'テスト', 
                             'firstName': '太郎', 
                             'language': 'ja', 
-                            'nameFormat': 'familyNmAndNm', 
-                            'nameShowFlg': 'Y'}], 
-        'authorIdInfo': [{'idType': 'ORCID', 
-                          'authorId': '1234', 
-                          'authorIdShowFlg': 'Y'}], 
-        'emailInfo': [{'email': 'test.taro@test.org'}], 
-        'is_deleted': ''}
-    
-    values = [{"key":"authorNameInfo[0].nameFormat","reduce_keys":["authorNameInfo",0,"nameFormat"],"value":"familyNmAndNm"}]
-    data = {'condition': {'either_required': ['familyName', 'firstName']},'value': 'familyNmAndNm'}
-    
+                            'nameFormat': '', 
+                            'nameShowFlg': 'Y'}]
+        }
+    test = {"authorNameInfo":
+        [{"familyName":"テスト","firstName":"太郎","language":"ja",
+          "nameFormat":"familyNmAndNm","nameShowFlg":"Y"}]}
     autofill_data(item, values, data)
-    
-    values = [{"key":"authorNameInfo[0].nameFormat","reduce_keys":["authorNameInfo",0,"nameFormat"],"value":""}]
-    autofill_data(item, values, data)
+    assert item == test
+
 
 # def convert_data_by_mask(item, values, mask):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_convert_data_by_mask -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -370,10 +476,25 @@ def test_convert_scheme_to_id():
                           'authorIdShowFlg': 'Y'}], 
         'emailInfo': [{'email': 'test.taro@test.org'}], 
         'is_deleted': ''}
-    values = [{"key":"authorIdInfo[0].idType","reduce_keys":["authorIdInfo",0,"idType"],"value":"ORCID"}]
-    authors_prefix = {"ORCID":2}
-    
+    values = [
+        {"key":"authorNameInfo[0].nameFormat","reduce_keys":["authorNameInfo",0,"nameFormat"],"value":""}, # value["value"] is none
+        {"key":"authorIdInfo[0].idType","reduce_keys":["authorIdInfo",0,"idType"],"value":"ORCID"} # value["value"] is not none
+        ]
+    authors_prefix = {"ORCID":"2"}
+    test = {
+        'pk_id': '1',
+        'authorNameInfo': [{'familyName': 'テスト', 
+                            'firstName': '太郎', 
+                            'language': 'ja', 
+                            'nameFormat': 'familyNmAndNm', 
+                            'nameShowFlg': 'Y'}], 
+        'authorIdInfo': [{'idType': '2', 
+                          'authorId': '1234', 
+                          'authorIdShowFlg': 'Y'}], 
+        'emailInfo': [{'email': 'test.taro@test.org'}], 
+        'is_deleted': ''}
     convert_scheme_to_id(item,values,authors_prefix)
+    assert item == test
     
     
 # def set_record_status(file_format, list_existed_author_id, item, errors, warnings):
@@ -471,6 +592,8 @@ def test_flatten_authors_mapping():
     all,keys = flatten_authors_mapping(data)
     assert all == test_all
     assert keys == test_keys
+
+
 # def import_author_to_system(author):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_import_author_to_system -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_import_author_to_system(app,mocker):
