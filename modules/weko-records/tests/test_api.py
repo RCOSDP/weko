@@ -1170,6 +1170,8 @@ def test_item_metadata_get_by_object_id(app, db):
     assert record3.json==None
     assert record3.version_id==2
 
+    ItemsMetadata.get_registered_item_metadata(item_type_id=1)
+
 # class ItemsMetadata(RecordBase):
 #     def patch(self, patch):
 
