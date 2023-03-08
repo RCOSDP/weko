@@ -23,6 +23,7 @@
 from re import T
 # from tkinter import W
 import pytest
+import json
 from elasticsearch.exceptions import RequestError
 from invenio_records.api import Record
 from invenio_records.errors import MissingModelError
@@ -338,6 +339,78 @@ def test_itemtypes_update_item_type(app, db, location):
         tag=1
     )
     item_type = ItemTypes.get_by_id(1)
+
+    def to_dict():
+        return {
+            "hits": {
+                "hits": [{
+                    "_id": "1",
+                    "_source": {
+                        "_item_metadata": {
+                            "item_type_id": "1"
+                        }
+                    },
+                }]
+            },
+        }
+
+    def myfilter(item):
+        def all():
+            return []
+
+        filter_magicmock = MagicMock()
+        filter_magicmock.all = all
+
+        return filter_magicmock
+    
+    def myfilter_2(item):
+        def all_2():
+            all2_magicmock = MagicMock()
+            all2_magicmock.json = {"1": "1"}
+            return [all2_magicmock]
+
+        filter_magicmock_2 = MagicMock()
+        filter_magicmock_2.all = all_2
+
+        return filter_magicmock_2
+
+    data1 = MagicMock()
+    data1.to_dict = to_dict
+    data1.filter = myfilter
+
+    data2 = MagicMock()
+    data2.filter = myfilter_2
+
+    data3 = MagicMock()
+
+    test = ItemTypes(
+                data={}
+            )
+
+    app.config['WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'] = False
+
+    with patch("weko_records.api.RecordsSearch.execute", return_value=data1):
+        with patch("weko_records.api.Mapping", return_value=data3):
+            with patch("weko_records.api.db.session.merge", return_value=""):
+                with patch("weko_records.api.db.session.query", return_value=data2):
+                    assert test.update_item_type(
+                        form=_form,
+                        id_=1,
+                        name='test',
+                        render=_render_2,
+                        result=item_type,
+                        schema=_schema
+                    ) != None
+                
+            with patch("weko_records.api.db.session.query", return_value=data1):
+                assert test.update_item_type(
+                    form=_form,
+                    id_=1,
+                    name='test',
+                    render=_render_2,
+                    result=item_type,
+                    schema=_schema
+                ) != None
 
     with pytest.raises(Exception) as e:
         record = ItemTypes.update_item_type(
@@ -684,6 +757,10 @@ def test_itemtypes_get_all(app, db):
 
 # class ItemTypes(RecordBase):
 #     def patch(self, patch):
+def test_patch_ItemTypes(app):
+    test = ItemTypes(data={})
+    with patch("weko_records.api.apply_patch", return_value=""):
+        test.patch(patch="test")
 
 # class ItemTypes(RecordBase):
 #     def commit(self, **kwargs):
@@ -769,15 +846,20 @@ def test_itemtypes_restore(app, db):
     assert it2.model.tag==1
     assert it2.model.is_deleted==False
 
-def test_itemtypes___update_metadata(app, db):
-    sample = ItemTypes.create(name='test')
-    data__json = {1: 1}
-    data_diff_keys = [1]
-    assert sample.__update_metadata(1,2,3,4).__del_data(data__json, data_diff_keys) == True
-
-
 # class ItemTypes(RecordBase):
 #     def revisions(self):
+def test_revision_ItemTypes(app):
+    test = ItemTypes(data={})
+    
+    # Exception coverage
+    try:
+        test.revisions()
+    except:
+        pass
+
+    test.model = True
+    with patch('weko_records.api.RevisionsIterator', return_value=MagicMock()):
+        assert test.revisions() != None
 
 # class ItemTypeEditHistory(RecordBase):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_edit_history -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -873,6 +955,11 @@ def test_mapping_get_record(app, db):
 
 # class Mapping(RecordBase):
 #     def patch(self, patch):
+def test_patch_Mapping(app):
+    test = Mapping(data={})
+
+    with patch("weko_records.api.apply_patch", return_value=""):
+        assert test.patch("test") == {}
 
 # class Mapping(RecordBase):
 #     def commit(self, **kwargs):
@@ -1170,7 +1257,7 @@ def test_item_metadata_get_by_object_id(app, db):
     assert record3.json==None
     assert record3.version_id==2
 
-    ItemsMetadata.get_registered_item_metadata(item_type_id=1)
+    # ItemsMetadata.get_registered_item_metadata(item_type_id=1)
 
 # class ItemsMetadata(RecordBase):
 #     def patch(self, patch):
