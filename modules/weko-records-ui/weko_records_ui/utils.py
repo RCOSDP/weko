@@ -1435,8 +1435,8 @@ def get_google_detaset_meta(record,record_tree=None):
                 '@type': 'Place',
                 'geo': {
                     '@type': 'GeoCoordinates',
-                    'latitude': point_longitude.text,
-                    'longitude': point_latitude.text,
+                    'latitude': point_latitude.text,
+                    'longitude': point_longitude.text,
                 }
             })
 
