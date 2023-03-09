@@ -33,7 +33,8 @@ from flask_security import current_user
 from flask_babelex import get_timezone
 from invenio_communities.models import Community
 from invenio_records_rest.errors import InvalidQueryRESTError
-from weko_index_tree.api import Indexes
+from weko_index_tree.api import Indexes, Index
+from weko_records.models import ItemTypeName
 from werkzeug.datastructures import MultiDict
 
 from . import config
@@ -146,11 +147,79 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
         return q
 
+    def _get_search_index_query(index_key, index_list_key, include_childe_key):
+
+        def _get_child_index(idx_list):
+            index_id_list = []
+            for index in idx_list:
+                child_id_list = [child_idx.id for child_idx in Index.query.filter_by(parent=index).all()]
+                if child_id_list:
+                    for child_id in child_id_list:
+                        index_id_list.append(str(child_id))
+                    index_id_list.extend(_get_child_index(child_id_list))
+            return index_id_list
+
+        index_id_list = []
+        index_id = request.values.get(index_key)
+        if index_id:
+            index_id_list.append(str(index_id))
+
+        idx = request.values.get(index_list_key)
+        if idx:
+            idx_list = idx.split(',')
+            index_id_list.extend(idx_list)
+
+            recursive = request.values.get(include_childe_key)
+            if recursive == '1':
+                index_id_list.extend(_get_child_index(idx_list))
+
+        shud = []
+        for index_id in index_id_list:
+            if index_id.isdecimal():
+                shud.append(Q("match", **{'path.tree': int(index_id)}))
+
+        return Q("bool", should=shud) if shud else None
+
     def _get_detail_keywords_query():
         """Get keywords query.
 
         :return: Query parser.
         """
+
+        def _get_opensearch_parameter(k):
+            kv = None
+            if k == 'publisher':
+                kv = request.values.get('pub')
+            elif k == 'cname':
+                kv = request.values.get('con')
+            elif k == 'mimetype':
+                kv = request.values.get('form')
+            elif k == 'srctitle':
+                kv = request.values.get('jtitle')
+            elif k == 'spatial':
+                kv = request.values.get('sp')
+            elif k == 'temporal':
+                kv = request.values.get('era')
+            elif k == 'version':
+                kv = request.values.get('textver')
+            elif k == 'dissno':
+                kv = request.values.get('grantid')
+            elif k == 'dgname':
+                kv = request.values.get('grantor')
+            elif k == 'itemtype':
+                kv = request.values.get('itemTypeList')
+                if kv is None:
+                    return kv
+                # Convert ID to Name
+                item_type_id_list = [int(i) for i in kv.split(',')]
+                item_type_name_list = ItemTypeName.query.filter(ItemTypeName.id.in_(item_type_id_list)).all()
+                kv = ",".join([i.name for i in item_type_name_list])
+            elif k == 'language':
+                kv = request.values.get('ln')
+                lang_dict = current_app.config['WEKO_SEARCH_UI_OPENSEARCH_LANGUAGE_PARAM']
+                kv = lang_dict.get(kv)
+
+            return kv
 
         def _get_keywords_query(k, v):
             qry = None
@@ -159,7 +228,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             )
 
             if not kv:
-                return
+                kv = _get_opensearch_parameter(k)
+                if not kv:
+                    return
 
             if isinstance(v, str):
                 name_dict = dict(operator="and")
@@ -218,7 +289,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             # text value
             kv = request.values.get(k)
             if not kv:
-                return
+                if k == 'subject':
+                    kv = request.values.get('kw')
+                if not kv:
+                    return
             if isinstance(v, tuple) and len(v) > 1 and isinstance(v[1], dict):
                 # attr keyword in request url
                 attrs = map(lambda x: (x, request.values.get(x)), list(v[1].keys()))
@@ -246,6 +320,13 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                                 {"terms": {attr_key_hit[0]: schemas}},
                                             ]
                                         )
+                    else:
+                        name = v[0] + ".value"
+                        return Bool(
+                            must=[
+                                {"term": {name: kv}},
+                            ]
+                        )
             return None
 
         def _get_nested_query(k, v):
@@ -366,32 +447,34 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 date_from = request.values.get(k + "_" + v[0][0])
                 date_to = request.values.get(k + "_" + v[0][1])
 
-                if not date_from or not date_to:
+                if not date_from:
+                    if k == 'dategranted':
+                        date_from = request.values.get('grantDateFrom')
+                if not date_to:
+                    if k == 'dategranted':
+                        date_to = request.values.get('grantDateUntil')
+
+                if not date_from and not date_to:
                     return
 
                 pattern = r"^(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{4})|(\d{6})|(\d{8})$"
                 p = re.compile(pattern)
-                if p.match(date_from) and p.match(date_to):
-                    if len(date_from) == 8:
-                        date_from = datetime.strptime(date_from, "%Y%m%d").strftime(
-                            "%Y-%m-%d"
-                        )
-                    if len(date_to) == 8:
-                        date_to = datetime.strptime(date_to, "%Y%m%d").strftime(
-                            "%Y-%m-%d"
-                        )
-                    if len(date_from) == 6:
-                        date_from = datetime.strptime(date_from, "%Y%m").strftime(
-                            "%Y-%m"
-                        )
-                    if len(date_to) == 6:
-                        date_to = datetime.strptime(date_to, "%Y%m").strftime("%Y-%m")
-                else:
-                    return
 
                 qv = {}
-                qv.update(dict(gte=date_from))
-                qv.update(dict(lte=date_to))
+                if date_from and p.match(date_from):
+                    if len(date_from) == 8:
+                        date_from = datetime.strptime(date_from, "%Y%m%d").strftime("%Y-%m-%d")
+                    if len(date_from) == 6:
+                        date_from = datetime.strptime(date_from, "%Y%m").strftime("%Y-%m")
+                    qv.update(dict(gte=date_from))
+                if date_to and p.match(date_to):
+                    if len(date_to) == 8:
+                        date_to = datetime.strptime(date_to, "%Y%m%d").strftime("%Y-%m-%d")
+                    if len(date_to) == 6:
+                        date_to = datetime.strptime(date_to, "%Y%m").strftime("%Y-%m")
+                    qv.update(dict(lte=date_to))
+                if not qv:
+                    return
 
                 if isinstance(v[1], str):
                     qry = Q("range", **{v[1]: qv})
@@ -516,6 +599,156 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
             return qry
 
+        def _get_search_type_query():
+            type_list = current_app.config["WEKO_SEARCH_UI_OPENSEARCH_TYPE_PARAM"]
+            type_idxs = request.values.get('typeList')
+            if not type_idxs:
+                return None
+
+            shud = []
+            for type_idx in type_idxs.split(','):
+                if not type_idx.isdecimal():
+                    continue
+                target_list = type_list[int(type_idx)]
+                for target in target_list:
+                    name_dict = dict(operator="and")
+                    name_dict.update(dict(query=target))
+                    shud.append(Q("match", **{'type.raw': name_dict}))
+
+            if shud:
+                return Q("bool", should=shud)
+
+            return None
+
+        def _get_search_id_query():
+            id = request.values.get('idDes')
+            if not id:
+                return
+
+            id_idxs = request.values.get('idList')
+            id_idxs = id_idxs.split(',') if id_idxs else []
+            id_type_list = current_app.config["WEKO_SEARCH_UI_OPENSEARCH_ID_PARAM"]
+
+            shuld = []
+            for idx, id_type in enumerate(id_type_list):
+                if id_idxs and str(idx) not in id_idxs:
+                    continue
+                if not id_type:
+                    continue
+
+                if isinstance(id_type, str):
+                    name = id_type + ".value"
+                    name_dict = dict(operator="and")
+                    name_dict.update(dict(query=id))
+                    mut = [Q("match", **{name: name_dict})]
+
+                    qry = Q("bool", must=mut)
+                    shuld.append(Q("nested", path=id_type, query=qry))
+
+                elif isinstance(id_type, list):
+                    qry = Q(
+                        "multi_match",
+                        query=id,
+                        type="most_fields",
+                        minimum_should_match="75%",
+                        operator="and",
+                        fields=id_type,
+                    )
+                    shuld.append(qry)
+
+            return Q("bool", should=shuld) if shuld else None
+
+        def _get_search_license_query():
+            riDes = request.values.get('riDes')
+            riList = request.values.get('riList')
+            riList = riList.split(',') if riList else []
+            if riList:
+                license_type_list = current_app.config["WEKO_SEARCH_UI_OPENSEARCH_LICENSE_PARAM"]
+
+                target = []
+                search_rides = False
+                for k, v in license_type_list.items():
+                    if k not in riList:
+                        continue
+                    if k != 'free_input':
+                        target.extend(v)
+                    else:
+                        if riDes:
+                            search_rides = True
+                        else:
+                            target.extend(v)
+
+                shuld = []
+                if target:
+                    query = Q('bool', must=[{'terms': {'content.licensetype.raw': target}}])
+                    nested = Q('nested', path='content', query=query)
+                    shuld.append(nested)
+                if search_rides:
+                    other_must = [
+                        {'terms': {'content.licensetype.raw': ['license_free']}},
+                        {'terms': {"content.licensefree.raw": [riDes]}}
+                    ]
+                    other_query = Q('bool', must=other_must)
+                    other_nested = Q('nested', path='content', query=other_query)
+                    shuld.append(other_nested)
+
+                return Q('bool', should=shuld) if shuld else None
+
+            else:
+                if riDes:
+                    # Search only free_input
+                    other_must = [
+                        {'terms': {'content.licensetype.raw': ['license_free']}},
+                        {'terms': {"content.licensefree.raw": [riDes]}}
+                    ]
+                    other_query = Q('bool', must=other_must)
+                    shuld = [Q('nested', path='content', query=other_query)]
+                    return Q('bool', should=shuld) if shuld else None
+                else:
+                    return None
+
+        def _get_date_query_for_opensearch():
+            qy = []
+            date_created = request.values.get('date')
+            if date_created:
+                qv = {'gte': date_created, 'lte': date_created}
+                shud = [Q('term', **{'file.date.dateType': 'Created'})]
+
+                qry = Q('range', **{'file.date.value': qv})
+                qry = Q('nested', path='file.date', query=Q('bool', should=shud, must=[qry]))
+                qy.append(qry)
+
+            year_issued_from = request.values.get('pubYearFrom')
+            year_issued_until = request.values.get('pubYearUntil')
+            if year_issued_from or year_issued_until:
+                qv = {}
+                if year_issued_from:
+                    qv.update(dict(gte=year_issued_from + '-01-01'))
+                if year_issued_until:
+                    qv.update(dict(lte=year_issued_until + '-12-31'))
+                shud = [Q('term', **{'file.date.dateType': 'Issued'})]
+
+                qry = Q('range', **{'file.date.value': qv})
+                qry = Q('nested', path='file.date', query=Q('bool', should=shud, must=[qry]))
+                qy.append(qry)
+
+            date_issued_from = request.values.get('pubDateFrom')
+            date_issued_until = request.values.get('pubDateUntil')
+            if date_issued_from or date_issued_until:
+                qv = {}
+                if date_issued_from:
+                    qv.update(dict(gte=date_issued_from))
+                if date_issued_until:
+                    qv.update(dict(lte=date_issued_until))
+                shud = [Q('term', **{'file.date.dateType': 'Issued'})]
+
+                qry = Q('range', **{'file.date.value': qv})
+                qry = Q('nested', path='file.date', query=Q('bool', should=shud, must=[qry]))
+                qy.append(qry)
+
+            return qy
+
+
         kwd = current_app.config["WEKO_SEARCH_KEYWORDS_DICT"]
         ks = kwd.get("string")
         kd = kwd.get("date")
@@ -575,6 +808,22 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 if qy:
                     mut.append(qy)
 
+            qy = _get_search_index_query('index_id', 'idx', 'recursive')
+            if qy:
+                mut.append(qy)
+            qy = _get_search_type_query()
+            if qy:
+                mut.append(qy)
+            qy = _get_search_id_query()
+            if qy:
+                mut.append(qy)
+            qy = _get_search_license_query()
+            if qy:
+                mut.append(qy)
+            qy = _get_date_query_for_opensearch()
+            if qy:
+                mut.extend(qy)
+
         except Exception as e:
             current_app.logger.exception(
                 "Detail search query parser failed. err:{0}".format(e)
@@ -632,13 +881,25 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         # Search fields may increase so leaving as multi
         multi_q = Q(
             "query_string",
-            query=qs,
+            query=qstr,
             default_operator="and",
             fields=["search_*", "search_*.ja"],
         )
 
         nested_content = Q("nested", query=multi_cont_q, path="content")
         return Q("bool", should=[nested_content, multi_q])
+
+    def _get_file_meta_query(qstr):
+        """Query for searching indexed file meta."""
+        # Search fields may increase so leaving as multi
+        multi_q = Q(
+            "query_string",
+            query=qstr,
+            default_operator="and",
+            fields=["search_*", "search_*.ja"],
+        )
+
+        return Q("bool", should=[multi_q])
 
     def _default_parser(qstr=None):
         """Default parser that uses the Q() from elasticsearch_dsl.
@@ -659,8 +920,22 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             # details search
             mst.extend(mkq)
 
-        if qstr:
+        qs_all = request.values.get('all')
+        if qs_all:
+            q_s = _get_file_content_query(qs_all)
+            mst.append(q_s)
+
+        qs_meta = request.values.get('meta')
+        if qs_meta:
+            q_s = _get_file_meta_query(qs_meta)
+            mst.append(q_s)
+
+        if not qs_all and not qs_meta and qstr:
             q_s = _get_file_content_query(qstr)
+            mst.append(q_s)
+
+        q_s = _get_search_index_query('', 'cur_index_id', 'recursive')
+        if q_s:
             mst.append(q_s)
 
         return Q("bool", must=mst) if mst else Q()
@@ -686,8 +961,22 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             # details search
             mst.extend(mkq)
 
-        if qstr:
+        qs_all = request.values.get('all')
+        if qs_all:
+            q_s = _get_file_content_query(qs_all)
+            mst.append(q_s)
+
+        qs_meta = request.values.get('meta')
+        if qs_meta:
+            q_s = _get_file_meta_query(qs_meta)
+            mst.append(q_s)
+
+        if not qs_all and not qs_meta and qstr:
             q_s = _get_file_content_query(qstr)
+            mst.append(q_s)
+
+        q_s = _get_search_index_query('', 'cur_index_id', 'recursive')
+        if q_s:
             mst.append(q_s)
 
         return Q("bool", must=mst) if mst else Q()
