@@ -1,7 +1,11 @@
 import pytest
+import uuid
 from tests.helpers import json_data
-
+from mock import patch, MagicMock
+from werkzeug import ImmutableMultiDict
+from werkzeug.datastructures import MultiDict, CombinedMultiDict
 from invenio_pidstore.models import PersistentIdentifier
+from invenio_accounts.testutils import login_user_via_session
 from weko_records.api import ItemTypeProps, ItemTypes, Mapping
 from weko_records.models import ItemTypeName
 from weko_records.serializers.utils import (
@@ -51,6 +55,15 @@ def test_get_metadata_from_map(meta):
     _item_id = 'item_1551265302121'
     result = get_metadata_from_map(meta[0]['item_1551265302121'], _item_id)
     assert result == {'item_1551265302121' : 'testtest'}
+    _item_id = 'pubdate'
+    result = get_metadata_from_map(meta[0]['item_1551265302122'], _item_id)
+    assert result == {'pubdate.key' : 'test1'}
+    result = get_metadata_from_map(meta[0]['item_15512653021233'], _item_id)
+    assert result == {'pubdate.mlt' : 'test'}
+    result = get_metadata_from_map(meta[0]['item_15512653021234'], _item_id)
+    assert result == {'pubdate.key' : ['test1', 'test2', 'test3']}
+    result = get_metadata_from_map(meta[0]['item_15512653021235'], _item_id)
+    assert result == {'pubdate.key.subkey' : 'abcd'}
 
 # def get_attribute_schema(schema_id):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_get_attribute_schema -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -108,11 +121,10 @@ params=[
      "data/record_hit/record_hit1.json",
      True)]
 @pytest.mark.parametrize("render, form, mapping, hit, licence", params)
-def test_open_search_detail_data(app, db, db_index, render, form, mapping, hit, licence):
+def test_open_search_detail_data(app, db, db_index, record1, render, form, mapping, hit, licence):
     def fetcher(obj_uuid, data):
-        assert obj_uuid in ['a', 'b']
+        assert obj_uuid=="1"
         return PersistentIdentifier(pid_type='recid', pid_value=data['pid'])
-
     _item_type_name=ItemTypeName(name="test")
     _item_type = ItemTypes.create(
         name="test",
@@ -122,21 +134,25 @@ def test_open_search_detail_data(app, db, db_index, render, form, mapping, hit, 
         form=json_data(form),
         tag=1
     )
-    _item_type_mapping = Mapping.create(
+    Mapping.create(
         item_type_id=_item_type.id,
         mapping=json_data(mapping)
     )
-    _search_result = {'hits': {'total': 1, 'hits': [json_data(hit)]}}
-    data = OpenSearchDetailData(fetcher, _search_result, 'rss')
-    with app.test_request_context():
-        assert data.output_open_search_detail_data()
-
-    # add request parameter log_term
     _data = {
         'lang': 'en',
         'log_term': '2021-01'
     }
-    _search_result = {'hits': {'total': 1, 'hits': [json_data(hit)]}}
+    hit_data = json_data(hit)
+    hit_data['_id'] = record1[0].object_uuid
+    _search_result = {'hits': {'total': 1, 'hits': [hit_data]}}
     detail = OpenSearchDetailData(fetcher, _search_result, 'rss')
-    with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
+    with app.test_request_context(headers=[('Accept-Language','en')], query_string=_data):
+        assert detail.output_open_search_detail_data()
+
+    _data = {
+        'lang': 'en'
+    }
+    _search_result = {'hits': {'total': 1, 'hits': [hit_data]}}
+    detail = OpenSearchDetailData(fetcher, _search_result, 'rss')
+    with app.test_request_context(headers=[('Accept-Language','en')], query_string=_data):
         assert detail.output_open_search_detail_data()

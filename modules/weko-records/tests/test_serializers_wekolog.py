@@ -24,9 +24,6 @@ def test_extend_xml():
     expected += '</test>'
     expected_xml = etree.fromstring(expected)
     wbe = WekologBaseExtension()
-    wbe.terms(None)
-    wbe.view(None)
-    wbe.download(None)
     wbe._extend_xml(entry_xml)
     res = etree.tostring(entry_xml).decode()
     expected_xml = etree.tostring(expected_xml).decode()
