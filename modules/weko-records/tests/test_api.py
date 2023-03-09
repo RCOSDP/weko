@@ -759,6 +759,7 @@ def test_itemtypes_get_all(app, db):
 #     def patch(self, patch):
 def test_patch_ItemTypes(app):
     test = ItemTypes(data={})
+
     with patch("weko_records.api.apply_patch", return_value=""):
         test.patch(patch="test")
 
@@ -858,6 +859,7 @@ def test_revision_ItemTypes(app):
         pass
 
     test.model = True
+    
     with patch('weko_records.api.RevisionsIterator', return_value=MagicMock()):
         assert test.revisions() != None
 
@@ -1019,6 +1021,23 @@ def test_mapping_revert(app, db):
 
 # class Mapping(RecordBase):
 #     def revisions(self):
+def test_revisions_Mapping(app):
+    test = Mapping(data={})
+    test.model = "Not None"
+
+    def dummy_func():
+        return True
+
+    with patch("weko_records.api.RevisionsIterator", return_value=dummy_func):
+        assert test.revisions() != None
+
+    test.model = None
+
+    # Exception coverage
+    try:
+        test.revisions()
+    except:
+        pass
 
 # class Mapping(RecordBase):
 #     def get_mapping_by_item_type_ids(cls, item_type_ids: list) -> list:
@@ -1116,7 +1135,24 @@ def test_item_type_props(app, db):
     #assert records[0].delflg==False
     #assert records[0].sort==None
 
-    #     def revisions(self):
+#     def revisions(self):
+def test_revisions_ItemTypeProps(app):
+    test = ItemTypeProps(data={})
+    test.model = "Not None"
+
+    def dummy_func():
+        return True
+
+    with patch("weko_records.api.RevisionsIterator", return_value=dummy_func):
+        assert test.revisions() != None
+
+    test.model = None
+
+    # Exception coverage
+    try:
+        test.revisions()
+    except:
+        pass
 
 # class ItemsMetadata(RecordBase):
 #     def create(cls, data, id_=None, **kwargs):
@@ -1231,6 +1267,22 @@ def test_item_metadata_get_by_item_type_id(app, db):
 
 # class ItemsMetadata(RecordBase):
 #     def get_registered_item_metadata(cls, item_type_id):
+def test_get_registered_item_metadata_ItemsMetadata(app):
+    test = ItemsMetadata(data={})
+    data1 = MagicMock()
+
+    def all_func():
+        all_magicmock = MagicMock()
+        all_magicmock.id = 1
+        return [all_magicmock]
+    
+    data1.query = MagicMock()
+    data1.query.filter_by = MagicMock()
+    data1.query.filter_by.all = all_func
+
+    with patch("weko_records.api.ItemMetadata", return_value=data1):
+        with patch("weko_records.api.PersistentIdentifier", return_value=data1):
+            assert test.get_registered_item_metadata(item_type_id=1) != None
 
 # class ItemsMetadata(RecordBase):
 #     def get_by_object_id(cls, object_id):
@@ -1261,6 +1313,11 @@ def test_item_metadata_get_by_object_id(app, db):
 
 # class ItemsMetadata(RecordBase):
 #     def patch(self, patch):
+def test_patch_ItemsMetadata(app):
+    test = ItemsMetadata(data={})
+
+    with patch("weko_records.api.apply_patch", return_value=""):
+        test.patch(patch="test")
 
 # class ItemsMetadata(RecordBase):
 #     def commit(self, **kwargs):
@@ -1332,6 +1389,19 @@ def test_item_metadata_revert(app, db):
 
 # class ItemsMetadata(RecordBase):
 #     def revisions(self):
+def test_revision_ItemsMetadata(app):
+    test = ItemsMetadata(data={})
+    
+    # Exception coverage
+    try:
+        test.revisions()
+    except:
+        pass
+
+    test.model = True
+
+    with patch('weko_records.api.RevisionsIterator', return_value=MagicMock()):
+        assert test.revisions() != None
 
 # class FilesMetadata(RecordBase):
 #     def create(cls, data, id_=None, **kwargs):
@@ -1397,6 +1467,11 @@ def test_files_metadata_get_records(app, db):
 
 # class FilesMetadata(RecordBase):
 #     def patch(self, patch):
+def test_patch_FilesMetadata(app):
+    test = FilesMetadata(data={})
+    
+    with patch("weko_records.api.apply_patch", return_value=""):
+        test.patch(patch="test")
 
 # class FilesMetadata(RecordBase):
 #     def update_data(id, jsn):
@@ -1478,6 +1553,20 @@ def test_files_metadata_revert(app, db):
 
 # class FilesMetadata(RecordBase):
 #     def revisions(self):
+def test_revision_FilesMetadata(app):
+    test = FilesMetadata(data={})
+    
+    # Exception coverage
+    try:
+        test.revisions()
+    except:
+        pass
+
+    test.model = True
+    
+    with patch('weko_records.api.RevisionsIterator', return_value=MagicMock()):
+        assert test.revisions() != None
+
 # class RecordRevision(RecordBase):
 #     def __init__(self, model):
 
@@ -1558,7 +1647,30 @@ def test_wekorecord_get_record(app, db, records):
 
 # class WekoRecord(Record):
 #     def pid(self):
+def test_pid_WekoRecord(app):
+    def record_fetcher(item1, item2):
+        record_fetcher_magicmock = MagicMock()
+        record_fetcher_magicmock.pid_type = "pid_type"
+        return record_fetcher_magicmock
+
+    def get_func(item1, item2):
+        return True
+
+    test = WekoRecord(data={})
+    test.record_fetcher = record_fetcher
+
+    data1 = MagicMock()
+    data1.get = get_func
+
+    with patch('weko_records.api.PersistentIdentifier', return_value=data1):
+        assert test.pid() != None
+
 #     def depid(self):
+def test_depid_WekoRecord(app):
+    test = WekoRecord(data={})
+    
+    with patch('weko_records.api.PersistentIdentifier', return_value=True):
+        assert test.depid() != None
 
 # class FeedbackMailList(object):
 #     def update(cls, item_id, feedback_maillist):
