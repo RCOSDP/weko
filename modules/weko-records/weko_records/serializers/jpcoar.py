@@ -26,6 +26,7 @@ from datetime import datetime
 import pytz
 from flask import current_app, flash, json, request, url_for
 from invenio_records_rest.serializers.json import JSONSerializer
+from invenio_records_rest.views import RecordsListResource
 from weko_index_tree.api import Index
 
 from weko_records.api import Mapping
@@ -70,6 +71,7 @@ class JpcoarSerializer(JSONSerializer):
 
         size = request.args.get('list_view_num', type=str)
         size = 20 if size is None or not size.isnumeric() else int(size)
+        size = RecordsListResource.adjust_list_view_num(size)
 
         # Set startIndex
         _startIndex = (startPage - 1) * size + 1

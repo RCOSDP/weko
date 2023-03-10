@@ -27,6 +27,7 @@ import pytz
 from flask import request
 from invenio_db import db
 from invenio_records.models import RecordMetadata
+from invenio_records_rest.views import RecordsListResource
 from invenio_stats.views import QueryRecordViewCount, QueryFileStatsCount
 from weko_index_tree.api import Index
 
@@ -366,6 +367,7 @@ class OpenSearchDetailData:
 
         size = request.args.get('list_view_num', type=str)
         size = 20 if size is None or not size.isnumeric() else int(size)
+        size = RecordsListResource.adjust_list_view_num(size)
 
         # Set startIndex
         _start_index = (start_page - 1) * size + 1
