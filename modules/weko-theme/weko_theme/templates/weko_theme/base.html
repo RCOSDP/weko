@@ -77,11 +77,12 @@
   {% assets "weko_admin_quill_css" %}
   <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {%- endblock css %}
-  
   <!-- start tracking code -->
   {%- block trackingcode %}{% include config.THEME_TRACKINGCODE_TEMPLATE with context %}
   {%- endblock trackingcode %}
   <!-- end tracking code -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   {%- endblock head %}
 </head>
 
