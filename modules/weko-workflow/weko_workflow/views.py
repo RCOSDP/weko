@@ -1383,9 +1383,15 @@ def next_action(activity_id='0', action_id=0):
             # Approve to file permission
             # 利用申請のWF時、申請されたファイルと、そのアイテム内の制限公開ファイルすべてにアクセス権を付与する
             permissions :List[FilePermission] = FilePermission.find_by_activity(activity_id)
+            guest_activity :GuestActivity = GuestActivity.find_by_activity_id(activity_id)
             if permissions and len(permissions) == 1:
-                # 利用申請なら、WF作成時にFilePermissionが1レコードだけ作られている。
+                # 利用申請(ログイン済)なら、WF作成時にFilePermissionが1レコードだけ作られている。
                 url_and_expired_date = grant_access_rights_to_all_open_restricted_files(activity_id,permissions[0] ,activity_detail)
+            elif guest_activity and len(guest_activity) == 1:
+                # 利用申請(ゲスト)なら、WF作成時にFilePermissionが作られていないが、GuestActivityが作られている。
+                url_and_expired_date = grant_access_rights_to_all_open_restricted_files(activity_id,guest_activity[0] ,activity_detail)
+
+            
             if not url_and_expired_date:
                 url_and_expired_date = {}
         action_mails_setting = {"previous":
