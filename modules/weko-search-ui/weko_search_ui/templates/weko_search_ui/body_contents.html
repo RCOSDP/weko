@@ -185,6 +185,7 @@
   
                   </div>
                   {%- endif %}
+		  <!--
                   <div class="form-group">
                     <label for="size">{{_('Display Number')}}</label>
                     <select class="form-control" id="pagesize" onchange="changesize();">
@@ -194,6 +195,7 @@
                       <option value="100"  {% if request.args.get('size')=='100' %} selected {% endif %} >100</option>
                     </select>
                   </div>
+		  -->
                 {%- endblock search_sort %}
               {%- endif %}
             </div>

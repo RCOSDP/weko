@@ -357,8 +357,13 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     $rootScope.display_comment_jounal();
     if(window.location.pathname != '/' &&
       window.facetSearchFunctions && window.facetSearchFunctions.useFacetSearch()) {
-        console.log("=== resetFacetData ");
-        window.facetSearchFunctions.resetFacetData(evt.targetScope.vm.invenioSearchResults.aggregations);
+        let search = new URLSearchParams(window.location.search);
+        if(search.get('search_type') == 2){
+          window.facetSearchFunctions.resetFacetData(evt.targetScope.vm.invenioSearchResults.aggregations.aggregations[0]);
+        }else {
+          window.facetSearchFunctions.resetFacetData(evt.targetScope.vm.invenioSearchResults.aggregations);
+        }
+        
     }
   });
 
