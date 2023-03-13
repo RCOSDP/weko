@@ -3381,15 +3381,18 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
                 current_app.config["WEKO_WORKFLOW_APPROVE_DONE"])
 
         if actions_mail_setting.get('next', {}).get("request_approval", False):
-            approval_user = db.session.query(User).filter_by(
-                id=int(next_step_appover_id)).first()
+            approval_user = None
+            if next_step_appover_id :
+                approval_user = db.session.query(User).filter_by(
+                    id=int(next_step_appover_id)).first()
             if not approval_user:
-                current_app.logger.error("Does not have approval data")
+                #利用登録
+                mail_info['mail_recipient'] = session['guest_email'] 
             else:
                 mail_info['mail_recipient'] = approval_user.email
-                process_send_mail(
-                    mail_info,
-                    current_app.config["WEKO_WORKFLOW_REQUEST_APPROVAL"])
+            process_send_mail(
+                mail_info,
+                current_app.config["WEKO_WORKFLOW_REQUEST_APPROVAL"])
 
     if actions_mail_setting["reject"]:
         if actions_mail_setting.get(
@@ -4030,9 +4033,11 @@ def is_terms_of_use_only(workflow_id :int) -> bool:
             return True
     return False
 
-def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permission:FilePermission , activity_detail :Activity) -> dict:
+def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permission:Union[FilePermission,GuestActivity] , activity_detail :Activity) -> dict:
     """
-    To all of open_restricted files in item , grant access_rights
+    Target all of open_restricted files in the item , grant access rights for login user.
+    or
+    Target a open_restricted file that is applyed by the guest user  in the item , grant access rights for guest user.
     
     Args:
         str :activity_id
@@ -4042,28 +4047,38 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
         dict :one time url and expired_date
     """ 
     url_and_expired_date:dict = {}
-    files = WekoRecord.get_record_by_pid(permission.record_id).get_file_data()
-    for file in files:
-        #{'url': {'url': 'https://weko3.example.org/record/1/files/aaa (1).txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2023-02-03'}], 'terms': 'term_free', 'format': 'text/plain', 'provide': [{'role': 'none_loggin', 'workflow': '2'}, {'role': '3', 'workflow': '1'}], 'version': '1', 'dataType': 'perfectures', 'filename': 'aaa (1).txt', 'filesize': [{'value': '5 B'}], 'mimetype': 'text/plain', 'accessrole': 'open_restricted', 'version_id': '2a0aa15b-d3e2-4846-9e3a-e1e734a1a620', 'displaytype': 'simple', 'licensefree': 'licence text', 'licensetype': 'license_free', 'termsDescription': '利用規約のフリーインプット本文です'}
-        if file['accessrole'] in 'open_restricted':
-        
-            if file['filename'] != permission.file_name:
-                # create open_restricted content records of not applyed
-                FilePermission.init_file_permission(permission.user_id, permission.record_id, file['filename'], activity_id)
+    if isinstance(permission ,FilePermission): #contributer
+        files = WekoRecord.get_record_by_pid(permission.record_id).get_file_data()
+        for file in files:
+            #{'url': {'url': 'https://weko3.example.org/record/1/files/aaa (1).txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2023-02-03'}], 'terms': 'term_free', 'format': 'text/plain', 'provide': [{'role': 'none_loggin', 'workflow': '2'}, {'role': '3', 'workflow': '1'}], 'version': '1', 'dataType': 'perfectures', 'filename': 'aaa (1).txt', 'filesize': [{'value': '5 B'}], 'mimetype': 'text/plain', 'accessrole': 'open_restricted', 'version_id': '2a0aa15b-d3e2-4846-9e3a-e1e734a1a620', 'displaytype': 'simple', 'licensefree': 'licence text', 'licensetype': 'license_free', 'termsDescription': '利用規約のフリーインプット本文です'}
+            if file['accessrole'] in 'open_restricted':
             
-            #insert file_onetime_download
-            extra_info:dict = deepcopy(activity_detail.extra_info)
-            extra_info.update({'file_name' : file['filename']})
-            tmp:dict = create_onetime_download_url_to_guest(activity_detail.activity_id,extra_info)
-        
-            if file['filename'] == permission.file_name:
-                # a applyed content.
-                url_and_expired_date = tmp
+                if file['filename'] != permission.file_name:
+                    # create all open_restricted content records in unapplyed
+                    FilePermission.init_file_permission(permission.user_id, permission.record_id, file['filename'], activity_id)
+                
+                #insert file_onetime_download
+                extra_info:dict = deepcopy(activity_detail.extra_info)
+                extra_info.update({'file_name' : file['filename']})
+                tmp:dict = create_onetime_download_url_to_guest(activity_detail.activity_id,extra_info)
+            
+                if file['filename'] == permission.file_name:
+                    # a applyed content.
+                    url_and_expired_date = tmp
 
-    # approve all open_restricted contents.
-    permissions = FilePermission.find_by_activity(activity_id)
-    for permi in permissions:
-        FilePermission.update_status(permi,1) #1:Approval
+        # approve all open_restricted contents.
+        permissions = FilePermission.find_by_activity(activity_id)
+        for permi in permissions:
+            FilePermission.update_status(permi,1) #1:Approval
+    
+    elif isinstance(permission,GuestActivity): #guest user
+
+        #insert file_onetime_download
+        extra_info:dict = deepcopy(activity_detail.extra_info)
+        # extra_info.update({'file_name' : permission.file_name})
+        tmp:dict = create_onetime_download_url_to_guest(activity_detail.activity_id,extra_info)
+
+        url_and_expired_date = tmp
 
     #url_and_expired_date of a applyed content.
     return url_and_expired_date
