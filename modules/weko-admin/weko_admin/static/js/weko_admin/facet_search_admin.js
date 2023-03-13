@@ -98,6 +98,16 @@ function FacetSearchLayout(
   }
 
   /**
+   * Returns whether or not RangeSlider is disabled for the specified UI type.
+   * 
+   * @param {string} value UI Type
+   * @returns True if the UI type does not allow RangeSlider selection; false otherwise.
+   */
+    function isDisableRangeUi(value) {
+      return value!=="temporal";
+    }
+
+  /**
    * Returns whether or not the UI type allows displayNumber to be entered.
    * @param {string} value UI Type
    * @returns True if the UI type does not allow displayNumber input; false otherwise.

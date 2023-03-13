@@ -42,7 +42,7 @@ from invenio_indexer.api import RecordIndexer
 from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
 from invenio_records.models import RecordMetadata
-from invenio_records_rest.facets import terms_filter, terms_condition_filter
+from invenio_records_rest.facets import terms_filter, terms_condition_filter, range_filter
 from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
 from jinja2 import Template
 from simplekv.memory.redisstore import RedisStore
@@ -2062,12 +2062,6 @@ def get_item_mapping_list():
     def get_mapping(pre_key, key, value, mapping_list):
         if isinstance(value, dict) and value.get('type') == 'keyword':
             mapping_list.append(['keyword',handle_prefix_key(pre_key, key)])
-        if isinstance(value, dict) and value.get('type') == 'date_range':
-            mapping_list.append(['date_range',handle_prefix_key(pre_key, key)])
-        if isinstance(value, dict) and value.get('type') == 'integer_range':
-            mapping_list.append(['integer_range',handle_prefix_key(pre_key, key)])
-        if isinstance(value, dict) and value.get('type') == 'float_range':
-            mapping_list.append(['float_range',handle_prefix_key(pre_key, key)])
         if isinstance(value, dict):
             for k1, v1 in value.items():
                 get_mapping(handle_prefix_key(
@@ -2191,6 +2185,7 @@ def get_facet_search_query(has_permission=True):
     # Get query on redis.
     result = json.loads(get_redis_cache(key)) or {}
     # Update terms filter function for post filters.
+
     post_filters = result.get(search_index).get('post_filters')
     from weko_admin.utils import get_title_facets
     titles, order, uiTypes, isOpens, displayNumbers, searchConditions = get_title_facets()
@@ -2202,7 +2197,12 @@ def get_facet_search_query(has_permission=True):
         current_app.logger.warning(v)
         current_app.logger.warning(searchConditions)
         current_app.logger.warning(searchConditions[k])
-        post_filters.update({k: terms_condition_filter(v, searchConditions[k] == 'AND')})
+        if v == 'temporal':
+            current_app.logger.warning('---   USE RANGE_FILTER   ---')
+            post_filters.update({k: range_filter('date_range1', False, False)})
+        else:
+            post_filters.update({k: terms_condition_filter(v, searchConditions[k] == 'AND')})
+            
     current_app.logger.warning('---   query-result   ---')
     current_app.logger.warning(result) 
     return result

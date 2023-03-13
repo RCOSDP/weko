@@ -355,15 +355,15 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $scope.$on('invenio.search.finished', function (evt) {
     $scope.getPathName();
     $rootScope.display_comment_jounal();
-    if(sessionStorage.getItem('weko_search_param') &&
+    if(window.location.pathname != '/' &&
       window.facetSearchFunctions && window.facetSearchFunctions.useFacetSearch()) {
         console.log("=== resetFacetData ");
         window.facetSearchFunctions.resetFacetData(evt.targetScope.vm.invenioSearchResults.aggregations);
     }
   });
 
-  $scope.reSearchInvenio = (search) => {
-    console.log("============ $scope.reSearchInvenio ");
+  $rootScope.reSearchInvenio = (search) => {
+    console.log("============ $rootScope.reSearchInvenio ");
 
     //TODO PAGE と TimeStampを入れ替える。
     search.set('page','1');
@@ -373,11 +373,11 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     
     let url = search.get('search_type') == 2 ? "/api/index/" : "/api/records/";
 
-    $scope.$apply(function() {
-      $scope.vm.invenioSearchCurrentArgs.url = url;
-      $scope.vm.invenioSearchArgs.page = 1;
-      $scope.vm.invenioSearchLoading = true;
-      $scope.vm.invenioSearchHiddenParams = [];
+    $rootScope.$apply(function() {
+      $rootScope.vm.invenioSearchCurrentArgs.url = url;
+      $rootScope.vm.invenioSearchArgs.page = 1;
+      $rootScope.vm.invenioSearchLoading = true;
+      $rootScope.vm.invenioSearchHiddenParams = [];
     })
   }
   window.invenioSearchFunctions = {};
