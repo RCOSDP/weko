@@ -317,14 +317,11 @@
                 } else if (angular.element('#item_management_bulk_delete').length != 0) {
                     url = '/admin/items' + url + '&item_management=delete';
                 } else {
-                    let searchParam = new URLSearchParams(sessionStorage.getItem('weko_search_param') != null ?
-                    sessionStorage.getItem('weko_search_param') : window.location.search);
-
+                    let searchParam = new URLSearchParams(window.location.search);
                     for(var entry of new URLSearchParams(query_str).entries()) {
                         searchParam.set(entry[0], entry[1]);
                     }
-                    sessionStorage.setItem('weko_search_param', searchParam.toString());
-
+                    window.invenioSearchFunctions.reSearchInvenio(searchParam);
                     return;
                 }
 
@@ -445,14 +442,15 @@
         angular.module('searchDetailModule', ['searchDetail.controllers']);
         angular.module('searchDetailModule', ['searchDetail.controllers']).config(
             [
-                '$interpolateProvider','$locationProvider', function ($interpolateProvider,$locationProvider) {
+                '$interpolateProvider', '$locationProvider', function ($interpolateProvider, $locationProvider) {
                 $interpolateProvider.startSymbol('[[');
                 $interpolateProvider.endSymbol(']]');
+
                 $locationProvider.html5Mode({
                     enabled: true,
                     requireBase: false,
                     rewriteLinks: false,
-                  });
+                });
             }]
         ).directive('whenScrolled',function(){
             return function(scope, elem, attr){

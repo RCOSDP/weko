@@ -190,15 +190,12 @@ require([
                 search = insertParam(search, "item_management", "delete");
                 window.location.href = "/admin/items/search" + search;
             } else {
-                let searchParam = new URLSearchParams(sessionStorage.getItem('weko_search_param') != null ?
-                sessionStorage.getItem('weko_search_param') : window.location.search);
-
+                let searchParam = new URLSearchParams(window.location.search);
                 let appendSearchParam = new URLSearchParams(search);
                 searchParam.set('search_type', appendSearchParam.get('search_type'));
                 searchParam.set('q', appendSearchParam.get('q'));
 
-                sessionStorage.setItem('weko_search_param', searchParam.toString());
-                window.invenioSearchFunctions.reSearchInvenio();
+                window.invenioSearchFunctions.reSearchInvenio(searchParam);
             }
 
             // stop the form from submitting the normal way and refreshing the page
@@ -337,9 +334,7 @@ require([
         // 詳細検索ボタン：入力値をseesionStorageに保存する
         $('#detail-search-btn').on('click', function () {
             sessionStorage.setItem('btn', 'detail-search');
-            //SearchSubmit();
-            window.invenioSearchFunctions.reSearchInvenio();
-            event.preventDefault();
+            SearchSubmit();
         });
 
         // 詳細検索ボタン：フォームのテキスト入力でエンターキーを押したら検索する

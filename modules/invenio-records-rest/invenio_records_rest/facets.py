@@ -59,7 +59,6 @@ def range_filter(field, start_date_math=None, end_date_math=None, **kwargs):
         if len(values) != 1 or values[0].count('--') != 1 or values[0] == '--':
             raise RESTValidationError(
                 errors=[FieldError(field, 'Invalid range format.')])
-
         range_ends = values[0].split('--')
         range_args = dict()
 
@@ -86,8 +85,7 @@ def range_filter(field, start_date_math=None, end_date_math=None, **kwargs):
 
         args = kwargs.copy()
         args.update(range_args)
-
-        return Range(**{field: args})
+        return Q(Range(**{field: args}))
 
     return inner
 
@@ -150,8 +148,6 @@ def default_facets_factory(search, index):
     from weko_admin.utils import get_facet_search_query
     from weko_search_ui.permissions import search_permission
     facets = get_facet_search_query(search_permission.can()).get(index)
-    current_app.logger.warning('==========   facets   ==========')
-    current_app.logger.warning(facets)
     if facets is not None:
         # Aggregations.
         search = _aggregations(search, facets.get("aggs", {}))

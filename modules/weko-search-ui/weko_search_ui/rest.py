@@ -221,10 +221,19 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         
         # Execute search
         weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
+        current_app.logger.warning('=============   Execute search STAERT  =============')
+        current_app.logger.warning(search)
         for param in params:
             query_key = weko_faceted_search_mapping[param]
             search = search.post_filter({"terms": {query_key: params[param]}})
+            #mapping_type = weko_faceted_search_mapping['type']
+            #current_app.logger.warning('en_name: ' + param + '  mapping: ' + query_key +   '  mapping_type: ' + mapping_type)
+            #if mapping_type == 'keyword':
+                #search = search.post_filter({"terms": {query_key: params[param]}})
+            #else:
+                #search = search.post_filter({"terms": {query_key: params[param]}})
 
+        current_app.logger.warning('=============   Execute search END  =============')
         search_result = search.execute()
         # Generate links for prev/next
         urlkwargs.update(
