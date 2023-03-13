@@ -468,8 +468,8 @@ WEKO_THEME_ADMIN_MENU = [
 ]
 
 
-WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER = False 
+WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER = False
 """インデックスツリー設定"""
 
-DISPLAY_LOGIN = True
+DISPLAY_LOGIN = False
 """ Display Login/Sign up menu """
