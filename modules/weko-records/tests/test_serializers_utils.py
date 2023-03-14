@@ -1,13 +1,9 @@
 import pytest
 import uuid
-import json
-import base64
 from tests.helpers import json_data
-from mock import patch, MagicMock
 from werkzeug import ImmutableMultiDict
 from werkzeug.datastructures import MultiDict, CombinedMultiDict
 from invenio_pidstore.models import PersistentIdentifier
-from invenio_accounts.testutils import login_user_via_session
 from weko_records.api import ItemTypeProps, ItemTypes, Mapping
 from weko_records.models import ItemTypeName
 from weko_records.serializers.utils import (
