@@ -17,8 +17,6 @@
                 json_obj = angular.fromJson(data)
                 db_data = json_obj.condition_setting;
 
-                $scope.set_current_index_condition()
-
                 angular.forEach(db_data, function (item, index, array) {
                     // useable
                     if (item.useable_status) {
@@ -424,29 +422,6 @@
             //     })
             // }
 
-            $scope.set_current_index_condition = function () {
-                const cur_index_id = $('#cur_index_id')[0].innerHTML;
-                if (!cur_index_id || cur_index_id == "None") {
-                    return;
-                }
-                angular.forEach(db_data, function (item, index, array) {
-                    if (item.id != "iid") {
-                        return;
-                    }
-                    let index_name = null;
-                    angular.forEach(item.check_val, function (item2, index2, array2) {
-                        if (item2.id == cur_index_id) {
-                            item2.checkStus = true;
-                            index_name = item2.contents;
-                        }
-                    });
-                    angular.forEach(item.check_val, function (item2, index2, array2) {
-                        if (item2.contents.startsWith(index_name + "/")) {
-                            item2.checkStus = true;
-                        }
-                    });
-                });
-            }
         }
 
         // Inject depedencies

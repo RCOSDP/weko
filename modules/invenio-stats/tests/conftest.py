@@ -18,8 +18,6 @@ import uuid
 from contextlib import contextmanager
 from copy import deepcopy
 import json
-from invenio_i18n import InvenioI18N
-from invenio_search.api import RecordsSearch
 from mock import Mock, patch
 from six import BytesIO
 import pytest
@@ -65,27 +63,12 @@ from invenio_stats import InvenioStats
 from invenio_stats.contrib.event_builders import build_file_unique_id, \
     build_record_unique_id, file_download_event_builder
 from invenio_stats.contrib.registrations import register_queries
-from invenio_stats.config import STATS_EVENTS, STATS_QUERIES
+from invenio_stats.config import STATS_EVENTS, STATS_AGGREGATIONS, STATS_QUERIES
 from invenio_stats.processors import EventsIndexer
 from invenio_stats.tasks import aggregate_events
 from invenio_stats.views import blueprint
 
 from tests.helpers import json_data, create_record
-
-
-class TestSearch(RecordsSearch):
-    """Test record search."""
-
-    class Meta:
-        """Test configuration."""
-
-        index = 'invenio-stats'
-        doc_types = None
-
-    def __init__(self, **kwargs):
-        """Add extra options."""
-        super(TestSearch, self).__init__(**kwargs)
-        self._extra.update(**{'_source': {'excludes': ['_access']}})
 
 
 def mock_iter_entry_points_factory(data, mocked_group):
@@ -248,14 +231,8 @@ def instance_path():
     shutil.rmtree(path)
 
 
-@pytest.yield_fixture(scope='session')
-def search_class():
-    """Search class."""
-    yield TestSearch
-
-
 @pytest.fixture()
-def base_app(instance_path, mock_gethostbyaddr, search_class):
+def base_app(instance_path, mock_gethostbyaddr):
     """Flask application fixture without InvenioStats."""
     app_ = Flask('testapp', instance_path=instance_path)
     stats_events = {
@@ -267,7 +244,6 @@ def base_app(instance_path, mock_gethostbyaddr, search_class):
         }
     }
     stats_events.update({'event_{}'.format(idx): {} for idx in range(5)})
-    os.environ['INVENIO_WEB_HOST_NAME']='127.0.0.1'
     app_.config.update(dict(
         CELERY_ALWAYS_EAGER=True,
         CELERY_TASK_ALWAYS_EAGER=True,
@@ -305,23 +281,7 @@ def base_app(instance_path, mock_gethostbyaddr, search_class):
         STATS_QUERIES=STATS_QUERIES,
         STATS_EVENTS=stats_events,
         STATS_AGGREGATIONS={'file-download-agg': {}},
-        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
-        SEARCH_UI_SEARCH_INDEX="test-weko",
-        WEKO_INDEX_TREE_UPDATED=True,
-        REDIS_PORT='6379',
-        RECORDS_REST_SORT_OPTIONS={
-            search_class.Meta.index: dict(
-                year=dict(
-                    fields=['year'],
-                )
-            )
-        },
-        WEKO_PERMISSION_ROLE_USER=[
-            "System Administrator",
-            "Repository Administrator",
-            "Contributor",
-            "Community Administrator",
-        ]
+        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"})
     ))
     FlaskCeleryExt(app_)
     InvenioAccess(app_)
@@ -352,41 +312,10 @@ def app(base_app):
 
 
 @pytest.yield_fixture()
-def i18n_app(app):
-    InvenioI18N(app)
-    with app.test_request_context(
-        headers=[('Accept-Language','ja')]):
-        app.extensions['invenio-oauth2server'] = 1
-        app.extensions['invenio-queues'] = 1
-        yield app
-
-
-@pytest.yield_fixture()
 def client(app):
     app.register_blueprint(blueprint, url_prefix="/api/stats")
     with app.test_client() as client:
         yield client
-
-@pytest.fixture()
-def roles(app, db):
-    ds = app.extensions["invenio-accounts"].datastore
-    role_count = Role.query.filter_by(name='System Administrator').count()
-    if role_count != 1:
-        sysadmin_role = ds.create_role(name='System Administrator')
-        repoadmin_role = ds.create_role(name='Repository Administrator')
-        contributor_role = ds.create_role(name='Contributor')
-        comadmin_role = ds.create_role(name='Community Administrator')
-    else:
-        sysadmin_role = Role.query.filter_by(name='System Administrator').first()
-        repoadmin_role = Role.query.filter_by(name='Repository Administrator').first()
-        contributor_role = Role.query.filter_by(name='Contributor').first()
-        comadmin_role = Role.query.filter_by(name='Community Administrator').first()
-    return {
-        'System Administrator': sysadmin_role,
-        'Repository Administrator': repoadmin_role,
-        'Contributor': contributor_role,
-        'Community Administrator': comadmin_role
-    }
 
 
 @pytest.fixture()
@@ -495,6 +424,7 @@ def role_users(app, db):
         ds.add_role_to_user(originalroleuser, originalrole)
         ds.add_role_to_user(originalroleuser2, originalrole)
         ds.add_role_to_user(originalroleuser2, repoadmin_role)
+        
 
     return [
         {"email": contributor.email, "id": contributor.id, "obj": contributor},

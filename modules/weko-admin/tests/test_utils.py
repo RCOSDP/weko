@@ -35,6 +35,7 @@ from weko_admin.utils import (
     make_stats_file,
     write_report_file_rows,
     reset_redis_cache,
+    is_exists_key_in_redis,
     is_exists_key_or_empty_in_redis,
     get_redis_cache,
     StatisticMail,
@@ -303,7 +304,7 @@ def test_make_stats_file(client,mocker):
         'Total Detail Views,10\n'
     result = make_stats_file(raw_stats,file_type,year,month)
     assert result.getvalue() == test
-
+    
     # filetype = billing_file_download
     file_type = "billing_file_download"
     raw_stats={"all_groups":["test_group"]}
@@ -312,10 +313,10 @@ def test_make_stats_file(client,mocker):
         'Aggregation Month,2022-10\n'\
         '""\n'\
         'No. Of Paid File Downloads\n'\
-        'File Name,Registered Index Name,No. Of Times Downloaded,Non-Logged In User,System Administrator,Repository Administrator,Contributor,Community Administrator,General,Original Role,Student,Site License,Admin,Registrar\n'
+        'File Name,Registered Index Name,No. Of Times Downloaded,test_group,Non-Logged In User,Logged In User,Site License,Admin,Registrar\n'
     result = make_stats_file(raw_stats,file_type,year,month)
     assert result.getvalue() == test
-
+    
     # filetype = site_access
     ## open_access in raw_stats
     file_type = "site_access"
@@ -393,53 +394,25 @@ def test_write_report_file_rows(db,users):
     record = [{"file_key":"test_file_key","index_list":"test_index_list","total":1,"no_login":"True","login":"False","site_license":"test_site_license","admin":"False","reg":"test_reg"}]
     write_report_file_rows(writer,record)
     assert output.getvalue() == "test_file_key,test_index_list,1,True,False,test_site_license,False,test_reg\n"
-
+    
     # filetype is billiing_file_download
     output = StringIO()
     writer = csv.writer(output,delimiter=",",lineterminator="\n")
-    record = [
-        {
-            "file_key": "test_file_key1",
-            "index_list": "test_index_list1",
-            "total": 1,
-            "no_login": 1,
-            "login": 0,
-            "site_license": 1,
-            "admin": 0,
-            "reg": 0,
-            "System Administrator": 0,
-            "Repository Administrator": 0,
-            "Contributor": 0,
-            "Community Administrator": 0,
-        }, {
-            "file_key": "test_file_key2",
-            "index_list": "test_index_list2",
-            "total": 2,
-            "no_login": 0,
-            "login": 2,
-            "site_license": 0,
-            "admin": 0,
-            "reg": 2,
-            "System Administrator": 0,
-            "Repository Administrator": 0,
-            "Contributor": 2,
-            "Community Administrator": 0,
-            "group_counts": { "test_group": 2 }
-        }, {
-            "file_key": "test_file_key3",
-            "index_list": "test_index_list3",
-            "total": 3,
-            "no_login": 0,
-            "login": 3,
-            "site_license": 0,
-            "admin": 3,
-            "reg": 0,
-            "System Administrator": 3,
-            "Repository Administrator": 0,
-            "Contributor": 0,
-            "Community Administrator": 0,
-        },
-    ]
+    record = {
+        "record1": {"file_key":"test_file_key1",
+               "index_list":"test_index_list1",
+               "total":1,"no_login":"True",
+               "login":"False",
+               "site_license":"test_site_license1",
+               "admin":"False","reg":"test_reg1"},
+        "record2": {"file_key":"test_file_key2",
+               "index_list":"test_index_list2",
+               "total":1,"no_login":"True",
+               "login":"False",
+               "site_license":"test_site_license2",
+               "admin":"False","reg":"test_reg2",
+               "group_counts":{"test_group":10}}
+    }
     other_info = ["test_group"]
     write_report_file_rows(writer,record,"billing_file_download",other_info)
     assert output.getvalue() == "test_file_key1,test_index_list1,1,True,False,test_site_license1,False,test_reg1\n"\
@@ -534,6 +507,20 @@ def test_reset_redis_cache(redis_connect,mocker):
     with mocker.patch("weko_admin.utils.RedisConnection.connection",side_effect=Exception("test_error")):
         with pytest.raises(Exception):
             reset_redis_cache("test_cache","")
+
+
+# def is_exists_key_in_redis(key):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_is_exists_key_in_redis -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_is_exists_key_in_redis(redis_connect,mocker):
+    mocker.patch("weko_admin.utils.RedisConnection.connection",return_value=redis_connect)
+    redis_connect.put("test_key",bytes("test_value","utf-8"))
+    result = is_exists_key_in_redis("test_key")
+    assert result == True
+    
+    # raise Exception
+    with patch("weko_admin.utils.RedisConnection.connection", side_effect=Exception("test_error")):
+        result = is_exists_key_in_redis("test_key")
+        assert result == False
 
 
 # def is_exists_key_or_empty_in_redis(key):

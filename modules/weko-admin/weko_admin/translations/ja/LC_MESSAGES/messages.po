@@ -265,15 +265,16 @@ msgstr "統計設定"
 
 #: weko_admin/config.py:129
 msgid "No. Of File Downloads"
-msgstr "ファイルダウンロード回数"
+msgstr "ファイルダウンロード数"
 
 #: weko_admin/config.py:130
 msgid "No. Of File Previews"
 msgstr "ファイルプレビュー数"
 
 #: weko_admin/config.py:131
+#, fuzzy
 msgid "No. Of Paid File Downloads"
-msgstr "課金ファイルダウンロード回数"
+msgstr "ファイルダウンロード数"
 
 #: weko_admin/config.py:132
 #, fuzzy
@@ -304,7 +305,7 @@ msgstr "ホスト別アクセス数"
 msgid "User Affiliation Information"
 msgstr "ユーザー所属情報"
 
-#: weko_admin/config.py:142
+#: weko_admin/config.py:139
 #: weko_admin/templates/weko_admin/email_templates/site_license_report.html:21
 msgid "Access Count By Site License"
 msgstr "サイトライセンス別アクセス数"
@@ -319,7 +320,7 @@ msgstr "オープンアクセスファイルプレビュー数"
 
 #: weko_admin/config.py:146
 msgid "Access Number Breakdown By Site License"
-msgstr "サイトライセンス別アクセス数内訳"
+msgstr "サイトライセンス別アクセス番号内訳"
 
 #: weko_admin/config.py:152 weko_admin/config.py:157
 msgid "File Name"
@@ -329,15 +330,16 @@ msgstr "ファイル名"
 msgid "Registered Index Name"
 msgstr "登録インデックス名"
 
-#: weko_admin/config.py:157
+#: weko_admin/config.py:153
+#, fuzzy
 msgid "No. Of Times Downloaded"
-msgstr "ファイルダウンロード回数"
+msgstr "ダウンロード/表示回数"
 
-#: weko_admin/config.py:153 weko_admin/config.py:157
+#: weko_admin/config.py:153 weko_admin/config.py:158
 msgid "Non-Logged In User"
-msgstr "未ログインユーザー"
+msgstr "非ログインユーザー"
 
-#: weko_admin/config.py:154 weko_admin/config.py:157
+#: weko_admin/config.py:154 weko_admin/config.py:159
 msgid "Logged In User"
 msgstr "ログインユーザー"
 
@@ -399,7 +401,7 @@ msgstr "検索キーワード"
 #: weko_admin/config.py:169 weko_admin/config.py:174
 #: weko_admin/templates/weko_admin/email_templates/site_license_report.html:25
 msgid "Number Of Searches"
-msgstr "検索回数"
+msgstr "検索数"
 
 #: weko_admin/config.py:170
 msgid "Host"
@@ -412,7 +414,7 @@ msgstr "IPアドレス"
 #: weko_admin/config.py:171 weko_admin/config.py:173
 #: weko_admin/templates/weko_admin/email_templates/site_license_report.html:24
 msgid "WEKO Top Page Access Count"
-msgstr "トップページアクセス回数"
+msgstr "WEKOトップページアクセス数"
 
 #: weko_admin/config.py:172
 msgid "Role"
@@ -425,12 +427,12 @@ msgstr "利用者数"
 #: weko_admin/config.py:174
 #: weko_admin/templates/weko_admin/email_templates/site_license_report.html:26
 msgid "Number Of Views"
-msgstr "閲覧回数"
+msgstr "ビュー数"
 
 #: weko_admin/config.py:175
 #: weko_admin/templates/weko_admin/email_templates/site_license_report.html:27
 msgid "Number Of File download"
-msgstr "ファイルダウンロード回数"
+msgstr "ファイルダウンロード数"
 
 #: weko_admin/config.py:176
 #: weko_admin/templates/weko_admin/email_templates/site_license_report.html:28
@@ -446,8 +448,9 @@ msgid "FilePreview_"
 msgstr "ファイルプレビュー"
 
 #: weko_admin/config.py:183
+#, fuzzy
 msgid "PayFileDownload_"
-msgstr "課金ファイルダウンロード"
+msgstr "ファイルダウンロード"
 
 #: weko_admin/config.py:184
 #, fuzzy
@@ -499,9 +502,9 @@ msgstr "アカウント情報が無効です。再度確認してください"
 msgid "Registered Users"
 msgstr "登録ユーザー"
 
-#: weko_admin/utils.py:374
+#: weko_admin/utils.py:373
 msgid "Aggregation Month"
-msgstr "集計月"
+msgstr "月別集計"
 
 #: weko_admin/utils.py:388
 msgid "Total Detail Views"
@@ -509,13 +512,14 @@ msgstr "詳細ビュー合計"
 
 #: weko_admin/utils.py:396
 msgid "Site license member"
-msgstr "サイトライセンス会員"
+msgstr "サイトライセンスメンバー"
 
 #: weko_admin/utils.py:400
 msgid "Other than site license"
-msgstr "サイトライセンス以外"
+msgstr "サイトライセンス外"
 
 #: weko_admin/utils.py:411
+#, fuzzy
 msgid "Institution Name"
 msgstr "機関名"
 
@@ -959,8 +963,9 @@ msgid "File Downloads"
 msgstr "ファイルダウンロード"
 
 #: weko_admin/templates/weko_admin/admin/report.html:110
+#, fuzzy
 msgid "Paid File Downloads"
-msgstr "課金ファイルダウンロード"
+msgstr "ファイルダウンロード"
 
 #: weko_admin/templates/weko_admin/admin/report.html:111
 msgid "File Previews"
