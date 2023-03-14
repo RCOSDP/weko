@@ -18,6 +18,7 @@ from weko_index_tree.utils import (
     unlock_index,
     is_index_locked,
     validate_before_delete_index,
+    is_exists_key_in_redis,
     perform_delete_index,
     get_doi_items_in_index,
     cached_index_tree_json,
@@ -67,7 +68,6 @@ from invenio_deposit.api import Deposit
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
 from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
-from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
 from weko_redis.redis import RedisConnection
 
@@ -387,6 +387,20 @@ def test_is_index_locked(i18n_app, indices, redis_connect):
     datastore.put(locked_key_dict, json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=30)
 
     assert is_index_locked(key)
+
+
+#+++ def is_exists_key_in_redis(key):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_is_exists_key_in_redis -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_is_exists_key_in_redis(redis_connect,mocker):
+    mocker.patch("weko_index_tree.utils.RedisConnection.connection",return_value=redis_connect)
+    redis_connect.put("test_key",bytes("test_value","utf-8"))
+    result = is_exists_key_in_redis("test_key")
+    assert result == True
+
+    # raise Exception
+    with patch("weko_index_tree.utils.RedisConnection.connection", side_effect=Exception("test_error")):
+        result = is_exists_key_in_redis("test_key")
+        assert result == False
 
 
 #+++ def perform_delete_index(index_id, record_class, action: str):
