@@ -633,8 +633,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             for idx, id_type in enumerate(id_type_list):
                 if id_idxs and str(idx) not in id_idxs:
                     continue
-                if not id_type:
-                    continue
 
                 if isinstance(id_type, str):
                     name = id_type + ".value"

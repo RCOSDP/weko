@@ -50,10 +50,9 @@ class WekologBaseExtension(BaseExtension):
 
         elems = ['terms', 'view', 'download']
         for elem in elems:
-            if hasattr(self, '_wekolog_%s' % elem):
-                for val in getattr(self, '_wekolog_%s' % elem) or []:
-                    node = etree.SubElement(xml_elem, '{%s}%s' % (WEKOLOGELEMENTS_NS, elem))
-                    node.text = val
+            for val in getattr(self, '_wekolog_%s' % elem) or []:
+                node = etree.SubElement(xml_elem, '{%s}%s' % (WEKOLOGELEMENTS_NS, elem))
+                node.text = val
 
     def extend_atom(self, atom_feed):
         """Extend an Atom feed with the set Wekolog fields.
