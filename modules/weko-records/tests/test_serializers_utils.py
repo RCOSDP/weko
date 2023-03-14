@@ -1,5 +1,7 @@
 import pytest
 import uuid
+import json
+import base64
 from tests.helpers import json_data
 from mock import patch, MagicMock
 from werkzeug import ImmutableMultiDict
@@ -147,7 +149,12 @@ def test_open_search_detail_data(app, db, db_index, record1, render, form, mappi
     _search_result = {'hits': {'total': 1, 'hits': [hit_data]}}
     detail = OpenSearchDetailData(fetcher, _search_result, 'rss')
     with app.test_request_context(headers=[('Accept-Language','en')], query_string=_data):
-        assert detail.output_open_search_detail_data()
+        res = detail.output_open_search_detail_data()
+        res = res.decode('utf-8')
+        cnt = 1 if res.find('wekolog:terms') else 0
+        cnt += 1 if res.find('wekolog:view') else 0
+        cnt += 1 if res.find('wekolog:download') else 0
+        assert True if cnt == 3 else False
 
     _data = {
         'lang': 'en'
@@ -155,4 +162,9 @@ def test_open_search_detail_data(app, db, db_index, record1, render, form, mappi
     _search_result = {'hits': {'total': 1, 'hits': [hit_data]}}
     detail = OpenSearchDetailData(fetcher, _search_result, 'rss')
     with app.test_request_context(headers=[('Accept-Language','en')], query_string=_data):
-        assert detail.output_open_search_detail_data()
+        res = detail.output_open_search_detail_data()
+        res = res.decode('utf-8')
+        cnt = 1 if res.find('wekolog:terms') == -1 else 0
+        cnt += 1 if res.find('wekolog:view') == -1 else 0
+        cnt += 1 if res.find('wekolog:download') == -1 else 0
+        assert True if cnt == 3 else False
