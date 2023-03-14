@@ -1,20 +1,5 @@
 import pytest
-from weko_records_ui.utils import (
-    check_and_create_usage_report,
-    check_items_settings, create_onetime_download_url,
-    create_usage_report_for_user, display_oaiset_path,
-    generate_one_time_download_url, get_billing_file_download_permission,
-    get_billing_role, get_file_info_list, get_google_detaset_meta,
-    get_google_scholar_meta, get_groups_price, get_license_pdf,
-    get_list_licence, get_min_price_billing_file_download,
-    get_onetime_download, get_pair_value, get_record_permalink, get_roles,
-    get_terms, get_workflows, hide_by_email, hide_by_file, hide_by_itemtype,
-    hide_item_metadata, hide_item_metadata_email_only, is_billing_item,
-    is_private_index, is_show_email_of_creator,
-    parse_one_time_download_token, replace_license_free, restore,
-    send_usage_report_mail_for_user, soft_delete, update_onetime_download,
-    validate_download_record, validate_onetime_download_token
-)
+from weko_records_ui.utils import create_usage_report_for_user,get_data_usage_application_data,send_usage_report_mail_for_user,check_and_send_usage_report,check_and_create_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,is_show_email_of_creator,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings
 import base64
 from unittest.mock import MagicMock
 import copy
@@ -29,8 +14,8 @@ from flask import Flask, json, jsonify, session, url_for,current_app
 from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-
 from mock import patch
+from weko_deposit.api import WekoRecord
 from weko_records_ui.models import FileOnetimeDownload
 from weko_records.api import ItemTypes,Mapping
 from werkzeug.exceptions import NotFound
@@ -179,17 +164,25 @@ def test_get_min_price_billing_file_download(users):
             get_min_price_billing_file_download(groups_price,billing_file_permission)
         except:
             pass
+        
 
-
-# def is_billing_item(record: dict) -> bool:
+# def is_billing_item(item_type_id):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_billing_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_is_billing_item(i18n_app,records, mock_es_execute):
-    _, results = records
-    non_billing_record = results[0]['record']
-    billing_record = results[3]['record']
+def test_is_billing_item(app,itemtypes):
+    assert is_billing_item(1)==False
 
-    assert is_billing_item(non_billing_record)==False
-    assert is_billing_item(billing_record)==True
+    data1 = MagicMock()
+    data1.schema = {
+        "properties": {
+            "meta_key": {
+                "type": "object",
+                "properties": ["groupsprice"]
+            }
+        }
+    }
+
+    with patch("weko_records.api.ItemTypes.get_by_id", return_value=data1):
+        assert is_billing_item(data1) == True
 
 
 # def soft_delete(recid):
@@ -1372,23 +1365,3 @@ def test_get_google_detaset_meta(app, records, itemtypes, oaischema, oaiidentify
 
         with patch("lxml.etree", return_value=data1):
             assert get_google_detaset_meta(record) == None
-
-
-# def get_billing_role(record):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_google_detaset_meta -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_billing_role(records, users):
-    _, results = records
-    record = results[0]['record']
-    with patch('flask_login.utils._get_user', return_value=users[8]['obj']):
-        user_role, min_price = get_billing_role(record)
-        assert user_role == 'guest'
-        assert min_price == ''
-    billing_record = results[3]['record']
-    with patch('flask_login.utils._get_user', return_value=users[8]['obj']):
-        user_role, min_price = get_billing_role(billing_record)
-        assert user_role == 'System Administrator'
-        assert min_price == '200'
-    with patch('flask_login.utils._get_user', return_value=users[5]['obj']):
-        user_role, min_price = get_billing_role(billing_record)
-        assert user_role == 'guest'
-        assert min_price == ''

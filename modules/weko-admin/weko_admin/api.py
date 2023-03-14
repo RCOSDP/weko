@@ -29,8 +29,6 @@ from redis import RedisError
 import requests
 from flask import current_app, render_template
 from flask_babelex import lazy_gettext as _
-from flask_mail import Attachment
-from invenio_accounts.models import Role, User
 from invenio_db import db
 from invenio_mail.api import send_mail
 from weko_redis.redis import RedisConnection
@@ -38,11 +36,9 @@ from flask_wtf import FlaskForm
 from wtforms.validators import ValidationError
 from flask_wtf.csrf import validate_csrf,same_origin,CSRFError
 
-from .config import WEKO_ADMIN_PERMISSION_ROLE_SYSTEM
 from .models import LogAnalysisRestrictedCrawlerList, \
     LogAnalysisRestrictedIpAddress
-from .utils import get_system_default_language, package_site_access_stats_file
-
+from .utils import get_system_default_language
 
 def is_restricted_user(user_info):
     """Check if user is restricted based on IP Address and User Agent.
@@ -127,18 +123,8 @@ def send_site_license_mail(organization_name, mail_list, agg_date, data):
     """Send site license statistics mail."""
     try:
         # mail title
-        subject = '[Weko3] ' + agg_date + ' site license statistics'
-
-        # Create attached file
-        file_name = 'SiteAccess_' + agg_date + '.zip'
-        zip_stream = package_site_access_stats_file(data, agg_date)
-        attachment = Attachment(file_name,
-                                'application/x-zip-compressed',
-                                zip_stream.getvalue())
-
-        role = Role.query.filter_by(name=WEKO_ADMIN_PERMISSION_ROLE_SYSTEM).first()
-        user = User.query.filter(User.roles.contains(role)).order_by(User.id.asc()).first()
-        administrator = user.email if user is not None else None
+        subject = '[{0}] {1} '.format(organization_name, agg_date) + \
+            _('statistics report')
 
         with current_app.test_request_context() as ctx:
             default_lang = get_system_default_language()
@@ -151,10 +137,9 @@ def send_site_license_mail(organization_name, mail_list, agg_date, data):
                 body=str(
                     render_template(
                         'weko_admin/email_templates/site_license_report.html',
-                        organization_name=organization_name,
                         agg_date=agg_date,
-                        administrator=administrator)),
-                attachments=[attachment])
+                        data=data,
+                        lang_code=default_lang)))
     except Exception as ex:
         current_app.logger.error(ex)
 
