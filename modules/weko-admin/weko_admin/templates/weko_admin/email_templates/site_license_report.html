@@ -17,13 +17,44 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 #}
+{{ organization_name }} 様
+WEKO3をご利用いただきありがとうございます。
+{{ agg_date }}のサイトライセンス利用統計を送付いたします。
+このメールが不要な場合は、お手数ですが管理者({{ administrator }})までご連絡ください。
 
-{{ _('Access Count By Site License') }}
-{{ _('Aggregation') }} : {{agg_date}}
+◆ファイル形式はタブ区切りテキストファイル(TSV)です。
+◆各列の説明
+  WEKOトップページアクセス数
+    トップページのアクセス数を表示します。
+  検索数
+    実施された検索回数を表示します。
+  ビュー数
+    アイテム詳細画面の表示数の合計を表示します。
+  ファイルダウンロード数
+    ファイルのダウンロード数の合計を表示します。
+  ファイル再生回数
+    ファイルの再生回数の合計を表示します。
 
-[{{ _('WEKO Top Page Access Count') }}] : {{ data['top_view']|int }}
-[{{ _('Number Of Searches') }}] : {{ data['search']|int }}
-[{{ _('Number Of Views') }}] : {{ data['record_view']|int }}
-[{{ _('Number Of File download') }}] : {{ data['file_download']|int }}
-[{{ _('Number Of File Regeneration') }}] : {{ data['file_preview']|int }}
+お問い合わせ窓口：{{ administrator }}
 
+----------------------------------------------------------------------------------
+
+Dear {{ organization_name }},
+Thank you for using WEKO3.
+I will send you the statistics for {{ agg_date }}.
+If you do not need this email, please contact the administrator({{ administrator }}).
+
+◆The file format is Tab-separated values file (TSV).
+◆Description of each column.
+  WEKO Top Page Access Count
+    Shows the number of accesses to the top page.
+  Number Of Searches
+    Shows the number of searches.
+  Number Of Views
+    Shows the total number of accesses to the item detail page.
+  Number Of File download
+    Shows the total number of file downloads.
+  Number Of File Regeneration
+    Shows the total number of file played.
+
+E-mail：{{ administrator }}

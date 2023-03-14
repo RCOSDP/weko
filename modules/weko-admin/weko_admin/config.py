@@ -20,7 +20,8 @@
 
 """Configuration for weko-admin."""
 
-from flask_babelex import gettext as _
+from flask_babelex import gettext as __
+from flask_babelex import lazy_gettext as _
 
 WEKO_ADMIN_DEFAULT_AGGREGATION_MONTH = 2
 """default aggregation month for site license mail."""
@@ -132,7 +133,6 @@ WEKO_ADMIN_REPORT_HEADERS = {
     'file_download': _('No. Of File Downloads'),
     'file_preview': _('No. Of File Previews'),
     'billing_file_download': _('No. Of Paid File Downloads'),
-    'billing_file_preview': _('No. Of Paid File Previews'),
     'index_access': _('Detail Views Per Index'),
     'detail_view': _('Detail Views Count'),
     'file_using_per_user': _('Usage Count By User'),
@@ -181,17 +181,16 @@ WEKO_ADMIN_REPORT_COLS = {
 """Columns for the report .csv files"""
 
 WEKO_ADMIN_REPORT_FILE_NAMES = {
-    'file_download': _('FileDownload_'),
-    'file_preview': _('FilePreview_'),
-    'billing_file_download': _('PayFileDownload_'),
-    'billing_file_preview': _('PayFilePreview_'),
-    'index_access': _('IndexAccess_'),
-    'detail_view': _('DetailView_'),
-    'file_using_per_user': _('FileUsingPerUser_'),
-    'search_count': _('SearchCount_'),
-    'user_roles': _('UserAffiliate_'),
-    'site_access': _('SiteAccess_'),
-    'top_page_access': _('TopPageAccess_'),
+    'file_download': 'FileDownload_',
+    'file_preview': 'FilePreview_',
+    'billing_file_download': 'PayFileDownload_',
+    'index_access': 'IndexAccess_',
+    'detail_view': 'DetailView_',
+    'file_using_per_user': 'FileUsingPerUser_',
+    'search_count': 'SearchCount_',
+    'user_roles': 'UserAffiliate_',
+    'site_access': 'SiteAccess_',
+    'top_page_access': 'TopPageAccess_',
 }
 """File names for the report .csv files"""
 

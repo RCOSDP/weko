@@ -21,18 +21,17 @@
 """Module of weko-records-ui utils."""
 
 import base64
-import os
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
-from typing import NoReturn, Tuple
-from urllib.parse import urlparse,quote
+from typing import NoReturn, Tuple, Dict
+from urllib.parse import quote
 
-from flask import abort, current_app, json, request, url_for
-from flask_babelex import get_locale
+from elasticsearch_dsl import Q
+from flask import abort, current_app, json, request
 from flask_babelex import gettext as _
-from flask_babelex import to_user_timezone, to_utc
-from flask_login import current_user
+from flask_babelex import to_utc
+from flask_security import current_user
 from invenio_accounts.models import Role
 from invenio_cache import current_cache
 from invenio_db import db
@@ -50,9 +49,8 @@ from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.models import ItemBilling
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
-from weko_workflow.api import WorkActivity, WorkFlow
-
 from weko_records_ui.models import InstitutionName
+from weko_workflow.api import WorkActivity, WorkFlow
 
 from .models import FileOnetimeDownload, FilePermission
 from .permissions import check_create_usage_report, \
@@ -132,7 +130,7 @@ def get_billing_file_download_permission(groups_price: list) -> dict:
 
     Returns:
         dict: Billing file permission dictionary.
-    """    
+    """
     # current_app.logger.debug("groups_price:{}".format(groups_price))
     billing_file_permission = dict()
     for data in groups_price:
@@ -188,18 +186,20 @@ def get_min_price_billing_file_download(groups_price: list,
     return min_prices
 
 
-def is_billing_item(item_type_id):
+def is_billing_item(record: Dict) -> bool:
     """Checks if item is a billing item based on its meta data schema."""
-    item_type = ItemTypes.get_by_id(id_=item_type_id)
-    if item_type:
-        properties = item_type.schema['properties']
-        for meta_key in properties:
-            if properties[meta_key]['type'] == 'object' and \
-               'groupsprice' in properties[meta_key]['properties'] or \
-                properties[meta_key]['type'] == 'array' and 'groupsprice' in \
-                    properties[meta_key]['items']['properties']:
-                return True
-        return False
+
+    for value in record.values():
+        if not isinstance(value, dict):
+            continue
+        if value.get('attribute_type', '') != 'file':
+            continue
+        for file in value.get('attribute_value_mlt', []):
+            if file.get('billing') and len(file.get('billing')) > 0 and file.get('billing')[0] == 'billing_file':
+                if file.get('priceinfo'):
+                    return True
+
+    return False
 
 
 def soft_delete(recid):
@@ -1533,3 +1533,42 @@ def get_google_detaset_meta(record,record_tree=None):
     current_app.logger.debug("res_data: {}".format(json.dumps(res_data, ensure_ascii=False)))
 
     return json.dumps(res_data, ensure_ascii=False)
+
+def get_billing_role(record: Dict) -> Tuple[str, str]:
+    """Get the lowest price and roll.
+
+    Args:
+        record (dict): Record metadata
+
+    Returns:
+        tuple[str, str]: role, price(min)
+    """
+    user_roles = current_user.roles
+    user_role_ids = [role.id for role in user_roles]
+
+    price_info_key = 'priceinfo'
+
+    billing_role_key = 'billingrole'
+    billing_price_key = 'price'
+
+    min_price_info = None
+    role_prices = []
+    for _, value in record.items():
+        if not isinstance(value, dict):
+            continue
+
+        if value.get('attribute_type') == 'file':
+            for file_item in value.get('attribute_value_mlt', []):
+                price_info = file_item.get(price_info_key, [])
+                role_prices.extend([role_price for role_price in price_info \
+                                    if int(role_price.get(billing_role_key, '-1')) in user_role_ids \
+                                        and billing_price_key in role_price.keys()])
+
+    if len(role_prices) > 0:
+        min_price_info = min(role_prices, key=lambda info: int(info[billing_price_key]))
+
+    if min_price_info is None or billing_role_key not in min_price_info.keys():
+        return 'guest', ''
+
+    min_role = Role.query.get(int(min_price_info.get(billing_role_key)))
+    return min_role.name, min_price_info.get(billing_price_key, '')

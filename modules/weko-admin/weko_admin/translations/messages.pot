@@ -951,30 +951,26 @@ msgid "File Previews"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/report.html:112
-msgid "Paid File Previews"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/report.html:113
 msgid "Index Access"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/report.html:114
+#: weko_admin/templates/weko_admin/admin/report.html:113
 msgid "Item View"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/report.html:115
+#: weko_admin/templates/weko_admin/admin/report.html:114
 msgid "File Using Per User"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/report.html:117
+#: weko_admin/templates/weko_admin/admin/report.html:116
 msgid "Top Page Access"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/report.html:118
+#: weko_admin/templates/weko_admin/admin/report.html:117
 msgid "Users"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/report.html:119
+#: weko_admin/templates/weko_admin/admin/report.html:118
 msgid "Site Access"
 msgstr ""
 
