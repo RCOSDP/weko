@@ -244,6 +244,15 @@ msgstr ""
 msgid "Profile was updated."
 msgstr "Updated your profile"
 
+#. NOTE: Menu item text (icon replaced by a user icon).
+#: weko_user_profiles/views.py:182
+msgid "%(icon)s Profile(UMS)"
+msgstr "%(icon)s Profile(UMS)"
+
+#: weko_user_profiles/views.py:186
+msgid "Profile(UMS)"
+msgstr "Profile(UMS)"
+
 #~ msgid "Full name"
 #~ msgstr ""
 
