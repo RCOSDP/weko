@@ -22,7 +22,6 @@ from flask import current_app
 from invenio_search import current_search_client
 from pytz import utc
 from weko_admin.api import is_restricted_user
-from weko_admin.utils import get_redis_cache, reset_redis_cache, is_exists_key_in_redis
 
 from .models import StatsEvents
 from .utils import get_anonymization_salt, get_geoip, obj_or_import_string
