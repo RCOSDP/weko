@@ -61,6 +61,29 @@ def test_convert_to(app):
         except:
             pass
 
+        try:
+            with patch('invenio_previewer.api.request.path', return_value="this/is/a/test/variable"):
+                with patch('invenio_previewer.api.flash', return_value=""):
+                    with patch('invenio_previewer.api.subprocess.run', side_effect=FileNotFoundError('test')):
+                        convert_to(folder=folder, source=source)
+        except:
+            pass
+
+        try:
+            with patch('invenio_previewer.api.request.path', return_value="this/is/a/test/variable"):
+                with patch('invenio_previewer.api.flash', return_value=""):
+                    with patch('invenio_previewer.api.subprocess.run', side_effect=PermissionError('test')):
+                        convert_to(folder=folder, source=source)
+        except:
+            pass
+
+        try:
+            with patch('invenio_previewer.api.request.path', return_value="this/is/a/test/variable"):
+                with patch('invenio_previewer.api.flash', return_value=""):
+                    with patch('invenio_previewer.api.subprocess.run', side_effect=OSError('test')):
+                        convert_to(folder=folder, source=source)
+        except:
+            pass
         
 
 # class LibreOfficeError(Exception):
