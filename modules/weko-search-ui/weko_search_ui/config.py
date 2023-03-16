@@ -142,6 +142,12 @@ SEARCH_UI_SEARCH_INDEX = "{}-weko".format(index_prefix)
 RECORDS_REST_FACETS = dict()
 RECORDS_REST_FACETS_NO_SEARCH_PERMISSION = dict()
 
+RECORDS_REST_DEFAULT_SORT = dict()
+RECORDS_REST_DEFAULT_SORT[SEARCH_UI_SEARCH_INDEX] = dict(
+    query='-createdate',
+    noquery='controlnumber',
+)
+
 RECORDS_REST_SORT_OPTIONS = dict()
 RECORDS_REST_SORT_OPTIONS[SEARCH_UI_SEARCH_INDEX] = dict(
     controlnumber=dict(

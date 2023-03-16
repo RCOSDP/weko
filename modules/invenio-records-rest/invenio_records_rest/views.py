@@ -547,6 +547,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
                                   request.values.get(
                                       'list_view_num', 10, type=int),
                                   type=int)
+        size = RecordsListResource.adjust_list_view_num(size)
 
         # if page * size >= self.max_result_window:
         #     raise MaxResultWindowRESTError()
@@ -804,6 +805,27 @@ class RecordsListResource(ContentNegotiatedMethodView):
             links=links,
             item_links_factory=self.item_links_factory,
         )
+
+
+    @classmethod
+    def adjust_list_view_num(cls, size: int) -> int:
+        """adjust parameter 'list_view_num'
+
+        Args:
+            size (int): request parameter size
+
+        Returns:
+            int: adjusted size (20, 50, 75, 100)
+        """
+        if size <= 20:
+            return 20
+        elif size > 20 and size <= 50:
+            return 50
+        elif size > 50 and size <= 75:
+            return 75
+
+        return 100
+
 
     @need_record_permission('create_permission_factory')
     def post(self, **kwargs):
