@@ -20,6 +20,7 @@
 
 """Pytest configuration."""
 
+from copy import deepcopy
 import os, sys
 import shutil
 import tempfile
@@ -55,7 +56,8 @@ from invenio_communities import InvenioCommunities
 from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_communities.models import Community
 from invenio_jsonschemas import InvenioJSONSchemas
-# from weko_records_ui import WekoRecordsUI
+from weko_search_ui.config import WEKO_SYS_USER
+from weko_records_ui import WekoRecordsUI
 from weko_theme import WekoTheme
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime,Identifier 
@@ -68,7 +70,7 @@ from weko_index_tree.models import Index
 
 from weko_workflow import WekoWorkflow
 from weko_search_ui import WekoSearchUI
-from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory,GuestActivity
+from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory,GuestActivity, WorkflowRole
 from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
 from weko_workflow.config import WEKO_WORKFLOW_GAKUNINRDM_DATA,WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR
 from weko_theme.views import blueprint as weko_theme_blueprint
@@ -485,6 +487,7 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_WORKFLOW_ACTION_ADVISOR=WEKO_WORKFLOW_ACTION_ADVISOR,
         WEKO_WORKFLOW_ACTION_ADMINISTRATOR=WEKO_WORKFLOW_ACTION_ADMINISTRATOR,
         WEKO_WORKFLOW_GAKUNINRDM_DATA=WEKO_WORKFLOW_GAKUNINRDM_DATA,
+        WEKO_SYS_USER=WEKO_SYS_USER,
     )
     
     app_.testing = True
@@ -504,6 +507,7 @@ def base_app(instance_path, search_class, cache_config):
     InvenioJSONSchemas(app_)
     InvenioPIDStore(app_)
     InvenioRecords
+    WekoRecordsUI(app_)
     search = InvenioSearch(app_, client=MockEs())
     search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
     # InvenioCommunities(app_)
@@ -1204,6 +1208,153 @@ def workflow(app, db, item_type, action_data, users):
     }
 
 @pytest.fixture()
+def workflow_open_restricted(app, db, item_type, action_data, users):
+    flow_define1 = FlowDefine(id=2,flow_id=uuid.uuid4(),
+                                flow_name='terms_of_use_only',
+                                flow_user=1)
+    flow_define2 = FlowDefine(id=3,flow_id=uuid.uuid4(),
+                                flow_name='usage application',
+                                flow_user=1)
+    with db.session.begin_nested():
+        db.session.add(flow_define1)
+        db.session.add(flow_define2)
+    db.session.commit()
+    
+    # setting flow action(start, item register, oa policy, item link, identifier grant, approval, end)
+    flow_actions1 = list()
+    flow_actions2 = list()
+    # flow_define1
+    # start
+    flow_actions1.append(FlowAction(status='N',
+                    flow_id=flow_define1.flow_id,
+                    action_id=1,
+                    action_version='1.0.0',
+                    action_order=1,
+                    action_condition='',
+                    action_status='A',
+                    action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                    send_mail_setting={}))
+    # end
+    flow_actions1.append(FlowAction(status='N',
+                    flow_id=flow_define1.flow_id,
+                    action_id=2,
+                    action_version='1.0.0',
+                    action_order=2,
+                    action_condition='',
+                    action_status='A',
+                    action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                    send_mail_setting={}))
+    # flow_define2
+    # start
+    flow_actions2.append(FlowAction(status='N',
+                    flow_id=flow_define2.flow_id,
+                    action_id=1,
+                    action_version='1.0.0',
+                    action_order=1,
+                    action_condition='',
+                    action_status='A',
+                    action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                    send_mail_setting={}))
+    # item register
+    flow_actions2.append(FlowAction(status='N',
+                    flow_id=flow_define2.flow_id,
+                    action_id=3,
+                    action_version='1.0.0',
+                    action_order=2,
+                    action_condition='',
+                    action_status='A',
+                    action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                    send_mail_setting={}))
+    # approval
+    flow_actions2.append(FlowAction(status='N',
+                    flow_id=flow_define2.flow_id,
+                    action_id=4,
+                    action_version='1.0.0',
+                    action_order=3,
+                    action_condition='',
+                    action_status='A',
+                    action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                    send_mail_setting={}))
+    # end
+    flow_actions2.append(FlowAction(status='N',
+                    flow_id=flow_define2.flow_id,
+                    action_id=2,
+                    action_version='1.0.0',
+                    action_order=4,
+                    action_condition='',
+                    action_status='A',
+                    action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                    send_mail_setting={}))
+    with db.session.begin_nested():
+        db.session.add_all(flow_actions1)
+        db.session.add_all(flow_actions2)
+    db.session.commit()
+    workflow1 = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='terms_of_use_only',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=2,
+                        is_deleted=False,
+                        open_restricted=True,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    workflow2 = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='usage application',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=3,
+                        is_deleted=False,
+                        open_restricted=True,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    workflow3 = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='nomal workflow',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=3,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    with db.session.begin_nested():
+        db.session.add(workflow1)
+        db.session.add(workflow2)
+        db.session.add(workflow3)
+    db.session.commit()
+
+    workflow_role1 = WorkflowRole(
+        workflow_id=workflow1.id
+        ,role_id=users[2]["obj"].id # sysadmin
+    )
+    workflow_role2 = WorkflowRole(
+        workflow_id=workflow2.id
+        ,role_id=users[2]["obj"].id # sysadmin
+    )
+    workflow_role3 = WorkflowRole(
+        workflow_id=workflow3.id
+        ,role_id=users[2]["obj"].id # sysadmin
+    )
+    with db.session.begin_nested():
+        db.session.add(workflow_role1)
+        db.session.add(workflow_role2)
+        db.session.add(workflow_role3)
+    db.session.commit()
+
+    return [{
+            "flow":flow_define1,
+            "flow_action":flow_actions1,
+            "workflow":workflow1
+        },{
+            "flow":flow_define2,
+            "flow_action":flow_actions2,
+            "workflow":workflow2
+        },{
+            "flow":flow_define2,
+            "flow_action":flow_actions2,
+            "workflow":workflow3
+        }]
+
+@pytest.fixture()
 def location(app, db, instance_path):
     with db.session.begin_nested():
         Location.query.delete()
@@ -1533,6 +1684,431 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
             "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item4,activity_item5,activity_item6]}
 
 @pytest.fixture()
+def db_register_usage_application(app, db, db_records, users, action_data, item_type ):
+    workflows = {}
+
+
+    flow_id1 = uuid.uuid4()
+    # flow_id2 = uuid.uuid4()
+    flow_id3 = uuid.uuid4()
+    flow_id4 = uuid.uuid4()
+
+    #workflow_flow_define
+    flow_define1 = FlowDefine(
+        flow_id=flow_id1, flow_name="利用登録", flow_user=1, flow_status="A"
+    )
+    flow_define3 = FlowDefine(
+        flow_id=flow_id3, flow_name="利用申請", flow_user=1, flow_status="A"
+    )
+    flow_define4 = FlowDefine(
+        flow_id=flow_id4, flow_name="2段階利用申請", flow_user=1, flow_status="A"
+    )
+
+    # workflow_flow_action
+    flow_action1_1 = FlowAction(
+        status="N",
+        flow_id=flow_id1,
+        action_id=1,
+        action_version="1.0.0",
+        action_order=1,
+        action_condition="",
+        action_status="A",
+        action_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        send_mail_setting={"inform_reject": False, "inform_approval": False, "request_approval": False},
+    )
+    flow_action1_2 = FlowAction(
+        status="N",
+        flow_id=flow_id1,
+        action_id=2,
+        action_version="1.0.0",
+        action_order=3,
+        action_condition="",
+        action_status="A",
+        action_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        send_mail_setting={"inform_reject": False, "inform_approval": False, "request_approval": False},
+    )
+    flow_action1_3 = FlowAction(
+        status="N",
+        flow_id=flow_id1,
+        action_id=3,
+        action_version="1.0.1",
+        action_order=2,
+        action_condition="",
+        action_status="A",
+        action_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        send_mail_setting={"inform_reject": False, "inform_approval": True, "request_approval": False},
+    )
+
+    flow_action3_1 = FlowAction(
+        status="N",
+        flow_id=flow_id3,
+        action_id=1,
+        action_version="1.0.0",
+        action_order=1,
+        action_condition="",
+        action_status="A",
+        action_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        send_mail_setting={"inform_reject": False, "inform_approval": False, "request_approval": False},
+    )
+    flow_action3_2 = FlowAction(
+        status="N",
+        flow_id=flow_id3,
+        action_id=2,
+        action_version="1.0.0",
+        action_order=4,
+        action_condition="",
+        action_status="A",
+        action_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        send_mail_setting={"inform_reject": False, "inform_approval": False, "request_approval": False},
+    )
+    flow_action3_3 = FlowAction(
+        status="N",
+        flow_id=flow_id3,
+        action_id=3,
+        action_version="1.0.1",
+        action_order=2,
+        action_condition="",
+        action_status="A",
+        action_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        send_mail_setting={"inform_reject": False, "inform_approval": False, "request_approval": False},
+    )
+    flow_action3_4 = FlowAction(
+        status="N",
+        flow_id=flow_id3,
+        action_id=4,
+        action_version="2.0.0",
+        action_order=3,
+        action_condition="",
+        action_status="A",
+        action_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        send_mail_setting={"inform_reject": True, "inform_approval": True, "request_approval": True},
+    )
+    flow_action4_1 = FlowAction(
+        status="N",
+        flow_id=flow_id4,
+        action_id=1,
+        action_version="1.0.0",
+        action_order=1,
+        action_condition="",
+        action_status="A",
+        action_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        send_mail_setting={"inform_reject": False, "inform_approval": False, "request_approval": False},
+    )
+    flow_action4_2 = FlowAction(
+        status="N",
+        flow_id=flow_id4,
+        action_id=2,
+        action_version="1.0.0",
+        action_order=5,
+        action_condition="",
+        action_status="A",
+        action_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        send_mail_setting={"inform_reject": False, "inform_approval": False, "request_approval": False},
+    )
+    flow_action4_3 = FlowAction(
+        status="N",
+        flow_id=flow_id4,
+        action_id=3,
+        action_version="1.0.1",
+        action_order=2,
+        action_condition="",
+        action_status="A",
+        action_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        send_mail_setting={"inform_reject": False, "inform_approval": False, "request_approval": False},
+    )
+    flow_action4_4 = FlowAction(
+        status="N",
+        flow_id=flow_id4,
+        action_id=4,
+        action_version="2.0.0",
+        action_order=3,
+        action_condition="",
+        action_status="A",
+        action_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        send_mail_setting={"inform_reject": True, "inform_approval": True, "request_approval": True},
+    )
+    flow_action4_5 = FlowAction(
+        status="N",
+        flow_id=flow_id4,
+        action_id=4,
+        action_version="2.0.0",
+        action_order=4,
+        action_condition="",
+        action_status="A",
+        action_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        send_mail_setting={"inform_reject": True, "inform_approval": True, "request_approval": True},
+    )
+
+
+    with db.session.begin_nested():
+        db.session.add_all([flow_define1,flow_define3,flow_define4])
+    db.session.commit()
+    #workflow_workflow
+    workflow_workflow1 = WorkFlow(
+        flows_id=flow_id1,
+        flows_name="利用登録",
+        itemtype_id=1,
+        index_tree_id=None,
+        flow_id=flow_define1.id,
+        flow_define=flow_define1,
+        is_deleted=False,
+        open_restricted=True,
+        # location_id=location.id,
+        # location=location,
+        is_gakuninrdm=False,
+    )
+
+    workflow_workflow3 = WorkFlow(
+        flows_id=flow_id3,
+        flows_name="利用申請",
+        itemtype_id=1,
+        index_tree_id=None,
+        flow_id=flow_define3.id,
+        flow_define=flow_define3,
+        is_deleted=False,
+        open_restricted=True,
+        # location_id=location.id,
+        # location=location,
+        is_gakuninrdm=False,
+    )
+    workflow_workflow4 = WorkFlow(
+        flows_id=flow_id4,
+        flows_name="2段階利用申請",
+        itemtype_id=1,
+        index_tree_id=None,
+        flow_id=flow_define4.id,
+        flow_define=flow_define4,
+        is_deleted=False,
+        open_restricted=True,
+        # location_id=location.id,
+        # location=location,
+        is_gakuninrdm=False,
+    )
+
+    with db.session.begin_nested():
+        db.session.add_all([flow_action1_1,flow_action1_2,flow_action1_3])
+
+        db.session.add_all([flow_action3_1,flow_action3_2,flow_action3_3,flow_action3_4])
+        db.session.add_all([flow_action4_1,flow_action4_2,flow_action4_3,flow_action4_4,flow_action4_5])
+        db.session.add_all([workflow_workflow1, workflow_workflow3, workflow_workflow4])
+    db.session.commit()
+    workflows.update({
+		"flow_define1"       : flow_define1      
+		# ,"flow_define2"       : flow_define2      
+		,"flow_define3"       : flow_define3      
+		,"flow_define4"       : flow_define4      
+		,"flow_action1_1"     : flow_action1_1    
+		,"flow_action1_2"     : flow_action1_2    
+		,"flow_action1_3"     : flow_action1_3    
+		# ,"flow_action2_1"     : flow_action2_1    
+		# ,"flow_action2_2"     : flow_action2_2    
+		,"flow_action3_1"     : flow_action3_1    
+		,"flow_action3_2"     : flow_action3_2    
+		,"flow_action3_3"     : flow_action3_3    
+		,"flow_action3_4"     : flow_action3_4    
+		,"flow_action4_1"     : flow_action4_1    
+		,"flow_action4_2"     : flow_action4_2    
+		,"flow_action4_3"     : flow_action4_3    
+		,"flow_action4_4"     : flow_action4_4    
+		,"flow_action4_5"     : flow_action4_5    
+		,"workflow_workflow1" : workflow_workflow1
+		# ,"workflow_workflow2" : workflow_workflow2
+		,"workflow_workflow3" : workflow_workflow3
+		,"workflow_workflow4" : workflow_workflow4
+    })
+
+    # 利用登録(now -> item_registration, next ->end)
+    activity1 = Activity(activity_id='A-00000001-20001'
+                        ,workflow_id=workflow_workflow1.id
+                        , flow_id=flow_define1.id,
+                    action_id=3, 
+                    item_id=db_records[2][2].id,
+                    activity_login_user=1,
+                    action_status = 'M',
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=None,
+                    activity_confirm_term_of_use=True,
+                    title='test'
+                    , shared_user_id=-1
+                    , extra_info={},
+                    action_order=2)
+    activity1_pre_action = ActivityAction(
+        activity_id='A-00000001-20001'
+        ,action_id=3
+        ,action_status = 'M'
+        ,action_order=2
+    )
+    activity1_next_action = ActivityAction(
+        activity_id='A-00000001-20001'
+        ,action_id=2
+        ,action_status = 'M'
+        ,action_order=3
+    )
+    # 利用申請(next ->end)
+    activity2 = Activity(activity_id='A-00000001-20002'
+                        ,workflow_id=workflow_workflow3.id
+                        ,flow_id=flow_define3.id
+                        ,action_id=4
+                        ,item_id=db_records[2][2].id
+                    , activity_login_user=1
+                    , action_status = 'M'
+                    , activity_update_user=1
+                    , activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f')
+                    , activity_community_id=3
+                    , activity_confirm_term_of_use=True
+                    , title='test'
+                    , shared_user_id=-1
+                    , extra_info={}
+                    , action_order=3)
+    activity2_pre_action = ActivityAction(
+        activity_id='A-00000001-20002'
+        ,action_id=4
+        ,action_status = 'M'
+        ,action_order=3
+    )
+    activity2_next_action = ActivityAction(
+        activity_id='A-00000001-20002'
+        ,action_id=2
+        ,action_status = 'M'
+        ,action_order=4
+        ,action_handler=-1
+    )
+    file_permission = FilePermission(
+        user_id = 1
+        ,record_id= 1
+        ,file_name= "aaa.txt"
+        ,usage_application_activity_id='A-00000001-20002'
+        ,usage_report_activity_id=None
+        ,status = -1
+    )
+    # ２段階利用申請(next -> approval2)
+    activity3 = Activity(activity_id='A-00000001-20003'
+                        ,workflow_id=workflow_workflow4.id
+                        ,flow_id=flow_define4.id
+                        ,action_id=4
+                        ,item_id=db_records[2][2].id
+                        ,activity_login_user=1
+                        ,action_status = 'M'
+                        ,activity_update_user=1
+                        ,activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f')
+                        ,activity_community_id=3
+                        ,activity_confirm_term_of_use=True
+                        ,title='test'
+                        ,shared_user_id=-1
+                        ,extra_info={"file_name": "aaa.txt", "record_id": "1", "user_mail": "aaa@test.org", "related_title": "test", "is_restricted_access": True}
+                        ,action_order=3)
+    activity3_pre_action = ActivityAction(
+        activity_id='A-00000001-20003'
+        ,action_id=4
+        ,action_status = 'M'
+        ,action_order=3
+    )
+    activity3_next_action = ActivityAction(
+        activity_id='A-00000001-20003'
+        ,action_id=4
+        ,action_status = 'M'
+        ,action_order=4
+    )
+    # ２段階利用申請(next ->end)
+    activity4 = Activity(activity_id='A-00000001-20004'
+                        ,workflow_id=workflow_workflow4.id
+                        ,flow_id=flow_define4.id
+                        ,action_id=4
+                        ,item_id=db_records[2][2].id
+                        ,activity_login_user=1
+                        ,action_status = 'M'
+                        ,activity_update_user=1
+                        ,activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f')
+                        ,activity_community_id=3
+                        ,activity_confirm_term_of_use=True
+                        ,title='test'
+                        ,shared_user_id=-1
+                        ,extra_info={"file_name": "aaa.txt", "record_id": "1", "user_mail": "aaa@test.org", "related_title": "test", "is_restricted_access": True}
+                        ,action_order=4)
+    activity4_pre_action = ActivityAction(
+        activity_id='A-00000001-20004'
+        ,action_id=4
+        ,action_status = 'M'
+        ,action_order=4
+    )
+    activity4_next_action = ActivityAction(
+        activity_id='A-00000001-20004'
+        ,action_id=2
+        ,action_status = 'M'
+        ,action_order=5
+    )
+    guest_activity = GuestActivity(
+        activity_id='A-00000001-20004'
+        ,record_id=1
+        ,user_mail = 'aaa@test.org'
+        ,file_name = "aaa.txt"
+        ,token="abc"
+        ,expiration_date=datetime.now()
+        ,is_usage_report=False
+    )
+    with db.session.begin_nested():
+        db.session.add(activity1)
+        db.session.add(activity2)
+        db.session.add(activity3)
+        db.session.add(activity4)
+    db.session.commit()
+    with db.session.begin_nested():
+        db.session.add(activity1_next_action)
+        db.session.add(activity2_next_action)
+        db.session.add(activity3_next_action)
+        db.session.add(activity4_next_action)
+        db.session.add(activity1_pre_action)
+        db.session.add(activity2_pre_action)
+        db.session.add(activity3_pre_action)
+        db.session.add(activity4_pre_action)
+        db.session.add(file_permission)
+        db.session.add(guest_activity)
+    db.session.commit()
+    workflows.update({
+        "activity1":activity1
+        ,"activity2":activity2
+        ,"activity3":activity3
+        ,"activity4":activity4
+    })
+
+    permissions = list()
+    for i in range(len(users)):
+        permissions.append(FilePermission(users[i]["id"],"1.1","test_file","2",None,-1))
+    with db.session.begin_nested():
+        db.session.add_all(permissions)
+    db.session.commit()
+
+    def set_activityaction(_activity, _action,_flow_action):
+        action_handler = _activity.activity_login_user \
+            if not _action.action_endpoint == 'approval' else -1
+        activity_action = ActivityAction(
+            activity_id=_activity.activity_id,
+            action_id=_flow_action.action_id,
+            action_status="F",
+            action_handler=action_handler,
+            action_order=_flow_action.action_order
+        )
+        db.session.add(activity_action)
+
+    # setting activity_action in activity existed item
+    # for flow_action in flow_actions:
+    #     action = action_data[0][flow_action.action_id-1]
+    #     set_activityaction(activity_item1, action, flow_action)
+    #     set_activityaction(activity_item2, action, flow_action)
+    #     set_activityaction(activity_item3, action, flow_action)
+    #     set_activityaction(activity_item4, action, flow_action)
+    #     set_activityaction(activity_item5, action, flow_action)
+    #     set_activityaction(activity_item6, action, flow_action)
+
+    # db.session.commit()
+    return workflows
+    # {"flow_actions":flow_actions,
+    #         "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item4,activity_item5,activity_item6]}
+
+
+
+@pytest.fixture()
 def site_info(db):
     site_info = {
         "site_name":["test_site"],
@@ -1555,8 +2131,6 @@ def db_guestactivity(db):
         db.session.add(record)
     db.session.commit()
     
-
-
 
 
 

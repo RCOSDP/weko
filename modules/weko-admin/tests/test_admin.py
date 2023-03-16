@@ -721,6 +721,39 @@ def test_SiteLicenseSettingsView_index(client,users,item_type,site_license,mocke
 #    def _get_community_list(self):
 #class RestrictedAccessSettingView(BaseView):
 #    def index(self):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::test_RestrictedAccessSettingView_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_RestrictedAccessSettingView_index(client, users, admin_settings, mocker):
+    login_user_via_session(client,email=users[0]["email"])
+    url = url_for("restricted_access.index")
+    mock_render = mocker.patch("weko_admin.admin.RestrictedAccessSettingView.render", return_value=make_response())
+    res = client.get(url)
+    assert res.status_code == 200
+    args, kwargs = mock_render.call_args
+    assert args[0] == "weko_admin/admin/restricted_access_settings.html"
+    assert json.loads(kwargs["data"]) == {"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": []}
+    assert kwargs["items_per_page"] == 25
+    
+    
+    
+@pytest.fixture()
+def setup_view_facetsearch(admin_app, admin_db):
+    admin = Admin(admin_app)
+    facet_adminview_copy = dict(facet_search_adminview)
+    facet_model = facet_adminview_copy.pop("model")
+    facet_view = facet_adminview_copy.pop("modelview")
+    view = facet_view(facet_model, admin_db.session,**facet_adminview_copy)
+    admin.add_view(view)
+    ds = admin_app.extensions['invenio-accounts'].datastore
+    sysadmin = create_test_user(email='sysadmin@test.org')
+    sysadmin_role = ds.create_role(name='System Administrator')
+    ds.add_role_to_user(sysadmin, sysadmin_role)
+    action_users = [
+            ActionUsers(action='superuser-access', user=sysadmin),
+        ]
+    admin_db.session.add_all(action_users)
+    admin_db.session.commit()
+    
+    return admin_app, admin_db, admin, sysadmin, view
 #class FacetSearchSettingView(ModelView):
 #    def search_placeholder(self):
 #    def create_view(self):

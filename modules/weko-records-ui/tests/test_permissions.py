@@ -13,6 +13,7 @@ from flask_security.utils import login_user
 from invenio_accounts.models import Role, User
 from invenio_accounts.testutils import create_test_user, login_user_via_session
 from mock import patch
+from weko_records_ui.models import FileOnetimeDownload
 
 from weko_records_ui.permissions import (
     check_created_id,
@@ -26,7 +27,8 @@ from weko_records_ui.permissions import (
     check_original_pdf_download_permission,
     file_permission_factory,
     page_permission_factory,
-    is_open_restricted
+    is_open_restricted,
+    is_owners_or_superusers
 )
 
 
@@ -86,10 +88,35 @@ def test_check_content_clickable(app, records, users,db_file_permission):
     record = results[0]["record"]
     fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-27'}], 'format': 'image/jpeg', 'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessrole': 'open_access', 'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False, 'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0, 'mimetype': 'image/jpeg', 'file_order': 0}
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
-        assert check_content_clickable(record, fjson) == False
+        with patch("weko_records_ui.permissions.check_open_restricted_permission", return_value=False):
+            assert check_content_clickable(record, fjson) == False
+
+            fjson['accessrole'] = 'open_restricted'
+            assert check_content_clickable(record, fjson) == True
+
+        with patch("weko_records_ui.permissions.check_open_restricted_permission", return_value=True):
+            fjson['accessrole'] = 'open_restricted'
+            assert check_content_clickable(record, fjson) == False
+
 
 # def check_permission_period(permission):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_get_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_permission_period -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_check_permission_period(app,users):
+    data1 = MagicMock()
+    data1.status = 1
+    data1.file_name = "a"
+    data1.user_id = users[0]["id"]
+    data1.user_mail = users[0]["email"]
+    data1.record_id = "c"
+    
+    with patch('weko_records_ui.models.FileOnetimeDownload.find_downloadable_only', return_value=[{}]):
+        assert check_permission_period(data1) == True
+    with patch('weko_records_ui.models.FileOnetimeDownload.find_downloadable_only', return_value=None):
+        assert check_permission_period(data1) == False
+
+    data1.status = 0
+    assert check_permission_period(data1) == False
+
 
 # def get_permission(record, fjson):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_get_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -97,8 +124,26 @@ def test_get_permission(app, records, users,db_file_permission):
     indexer, results = records
     record = results[0]["record"]
     fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-27'}], 'format': 'image/jpeg', 'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessrole': 'open_access', 'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False, 'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0, 'mimetype': 'image/jpeg', 'file_order': 0}
+    data1 = MagicMock()
+    data1.status = 1
+    data1.usage_application_activity_id = 1
+    data2 = [{'Status': ''},{'Status': 'action_canceled'}]
+
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         assert get_permission(record, fjson) == None
+
+        with patch("weko_records_ui.permissions.__get_file_permission", return_value=[data1]):
+            assert get_permission(record, fjson) != None
+
+            data1.status = 0
+            with patch("weko_workflow.api.WorkActivity.get_activity_steps", return_value=data2):
+                assert get_permission(record, fjson) == None
+            
+            with patch("weko_workflow.api.WorkActivity.get_activity_steps", return_value=""):
+                assert get_permission(record, fjson) != None
+
+            with patch("weko_records_ui.permissions.check_file_download_permission", return_value=""):
+                assert get_permission(record, fjson) == None
 
 
 # def check_original_pdf_download_permission(record):
@@ -584,9 +629,43 @@ def test_check_create_usage_report(app, records, users,db_file_permission):
 
 # def __get_file_permission(record_id, file_name):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test___get_file_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test___get_file_permission(app, records, users,db_file_permission):
+def test___get_file_permission(app, records_restricted, users,db_file_permission):
+    indexer, results = records_restricted
+    recid = results[len(results)-1]["recid"]
+    filename =results[len(results)-1]["filename"]
+    with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+        assert len(__get_file_permission(recid.pid_value, filename)) == 2
+
+# def is_owners_or_superusers(record) -> bool:
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_is_owners_or_superusers -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_is_owners_or_superusers(app,records,users):
     indexer, results = records
-    recid = results[0]["recid"]
-    filename =results[0]["filename"]
-    with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
-        assert __get_file_permission(recid.pid_value, filename) == []
+    testrec = results[0]["record"]
+    userId = users[0]["id"] # contributer
+    with app.test_request_context():
+        # contributer
+        with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+            assert not is_owners_or_superusers(testrec)
+            
+            testrec['owner'] = userId
+            assert is_owners_or_superusers(testrec) 
+
+            testrec['owner'] = -1
+            testrec['weko_shared_id'] = userId
+            assert is_owners_or_superusers(testrec)
+
+            testrec['owner'] = -1
+            testrec['weko_shared_id'] = None
+            assert not is_owners_or_superusers(testrec)
+
+            testrec['weko_shared_id'] = -1
+        # repoadmin
+        with  patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+            assert is_owners_or_superusers(testrec)
+        # sysadmin
+        with  patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+            assert is_owners_or_superusers(testrec)
+        # comadmin
+        with  patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+            assert is_owners_or_superusers(testrec)
+    
