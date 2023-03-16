@@ -341,6 +341,11 @@ def test_check_file_permission_period(app,records,db_file_permission,users,id,re
         with patch("weko_records_ui.views.check_permission_period" , return_value=True):
             assert check_file_permission_period(record,fjson)==result
 
+        # data1 = MagicMock()
+        # data2 = MagicMock()
+        # assert check_file_permission_period(record,fjson)
+
+
 # def get_file_permission(record, fjson):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize(
