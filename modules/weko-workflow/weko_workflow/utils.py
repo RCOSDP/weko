@@ -3384,8 +3384,10 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
                 approval_user = db.session.query(User).filter_by(
                     id=int(next_step_appover_id)).first()
             if not approval_user:
-                #利用登録
-                mail_info['mail_recipient'] = session['guest_email'] 
+                current_app.logger.error("Does not have approval data")
+                if 'guest_email' in session:
+                    #利用登録
+                    mail_info['mail_recipient'] = session['guest_email']
             else:
                 mail_info['mail_recipient'] = approval_user.email
             process_send_mail(
