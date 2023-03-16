@@ -389,7 +389,8 @@ def test_check_content_file_clickable(app,records,users,id,result):
     record = results[0]["record"]
     assert isinstance(record,WekoRecord)==True
     with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
-        assert check_content_file_clickable(record,record['item_1617605131499'])==result
+        with patch("weko_records_ui.permissions.check_open_restricted_permission", return_value=False):
+            assert check_content_file_clickable(record,record['item_1617605131499'])==False
 
 
 # def get_usage_workflow(file_json):
