@@ -18,6 +18,7 @@ if(!$_SERVER['HTTP_WEKOSOCIETYAFFILIATION']){
   $post_args["SHIB_ATTR_MAIL"]=$_SERVER['mail'];
   $post_args["SHIB_ATTR_SESSION_ID"]=$_SERVER['Shib-Session-ID'];
   $post_args["SHIB_ATTR_ROLE_AUTHORITY_NAME"]=$_SERVER['HTTP_WEKOSOCIETYAFFILIATION'];
+  $post_args["SHIB_ATTR_PAGE_NAME"]=$_SERVER['HTTP_WEKOSOCIETYSUBGROUP'];
   $options = array(
     //Method
     CURLOPT_POST => true,//POST

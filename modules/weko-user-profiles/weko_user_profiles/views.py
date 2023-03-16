@@ -20,12 +20,14 @@
 
 """Views for weko-user-profiles."""
 
-from flask import Blueprint, current_app, jsonify, render_template, request
+from flask import Blueprint, current_app, jsonify, render_template, request, redirect, session
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
 from flask_menu import register_menu
 from invenio_db import db
+
+from weko_admin.models import AdminSettings
 
 from .api import current_userprofile
 from .forms import EmailProfileForm, ProfileForm, VerificationForm, \
@@ -183,3 +185,23 @@ def dbsession_clean(exception):
         except:
             db.session.rollback()
     db.session.remove()
+
+
+def is_ums_user():
+    return session.get('user_src') == 'Shib'
+
+
+@blueprint.route('/ums_management', methods=['GET', 'POST'])
+@login_required
+@register_menu(
+    blueprint, 'settings.ums_management',
+    # NOTE: Menu item text (icon replaced by a user icon).
+    _('%(icon)s Profile(UMS)', icon='<i class="fa fa-user fa-fw"></i>'),
+    visible_when=is_ums_user,
+    order=1)
+@register_breadcrumb(
+    blueprint, 'breadcrumbs.settings.ums_management', _('Profile(UMS)')
+)
+def ums_management():
+    settings = AdminSettings.get('ums_management_url')
+    return redirect(settings.url)

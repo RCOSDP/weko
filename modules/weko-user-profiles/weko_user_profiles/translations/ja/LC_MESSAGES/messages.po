@@ -244,6 +244,15 @@ msgstr "プロフィールを更新しました %(email)s に確認メールを�
 msgid "Profile was updated."
 msgstr "プロフィールを更新しました"
 
+#. NOTE: Menu item text (icon replaced by a user icon).
+#: weko_user_profiles/views.py:182
+msgid "%(icon)s Profile(UMS)"
+msgstr "%(icon)s プロフィール(UMS)"
+
+#: weko_user_profiles/views.py:186
+msgid "Profile(UMS)"
+msgstr "プロフィール(UMS)"
+
 #~ msgid "You have not yet verified your email address."
 #~ msgstr "あなたはまだあなたのメールアドレスを確認していません。"
 
