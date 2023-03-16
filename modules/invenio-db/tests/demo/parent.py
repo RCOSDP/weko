@@ -13,4 +13,10 @@ from invenio_db import db
 
 class Parent(db.Model):
     __tablename__ = 'parent'
+    __versioned__ = {}
+    pk = db.Column(db.Integer, primary_key=True)
+
+class SecondParent(db.Model):
+    __tablename__ = 'second_parent'
+    __versioned__ = {}
     pk = db.Column(db.Integer, primary_key=True)
