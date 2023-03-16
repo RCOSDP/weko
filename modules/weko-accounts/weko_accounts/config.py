@@ -80,13 +80,19 @@ WEKO_ACCOUNTS_SHIB_ROLE_RELATION = {
     '教員': 'Contributor',
     '教官': 'Contributor',
     '事務局': 'Repository Administrator',
-    '学会員': 'IPSJ:学会員',
-    '準登録個人': 'IPSJ:準登録個人',
-    '非会員': '非会員',
+    '事務局２': '',
+    '学会員': '',
+    '会誌購読員': '',
+    '準登録個人': '',
+    '準登録（団体）': '',
+    '論文誌購読員': '',
+    '賛助会員': '',
+    '購読員': '',
+    '非会員': '',
 }
 """Role relation."""
 
-WEKO_ACCOUNTS_GENERAL_ROLE = 'Contributor'
+WEKO_ACCOUNTS_GENERAL_ROLE = ''
 """Default role."""
 
 WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED = True
