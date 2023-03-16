@@ -391,10 +391,6 @@ def test_check_content_file_clickable(app,records,users,id,result):
     with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
         with patch("weko_records_ui.permissions.check_open_restricted_permission", return_value=False):
             assert check_content_file_clickable(record,record['item_1617605131499'])==False
-<<<<<<< HEAD
-=======
-
->>>>>>> 9a815d772 (test add)
 
 # def get_usage_workflow(file_json):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_usage_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
