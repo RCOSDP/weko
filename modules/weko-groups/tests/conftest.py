@@ -25,8 +25,8 @@ import os
 import shutil
 import tempfile
 import pytest
-from mock import MagicMock
-from flask import Flask
+from mock import MagicMock, patch
+from flask import Flask, json, jsonify, session, url_for
 from flask_babelex import Babel
 from flask_breadcrumbs import Breadcrumbs
 from flask_menu import Menu
@@ -40,6 +40,7 @@ from invenio_accounts.testutils import create_test_user
 from invenio_accounts.models import User, Role
 from invenio_access.models import ActionUsers
 from invenio_access import InvenioAccess
+from invenio_admin import InvenioAdmin
 
 from weko_groups import WekoGroups
 from weko_groups.api import Group
@@ -159,6 +160,7 @@ def base_app(instance_path):
     InvenioAccounts(app_)
     WekoGroups(app_)
     InvenioAccess(app_)
+    InvenioAdmin(app_)
     # Babel(app_)
     # InvenioDB(app_)
     # InvenioAccounts(app_)
@@ -179,7 +181,7 @@ def app_2(base_app):
 
 
 @pytest.fixture()
-def db_2(app):
+def db_2(app_2):
     from invenio_db import db as db_
     """Database fixture."""
     if not database_exists(str(db_.engine.url)):
@@ -188,6 +190,25 @@ def db_2(app):
     yield db_
     db_.session.remove()
     db_.drop_all()
+
+
+@pytest.yield_fixture()
+def client_request_args(app_2):
+    with app_2.test_client() as client:
+        with patch("flask.templating._render", return_value=""):
+            r = client.get(
+                "/",
+                query_string={
+                    "q": "q",
+                    "page": 1,
+                    "count": 20,
+                    "lang": "en",
+                    "remote_addr": "0.0.0.0",
+                    "referrer": "test",
+                    "host": "127.0.0.1",
+                },
+            )
+            yield r
 
 
 @pytest.fixture()
