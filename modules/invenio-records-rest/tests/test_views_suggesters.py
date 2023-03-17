@@ -16,6 +16,8 @@ import json
 import pytest
 from elasticsearch import VERSION as ES_VERSION
 from flask import url_for
+from invenio_search import RecordsSearch
+
 
 
 @pytest.mark.parametrize('app', [dict(
@@ -33,15 +35,20 @@ from flask import url_for
         )
     )
 )], indirect=['app'])
-def test_valid_suggest(app, db, es, indexed_records):
+def test_valid_suggest(app, db, es, indexed_records, mock_es_execute, mocker):
     """Test VALID record creation request (POST .../records/)."""
     with app.test_client() as client:
+        suggest_mocker = mocker.patch("elasticsearch_dsl.Search.suggest", return_value=RecordsSearch())
         # Valid simple completion suggester
+        mocker.patch("elasticsearch_dsl.Search.execute", return_value=mock_es_execute({"suggest":{"text":"test_value"}}))
         res = client.get(
             url_for('invenio_records_rest.recid_suggest'),
             query_string={'text': 'Back'}
         )
         assert res.status_code == 200
+        suggest_mocker.assert_has_calls(
+            [mocker.call("text","Back",completion=dict(field='suggest_title'))]
+        )
         data = json.loads(res.get_data(as_text=True))
         assert len(data['text'][0]['options']) == 2
         options = data['text'][0]['options']

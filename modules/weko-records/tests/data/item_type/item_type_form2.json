@@ -1,0 +1,61 @@
+[
+  {
+    "key":"item_test1_creator",
+    "items":[
+      {
+        "key":"item_test1_creator[].creatorName",
+        "type":"text",
+        "title":"creator_name",
+        "title_i18n":{"en":"Creator Name","ja":"作成者氏名"},
+        "title_i18n_temp":{"en":"Creator Name","ja":"作成者氏名"},
+        "isShowList":true
+      }
+    ],
+    "stype":{"add":"btn-success"},
+    "title":"Creator",
+    "title_i18n":{"en":"Creator","ja":"製作者"}
+  },
+  {
+    "key":"item_test2_title",
+    "items":[
+      {
+        "key":"item_test2_title[].test_title",
+        "type":"text",
+        "title":"Title",
+        "title_i18n":{"en":"Title","ja":"タイトル"},
+        "titlei_i18n_temp":{"en":"Title","ja":"タイトル"},
+        "isShowList":true
+      },
+      {
+        "key":"item_test2_title[].test_title_lang",
+        "type":"select",
+        "title":"Language",
+        "titleMap":[
+          {"name":"ja","value":"ja"},
+          {"name":"en","value":"en"}
+        ],
+        "title_i18n": { "en": "Language", "ja": "言語" },
+        "title_i18n_temp": { "en": "Language", "ja": "言語" },
+        "isShowList":true
+      }
+    ],
+    "stype":{"add":"btn-success"},
+    "title":"Title",
+    "title_i18n":{"en":"Title","ja":"タイトル"},
+    "isShowList":true
+  },
+  {
+    "key":"item_test3_bibliographic",
+    "items":[
+      {
+        "key":"item_test3_bibliographic[].bibliographic_titles",
+        "type":"text",
+        "isShowList":true
+      }
+    ],
+    "stype":{"add":"btn-success"},
+    "title":"bibliographc test",
+    "title_i18n":{"en":"bibliographic","ja":"書誌"},
+    "isShowList":true
+  }
+]

@@ -1,0 +1,49 @@
+{#
+    # This file is part of WEKO3.
+    # Copyright (C) 2017 National Institute of Informatics.
+    #
+    # WEKO3 is free software; you can redistribute it
+    # and/or modify it under the terms of the GNU General Public License as
+    # published by the Free Software Foundation; either version 2 of the
+    # License, or (at your option) any later version.
+    #
+    # WEKO3 is distributed in the hope that it will be
+    # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+    # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    # General Public License for more details.
+    #
+    # You should have received a copy of the GNU General Public License
+    # along with WEKO3; if not, write to the
+    # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+    # MA 02111-1307, USA.
+    #}
+    
+    {%- extends admin_base_template %}
+    
+    {%- block css %}
+      {{ super() }}
+      {% assets "weko_authors_affiliation_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+      {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+      {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {%- endblock css %}
+    
+    {%- block javascript %}
+      {{ super() }}
+      {% assets "weko_authors_affiliation_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+      {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {%- endblock javascript %}
+    
+    {%- block body %}
+    {% from "weko_authors/macros/tabs_selector.html" import tabs_selector with context %}
+    {{ tabs_selector('affiliation_list') }}
+    <input id="lang-code" type="hidden" value="{{lang_code}}" />
+    <div class="row">
+      <div class="col-sm-1 col-md-1 col-md-1"></div>
+      <div class="col-sm-10 col-md-10 col-md-10">
+        <app-affiliation-search></app-affiliation-search>
+      </div>
+      <div class="col-sm-1 col-md-1 col-md-1"></div>
+    </div>
+    {%- endblock body %}
+    
+    

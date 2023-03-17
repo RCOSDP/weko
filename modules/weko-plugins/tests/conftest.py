@@ -40,7 +40,7 @@ def instance_path():
 @pytest.fixture()
 def base_app(instance_path):
     """Flask application fixture."""
-    app_ = Flask('testapp', instance_path=instance_path, root_path='/code')
+    app_ = Flask("testapp", instance_path=instance_path, root_path="/code")
     app_.config.update(
         SECRET_KEY=os.urandom(24),
         TESTING=True,

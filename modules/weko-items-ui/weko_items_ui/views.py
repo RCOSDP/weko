@@ -28,6 +28,7 @@ import pickle
 from datetime import date, datetime, timedelta
 
 import redis
+from redis import sentinel
 from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
     render_template, request, session, url_for
 from flask_babelex import gettext as _
@@ -37,6 +38,7 @@ from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.resolver import Resolver
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
@@ -49,15 +51,19 @@ from weko_index_tree.utils import check_index_permissions, get_index_id, \
 from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
+from weko_redis.redis import RedisConnection
 from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow
 from weko_workflow.utils import check_an_item_is_locked, \
     get_record_by_root_ver, get_thumbnails, prepare_edit_workflow, \
     set_files_display_type
 from werkzeug.utils import import_string
+from webassets.exceptions import BuildError
+from werkzeug.exceptions import BadRequest
 
 from .permissions import item_permission
 from .utils import _get_max_export_items, check_item_is_being_edit, \
     export_items, get_current_user, get_data_authors_prefix_settings, \
+    get_data_authors_affiliation_settings, \
     get_list_email, get_list_username, get_ranking, get_user_info_by_email, \
     get_user_info_by_username, get_user_information, get_user_permission, \
     get_workflow_by_item_type_id, hide_form_items, is_schema_include_key, \
@@ -67,6 +73,10 @@ from .utils import _get_max_export_items, check_item_is_being_edit, \
     update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
     update_sub_items_by_user_role, validate_form_input_data, validate_user, \
     validate_user_mail_and_index
+from .config import WEKO_ITEMS_UI_FORM_TEMPLATE,WEKO_ITEMS_UI_ERROR_TEMPLATE
+from weko_theme.config import WEKO_THEME_DEFAULT_COMMUNITY
+
+from sqlalchemy.exc import StatementError
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -77,13 +87,12 @@ blueprint = Blueprint(
 )
 
 blueprint_api = Blueprint(
-    'weko_items_ui',
+        'weko_items_ui_api',
     __name__,
     template_folder='templates',
     static_folder='static',
     url_prefix="/items",
 )
-
 
 @blueprint.route('/', methods=['GET'])
 @blueprint.route('/<int:item_type_id>', methods=['GET'])
@@ -91,22 +100,42 @@ blueprint_api = Blueprint(
 @item_permission.require(http_exception=403)
 def index(item_type_id=0):
     """Renders an item register view.
-
     :param item_type_id: Item type ID. (Default: 0)
     :return: The rendered template.
+    ---
+      get:
+        description: Renders an item register view.
+        security:
+        - login_required: []
+        parameters:
+          - name: item_type_id
+            in: query
+            description: item_type_id
+            schema:
+              type: string
+        responses:
+          200:
+            description: render result of weko_items_ui/edit.html
+            content:
+                text/html
+          302:
+            description: 
+          403:
+            description: no item_permission
+            
     """
     try:
         from weko_theme.utils import get_design_layout
 
         # Get the design for widget rendering
         page, render_widgets = get_design_layout(
-            current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+            current_app.config.get('WEKO_THEME_DEFAULT_COMMUNITY',WEKO_THEME_DEFAULT_COMMUNITY))
 
         lists = ItemTypes.get_latest()
         if lists is None or len(lists) == 0:
             return render_template(
-                current_app.config['WEKO_ITEMS_UI_ERROR_TEMPLATE']
-            )
+                current_app.config.get('WEKO_ITEMS_UI_ERROR_TEMPLATE',WEKO_ITEMS_UI_ERROR_TEMPLATE)
+            ),400
         item_type = ItemTypes.get_by_id(item_type_id)
         if item_type is None:
             return redirect(
@@ -114,9 +143,9 @@ def index(item_type_id=0):
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
         need_file, need_billing_file = is_schema_include_key(item_type.schema)
-
+        
         return render_template(
-            current_app.config['WEKO_ITEMS_UI_FORM_TEMPLATE'],
+            current_app.config.get('WEKO_ITEMS_UI_FORM_TEMPLATE',WEKO_ITEMS_UI_FORM_TEMPLATE),
             page=page,
             render_widgets=render_widgets,
             need_file=need_file,
@@ -127,7 +156,7 @@ def index(item_type_id=0):
             lists=lists,
             id=item_type_id,
             files=[]
-        )
+        ),200
     except BaseException:
         current_app.logger.error(
             'Unexpected error: {}'.format(sys.exc_info()[0]))
@@ -148,13 +177,13 @@ def iframe_index(item_type_id=0):
         item_type = ItemTypes.get_by_id(item_type_id)
         if item_type is None:
             return render_template('weko_items_ui/iframe/error.html',
-                                   error_type='no_itemtype')
+                                   error_type='no_itemtype'),404
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
         record = {}
         files = []
         endpoints = {}
-        activity_session = session['activity_info']
+        activity_session = session.get('activity_info',{})
         activity_id = activity_session.get('activity_id', None)
         if activity_id:
             activity = WorkActivity()
@@ -376,10 +405,9 @@ def items_index(pid_value='0'):
                 render_widgets=render_widgets)
 
         data = request.get_json()
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
         if request.method == 'PUT':
             """update index of item info."""
             item_str = sessionstore.get('item_index_{}'.format(pid_value))
@@ -393,6 +421,17 @@ def items_index(pid_value='0'):
                 json.dumps(data),
                 ttl_secs=300)
         return jsonify(data)
+    except PIDDoesNotExistError as ex:
+        current_app.logger.error(
+            'PIDDoesNotExistError: {}'.format(ex))
+    except KeyError as ex:
+        current_app.logger.error('KeyError: {}'.format(ex))
+    except FileNotFoundError as ex:
+        current_app.logger.error("FileNotFoundError: {}".format(ex))
+    except BuildError as ex:
+        current_app.logger.error("BuildError: {}".format(ex))
+    except BadRequest as ex:
+        current_app.logger.error("BadRequest: {}".format(ex))
     except BaseException:
         current_app.logger.error(
             'Unexpected error: {}'.format(sys.exc_info()[0]))
@@ -420,11 +459,14 @@ def iframe_items_index(pid_value='0'):
             ctx = {'community': comm}
 
         if request.method == 'GET':
-            cur_activity = session['itemlogin_activity']
+            cur_activity = session.get('itemlogin_activity')
+            if cur_activity is None:
+                abort(400)
 
             workflow = WorkFlow()
             workflow_detail = workflow.get_workflow_by_id(
-                cur_activity.workflow_id)
+            cur_activity.workflow_id)
+            
             if workflow_detail and workflow_detail.index_tree_id:
                 index_id = get_index_id(cur_activity.activity_id)
                 update_index_tree_for_record(pid_value, index_id)
@@ -441,10 +483,12 @@ def iframe_items_index(pid_value='0'):
             if pid_value and '.' in pid_value:
                 root_record, files = get_record_by_root_ver(pid_value)
                 if root_record and root_record.get('title'):
+                    # current_app.logger.debug("session['itemlogin_item']:{}".format(session['itemlogin_item']))
                     session['itemlogin_item']['title'] = \
                         root_record['title'][0]
                     files_thumbnail = get_thumbnails(files, None)
             else:
+                # current_app.logger.debug("session['itemlogin_record']: {}".format(session['itemlogin_record']))
                 root_record = session['itemlogin_record']
             if root_record and files and len(root_record) > 0 and \
                     len(files) > 0 and isinstance(root_record, (list, dict)):
@@ -460,7 +504,15 @@ def iframe_items_index(pid_value='0'):
                     thumbnails_org=record_detail_alt.get('files_thumbnail')
                 )
             )
-
+            # current_app.logger.debug("session['itemlogin_activity']: {}".format(session['itemlogin_activity']))
+            # current_app.logger.debug("session['itemlogin_item']: {}".format(session['itemlogin_item']))
+            # current_app.logger.debug("session['itemlogin_steps']: {}".format(session['itemlogin_steps']))
+            # current_app.logger.debug("session['itemlogin_action_id']: {}".format(session['itemlogin_action_id']))
+            # current_app.logger.debug("session['itemlogin_cur_step']: {}".format(session['itemlogin_cur_step']))
+            # current_app.logger.debug("session['itemlogin_histories']: {}".format(session['itemlogin_histories']))
+            # current_app.logger.debug("session['itemlogin_res_check']: {}".format(session['itemlogin_res_check']))
+            # current_app.logger.debug("session['itemlogin_pid']: {}".format(session['itemlogin_pid']))
+            
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,
@@ -496,10 +548,9 @@ def iframe_items_index(pid_value='0'):
             )
 
         data = request.get_json()
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
         if request.method == 'PUT':
             """update index of item info."""
             item_str = sessionstore.get('item_index_{}'.format(pid_value))
@@ -513,6 +564,16 @@ def iframe_items_index(pid_value='0'):
                 json.dumps(data),
                 ttl_secs=300)
         return jsonify(data)
+    except KeyError as ex:
+        current_app.logger.error('KeyError: {}'.format(ex))
+    except AttributeError as ex:
+        current_app.logger.error('AttributeError: {}'.format(ex))
+        import traceback
+        current_app.logger.error(traceback.format_exc())
+    except BadRequest as ex:
+        current_app.logger.error('BadRequest: {}'.format(ex))
+    except StatementError as ex:
+        current_app.logger.error('BadRequest: {}'.format(ex))
     except BaseException:
         current_app.logger.error(
             'Unexpected error: {}'.format(sys.exc_info()[0]))
@@ -918,6 +979,18 @@ def ranking():
     """Ranking page view."""
     # get ranking settings
     settings = RankingSettings.get()
+
+    if not settings:
+        upd_data = RankingSettings()
+        dafault_data = current_app.config['WEKO_ITEMS_UI_RANKING_DEFAULT_SETTINGS']
+        upd_data.is_show = dafault_data['is_show']
+        upd_data.new_item_period = dafault_data['new_item_period']
+        upd_data.statistical_period = dafault_data['statistical_period']
+        upd_data.display_rank = dafault_data['display_rank']
+        upd_data.rankings = dafault_data['rankings']
+        RankingSettings.update(data=upd_data) 
+        settings = RankingSettings.get()
+
     # get statistical period
     end_date = date.today()  # - timedelta(days=1)
     start_date = end_date - timedelta(days=int(settings.statistical_period))
@@ -1015,7 +1088,8 @@ def export():
         from weko_workflow.api import GetCommunity
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
-        community_id = comm.id
+        if comm is not None:
+            community_id = comm.id
 
     from weko_theme.utils import get_design_layout
 
@@ -1069,10 +1143,9 @@ def check_validation_error_msg(activity_id):
     :param activity_id: The identify of Activity.
     :return: Show error message
     """
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
     if sessionstore.redis.exists(
             'updated_json_schema_{}'.format(activity_id)) \
             and sessionstore.get('updated_json_schema_{}'.format(activity_id)):
@@ -1130,6 +1203,24 @@ def get_authors_prefix_settings():
     else:
         return abort(403)
 
+@blueprint_api.route('/author_affiliation_settings', methods=['GET'])
+def get_authors_affiliation_settings():
+    """Get all author affiliation settings."""
+    author_affiliation_settings = get_data_authors_affiliation_settings()
+    if author_affiliation_settings is not None:
+        results = []
+        for affiliation in author_affiliation_settings:
+            scheme = affiliation.scheme
+            url = affiliation.url
+            result = dict(
+                scheme=scheme,
+                url=url
+            )
+            results.append(result)
+        return jsonify(results)
+    else:
+        return abort(403)
+
 
 @blueprint.route('/sessionvalidate', methods=['POST'])
 def session_validate():
@@ -1162,9 +1253,14 @@ def check_record_doi(pid_value='0'):
 def check_record_doi_indexes(pid_value='0'):
     """Check restrict DOI and Indexes.
 
-    :param pid_value: pid_value.
-    :return:
-    """
+    Args:
+        pid_value (str, optional): _description_. Defaults to '0'.
+
+    Returns:
+        _type_: _description_
+    Rises:
+        invenio_pidstore.errors.PIDDoesNotExistError
+    """    
     doi = int(request.args.get('doi', '0'))
     record = WekoRecord.get_record_by_pid(pid_value)
     if (record.pid_doi or doi > 0) and \

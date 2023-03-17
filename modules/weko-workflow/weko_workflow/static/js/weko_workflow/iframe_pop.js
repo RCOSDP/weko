@@ -59,10 +59,14 @@ require([
           $("#btn_cancel").attr('style', 'display: none;');
         }
       },
-      error: function (jqXHE, status) {
+      error: function (jqXHR, status) {
         endLoading(_this);
         $('#action_quit_confirmation').modal('show');
-        $('.modal-body').html('Server error.');
+        if (jqXHR.responseJSON && jqXHR.responseJSON.msg) {
+          $('.modal-body').html(jqXHR.responseJSON.msg);
+        } else {
+          $('.modal-body').html('Server error.');
+        }
         $("#btn_cancel").attr('style', 'display: none;');
         parent.document.location.href = "/workflow/activity/detail/" + $("#activity_id").text().trim();
       }
@@ -103,10 +107,14 @@ require([
           $("#btn_cancel").attr('style', 'display: none;');
         }
       },
-      error: function (jqXHE, status) {
+      error: function (jqXHR, status) {
         endLoading(_this);
         $('#action_quit_confirmation').modal('show');
-        $('.modal-body').html('Server error.');
+        if (jqXHR.responseJSON && jqXHR.responseJSON.msg) {
+          $('.modal-body').html(jqXHR.responseJSON.msg);
+        } else {
+          $('.modal-body').html('Server error.');
+        }
         $("#btn_cancel").attr('style', 'display: none;');
         parent.document.location.href = "/workflow/activity/detail/" + $("#activity_id").text().trim();
       }

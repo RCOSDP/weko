@@ -82,8 +82,28 @@ WEKO_SCHEMA_DDI_VERSION = "2.5"
 WEKO_SCHEMA_DDI_SCHEMA_NAME = "ddi_mapping"
 """DDI schema name"""
 
+WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME = 'jpcoar_v1_mapping'
+"""JPCOAR v1.0 schema name"""
+
+WEKO_SCHEMA_JPCOAR_V1_RESOURCE_TYPE_REPLACE = {
+    'aggregated data': 'dataset',
+    'clinical trial data': 'dataset',
+    'compiled data': 'dataset',
+    'encoded data': 'dataset',
+    'experimental data': 'dataset',
+    'genomic data': 'dataset',
+    'geospatial data': 'dataset',
+    'laboratory notebook': 'dataset',
+    'measurement and test data': 'dataset',
+    'observational data': 'dataset',
+    'recorded data': 'dataset',
+    'simulation data': 'dataset',
+    'survey data': 'dataset',
+}
+"""Resource type replace list for jpcoar v1.0"""
+
 WEKO_SCHEMA_UI_LIST_SCHEME = ['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID',
-                              'kakenhi', 'Ringgold', 'GRID']
+                              'kakenhi', 'Ringgold', 'GRID', 'ROR']
 """ List of scheme """
 
 WEKO_SCHEMA_UI_LIST_SCHEME_AFFILIATION = ['ISNI', 'kakenhi',

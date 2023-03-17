@@ -1,0 +1,190 @@
+{
+  "_source":{
+    "_item_metadata":{
+      "item_type_id":"1",
+      "item_test1_1":{
+        "attribute_name":"Test Item1-1",
+        "attribute_value_mlt":[
+          {
+            "test_item_lang1":"en",
+            "test_value1":"this is test item1-1"
+          }
+        ]
+      },
+      "item_test1_2":{
+        "attribute_name":"Test Item1-2",
+        "attribute_value_mlt":[
+          {
+            "test_item_lang1":"en"
+          }
+        ]
+      },
+      "item_test1_3":{
+        "attribute_name":"Test Item1-3",
+        "attribute_value_mlt":[
+          {
+            "test_value1":"this is test item1-3"
+          }
+        ]
+      },
+      "item_test1_4":{
+        "attrinute_name":"Test Item1-4",
+        "attribute_value_mlt":[
+          {
+            "test_value1":""
+          }
+        ]
+      },
+      "item_test1_5":{
+        "attribute_name":"Test Item1-5",
+        "attribute_value_mlt":[
+          {
+            "test_item_lang1":"en",
+            "test_value1":""
+          }
+        ]
+      },
+      "item_test2_title":{
+        "attribute_name":"Title",
+        "attribute_value_mlt":[
+          {
+            "test_title":"this is test item title",
+            "test_title_lang":"en"
+          }
+        ]
+      },
+      "item_test3_file":{
+        "attribute_name":"File",
+        "attribute_type":"file",
+        "attribute_value_mlt":[
+          {
+            "url":{
+              "label":"open and exist label"
+            },
+            "accessrole":"open_restricted"
+          },
+          {
+            "url":{
+              "test":"open and not exist label"
+            },
+            "accessrole":"open_restricted"
+          },
+          {
+            "url":{
+              "url":"not label, but version_id"
+            },
+            "version_id":"1.0",
+            "filename":"test.txt"
+          },
+          {
+            "url":{
+              "label":"not file url"
+            },
+            "version_id":"1.0",
+            "filename":"test_not_extension"
+          },
+          {
+            "url":{
+              "test":"not open and not label"
+            }
+          }
+        ]
+      },
+      "item_test4_thumbnail":{
+        "attribute_name":"thumbnail",
+        "attribute_type":"thumbnail",
+        "attribute_value_mlt":[
+          {
+            "subitem_thumbnail":[
+            ]
+          }
+        ]
+      },
+      "item_test4_2_thumbnail":{
+        "attribute_name":"thumbnail2",
+        "attribute_type":"thumbnail",
+        "attribute_value_mlt":[
+          {
+            "subitem_thumbnail":[
+              {"thumbnail_label":"サムネイルラベル"}
+            ]
+          }
+        ]
+      },
+      "item_test5_creator":{
+        "attribute_name":"creator",
+        "attribute_type":"creator",
+        "attribute_value_mlt":[
+          {
+            "creatorNames":[
+              {
+                "creatorName":"takeshi",
+                "creatorNameLang":"en"
+              }
+            ],
+            "familyNames":[
+              {
+                "familyName":null,
+                "familyNameLang":"en"
+              },
+              {
+                "familyName":"takesi family"
+              }
+            ],
+            "givenNames":[
+              {
+                "givenName":"takesi given",
+                "givenNameLang":"en"
+              }
+            ],
+            "nameIdentifierURI":[
+              {
+                "nameIdentifierURI":""
+              }
+            ]
+          }
+        ]
+      },
+      "item_test6_bibliographic":{
+        "attribute_value_mlt":[
+          {
+            "bibliographic_titles":[
+              {
+                "bibliographic_titleLang":"en",
+                "bibliographic_title":"this is test bibliographic title"
+              }
+            ]
+          }
+        ]
+      },
+      "item_test8_not_mlt":{
+        "attribute_type":"test"
+      },
+      "item_test9":{
+        "attribute_value_mlt":{
+          "item_test9_dict":{
+            "item_test9_dict_value":"value9_dict"
+          },
+          "item_test9_list":[
+            [
+              "item_test9_list_value"
+            ]
+          ]
+        }
+      },
+      "item_test11":{
+        "attribute_value_mlt":"str_attribute_value_mlt"
+      },
+      "item_test12.indot_item":{
+        "attribute_value_mlt":{
+          "value":"value"
+        }
+      }
+    },
+    "file":"",
+    "title":[
+      "this is dummy title",
+      "this is test item title"
+    ]
+  }
+}

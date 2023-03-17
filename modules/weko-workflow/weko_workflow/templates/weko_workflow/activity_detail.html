@@ -378,6 +378,24 @@
 {%- endblock page_body_main %}
 
 {%- block page_body %}
+<div id="AutoCancelMsg" class="hide">{{_('The activity is forcibly canceled because the workflow settings have changed and the next step was not found.')}}</div>
+<div ng-controller="AuthorModalCtrl" class="modal fade" tabindex="-1" role="dialog" id="cancelModal">
+  <div class="modal-dialog modelWidth modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">WEKO</h4>
+      </div>
+      <div class="modal-body" id="cancelModalBody">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="btnContinue">{{_('Continue')}}</button>
+      </div>
+    </div>
+  </div>
+</div>
   {%-if community %}
     <div class="communities">
     <div id="community-id" name="community-id" hidden>{{ community.id }}</div>

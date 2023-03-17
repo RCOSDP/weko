@@ -13,7 +13,7 @@ from __future__ import absolute_import, print_function
 
 import json
 
-from helpers import record_url
+from tests.helpers import record_url
 
 
 def test_default_permissions(app, default_permissions, test_data, search_url,

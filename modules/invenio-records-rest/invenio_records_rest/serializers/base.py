@@ -200,8 +200,7 @@ class PreprocessorMixin(PreprocessorMixinInterface):
             return mapping_dict
 
         links_factory = links_factory or (lambda x, record=None, **k: dict())
-        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
-        metadata = pickle_copy(record.replace_refs()) if self.replace_refs \
+        metadata = pickle.loads(pickle.dumps(record.replace_refs(), -1)) if self.replace_refs \
             else record.dumps()
         # Get keys of metadata record by mapping.
         mapping_key_lang = get_mapping(metadata.get('item_type_id'))

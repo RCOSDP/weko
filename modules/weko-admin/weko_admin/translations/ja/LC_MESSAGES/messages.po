@@ -1872,3 +1872,31 @@ msgstr "サーバーエラーのため、作成に失敗しました。"
 #~ msgid "Add_Agg"
 #~ msgstr "追加"
 
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
+msgid "UiType"
+msgstr "UI"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:60
+msgid "DisplayNumber"
+msgstr "表示件数"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
+msgid "OpenClose"
+msgstr "開閉状態"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
+msgid "OpenClose Open"
+msgstr "開"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
+msgid "OpenClose Close"
+msgstr "閉"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+#, python-format
+msgid "DisplayNumber Validation1"
+msgstr "表示件数は1以上99以下の整数値で入力する必要があります。"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+msgid "DisplayNumber Validation2"
+msgstr "CheckboxListを選択した場合は表示件数を入力する必要があります。"

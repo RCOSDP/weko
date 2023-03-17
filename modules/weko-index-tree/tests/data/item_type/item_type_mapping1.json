@@ -1,0 +1,89 @@
+{
+  "item_test1_1":{
+    "jpcoar_mapping":{
+      "test1":{
+        "@value":"test_value1",
+        "@attributes":{
+          "xml:lang":"test_item_lang1"
+        }
+      }
+    }
+  },
+  "item_test1_2":{
+    "jpcoar_mapping":{
+      "test1_2":{
+        "@value":"",
+        "@attributes":{
+          "xml:lang":"test_item_lang1"
+        }
+      }
+    }
+  },
+  "item_test1_3":{
+    "jpcoar_mapping":{
+      "test1_3":{
+        "@value":"test_value1",
+        "@attributes":{
+          "test":""
+        }
+      }
+    }
+  },
+  "item_test1_4":{
+    "jpcoar_mapping":{
+      "test1_4":{
+        "@value":"test_value1",
+        "@attributes":{
+          "test":""
+        }
+      }
+    }
+  },
+  "item_test1_5":{
+    "jpcoar_mapping":{
+      "test1":{
+        "@value":"test_value1",
+        "@attributes":{
+          "xml:lang":"test_item_lang1"
+        }
+      }
+    }
+  },
+  "item_test2_title":{
+    "jpcoar_mapping":{
+      "title":{
+        "@value":"test_title",
+        "@attributes":{
+          "xml:lang":"test_title_lang"
+        }
+      }
+    }
+  },
+  "item_test3":{
+    "jpcoar_mapping":{
+      "file":{
+        "URI": {
+          "@value": "url.url",
+          "@attributes": {
+            "label": "url.label",
+            "objectType": "url.objectType"
+          }
+        }
+      }
+    }
+  },
+  "system_file":{
+    "jpcoar_mapping":{
+        "system_file":{
+            "URI":{
+                "@value":"subitem_systemfile_filename_uri",
+                "@attributes":{
+                    "label":"subitem_systemfile_filename_label",
+                    "objectType":"subitem_systemfile_filename_type"
+                }
+            }
+        }
+    }
+  }
+}
+

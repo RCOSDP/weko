@@ -53,6 +53,7 @@ const is_withdraw_doi = document.getElementById("is_withdraw_doi").value;
 const item_is_deleted = document.getElementById("item_is_deleted").value;
 const item_is_being_edit = document.getElementById("item_is_being_edit").value;
 
+const file_format = $("#file_format").text() ? $("#file_format").text() : "tsv";
 const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
 const urlTree = window.location.origin + '/api/tree'
 const urlCheck = window.location.origin + '/admin/items/import/check'
@@ -868,9 +869,9 @@ class CheckComponent extends React.Component {
       contentType: "application/json; charset=utf-8",
       success: function (response) {
         const date = moment()
-        const fileName = 'check_' + date.format("YYYY-DD-MM") + '.tsv';
+        const fileName = 'check_' + date.format("YYYY-DD-MM") + '.' + file_format;
 
-        const blob = new Blob([response], { type: 'text/tsv' });
+        const blob = new Blob([response], { type: 'text/' + file_format });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
           window.navigator.msSaveOrOpenBlob(blob, fileName);
         } else {
@@ -1033,9 +1034,9 @@ class ResultComponent extends React.Component {
       contentType: "application/json; charset=utf-8",
       success: function (response) {
         const date = moment()
-        const fileName = 'List_Download_' + date.format("YYYY-DD-MM") + '.tsv';
+        const fileName = 'List_Download_' + date.format("YYYY-DD-MM") + '.' + file_format;
 
-        const blob = new Blob([response], { type: 'text/tsv' });
+        const blob = new Blob([response], { type: 'text/' + file_format });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
           window.navigator.msSaveOrOpenBlob(blob, fileName);
         } else {
@@ -1174,7 +1175,7 @@ class ItemTypeComponent extends React.Component {
         }
 
         fileName = decodeURIComponent(fileName.replace(/\+/g, '%20'));
-        const blob = new Blob([response], { type: 'text/tsv' });
+        const blob = new Blob([response], { type: 'text/' + file_format });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
           window.navigator.msSaveOrOpenBlob(blob, fileName);
         } else {

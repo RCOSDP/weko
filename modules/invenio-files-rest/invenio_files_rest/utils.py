@@ -76,7 +76,18 @@ def _location_has_quota(bucket, content_length):
 
 
 def delete_file_instance(file_id):
-    """Delete file instance."""
+    """
+    delete_file_instance Delete file instance.
+
+    _extended_summary_
+
+    Args:
+        file_id (_type_): _description_
+
+    Returns:
+        bool: _description_
+    """
+    
     obj_list = ObjectVersion.query.filter_by(
         file_id=file_id).all()
     if len(obj_list) == 0:

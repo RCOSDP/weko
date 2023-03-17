@@ -12,9 +12,10 @@
 from __future__ import absolute_import, print_function
 
 import uuid
-
+import copy
 import mock
 import pkg_resources
+
 from dojson.contrib.marc21 import marc21
 from dojson.contrib.marc21.utils import load
 from invenio_db import db
@@ -24,7 +25,10 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_records import Record
 from invenio_records.models import RecordMetadata
 from invenio_search import current_search, current_search_client
+from invenio_pidstore import current_pidstore
+from weko_records.api import ItemsMetadata
 
+from invenio_oaiserver.provider import OAIIDProvider
 from invenio_oaiserver.minters import oaiid_minter
 from invenio_oaiserver.models import OAISet
 from invenio_oaiserver.receivers import after_insert_oai_set
@@ -95,3 +99,20 @@ def create_record(app, item_dict, mint_oaiid=True):
         record = Record.create(item_dict, id_=record_id)
         indexer.index(record)
         return record
+
+
+def create_record_oai(record_data, item_data):
+    """Create a test record."""
+    with db.session.begin_nested():
+        record_data = copy.deepcopy(record_data)
+        item_data = copy.deepcopy(item_data)
+        rec_uuid = uuid.uuid4()
+        pid = current_pidstore.minters['recid'](rec_uuid, record_data)
+        oai_pro = OAIIDProvider.create(
+            object_type='rec',
+            object_uuid=rec_uuid,
+            pid_value=str(pid)
+        )
+        record = Record.create(record_data, id_=rec_uuid)
+        item = ItemsMetadata.create(item_data, id_=rec_uuid)
+    return (pid, oai_pro, record, item)

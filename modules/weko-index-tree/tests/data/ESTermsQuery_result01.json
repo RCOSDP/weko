@@ -1,0 +1,28 @@
+{
+  "start_date": "2017-01-01T00:00:00",
+  "end_date": "2017-01-07T00:00:00",
+  "value": 10.0,
+  "buckets": [
+    {
+      "remote_addr": "192.168.56.1",
+      "hostname": "None",
+      "count": 5,
+      "search_key": "test_key01",
+      "value": 49
+    },
+    {
+      "remote_addr": "192.168.56.1",
+      "hostname": "None",
+      "count": 2,
+      "search_key": "test_key02",
+      "value": 23
+    },
+    {
+      "remote_addr": "192.168.56.1",
+      "hostname": "None",
+      "count": 3,
+      "search_key": "test_key03",
+      "value": 21
+    }
+  ]
+}

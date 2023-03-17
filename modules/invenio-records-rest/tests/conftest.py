@@ -19,11 +19,14 @@ import tempfile
 from os.path import dirname, join
 
 import pytest
+from elasticsearch import Elasticsearch
 from elasticsearch import VERSION as ES_VERSION
 from elasticsearch.exceptions import RequestError
-from flask import Flask, url_for
+from elasticsearch_dsl import response, Search
+from flask import Flask, url_for, Response
 from flask_login import LoginManager, UserMixin
-from helpers import create_record
+from tests.helpers import create_record
+from invenio_access import InvenioAccess
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_indexer import InvenioIndexer
@@ -35,6 +38,8 @@ from invenio_rest import InvenioREST
 from invenio_search import InvenioSearch, RecordsSearch, current_search, \
     current_search_client
 from sqlalchemy_utils.functions import create_database, database_exists
+from weko_records import WekoRecords
+from weko_records.models import ItemTypeMapping
 
 from invenio_records_rest import InvenioRecordsREST, config
 from invenio_records_rest.facets import terms_filter
@@ -82,7 +87,50 @@ def search_url():
     """Search class."""
     yield url_for('invenio_records_rest.recid_list')
 
-
+class MockEs():
+    def __init__(self,**keywargs):
+        self.indices = self.MockIndices()
+        self.es = Elasticsearch()
+        self.cluster = self.MockCluster()
+    def index(self, id="",version="",version_type="",index="",doc_type="",body="",**arguments):
+        pass
+    def delete(self,id="",index="",doc_type="",**kwargs):
+        return Response(response=json.dumps({}),status=500)
+    @property
+    def transport(self):
+        return self.es.transport
+    class MockIndices():
+        def __init__(self,**keywargs):
+            self.mapping = dict()
+        def delete(self,index="", ignore=""):
+            pass
+        def delete_template(self,index=""):
+            pass
+        def create(self,index="",body={},ignore=""):
+            self.mapping[index] = body
+        def put_alias(self,index="", name="", ignore=""):
+            pass
+        def put_template(self,name="", body={}, ignore=""):
+            pass
+        def refresh(self,index=""):
+            pass
+        def exists(self, index="", **kwargs):
+            if index in self.mapping:
+                return True
+            else:
+                return False
+        def flush(self,index="",wait_if_ongoing=""):
+            pass
+        def delete_alias(self, index="", name="",ignore=""):
+            pass
+        
+        # def search(self,index="",doc_type="",body={},**kwargs):
+        #     pass
+    class MockCluster():
+        def __init__(self,**kwargs):
+            pass
+        def health(self, wait_for_status="", request_timeout=0):
+            pass
 @pytest.yield_fixture()
 def app(request, search_class):
     """Flask application fixture.
@@ -175,13 +223,14 @@ def app(request, search_class):
                     new_endpoint
 
     app.url_map.converters['pid'] = PIDConverter
-
+    InvenioAccess(app)
     InvenioDB(app)
     InvenioREST(app)
     InvenioRecords(app)
     InvenioIndexer(app)
     InvenioPIDStore(app)
-    search = InvenioSearch(app)
+    WekoRecords(app)
+    search = InvenioSearch(app, client=MockEs())
     search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
     InvenioRecordsREST(app)
     app.register_blueprint(create_blueprint_from_app(app))
@@ -323,3 +372,24 @@ def default_permissions(app):
     yield app
 
     app.extensions['invenio-records-rest'].reset_permission_factories()
+
+
+@pytest.fixture()
+def mock_es_execute():
+    def _dummy_response(data):
+        if isinstance(data, str):
+            with open(data, "r") as f:
+                data = json.load(f)
+        dummy=response.Response(Search(), data)
+        return dummy
+    return _dummy_response
+
+@pytest.fixture()
+def item_type_mapping(db):
+    path = "data/itemtypemapping.json"
+
+    with open(join(dirname(__file__), path), "r") as f:
+        data = json.load(f)
+    with db.session.begin_nested():
+        item=ItemTypeMapping(**data)
+        db.session.add(item)

@@ -26,12 +26,14 @@ from collections import Iterable, OrderedDict
 from functools import partial
 
 import redis
+from redis import sentinel
 import xmlschema
 from flask import abort, current_app, request, url_for
 from lxml import etree
 from lxml.builder import ElementMaker
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemLink, Mapping
+from weko_redis import RedisConnection
 from xmlschema.validators import XsdAnyAttribute, XsdAnyElement, \
     XsdAtomicBuiltin, XsdAtomicRestriction, XsdEnumerationFacet, XsdGroup, \
     XsdPatternsFacet, XsdSingleFacet, XsdUnion
@@ -48,6 +50,9 @@ class SchemaConverter:
             abort(400, "Error creating Schema: Invalid schema file used")
         if not rootname:
             abort(400, "Error creating Schema: Invalid root name used")
+
+        current_app.logger.error("schemafile:{}".format(schemafile))
+        current_app.logger.error("rootname:{}".format(rootname))
 
         self.rootname = rootname
         self.schema, self.namespaces, self.target_namespace = \
@@ -927,6 +932,19 @@ class SchemaTree:
                         for i in v:
                             remove_hide_data(i, parentkey + "." + k)
 
+        def replace_resource_type_for_jpcoar_v1(atr_vm_item):
+            # current_app.logger.debug('atr_vm_item:{0}'.format(atr_vm_item))
+            # atr_vm_item:{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}
+            if 'resourcetype' in atr_vm_item and \
+                    'resourceuri' in atr_vm_item and \
+                    atr_vm_item['resourcetype'] in current_app.config[
+                        'WEKO_SCHEMA_JPCOAR_V1_RESOURCE_TYPE_REPLACE']:
+                new_type = current_app.config[
+                    'WEKO_SCHEMA_JPCOAR_V1_RESOURCE_TYPE_REPLACE'][atr_vm_item['resourcetype']]
+                atr_vm_item['resourcetype'] = new_type
+                atr_vm_item['resourceuri'] = current_app.config[
+                    'RESOURCE_TYPE_URI'][new_type]
+
         vlst = []
         for key_item_parent, value_item_parent in sorted(self._record.items()):
             if isinstance(value_item_parent, dict):
@@ -969,6 +987,9 @@ class SchemaTree:
                     for atr_vm_item in atr_vm:
                         if self._ignore_list_all:
                             remove_hide_data(atr_vm_item, key_item_parent)
+                        if self._schema_name == current_app.config[
+                                'WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME']:
+                            replace_resource_type_for_jpcoar_v1(atr_vm_item)
                         vlst_child = get_mapping_value(mpdic, atr_vm_item,
                                                        key_item_parent,
                                                        atr_name)
@@ -1458,7 +1479,7 @@ class SchemaTree:
                     count_name += _max_len_name
                 else:
                     if _value[jpcoar_affname].get(self._v):
-                        _value[jpcoar_affname][self._v][0] = [[]]
+                        _value[jpcoar_affname][self._v] = [[]]
 
                 len_idtf = _child[jpcoar_nameidt]
                 if len_idtf > 0:
@@ -1814,16 +1835,19 @@ def cache_schema(schema_name, delete=False):
                 dstore['namespaces'] = rec.model.namespaces.copy()
                 dstore['schema'] = json.loads(
                     rec.model.xsd, object_pairs_hook=OrderedDict)
+                
+                # why use clear()?
                 rec.model.namespaces.clear()
                 del rec
+                
                 return dstore
         except BaseException:
             return None
 
     try:
         # schema cached on Redis by schema name
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         cache_key = current_app.config[
             'WEKO_SCHEMA_CACHE_PREFIX'].format(schema_name=schema_name)
         data_str = datastore.get(cache_key)
@@ -1832,7 +1856,7 @@ def cache_schema(schema_name, delete=False):
             object_pairs_hook=OrderedDict)
         if delete:
             datastore.delete(cache_key)
-    except BaseException:
+    except BaseException as ex:
         try:
             schema = get_schema()
             if schema:
@@ -1854,8 +1878,8 @@ def delete_schema_cache(schema_name):
     """
     try:
         # schema cached on Redis by schema name
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         cache_key = current_app.config[
             'WEKO_SCHEMA_CACHE_PREFIX'].format(schema_name=schema_name)
         datastore.delete(cache_key)
@@ -1901,6 +1925,7 @@ def delete_schema(pid):
 def get_oai_metadata_formats(app):
     """Get oai metadata formats."""
     oad = app.config.get('OAISERVER_METADATA_FORMATS', {}).copy()
+    
     if isinstance(oad, dict):
         try:
             obj = WekoSchema.get_all()
@@ -1931,4 +1956,5 @@ def get_oai_metadata_formats(app):
                                 oad[schema_name]['namespace'] = ns
                         if lst.schema_location:
                             oad[schema_name]['schema'] = lst.schema_location
+    
     return oad

@@ -21,7 +21,7 @@ from invenio_records_rest.schemas.fields import \
 from invenio_records_rest.serializers.json import JSONSerializer
 
 
-def test_serialize():
+def test_serialize(db):
     """Test JSON serialize."""
     class TestSchema(Schema):
         title = fields.Str(attribute='metadata.mytitle')
@@ -72,7 +72,7 @@ def test_serialize_search():
     )
 
 
-def test_serialize_pretty(app):
+def test_serialize_pretty(app, db):
     """Test pretty JSON."""
     class TestSchema(Schema):
         title = fields.Str(attribute='metadata.title')

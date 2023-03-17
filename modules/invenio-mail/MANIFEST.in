@@ -32,3 +32,7 @@ recursive-include tests *.txt
 # added by check_manifest.py
 recursive-include invenio_mail *.html
 recursive-include invenio_mail *.pot
+
+# added by check-manifest
+include *.properties
+include tox.ini

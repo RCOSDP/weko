@@ -21,7 +21,7 @@
 """Permissions for Detail Page."""
 
 from datetime import datetime as dt
-from datetime import timedelta
+from datetime import timedelta, timezone
 
 from flask import abort, current_app
 from flask_babelex import get_locale, to_user_timezone, to_utc
@@ -162,7 +162,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                         adt = date[0].get('dateValue')
                         if adt:
                             pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
-                            is_can = True if dt.today() >= pdt else False
+                            is_can = True if dt.utcnow() >= pdt else False
                         else:
                             is_can = True
             # access with open date
@@ -176,7 +176,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                         if date and isinstance(date, list) and date[0]:
                             adt = date[0].get('dateValue')
                             pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
-                            is_can = True if dt.today() >= pdt else False
+                            is_can = True if dt.utcnow() >= pdt else False
                     except BaseException:
                         is_can = False
 
@@ -301,6 +301,7 @@ def get_permission(record, fjson):
     @param fjson:
     @return:
     """
+    # current_app.logger.debug("fjson: {}".format(fjson))
     record_id = record.get('recid')
     file_name = fjson.get('filename')
     list_permission = __get_file_permission(record_id, file_name)
@@ -373,9 +374,13 @@ def check_publish_status(record):
     pst = record.get('publish_status')
     pdt = record.get('pubdate', {}).get('attribute_value')
     try:
+        # offset-naive
         pdt = to_utc(dt.strptime(pdt, '%Y-%m-%d'))
-        pdt = True if dt.today() >= pdt else False
-    except BaseException:
+        # offset-naive
+        now = dt.utcnow() 
+        pdt = True if now >= pdt else False
+    except BaseException as e:
+        current_app.logger.error(e)
         pdt = False
     # if it's publish
     if pst and '0' in pst and pdt:
@@ -383,51 +388,78 @@ def check_publish_status(record):
     return result
 
 
-def check_created_id(record):
-    """Check Created id.
+# def check_created_id(record):
+#     """Check Created id.
+#      :param record:
+#      :return: result
+#     """
+#     is_himself = False
+#     users = current_app.config['WEKO_PERMISSION_ROLE_USER']
+#     # Super users
+#     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+#     user_id = current_user.get_id() \
+#         if current_user and current_user.is_authenticated else None
+#     created_id = record.get('_deposit', {}).get('created_by')
+#     from weko_records.serializers.utils import get_item_type_name
+#     item_type_id = record.get('item_type_id', '')
+#     item_type_name = get_item_type_name(item_type_id)
+#     for lst in list(current_user.roles or []):
+#         # In case of supper user,it's always have permission
+#         if lst.name in supers:
+#             is_himself = True
+#             break
+#         if lst.name in users:
+#             is_himself = True
+#             data_registration = current_app.config.get(
+#                 'WEKO_ITEMS_UI_DATA_REGISTRATION')
+#             application_item_type_list = current_app.config.get(
+#                 'WEKO_ITEMS_UI_APPLICATION_ITEM_TYPES_LIST')
+#             if item_type_name and data_registration \
+#                     and application_item_type_list and (
+#                     item_type_name == data_registration
+#                     or item_type_name in application_item_type_list):
+#                 if user_id and user_id == str(created_id):
+#                     is_himself = True
+#                 else:
+#                     is_himself = False
+#                 break
+#             if lst.name == users[2]:
+#                 is_himself = False
+#                 shared_id = record.get('weko_shared_id')
+#                 if user_id and created_id and user_id == str(created_id):
+#                     is_himself = True
+#                 elif user_id and shared_id and user_id == str(shared_id):
+#                     is_himself = True
+#             elif lst.name == users[3]:
+#                 is_himself = False
+#     return is_himself
 
-    :param record:
-    :return: result
-    """
+def check_created_id(record):
+    """Check edit permission to the record for the current user
+
+    Args:
+        record (dict): the record to check edit permission.
+        example: {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1657555088462']}, 'path': ['1657555088462'], 'owner': '1', 'recid': '1', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-12'}, '_buckets': {'deposit': '35004d51-8938-4e77-87d7-0c9e176b8e7b'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-12', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True}
+
+    Returns:
+        bool: True is the current user has the edit permission.
+    """    
     is_himself = False
-    users = current_app.config['WEKO_PERMISSION_ROLE_USER']
     # Super users
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
     user_id = current_user.get_id() \
-        if current_user and current_user.is_authenticated else None
-    created_id = record.get('_deposit', {}).get('created_by')
-    from weko_records.serializers.utils import get_item_type_name
-    item_type_id = record.get('item_type_id', '')
-    item_type_name = get_item_type_name(item_type_id)
-    for lst in list(current_user.roles or []):
-        # In case of supper user,it's always have permission
-        if lst.name in supers:
+            if current_user and current_user.is_authenticated else None
+    if user_id is not None:    
+        created_id = record.get('_deposit', {}).get('created_by')
+        shared_id = record.get('weko_shared_id')
+        if user_id and created_id and user_id == str(created_id):
             is_himself = True
-            break
-        if lst.name in users:
+        elif user_id and shared_id and user_id == str(shared_id):
             is_himself = True
-            data_registration = current_app.config.get(
-                'WEKO_ITEMS_UI_DATA_REGISTRATION')
-            application_item_type_list = current_app.config.get(
-                'WEKO_ITEMS_UI_APPLICATION_ITEM_TYPES_LIST')
-            if item_type_name and data_registration \
-                    and application_item_type_list and (
-                    item_type_name == data_registration
-                    or item_type_name in application_item_type_list):
-                if user_id and user_id == str(created_id):
-                    is_himself = True
-                else:
-                    is_himself = False
-                break
-            if lst.name == users[2]:
-                is_himself = False
-                shared_id = record.get('weko_shared_id')
-                if user_id and created_id and user_id == str(created_id):
-                    is_himself = True
-                elif user_id and shared_id and user_id == str(shared_id):
-                    is_himself = True
-            elif lst.name == users[3]:
-                is_himself = False
+        for lst in list(current_user.roles or []):
+            # In case of supper user,it's always have permission
+            if lst.name in supers:
+                is_himself = True
     return is_himself
 
 

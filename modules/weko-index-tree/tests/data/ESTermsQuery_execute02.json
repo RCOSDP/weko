@@ -1,0 +1,28 @@
+{
+  "took": 20,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 3,
+    "max_score": 0.0,
+    "hits": []
+  },
+  "aggregations": {
+    "my_buckets": {
+      "after_key": {
+        "remote_addr": "192.168.56.1",
+        "hostname": "None",
+        "count": 3
+      },
+      "buckets": []
+    },
+    "value": {
+      "value": 10.0
+    }
+  }
+}

@@ -207,4 +207,80 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
         return cls
 
 
-__all__ = ('Authors', 'AuthorsPrefixSettings', )
+class AuthorsAffiliationSettings(db.Model, Timestamp):
+    """Represent an author affiliation setting."""
+
+    __tablename__ = 'authors_affiliation_settings'
+
+    id = db.Column(db.Integer, primary_key=True, unique=True)
+    """ Id of the authors affiliation settings."""
+
+    name = db.Column(db.Text, nullable=False)
+    """ The name of affiliation organization."""
+
+    scheme = db.Column(db.Text, nullable=True, unique=True)
+    """ The scheme of affiliation organization."""
+
+    url = db.Column(db.Text, nullable=True)
+    """ The url of affiliation organization."""
+
+    created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    """ Created date."""
+
+    updated = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow)
+    """ Updated date."""
+
+    @classmethod
+    def create(cls, name, scheme, url):
+        """Create settings."""
+        try:
+            data = AuthorsAffiliationSettings()
+            with db.session.begin_nested():
+                data.name = name
+                data.url = url
+                if scheme:
+                    data.scheme = scheme.strip()
+                db.session.add(data)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise
+        return cls
+
+    @classmethod
+    def update(cls, id, name, scheme, url):
+        """Update settings."""
+        try:
+            with db.session.begin_nested():
+                data = cls.query.filter_by(id=id).first()
+                data.name = name
+                data.url = url
+                if scheme:
+                    data.scheme = scheme.strip()
+                db.session.merge(data)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise
+        return cls
+
+    @classmethod
+    def delete(cls, id):
+        """Delete settings."""
+        try:
+            with db.session.begin_nested():
+                cls.query.filter_by(id=id).delete()
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise
+        return cls
+
+__all__ = ('Authors', 'AuthorsPrefixSettings', 'AuthorsAffiliationSettings')

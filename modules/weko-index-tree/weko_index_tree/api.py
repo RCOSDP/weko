@@ -20,10 +20,14 @@
 
 """API for weko-index-tree."""
 
+import pickle
+import os
 from copy import deepcopy
 from datetime import date, datetime
 from functools import partial
+from socketserver import DatagramRequestHandler
 
+from redis.exceptions import RedisError
 from flask import current_app, json
 from flask_babelex import gettext as _
 from flask_login import current_user
@@ -36,15 +40,14 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import case, func, literal_column
 from weko_groups.api import Group
+from weko_redis.redis import RedisConnection
 
 from .models import Index
 from .utils import cached_index_tree_json, check_doi_in_index, \
     check_restrict_doi_with_indexes, filter_index_list_by_role, \
     get_index_id_list, get_publish_index_id_list, get_tree_json, \
-    get_user_roles, is_index_locked, reset_tree, sanitize
+    get_user_roles, is_index_locked, reset_tree, sanitize, save_index_trees_to_redis
 
-
-import pickle
 
 class Indexes(object):
     """Define API for index tree creation and update."""
@@ -91,7 +94,7 @@ class Indexes(object):
 
             data["coverpage_state"] = False
             data["recursive_coverpage_check"] = False
-
+            
             group_list = ''
             groups = Group.query.all()
             for group in groups:
@@ -103,6 +106,7 @@ class Indexes(object):
             data["browsing_group"] = group_list
             data["contribute_group"] = group_list
 
+            
             if int(pid) == 0:
                 pid_info = cls.get_root_index_count()
                 data["position"] = 0 if not pid_info else \
@@ -143,7 +147,6 @@ class Indexes(object):
 
                 else:
                     return
-
             _add_index(data)
         except IntegrityError as ie:
             if 'uix_position' in ''.join(ie.args):
@@ -183,6 +186,7 @@ class Indexes(object):
                 if not index:
                     return
 
+                data.pop("can_edit", False)
                 for k, v in data.items():
                     if isinstance(getattr(index, k), int):
                         if isinstance(v, str) and len(v) == 0:
@@ -219,7 +223,10 @@ class Indexes(object):
                         getattr(index, "contribute_group")),
                     'recursive_contribute_role': partial(
                         cls.set_contribute_role_resc, index_id,
-                        getattr(index, "contribute_role"))
+                        getattr(index, "contribute_role")),
+                    'biblio_flag': partial(
+                        cls.set_online_issn_resc, index_id,
+                        getattr(index, "online_issn"))
                 }
                 for recur_key, recur_update_func in recs_group.items():
                     if getattr(index, recur_key):
@@ -398,7 +405,39 @@ class Indexes(object):
                 ret['msg'] = _('Select an index to move.')
                 return ret
 
+            if index_id == int(parent):
+                ret['is_ok'] = False
+                ret['msg'] = _('Fail move an index.')
+                return ret
+
             try:
+                role_ids = []
+                if current_user and current_user.is_authenticated:
+                    for role in current_user.roles:
+                        if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
+                            ret['is_ok'] = True
+                            role_ids = []
+                            break
+                        else:
+                            ret['is_ok'] = False
+                            role_ids.append(role.id)
+                if not ret['is_ok'] and role_ids:
+                    can_edit_list = []
+                    from invenio_communities.models import Community
+                    comm_data = Community.query.filter(
+                        Community.id_role.in_(role_ids)
+                    ).all()
+                    for comm in comm_data:
+                        can_edit_list += [i.cid for i in cls.get_self_list(comm.root_node_id)]
+                    can_edit_list = list(set(can_edit_list))
+                    if int(parent) not in can_edit_list or \
+                            int(pre_parent) not in can_edit_list or \
+                            int(index_id) not in can_edit_list:
+                        ret['is_ok'] = False
+                        ret['msg'] = _('You can not move the index.')
+                        return ret
+
+                ret['is_ok'] = True
                 new_position = int(data.get('position'))
                 if int(parent) == 0:
                     parent_info = cls.get_root_index_count()
@@ -526,7 +565,20 @@ class Indexes(object):
     @classmethod
     def get_browsing_tree(cls, pid=0):
         """Get browsing tree."""
-        tree = cls.get_index_tree(pid)
+        if pid == 0:
+            try:
+                redis_connection = RedisConnection()
+                datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+                v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language).decode("UTF-8")
+                tree = json.loads(str(v))
+            except RedisError:
+                tree = cls.get_index_tree(pid)
+                save_index_trees_to_redis(tree)
+            except KeyError:
+                tree = cls.get_index_tree(pid)
+                save_index_trees_to_redis(tree)
+        else:
+            tree = cls.get_index_tree(pid)
         reset_tree(tree=tree)
         return tree
 
@@ -540,7 +592,20 @@ class Indexes(object):
     @classmethod
     def get_browsing_tree_ignore_more(cls, pid=0):
         """Get browsing tree ignore more."""
-        tree = cls.get_index_tree(pid)
+        if pid == 0:
+            try:
+                redis_connection = RedisConnection()
+                datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+                v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language).decode("UTF-8")
+                tree = json.loads(str(v))
+            except RedisError:
+                tree = cls.get_index_tree(pid)
+                save_index_trees_to_redis(tree)
+            except KeyError:
+                tree = cls.get_index_tree(pid)
+                save_index_trees_to_redis(tree)
+        else:
+            tree = cls.get_index_tree(pid)
         reset_tree(tree=tree, ignore_more=True)
         return tree
 
@@ -637,8 +702,7 @@ class Indexes(object):
         role = cls.get_account_role()
         allow = index["browsing_role"].split(',') \
             if len(index["browsing_role"]) else []
-        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
-        allow, deny = _get_allow_deny(allow, pickle_copy(role), True)
+        allow, deny = _get_allow_deny(allow, pickle.loads(pickle.dumps(role, -1)), True)
         index["browsing_role"] = dict(allow=allow, deny=deny)
 
         allow = index["contribute_role"].split(',') \
@@ -654,13 +718,13 @@ class Indexes(object):
         allow_group_id = index["browsing_group"].split(',') \
             if len(index["browsing_group"]) else []
         allow_group, deny_group = _get_group_allow_deny(allow_group_id,
-                                                        pickle_copy(group_list))
+                                                        pickle.loads(pickle.dumps(group_list, -1)))
         index["browsing_group"] = dict(allow=allow_group, deny=deny_group)
 
         allow_group_id = index["contribute_group"].split(',') \
             if len(index["contribute_group"]) else []
         allow_group, deny_group = _get_group_allow_deny(allow_group_id,
-                                                        pickle_copy(group_list))
+                                                        pickle.loads(pickle.dumps(group_list, -1)))
         index["contribute_group"] = dict(allow=allow_group, deny=deny_group)
 
         return index
@@ -1236,8 +1300,7 @@ class Indexes(object):
                     'parent_state')).filter(Index.id.in_(path))
 
         try:
-            pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
-            _paths = pickle_copy(paths)
+            _paths = pickle.loads(pickle.dumps(paths, -1))
             last_path = _paths.pop(-1).split('/')
             qry = _query(last_path)
             for i in range(len(_paths)):
@@ -1281,8 +1344,7 @@ class Indexes(object):
                     'parent_state')).filter(Index.id.in_(path))
 
         try:
-            pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
-            _paths = pickle_copy(paths)
+            _paths = pickle.loads(pickle.dumps(paths, -1))
             last_path = _paths.pop(-1).split('/')
             qry = _query(last_path)
             for i in range(len(_paths)):
@@ -1310,8 +1372,7 @@ class Indexes(object):
                 ))).label('parent_state'))
 
         try:
-            pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
-            _ids = pickle_copy(ids)
+            _ids = pickle.loads(pickle.dumps(ids, -1))
             qry = _query(_ids.pop(-1))
             for i in range(len(_ids)):
                 _ids[i] = _query(_ids[i])
@@ -1519,6 +1580,20 @@ class Indexes(object):
                    synchronize_session='fetch')
         for index in Index.query.filter_by(parent=index_id).all():
             cls.set_browsing_group_resc(index.id, browsing_group)
+
+    @classmethod
+    def set_online_issn_resc(cls, index_id, online_issn):
+        """
+        Set Online ISSN for all index's children.
+
+        :param index_id: search index id
+        :param online_issn: Online ISSN
+        """
+        Index.query.filter_by(parent=index_id). \
+            update({Index.online_issn: online_issn},
+                   synchronize_session='fetch')
+        for index in Index.query.filter_by(parent=index_id).all():
+            cls.set_online_issn_resc(index.id, online_issn)
 
     @classmethod
     def get_index_count(cls):

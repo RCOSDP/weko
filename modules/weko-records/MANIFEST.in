@@ -57,3 +57,10 @@ recursive-include examples *.sh
 recursive-include examples *.txt
 recursive-include tests *.py
 recursive-include weko_records *.xsl
+
+# added by check-manifest
+include *.properties
+include tox.ini
+recursive-include tests *.json
+recursive-include weko_records *.po
+recursive-include weko_records *.pot

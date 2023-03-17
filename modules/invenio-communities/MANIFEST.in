@@ -47,3 +47,8 @@ recursive-include invenio_communities *.po *.pot *.mo
 recursive-include invenio_communities *.py
 recursive-include invenio_communities *.scss
 recursive-include tests *.py
+
+# added by check-manifest
+include *.properties
+include tox.ini
+recursive-include invenio_communities *.css

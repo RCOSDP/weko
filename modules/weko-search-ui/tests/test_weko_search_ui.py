@@ -28,6 +28,7 @@ from weko_search_ui import WekoSearchUI
 def test_version():
     """Test version import."""
     from weko_search_ui import __version__
+
     assert __version__
 
 
@@ -35,7 +36,7 @@ def test_init(app):
     """Test extension initialization."""
     # app = Flask('testapp')
     ext = WekoSearchUI(app)
-    assert 'weko-search-ui' in app.extensions
+    assert "weko-search-ui" in app.extensions
 
     # app = Flask('testapp')
     # ext = WekoSearchUI()

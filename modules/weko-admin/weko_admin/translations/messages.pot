@@ -168,6 +168,34 @@ msgstr ""
 msgid "Active"
 msgstr ""
 
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
+msgid "UiType"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:60
+msgid "DisplayNumber"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
+msgid "OpenClose"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
+msgid "OpenClose Open"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
+msgid "OpenClose Close"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+msgid "DisplayNumber Validation1"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+msgid "DisplayNumber Validation2"
+msgstr ""
+
 #: weko_admin/admin.py:1210 weko_admin/admin.py:1237 weko_admin/admin.py:1246
 #: weko_admin/admin.py:1255 weko_admin/admin.py:1264 weko_admin/admin.py:1273
 #: weko_admin/admin.py:1282 weko_admin/admin.py:1291 weko_admin/admin.py:1309
@@ -886,7 +914,7 @@ msgid "Rankings"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:91
-msgid "The Most Viewed Items"
+msgid "Most Viewed Items"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:102

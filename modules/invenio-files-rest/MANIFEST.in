@@ -27,3 +27,7 @@ recursive-include invenio_files_rest *.js
 recursive-include invenio_files_rest *.po *.pot *.mo
 recursive-include invenio_files_rest *.py
 recursive-include tests *.py
+
+# added by check-manifest
+include *.properties
+include tox.ini

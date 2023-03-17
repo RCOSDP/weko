@@ -35,6 +35,7 @@ from sqlalchemy_utils.types import JSONType, UUIDType
 from sqlalchemy_utils.types.choice import ChoiceType
 from weko_groups.widgets import RadioGroupWidget
 from weko_records.models import ItemType
+from invenio_files_rest.models import Location
 
 
 class ActionStatusPolicy(object):
@@ -661,6 +662,15 @@ class WorkFlow(db.Model, TimestampMixin):
     open_restricted = db.Column(db.Boolean(name='open_restricted'), nullable=False, default=True)
     """Open restricted flag."""
 
+    location_id = db.Column(db.Integer(), db.ForeignKey(Location.id),
+                        nullable=True, unique=False)
+    """the id of location."""
+
+    location = db.relationship(
+        Location,
+        backref=db.backref('workflow', lazy='dynamic')
+    )
+    
     is_gakuninrdm = db.Column(db.Boolean(name='is_gakuninrdm'), nullable=False, default=False)
     """GakuninRDM flag."""
 
