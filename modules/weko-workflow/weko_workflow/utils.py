@@ -4051,3 +4051,27 @@ def create_or_update_item_billing(deposit):
     except SQLAlchemyError as ex:
         current_app.logger.debug(ex)
         db.session.rollback()
+
+
+def make_activitylog_tsv(activities):
+    """make tsv for activitiy_log
+
+    Args:
+        activities: activities for download as tsv.
+    """
+    import csv 
+    from io import StringIO
+    file_output = StringIO()
+
+    keys = current_app.config.get("WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS")
+
+    writer = csv.writer(file_output, delimiter="\t", lineterminator="\n")
+    writer.writerow(keys)
+    for item in activities:
+        term = []
+        for name in keys:
+            term.append(getattr(item,name))
+        writer.writerow(term)
+
+    return file_output.getvalue()
+    

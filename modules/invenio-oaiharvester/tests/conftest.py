@@ -33,15 +33,20 @@ import tempfile
 import uuid
 from datetime import datetime
 from os.path import join
+from mock import patch
+import copy
 
 import pytest
 from flask import Flask
 from flask.cli import ScriptInfo
 from flask_celeryext import FlaskCeleryExt
 from invenio_access import InvenioAccess
+from invenio_access.models import ActionUsers, ActionRoles
 from invenio_accounts import InvenioAccounts
-from invenio_accounts.models import User
+from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user
+from invenio_cache import InvenioCache
+from invenio_deposit import InvenioDeposit
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_files_rest import InvenioFilesREST
@@ -54,6 +59,8 @@ from invenio_records import InvenioRecords
 from invenio_records_rest import InvenioRecordsREST
 from invenio_search import InvenioSearch, current_search_client
 from sqlalchemy_utils.functions import create_database, database_exists
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdentifier
+from invenio_pidrelations.models import PIDRelation
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_index_tree.models import Index
 from weko_search_ui import WekoSearchUI
@@ -61,9 +68,12 @@ from weko_schema_ui.models import OAIServerSchema
 from weko_theme import WekoTheme
 from weko_deposit import WekoDeposit
 from weko_records import WekoRecords
+from weko_records.api import ItemsMetadata 
+
 
 from invenio_oaiharvester import InvenioOAIHarvester
 from invenio_oaiharvester.models import OAIHarvestConfig, HarvestSettings
+
 
 
 @pytest.yield_fixture()
@@ -114,7 +124,9 @@ def base_app(instance_path):
     FlaskCeleryExt(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
+    InvenioCache(app_)
     InvenioDB(app_)
+    InvenioDeposit(app_)
     InvenioI18N(app_)
     InvenioPIDStore(app_)
     InvenioJSONSchemas(app_)
@@ -172,11 +184,135 @@ def esindex(app):
         current_search_client.indices.delete(index='test-*')
 
 
+@pytest.fixture()
+def users(app, db):
+    """Create users."""
+    ds = app.extensions['invenio-accounts'].datastore
+    user_count = User.query.filter_by(email='user@test.org').count()
+    if user_count != 1:
+        user = create_test_user(email='user@test.org')
+        contributor = create_test_user(email='contributor@test.org')
+        comadmin = create_test_user(email='comadmin@test.org')
+        repoadmin = create_test_user(email='repoadmin@test.org')
+        sysadmin = create_test_user(email='sysadmin@test.org')
+        generaluser = create_test_user(email='generaluser@test.org')
+        originalroleuser = create_test_user(email='originalroleuser@test.org')
+        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
+        student = create_test_user(email='student@test.org')
+    else:
+        user = User.query.filter_by(email='user@test.org').first()
+        contributor = User.query.filter_by(email='contributor@test.org').first()
+        comadmin = User.query.filter_by(email='comadmin@test.org').first()
+        repoadmin = User.query.filter_by(email='repoadmin@test.org').first()
+        sysadmin = User.query.filter_by(email='sysadmin@test.org').first()
+        generaluser = User.query.filter_by(email='generaluser@test.org')
+        originalroleuser = create_test_user(email='originalroleuser@test.org')
+        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
+        student = User.query.filter_by(email='student@test.org').first()
+        
+    role_count = Role.query.filter_by(name='System Administrator').count()
+    if role_count != 1:
+        sysadmin_role = ds.create_role(name='System Administrator')
+        repoadmin_role = ds.create_role(name='Repository Administrator')
+        contributor_role = ds.create_role(name='Contributor')
+        comadmin_role = ds.create_role(name='Community Administrator')
+        general_role = ds.create_role(name='General')
+        originalrole = ds.create_role(name='Original Role')
+        studentrole = ds.create_role(name='Student')
+    else:
+        sysadmin_role = Role.query.filter_by(name='System Administrator').first()
+        repoadmin_role = Role.query.filter_by(name='Repository Administrator').first()
+        contributor_role = Role.query.filter_by(name='Contributor').first()
+        comadmin_role = Role.query.filter_by(name='Community Administrator').first()
+        general_role = Role.query.filter_by(name='General').first()
+        originalrole = Role.query.filter_by(name='Original Role').first()
+        studentrole = Role.query.filter_by(name='Student').first()
+
+    ds.add_role_to_user(sysadmin, sysadmin_role)
+    ds.add_role_to_user(repoadmin, repoadmin_role)
+    ds.add_role_to_user(contributor, contributor_role)
+    ds.add_role_to_user(comadmin, comadmin_role)
+    ds.add_role_to_user(generaluser, general_role)
+    ds.add_role_to_user(originalroleuser, originalrole)
+    ds.add_role_to_user(originalroleuser2, originalrole)
+    ds.add_role_to_user(originalroleuser2, repoadmin_role)
+    ds.add_role_to_user(student,studentrole)
+    # Assign access authorization
+    with db.session.begin_nested():
+        action_users = [
+            ActionUsers(action='superuser-access', user=sysadmin),
+        ]
+        db.session.add_all(action_users)
+        action_roles = [
+            ActionRoles(action='superuser-access', role=sysadmin_role),
+            ActionRoles(action='admin-access', role=repoadmin_role),
+            ActionRoles(action='schema-access', role=repoadmin_role),
+            ActionRoles(action='index-tree-access', role=repoadmin_role),
+            ActionRoles(action='indextree-journal-access', role=repoadmin_role),
+            ActionRoles(action='item-type-access', role=repoadmin_role),
+            ActionRoles(action='item-access', role=repoadmin_role),
+            ActionRoles(action='files-rest-bucket-update', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-delete', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-delete-version', role=repoadmin_role),
+            ActionRoles(action='files-rest-object-read', role=repoadmin_role),
+            ActionRoles(action='search-access', role=repoadmin_role),
+            ActionRoles(action='detail-page-acces', role=repoadmin_role),
+            ActionRoles(action='download-original-pdf-access', role=repoadmin_role),
+            ActionRoles(action='author-access', role=repoadmin_role),
+            ActionRoles(action='items-autofill', role=repoadmin_role),
+            ActionRoles(action='stats-api-access', role=repoadmin_role),
+            ActionRoles(action='read-style-action', role=repoadmin_role),
+            ActionRoles(action='update-style-action', role=repoadmin_role),
+            ActionRoles(action='detail-page-acces', role=repoadmin_role),
+
+            ActionRoles(action='admin-access', role=comadmin_role),
+            ActionRoles(action='index-tree-access', role=comadmin_role),
+            ActionRoles(action='indextree-journal-access', role=comadmin_role),
+            ActionRoles(action='item-access', role=comadmin_role),
+            ActionRoles(action='files-rest-bucket-update', role=comadmin_role),
+            ActionRoles(action='files-rest-object-delete', role=comadmin_role),
+            ActionRoles(action='files-rest-object-delete-version', role=comadmin_role),
+            ActionRoles(action='files-rest-object-read', role=comadmin_role),
+            ActionRoles(action='search-access', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='download-original-pdf-access', role=comadmin_role),
+            ActionRoles(action='author-access', role=comadmin_role),
+            ActionRoles(action='items-autofill', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+            ActionRoles(action='detail-page-acces', role=comadmin_role),
+
+            ActionRoles(action='item-access', role=contributor_role),
+            ActionRoles(action='files-rest-bucket-update', role=contributor_role),
+            ActionRoles(action='files-rest-object-delete', role=contributor_role),
+            ActionRoles(action='files-rest-object-delete-version', role=contributor_role),
+            ActionRoles(action='files-rest-object-read', role=contributor_role),
+            ActionRoles(action='search-access', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='download-original-pdf-access', role=contributor_role),
+            ActionRoles(action='author-access', role=contributor_role),
+            ActionRoles(action='items-autofill', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+            ActionRoles(action='detail-page-acces', role=contributor_role),
+        ]
+        db.session.add_all(action_roles)
+
+    db.session.commit()
+    return [
+        {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
+        {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
+        {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
+        {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
+        {'email': generaluser.email, 'id': generaluser.id, 'obj': generaluser},
+        {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
+        {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
+        {'email': user.email, 'id': user.id, 'obj': user},
+        {'email': student.email,'id': student.id, 'obj': student}
+    ]
 @pytest.fixture
 def test_indices(app, db):
     def base_index(id, parent, position, public_date=None, coverpage_state=False, recursive_browsing_role=False,
                    recursive_contribute_role=False, recursive_browsing_group=False,
-                   recursive_contribute_group=False, online_issn=''):
+                   recursive_contribute_group=False, online_issn='',harvest_spec=""):
         _browsing_role = "3,-98,-99"
         _contribute_role = "1,2,3,4,-98,-99"
         _group = "g1,g2"
@@ -206,7 +342,8 @@ def test_indices(app, db):
             contribute_group=_group,
             recursive_contribute_group=recursive_contribute_group,
             biblio_flag=True if not online_issn else False,
-            online_issn=online_issn
+            online_issn=online_issn,
+            harvest_spec=harvest_spec
         )
     
     with db.session.begin_nested():
@@ -215,7 +352,8 @@ def test_indices(app, db):
         db.session.add(base_index(3, 0, 2))
         db.session.add(base_index(11, 1, 0))
         db.session.add(base_index(21, 2, 0))
-        db.session.add(base_index(22, 2, 1))
+        db.session.add(base_index(22, 2, 1)),
+        db.session.add(base_index(12, 1, 1,harvest_spec="11"))
     db.session.commit()
 
 
@@ -275,7 +413,6 @@ def harvest_setting(app, db, test_indices):
     )
     with db.session.begin_nested():
         db.session.add(jpcoar_setting)
-    db.session.commit()
     setting_list.append(jpcoar_setting)
 
     ddi_setting = HarvestSettings(
@@ -291,8 +428,39 @@ def harvest_setting(app, db, test_indices):
     )
     with db.session.begin_nested():
         db.session.add(ddi_setting)
-    db.session.commit()
     setting_list.append(ddi_setting)
+
+    dc_setting = HarvestSettings(
+        id=3,
+        repository_name="dc_test",
+        base_url="http://export.arxiv.org/oai2",
+        from_date=datetime(2022, 10, 1),
+        until_date=datetime(2022, 10, 2),
+        metadata_prefix="oai_dc",
+        index_id=1,
+        update_style="0",
+        auto_distribution="1"
+    )
+    with db.session.begin_nested():
+        db.session.add(dc_setting)
+    setting_list.append(dc_setting)
+
+    other_setting = HarvestSettings(
+        id=4,
+        repository_name="other_test",
+        base_url="http://export.arxiv.org/oai2",
+        from_date=datetime(2022, 10, 1),
+        until_date=datetime(2022, 10, 2),
+        metadata_prefix="other_prefix",
+        index_id=1,
+        update_style="0",
+        auto_distribution="1"
+    )
+    with db.session.begin_nested():
+        db.session.add(other_setting)
+    setting_list.append(other_setting)
+
+    db.session.commit()
 
     return setting_list
 
@@ -347,6 +515,14 @@ def sample_list_xml_cs():
     raw_cs_xml = open(os.path.join(
         os.path.dirname(__file__),
         "data/sample_arxiv_response_listrecords_cs.xml"
+    )).read()
+    return raw_cs_xml
+
+@pytest.fixture
+def sample_list_xml_no_sets():
+    raw_cs_xml = open(os.path.join(
+        os.path.dirname(__file__),
+        "data/sample_arxiv_response_listrecords_no_sets.xml"
     )).read()
     return raw_cs_xml
 
@@ -427,7 +603,6 @@ def db_itemtype(app, db):
     item_type_ddi_mapping = dict()
     with open("tests/data/itemtype_ddi_mapping.json", "r") as f:
         item_type_ddi_mapping = json.load(f)
-
     item_type_ddi = ItemType(
         id=11,
         name_id=11,
@@ -442,6 +617,39 @@ def db_itemtype(app, db):
 
     item_type_ddi_mapping = ItemTypeMapping(id=11, item_type_id=11, mapping=item_type_ddi_mapping)
 
+    # Harvesting DC
+    item_type_dc_name = ItemTypeName(
+        id=12, name="Harvesting dc", has_site_license=True, is_active=True
+    )
+    item_type_dc_schema = dict()
+    with open("tests/data/itemtype_dc_schema.json", "r") as f:
+        item_type_dc_schema = json.load(f)
+
+    item_type_dc_form = dict()
+    with open("tests/data/itemtype_dc_form.json", "r") as f:
+        item_type_dc_form = json.load(f)
+
+    item_type_dc_render = dict()
+    with open("tests/data/itemtype_dc_render.json", "r") as f:
+        item_type_dc_render = json.load(f)
+
+    item_type_dc_mapping = dict()
+    with open("tests/data/itemtype_dc_mapping.json", "r") as f:
+        item_type_dc_mapping = json.load(f)
+
+    item_type_dc = ItemType(
+        id=12,
+        name_id=12,
+        harvesting_type=True,
+        schema=item_type_dc_schema,
+        form=item_type_dc_form,
+        render=item_type_dc_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+    item_type_dc_mapping = ItemTypeMapping(id=12, item_type_id=12, mapping=item_type_dc_mapping)
+
     with db.session.begin_nested():
         db.session.add(item_type_multiple_name)
         db.session.add(item_type_multiple)
@@ -449,6 +657,9 @@ def db_itemtype(app, db):
         db.session.add(item_type_ddi_name)
         db.session.add(item_type_ddi)
         db.session.add(item_type_ddi_mapping)
+        db.session.add(item_type_dc_name)
+        db.session.add(item_type_dc)
+        db.session.add(item_type_dc_mapping)
     db.session.commit()
 
     return {
@@ -508,3 +719,69 @@ def db_oaischema(app, db):
         db.session.add(jpcoar_mapping)
         db.session.add(jpcoar_v1_mapping)
 
+
+@pytest.fixture(scope="function", autouse=True)
+def reset_class_value():
+    yield
+    from invenio_oaiharvester.harvester import (
+        BaseMapper,DCMapper,DDIMapper
+    )
+    BaseMapper.itemtype_map = {}
+    BaseMapper.identifiers = []
+    
+    DCMapper.itemtype_map = {}
+    DCMapper.identifiers = []
+    DDIMapper.itemtype_map = {}
+    DDIMapper.identifiers = []
+
+
+def create_record(db, record_data, item_data):
+    from weko_deposit.api import WekoDeposit, WekoRecord
+    with db.session.begin_nested():
+        record_data = copy.deepcopy(record_data)
+        item_data = copy.deepcopy(item_data)
+        rec_uuid = uuid.uuid4()
+        recid = PersistentIdentifier.create('recid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        depid = PersistentIdentifier.create('depid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        rel = PIDRelation.create(recid,depid,3)
+        db.session.add(rel)
+        parent=None
+        doi = None
+        
+        if '.' in record_data["recid"]:
+            parent = PersistentIdentifier.get("recid",int(float(record_data["recid"])))
+            recid_p = PIDRelation.get_child_relations(parent).one_or_none()
+            PIDRelation.create(recid_p.parent, recid,2)
+        else:
+            parent = PersistentIdentifier.create('parent', "parent:{}".format(record_data["recid"]),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            rel = PIDRelation.create(parent, recid,2,0)
+            db.session.add(rel)
+            RecordIdentifier.next()
+        if record_data.get("_oai").get("id"):
+            oaiid = PersistentIdentifier.create('oai', record_data["_oai"]["id"],pid_provider="oai",object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            hvstid = PersistentIdentifier.create('hvstid', record_data["_oai"]["id"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        if "item_1612345678910" in record_data:
+            for i in range(len(record_data["item_1612345678910"]["attribute_value_mlt"])):
+                data = record_data["item_1612345678910"]["attribute_value_mlt"][i]
+                PersistentIdentifier.create(data.get("subitem_16345678901234").lower(),data.get("subitem_1623456789123"),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        record = WekoRecord.create(record_data, id_=rec_uuid)
+        item = ItemsMetadata.create(item_data, id_=rec_uuid)
+        deposit = WekoDeposit(record, record.model)
+
+        deposit.commit()
+        
+    return recid, depid, record, item, parent, doi, deposit
+
+@pytest.fixture()
+def db_records(app,db):
+    record_datas = list()
+    with open("tests/data/test_record/record_metadata.json") as f:
+        record_datas = json.load(f)
+    
+    item_datas = list()
+    with open("tests/data/test_record/item_metadata.json") as f:
+        item_datas = json.load(f)
+        
+    for i in range(len(record_datas)):
+        recid, depid, record, item, parent, doi, deposit = create_record(db,record_datas[i],item_datas[i])
+        

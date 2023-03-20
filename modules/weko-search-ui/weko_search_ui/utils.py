@@ -59,6 +59,7 @@ from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import Record
+from invenio_records.models import RecordMetadata
 from invenio_records_rest.errors import InvalidQueryRESTError
 from invenio_search import RecordsSearch
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
@@ -218,6 +219,7 @@ def delete_records(index_tree_id, ignore_items):
     hits = get_tree_items(index_tree_id)
     result = []
 
+    from weko_records_ui.utils import soft_delete
     for hit in hits:
         recid = hit.get("_id")
         record = Record.get_record(recid)
@@ -225,28 +227,34 @@ def delete_records(index_tree_id, ignore_items):
 
         if record and record["path"] and pid not in ignore_items:
             paths = record["path"]
+            del_flag = False
             if len(paths) > 0:
                 # Remove the element which matches the index_tree_id
                 removed_path = None
                 for index_id in paths:
                     if index_id == str(index_tree_id):
                         removed_path = index_id
-                        paths.remove(index_id)
+                        if len(paths) == 1:
+                            del_flag = True
+                            pass
+                        else:
+                            paths.remove(index_id)
                         break
 
-                # Do update the path on record
-                record.update({"path": paths})
-                record.commit()
-                db.session.commit()
-
-                # Indexing
+                
                 indexer = WekoIndexer()
-                indexer.update_path(record, update_revision=False)
 
-                if len(paths) == 0 and removed_path is not None:
-                    WekoDeposit.delete_by_index_tree_id(removed_path, ignore_items)
-                    Record.get_record(recid).delete()  # flag as deleted
-                    db.session.commit()  # terminate the transaction
+                if not del_flag:
+                    # Do update the path on record
+                    record.update({"path": paths})
+                    # Update to ES
+                    indexer.update_es_data(record, update_revision=False)
+                    record.commit()
+                    db.session.commit()
+                elif del_flag and removed_path is not None:
+                    soft_delete(pid)
+                else:
+                    pass
 
                 result.append(pid)
 
@@ -1365,7 +1373,7 @@ def update_publish_status(item_id, status):
     record["publish_status"] = status
     record.commit()
     indexer = WekoIndexer()
-    indexer.update_publish_status(record)
+    indexer.update_es_data(record, update_revision=False, field='publish_status')
 
 
 def handle_workflow(item: dict):
@@ -1726,57 +1734,81 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
     errors = []
     warnings = []
 
-    def check(index_id, index_name):
+    def check(index_id, index_name_path):
         """Check index_id/index_name.
 
         Args:
             index_id (str): Index id.
-            index_name (str): Index name.
+            index_name_path (str): Index name path.
 
         Returns:
             [bool]: Check result.
 
         """
-        result = None
-        index = None
+        temp_res = []
+        index_info = None
         try:
-            index = Indexes.get_index(index_id)
+            index_info = Indexes.get_path_list([index_id])
         except Exception:
+            db.session.rollback()
             current_app.logger.warning("Specified IndexID is invalid!")
 
-        if index:
-            if index_name and index_name not in [
-                index.index_name,
-                index.index_name_english,
+        if index_info and len(index_info) == 1:
+            if index_name_path and index_name_path not in [
+                index_info[0].name.replace(
+                    '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']),
+                index_info[0].name_en.replace(
+                    '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']),
             ]:
                 warnings.append(
                     _("Specified {} does not match with existing index.").format(
                         "POS_INDEX"
                     )
                 )
-            result = index.id
-        elif index_name:
-            index = Indexes.get_index_by_all_name(index_name)
+            temp_res = [index_info[0].cid]
+        elif index_name_path:
+            index_path_list = index_name_path.split(
+                current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT'])
+            index_all_name = Indexes.get_index_by_all_name(index_path_list[-1])
+            index_infos = Indexes.get_path_list([i.id for i in index_all_name])
             msg_not_exist = _("The specified {} does not exist in system.")
-            if not index:
+            if index_infos:
+                for info in index_infos:
+                    index_info = None
+                    if index_name_path == \
+                            info.name.replace(
+                                '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']):
+                        index_info = info
+                    
+                    if not index_info:
+                        if index_id:
+                            errors.append(msg_not_exist.format("IndexID, POS_INDEX"))
+                        else:
+                            errors.append(msg_not_exist.format("POS_INDEX"))
+                    else:
+                        if index_id:
+                            errors.append(msg_not_exist.format("IndexID"))
+                        else:
+                            temp_res.append(index_info.cid)
+            else:
                 if index_id:
                     errors.append(msg_not_exist.format("IndexID, POS_INDEX"))
                 else:
                     errors.append(msg_not_exist.format("POS_INDEX"))
-            else:
-                if index_id:
-                    errors.append(msg_not_exist.format("IndexID"))
-                else:
-                    result = index.id
-        if result and not all_index_permission:
+        result = []
+        if temp_res and not all_index_permission:
             msg_can_not_edit = _("Your role cannot register items in this index.")
             if not can_edit_indexes:
                 errors.append(msg_can_not_edit)
-                result = None
+                result = []
             elif can_edit_indexes[0] != 0:
-                if result not in can_edit_indexes:
+                for i in temp_res:
+                    if i in can_edit_indexes:
+                        result.append(i)
+                if not result:
                     errors.append(msg_can_not_edit)
-                    result = None
+            else:
+                result = temp_res
 
         return result
 
@@ -1791,15 +1823,16 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
             if not index_ids:
                 index_ids = ["" for _ in range(len(pos_index))]
             for x, index_id in enumerate(index_ids):
-                index_name = ""
+                index_name_path = ""
                 if pos_index and x <= len(pos_index) - 1:
-                    index_name = pos_index[x].strip()
+                    index_name_path = pos_index[x].strip()
                 else:
-                    index_name = ""
+                    index_name_path = ""
 
-                _index_id = check(index_id, index_name)
-                if _index_id:
-                    indexes.append(_index_id)
+                _index_ids = check(index_id, index_name_path)
+                for i in _index_ids:
+                    if i not in indexes:
+                        indexes.append(i)
 
         if indexes:
             item["metadata"]["path"] = indexes
@@ -3242,6 +3275,7 @@ def export_all(root_url, user_id, data):
             item_datas["recids"],
             item_datas["data"],
             permissions,
+            export_path
         )
         keys, labels, is_systems, options = headers
         item_datas["recids"].sort()
@@ -3297,10 +3331,15 @@ def export_all(root_url, user_id, data):
                 # get all record id
                 if toid:
                     recids = db.session.query(
-                        PersistentIdentifier.pid_value, PersistentIdentifier.object_uuid
+                        PersistentIdentifier.pid_value,
+                        PersistentIdentifier.object_uuid,
+                        RecordMetadata.json
                     ).join(
                         ItemMetadata,
                         PersistentIdentifier.object_uuid == ItemMetadata.id,
+                    ).join(
+                        RecordMetadata,
+                        PersistentIdentifier.object_uuid == RecordMetadata.id,
                     ).filter(
                         PersistentIdentifier.pid_type == "recid",
                         PersistentIdentifier.status == PIDStatus.REGISTERED,
@@ -3320,10 +3359,15 @@ def export_all(root_url, user_id, data):
                     )).all()
                 else:
                     recids = db.session.query(
-                        PersistentIdentifier.pid_value, PersistentIdentifier.object_uuid
+                        PersistentIdentifier.pid_value,
+                        PersistentIdentifier.object_uuid,
+                        RecordMetadata.json
                     ).join(
                         ItemMetadata,
                         PersistentIdentifier.object_uuid == ItemMetadata.id,
+                    ).join(
+                        RecordMetadata,
+                        PersistentIdentifier.object_uuid == RecordMetadata.id,
                     ).filter(
                         PersistentIdentifier.pid_type == "recid",
                         PersistentIdentifier.status == PIDStatus.REGISTERED,
@@ -3342,7 +3386,9 @@ def export_all(root_url, user_id, data):
                     item_types.remove(it)
                     continue
 
-                record_ids = [(recid.pid_value, recid.object_uuid) for recid in recids]
+                record_ids = [(recid.pid_value, recid.object_uuid) 
+                    for recid in recids if 'publish_status' in recid.json 
+                    and recid.json['publish_status'] in ['0', '1']]
                 for recid, uuid in record_ids:
                     if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
                         # Create export info file

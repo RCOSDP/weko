@@ -1,0 +1,4909 @@
+{
+  "mappings": {
+    "item-v1.0.0": {
+      "dynamic_templates": [
+        {
+          "weko_id": {
+            "match": "^weko_id$",
+            "match_mapping_type": "string",
+            "match_pattern": "regex",
+            "mapping": {
+              "copy_to": "weko_id",
+              "fielddata": true,
+              "index": false,
+              "type": "text"
+            }
+          }
+        },
+        {
+          "string": {
+            "match_mapping_type": "string",
+            "mapping": {
+              "copy_to": "search_string",
+              "fields": {
+                "raw": {
+                  "ignore_above": 256,
+                  "type": "keyword"
+                }
+              },
+              "index": false,
+              "type": "text"
+            }
+          }
+        },
+        {
+          "date_string": {
+            "match_mapping_type": "date",
+            "mapping": {
+              "copy_to": "search_string",
+              "fields": {
+                "raw": {
+                  "ignore_above": 256,
+                  "type": "keyword"
+                }
+              },
+              "index": false,
+              "type": "text"
+            }
+          }
+        }
+      ],
+      "properties": {
+        "_created": {
+          "type": "date"
+        },
+        "_item_metadata": {
+          "properties": {
+            "_oai": {
+              "properties": {
+                "id": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "sets": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                }
+              }
+            },
+            "author_link": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "control_number": {
+              "type": "text",
+              "index": false,
+              "fielddata":true,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "item_1617186331708": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1551255647225": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1551255648112": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186385884": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1551255720400": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1551255721061": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186419668": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_type": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "creatorAffiliations": {
+                      "properties": {
+                        "affiliationNameIdentifiers": {
+                          "properties": {
+                            "affiliationNameIdentifier": {
+                              "type": "text",
+                              "index": false,
+                              "fields": {
+                                "raw": {
+                                  "type": "keyword",
+                                  "ignore_above": 256
+                                }
+                              },
+                              "copy_to": ["search_string"]
+                            },
+                            "affiliationNameIdentifierScheme": {
+                              "type": "text",
+                              "index": false,
+                              "fields": {
+                                "raw": {
+                                  "type": "keyword",
+                                  "ignore_above": 256
+                                }
+                              },
+                              "copy_to": ["search_string"]
+                            },
+                            "affiliationNameIdentifierURI": {
+                              "type": "text",
+                              "index": false,
+                              "fields": {
+                                "raw": {
+                                  "type": "keyword",
+                                  "ignore_above": 256
+                                }
+                              },
+                              "copy_to": ["search_string"]
+                            }
+                          }
+                        },
+                        "affiliationNames": {
+                          "properties": {
+                            "affiliationName": {
+                              "type": "text",
+                              "index": false,
+                              "fields": {
+                                "raw": {
+                                  "type": "keyword",
+                                  "ignore_above": 256
+                                }
+                              },
+                              "copy_to": ["search_string"]
+                            },
+                            "affiliationNameLang": {
+                              "type": "text",
+                              "index": false,
+                              "fields": {
+                                "raw": {
+                                  "type": "keyword",
+                                  "ignore_above": 256
+                                }
+                              },
+                              "copy_to": ["search_string"]
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "creatorAlternatives": {
+                      "properties": {
+                        "creatorAlternative": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "creatorAlternativeLang": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "creatorMails": {
+                      "properties": {
+                        "creatorMail": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "creatorNames": {
+                      "properties": {
+                        "creatorName": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "creatorNameLang": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "familyNames": {
+                      "properties": {
+                        "familyName": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "familyNameLang": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "givenNames": {
+                      "properties": {
+                        "givenName": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "givenNameLang": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "nameIdentifiers": {
+                      "properties": {
+                        "nameIdentifier": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "nameIdentifierScheme": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "nameIdentifierURI": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186476635": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1522299639480": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1600958577026": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186499011": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1522650717957": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1522650727486": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1522651041219": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186609386": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1522299896455": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1522300014469": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1522300048512": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1523261968819": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186626617": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_description": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_description_language": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_description_type": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186643794": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1522300295150": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1522300316516": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186660861": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1522300695726": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1522300722591": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186702042": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1551255818386": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186783814": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_identifier_type": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_identifier_uri": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186819068": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_identifier_reg_text": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_identifier_reg_type": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186859717": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1522658018441": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1522658031721": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186882738": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_geolocation_box": {
+                      "properties": {
+                        "subitem_east_longitude": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_north_latitude": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_south_latitude": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_west_longitude": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "subitem_geolocation_place": {
+                      "properties": {
+                        "subitem_geolocation_place_text": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "subitem_geolocation_point": {
+                      "properties": {
+                        "subitem_point_latitude": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_point_longitude": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186901218": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1522399143519": {
+                      "properties": {
+                        "subitem_1522399281603": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1522399333375": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "subitem_1522399412622": {
+                      "properties": {
+                        "subitem_1522399416691": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1522737543681": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "subitem_1522399571623": {
+                      "properties": {
+                        "subitem_1522399585738": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1522399628911": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "subitem_1522399651758": {
+                      "properties": {
+                        "subitem_1522721910626": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1522721929892": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186920753": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1522646500366": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1522646572813": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186941041": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1522650068558": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1522650091861": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186959569": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1551256328147": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186981471": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1551256294723": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617186994930": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1551256248092": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617187024783": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1551256198917": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617187045071": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1551256185532": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617187056579": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "bibliographicIssueDates": {
+                      "properties": {
+                        "bibliographicIssueDate": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "bibliographicIssueDateType": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "bibliographicIssueNumber": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "bibliographicNumberOfPages": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "bibliographicPageEnd": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "bibliographicPageStart": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "bibliographicVolumeNumber": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "bibliographic_titles": {
+                      "properties": {
+                        "bibliographic_title": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "bibliographic_titleLang": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617187087799": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1551256171004": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617187112279": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1551256126428": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1551256129013": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617187136212": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1551256096004": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617187187528": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1599711633003": {
+                      "properties": {
+                        "subitem_1599711636923": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1599711645590": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "subitem_1599711655652": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1599711660052": {
+                      "properties": {
+                        "subitem_1599711680082": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1599711686511": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "subitem_1599711699392": {
+                      "properties": {
+                        "subitem_1599711704251": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1599711712451": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1599711727603": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1599711731891": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1599711735410": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1599711739022": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1599711743722": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1599711745532": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "subitem_1599711758470": {
+                      "properties": {
+                        "subitem_1599711769260": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1599711775943": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "subitem_1599711788485": {
+                      "properties": {
+                        "subitem_1599711798761": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1599711803382": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "subitem_1599711813532": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617258105262": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "resourcetype": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "resourceuri": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617265215918": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1522305645492": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1600292170262": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617349709064": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "contributorAffiliations": {
+                      "properties": {
+                        "contributorAffiliationNameIdentifiers": {
+                          "properties": {
+                            "contributorAffiliationNameIdentifier": {
+                              "type": "text",
+                              "index": false,
+                              "fields": {
+                                "raw": {
+                                  "type": "keyword",
+                                  "ignore_above": 256
+                                }
+                              },
+                              "copy_to": ["search_string"]
+                            },
+                            "contributorAffiliationScheme": {
+                              "type": "text",
+                              "index": false,
+                              "fields": {
+                                "raw": {
+                                  "type": "keyword",
+                                  "ignore_above": 256
+                                }
+                              },
+                              "copy_to": ["search_string"]
+                            },
+                            "contributorAffiliationURI": {
+                              "type": "text",
+                              "index": false,
+                              "fields": {
+                                "raw": {
+                                  "type": "keyword",
+                                  "ignore_above": 256
+                                }
+                              },
+                              "copy_to": ["search_string"]
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "contributorAlternatives": {
+                      "properties": {
+                        "contributorAlternative": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "contributorAlternativeLang": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "contributorMails": {
+                      "properties": {
+                        "contributorMail": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "contributorNames": {
+                      "properties": {
+                        "contributorName": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "lang": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "contributorType": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "creatorAlternatives": {
+                      "properties": {
+                        "creatorAlternativeLang": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "familyNames": {
+                      "properties": {
+                        "familyName": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "familyNameLang": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "givenNames": {
+                      "properties": {
+                        "givenName": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "givenNameLang": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "nameIdentifiers": {
+                      "properties": {
+                        "nameIdentifier": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "nameIdentifierScheme": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "nameIdentifierURI": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617349808926": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1523263171732": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617351524846": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1523260933860": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617353299429": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1522306207484": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1522306287251": {
+                      "properties": {
+                        "subitem_1522306382014": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1522306436033": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "subitem_1523320863692": {
+                      "properties": {
+                        "subitem_1523320867455": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1523320909613": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617605131499": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_type": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "accessrole": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "date": {
+                      "properties": {
+                        "dateType": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "dateValue": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "displaytype": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "fileDate": {
+                      "properties": {
+                        "fileDateType": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "fileDateValue": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "filename": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "filesize": {
+                      "properties": {
+                        "value": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "format": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "licensefree": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "licensetype": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "mimetype": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "url": {
+                      "properties": {
+                        "url": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "version": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "version_id": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617610673286": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "nameIdentifiers": {
+                      "properties": {
+                        "nameIdentifier": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "nameIdentifierScheme": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "nameIdentifierURI": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "rightHolderNames": {
+                      "properties": {
+                        "rightHolderLanguage": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "rightHolderName": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617620223087": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1565671149650": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1565671169640": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1565671178623": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1617944105607": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1551256015892": {
+                      "properties": {
+                        "subitem_1551256027296": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1551256029891": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "subitem_1551256037922": {
+                      "properties": {
+                        "subitem_1551256042287": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        },
+                        "subitem_1551256047619": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "item_1665554321971": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_text_language": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_text_value": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1665554421892": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_temporal_language": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_temporal_text": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1665554481493": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_heading_banner_headline": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_heading_headline": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_heading_language": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1665554576715": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_text_language": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_text_value": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1671082040786": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1671004059986": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1671082048705": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1671004059986": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1671082056911": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1671004059986": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1671082065508": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1671004175481": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1671082072763": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1671004175481": {
+                      "properties": {
+                        "subitem_1671004205320": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "item_1671082079712": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1671004175481": {
+                      "properties": {
+                        "subitem_1671004234786": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "item_1671082087252": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1671078069708": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1671082095531": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1671078145295": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1671078147984": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1671078151605": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1671078158233": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1671078165780": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1671078174888": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1671078180043": {
+                      "properties": {
+                        "subitem_1671078185700": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    },
+                    "subitem_1671078190829": {
+                      "properties": {
+                        "subitem_1671078193062": {
+                          "type": "text",
+                          "index": false,
+                          "fields": {
+                            "raw": {
+                              "type": "keyword",
+                              "ignore_above": 256
+                            }
+                          },
+                          "copy_to": ["search_string"]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "item_1671086824887": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1670982472750": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1671508244520": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_1551255647225": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_1551255648112": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1671508260839": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "resourcetype": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "resourceuri": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1671508308460": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "interim": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1676945944309": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_text_language": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_text_value": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1676945972917": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_temporal_language": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_temporal_text": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1676946009659": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_heading_banner_headline": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_heading_headline": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_heading_language": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_1676946040765": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_text_language": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_text_value": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_30002_title0": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value_mlt": {
+                  "properties": {
+                    "subitem_title": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "subitem_title_language": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                }
+              }
+            },
+            "item_title": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "item_type_id": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "owner": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "path": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "pubdate": {
+              "properties": {
+                "attribute_name": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "attribute_value": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                }
+              }
+            },
+            "publish_date": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "publish_status": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "relation_version_is_last": {
+              "type": "boolean"
+            },
+            "title": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "weko_shared_id": {
+              "type": "long"
+            }
+          }
+        },
+        "_oai": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            },
+            "sets": {
+              "type": "keyword"
+            },
+            "updated": {
+              "type": "date"
+            }
+          }
+        },
+        "_updated": {
+          "type": "date"
+        },
+        "accessRights": {
+          "type": "keyword",
+          "copy_to": ["search_other"]
+        },
+        "alternative": {
+          "type": "keyword",
+          "copy_to": ["search_title"]
+        },
+        "apc": {
+          "type": "text",
+          "copy_to": ["search_other"]
+        },
+        "author_link": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "conference": {
+          "properties": {
+            "conferenceCountry": {
+              "type": "keyword",
+              "copy_to": ["search_other"]
+            },
+            "conferenceDate": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "conferenceName": {
+              "type": "keyword",
+              "copy_to": ["search_other"]
+            },
+            "conferencePlace": {
+              "type": "keyword",
+              "copy_to": ["search_other"]
+            },
+            "conferenceSequence": {
+              "type": "keyword",
+              "copy_to": ["search_other"]
+            },
+            "conferenceSponsor": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "conferenceVenue": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            }
+          }
+        },
+        "content": {
+          "type": "nested",
+          "properties": {
+            "accessrole": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "attachment": {
+              "properties": {
+                "content": {
+                  "type": "text",
+                  "store": true,
+                  "term_vector": "with_positions_offsets",
+                  "fields": {
+                    "ja": {
+                      "type": "text",
+                      "store": true,
+                      "term_vector": "with_positions_offsets"
+                    }
+                  }
+                }
+              }
+            },
+            "date": {
+              "properties": {
+                "dateType": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "dateValue": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                }
+              }
+            },
+            "display_name": {
+              "type": "text",
+              "fields": {
+                "ja": {
+                  "type": "text"
+                }
+              }
+            },
+            "displaytype": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "file": {
+              "type": "text",
+              "store": true,
+              "term_vector": "with_positions_offsets",
+              "fields": {
+                "ja": {
+                  "type": "text",
+                  "store": true,
+                  "term_vector": "with_positions_offsets"
+                }
+              }
+            },
+            "fileDate": {
+              "properties": {
+                "fileDateType": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "fileDateValue": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                }
+              }
+            },
+            "file_id": {
+              "type": "keyword"
+            },
+            "file_name": {
+              "type": "text",
+              "fields": {
+                "ja": {
+                  "type": "text"
+                }
+              }
+            },
+            "filename": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "filesize": {
+              "properties": {
+                "value": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                }
+              }
+            },
+            "format": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "groups": {
+              "type": "keyword"
+            },
+            "license_notation": {
+              "type": "text"
+            },
+            "licensefree": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "licensetype": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "mimetype": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "url": {
+              "properties": {
+                "url": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                }
+              }
+            },
+            "version": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            },
+            "version_id": {
+              "type": "text",
+              "index": false,
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "copy_to": ["search_string"]
+            }
+          }
+        },
+        "contributor": {
+          "properties": {
+            "@attributes": {
+              "properties": {
+                "contributorType": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "affiliation": {
+              "properties": {
+                "affiliationName": {
+                  "type": "keyword",
+                  "copy_to": ["search_other"]
+                },
+                "nameIdentifier": {
+                  "type": "keyword",
+                  "copy_to": ["search_identifier"]
+                }
+              }
+            },
+            "contributorAlternative": {
+              "type": "keyword",
+              "copy_to": ["search_contributor"]
+            },
+            "contributorName": {
+              "type": "keyword",
+              "copy_to": ["search_contributor"]
+            },
+            "familyName": {
+              "type": "keyword",
+              "copy_to": ["search_contributor"]
+            },
+            "givenName": {
+              "type": "keyword",
+              "copy_to": ["search_contributor"]
+            },
+            "nameIdentifier": {
+              "type": "keyword",
+              "copy_to": ["search_contributor"]
+            }
+          }
+        },
+        "control_number": {
+          "fielddata":true,
+          "type": "keyword"
+        },
+        "creator": {
+          "properties": {
+            "affiliation": {
+              "properties": {
+                "affiliationName": {
+                  "type": "keyword",
+                  "copy_to": ["search_other"]
+                },
+                "nameIdentifier": {
+                  "type": "keyword",
+                  "copy_to": ["search_identifier"]
+                }
+              }
+            },
+            "creatorAlternative": {
+              "type": "keyword",
+              "copy_to": ["search_creator"]
+            },
+            "creatorName": {
+              "type": "keyword",
+              "copy_to": ["search_creator"]
+            },
+            "familyName": {
+              "type": "keyword",
+              "copy_to": ["search_creator"]
+            },
+            "givenName": {
+              "type": "keyword",
+              "copy_to": ["search_creator"]
+            },
+            "nameIdentifier": {
+              "type": "keyword",
+              "copy_to": ["search_creator"]
+            }
+          }
+        },
+        "date": {
+          "type": "nested",
+          "properties": {
+            "dateType": {
+              "type": "keyword",
+              "copy_to": ["search_attr"]
+            },
+            "value": {
+              "type": "keyword"
+            }
+          }
+        },
+        "dateGranted": {
+          "type": "keyword"
+        },
+        "date_range1": {
+          "type": "date_range",
+          "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"
+        },
+        "date_range2": {
+          "type": "date_range",
+          "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"
+        },
+        "date_range3": {
+          "type": "date_range",
+          "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"
+        },
+        "date_range4": {
+          "type": "date_range",
+          "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"
+        },
+        "date_range5": {
+          "type": "date_range",
+          "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"
+        },
+        "degreeGrantor": {
+          "properties": {
+            "degreeGrantorName": {
+              "type": "keyword",
+              "copy_to": ["search_other", "dgName"]
+            },
+            "nameIdentifier": {
+              "type": "keyword",
+              "copy_to": ["search_identifier"]
+            }
+          }
+        },
+        "degreeName": {
+          "type": "text",
+          "fields": {
+            "ja": {
+              "type": "text"
+            }
+          },
+          "copy_to": ["search_other"]
+        },
+        "description": {
+          "properties": {
+            "descriptionType": {
+              "type": "keyword"
+            },
+            "value": {
+              "type": "keyword",
+              "copy_to": ["search_des"],
+              "ignore_above": 256
+            }
+          }
+        },
+        "dgName": {
+          "type": "text",
+          "fields": {
+            "ja": {
+              "type": "text"
+            }
+          }
+        },
+        "dissertationNumber": {
+          "type": "text",
+          "copy_to": ["search_other"]
+        },
+        "feedback_mail_list": {
+          "type": "nested",
+          "properties": {
+            "author_id": {
+              "type": "keyword"
+            },
+            "email": {
+              "type": "keyword"
+            }
+          }
+        },
+        "file": {
+          "properties": {
+            "URI": {
+              "type": "nested",
+              "properties": {
+                "objectType": {
+                  "type": "keyword"
+                },
+                "value": {
+                  "type": "text"
+                }
+              }
+            },
+            "date": {
+              "type": "nested",
+              "properties": {
+                "dateType": {
+                  "type": "keyword"
+                },
+                "value": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "extent": {
+              "type": "keyword"
+            },
+            "mimeType": {
+              "type": "keyword"
+            },
+            "version": {
+              "type": "text"
+            }
+          }
+        },
+        "float_range1": {
+          "type": "float_range"
+        },
+        "float_range2": {
+          "type": "float_range"
+        },
+        "float_range3": {
+          "type": "float_range"
+        },
+        "float_range4": {
+          "type": "float_range"
+        },
+        "float_range5": {
+          "type": "float_range"
+        },
+        "fundingReference": {
+          "properties": {
+            "awardNumber": {
+              "type": "keyword",
+              "copy_to": ["search_other"]
+            },
+            "awardTitle": {
+              "type": "keyword",
+              "copy_to": ["search_other"]
+            },
+            "funderIdentifier": {
+              "type": "keyword",
+              "copy_to": ["search_identifier"]
+            },
+            "funderName": {
+              "type": "keyword",
+              "copy_to": ["search_other"]
+            }
+          }
+        },
+        "geoLocation": {
+          "properties": {
+            "geoLocationBox": {
+              "properties": {
+                "eastBoundLongitude": {
+                  "type": "geo_point"
+                },
+                "northBoundLatitude": {
+                  "type": "geo_point"
+                },
+                "northEastPoint": {
+                  "properties": {
+                    "lat": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "lon": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                },
+                "southBoundLatitude": {
+                  "type": "geo_point"
+                },
+                "southWestPoint": {
+                  "properties": {
+                    "lat": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    },
+                    "lon": {
+                      "type": "text",
+                      "index": false,
+                      "fields": {
+                        "raw": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      },
+                      "copy_to": ["search_string"]
+                    }
+                  }
+                },
+                "westBoundLongitude": {
+                  "type": "geo_point"
+                }
+              }
+            },
+            "geoLocationPlace": {
+              "type": "keyword",
+              "copy_to": ["search_other"]
+            },
+            "geoLocationPoint": {
+              "properties": {
+                "lat": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "lon": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                },
+                "pointLatitude": {
+                  "type": "geo_point"
+                },
+                "pointLongitude": {
+                  "type": "geo_point"
+                }
+              }
+            }
+          }
+        },
+        "geo_point1": {
+          "type": "geo_point"
+        },
+        "geo_shape1": {
+          "type": "geo_shape"
+        },
+        "identifier": {
+          "type": "nested",
+          "properties": {
+            "identifierType": {
+              "type": "keyword",
+              "copy_to": ["search_attr"]
+            },
+            "value": {
+              "type": "text",
+              "copy_to": ["search_other"]
+            }
+          }
+        },
+        "identifierRegistration": {
+          "type": "nested",
+          "properties": {
+            "identifierType": {
+              "type": "keyword",
+              "copy_to": ["search_attr"]
+            },
+            "value": {
+              "type": "text",
+              "copy_to": ["search_other"]
+            }
+          }
+        },
+        "integer_range1": {
+          "type": "integer_range"
+        },
+        "integer_range2": {
+          "type": "integer_range"
+        },
+        "integer_range3": {
+          "type": "integer_range"
+        },
+        "integer_range4": {
+          "type": "integer_range"
+        },
+        "integer_range5": {
+          "type": "integer_range"
+        },
+        "issue": {
+          "type": "text",
+          "copy_to": ["search_other"]
+        },
+        "item_type_id": {
+          "type": "keyword"
+        },
+        "itemtype": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          },
+          "copy_to": ["search_other"],
+          "fielddata": true
+        },
+        "language": {
+          "type": "keyword",
+          "copy_to": ["search_other"]
+        },
+        "numPages": {
+          "type": "text"
+        },
+        "pageEnd": {
+          "type": "text"
+        },
+        "pageStart": {
+          "type": "text"
+        },
+        "path": {
+          "type": "keyword",
+          "fields": {
+            "tree": {
+              "type": "text",
+              "analyzer": "paths",
+              "fielddata": true
+            }
+          }
+        },
+        "publish_date": {
+          "type": "date",
+          "format": "yyyy-MM-dd||yyyy-MM||yyyy"
+        },
+        "publish_status": {
+          "type": "keyword"
+        },
+        "publisher": {
+          "type": "text",
+          "copy_to": ["search_publisher"]
+        },
+        "query": {
+          "type": "percolator"
+        },
+        "relation": {
+          "properties": {
+            "@attributes": {
+              "properties": {
+                "relationType": {
+                  "type": "text",
+                  "index": false,
+                  "fields": {
+                    "raw": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "copy_to": ["search_string"]
+                }
+              }
+            },
+            "relatedIdentifier": {
+              "type": "nested",
+              "properties": {
+                "identifierType": {
+                  "type": "keyword",
+                  "copy_to": ["search_attr"]
+                },
+                "value": {
+                  "type": "text",
+                  "copy_to": ["search_other"]
+                }
+              }
+            },
+            "relatedTitle": {
+              "type": "keyword",
+              "copy_to": ["search_other"]
+            },
+            "relationType": {
+              "type": "nested",
+              "properties": {
+                "item_links": {
+                  "type": "keyword"
+                },
+                "item_title": {
+                  "type": "keyword"
+                },
+                "value": {
+                  "type": "text"
+                }
+              }
+            }
+          }
+        },
+        "relation_version_is_last": {
+          "type": "boolean"
+        },
+        "rights": {
+          "type": "text",
+          "copy_to": ["search_other"]
+        },
+        "rightsHolder": {
+          "properties": {
+            "nameIdentifier": {
+              "type": "keyword",
+              "copy_to": ["search_identifier"]
+            },
+            "rightsHolderName": {
+              "type": "keyword",
+              "copy_to": ["search_other"]
+            }
+          }
+        },
+        "search_attr": {
+          "type": "text"
+        },
+        "search_contributor": {
+          "type": "text",
+          "fields": {
+            "ja": {
+              "type": "text"
+            }
+          }
+        },
+        "search_creator": {
+          "type": "text",
+          "fields": {
+            "ja": {
+              "type": "text"
+            }
+          }
+        },
+        "search_des": {
+          "type": "text",
+          "fields": {
+            "ja": {
+              "type": "text"
+            }
+          }
+        },
+        "search_identifier": {
+          "type": "text"
+        },
+        "search_other": {
+          "type": "text",
+          "fields": {
+            "ja": {
+              "type": "text"
+            }
+          }
+        },
+        "search_publisher": {
+          "type": "text",
+          "fields": {
+            "ja": {
+              "type": "text"
+            }
+          }
+        },
+        "search_string": {
+          "type": "text"
+        },
+        "search_title": {
+          "type": "text",
+          "fields": {
+            "ja": {
+              "type": "text"
+            }
+          }
+        },
+        "sourceIdentifier": {
+          "type": "nested",
+          "properties": {
+            "identifierType": {
+              "type": "keyword",
+              "copy_to": ["search_attr"]
+            },
+            "value": {
+              "type": "text",
+              "copy_to": ["search_other"]
+            }
+          }
+        },
+        "sourceTitle": {
+          "type": "text",
+          "fields": {
+            "ja": {
+              "type": "text"
+            }
+          },
+          "copy_to": ["search_other"]
+        },
+        "subject": {
+          "properties": {
+            "subjectScheme": {
+              "type": "keyword",
+              "copy_to": ["search_attr"]
+            },
+            "value": {
+              "type": "keyword",
+              "copy_to": ["search_other"]
+            }
+          }
+        },
+        "temporal": {
+          "type": "keyword",
+          "copy_to": ["search_other"]
+        },
+        "text1": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text10": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text11": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text12": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text13": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text14": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text15": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text16": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text17": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text18": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text19": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text2": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text20": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text21": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text22": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text23": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text24": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text25": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text26": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text27": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text28": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text29": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text3": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text30": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text4": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text5": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text6": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text7": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text8": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "text9": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "title": {
+          "type": "keyword",
+          "copy_to": ["search_title"]
+        },
+        "type": {
+          "type": "text",
+          "index": false,
+          "fields": {
+            "raw": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          },
+          "copy_to": ["search_string"]
+        },
+        "version": {
+          "type": "text",
+          "copy_to": ["search_other"]
+        },
+        "versionType": {
+          "type": "text",
+          "copy_to": ["search_other"]
+        },
+        "versiontype": {
+          "type": "text",
+          "index": false,
+          "fields": {
+            "raw": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          },
+          "copy_to": ["search_string"]
+        },
+        "volume": {
+          "type": "text",
+          "copy_to": ["search_other"]
+        },
+        "weko_creator_id": {
+          "type": "text",
+          "fielddata": true
+        },
+        "weko_id": {
+          "type": "text",
+          "fielddata": true
+        },
+        "weko_shared_id": {
+          "type": "long"
+        }
+      }
+    }
+  }
+}

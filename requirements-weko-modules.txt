@@ -9,6 +9,7 @@
 -e /code/modules/invenio-records-rest
 -e /code/modules/invenio-communities
 -e /code/modules/invenio-mail
+-e /code/modules/invenio-indexer
 -e /code/modules/invenio-deposit
 -e /code/modules/invenio-resourcesyncserver
 -e /code/modules/invenio-resourcesyncclient

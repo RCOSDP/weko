@@ -22,6 +22,7 @@ class MockHandleClient:
     def instantiate_with_credentials(self, credential=None):
         return self.MockClient()
 
+
 # .tox/c1/bin/pytest --cov=weko_handle tests/test_views.py::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-handle/.tox/c1/tmp
 def test_index(app, client):
     url = url_for(
@@ -29,6 +30,7 @@ def test_index(app, client):
     )
     res = client.get(url)
     assert res.status_code == 200
+
 
 # .tox/c1/bin/pytest --cov=weko_handle tests/test_views.py::test_retrieve_handle -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-handle/.tox/c1/tmp
 def test_retrieve_handle(app, client):
@@ -70,3 +72,10 @@ def test_register_handle(app, client):
         res = client.post(url, data={'location': 'http://localhost/records/123'})
         assert res.status_code == 200
 
+
+# def dbsession_clean(exception):   
+def test_dbsession_clean(app):
+    from weko_handle.views import dbsession_clean
+
+    with patch("weko_handle.views.db.session.commit", side_effect=KeyError('test')):
+        dbsession_clean(exception=None)

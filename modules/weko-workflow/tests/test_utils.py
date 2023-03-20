@@ -127,7 +127,8 @@ from weko_workflow.utils import (
     update_system_data_for_item_metadata,
     update_approval_date_for_deposit,
     update_system_data_for_activity,
-    create_or_update_item_billing
+    create_or_update_item_billing,
+    make_activitylog_tsv
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
 from weko_workflow.models import Activity
@@ -2676,3 +2677,16 @@ def test_create_or_update_item_billing(db_register_item_billing):
 
     deleted = ItemBilling.query.filter_by(item_id=10, role_id=3).one_or_none()
     assert deleted is None
+
+
+def test_make_activitylog_tsv(db_register,db_records):
+    """test make_activitylog_tsv"""
+    activity = Activity()
+    activities = []
+    activities.append(activity.query.filter_by(activity_id='2'))
+    activities.append(activity.query.filter_by(activity_id='3'))
+    
+
+    output_tsv = make_activitylog_tsv(activities)
+    assert isinstance(output_tsv,str)
+    assert len(output_tsv.splitlines()) == 3

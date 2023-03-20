@@ -17,7 +17,7 @@ from weko_search_ui.query import (
     get_permission_filter,
     default_search_factory,
     item_path_search_factory,
-    check_admin_user,
+    check_permission_user,
     opensearch_factory,
     item_search_factory,
     feedback_email_search_factory
@@ -930,11 +930,11 @@ def test_item_path_search_factory(i18n_app, users, indices):
                     assert res
 
 
-# def check_admin_user():
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_query.py::test_check_admin_user -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_check_admin_user(i18n_app, users):
+# def check_permission_user():
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_query.py::test_check_permission_user -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_permission_user(i18n_app, users):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        res = check_admin_user()
+        res = check_permission_user()
         assert res==('5', True)
 
 

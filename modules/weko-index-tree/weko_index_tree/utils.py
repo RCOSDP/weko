@@ -595,7 +595,8 @@ def get_record_in_es_of_index(index_id, recursively=True):
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
     must_query = [
         QueryString(query=query_string),
-        Q("terms", path=child_idx)
+        Q("terms", path=child_idx),
+        Q("terms", publish_status=["0", "1"])
     ]
     search = search.query(
         Bool(filter=must_query)

@@ -77,11 +77,12 @@
   {% assets "weko_admin_quill_css" %}
   <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {%- endblock css %}
-  
   <!-- start tracking code -->
   {%- block trackingcode %}{% include config.THEME_TRACKINGCODE_TEMPLATE with context %}
   {%- endblock trackingcode %}
   <!-- end tracking code -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   {%- endblock head %}
 </head>
 
@@ -112,27 +113,27 @@
       poweredBy: 'https://github.com/RCOSDP/weko',
       translations: {
         en: {
-          privacyPolicyUrl: '/privacy',
+          privacyPolicyUrl: '/sitepolicy',
           acceptAll: "Accept all",
           acceptSelected: "Accept selected",
+          save: "Save",
+          privacyPolicy: {
+            name: "Privacy policy",
+            text: "To learn more, please read our {privacyPolicy}.",
+          },
           close: "Close",
           consentModal: {
             description:
               "This website uses third-party applications. To protect and manage your privacy you can review and control these apps here.",
             title: "Services we would like to use",
-            privacyPolicy: {
-              name: "Privacy policy",
-              text: "To learn more, please read our {privacyPolicy}.",
-            },
+
           },
           consentNotice: {
             description: "By using this website, you agree to the use of cookies as described in our {privacyPolicy}.",
             learnMore: "Let me choose",
           },
-          decline: "I decline",
           ok: "That's ok",
-          poweredBy: "",
-
+          poweredBy: "Powered by Klaro",
           purposeItem: {
             service: "service",
             services: "services"
@@ -142,53 +143,64 @@
               description: "Analytics",
               title: "Analytics"
             },
-            performance: {
-              description: "Performance",
-              title: "Performance"
+            jairocloud: {
+              description: "JAIRO Cloud",
+              title: "JAIRO Cloud"
             },
           },
           service: {
             purpose: "purpose",
+            purposes: "purposes",
+            required: {
+              title: "required"
+            },  
           },
         },
         ja: {
-          privacyPolicyUrl: '/privacy',
+          privacyPolicyUrl: '/sitepolicy',
           acceptAll: "すべて同意",
           acceptSelected: "選択して同意",
-          close: "Close",
+          save: "保存",
+          privacyPolicy: {
+            name: "サイトポリシー",
+            text: "詳細は {privacyPolicy} をご確認ください。",
+          },
           consentModal: {
             description:
-              "This website uses third-party applications. To protect and manage your privacy you can review and control these apps here.",
-            title: "Services we would like to use",
-            privacyPolicy: {
-              name: "Privacy policy",
-              text: "To learn more, please read our {privacyPolicy}.",
-            },
+              "当サイトでは、より良いサービスを提供するため、クッキーおよびサードパーティ製のアプリケーションを利用しています。以下の設定からクッキー設定を制御できます。",
+            title: "クッキー設定",
+            
           },
           consentNotice: {
-            description: "By using this website, you agree to the use of cookies as described in our {privacyPolicy}.",
-            learnMore: "Let me choose",
+            description: "当サイトでは、より良いサービスを提供するため、クッキーを利用しています。クッキーの使用に同意いただける場合は「同意」ボタンをクリックし、クッキーポリシーについては「詳細を見る」をクリックしてください。詳しくは当サイトの {privacyPolicy} をご確認ください。",
+            learnMore: "詳細を見る",
           },
-          decline: "I decline",
-          ok: "That's ok",
-          poweredBy: "",
-
+          contextualConsent:{
+            description: "サードパティ製アプリケーションを利用しています。",
+            acceptOnce: "一時的に同意する"
+          },
+          ok: "同意",
+          poweredBy: "Powered by Klaro",
           purposeItem: {
             service: "service",
             services: "services"
           },
           purposes: {
             analytics: {
-              description: "Analytics",
-              title: "Analytics"
+              description: "分析",
+              title: "分析"
             },
-            performance: {
-              description: "Performance",
-              title: "Performance"
+            jairocloud: {
+              description: "JAIRO Cloudサービスの品質向上目的で利用します。",
+              title: "JAIRO Cloud"
             },
           },
           service: {
             purpose: "purpose",
+            purposes: "purposes",
+            required: {
+              title: "required"
+            },  
           },
         },
      },
@@ -198,7 +210,7 @@
         name: 'jairocloud',
         default: true,
         title: 'Google Analytics',
-        purposes: ['analytics','performance'],
+        purposes: ['jairocloud'],
         callback: function (consent, service) {
           console.log(
             'User consent for service ' + service.name + ': consent=' + consent
