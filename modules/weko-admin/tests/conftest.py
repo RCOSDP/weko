@@ -36,6 +36,7 @@ from invenio_oaiserver.minters import oaiid_minter
 
 from flask import Flask
 from flask_babelex import Babel
+from flask_babelex import lazy_gettext as _
 from flask_mail import Mail
 from flask_menu import Menu
 from flask.cli import ScriptInfo
@@ -44,11 +45,11 @@ from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 from simplekv.memory.redisstore import RedisStore
 
-
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user
 from invenio_access.models import ActionUsers, ActionRoles
+
 from invenio_access import InvenioAccess
 from invenio_admin import InvenioAdmin
 from invenio_cache import InvenioCache
@@ -160,6 +161,51 @@ def base_app(instance_path, cache_config,request ,search_class):
         WEKO_THEME_INSTANCE_DATA_DIR="data",
         SEARCH_INDEX_PREFIX="test-",
         INDEXER_DEFAULT_DOC_TYPE="item-v1.0.0",
+        WEKO_ADMIN_REPORT_HEADERS = {
+            'file_download': _('No. Of File Downloads'),
+            'file_preview': _('No. Of File Previews'),
+            'billing_file_download': _('No. Of Paid File Downloads'),
+            'index_access': _('Detail Views Per Index'),
+            'detail_view': _('Detail Views Count'),
+            'file_using_per_user': _('Usage Count By User'),
+            'search_count': _('Search Keyword Ranking'),
+            'top_page_access': _('Number Of Access By Host'),
+            'user_roles': _('User Affiliation Information'),
+            'site_access': _('Access Count By Site License')
+        },
+        WEKO_ADMIN_REPORT_SUB_HEADERS = {
+            'file_download': _('Open-Access No. Of File Downloads'),
+            'file_preview': _('Open-Access No. Of File Previews'),
+            'site_access': _('Access Number Breakdown By Site License')
+        },
+        WEKO_ADMIN_REPORT_COLS = {
+            'file_download': [
+                _('File Name'), _('Registered Index Name'),
+                _('No. Of Times Downloaded'), _('Non-Logged In User'),
+                _('Logged In User'), _('Site License'), _('Admin'),
+                _('Registrar')],
+            'file_preview': [
+                _('File Name'), _('Registered Index Name'),
+                _('No. Of Times Viewed'), _('Non-Logged In User'),
+                _('Logged In User'), _('Site License'), _('Admin'),
+                _('Registrar')],
+            'index_access': [_('Index'), _('No. Of Views')],
+            'detail_view': [
+                _('Title'), _('Registered Index Name'), _('View Count'),
+                _('Non-logged-in User')],
+            'file_using_per_user': [_('Mail address'),
+                                    _('Username'),
+                                    _('File download count'),
+                                    _('File playing count')],
+            'search_count': [_('Search Keyword'), _('Number Of Searches')],
+            'top_page_access': [_('Host'), _('IP Address'),
+                                _('WEKO Top Page Access Count')],
+            'user_roles': [_('Role'), _('Number Of Users')],
+            'site_access': [_('WEKO Top Page Access Count'),
+                            _('Number Of Searches'), _('Number Of Views'),
+                            _('Number Of File download'),
+                            _('Number Of File Regeneration')]
+        },
     )
     app_.testing = True
     app_.login_manager = dict(_login_disabled=True)
@@ -203,6 +249,15 @@ def app(base_app):
 
 
 @pytest.yield_fixture()
+def i18n_app(app):
+    with app.test_request_context(
+        headers=[('Accept-Language','ja')]):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        yield app
+
+
+@pytest.yield_fixture()
 def db(app):
     # if not database_exists(str(db_.engine.url)) and \
     #         app.config['SQLALCHEMY_DATABASE_URI'] != 'sqlite://':
@@ -221,6 +276,44 @@ def i18n_app(app):
         app.extensions['invenio-oauth2server'] = 1
         app.extensions['invenio-queues'] = 1
         yield app
+
+@pytest.fixture()
+def roles(app, db):
+    ds = app.extensions["invenio-accounts"].datastore
+    role_count = Role.query.filter_by(name='System Administrator').count()
+    if role_count != 1:
+        sysadmin_role = ds.create_role(name='System Administrator')
+        repoadmin_role = ds.create_role(name='Repository Administrator')
+        contributor_role = ds.create_role(name='Contributor')
+        comadmin_role = ds.create_role(name='Community Administrator')
+    else:
+        sysadmin_role = Role.query.filter_by(name='System Administrator').first()
+        repoadmin_role = Role.query.filter_by(name='Repository Administrator').first()
+        contributor_role = Role.query.filter_by(name='Contributor').first()
+        comadmin_role = Role.query.filter_by(name='Community Administrator').first()
+    return {
+        'System Administrator': sysadmin_role,
+        'Repository Administrator': repoadmin_role,
+        'Contributor': contributor_role,
+        'Community Administrator': comadmin_role
+    }
+
+
+@pytest.fixture()
+def test_site_license(db):
+    results = list()
+    result = SiteLicenseInfo(
+        organization_id=0,
+        organization_name="test data",
+        receive_mail_flag="T",
+        mail_address="test@mail.com",
+        domain_name="test_domain",
+    )
+    db.session.add(result)
+    results.append(result)
+    db.session.commit()
+    yield results
+
 
 def _database_setup(app, request):
     """Set up the database."""

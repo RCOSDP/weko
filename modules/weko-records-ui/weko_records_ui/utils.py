@@ -21,18 +21,17 @@
 """Module of weko-records-ui utils."""
 
 import base64
-import os
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
-from typing import NoReturn, Tuple
-from urllib.parse import urlparse,quote
+from typing import NoReturn, Tuple, Dict
+from urllib.parse import quote
 
-from flask import abort, current_app, json, request, url_for
-from flask_babelex import get_locale
+from elasticsearch_dsl import Q
+from flask import abort, current_app, json, request
 from flask_babelex import gettext as _
-from flask_babelex import to_user_timezone, to_utc
-from flask_login import current_user
+from flask_babelex import to_utc
+from flask_security import current_user
 from invenio_accounts.models import Role
 from invenio_cache import current_cache
 from invenio_db import db
@@ -47,16 +46,16 @@ from weko_admin.models import AdminSettings
 from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.models import ItemBilling
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
-from weko_workflow.api import WorkActivity, WorkFlow
-
 from weko_records_ui.models import InstitutionName
+from weko_workflow.api import WorkActivity, WorkFlow
 
 from .models import FileOnetimeDownload, FilePermission
 from .permissions import check_create_usage_report, \
     check_file_download_permission, check_user_group_permission, \
-    is_open_restricted
+    is_open_restricted, get_file_price
 
 
 
@@ -131,7 +130,7 @@ def get_billing_file_download_permission(groups_price: list) -> dict:
 
     Returns:
         dict: Billing file permission dictionary.
-    """    
+    """
     # current_app.logger.debug("groups_price:{}".format(groups_price))
     billing_file_permission = dict()
     for data in groups_price:
@@ -187,18 +186,20 @@ def get_min_price_billing_file_download(groups_price: list,
     return min_prices
 
 
-def is_billing_item(item_type_id):
+def is_billing_item(record: Dict) -> bool:
     """Checks if item is a billing item based on its meta data schema."""
-    item_type = ItemTypes.get_by_id(id_=item_type_id)
-    if item_type:
-        properties = item_type.schema['properties']
-        for meta_key in properties:
-            if properties[meta_key]['type'] == 'object' and \
-               'groupsprice' in properties[meta_key]['properties'] or \
-                properties[meta_key]['type'] == 'array' and 'groupsprice' in \
-                    properties[meta_key]['items']['properties']:
-                return True
-        return False
+
+    for value in record.values():
+        if not isinstance(value, dict):
+            continue
+        if value.get('attribute_type', '') != 'file':
+            continue
+        for file in value.get('attribute_value_mlt', []):
+            if file.get('billing') and len(file.get('billing')) > 0 and file.get('billing')[0] == 'billing_file':
+                if file.get('priceinfo'):
+                    return True
+
+    return False
 
 
 def soft_delete(recid):
@@ -685,7 +686,8 @@ def get_file_info_list(record):
         access = p_file.get("accessrole", '')
         date = p_file.get('date')
         if access == "open_login" and not current_user.get_id():
-            p_file['future_date_message'] = _("Restricted Access")
+            if not 'billing' in p_file:
+                p_file['future_date_message'] = _("Restricted Access")
         elif access == "open_date":
             if date and isinstance(date, list) and date[0]:
                 adt = date[0].get('dateValue')
@@ -704,6 +706,30 @@ def get_file_info_list(record):
         for item in array_json:
             if str(item.get('id')) == str(key):
                 return item.get(get_key)
+
+    def add_billing_info(p_file):
+        '''ファイル情報に課金ファイルに関する情報を追加する'''
+
+        # 課金ファイルのアクセス権限
+        p_file['billing_file_permission'] = check_file_download_permission(record, p_file, check_billing_file=True)
+        if not p_file['billing_file_permission']:
+            # 課金額
+            p_file['file_price'], p_file['currency_unit'] = get_file_price(record['_deposit']['id'])
+
+        user_role_name_list = list(current_user.roles or [])
+        for priceinfo in p_file['priceinfo']:
+            # 税込/税抜
+            itemBilling = ItemBilling.query.filter_by(
+                item_id=record['_deposit']['id'], role_id=int(priceinfo['billingrole'])).one_or_none()
+            priceinfo['tax'] = 'include_tax' if itemBilling.include_tax else 'without_tax'
+
+            # ロールIDをロール名に変換
+            role = next(filter(lambda x: x['id'] == int(priceinfo['billingrole']), roles), None)
+            if role:
+                priceinfo['billingrole'] = role['name']
+
+            # ユーザーがこのロールをもっているかどうか
+            priceinfo['has_role'] = priceinfo['billingrole'] in user_role_name_list
 
     workflows = get_workflows()
     roles = get_roles()
@@ -771,6 +797,8 @@ def get_file_info_list(record):
                                 p['role'] = get_data_by_key_array_json(
                                     role, roles, 'name')
                     f['file_order'] = file_order
+                    if 'billing' in f:
+                        add_billing_info(f)
                     files.append(f)
                 file_order += 1
     return is_display_file_preview, files
@@ -1507,3 +1535,42 @@ def get_google_detaset_meta(record,record_tree=None):
     current_app.logger.debug("res_data: {}".format(json.dumps(res_data, ensure_ascii=False)))
 
     return json.dumps(res_data, ensure_ascii=False)
+
+def get_billing_role(record: Dict) -> Tuple[str, str]:
+    """Get the lowest price and roll.
+
+    Args:
+        record (dict): Record metadata
+
+    Returns:
+        tuple[str, str]: role, price(min)
+    """
+    user_roles = current_user.roles
+    user_role_ids = [role.id for role in user_roles]
+
+    price_info_key = 'priceinfo'
+
+    billing_role_key = 'billingrole'
+    billing_price_key = 'price'
+
+    min_price_info = None
+    role_prices = []
+    for _, value in record.items():
+        if not isinstance(value, dict):
+            continue
+
+        if value.get('attribute_type') == 'file':
+            for file_item in value.get('attribute_value_mlt', []):
+                price_info = file_item.get(price_info_key, [])
+                role_prices.extend([role_price for role_price in price_info \
+                                    if int(role_price.get(billing_role_key, '-1')) in user_role_ids \
+                                        and billing_price_key in role_price.keys()])
+
+    if len(role_prices) > 0:
+        min_price_info = min(role_prices, key=lambda info: int(info[billing_price_key]))
+
+    if min_price_info is None or billing_role_key not in min_price_info.keys():
+        return 'guest', ''
+
+    min_role = Role.query.get(int(min_price_info.get(billing_role_key)))
+    return min_role.name, min_price_info.get(billing_price_key, '')

@@ -1,0 +1,74 @@
+{
+    "_oai": {
+        "id": "oai:weko3.example.org:00000001",
+        "sets": []
+    },
+    "path": [
+        "1031"
+    ],
+    "owner": "1",
+    "recid": "1",
+    "title": [
+        "Back to the Future"
+    ],
+    "pubdate": {
+        "attribute_name": "PubDate",
+        "attribute_value": "2021-02-13"
+    },
+    "_buckets": {
+        "deposit": "e80a542d-baf6-4103-8cf7-fae8015b0289"
+    },
+    "_deposit": {
+        "id": "1",
+        "pid": {
+            "type": "depid",
+            "value": "1",
+            "revision_id": 0
+        },
+        "owners": [
+            1
+        ],
+        "status": "published"
+    },
+    "item_title": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+    "author_link": [
+        "1",
+        "2",
+        "3"
+    ],
+    "item_type_id": "1",
+    "publish_date": "2021-02-13",
+    "control_number": "1",
+    "publish_status": "0",
+    "weko_shared_id": -1,
+
+    "item_test_file": {
+        "attribute_name": "File",
+        "attribute_type": "file",
+        "attribute_value_mlt": [
+            {
+                "url": {
+                    "url": "https://weko3.example.org/record/1/files/1KB.pdf"
+                },
+                "date": [
+                    {
+                        "dateType": "Available",
+                        "dateValue": "2022-05-27"
+                    }
+                ],
+                "format": "text/plain",
+                "filesize": [
+                    {
+                        "value": "1 KB"
+                    }
+                ],
+                "mimetype": "application/pdf",
+                "accessrole": "open_date",
+                "version_id": "6e3b5a33-ab7c-49e3-86e2-90d1cf7a9489",
+                "displaytype": "simple",
+                "licensetype": "license_0"
+            }
+        ]
+    },
+    "relation_version_is_last": true
+}

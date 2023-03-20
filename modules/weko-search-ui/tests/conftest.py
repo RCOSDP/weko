@@ -2272,6 +2272,48 @@ def db_index(client, users):
         # index.public_state = False
         # index.harvest_public_state = False
 
+@pytest.fixture()
+def db_index2(client, users):
+    index_metadata = {
+        "id": 1,
+        "parent": 0,
+        "value": "Index(public_state = True,harvest_public_state = True)",
+    }
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        ret = Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(1)
+
+    index_metadata = {
+        "id": 2,
+        "parent": 0,
+        "value": "Index(public_state = True,harvest_public_state = False)",
+    }
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(2)
+
+    index_metadata = {
+        "id": 3,
+        "parent": 1,
+        "value": "Index(public_state = False,harvest_public_state = True)",
+    }
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(3)
+
+    index_metadata = {
+        "id": 4,
+        "parent": 1,
+        "value": "Index(public_state = False,harvest_public_state = False)",
+    }
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(4)
+
 
 @pytest.fixture()
 def es_records(app, db, db_index, location, db_itemtype, db_oaischema):

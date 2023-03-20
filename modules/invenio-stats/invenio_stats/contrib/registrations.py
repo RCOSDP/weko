@@ -371,7 +371,8 @@ def register_queries():
                 doc_type='file-download-day-aggregation',
                 group_fields=['file_key', 'index_list',
                               'userrole', 'site_license_flag',
-                              'user_group_names', 'count'],
+                              'user_group_names', 'cur_user_id',
+                              'count'],
                 required_filters=dict(
                     is_billing_item='is_billing_item',
                 ),

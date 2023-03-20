@@ -183,6 +183,12 @@ require([
                 search = insertParam(search, "size", size);
             }
 
+            const cur_index_id = getCurIndexId()
+            if (cur_index_id) {
+                search = insertParam(search, "cur_index_id", cur_index_id);
+                search = insertParam(search, "recursive", 1);
+            }
+
             if ($("#item_management_bulk_update").length != 0) {
                 search = insertParam(search, "item_management", "update");
                 window.location.href = "/admin/items/search" + search;
@@ -251,6 +257,20 @@ require([
         return data;
     }
 
+    function getCurIndexId() {
+        const cur_index_id = $('#cur_index_id')[0].innerHTML;
+        if (cur_index_id && cur_index_id != "None") {
+            return cur_index_id;
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('cur_index_id')) {
+            return urlParams.get('cur_index_id')
+        }
+
+        return null;
+    }
+
     $(document).ready(function () {
 
         ArrangeSearch();
@@ -258,6 +278,12 @@ require([
         // 詳細検索からページ遷移した場合、詳細検索のアコーディオンを開いた状態にして、ボタンのテキストを「閉じる」にセット
         var urlParams = new URLSearchParams(window.location.search);
         var isDetailSearch = Array.from(urlParams.keys()).length > 6  // 6は簡易検索の際のクエリの数
+        if (isDetailSearch) {
+            // インデックスを開いた状態での簡易検索の判定
+            if (urlParams.has('cur_index_id')) {
+                isDetailSearch = false;
+            }
+        }
         var SearchType = GetUrlParam('search_type');
 
         if (isDetailSearch && SearchType && SearchType != '2' && !urlParams.has('is_facet_search')) {  // インデックスの検索に開かない

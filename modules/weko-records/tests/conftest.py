@@ -301,6 +301,25 @@ def records(db):
     db.session.commit()
     yield result
 
+@pytest.fixture()
+def record1(db):
+    record_data = json_data("data/test_record1.json")
+    item_data = json_data("data/test_items.json")
+    item_data = item_data[0]
+    result = []
+    result = create_record(record_data, item_data)
+    db.session.commit()
+    yield result
+
+@pytest.fixture()
+def record2(db):
+    record_data = json_data("data/test_record2.json")
+    item_data = json_data("data/test_items.json")
+    item_data = item_data[0]
+    result = []
+    result = create_record(record_data, item_data)
+    db.session.commit()
+    yield result
 
 @pytest.fixture()
 def admin_settings(app, db):

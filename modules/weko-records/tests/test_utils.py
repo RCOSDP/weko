@@ -439,6 +439,22 @@ def test_get_all_items():
     res = get_all_items(_nlst, _klst)
     assert res==[[{'item_1.subitem_1': 'en_value', 'item_1.subitem_1_lang': 'en'}], [{'item_1.subitem_1': 'ja_value', 'item_1.subitem_1_lang': 'ja'}]]
 
+    # 55
+    role_name = 'role_name'
+    _nlst2 = [
+        {'billing': ['billing_file'], 
+        'priceinfo': [{'tax': 'include_tax', 'price': '110', 'billingrole': role_name, 'has_role': True}], 
+        }
+    ]
+    _klst2 = [
+        ['item_1617605131499[].billing', '課金', '', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, ''],
+        ['item_1617605131499[].priceinfo[].billingrole', 'ロール', '', {'required': False, 'show_list': False, 'specify_newline': False, 'hide': False, 'non_display': False}, '']
+    ]
+
+    res2 = get_all_items(_nlst2, _klst2)
+    assert res2[0][0][0][1]['item_1617605131499[].priceinfo[].billingrole'] == role_name
+    assert res2[0][1]['item_1617605131499[].billing'] == 'billing_file'
+
     data1 = {
         "k": "k",
     }

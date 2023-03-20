@@ -1,0 +1,111 @@
+[
+    {
+        "add": "New",
+        "key": "item_1617605131499",
+        "items": [
+            {
+                "key": "item_1617605131499[].billing",
+                "type": "template",
+                "title": "課金",
+                "titleMap": [
+                    {
+                        "name": "課金ファイル",
+                        "value": "billing_file",
+                        "name_i18n": {
+                            "en": "Billing file",
+                            "ja": "課金ファイル"
+                        }
+                    }
+                ],
+                "condition": "model.item_1617605131499[arrayIndex].accessrole == 'open_date' || model.item_1617605131499[arrayIndex].accessrole == 'open_login'",
+                "title_i18n": {
+                    "en": "Billing",
+                    "ja": "課金"
+                },
+                "templateUrl": "/static/templates/weko_deposit/checkboxes.html",
+                "title_i18n_temp": {
+                    "en": "Billing",
+                    "ja": "課金"
+                }
+            },
+            {
+                "add": "New",
+                "key": "item_1617605131499[].priceinfo",
+                "items": [
+                    {
+                        "key": "item_1617605131499[].priceinfo[].billingrole",
+                        "type": "select",
+                        "title": "ロール",
+                        "titleMap": [],
+                        "title_i18n": {
+                            "en": "Role",
+                            "ja": "ロール"
+                        },
+                        "title_i18n_temp": {
+                            "en": "Role",
+                            "ja": "ロール"
+                        }
+                    },
+                    {
+                        "key": "item_1617605131499[].priceinfo[].tax",
+                        "type": "template",
+                        "title": "税",
+                        "titleMap": [
+                            {
+                                "name": "税込",
+                                "value": "include_tax",
+                                "name_i18n": {
+                                    "en": "Include tax",
+                                    "ja": "税込"
+                                }
+                            }
+                        ],
+                        "title_i18n": {
+                            "en": "Tax",
+                            "ja": "税"
+                        },
+                        "templateUrl": "/static/templates/weko_deposit/checkboxes.html",
+                        "title_i18n_temp": {
+                            "en": "Tax",
+                            "ja": "税"
+                        }
+                    },
+                    {
+                        "key": "item_1617605131499[].priceinfo[].price",
+                        "type": "text",
+                        "title": "価格",
+                        "title_i18n": {
+                            "en": "Price",
+                            "ja": "価格"
+                        },
+                        "title_i18n_temp": {
+                            "en": "Price",
+                            "ja": "価格"
+                        }
+                    }
+                ],
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "価格情報",
+                "condition": "(model.item_1617605131499[arrayIndex].accessrole == 'open_date' || model.item_1617605131499[arrayIndex].accessrole == 'open_login') && model.item_1617605131499[arrayIndex].billing == 'billing_file'",
+                "title_i18n": {
+                    "en": "Price",
+                    "ja": "価格情報"
+                },
+                "title_i18n_temp": {
+                    "en": "Price",
+                    "ja": "価格情報"
+                }
+            }
+        ],
+        "style": {
+            "add": "btn-success"
+        },
+        "title": "File",
+        "title_i18n": {
+            "en": "File",
+            "ja": "ファイル情報"
+        }
+    }
+]

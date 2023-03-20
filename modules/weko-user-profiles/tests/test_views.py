@@ -23,7 +23,7 @@
 
 """Tests for user profile views."""
 
-from flask import url_for, json,make_response, current_app, g, jsonify
+from flask import url_for, json,make_response, current_app, g, jsonify, session
 from flask_breadcrumbs import current_breadcrumbs
 from flask_security import url_for_security
 from flask_menu import current_menu
@@ -42,7 +42,8 @@ from weko_user_profiles.views import (
     userprofile,
     init_common,
     profile_form_factory,
-    init_ui
+    init_ui,
+    is_ums_user,
     )
 
 from tests.helpers import login, sign_up
@@ -407,3 +408,39 @@ def test_profile_form_factory(req_context,users,user_profiles):
     )
     result = profile_form_factory()
     assert type(result) == ProfileForm
+
+
+# def profile():
+# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_views.py::test_is_ums_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
+def test_is_ums_user(app):
+    with app.test_request_context(method="GET"):
+        assert is_ums_user() == False
+
+        session["user_src"] = "Shib"
+        assert is_ums_user() == True
+
+
+# def profile():
+# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_views.py::test_ums_management -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
+def test_ums_management(client, register_bp, users, mocker, admin_settings):
+    login_user_via_session(client=client, email=users[0]["email"])
+    url = url_for("weko_user_profiles.ums_management")
+    # no login
+    res = client.get(url)
+    assert res.headers.get('Location') == 'http://dummy.co.jp/dummy'
+    assert res.status_code == 302
+
+    # not submit
+    client.post(url, data={})
+
+    # submit is profile
+    client.post(url, data={"submit": "profile"})
+
+    # submit is verification
+    client.post(url, data={"submit": "verification"})
+
+    # check submenu, breadcrumbs
+    assert current_menu.submenu("settings.ums_management").active == True
+    assert current_menu.submenu("settings.ums_management").url == "/account/settings/profile/ums_management"
+    assert current_menu.submenu("settings.ums_management").text == '<i class="fa fa-user fa-fw"></i> Profile(UMS)'
+    assert list(map(lambda x: x.url, list(current_breadcrumbs))) == ["#", "#", "#", "/account/settings/profile/ums_management"]

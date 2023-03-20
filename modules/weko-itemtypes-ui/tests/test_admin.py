@@ -160,6 +160,7 @@ class TestItemTypeMetaDataView:
         url = url_for("itemtypesregister.register",item_type_id=1)
         res = client.post(url,json={})
         assert_statuscode_with_role(res,is_permission)
+
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_register -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
     def test_register(self,app,client,db,admin_view,users,item_type,mocker):
         login_user_via_session(client=client,email=users[0]["email"])
@@ -680,3 +681,23 @@ class TestItemTypeMappingView:
         res = client.get(url)
         assert res.status_code == 200
         assert json.loads(res.data) == {}
+
+
+# def register(self, item_type_id=0):
+# .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::test_register -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
+def test_register(client, users):
+    login_user_via_session(client=client, email=users[2]['email'])
+
+    url = url_for('itemtypesregister.register')
+    headers = [('Content-Type', 'application/json'), ('Accept', 'application/json')]
+    data = dict()
+    with open("tests/data/page_global.json", "r") as f:
+        data = json.load(f)
+        data = json.dumps(data)
+
+    res = client.post(url, headers=headers, data=data)
+
+    res_json = json.loads(res.data.decode('utf-8'))
+    res_msg = res_json['msg']
+    assert res.status_code == 400
+    assert res_msg == 'Failed to register Item type. Can\'t register multiple files for the billing file.'

@@ -5,13 +5,15 @@ from weko_records_ui.config import WEKO_RECORDS_UI_DETAIL_TEMPLATE
 from unittest.mock import MagicMock
 from invenio_theme.config import THEME_ERROR_TEMPLATE 
 import pytest
-import io
-import copy
-from flask import Flask, json, jsonify, session, url_for,request
-from flask_security.utils import login_user
-from invenio_accounts.testutils import login_user_via_session
 from mock import patch
 from invenio_records_files.utils import record_file_factory
+from invenio_theme.config import THEME_ERROR_TEMPLATE
+from weko_records_ui.config import WEKO_RECORDS_UI_DETAIL_TEMPLATE
+from weko_records_ui.fd import (
+    _download_file, add_signals_info,
+    file_download_onetime, file_download_ui, file_preview_ui, file_ui,
+    prepare_response, weko_view_method
+)
 from werkzeug.exceptions import NotFound
 
 # def weko_view_method(pid, record, template=None, **kwargs):
@@ -42,7 +44,7 @@ def test_weko_view_method(app,records,itemtypes,users):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_prepare_response -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_prepare_response(app,client,records,itemtypes,users):
     indexer, results = records
-    recid = results[0]["recid"]    
+    recid = results[0]["recid"]
     with app.test_request_context(path="/?filename=hoge"):
     #     ret = prepare_response(recid.pid_value,True)
     #     assert ret == ""
@@ -154,16 +156,31 @@ def test__download_file(app,records,itemtypes,users):
 
 # def add_signals_info(record, obj):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_add_signals_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_add_signals_info(app,records,itemtypes,users):
-    indexer, results = records
-    recid = results[0]["recid"]
-    record = results[0]["record"]
-    fileobj = record_file_factory(recid,record,"helloworld.pdf")
-    obj = fileobj.obj
-    with app.test_request_context():
+def test_add_signals_info(i18n_app,records,itemtypes,users,mock_es_execute):
+    _, results = records
+    with i18n_app.test_request_context():
         with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
-            add_signals_info(record,obj)
-            assert obj.item_title=='ja_conference paperITEM00000009(public_open_access_open_access_simple)'
+            with patch('flask_principal.Permission.can', MagicMock(return_value=True)):
+                with patch('elasticsearch_dsl.Search.execute', return_value=mock_es_execute('tests/data/execute_result2.json')):
+                    recid = results[0]["recid"]
+                    record = results[0]["record"]
+                    fileobj = record_file_factory(recid,record,"helloworld.pdf")
+                    obj = fileobj.obj
+                    add_signals_info(record,obj)
+                    assert obj.item_title == 'ja_conference paperITEM00000009(public_open_access_open_access_simple)'
+                    assert obj.is_billing_item == False
+                    assert obj.userrole == 'Repository Administrator'
+                    assert obj.billing_file_price == ''
+                with patch('elasticsearch_dsl.Search.execute', return_value=mock_es_execute('tests/data/execute_result1.json')):
+                    recid = results[3]["recid"]
+                    record = results[3]["record"]
+                    fileobj = record_file_factory(recid,record,"helloworld_billing.pdf")
+                    obj = fileobj.obj
+                    add_signals_info(record,obj)
+                    assert obj.item_title == 'ja_conference paperITEM00000009(public_open_access_open_access_simple)_billing'
+                    assert obj.is_billing_item == True
+                    assert obj.userrole == 'Repository Administrator'
+                    assert obj.billing_file_price == '400'
 
         data1 = MagicMock()
         def all_func():
@@ -174,16 +191,19 @@ def test_add_signals_info(app,records,itemtypes,users):
         data2 = MagicMock()
         data2.id = 2
 
-        with patch("weko_records_ui.fd.Group.query_by_user", return_value=data1):
-            with patch("flask_login.utils._get_user", return_value=data1):
-                add_signals_info(record,obj)
-            
-            data1.roles = [data1, data2]
 
-            with patch("flask_login.utils._get_user", return_value=data1):
-                add_signals_info(record,obj)
+        with patch("weko_records_ui.fd.is_billing_item", return_value=False):
+            with patch("weko_records_ui.fd.Group.query_by_user", return_value=data1):
+                with patch("flask_login.utils._get_user", return_value=data1):
+                    add_signals_info(record,obj)
+                data1.roles = [data1, data2]
 
-                with patch("weko_records_ui.fd.is_billing_item", return_value=True):
+                with patch("flask_login.utils._get_user", return_value=data1):
+                    add_signals_info(record,obj)
+
+        with patch("weko_records_ui.fd.is_billing_item", return_value=True):
+            with patch("weko_records_ui.fd.Group.query_by_user", return_value=data1):
+                with patch("flask_login.utils._get_user", return_value=data1):
                     add_signals_info(record,obj)
 
 

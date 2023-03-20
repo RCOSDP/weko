@@ -101,7 +101,7 @@
                 </tbody>
               </table>
               {%- endif %}
-                {{ output_item_detail(record_org, files_org, thumbnails_org, pid, record_org.items_show_list, cur_step ) }}
+                {{ output_item_detail(record_org, files_org, thumbnails_org, pid, record_org.items_show_list, m_cur_step=cur_step, m_display_billing_file_flg=display_billing_file_flg) }}
               {%- if 'main_entry_personal_name' in record_org %}
               <p class="record_authors">
                 <i>{{ record_org['main_entry_personal_name']['personal_name'] }}</i>

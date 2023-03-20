@@ -142,6 +142,12 @@ SEARCH_UI_SEARCH_INDEX = "{}-weko".format(index_prefix)
 RECORDS_REST_FACETS = dict()
 RECORDS_REST_FACETS_NO_SEARCH_PERMISSION = dict()
 
+RECORDS_REST_DEFAULT_SORT = dict()
+RECORDS_REST_DEFAULT_SORT[SEARCH_UI_SEARCH_INDEX] = dict(
+    query='-createdate',
+    noquery='controlnumber',
+)
+
 RECORDS_REST_SORT_OPTIONS = dict()
 RECORDS_REST_SORT_OPTIONS[SEARCH_UI_SEARCH_INDEX] = dict(
     controlnumber=dict(
@@ -404,7 +410,27 @@ WEKO_SEARCH_KEYWORDS_DICT = {
                     ]
                 }
             },
-        )
+        ),
+        "scDes": (
+            "subject",
+            {
+                "scList": {
+                    "subject.subjectScheme": [
+                        "BSH",
+                        "DDC",
+                        "LCC",
+                        "LCSH",
+                        "MeSH",
+                        "NDC",
+                        "NDLC",
+                        "NDLSH",
+                        "UDC",
+                        "Other",
+                        "SciVal",
+                    ]
+                }
+            },
+        ),
     },
     "text": {
         "text1": "text1",
@@ -704,3 +730,67 @@ WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI = "import_unuse_files_uri_{}"
 
 WEKO_SEARCH_UI_BULK_EXPORT_RETRY_INTERVAL = 1
 """ retry interval(sec) """
+
+WEKO_SEARCH_UI_OPENSEARCH_LANGUAGE_PARAM = {
+    'ja': 'jpn',
+    'en': 'eng',
+    'fr': 'fra',
+    'it': 'ita',
+    'de': 'deu',
+    'es': 'spa',
+    'zh': 'zho',
+    'ru': 'rus',
+    'la': 'lat',
+    'ms': 'msa',
+    'eo': 'epo',
+    'ar': 'ara',
+    'el': 'ell',
+    'ko': 'kor',
+    'otherlanguage': 'other'
+}
+"""Convert opensearch param to search param"""
+
+WEKO_SEARCH_UI_OPENSEARCH_TYPE_PARAM = [
+    ['data paper', 'journal article', 'newspaper'],
+    ['thesis', 'bachelor thesis', 'master thesis', 'doctoral thesis'],
+    ['departmental bulletin paper'],
+    ['conference paper'],
+    ['conference object', 'conference proceedings', 'conference poster'],
+    ['book', 'book part'],
+    ['technical report'],
+    ['report', 'research report'],
+    ['editorial', 'periodical', 'review article', 'software paper', 'article'],
+    [],
+    ['learning object'],
+    ['dataset'],
+    ['software'],
+    [
+        'cartographic material', 'map', 'interview', 'image', 'still image',
+        'moving image', 'video', 'lecture', 'patent', 'internal report',
+        'policy report', 'report part', 'working paper', 'data management plan', 'sound'
+        'interactive resource', 'manuscript', 'musical notation', 'research proposal', 'technical documentation',
+        'workflow', 'other'
+    ],
+]
+"""Convert opensearch param to search param"""
+
+WEKO_SEARCH_UI_OPENSEARCH_ID_PARAM = [
+    ["search_des", "search_des.ja"],
+    'identifier',
+    'file.URI',
+    'identifierRegistration',
+    'relation.relatedIdentifier',
+    'sourceIdentifier',
+]
+"""Convert opensearch param to search param"""
+
+WEKO_SEARCH_UI_OPENSEARCH_LICENSE_PARAM = {
+    '101': ['license_0', 'license_6'],
+    '102': ['license_1', 'license_7'],
+    '103': ['license_2', 'license_8'],
+    '104': ['license_3', 'license_9'],
+    '105': ['license_4', 'license_10'],
+    '106': ['license_5', 'license_11'],
+    'free_input': ['license_free'],
+}
+"""Convert opensearch param to search param"""

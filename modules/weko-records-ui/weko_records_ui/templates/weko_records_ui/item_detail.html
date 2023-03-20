@@ -18,7 +18,7 @@
   # MA 02111-1307, USA.
   #}
 
-{% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
+{% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value, output_price_info %}
 {% from "weko_records_ui/creator_detail_template.html" import output_creator_data with context %}
 {% from "weko_records_ui/output_bibliographic_information_detail.html" import output_bibliographic_information %}
 {% macro output_item_detail(m_record,
@@ -29,7 +29,8 @@
                             m_is_top_page=False,
                             m_is_logged_in=False,
                             m_open_day_display_flg=true,
-                            m_cur_step=None) %}
+                            m_cur_step=None,
+                            m_display_billing_file_flg=False) %}
   {% autoescape False %}
   <table class="table table-bordered table-striped detail-table">
       {% if m_record.item_type_info %}
@@ -87,6 +88,10 @@
                           {%- endfor -%}
                         </td>
                       </tr>
+                    {%- endif -%}
+                  {% else %}
+                    {% if m_display_billing_file_flg %}
+                      {{ output_price_info(lst) }}
                     {%- endif -%}
                   {%- endif -%}
                 {% elif (lst['attribute_name']|upper == 'RESOURCETYPE') %}

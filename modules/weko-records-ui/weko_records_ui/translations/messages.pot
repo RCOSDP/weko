@@ -1249,3 +1249,39 @@ msgstr ""
 
 msgid "This data is not available for this user."
 msgstr ""
+
+msgid "PriceInfo"
+msgstr ""
+
+msgid "FileName"
+msgstr ""
+
+msgid "billingrole"
+msgstr ""
+
+msgid "tax"
+msgstr ""
+
+msgid "include_tax"
+msgstr ""
+
+msgid "without_tax"
+msgstr ""
+
+msgid "price"
+msgstr ""
+
+msgid "charge_confirmation"
+msgstr ""
+
+msgid "charge_success"
+msgstr ""
+
+msgid "charge_already"
+msgstr ""
+
+msgid "charge_credit_error"
+msgstr ""
+
+msgid "charge_error"
+msgstr ""

@@ -114,8 +114,9 @@ class ShibUser(object):
                 if self.shib_attr['shib_user_name']:
                     shib_user.shib_user_name = self.shib_attr['shib_user_name']
                 if self.shib_attr['shib_role_authority_name']:
-                    shib_user.shib_role_authority_name = self.shib_attr[
-                        'shib_role_authority_name']
+                    shib_user.shib_role_authority_name = self.shib_attr['shib_role_authority_name']
+                if self.shib_attr['shib_page_name']:
+                    shib_user.shib_page_name = self.shib_attr['shib_page_name']
             db.session.commit()
         except Exception as ex:
             current_app.logger.error(ex)
@@ -233,6 +234,7 @@ class ShibUser(object):
 
         """
         ret = ''
+        _roles = []
 
         if not self.user:
             ret = _("Can't get relation Weko User.")
@@ -245,6 +247,13 @@ class ShibUser(object):
 
         if set(roles).issubset(set(shib_roles.keys())):
             _roles = [shib_roles[role] for role in roles]
+
+        groups = self.shib_attr.get('shib_page_name', '')
+        if groups:
+            groups = [x.strip() for x in groups.split(';')]
+            _roles.extend(groups)
+
+        if _roles:
             ret = self._set_weko_user_role(_roles)
 
         if ret:

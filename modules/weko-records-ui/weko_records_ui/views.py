@@ -67,7 +67,8 @@ from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
 from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
-    check_permission_period, file_permission_factory, get_permission
+    check_permission_period, file_permission_factory, get_permission, \
+    check_charge, create_charge, close_charge
 from .utils import get_billing_file_download_permission, \
     get_google_detaset_meta, get_google_scholar_meta, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
@@ -638,6 +639,9 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     if file_order >= 0 and files and files[file_order].get('url') and files[file_order]['url'].get('url'):
         file_url = files[file_order]['url']['url']
 
+    billing_settings = AdminSettings.get('billing_settings')
+    billing_settings = {"tax_rate": billing_settings.tax_rate, "currency_unit": billing_settings.currency_unit}
+
     return render_template(
         template,
         pid=pid,
@@ -679,6 +683,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_itemtype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE') ,
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
+        billing_settings=billing_settings,
         
         **ctx,
         **kwargs
@@ -992,3 +997,51 @@ def dbsession_clean(exception):
         except:
             db.session.rollback()
     db.session.remove()
+
+@blueprint.route("/charge", methods=['GET'])
+def charge():
+    '''課金処理を行う。
+
+    Request parameter:
+        item_id   : アイテムID
+        file_name : ファイル名
+        title     : タイトル
+        price     : 支払い金額
+
+    Response parameter(json):
+        status :
+            success      : 課金成功
+            already      : 課金済み
+            error        : 課金失敗
+            credit_error : 課金失敗(クレジットカード情報の不備)
+    '''
+    item_id = request.values.get('item_id')
+    file_name = request.values.get('file_name')
+    title = request.values.get('title')
+    price = request.values.get('price')
+    file_url = current_app.config['THEME_SITEURL'] + f'/record/{item_id}/files/{file_name}'
+
+    # 課金チェック
+    charge_result = check_charge(current_user.id, int(item_id), file_name)
+    if charge_result == 'already':
+        # 課金済みだったら課金しない
+        return jsonify({'status': 'already'})
+
+    # 課金予約
+    trade_id = create_charge(current_user.id, int(item_id), file_name, price, title, file_url)
+    if trade_id in ['connection_error', 'api_error']:
+        # 課金失敗
+        return jsonify({'status': 'error'})
+    if trade_id == 'credit_error':
+        # 課金失敗(クレジットカード情報の不備)
+        return jsonify({'status': 'credit_error'})
+    if trade_id == 'already':
+        # 課金済みだったら課金しない
+        return jsonify({'status': 'already'})
+
+    # 課金確定
+    charge_result = close_charge(current_user.id, trade_id)
+    if charge_result:
+        return jsonify({'status': 'success'})
+    else:
+        return jsonify({'status': 'error'})
