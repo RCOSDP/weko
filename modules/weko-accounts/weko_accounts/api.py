@@ -249,8 +249,8 @@ class ShibUser(object):
             _roles = [shib_roles[role] for role in roles]
 
         groups = self.shib_attr.get('shib_page_name', '')
-        groups = [x.strip() for x in groups.split(';')]
         if groups:
+            groups = [x.strip() for x in groups.split(';')]
             _roles.extend(groups)
 
         if _roles:

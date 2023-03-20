@@ -76,18 +76,37 @@ class TestShibUser:
         s_user1 = ShibbolethUser(weko_uid=user1.id,weko_user=user1,**attr)
         db.session.add(s_user1)
         db.session.commit()
+
         # exist shib_eppn,exist shib_user.weko_user,not exist self.user
+        # attribute does not exist
+        attr = {
+            "shib_eppn":"test_eppn",
+            "shib_mail":None,
+            "shib_user_name":None,
+            "shib_role_authority_name":None,
+            "shib_page_name":None,
+        }
+        shibuser = ShibUser(attr)
+        result = shibuser.get_relation_info()
+        assert result.shib_mail == None
+        assert result.shib_user_name == None
+        assert result.shib_role_authority_name == None
+        assert result.shib_page_name == None
+
+        # attribute exists
         attr = {
             "shib_eppn":"test_eppn",
             "shib_mail":"shib.user@test.org",
             "shib_user_name":"shib name1",
-            "shib_role_authority_name":"shib auth"
+            "shib_role_authority_name":"shib auth",
+            "shib_page_name":"shib page",
         }
         shibuser = ShibUser(attr)
         result = shibuser.get_relation_info()
         assert result.shib_mail == "shib.user@test.org"
         assert result.shib_user_name == "shib name1"
         assert result.shib_role_authority_name == "shib auth"
+        assert result.shib_page_name == "shib page"
         
         # not exist shib_eppn,not exist shib_user.weko_user
         attr = {
@@ -232,12 +251,25 @@ class TestShibUser:
         mock_set_role.assert_called_with(['System Administrator','Repository Administrator'])
         assert flg == True
         assert ret == None
-        
+
+        # exist self.user, issubset, ret is None
+        attr = {
+            "shib_role_authority_name":"管理者;図書館員",
+            "shib_page_name":"IPSJ:学会員",
+        }
+        shibuser = ShibUser(attr)
+        shibuser.user = users[0]["obj"]
+        mock_set_role=mocker.patch("weko_accounts.api.ShibUser._set_weko_user_role",return_value=None)
+        flg, ret = shibuser.assign_user_role()
+        mock_set_role.assert_called_with(['System Administrator','Repository Administrator','IPSJ:学会員'])
+        assert flg == True
+        assert ret == None
+
         # ret is error
         error = Exception("test_error")
         mock_set_role=mocker.patch("weko_accounts.api.ShibUser._set_weko_user_role",return_value=error)
         flg, ret = shibuser.assign_user_role()
-        mock_set_role.assert_called_with(['System Administrator','Repository Administrator'])
+        mock_set_role.assert_called_with(['System Administrator','Repository Administrator','IPSJ:学会員'])
         assert flg == False
         assert ret == error
         
