@@ -58,13 +58,20 @@ function FacetSearchLayout(
       //The displayNumber must be set to an integer value between 1 and 99.
       errorMessage = (LABELS['lblDisplayNumberValidation1']);
     } else {
+      //It is an error if the parameter name for faceted search overlaps with the parameter name used for detail search.
       detail_condition.map((item) => {
         if(item[1] === 'range' || item[1] === 'dateRange'){
+          //If the type is [range] or [dateRange], [_from] and [_to] are added to the parameter name.
           if(item[0] + '_from' === _nameEN || item[0] + '_to' === _nameEN){
-            errorMessage = 'Bad en name. range value same.';
+            errorMessage = (LABELS['lblNameENValidation']);
+          }
+        } else if(item[1] === 'geo_distance') {
+          //If the type is [geo_distance], [_lat], [_lon] and [_distance] are added to the parameter names.
+          if(item[0] + '_lat' === _nameEN || item[0] + '_lon' === _nameEN || item[0] + '_distance' === _nameEN){
+            errorMessage = (LABELS['lblNameENValidation']);
           }
         } else if(item[0] === _nameEN) {
-          errorMessage = 'Bad en name. detail condition name same.';
+          errorMessage = (LABELS['lblNameENValidation']);
         }
       });
     }

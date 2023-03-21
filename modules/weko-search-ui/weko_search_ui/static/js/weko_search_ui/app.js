@@ -357,6 +357,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     $rootScope.display_comment_jounal();
     if(window.location.pathname != '/' &&
       window.facetSearchFunctions && window.facetSearchFunctions.useFacetSearch()) {
+        // Apply the search results to faceted items except for the first search result.
         let search = new URLSearchParams(window.location.search);
         if(search.get('search_type') == 2){
           window.facetSearchFunctions.resetFacetData(evt.targetScope.vm.invenioSearchResults.aggregations.aggregations[0]);
@@ -367,8 +368,15 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     }
   });
 
+  /**
+   * This process is performed when searching without loading the full screen.
+   * In this process, the search is reflected only in the search results,
+   * but in the event [invenio.search.finished] after the search,
+   * the search results are also reflected in the facet items.
+   * 
+   * @param {URLSearchParams} search Search Conditions.
+   */
   $rootScope.reSearchInvenio = (search) => {
-    console.log("============ $rootScope.reSearchInvenio ");
 
     //TODO PAGE と TimeStampを入れ替える。
     search.set('page','1');

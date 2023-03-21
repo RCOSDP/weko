@@ -190,7 +190,8 @@ require([
                 search = insertParam(search, "item_management", "delete");
                 window.location.href = "/admin/items/search" + search;
             } else {
-                let searchParam = new URLSearchParams(window.location.search);
+                let searchParam = window.facetSearchFunctions.getFacetSearchCondition ? 
+                    window.facetSearchFunctions.getFacetSearchCondition() : new URLSearchParams(window.location.search);
                 let appendSearchParam = new URLSearchParams(search);
                 searchParam.set('search_type', appendSearchParam.get('search_type'));
                 searchParam.set('q', appendSearchParam.get('q'));
