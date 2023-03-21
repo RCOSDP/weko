@@ -34,6 +34,7 @@ def terms_condition_filter(field, isAndFileter):
     """Create a term filter.
 
     :param field: Field name.
+    :param isAndFileter: AND condition if true. OR condition if false.
     :returns: Function that returns the Terms query.
     """
     def inner(values):

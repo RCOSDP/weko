@@ -2084,6 +2084,16 @@ def get_item_mapping_list():
     return result
 
 def get_detail_search_list():
+    """
+    Gets the name and type of the search condition used in the detail search.
+    The purpose of this function is to return the information of a detail search in order to prevent 
+    duplication of parameter names used in a facet search with those used in a detail search.
+
+    It extracts the part related to the detail_condition from the search settings and returns [id], 
+    which is the source of the parameter name, and [inputType], which determines the type.
+
+    If there is a special search parameter, the parameter name is defined in [mappingName] and is included in the response.
+    """
     detail_conditions = get_search_setting()["detail_condition"]
     result = []
     for k_v in detail_conditions:
@@ -2179,11 +2189,7 @@ def get_query_key_by_permission(has_permission):
 def get_facet_search_query(has_permission=True):
     """Get facet search query in redis."""
     search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
-    current_app.logger.warning('---   search_index   ---') 
-    current_app.logger.warning(search_index) 
     key = get_query_key_by_permission(has_permission)
-    current_app.logger.warning('---   key   ---') 
-    current_app.logger.warning(key) 
     # Check query exists in redis.
     query = json.loads(get_redis_cache(key) or '{}')
     if not is_exists_key_or_empty_in_redis(key) \
@@ -2198,21 +2204,12 @@ def get_facet_search_query(has_permission=True):
     from weko_admin.utils import get_title_facets
     titles, order, uiTypes, isOpens, displayNumbers, searchConditions = get_title_facets()
     for k, v in post_filters.items():
-        current_app.logger.warning('==================   searchConditions   ==================')
-        current_app.logger.warning('---   value k:   ---')
-        current_app.logger.warning(k)
-        current_app.logger.warning('---   value v:   ---')
-        current_app.logger.warning(v)
-        current_app.logger.warning(searchConditions)
-        current_app.logger.warning(searchConditions[k])
         if v == 'temporal':
-            current_app.logger.warning('---   USE RANGE_FILTER   ---')
+            # If the mapping name is [template], it is assumed to be a Filter to date_range1.
             post_filters.update({k: range_filter('date_range1', False, False)})
         else:
+            # Set whether the Filter is an AND or OR condition from the facet definition.
             post_filters.update({k: terms_condition_filter(v, searchConditions[k] == 'AND')})
-            
-    current_app.logger.warning('---   query-result   ---')
-    current_app.logger.warning(result) 
     return result
 
 
