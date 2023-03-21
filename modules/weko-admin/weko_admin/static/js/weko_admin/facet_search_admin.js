@@ -32,7 +32,7 @@ function Layout({isEditScreen}) {
 
 function FacetSearchLayout(
   {
-    name_en, name_jp, mapping, active, ui_type, is_open, display_number, search_condition, aggregations, mapping_list
+    name_en, name_jp, mapping, active, ui_type, is_open, display_number, search_condition, aggregations, mapping_list, detail_condition
   }
 ) {
   const [_nameEN, _setNameEN] = useState(name_en);
@@ -57,6 +57,16 @@ function FacetSearchLayout(
        ( !Number.isInteger(Number(_displayNumber)) || _displayNumber < 1 || _displayNumber > 99 ) ) {
       //The displayNumber must be set to an integer value between 1 and 99.
       errorMessage = (LABELS['lblDisplayNumberValidation1']);
+    } else {
+      detail_condition.map((item) => {
+        if(item[1] === 'range' || item[1] === 'dateRange'){
+          if(item[0] + '_from' === _nameEN || item[0] + '_to' === _nameEN){
+            errorMessage = 'Bad en name. range value same.';
+          }
+        } else if(item[0] === _nameEN) {
+          errorMessage = 'Bad en name. detail condition name same.';
+        }
+      });
     }
 
     if (errorMessage){
@@ -121,7 +131,7 @@ function FacetSearchLayout(
    */
   function handleChangeMapping(event) {
     _setMapping(event.target.value);
-    handleUiTypeRange(event.target.type);
+    handleUiTypeRange(event.target.value);
   }
 
   /**
@@ -131,22 +141,12 @@ function FacetSearchLayout(
    * 
    * @param {string} type type of selected Mapping.
    */
-  function handleUiTypeRange(type) {
-    if(type==='keyword') {
-      $("#uiType_Checkbox").prop("disabled",false);
-      $("#uiType_Select").prop("disabled",false);
-      $("#uiType_Range").prop("disabled",true);
-      if(_uiType==='RangeSlider') {
-        _setUiType("CheckboxList");
-      }
-    }else {
-      $("#uiType_Checkbox").prop("disabled",true);
-      $("#uiType_Select").prop("disabled",true);
-      $("#uiType_Range").prop("disabled",false);
-      _setUiType("RangeSlider");
+  function handleUiTypeRange(value) {
+    let isDisable = isDisableRangeUi(value);
+    if(isDisable && _uiType==='RangeSlider') {
+      _setUiType("CheckboxList");
     }
-
-    
+    $("#uiType_Range").prop("disabled",isDisable);
   }
 
   /**
@@ -186,7 +186,7 @@ function FacetSearchLayout(
                     onChange={handleChangeMapping}>
               {
                 mapping_list.map((item) =>
-                  <option type={item[0]} value={item[1]}>{item[1]}</option>)
+                  <option value={item}>{item}</option>)
               }
             </select>
           </div>
