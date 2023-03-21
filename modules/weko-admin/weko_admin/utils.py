@@ -2061,7 +2061,7 @@ def get_item_mapping_list():
 
     def get_mapping(pre_key, key, value, mapping_list):
         if isinstance(value, dict) and value.get('type') == 'keyword':
-            mapping_list.append(handle_prefix_key(pre_key, key))
+            mapping_list.append(['keyword',handle_prefix_key(pre_key, key)])
         if isinstance(value, dict):
             for k1, v1 in value.items():
                 get_mapping(handle_prefix_key(
@@ -2204,12 +2204,30 @@ def get_facet_search_query(has_permission=True):
     from weko_admin.utils import get_title_facets
     titles, order, uiTypes, isOpens, displayNumbers, searchConditions = get_title_facets()
     for k, v in post_filters.items():
+<<<<<<< HEAD
         if v == 'temporal':
             # If the mapping name is [template], it is assumed to be a Filter to date_range1.
             post_filters.update({k: range_filter('date_range1', False, False)})
         else:
             # Set whether the Filter is an AND or OR condition from the facet definition.
             post_filters.update({k: terms_condition_filter(v, searchConditions[k] == 'AND')})
+=======
+        current_app.logger.warning('==================   searchConditions   ==================')
+        current_app.logger.warning('---   value k:   ---')
+        current_app.logger.warning(k)
+        current_app.logger.warning('---   value v:   ---')
+        current_app.logger.warning(v)
+        current_app.logger.warning(searchConditions)
+        current_app.logger.warning(searchConditions[k])
+        if v == 'temporal':
+            current_app.logger.warning('---   USE RANGE_FILTER   ---')
+            post_filters.update({k: range_filter('date_range1', False, False)})
+        else:
+            post_filters.update({k: terms_condition_filter(v, searchConditions[k] == 'AND')})
+            
+    current_app.logger.warning('---   query-result   ---')
+    current_app.logger.warning(result) 
+>>>>>>> bbf9f69dd9712151ef28034cf7b3287fd1549692
     return result
 
 

@@ -138,7 +138,7 @@ function FacetSearchLayout(
    */
   function handleChangeMapping(event) {
     _setMapping(event.target.value);
-    handleUiTypeRange(event.target.value);
+    handleUiTypeRange(event.target.type);
   }
 
   /**
@@ -148,12 +148,22 @@ function FacetSearchLayout(
    * 
    * @param {string} type type of selected Mapping.
    */
-  function handleUiTypeRange(value) {
-    let isDisable = isDisableRangeUi(value);
-    if(isDisable && _uiType==='RangeSlider') {
-      _setUiType("CheckboxList");
+  function handleUiTypeRange(type) {
+    if(type==='keyword') {
+      $("#uiType_Checkbox").prop("disabled",false);
+      $("#uiType_Select").prop("disabled",false);
+      $("#uiType_Range").prop("disabled",true);
+      if(_uiType==='RangeSlider') {
+        _setUiType("CheckboxList");
+      }
+    }else {
+      $("#uiType_Checkbox").prop("disabled",true);
+      $("#uiType_Select").prop("disabled",true);
+      $("#uiType_Range").prop("disabled",false);
+      _setUiType("RangeSlider");
     }
-    $("#uiType_Range").prop("disabled",isDisable);
+
+    
   }
 
   /**
@@ -193,7 +203,7 @@ function FacetSearchLayout(
                     onChange={handleChangeMapping}>
               {
                 mapping_list.map((item) =>
-                  <option value={item}>{item}</option>)
+                  <option type={item[0]} value={item[1]}>{item[1]}</option>)
               }
             </select>
           </div>
