@@ -2061,7 +2061,7 @@ def get_item_mapping_list():
 
     def get_mapping(pre_key, key, value, mapping_list):
         if isinstance(value, dict) and value.get('type') == 'keyword':
-            mapping_list.append(['keyword',handle_prefix_key(pre_key, key)])
+            mapping_list.append(handle_prefix_key(pre_key, key))
         if isinstance(value, dict):
             for k1, v1 in value.items():
                 get_mapping(handle_prefix_key(
@@ -2081,6 +2081,14 @@ def get_item_mapping_list():
         mapping_list = []
         get_mapping('', k, v, mapping_list)
         result = result + mapping_list
+    return result
+
+def get_detail_search_list():
+    detail_conditions = get_search_setting()["detail_condition"]
+    result = []
+    for k_v in detail_conditions:
+        result.append([k_v.get("id"), k_v.get("inputType")])
+        if k_v.get("mappingName"): result.append([k_v.get("mappingName"), k_v.get("id") + ".mappingName"])
     return result
 
 

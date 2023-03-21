@@ -60,7 +60,7 @@ from .models import AdminSettings, FacetSearchSetting, Identifier, \
     RankingSettings, SearchManagement, StatisticsEmail
 from .permissions import admin_permission_factory
 from .utils import get_facet_search, get_item_mapping_list, \
-    get_response_json, get_restricted_access, get_search_setting
+    get_response_json, get_restricted_access, get_search_setting, get_detail_search_list
 from .utils import get_user_report_data as get_user_report
 from .utils import package_reports, str_to_bool
 
@@ -1175,6 +1175,7 @@ class FacetSearchSettingView(ModelView):
             return redirect(return_url)
         facet_search = get_facet_search()
         facet_search.update({'mapping_list': get_item_mapping_list()})
+        facet_search.update({'detail_condition': get_detail_search_list()})
         return self.render(
             current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
             data=json.dumps(facet_search),
@@ -1188,6 +1189,7 @@ class FacetSearchSettingView(ModelView):
             return redirect(return_url)
         facet_search = get_facet_search(id=id)
         facet_search.update({'mapping_list': get_item_mapping_list()})
+        facet_search.update({'detail_condition': get_detail_search_list()})
         return self.render(
             current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
             data=json.dumps(facet_search),
@@ -1202,6 +1204,7 @@ class FacetSearchSettingView(ModelView):
             return redirect(return_url)
         facet_search = get_facet_search(id=id)
         facet_search.update({'mapping_list': get_item_mapping_list()})
+        #facet_search.update({'detail_condition': get_detail_search_list()})
         return self.render(
             current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
             data=json.dumps(facet_search),
