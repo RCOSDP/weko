@@ -26,6 +26,7 @@ import json
 import os
 import re
 import shutil
+import pickle
 import sys
 import tempfile
 import traceback
@@ -607,10 +608,11 @@ def parse_node_str_to_json_schema(node_str: str):
     """
     json_node = {}
     nodes = node_str.split('.')
+    pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
     if len(nodes) > 0:
         json_node["item"] = nodes[len(nodes) - 1]
         for x in reversed(range(len(nodes) - 1)):
-            json_node["child"] = copy.deepcopy(json_node)
+            json_node["child"] = pickle_copy(json_node)
             json_node["item"] = nodes[x]
 
     return json_node
@@ -752,6 +754,7 @@ def recursive_update_schema_form_with_condition(
                 "onChangeEitherField(this, form, modelValue, undefined)"
 
     schema_form_condition = []
+    pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
     for index, elem in enumerate(schema_form):
         if elem.get('items'):
             recursive_update_schema_form_with_condition(
@@ -768,7 +771,7 @@ def recursive_update_schema_form_with_condition(
                                         cond_required, cond_not_required = \
                                             prepare_either_condition_required(
                                                 group_idx, _id)
-                                        condition_item = copy.deepcopy(elem)
+                                        condition_item = pickle_copy(elem)
                                         condition_item['required'] = True
                                         condition_item['condition'] \
                                             = cond_required
@@ -786,7 +789,7 @@ def recursive_update_schema_form_with_condition(
                                     cond_required, cond_not_required = \
                                         prepare_either_condition_required(
                                             group_idx, ids)
-                                    condition_item = copy.deepcopy(elem)
+                                    condition_item = pickle_copy(elem)
                                     condition_item['required'] = True
                                     condition_item['condition'] = \
                                         cond_required
