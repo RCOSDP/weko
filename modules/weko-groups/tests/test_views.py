@@ -85,7 +85,7 @@ def test__has_admin_access(app):
 
 # def index():
 def test_index(app_2, users):
-    # "Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'.", lineno = 24
+    # "Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'.", 
     # But upon testing on the actual url on the browser "https://localhost/accounts/settings/groups/index" there is no problem
     with app_2.test_request_context():
         with app_2.test_client() as client:
@@ -151,7 +151,7 @@ def test_new(app_2, users):
         with app_2.test_client() as client:
             with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
                 with patch("weko_groups.views.GroupForm", return_value=form):
-                    # "Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'.", lineno = 24
+                    # "Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'.", 
                     # But upon testing on the actual url on the browser "https://localhost/accounts/settings/groups/new" there is no problem
                     try:
                         client.get(url_for('weko_groups.new'))
@@ -178,9 +178,6 @@ def test_manage(app_2, users):
     def validate_on_submit_True():
         return True
     
-    def validate_on_submit_False():
-        return False
-
     def can_edit_True(item):
         return True
 
@@ -198,10 +195,10 @@ def test_manage(app_2, users):
     group.query.get_or_404.name = "name"
 
     with app_2.test_request_context():
-        # "Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'.", lineno = 24
-        # But upon testing on the actual url on the browser "https://localhost/accounts/settings/groups/1" there is no problem
-        # But upon testing on the actual url on the browser "https://localhost/accounts/settings/groups/1/manage" there is no problem
         with app_2.test_client() as client:
+            # "Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'.", 
+            # But upon testing on the actual url on the browser "https://localhost/accounts/settings/groups/1" there is no problem
+            # But upon testing on the actual url on the browser "https://localhost/accounts/settings/groups/1/manage" there is no problem
             with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
                 with patch("weko_groups.views.Group", return_value=group):
                     with patch("weko_groups.views.GroupForm", return_value=form):
@@ -210,30 +207,290 @@ def test_manage(app_2, users):
                         except:
                             pass
         
-        # with app_2.test_client() as client:
-        #     with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
-        #         with patch("weko_groups.views.Group", return_value=group):
-        #             with patch("weko_groups.views.GroupForm", return_value=form):
-        #                 try:
-        #                     client.get(url_for('weko_groups.manage', group_id=1))
-        #                 except:
-        #                     pass
-                # group.query.get_or_404.can_edit = can_edit_True
 
-                # with patch("weko_groups.views.Group", return_value=group):
-                #     with patch("weko_groups.views.GroupForm", return_value=form):
-                #         try:
-                #             client.get(url_for('weko_groups.manage', group_id=1))
-                #         except:
-                #             pass
+def test_manage_2(app_2, users):
+    def validate_on_submit_True():
+        return True
 
-                
-                # with patch("weko_groups.views.Group", side_effect=BaseException('')):
-                    # Exception coverage
-                    # try:
-                    #     client.get(url_for('weko_groups.manage', group_id=1))
-                    # except:
-                    #     pass
+    form = MagicMock()
+    form.validate_on_submit = validate_on_submit_True
+    
+    with app_2.test_request_context():
+        # "Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'.", 
+        # But upon testing on the actual url on the browser "https://localhost/accounts/settings/groups/1" there is no problem
+        # But upon testing on the actual url on the browser "https://localhost/accounts/settings/groups/1/manage" there is no problem
+        group = Group.create(name="name")
+        with app_2.test_client() as client:
+            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+                with patch("weko_groups.views.GroupForm", return_value=form):
+                    try:
+                        client.get(url_for('weko_groups.manage', group_id=group.id))
+                    except:
+                        pass
+
+
+# def delete(group_id):
+def test_delete(app_2, users):
+    def can_edit_True(item):
+        return True
+
+    def can_edit_False(item):
+        return False
+
+    def delete_func():
+        return True
+
+    group = MagicMock()
+    group.query = MagicMock()
+    group.query.get_or_404 = MagicMock()
+    group.query.get_or_404.can_edit = can_edit_False
+    group.query.get_or_404.delete = delete_func
+
+    with app_2.test_request_context():
+        with app_2.test_client() as client:
+            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+                with patch("weko_groups.views.Group", return_value=group):
+                    res = client.post(url_for('weko_groups.delete', group_id=1))
+                    assert res.status_code == 302
+        
+
+def test_delete_2(app_2, users):
+    with app_2.test_request_context():
+        group = Group.create(name="name")
+        with app_2.test_client() as client:
+            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+                res = client.post(url_for('weko_groups.delete', group_id=group.id))
+                assert res.status_code == 302
+
+
+# def members(group_id):
+def test_members(app_2, users):
+    def can_edit_True(item):
+        return True
+
+    def can_edit_False(item):
+        return False
+
+    def delete_func():
+        return True
+
+    group = MagicMock()
+    group.query = MagicMock()
+    group.query.get_or_404 = MagicMock()
+    group.query.get_or_404.can_edit = can_edit_False
+    group.query.get_or_404.delete = delete_func
+
+    with app_2.test_request_context():
+        with app_2.test_client() as client:
+            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+                with patch("weko_groups.views.Group", return_value=group):
+                    res = client.post(
+                        url_for('weko_groups.members', group_id=1),
+                        query_string={
+                            "q": "q",
+                            "s": "s",
+                        }
+                    )
+                    assert res.status_code == 200
+
+
+def test_members_2(app_2, users):
+    with app_2.test_request_context():
+        group = Group.create(name="name")
+
+        with app_2.test_client() as client:
+            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+                res = client.post(url_for('weko_groups.members', group_id=group.id))
+                assert res.status_code == 302
+
+
+# def leave(group_id):
+def test_leave(app_2, users):
+    def can_leave_True(item):
+        return True
+
+    group = MagicMock()
+    group.query.get_or_404.can_leave = can_leave_True
+
+    with app_2.test_request_context():
+        with app_2.test_client() as client:
+            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+                with patch("weko_groups.views.Group", return_value=group):
+                    res = client.post(url_for('weko_groups.leave', group_id=1))
+                    assert res.status_code == 302
+        
+
+def test_leave_2(app_2, users):
+    with app_2.test_request_context():
+        group = Group.create(name="name")
+        with app_2.test_client() as client:
+            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+                res = client.post(url_for('weko_groups.leave', group_id=group.id))
+                assert res.status_code == 302
+
+
+# def approve(group_id, user_id): 
+def test_approve(app_2, users):
+    def can_edit_True(item):
+        return True
+
+    membership = MagicMock()
+    membership.query.get_or_404.group.can_edit = can_edit_True
+
+    with app_2.test_request_context():
+        with app_2.test_client() as client:
+            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+                with patch("weko_groups.views.Membership", return_value=membership):
+                    res = client.post(url_for('weko_groups.approve', group_id=1, user_id=users[3]["obj"].id))
+                    assert res.status_code == 302
+        
+
+def test_approve_2(app_2, users):
+    with app_2.test_request_context():
+        group = Group.create(name="name")
+        with app_2.test_client() as client:
+            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+                res = client.post(url_for('weko_groups.approve', group_id=group.id, user_id=users[3]["obj"].id))
+                assert res.status_code == 404
+
+
+# def remove(group_id, user_id): 
+def test_remove(app_2, users):
+    def can_edit_True(item):
+        return True
+
+    group = MagicMock()
+    group.query.get_or_404.group.can_edit = can_edit_True
+
+    with app_2.test_request_context():
+        with app_2.test_client() as client:
+            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+                with patch("weko_groups.views.Group", return_value=group):
+                    res = client.post(url_for('weko_groups.remove', group_id=1, user_id=users[3]["obj"].id))
+                    assert res.status_code == 302
+        
+
+def test_remove_2(app_2, users):
+    with app_2.test_request_context():
+        group = Group.create(name="name")
+        with app_2.test_client() as client:
+            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+                res = client.post(url_for('weko_groups.remove', group_id=group.id, user_id=users[3]["obj"].id))
+                assert res.status_code == 302
+
+
+# def accept(group_id): 
+def test_accept(app_2, users):
+    def can_edit_True(item):
+        return True
+    
+    def accept():
+        return True
+
+    membership = MagicMock()
+    membership.query.get_or_404.group.can_edit = can_edit_True
+    membership.query.get_or_404.group.accept = accept
+
+    with app_2.test_request_context():
+        with app_2.test_client() as client:
+            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+                with patch("weko_groups.views.Membership", return_value=membership):
+                    res = client.post(url_for('weko_groups.accept', group_id=1, user_id=users[3]["obj"].id))
+                    assert res.status_code == 302
+
+
+# def reject(group_id): 
+def test_reject(app_2, users):
+    def can_edit_True(item):
+        return True
+    
+    def reject():
+        return True
+
+    membership = MagicMock()
+    membership.query.get_or_404.group.can_edit = can_edit_True
+    membership.query.get_or_404.group.reject = reject
+
+    with app_2.test_request_context():
+        with app_2.test_client() as client:
+            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+                with patch("weko_groups.views.Membership", return_value=membership):
+                    res = client.post(url_for('weko_groups.reject', group_id=1, user_id=users[3]["obj"].id))
+                    assert res.status_code == 302
+
+
+# def new_member(group_id):
+def test_new_member(app_2, users):
+    def validate_on_submit_True():
+        return True
+    
+    def can_invite_others(item):
+        return True
+    
+    def invite_by_emails(item):
+        return True
+
+    form = MagicMock()
+    form.validate_on_submit = validate_on_submit_True
+    group = MagicMock()
+    group.query.get_or_404.can_invite_others = can_invite_others
+    group.query.get_or_404.invite_by_emails = invite_by_emails
+    group.name = "group_name"
+
+    with app_2.test_request_context():
+        # "Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'."
+        # But upon testing on the actual url on the browser "https://localhost/accounts/settings/groups/1/members/new" there is no problem 
+        with app_2.test_client() as client:
+            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+                with patch("weko_groups.views.Group", return_value=group):
+                    with patch("weko_groups.views.NewMemberForm", return_value=form):
+                        try:
+                            client.get(url_for('weko_groups.new_member', group_id=1))
+                        except:
+                            pass
+                    try:
+                        client.get(url_for('weko_groups.new_member', group_id=1))
+                    except:
+                        pass
+
+
+# def new_member(group_id):
+def test_new_member_2(app_2, users):
+    def validate_on_submit_True():
+        return True
+    
+    def can_invite_others(item):
+        return True
+    
+    def invite_by_emails(item):
+        return True
+
+    form = MagicMock()
+    form.validate_on_submit = validate_on_submit_True
+    group = MagicMock()
+    group.query.get_or_404.can_invite_others = can_invite_others
+    group.query.get_or_404.invite_by_emails = invite_by_emails
+    group.name = "group_name"
+
+    with app_2.test_request_context():
+        # "Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'."
+        # But upon testing on the actual url on the browser "https://localhost/accounts/settings/groups/1/members/new" there is no problem 
+        with app_2.test_client() as client:
+            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+                with patch("weko_groups.views.Group", return_value=group):
+                    try:
+                        client.get(url_for('weko_groups.new_member', group_id=1))
+                    except:
+                        pass
+        
+
+def test_new_member_3(app_2, users):
+    with app_2.test_request_context():
+        group = Group.create(name="name", is_managed=True)
+        with app_2.test_client() as client:
+            with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
+                res = client.get(url_for('weko_groups.new_member', group_id=group.id))
+                assert res.status_code == 302
 
 
 # def remove_csrf(form):
