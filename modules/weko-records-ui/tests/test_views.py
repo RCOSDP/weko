@@ -431,7 +431,6 @@ def test_get_workflow_detail(app,workflows):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 #     """Display default view.
 #     def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
-@pytest.mark.target
 def test_default_view_method(app, records, itemtypes, indexstyle ,users):
     indexer, results = records
     record = results[0]["record"]
@@ -516,8 +515,10 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
                         with patch('weko_records_ui.views.Indexes.get_index',return_value=index):
                             assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
 
-                        
-@pytest.mark.target
+# def default_view_method(pid, record, filename=None, template=None, **kwargs):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+#     """Display default view.
+#     def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
 def test_default_view_method2(app, records, itemtypes, indexstyle ,users,db_community):
     indexer, results = records
     record = results[0]["record"]

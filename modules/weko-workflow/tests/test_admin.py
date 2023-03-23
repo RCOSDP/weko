@@ -226,7 +226,7 @@ class TestWorkFlowSettingView:
         # (5, 200),
         # (6, 200),
     ])
-    def test_workflow_detail_acl(self,client,db_register2,users,users_index,status_code,mocker):
+    def test_workflow_detail_acl(self,app ,client,db_register,workflow_open_restricted, db_register2,users,users_index,status_code,mocker):
         login(client=client, email=users[users_index]['email'])
         url = url_for('workflowsetting.workflow_detail',workflow_id='0',_external=True)
         mock_render =mocker.patch("flask.templating._render", return_value=make_response())
@@ -234,7 +234,29 @@ class TestWorkFlowSettingView:
         assert res.status_code == status_code  
         is_sysadmin = users_index == 2
         args, kwargs = mock_render.call_args
+        # 81
         assert args[1]["is_sysadmin"] == is_sysadmin
+
+        wf:WorkFlow = workflow_open_restricted[0]["workflow"]
+        flows_id = wf.flows_id
+        url = url_for('workflowsetting.workflow_detail',workflow_id=flows_id,_external=True)
+        is_sysadmin = users_index == 2
+        res =  client.get(url)
+        args, kwargs = mock_render.call_args
+        assert args[1]["is_sysadmin"] == is_sysadmin
+        if not is_sysadmin:
+            assert res.status_code == 403
+        else:
+            assert res.status_code == status_code
+
+        #117
+        wf:WorkFlow = db_register["workflow"]
+        flows_id = wf.flows_id
+        url = url_for('workflowsetting.workflow_detail',workflow_id=flows_id,_external=True)
+        with patch('weko_workflow.admin.WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS', False):
+            res =  client.get(url)
+            assert res.status_code == status_code
+
         
 
     #     def update_workflow(self, workflow_id='0'):
@@ -286,6 +308,16 @@ class TestWorkFlowSettingView:
             assert res.status_code == 200
             wf : WorkFlow = db.session.query(WorkFlow).filter_by(id = wflow.id).one_or_none()
             assert wf.open_restricted == False
+            
+            url = url_for('workflowsetting.update_workflow',workflow_id='0',_external=True)
+            res =  client.post(url 
+                                    , headers=[('Content-Type', 'application/json')
+                                                ,('Accept', 'application/json')]
+                                    , data=json.dumps({'id': wflow.id,'flow_id': define.id
+                                                    ,'itemtype_id' :wflow.itemtype_id
+                                                    ,'flows_id' : wflow.flows_id
+                                                    ,'is_gakuninrdm' : False})
+                                    )
 
 
     #  def delete_workflow(self, workflow_id='0'):
