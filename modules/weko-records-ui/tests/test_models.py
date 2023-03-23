@@ -40,6 +40,7 @@ def test_find_by_activity(db_file_permission):
 
 # def find_downloadable_only(cls, **obj) -> list:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_find_downloadable_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.skip(reason="'from sqlalchemy.dialects.postgresql import INTERVAL' can't tests on SQLite.")
 def test_find_downloadable_only(app,db):
     # 35
     user_mail ='aaa@example.org' 
