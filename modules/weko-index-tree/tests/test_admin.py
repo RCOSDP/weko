@@ -2,6 +2,8 @@ import base64
 import pytest
 import werkzeug
 from io import BytesIO
+from mock import patch, MagicMock
+
 from jinja2.exceptions import TemplateNotFound
 from flask import current_app, url_for
 from werkzeug.local import LocalProxy
@@ -12,6 +14,14 @@ SMALLEST_JPEG_B64 = """\
 /9j/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8Q
 EBEQCgwSExIQEw8QEBD/yQALCAABAAEBAREA/8wABgAQEAX/2gAIAQEAAD8A0s8g/9k=
 """
+
+class MockSyncFunc:
+    def __init__(self, form):
+        pass
+
+    def validate(self):
+        return True
+
 
 # class IndexLinkSettingView(BaseView):
 # def index(self):
@@ -32,8 +42,16 @@ def test_IndexLinkSettingView(app, users, id, status_code):
         login_user_via_session(client=client, email=users[id]["email"])
         res = client.get(url_for('indexlink.index'))
         assert res.status_code==status_code
-        res = client.post(url_for('indexlink.index'))
-        assert res.status_code==status_code
+
+        mock_sync_func = MagicMock(side_effect=MockSyncFunc)
+        with patch("weko_index_tree.admin.FlaskForm", mock_sync_func):
+            _form = {'indexlink': 'enable'}
+            res = client.post(url_for('indexlink.index'), data=_form)
+            assert res.status_code==status_code
+
+            _form = {'indexlink': 'disable'}
+            res = client.post(url_for('indexlink.index'), data=_form)
+            assert res.status_code==status_code
 
 
 # class IndexEditSettingView(BaseView):
@@ -47,7 +65,7 @@ def test_IndexLinkSettingView(app, users, id, status_code):
         (4, 400)
     ],
 )
-def test_IndexEditSettingView(app, users, id, status_code):
+def test_IndexEditSettingView(app, db, location, users, id, status_code):
     app.config['WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE'] = 'weko_index_tree/admin/index_edit_setting.html'
     app.config['WEKO_THEME_INSTANCE_DATA_DIR'] = 'data'
     _file1 = werkzeug.datastructures.FileStorage(
@@ -71,10 +89,13 @@ def test_IndexEditSettingView(app, users, id, status_code):
         with pytest.raises(Exception) as e:
             res = client.get(url_for('indexedit.index'))
         assert e.type==TemplateNotFound
+
         with pytest.raises(Exception) as e:
             res = client.post(url_for('indexedit.upload_image'), data=dict(uploadFile=_file1))
         assert e.type==FileNotFoundError
+
         res = client.post(url_for('indexedit.upload_image'), data=dict(uploadFile=_file2))
         assert res.status_code==status_code
+
         res = client.post(url_for('indexedit.upload_image'), data=dict(data=_file3))
         assert res.status_code==status_code
