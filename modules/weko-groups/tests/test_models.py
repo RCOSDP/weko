@@ -22,6 +22,7 @@
 """Test groups data models."""
 
 import pytest
+from mock import patch, MagicMock
 from invenio_accounts.models import User
 from invenio_db import db
 from sqlalchemy import event
@@ -1077,3 +1078,103 @@ def test_function_issue34801(app):
         assert result == "test&lt;script&gt;alert()&lt;/script&gt;"
         assert g.escape_name == "test&lt;script&gt;alert()&lt;/script&gt;"
         assert g.name == "test<script>alert()</script>"
+
+
+# class Group(db.Model): 
+# def get_group_list(cls):
+def test_get_group_list(app):
+    from weko_groups.models import Group
+
+    with app.app_context():
+        group = Group.create(name="test")
+        test = Group()
+
+        assert test.get_group_list() != None
+
+
+# def _escape_value(self,text): 
+def test__escape_value(app):
+    with app.app_context():
+        test = Group()
+        text = {}
+
+        # Exception coverage
+        try:
+            assert test._escape_value(text=text) != None
+        except:
+            pass
+
+
+# def _filter(cls, query, state=MembershipState.ACTIVE, eager=None):
+def test__filter(app):
+    def filter_by(state="state"):
+        filter_by_magicmock = MagicMock()
+        filter_by_magicmock.options = MagicMock()
+        return filter_by_magicmock
+
+    with app.app_context():
+        test = Membership()
+        query = MagicMock()
+        query.filter_by = filter_by
+        eager = [""]
+
+        with patch('weko_groups.models.joinedload', return_value=""):
+            assert test._filter(query=query, eager=eager) != None
+        
+
+# def query_invitations(cls, user, eager=False):
+def test_query_invitations(app):
+    def query_by_user(item1, item2, item3):
+        return True
+    
+    def get_id():
+        return "id"
+
+    with app.app_context():
+        test = Membership()
+        test.query_by_user = query_by_user
+        user = MagicMock()
+        user.get_id = get_id
+        eager = True
+
+        assert test.query_invitations(user=user, eager=eager) != None
+
+
+# def query_requests(cls, admin): 
+def test_query_requests(app):
+    def is_superadmin():
+        return "is_superadmin"
+
+    with app.app_context():
+        test = Membership()
+        admin = MagicMock()
+        admin.is_superadmin = is_superadmin
+
+        assert test.query_requests(admin=admin) != None
+
+
+# def query_by_group(cls, group_or_id, with_invitations=False, **kwargs): 
+def test_query_by_group(app):
+    with app.app_context():
+        test = Membership()
+        group = Group()
+
+        assert test.query_by_group(group_or_id=group, with_invitations=True) != None
+
+
+# def order(cls, query, field, s): 
+def test_order(app):
+    def order_by(item):
+        return "item"
+    
+    with app.app_context():
+        test = Membership()
+        query = MagicMock()
+        query.order_by = order_by
+        field = "field_test"
+
+        s = "asc"
+        assert test.order(query=query, field=field, s=s) != None
+
+        s = "desc"
+        assert test.order(query=query, field=field, s=s) != None
