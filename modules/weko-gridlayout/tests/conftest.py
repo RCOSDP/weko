@@ -88,6 +88,7 @@ def base_app(instance_path):
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         TESTING=True,
+        WEKO_GRIDLAYOUT_BASE_TEMPLATE = 'weko_gridlayout/base.html',
         SERVER_NAME="TEST_SERVER",
         SEARCH_INDEX_PREFIX='test-',
         INDEXER_DEFAULT_DOC_TYPE='testrecord',
@@ -110,7 +111,8 @@ def base_app(instance_path):
     InvenioAccounts(app_)
     InvenioAccess(app_)
     InvenioFilesREST(app_)
-    #WekoAdmin(app_)
+    WekoGridLayout(app_)
+    # WekoAdmin(app_)
     app_.register_blueprint(blueprint)
     app_.register_blueprint(blueprint_api)
 
