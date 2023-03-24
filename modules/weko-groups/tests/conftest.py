@@ -33,6 +33,7 @@ from flask_menu import Menu
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 
+from invenio_admin import InvenioAdmin
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User
 from invenio_db import InvenioDB, db
@@ -68,6 +69,7 @@ def app(request):
     )
     Babel(app)
     Menu(app)
+    InvenioAdmin(app)
     Breadcrumbs(app)
     InvenioDB(app)
     InvenioAccounts(app)
