@@ -1,5 +1,6 @@
 import json
 import copy
+from copy import deepcopy
 from unittest.mock import Mock
 import uuid
 from os.path import dirname, join
@@ -54,3 +55,11 @@ def create_record(record_data, item_data):
         item = ItemsMetadata.create(item_data, id_=rec_uuid)
     
     return depid, recid,parent,doi,record, item
+
+def fill_oauth2_headers(json_headers, token):
+    """Create authentication headers (with a valid oauth2 token)."""
+    headers = deepcopy(json_headers)
+    headers.append(
+        ('Authorization', 'Bearer {0}'.format(token.access_token))
+    )
+    return headers

@@ -35,7 +35,7 @@ from flask_celeryext import FlaskCeleryExt
 from flask_menu import Menu
 from flask_login import current_user, login_user, LoginManager
 from werkzeug.local import LocalProxy
-from tests.helpers import create_record, json_data
+from tests.helpers import create_record, json_data, fill_oauth2_headers
 
 from invenio_deposit.config import (
     DEPOSIT_DEFAULT_STORAGE_CLASS,
@@ -66,6 +66,8 @@ from invenio_jsonschemas import InvenioJSONSchemas
 from invenio_mail import InvenioMail
 from invenio_oaiserver import InvenioOAIServer
 from invenio_oaiserver.models import OAISet
+from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
+from invenio_oauth2server.models import Client, Token
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_records import InvenioRecords
 from invenio_search import InvenioSearch
@@ -105,6 +107,7 @@ from weko_index_tree.models import Index
 from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
 from weko_index_tree.views import blueprint_api
 from weko_index_tree.rest import create_blueprint
+from weko_index_tree.scopes import create_index_scope
 from weko_search_ui import WekoSearchUI, WekoSearchREST
 from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX
 from weko_redis.redis import RedisConnection
@@ -128,7 +131,7 @@ def base_app(instance_path):
     """Flask application fixture."""
     app_ = Flask('testapp', instance_path=instance_path,static_folder=join(instance_path, "static"))
     app_.config.update(
-        ACCOUNTS_JWT_ENABLE=True,
+        ACCOUNTS_JWT_ENABLE=False,
         SECRET_KEY='SECRET_KEY',
         WEKO_INDEX_TREE_UPDATED=True,
         TESTING=True,
@@ -452,6 +455,8 @@ def base_app(instance_path):
     InvenioStats(app_)
     InvenioAdmin(app_)
     InvenioPIDStore(app_)
+    InvenioOAuth2Server(app_)
+    InvenioOAuth2ServerREST(app_)
     WekoSearchUI(app_)
     WekoWorkflow(app_)
     WekoGroups(app_)
@@ -676,21 +681,38 @@ def users(app, db):
 def indices(app, db):
     with db.session.begin_nested():
         # Create a test Indices
-        testIndexOne = Index(index_name="testIndexOne",browsing_role="Contributor",public_state=True,id=11,position=0)
-        testIndexTwo = Index(index_name="testIndexTwo",browsing_group="group_test1",public_state=True,id=22,position=1)
+        testIndexOne = Index(
+            index_name="testIndexOne",
+            browsing_role="1,2,3,4,-98,-99",
+            public_state=True,
+            id=11,
+            position=0
+        )
+        testIndexTwo = Index(
+            index_name="testIndexTwo",
+            browsing_group="group_test1",
+            public_state=True,
+            id=22,
+            position=1
+        )
         testIndexThree = Index(
             index_name="testIndexThree",
-            browsing_role="Contributor",
+            browsing_role="1,2,3,4,-98,-99",
             public_state=True,
             harvest_public_state=True,
             id=33,
             position=2,
             public_date=datetime.today() - timedelta(days=1)
         )
-        testIndexPrivate = Index(index_name="testIndexPrivate",public_state=False,id=55,position=3)
+        testIndexPrivate = Index(
+            index_name="testIndexPrivate",
+            public_state=False,
+            id=55,
+            position=3
+        )
         testIndexThreeChild = Index(
             index_name="testIndexThreeChild",
-            browsing_role="Contributor",
+            browsing_role="1,2,3,4,-98,-99",
             parent=33,
             index_link_enabled=True,
             index_link_name="test_link",
@@ -700,7 +722,13 @@ def indices(app, db):
             position=0,
             public_date=datetime.today() - timedelta(days=1)
         )
-        testIndexMore = Index(index_name="testIndexMore",parent=33,public_state=True,id=45,position=1)
+        testIndexMore = Index(
+            index_name="testIndexMore",
+            parent=33,
+            public_state=True,
+            id=45,
+            position=1
+        )
 
 
         db.session.add(testIndexOne)
@@ -728,7 +756,7 @@ def test_indices(app, db):
     def base_index(id, parent, position, public_date=None, coverpage_state=False, recursive_browsing_role=False,
                    recursive_contribute_role=False, recursive_browsing_group=False,
                    recursive_contribute_group=False, online_issn=''):
-        _browsing_role = "3,-98,-99"
+        _browsing_role = "3,-99"
         _contribute_role = "1,2,3,4,-98,-99"
         _group = "g1,g2"
         return Index(
@@ -739,7 +767,7 @@ def test_indices(app, db):
             index_name_english="Test index {}".format(id),
             index_link_name="Test index link {}".format(id),
             index_link_name_english="Test index link {}".format(id),
-            index_link_enabled=False,
+            index_link_enabled=True,
             more_check=False,
             display_no=position,
             harvest_public_state=True,
@@ -770,6 +798,15 @@ def test_indices(app, db):
     db.session.commit()
 
 
+@pytest.yield_fixture
+def without_oaiset_signals(app):
+    """Temporary disable oaiset signals."""
+    from invenio_oaiserver import current_oaiserver
+    current_oaiserver.unregister_signals_oaiset()
+    yield
+    current_oaiserver.register_signals_oaiset()
+
+
 @pytest.fixture()
 def esindex(app,db_records):
     with open("tests/data/mappings/item-v1.0.0.json","r") as f:
@@ -798,7 +835,7 @@ def esindex(app,db_records):
             search.client.indices.delete(index=app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
         except:
             search.client.indices.delete_alias(index="test-weko-items", name="test-weko")
-            search.client.indices.delete(index=test-weko-items, ignore=[400, 404])
+            search.client.indices.delete(index="test-weko-items", ignore=[400, 404])
 
 
 @pytest.fixture()
@@ -1286,18 +1323,26 @@ def db_oaischema(app, db):
 @pytest.fixture()
 def communities(app, db, users, test_indices):
     """Create some example communities."""
-    comm = Community(
+    comm1 = Community(
         id='comm1',
         id_user=users[3]['id'],
         title='Test Comm Title',
         root_node_id=1,
         id_role=users[3]['obj'].roles[0].id
     )
+    comm2 = Community(
+        id='comm2',
+        id_user=users[1]['id'],
+        title='Test Comm Title',
+        root_node_id=1,
+        id_role=users[1]['obj'].roles[0].id
+    )
     with db.session.begin_nested():
-        db.session.add(comm)
+        db.session.add(comm1)
+        db.session.add(comm2)
     db.session.commit()
 
-    return comm
+    return comm1
 
 
 @pytest.fixture()
@@ -1484,3 +1529,59 @@ def permissions(db, bucket):
     db.session.commit()
 
     yield users
+
+
+@pytest.fixture()
+def client(client_api, users):
+    """Create client."""
+    with db_.session.begin_nested():
+        # create resource_owner -> client_1
+        client_ = Client(
+            client_id='client_test_u1c1',
+            client_secret='client_test_u1c1',
+            name='client_test_u1c1',
+            description='',
+            is_confidential=False,
+            user=users[0]['obj'],
+            _redirect_uris='',
+            _default_scopes='',
+        )
+        db_.session.add(client_)
+    db_.session.commit()
+    return client_
+
+
+@pytest.fixture()
+def create_token_user_1(client_api, client, users):
+    """Create token."""
+    with db_.session.begin_nested():
+        token_ = Token(
+            client=client,
+            user=users[0]['obj'],
+            token_type='u',
+            access_token='dev_access_1',
+            refresh_token='dev_refresh_1',
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=False,
+            is_internal=True,
+            _scopes=create_index_scope.id,
+        )
+        db_.session.add(token_)
+    db_.session.commit()
+    return token_
+
+
+@pytest.fixture()
+def json_headers():
+    """JSON headers."""
+    return [('Content-Type', 'application/json'),
+            ('Accept', 'application/json')]
+
+
+@pytest.fixture()
+def auth_headers(client_api, json_headers, create_token_user_1):
+    """Authentication headers (with a valid oauth2 token).
+
+    It uses the token associated with the first user.
+    """
+    return fill_oauth2_headers(json_headers, create_token_user_1)
