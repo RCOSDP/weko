@@ -107,6 +107,9 @@ def shib_auto_login():
 
     :return: next url
     """
+
+    current_app.logger.debug('/auto/login (GET)')
+
     try:
         is_auto_bind = False
         shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
@@ -283,6 +286,13 @@ def shib_sp_login():
             return redirect(url_for_security('login'))
 
         shib_attr, error = parse_attributes()
+        current_app.logger.debug('/shib/login (POST)')
+        current_app.logger.debug('SHIB_ATTR_ROLE_AUTHORITY_NAME')
+        current_app.logger.debug(request.form.get('SHIB_ATTR_ROLE_AUTHORITY_NAME', ''))
+        current_app.logger.debug(shib_attr['shib_role_authority_name'])
+        current_app.logger.debug('SHIB_ATTR_PAGE_NAME')
+        current_app.logger.debug(request.form.get('SHIB_ATTR_PAGE_NAME', ''))
+        current_app.logger.debug(shib_attr['shib_page_name'])
 
         # Check SHIB_ATTR_EPPN and SHIB_ATTR_USER_NAME:
         if error or not (
