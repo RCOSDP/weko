@@ -1,0 +1,349 @@
+GLOB sdist-make: /code/modules/invenio-resourcesyncserver/setup.py
+c1 recreate: /code/modules/invenio-resourcesyncserver/.tox/c1
+c1 installdeps: pytest>=3, pytest-cov, -rrequirements.txt
+c1 inst: /code/modules/invenio-resourcesyncserver/.tox/.tmp/package/1/invenio-resourcesyncserver-1.0.0.dev20200000.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.6,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,invenio-resourcesyncserver @ file:///code/modules/invenio-resourcesyncserver/.tox/.tmp/package/1/invenio-resourcesyncserver-1.0.0.dev20200000.zip,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,kombu==4.6.10,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-flask==1.2.0,pytest-invenio==1.0.6,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='2275906980'
+c1 run-test: commands[0] | pytest --cov=invenio_resourcesyncserver tests -v --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/invenio-resourcesyncserver/.tox/c1/tmp
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/invenio-resourcesyncserver/.tox/c1/bin/python
+cachedir: .tox/c1/.pytest_cache
+rootdir: /code/modules/invenio-resourcesyncserver
+plugins: flask-1.2.0, cov-4.0.0, celery-4.4.7, invenio-1.0.6, mock-3.6.1
+collecting ... collected 73 items
+
+tests/test_admin.py::test_index_AdminResourceListView PASSED             [  1%]
+tests/test_admin.py::test_get_list_AdminResourceListView PASSED          [  2%]
+tests/test_admin.py::test_create_AdminResourceListView PASSED            [  4%]
+tests/test_admin.py::test_update_AdminResourceListView FAILED            [  5%]
+tests/test_admin.py::test_delete_AdminResourceListView PASSED            [  6%]
+tests/test_admin.py::test_index_AdminChangeListView PASSED               [  8%]
+tests/test_admin.py::test_get_list_AdminChangeListView PASSED            [  9%]
+tests/test_admin.py::test_get_change_list_AdminChangeListView PASSED     [ 10%]
+tests/test_admin.py::test_create_AdminChangeListView PASSED              [ 12%]
+tests/test_admin.py::test_update_AdminChangeListView PASSED              [ 13%]
+tests/test_admin.py::test_delete_AdminChangeListView PASSED              [ 15%]
+tests/test_api.py::test_get_index_ResourceListHandler PASSED             [ 16%]
+tests/test_api.py::test_to_dict_ResourceListHandler PASSED               [ 17%]
+tests/test_api.py::test_create_ResourceListHandler PASSED                [ 19%]
+tests/test_api.py::test_update_ResourceListHandler PASSED                [ 20%]
+tests/test_api.py::test_delete_ResourceListHandler PASSED                [ 21%]
+tests/test_api.py::test_get_resource_ResourceListHandler PASSED          [ 23%]
+tests/test_api.py::test_get_list_resource_ResourceListHandler PASSED     [ 24%]
+tests/test_api.py::test_get_resource_by_repository_id_ResourceListHandler PASSED [ 26%]
+tests/test_api.py::test__validation_ResourceListHandler PASSED           [ 27%]
+tests/test_api.py::test_get_resource_list_xml_ResourceListHandler PASSED [ 28%]
+tests/test_api.py::test_get_resource_dump_xml_ResourceListHandler PASSED [ 30%]
+tests/test_api.py::test_get_capability_content_ResourceListHandler PASSED [ 31%]
+tests/test_api.py::test_get_resource_dump_manifest_ResourceListHandler PASSED [ 32%]
+tests/test_api.py::test_get_record_content_file_ResourceListHandler PASSED [ 34%]
+tests/test_api.py::test_save_ChangeListHandler PASSED                    [ 35%]
+tests/test_api.py::test_get_change_list_content_xml_ChangeListHandler PASSED [ 36%]
+tests/test_api.py::test_get_change_list_index_ChangeListHandler PASSED   [ 38%]
+tests/test_api.py::test_get_change_dump_index_ChangeListHandler PASSED   [ 39%]
+tests/test_api.py::test_get_change_dump_xml_ChangeListHandler PASSED     [ 41%]
+tests/test_api.py::test__validation_ChangeListHandler PASSED             [ 42%]
+tests/test_api.py::test_get_change_dump_manifest_xml_ChangeListHandler FAILED [ 43%]
+tests/test_api.py::test_delete_ChangeListHandler PASSED                  [ 45%]
+tests/test_api.py::test_get_index_ChangeListHandler PASSED               [ 46%]
+tests/test_api.py::test_to_dict_ChangeListHandler PASSED                 [ 47%]
+tests/test_api.py::test_get_change_list_ChangeListHandler PASSED         [ 49%]
+tests/test_api.py::test_get_all_ChangeListHandler PASSED                 [ 50%]
+tests/test_api.py::test_get_change_list_by_repo_id_ChangeListHandler PASSED [ 52%]
+tests/test_api.py::test__is_record_in_index_ChangeListHandler PASSED     [ 53%]
+tests/test_api.py::test_get_record_content_file_ChangeListHandler PASSED [ 54%]
+tests/test_api.py::test_get_capability_content_ChangeListHandler PASSED  [ 56%]
+tests/test_api.py::test__date_validation_ChangeListHandler FAILED        [ 57%]
+tests/test_api.py::test__next_change_ChangeListHandler PASSED            [ 58%]
+tests/test_api.py::test__get_record_changes_with_interval_ChangeListHandler PASSED [ 60%]
+tests/test_api.py::test__get_record_changes_ChangeListHandler PASSED     [ 61%]
+tests/test_invenio_resourcesyncserver.py::test_version PASSED            [ 63%]
+tests/test_invenio_resourcesyncserver.py::test_init PASSED               [ 64%]
+tests/test_query.py::test_get_items_by_index_tree PASSED                 [ 65%]
+tests/test_query.py::test_get_item_changes_by_index FAILED               [ 67%]
+tests/test_query.py::test_item_path_search_factory PASSED                [ 68%]
+tests/test_query.py::test_item_changes_search_factory PASSED             [ 69%]
+tests/test_utils.py::test_get_real_path PASSED                           [ 71%]
+tests/test_utils.py::test_render_capability_xml PASSED                   [ 72%]
+tests/test_utils.py::test_render_well_know_resourcesync PASSED           [ 73%]
+tests/test_utils.py::test_query_record_changes PASSED                    [ 75%]
+tests/test_utils.py::test_check_existing_record_in_list PASSED           [ 76%]
+tests/test_utils.py::test_parse_date PASSED                              [ 78%]
+tests/test_utils.py::test_get_timezone FAILED                            [ 79%]
+tests/test_utils.py::test_get_pid PASSED                                 [ 80%]
+tests/test_views.py::test_resource_list PASSED                           [ 82%]
+tests/test_views.py::test_resource_dump PASSED                           [ 83%]
+tests/test_views.py::test_file_content PASSED                            [ 84%]
+tests/test_views.py::test_capability PASSED                              [ 86%]
+tests/test_views.py::test_resource_dump_manifest PASSED                  [ 87%]
+tests/test_views.py::test_change_list_index PASSED                       [ 89%]
+tests/test_views.py::test_change_list PASSED                             [ 90%]
+tests/test_views.py::test_change_dump_index PASSED                       [ 91%]
+tests/test_views.py::test_change_dump PASSED                             [ 93%]
+tests/test_views.py::test_change_dump_manifest PASSED                    [ 94%]
+tests/test_views.py::test_change_dump_content PASSED                     [ 95%]
+tests/test_views.py::test_well_know_resourcesync PASSED                  [ 97%]
+tests/test_views.py::test_source_description PASSED                      [ 98%]
+tests/test_views.py::test_record_detail_in_index PASSED                  [100%]
+
+=================================== FAILURES ===================================
+______________________ test_update_AdminResourceListView _______________________
+
+i18n_app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/invenio-resourcesyncserver/test.db>
+
+    def test_update_AdminResourceListView(i18n_app, db):
+        from invenio_resourcesyncserver.api import ResourceListHandler
+        test = ResourceListIndexes(
+            id=1,
+            repository_id=2,
+        )
+    
+        db.session.add(test)
+        db.session.commit()
+    
+        data = MagicMock()
+        data.success = True
+    
+        with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_resource", return_value=data):
+            assert test_1.update(resource_id=1)
+    
+        data = None
+    
+        with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_resource", return_value=data):
+>           assert test_1.update(resource_id=0)
+
+tests/test_admin.py:73: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:69: in inner
+    return self._run_view(f, *args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:368: in _run_view
+    return fn(self, *args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <invenio_resourcesyncserver.admin.AdminResourceListView object at 0x7f820aa92e80>
+resource_id = 0
+
+    @expose('/update/<resource_id>', methods=['POST'])
+    def update(self, resource_id):
+        """Renders an item import view.
+    
+        :param
+        :return: The rendered template.
+        """
+        resource = ResourceListHandler.get_resource(resource_id)
+    
+        if resource:
+            result = resource.update(request.get_json())
+            if result.get('success'):
+                return jsonify(data=result.get('data').to_dict(), success=True)
+>       return jsonify(message=result.get('message'), success=False)
+E       UnboundLocalError: local variable 'result' referenced before assignment
+
+invenio_resourcesyncserver/admin.py:82: UnboundLocalError
+_____________ test_get_change_dump_manifest_xml_ChangeListHandler ______________
+
+i18n_app = <Flask 'testapp'>
+
+    def test_get_change_dump_manifest_xml_ChangeListHandler(i18n_app):
+        test_str = sample_ChangeListHandler("str")
+        record_id = "8.9"
+    
+        def _validation():
+            return MagicMock()
+    
+        def _is_record_in_index(key):
+            return "8.9"
+    
+>       assert not test_str.get_change_dump_manifest_xml(record_id)
+
+tests/test_api.py:492: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+invenio_resourcesyncserver/api.py:936: in get_change_dump_manifest_xml
+    if not self._is_record_in_index(record_id) or not self._validation():
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <invenio_resourcesyncserver.api.ChangeListHandler object at 0x7f82060f02e8>
+
+    def _validation(self):
+        """Validate."""
+        if self.status:
+            if self.repository_id:
+>               if self.index.public_state:
+E               AttributeError: 'str' object has no attribute 'public_state'
+
+invenio_resourcesyncserver/api.py:924: AttributeError
+___________________ test__date_validation_ChangeListHandler ____________________
+
+i18n_app = <Flask 'testapp'>
+
+    def test__date_validation_ChangeListHandler(i18n_app):
+        test_str = sample_ChangeListHandler("str")
+        test_str.publish_date = datetime.datetime.now() - datetime.timedelta(days=5)
+        date_from = "20221107"
+    
+>       assert test_str._date_validation(date_from)
+E       AssertionError: assert None
+E        +  where None = <bound method ChangeListHandler._date_validation of <invenio_resourcesyncserver.api.ChangeListHandler object at 0x7f820603c1d0>>('20221107')
+E        +    where <bound method ChangeListHandler._date_validation of <invenio_resourcesyncserver.api.ChangeListHandler object at 0x7f820603c1d0>> = <invenio_resourcesyncserver.api.ChangeListHandler object at 0x7f820603c1d0>._date_validation
+
+tests/test_api.py:686: AssertionError
+________________________ test_get_item_changes_by_index ________________________
+
+i18n_app = <Flask 'testapp'>
+indices = {'index_dict': {'biblio_flag': False, 'browsing_group': '', 'browsing_role': 'Contributor', 'comment': '', ...}, 'index_non_dict': <Index 33>, 'index_non_dict_child': <Index 44>}
+es = <Elasticsearch([{'host': 'elasticsearch'}])>
+
+    def test_get_item_changes_by_index(i18n_app, indices, es):
+        index_tree_id = 33
+        date_from = datetime.datetime.now() - datetime.timedelta(days=3)
+        date_until = datetime.datetime.now()
+    
+>       assert get_item_changes_by_index(index_tree_id, date_from, date_until)
+
+tests/test_query.py:33: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+invenio_resourcesyncserver/query.py:60: in get_item_changes_by_index
+    search_result = search_instance.execute().to_dict()
+.tox/c1/lib/python3.6/site-packages/elasticsearch_dsl/search.py:706: in execute
+    **self._params
+.tox/c1/lib/python3.6/site-packages/elasticsearch/client/utils.py:76: in _wrapped
+    return func(*args, params=params, **kwargs)
+.tox/c1/lib/python3.6/site-packages/elasticsearch/client/__init__.py:636: in search
+    doc_type, '_search'), params=params, body=body)
+.tox/c1/lib/python3.6/site-packages/elasticsearch/transport.py:314: in perform_request
+    status, headers_response, data = connection.perform_request(method, url, params, body, headers=headers, ignore=ignore, timeout=timeout)
+.tox/c1/lib/python3.6/site-packages/elasticsearch/connection/http_requests.py:90: in perform_request
+    self._raise_error(response.status_code, raw_data)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <RequestsHttpConnection: http://elasticsearch:9200>, status_code = 400
+raw_data = '{"error":{"root_cause":[{"type":"query_shard_exception","reason":"No mapping found for [_updated] in order to sort on... found for [_updated] in order to sort on","index_uuid":"seC2XT1KRhi6BwomJy6TQA","index":"test-weko"}}]},"status":400}'
+
+    def _raise_error(self, status_code, raw_data):
+        """ Locate appropriate exception and raise it. """
+        error_message = raw_data
+        additional_info = None
+        try:
+            if raw_data:
+                additional_info = json.loads(raw_data)
+                error_message = additional_info.get('error', error_message)
+                if isinstance(error_message, dict) and 'type' in error_message:
+                    error_message = error_message['type']
+        except (ValueError, TypeError) as err:
+            logger.warning('Undecodable raw error response from server: %s', err)
+    
+>       raise HTTP_EXCEPTIONS.get(status_code, TransportError)(status_code, error_message, additional_info)
+E       elasticsearch.exceptions.RequestError: TransportError(400, 'search_phase_execution_exception', 'No mapping found for [_updated] in order to sort on')
+
+.tox/c1/lib/python3.6/site-packages/elasticsearch/connection/base.py:125: RequestError
+------------------------------ Captured log setup ------------------------------
+WARNING  elasticsearch:base.py:97 PUT http://elasticsearch:9200/test-weko-item-v1.0.0/_alias/test-weko [status:400 request:0.004s]
+------------------------------ Captured log call -------------------------------
+WARNING  elasticsearch:base.py:97 GET http://elasticsearch:9200/test-weko/_search?preference=4a4d20d732cd9f789541e54dd9eb6af8&version=false [status:400 request:0.006s]
+______________________________ test_get_timezone _______________________________
+
+i18n_app = <Flask 'testapp'>
+
+    def test_get_timezone(i18n_app):
+        date_1 = "1:1+1:1+1:1"
+        date_2 = "1-1:1:1"
+    
+        assert get_timezone(date_1)
+>       assert get_timezone(date_2)
+
+tests/test_utils.py:175: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+date = '1'
+
+    def get_timezone(date):
+        """Get timezone of a date, then return date & timezone."""
+        parts = date.rsplit('+', 1)
+        offset = 0
+        if len(parts) > 1:
+            date = parts[0]
+            tz = parts[1]
+            tz_parts = tz.split(':')
+            tz_hour = tz_parts[0]
+            tz_min = tz_parts[1]
+            offset = int(tz_hour) * 60 * 60 + int(tz_min) * 60
+            return date, offset
+        else:
+            parts = date.rsplit('-', 1)
+            if len(parts) > 1:
+                date = parts[0]
+                tz = parts[1]
+                tz_parts = tz.split(':')
+>               if len(tz_parts > 1):
+E               TypeError: '>' not supported between instances of 'list' and 'int'
+
+invenio_resourcesyncserver/utils.py:203: TypeError
+=============================== warnings summary ===============================
+../invenio-indexer/invenio_indexer/cli.py:108
+  /code/modules/invenio-indexer/invenio_indexer/cli.py:108: DeprecationWarning: 'resultcallback' has been renamed to 'result_callback'. The old name will be removed in Click 8.1.
+    @queue.resultcallback()
+
+.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3
+  /code/modules/invenio-resourcesyncserver/.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3: DeprecationWarning: 'werkzeug.contrib.cache' is deprecated as of version 0.15 and will be removed in version 1.0. It has moved to https://github.com/pallets/cachelib.
+    from werkzeug.contrib.cache import NullCache, SimpleCache, FileSystemCache
+
+.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35
+  /code/modules/invenio-resourcesyncserver/.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+    import imp
+
+.tox/c1/src/pypdf2/PyPDF2/generic.py:348
+  /code/modules/invenio-resourcesyncserver/.tox/c1/src/pypdf2/PyPDF2/generic.py:348: DeprecationWarning: invalid escape sequence \c
+    b_("c") : b_("\c"),
+
+tests/test_admin.py: 286 warnings
+tests/test_api.py: 884 warnings
+tests/test_query.py: 104 warnings
+tests/test_utils.py: 208 warnings
+tests/test_views.py: 364 warnings
+  /code/modules/invenio-resourcesyncserver/.tox/c1/lib/python3.6/site-packages/invenio_admin/ext.py:73: PendingDeprecationWarning: Usage of model and modelview kwargs are deprecated in favor of view_class, args and kwargs.
+    PendingDeprecationWarning
+
+tests/test_admin.py: 11 warnings
+tests/test_api.py: 34 warnings
+tests/test_query.py: 4 warnings
+tests/test_utils.py: 8 warnings
+tests/test_views.py: 14 warnings
+  /code/modules/invenio-resourcesyncserver/.tox/c1/lib/python3.6/site-packages/flask_admin/model/base.py:1416: UserWarning: Fields missing from ruleset: created_userId,created_date,updated_userId,updated_date
+    warnings.warn(text)
+
+tests/test_api.py: 720 warnings
+tests/test_utils.py: 1026 warnings
+  /code/modules/invenio-oaiserver/invenio_oaiserver/receivers.py:28: DeprecationWarning: generator 'get_record_sets' raised StopIteration
+    new_sets = set(get_record_sets(record=record))
+
+-- Docs: https://docs.pytest.org/en/stable/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                                     Stmts   Miss Branch BrPart  Cover
+--------------------------------------------------------------------------
+invenio_resourcesyncserver/__init__.py       5      0      0      0   100%
+invenio_resourcesyncserver/admin.py         65      3     24      6    90%
+invenio_resourcesyncserver/api.py          619     71    218     40    83%
+invenio_resourcesyncserver/bundles.py        6      0      0      0   100%
+invenio_resourcesyncserver/config.py        12      0      0      0   100%
+invenio_resourcesyncserver/ext.py           18      1     10      1    93%
+invenio_resourcesyncserver/models.py        33      0      4      0   100%
+invenio_resourcesyncserver/query.py         91      9     20      6    86%
+invenio_resourcesyncserver/utils.py        115     10     38      8    87%
+invenio_resourcesyncserver/version.py        3      0      0      0   100%
+invenio_resourcesyncserver/views.py        107     17     46     18    76%
+--------------------------------------------------------------------------
+TOTAL                                     1074    111    360     79    84%
+Coverage XML written to file coverage.xml
+
+=========================== short test summary info ============================
+FAILED tests/test_admin.py::test_update_AdminResourceListView - UnboundLocalE...
+FAILED tests/test_api.py::test_get_change_dump_manifest_xml_ChangeListHandler
+FAILED tests/test_api.py::test__date_validation_ChangeListHandler - Assertion...
+FAILED tests/test_query.py::test_get_item_changes_by_index - elasticsearch.ex...
+FAILED tests/test_utils.py::test_get_timezone - TypeError: '>' not supported ...
+=========== 5 failed, 68 passed, 3667 warnings in 393.74s (0:06:33) ============
+ERROR: InvocationError for command /code/modules/invenio-resourcesyncserver/.tox/c1/bin/pytest --cov=invenio_resourcesyncserver tests -v --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/invenio-resourcesyncserver/.tox/c1/tmp (exited with code 1)
+___________________________________ summary ____________________________________
+ERROR:   c1: commands failed
