@@ -47,6 +47,6 @@ def delete_marked_communities():
 @shared_task(ignore_result=True)
 def delete_expired_requests():
     """Delete expired inclusion requests."""
-    InclusionRequest.query.filter_by(
-        InclusionRequest.expiry_date > datetime.utcnow()).delete()
+    InclusionRequest.query.filter(
+        InclusionRequest.expires_at > datetime.utcnow()).delete()
     db.session.commit()

@@ -1,0 +1,965 @@
+GLOB sdist-make: /code/modules/invenio-communities/setup.py
+c1 inst-nodeps: /code/modules/invenio-communities/.tox/.tmp/package/1/invenio-communities-1.0.0a21.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.6,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,invenio-communities @ file:///code/modules/invenio-communities/.tox/.tmp/package/1/invenio-communities-1.0.0a21.zip,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,kombu==4.6.10,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/ivis-miyachi/weko.git@a7d8cdedce90fba7ca033b903fa7bd65c0faf492#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='1581249926'
+c1 run-test: commands[0] | pytest --cov=invenio_communities tests -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/invenio-communities/.tox/c1/bin/python
+cachedir: .tox/c1/.pytest_cache
+rootdir: /code/modules/invenio-communities
+plugins: celery-4.4.7, mock-3.6.1, cov-4.0.0
+collecting ... collected 80 items
+
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl_guest FAILED
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl[0-403] called
+FAILED
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl[1-200] called
+PASSED
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl[2-200] called
+PASSED
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl[3-200] called
+PASSED
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl[4-403] called
+FAILED
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl[5-403] called
+FAILED
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl[6-200] called
+PASSED
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl[7-403] FAILED
+tests/test_admin.py::TestCommunityModelView::test_role_query_cond PASSED
+tests/test_admin.py::TestCommunityModelView::test_get_query PASSED
+tests/test_admin.py::TestCommunityModelView::test_get_count_query called
+called
+<flask_mail._Mail object at 0x7f0c5d443c50>
+FAILED
+tests/test_admin.py::TestCommunityModelView::test_edit called edit_form
+[1]
+1
+b'\n<!DOCTYPE html>\n<html>\n  <head>\n    <title>Communities - Community - Admin</title>\n    \n        <meta charset="UTF-8">\n        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">\n        <meta name="viewport" content="width=device-width, initial-scale=1.0">\n        <meta name="description" content="">\n        <meta name="author" content="">\n    \n    \n        <link href="/admin/static/bootstrap/bootstrap2/swatch/default/bootstrap.min.css?v=2.3.2" rel="stylesheet">\n        <link href="/admin/static/bootstrap/bootstrap2/css/bootstrap-responsive.css?v=2.3.2" rel="stylesheet">\n        <link href="/admin/static/admin/css/bootstrap2/admin.css?v=1.1.1" rel="stylesheet">\n        \n        <style>\n        body {\n            padding-top: 4px;\n        }\n        </style>\n    \n    \n  \n    \n  \n  <link href="/admin/static/vendor/select2/select2.css?v=3.5.2" rel="stylesheet">\n  <link href="/admin/static/vendor/bootstrap-daterangepicker/daterangepicker-bs2.css?v=1.3.22" rel="stylesheet">\n  \n  \n\n\n    \n    \n  </head>\n  <body>\n    \n    <div class="container">\n      <div class="navbar">\n        <div class="navbar-inner">\n          \n          <a class="brand" href="/admin">Admin</a>\n          \n          \n          <ul class="nav">\n            \n  \n        <li>\n          <a href="/admin/">Home</a>\n        </li>\n        \n        <li class="active dropdown">\n        \n          <a class="dropdown-toggle" data-toggle="dropdown" href="javascript:void(0)">\n            \n            Communities<b class="caret"></b></a>\n          <ul class="dropdown-menu">\n              \n              <li class="active">\n              \n              <a href="/admin/community/">\n              Community</a>\n              </li>\n          </ul>\n        </li>\n      \n\n          </ul>\n          \n          \n          <ul class="nav pull-right">\n            \n  \n  \n\n          </ul>\n          \n          \n          \n        </div>\n      </div>\n\n      \n      \n  \n    \n  \n\n      \n\n      \n      \n\n      \n  \n  <ul class="nav nav-tabs">\n    <li>\n        <a href="/admin/community/">List</a>\n    </li><li>\n        <a href="/admin/community/new/?url=%2Fadmin%2Fcommunity%2F">Create</a>\n    </li><li class="active">\n        <a href="javascript:void(0)">Edit</a>\n    </li><li>\n        <a href="/admin/community/details/?id=test_comm&amp;url=%2Fadmin%2Fcommunity%2F">Details</a>\n    </li></ul>\n  \n\n  \n    \n    <form action="" method="POST" class="admin-form form-horizontal" enctype="multipart/form-data">\n      <fieldset>\n        \n        \n    \n        \n        \n    \n\n    \n        \n          \n            \n          \n          \n  \n  <div class="control-group">\n    <div class="control-label">\n      <label for="id">Id\n          \n            <strong style="color: red">&#42;</strong>\n      </label>\n    </div>\n    <div class="controls">\n    <div>\n      <input id="id" maxlength="100" name="id" placeholder="Please select ID" type="text" value="test_comm">\n    </div>\n    \n    \n    </div>\n    \n  </div>\n\n        \n          \n            \n          \n          \n  \n  <div class="control-group">\n    <div class="control-label">\n      <label for="owner">Owner\n          \n            <strong style="color: red">&#42;</strong>\n      </label>\n    </div>\n    <div class="controls">\n    <div>\n      <select data-role="select2" id="owner" name="owner"><option selected value="1">System Administrator - None</option><option value="2">Repository Administrator - None</option><option value="3">Contributor - None</option><option value="4">Community Administrator - None</option><option value="5">General - None</option><option value="6">Original Role - None</option></select>\n    </div>\n    \n    \n    </div>\n    \n  </div>\n\n        \n          \n            \n          \n          \n  \n  <div class="control-group">\n    <div class="control-label">\n      <label for="index">Index\n          \n            <strong style="color: red">&#42;</strong>\n      </label>\n    </div>\n    <div class="controls">\n    <div>\n      <select data-role="select2" id="index" name="index"><option selected value="11">Index &lt;id=11, name=&gt;</option></select>\n    </div>\n    \n    \n    </div>\n    \n  </div>\n\n        \n          \n            \n          \n          \n  \n  <div class="control-group">\n    <div class="control-label">\n      <label for="title">Title\n          &nbsp;\n      </label>\n    </div>\n    <div class="controls">\n    <div>\n      <input id="title" name="title" type="text" value="Test comm">\n    </div>\n    \n    \n    </div>\n    \n  </div>\n\n        \n          \n            \n          \n          \n  \n  <div class="control-group">\n    <div class="control-label">\n      <label for="description">Description\n          &nbsp;\n      </label>\n    </div>\n    <div class="controls">\n    <div>\n      <textarea id="description" name="description">this is test comm</textarea>\n    </div>\n    \n    \n    </div>\n    \n  </div>\n\n        \n          \n            \n          \n          \n  \n  <div class="control-group">\n    <div class="control-label">\n      <label for="page">Page\n          &nbsp;\n      </label>\n    </div>\n    <div class="controls">\n    <div>\n      <textarea id="page" name="page"></textarea>\n    </div>\n    \n    \n    </div>\n    \n  </div>\n\n        \n          \n            \n          \n          \n  \n  <div class="control-group">\n    <div class="control-label">\n      <label for="curation_policy">Curation Policy\n          &nbsp;\n      </label>\n    </div>\n    <div class="controls">\n    <div>\n      <textarea id="curation_policy" name="curation_policy"></textarea>\n    </div>\n    \n    \n    </div>\n    \n  </div>\n\n        \n          \n            \n          \n          \n  \n  <div class="control-group">\n    <div class="control-label">\n      <label for="ranking">Ranking\n          &nbsp;\n      </label>\n    </div>\n    <div class="controls">\n    <div>\n      <input id="ranking" name="ranking" type="text" value="0">\n    </div>\n    \n    \n    </div>\n    \n  </div>\n\n        \n          \n            \n          \n          \n  \n  <div class="control-group">\n    <div class="control-label">\n      <label for="fixed_points">Fixed Points\n          &nbsp;\n      </label>\n    </div>\n    <div class="controls">\n    <div>\n      <input id="fixed_points" name="fixed_points" type="text" value="0">\n    </div>\n    \n    \n    </div>\n    \n  </div>\n\n        \n    \n\n        \n    <hr>\n    <div class="control-group">\n      <div class="controls">\n        <input type="submit" class="btn btn-primary" value="Save" />\n        \n        \n  \n  <input name="_add_another" type="submit" class="btn" value="Save and Add Another" />\n  \n  \n  <input name="_continue_editing" type="submit" class="btn" value="Save and Continue Editing" />\n  \n\n        \n        \n          <a href="/admin/community/" class="btn btn-danger" >Cancel</a>\n        \n      </div>\n    </div>\n\n    \n      </fieldset>\n    </form>\n\n\n  \n\n    </div>\n    \n\n    \n    <script src="/admin/static/vendor/jquery.min.js?v=2.1.4" type="text/javascript"></script>\n    <script src="/admin/static/bootstrap/bootstrap2/js/bootstrap.min.js?v=2.3.2" type="text/javascript"></script>\n    <script src="/admin/static/vendor/moment.min.js?v=2.9.0" type="text/javascript"></script>\n    <script src="/admin/static/vendor/select2/select2.min.js?v=3.5.2" type="text/javascript"></script>\n    \n    \n\n    \n  \n    \n  \n  \n  <script src="/admin/static/vendor/bootstrap-daterangepicker/daterangepicker.js?v=1.3.22"></script>\n  \n  <script src="/admin/static/admin/js/form.js?v=1.0.1"></script>\n\n  <script>\n    $(document).ready(function(){\n        $("#id").prop(\'readonly\', true)\n    });\n  </script>\n\n  </body>\n</html>'
+called edit_form
+[3]
+2
+called _use_append_repository_edit
+called _get_child_index_list
+called edit_form
+[1]
+1
+called edit_form
+[1]
+1
+called edit_form
+[1]
+1
+called edit_form
+[1]
+1
+called on_model_change
+PASSED
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl_guest FAILED
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[0-403] FAILED
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[1-200] PASSED
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[2-200] PASSED
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[3-200] PASSED
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[4-403] FAILED
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[5-403] FAILED
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[6-200] PASSED
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[7-403] FAILED
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl_guest FAILED
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[0-403] FAILED
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[1-200] PASSED
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[2-200] PASSED
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[3-200] PASSED
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[4-403] FAILED
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[5-403] FAILED
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[6-200] PASSED
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[7-403] FAILED
+tests/test_cli.py::test_cli_init PASSED
+tests/test_cli.py::test_addlogo 
+None
+PASSED
+tests/test_cli.py::test_request PASSED
+tests/test_cli.py::test_remove PASSED
+tests/test_forms.py::test_validate_input_id PASSED
+tests/test_forms.py::test_CommunityForm ['The first character cannot be a number or special character. It should be an alphabet character, "-" or "_"']
+PASSED
+tests/test_invenio_communities.py::test_version PASSED
+tests/test_invenio_communities.py::test_init PASSED
+tests/test_invenio_communities.py::test_alembic SKIPPED
+tests/test_invenio_communities.py::test_model_init PASSED
+tests/test_invenio_communities.py::test_email_notification Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Subject: A record was requested to be added to your community (Title1).
+From: info@inveniosoftware.org
+To: test@test.org
+Date: Fri, 24 Mar 2023 06:17:37 +0000
+Message-ID: <167963865733.4645.11728729171806459428@63ee5d1d2822>
+
+A new upload requests to be added to your community (Title1):
+
+
+Requested by:  (test@test.org)
+
+Record Title: Foobar
+Record Description: Baz bar.
+
+You can accept or reject this record in your community curation page:
+https://inveniosoftware.org/communities/comm1/curate/
+-------------------------------------------------------------------------------
+PASSED
+tests/test_invenio_communities.py::test_model_featured_community PASSED
+tests/test_invenio_communities.py::test_oaipmh_sets PASSED
+tests/test_invenio_communities.py::test_communities_rest_all_communities PASSED
+tests/test_invenio_communities.py::test_community_delete PASSED
+tests/test_invenio_communities.py::test_communities_rest_all_communities_query_and_sort PASSED
+tests/test_invenio_communities.py::test_communities_rest_pagination PASSED
+tests/test_invenio_communities.py::test_communities_rest_get_details PASSED
+tests/test_invenio_communities.py::test_communities_rest_etag PASSED
+tests/test_invenio_communities.py::test_add_remove_corner_cases PASSED
+tests/test_models.py::test_filter_community[<lambda>0] PASSED
+tests/test_models.py::test_filter_community[<lambda>1] PASSED
+tests/test_models.py::test_filter_community[<lambda>2] PASSED
+tests/test_receivers.py::test_inject_provisional_community PASSED
+tests/test_receivers.py::test_destroy_oaipmh_set PASSED
+tests/test_serializers_response.py::test_format_args PASSED
+tests/test_serializers_schema_community.py::test_CommunitySchemaV1 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+PASSED
+tests/test_tasks.py::test_community_delete_task PASSED
+tests/test_tasks.py::test_delete_marked_communities PASSED
+tests/test_tasks.py::test_delete_expired_requests PASSED
+tests/test_utils.py::test_Pagination PASSED
+tests/test_utils.py::test_template_formatting_from_string PASSED
+tests/test_utils.py::test_save_and_validate_logo PASSED
+tests/test_utils.py::test_initialize_communities_bucket PASSED
+tests/test_utils.py::test_format_request_email_templ PASSED
+tests/test_utils.py::test_send_community_request_email PASSED
+tests/test_utils.py::test_get_user_role_ids PASSED
+tests/test_utils.py::test_email_formatting Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Subject: A record was requested to be added to your community (Title1).
+From: info@inveniosoftware.org
+To: test@test.org
+Date: Fri, 24 Mar 2023 06:19:37 +0000
+Message-ID: <167963877739.4645.14321970117917285758@63ee5d1d2822>
+
+A new upload requests to be added to your community (Title1):
+
+
+Requested by:  (test@test.org)
+
+Record Title: Foobar and Bazbar
+Record Description: On Foobar, Bazbar and more.
+
+You can accept or reject this record in your community curation page:
+https://inveniosoftware.org/communities/comm1/curate/
+-------------------------------------------------------------------------------
+PASSED
+tests/test_views_api.py::TestCommunityDetailsResource::test_get 1
+PASSED
+tests/test_views_api.py::test_dbsession_clean usreid
+1
+1
+1
+PASSED
+tests/test_views_ui.py::test_sanitize_html PASSED
+tests/test_views_ui.py::test_pass_community 2
+1
+PASSED
+tests/test_views_ui.py::test_permission_required PASSED
+tests/test_views_ui.py::test_format_item 1
+item:test_item,template:test_template,name:name
+PASSED
+tests/test_views_ui.py::test_mycommunities_ctx [2]
+PASSED
+tests/test_views_ui.py::test_view 2
+2
+2
+1
+PASSED
+tests/test_views_ui.py::test_generic_item [2]
+PASSED
+tests/test_views_ui.py::test_community_list [2]
+PASSED
+tests/test_views_ui.py::test_dbsession_clean usreid
+1
+1
+1
+PASSED
+
+=================================== FAILURES ===================================
+_______________ TestCommunityModelView.test_index_view_acl_guest _______________
+
+self = <tests.test_admin.TestCommunityModelView object at 0x7f0c5ed0df98>
+app = <Flask 'testapp'>
+setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>, <flask_admin.base.Admin object at 0x7f0c5dd96f60>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f0c5dd62f28>)
+client = <FlaskClient <Flask 'testapp'>>
+
+    def test_index_view_acl_guest(self,app,setup_view_community,client):
+        url = url_for('community.index_view')
+>       res = client.get(url)
+
+tests/test_admin.py:49: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1029: in get
+    return self.open(*args, **kw)
+.tox/c1/lib/python3.6/site-packages/flask/testing.py:196: in open
+    follow_redirects=follow_redirects
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:993: in open
+    response = self.run_wsgi_app(environ.copy(), buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:884: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1119: in run_wsgi_app
+    app_rv = app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2334: in __call__
+    return self.wsgi_app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2320: in wsgi_app
+    response = self.handle_exception(e)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1766: in handle_exception
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2317: in wsgi_app
+    response = self.full_dispatch_request()
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1840: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1743: in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1838: in full_dispatch_request
+    rv = self.dispatch_request()
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1824: in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:69: in inner
+    return self._run_view(f, *args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:368: in _run_view
+    return fn(self, *args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/flask_admin/model/base.py:1960: in index_view
+    view_args.search, view_args.filters, page_size=page_size)
+.tox/c1/lib/python3.6/site-packages/flask_admin/contrib/sqla/view.py:1029: in get_list
+    query = self.get_query()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <invenio_communities.admin.CommunityModelView object at 0x7f0c5dd62f28>
+
+    def get_query(self):
+        """Return a query for the model type.
+    
+        This method can be used to set a "persistent filter" on an index_view.
+        If you override this method, don't forget to also override
+        `get_count_query`,
+        for displaying the correct
+        item count in the list view, and `get_one`,
+        which is used when retrieving records for the edit view.
+        """
+        role_ids = get_user_role_ids()
+    
+>       if min(role_ids) <= \
+                current_app.config['COMMUNITIES_LIMITED_ROLE_ACCESS_PERMIT']:
+E               ValueError: min() arg is an empty sequence
+
+invenio_communities/admin.py:149: ValueError
+______________ TestCommunityModelView.test_index_view_acl[0-403] _______________
+
+self = <tests.test_admin.TestCommunityModelView object at 0x7f0c5da43d30>
+app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
+setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>, <flask_admin.base.Admin object at 0x7f0c5dc472e8>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f0c5dc64b70>)
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 0, status_code = 403
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+        (0, 403), # contributor
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (4, 403), # generaluser
+        (5, 403), # original role
+        (6, 200), # original role + repoadmin
+        (7, 403), # no role
+    ],
+    )
+    def test_index_view_acl(self,app,client,setup_view_community,users,id,status_code):
+        url = url_for('community.index_view')
+        login_user_via_session(client,email=users[id]["email"])
+        res = client.get(url)
+>       assert res.status_code == status_code
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_admin.py:70: AssertionError
+______________ TestCommunityModelView.test_index_view_acl[4-403] _______________
+
+self = <tests.test_admin.TestCommunityModelView object at 0x7f0c5d86b8d0>
+app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
+setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>, <flask_admin.base.Admin object at 0x7f0c5d8019b0>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f0c5d801b70>)
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 4, status_code = 403
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+        (0, 403), # contributor
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (4, 403), # generaluser
+        (5, 403), # original role
+        (6, 200), # original role + repoadmin
+        (7, 403), # no role
+    ],
+    )
+    def test_index_view_acl(self,app,client,setup_view_community,users,id,status_code):
+        url = url_for('community.index_view')
+        login_user_via_session(client,email=users[id]["email"])
+        res = client.get(url)
+>       assert res.status_code == status_code
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_admin.py:70: AssertionError
+______________ TestCommunityModelView.test_index_view_acl[5-403] _______________
+
+self = <tests.test_admin.TestCommunityModelView object at 0x7f0c5d819fd0>
+app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
+setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>, <flask_admin.base.Admin object at 0x7f0c5d51f080>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f0c5d443470>)
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 5, status_code = 403
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+        (0, 403), # contributor
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (4, 403), # generaluser
+        (5, 403), # original role
+        (6, 200), # original role + repoadmin
+        (7, 403), # no role
+    ],
+    )
+    def test_index_view_acl(self,app,client,setup_view_community,users,id,status_code):
+        url = url_for('community.index_view')
+        login_user_via_session(client,email=users[id]["email"])
+        res = client.get(url)
+>       assert res.status_code == status_code
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_admin.py:70: AssertionError
+______________ TestCommunityModelView.test_index_view_acl[7-403] _______________
+
+self = <tests.test_admin.TestCommunityModelView object at 0x7f0c5d3d2080>
+app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
+setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>, <flask_admin.base.Admin object at 0x7f0c5d34fcc0>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f0c5d32ed68>)
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 7, status_code = 403
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+        (0, 403), # contributor
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (4, 403), # generaluser
+        (5, 403), # original role
+        (6, 200), # original role + repoadmin
+        (7, 403), # no role
+    ],
+    )
+    def test_index_view_acl(self,app,client,setup_view_community,users,id,status_code):
+        url = url_for('community.index_view')
+        login_user_via_session(client,email=users[id]["email"])
+>       res = client.get(url)
+
+tests/test_admin.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1029: in get
+    return self.open(*args, **kw)
+.tox/c1/lib/python3.6/site-packages/flask/testing.py:196: in open
+    follow_redirects=follow_redirects
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:993: in open
+    response = self.run_wsgi_app(environ.copy(), buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:884: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1119: in run_wsgi_app
+    app_rv = app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2334: in __call__
+    return self.wsgi_app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2320: in wsgi_app
+    response = self.handle_exception(e)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1766: in handle_exception
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2317: in wsgi_app
+    response = self.full_dispatch_request()
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1840: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1743: in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1838: in full_dispatch_request
+    rv = self.dispatch_request()
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1824: in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:69: in inner
+    return self._run_view(f, *args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:368: in _run_view
+    return fn(self, *args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/flask_admin/model/base.py:1960: in index_view
+    view_args.search, view_args.filters, page_size=page_size)
+.tox/c1/lib/python3.6/site-packages/flask_admin/contrib/sqla/view.py:1029: in get_list
+    query = self.get_query()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <invenio_communities.admin.CommunityModelView object at 0x7f0c5d32ed68>
+
+    def get_query(self):
+        """Return a query for the model type.
+    
+        This method can be used to set a "persistent filter" on an index_view.
+        If you override this method, don't forget to also override
+        `get_count_query`,
+        for displaying the correct
+        item count in the list view, and `get_one`,
+        which is used when retrieving records for the edit view.
+        """
+        role_ids = get_user_role_ids()
+    
+>       if min(role_ids) <= \
+                current_app.config['COMMUNITIES_LIMITED_ROLE_ACCESS_PERMIT']:
+E               ValueError: min() arg is an empty sequence
+
+invenio_communities/admin.py:149: ValueError
+_________________ TestCommunityModelView.test_get_count_query __________________
+
+self = <tests.test_admin.TestCommunityModelView object at 0x7f0c5d755f60>
+setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>, <flask_admin.base.Admin object at 0x7f0c5d391c88>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f0c5d487dd8>)
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+
+    def test_get_count_query(self,setup_view_community,users):
+        app, _, _, user, view = setup_view_community
+        with patch("flask_login.utils._get_user", return_value=user):
+            result = view.get_count_query()
+            assert "WHERE" not in str(result)
+        with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+            result = view.get_count_query()
+            assert "WHERE communities_community.id_role IN (?) OR communities_community.id_user = ?" in str(result)
+        print(app.extensions['mail'])
+>       assert 1==2
+E       assert 1 == 2
+E         +1
+E         -2
+
+tests/test_admin.py:109: AssertionError
+___________ TestFeaturedCommunityModelView.test_index_view_acl_guest ___________
+
+self = <tests.test_admin.TestFeaturedCommunityModelView object at 0x7f0c5d4ec588>
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>
+client = <FlaskClient <Flask 'testapp'>>
+
+    def test_index_view_acl_guest(self,app,db,client):
+        admin = Admin(app)
+        featured_adminview_copy = dict(featured_adminview)
+        featured_model = featured_adminview_copy.pop("model")
+        featured_view = featured_adminview_copy.pop("modelview")
+        view = featured_view(featured_model,db.session,**featured_adminview_copy)
+        admin.add_view(view)
+    
+        url = url_for('featuredcommunity.index_view')
+        res = client.get(url)
+>       assert res.status_code == 302
+E       assert 200 == 302
+E         +200
+E         -302
+
+tests/test_admin.py:197: AssertionError
+__________ TestFeaturedCommunityModelView.test_index_view_acl[0-403] ___________
+
+self = <tests.test_admin.TestFeaturedCommunityModelView object at 0x7f0c5d862f28>
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 0, status_code = 403
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+        (0, 403), # contributor
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (4, 403), # generaluser
+        (5, 403), # original role
+        (6, 200), # original role + repoadmin
+        (7, 403), # no role
+    ],
+    )
+    def test_index_view_acl(self,app,db,client,users,id,status_code):
+        admin = Admin(app)
+        featured_adminview_copy = dict(featured_adminview)
+        featured_model = featured_adminview_copy.pop("model")
+        featured_view = featured_adminview_copy.pop("modelview")
+        view = featured_view(featured_model,db.session,**featured_adminview_copy)
+        admin.add_view(view)
+        url = url_for('featuredcommunity.index_view')
+        login_user_via_session(client,email=users[id]["email"])
+        res = client.get(url)
+>       assert res.status_code == status_code
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_admin.py:223: AssertionError
+__________ TestFeaturedCommunityModelView.test_index_view_acl[4-403] ___________
+
+self = <tests.test_admin.TestFeaturedCommunityModelView object at 0x7f0c5d243438>
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 4, status_code = 403
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+        (0, 403), # contributor
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (4, 403), # generaluser
+        (5, 403), # original role
+        (6, 200), # original role + repoadmin
+        (7, 403), # no role
+    ],
+    )
+    def test_index_view_acl(self,app,db,client,users,id,status_code):
+        admin = Admin(app)
+        featured_adminview_copy = dict(featured_adminview)
+        featured_model = featured_adminview_copy.pop("model")
+        featured_view = featured_adminview_copy.pop("modelview")
+        view = featured_view(featured_model,db.session,**featured_adminview_copy)
+        admin.add_view(view)
+        url = url_for('featuredcommunity.index_view')
+        login_user_via_session(client,email=users[id]["email"])
+        res = client.get(url)
+>       assert res.status_code == status_code
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_admin.py:223: AssertionError
+__________ TestFeaturedCommunityModelView.test_index_view_acl[5-403] ___________
+
+self = <tests.test_admin.TestFeaturedCommunityModelView object at 0x7f0c5cf7ba20>
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 5, status_code = 403
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+        (0, 403), # contributor
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (4, 403), # generaluser
+        (5, 403), # original role
+        (6, 200), # original role + repoadmin
+        (7, 403), # no role
+    ],
+    )
+    def test_index_view_acl(self,app,db,client,users,id,status_code):
+        admin = Admin(app)
+        featured_adminview_copy = dict(featured_adminview)
+        featured_model = featured_adminview_copy.pop("model")
+        featured_view = featured_adminview_copy.pop("modelview")
+        view = featured_view(featured_model,db.session,**featured_adminview_copy)
+        admin.add_view(view)
+        url = url_for('featuredcommunity.index_view')
+        login_user_via_session(client,email=users[id]["email"])
+        res = client.get(url)
+>       assert res.status_code == status_code
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_admin.py:223: AssertionError
+__________ TestFeaturedCommunityModelView.test_index_view_acl[7-403] ___________
+
+self = <tests.test_admin.TestFeaturedCommunityModelView object at 0x7f0c5cfd3978>
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 7, status_code = 403
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+        (0, 403), # contributor
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (4, 403), # generaluser
+        (5, 403), # original role
+        (6, 200), # original role + repoadmin
+        (7, 403), # no role
+    ],
+    )
+    def test_index_view_acl(self,app,db,client,users,id,status_code):
+        admin = Admin(app)
+        featured_adminview_copy = dict(featured_adminview)
+        featured_model = featured_adminview_copy.pop("model")
+        featured_view = featured_adminview_copy.pop("modelview")
+        view = featured_view(featured_model,db.session,**featured_adminview_copy)
+        admin.add_view(view)
+        url = url_for('featuredcommunity.index_view')
+        login_user_via_session(client,email=users[id]["email"])
+        res = client.get(url)
+>       assert res.status_code == status_code
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_admin.py:223: AssertionError
+___________ TestInclusionRequestModelView.test_index_view_acl_guest ____________
+
+self = <tests.test_admin.TestInclusionRequestModelView object at 0x7f0c5d13ef28>
+app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
+db = <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>
+
+    def test_index_view_acl_guest(self,app,client,db):
+        admin = Admin(app)
+        request_adminview_copy = dict(request_adminview)
+        request_model = request_adminview_copy.pop("model")
+        request_view = request_adminview_copy.pop("modelview")
+        view = request_view(request_model,db.session,**request_adminview_copy)
+        admin.add_view(view)
+        url = url_for('inclusionrequest.index_view')
+        res = client.get(url)
+>       assert res.status_code == 302
+E       assert 200 == 302
+E         +200
+E         -302
+
+tests/test_admin.py:238: AssertionError
+___________ TestInclusionRequestModelView.test_index_view_acl[0-403] ___________
+
+self = <tests.test_admin.TestInclusionRequestModelView object at 0x7f0c5d13e2b0>
+app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
+db = <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 0, status_code = 403
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+        (0, 403), # contributor
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (4, 403), # generaluser
+        (5, 403), # original role
+        (6, 200), # original role + repoadmin
+        (7, 403), # no role
+    ],
+    )
+    def test_index_view_acl(self,app,client,db,users,id,status_code):
+        admin = Admin(app)
+        request_adminview_copy = dict(request_adminview)
+        request_model = request_adminview_copy.pop("model")
+        request_view = request_adminview_copy.pop("modelview")
+        view = request_view(request_model,db.session,**request_adminview_copy)
+        admin.add_view(view)
+    
+        url = url_for('inclusionrequest.index_view')
+        login_user_via_session(client,email=users[id]["email"])
+        res = client.get(url)
+>       assert res.status_code == status_code
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_admin.py:265: AssertionError
+___________ TestInclusionRequestModelView.test_index_view_acl[4-403] ___________
+
+self = <tests.test_admin.TestInclusionRequestModelView object at 0x7f0c5d044630>
+app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
+db = <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 4, status_code = 403
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+        (0, 403), # contributor
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (4, 403), # generaluser
+        (5, 403), # original role
+        (6, 200), # original role + repoadmin
+        (7, 403), # no role
+    ],
+    )
+    def test_index_view_acl(self,app,client,db,users,id,status_code):
+        admin = Admin(app)
+        request_adminview_copy = dict(request_adminview)
+        request_model = request_adminview_copy.pop("model")
+        request_view = request_adminview_copy.pop("modelview")
+        view = request_view(request_model,db.session,**request_adminview_copy)
+        admin.add_view(view)
+    
+        url = url_for('inclusionrequest.index_view')
+        login_user_via_session(client,email=users[id]["email"])
+        res = client.get(url)
+>       assert res.status_code == status_code
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_admin.py:265: AssertionError
+___________ TestInclusionRequestModelView.test_index_view_acl[5-403] ___________
+
+self = <tests.test_admin.TestInclusionRequestModelView object at 0x7f0c5d266160>
+app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
+db = <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 5, status_code = 403
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+        (0, 403), # contributor
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (4, 403), # generaluser
+        (5, 403), # original role
+        (6, 200), # original role + repoadmin
+        (7, 403), # no role
+    ],
+    )
+    def test_index_view_acl(self,app,client,db,users,id,status_code):
+        admin = Admin(app)
+        request_adminview_copy = dict(request_adminview)
+        request_model = request_adminview_copy.pop("model")
+        request_view = request_adminview_copy.pop("modelview")
+        view = request_view(request_model,db.session,**request_adminview_copy)
+        admin.add_view(view)
+    
+        url = url_for('inclusionrequest.index_view')
+        login_user_via_session(client,email=users[id]["email"])
+        res = client.get(url)
+>       assert res.status_code == status_code
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_admin.py:265: AssertionError
+___________ TestInclusionRequestModelView.test_index_view_acl[7-403] ___________
+
+self = <tests.test_admin.TestInclusionRequestModelView object at 0x7f0c5d67a198>
+app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
+db = <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 7, status_code = 403
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+        (0, 403), # contributor
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (4, 403), # generaluser
+        (5, 403), # original role
+        (6, 200), # original role + repoadmin
+        (7, 403), # no role
+    ],
+    )
+    def test_index_view_acl(self,app,client,db,users,id,status_code):
+        admin = Admin(app)
+        request_adminview_copy = dict(request_adminview)
+        request_model = request_adminview_copy.pop("model")
+        request_view = request_adminview_copy.pop("modelview")
+        view = request_view(request_model,db.session,**request_adminview_copy)
+        admin.add_view(view)
+    
+        url = url_for('inclusionrequest.index_view')
+        login_user_via_session(client,email=users[id]["email"])
+        res = client.get(url)
+>       assert res.status_code == status_code
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_admin.py:265: AssertionError
+=============================== warnings summary ===============================
+../invenio-indexer/invenio_indexer/cli.py:108
+  /code/modules/invenio-indexer/invenio_indexer/cli.py:108: DeprecationWarning: 'resultcallback' has been renamed to 'result_callback'. The old name will be removed in Click 8.1.
+    @queue.resultcallback()
+
+.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3
+  /code/modules/invenio-communities/.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3: DeprecationWarning: 'werkzeug.contrib.cache' is deprecated as of version 0.15 and will be removed in version 1.0. It has moved to https://github.com/pallets/cachelib.
+    from werkzeug.contrib.cache import NullCache, SimpleCache, FileSystemCache
+
+.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35
+  /code/modules/invenio-communities/.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+    import imp
+
+tests/test_admin.py: 31 warnings
+tests/test_cli.py: 4 warnings
+tests/test_forms.py: 2 warnings
+tests/test_invenio_communities.py: 12 warnings
+tests/test_models.py: 3 warnings
+tests/test_receivers.py: 2 warnings
+tests/test_serializers_schema_community.py: 1 warning
+tests/test_tasks.py: 3 warnings
+tests/test_utils.py: 7 warnings
+tests/test_views_api.py: 2 warnings
+tests/test_views_ui.py: 9 warnings
+  /code/modules/invenio-communities/.tox/c1/lib/python3.6/site-packages/flask_celeryext/app.py:36: UserWarning: Celery v4 installed, but detected Celery v3 configuration CELERY_ALWAYS_EAGER (use CELERY_TASK_ALWAYS_EAGER instead).
+    UserWarning
+
+tests/test_admin.py: 31 warnings
+tests/test_cli.py: 4 warnings
+tests/test_forms.py: 2 warnings
+tests/test_invenio_communities.py: 12 warnings
+tests/test_models.py: 3 warnings
+tests/test_receivers.py: 2 warnings
+tests/test_serializers_schema_community.py: 1 warning
+tests/test_tasks.py: 3 warnings
+tests/test_utils.py: 7 warnings
+tests/test_views_api.py: 2 warnings
+tests/test_views_ui.py: 9 warnings
+  /code/modules/invenio-communities/.tox/c1/lib/python3.6/site-packages/flask_celeryext/app.py:36: UserWarning: Celery v4 installed, but detected Celery v3 configuration CELERY_EAGER_PROPAGATES_EXCEPTIONS (use CELERY_TASK_EAGER_PROPAGATES instead).
+    UserWarning
+
+tests/test_admin.py: 13 warnings
+tests/test_cli.py: 3 warnings
+tests/test_forms.py: 1 warning
+tests/test_invenio_communities.py: 11 warnings
+tests/test_models.py: 3 warnings
+tests/test_receivers.py: 2 warnings
+tests/test_serializers_schema_community.py: 1 warning
+tests/test_tasks.py: 3 warnings
+tests/test_utils.py: 5 warnings
+tests/test_views_api.py: 2 warnings
+tests/test_views_ui.py: 7 warnings
+  /code/modules/invenio-communities/.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2455: SAWarning: Usage of the 'Session.add()' operation is not currently supported within the execution stage of the flush process. Results may not be consistent.  Consider using alternative event listeners or connection-level operations instead.
+    "event listeners or connection-level operations instead." % method
+
+tests/test_admin.py: 25 warnings
+tests/test_views_ui.py: 1 warning
+  /code/modules/invenio-communities/.tox/c1/lib/python3.6/site-packages/flask/sessions.py:208: UserWarning: "test_server" is not a valid cookie domain, it must contain a ".". Add an entry to your hosts file, for example "test_server.localdomain", and use that instead.
+    ' "{rv}.localdomain", and use that instead.'.format(rv=rv)
+
+tests/test_forms.py::test_validate_input_id
+  /code/modules/invenio-communities/tests/test_forms.py:20: FlaskWTFDeprecationWarning: "flask_wtf.Form" has been renamed to "FlaskForm" and will be removed in 1.0.
+    form = TestForm()
+
+tests/test_forms.py::test_validate_input_id
+  /code/modules/invenio-communities/tests/test_forms.py:29: FlaskWTFDeprecationWarning: "flask_wtf.Form" has been renamed to "FlaskForm" and will be removed in 1.0.
+    form = TestForm()
+
+tests/test_forms.py::test_validate_input_id
+  /code/modules/invenio-communities/tests/test_forms.py:38: FlaskWTFDeprecationWarning: "flask_wtf.Form" has been renamed to "FlaskForm" and will be removed in 1.0.
+    form = TestForm()
+
+tests/test_forms.py::test_validate_input_id
+  /code/modules/invenio-communities/tests/test_forms.py:47: FlaskWTFDeprecationWarning: "flask_wtf.Form" has been renamed to "FlaskForm" and will be removed in 1.0.
+    form = TestForm()
+
+tests/test_forms.py::test_CommunityForm
+  /code/modules/invenio-communities/tests/test_forms.py:66: FlaskWTFDeprecationWarning: "flask_wtf.Form" has been renamed to "FlaskForm" and will be removed in 1.0.
+    form = CommunityForm()
+
+tests/test_forms.py::test_CommunityForm
+  /code/modules/invenio-communities/tests/test_forms.py:81: FlaskWTFDeprecationWarning: "flask_wtf.Form" has been renamed to "FlaskForm" and will be removed in 1.0.
+    form = CommunityForm()
+
+tests/test_forms.py::test_CommunityForm
+  /code/modules/invenio-communities/tests/test_forms.py:95: FlaskWTFDeprecationWarning: "flask_wtf.Form" has been renamed to "FlaskForm" and will be removed in 1.0.
+    form = CommunityForm()
+
+tests/test_invenio_communities.py::test_oaipmh_sets
+  /code/modules/invenio-communities/.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2455: SAWarning: Usage of the 'Session.delete()' operation is not currently supported within the execution stage of the flush process. Results may not be consistent.  Consider using alternative event listeners or connection-level operations instead.
+    "event listeners or connection-level operations instead." % method
+
+tests/test_serializers_response.py::test_format_args
+  /code/modules/invenio-communities/.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:348: DeprecationWarning: 'Request.is_xhr' is deprecated as of version 0.13 and will be removed in version 1.0. The 'X-Requested-With' header is not standard and is unreliable. You may be able to use 'accept_mimetypes' instead.
+    return getattr(self._get_current_object(), name)
+
+tests/test_views_ui.py::test_community_list
+  /code/modules/invenio-communities/invenio_communities/views/ui.py:682: FlaskWTFDeprecationWarning: "flask_wtf.Form" has been renamed to "FlaskForm" and will be removed in 1.0.
+    form = SearchForm(p=p)
+
+-- Docs: https://docs.pytest.org/en/stable/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                                                   Stmts   Miss Branch BrPart  Cover
+----------------------------------------------------------------------------------------
+invenio_communities/__init__.py                            5      0      0      0   100%
+invenio_communities/admin.py                              95      0     22      0   100%
+invenio_communities/bundles.py                            11      0      0      0   100%
+invenio_communities/cli.py                                53      0      4      0   100%
+invenio_communities/config.py                             40      0      0      0   100%
+invenio_communities/errors.py                             14      0     12      0   100%
+invenio_communities/ext.py                                34      0     10      0   100%
+invenio_communities/forms.py                              64      0     16      0   100%
+invenio_communities/links.py                              13      0      4      0   100%
+invenio_communities/models.py                            180     13     46      7    90%
+invenio_communities/permissions.py                        15      0      2      0   100%
+invenio_communities/proxies.py                             5      0      2      0   100%
+invenio_communities/receivers.py                          25      0      8      0   100%
+invenio_communities/serializers/__init__.py                5      0      0      0   100%
+invenio_communities/serializers/response.py               28      0      8      0   100%
+invenio_communities/serializers/schemas/__init__.py        2      0      0      0   100%
+invenio_communities/serializers/schemas/community.py      33      0      8      0   100%
+invenio_communities/signals.py                             6      0      0      0   100%
+invenio_communities/tasks.py                              13      2      0      0    85%
+invenio_communities/utils.py                              89      0     24      0   100%
+invenio_communities/version.py                             3      0      0      0   100%
+invenio_communities/views/__init__.py                      2      0      0      0   100%
+invenio_communities/views/api.py                          46      0     10      0   100%
+invenio_communities/views/ui.py                          103      0      8      0   100%
+----------------------------------------------------------------------------------------
+TOTAL                                                    884     15    184      7    98%
+Coverage HTML written to dir htmlcov
+
+=========================== short test summary info ============================
+FAILED tests/test_admin.py::TestCommunityModelView::test_index_view_acl_guest
+FAILED tests/test_admin.py::TestCommunityModelView::test_index_view_acl[0-403]
+FAILED tests/test_admin.py::TestCommunityModelView::test_index_view_acl[4-403]
+FAILED tests/test_admin.py::TestCommunityModelView::test_index_view_acl[5-403]
+FAILED tests/test_admin.py::TestCommunityModelView::test_index_view_acl[7-403]
+FAILED tests/test_admin.py::TestCommunityModelView::test_get_count_query - as...
+FAILED tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl_guest
+FAILED tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[0-403]
+FAILED tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[4-403]
+FAILED tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[5-403]
+FAILED tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[7-403]
+FAILED tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl_guest
+FAILED tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[0-403]
+FAILED tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[4-403]
+FAILED tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[5-403]
+FAILED tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[7-403]
+====== 16 failed, 63 passed, 1 skipped, 242 warnings in 386.58s (0:06:26) ======
+ERROR: InvocationError for command /code/modules/invenio-communities/.tox/c1/bin/pytest --cov=invenio_communities tests -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/invenio-communities/.tox/c1/tmp (exited with code 1)
+___________________________________ summary ____________________________________
+ERROR:   c1: commands failed

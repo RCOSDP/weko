@@ -1,0 +1,6 @@
+GLOB sdist-make: /code/modules/invenio-communities/setup.py
+c1 inst-nodeps: /code/modules/invenio-communities/.tox/.tmp/package/1/invenio-communities-1.0.0a21.zip
+ERROR: got KeyboardInterrupt signal
+___________________________________ summary ____________________________________
+  c1: commands succeeded
+  congratulations :)

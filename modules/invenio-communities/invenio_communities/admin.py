@@ -101,22 +101,16 @@ class CommunityModelView(ModelView):
             "FIRST_LETTER_PATTERN2": "Cannot set negative number to ID.",
         }
 
-        if the_patterns['FIRST_LETTER_PATTERN1']:
-            m = re.match(the_patterns['FIRST_LETTER_PATTERN1'], field.data)
-            if m is None:
-                raise ValidationError(the_result['FIRST_LETTER_PATTERN1'])
-            if the_patterns['FIRST_LETTER_PATTERN2']:
-                m = re.match(the_patterns['FIRST_LETTER_PATTERN2'], field.data)
-                if m is not None:
-                    raise ValidationError(the_result['FIRST_LETTER_PATTERN2'])
-                if the_patterns['ASCII_LETTER_PATTERN']:
-                    m = re.match(the_patterns['ASCII_LETTER_PATTERN'],
-                                 field.data)
-                    if m is None:
-                        raise ValidationError(
-                            the_result['ASCII_LETTER_PATTERN'])
-        if field.data:
-            field.data = field.data.lower()
+        m = re.match(the_patterns['FIRST_LETTER_PATTERN1'], field.data)
+        if m is None:
+            raise ValidationError(the_result['FIRST_LETTER_PATTERN1'])
+        m = re.match(the_patterns['FIRST_LETTER_PATTERN2'], field.data)
+        if m is not None:
+            raise ValidationError(the_result['FIRST_LETTER_PATTERN2'])
+        m = re.match(the_patterns['ASCII_LETTER_PATTERN'], field.data)
+        if m is None:
+            raise ValidationError(the_result['ASCII_LETTER_PATTERN'])
+        field.data = field.data.lower()
 
     form_args = {
         'id': {

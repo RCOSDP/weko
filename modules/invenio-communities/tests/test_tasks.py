@@ -67,7 +67,15 @@ def test_delete_expired_requests(app, db, communities):
     (comm1, comm2, comm3) = communities
     communities_key = app.config["COMMUNITIES_RECORD_KEY"]
     rec1 = Record.create({'title': 'Foobar'})
-    InclusionRequest.create(community=comm1, record=rec1,notify=False)
-    assert delete_expired_requests()
+    from datetime import datetime, timedelta
+    now = datetime.utcnow()+timedelta(days=1)
+    increq = InclusionRequest.create(
+        community=comm1, 
+        record=rec1,
+        notify=False,
+        expires_at=now)
+    delete_expired_requests()
+    result = InclusionRequest.query.filter_by(id_record=rec1.id).first()
+    assert  result == None
 
     
