@@ -28,6 +28,7 @@ from sqlalchemy_utils.functions import create_database, database_exists
 from datetime import datetime, timedelta
 from tests.helpers import create_record, json_data
 
+from invenio_cache import InvenioCache
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.testutils import create_test_user, login_user_via_session
 from invenio_access.models import ActionUsers
@@ -112,6 +113,7 @@ def base_app(instance_path):
     InvenioAccess(app_)
     InvenioFilesREST(app_)
     WekoGridLayout(app_)
+    # InvenioCache(app_)
     # WekoAdmin(app_)
     app_.register_blueprint(blueprint)
     app_.register_blueprint(blueprint_api)

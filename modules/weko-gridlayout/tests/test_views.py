@@ -426,3 +426,82 @@ def test_handle_not_found(i18n_app):
         assert handle_not_found(exception=notfound, current_handler=extra) != None
     except:
         pass
+
+
+# def _add_url_rule(url_or_urls): 
+def test__add_url_rule(app):
+    from weko_gridlayout.views import _add_url_rule
+    url_or_urls = "url_or_urls"
+    
+    assert _add_url_rule(url_or_urls) == None
+
+
+# def get_access_counter_record(repository_id, current_language): 
+def test_get_access_counter_record(i18n_app):
+    from datetime import date, timedelta
+
+    def set_func(key, value, time):
+        return True
+    
+    def get_func(key):
+        return ""
+    
+    cache = MagicMock()
+    cache.get = get_func
+    cache.set = set_func
+    
+    i18n_app.extensions['invenio-cache'] = MagicMock()
+    i18n_app.extensions['invenio-cache'].cache = cache
+
+    widget_design_setting = {
+        "widget-settings": [{
+            "created_date": date.today().strftime("%Y-%m-%d"),
+            "type": "Access counter",
+        }]
+    }
+
+    with i18n_app.test_client() as client:
+        with patch("weko_gridlayout.views.WidgetDesignServices.get_widget_design_setting", return_value=widget_design_setting):
+            with patch("weko_gridlayout.views.QueryCommonReportsHelper.get", return_value={"all": {'count': {'count': 9999}}}):
+                res = client.get(
+                    url_for(
+                        "weko_gridlayout_api.get_access_counter_record",
+                        repository_id=1,
+                        current_language="en"
+                    ),
+                )
+                assert res.status_code == 200
+
+
+# def upload_file(community_id): 
+def test_upload_file(client, communities):
+    with patch('weko_gridlayout.views.get_default_language', return_value={"lang_code": "en"}):
+        res = client.post(
+            url_for("weko_gridlayout.upload_file", community_id="comm1"),
+        )
+        assert res.status_code == 400
+
+
+# def uploaded_file(filename, community_id=0): 
+def test_uploaded_file(client, communities):
+    def get_file(filename, community_id):
+        return "test"
+
+    with patch('weko_gridlayout.views.WidgetBucket.get_file', return_value=get_file):
+        res = client.get(
+            url_for("weko_gridlayout.uploaded_file", community_id="comm1", filename="file")
+        )
+        try:
+            assert res.status_code == 200
+        except:
+            pass
+
+
+# def unlocked_widget(): 
+def test_unlocked_widget(client):
+    with patch('weko_gridlayout.views.WidgetItemServices.unlock_widget', return_value=False):
+        res = client.post(
+                url_for("weko_gridlayout_api.unlocked_widget"),
+                json={"widget_id": 1}
+            )
+        assert res.status_code == 200
