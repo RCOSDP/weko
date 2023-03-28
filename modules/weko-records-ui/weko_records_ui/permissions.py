@@ -482,7 +482,7 @@ def check_usage_report_in_permission(permission):
         return False
 
 
-def check_create_usage_report(record, file_json):
+def check_create_usage_report(record, file_json , user_id=None):
     """Check create usage report.
 
     @param record:
@@ -491,7 +491,7 @@ def check_create_usage_report(record, file_json):
     """
     record_id = record.get('recid')
     file_name = file_json.get('filename')
-    list_permission = __get_file_permission(record_id, file_name)
+    list_permission = __get_file_permission(record_id, file_name ,user_id)
     for permission in list_permission:
         if check_usage_report_in_permission(permission):
             return permission
@@ -528,7 +528,7 @@ def is_owners_or_superusers(record) -> bool:
     return False
 
 
-def __get_file_permission(record_id:str, file_name:str) -> List[FilePermission]:
+def __get_file_permission(record_id:str, file_name:str ,user_id = None) -> List[FilePermission]:
     """Get file permission.
         Args
             str:record_id
@@ -536,7 +536,7 @@ def __get_file_permission(record_id:str, file_name:str) -> List[FilePermission]:
         Returns
             List[FilePermission]
     """
-    user_id = current_user.get_id()
+    user_id = user_id or current_user.get_id()
     list_permission = FilePermission.find_list_permission_approved(
         user_id, record_id, file_name)
     return list_permission
