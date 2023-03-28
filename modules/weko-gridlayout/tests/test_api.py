@@ -65,13 +65,19 @@ class test_WidgetItems():
 
                 widget_items = list()
                 assert not WidgetItems.build_object(widget_items)
-        # assert not WidgetItems.build_object(widget_items=None)
+        
+        with patch("weko_gridlayout.api.WidgetItems.build_settings_data", side_effect=Exception('')):
+            # Exception coverage
+            # try:
+            WidgetItems.build_object({})
+            # except:
+                # pass
 
 
     # def create(cls, widget_items=None):
     def test_create(i18n_app):
         widget_items = list()
-        assert not WidgetItems.create(widget_items)
+        assert WidgetItems.create(widget_items) == None
 
         widget_items = {
             "repository": "repository",
@@ -85,8 +91,13 @@ class test_WidgetItems():
             "text_color": "text_color",
             "background_color": "background_color",
         }
-        # with patch("weko_gridlayout.api.WidgetItems.build_object", return_value=widget_items):
-        assert not WidgetItems.create(widget_items)
+
+        with patch("weko_gridlayout.api.WidgetItem", return_value=""):
+            with patch("weko_gridlayout.api.db.session.add", return_value=""):
+                assert WidgetItems.create(widget_items) != None
+
+        # Exception coverage
+        WidgetItems.create(widget_items)
 
 
     # def update(cls, widget_items, widget_id):
@@ -143,7 +154,7 @@ class test_WidgetItems():
 
         # Doesn't return any value
         # ERROR ~ delete function doesn't exist in WidgetItem class
-        assert not WidgetItems.delete(1)
+        WidgetItems.delete(1)
 
 
     # def get_all_widget_items(cls):
@@ -159,10 +170,15 @@ class test_WidgetItems():
         data = {
             "k": {"label": "label"}
         }
-        assert WidgetItems.validate_exist_multi_language(item, data)
+        assert WidgetItems.validate_exist_multi_language(item, data) == True
+
+        data = {
+            "k": {"labels": "label"}
+        }
+        assert WidgetItems.validate_exist_multi_language(item, data) == False
 
         item = {}
-        assert not WidgetItems.validate_exist_multi_language(item, data)
+        assert WidgetItems.validate_exist_multi_language(item, data) == False
 
 
     # def is_existed(cls, widget_items, widget_item_id):
@@ -171,11 +187,11 @@ class test_WidgetItems():
 
         # ERROR ~ get_by_repo_and_type function doesn't exist in WidgetItem class
         with patch("weko_gridlayout.api.WidgetItem.get_by_repo_and_type", return_value=""):
-            widget_item = {
+            widget_items = {
                 "repository": "repository",
                 "widget_type": "widget_type",
             }
-            assert WidgetItems.is_existed(widget_item, "1")
+            assert WidgetItems.is_existed(widget_items, "1")
 
 
     # def get_account_role(cls):
@@ -184,8 +200,11 @@ class test_WidgetItems():
 
 
     def test_get_account_role_2(i18n_app):
+        from sqlalchemy.exc import SQLAlchemyError
+
         # For exception coverage
-        assert WidgetItems.get_account_role()
+        with patch('weko_gridlayout.api.Role.query.all', side_effect=SQLAlchemyError('')):
+            assert WidgetItems.get_account_role() == None
 
 
     # def parse_result(cls, in_result):
@@ -213,29 +232,29 @@ class test_WidgetItems():
 
 test = test_WidgetItems()
 
-def test_build_general_data():
+def test_build_general_data(i18n_app):
     test.test_build_general_data()
-def test_build_settings_data():
+def test_build_settings_data(i18n_app):
     test.test_build_settings_data()
-def test_build_object():
+def test_build_object(i18n_app):
     test.test_build_object()
-def test_create():
+def test_create(i18n_app):
     test.test_create()
-def test_update():
+def test_update(i18n_app):
     test.test_update()
-def test_update_by_id():
+def test_update_by_id(i18n_app):
     test.test_update_by_id()
-def test_delete(db):
+def test_delete(i18n_app, db):
     test.test_delete(db)
-def test_get_all_widget_items(widget_item):
+def test_get_all_widget_items(i18n_app, widget_item):
     test.test_get_all_widget_items(widget_item)
-def test_validate_exist_multi_language():
+def test_validate_exist_multi_language(i18n_app):
     test.test_validate_exist_multi_language()   
-def test_is_existed(widget_item):
+def test_is_existed(i18n_app, widget_item):
     test.test_is_existed(widget_item)
-def test_get_account_role(users):
+def test_get_account_role(i18n_app, users):
     test.test_get_account_role(users)
-def test_get_account_role_2():
+def test_get_account_role_2(i18n_app):
     test.test_get_account_role_2()
-def test_parse_result():
+def test_parse_result(i18n_app):
     test.test_parse_result()

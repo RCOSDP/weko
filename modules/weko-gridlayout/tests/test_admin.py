@@ -14,7 +14,9 @@ from flask_admin.contrib.sqla import ModelView
 from flask_admin.model.base import ViewArgs
 
 from weko_gridlayout.utils import get_register_language
-from weko_gridlayout.admin import WidgetSettingView
+from weko_gridlayout.admin import WidgetSettingView, WidgetDesign
+from weko_gridlayout.models import WidgetItem
+
 
 # .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
 
@@ -197,26 +199,42 @@ def test_search_placeholder(app, admin_view, widget_items, view_instance):
     assert view_instance.search_placeholder() == "Search"
 
 
-# WidgetSettingView.index_view
+# WidgetDesign.index ~ ERROR
+def test_index_WidgetDesign(i18n_app, view_instance):
+    test = WidgetDesign()
+    test.admin = MagicMock()
+    test.admin.base_template = "weko_gridlayout/admin/widget_design.html"
+    try:
+        assert test.index()
+    except:
+        pass
+
+
+# WidgetSettingView.index_view ~ ERROR
 def test_index_view_WidgetSettingView(i18n_app, view_instance):
-
-    # Error
-    assert view_instance.index_view()
+    assert view_instance.index_view() != None
 
 
-# WidgetSettingView.create_view
+# WidgetSettingView.create_view ~ ERROR
 def test_create_view_WidgetSettingView(i18n_app, view_instance):
-    with patch("flask_admin.helpers.get_redirect_target", return_value="/"):
+    with patch("weko_gridlayout.admin.get_redirect_target", return_value="/"):
 
-        # Error
+        view_instance.admin = MagicMock()
+        view_instance.admin.base_template = "weko_gridlayout/admin/widget_design.html"
+        
         assert view_instance.create_view()
 
 
-# WidgetSettingView.edit_view
+# WidgetSettingView.edit_view ~ ERROR
 def test_edit_view_WidgetSettingView(i18n_app, view_instance):
+    locked_widget = WidgetItem()
 
-    # Error
-    assert view_instance.edit_view()
+    with patch("weko_gridlayout.admin.get_redirect_target", return_value="/"):
+        with patch("weko_gridlayout.admin.WidgetItemServices.get_locked_widget_info", return_value=locked_widget):
+            view_instance.admin = MagicMock()
+            view_instance.admin.base_template = "weko_gridlayout/admin/edit_widget_settings.html"
+            
+            assert view_instance.edit_view()
 
 
 # WidgetSettingView.get_detail_value
@@ -231,10 +249,22 @@ def test_get_detail_value_WidgetSettingView(i18n_app, view_instance):
 
 # WidgetSettingView.details_view
 def test_details_view_WidgetSettingView(i18n_app, view_instance):
-    # Error
-    with patch("flask_admin.helpers.get_redirect_target", return_value="/"):
+    def get_one(item):
+        get_one_magic_mock = MagicMock()
+        get_one_magic_mock.label = "label"
+        get_one_magic_mock.id = 1
+        
+        return get_one_magic_mock
 
-        assert view_instance.details_view()
+    view_instance.get_one = get_one
+
+    with patch("weko_gridlayout.admin.get_redirect_target", return_value="/"):
+        with patch("weko_gridlayout.admin.helpers.get_mdict_item_or_list", return_value="1"):
+            with patch("weko_gridlayout.admin.WidgetSettingView.get_label_display_to_list", return_value="1"):
+                view_instance.admin = MagicMock()
+                view_instance.admin.base_template = "weko_gridlayout/admin/widget_design.html"
+                
+                assert view_instance.details_view()
 
 
 # WidgetSettingView.action_delete

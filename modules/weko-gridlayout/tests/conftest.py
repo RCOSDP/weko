@@ -90,6 +90,7 @@ def base_app(instance_path):
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         TESTING=True,
         WEKO_GRIDLAYOUT_BASE_TEMPLATE = 'weko_gridlayout/base.html',
+        WEKO_GRIDLAYOUT_ADMIN_WIDGET_DESIGN = 'weko_gridlayout/admin/widget_design.html',
         SERVER_NAME="TEST_SERVER",
         SEARCH_INDEX_PREFIX='test-',
         INDEXER_DEFAULT_DOC_TYPE='testrecord',
