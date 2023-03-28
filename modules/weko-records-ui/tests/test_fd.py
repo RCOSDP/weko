@@ -17,7 +17,7 @@ from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
 from mock import patch
 from invenio_records_files.utils import record_file_factory
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import NotFound ,Forbidden
 
 from weko_records_ui.models import FileSecretDownload
 from sqlalchemy.exc import SQLAlchemyError 
@@ -971,6 +971,9 @@ def test_file_download_secret(app,db, itemtypes, users, records):
                                         #31
                                         assert file_download_secret(recid,record,record_file_factory,filename="helloworld.docx")=="_download_file"
                                         assert db.session.query(FileSecretDownload).one_or_none().download_count == 0
+                                    with patch("weko_records_ui.fd.get_secret_download", return_value=None):
+                                        with pytest.raises(Forbidden):
+                                            file_download_secret(recid,record,record_file_factory,filename="helloworld.docx")
         with patch("weko_records_ui.fd.render_template", side_effect=lambda x,error: (x,error)): #return param
             with patch("weko_records_ui.fd.parse_secret_download_token", return_value=(False , (results[1]["recid"].pid_value,1,p.created,""))):
                 with patch("weko_records_ui.fd.validate_secret_download_token", return_value=(True , "")):

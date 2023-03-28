@@ -542,6 +542,9 @@ def file_download_secret(pid, record, _record_file_factory=None, **kwargs):
         file_name=filename, record_id=pid, id=id , created=date
     )
 
+    if not secret_download:
+        abort(403)
+
     # Validate token
     is_valid, error = validate_secret_download_token(
         secret_download, filename, pid, id, date, secret_token)
