@@ -224,28 +224,20 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
         from weko_admin.utils import get_title_facets
         titles, order, uiTypes, isOpens, displayNumbers, searchConditions = get_title_facets()
-        current_app.logger.warning('=============   Execute search STAERT  =============')
         current_app.logger.warning(search)
         for param in params:
             query_key = weko_faceted_search_mapping[param]
-            #search = search.post_filter({"terms": {query_key: params[param]}})
-            #mapping_type = weko_faceted_search_mapping['type']
-            current_app.logger.warning('en_name: ' + param + '  mapping: ' + query_key + '  values: ')
-            current_app.logger.warning(params[param])
             if query_key == 'temporal':
-                #search = search.post_filter({"terms": {query_key: params[param]}})
                 range_value = params[param][0].split('--')
                 search = search.post_filter({"range": {"date_range1": {"gte": range_value[0], "lte": range_value[1]}}})
             else:
-                #search = search.post_filter({"terms": {query_key: params[param]}})
-                if searchConditions[query_key]  == 'AND':
+                if searchConditions[param]  == 'AND':
                     q_list = []
                     for value in params[param]:
                         q_list.append({ "term": {query_key: value}})
                     search = search.post_filter({"bool": {"must": q_list}})
                 else: 
                     search = search.post_filter({"terms": {query_key: params[param]}})
-        current_app.logger.warning('=============   Execute search END  =============')
         search_result = search.execute()
         # Generate links for prev/next
         urlkwargs.update(

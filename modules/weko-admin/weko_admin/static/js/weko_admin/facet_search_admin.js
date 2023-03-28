@@ -133,6 +133,10 @@ function FacetSearchLayout(
     return value!=="CheckboxList";
   }
 
+  function isRangeSlider(ui_type) {
+    return ui_type==='RangeSlider';
+  }
+
   /**
    * Called when Mapping is changed to control whether or not RangeSlider input is allowed.
    */
@@ -142,15 +146,16 @@ function FacetSearchLayout(
   }
 
   /**
-   * When Mapping is modified, it controls the UI type according to the Mapping type.
-   * The "keyword" type cannot select RangeSlider, and the "integer_range", "float_range"
-   * and "date_range" types can only select RangeSlider.
+   * Controls the UI type when Mapping is changed.
+   * If the facet item has RangeSlider selected as the UI type and
+   * is changed to a mapping that does not allow RangeSlider to be selected,
+   * the UI type is forcibly changed to CheckboxList.
    * 
-   * @param {string} type type of selected Mapping.
+   * @param {string} value Value of selected Mapping.
    */
   function handleUiTypeRange(value) {
     let isDisable = isDisableRangeUi(value);
-    if(isDisable && _uiType==='RangeSlider') {
+    if(isDisable && isRangeSlider(_uiType)) {
       _setUiType("CheckboxList");
     }
     $("#uiType_Range").prop("disabled",isDisable);
@@ -167,6 +172,13 @@ function FacetSearchLayout(
       _setDisplayNumber(null);
     }
     $("#" + LABELS['lblDisplayNumber']).prop("disabled",isDisable);
+
+    let isSlider = isRangeSlider(event.target.value);
+    if(isSlider) {
+      _setSearchCondition("AND");
+      
+    }
+    $("#searchConditionOR").prop("disabled",isSlider);
   }
 
   return (
@@ -231,7 +243,7 @@ function FacetSearchLayout(
       </div>
       <div className="row">
         <InputSearchConditionComponent value={_searchCondition} setValue={_setSearchCondition}
-                              idName={LABELS['lblSearchCondition']}/>
+                              idName={LABELS['lblSearchCondition']} isSlider={isRangeSlider(_uiType)} />
       </div>
       <div className="row">
         <InputRadioComponent value={_active} setValue={_setActive}
@@ -342,10 +354,9 @@ function InputOpenCloseComponent({value, setValue, idName}) {
   )
 }
 
-function InputSearchConditionComponent({value, setValue, idName}) {
+function InputSearchConditionComponent({value, setValue, idName, isSlider}) {
 
   function handleChangeDisplay(event) {
-    event.preventDefault();
     setValue(event.target.value);
   }
 
@@ -356,8 +367,10 @@ function InputSearchConditionComponent({value, setValue, idName}) {
       </label>
       <div className="controls col-xs-6">
         <label className="radio-inline" htmlFor="searchConditionOR">
-          <input type="radio" id="searchConditionOR" checked={value === "OR"} value="OR"
-                 onChange={handleChangeDisplay}/>
+          {isSlider && <input type="radio" id="searchConditionOR" checked={value === "OR"} value="OR"
+                 onChange={handleChangeDisplay} disabled/>}
+          {!isSlider && <input type="radio" id="searchConditionOR" checked={value === "OR"} value="OR"
+                 onChange={handleChangeDisplay} />}
           {LABELS['lblSearchConditionOR']}
         </label>
         <label className="radio-inline" htmlFor="searchConditionAND">

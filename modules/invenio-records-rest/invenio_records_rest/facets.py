@@ -139,12 +139,6 @@ def default_facets_factory(search, index):
         all fields and values used.
     """
     urlkwargs = MultiDict()
-
-    #import traceback
-    #try:
-    #    raise Exception
-    #except:
-    #    traceback.print_exc()
         
     from weko_admin.utils import get_facet_search_query
     from weko_search_ui.permissions import search_permission
