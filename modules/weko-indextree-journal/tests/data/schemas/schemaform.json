@@ -1,0 +1,66 @@
+[
+    {
+        "key":"publication_title",
+        "type": "text",
+        "condition": "model.is_output",
+        "title_i18n":{
+            "en":"Title",
+            "ja":"タイトル"
+        }
+    },
+    {
+        "key": "publisher_name",
+        "type": "text",
+        "condition": "model.is_output",
+        "title_i18n":{
+            "en":"Publisher name",
+            "ja":""
+        }
+    },
+    {
+        "key": "title_alternative",
+        "type": "text",
+        "condition": "model.is_output",
+        "title_i18n":{
+            "en": "Title alternative"
+        }
+    },
+    {
+        "key": "creator_info",
+        "type": "obj",
+        "condition": "model.is_output",
+        "items":[
+            {
+                "key":"creator_name",
+                "type":"text",
+                "condition":"model.is_output",
+                "title_i18n":{
+                    "en":"creator name",
+                    "ja":"作成者"
+                }
+            },
+            {
+                "key":"creator_name",
+                "type":"text",
+                "condition":"model.is_output",
+                "title_i18n":{
+                    "en":"age",
+                    "ja":""
+                }
+            },
+            {
+                "key":"creator_name",
+                "type":"text",
+                "condition":"model.is_output",
+                "title_i18n":{
+                    "en":"creator affiliation"
+                }
+            },
+            {
+                "key":"creator_name",
+                "type":"text",
+                "condition":"model.is_output"
+            }
+        ]
+    }
+]
