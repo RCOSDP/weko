@@ -430,17 +430,17 @@ class Community(db.Model, Timestamp):
             )
         return None
 
-    @property
-    def community_url(self):
-        """Get provisional URL."""
-        return url_for(
-            'invenio_communities.detail', community_id=self.id, _external=True)
+    # @property
+    # def community_url(self):
+    #     """Get provisional URL."""
+    #     return url_for(
+    #         'invenio_communities.detail', community_id=self.id, _external=True)
 
-    @property
-    def community_provisional_url(self):
-        """Get provisional URL."""
-        return url_for(
-            'invenio_communities.curate', community_id=self.id, _external=True)
+    # @property
+    # def community_provisional_url(self):
+    #     """Get provisional URL."""
+    #     return url_for(
+    #         'invenio_communities.curate', community_id=self.id, _external=True)
 
     @property
     def upload_url(self):

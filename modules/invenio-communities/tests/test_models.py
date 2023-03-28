@@ -265,22 +265,22 @@ class TestCommunity:
 #     def is_deleted(self):
 #     def logo_url(self):
 #     def community_url(self):
-# .tox/c1/bin/pytest --cov=invenio_communities tests/test_models.py::TestCommunity::test_community_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
-    @pytest.mark.skip(reason="")
-    def test_community_url(self, app,communities):
-        # TODO:views.ui.detailがコメントアウトされている
-        comm = communities[0]
-        result = comm.community_url
-        assert result == "http://test_server/c/comm1/detail/"
+# # .tox/c1/bin/pytest --cov=invenio_communities tests/test_models.py::TestCommunity::test_community_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+#     @pytest.mark.skip(reason="")
+#     def test_community_url(self, app,communities):
+#         # TODO:views.ui.detailがコメントアウトされている
+#         comm = communities[0]
+#         result = comm.community_url
+#         assert result == "http://test_server/c/comm1/detail/"
 
-#     def community_provisional_url(self):
-# .tox/c1/bin/pytest --cov=invenio_communities tests/test_models.py::TestCommunity::test_community_provisional_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
-    @pytest.mark.skip(reason="")
-    def test_community_provisional_url(self, app, communities):
-         # TODO:views.ui.curateがコメントアウトされている
-        comm = communities[0]
-        result = comm.community_provisional_url
-        assert result == "http://test_server/c/comm1/curate/"
+# #     def community_provisional_url(self):
+# # .tox/c1/bin/pytest --cov=invenio_communities tests/test_models.py::TestCommunity::test_community_provisional_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+#     @pytest.mark.skip(reason="")
+#     def test_community_provisional_url(self, app, communities):
+#          # TODO:views.ui.curateがコメントアウトされている
+#         comm = communities[0]
+#         result = comm.community_provisional_url
+#         assert result == "http://test_server/c/comm1/curate/"
 
 #     def upload_url(self):
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_models.py::TestCommunity::test_upload_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp

@@ -31,7 +31,7 @@ from invenio_records.api import Record
 import pytest
 
 from invenio_communities.models import InclusionRequest
-from invenio_communities.tasks import delete_marked_communities, delete_expired_requests
+from invenio_communities.tasks import delete_expired_requests
 from datetime import datetime,timedelta
 
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_tasks.py::test_community_delete_task -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
@@ -50,15 +50,15 @@ def test_community_delete_task(app, db, communities):
     comm1.delete()
     assert comm1.is_deleted
 
-# .tox/c1/bin/pytest --cov=invenio_communities tests/test_tasks.py::test_delete_marked_communities -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
-# def delete_marked_communities():
-def test_delete_marked_communities(app, db, communities):
-    (comm1, comm2, comm3) = communities
-    communities_key = app.config["COMMUNITIES_RECORD_KEY"]
-    rec1 = Record.create({'title': 'Foobar'})
-    InclusionRequest.create(community=comm1, record=rec1, notify=False)
-    with pytest.raises(NotImplementedError):
-        assert delete_marked_communities()
+# # .tox/c1/bin/pytest --cov=invenio_communities tests/test_tasks.py::test_delete_marked_communities -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+# # def delete_marked_communities():
+# def test_delete_marked_communities(app, db, communities):
+#     (comm1, comm2, comm3) = communities
+#     communities_key = app.config["COMMUNITIES_RECORD_KEY"]
+#     rec1 = Record.create({'title': 'Foobar'})
+#     InclusionRequest.create(community=comm1, record=rec1, notify=False)
+#     with pytest.raises(NotImplementedError):
+#         assert delete_marked_communities()
     
     
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_tasks.py::test_delete_expired_requests -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp    
