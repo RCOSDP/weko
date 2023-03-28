@@ -64,14 +64,23 @@ from .permissions import check_create_usage_report, \
 def check_items_settings(settings=None):
     """Check items setting."""
     if settings is None:
-        settings = AdminSettings.get('items_display_settings')
-    if hasattr(settings, 'item_display_email'):
-        current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
-    if hasattr(settings, 'item_search_author'):
-        current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
-    if hasattr(settings, 'item_display_open_date'):
-        current_app.config['OPEN_DATE_DISPLAY_FLG'] = \
-            settings.item_display_open_date
+        settings = AdminSettings.get('items_display_settings',dict_to_object=False)
+    if settings is not None:
+        if isinstance(settings,dict):
+            if 'items_display_email' in settings:
+                current_app.config['EMAIL_DISPLAY_FLG'] = settings['items_display_email']
+            if 'items_search_author' in settings:    
+                current_app.config['ITEM_SEARCH_FLG'] = settings['items_search_author']
+            if 'item_display_open_date' in settings:    
+                current_app.config['OPEN_DATE_DISPLAY_FLG'] = \
+                settings['item_display_open_date']
+        else:
+            if hasattr(settings,'items_display_email'):
+                current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
+            if hasattr(settings,'items_search_author'):
+                current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
+            if hasattr(settings,'item_display_open_date'):
+                current_app.config['OPEN_DATE_DISPLAY_FLG'] = settings.item_display_open_date
 
 
 def get_record_permalink(record):
@@ -254,8 +263,9 @@ def soft_delete(recid):
                 rec = RecordMetadata.query.filter_by(
                     id=ver.object_uuid).first()
                 dep = WekoDeposit(rec.json, rec)
-                dep['path'] = []
-                dep.indexer.update_path(dep, update_revision=False)
+                #dep['path'] = []
+                dep['publish_status'] = '-1'
+                dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
                 FeedbackMailList.delete(ver.object_uuid)
                 dep.remove_feedback_mail()
                 for i in range(len(dep.files)):
@@ -312,7 +322,8 @@ def restore(recid):
                 rec = RecordMetadata.query.filter_by(
                     id=ver.object_uuid).first()
                 dep = WekoDeposit(rec.json, rec)
-                dep.indexer.update_path(dep, update_revision=False)
+                dep['publish_status'] = '0'
+                dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
                 dep.commit()
             pids = PersistentIdentifier.query.filter_by(
                 object_uuid=ver.object_uuid)
@@ -437,9 +448,17 @@ def hide_item_metadata(record, settings=None, item_type_mapping=None,
             record['item_type_id'], item_type_mapping, item_type_data
         )
         record = hide_by_itemtype(record, list_hidden)
+        
+        hide_email = hide_meta_data_for_role(record)
+        if hide_email:
+            # Hidden owners_ext.email
+            if record.get('_deposit') and \
+                record['_deposit'].get('owners_ext') and record['_deposit']['owners_ext'].get('email'):
+                del record['_deposit']['owners_ext']['email']
 
-        if not current_app.config['EMAIL_DISPLAY_FLG']:
+        if hide_email and not current_app.config['EMAIL_DISPLAY_FLG']:
             record = hide_by_email(record)
+
 
         record = hide_by_file(record)
 
@@ -459,11 +478,16 @@ def hide_item_metadata_email_only(record):
     check_items_settings()
 
     record['weko_creator_id'] = record.get('owner')
+    
+    hide_email = hide_meta_data_for_role(record)
+    if hide_email:
+        # Hidden owners_ext.email
+        if record.get('_deposit') and \
+            record['_deposit'].get('owners_ext') and record['_deposit']['owners_ext'].get('email'):
+            del record['_deposit']['owners_ext']['email']
 
-    if hide_meta_data_for_role(record) and \
-            not current_app.config['EMAIL_DISPLAY_FLG']:
+    if hide_email and not current_app.config['EMAIL_DISPLAY_FLG']:
         record = hide_by_email(record)
-
         return True
 
     record.pop('weko_creator_id')
@@ -500,7 +524,7 @@ def hide_by_email(item_metadata):
 
     # Hidden owners_ext.email
     if item_metadata.get('_deposit') and \
-            item_metadata['_deposit'].get('owners_ext'):
+        item_metadata['_deposit'].get('owners_ext') and item_metadata['_deposit']['owners_ext'].get('email'):
         del item_metadata['_deposit']['owners_ext']['email']
 
     for item in item_metadata:
@@ -587,15 +611,16 @@ def is_show_email_of_creator(item_type_id):
 
     def item_setting_show_email():
         # Display email from setting item admin.
-        settings = AdminSettings.get('items_display_settings')
-        if hasattr(settings, 'item_display_email'):
-            is_display = settings.items_display_email
+        settings = AdminSettings.get('items_display_settings',dict_to_object=False)
+        if settings and 'items_display_email' in settings:
+            is_display = settings['items_display_email']
         else:
             is_display = False
         return is_display
 
     is_hide = item_type_show_email(item_type_id)
     is_display = item_setting_show_email()
+    
     return not is_hide and is_display
 
 
@@ -1163,7 +1188,7 @@ def display_oaiset_path(record_metadata):
     record_metadata['_oai']['sets'] = index_paths
 
 
-def get_google_scholar_meta(record):
+def get_google_scholar_meta(record, record_tree=None):
     """
     _get_google_scholar_meta [make a google scholar metadata]
 
@@ -1171,6 +1196,7 @@ def get_google_scholar_meta(record):
 
     Args:
         record ([type]): [description]
+        record_tree (etree): Return value of getrecord method
 
     Returns:
         [type]: [description]
@@ -1188,12 +1214,16 @@ def get_google_scholar_meta(record):
 
     if '_oai' not in record and 'id' not in record['_oai']:
         return
-    recstr = etree.tostring(
-        getrecord(
-            identifier=record['_oai'].get('id'),
-            metadataPrefix='jpcoar',
-            verb='getrecord'))
-    et = etree.fromstring(recstr)
+    if record_tree is None:
+        recstr = etree.tostring(
+            getrecord(
+                identifier=record['_oai'].get('id'),
+                metadataPrefix='jpcoar',
+                verb='getrecord'))
+        et = etree.fromstring(recstr)
+    else:
+        et = record_tree
+
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     if mtdata is None:
         return
@@ -1254,8 +1284,7 @@ def get_google_scholar_meta(record):
     res.append({'name': 'citation_abstract_html_url', 'data': record_url})
     return res
 
-
-def get_google_detaset_meta(record):
+def get_google_detaset_meta(record,record_tree=None):
     """
     _get_google_detaset_meta [summary]
 
@@ -1263,6 +1292,7 @@ def get_google_detaset_meta(record):
 
     Args:
         record ([type]): [description]
+        record_tree (etree): Return value of getrecord method
 
     Returns:
         [type]: [description]
@@ -1279,13 +1309,15 @@ def get_google_detaset_meta(record):
 
     if '_oai' not in record and 'id' not in record['_oai']:
         return
-        
-    recstr = etree.tostring(
-        getrecord(
-            identifier=record['_oai'].get('id'),
-            metadataPrefix='jpcoar',
-            verb='getrecord'))
-    et = etree.fromstring(recstr)
+    if record_tree is None:
+        recstr = etree.tostring(
+            getrecord(
+                identifier=record['_oai'].get('id'),
+                metadataPrefix='jpcoar',
+                verb='getrecord'))
+        et = etree.fromstring(recstr)
+    else:
+        et = record_tree
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     if mtdata is None:
         return
@@ -1403,8 +1435,8 @@ def get_google_detaset_meta(record):
                 '@type': 'Place',
                 'geo': {
                     '@type': 'GeoCoordinates',
-                    'latitude': point_longitude.text,
-                    'longitude': point_latitude.text,
+                    'latitude': point_latitude.text,
+                    'longitude': point_longitude.text,
                 }
             })
 

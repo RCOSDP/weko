@@ -204,8 +204,7 @@ def process_item(record, harvesting, counter, request_info):
         indexes.append(str(harvesting.index_id)) if str(
             harvesting.index_id) not in indexes else None
 
-    if hvstid and pubdate >= mapper.datestamp() and \
-       indexes == dep['path'] and harvesting.update_style == '1':
+    if hvstid and pubdate >= mapper.datestamp() and indexes == dep['path'] and harvesting.update_style == '1':
         return
 
     if mapper.is_deleted():    # delete item if item is already registered
@@ -225,23 +224,21 @@ def process_item(record, harvesting, counter, request_info):
             0, 'Harvesting', mapper.identifier()))
         if harvesting.metadata_prefix == 'oai_ddi25' or harvesting.metadata_prefix == 'ddi':
             if 'item_1593074267803' in json_data:
-                if len(json_data['item_1593074267803']) > 0:
-                    n2 = len(json_data['item_1593074267803'])
-                    n = int(n2/2)
-                    if 'creatorNames' in json_data['item_1593074267803'][0] and 'creatorNames' in json_data['item_1593074267803'][n]:
-                        if 'creatorNameLang' in json_data['item_1593074267803'][0]['creatorNames'][0] and 'creatorNameLang' in json_data['item_1593074267803'][n]['creatorNames'][0]:
-                            if json_data['item_1593074267803'][0]['creatorNames'][0]['creatorNameLang'] != json_data['item_1593074267803'][n]['creatorNames'][0]['creatorNameLang']:
-                                for i in range(n):
-                                    json_data['item_1593074267803'][i]['creatorNames'].append(
-                                        json_data['item_1593074267803'][i+n]['creatorNames'][0])
-                                    if json_data['item_1593074267803'][i]['creatorNames'][0]['creatorNameLang'] == 'en':
-                                        tmp = json_data['item_1593074267803'][i]['creatorNames'][0]
-                                        json_data['item_1593074267803'][i]['creatorNames'][0] = json_data['item_1593074267803'][i]['creatorNames'][1]
-                                        json_data['item_1593074267803'][i]['creatorNames'][1] = tmp
-                                    if 'nameIdentifiers' in json_data['item_1593074267803'][i]:
-                                        del json_data['item_1593074267803'][i]['nameIdentifiers']
-
-                                del json_data['item_1593074267803'][n:]
+                n2 = len(json_data['item_1593074267803'])
+                n = int(n2/2)
+                if 'creatorNames' in json_data['item_1593074267803'][0] and 'creatorNames' in json_data['item_1593074267803'][n]:
+                    if 'creatorNameLang' in json_data['item_1593074267803'][0]['creatorNames'][0] and 'creatorNameLang' in json_data['item_1593074267803'][n]['creatorNames'][0]:
+                        if json_data['item_1593074267803'][0]['creatorNames'][0]['creatorNameLang'] != json_data['item_1593074267803'][n]['creatorNames'][0]['creatorNameLang']:
+                            for i in range(n):
+                                json_data['item_1593074267803'][i]['creatorNames'].append(
+                                    json_data['item_1593074267803'][i+n]['creatorNames'][0])
+                                if json_data['item_1593074267803'][i]['creatorNames'][0]['creatorNameLang'] == 'en':
+                                    tmp = json_data['item_1593074267803'][i]['creatorNames'][0]
+                                    json_data['item_1593074267803'][i]['creatorNames'][0] = json_data['item_1593074267803'][i]['creatorNames'][1]
+                                    json_data['item_1593074267803'][i]['creatorNames'][1] = tmp
+                                if 'nameIdentifiers' in json_data['item_1593074267803'][i]:
+                                    del json_data['item_1593074267803'][i]['nameIdentifiers']
+                            del json_data['item_1593074267803'][n:]
 
         # for e in json_data:
         #    current_app.logger.debug('[{0}] [{1}] Processing json_data[e]: {2}'.format(
@@ -308,8 +305,6 @@ def process_item(record, harvesting, counter, request_info):
         current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
             0, 'Harvesting', idt))
         for it in idt_list:
-            if not it.get('type'):
-                continue
             pid_type = it['type'].lower()
             pid_obj = idt.get_pidstore(pid_type)
             if not pid_obj:
@@ -332,7 +327,7 @@ def process_item(record, harvesting, counter, request_info):
         send_item_created_event_to_es(dep, request_info)
     elif event == ItemEvents.UPDATE:
         event_counter('updated_items', counter)
-    elif event == ItemEvents.DELETE:
+    else: #event == ItemEvents.DELETE:
         event_counter('deleted_items', counter)
 
 
@@ -496,10 +491,22 @@ def check_schedules_and_run():
     """Check schedules and run."""
     settings = HarvestSettings.query.all()
     now = datetime.utcnow()
+    user_data = {
+            'ip_address': "",
+            'user_agent': "",
+            'user_id': "",
+            'session_id': ""
+    }
+    request_info = {
+            "remote_addr": "",
+            "referrer": "",
+            "hostname": "",
+            "user_id": ""
+    }
     for h in settings:
         if h.schedule_enable is True:
             if (h.schedule_frequency == 'daily') or \
                (h.schedule_frequency == 'weekly' and h.schedule_details == now.weekday()) or \
                (h.schedule_frequency == 'monthly' and h.schedule_details == now.day):
                 run_harvesting.delay(
-                    h.id, now.strftime('%Y-%m-%dT%H:%M:%S%z'), {})
+                    h.id, now.strftime('%Y-%m-%dT%H:%M:%S%z'), user_data,request_info)

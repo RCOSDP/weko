@@ -1,0 +1,1890 @@
+GLOB sdist-make: /code/modules/weko-records-ui/setup.py
+c1 inst-nodeps: /code/modules/weko-records-ui/.tox/.tmp/package/1/weko-records-ui-0.1.0.dev20170000.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.5,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,kombu==4.6.10,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records&subdirectory=modules/weko-records,weko-records-ui @ file:///code/modules/weko-records-ui/.tox/.tmp/package/1/weko-records-ui-0.1.0.dev20170000.zip,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='3533420028'
+c1 run-test: commands[0] | pytest --cov=weko_records_ui tests -v --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/weko-records-ui/.tox/c1/bin/python
+cachedir: .tox/c1/.pytest_cache
+rootdir: /code/modules/weko-records-ui
+plugins: cov-4.0.0, celery-4.4.7, mock-3.6.1
+collecting ... collected 162 items
+
+tests/test_admin.py::TestItemSettingView::test_index_acl PASSED          [  0%]
+tests/test_admin.py::TestItemSettingView::test_index PASSED              [  1%]
+tests/test_admin.py::TestPdfCoverPageSettingView::test_index PASSED      [  1%]
+tests/test_admin.py::TestInstitutionNameSettingView::test_index PASSED   [  2%]
+tests/test_admin.py::TestItemManagementBulkUpdate::test_index FAILED     [  3%]
+tests/test_admin.py::TestItemManagementBulkUpdate::test_get_items_metadata_acl PASSED [  3%]
+tests/test_admin.py::TestItemManagementBulkUpdate::test_get_items_metadata PASSED [  4%]
+tests/test_fd.py::test_weko_view_method PASSED                           [  4%]
+tests/test_fd.py::test_prepare_response PASSED                           [  5%]
+tests/test_fd.py::test_file_preview_ui PASSED                            [  6%]
+tests/test_fd.py::test_file_download_ui PASSED                           [  6%]
+tests/test_fd.py::test_file_ui PASSED                                    [  7%]
+tests/test_fd.py::test__download_file PASSED                             [  8%]
+tests/test_fd.py::test_add_signals_info PASSED                           [  8%]
+tests/test_fd.py::test_file_download_onetime PASSED                      [  9%]
+tests/test_ipaddr.py::test_check_site_license_permission PASSED          [  9%]
+tests/test_ipaddr.py::test_check_site_license_permission2 PASSED         [ 10%]
+tests/test_ipaddr.py::test_match_ip_addr PASSED                          [ 11%]
+tests/test_models.py::test_InstitutionName_set_institution_name PASSED   [ 11%]
+tests/test_models.py::test_FilePermission_set_institution_name PASSED    [ 12%]
+tests/test_models.py::test_FilePermission_init_file_permission FAILED    [ 12%]
+tests/test_models.py::test_FilePermission_update_status PASSED           [ 13%]
+tests/test_models.py::test_FilePermission_update_open_date PASSED        [ 14%]
+tests/test_models.py::test_FilePermission_find_by_activity FAILED        [ 14%]
+tests/test_models.py::test_FilePermission_update_usage_report_activity_id PASSED [ 15%]
+tests/test_models.py::test_FilePermission_delete_object FAILED           [ 16%]
+tests/test_models.py::test_FileOnetimeDownload_update_download PASSED    [ 16%]
+tests/test_pdf.py::test_get_east_asian_width_count PASSED                [ 17%]
+tests/test_pdf.py::test_make_combined_pdf PASSED                         [ 17%]
+tests/test_permissions.py::test_page_permission_factory PASSED           [ 18%]
+tests/test_permissions.py::test_file_permission_factory PASSED           [ 19%]
+tests/test_permissions.py::test_check_file_download_permission FAILED    [ 19%]
+tests/test_permissions.py::test_check_open_restricted_permission PASSED  [ 20%]
+tests/test_permissions.py::test_is_open_restricted PASSED                [ 20%]
+tests/test_permissions.py::test_check_content_clickable PASSED           [ 21%]
+tests/test_permissions.py::test_check_permission_period PASSED           [ 22%]
+tests/test_permissions.py::test_get_permission PASSED                    [ 22%]
+tests/test_permissions.py::test_check_original_pdf_download_permission FAILED [ 23%]
+tests/test_permissions.py::test_check_user_group_permission PASSED       [ 24%]
+tests/test_permissions.py::test_check_publish_status PASSED              [ 24%]
+tests/test_permissions.py::test_check_publish_status2[0-2023-03-24-True0] PASSED [ 25%]
+tests/test_permissions.py::test_check_publish_status2[1-2023-03-24-False0] PASSED [ 25%]
+tests/test_permissions.py::test_check_publish_status2[0-2023-03-25-True] PASSED [ 26%]
+tests/test_permissions.py::test_check_publish_status2[1-2023-03-25-False] PASSED [ 27%]
+tests/test_permissions.py::test_check_publish_status2[0-2023-03-26-False] PASSED [ 27%]
+tests/test_permissions.py::test_check_publish_status2[0-2023-03-24-True1] PASSED [ 28%]
+tests/test_permissions.py::test_check_publish_status2[1-2023-03-24-False1] PASSED [ 29%]
+tests/test_permissions.py::test_check_created_id FAILED                  [ 29%]
+tests/test_permissions.py::test_check_usage_report_in_permission PASSED  [ 30%]
+tests/test_permissions.py::test_check_create_usage_report PASSED         [ 30%]
+tests/test_permissions.py::test___get_file_permission PASSED             [ 31%]
+tests/test_preview.py::test_preview PASSED                               [ 32%]
+tests/test_preview.py::test_children_to_list PASSED                      [ 32%]
+tests/test_preview.py::test_zip_preview PASSED                           [ 33%]
+tests/test_preview.py::test_decode_name PASSED                           [ 33%]
+tests/test_rest.py::test_create_error_handlers PASSED                    [ 34%]
+tests/test_rest.py::test_create_blueprint PASSED                         [ 35%]
+tests/test_rest.py::test_WekoRecordsCitesResource PASSED                 [ 35%]
+tests/test_utils.py::test_check_items_settings PASSED                    [ 36%]
+tests/test_utils.py::test_get_record_permalink PASSED                    [ 37%]
+tests/test_utils.py::test_get_groups_price PASSED                        [ 37%]
+tests/test_utils.py::test_get_billing_file_download_permission PASSED    [ 38%]
+tests/test_utils.py::test_get_min_price_billing_file_download PASSED     [ 38%]
+tests/test_utils.py::test_is_billing_item PASSED                         [ 39%]
+tests/test_utils.py::test_soft_delete PASSED                             [ 40%]
+tests/test_utils.py::test_restore PASSED                                 [ 40%]
+tests/test_utils.py::test_get_list_licence PASSED                        [ 41%]
+tests/test_utils.py::test_get_license_pdf PASSED                         [ 41%]
+tests/test_utils.py::test_get_pair_value FAILED                          [ 42%]
+tests/test_utils.py::test_hide_item_metadata PASSED                      [ 43%]
+tests/test_utils.py::test_hide_item_metadata_email_only PASSED           [ 43%]
+tests/test_utils.py::test_hide_by_file PASSED                            [ 44%]
+tests/test_utils.py::test_hide_by_email PASSED                           [ 45%]
+tests/test_utils.py::test_hide_by_itemtype PASSED                        [ 45%]
+tests/test_utils.py::test_is_show_email_of_creator[False-True-True] PASSED [ 46%]
+tests/test_utils.py::test_is_show_email_of_creator[True-True-False] PASSED [ 46%]
+tests/test_utils.py::test_is_show_email_of_creator[False-False-False] PASSED [ 47%]
+tests/test_utils.py::test_is_show_email_of_creator[True-False-False] PASSED [ 48%]
+tests/test_utils.py::test_replace_license_free PASSED                    [ 48%]
+tests/test_utils.py::test_get_file_info_list PASSED                      [ 49%]
+tests/test_utils.py::test_check_and_create_usage_report PASSED           [ 50%]
+tests/test_utils.py::test_create_usage_report_for_user PASSED            [ 50%]
+tests/test_utils.py::test_get_data_usage_application_data FAILED         [ 51%]
+tests/test_utils.py::test_send_usage_report_mail_for_user PASSED         [ 51%]
+tests/test_utils.py::test_check_and_send_usage_report PASSED             [ 52%]
+tests/test_utils.py::test_generate_one_time_download_url PASSED          [ 53%]
+tests/test_utils.py::test_parse_one_time_download_token PASSED           [ 53%]
+tests/test_utils.py::test_validate_onetime_download_token PASSED         [ 54%]
+tests/test_utils.py::test_is_private_index PASSED                        [ 54%]
+tests/test_utils.py::test_validate_download_record PASSED                [ 55%]
+tests/test_utils.py::test_get_onetime_download PASSED                    [ 56%]
+tests/test_utils.py::test_create_onetime_download_url PASSED             [ 56%]
+tests/test_utils.py::test_update_onetime_download PASSED                 [ 57%]
+tests/test_utils.py::test_get_workflows PASSED                           [ 58%]
+tests/test_utils.py::test_get_roles PASSED                               [ 58%]
+tests/test_utils.py::test_get_terms PASSED                               [ 59%]
+tests/test_utils.py::test_display_oaiset_path PASSED                     [ 59%]
+tests/test_utils.py::test_get_google_scholar_meta PASSED                 [ 60%]
+tests/test_utils.py::test_get_google_detaset_meta FAILED                 [ 61%]
+tests/test_views.py::test_record_from_pid PASSED                         [ 61%]
+tests/test_views.py::test_url_to_link FAILED                             [ 62%]
+tests/test_views.py::test_pid_value_version PASSED                       [ 62%]
+tests/test_views.py::test_publish_acl_guest PASSED                       [ 63%]
+tests/test_views.py::test_publish_acl[0-302] PASSED                      [ 64%]
+tests/test_views.py::test_export_acl_guest PASSED                        [ 64%]
+tests/test_views.py::test_export_acl[0-200] PASSED                       [ 65%]
+tests/test_views.py::test_get_image_src PASSED                           [ 66%]
+tests/test_views.py::test_get_license_icon PASSED                        [ 66%]
+tests/test_views.py::test_check_permission PASSED                        [ 67%]
+tests/test_views.py::test_check_file_permission[0-True] PASSED           [ 67%]
+tests/test_views.py::test_check_file_permission[1-True] PASSED           [ 68%]
+tests/test_views.py::test_check_file_permission[2-True] PASSED           [ 69%]
+tests/test_views.py::test_check_file_permission[3-True] PASSED           [ 69%]
+tests/test_views.py::test_check_file_permission[4-True] PASSED           [ 70%]
+tests/test_views.py::test_check_file_permission[5-True] PASSED           [ 70%]
+tests/test_views.py::test_check_file_permission[6-True] PASSED           [ 71%]
+tests/test_views.py::test_check_file_permission[7-True] PASSED           [ 72%]
+tests/test_views.py::test_check_file_permission_period[0-True] FAILED    [ 72%]
+tests/test_views.py::test_get_file_permission[0-None] PASSED             [ 73%]
+tests/test_views.py::test_check_content_file_clickable[0-False] PASSED   [ 74%]
+tests/test_views.py::test_get_usage_workflow FAILED                      [ 74%]
+tests/test_views.py::test_get_workflow_detail PASSED                     [ 75%]
+tests/test_views.py::test_default_view_method FAILED                     [ 75%]
+tests/test_views.py::test_doi_ish_view_method_acl_guest PASSED           [ 76%]
+tests/test_views.py::test_doi_ish_view_method_acl[0-False] FAILED        [ 77%]
+tests/test_views.py::test_parent_view_method_acl_guest PASSED            [ 77%]
+tests/test_views.py::test_parent_view_method_acl[0-False] PASSED         [ 78%]
+tests/test_views.py::test_set_pdfcoverpage_header_acl_guest FAILED       [ 79%]
+tests/test_views.py::test_set_pdfcoverpage_header_acl[0-False] PASSED    [ 79%]
+tests/test_views.py::test_file_version_update_acl_guest PASSED           [ 80%]
+tests/test_views.py::test_file_version_update_acl[0-200] PASSED          [ 80%]
+tests/test_views.py::test_citation PASSED                                [ 81%]
+tests/test_views.py::test_soft_delete_acl_guest PASSED                   [ 82%]
+tests/test_views.py::test_soft_delete_acl[0-500] PASSED                  [ 82%]
+tests/test_views.py::test_soft_delete_acl[1-200] FAILED                  [ 83%]
+tests/test_views.py::test_soft_delete_acl[2-200] FAILED                  [ 83%]
+tests/test_views.py::test_soft_delete_acl[3-200] FAILED                  [ 84%]
+tests/test_views.py::test_soft_delete_acl[4-500] PASSED                  [ 85%]
+tests/test_views.py::test_soft_delete_acl[5-500] PASSED                  [ 85%]
+tests/test_views.py::test_soft_delete_acl[6-200] FAILED                  [ 86%]
+tests/test_views.py::test_soft_delete_acl[7-500] PASSED                  [ 87%]
+tests/test_views.py::test_restore_acl_guest PASSED                       [ 87%]
+tests/test_views.py::test_restore_acl[0-500] PASSED                      [ 88%]
+tests/test_views.py::test_restore_acl[1-200] FAILED                      [ 88%]
+tests/test_views.py::test_restore_acl[2-200] FAILED                      [ 89%]
+tests/test_views.py::test_restore_acl[3-200] FAILED                      [ 90%]
+tests/test_views.py::test_restore_acl[4-500] PASSED                      [ 90%]
+tests/test_views.py::test_restore_acl[5-500] PASSED                      [ 91%]
+tests/test_views.py::test_restore_acl[6-200] FAILED                      [ 91%]
+tests/test_views.py::test_restore_acl[7-500] PASSED                      [ 92%]
+tests/test_views.py::test_init_permission_acl_guest PASSED               [ 93%]
+tests/test_views.py::test_init_permission_acl[0-400] PASSED              [ 93%]
+tests/test_views.py::test_escape_str PASSED                              [ 94%]
+tests/test_views.py::test_escape_newline PASSED                          [ 95%]
+tests/test_views.py::test_json_string_escape PASSED                      [ 95%]
+tests/test_views.py::test_xml_string_escape PASSED                       [ 96%]
+tests/test_views.py::test_preview_able PASSED                            [ 96%]
+tests/test_views.py::test_get_uri PASSED                                 [ 97%]
+tests/test_views.py::test_default_view_method_fix35133 FAILED            [ 98%]
+tests/test_weko_records_ui.py::test_version PASSED                       [ 98%]
+tests/test_weko_records_ui.py::test_init PASSED                          [ 99%]
+tests/test_weko_records_ui.py::test_wekorecordsCitesREST PASSED          [100%]
+
+=================================== FAILURES ===================================
+___________________ TestItemManagementBulkUpdate.test_index ____________________
+
+self = <tests.test_admin.TestItemManagementBulkUpdate object at 0x7fd8816e4b00>
+client = <FlaskClient <Flask 'testapp'>>, db_sessionlifetime = None
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+
+    def test_index(self,client,db_sessionlifetime,users):
+        url = url_for("items/bulk/update.index", _external=True)
+        with patch("weko_records_ui.views.get_search_detail_keyword", return_value={}):
+            res = client.get(url)
+            assert res.status == '302 FOUND'
+    
+            with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
+                with patch("flask.templating._render", return_value=""):
+                    res = client.get(url)
+                    assert res.status == '403 FORBIDDEN'
+    
+            with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
+                with patch("flask.templating._render", return_value=""):
+>                   res = client.get(url)
+
+tests/test_admin.py:124: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1029: in get
+    return self.open(*args, **kw)
+.tox/c1/lib/python3.6/site-packages/flask/testing.py:196: in open
+    follow_redirects=follow_redirects
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:993: in open
+    response = self.run_wsgi_app(environ.copy(), buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:884: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1119: in run_wsgi_app
+    app_rv = app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2334: in __call__
+    return self.wsgi_app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2320: in wsgi_app
+    response = self.handle_exception(e)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1766: in handle_exception
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2317: in wsgi_app
+    response = self.full_dispatch_request()
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1840: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1743: in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1838: in full_dispatch_request
+    rv = self.dispatch_request()
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1824: in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:69: in inner
+    return self._run_view(f, *args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:368: in _run_view
+    return fn(self, *args, **kwargs)
+weko_records_ui/admin.py:165: in index
+    detail_condition = get_search_detail_keyword('')
+../weko-search-ui/weko_search_ui/api.py:183: in get_search_detail_keyword
+    index_browsing_tree = Indexes.get_browsing_tree()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'weko_index_tree.api.Indexes'>, pid = 0
+
+    @classmethod
+    def get_browsing_tree(cls, pid=0):
+        """Get browsing tree."""
+        if pid == 0:
+            try:
+                redis_connection = RedisConnection()
+                datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+>               v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language).decode("UTF-8")
+E               TypeError: must be str, not NoneType
+
+../weko-index-tree/weko_index_tree/api.py:572: TypeError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+----------------------------- Captured stdout call -----------------------------
+/admin/items/bulk/update/
+___________________ test_FilePermission_init_file_permission ___________________
+
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/weko-records-ui/test.db>
+
+    def test_FilePermission_init_file_permission(app, db):
+        db.session.add(file_permission)
+        db.session.commit()
+    
+        file_permission.init_file_permission(
+>           user_id=file_permission.id,
+            record_id=file_permission.record_id,
+            file_name=file_permission.file_name,
+            activity_id=file_permission.usage_application_activity_id
+        )
+
+tests/test_models.py:54: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7fd884e77eb8; FilePermission>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7fd883e37a20>
+attribute_names = {'file_name', 'id', 'open_date', 'record_id', 'status', 'usage_application_activity_id', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+                "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+    
+        has_key = bool(state.key)
+    
+        result = False
+    
+        # in the case of inheritance, particularly concrete and abstract
+        # concrete inheritance, the class manager might have some keys
+        # of attributes on the superclass that we didn't actually map.
+        # These could be mapped as "concrete, dont load" or could be completely
+        # exluded from the mapping and we know nothing about them.  Filter them
+        # here to prevent them from coming through.
+        if attribute_names:
+            attribute_names = attribute_names.intersection(mapper.attrs.keys())
+    
+        if mapper.inherits and not mapper.concrete:
+            # because we are using Core to produce a select() that we
+            # pass to the Query, we aren't calling setup() for mapped
+            # attributes; in 1.0 this means deferred attrs won't get loaded
+            # by default
+            statement = mapper._optimized_get_statement(state, attribute_names)
+            if statement is not None:
+                result = load_on_ident(
+                    session.query(mapper)
+                    .options(strategy_options.Load(mapper).undefer("*"))
+                    .from_statement(statement),
+                    None,
+                    only_load_props=attribute_names,
+                    refresh_state=state,
+                )
+    
+        if result is False:
+            if has_key:
+                identity_key = state.key
+            else:
+                # this codepath is rare - only valid when inside a flush, and the
+                # object is becoming persistent but hasn't yet been assigned
+                # an identity_key.
+                # check here to ensure we have the attrs we need.
+                pk_attrs = [
+                    mapper._columntoproperty[col].key for col in mapper.primary_key
+                ]
+                if state.expired_attributes.intersection(pk_attrs):
+                    raise sa_exc.InvalidRequestError(
+                        "Instance %s cannot be refreshed - it's not "
+                        " persistent and does not "
+                        "contain a full primary key." % state_str(state)
+                    )
+                identity_key = mapper._identity_key_from_state(state)
+    
+            if (
+                _none_set.issubset(identity_key) and not mapper.allow_partial_pks
+            ) or _none_set.issuperset(identity_key):
+                util.warn_limited(
+                    "Instance %s to be refreshed doesn't "
+                    "contain a full primary key - can't be refreshed "
+                    "(and shouldn't be expired, either).",
+                    state_str(state),
+                )
+                return
+    
+            result = load_on_ident(
+                session.query(mapper),
+                identity_key,
+                refresh_state=state,
+                only_load_props=attribute_names,
+            )
+    
+        # if instance is pending, a refresh operation
+        # may not complete (even if PK attributes are assigned)
+        if has_key and result is None:
+>           raise orm_exc.ObjectDeletedError(state)
+E           sqlalchemy.orm.exc.ObjectDeletedError: Instance '<FilePermission at 0x7fd883e0e358>' has been deleted, or its row is otherwise not present.
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:985: ObjectDeletedError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+_____________________ test_FilePermission_find_by_activity _____________________
+
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/weko-records-ui/test.db>
+
+    def test_FilePermission_find_by_activity(app, db):
+        db.session.add(file_permission)
+        db.session.commit()
+    
+        file_permission.find_by_activity(
+>           activity_id=file_permission.usage_application_activity_id
+        )
+
+tests/test_models.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7fd884e77eb8; FilePermission>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7fd883e37a20>
+attribute_names = {'file_name', 'id', 'open_date', 'record_id', 'status', 'usage_application_activity_id', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+                "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+    
+        has_key = bool(state.key)
+    
+        result = False
+    
+        # in the case of inheritance, particularly concrete and abstract
+        # concrete inheritance, the class manager might have some keys
+        # of attributes on the superclass that we didn't actually map.
+        # These could be mapped as "concrete, dont load" or could be completely
+        # exluded from the mapping and we know nothing about them.  Filter them
+        # here to prevent them from coming through.
+        if attribute_names:
+            attribute_names = attribute_names.intersection(mapper.attrs.keys())
+    
+        if mapper.inherits and not mapper.concrete:
+            # because we are using Core to produce a select() that we
+            # pass to the Query, we aren't calling setup() for mapped
+            # attributes; in 1.0 this means deferred attrs won't get loaded
+            # by default
+            statement = mapper._optimized_get_statement(state, attribute_names)
+            if statement is not None:
+                result = load_on_ident(
+                    session.query(mapper)
+                    .options(strategy_options.Load(mapper).undefer("*"))
+                    .from_statement(statement),
+                    None,
+                    only_load_props=attribute_names,
+                    refresh_state=state,
+                )
+    
+        if result is False:
+            if has_key:
+                identity_key = state.key
+            else:
+                # this codepath is rare - only valid when inside a flush, and the
+                # object is becoming persistent but hasn't yet been assigned
+                # an identity_key.
+                # check here to ensure we have the attrs we need.
+                pk_attrs = [
+                    mapper._columntoproperty[col].key for col in mapper.primary_key
+                ]
+                if state.expired_attributes.intersection(pk_attrs):
+                    raise sa_exc.InvalidRequestError(
+                        "Instance %s cannot be refreshed - it's not "
+                        " persistent and does not "
+                        "contain a full primary key." % state_str(state)
+                    )
+                identity_key = mapper._identity_key_from_state(state)
+    
+            if (
+                _none_set.issubset(identity_key) and not mapper.allow_partial_pks
+            ) or _none_set.issuperset(identity_key):
+                util.warn_limited(
+                    "Instance %s to be refreshed doesn't "
+                    "contain a full primary key - can't be refreshed "
+                    "(and shouldn't be expired, either).",
+                    state_str(state),
+                )
+                return
+    
+            result = load_on_ident(
+                session.query(mapper),
+                identity_key,
+                refresh_state=state,
+                only_load_props=attribute_names,
+            )
+    
+        # if instance is pending, a refresh operation
+        # may not complete (even if PK attributes are assigned)
+        if has_key and result is None:
+>           raise orm_exc.ObjectDeletedError(state)
+E           sqlalchemy.orm.exc.ObjectDeletedError: Instance '<FilePermission at 0x7fd883e0e358>' has been deleted, or its row is otherwise not present.
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:985: ObjectDeletedError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+______________________ test_FilePermission_delete_object _______________________
+
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/weko-records-ui/test.db>
+
+    def test_FilePermission_delete_object(app, db):
+        db.session.add(file_permission)
+        db.session.commit()
+    
+        file_permission.delete_object(
+>           permission=file_permission
+        )
+
+tests/test_models.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_records_ui/models.py:286: in delete_object
+    db.session.commit()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/scoping.py:162: in do
+    return getattr(self.registry(), name)(*args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:1023: in commit
+    self.transaction.commit()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:487: in commit
+    self._prepare_impl()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:466: in _prepare_impl
+    self.session.flush()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2446: in flush
+    self._flush(objects)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2584: in _flush
+    transaction.rollback(_capture_exception=True)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/langhelpers.py:67: in __exit__
+    compat.reraise(exc_type, exc_value, exc_tb)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2544: in _flush
+    flush_context.execute()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/unitofwork.py:416: in execute
+    rec.execute(self)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/unitofwork.py:618: in execute
+    uow,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/persistence.py:348: in delete_obj
+    delete,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/persistence.py:1289: in _emit_delete_statements
+    for connection, recs in groupby(delete, lambda rec: rec[1]):  # connection
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/persistence.py:812: in _collect_delete_commands
+    state, state_dict, col
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/mapper.py:2776: in _get_committed_state_attr_by_column
+    state, dict_, passive=passive
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:740: in get_committed_value
+    return self.get(state, dict_, passive=passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:669: in get
+    value = state._load_expired(state, passive)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/state.py:632: in _load_expired
+    self.manager.deferred_scalar_loader(self, toload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x7fd884e77eb8; FilePermission>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7fd883e37a20>
+attribute_names = {'file_name', 'id', 'open_date', 'record_id', 'status', 'usage_application_activity_id', ...}
+
+    def load_scalar_attributes(mapper, state, attribute_names):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+            raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+                "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+    
+        has_key = bool(state.key)
+    
+        result = False
+    
+        # in the case of inheritance, particularly concrete and abstract
+        # concrete inheritance, the class manager might have some keys
+        # of attributes on the superclass that we didn't actually map.
+        # These could be mapped as "concrete, dont load" or could be completely
+        # exluded from the mapping and we know nothing about them.  Filter them
+        # here to prevent them from coming through.
+        if attribute_names:
+            attribute_names = attribute_names.intersection(mapper.attrs.keys())
+    
+        if mapper.inherits and not mapper.concrete:
+            # because we are using Core to produce a select() that we
+            # pass to the Query, we aren't calling setup() for mapped
+            # attributes; in 1.0 this means deferred attrs won't get loaded
+            # by default
+            statement = mapper._optimized_get_statement(state, attribute_names)
+            if statement is not None:
+                result = load_on_ident(
+                    session.query(mapper)
+                    .options(strategy_options.Load(mapper).undefer("*"))
+                    .from_statement(statement),
+                    None,
+                    only_load_props=attribute_names,
+                    refresh_state=state,
+                )
+    
+        if result is False:
+            if has_key:
+                identity_key = state.key
+            else:
+                # this codepath is rare - only valid when inside a flush, and the
+                # object is becoming persistent but hasn't yet been assigned
+                # an identity_key.
+                # check here to ensure we have the attrs we need.
+                pk_attrs = [
+                    mapper._columntoproperty[col].key for col in mapper.primary_key
+                ]
+                if state.expired_attributes.intersection(pk_attrs):
+                    raise sa_exc.InvalidRequestError(
+                        "Instance %s cannot be refreshed - it's not "
+                        " persistent and does not "
+                        "contain a full primary key." % state_str(state)
+                    )
+                identity_key = mapper._identity_key_from_state(state)
+    
+            if (
+                _none_set.issubset(identity_key) and not mapper.allow_partial_pks
+            ) or _none_set.issuperset(identity_key):
+                util.warn_limited(
+                    "Instance %s to be refreshed doesn't "
+                    "contain a full primary key - can't be refreshed "
+                    "(and shouldn't be expired, either).",
+                    state_str(state),
+                )
+                return
+    
+            result = load_on_ident(
+                session.query(mapper),
+                identity_key,
+                refresh_state=state,
+                only_load_props=attribute_names,
+            )
+    
+        # if instance is pending, a refresh operation
+        # may not complete (even if PK attributes are assigned)
+        if has_key and result is None:
+>           raise orm_exc.ObjectDeletedError(state)
+E           sqlalchemy.orm.exc.ObjectDeletedError: Instance '<FilePermission at 0x7fd883e0e358>' has been deleted, or its row is otherwise not present.
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:985: ObjectDeletedError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+_____________________ test_check_file_download_permission ______________________
+
+app = <Flask 'testapp'>
+records = (<weko_deposit.api.WekoIndexer object at 0x7fd87d1e4d30>, [{'depid': <PersistentIdentifier depid:1 / rec:9393961e-8c04...https://doi.org/10.xyz/0000000003 / rec:85d723cb-bc8b-49e8-b280-c595c6a10bc8 (R)>, 'filename': 'helloworld.zip', ...}])
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+db_file_permission = [<FilePermission 1>, <FilePermission 2>, <FilePermission 3>]
+
+    def test_check_file_download_permission(app, records, users,db_file_permission):
+        indexer, results = records
+        record = results[0]["record"]
+        fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-27'}], 'format': 'image/jpeg', 'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessrole': 'open_access', 'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False, 'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0, 'mimetype': 'image/jpeg', 'file_order': 0}
+        with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+            assert check_file_download_permission(record, fjson, True) == True
+    
+        with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
+            assert check_file_download_permission(record, fjson, True) == True
+    
+        with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+            assert check_file_download_permission(record, fjson, True) == True
+    
+        with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+            with patch("weko_records_ui.permissions.to_utc", return_value=datetime.now()):
+>               assert check_file_download_permission(record, fjson, False) == False
+E               assert True == False
+E                 +True
+E                 -False
+
+tests/test_permissions.py:82: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+_________________ test_check_original_pdf_download_permission __________________
+
+app = <Flask 'testapp'>
+records = (<weko_deposit.api.WekoIndexer object at 0x7fd87bb83d68>, [{'depid': <PersistentIdentifier depid:1 / rec:8bda009c-f644...https://doi.org/10.xyz/0000000003 / rec:3aeb78c2-c24f-4d36-9276-83613137f4b7 (R)>, 'filename': 'helloworld.zip', ...}])
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+db_file_permission = [<FilePermission 1>, <FilePermission 2>, <FilePermission 3>]
+
+    def test_check_original_pdf_download_permission(app, records, users,db_file_permission):
+        indexer, results = records
+        record = results[0]["record"]
+        data1 = MagicMock()
+        def can():
+            return True
+        data1.can = can
+    
+        with app.test_request_context():
+            with patch("invenio_access.action_factory", return_value=data1):
+                with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+>                   assert check_original_pdf_download_permission(record) == None
+
+tests/test_permissions.py:216: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_records_ui/permissions.py:331: in check_original_pdf_download_permission
+    is_can = download_original_pdf_permission.can()
+.tox/c1/lib/python3.6/site-packages/flask_principal.py:347: in can
+    return self.require().can()
+.tox/c1/lib/python3.6/site-packages/flask_principal.py:193: in can
+    return self.identity.can(self.permission)
+.tox/c1/lib/python3.6/site-packages/flask_principal.py:188: in identity
+    return g.identity
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <flask.g of 'testapp'>, name = 'identity'
+
+    def __getattr__(self, name):
+        if name == "__members__":
+            return dir(self._get_current_object())
+>       return getattr(self._get_current_object(), name)
+E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
+
+.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:348: AttributeError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+____________________________ test_check_created_id _____________________________
+
+app = <Flask 'testapp'>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+
+    def test_check_created_id(app, users):
+        datastore = app.extensions["invenio-accounts"].datastore
+        login_manager = app.login_manager
+    
+        @login_manager.user_loader
+        def load_user(user_id):
+            user = datastore.find_user(id=user_id)
+            return user
+    
+        @app.route("/foo_login/<username>")
+        def login(username):
+            user = datastore.find_user(email=username)
+            login_user(user)
+            return "Logged In"
+    
+        record = {
+            "_oai": {"id": "oai:weko3.example.org:00000001", "sets": ["1657555088462"]},
+            "path": ["1657555088462"],
+            "owner": "1",
+            "recid": "1",
+            "title": ["a"],
+            "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-07-12"},
+            "_buckets": {"deposit": "35004d51-8938-4e77-87d7-0c9e176b8e7b"},
+            "_deposit": {
+                "id": "1",
+                "pid": {"type": "depid", "value": "1", "revision_id": 0},
+                "owner": "1",
+                "owners": [1],
+                "status": "published",
+                "created_by": 1,
+                "owners_ext": {
+                    "email": "wekosoftware@nii.ac.jp",
+                    "username": "",
+                    "displayname": "",
+                },
+            },
+            "item_title": "a",
+            "author_link": [],
+            "item_type_id": "15",
+            "publish_date": "2022-07-12",
+            "publish_status": "0",
+            "weko_shared_id": -1,
+            "item_1617186331708": {
+                "attribute_name": "Title",
+                "attribute_value_mlt": [
+                    {"subitem_1551255647225": "a", "subitem_1551255648112": "ja"}
+                ],
+            },
+            "item_1617258105262": {
+                "attribute_name": "Resource Type",
+                "attribute_value_mlt": [
+                    {
+                        "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+                        "resourcetype": "conference paper",
+                    }
+                ],
+            },
+            "relation_version_is_last": True,
+        }
+        assert record.get("_deposit", {}).get("created_by") == 1
+        assert record.get("item_type_id") == "15"
+        assert record.get("weko_shared_id") == -1
+    
+        supers = app.config["WEKO_PERMISSION_SUPER_ROLE_USER"]
+        user_roles = app.config["WEKO_PERMISSION_ROLE_USER"]
+    
+        with app.test_request_context(headers=[("Accept-Language", "en")]):
+            with app.test_client() as client:
+                # guest user
+                assert current_user.is_authenticated == False
+                assert record.get("_deposit", {}).get("created_by") == 1
+                assert record.get("item_type_id") == "15"
+                assert record.get("weko_shared_id") == -1
+                assert check_created_id(record) == False
+                ## no item type
+                record["item_type_id"] = ""
+                assert record.get("_deposit", {}).get("created_by") == 1
+                assert record.get("item_type_id") == ""
+                assert record.get("weko_shared_id") == -1
+                assert check_created_id(record) == False
+                record["item_type_id"] = "15"
+    
+        data_registration = app.config.get("WEKO_ITEMS_UI_DATA_REGISTRATION")
+        application_item_type_list = app.config.get(
+            "WEKO_ITEMS_UI_APPLICATION_ITEM_TYPES_LIST"
+        )
+    
+        with app.test_request_context(headers=[("Accept-Language", "en")]):
+            with app.test_client() as client:
+                for user in users:
+                    # obj = user.get("obj")
+                    obj = MagicMock()
+    
+>                   client.get("/foo_login/{}".format(obj.email), follow_redirects=True)
+
+tests/test_permissions.py:622: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1029: in get
+    return self.open(*args, **kw)
+.tox/c1/lib/python3.6/site-packages/flask/testing.py:196: in open
+    follow_redirects=follow_redirects
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:993: in open
+    response = self.run_wsgi_app(environ.copy(), buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:884: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1119: in run_wsgi_app
+    app_rv = app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2334: in __call__
+    return self.wsgi_app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2320: in wsgi_app
+    response = self.handle_exception(e)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1766: in handle_exception
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2317: in wsgi_app
+    response = self.full_dispatch_request()
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1840: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1743: in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1838: in full_dispatch_request
+    rv = self.dispatch_request()
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1824: in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+tests/test_permissions.py:541: in login
+    login_user(user)
+.tox/c1/lib/python3.6/site-packages/flask_security/utils.py:78: in login_user
+    if not _login_user(user, remember):  # pragma: no cover
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+user = None, remember = False, duration = None, force = False, fresh = True
+
+    def login_user(user, remember=False, duration=None, force=False, fresh=True):
+        '''
+        Logs a user in. You should pass the actual user object to this. If the
+        user's `is_active` property is ``False``, they will not be logged in
+        unless `force` is ``True``.
+    
+        This will return ``True`` if the log in attempt succeeds, and ``False`` if
+        it fails (i.e. because the user is inactive).
+    
+        :param user: The user object to log in.
+        :type user: object
+        :param remember: Whether to remember the user after their session expires.
+            Defaults to ``False``.
+        :type remember: bool
+        :param duration: The amount of time before the remember cookie expires. If
+            ``None`` the value set in the settings is used. Defaults to ``None``.
+        :type duration: :class:`datetime.timedelta`
+        :param force: If the user is inactive, setting this to ``True`` will log
+            them in regardless. Defaults to ``False``.
+        :type force: bool
+        :param fresh: setting this to ``False`` will log in the user with a session
+            marked as not "fresh". Defaults to ``True``.
+        :type fresh: bool
+        '''
+>       if not force and not user.is_active:
+E       AttributeError: 'NoneType' object has no attribute 'is_active'
+
+.tox/c1/lib/python3.6/site-packages/flask_login/utils.py:158: AttributeError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+----------------------------- Captured stdout call -----------------------------
+/foo_login/<MagicMock name='mock.email' id='140567766381176'>
+_____________________________ test_get_pair_value ______________________________
+
+app = <Flask 'testapp'>
+
+    def test_get_pair_value(app):
+        name_keys = ['subitem_1551255647225']
+        lang_keys = ['subitem_1551255648112']
+        datas = [{'subitem_1551255647225': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'en_conference paperITEM00000001(public_open_access_simple)', 'subitem_1551255648112': 'en'}]
+        with app.test_request_context():
+            name,lang =  get_pair_value(name_keys,lang_keys,datas)
+            assert name== ('ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'ja')
+            assert lang== ('en_conference paperITEM00000001(public_open_access_simple)', 'en')
+    
+            name_keys = ['subitem_1551255647225', 'subitem_1551255647225']
+            lang_keys = ['subitem_1551255648112', 'subitem_1551255647225']
+>           name,lang =  get_pair_value(name_keys,lang_keys,datas)
+E           ValueError: not enough values to unpack (expected 2, got 0)
+
+tests/test_utils.py:266: ValueError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+_____________________ test_get_data_usage_application_data _____________________
+
+self = <sqlalchemy.engine.base.Connection object at 0x7fd87337e860>
+dialect = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x7fd8732f9d68>
+constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext'>>
+statement = <sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x7fd87337e908>
+parameters = [{'activity_count': 1, 'date': '2023-03-24'}]
+args = (<sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x7fd87337e908>, [{'activity_count': 1, 'date': '2023-03-24'}])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fd8742a4550>
+
+    def _execute_context(
+        self, dialect, constructor, statement, parameters, *args
+    ):
+        """Create an :class:`.ExecutionContext` and execute, returning
+        a :class:`.ResultProxy`."""
+    
+        try:
+            try:
+                conn = self.__connection
+            except AttributeError:
+                # escape "except AttributeError" before revalidating
+                # to prevent misleading stacktraces in Py3K
+                conn = None
+            if conn is None:
+                conn = self._revalidate_connection()
+    
+>           context = constructor(dialect, self, conn, *args)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1171: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext'>
+dialect = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x7fd8732f9d68>
+connection = <sqlalchemy.engine.base.Connection object at 0x7fd87337e860>
+dbapi_connection = <sqlalchemy.pool._ConnectionFairy object at 0x7fd8742a4550>
+compiled = <sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x7fd87337e908>
+parameters = []
+
+    @classmethod
+    def _init_compiled(
+        cls, dialect, connection, dbapi_connection, compiled, parameters
+    ):
+        """Initialize execution context for a Compiled construct."""
+    
+        self = cls.__new__(cls)
+        self.root_connection = connection
+        self._dbapi_connection = dbapi_connection
+        self.dialect = connection.dialect
+    
+        self.compiled = compiled
+    
+        # this should be caught in the engine before
+        # we get here
+        assert compiled.can_execute
+    
+        self.execution_options = compiled.execution_options.union(
+            connection._execution_options
+        )
+    
+        self.result_column_struct = (
+            compiled._result_columns,
+            compiled._ordered_columns,
+            compiled._textual_ordered_columns,
+        )
+    
+        self.unicode_statement = util.text_type(compiled)
+        if not dialect.supports_unicode_statements:
+            self.statement = self.unicode_statement.encode(
+                self.dialect.encoding
+            )
+        else:
+            self.statement = self.unicode_statement
+    
+        self.isinsert = compiled.isinsert
+        self.isupdate = compiled.isupdate
+        self.isdelete = compiled.isdelete
+        self.is_text = compiled.isplaintext
+    
+        if not parameters:
+            self.compiled_parameters = [compiled.construct_params()]
+        else:
+            self.compiled_parameters = [
+                compiled.construct_params(m, _group_number=grp)
+                for grp, m in enumerate(parameters)
+            ]
+    
+            self.executemany = len(parameters) > 1
+    
+        self.cursor = self.create_cursor()
+    
+        if self.isinsert or self.isupdate or self.isdelete:
+            self.is_crud = True
+            self._is_explicit_returning = bool(compiled.statement._returning)
+            self._is_implicit_returning = bool(
+                compiled.returning and not compiled.statement._returning
+            )
+    
+        if self.compiled.insert_prefetch or self.compiled.update_prefetch:
+            if self.executemany:
+                self._process_executemany_defaults()
+            else:
+                self._process_executesingle_defaults()
+    
+        processors = compiled._bind_processors
+    
+        if compiled.contains_expanding_parameters:
+            positiontup = self._expand_in_parameters(compiled, processors)
+        elif compiled.positional:
+            positiontup = self.compiled.positiontup
+    
+        # Convert the dictionary of bind parameter values
+        # into a dict or list to be sent to the DBAPI's
+        # execute() or executemany() method.
+        parameters = []
+        if compiled.positional:
+            for compiled_params in self.compiled_parameters:
+                param = []
+                for key in positiontup:
+                    if key in processors:
+>                       param.append(processors[key](compiled_params[key]))
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:703: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = '2023-03-24'
+
+    def process(value):
+        if value is None:
+            return None
+        elif isinstance(value, datetime_date):
+            return format_ % {
+                "year": value.year,
+                "month": value.month,
+                "day": value.day,
+            }
+        else:
+            raise TypeError(
+>               "SQLite Date type only accepts Python "
+                "date objects as input."
+            )
+E           TypeError: SQLite Date type only accepts Python date objects as input.
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:698: TypeError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/weko-records-ui/test.db>
+workflows = {'activity': <Activity (transient 140567627674400)>, 'data_usage_activity': <Activity (transient 140567627675744)>, 'data_usage_wf': <WorkFlow (transient 140567625859480)>, 'flow_action1': <FlowAction (transient 140567625584200)>, ...}
+records = (<weko_deposit.api.WekoIndexer object at 0x7fd87434afd0>, [{'depid': <PersistentIdentifier depid:1 / rec:4c060ac6-6802...https://doi.org/10.xyz/0000000003 / rec:cda77099-6081-43d5-a0e9-31522b601978 (R)>, 'filename': 'helloworld.zip', ...}])
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+db_file_permission = [<FilePermission (transient 140567652094528)>, <FilePermission (transient 140567652094024)>, <FilePermission (transient 140567652094304)>]
+
+    def test_get_data_usage_application_data(app, db, workflows, records, users, db_file_permission):
+        _onetime_download_extra_info = {
+            'usage_application_activity_id': 'usage_application_activity_id_dummy1',
+            'is_guest': False
+        }
+        app.config['WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME'] = 'Data Usage Report'
+        app.config['WEKO_WORKFLOW_ENABLE_SHOWING_TERM_OF_USE'] = False
+        app.config['WEKO_WORKFLOW_ACTIVITY_ID_FORMAT'] = 'A-{}-{}'
+        app.config['WEKO_WORKFLOW_RESTRICTED_ACCESS_USAGE_REPORT_ID'] = 'subitem_restricted_access_usage_report_id'
+>       assert create_usage_report_for_user(_onetime_download_extra_info)
+
+tests/test_utils.py:1073: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_records_ui/utils.py:862: in create_usage_report_for_user
+    activity = WorkActivity().init_activity(activity_data)
+../weko-workflow/weko_workflow/api.py:734: in init_activity
+    raise ex
+../weko-workflow/weko_workflow/api.py:716: in init_activity
+    activity_id=self.get_new_activity_id(),
+../weko-workflow/weko_workflow/api.py:815: in get_new_activity_id
+    raise ex
+../weko-workflow/weko_workflow/api.py:810: in get_new_activity_id
+    prev_counts = ActivityCount.query.filter(ActivityCount.date<current_date).all()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/query.py:2925: in all
+    return list(self)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/query.py:3080: in __iter__
+    self.session._autoflush()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:1582: in _autoflush
+    util.raise_from_cause(e)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:1571: in _autoflush
+    self.flush()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2446: in flush
+    self._flush(objects)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2584: in _flush
+    transaction.rollback(_capture_exception=True)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/langhelpers.py:67: in __exit__
+    compat.reraise(exc_type, exc_value, exc_tb)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2544: in _flush
+    flush_context.execute()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/unitofwork.py:416: in execute
+    rec.execute(self)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/unitofwork.py:583: in execute
+    uow,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/persistence.py:245: in save_obj
+    insert,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/persistence.py:1063: in _emit_insert_statements
+    c = cached_connections[connection].execute(statement, multiparams)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:273: in _execute_on_connection
+    return connection._execute_clauseelement(self, multiparams, params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1099: in _execute_clauseelement
+    distilled_params,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1174: in _execute_context
+    e, util.text_type(statement), parameters, None, None
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1458: in _handle_dbapi_exception
+    util.raise_from_cause(sqlalchemy_exception, exc_info)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1171: in _execute_context
+    context = constructor(dialect, self, conn, *args)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:703: in _init_compiled
+    param.append(processors[key](compiled_params[key]))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = '2023-03-24'
+
+    def process(value):
+        if value is None:
+            return None
+        elif isinstance(value, datetime_date):
+            return format_ % {
+                "year": value.year,
+                "month": value.month,
+                "day": value.day,
+            }
+        else:
+            raise TypeError(
+>               "SQLite Date type only accepts Python "
+                "date objects as input."
+            )
+E           sqlalchemy.exc.StatementError: (raised as a result of Query-invoked autoflush; consider using a session.no_autoflush block if this flush is occurring prematurely) (builtins.TypeError) SQLite Date type only accepts Python date objects as input. [SQL: 'INSERT INTO workflow_activity_count (status, created, updated, date, activity_count) VALUES (?, ?, ?, ?, ?)'] [parameters: [{'date': '2023-03-24', 'activity_count': 1}]]
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:698: StatementError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+_________________________ test_get_google_detaset_meta _________________________
+
+app = <Flask 'testapp'>
+records = (<weko_deposit.api.WekoIndexer object at 0x7fd87483fda0>, [{'depid': <PersistentIdentifier depid:1 / rec:e202efed-d704...https://doi.org/10.xyz/0000000003 / rec:f4e8202d-48b8-4d7f-ad48-37f8ce0ddac6 (R)>, 'filename': 'helloworld.zip', ...}])
+itemtypes = {'item_type': <ItemType 1>, 'item_type_mapping': <ItemTypeMapping 1>, 'item_type_name': <ItemTypeName 1>}
+oaischema = None, oaiidentify = None
+
+    def test_get_google_detaset_meta(app, records, itemtypes, oaischema, oaiidentify):
+        _data = '<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><responseDate>2022-10-07T06:11:40Z</responseDate><request identifier="oai:repository.dl.itc.u-tokyo.ac.jp:02005680" verb="getrecord" metadataPrefix="jpcoar_1.0">https://repository.dl.itc.u-tokyo.ac.jp/oai</request><getrecord><record><header><identifier>oai:repository.dl.itc.u-tokyo.ac.jp:02005680</identifier><datestamp>2022-09-27T06:40:27Z</datestamp></header><metadata><jpcoar:jpcoar xmlns:datacite="https://schema.datacite.org/meta/kernel-4/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:jpcoar="https://github.com/JPCOAR/schema/blob/master/1.0/" xmlns:oaire="http://namespace.openaire.eu/schema/oaire/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rioxxterms="http://www.rioxx.net/schema/v2.0/rioxxterms/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="https://github.com/JPCOAR/schema/blob/master/1.0/" xsi:schemaLocation="https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd"><dc:title xml:lang="ja">『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表</dc:title><jpcoar:creator><jpcoar:nameIdentifier nameIdentifierURI="https://orcid.org/123" nameIdentifierScheme="ORCID">123</jpcoar:nameIdentifier><jpcoar:creatorName xml:lang="en">creator name</jpcoar:creatorName><jpcoar:familyName xml:lang="en">creator family name</jpcoar:familyName><jpcoar:givenName xml:lang="en">creator given name</jpcoar:givenName><jpcoar:creatorAlternative xml:lang="en">creator alternative name</jpcoar:creatorAlternative><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="test uri" nameIdentifierScheme="ISNI">affi name id</jpcoar:nameIdentifier><jpcoar:affiliationName xml:lang="en">affi name</jpcoar:affiliationName></jpcoar:affiliation></jpcoar:creator><dc:rights>CC BY</dc:rights><datacite:description xml:lang="ja" descriptionType="Other">『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。</datacite:description><dc:publisher xml:lang="ja">東京大学史料編纂所附属画像史料解析センター</dc:publisher><dc:publisher xml:lang="en">Center for the Study of Visual Sources, Historiographical Institute, The University of Tokyo</dc:publisher><datacite:date dateType="Issued">2022-09-30</datacite:date><dc:language>jpn</dc:language><dc:type rdf:resource="http://purl.org/coar/resource_type/c_ddb1">dataset</dc:type><jpcoar:identifier identifierType="HDL">http://hdl.handle.net/2261/0002005680</jpcoar:identifier><jpcoar:identifier identifierType="URI">https://repository.dl.itc.u-tokyo.ac.jp/records/2005680</jpcoar:identifier><jpcoar:relation relationType="references"><jpcoar:relatedIdentifier identifierType="URI">https://clioimg.hi.u-tokyo.ac.jp/viewer/list/idata/850/8500/20/%28a%29/?m=limit</jpcoar:relatedIdentifier></jpcoar:relation><datacite:geoLocation><datacite:geoLocationPoint><datacite:pointLongitude>point longitude test</datacite:pointLongitude><datacite:pointLatitude>point latitude test</datacite:pointLatitude></datacite:geoLocationPoint><datacite:geoLocationBox><datacite:westBoundLongitude>1</datacite:westBoundLongitude><datacite:eastBoundLongitude>2</datacite:eastBoundLongitude><datacite:southBoundLatitude>3</datacite:southBoundLatitude><datacite:northBoundLatitude>4</datacite:northBoundLatitude></datacite:geoLocationBox><datacite:geoLocationPlace>geo location place test</datacite:geoLocationPlace></datacite:geoLocation><jpcoar:file><jpcoar:URI objectType="dataset">https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx</jpcoar:URI><jpcoar:mimeType>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</jpcoar:mimeType><jpcoar:extent>121.7KB</jpcoar:extent><datacite:date dateType="Available">2022-09-27</datacite:date></jpcoar:file></jpcoar:jpcoar></metadata></record></getrecord></OAI-PMH>'
+        _rv = etree.fromstring(_data)
+        with patch("weko_records_ui.utils.getrecord", return_value=_rv):
+            indexer, results = records
+            record = results[0]["record"]
+>           assert get_google_detaset_meta(record)=='{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point longitude test", "longitude": "point latitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}'
+E           assert '{"@context":...place test"]}' == '{"@context":...place test"]}'
+E             - {"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "htt...
+E             
+E             ...Full output truncated (4 lines hidden), use '-vv' to show
+
+tests/test_utils.py:1332: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+_______________________________ test_url_to_link _______________________________
+
+    def test_url_to_link():
+        assert url_to_link("file://localhost") == False
+        assert url_to_link("http://localhost") == True
+        assert url_to_link("https://localhost") == True
+>       assert url_to_link("https://localhost/records/123/files/file.pdf") == False
+E       assert True == False
+E         +True
+E         -False
+
+tests/test_views.py:72: AssertionError
+__________________ test_check_file_permission_period[0-True] ___________________
+
+app = <Flask 'testapp'>
+records = (<weko_deposit.api.WekoIndexer object at 0x7fd86bc22da0>, [{'depid': <PersistentIdentifier depid:1 / rec:106d9da0-5ae9...https://doi.org/10.xyz/0000000003 / rec:8e84fbbd-4642-4dc7-a771-990fd03822b1 (R)>, 'filename': 'helloworld.zip', ...}])
+db_file_permission = [<FilePermission 1>, <FilePermission 2>, <FilePermission 3>]
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 0, result = True
+
+    @pytest.mark.parametrize(
+        "id, result",
+        [
+            (0, True),
+            # (1, True),
+            # (2, True),
+            # (3, True),
+            # (4, True),
+            # (5, True),
+            # (6, True),
+            # (7, True),
+        ],
+    )
+    def test_check_file_permission_period(app,records,db_file_permission,users,id,result):
+        indexer, results = records
+        record = results[0]["record"]
+        assert isinstance(record,WekoRecord)==True
+        fjson = record['item_1617605131499']['attribute_value_mlt'][0]
+        # fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-27'}], 'format': 'image/jpeg', 'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessrole': 'open_access', 'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False, 'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0, 'mimetype': 'image/jpeg', 'file_order': 0}
+        with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+>           assert check_file_permission_period(record,fjson)==result
+
+tests/test_views.py:342: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_records_ui/views.py:297: in check_file_permission_period
+    return check_permission_period(get_permission(record, fjson))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+permission = None
+
+    def check_permission_period(permission):
+        """Check download permission."""
+>       if permission.status == 1:
+E       AttributeError: 'NoneType' object has no attribute 'status'
+
+weko_records_ui/permissions.py:291: AttributeError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+___________________________ test_get_usage_workflow ____________________________
+
+app = <Flask 'testapp'>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+workflows = {'activity': <Activity 1>, 'data_usage_activity': <Activity 2>, 'data_usage_wf': <WorkFlow 2>, 'flow_action1': <FlowAction 1>, ...}
+
+    def test_get_usage_workflow(app, users, workflows):
+        _file_json = {
+            'provide': [
+                {
+                    'role_id': "3",
+                    'workflow_id': "2"
+                }
+                ,
+                {
+                    'role_id': "none_loggin",
+                    'workflow_id': "3"
+                }
+            ]
+        }
+        with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+            res = get_usage_workflow(_file_json)
+            assert res=="2"
+        with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+            res = get_usage_workflow(_file_json)
+            assert res==None
+    
+        data1 = MagicMock()
+        data1.is_authenticated = False
+    
+        with patch("flask_login.utils._get_user", return_value=data1):
+            res = get_usage_workflow(_file_json)
+>           assert res==3
+E           AssertionError: assert '3' == 3
+E             +'3'
+E             -3
+
+tests/test_views.py:423: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+___________________________ test_default_view_method ___________________________
+
+app = <Flask 'testapp'>
+records = (<weko_deposit.api.WekoIndexer object at 0x7fd86cc7b160>, [{'depid': <PersistentIdentifier depid:1 / rec:d691ac73-5008...https://doi.org/10.xyz/0000000003 / rec:9c79cc56-251a-4912-9cd5-66d0cf317da5 (R)>, 'filename': 'helloworld.zip', ...}])
+itemtypes = {'item_type': <ItemType 1>, 'item_type_mapping': <ItemTypeMapping 1>, 'item_type_name': <ItemTypeName 1>}
+indexstyle = None
+
+    def test_default_view_method(app, records, itemtypes, indexstyle):
+        indexer, results = records
+        record = results[0]["record"]
+        recid = results[0]["recid"]
+        with app.test_request_context():
+            with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True):
+                with patch("weko_records_ui.views.get_search_detail_keyword", return_value={}):
+                    with patch("weko_records_ui.views.get_index_link_list", return_value=[]):
+                        # need to fix
+                        with pytest.raises(Exception) as e:
+                            res = default_view_method(recid, record, 'helloworld.pdf')
+                        assert e.type==TemplatesNotFound
+    
+>                       meta_options
+E                       NameError: name 'meta_options' is not defined
+
+tests/test_views.py:454: NameError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+____________________ test_doi_ish_view_method_acl[0-False] _____________________
+
+app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
+records = (<weko_deposit.api.WekoIndexer object at 0x7fd86988ea20>, [{'depid': <PersistentIdentifier depid:1 / rec:aa3bb7fa-6317...https://doi.org/10.xyz/0000000003 / rec:a423874d-7359-4e84-a6a9-bdb6ff6c65c7 (R)>, 'filename': 'helloworld.zip', ...}])
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 0, result = False
+
+    @pytest.mark.parametrize(
+        "id, result",
+        [
+            (0, False),
+            # (1, True),
+            # (2, True),
+            # (3, True),
+            # (4, True),
+            # (5, True),
+            # (6, True),
+            # (7, True),
+        ],
+    )
+    def test_doi_ish_view_method_acl(app,client,records,users,id,result):
+        login_user_via_session(client=client, email=users[id]["email"])
+        url = url_for("weko_records_ui.doi_ish_view_method", parent_pid_value=1, _external=True)
+        res = client.get(url)
+        assert res.status_code == 302
+        assert res.location == 'http://test_server/records/1.1'
+    
+>       assert "302 FOUND" in doi_ish_view_method(parent_pid_value=1, version=1)
+E       TypeError: argument of type 'Response' is not iterable
+
+tests/test_views.py:487: TypeError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+----------------------------- Captured stdout call -----------------------------
+/r/1
+____________________ test_set_pdfcoverpage_header_acl_guest ____________________
+
+app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
+records = (<weko_deposit.api.WekoIndexer object at 0x7fd86846be10>, [{'depid': <PersistentIdentifier depid:1 / rec:4627a59a-098f...https://doi.org/10.xyz/0000000003 / rec:d448ca61-9b45-45fe-89b9-1f873d53d955 (R)>, 'filename': 'helloworld.zip', ...}])
+pdfcoverpagesetting = None
+
+    def test_set_pdfcoverpage_header_acl_guest(app, client, records, pdfcoverpagesetting):
+        url = url_for("weko_records_ui.set_pdfcoverpage_header",_external=True)
+        res = client.get(url)
+        assert res.status_code == 308
+        assert res.location == 'http://test_server/admin/pdfcoverpage/'
+    
+>       res = client.post(url)
+
+tests/test_views.py:529: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1039: in post
+    return self.open(*args, **kw)
+.tox/c1/lib/python3.6/site-packages/flask/testing.py:196: in open
+    follow_redirects=follow_redirects
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:993: in open
+    response = self.run_wsgi_app(environ.copy(), buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:884: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1119: in run_wsgi_app
+    app_rv = app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2334: in __call__
+    return self.wsgi_app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2320: in wsgi_app
+    response = self.handle_exception(e)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1766: in handle_exception
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2317: in wsgi_app
+    response = self.full_dispatch_request()
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1840: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1743: in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1838: in full_dispatch_request
+    rv = self.dispatch_request()
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1824: in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @blueprint.route('/admin/pdfcoverpage', methods=['GET', 'POST'])
+    def set_pdfcoverpage_header():
+        """Set pdfcoverage header."""
+        @blueprint.errorhandler(werkzeug.exceptions.RequestEntityTooLarge)
+        def handle_over_max_file_size(error):
+            return 'result : file size is overed.'
+    
+        # Save PDF Cover Page Header settings
+        if request.method == 'POST':
+            record = PDFCoverPageSettings.find(1)
+            avail = request.form.get('availability')
+            header_display_type = request.form.get('header-display')
+            header_output_string = request.form.get('header-output-string')
+            header_output_image_file = request.files.get('header-output-image')
+>           header_output_image_filename = header_output_image_file.filename
+E           AttributeError: 'NoneType' object has no attribute 'filename'
+
+weko_records_ui/views.py:758: AttributeError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+----------------------------- Captured stdout call -----------------------------
+/admin/pdfcoverpage
+_________________________ test_soft_delete_acl[1-200] __________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+records = (<weko_deposit.api.WekoIndexer object at 0x7fd8664997b8>, [{'depid': <PersistentIdentifier depid:1 / rec:d55f8317-2caf...https://doi.org/10.xyz/0000000003 / rec:35dac602-aaf6-4161-900e-c3f1f0d9b059 (R)>, 'filename': 'helloworld.zip', ...}])
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 1, status_code = 200
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+            (0, 500), # contributor
+            (1, 200), # repoadmin
+            (2, 200), # sysadmin
+            (3, 200), # comadmin
+            (4, 500), # generaluser
+            (5, 500), # originalroleuser
+            (6, 200), # originalroleuser2
+            (7, 500), # user
+        ],
+    )
+    def test_soft_delete_acl(client, records, users, id, status_code):
+        with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+            url = url_for(
+                "weko_records_ui.soft_delete", recid=1, _external=True
+            )
+            with patch("flask.templating._render", return_value=""):
+                res = client.post(url)
+>               assert res.status_code == status_code
+E               assert 500 == 200
+E                 +500
+E                 -200
+
+tests/test_views.py:657: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+----------------------------- Captured stdout call -----------------------------
+/records/soft_delete/1
+------------------------------ Captured log call -------------------------------
+ERROR    flask.app:views.py:838 403 Forbidden: You don't have the permission to access the requested resource. It is either read-protected or not readable by the server.
+_________________________ test_soft_delete_acl[2-200] __________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+records = (<weko_deposit.api.WekoIndexer object at 0x7fd865cd6198>, [{'depid': <PersistentIdentifier depid:1 / rec:359cb5a4-46dd...https://doi.org/10.xyz/0000000003 / rec:64e6a026-159c-408b-8de2-0e08357993ee (R)>, 'filename': 'helloworld.zip', ...}])
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 2, status_code = 200
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+            (0, 500), # contributor
+            (1, 200), # repoadmin
+            (2, 200), # sysadmin
+            (3, 200), # comadmin
+            (4, 500), # generaluser
+            (5, 500), # originalroleuser
+            (6, 200), # originalroleuser2
+            (7, 500), # user
+        ],
+    )
+    def test_soft_delete_acl(client, records, users, id, status_code):
+        with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+            url = url_for(
+                "weko_records_ui.soft_delete", recid=1, _external=True
+            )
+            with patch("flask.templating._render", return_value=""):
+                res = client.post(url)
+>               assert res.status_code == status_code
+E               assert 500 == 200
+E                 +500
+E                 -200
+
+tests/test_views.py:657: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+----------------------------- Captured stdout call -----------------------------
+/records/soft_delete/1
+------------------------------ Captured log call -------------------------------
+ERROR    flask.app:views.py:838 403 Forbidden: You don't have the permission to access the requested resource. It is either read-protected or not readable by the server.
+_________________________ test_soft_delete_acl[3-200] __________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+records = (<weko_deposit.api.WekoIndexer object at 0x7fd87041cdd8>, [{'depid': <PersistentIdentifier depid:1 / rec:48767a62-d9f6...https://doi.org/10.xyz/0000000003 / rec:afaf4bf1-afad-4eba-b0af-2b4b7c904c72 (R)>, 'filename': 'helloworld.zip', ...}])
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 3, status_code = 200
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+            (0, 500), # contributor
+            (1, 200), # repoadmin
+            (2, 200), # sysadmin
+            (3, 200), # comadmin
+            (4, 500), # generaluser
+            (5, 500), # originalroleuser
+            (6, 200), # originalroleuser2
+            (7, 500), # user
+        ],
+    )
+    def test_soft_delete_acl(client, records, users, id, status_code):
+        with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+            url = url_for(
+                "weko_records_ui.soft_delete", recid=1, _external=True
+            )
+            with patch("flask.templating._render", return_value=""):
+                res = client.post(url)
+>               assert res.status_code == status_code
+E               assert 500 == 200
+E                 +500
+E                 -200
+
+tests/test_views.py:657: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+----------------------------- Captured stdout call -----------------------------
+/records/soft_delete/1
+------------------------------ Captured log call -------------------------------
+ERROR    flask.app:views.py:838 403 Forbidden: You don't have the permission to access the requested resource. It is either read-protected or not readable by the server.
+_________________________ test_soft_delete_acl[6-200] __________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+records = (<weko_deposit.api.WekoIndexer object at 0x7fd86539cac8>, [{'depid': <PersistentIdentifier depid:1 / rec:bd18b710-2896...https://doi.org/10.xyz/0000000003 / rec:4f58e21a-256e-4d1b-9f6c-f4e4e007032e (R)>, 'filename': 'helloworld.zip', ...}])
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 6, status_code = 200
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+            (0, 500), # contributor
+            (1, 200), # repoadmin
+            (2, 200), # sysadmin
+            (3, 200), # comadmin
+            (4, 500), # generaluser
+            (5, 500), # originalroleuser
+            (6, 200), # originalroleuser2
+            (7, 500), # user
+        ],
+    )
+    def test_soft_delete_acl(client, records, users, id, status_code):
+        with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+            url = url_for(
+                "weko_records_ui.soft_delete", recid=1, _external=True
+            )
+            with patch("flask.templating._render", return_value=""):
+                res = client.post(url)
+>               assert res.status_code == status_code
+E               assert 500 == 200
+E                 +500
+E                 -200
+
+tests/test_views.py:657: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+----------------------------- Captured stdout call -----------------------------
+/records/soft_delete/1
+------------------------------ Captured log call -------------------------------
+ERROR    flask.app:views.py:838 403 Forbidden: You don't have the permission to access the requested resource. It is either read-protected or not readable by the server.
+___________________________ test_restore_acl[1-200] ____________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+records = (<weko_deposit.api.WekoIndexer object at 0x7fd863423898>, [{'depid': <PersistentIdentifier depid:1 / rec:0f6b7257-2a19...https://doi.org/10.xyz/0000000003 / rec:43724dbb-ffb9-41b0-8cc9-5a893ea5d0e5 (R)>, 'filename': 'helloworld.zip', ...}])
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 1, status_code = 200
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+            (0, 500), # contributor
+            (1, 200), # repoadmin
+            (2, 200), # sysadmin
+            (3, 200), # comadmin
+            (4, 500), # generaluser
+            (5, 500), # originalroleuser
+            (6, 200), # originalroleuser2
+            (7, 500), # user
+        ],
+    )
+    def test_restore_acl(client, records, users, id, status_code):
+        with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+            url = url_for(
+                "weko_records_ui.restore", recid=1, _external=True
+            )
+            with patch("flask.templating._render", return_value=""):
+                res = client.post(url)
+>               assert res.status_code == status_code
+E               assert 500 == 200
+E                 +500
+E                 -200
+
+tests/test_views.py:690: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+----------------------------- Captured stdout call -----------------------------
+/records/restore/1
+------------------------------ Captured log call -------------------------------
+ERROR    flask.app:views.py:859 403 Forbidden: You don't have the permission to access the requested resource. It is either read-protected or not readable by the server.
+___________________________ test_restore_acl[2-200] ____________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+records = (<weko_deposit.api.WekoIndexer object at 0x7fd862c32320>, [{'depid': <PersistentIdentifier depid:1 / rec:291c5ba9-20cb...https://doi.org/10.xyz/0000000003 / rec:d63cb5fa-2879-468b-84f1-c322aa71567c (R)>, 'filename': 'helloworld.zip', ...}])
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 2, status_code = 200
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+            (0, 500), # contributor
+            (1, 200), # repoadmin
+            (2, 200), # sysadmin
+            (3, 200), # comadmin
+            (4, 500), # generaluser
+            (5, 500), # originalroleuser
+            (6, 200), # originalroleuser2
+            (7, 500), # user
+        ],
+    )
+    def test_restore_acl(client, records, users, id, status_code):
+        with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+            url = url_for(
+                "weko_records_ui.restore", recid=1, _external=True
+            )
+            with patch("flask.templating._render", return_value=""):
+                res = client.post(url)
+>               assert res.status_code == status_code
+E               assert 500 == 200
+E                 +500
+E                 -200
+
+tests/test_views.py:690: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+----------------------------- Captured stdout call -----------------------------
+/records/restore/1
+------------------------------ Captured log call -------------------------------
+ERROR    flask.app:views.py:859 403 Forbidden: You don't have the permission to access the requested resource. It is either read-protected or not readable by the server.
+___________________________ test_restore_acl[3-200] ____________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+records = (<weko_deposit.api.WekoIndexer object at 0x7fd877f8afd0>, [{'depid': <PersistentIdentifier depid:1 / rec:a9eb4fb9-3abc...https://doi.org/10.xyz/0000000003 / rec:41c1e123-8264-433f-8485-a451df7175c7 (R)>, 'filename': 'helloworld.zip', ...}])
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 3, status_code = 200
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+            (0, 500), # contributor
+            (1, 200), # repoadmin
+            (2, 200), # sysadmin
+            (3, 200), # comadmin
+            (4, 500), # generaluser
+            (5, 500), # originalroleuser
+            (6, 200), # originalroleuser2
+            (7, 500), # user
+        ],
+    )
+    def test_restore_acl(client, records, users, id, status_code):
+        with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+            url = url_for(
+                "weko_records_ui.restore", recid=1, _external=True
+            )
+            with patch("flask.templating._render", return_value=""):
+                res = client.post(url)
+>               assert res.status_code == status_code
+E               assert 500 == 200
+E                 +500
+E                 -200
+
+tests/test_views.py:690: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+----------------------------- Captured stdout call -----------------------------
+/records/restore/1
+------------------------------ Captured log call -------------------------------
+ERROR    flask.app:views.py:859 403 Forbidden: You don't have the permission to access the requested resource. It is either read-protected or not readable by the server.
+___________________________ test_restore_acl[6-200] ____________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+records = (<weko_deposit.api.WekoIndexer object at 0x7fd8625c6828>, [{'depid': <PersistentIdentifier depid:1 / rec:9251011e-9b3c...https://doi.org/10.xyz/0000000003 / rec:3a731833-db8c-4b97-90ba-fa7f9822933f (R)>, 'filename': 'helloworld.zip', ...}])
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 6, status_code = 200
+
+    @pytest.mark.parametrize(
+        "id, status_code",
+        [
+            (0, 500), # contributor
+            (1, 200), # repoadmin
+            (2, 200), # sysadmin
+            (3, 200), # comadmin
+            (4, 500), # generaluser
+            (5, 500), # originalroleuser
+            (6, 200), # originalroleuser2
+            (7, 500), # user
+        ],
+    )
+    def test_restore_acl(client, records, users, id, status_code):
+        with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+            url = url_for(
+                "weko_records_ui.restore", recid=1, _external=True
+            )
+            with patch("flask.templating._render", return_value=""):
+                res = client.post(url)
+>               assert res.status_code == status_code
+E               assert 500 == 200
+E                 +500
+E                 -200
+
+tests/test_views.py:690: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+----------------------------- Captured stdout call -----------------------------
+/records/restore/1
+------------------------------ Captured log call -------------------------------
+ERROR    flask.app:views.py:859 403 Forbidden: You don't have the permission to access the requested resource. It is either read-protected or not readable by the server.
+______________________ test_default_view_method_fix35133 _______________________
+
+app = <Flask 'testapp'>
+records = (<weko_deposit.api.WekoIndexer object at 0x7fd85fa349b0>, [{'depid': <PersistentIdentifier depid:1 / rec:26a4af6b-508b...https://doi.org/10.xyz/0000000003 / rec:04ba3935-be15-4b3f-bb7f-84e0af4b6fbe (R)>, 'filename': 'helloworld.zip', ...}])
+itemtypes = {'item_type': <ItemType 1>, 'item_type_mapping': <ItemTypeMapping 1>, 'item_type_name': <ItemTypeName 1>}
+indexstyle = None
+mocker = <pytest_mock.plugin.MockerFixture object at 0x7fd85f83a208>
+
+    def test_default_view_method_fix35133(app, records, itemtypes, indexstyle,mocker):
+        indexer, results = records
+        record = results[0]["record"]
+        recid = results[0]["recid"]
+        etree_str = '<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><responseDate>2022-10-07T06:11:40Z</responseDate><request identifier="oai:repository.dl.itc.u-tokyo.ac.jp:02005680" verb="getrecord" metadataPrefix="jpcoar_1.0">https://repository.dl.itc.u-tokyo.ac.jp/oai</request><getrecord><record><header><identifier>oai:repository.dl.itc.u-tokyo.ac.jp:02005680</identifier><datestamp>2022-09-27T06:40:27Z</datestamp></header><metadata><jpcoar:jpcoar xmlns:datacite="https://schema.datacite.org/meta/kernel-4/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:jpcoar="https://github.com/JPCOAR/schema/blob/master/1.0/" xmlns:oaire="http://namespace.openaire.eu/schema/oaire/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rioxxterms="http://www.rioxx.net/schema/v2.0/rioxxterms/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="https://github.com/JPCOAR/schema/blob/master/1.0/" xsi:schemaLocation="https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd"><dc:title xml:lang="ja">『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表</dc:title><jpcoar:creator><jpcoar:nameIdentifier nameIdentifierURI="https://orcid.org/123" nameIdentifierScheme="ORCID">123</jpcoar:nameIdentifier><jpcoar:creatorName xml:lang="en">creator name</jpcoar:creatorName><jpcoar:familyName xml:lang="en">creator family name</jpcoar:familyName><jpcoar:givenName xml:lang="en">creator given name</jpcoar:givenName><jpcoar:creatorAlternative xml:lang="en">creator alternative name</jpcoar:creatorAlternative><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="test uri" nameIdentifierScheme="ISNI">affi name id</jpcoar:nameIdentifier><jpcoar:affiliationName xml:lang="en">affi name</jpcoar:affiliationName></jpcoar:affiliation></jpcoar:creator><dc:rights>CC BY</dc:rights><datacite:description xml:lang="ja" descriptionType="Other">『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。</datacite:description><dc:publisher xml:lang="ja">東京大学史料編纂所附属画像史料解析センター</dc:publisher><dc:publisher xml:lang="en">Center for the Study of Visual Sources, Historiographical Institute, The University of Tokyo</dc:publisher><datacite:date dateType="Issued">2022-09-30</datacite:date><dc:language>jpn</dc:language><dc:type rdf:resource="http://purl.org/coar/resource_type/c_ddb1">dataset</dc:type><jpcoar:identifier identifierType="HDL">http://hdl.handle.net/2261/0002005680</jpcoar:identifier><jpcoar:identifier identifierType="URI">https://repository.dl.itc.u-tokyo.ac.jp/records/2005680</jpcoar:identifier><jpcoar:relation relationType="references"><jpcoar:relatedIdentifier identifierType="URI">https://clioimg.hi.u-tokyo.ac.jp/viewer/list/idata/850/8500/20/%28a%29/?m=limit</jpcoar:relatedIdentifier></jpcoar:relation><datacite:geoLocation><datacite:geoLocationPoint><datacite:pointLongitude>point longitude test</datacite:pointLongitude><datacite:pointLatitude>point latitude test</datacite:pointLatitude></datacite:geoLocationPoint><datacite:geoLocationBox><datacite:westBoundLongitude>1</datacite:westBoundLongitude><datacite:eastBoundLongitude>2</datacite:eastBoundLongitude><datacite:southBoundLatitude>3</datacite:southBoundLatitude><datacite:northBoundLatitude>4</datacite:northBoundLatitude></datacite:geoLocationBox><datacite:geoLocationPlace>geo location place test</datacite:geoLocationPlace></datacite:geoLocation><jpcoar:file><jpcoar:URI objectType="dataset">https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx</jpcoar:URI><jpcoar:mimeType>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</jpcoar:mimeType><jpcoar:extent>121.7KB</jpcoar:extent><datacite:date dateType="Available">2022-09-27</datacite:date></jpcoar:file></jpcoar:jpcoar></metadata></record></getrecord></OAI-PMH>'
+        et = etree.fromstring(etree_str)
+        mock_render_template = mocker.patch("weko_records_ui.views.render_template")
+        with app.test_request_context():
+            with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True):
+                with patch("weko_records_ui.views.getrecord",return_value=et):
+>                   default_view_method(recid, record)
+
+tests/test_views.py:813: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_records_ui/views.py:473: in default_view_method
+    detail_condition = get_search_detail_keyword('')
+../weko-search-ui/weko_search_ui/api.py:183: in get_search_detail_keyword
+    index_browsing_tree = Indexes.get_browsing_tree()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'weko_index_tree.api.Indexes'>, pid = 0
+
+    @classmethod
+    def get_browsing_tree(cls, pid=0):
+        """Get browsing tree."""
+        if pid == 0:
+            try:
+                redis_connection = RedisConnection()
+                datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+>               v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language).decode("UTF-8")
+E               TypeError: must be str, not NoneType
+
+../weko-index-tree/weko_index_tree/api.py:572: TypeError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+=============================== warnings summary ===============================
+../invenio-indexer/invenio_indexer/cli.py:108
+  /code/modules/invenio-indexer/invenio_indexer/cli.py:108: DeprecationWarning: 'resultcallback' has been renamed to 'result_callback'. The old name will be removed in Click 8.1.
+    @queue.resultcallback()
+
+.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3
+  /code/modules/weko-records-ui/.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3: DeprecationWarning: 'werkzeug.contrib.cache' is deprecated as of version 0.15 and will be removed in version 1.0. It has moved to https://github.com/pallets/cachelib.
+    from werkzeug.contrib.cache import NullCache, SimpleCache, FileSystemCache
+
+.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35
+  /code/modules/weko-records-ui/.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+    import imp
+
+tests/test_admin.py: 182 warnings
+tests/test_fd.py: 208 warnings
+tests/test_ipaddr.py: 52 warnings
+tests/test_models.py: 234 warnings
+tests/test_pdf.py: 26 warnings
+tests/test_permissions.py: 572 warnings
+tests/test_preview.py: 104 warnings
+tests/test_rest.py: 78 warnings
+tests/test_utils.py: 1066 warnings
+tests/test_views.py: 1378 warnings
+  /code/modules/weko-records-ui/.tox/c1/lib/python3.6/site-packages/invenio_admin/ext.py:73: PendingDeprecationWarning: Usage of model and modelview kwargs are deprecated in favor of view_class, args and kwargs.
+    PendingDeprecationWarning
+
+tests/test_admin.py: 7 warnings
+tests/test_fd.py: 8 warnings
+tests/test_ipaddr.py: 2 warnings
+tests/test_models.py: 9 warnings
+tests/test_pdf.py: 1 warning
+tests/test_permissions.py: 22 warnings
+tests/test_preview.py: 4 warnings
+tests/test_rest.py: 3 warnings
+tests/test_utils.py: 41 warnings
+tests/test_views.py: 53 warnings
+  /code/modules/weko-records-ui/.tox/c1/lib/python3.6/site-packages/flask_admin/model/base.py:1416: UserWarning: Fields missing from ruleset: created_userId,created_date,updated_userId,updated_date
+    warnings.warn(text)
+
+tests/test_admin.py: 7 warnings
+tests/test_fd.py: 8 warnings
+tests/test_ipaddr.py: 2 warnings
+tests/test_models.py: 9 warnings
+tests/test_pdf.py: 1 warning
+tests/test_permissions.py: 22 warnings
+tests/test_preview.py: 4 warnings
+tests/test_rest.py: 3 warnings
+tests/test_utils.py: 41 warnings
+tests/test_views.py: 53 warnings
+  /code/modules/invenio-oaiserver/invenio_oaiserver/ext.py:135: UserWarning: Please specify the OAISERVER_ID_PREFIX configuration.default value is: oai:d1e8c2e8926a:recid/
+    app.config.get('OAISERVER_ID_PREFIX')))
+
+tests/test_admin.py: 7 warnings
+tests/test_views.py: 33 warnings
+  /code/modules/weko-records-ui/.tox/c1/lib/python3.6/site-packages/flask/sessions.py:208: UserWarning: "TEST_SERVER" is not a valid cookie domain, it must contain a ".". Add an entry to your hosts file, for example "TEST_SERVER.localdomain", and use that instead.
+    ' "{rv}.localdomain", and use that instead.'.format(rv=rv)
+
+tests/test_admin.py: 84 warnings
+tests/test_fd.py: 1104 warnings
+tests/test_pdf.py: 324 warnings
+tests/test_permissions.py: 4656 warnings
+tests/test_preview.py: 600 warnings
+tests/test_rest.py: 672 warnings
+tests/test_utils.py: 17842 warnings
+tests/test_views.py: 76250 warnings
+  /code/modules/invenio-oaiserver/invenio_oaiserver/receivers.py:28: DeprecationWarning: generator 'get_record_sets' raised StopIteration
+    new_sets = set(get_record_sets(record=record))
+
+tests/test_preview.py::test_preview
+  /code/modules/weko-records-ui/.tox/c1/lib/python3.6/site-packages/nbconvert/exporters/exporter_locator.py:28: DeprecationWarning: `nbconvert.exporters.exporter_locator` is deprecated in favor of `nbconvert.exporters.base` since nbconvert 5.0.
+    DeprecationWarning)
+
+tests/test_preview.py::test_preview
+  /code/modules/weko-records-ui/.tox/c1/lib/python3.6/site-packages/nbconvert/preprocessors/regexremove.py:41: DeprecationWarning: Traits should be given as instances, not types (for example, `Int()`, not `Int`). Passing types is deprecated in traitlets 4.1.
+    patterns = List(Unicode, default_value=[r'\Z']).tag(config=True)
+
+tests/test_preview.py::test_preview
+tests/test_preview.py::test_preview
+tests/test_preview.py::test_preview
+tests/test_preview.py::test_preview
+  /code/modules/weko-records-ui/.tox/c1/lib/python3.6/site-packages/traitlets/traitlets.py:2367: DeprecationWarning: Traits should be given as instances, not types (for example, `Int()`, not `Int`). Passing types is deprecated in traitlets 4.1.
+    super(Set, self).__init__(trait, default_value, minlen, maxlen, **kwargs)
+
+tests/test_preview.py::test_preview
+  /code/modules/weko-records-ui/.tox/c1/lib/python3.6/site-packages/wand/api.py:169: PendingDeprecationWarning: dist() and linux_distribution() functions are deprecated in Python 3.5
+    distname, _, __ = platform.linux_distribution()
+
+-- Docs: https://docs.pytest.org/en/stable/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                             Stmts   Miss Branch BrPart  Cover
+------------------------------------------------------------------
+weko_records_ui/__init__.py          4      0      0      0   100%
+weko_records_ui/admin.py           118      7     44      2    93%
+weko_records_ui/bundles.py          10      0      0      0   100%
+weko_records_ui/config.py           68      0      0      0   100%
+weko_records_ui/ext.py              33      0     18      1    98%
+weko_records_ui/fd.py              190     42     64     12    75%
+weko_records_ui/ipaddr.py           37      0     12      0   100%
+weko_records_ui/models.py          162     28     24      2    80%
+weko_records_ui/pdf.py             369     51     94     17    83%
+weko_records_ui/permissions.py     257     70    128     16    67%
+weko_records_ui/preview.py          61      3     22      2    94%
+weko_records_ui/rest.py             55      9     14      2    81%
+weko_records_ui/utils.py           794     58    428     95    87%
+weko_records_ui/version.py           2      0      0      0   100%
+weko_records_ui/views.py           508     66    182     41    82%
+------------------------------------------------------------------
+TOTAL                             2668    334   1030    190    83%
+Coverage XML written to file coverage.xml
+
+=========================== short test summary info ============================
+FAILED tests/test_admin.py::TestItemManagementBulkUpdate::test_index - TypeEr...
+FAILED tests/test_models.py::test_FilePermission_init_file_permission - sqlal...
+FAILED tests/test_models.py::test_FilePermission_find_by_activity - sqlalchem...
+FAILED tests/test_models.py::test_FilePermission_delete_object - sqlalchemy.o...
+FAILED tests/test_permissions.py::test_check_file_download_permission - asser...
+FAILED tests/test_permissions.py::test_check_original_pdf_download_permission
+FAILED tests/test_permissions.py::test_check_created_id - AttributeError: 'No...
+FAILED tests/test_utils.py::test_get_pair_value - ValueError: not enough valu...
+FAILED tests/test_utils.py::test_get_data_usage_application_data - sqlalchemy...
+FAILED tests/test_utils.py::test_get_google_detaset_meta - assert '{"@context...
+FAILED tests/test_views.py::test_url_to_link - assert True == False
+FAILED tests/test_views.py::test_check_file_permission_period[0-True] - Attri...
+FAILED tests/test_views.py::test_get_usage_workflow - AssertionError: assert ...
+FAILED tests/test_views.py::test_default_view_method - NameError: name 'meta_...
+FAILED tests/test_views.py::test_doi_ish_view_method_acl[0-False] - TypeError...
+FAILED tests/test_views.py::test_set_pdfcoverpage_header_acl_guest - Attribut...
+FAILED tests/test_views.py::test_soft_delete_acl[1-200] - assert 500 == 200
+FAILED tests/test_views.py::test_soft_delete_acl[2-200] - assert 500 == 200
+FAILED tests/test_views.py::test_soft_delete_acl[3-200] - assert 500 == 200
+FAILED tests/test_views.py::test_soft_delete_acl[6-200] - assert 500 == 200
+FAILED tests/test_views.py::test_restore_acl[1-200] - assert 500 == 200
+FAILED tests/test_views.py::test_restore_acl[2-200] - assert 500 == 200
+FAILED tests/test_views.py::test_restore_acl[3-200] - assert 500 == 200
+FAILED tests/test_views.py::test_restore_acl[6-200] - assert 500 == 200
+FAILED tests/test_views.py::test_default_view_method_fix35133 - TypeError: mu...
+======== 25 failed, 137 passed, 105782 warnings in 24169.41s (6:42:49) =========
+ERROR: InvocationError for command /code/modules/weko-records-ui/.tox/c1/bin/pytest --cov=weko_records_ui tests -v --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp (exited with code 1)
+___________________________________ summary ____________________________________
+ERROR:   c1: commands failed

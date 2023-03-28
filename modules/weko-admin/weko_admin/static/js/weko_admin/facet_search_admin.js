@@ -32,31 +32,45 @@ function Layout({isEditScreen}) {
 
 function FacetSearchLayout(
   {
-    name_en, name_jp, mapping, active, aggregations, mapping_list
+    name_en, name_jp, mapping, active, ui_type, is_open, display_number, aggregations, mapping_list
   }
 ) {
   const [_nameEN, _setNameEN] = useState(name_en);
   const [_nameJP, _setNameJP] = useState(name_jp);
   const [_mapping, _setMapping] = useState(mapping);
   const [_active, _setActive] = useState(active);
+  const [_uiType, _setUiType] = useState(ui_type);
+  const [_isOpen, _setIsOpen] = useState(is_open);
+  const [_displayNumber, _setDisplayNumber] = useState(display_number);
   const [_aggregations, _setAggregations] = useState(aggregations);
 
   function handleSaveFacetSearch() {
     const URL = "/api/admin/facet-search/save";
-
     let errorMessage = "";
-    if  ( (_nameEN === "") || (_nameJP === "") || (_mapping === "") ){
+    if  ( (_nameEN === "") || (_nameJP === "") || (_mapping === "")  ){
       errorMessage = (LABELS['lblMsgRequired']);
+     }else if ( _uiType === 'CheckboxList' && !_displayNumber ) {
+        //If a checkbox UI is set and displayNumber is not entered, make an error.
+        errorMessage = (LABELS['lblDisplayNumberValidation2']);
+    } else if ( _displayNumber &&
+       ( !Number.isInteger(Number(_displayNumber)) || _displayNumber < 1 || _displayNumber > 99 ) ) {
+      //The displayNumber must be set to an integer value between 1 and 99.
+      errorMessage = (LABELS['lblDisplayNumberValidation1']);
     }
+
     if (errorMessage){
       showErrorMessage(errorMessage);
       return ;
     }
+
     let data = {
       name_en: _nameEN,
       name_jp: _nameJP,
       mapping: _mapping,
       active: _active,
+      ui_type: _uiType,
+      is_open: _isOpen,
+      display_number: _displayNumber,
       aggregations: _aggregations,
       id:LABELS['lblFacetSearchId']
     }
@@ -81,17 +95,73 @@ function FacetSearchLayout(
     });
   }
 
+  /**
+   * Returns whether or not RangeSlider is disabled for the specified UI type.
+   * 
+   * @param {string} value UI Type
+   * @returns True if the UI type does not allow RangeSlider selection; false otherwise.
+   */
+  function isDisableRangeUi(value) {
+    return value!=="temporal";
+  }
+
+  /**
+   * Returns whether or not the UI type allows displayNumber to be entered.
+   * @param {string} value UI Type
+   * @returns True if the UI type does not allow displayNumber input; false otherwise.
+   */
+  function isDisableDisplayNumber(value) {
+    return value!=="CheckboxList";
+  }
+
+  /**
+   * Called when Mapping is changed to control whether or not RangeSlider input is allowed.
+   */
+  function handleChangeMapping(event) {
+    _setMapping(event.target.value);
+    handleUiTypeRange(event.target.value);
+  }
+
+  /**
+   * Controls the UI type when Mapping is changed.
+   * If the facet item has RangeSlider selected as the UI type and
+   * is changed to a mapping that does not allow RangeSlider to be selected,
+   * the UI type is forcibly changed to CheckboxList.
+   * 
+   * @param {string} value Value of selected Mapping.
+   */
+  function handleUiTypeRange(value) {
+    let isDisable = isDisableRangeUi(value);
+    if(isDisable && _uiType==='RangeSlider') {
+      _setUiType("CheckboxList");
+    }
+    $("#uiType_Range").prop("disabled",isDisable);
+  }
+
+  /**
+   * Called when the UI type is changed.
+   * The input state of displayNumber is controlled by the value of the selected UI type.
+   */
+  function handleChangeUiType(event) {
+    _setUiType(event.target.value);
+    let isDisable = isDisableDisplayNumber(event.target.value);
+    if(isDisable){
+      _setDisplayNumber(null);
+    }
+    $("#" + LABELS['lblDisplayNumber']).prop("disabled",isDisable);
+  }
+
   return (
     <div>
       <HeaderComponent/>
       <br/>
       <div className="row">
         <InputTextComponent value={_nameEN} setValue={_setNameEN}
-                            idName={LABELS['lblNameEN']}/>
+                            idName={LABELS['lblNameEN']} isRequired={true} isDisalbed={false} />
       </div>
       <div className="row">
         <InputTextComponent value={_nameJP} setValue={_setNameJP}
-                            idName={LABELS['lblNameJP']}/>
+                            idName={LABELS['lblNameJP']} isRequired={true} isDisalbed={false}/>
       </div>
       <div className="row">
         <div className="form-group row">
@@ -102,7 +172,7 @@ function FacetSearchLayout(
           <div className="controls col-xs-6">
             <select className="form-control" id={LABELS['lblMapping']}
                     value={_mapping}
-                    onChange={e => _setMapping(e.target.value)}>
+                    onChange={handleChangeMapping}>
               {
                 mapping_list.map((item) =>
                   <option value={item}>{item}</option>)
@@ -112,6 +182,31 @@ function FacetSearchLayout(
         </div>
       </div>
       <div className="row">
+        <div className="form-group row">
+          <label htmlFor={LABELS['lblUiType']}
+          className="control-label col-xs-2 text-right field-required">
+            {LABELS['lblUiType']}
+          </label>
+          <div className="controls col-xs-6">
+            <select className="form-control" id={LABELS['lblUiType']}
+                    value={_uiType}
+                    onChange={handleChangeUiType}>
+              <option id='uiType_Checkbox' value="CheckboxList">CheckboxList</option>
+              <option value="SelectBox">SelectBox</option>
+              {isDisableRangeUi(_mapping) && 
+                <option id='uiType_Range' value="RangeSlider" disabled>RangeSlider</option>}
+              {!isDisableRangeUi(_mapping) &&
+                <option id='uiType_Range' value="RangeSlider">RangeSlider</option>}
+            </select>
+          </div>
+        </div>
+      </div>
+      <div className="row">
+        <InputTextComponent value={_displayNumber} setValue={_setDisplayNumber}
+                            idName={LABELS['lblDisplayNumber']} isRequired={false}
+                            isDisabled={isDisableDisplayNumber(_uiType)} />
+      </div>
+      <div className="row">
         <CustomAggregations aggregations={_aggregations}
                             setAggregations={_setAggregations}
                             mappingList={mapping_list}/>
@@ -119,6 +214,10 @@ function FacetSearchLayout(
       <div className="row">
         <InputRadioComponent value={_active} setValue={_setActive}
                               idName={LABELS['lblActive']}/>
+      </div>
+      <div className="row">
+        <InputOpenCloseComponent value={_isOpen} setValue={_setIsOpen}
+                              idName={LABELS['lblOpenClose']}/>
       </div>
       <br/>
       <div className="row">
@@ -143,7 +242,7 @@ function FacetSearchLayout(
   )
 }
 
-function InputTextComponent({value, setValue, idName}) {
+function InputTextComponent({value, setValue, idName, isRequired ,isDisabled}) {
 
   function handleChange(event) {
     event.preventDefault();
@@ -155,12 +254,12 @@ function InputTextComponent({value, setValue, idName}) {
     <div>
       <div className="form-group row">
         <label htmlFor={idName}
-          className="control-label col-xs-2 text-right field-required">
+          className={"control-label col-xs-2 text-right" + (isRequired ? "field-required" : "")}>
           {idName}
         </label>
         <div className="controls col-xs-6">
-          <input type="text" id={idName} className="form-control" value={value}
-                 onChange={handleChange}/>
+          {isDisabled && <input type="text" id={idName} className="form-control" value={value} onChange={handleChange} disabled/>}
+          {!isDisabled && <input type="text" id={idName} className="form-control" value={value} onChange={handleChange}/>}
         </div>
       </div>
     </div>
@@ -188,6 +287,33 @@ function InputRadioComponent({value, setValue, idName}) {
           <input type="radio" id="hide" checked={value === false}
                  onChange={handleChangeDisplay}/>
           {LABELS['lblHide']}
+        </label>
+      </div>
+    </div>
+  )
+}
+
+function InputOpenCloseComponent({value, setValue, idName}) {
+
+  function handleChangeDisplay(event) {
+    setValue(!value);
+  }
+
+  return (
+    <div className="form-group">
+      <label htmlFor={idName} className="control-label col-xs-2 text-right">
+        {idName}
+      </label>
+      <div className="controls col-xs-6">
+        <label className="radio-inline" htmlFor="openCloseOpen">
+          <input type="radio" id="openCloseOpen" checked={value === true}
+                 onChange={handleChangeDisplay}/>
+          {LABELS['lblOpenCloseOpen']}
+        </label>
+        <label className="radio-inline" htmlFor="openCloseClose">
+          <input type="radio" id="openCloseClose" checked={value === false}
+                 onChange={handleChangeDisplay}/>
+          {LABELS['lblOpenCloseClose']}
         </label>
       </div>
     </div>
@@ -341,7 +467,7 @@ function CustomAggregations({aggregations, setAggregations, mappingList}) {
 
 function FacetSearchDetailsLayout(
   {
-    name_en, name_jp, mapping, active, aggregations
+    name_en, name_jp, mapping, active, ui_type, is_open, display_number, aggregations
   }
 ) {
 
@@ -369,6 +495,14 @@ function FacetSearchDetailsLayout(
             <td>{mapping}</td>
           </tr>
           <tr>
+            <td><b>{LABELS['lblUiType']}</b></td>
+            <td>{ui_type}</td>
+          </tr>
+          <tr>
+            <td><b>{LABELS['lblDisplayNumber']}</b></td>
+            <td>{display_number}</td>
+          </tr>
+          <tr>
             <td><b>{LABELS['lblCustomAgg']}</b></td>
             <td>{
               aggregations.map(item =>
@@ -378,6 +512,10 @@ function FacetSearchDetailsLayout(
           <tr>
             <td><b>{LABELS['lblActive']}</b></td>
             <td>{active ? LABELS['lblDisplay'] : LABELS['lblHide']}</td>
+          </tr>
+          <tr>
+            <td><b>{LABELS['lblOpenClose']}</b></td>
+            <td>{is_open ? LABELS['lblOpenCloseOpen'] : LABELS['lblOpenCloseClose']}</td>
           </tr>
           </tbody>
         </table>

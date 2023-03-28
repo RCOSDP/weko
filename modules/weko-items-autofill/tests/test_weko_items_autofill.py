@@ -19,7 +19,7 @@ def test_version():
     from weko_items_autofill import __version__
     assert __version__
 
-
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_weko_items_autofill.py::test_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_init():
     """Test extension initialization."""
     app = Flask('testapp')
@@ -31,3 +31,9 @@ def test_init():
     assert 'weko-items-autofill' not in app.extensions
     ext.init_app(app)
     assert 'weko-items-autofill' in app.extensions
+    
+    # exist BASE_TEMPLATE in app.config
+    app = Flask('testapp')
+    app.config["BASE_TEMPLATE"] = "template.html"
+    ext = WekoItemsAutofill(app)
+    assert app.config["WEKO_ITEMS_AUTOFILL_BASE_TEMPLATE"] == "template.html"

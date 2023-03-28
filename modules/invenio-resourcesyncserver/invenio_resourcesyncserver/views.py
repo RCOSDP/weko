@@ -14,7 +14,7 @@
 from __future__ import absolute_import, print_function
 
 from flask import Blueprint, Response, abort, redirect, url_for, current_app
-
+from invenio_db import db
 from invenio_oaiserver.response import getrecord
 from lxml import etree
 
@@ -191,3 +191,14 @@ def record_detail_in_index(index_id, record_id):
     #return redirect(
     #    url_for('invenio_records_ui.recid',
     #            pid_value=record_id))
+
+
+@blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("invenio_resourcesyncserver dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

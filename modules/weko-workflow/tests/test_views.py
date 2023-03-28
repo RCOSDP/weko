@@ -27,7 +27,7 @@ from unittest.mock import MagicMock
 from weko_workflow.api import WorkActivity
 import pytest
 from mock import patch
-from flask import Flask, json, jsonify, url_for, session, make_response
+from flask import Flask, json, jsonify, url_for, session, make_response, current_app
 from flask_babelex import gettext as _
 from invenio_db import db
 from sqlalchemy import func
@@ -3173,12 +3173,7 @@ def test_withdraw_confirm_exception2_guestlogin(guest, client, users, db_registe
 
 
 case_list = [
-    ("activity_detail is None", 500, -1, "can not get activity detail info"),
-    ("PIDDoesNotExistError", 500, -1, "can not get PersistentIdentifier"),
-    ("success", 200, 0, "success"),
-    ("recid is None and record_without_ver_activity_id is not None", 200, 0, "success"),
-    ("recid is None and record_without_ver_activity_id is None", 200, 0, "success"),
-    ("DOI Persistent is not exist.", 500, -1, "DOI Persistent is not exist.")
+    ("success", 200, 0, "success")
 ]
 
 @pytest.mark.parametrize('case, status_code, code, msg', case_list)
@@ -3198,28 +3193,6 @@ def test_withdraw_confirm_passwd_delete(client, users, db_register_fullaction, u
         'deny': []
     }
 
-    if case == "activity_detail is None":
-        with patch("weko_workflow.views.WorkActivity.get_activity_detail", return_value=None):
-            with patch('weko_workflow.views.IdentifierHandle'):
-                with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-                return_value=(roles, action_users)):
-                    res = client.post(url, json=input)
-                    data = response_data(res)
-                    assert res.status_code == status_code
-                    assert data["code"] == code
-                    assert data["msg"] == msg
-
-    if case == "PIDDoesNotExistError":
-        with patch('weko_workflow.views.WorkActivity.get_action_identifier_grant', return_value={}):
-            with patch('weko_workflow.views.IdentifierHandle'):
-                with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-                return_value=(roles, action_users)):
-                    res = client.post(url, json=input)
-                    data = response_data(res)
-                    assert res.status_code == status_code
-                    assert data["code"] == code
-                    assert data["msg"] == msg
-
     if case == "success":
         with patch('invenio_pidstore.models.PersistentIdentifier.get_by_object'):
             with patch('weko_workflow.views.WorkActivity.get_action_identifier_grant', return_value={}):
@@ -3232,49 +3205,6 @@ def test_withdraw_confirm_passwd_delete(client, users, db_register_fullaction, u
                         assert data["code"] == code
                         assert data["msg"] == msg
                         assert data["data"] == {"redirect": url_for('weko_workflow.display_activity', activity_id='1')}
-
-    if case == "recid is None and record_without_ver_activity_id is not None":
-        with patch('weko_workflow.views.get_activity_id_of_record_without_version', return_value="activity_first_ver.activity_id"):
-            with patch('weko_workflow.views.get_record_without_version'):
-                with patch('weko_workflow.views.get_record_identifier', return_value=None):
-                    with patch('invenio_pidstore.models.PersistentIdentifier.get_by_object'):
-                        with patch('weko_workflow.views.WorkActivity.get_action_identifier_grant', return_value={}):
-                            with patch('weko_workflow.views.IdentifierHandle'):
-                                with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-                                return_value=(roles, action_users)):
-                                    res = client.post(url, json=input)
-                                    data = response_data(res)
-                                    assert res.status_code == status_code
-                                    assert data["code"] == code
-                                    assert data["msg"] == msg
-
-    if case == "recid is None and record_without_ver_activity_id is None":
-        with patch('weko_workflow.views.get_activity_id_of_record_without_version', return_value=None):
-            with patch('weko_workflow.views.get_record_without_version'):
-                with patch('weko_workflow.views.get_record_identifier', return_value=None):
-                    with patch('invenio_pidstore.models.PersistentIdentifier.get_by_object'):
-                        with patch('weko_workflow.views.WorkActivity.get_action_identifier_grant', return_value={}):
-                            with patch('weko_workflow.views.IdentifierHandle'):
-                                with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-                                return_value=(roles, action_users)):
-                                    res = client.post(url, json=input)
-                                    data = response_data(res)
-                                    assert res.status_code == status_code
-                                    assert data["code"] == code
-                                    assert data["msg"] == msg
-
-    if case == "DOI Persistent is not exist.":
-        with patch('weko_workflow.views.IdentifierHandle.delete_pidstore_doi', return_value=False):
-            with patch('weko_workflow.views.WorkActivity.get_action_identifier_grant', return_value={}):
-                with patch('weko_workflow.views.IdentifierHandle.__init__', return_value=None):
-                    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-                    return_value=(roles, action_users)):
-                        res = client.post(url, json=input)
-                        data = response_data(res)
-                        assert res.status_code == status_code
-                        assert data["code"] == code
-                        assert data["msg"] == msg
-
 
 @pytest.mark.parametrize('case, status_code, code, msg', case_list)
 def test_withdraw_confirm_passwd_delete_guestlogin(guest, client, users, db_register_fullaction, case, status_code, code, msg):
@@ -3294,29 +3224,6 @@ def test_withdraw_confirm_passwd_delete_guestlogin(guest, client, users, db_regi
         "guest_url": "guest_url"
     }
     with patch("weko_workflow.views.session",session):
-
-        if case == "activity_detail is None":
-            with patch("weko_workflow.views.WorkActivity.get_activity_detail", return_value=None):
-                with patch('weko_workflow.views.IdentifierHandle'):
-                    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-                    return_value=(roles, action_users)):
-                        res = guest.post(url, json=input)
-                        data = response_data(res)
-                        assert res.status_code == status_code
-                        assert data["code"] == code
-                        assert data["msg"] == msg
-
-        if case == "PIDDoesNotExistError":
-            with patch('weko_workflow.views.WorkActivity.get_action_identifier_grant', return_value={}):
-                with patch('weko_workflow.views.IdentifierHandle'):
-                    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-                    return_value=(roles, action_users)):
-                        res = guest.post(url, json=input)
-                        data = response_data(res)
-                        assert res.status_code == status_code
-                        assert data["code"] == code
-                        assert data["msg"] == msg
-
         if case == "success":
             with patch('invenio_pidstore.models.PersistentIdentifier.get_by_object'):
                 with patch('weko_workflow.views.WorkActivity.get_action_identifier_grant', return_value={}):
@@ -3330,45 +3237,236 @@ def test_withdraw_confirm_passwd_delete_guestlogin(guest, client, users, db_regi
                             assert data["msg"] == msg
                             assert data["data"] == {"redirect": "guest_url"}
 
+def test_download_activitylog_nologin(client,db_register2):
+    """_summary_
 
-    if case == "recid is None and record_without_ver_activity_id is not None":
-        with patch('weko_workflow.views.get_activity_id_of_record_without_version', return_value="activity_first_ver.activity_id"):
-            with patch('weko_workflow.views.get_record_without_version'):
-                with patch('weko_workflow.views.get_record_identifier', return_value=None):
-                    with patch('invenio_pidstore.models.PersistentIdentifier.get_by_object'):
-                        with patch('weko_workflow.views.WorkActivity.get_action_identifier_grant', return_value={}):
-                            with patch('weko_workflow.views.IdentifierHandle'):
-                                with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-                                return_value=(roles, action_users)):
-                                    res = guest.post(url, json=input)
-                                    data = response_data(res)
-                                    assert res.status_code == status_code
-                                    assert data["code"] == code
-                                    assert data["msg"] == msg
+    Args:
+        client (FlaskClient): flask test client
+    """
+    #2
+    url = url_for('weko_workflow.download_activitylog')
+    res =  client.get(url)
+    assert res.status_code == 302
 
-    if case == "recid is None and record_without_ver_activity_id is None":
-        with patch('weko_workflow.views.get_activity_id_of_record_without_version', return_value=None):
-            with patch('weko_workflow.views.get_record_without_version'):
-                with patch('weko_workflow.views.get_record_identifier', return_value=None):
-                    with patch('invenio_pidstore.models.PersistentIdentifier.get_by_object'):
-                        with patch('weko_workflow.views.WorkActivity.get_action_identifier_grant', return_value={}):
-                            with patch('weko_workflow.views.IdentifierHandle'):
-                                with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-                                return_value=(roles, action_users)):
-                                    res = guest.post(url, json=input)
-                                    data = response_data(res)
-                                    assert res.status_code == status_code
-                                    assert data["code"] == code
-                                    assert data["msg"] == msg
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 200),
+])
+def test_download_activitylog_1(client, db_register , users, users_index, status_code):
+    """Test of download_activitylog."""
+    login(client=client, email=users[users_index]['email'])
 
-    if case == "DOI Persistent is not exist.":
-        with patch('weko_workflow.views.IdentifierHandle.delete_pidstore_doi', return_value=False):
-            with patch('weko_workflow.views.WorkActivity.get_action_identifier_grant', return_value={}):
-                with patch('weko_workflow.views.IdentifierHandle.__init__', return_value=None):
-                    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-                    return_value=(roles, action_users)):
-                        res = guest.post(url, json=input)
-                        data = response_data(res)
-                        assert res.status_code == status_code
-                        assert data["code"] == code
-                        assert data["msg"] == msg
+    #1
+    url = url_for('weko_workflow.download_activitylog',
+                activity_id='2')
+    res = client.get(url)
+    assert res.status_code == status_code
+
+    #3
+    current_app.config.update(
+        DELETE_ACTIVITY_LOG_ENABLE = False
+    )
+
+    url = url_for('weko_workflow.download_activitylog',
+                tab='all')
+    res = client.get(url)
+    assert res.status_code == 403
+
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200),
+    (2, 200),
+    (6, 200),
+])
+def test_download_activitylog_2(client, db_register , users, users_index, status_code):
+    """Test of download_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+
+    #4
+    url = url_for('weko_workflow.download_activitylog',
+                activity_id='2')
+    res = client.get(url)
+    assert res.status_code == status_code
+
+
+    #5
+    url = url_for('weko_workflow.download_activitylog',
+                activity_id='10')
+    res = client.get(url)
+    assert res.status_code == 400
+
+    #6
+    url = url_for('weko_workflow.download_activitylog',
+                tab='all')
+    res = client.get(url)
+    assert res.status_code == status_code
+
+    #7
+    url = url_for('weko_workflow.download_activitylog',
+                createdto='1900-01-17')
+    res = client.get(url)
+    assert res.status_code == 400
+
+def test_clear_activitylog_nologin(client,db_register2):
+    """_summary_
+
+    Args:
+        client (FlaskClient): flask test client
+    """
+    #10
+    url = url_for('weko_workflow.clear_activitylog')
+    res =  client.get(url)
+    assert res.status_code == 302
+
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 200),
+])
+def test_clear_activitylog_1(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+
+    #9,11
+    url = url_for('weko_workflow.clear_activitylog',
+                activity_id='A-00000001-10001')
+    res = client.get(url)
+    assert res.status_code == status_code
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200),
+    (2, 200),
+    (6, 200),
+])
+def test_clear_activitylog_2(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+    #12
+    url = url_for('weko_workflow.clear_activitylog',
+                activity_id='10')
+    res = client.get(url)
+    assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200),
+    (2, 200),
+    (6, 200),
+])
+def test_clear_activitylog_3(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+    #13
+    with patch('weko_workflow.views.WorkActivity.quit_activity', return_value=None):
+        url = url_for('weko_workflow.clear_activitylog',
+                    activity_id='A-00000001-10001')
+        res = client.get(url)
+        assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200),
+    (2, 200),
+    (6, 200),
+])
+def test_clear_activitylog_4(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+    #14
+    with patch('invenio_db.db.session.delete', side_effect=Exception("test error")):
+        url = url_for('weko_workflow.clear_activitylog',
+                    activity_id='A-00000001-10001')
+        res = client.get(url)
+        assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 200),
+])
+def test_clear_activitylog_5(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+    #15
+    url = url_for('weko_workflow.clear_activitylog',
+                tab='all')
+    res = client.get(url)
+    assert res.status_code == status_code
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200),
+    (2, 200),
+    (6, 200),
+])
+def test_clear_activitylog_6(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+    #16
+    url = url_for('weko_workflow.clear_activitylog',
+                createdto='1900-01-17')
+    res = client.get(url)
+    assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200),
+    (2, 200),
+    (6, 200),
+])
+def test_clear_activitylog_7(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+    #17
+    with patch('weko_workflow.views.WorkActivity.quit_activity', return_value=None):
+        url = url_for('weko_workflow.clear_activitylog',
+                    tab='all')
+        res = client.get(url)
+        assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (1, 200),
+    (2, 200),
+    (6, 200),
+])
+def test_clear_activitylog_8(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+    #18
+    with patch('invenio_db.db.session.delete', side_effect=Exception("test error")):
+        url = url_for('weko_workflow.clear_activitylog',
+                    tab='all')
+        res = client.get(url)
+        assert res.status_code == 400
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
+    (5, 403),
+    (6, 200),
+])
+def test_clear_activitylog_9(client, db_register , users, users_index, status_code):
+    """Test of clear_activitylog."""
+    login(client=client, email=users[users_index]['email'])
+    #19
+    current_app.config.update(
+        DELETE_ACTIVITY_LOG_ENABLE = False
+    )
+
+    url = url_for('weko_workflow.clear_activitylog',
+                tab='all')
+    res = client.get(url)
+    assert res.status_code == 403

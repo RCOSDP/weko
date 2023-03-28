@@ -346,6 +346,8 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                     else:
                         children.clear()
                         tree.pop(i)
+            else:
+                tree.pop(i)
 
 
 def get_index_id_list(indexes, id_list=None):
@@ -596,7 +598,8 @@ def get_record_in_es_of_index(index_id, recursively=True):
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
     must_query = [
         QueryString(query=query_string),
-        Q("terms", path=child_idx)
+        Q("terms", path=child_idx),
+        Q("terms", publish_status=["0", "1"])
     ]
     search = search.query(
         Bool(filter=must_query)

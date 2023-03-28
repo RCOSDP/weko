@@ -10,6 +10,8 @@
             $scope.search_type = "0";
             $scope.default_condition_data = [];
 
+            $scope.load_delimiter = 50;
+
             // page init
             $scope.initData = function (data) {
                 json_obj = angular.fromJson(data)
@@ -53,6 +55,13 @@
                     obj_of_condition.selected_key = item.id;
                     obj_of_condition.key_options = $scope.detail_search_key;
                     obj_of_condition.key_value = angular.copy(db_data[item.inx]);
+                    if (db_data[item.inx].inputType == 'checkbox_list'){
+                        if (db_data[item.inx].check_val.length>$scope.load_delimiter){
+                            obj_of_condition.key_value.limit=$scope.load_delimiter;
+                        }else{
+                            obj_of_condition.key_value.limit=db_data[item.inx].check_val.length;
+                        }
+                    }
                     $scope.condition_data.push(obj_of_condition)
                 });
 
@@ -93,6 +102,13 @@
                         obj_of_condition.selected_key = $scope.detail_search_key[sub_detail].id;
                         obj_of_condition.key_options = $scope.detail_search_key;
                         obj_of_condition.key_value = angular.copy(db_data[$scope.detail_search_key[sub_detail].inx]);
+                        if (db_data[$scope.detail_search_key[sub_detail].inx].inputType == 'checkbox_list'){
+                            if (db_data[$scope.detail_search_key[sub_detail].inx].check_val.length>$scope.load_delimiter){
+                                obj_of_condition.key_value.limit=$scope.load_delimiter;
+                            }else{
+                                obj_of_condition.key_value.limit=db_data[$scope.detail_search_key[sub_detail].inx].check_val.length;
+                            }
+                        }
                         $scope.condition_data.push(obj_of_condition)
                         break;
                     }
@@ -300,6 +316,8 @@
                     url = '/admin/items' + url + '&item_management=update';
                 } else if (angular.element('#item_management_bulk_delete').length != 0) {
                     url = '/admin/items' + url + '&item_management=delete';
+                } else {
+                    url += getFacetParameter();
                 }
 
                 // URI-encode '+' in advance for preventing from being converted to '%20'(space)
@@ -352,12 +370,28 @@
                     obj_of_condition.selected_key = item.id;
                     obj_of_condition.key_options = $scope.detail_search_key;
                     obj_of_condition.key_value = angular.copy(db_data[item.inx]);
+                    if (db_data[item.inx].inputType == 'checkbox_list'){
+                        if (db_data[item.inx].check_val.length>$scope.load_delimiter){
+                            obj_of_condition.key_value.limit=$scope.load_delimiter;
+                        }else{
+                            obj_of_condition.key_value.limit=db_data[item.inx].check_val.length;
+                        }
+                    }
                     $scope.condition_data.push(obj_of_condition);
                 });
 
                 $scope.update_disabled_flg();
             }
-
+            $scope.loadMore = function(index){
+                var now = $scope.condition_data[index].key_value.limit;
+                var next = 0;
+                if($scope.condition_data[index].key_value.check_val.length < now+$scope.load_delimiter){
+                    next = $scope.condition_data[index].key_value.check_val.length;
+                }else{
+                    next = now + $scope.load_delimiter;
+                }
+                $scope.condition_data[index].key_value.limit = next;
+            }
             // set search options
             $scope.get_search_key = function (search_key) {
                 var obj_of_condition = {
@@ -403,12 +437,48 @@
         angular.module('searchDetailModule', ['searchDetail.controllers']);
         angular.module('searchDetailModule', ['searchDetail.controllers']).config(
             [
-                '$interpolateProvider', function ($interpolateProvider) {
+                '$interpolateProvider','$locationProvider', function ($interpolateProvider,$locationProvider) {
                 $interpolateProvider.startSymbol('[[');
                 $interpolateProvider.endSymbol(']]');
+                $locationProvider.html5Mode({
+                    enabled: true,
+                    requireBase: false,
+                    rewriteLinks: false,
+                  });
             }]
-        );
+        ).directive('whenScrolled',function(){
+            return function(scope, elem, attr){
+                var raw = elem[0];
+                elem.bind('scroll',  function() {
+                  if (raw.scrollTop + raw.offsetHeight + 1 >= raw.scrollHeight) {
+                    scope.$apply(attr.whenScrolled);
+                  }
+                });
+            }
+        });
         angular.bootstrap(
             document.getElementById('search_detail'), ['searchDetailModule']);
+        
+        /**
+         * Returns faceted search parameters.
+         * This function was created for the purpose of providing faceted search parameters for detailed search.
+         * Returns parameters for faceted searches from existing URLs, excluding simple, advanced, and INDEX searches.
+         * 
+         * @returns Faceted search parameters.
+         */
+        function getFacetParameter() {
+            let result = "";
+            let params = window.location.search.substring(1).split('&');
+            const conds = ['page', 'size', 'sort', 'timestamp', 'search_type', 'q', 'title', 'creator', 'date_range1_from', 'date_range1_to','time'];
+            for (let i = 0; i < params.length; i++) {
+                var keyValue = decodeURIComponent(params[i]).split('=');
+                var key = keyValue[0];
+                var value = keyValue[1];
+                if(key && !conds.includes(key) && !key.startsWith("text")) {
+                    result += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(value);
+                }
+            }
+            return result;
+        }
     });
 })(angular);

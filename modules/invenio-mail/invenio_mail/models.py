@@ -20,6 +20,7 @@
 
 """Database models for mail."""
 
+import pickle
 from invenio_db import db
 
 
@@ -41,7 +42,7 @@ class MailConfig(db.Model):
         if len(cls.query.all()) < 1:
             db.session.add(cls())
             db.session.commit()
-        cfg = cls.query.get(1).__dict__
+        cfg = pickle.loads(pickle.dumps(cls.query.get(1).__dict__))
         cfg.pop('id')
         cfg.pop('_sa_instance_state')
         return cfg

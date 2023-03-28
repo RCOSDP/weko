@@ -70,6 +70,17 @@ def create_blueprint(app, endpoints):
         __name__,
         url_prefix="",
     )
+    
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+        current_app.logger.debug("weko_search_ui dbsession_clean: {}".format(exception))
+        if exception is None:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+        db.session.remove()
+    
 
     for endpoint, options in (endpoints or {}).items():
         if "record_serializers" in options:
@@ -185,7 +196,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         from weko_admin.utils import get_facet_search_query
 
         page = request.values.get("page", 1, type=int)
-        size = request.values.get("size", 20, type=int)
+        size = request.values.get("size", 20, type=int) 
         is_search = request.values.get("is_search", 0 ,type=int ) #toppage and search_page is 1
         community_id = request.values.get("community")
         params = {}
@@ -207,7 +218,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         query = request.values.get("q")
         if query:
             urlkwargs["q"] = query
-
+        
         # Execute search
         weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
         for param in params:
@@ -215,7 +226,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             search = search.post_filter({"terms": {query_key: params[param]}})
 
         search_result = search.execute()
-
         # Generate links for prev/next
         urlkwargs.update(
             size=size,
@@ -313,7 +323,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 private_count, public_count = count_items(_child_indexes)
                 current_idx["date_range"]["pub_cnt"] = public_count
                 current_idx["date_range"]["un_pub_cnt"] = private_count
-                nlst.append(current_idx)
+                if p.path in is_perm_paths:
+                    nlst.append(current_idx)
         else:
             for p in paths:
                 m = 0
@@ -351,7 +362,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 private_count, public_count = count_items(_child_indexes)
                 current_idx["date_range"]["pub_cnt"] = public_count
                 current_idx["date_range"]["un_pub_cnt"] = private_count
-                nlst.append(current_idx)
+                if p.path in is_perm_paths:
+                    nlst.append(current_idx)
         agp.clear()
         # process index tree image info
         if len(nlst):
@@ -404,6 +416,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     hit["_source"]["pageEnd"] = []
         except Exception as ex:
             current_app.logger.error(ex)
+
         return self.make_response(
             pid_fetcher=self.pid_fetcher,
             search_result=rd,

@@ -70,7 +70,7 @@ from weko_workflow import WekoWorkflow
 from weko_search_ui import WekoSearchUI
 from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory,GuestActivity
 from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
-from weko_workflow.config import WEKO_WORKFLOW_GAKUNINRDM_DATA,WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR
+from weko_workflow.config import WEKO_WORKFLOW_GAKUNINRDM_DATA,WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR,WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
@@ -486,6 +486,8 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_WORKFLOW_ACTION_ADVISOR=WEKO_WORKFLOW_ACTION_ADVISOR,
         WEKO_WORKFLOW_ACTION_ADMINISTRATOR=WEKO_WORKFLOW_ACTION_ADMINISTRATOR,
         WEKO_WORKFLOW_GAKUNINRDM_DATA=WEKO_WORKFLOW_GAKUNINRDM_DATA,
+        DELETE_ACTIVITY_LOG_ENABLE=True,
+        WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS=WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS,
     )
     
     app_.testing = True
@@ -992,6 +994,9 @@ def db_register(app, db, db_records, users, action_data, item_type):
         db.session.add(activity_guest)
     db.session.commit()
 
+    activity_action = ActivityAction(activity_id=activity.activity_id,
+                                     action_id=1,action_status="M",
+                                     action_handler=1, action_order=1)
     activity_action1_item1 = ActivityAction(activity_id=activity_item1.activity_id,
                                             action_id=1,action_status="M",
                                             action_handler=1, action_order=1)
@@ -1032,6 +1037,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                                 feedback_maillist={"email": "test1@org", "author_id": "2"}
                                 )
     with db.session.begin_nested():
+        db.session.add(activity_action)
         db.session.add(activity_action1_item1)
         db.session.add(activity_action2_item1)
         db.session.add(activity_action3_item1)
@@ -1055,10 +1061,10 @@ def db_register(app, db, db_records, users, action_data, item_type):
     with db.session.begin_nested():
         db.session.add(activity_03)
     
-    activity_action03_1 = ActivityAction(id=4, activity_id=activity_03.activity_id,
+    activity_action03_1 = ActivityAction(activity_id=activity_03.activity_id,
                                             action_id=1,action_status="M",action_comment="",
                                             action_handler=1, action_order=1)
-    activity_action03_2 = ActivityAction(id=5, activity_id=activity_03.activity_id,
+    activity_action03_2 = ActivityAction(activity_id=activity_03.activity_id,
                                             action_id=3,action_status="F",action_comment="",
                                             action_handler=0, action_order=2)
     with db.session.begin_nested():
@@ -1069,6 +1075,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
     history = ActivityHistory(
         activity_id=activity.activity_id,
         action_id=activity.action_id,
+        action_order=activity.action_order,
     )
     with db.session.begin_nested():
         db.session.add(history)
@@ -1504,7 +1511,16 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
     #     db.session.add(flow_action_role)
     # db.session.commit()
 
-    action_identifier=ActionIdentifier(
+    action_identifier1=ActionIdentifier(
+        activity_id=activity_item1.activity_id,
+        action_id=7,
+        action_identifier_select=-2,
+        action_identifier_jalc_doi="",
+        action_identifier_jalc_cr_doi="",
+        action_identifier_jalc_dc_doi="",
+        action_identifier_ndl_jalc_doi=""
+    )
+    action_identifier3=ActionIdentifier(
         activity_id=activity_item3.activity_id,
         action_id=7,
         action_identifier_select=1,
@@ -1514,7 +1530,8 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
         action_identifier_ndl_jalc_doi=""
     )
     with db.session.begin_nested():
-        db.session.add(action_identifier)
+        db.session.add(action_identifier1)
+        db.session.add(action_identifier3)
     db.session.commit()
     return {"flow_actions":flow_actions,
             "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item4,activity_item5,activity_item6]}

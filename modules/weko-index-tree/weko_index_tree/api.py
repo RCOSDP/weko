@@ -776,7 +776,7 @@ class Indexes(object):
         with db.session.begin_nested():
             obj = db.session.query(Index). \
                 filter(db.or_(Index.index_name_english == index_name,
-                              Index.index_name == index_name)).first()
+                              Index.index_name == index_name)).all()
         return obj
 
     @classmethod
@@ -1478,7 +1478,7 @@ class Indexes(object):
     @classmethod
     def have_children(cls, index_id):
         """Have children."""
-        return Index.get_children(index_id)
+        return Index.have_children(index_id)
 
     @classmethod
     def get_coverpage_state(cls, indexes: list):

@@ -4,10 +4,11 @@ import csv
 import os
 import json
 import pytest
-from flask import current_app, make_response, request
+from mock import patch, MagicMock, Mock
 from flask_login import current_user
 from mock import patch
 from jinja2.exceptions import TemplateNotFound
+from flask import Flask, json, jsonify, session, url_for,current_app, make_response, request
 
 from invenio_accounts.testutils import login_user_via_session
 
@@ -22,7 +23,7 @@ from weko_search_ui.admin import (
 
 # class ItemManagementBulkDelete(BaseView):
 #     def index(self):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemManagementBulkDelete_index -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemManagementBulkDelete_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_ItemManagementBulkDelete_index(i18n_app, es, users, indices):
     i18n_app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
     with i18n_app.test_client() as client:
@@ -40,65 +41,105 @@ def test_ItemManagementBulkDelete_index(i18n_app, es, users, indices):
                         assert res.status_code==200
 
 #     def check(self):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemManagementBulkDelete_check -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_ItemManagementBulkDelete_check(i18n_app, users, indices):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemManagementBulkDelete_check -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_ItemManagementBulkDelete_check(i18n_app, users,db_records2):
+    import secrets
     i18n_app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
+    currect_token = secrets.token_hex()
     with i18n_app.test_client() as client:
         with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
             res = client.get("/admin/items/bulk/delete/check",
-                             content_type="application/json")
+                             content_type="application/json",
+                             headers={"X-CSRFToken":currect_token})
             assert res.status_code==200
             res = client.get("/admin/items/bulk/delete/check?q=33",
-                            content_type="application/json")
+                            content_type="application/json",
+                             headers={"X-CSRFToken":currect_token})
             assert res.status_code==200
             with patch('weko_search_ui.admin.is_index_locked', return_value=False):
                 with patch('weko_search_ui.admin.get_doi_items_in_index', return_value=[1]):
                     res = client.get("/admin/items/bulk/delete/check?q=33",
-                                    content_type="application/json")
+                                    content_type="application/json",
+                                    headers={"X-CSRFToken":currect_token})
                     assert res.status_code==200
                 with patch('weko_search_ui.admin.get_doi_items_in_index', return_value=[]):
                     res = client.get("/admin/items/bulk/delete/check?q=33",
-                                    content_type="application/json")
+                                    content_type="application/json",
+                                    headers={"X-CSRFToken":currect_token})
                     assert res.status_code==200
 
 
 # class ItemManagementCustomSort(BaseView):
-#     def index(self): ~ ERROR
-def test_ItemManagementCustomSort_index(i18n_app, users, client_request_args, db_records2):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        test = ItemManagementCustomSort()
-        assert test.index()
+class TestItemManagementCustomSort:
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemManagementCustomSort::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_index_acl(self,client, users, db_records2):
+        user = users[3]['obj']
+        assert user.roles[0].name=='System Administrator' 
+        
+        url = url_for("items/custom_sort.index", _external=True)
+        with patch("flask.templating._render", return_value=""):
+            res = client.get(url)
+            assert res.status == '302 FOUND'
+
+        with patch("flask_login.utils._get_user", return_value=user):
+            with patch("flask.templating._render", return_value=""):
+                res = client.get(url)
+                assert res.status == '200 OK'
 
 #     def save_sort(self): ~ GOOD
-def test_ItemManagementCustomSort_save_sort(i18n_app, users, client_request_args, db_records2):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemManagementCustomSort_save_sort -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_ItemManagementCustomSort_save_sort(i18n_app, users, db_records2):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         test = ItemManagementCustomSort()
-        assert test.save_sort()
+        with patch("flask.templating._render", return_value=""):
+            assert test.save_sort()
 
 
 # class ItemManagementBulkSearch(BaseView):
-#     def index(self): ~ ERROR
-def test_ItemManagementBulkSearch_index(i18n_app, users, client_request_args, db_records2):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        test = ItemManagementBulkSearch()
-        assert test.index()
+class TestItemManagementBulkSearch:
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemManagementBulkSearch::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_index_acl(self,client, users, db_records2):
+        user = users[3]['obj']
+        assert user.roles[0].name=='System Administrator' 
+        
+        url = url_for("items/search.index", _external=True)
+        with patch("flask.templating._render", return_value=""):
+            res = client.get(url)
+            assert res.status == '302 FOUND'
+
+        with patch("flask_login.utils._get_user", return_value=user):
+            with patch("flask.templating._render", return_value=""):
+                res = client.get(url)
+                assert res.status == '200 OK'
 
 #     def is_visible(): ~ GOOD
-def test_ItemManagementBulkSearch_is_visible(i18n_app, users, client_request_args, db_records2):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemManagementBulkSearch_is_visible -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_ItemManagementBulkSearch_is_visible(i18n_app, users, db_records2):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         test = ItemManagementBulkSearch()
         assert not test.is_visible()
 
 
 # class ItemImportView(BaseView):
-#     def index(self): ~ ERROR
-def test_ItemImportView_index(i18n_app, users, client_request_args, db_records2):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        test = ItemImportView()
-        assert test.index()
+class TestItemImportView:
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemImportView::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_index_acl(self,client, users, db_records2):
+        user = users[3]['obj']
+        assert user.roles[0].name=='System Administrator' 
+        
+        url = url_for("items/import.index", _external=True)
+        with patch("flask.templating._render", return_value=""):
+            res = client.get(url)
+            assert res.status == '302 FOUND'
 
+        with patch("flask_login.utils._get_user", return_value=user):
+            with patch("flask.templating._render", return_value=""):
+                res = client.get(url)
+                assert res.status == '200 OK'
+                
 # def check(self) -> jsonify: ~ UnboundLocalError: local variable 'task' referenced before assignment request.form needed
-def test_ItemImportView_check(i18n_app, users, client, client_request_args):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemImportView_check -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_ItemImportView_check(i18n_app, users, client,client_request_args):
     file_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         'data',
@@ -138,7 +179,10 @@ def test_ItemImportView_check(i18n_app, users, client, client_request_args):
 
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         test = ItemImportView()
-        assert test.check()
+        task = MagicMock()
+        task.task_id = 1
+        with patch("weko_search_ui.tasks.check_import_items_task.apply_async",return_Value=task):
+            assert test.check()
 
 #     def get_check_status(self) -> jsonify: ~ GOOD
 def test_ItemImportView_get_check_status(i18n_app, users, client_request_args, db_records2):
@@ -177,7 +221,7 @@ def test_ItemImportView_get_disclaimer_text(i18n_app, users, client_request_args
         assert test.get_disclaimer_text()
 
 #     def export_template(self):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemImportView_export_template -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemImportView_export_template -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_ItemImportView_export_template(i18n_app, users, item_type):
     _data = {
         'item_type_id': 1
@@ -199,10 +243,15 @@ def test_ItemImportView_export_template(i18n_app, users, item_type):
 
 # class ItemBulkExport(BaseView):
 #     def index(self): ~ AttributeError: 'NoneType' object has no attribute 'base_template'
-def test_ItemBulkExport_index(i18n_app, users, client_request_args, db_records2):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemBulkExport_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_ItemBulkExport_index(i18n_app, users, client_request_args, db_records2,mocker):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        mock_render = mocker.patch("weko_search_ui.admin.ItemBulkExport.render",return_value=make_response())
         test = ItemBulkExport()
-        assert test.index()
+        res = test.index()
+        assert res.status_code == 200
+        mock_render.assert_called_with("weko_search_ui/admin/export.html")
+        
 
 #     def export_all(self): ~ GETS STUCK
 # def test_ItemBulkExport_export_all(i18n_app, users, client_request_args, db_records2):
@@ -251,7 +300,8 @@ def compare_csv(data1, data2):
                     return False
     return True
 
-def test_export_template(app, client, admin_view, users, item_type):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_export_template -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_export_template(app, client, users, item_type):
     
     url="/admin/items/import/export_template"
 

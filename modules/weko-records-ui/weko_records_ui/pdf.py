@@ -591,8 +591,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     # Download the newly generated combined PDF file
     try:
         combined_filename = 'CV_' + datetime.now().strftime('%Y%m%d') + '_' + \
-                            item_metadata_json[_file_item_id][0].get(
-                                "filename")
+                            fileobj['filename']
     except (KeyError, IndexError):
         combined_filename = 'CV_' + title + '.pdf'
 

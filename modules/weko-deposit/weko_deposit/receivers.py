@@ -50,13 +50,11 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
             if pid == get_record_without_version(pid) else False
         dep._convert_jpcoar_data_to_es()
         im.pop('recid')
-        dep.get_content_files()
+        if record_metadata.status != PIDStatus.DELETED:
+            dep.get_content_files()
 
         # Updated metadata's path
-        if record_metadata.status == PIDStatus.REGISTERED:
-            dep.jrc.update(dict(path=dep.get('path')))
-        else:
-            dep.jrc.update(dict(path=[]))
+        dep.jrc.update(dict(path=dep.get('path')))
 
         ps = dict(publish_status=dep.get('publish_status'))
         dep.jrc.update(ps)

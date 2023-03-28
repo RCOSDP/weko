@@ -110,18 +110,19 @@ class TestItemManagementBulkUpdate:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_admin.py::TestItemManagementBulkUpdate::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
     def test_index(self,client,db_sessionlifetime,users):
         url = url_for("items/bulk/update.index", _external=True)
-        res = client.get(url)
-        assert res.status == '302 FOUND'
+        with patch("weko_records_ui.views.get_search_detail_keyword", return_value={}):
+            res = client.get(url)
+            assert res.status == '302 FOUND'
 
-        with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
-            with patch("flask.templating._render", return_value=""):
-                res = client.get(url)
-                assert res.status == '403 FORBIDDEN'
-        
-        with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
-            with patch("flask.templating._render", return_value=""):
-                res = client.get(url)
-                assert res.status == '200 OK'
+            with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
+                with patch("flask.templating._render", return_value=""):
+                    res = client.get(url)
+                    assert res.status == '403 FORBIDDEN'
+            
+            with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
+                with patch("flask.templating._render", return_value=""):
+                    res = client.get(url)
+                    assert res.status == '200 OK'
         
 #     def get_items_metadata(self):
 #         def get_file_data(meta):

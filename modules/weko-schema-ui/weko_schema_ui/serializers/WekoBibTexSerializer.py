@@ -541,62 +541,62 @@ class WekoBibTexSerializer():
 
         def validate_partial_req():
             result = True
-            for par_req in fields.get('required_partial'):
-                partial_valid = False
-                for field in par_req:
-                    # check for pages because pages is represented for start
-                    # and end page
-                    if field == BibTexFields.PAGES:
-                        start_page = root.findall(self.__find_pattern.format(
-                            self.__fields_mapping[BibTexFields.PAGE_START]),
-                            self.__ns)
-                        end_page = root.findall(
-                            self.__find_pattern.format(self.__fields_mapping[BibTexFields.PAGE_END]),
-                            self.__ns)
-                        if len(start_page) > 0 and len(end_page) > 0:
-                            partial_valid = True
-                            break
-                    else:
-                        field_data = root.findall(
-                            self.__find_pattern.format(self.__fields_mapping[field]),
-                            self.__ns)
-                        if len(field_data) > 0:
-                            partial_valid = True
-                            break
-                if not partial_valid:
-                    result = False
-                    lst_invalid_fields.append(par_req[0].value)
-                    lst_invalid_fields.append(par_req[1].value)
+            # for par_req in fields.get('required_partial'):
+            #     partial_valid = False
+            #     for field in par_req:
+            #         # check for pages because pages is represented for start
+            #         # and end page
+            #         if field == BibTexFields.PAGES:
+            #             start_page = root.findall(self.__find_pattern.format(
+            #                 self.__fields_mapping[BibTexFields.PAGE_START]),
+            #                 self.__ns)
+            #             end_page = root.findall(
+            #                 self.__find_pattern.format(self.__fields_mapping[BibTexFields.PAGE_END]),
+            #                 self.__ns)
+            #             if len(start_page) > 0 and len(end_page) > 0:
+            #                 partial_valid = True
+            #                 break
+            #         else:
+            #             field_data = root.findall(
+            #                 self.__find_pattern.format(self.__fields_mapping[field]),
+            #                 self.__ns)
+            #             if len(field_data) > 0:
+            #                 partial_valid = True
+            #                 break
+            #     if not partial_valid:
+            #         result = False
+            #         lst_invalid_fields.append(par_req[0].value)
+            #         lst_invalid_fields.append(par_req[1].value)
             return result
 
         lst_invalid_fields = []
         identifierType_str = 'identifierType'
         required_valid = True
         fields = self.____get_bibtex_type_fields(bibtex_type)
-        for item_required in fields.get('required'):
-            elements = root.findall(
-                self.__find_pattern.format(self.__fields_mapping[item_required]),
-                self.__ns)
-            if len(elements) == 0:
-                required_valid = False
-                lst_invalid_fields.append(item_required.value)
-            elif item_required == BibTexFields.YEAR or \
-                    item_required == BibTexFields.MONTH:
-                date_valid = validate_by_att('dateType', ['issued'])
-                if not date_valid:
-                    lst_invalid_fields.append(item_required.value)
-                    required_valid = False
-            elif item_required == BibTexFields.DOI:
-                doi_valid = validate_by_att(identifierType_str, ['doi'])
-                if not doi_valid:
-                    lst_invalid_fields.append(item_required.value)
-                    required_valid = False
-            elif item_required == BibTexFields.URL:
-                url_valid = validate_by_att(identifierType_str,
-                                            ['doi', 'hdl', 'uri'])
-                if not url_valid:
-                    lst_invalid_fields.append(item_required.value)
-                    required_valid = False
+        # for item_required in fields.get('required'):
+        #     elements = root.findall(
+        #         self.__find_pattern.format(self.__fields_mapping[item_required]),
+        #         self.__ns)
+        #     if len(elements) == 0:
+        #         required_valid = False
+        #         lst_invalid_fields.append(item_required.value)
+        #     elif item_required == BibTexFields.YEAR or \
+        #             item_required == BibTexFields.MONTH:
+        #         date_valid = validate_by_att('dateType', ['issued'])
+        #         if not date_valid:
+        #             lst_invalid_fields.append(item_required.value)
+        #             required_valid = False
+        #     elif item_required == BibTexFields.DOI:
+        #         doi_valid = validate_by_att(identifierType_str, ['doi'])
+        #         if not doi_valid:
+        #             lst_invalid_fields.append(item_required.value)
+        #             required_valid = False
+        #     elif item_required == BibTexFields.URL:
+        #         url_valid = validate_by_att(identifierType_str,
+        #                                     ['doi', 'hdl', 'uri'])
+        #         if not url_valid:
+        #             lst_invalid_fields.append(item_required.value)
+        #             required_valid = False
         partial_req_valid = validate_partial_req()
         return required_valid and partial_req_valid, lst_invalid_fields
 
@@ -609,13 +609,13 @@ class WekoBibTexSerializer():
         all_field_type = self.____get_bibtex_type_fields(bibtex_type)
         all_fields = all_field_type.get(
             'required') + all_field_type.get('optional')
-        partial_req = all_field_type.get('required_partial')
-        for item in partial_req:
-            if BibTexFields.PAGES in item:
-                item.remove(BibTexFields.PAGES)
-                item.extend([BibTexFields.PAGE_START,
-                            BibTexFields.PAGE_END])
-            all_fields.extend(item)
+        # partial_req = all_field_type.get('required_partial')
+        # for item in partial_req:
+        #     if BibTexFields.PAGES in item:
+        #         item.remove(BibTexFields.PAGES)
+        #         item.extend([BibTexFields.PAGE_START,
+        #                     BibTexFields.PAGE_END])
+        #     all_fields.extend(item)
         return all_fields
 
     def __get_bibtex_data(self, root, bibtex_type):

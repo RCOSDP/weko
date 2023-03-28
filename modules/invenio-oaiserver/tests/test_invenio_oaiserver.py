@@ -12,9 +12,10 @@ from __future__ import absolute_import, print_function
 
 import pytest
 from flask import Flask
-from invenio_db import db
 
+from invenio_cache import InvenioCache, current_cache
 from invenio_oaiserver import InvenioOAIServer, current_oaiserver
+from invenio_oaiserver.ext import _AppState
 
 
 def test_version():
@@ -38,7 +39,7 @@ def test_init():
         current_oaiserver.unregister_signals()
 
 
-def test_view(app):
+def test_view(app, db):
     """Test view."""
     with app.test_client() as client:
         res = client.get("/oai?verb=Identify")
@@ -47,8 +48,8 @@ def test_view(app):
         # no XSL transformation by default
         assert b'xml-stylesheet' not in res.data
 
-
-def test_view_with_xsl(app):
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_invenio_oaiserver.py::test_view_with_xsl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_view_with_xsl(app, db):
     """Test view."""
     with app.test_client() as client:
         app.config['OAISERVER_XSL_URL'] = 'testdomain.com/oai2.xsl'
@@ -58,7 +59,7 @@ def test_view_with_xsl(app):
         assert b'xml-stylesheet' in res.data
 
 
-def test_alembic(app):
+def test_alembic(app, db):
     """Test alembic recipes."""
     ext = app.extensions['invenio-db']
 
@@ -75,3 +76,39 @@ def test_alembic(app):
     ext.alembic.upgrade()
 
     assert not ext.alembic.compare_metadata()
+
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_invenio_oaiserver.py::test_AppState -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_AppState():
+    # register signal, exist cache
+    app = Flask("test_app")
+    app.config.update(CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_DB='0',
+        CACHE_REDIS_HOST="redis",
+        OAISERVER_CACHE_KEY="DynamicOAISets::",
+        OAISERVER_REGISTER_RECORD_SIGNALS=True,
+        OAISERVER_REGISTER_SET_SIGNALS=True)
+    InvenioCache(app)
+    with app.app_context():
+        current_cache.delete("DynamicOAISets::")
+
+        state = _AppState(app=app,cache=current_cache)
+        assert state.sets == None
+        state.sets = "test_value"
+        assert state.sets == "test_value"
+        state.unregister_signals()
+        
+    
+    # not register signal, not exist cache
+    app = Flask("test_app")
+    app.config.update(OAISERVER_REGISTER_RECORD_SIGNALS=False,
+        OAISERVER_REGISTER_SET_SIGNALS=False)
+    with app.app_context():
+        state = _AppState(app=app)
+        state.sets="test_value"
+        state.unregister_signals()
+    
+    app = Flask("test_app")
+    app.config.update(OAISERVER_REGISTER_RECORD_SIGNALS=True,
+        OAISERVER_REGISTER_SET_SIGNALS=False)
+    with app.app_context():
+        state = _AppState(app=app)

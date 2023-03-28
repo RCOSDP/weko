@@ -7,11 +7,64 @@
 
 """Module tests."""
 import pytest
-from mock import patch
+import json
+from mock import patch, MagicMock
 
-from weko_gridlayout.services import WidgetItemServices
+from weko_gridlayout.services import (
+    WidgetItemServices,
+    WidgetDesignServices,
+    WidgetDesignPageServices,
+    WidgetDataLoaderServices
+) 
+from weko_gridlayout.models import WidgetDesignPage
 
 
+### class WidgetItemServices:
+#     def get_widget_by_id(cls, widget_id):
+def test_get_widget_by_id(i18n_app, widget_item):
+    for item in widget_item:
+        assert WidgetItemServices.get_widget_by_id("1")
+
+
+#     def save_command(cls, data):
+def test_save_command(i18n_app):
+    data = {
+        "data": 1,
+        "flag_edit": False
+    }
+    return_data = {
+        "message": "test",
+        "success": "test"
+    }
+    return_data_2 = {
+        "error": False,
+    }
+    with patch("weko_gridlayout.utils.build_data", return_value=""):
+        with patch("weko_gridlayout.services.WidgetItemServices.create", return_value=return_data_2):
+            assert WidgetItemServices.save_command(data)
+
+
+#     def __edit_widget(cls, data, ):
+
+
+#     def get_by_id(cls, widget_id):
+def test_get_by_id(i18n_app):
+    widget_id = "1"
+    return_data = {"multiLangSetting": "test"}
+    return_data_2 = [{
+        "label": "test",
+        "description_data": "test",
+        "lang_code": "test"
+    }]
+    with patch("weko_gridlayout.models.WidgetItem.get_by_id", return_value=""):
+        with patch("weko_gridlayout.models.WidgetMultiLangData.get_by_widget_id", return_value=""):
+            assert WidgetItemServices.get_by_id(widget_id)
+    with patch("weko_gridlayout.models.WidgetItem.get_by_id", return_value=return_data):
+        with patch("weko_gridlayout.models.WidgetMultiLangData.get_by_widget_id", return_value=return_data_2):
+            assert WidgetItemServices.get_by_id(widget_id)
+
+
+#     def create(cls, widget_data):
 @pytest.mark.parametrize("widget_data, result_error",
                          [({}, 'Widget data is empty!'),
                           ({'multiLangSetting':''}, 'Multiple language data is empty'),
@@ -33,7 +86,6 @@ def test_create(db, widget_data, result_error):
         result = WidgetItemServices.create(widget_data)
         assert result['error'] == result_error
 
-
 def test_create_exception(app, db):
     """
     Test of new widget creation.
@@ -51,6 +103,7 @@ def test_create_exception(app, db):
         assert result['error'] == "Exception"
 
 
+#     def update_by_id(cls, widget_id, widget_data):
 @pytest.mark.parametrize("widget_id, widget_data, result_error",
                          [(None, None, 'Widget data is empty!'),
                           (1, None, 'Widget data is empty!'),
@@ -71,7 +124,6 @@ def test_update_by_id(db, widget_id, widget_data, result_error):
     result = WidgetItemServices.update_by_id(widget_id, widget_data)
     assert result['error'] == result_error
 
-
 def test_update_by_id_exception(db):
     widget_data = {'multiLangSetting':
         {'en':
@@ -84,3 +136,443 @@ def test_update_by_id_exception(db):
                side_effect=Exception("Exception")):
         result = WidgetItemServices.update_by_id(1, widget_data)
         assert result['error'] == "Exception"
+
+
+#     def delete_by_id(cls, widget_id):.
+def test_delete_by_id(i18n_app):
+    widget_id = "1"
+    assert WidgetItemServices.delete_by_id(widget_id="")
+    with patch("weko_gridlayout.services.WidgetDesignServices.is_used_in_widget_design", return_value=True):
+        assert WidgetItemServices.delete_by_id(widget_id)
+    with patch("weko_gridlayout.services.WidgetDesignServices.is_used_in_widget_design", return_value=False):
+        with patch("weko_gridlayout.models.WidgetItem.delete_by_id", return_value=""):
+            with patch("weko_gridlayout.models.WidgetMultiLangData.delete_by_widget_id", return_value=""):
+                assert WidgetItemServices.delete_by_id(widget_id)
+        assert WidgetItemServices.delete_by_id(widget_id)
+
+
+#     def delete_multi_item_by_id(cls, widget_id, session):
+#     def get_widget_data_by_widget_id(cls, widget_id):
+
+
+#     def load_edit_pack(cls, widget_id):
+def test_load_edit_pack(i18n_app, widget_items):
+    widget_id = widget_items[0].widget_id
+    with patch("weko_gridlayout.utils.convert_widget_data_to_dict", return_value=""):
+        # with patch("weko_gridlayout.models.WidgetItem.get_by_id", return_value=""):
+        with patch("weko_gridlayout.models.WidgetMultiLangData.get_by_widget_id", return_value=""):
+            with patch("weko_gridlayout.utils.convert_data_to_design_pack", return_value=""):
+                with patch("weko_gridlayout.utils.convert_data_to_edit_pack", return_value="test"):
+                    # Doesn't return any value
+                    assert not WidgetItemServices.load_edit_pack(widget_id)
+    # Doesn't return any value
+    assert not WidgetItemServices.load_edit_pack(widget_id=None)
+
+
+#     def get_locked_widget_info(cls, widget_id, widget_item=None,
+# ERR ~ TypeError: '<' not supported between instances of 'datetime.timedelta' and 'datetime.datetime'
+def test_get_locked_widget_info(i18n_app, widget_items):
+    import datetime
+    widget_id = "1"
+    # with patch("weko_gridlayout.services.WidgetItemServices.get_widget_by_id", return_value=return_data):
+    widget_item = MagicMock()
+    widget_item.updated = datetime.timedelta(0, 3)
+
+    assert not WidgetItemServices.get_locked_widget_info(widget_id)
+    assert WidgetItemServices.get_locked_widget_info(widget_id, widget_item)
+
+
+#     def lock_widget(cls, widget_id, locked_value):
+def test_lock_widget(i18n_app, users):
+    widget_id = "1"
+    locked_value = "1"
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        with patch("weko_gridlayout.models.WidgetItem.update_by_id", return_value=""):
+            # Doesn't return any value
+            assert not WidgetItemServices.lock_widget(widget_id, locked_value)
+
+
+#     def unlock_widget(cls, widget_id):
+def test_unlock_widget(i18n_app):
+    widget_id = "1"
+    with patch("weko_gridlayout.models.WidgetItem.update_by_id", return_value=""):
+        # Doesn't return any value
+            assert not WidgetItemServices.unlock_widget(widget_id)
+
+
+#     def __validate(cls, data, is_used_in_widget_design=False):
+
+
+### class WidgetDesignServices:
+#     def get_repository_list(cls):
+def test_get_repository_list(i18n_app, communities):
+    assert WidgetDesignServices.get_repository_list()
+def test_get_repository_list_2(i18n_app):
+    assert WidgetDesignServices.get_repository_list()
+
+
+#     def get_widget_list(cls, repository_id, default_language):
+def test_get_widget_list(i18n_app, widget_items):
+    repository_id = "Root Index"
+    default_language = {"lang_code": "ja"}
+    assert WidgetDesignServices.get_widget_list(repository_id, default_language)
+
+
+#     def get_widget_preview(cls, repository_id, default_language,
+def test_get_widget_preview(i18n_app, widget_item):
+    repository_id = "Root Index"
+    default_language = {"lang_code": "ja"}
+    WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE = "Access counter"
+    return_data = {
+        "settings": [{
+            "widget_id": "test",
+            "x": "test",
+            "y": "test",
+            "width": "test",
+            "height": "test",
+            "id": "test",
+            "type": WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE,
+            "name": "test",
+            "created_date": "test",
+            "multiLangSetting": {
+                "ja": "ja",
+            }
+        }]
+    }
+    with patch("weko_gridlayout.models.WidgetDesignSetting.select_by_repository_id", return_value=return_data):
+        assert WidgetDesignServices.get_widget_preview(repository_id, default_language)
+        return_data["settings"][0]["multiLangSetting"] = {"en": {"label": "en"}}
+        assert WidgetDesignServices.get_widget_preview(repository_id, default_language)
+        return_data["settings"][0]["multiLangSetting"] = {"xx": {"label": "en"}}
+        assert WidgetDesignServices.get_widget_preview(repository_id, default_language)
+        return_data["settings"][0]["multiLangSetting"] = None
+        assert WidgetDesignServices.get_widget_preview(repository_id, default_language)
+
+
+#     def get_widget_design_setting(cls, repository_id: str,
+def test_get_widget_design_setting_2(i18n_app):
+    repository_id = "Root Index"
+    current_language = "ja"
+    return_data = {
+        "settings": {
+            "widget_id": "test",
+            "x": "test",
+            "y": "test",
+            "width": "test",
+            "height": "test",
+            "id": "test",
+            "type": "test",
+            "name": "test",
+            "created_date": "test",
+            "multiLangSetting": {
+                "ja": "ja",
+            }
+        }
+    }
+    with patch("weko_gridlayout.models.WidgetDesignSetting.select_by_repository_id", return_value=return_data):
+        with patch("weko_gridlayout.services.WidgetDesignServices._get_setting", return_value="return_data"):
+            assert WidgetDesignServices.get_widget_design_setting(repository_id, current_language)
+    assert WidgetDesignServices.get_widget_design_setting(repository_id, current_language)
+
+
+#     def _get_setting(cls, settings, current_language):
+def test__get_setting(i18n_app):
+    current_language = "ja"
+    settings = json.dumps(
+        {
+            "settings": {
+                "widget_id": "test",
+                "x": "test",
+                "y": "test",
+                "width": "test",
+                "height": "test",
+                "id": "test",
+                "type": "test",
+                "name": "test",
+                "created_date": "test",
+                "multiLangSetting": {
+                    "ja": "ja",
+                }
+            }
+        }
+    )
+    with patch("weko_gridlayout.services.WidgetDesignServices._get_design_base_on_current_language", return_value="return_data"):
+        assert WidgetDesignServices._get_setting(settings, current_language)
+
+
+#     def _get_design_base_on_current_language(cls, current_language,
+def test__get_design_base_on_current_language(i18n_app):
+    current_language = "ja"
+    widget_item = {
+        "multiLangSetting": {
+            "ja": "ja",
+            "en": "en",
+        }
+    }
+    assert WidgetDesignServices._get_design_base_on_current_language(current_language, widget_item)
+    widget_item = {}
+    assert WidgetDesignServices._get_design_base_on_current_language(current_language, widget_item)
+
+
+#     def update_widget_design_setting(cls, data):
+def test_update_widget_design_setting(i18n_app):
+    WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE = "Access counter"
+    data = {
+        "widget_id": "test",
+        "settings": [{
+            "settings": "test",
+            "type": WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE,
+            "created_date": None
+        }],
+        "repository_id": "Root Index",
+        "page_id": "test",
+    }
+    
+    return_data = {
+        "settings": {
+            "widget_id": "test",
+            "x": "test",
+            "y": "test",
+            "width": "test",
+            "height": "test",
+            "id": "test",
+            "type": "test",
+            "name": "test",
+            "created_date": "test",
+            "multiLangSetting": {
+                "ja": "ja",
+            }
+        }
+    }
+    
+    with patch("weko_gridlayout.services.WidgetItemServices.get_widget_data_by_widget_id", return_value=return_data):
+        with patch("weko_gridlayout.utils.validate_main_widget_insertion", return_value="test"):
+            with patch("weko_gridlayout.utils.delete_widget_cache", return_value="test"):
+                with patch("weko_gridlayout.models.WidgetDesignPage.update_settings", return_value="test"):
+                    with patch("weko_gridlayout.services.WidgetDesignSetting.select_by_repository_id", return_value="return_data"):
+                        assert WidgetDesignServices.update_widget_design_setting(data)
+                        data["page_id"] = None
+                        assert WidgetDesignServices.update_widget_design_setting(data)
+        assert WidgetDesignServices.update_widget_design_setting(data)
+
+
+#     def update_item_in_preview_widget_item(cls, widget_id, data_result,
+def test_update_item_in_preview_widget_item(i18n_app):
+    widget_id = "1"
+    data_result = {"test": "test"}
+    json_data = [{
+        "widget_id": "1"
+    }]
+    with patch("weko_gridlayout.utils.update_general_item", return_value="test"):
+        assert WidgetDesignServices.update_item_in_preview_widget_item(widget_id=widget_id, data_result=data_result, json_data=json_data)
+
+
+#     def handle_change_item_in_preview_widget_item(cls, widget_id, data_result):
+def test_handle_change_item_in_preview_widget_item(i18n_app):
+    return_data = MagicMock()
+    return_data.repository_id = "1"
+    return_data.settings = "1"
+    return_data.id = "1"
+    widget_id = "1"
+    data_result = MagicMock()
+    with patch("weko_gridlayout.services.WidgetItemServices.get_widget_by_id", return_value=return_data):
+        with patch("weko_gridlayout.models.WidgetDesignSetting.select_by_repository_id", return_value=return_data):
+            with patch("weko_gridlayout.services.WidgetDesignPage.get_by_repository_id", return_value=[return_data]):
+                with patch("weko_gridlayout.services.WidgetDesignServices.update_item_in_preview_widget_item", return_value="test"):
+                    with patch("weko_gridlayout.models.WidgetDesignPage.update_settings", return_value=False):
+                        assert not WidgetDesignServices.handle_change_item_in_preview_widget_item(widget_id, data_result)
+                    with patch("weko_gridlayout.models.WidgetDesignPage.update_settings", return_value=True):
+                        with patch("weko_gridlayout.utils.delete_widget_cache", return_value="test"):
+                            assert WidgetDesignServices.handle_change_item_in_preview_widget_item(widget_id, data_result)
+    assert not WidgetDesignServices.handle_change_item_in_preview_widget_item(widget_id, data_result)                            
+
+#     def is_used_in_widget_design(cls, widget_id):
+def test_is_used_in_widget_design(i18n_app):
+    return_data = MagicMock()
+    return_data.repository_id = "1"
+    return_data.settings = [{"widget_id": "1"}]
+    return_data.id = "1"
+    widget_id = "1"
+    data_result = MagicMock()
+    with patch("weko_gridlayout.services.WidgetItemServices.get_widget_by_id", return_value=return_data):
+        with patch("weko_gridlayout.models.WidgetDesignSetting.select_by_repository_id", return_value=return_data):
+            with patch("weko_gridlayout.services.WidgetDesignPage.get_by_repository_id", return_value=[return_data]):
+                assert WidgetDesignServices.is_used_in_widget_design(widget_id)
+    assert not WidgetDesignServices.is_used_in_widget_design(widget_id="")
+    assert WidgetDesignServices.is_used_in_widget_design(widget_id)
+
+
+
+### class WidgetDesignPageServices:
+#     def get_widget_design_setting(cls, page_id: str, current_language: str):
+def test_get_widget_design_setting(i18n_app):
+    return_data = MagicMock()
+    return_data.settings = "test"
+    with patch("weko_gridlayout.services.WidgetDesignPage.get_by_id", return_value=return_data):
+        with patch("weko_gridlayout.services.WidgetDesignServices._get_setting", return_value="return_data"):
+            assert WidgetDesignPageServices.get_widget_design_setting(1, "ja")
+    return_data.settings = None
+    assert WidgetDesignPageServices.get_widget_design_setting(1, "ja")
+
+
+#     def add_or_update_page(cls, data):
+def test_add_or_update_page(i18n_app):
+    data = {
+        "is_edit": "test",
+        "page_id": "test",
+        "repository_id": "test",
+        "title": "test",
+        "url": "test",
+        "content": "test",
+        "settings": "test",
+        "multi_lang_data": "test",
+        "is_main_layout": "test",
+    }
+    with patch("weko_gridlayout.services.WidgetDesignPage.create_or_update", return_value="return_data"):
+        with patch("weko_gridlayout.services.WidgetDesignPageServices._update_main_layout_id_for_widget", return_value="return_data"):
+            assert WidgetDesignPageServices.add_or_update_page(data)
+    data["is_edit"] = False
+    assert WidgetDesignPageServices.add_or_update_page(data)
+
+
+#     def _update_main_layout_id_for_widget(cls, repository_id):
+#     def __update_main_layout_page_id_for_widget_item(cls, repository_id,
+def test__update_main_layout_id_for_widget(i18n_app, db):
+    test = WidgetDesignPage(
+        id=1,
+        repository_id="test",
+        url="/",
+        is_main_layout=True
+    )
+    db.session.add(test)
+    db.session.commit()
+    with patch("weko_gridlayout.models.WidgetItem.get_id_by_repository_and_type", return_value=["1"]):
+        with patch("weko_gridlayout.models.WidgetItem.get_by_id", return_value=""):
+            with patch("weko_gridlayout.services.WidgetDesignPageServices._update_page_id_for_widget_item_setting", return_value=""):
+                assert WidgetDesignPageServices._update_main_layout_id_for_widget("test")
+
+
+#     def _update_main_layout_page_id_for_widget_design( ERR ~ 
+def test__update_main_layout_page_id_for_widget_design(i18n_app):
+    repository_id = "1"
+    page_id = "1"
+    return_data = {
+        "settings": "test",
+    }
+    with patch("weko_gridlayout.services.WidgetDesignSetting.select_by_repository_id", return_value=return_data):
+        # Doesn't return any value
+        assert not WidgetDesignPageServices._update_main_layout_page_id_for_widget_design(repository_id, page_id)
+
+
+#     def _update_page_id_for_widget_design_setting(cls, settings, page_id):
+def test__update_page_id_for_widget_design_setting(i18n_app):
+    WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE = 'Menu'
+    settings = [{
+        "type": WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE,
+        "menu_show_pages": ["0"]
+    }]
+    page_id = "0"
+    assert WidgetDesignPageServices._update_page_id_for_widget_design_setting(settings, page_id)
+
+
+#     def _update_page_id_for_widget_item_setting(cls, page_id,
+def test__update_page_id_for_widget_item_setting(i18n_app):
+    page_id = "0"
+    widget_item = MagicMock()
+    widget_item.settings = {
+        "menu_show_pages": ["0"]
+    }
+
+    with patch("weko_gridlayout.models.WidgetItem.update_setting_by_id", return_value=""):
+        # Doesn't return any value
+        assert not WidgetDesignPageServices._update_page_id_for_widget_item_setting(page_id, widget_item)
+
+
+#     def delete_page(cls, page_id):
+def test_delete_page(i18n_app):
+    page_id = "1"
+    with patch("weko_gridlayout.models.WidgetDesignPageMultiLangData.delete_by_page_id", return_value="test"):
+        with patch("weko_gridlayout.models.WidgetDesignPage.delete", return_value=""):
+            assert WidgetDesignPageServices.delete_page(page_id)
+    assert WidgetDesignPageServices.delete_page(page_id)
+
+
+
+#     def get_page_list(cls, repository_id, language):
+def test_get_page_list(i18n_app):
+    repository_id = "1"
+    language = "ja"
+    return_data = MagicMock()
+    return_data_2 = MagicMock()
+    return_data_2.title = "test"
+    return_data.multi_lang_data = {"language": return_data_2, "ja": "ja"}
+    return_data.title = "test"
+    return_data.id = "test"
+    with patch("weko_gridlayout.services.WidgetDesignPage.get_by_repository_id", return_value=[return_data]):
+        assert WidgetDesignPageServices.get_page_list(repository_id, language)
+    assert WidgetDesignPageServices.get_page_list(repository_id, language)
+
+
+#     def get_page(cls, page_id, repository_id):
+def test_get_page(i18n_app):
+    page_id = "1"
+    repository_id = "1"
+    return_data = MagicMock()
+    return_data_2 = MagicMock()
+    return_data_2.title = "test"
+    return_data.multi_lang_data = {"lang": return_data_2}
+    return_data.title = "test"
+    return_data.id = "test"
+    return_data.url = "test"
+    return_data.content = "test"
+    return_data.repository_id = "test"
+    return_data.is_main_layout = "test"
+
+    with patch("weko_gridlayout.services.WidgetDesignPage.get_by_id", return_value=return_data):
+        assert WidgetDesignPageServices.get_page(page_id, repository_id)
+    assert WidgetDesignPageServices.get_page(page_id, repository_id)
+
+
+### class WidgetDataLoaderServices:
+#     def get_new_arrivals_data(cls, widget_id):
+def test_get_new_arrivals_data(i18n_app, widget_item):
+    return_data = {
+        "settings": {
+            "display_result": "test",
+            "new_dates": "test",
+        }
+    }
+    with patch("weko_gridlayout.services.WidgetItemServices.get_widget_data_by_widget_id", return_value=return_data):
+        assert WidgetDataLoaderServices.get_new_arrivals_data(1)
+
+
+#     def get_arrivals_rss(cls, data, term, count):
+def test_get_arrivals_rss(i18n_app):
+    data = MagicMock()
+    term = "test"
+    count = 1
+    assert WidgetDataLoaderServices.get_arrivals_rss(data, term, count)
+
+
+#     def get_widget_page_endpoints(cls, widget_id, language):
+def test_get_widget_page_endpoints(i18n_app, widget_item):
+    widget_id = 1
+    language = "ja"
+    return_data = {
+        "repository_id": "test",
+        "settings": {
+            "menu_show_pages": "test"
+        },
+        "widget_type": "Menu"
+    }
+    return_data_2 = MagicMock()
+    return_data_2.title = "test"
+    return_data_2.url = "test"
+    return_data_2.is_main_layout = "test"
+    return_data_3 = MagicMock()
+    return_data_3.title = "test"
+    return_data_2.multi_lang_data = {"ja": "test", "language": return_data_3}
+    with patch("weko_gridlayout.services.WidgetItemServices.get_widget_data_by_widget_id", return_value=return_data):
+        with patch("weko_gridlayout.services.WidgetDesignPage.get_by_id", return_value=return_data_2):
+            assert WidgetDataLoaderServices.get_widget_page_endpoints(widget_id, language)
+        assert WidgetDataLoaderServices.get_widget_page_endpoints(widget_id, language)

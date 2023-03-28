@@ -12,6 +12,7 @@ from __future__ import absolute_import, print_function
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import login_required
+from invenio_db import db
 from weko_accounts.utils import login_required_customize
 from weko_admin.utils import get_current_api_certification
 
@@ -127,3 +128,15 @@ def get_item_auto_fill_journal(activity_id):
     result['result'] = get_workflow_journal(activity_id)
 
     return jsonify(result)
+
+
+@blueprint.teardown_request
+@blueprint_api.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_items_autofill dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()
