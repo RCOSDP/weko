@@ -37,6 +37,7 @@ from weko_accounts.views import _redirect_method
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_records.api import FilesMetadata, ItemTypes
+from weko_records_ui.ipaddr import check_site_license_permission
 from weko_user_profiles.models import UserProfile
 from werkzeug.datastructures import Headers
 from werkzeug.urls import url_quote
@@ -337,6 +338,9 @@ def add_signals_info(record, obj):
     :param record: the record metadata.
     :param obj: send object.
     """
+    # Add site license permission to current user
+    check_site_license_permission()
+
     # Check whether billing file or not
     obj.is_billing_item = is_billing_item(record)
 
