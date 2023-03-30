@@ -6,3 +6,6 @@ values
         'ums_management_url',
         '{"url":""}'
     );
+
+-- update column type
+ALTER TABLE shibboleth_user ALTER COLUMN shib_page_name TYPE text;
