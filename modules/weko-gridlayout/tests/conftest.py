@@ -276,7 +276,7 @@ def widget_items(db):
             "multiLangSetting": {
                 "en": {
                     "label": "for test"
-                }
+                },
             }
         },
         "2": {

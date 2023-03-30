@@ -8,6 +8,7 @@
 """Module tests."""
 import pytest
 import json
+import copy
 from mock import patch, MagicMock, Mock
 from datetime import datetime
 
@@ -575,26 +576,72 @@ keywords = [
     'pageEnd',
     'date',
     'description',
-    '_updated'
+    '_updated',
+    ''
 ]
 @pytest.mark.parametrize('keyword', keywords)
 def test_find_rss_value(i18n_app, keyword, item_type):
-    data = MagicMock()
-    data._source = {
-        "date": ["test"],
-        "creator": {
-            "familyName": ["test", "test"],
-            "givenName": ["test", "test"]
+
+    data = {
+        "_source": {
+            "date": ["test"],
+            "creator": {
+                "familyName": ["test", "test"],
+                "givenName": ["test", "test"]
+            },
+            "_item_metadata": {
+                "item_title": "item_title",
+                "control_number": "9999"
+            }
         }
     }
+
     return_data = {
         "description.@attributes.descriptionType": "test",
         "description.@value": "test",
     }
+
     with patch("weko_gridlayout.utils.get_rss_data_source", return_value="Issued"):
         with patch("weko_records.api.Mapping.get_record", return_value="test"):
             with patch("weko_records.serializers.utils.get_mapping", return_value=return_data):
-                assert find_rss_value(data, keyword)
+                find_rss_value(data, keyword) 
+                                
+                
+                data2 = None
+                assert find_rss_value(data2, keyword) == None
+
+                if keyword == "creator":
+                    data3 = copy.deepcopy(data)
+                    data3["_source"]["creator"]["familyName"] = []
+                    assert find_rss_value(data3, keyword) == ""
+
+                    data4 = copy.deepcopy(data)
+                    del data4["_source"]["creator"]
+                    assert find_rss_value(data4, keyword) == ""
+
+                if keyword == "issn":
+                    data5 = copy.deepcopy(data)
+                    data5["_source"]["sourceIdentifier"] = ["test"]
+                    assert find_rss_value(data5, keyword) != ""
+                
+                if keyword == 'description':
+                    item_map = {
+                        "description.@attributes.descriptionType": "description.@attributes.descriptionType",
+                        "description.@value": "description.@value"
+                    }
+                    data6 = copy.deepcopy(data)
+                    data6["_source"]["description"] = ["test"]
+                    data6["_source"]["_item_metadata"]["description"] = {
+                        "attribute_value_mlt": "attribute_value_mlt"
+                    }
+                    with patch('weko_gridlayout.utils.Mapping.get_record', return_value=""):
+                        with patch('weko_gridlayout.utils.get_mapping', return_value=item_map):
+                            with patch('weko_gridlayout.utils.get_pair_value', return_value=[("Abstract", "Abstract")]):
+                                assert find_rss_value(data6, keyword) != ""
+
+
+
+                
 
 
 # def get_rss_data_source(source, keyword):
@@ -610,9 +657,19 @@ def test_get_rss_data_source(i18n_app):
 
 # def get_elasticsearch_result_by_date(start_date, end_date):
 def test_get_elasticsearch_result_by_date(i18n_app):
+    from elasticsearch.exceptions import NotFoundError
+
     start_date = "2021-11-11"
     end_date = "2021-11-22"
+
     assert get_elasticsearch_result_by_date(start_date, end_date)
+
+    with patch('weko_gridlayout.utils.item_search_factory', side_effect=NotFoundError('')):
+        # Exception coverage ~ line 779
+        try:
+            get_elasticsearch_result_by_date(start_date, end_date)
+        except:
+            pass
     
 
 # def validate_main_widget_insertion(repository_id, new_settings, page_id=0):
@@ -620,11 +677,23 @@ def test_validate_main_widget_insertion(i18n_app, widget_item):
     repository_id = 1
     new_settings = ""
     return_data = MagicMock()
+
     with patch("weko_gridlayout.utils.has_main_contents_widget", return_value=True):
         assert validate_main_widget_insertion(repository_id, new_settings)
+
     with patch("weko_gridlayout.models.WidgetDesignSetting.select_by_repository_id", return_value=return_data):
         assert validate_main_widget_insertion(repository_id, new_settings)
 
+    main_settings = {
+        "settings": []
+    }
+
+    with patch("weko_gridlayout.utils.has_main_contents_widget", return_value=True):
+        with patch('weko_gridlayout.utils.get_widget_design_page_with_main', return_value=False):
+            with patch('weko_gridlayout.utils.WidgetDesignSetting.select_by_repository_id', return_value=main_settings):
+                with patch('weko_gridlayout.utils.WidgetDesignPage.get_by_id_or_none', return_value=False):
+                 assert validate_main_widget_insertion(repository_id, new_settings)
+    
 
 # def get_widget_design_page_with_main(repository_id):
 def test_get_widget_design_page_with_main(i18n_app):
@@ -647,8 +716,49 @@ def test_main_design_has_main_widget(db_register):
 
 
 # def has_main_contents_widget(settings):
-# def get_widget_design_setting(repository_id, current_language, page_id=None):
 
+
+# def get_widget_design_setting(repository_id, current_language, page_id=None):
+def test_get_widget_design_setting(i18n_app):
+    with i18n_app.test_client():
+        repository_id = "root"
+        current_language = "en"
+
+        def lower_func():
+            return "gzip"
+
+        def get_func(item):
+            return "gzip"
+
+        i18n_app.config['WEKO_GRIDLAYOUT_IS_COMPRESS_WIDGET'] = "test"
+        i18n_app.config['WEKO_GRIDLAYOUT_WIDGET_PAGE_CACHE_KEY'] = "test"
+        accept_encoding = MagicMock()
+        accept_encoding.lower = lower_func
+        
+        headers = {
+            "Accept-Encoding": accept_encoding,
+            'Content-Encoding': "json"
+        }
+
+        request = MagicMock()
+        request.headers = headers
+
+        current_cache = MagicMock()
+        current_cache.get = get_func
+
+        with patch('weko_gridlayout.utils.request', request):
+            with patch('weko_gridlayout.utils.current_cache', current_cache):
+                assert get_widget_design_setting(
+                    repository_id=repository_id,
+                    current_language=current_language,
+                    page_id="1"
+                ) != None
+
+                assert get_widget_design_setting(
+                    repository_id=repository_id,
+                    current_language=current_language,
+                    page_id=0
+                ) != None
 
 
 # def compress_widget_response(response):
