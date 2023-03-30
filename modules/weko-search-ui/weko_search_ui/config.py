@@ -791,6 +791,6 @@ WEKO_SEARCH_UI_OPENSEARCH_LICENSE_PARAM = {
     '104': ['license_3', 'license_9'],
     '105': ['license_4', 'license_10'],
     '106': ['license_5', 'license_11'],
-    'free_input': ['license_free'],
+    'free_input': ['license_note'],
 }
 """Convert opensearch param to search param"""

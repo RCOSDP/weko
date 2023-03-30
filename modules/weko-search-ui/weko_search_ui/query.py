@@ -216,15 +216,19 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 kv = ",".join([i.name for i in item_type_name_list])
             elif k == 'language':
                 kv = request.values.get('ln')
-                lang_dict = current_app.config['WEKO_SEARCH_UI_OPENSEARCH_LANGUAGE_PARAM']
-                kv = lang_dict.get(kv)
+                if kv is not None and kv != '':
+                    lang_dict = current_app.config['WEKO_SEARCH_UI_OPENSEARCH_LANGUAGE_PARAM']
+                    lang_list = []
+                    for lang in kv.split(','):
+                        lang_list.append(lang_dict.get(lang))
+                    kv = ','.join(lang_list)
 
             return kv
 
         def _get_keywords_query(k, v):
             qry = None
             kv = (
-                request.values.get("lang") if k == "language" else request.values.get(k)
+                request.values.get("lang") if (k == "language" and request.values.get('q') is not None) else request.values.get(k)
             )
 
             if not kv:
@@ -683,7 +687,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                     shuld.append(nested)
                 if search_rides:
                     other_must = [
-                        {'terms': {'content.licensetype.raw': ['license_free']}},
+                        {'terms': {'content.licensetype.raw': ['license_note']}},
                         {'terms': {"content.licensefree.raw": [riDes]}}
                     ]
                     other_query = Q('bool', must=other_must)
@@ -696,7 +700,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 if riDes:
                     # Search only free_input
                     other_must = [
-                        {'terms': {'content.licensetype.raw': ['license_free']}},
+                        {'terms': {'content.licensetype.raw': ['license_note']}},
                         {'terms': {"content.licensefree.raw": [riDes]}}
                     ]
                     other_query = Q('bool', must=other_must)
@@ -997,12 +1001,13 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     if search_type is None:
         search_type = request.values.get("search_type")
 
-    if request.values.get("format"):
+    q_param = request.values.get("q", "")
+    if not q_param:
         qs = request.values.get("keyword")
     else:
         # Escape special characters for avoiding ES search errors
         qs = (
-            request.values.get("q", "")
+            q_param
             .replace("\\", r"\\")
             .replace("+", r"\+")
             .replace("-", r"\-")
