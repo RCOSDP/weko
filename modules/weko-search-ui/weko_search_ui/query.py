@@ -208,7 +208,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 kv = request.values.get('sp')
             elif k == 'temporal':
                 kv = request.values.get('era')
-            elif k == 'version':
+            elif k == 'versiontype':
                 kv = request.values.get('textver')
             elif k == 'dissno':
                 kv = request.values.get('grantid')
@@ -245,9 +245,14 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                     return
 
             if isinstance(v, str):
-                name_dict = dict(operator="and")
-                name_dict.update(dict(query=kv))
-                qry = Q("match", **{v: name_dict})
+                kvl = kv.split(",")
+                shud = []
+                for j in kvl:
+                    name_dict = dict(operator="and")
+                    name_dict.update(dict(query=j))
+                    shud.append(Q("match", **{v: name_dict}))
+                if shud:
+                    qry = Q("bool", should=shud)
             elif isinstance(v, list):
                 qry = Q(
                     "multi_match",
@@ -902,11 +907,12 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     def _get_file_meta_query(qstr):
         """Query for searching indexed file meta."""
         # Search fields may increase so leaving as multi
+        qstr = "*" + qstr + "*"
         multi_q = Q(
             "query_string",
             query=qstr,
             default_operator="and",
-            fields=["search_*", "search_*.ja"],
+            fields=["_item_metadata.*.raw"],
         )
 
         return Q("bool", should=[multi_q])

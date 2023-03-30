@@ -508,7 +508,7 @@ class OpenSearchDetailData:
             self._set_publisher(fe, item_map, item_metadata, request_lang)
 
             # Set subject
-            if _index_id:
+            if _index_id and not request.args.get('idx'):
                 fe.dc.dc_subject(index_meta[_index_id])
             else:
                 index_id = item_metadata['path'][0]
