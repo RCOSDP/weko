@@ -56,7 +56,7 @@ class ShibbolethUser(db.Model):
     shib_role_authority_name = db.Column(db.String(255), nullable=True)
     """SHIB_ATTR_ROLE_AUTHORITY_NAME"""
 
-    shib_page_name = db.Column(db.String(255), nullable=True)
+    shib_page_name = db.Column(db.Text, nullable=True)
     """SHIB_ATTR_PAGE_NAME"""
 
     shib_active_flag = db.Column(db.String(255), nullable=True)
