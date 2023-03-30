@@ -59,7 +59,8 @@ from weko_admin.utils import (
     get_facet_search_query,
     get_title_facets,
     is_exits_facet,
-    overwrite_the_memory_config_with_db
+    overwrite_the_memory_config_with_db,
+    get_detail_search_list
 )
 
 from tests.helpers import json_data
@@ -1876,13 +1877,17 @@ def test_get_facet_search(client,facet_search_settings):
         "name_jp": "",
         "mapping": "",
         "active": True,
-        "aggregations": []
+        "aggregations": [],
+        "ui_type": "",
+        "display_naumber": "",
+        "is_open": "",
+        "search_condition": ""
     }
     result = get_facet_search(None)
     assert result == test
     
     result  = get_facet_search(1)
-    assert result == {"name_en":"Data Language","name_jp":"データの言語","mapping":"language","aggregations":[],"active":True}
+    assert result == {"name_en":"Data Language","name_jp":"データの言語","mapping":"language","aggregations":[],"active":True, "display_number": 5, "is_open": True, 'search_condition': 'OR', 'ui_type': 'CheckboxList'}
 
 
 # def get_item_mapping_list():
@@ -2069,9 +2074,17 @@ from weko_admin.utils import (
 )
 
 # def get_title_facets():
-def test_get_title_facets(i18n_app, users, facet_search_setting):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        titles, order, uiTypes, isOpens, displayNumbers = get_title_facets()
+def test_get_title_facets(app, users):
+    #with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+        titles, order, uiTypes, isOpens, displayNumbers, searchConditions = get_title_facets()
         assert uiTypes
         assert isOpens
         assert displayNumbers
+        assert searchConditions
+
+# def get_detail_search_list():
+def test_get_detail_search_list(i18n_app, users):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        result =  get_detail_search_list()
+        assert result

@@ -905,21 +905,34 @@ def facet_search_settings(db):
         name_jp="データの言語",
         mapping="language",
         aggregations=[],
-        active=True
+        active=True,
+        ui_type='SelectBox',
+        display_number="1",
+        is_open=True,
+        search_condition='OR'
+
     )
     access = FacetSearchSetting(
         name_en="Access",
         name_jp="アクセス制限",
         mapping="accessRights",
         aggregations=[],
-        active=False
+        active=False,
+        ui_type='CheckboxList',
+        display_number="1",
+        is_open=True,
+        search_condition='AND'
     )
     data_type = FacetSearchSetting(
         name_en="Data Type",
         name_jp="データタイプ",
         mapping="description.value",
         aggregations=[{"agg_value":"Other","agg_mapping":"description.descriptionType"}],
-        active=True
+        active=True,
+        ui_type='CheckboxList',
+        display_number="1",
+        is_open=True,
+        search_condition='AND'
     )
     
     fields_raw = FacetSearchSetting(
@@ -927,7 +940,24 @@ def facet_search_settings(db):
         name_jp="raw_test",
         mapping="test.fields.raw",
         aggregations=[],
-        active=True
+        active=True,
+        ui_type='CheckboxList',
+        display_number="1",
+        is_open=True,
+        search_condition='AND'
+    )
+
+        
+    fields_raw = FacetSearchSetting(
+        name_en="Time Period(s)",
+        name_jp="対象時期",
+        mapping="temporal",
+        aggregations=[],
+        active=True,
+        ui_type='RangeSlider',
+        display_number="1",
+        is_open=True,
+        search_condition='AND'
     )
     db.session.add(language)
     db.session.add(access)

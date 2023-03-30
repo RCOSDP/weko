@@ -1414,6 +1414,8 @@ class TestFacetSearchSettingView:
             # can_create is True
             mapping_list = ["","path","title"]
             mocker.patch("weko_admin.admin.get_item_mapping_list",return_value=mapping_list)
+            detail_condition = [["title", "text"],["creator", "text"]]
+            mocker.patch("weko_admin.admin.get_detail_search_list",return_value=detail_condition)
             mock_render = mocker.patch("weko_admin.admin.FacetSearchSettingView.render", return_value=make_response())
             test = {
                 "name_en": "",
@@ -1421,7 +1423,12 @@ class TestFacetSearchSettingView:
                 "mapping": "",
                 "active": True,
                 "aggregations": [],
-                "mapping_list": mapping_list
+                "display_number": "",
+                "is_open": True,
+                "search_condition": "",
+                "ui_type": "",
+                "mapping_list": mapping_list,
+                "detail_condition": detail_condition
             }
             client.get(url)
             args, kwargs = mock_render.call_args
@@ -1444,12 +1451,18 @@ class TestFacetSearchSettingView:
             name_jp="データの言語",
             mapping="language",
             aggregations=[],
-            active=True
+            active=True,
+            ui_type="SelectBox",
+            display_number="1",
+            is_open=True,
+            search_condition="OR"
         )
         db.session.add(language)
         db.session.commit()
         mapping_list = ["","path","title"]
         mocker.patch("weko_admin.admin.get_item_mapping_list",return_value=mapping_list)
+        detail_condition = [["title", "text"],["creator", "text"]]
+        mocker.patch("weko_admin.admin.get_detail_search_list",return_value=detail_condition)
 
         with app.test_client() as client:
             login_user_via_session(client,email=user.email)
@@ -1462,7 +1475,12 @@ class TestFacetSearchSettingView:
                 "mapping": "language",
                 "active": True,
                 "aggregations": [],
-                "mapping_list": mapping_list
+                "display_number": 1,
+                "is_open": True,
+                "search_condition": "OR",
+                "ui_type": "SelectBox",
+                "mapping_list": mapping_list,
+                "detail_condition": detail_condition
             }
             client.get(url)
             args, kwargs = mock_render.call_args
@@ -1486,12 +1504,18 @@ class TestFacetSearchSettingView:
             name_jp="データの言語",
             mapping="language",
             aggregations=[],
-            active=True
+            active=True,
+            ui_type="SelectBox",
+            display_number="1",
+            is_open=True,
+            search_condition="OR"
         )
         db.session.add(language)
         db.session.commit()
         mapping_list = ["","path","title"]
         mocker.patch("weko_admin.admin.get_item_mapping_list",return_value=mapping_list)
+        detail_condition = [["title", "text"],["creator", "text"]]
+        mocker.patch("weko_admin.admin.get_detail_search_list",return_value=detail_condition)
 
         with app.test_client() as client:
             login_user_via_session(client,email=user.email)
@@ -1504,7 +1528,12 @@ class TestFacetSearchSettingView:
                 "mapping": "language",
                 "active": True,
                 "aggregations": [],
-                "mapping_list": mapping_list
+                "display_number": 1,
+                "is_open": True,
+                "search_condition": "OR",
+                "ui_type": "SelectBox",
+                "mapping_list": mapping_list,
+                "detail_condition": detail_condition
             }
             client.get(url)
             args, kwargs = mock_render.call_args
@@ -1529,7 +1558,11 @@ class TestFacetSearchSettingView:
             name_jp="データの言語",
             mapping="language",
             aggregations=[],
-            active=True
+            active=True,
+            ui_type="SelectBox",
+            display_number="1",
+            is_open=True,
+            search_condition="OR"
         )
         db.session.add(language)
         db.session.commit()
@@ -1553,6 +1586,10 @@ class TestFacetSearchSettingView:
                 "mapping": "language",
                 "active": True,
                 "aggregations": [],
+                "ui_type":"SelectBox",
+                "display_number":1,
+                "is_open":True,
+                "search_condition":"OR"
             }
             client.get(url)
             args, kwargs = mock_render.call_args

@@ -259,6 +259,7 @@ def facet_search_setting():
 @click.argument('ui_type')
 @click.argument('display_number')
 @click.argument('is_open')
+@click.argument('search_condition')
 @click.option('--active', is_flag=True, default=False)
 @click.option('--is_open', is_flag=True, default=False)
 @with_appcontext
