@@ -131,7 +131,7 @@ class MailSettingView(BaseView):
             current_app.extensions['mail'].send(msg)
             return True
         except Exception as ex:
-            current_app.logger.error('Cannot send email', ex)
+            current_app.logger.error('Cannot send email:{}'.format(str(ex)))
             return False
 
 

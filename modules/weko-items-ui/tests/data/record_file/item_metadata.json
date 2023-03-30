@@ -1,0 +1,42 @@
+{
+  "id": "1",
+  "pid": { "type": "depid", "value": "1", "revision_id": 0 },
+  "lang": "ja",
+  "owner": "1",
+  "title": "only file item",
+  "owners": [1],
+  "status": "published",
+  "$schema": "/items/jsonschema/1",
+  "pubdate": "2023-02-28",
+  "created_by": 1,
+  "owners_ext": {
+    "email": "wekosoftware@nii.ac.jp",
+    "username": "",
+    "displayname": ""
+  },
+  "shared_user_id": -1,
+  "item_1617186331708": [
+    { "subitem_1551255647225": "only file item", "subitem_1551255648112": "ja" }
+  ],
+  "item_1617258105262": {
+    "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+    "resourcetype": "conference paper"
+  },
+  "item_1617605131499": [
+    {
+      "url": { "url": "https://weko3.example.org/record/1/files/test1.txt" },
+      "date": [{ "dateType": "Available", "dateValue": "2023-02-28" }],
+      "format": "text/plain",
+      "filename": "test1.txt",
+      "filesize": [{ "value": "37 B" }],
+      "accessrole": "open_access",
+      "version_id": "b9c4a2bd-3cba-449b-908f-fe2eeb9427b6"
+    },
+    {
+      "url": { "url": "https://www.google.com/" },
+      "date": [{ "dateType": "Available", "dateValue": "2023-02-28" }],
+      "filename": "google",
+      "accessrole": "open_access"
+    }
+  ]
+}

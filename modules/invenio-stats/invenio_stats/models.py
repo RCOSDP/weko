@@ -10,12 +10,15 @@
 import hashlib
 import json
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from typing import List
 from uuid import uuid4
 
 from celery.utils.log import get_task_logger
 from flask import current_app
 from invenio_db import db
+from sqlalchemy import event
+from sqlalchemy.sql.ddl import DDL
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
@@ -44,6 +47,7 @@ class _StataModelBase(Timestamp):
         db.DateTime,
         default=datetime.utcnow,
         nullable=False,
+        primary_key=True,
         index=True)
 
     @classmethod
@@ -188,8 +192,9 @@ class StatsEvents(db.Model, _StataModelBase):
     __tablename__ = "stats_events"
 
     __table_args__ = (
-        db.UniqueConstraint('source_id', 'index',
-                            name='uq_stats_key_stats_events'),
+        (db.UniqueConstraint('source_id', 'index', 'date',
+                            name='uq_stats_key_stats_events')),
+        { "postgresql_partition_by": 'RANGE (date)' }
     )
 
     def get_uq_key():
@@ -236,6 +241,35 @@ def _generate_id():
     return str(uuid4()) + \
         hashlib.sha1(current_time.encode("utf-8")).hexdigest()
 
+def get_stats_events_partition_tables():
+    query = "select tablename from pg_tables where tablename like 'stats_events_%'"
+    tables = db.session.execute(query).fetchall()
+    db.session.commit()
+
+    return [a[0] for a in tables]
+
+def make_stats_events_partition_table(year, month):
+    start_date = datetime(year, month, 1, 0, 0, 0)
+    end_date = start_date + relativedelta(months=1)
+    suffix = '_' + start_date.strftime('%Y%m')
+    tablename = StatsEvents.__tablename__ + suffix
+
+    NewPartitionTable = type('StatsEvents' + suffix,
+                             (db.Model,_StataModelBase),
+                             {"__tablename__": tablename})
+    NewPartitionTable.__table__.add_is_dependent_on(StatsEvents.__table__)
+
+    alter_table = \
+        "ALTER TABLE " + StatsEvents.__tablename__ + " ATTACH PARTITION " + \
+        tablename + \
+        " FOR VALUES FROM ('{}') TO ('{}');".format(start_date.strftime('%Y-%m-%d'),
+                                                    end_date.strftime('%Y-%m-%d'))
+
+    event.listen(NewPartitionTable.__table__,
+                 "after_create",
+                 DDL(alter_table))
+
+    return tablename
 
 __all__ = [
     "StatsEvents",

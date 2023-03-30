@@ -4,6 +4,7 @@ from os.path import dirname, join
 from flask import url_for,current_app,make_response
 from flask_admin import Admin
 from mock import patch
+from mock import MagicMock, patch
 import json
 from io import BytesIO
 import pytest
@@ -11,6 +12,11 @@ from datetime import datetime
 from wtforms.validators import ValidationError
 from werkzeug.datastructures import ImmutableMultiDict
 
+import pytest
+from requests import Response
+
+from invenio_accounts.testutils import login_user_via_session
+from .test_views import assert_role
 
 from invenio_accounts.testutils import login_user_via_session, create_test_user
 from invenio_access.models import ActionUsers
@@ -1564,3 +1570,223 @@ class TestFacetSearchSettingView:
             assert json.loads(kwargs["data"]) == test
             assert kwargs["type_str"] == "delete"
             assert kwargs["id"] == "1"
+#    'view_class': StyleSettingView,
+#    'view_class': ReportView,
+#    'view_class': FeedbackMailView,
+#    'view_class': StatsSettingsView,
+#    'view_class': LogAnalysisSettings,
+#    'view_class': LanguageSettingView,
+#    'view_class': WebApiAccount,
+#    'view_class': RankingSettingsView,
+#    'view_class': SearchSettingsView,
+#    'view_class': SiteLicenseSettingsView,
+#    'view_class': SiteLicenseSendMailSettingsView,
+#    'view_class': FilePreviewSettingsView,
+#    'view_class': ItemExportSettingsView,
+#    'view_class': SiteInfoView,
+#    'view_class': RestrictedAccessSettingView,
+#
+from flask_babelex import gettext as _
+class TestsReindexElasticSearchView:
+
+    @pytest.mark.parametrize("index,is_permission,status_code",[
+                            (0,False,200),# sysadmin
+                            (1,False,403),# repoadmin
+                            (2,False,403),# comadmin
+                            (3,False,403),# contributor
+                            (4,False,403),# generaluser
+                            ])
+    def test_ReindexElasticSearchView_index_acl(self, client,users,admin_settings,mocker,index, is_permission ,status_code):
+        login_user_via_session(client,email=users[index]["email"])
+        url = url_for("reindex_es.index")
+        # with patch("weko_admin.admin.check_reindex_is_running", return_value="{\"isError\":False ,\"isExecuting\":False,\"disabled_Btn\":False }"):
+        with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+            mocker_render = mocker.patch("weko_admin.admin.ReindexElasticSearchView.render",return_value=make_response())
+            res = client.get(url)
+        assert_role(res,is_permission,status_code)
+
+        if status_code == 200 :
+            mocker_render.assert_called_with(
+                template='weko_admin/admin/reindex_elasticsearch.html'
+                ,isError=False
+                ,isExecuting=False
+                ,disabled_Btn=False 
+            )
+        else:
+            mocker_render.assert_not_called()
+
+
+    def test_ReindexElasticSearchView_index_guest(self, client,users,admin_settings,mocker):
+        url = url_for("reindex_es.index")
+        # with patch("weko_admin.admin.check_reindex_is_running", return_value="{\"isError\":False ,\"isExecuting\":False,\"disabled_Btn\":False }"):
+        with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+            mocker_render = mocker.patch("weko_admin.admin.ReindexElasticSearchView.render",return_value=make_response())
+            res = client.get(url)
+        assert res.status_code == 302
+        mocker_render.assert_not_called()
+        
+    def test_ReindexElasticSearchView_index_raise(self, client,users,admin_settings,mocker):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        url = url_for("reindex_es.index")
+        with mocker.patch("weko_admin.admin.is_reindex_running", side_effect=BaseException("test_error")):
+            mocker_render = mocker.patch("weko_admin.admin.ReindexElasticSearchView.render",return_value=make_response())
+            res = client.get(url)
+        assert res.status_code == 500
+        mocker_render.assert_not_called()
+
+    @pytest.mark.parametrize("index,is_permission,status_code",[
+                            (0,False,200),# sysadmin
+                            (1,False,403),# repoadmin
+                            (2,False,403),# comadmin
+                            (3,False,403),# contributor
+                            (4,False,403),# generaluser
+                            ])
+    def test_ReindexElasticSearchView_reindex_acl(self, client,users,mocker,index,admin_settings, is_permission ,status_code):
+        login_user_via_session(client,email=users[index]["email"])
+        url = url_for("reindex_es.reindex" , is_db_to_es=False)
+        with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+            mocker.patch("weko_admin.admin.reindex", return_value='completed')
+            res = client.get(url)
+            assert res.status_code == 405
+            assert res.data != str({"responce" : _('completed')})
+        with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+            mocker.patch("weko_admin.admin.reindex", return_value='completed')
+            res = client.post(url)
+            assert_role(res,is_permission,status_code)
+            if res.status_code == 200:
+                assert json.loads(res.data) == {"responce" : _('completed')}
+            else:
+                assert res.data != str({"responce" : _('completed')})
+
+    def test_ReindexElasticSearchView_reindex_guest(self, client,users,admin_settings):
+        url = url_for("reindex_es.reindex" , is_db_to_es=False)
+        res = client.get(url)
+        assert res.status_code == 405
+        res = client.post(url)
+        assert res.status_code == 302
+
+
+    def test_ReindexElasticSearchView_reindex_param1(self, client,users,mocker,admin_settings):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        url = url_for("reindex_es.reindex" , is_db_to_es=False)
+        with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+            mocker.patch("weko_admin.admin.reindex", return_value='completed')
+            res = client.post(url)
+            assert res.status_code == 200
+            assert json.loads(res.data) == {"responce" : _('completed')}
+    def test_ReindexElasticSearchView_reindex_param2(self, client,users,mocker,admin_settings):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        url = url_for("reindex_es.reindex" , is_db_to_es=True)
+        with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+            mocker.patch("weko_admin.admin.reindex", return_value='completed')
+            res = client.post(url)
+            assert res.status_code == 200
+            assert json.loads(res.data) == {"responce" : _('completed')}
+    def test_ReindexElasticSearchView_reindex_param3(self, client,users,mocker,admin_settings):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        url = url_for("reindex_es.reindex" , is_db_to_es="aaa")
+        with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+            mocker.patch("weko_admin.admin.reindex", return_value='completed')
+            res = client.post(url)
+            assert res.status_code == 200
+            assert json.loads(res.data) == {"responce" : _('completed')}
+    def test_ReindexElasticSearchView_reindex_param4(self, client,users,mocker,admin_settings):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        url = url_for("reindex_es.reindex" )
+        with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+            mocker.patch("weko_admin.admin.reindex", return_value='completed')
+            res = client.post(url)
+            assert res.status_code == 200
+            assert json.loads(res.data) == {"responce" : _('completed')}
+
+    def test_ReindexElasticSearchView_reindex_chk_executing(self, client,users,admin_settings):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        url = url_for("reindex_es.reindex" , is_db_to_es=False)
+
+        with patch("weko_admin.admin.is_reindex_running", return_value=True):
+            res = client.post(url)
+            assert res.status_code == 400
+            assert json.loads(res.data).get("error") ==  _('executing...')
+
+    def test_ReindexElasticSearchView_reindex_chk_err(self, client,users,mocker,admin_settings):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        url = url_for("reindex_es.reindex" , is_db_to_es=False)
+        with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+            # patch("weko_admin.admin.reindex", return_value='completed')
+            mocker.patch("weko_admin.admin.AdminSettings.get", return_value=dict({"has_errored": True}))
+            res = client.post(url)
+            assert res.status_code == 400
+            assert json.loads(res.data).get("error") == _('haserror')
+
+
+    def test_ReindexElasticSearchView_reindex_return(self, client,users,mocker,admin_settings):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        url = url_for("reindex_es.reindex" , is_db_to_es=False)
+
+        with mocker.patch("weko_admin.admin.is_reindex_running", side_effect=BaseException("test_error")):
+            res = client.post(url)
+            assert res.status_code == 500
+            assert json.loads(res.data).get("error") != None
+            admin_setting = AdminSettings.get('elastic_reindex_settings',False)
+            assert True == admin_setting.get('has_errored')
+            
+    def test_ReindexElasticSearchView_reindex_return2(self, client,users,mocker,admin_settings):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        url = url_for("reindex_es.reindex" , is_db_to_es=False)
+        with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+            with mocker.patch("weko_admin.admin.reindex.apply_async", side_effect=BaseException("test_error")):
+                res = client.post(url)
+                assert res.status_code == 500
+                assert json.loads(res.data).get("error") != None
+                admin_setting = AdminSettings.get('elastic_reindex_settings',False)
+                assert True == admin_setting.get('has_errored')
+
+    @pytest.mark.parametrize("index,is_permission,status_code",[
+                            (0,False,200),# sysadmin
+                            (1,False,403),# repoadmin
+                            (2,False,403),# comadmin
+                            (3,False,403),# contributor
+                            (4,False,403),# generaluser
+                            ])
+    def test_ReindexElasticSearchView_check_reindex_is_running_acl(self, client,users,admin_settings,index, is_permission ,status_code):
+        login_user_via_session(client,email=users[index]["email"])
+        url = url_for("reindex_es.check_reindex_is_running")
+        with patch("weko_admin.admin.is_reindex_running", return_value=False):
+            res = client.get(url)
+        assert_role(res,is_permission,status_code)
+
+        if status_code == 200:
+            assert json.loads(res.data) == dict({ "isError":False ,"isExecuting":False,"disabled_Btn":False })
+        else:
+            assert res.data != str(dict({ "isError":False ,"isExecuting":False,"disabled_Btn":False }))
+
+    def test_ReindexElasticSearchView_check_reindex_is_running_running(self, client,users,admin_settings):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        url = url_for("reindex_es.check_reindex_is_running")
+        with patch("weko_admin.admin.is_reindex_running", return_value=True):
+            res = client.get(url)
+            assert res.status_code == 200
+            assert json.loads(res.data) == dict({ "isError":False ,"isExecuting":True,"disabled_Btn":True })
+
+    def test_ReindexElasticSearchView_check_reindex_iserror(self, client,users,admin_settings,mocker):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        url = url_for("reindex_es.check_reindex_is_running")
+        with mocker.patch("weko_admin.admin.is_reindex_running", return_value=False):
+            mocker.patch("weko_admin.admin.AdminSettings.get", return_value=dict({"has_errored": True}))
+            res = client.get(url)
+            assert res.status_code == 200
+            assert json.loads(res.data) == dict({ "isError":True ,"isExecuting":False,"disabled_Btn":True })
+
+    def test_ReindexElasticSearchView_check_reindex_is_running_guest(self, client,users,admin_settings):
+        url = url_for("reindex_es.check_reindex_is_running")
+        res = client.get(url)
+        assert res.status_code == 302
+        assert res.data != str(dict({ "isError":False ,"isExecuting":False,"disabled_Btn":False }))
+
+    def test_ReindexElasticSearchView_check_reindex_is_running_err(self, client,users,admin_settings):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        url = url_for("reindex_es.check_reindex_is_running")
+        with patch("weko_admin.admin.AdminSettings.get", side_effect=BaseException("test_error")):
+            res = client.get(url)
+            assert res.status_code == 500
+            assert res.data != str(dict({ "isError":False ,"isExecuting":False,"disabled_Btn":False }))     

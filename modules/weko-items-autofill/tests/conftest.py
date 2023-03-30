@@ -40,6 +40,8 @@ from weko_records_ui import WekoRecordsUI
 from weko_index_tree.models import Index
 from weko_workflow.models import ActionStatus, Action
 
+from weko_admin.models import ApiCertificate
+
 from weko_items_autofill import WekoItemsAutofill
 
 from tests.helpers import json_data, create_record
@@ -378,3 +380,14 @@ def records(db):
         result.append(create_record(record_data[d], item_data[d]))
         db.session.commit()
     yield result
+
+@pytest.fixture()
+def api_certificate(db):
+    api = ApiCertificate(
+        api_code="crf",
+        api_name="CrossRef",
+        cert_data="test.test@test.org"
+    )
+    db.session.add(api)
+    db.session.commit()
+    return api

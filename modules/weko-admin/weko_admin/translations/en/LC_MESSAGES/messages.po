@@ -255,6 +255,7 @@ msgstr ""
 #: weko_admin/templates/weko_admin/search_management.html:215
 #: weko_admin/templates/weko_admin/site_license.html:207
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:47
 msgid "Save"
 msgstr "Save"
 
@@ -276,6 +277,7 @@ msgstr "Condition Name"
 
 #: weko_admin/templates/weko_admin/site_license.html:73
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:46
 msgid "Delete"
 msgstr ""
 
@@ -461,6 +463,7 @@ msgid "Download"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/report.html:150
+#: weko_admin/utils.py:50
 msgid "Error"
 msgstr ""
 
@@ -579,12 +582,12 @@ msgid "From author DB"
 msgstr "Input from author DB"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:46
-msgid "Delete"
-msgstr ""
+#: msgid "Delete"
+#: msgstr ""
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:47
-msgid "Save"
-msgstr ""
+#: msgid "Save"
+#: msgstr ""
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:48
 msgid "Manual Send"
@@ -619,8 +622,8 @@ msgid "Success"
 msgstr ""
 
 #: weko_admin/utils.py:50
-msgid "Error"
-msgstr ""
+#: msgid "Error"
+#: msgstr ""
 
 #: weko_admin/utils.py:50
 msgid "List of authors who failed to send"
@@ -826,3 +829,75 @@ msgstr "Failed to delete due to server error."
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
 msgid "The item name/mapping is already exists. Please input other faceted item/mapping."
 msgstr "The item name/mapping is already exists. Please input other faceted item/mapping."
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "reindex item_index"
+msgstr "reindex item Types"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "reindex item"
+msgstr "reindex items"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "execute"
+msgstr "execute"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "Maintenance"
+msgstr "Maintenance"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "ElasticSearch Index"
+msgstr "ElasticSearch Index"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "waiting..."
+msgstr "waiting..."
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "executing..."
+msgstr "executing..."
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "haserror"
+msgstr "Execution prohibited due to an error"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "validationMsg1"
+msgstr "Execution mode not selected"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "confirmMessage"
+msgstr "We expect this process to take a considerable amount of time to execute. May I run the reindexing process?"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "completed"
+msgstr "Completed!"
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
+msgid "UiType"
+msgstr "UI"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:60
+msgid "DisplayNumber"
+msgstr "Display Number"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
+msgid "OpenClose"
+msgstr "Open/Close"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
+msgid "OpenClose Open"
+msgstr "Open"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
+msgid "OpenClose Close"
+msgstr "Close"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+#, python-format
+msgid "DisplayNumber Validation1"
+msgstr "Display Number must be an integer value from 1 to 99."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+msgid "DisplayNumber Validation2"
+msgstr "If CheckboxList is selected, Display Number must be entered."

@@ -31,7 +31,7 @@ import ipaddress
 from datetime import datetime, timedelta
 
 from flask import abort, current_app, flash, jsonify, make_response, \
-    redirect, render_template, request, url_for
+    redirect, render_template, request, url_for 
 from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.fields import QuerySelectField
@@ -58,11 +58,128 @@ from .config import WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR, \
 from .models import AdminSettings, FacetSearchSetting, Identifier, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
     RankingSettings, SearchManagement, StatisticsEmail
-from .permissions import admin_permission_factory
+from .permissions import admin_permission_factory ,superuser_access
 from .utils import get_facet_search, get_item_mapping_list, \
     get_response_json, get_restricted_access, get_search_setting
 from .utils import get_user_report_data as get_user_report
-from .utils import package_reports, str_to_bool
+from .utils import package_reports, str_to_bool 
+from .tasks import is_reindex_running ,reindex
+
+
+class ReindexElasticSearchView(BaseView):
+
+    @expose('/', methods=['GET'])
+    @superuser_access.require(http_exception=403)
+    def index(self):
+        """ 
+        show view Maintenance/ElasticSearch 
+        
+        Returns:
+            'weko_admin/admin/reindex_elasticsearch.html'
+        """
+        try:
+            status =  self._check_reindex_is_running()
+            is_error = status.get("isError")
+            is_executing = status.get("isExecuting")
+            disabled_btn = status.get("disabled_Btn")
+
+            return self.render(
+                template=current_app.config['WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE']
+                ,isError=is_error
+                ,isExecuting=is_executing
+                ,disabled_Btn=disabled_btn 
+            )
+        except BaseException:
+            import traceback
+            estr = traceback.format_exc()
+            current_app.logger.error('Unexpected error: {}'.format( estr ))
+            return abort(500)
+
+    @expose('/reindex', methods=['POST'])
+    @superuser_access.require(http_exception=403)
+    def reindex(self):
+        """ 
+        Processing when "Executing Button" is pressed
+
+        Args:
+        is_db_to_es : boolean (GET paramater)
+            if True,  index Documents from DB data
+            if False, index Documents from ES data itself
+
+        Returns:
+            responce json text and responce code
+
+        Todo:
+        if you change this codes or operating, please keep in mind Todo of the method "elasticsearch_reindex"
+        in .utils.py .
+        """
+
+        
+        try:
+            ## exclusion check
+            status =  self._check_reindex_is_running()
+            is_error = status.get("isError")
+            is_executing = status.get("isExecuting")
+            if is_error:
+                return jsonify({"error" : _('haserror')}) , 400
+            if is_executing:
+                return jsonify({"error" : _('executing...')}) , 400
+
+            is_db_to_es=request.args.get('is_db_to_es') == 'true'
+            # execute in celery task
+            res = reindex.apply_async(args=(is_db_to_es,))
+            res_output = res.get() #wait until celery task finish
+            current_app.logger.info(res_output)
+            return jsonify({"responce" : _('completed')}), 200
+
+        except BaseException:
+            import traceback
+            estr = traceback.format_exc()
+            current_app.logger.error('Unexpected error: {}'.format( estr ))
+            AdminSettings.update(current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS'] 
+            , dict({current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']:True}))
+            return jsonify({"error" : estr }), 500
+            
+    @expose('/is_reindex_running', methods=['GET'])
+    @superuser_access.require(http_exception=403)
+    def check_reindex_is_running(self):
+        """
+        Monitor whether the reindex process is running/error is occurred
+        by Celery task and admin_settings
+
+        Returns:
+            str : View state json text
+                isError      : boolean
+                isExecuting  : boolean
+                disabled_Btn : boolean
+            
+        """
+        try:
+            return jsonify(self._check_reindex_is_running())
+        except BaseException:
+            import traceback
+            estr = traceback.format_exc()
+            current_app.logger.error('Unexpected error: {}'.format( estr ))
+            return abort(500)
+
+    def _check_reindex_is_running(self):
+        """
+        Monitor whether the reindex process is running/error is occurred
+        by Celery task and admin_settings
+        """
+        ELASTIC_REINDEX_SETTINGS = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS']
+        HAS_ERRORED = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']
+
+        admin_setting = AdminSettings.get(ELASTIC_REINDEX_SETTINGS,False)
+        is_error = admin_setting.get(HAS_ERRORED)
+        is_executing = is_reindex_running()
+        result = dict({
+            "isError": is_error
+            ,"isExecuting": is_executing
+            ,"disabled_Btn": is_error or is_executing 
+        })
+        return result
+
 
 
 # FIXME: Change all setting views' path to be under settings/
@@ -270,6 +387,12 @@ class ReportView(BaseView):
                                 "exists":
                                 {
                                     "field": "path"
+                                }
+                            },
+                            {
+                                "terms":
+                                {
+                                    "publish_status": ["0", "1"]
                                 }
                             }
                         ]
@@ -1136,6 +1259,7 @@ class FacetSearchSettingView(ModelView):
         'name_en',
         'name_jp',
         'mapping',
+        'ui_type',
         'active',
     )
     column_searchable_list = (
@@ -1143,6 +1267,7 @@ class FacetSearchSettingView(ModelView):
         'name_en',
         'name_jp',
         'mapping',
+        'ui_type',
         'active',
     )
 
@@ -1151,6 +1276,7 @@ class FacetSearchSettingView(ModelView):
         'name_en',
         'name_jp',
         'mapping',
+        'ui_type',
         'active',
     )
     column_labels = dict(
@@ -1158,6 +1284,7 @@ class FacetSearchSettingView(ModelView):
         name_en=_('Item Name(EN)'),
         name_jp=_('Item Name(JP)'),
         mapping=_('Mapping'),
+        ui_type=_('UI'),
         active=_('Active')
     )
 
@@ -1374,6 +1501,16 @@ facet_search_adminview = dict(
     endpoint='facet-search'
 )
 
+reindex_elasticsearch_adminview = {
+    'view_class': ReindexElasticSearchView,
+    'kwargs': {
+        'category': _('Maintenance'),
+        'name': _('ElasticSearch Index'),
+        'endpoint': 'reindex_es'
+    }
+}
+
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -1391,5 +1528,6 @@ __all__ = (
     'site_info_settings_adminview',
     'restricted_access_adminview',
     'identifier_adminview',
-    'facet_search_adminview'
+    'facet_search_adminview',
+    'reindex_elasticsearch_adminview'
 )

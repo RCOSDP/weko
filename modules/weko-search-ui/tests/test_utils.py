@@ -214,7 +214,7 @@ def test_delete_records(i18n_app, db_activity):
                 return_value=db_activity["record"],
             ):
                 with patch(
-                    "weko_deposit.api.WekoIndexer.update_path",
+                    "weko_deposit.api.WekoIndexer.update_es_data",
                     return_value=db_activity["record"],
                 ):
                     with patch(

@@ -600,8 +600,7 @@ class SiteLicenseIpAddress(db.Model, Timestamp):
 
     organization_no = db.Column(
         db.Integer(),
-        # primary_key=True,
-        autoincrement=True
+        primary_key=True
     )
 
     start_ip_address = db.Column(

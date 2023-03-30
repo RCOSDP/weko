@@ -84,5 +84,4 @@ class InvenioMail(object):
         for k in dir(config):
             if k.startswith('INVENIO_MAIL_'):
                 app.config.setdefault(k, getattr(config, k))
-            elif k.startswith('BABEL_'):
-                app.config.setdefault(k, getattr(config, k))
+
