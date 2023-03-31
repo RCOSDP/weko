@@ -314,7 +314,10 @@ class QueryFileReportsHelper(object):
 
         # Aggregate billing file download stats.
         for bucket in res['buckets']:
-            key_str = '{}_{}'.format(bucket['file_key'], bucket['index_list'])
+            # convert index_list into index_key
+            indices_tree = bucket['index_list'].split('|')
+            index_key = '|'.join([node.split('-/-')[-1] for node in indices_tree])
+            key_str = '{}_{}'.format(bucket['file_key'], index_key)
             if key_str in mapper:
                 data = data_list[mapper[key_str]]
             else:
