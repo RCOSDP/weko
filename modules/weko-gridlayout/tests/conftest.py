@@ -89,6 +89,7 @@ def base_app(instance_path):
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         TESTING=True,
+        BASE_TEMPLATE = 'weko_gridlayout/base.html',
         WEKO_GRIDLAYOUT_BASE_TEMPLATE = 'weko_gridlayout/base.html',
         WEKO_GRIDLAYOUT_ADMIN_WIDGET_DESIGN = 'weko_gridlayout/admin/widget_design.html',
         SERVER_NAME="TEST_SERVER",
