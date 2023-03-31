@@ -44,7 +44,6 @@ from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
-
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.facets import terms_filter
 from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
@@ -52,7 +51,6 @@ from jinja2 import Template
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
-
 from weko_records.api import ItemsMetadata
 from weko_redis.redis import RedisConnection
 from elasticsearch import Elasticsearch
@@ -200,7 +198,7 @@ def get_current_api_certification(api_code):
     """Get current API certification.
 
     :param api_code: API code
-    :return: API certification data if exist 
+    :return: API certification data if exist
     """
     results = {
         'api_code': api_code,
@@ -1619,8 +1617,8 @@ def format_site_info_data(site_info):
     result['favicon_name'] = site_info.get('favicon_name')
     result['notify'] = notify
     result['google_tracking_id_user'] = site_info.get(
-        'google_tracking_id_user').strip()
-    result['addthis_user_id'] = site_info.get('addthis_user_id').strip()
+        'google_tracking_id_user')
+    result['addthis_user_id'] = site_info.get('addthis_user_id')
     result['ogp_image'] = site_info.get('ogp_image')
     result['ogp_image_name'] = site_info.get('ogp_image_name')
     return result
