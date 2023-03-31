@@ -1168,7 +1168,6 @@ def check_validation_error_msg(activity_id):
 @blueprint.route('/', methods=['GET'])
 @blueprint.route('/corresponding-activity', methods=['GET'])
 @login_required
-@item_permission.require(http_exception=403)
 def corresponding_activity_list():
     """Get corresponding usage & output activity list.
 

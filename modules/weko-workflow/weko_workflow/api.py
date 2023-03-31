@@ -2404,8 +2404,9 @@ class WorkActivity(object):
                 _Activity.activity_id.in_(activities_id)
             )
         else:
-            query = query.filter(
-                _Activity.workflow_id == 31001
+            query = query.join(_WorkFlow).filter(
+                _WorkFlow.flows_name
+                == current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME')
             )
         query = query.filter(
             or_(_Activity.activity_status
@@ -2436,8 +2437,9 @@ class WorkActivity(object):
                 _Activity.activity_id.in_(activities_id)
             )
         else:
-            query = query.filter(
-                _Activity.workflow_id == 31001
+            query = query.join(_WorkFlow).filter(
+                _WorkFlow.flows_name
+                == current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME')
             )
         activities_number = query.filter(
             or_(_Activity.activity_status

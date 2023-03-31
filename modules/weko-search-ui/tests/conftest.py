@@ -234,6 +234,8 @@ def search_class():
     """Search class."""
     yield TestSearch
 
+from weko_search_ui import WekoSearchUI
+
 
 @pytest.yield_fixture()
 def instance_path():

@@ -118,7 +118,7 @@ def instance_path():
 
 
 @pytest.fixture()
-def base_app(instance_path):
+def base_app(request):
     """Flask application fixture."""
 
     app_ = Flask("testapp", instance_path=instance_path)

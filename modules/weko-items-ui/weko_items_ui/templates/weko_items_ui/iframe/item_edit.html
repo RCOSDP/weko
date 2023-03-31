@@ -460,6 +460,8 @@
               value="{{_('The following items is required. Please recheck and input.')}}">
           <input type="hidden" id="validate_email_register" name="validate_email_register"
               value="{{_('The following email address is not registered in the system. Please recheck and input.')}}">
+          <input type="hidden" id="validate_email_check" name="validate_email_check"
+              value="{{_('The approver email address cannot be the same as the applicant. Please recheck and input.')}}">
           <input type="hidden" id="validate_email_map" name="validate_email_map"
                  value="{{_('Can not found the email address of approval.')}}">
           <input type="hidden" id="validate_email_required" name="validate_email_required"
@@ -479,22 +481,22 @@
             value='{{usage_type}}'>
           <input type="hidden" id="auto_fill_subitem_restricted_access_dataset_usage"
             name="auto_fill_subitem_restricted_access_dataset_usage" value='{{dataset_usage}}'>
-          <input type="hidden" id="auto_fill_subitem_restricted_access_name"
-            name="auto_fill_subitem_restricted_access_name" value='{{usage_data_name}}'>
-          <input type="hidden" id="auto_fill_subitem_restricted_access_mail_address"
-            name="auto_fill_subitem_restricted_access_mail_address" value='{{mail_address}}'>
-          <input type="hidden" id="auto_fill_subitem_restricted_access_university/institution"
-            name="auto_fill_subitem_restricted_access_university/institution"
+          <input type="hidden" id="auto_fill_subitem_fullname"
+            name="auto_fill_subitem_fullname" value='{{usage_data_name}}'>
+          <input type="hidden" id="auto_fill_subitem_mail_address"
+            name="auto_fill_subitem_mail_address" value='{{mail_address}}'>
+          <input type="hidden" id="auto_fill_subitem_university/institution"
+            name="auto_fill_subitem_university/institution"
             value='{{university_institution}}'>
-          <input type="hidden" id="auto_fill_subitem_restricted_access_affiliated_division/department"
-            name="auto_fill_subitem_restricted_access_affiliated_division/department"
+          <input type="hidden" id="auto_fill_subitem_affiliated_division/department"
+            name="auto_fill_subitem_affiliated_division/department"
             value='{{affiliated_division_department}}'>
-          <input type="hidden" id="auto_fill_subitem_restricted_access_position"
-            name="auto_fill_subitem_restricted_access_position" value='{{position}}'>
-          <input type="hidden" id="auto_fill_subitem_restricted_access_position(others)"
-            name="auto_fill_subitem_restricted_access_position(others)" value='{{position_other}}'>
-          <input type="hidden" id="auto_fill_subitem_restricted_access_phone_number"
-            name="auto_fill_subitem_restricted_access_phone_number" value='{{phone_number}}'>
+          <input type="hidden" id="auto_fill_subitem_position"
+            name="auto_fill_subitem_position" value='{{position}}'>
+          <input type="hidden" id="auto_fill_subitem_position(others)"
+            name="auto_fill_subitem_position(others)" value='{{position_other}}'>
+          <input type="hidden" id="auto_fill_subitem_phone_number"
+            name="auto_fill_subitem_phone_number" value='{{phone_number}}'>
           <input type="hidden" id="auto_fill_subitem_restricted_access_usage_report_id"
             name="auto_fill_subitem_restricted_access_usage_report_id" value='{{usage_report_id}}'>
           <input type="hidden" id="auto_fill_subitem_restricted_access_wf_issued_date"

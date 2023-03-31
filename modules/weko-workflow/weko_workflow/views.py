@@ -935,7 +935,6 @@ def display_activity(activity_id="0"):
     res_check = check_authority_action(str(activity_id), int(action_id),
                                        is_auto_set_index_action,
                                        activity_detail.action_order)
-
     getargs = request.args
     ctx = {'community': None}
     community_id = ""
@@ -1349,6 +1348,8 @@ def next_action(activity_id='0', action_id=0):
         register_hdl(activity_id)
 
     flow = Flow()
+    current_flow_action = flow.get_flow_action_detail(
+        activity_detail.flow_define.flow_id, action_id, action_order)
     next_flow_action = flow.get_next_flow_action(
         activity_detail.flow_define.flow_id, action_id, action_order)
     if not isinstance(next_flow_action, list) or len(next_flow_action) <= 0:
@@ -1359,6 +1360,15 @@ def next_action(activity_id='0', action_id=0):
     next_action_id = next_flow_action[0].action_id
     next_action_order = next_flow_action[
         0].action_order if action_order else None
+    action_mails_setting = {"previous":
+                            current_flow_action.send_mail_setting
+                            if current_flow_action.send_mail_setting
+                            else {},
+                            "next": next_flow_action[0].send_mail_setting
+                            if next_flow_action[0].send_mail_setting
+                            else {},
+                            "approval": False,
+                            "reject": False}
     # Start to send mail
     if next_action_endpoint in ['approval' , 'end_action']:
         current_flow_action = flow.get_flow_action_detail(
@@ -1394,15 +1404,7 @@ def next_action(activity_id='0', action_id=0):
             
             if not url_and_expired_date:
                 url_and_expired_date = {}
-        action_mails_setting = {"previous":
-                                current_flow_action.send_mail_setting
-                                if current_flow_action.send_mail_setting
-                                else {},
-                                "next": next_flow_action[0].send_mail_setting
-                                if next_flow_action[0].send_mail_setting
-                                else {},
-                                "approval": True,
-                                "reject": False}
+        action_mails_setting['approval'] = True
 
         next_action_handler = next_action_detail.action_handler
         # in case of current action has action user
@@ -1419,12 +1421,9 @@ def next_action(activity_id='0', action_id=0):
                                     next_action_handler,
                                     url_and_expired_date)
     if current_app.config.get(
-        'WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL') and \
-        current_user.is_authenticated and \
-        (not activity_detail.extra_info or not
-            activity_detail.extra_info.get('guest_mail')):
-        process_send_notification_mail(activity_detail,
-                                       action_endpoint, next_action_endpoint)
+        'WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL'):
+        process_send_notification_mail(activity_detail, action_endpoint,
+                                       next_action_endpoint, action_mails_setting)
 
     if post_json.get('temporary_save') == 1 \
             and action_endpoint not in ['identifier_grant', 'item_link']:
@@ -2602,18 +2601,18 @@ def check_approval(activity_id='0'):
 @workflow_blueprint.route('/send_mail/<string:activity_id>/<string:mail_template>',
                  methods=['POST'])
 @login_required
-def send_mail(activity_id='0', mail_template=''):
+def send_mail(activity_id='0', mail_id=''):
     """Send mail.
 
     :param activity_id:
-    :param mail_template:
+    :param mail_id:
     :return:
     """
     try:
         work_activity = WorkActivity()
         activity_detail = work_activity.get_activity_detail(activity_id)
         if current_app.config.get('WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL'):
-            process_send_reminder_mail(activity_detail, mail_template)
+            process_send_reminder_mail(activity_detail, mail_id)
     except ValueError:
         return jsonify(code=-1, msg='Error')
     return jsonify(code=1, msg='Success')

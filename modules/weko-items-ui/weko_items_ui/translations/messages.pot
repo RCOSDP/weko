@@ -318,6 +318,47 @@ msgstr ""
 msgid "Name"
 msgstr ""
 
+#: weko_items_ui/templates/weko_items_ui/iframe/upload_thumbnail_list.html:
+msgid "Actions"
+msgstr ""
+
+msgid "Specified index does not exist"
+msgstr ""
+
+msgid "Advisor"
+msgstr ""
+
+msgid "Guarantor"
+msgstr ""
+
+msgid "Email (Advisor)"
+msgstr ""
+
+msgid "Email (Guarantor)"
+msgstr ""
+
+msgid "The approver email address cannot be the same as the applicant. Please recheck and input."
+msgstr ""
+
+msgid "The following email address is not registered in the system. Please recheck and input."
+msgstr ""
+
+msgid "The specified number has been exceeded. You can only select up to two fields."
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Version Management"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Upgrade Version"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Keep Version"
+msgstr ""
+
+msgid "Required item is not inputted"
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:291
 msgid "Mail address"
 msgstr ""

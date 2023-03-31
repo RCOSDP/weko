@@ -667,3 +667,6 @@ msgstr "承認通知メール"
 
 msgid "Approval Rejection Notification Email"
 msgstr "承認却下通知メール"
+
+msgid "Send an email to the registrant"
+msgstr "登録者にメールを送信する"

@@ -1143,6 +1143,8 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'site_info',
     'location',
     'facet-search',
+    'restricted_access',
+    'mailtemplates'
     'community',
     'restricted_access'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
