@@ -22,6 +22,7 @@
 
 import copy
 import json
+import traceback
 import mimetypes
 import os
 import shutil
@@ -36,6 +37,7 @@ from unittest.mock import patch
 import pytest
 from click.testing import CliRunner
 from elasticsearch import Elasticsearch
+from elasticsearch.client.ingest import IngestClient
 from flask import Blueprint, Flask
 from flask_assets import assets
 from flask_babelex import Babel
@@ -246,6 +248,7 @@ def base_app(instance_path):
         WEKO_SCHEMA_UI_ADMIN_LIST="weko_schema_ui/admin/list.html",
         WEKO_SCHEMA_UI_ADMIN_UPLOAD="weko_schema_ui/admin/upload.html",
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
+        SEARCH_UI_SEARCH_INDEX="{}-weko-item-v1.0.0".format("test"),
         INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
         INDEXER_DEFAULT_DOC_TYPE="item-v1.0.0",
         INDEXER_FILE_DOC_TYPE="content",
@@ -664,6 +667,47 @@ def db_itemtype(app, db):
 
 
 @pytest.fixture()
+def db_itemtype_jdcat(app, db):
+    item_type_name = ItemTypeName(
+        name="テストアイテムタイプ", has_site_license=True, is_active=True
+    )
+    item_type_schema = dict()
+    with open("tests/data/itemtype_jdcat_schema.json", "r") as f:
+        item_type_schema = json.load(f)
+
+    item_type_form = dict()
+    with open("tests/data/itemtype_jdcat_form.json", "r") as f:
+        item_type_form = json.load(f)
+
+    item_type_render = dict()
+    with open("tests/data/itemtype_jdcat_render.json", "r") as f:
+        item_type_render = json.load(f)
+
+    item_type_mapping = dict()
+    with open("tests/data/itemtype_jdcat_mapping.json", "r") as f:
+        item_type_mapping = json.load(f)
+
+    item_type = ItemType(
+        name_id=1,
+        harvesting_type=True,
+        schema=item_type_schema,
+        form=item_type_form,
+        render=item_type_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_mapping = ItemTypeMapping(item_type_id=1, mapping=item_type_mapping)
+
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
+        db.session.add(item_type)
+        db.session.add(item_type_mapping)
+
+    return {"item_type_name": item_type_name, "item_type": item_type}
+
+@pytest.fixture()
 def db_sessionlifetime(app, db):
     session_lifetime = SessionLifetime(lifetime=60, is_delete=False)
     with db.session.begin_nested():
@@ -678,7 +722,8 @@ def client(app):
 @pytest.fixture()
 def esindex(app):
     current_search_client.indices.delete(index="test-*")
-    with open("tests/data/mappings/item-v1.0.0.json", "r") as f:
+    # print(app.config["INDEXER_DEFAULT_INDEX"])
+    with open("tests/data/mappings/v6/weko/item-v1.0.0.json", "r") as f:
         mapping = json.load(f)
     try:
         current_search_client.indices.create(
@@ -687,12 +732,50 @@ def esindex(app):
         current_search_client.indices.put_alias(
             index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko"
         )
+        
+        es = Elasticsearch(
+            [app.config['SEARCH_ELASTIC_HOSTS']],
+            scheme="http",
+            port=9200
+        )
+        p = IngestClient(es)
+        p.put_pipeline(id='item-file-pipeline', body={
+            'description': "Index contents of each file.",
+            'processors' : [
+                {
+                    'foreach': {
+                        'field': 'content',
+                        'processor': {
+                            'attachment': {
+                                'indexed_chars' : -1,
+                                'target_field': '_ingest._value.attachment',
+                                'field': '_ingest._value.file',
+                                'properties': [
+                                    'content'
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                {
+                    'foreach': {
+                        'field': 'content',
+                        'processor': {
+                            'remove': {
+                                'field': '_ingest._value.file'
+                                }
+                            }
+                        }
+                    }
+                ]})
     except:
         current_search_client.indices.create("test-weko-items", body=mapping)
         current_search_client.indices.put_alias(
             index="test-weko-items", name="test-weko"
         )
     try:
+        # print index mapping
+        # print(current_search_client.indices.get_mapping(index="test-weko"))
         yield current_search_client
     finally:
         current_search_client.indices.delete(index="test-*")
@@ -825,7 +908,7 @@ def records(app, db, esindex, indextree, location, itemtypes, db_oaischema):
         mimetype = "application/pdf"
         filepath = "tests/data/helloworld.pdf"
         results.append(make_record(db, indexer, i, filepath, filename, mimetype))
-
+        
         i = 2
         filename = "helloworld.docx"
         mimetype = (
@@ -2062,7 +2145,9 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
             status=PIDStatus.REGISTERED,
         )
 
+    # print(record_data)
     record = WekoRecord.create(record_data, id_=rec_uuid)
+    # print(current_search_client.indices.get_mapping(index="test-weko"))
     # from six import BytesIO
     import base64
 
@@ -2102,6 +2187,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
         }
     ]
     indexer.upload_metadata(record_data, rec_uuid, 1, False)
+    
     item = ItemsMetadata.create(item_data, id_=rec_uuid, item_type_id=1)
 
     record_v1 = WekoRecord.create(record_data, id_=rec_uuid2)
