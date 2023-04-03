@@ -34,19 +34,19 @@ from invenio_db import db
 from .models import Community, InclusionRequest
 
 
-@shared_task(ignore_result=True)
-def delete_marked_communities():
-    """Delete communities after holdout time."""
-    # TODO: Delete the community ID from all records metadata first
-    raise NotImplementedError()
-    Community.query.filter_by(
-        Community.delete_time > datetime.utcnow()).delete()
-    db.session.commit()
+# @shared_task(ignore_result=True)
+# def delete_marked_communities():
+#     """Delete communities after holdout time."""
+#     # TODO: Delete the community ID from all records metadata first
+#     raise NotImplementedError()
+#     Community.query.filter_by(
+#         Community.delete_time > datetime.utcnow()).delete()
+#     db.session.commit()
 
 
 @shared_task(ignore_result=True)
 def delete_expired_requests():
     """Delete expired inclusion requests."""
-    InclusionRequest.query.filter_by(
-        InclusionRequest.expiry_date > datetime.utcnow()).delete()
+    InclusionRequest.query.filter(
+        InclusionRequest.expires_at > datetime.utcnow()).delete()
     db.session.commit()

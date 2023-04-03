@@ -53,7 +53,7 @@ def init():
         initialize_communities_bucket()
         click.secho('Community init successful.', fg='green')
     except FilesException as e:
-        click.secho(e.message, fg='red')
+        click.secho(e.errors, fg='red')
 
 
 @communities.command()
@@ -101,6 +101,7 @@ def remove(community_id, record_id):
     """Remove a record from community."""
     c = Community.get(community_id)
     assert c is not None
-    c.remove_record(record_id)
+    record = Record.get_record(record_id)
+    c.remove_record(record)
     db.session.commit()
     RecordIndexer().index_by_id(record_id)

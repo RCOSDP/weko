@@ -33,7 +33,7 @@ def default_links_item_factory(community):
     """Factory for record links generation."""
     return dict(
         self=url_for(
-            '.communities_item', community_id=community['id'], _external=True),
+            'invenio_communities_rest.communities_item', community_id=community['id'], _external=True),
         html=current_app.config.get(
             'COMMUNITIES_URL_COMMUNITY_VIEW',
             '{protocol}://{host}/communities/{community_id}/'
@@ -47,7 +47,7 @@ def default_links_item_factory(community):
 
 def default_links_pagination_factory(page, urlkwargs):
     """Factory for record links generation."""
-    endpoint = '.communities_list'
+    endpoint = 'invenio_communities_rest.communities_list'
 
     links = {
         'self': url_for(endpoint, page=page.page, _external=True, **urlkwargs),
