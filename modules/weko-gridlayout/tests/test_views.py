@@ -16,6 +16,13 @@ user_results1 = [
 ]
 
 
+# def preload_pages(): 
+def test_preload_pages(i18n_app):
+    from weko_gridlayout.views import preload_pages
+
+    preload_pages()
+
+
 @pytest.mark.parametrize('id, status_code', user_results1)
 def test_unlocked_widget_login(client, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
@@ -322,6 +329,7 @@ def test_delete_widget_item(client, users):
 
 # def get_account_role(): 
 def test_get_account_role(client, users):
+    login_user_via_session(client=client, email=users[2]['obj'].email)
     res = client.get(
         url_for("weko_gridlayout_api.get_account_role"),
     )
