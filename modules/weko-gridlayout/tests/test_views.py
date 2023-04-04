@@ -20,7 +20,17 @@ user_results1 = [
 def test_preload_pages(i18n_app):
     from weko_gridlayout.views import preload_pages
 
-    preload_pages()
+    assert preload_pages() == None
+
+
+# def load_repository(): 
+def test_load_repository(client, users):
+    login_user_via_session(client=client, email=users[2]["email"])
+    res = client.get(
+        url_for("weko_gridlayout_api.load_repository"),
+    )
+
+    assert res.status_code == 200
 
 
 @pytest.mark.parametrize('id, status_code', user_results1)
