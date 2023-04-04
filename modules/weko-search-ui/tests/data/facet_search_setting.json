@@ -74,6 +74,6 @@
         "aggregations":[{"agg_value": "Other", "agg_mapping": "description.descriptionType"}],
         "active":true,
         "is_open":false,
-        "search_condition":"OR"
+        "search_condition":"AND"
     }
 }

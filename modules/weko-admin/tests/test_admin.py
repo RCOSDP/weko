@@ -1423,10 +1423,10 @@ class TestFacetSearchSettingView:
                 "mapping": "",
                 "active": True,
                 "aggregations": [],
-                "display_number": "",
+                "display_number": 5,
                 "is_open": True,
-                "search_condition": "",
-                "ui_type": "",
+                "search_condition": "OR",
+                "ui_type": "CheckboxList",
                 "mapping_list": mapping_list,
                 "detail_condition": detail_condition
             }
@@ -1532,8 +1532,7 @@ class TestFacetSearchSettingView:
                 "is_open": True,
                 "search_condition": "OR",
                 "ui_type": "SelectBox",
-                "mapping_list": mapping_list,
-                "detail_condition": detail_condition
+                "mapping_list": mapping_list
             }
             client.get(url)
             args, kwargs = mock_render.call_args
