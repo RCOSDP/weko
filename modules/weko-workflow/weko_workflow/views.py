@@ -422,7 +422,7 @@ def new_activity():
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         if comm is not None:
-           community_id = comm.id
+            community_id = comm.id
 
     # Process exclude workflows
     from weko_workflow.utils import exclude_admin_workflow
@@ -511,9 +511,6 @@ def init_activity():
                 post_activity.data, request.args.get('community'))
         else:
             rtn = activity.init_activity(post_activity.data)
-        if rtn is None:
-            res = ResponseMessageSchema().load({'code':-1,'msg':'can not make activity_id'})
-            return jsonify(res.data), 500
 
         url = url_for('weko_workflow.display_activity',
                       activity_id=rtn.activity_id)
@@ -649,8 +646,8 @@ def display_guest_activity(file_name=""):
     # Get item link info.
     record_detail_alt = get_main_record_detail(activity_id,
                                                guest_activity.get('activity'))
-    if record_detail_alt.get('record'):
-        record_detail_alt['record']['is_guest'] = True
+    #if record_detail_alt.get('record'):
+    #    record_detail_alt['record']['is_guest'] = True
 
     guest_activity.update(
         dict(
@@ -739,11 +736,11 @@ def display_activity(activity_id="0"):
                     text/html
     """
 
-    check_flg = type_null_check(activity_id, str)
-    if not check_flg:
-        current_app.logger.error("display_activity: argument error")
-        return render_template("weko_theme/error.html",
-                error="can not get data required for rendering")
+    #check_flg = type_null_check(activity_id, str)
+    #if not check_flg:
+    #    current_app.logger.error("display_activity: argument error")
+    #    return render_template("weko_theme/error.html",
+    #            error="can not get data required for rendering")
 
     activity = WorkActivity()
     if "?" in activity_id:
@@ -828,8 +825,6 @@ def display_activity(activity_id="0"):
     if action_endpoint in ['item_login',
                            'item_login_application',
                            'file_upload']:
-        if not activity.get_activity_by_id(activity_id):
-            pass
         if activity.get_activity_by_id(activity_id).action_status != ActionStatusPolicy.ACTION_CANCELED:
             activity_session = dict(
                 activity_id=activity_id,
@@ -846,13 +841,11 @@ def display_activity(activity_id="0"):
             item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
             allow_multi_thumbnail \
             = item_login(item_type_id=workflow_detail.itemtype_id)
-        if not step_item_login_url:
-            current_app.logger.error("display_activity: can not get item")
-            return render_template("weko_theme/error.html",
-                    error="can not get data required for rendering")
-
+#        if not step_item_login_url:
+#            current_app.logger.error("display_activity: can not get item")
+#            return render_template("weko_theme/error.html",
+#                    error="can not get data required for rendering")
         application_item_type = is_usage_application_item_type(activity_detail)
-
         if not record and item:
             record = item
 
@@ -860,10 +853,10 @@ def display_activity(activity_id="0"):
         sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
 
 
-        if not (json_schema and schema_form):
-            current_app.logger.error("display_activity: can not get json_schema,schema_form")
-            return render_template("weko_theme/error.html",
-                    error="can not get data required for rendering")
+        #if not (json_schema and schema_form):
+        #    current_app.logger.error("display_activity: can not get json_schema,schema_form")
+        #    return render_template("weko_theme/error.html",
+        #            error="can not get data required for rendering")
 
         if sessionstore.redis.exists(
             'updated_json_schema_{}'.format(activity_id)) \
@@ -926,9 +919,8 @@ def display_activity(activity_id="0"):
 
     user_id = current_user.id
     user_profile = {}
-    if user_id:
-        from weko_user_profiles.views import get_user_profile_info
-        user_profile['results'] = get_user_profile_info(int(user_id))
+    from weko_user_profiles.views import get_user_profile_info
+    user_profile['results'] = get_user_profile_info(int(user_id))
     from weko_records_ui.utils import get_list_licence
     from weko_theme.utils import get_design_layout
 
@@ -937,10 +929,10 @@ def display_activity(activity_id="0"):
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
     list_license = get_list_licence()
-    if list_license is None or not isinstance(list_license, list):
-        current_app.logger.error("display_activity: bad value for list_licences")
-        return render_template("weko_theme/error.html",
-                error="can not get data required for rendering")
+    #if list_license is None or not isinstance(list_license, list):
+        #current_app.logger.error("display_activity: bad value for list_licences")
+        #return render_template("weko_theme/error.html",
+        #        error="can not get data required for rendering")
 
 
     if action_endpoint == 'item_link' and recid:
@@ -951,10 +943,10 @@ def display_activity(activity_id="0"):
     record_detail_alt = get_main_record_detail(
         activity_id, activity_detail, action_endpoint, item,
         approval_record, files, files_thumbnail)
-    if not record_detail_alt:
-        current_app.logger.error("display_activity: bad value for record_detail_alt")
-        return render_template("weko_theme/error.html",
-                    error="can not get data required for rendering")
+    #if not record_detail_alt:
+    #    current_app.logger.error("display_activity: bad value for record_detail_alt")
+    #    return render_template("weko_theme/error.html",
+    #                error="can not get data required for rendering")
 
     ctx.update(
         dict(
@@ -1818,6 +1810,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
             activity_id,
             identifier_actionid)
         if identifier and identifier['action_identifier_select'] == -2:
+            print(1)
             identifier['action_identifier_select'] = \
                 current_app.config.get(
                     "WEKO_WORKFLOW_IDENTIFIER_GRANT_CAN_WITHDRAW", -1)
@@ -2047,9 +2040,11 @@ def cancel_action(activity_id='0', action_id=0):
                         current_app.logger.error("cancel_action: can not get PersistentIdentifier")
                         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get PersistentIdentifier"})
                         return jsonify(res.data), 500
+                    print(cancel_pid)
                     cancel_pv = PIDVersioning(child=cancel_pid)
 
                     if cancel_pv.exists:
+                        print("zzzzzzzzz")
                         parent_pid = deepcopy(cancel_pv.parent)
                         cancel_pv.remove_child(cancel_pid)
                         # rollback parent info
@@ -2168,13 +2163,17 @@ def withdraw_confirm(activity_id='0', action_id=0):
         check_flg = type_null_check(activity_id, str)
         check_flg &= type_null_check(action_id, int)
         if not check_flg:
+            print(1)
             current_app.logger.error("withdraw_confirm: argument error")
             res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
             return jsonify(res.data), 500
+        else:
+            print(2)
 
         try:
             schema_load = PasswdSchema().load(request.get_json())
         except ValidationError as err:
+            print(3)
             current_app.logger.error("withdraw_confirm: "+str(err))
             res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
             return jsonify(res.data), 500
@@ -2183,6 +2182,7 @@ def withdraw_confirm(activity_id='0', action_id=0):
         password = post_json.get('passwd', None)
         # wekouser = ShibUser()
         if password == 'DELETE':
+            print(4)
             activity = WorkActivity()
             identifier_actionid = get_actionid('identifier_grant')
             identifier = activity.get_action_identifier_grant(
@@ -2197,16 +2197,20 @@ def withdraw_confirm(activity_id='0', action_id=0):
                 identifier)
 
             if session.get("guest_url"):
+                print(5)
                 url = session.get("guest_url")
             else:
+                print(6)
                 url = url_for('weko_workflow.display_activity',
                               activity_id=activity_id)
             res = ResponseMessageSchema().load({"code":0, "msg": _("success"), "data": {"redirect": url}})
             return jsonify(res.data), 200
         else:
+            print(7)
             res = ResponseMessageSchema().load({"code":-1, "msg":_('Invalid password')})
             return jsonify(res.data), 500
     except ValueError:
+        print(8)
         current_app.logger.error("withdraw_confirm: Unexpected error: {}".format(sys.exc_info()))
     res = ResponseMessageSchema().load({"code":-1, "msg":_('Error!')})
     return jsonify(res.data), 500
@@ -2291,6 +2295,7 @@ def get_feedback_maillist(activity_id='0'):
         current_app.logger.error("get_feedback_maillist: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
         return jsonify(res.data), 400
+
     try:
         work_activity = WorkActivity()
         action_feedbackmail = work_activity.get_action_feedbackmail(
@@ -2574,12 +2579,17 @@ def send_mail(activity_id='0', mail_template=''):
     :param mail_template:
     :return:
     """
+    print("called")
     try:
         work_activity = WorkActivity()
         activity_detail = work_activity.get_activity_detail(activity_id)
         if current_app.config.get('WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL'):
+            print(1)
             process_send_reminder_mail(activity_detail, mail_template)
+        else:
+            print(2)
     except ValueError:
+        print(3)
         return jsonify(code=-1, msg='Error')
     return jsonify(code=1, msg='Success')
 

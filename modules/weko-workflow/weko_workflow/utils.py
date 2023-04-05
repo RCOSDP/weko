@@ -322,7 +322,10 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     current_app.logger.debug("file_path: {}".format(file_path))
 
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
+        print(1)
         return None
+    else:
+        print(2)
 
     ddi_item_type_name = 'DDI'
     journalarticle_type = ['other', 'conference paper',
@@ -350,27 +353,41 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     item_type = metadata_item.get_data_item_type()
     type_key, resource_type = metadata_item.get_first_data_by_mapping(
         'type.@value')
-
+    print("type_key:{},resource:{}".format(type_key, resource_type))
     error_list = {'required': [], 'required_key': [], 'pattern': [],
                   'either': [],  'either_key': [], 'mapping': [], 'other': ''}
     # check resource type request
     if not resource_type and not type_key:
+        print(3)
         error_list['mapping'].append('dc:type')
         return error_list
+    else:
+        print(4)
 
     type_check = check_required_data(resource_type, type_key)
+    print("type_check:{}".format(type_check))
     if not item_type or not resource_type and type_check:
+        print(5)
         error_list['required'].append(type_key)
         return error_list
+    else:
+        print(6)
 
     resource_type = resource_type.pop()
     if without_ver_id:
+        print(7)
         _type_key, old_resource_type = MappingData(without_ver_id) \
             .get_first_data_by_mapping('type.@value')
+        print("resource_type:{},old:{}".format(resource_type,old_resource_type))
         if old_resource_type and resource_type != old_resource_type.pop():
+            print(8)
             error_list['other'] = 'You cannot change the resource type of ' \
                 + 'items that have been grant a DOI.'
             return error_list
+        else:
+            print(9)
+    else:
+        print(10)
 
     properties = {}
     # 必須
@@ -380,6 +397,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
 
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLC']:
+        print(11)
         # 別表2-1 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
         # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
@@ -390,32 +408,47 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 or resource_type in thesis_types \
                 or resource_type in elearning_type \
                 or resource_type in datageneral_types:
+            print(12)
             required_properties = ['title']
             # remove 20220207
             # either_properties = ['version']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif resource_type in dataset_type:
+            print(13)
             required_properties = ['title',
                                    'givenName']
             # remove 20220207
             # either_properties = ['geoLocation']
+        else:
+            print(14)
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['Crossref']:
+        print(15)
         if resource_type in journalarticle_type:
+            print(16)
             required_properties = ['title',
                                    'publisher',
                                    'sourceIdentifier',
                                    'sourceTitle']
         elif resource_type in report_types \
                 or resource_type in thesis_types:
+            print(17)
             required_properties = ['title']
+        else:
+            print(18)
     # DataCite DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCite']:
+        print(19)
         if resource_type in dataset_type:
+            print(20)
             required_properties = ['title',
                                    'givenName']
             # remove 20220207
             # either_properties = ['geoLocation']
+        else:
+            print(21)
+    else:
+        print(22)
     # NDL JaLC DOI identifier registration
 
     # 本文URL条件
@@ -423,16 +456,30 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     # 新規登録(item_idなし、かつfile_pathがある場合は本文URL:があるとみなす
     # それ以外はfileURIが必須
     if item_type.item_type_name.name != ddi_item_type_name:
+        print(23)
         if item_id is None:
+            print(24)
             if len(file_path) == 0:
+                print(25)
                 required_properties.append('fileURI')
+            else:
+                print(26)
         else:
+            print(27)
             required_properties.append('fileURI')
+    else:
+        print(28)
 
     if required_properties:
+        print(29)
         properties['required'] = required_properties
+    else:
+        print(30)
     if either_properties:
+        print(31)
         properties['either'] = either_properties
+    else:
+        print(32)
 
     current_app.logger.debug(item_type)
     current_app.logger.debug(resource_type)
@@ -444,8 +491,10 @@ def item_metadata_validation(item_id, identifier_type, record=None,
             ((identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCite']
               and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC']
               ) or is_import):
+        print(33)
         return validation_item_property(metadata_item, properties)
     else:
+        print(34)
         return _('Cannot register selected DOI for current Item Type of this '
                  'item.')
 
@@ -863,6 +912,7 @@ class MappingData(object):
         :return: properties key and data.
         """
         data_info = self.get_data_by_mapping(mapping_key, True)
+        print(data_info)
         return next(iter(data_info.items())) if data_info else (None, None)
 
     def get_first_property_by_mapping(self, mapping_key, ignore_empty=False):

@@ -137,7 +137,7 @@ from weko_workflow.utils import (
     validattion_item_property_required,
     validattion_item_property_either_required,
     register_hdl_by_item_id,
-    register_hdl_by_handle
+    register_hdl_by_handle,
     make_activitylog_tsv
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
@@ -179,7 +179,7 @@ def test_get_identifier_setting(identifier):#c
     assert get_identifier_setting(identifier.repository)==identifier
 
 # def saving_doi_pidstore(item_id,
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_saving_doi_pidstore -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_saving_doi_pidstore(db_records,item_type,mocker):#c
     item_id = db_records[0][3].id
     pid_without_ver = get_record_without_version(db_records[0][0]).object_uuid
@@ -190,30 +190,42 @@ def test_saving_doi_pidstore(db_records,item_type,mocker):#c
         "identifier_grant_jalc_dc_doi_link":"https://doi.org/3000/0000000001",
         "identifier_grant_ndl_jalc_doi_link":"https://doi.org/4000/0000000001"
     }
+
+    # select jalc doi
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
     result = saving_doi_pidstore(item_id,pid_without_ver,data,1,False,True)
     assert result == True
     mock_update.assert_has_calls([mocker.call("1000/0000000001","JaLC")])
-    
+
+    # select jalc crossref doi
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
     result = saving_doi_pidstore(item_id,pid_without_ver,data,2,False,False)
     assert result == True
     mock_update.assert_has_calls([mocker.call("2000/0000000001","Crossref")])
-    
+
+    # select jalc datacite doi
     with patch("weko_workflow.utils.IdentifierHandle.register_pidstore",return_value=True):
         mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
         result = saving_doi_pidstore(item_id,pid_without_ver,data,3,False,False)
         assert result == True
         mock_update.assert_has_calls([mocker.call("3000/0000000001","DataCite"),mocker.call("3000/0000000001","DataCite")])
-    
+
+    # select ndl jalc doi
     with patch("weko_workflow.utils.IdentifierHandle.register_pidstore",side_effect=Exception):
         mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
         result = saving_doi_pidstore(item_id,pid_without_ver,data,4,True,False)
         assert result == False
+    
+    # identifier_val is false
+    data = {"identifier_grant_jalc_doi_link":"http://doi.org/"}
+    result = saving_doi_pidstore(item_id,pid_without_ver,data,1,True,False)
+    assert result == True
 
+    # wrong doi_select
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
     result = saving_doi_pidstore(uuid.uuid4(),pid_without_ver,data,"wrong",False,False)
     assert result == False
+    
 
 # def register_hdl(activity_id):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_register_hdl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -290,14 +302,40 @@ def test_register_hdl_by_handle(db_records,item_type):
         assert pid[0].object_uuid == db_records[1][0].object_uuid
         assert pid[0].pid_value == "http://hdl.handle.net/handle:00.000.12345/0000000001"
     
+    with patch("weko_handle.api.Handle.register_handle",return_value=""):
+        register_hdl_by_handle(deposit,item_id,"http://test_item.com")
+    
 
 # def item_metadata_validation(item_id, identifier_type, record=None,
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_item_metadata_validation -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_item_metadata_validation(db_records):
+def test_item_metadata_validation(db_records,item_type):
     recid, depid, record, item, parent, doi, deposit = db_records[0]
-    result = item_metadata_validation(recid.id,"hdl")
-    assert result == ""
+    print("tt1")
+    # identifier_type = Not Grant
+    result = item_metadata_validation(recid.object_uuid,"0")
+    assert result == None
+    print("tt2")
+    # type_key, resource_type is None
+    with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",return_value=(None, None)):
+        result = item_metadata_validation(recid.object_uuid,"hdl")
+        assert result == {'required': [], 'required_key': [], 'pattern': [],
+                  'either': [],  'either_key': [], 'mapping': ["dc:type"], 'other': ''}
+    print("tt3")
+    with patch("weko_workflow.utils.check_required_data",return_value=['item_1617186331708.subitem_1551255647225']):
+        result = item_metadata_validation(recid.object_uuid,"hdl")
+        assert result == {'required': ['item_1617186331708.subitem_1551255647225'], 'required_key': ["jpcoar:URI"], 'pattern': [],
+                  'either': [],  'either_key': [], 'mapping': []}
+    print("tt4")
+    without_ver = get_record_without_version(recid)
+    with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",side_effect=[("item_1617258105262.resourcetype", ['conference paper']),(None,["data paper"])]):
+        result = item_metadata_validation(recid.object_uuid,"hdl",without_ver_id=without_ver.object_uuid)
+        assert result == {'required': [], 'required_key': [], 'pattern': [],
+                  'either': [],  'either_key': [], 'mapping': [], 'other': 'You cannot change the resource type of items that have been grant a DOI.'}
     
+    result = item_metadata_validation(recid.object_uuid,"hdl")
+    print("tt5")
+    result = item_metadata_validation(recid.object_uuid,"hdl")
+    assert result == ""
 # def merge_doi_error_list(current, new):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_merge_doi_error_list():#c

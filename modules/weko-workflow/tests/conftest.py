@@ -24,6 +24,7 @@ import os, sys
 import shutil
 import tempfile
 import json
+from mock import patch
 import uuid
 from datetime import datetime
 from six import BytesIO
@@ -54,7 +55,12 @@ from invenio_search import RecordsSearch,InvenioSearch
 from invenio_communities import InvenioCommunities
 from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_communities.models import Community
+from invenio_oaiserver import InvenioOAIServer
+from invenio_oauth2server import InvenioOAuth2Server
 from invenio_jsonschemas import InvenioJSONSchemas
+from invenio_indexer import InvenioIndexer
+from invenio_records_rest import InvenioRecordsREST
+from invenio_mail import InvenioMail
 # from weko_records_ui import WekoRecordsUI
 from weko_theme import WekoTheme
 from weko_admin import WekoAdmin
@@ -217,6 +223,12 @@ def base_app(instance_path, search_class, cache_config):
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
+        CELERY_ALWAYS_EAGER=True,
+        CELERY_TASK_ALWAYS_EAGER=True,
+        CELERY_CACHE_BACKEND='memory',
+        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_TASK_EAGER_PROPAGATES=True,
+        CELERY_RESULT_BACKEND='cache',
         ACCOUNTS_USERINFO_HEADERS=True,
         WEKO_PERMISSION_SUPER_ROLE_USER=['System Administrator',
                                          'Repository Administrator'],
@@ -488,10 +500,17 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_WORKFLOW_GAKUNINRDM_DATA=WEKO_WORKFLOW_GAKUNINRDM_DATA,
         DELETE_ACTIVITY_LOG_ENABLE=True,
         WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS=WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS,
+        JSONSCHEMAS_HOST='inveniosoftware.org',
+        MAIL_SUPPRESS_SEND=True,
+        WEKO_WORKFLOW_ACCESS_ACTIVITY_URL="email_pattern_guest_activity.tpl",
+        WEKO_WORKFLOW_MAIL_TEMPLATE_FOLDER_PATH='/code/modules/weko-workflow/weko_workflow/templates/weko_workflow/email_templates',
+        COMMUNITIES_MAIL_ENABLED = True
     )
     
     app_.testing = True
     Babel(app_)
+    from flask_celeryext import FlaskCeleryExt
+    FlaskCeleryExt(app_)
     InvenioI18N(app_)
     Menu(app_)
     # InvenioTheme(app_)
@@ -503,21 +522,26 @@ def base_app(instance_path, search_class, cache_config):
     InvenioStats(app_)
     InvenioAssets(app_)
     InvenioAdmin(app_)
+    InvenioIndexer(app_)
     InvenioPIDRelations(app_)
     InvenioJSONSchemas(app_)
     InvenioPIDStore(app_)
     InvenioRecords
     search = InvenioSearch(app_, client=MockEs())
     search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
-    # InvenioCommunities(app_)
+    InvenioCommunities(app_)
+    InvenioOAIServer(app_)
+    InvenioOAuth2Server(app_)
+    InvenioMail(app_)
     # WekoAdmin(app_)
-    # WekoTheme(app_)
+    WekoTheme(app_)
     WekoSearchUI(app_)
     WekoWorkflow(app_)
     WekoUserProfiles(app_)
     WekoDeposit(app_)
     WekoItemsUI(app_)
     WekoAdmin(app_)
+    InvenioRecordsREST(app_)
     # WekoRecordsUI(app_)
     # app_.register_blueprint(invenio_theme_blueprint)
     app_.register_blueprint(invenio_communities_blueprint)
@@ -560,6 +584,23 @@ def client(app):
     with app.test_client() as client:
         yield client
 
+@pytest.yield_fixture
+def without_signals(app,mocker):
+    """Temporary disable oaiset signals."""
+    from invenio_oaiserver import current_oaiserver
+    current_oaiserver.unregister_signals_oaiset()
+    
+    mocker.patch("invenio_records.api.before_record_insert.send")
+    mocker.patch("invenio_records.api.after_record_insert.send")
+    mocker.patch("invenio_records.api.before_record_update")
+    mocker.patch("invenio_records.api.after_record_update")
+    yield
+    current_oaiserver.register_signals_oaiset()
+    
+@pytest.yield_fixture()
+def without_session_remove():
+    with patch("weko_workflow.views.db.session.remove"):
+        yield
 @pytest.yield_fixture()
 def guest(client):
     with client.session_transaction() as sess:
@@ -580,7 +621,7 @@ def redis_connect(app):
     return redis_connection
 
 @pytest.fixture()
-def users(app, db):
+def users(app, db,without_signals):
     """Create users."""
     ds = app.extensions['invenio-accounts'].datastore
     user_count = User.query.filter_by(email='user@test.org').count()
@@ -608,6 +649,7 @@ def users(app, db):
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
+        admin_role = ds.create_role(name='Administrator')
         repoadmin_role = ds.create_role(name='Repository Administrator')
         contributor_role = ds.create_role(name='Contributor')
         comadmin_role = ds.create_role(name='Community Administrator')
@@ -624,6 +666,7 @@ def users(app, db):
         studentrole = Role.query.filter_by(name='Student').first()
 
     ds.add_role_to_user(sysadmin, sysadmin_role)
+    ds.add_role_to_user(sysadmin, admin_role)
     ds.add_role_to_user(repoadmin, repoadmin_role)
     ds.add_role_to_user(contributor, contributor_role)
     ds.add_role_to_user(comadmin, comadmin_role)
@@ -1217,7 +1260,7 @@ def location(app, db, instance_path):
     return loc
 
 @pytest.fixture()
-def db_records(db, location):
+def db_records(db, location, without_signals):
     record_data = json_data("data/test_records.json")
     item_data = json_data("data/test_items.json")
     record_num = len(record_data)
@@ -1559,8 +1602,17 @@ def db_guestactivity(db):
         db.session.add(record)
     db.session.commit()
     
-
-
-
-
-
+@pytest.fixture()
+def csrftoken():
+    from itsdangerous import BadData, SignatureExpired, URLSafeTimedSerializer
+    import hashlib
+    import os
+    s = URLSafeTimedSerializer("SECRET_KEY", salt='wtf-csrf-token')
+    session_token = hashlib.sha1(os.urandom(64)).hexdigest()
+    csrf_token = s.dumps(session_token)
+    
+    def set_session(client):
+        with client.session_transaction() as session:
+            session["csrf_token"] = session_token
+    
+    return csrf_token, set_session

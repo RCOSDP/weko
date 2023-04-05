@@ -173,6 +173,7 @@ ftfy==4.4.3
 attrs==17.4.0
 b2handle==1.1.2
 resync==1.0.9
+responses
 email-validator==1.0.5
 iiif-prezi==0.3.0
 netaddr==0.8.0

@@ -100,7 +100,7 @@ def create_record(record_data, item_data):
         if '.' in record_data["recid"]:
             parent = PersistentIdentifier.get("recid",int(float(record_data["recid"])))
             recid_p = PIDRelation.get_child_relations(parent).one_or_none()
-            PIDRelation.create(recid_p.parent, recid,3)
+            PIDRelation.create(recid_p.parent, recid,2)
         else:
             parent = PersistentIdentifier.create('parent', "parent:{}".format(record_data["recid"]),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
             rel = PIDRelation.create(parent, recid,2,0)
