@@ -369,6 +369,7 @@ class QueryItemRegReport(WekoQuery):
     @stats_api_access_required
     def get(self, **kwargs):
         """Get item registration report."""
+        page_index = 0
         try:
             page_index = int(request.args.get('p', 1)) - 1
         except Exception as e:
