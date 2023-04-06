@@ -944,9 +944,9 @@ class FileInstance(db.Model, Timestamp):
                         fp.close()
                         with open(target_uri,"wb") as f:
                             f.write(data)
-                    #convert_to(pdf_dir, self.uri)
+
                     convert_to(pdf_dir, target_uri)
-                    # tmpdirを削除
+
                     if os.path.exists(convert_dir):
                         shutil.rmtree(convert_dir)
 
