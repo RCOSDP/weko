@@ -241,26 +241,18 @@ class ShibUser(object):
             return False, ret
 
         roles = self.shib_attr.get('shib_role_authority_name', '')
-        current_app.logger.debug('roles')
-        current_app.logger.debug(roles)
         # Splitting the value of shib_role_authority_name into multiple roles
         roles = [x.strip() for x in roles.split(';')]
         shib_roles = current_app.config['WEKO_ACCOUNTS_SHIB_ROLE_RELATION']
-        current_app.logger.debug('shib_roles')
-        current_app.logger.debug(shib_roles)
 
         if set(roles).issubset(set(shib_roles.keys())):
             _roles = [shib_roles[role] for role in roles]
 
         groups = self.shib_attr.get('shib_page_name', '')
-        current_app.logger.debug('groups')
-        current_app.logger.debug(groups)
         if groups:
             groups = [x.strip() for x in groups.split(';')]
             _roles.extend(groups)
 
-        current_app.logger.debug('_roles')
-        current_app.logger.debug(_roles)
         if _roles:
             ret = self._set_weko_user_role(_roles)
 
