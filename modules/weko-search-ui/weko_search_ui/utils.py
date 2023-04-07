@@ -3026,7 +3026,7 @@ def handle_fill_system_item(list_record):
                 warnings.append(_('The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'))
             
             if is_change_identifier:
-                if not (current_app.config["WEKO_HANDLE_ALLOW_REGISTER_CRNI"] and item_cnri):
+                if not (current_app.config["WEKO_HANDLE_ALLOW_REGISTER_CNRI"] and item_cnri):
                     if item_doi is "":
                         errors.append(_('Please specify DOI prefix/suffix.'))
                     elif item_doi_suffix is "":
