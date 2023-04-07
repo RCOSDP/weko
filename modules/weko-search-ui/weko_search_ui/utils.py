@@ -2890,6 +2890,7 @@ def handle_fill_system_item(list_record):
         item_doi = item.get("doi","")
         item_doi_prefix = ""
         item_doi_suffix = ""
+        item_cnri = item.get("cnri", "")
         
         if item_doi and "/" in item_doi:
             item_doi_prefix, item_doi_suffix = item_doi.split("/")
@@ -3025,10 +3026,11 @@ def handle_fill_system_item(list_record):
                 warnings.append(_('The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'))
             
             if is_change_identifier:
-                if item_doi is "":
-                    errors.append(_('Please specify DOI prefix/suffix.'))
-                elif item_doi_suffix is "":
-                    errors.append(_('Please specify DOI suffix.'))
+                if not (current_app.config["WEKO_HANDLE_ALLOW_REGISTER_CRNI"] and item_cnri):
+                    if item_doi is "":
+                        errors.append(_('Please specify DOI prefix/suffix.'))
+                    elif item_doi_suffix is "":
+                        errors.append(_('Please specify DOI suffix.'))
             else:
                 if item_doi_suffix and existed_doi is False:
                     errors.append(_('Do not specify DOI suffix.'))
