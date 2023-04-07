@@ -28,6 +28,7 @@ from sqlalchemy_utils.functions import create_database, database_exists
 from datetime import datetime, timedelta
 from tests.helpers import create_record, json_data
 
+from invenio_cache import InvenioCache
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.testutils import create_test_user, login_user_via_session
 from invenio_access.models import ActionUsers
@@ -88,6 +89,9 @@ def base_app(instance_path):
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         TESTING=True,
+        BASE_TEMPLATE = 'weko_gridlayout/base.html',
+        WEKO_GRIDLAYOUT_BASE_TEMPLATE = 'weko_gridlayout/base.html',
+        WEKO_GRIDLAYOUT_ADMIN_WIDGET_DESIGN = 'weko_gridlayout/admin/widget_design.html',
         SERVER_NAME="TEST_SERVER",
         SEARCH_INDEX_PREFIX='test-',
         INDEXER_DEFAULT_DOC_TYPE='testrecord',
@@ -110,7 +114,9 @@ def base_app(instance_path):
     InvenioAccounts(app_)
     InvenioAccess(app_)
     InvenioFilesREST(app_)
-    #WekoAdmin(app_)
+    WekoGridLayout(app_)
+    # InvenioCache(app_)
+    # WekoAdmin(app_)
     app_.register_blueprint(blueprint)
     app_.register_blueprint(blueprint_api)
 
@@ -271,7 +277,7 @@ def widget_items(db):
             "multiLangSetting": {
                 "en": {
                     "label": "for test"
-                }
+                },
             }
         },
         "2": {
