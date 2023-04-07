@@ -1383,7 +1383,6 @@ class Indexes(object):
 
             return result.parent_state
         except Exception as se:
-            print(se)
             current_app.logger.debug(se)
             return False
 

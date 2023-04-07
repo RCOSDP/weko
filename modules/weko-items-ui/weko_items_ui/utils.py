@@ -1673,7 +1673,6 @@ def get_new_items_by_date(start_date: str, end_date: str, ranking=False) -> dict
                                                           indexes,
                                                           query_with_publish_status=False,
                                                           ranking=ranking)
-        print(search_instance.to_dict())
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError as e:

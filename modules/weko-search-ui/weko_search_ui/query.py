@@ -470,7 +470,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
                 if isinstance(v[1], str):
                     qry = Q("range", **{v[1]: qv})
-                    print(qry)
             return qry
 
         def _get_geo_distance_query(k, v):
