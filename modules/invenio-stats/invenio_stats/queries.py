@@ -49,12 +49,12 @@ class ESQuery(object):
                 date = dateutil.parser.parse(date)
             except ValueError:
                 raise ValueError(
-                    'Invalid date format for statistic {}.'
-                ).format(self.query_name)
+                    'Invalid date format for statistic {}.'.format(self.query_name)
+                )
         if not isinstance(date, datetime):
             raise TypeError(
-                'Invalid date type for statistic {}.'
-            ).format(self.query_name)
+                'Invalid date type for statistic {}.'.format(self.query_name)
+            )
         return date
 
     def run(self, *args, **kwargs):
@@ -102,8 +102,8 @@ class ESDateHistogramQuery(ESQuery):
         """Validate query arguments."""
         if interval not in self.allowed_intervals:
             raise InvalidRequestInputError(
-                'Invalid aggregation time interval for statistic {}.'
-            ).format(self.query_name)
+                'Invalid aggregation time interval for statistic {}.'.format(self.query_name)
+            )
         if set(kwargs) < set(self.required_filters):
             raise InvalidRequestInputError(
                 'Missing one of the required parameters {0} in '
