@@ -1409,5 +1409,45 @@ xsd = {
                 "maxOccurs": 1
             }
         }
-    }
+    },
+    "jpcoar:publisher_jpcoar": {
+        "type": {
+            "maxOccurs": "unbounded",
+            "minOccurs": 0,
+        },
+        "jpcoar:publisherName": {
+            "type": {
+                "maxOccurs": "unbounded",
+                "minOccurs": 0,
+                "attributes": [{
+                    "use": "optional",
+                    "name": "xml:lang",
+                    "ref": "xml:lang"
+                }]
+            }
+        },
+        "jpcoar:publisherDescription": {
+            "type": {
+                "maxOccurs": "unbounded",
+                "minOccurs": 0,
+                "attributes": [{
+                    "use": "optional",
+                    "name": "xml:lang",
+                    "ref": "xml:lang"
+                }]
+            }
+        },
+        "dcndl:location": {
+            "type": {
+                "maxOccurs": "unbounded",
+                "minOccurs": 0,
+            }
+        },
+        "dcndl:publicationPlace": {
+            "type": {
+                "maxOccurs": "unbounded",
+                "minOccurs": 0,
+            }
+        },
+    },
 }

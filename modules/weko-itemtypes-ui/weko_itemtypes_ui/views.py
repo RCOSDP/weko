@@ -100,6 +100,12 @@ def replace_mapping_version(jp_key):
         return "version(oaire)"
     elif jp_key == "version":
         return "version(datacite)"
+    
+    if jp_key == "publisher_jpcoar":
+        return "publisher(jpcoar)"
+    elif jp_key == "publisher":
+        return "publisher(dc)"
+
     return jp_key
 
 @blueprint.teardown_request

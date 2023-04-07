@@ -122,6 +122,12 @@ WEKO_SCHEMA_VERSION_TYPE = {
 }
 """Modified and original for versiontype key"""
 
+WEKO_SCHEMA_PUBLISHER_TYPE = {
+    "modified": "jpcoar:publisher_jpcoar",
+    "original": "jpcoar:publisher"
+}
+"""Modified and original for publisher key"""
+
 WEKO_SCHEMA_RELATION_TYPE = [
     'isVersionOf', 'hasVersion', 'isPartOf', 'hasPart', 'isReferencedBy',
     'references', 'isFormatOf', 'hasFormat', 'isReplacedBy', 'replaces',
