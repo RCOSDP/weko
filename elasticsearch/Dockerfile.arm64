@@ -1,0 +1,64 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+
+FROM arm64v8/openjdk:8-jdk-buster
+
+ARG ELASTICSEARCH_S3_ACCESS_KEY
+ARG ELASTICSEARCH_S3_SECRET_KEY
+ARG ELASTICSEARCH_S3_ENDPOINT
+ARG ELASTICSEARCH_S3_BUCKET
+ENV ELASTICSEARCH_S3_ACCESS_KEY=${ELASTICSEARCH_S3_ACCESS_KEY}
+ENV ELASTICSEARCH_S3_SECRET_KEY=${ELASTICSEARCH_S3_SECRET_KEY}
+ENV ELASTICSEARCH_S3_ENDPOINT=${ELASTICSEARCH_S3_ENDPOINT}
+ENV ELASTICSEARCH_S3_BUCKET=${ELASTICSEARCH_S3_BUCKET}
+
+WORKDIR /usr/share
+RUN groupadd -g 1000 elasticsearch && \
+    useradd -u 1000 -g elasticsearch elasticsearch && \
+    apt update && \
+    apt install -y curl nano && \
+    curl -L -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.8.23.tar.gz && \
+    tar -xvf elasticsearch-6.8.23.tar.gz && \
+    mv elasticsearch-6.8.23 elasticsearch && \
+    echo 'xpack.security.enabled: false' >> elasticsearch/config/elasticsearch.yml && \
+    echo 'xpack.ml.enabled: false' >> elasticsearch/config/elasticsearch.yml && \
+    echo 'http.host: 0.0.0.0' >> elasticsearch/config/elasticsearch.yml && \
+    echo 'transport.host: 0.0.0.0' >> elasticsearch/config/elasticsearch.yml && \    
+    echo 'path.repo: "/usr/share/elasticsearch/backups"' >> elasticsearch/config/elasticsearch.yml && \
+    chown -R elasticsearch:elasticsearch elasticsearch
+
+COPY elasticsearch/dic/character/kui.txt /usr/share/elasticsearch/config
+
+RUN chown -R elasticsearch:elasticsearch elasticsearch && \
+    mkdir -p elasticsearch/backups && \
+    chown -R elasticsearch:elasticsearch elasticsearch/backups && \
+    mkdir -p elasticsearch/data && \
+    chown -R elasticsearch:elasticsearch elasticsearch/data && \
+    /usr/share/elasticsearch/bin/elasticsearch-plugin install --batch ingest-attachment && \
+    /usr/share/elasticsearch/bin/elasticsearch-plugin install --batch analysis-kuromoji && \
+    /usr/share/elasticsearch/bin/elasticsearch-plugin install --batch repository-s3
+    
+USER elasticsearch
+ENV JAVA_HOME=/usr/local/openjdk-18/bin/java
+ENV discovery.type=single-node
+ENV xpack.security.enabled: false
+ENV xpack.ml.enabled: false
+
+CMD cd /usr/share/elasticsearch && ./bin/elasticsearch
