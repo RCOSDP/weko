@@ -473,6 +473,22 @@ def add_contributor_jpcoar(schema, mapping, res, metadata):
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
+def add_publisher_jpcoar(schema, mapping, res, metadata):
+    """Add publisher."""
+    patterns = [
+        ('publisher.@value', TEXT),
+        ('publisher.@attributes.xml:lang', LANG),
+        # ('publisher.publisherName.@value', 'jpcoar:publisherName.#text'),
+        # ('publisher.publisherName.@attributes.xml.lang', LANG),
+        # ('publisher.publisherDescription.@value', 'jpcoar:publisherDescription.#text'),
+        # ('publisher.publisherDescription.@attributes.xml.lang', LANG),
+        # ('publisher.location.@value', 'dcndl:location.#text'),
+        # ('publisher.publicationPlace.@value', 'dcndl:publicationPlace.#text'),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
+
+
 def add_access_right(schema, mapping, res, metadata):
     """Add the access status of the resource.
 
@@ -1427,6 +1443,8 @@ class JPCOARMapper(BaseMapper):
                 partial(add_file, *args),
             'jpcoar:identifier':
                 partial(add_identifier, *args),
+            'jpcoar:publisher':
+                partial(add_publisher_jpcoar, *args),
         }
 
         tags = self.json['record']['metadata']['jpcoar:jpcoar']

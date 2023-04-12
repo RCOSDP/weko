@@ -1810,10 +1810,13 @@ class SchemaTree:
                             pass
                 version_type = current_app.config['WEKO_SCHEMA_VERSION_TYPE']
                 publisher_type = current_app.config['WEKO_SCHEMA_PUBLISHER_TYPE']
+                date_type = current_app.config['WEKO_SCHEMA_DATE_TYPE']
                 if k == version_type['modified']:
                     nlst.append({version_type['original']: nv})
                 elif k == publisher_type['modified']:
                     nlst.append({publisher_type['original']: nv})
+                elif k == date_type['modified']:
+                    nlst.append({date_type['original']: nv})
                 else:
                     nlst.append({k: nv})
         return nlst

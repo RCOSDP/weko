@@ -128,6 +128,12 @@ WEKO_SCHEMA_PUBLISHER_TYPE = {
 }
 """Modified and original for publisher key"""
 
+WEKO_SCHEMA_DATE_TYPE = {
+    "modified": "dcterms:date_dcterms",
+    "original": "dcterms:date"
+}
+"""Modified and original for publisher key"""
+
 WEKO_SCHEMA_RELATION_TYPE = [
     'isVersionOf', 'hasVersion', 'isPartOf', 'hasPart', 'isReferencedBy',
     'references', 'isFormatOf', 'hasFormat', 'isReplacedBy', 'replaces',

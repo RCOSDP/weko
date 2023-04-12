@@ -382,7 +382,8 @@ RECORDS_REST_DEFAULT_MAPPING_KEY = {
     'jpcoar:pageStart': None,
     'jpcoar:pageEnd': None,
     'datacite:date': None,
-    'dc:publisher': None
+    'dc:publisher': None,
+    'jpcoar:publisher': None,
 }
 """Dictionary mapping key default."""
 
@@ -399,7 +400,8 @@ RECORDS_REST_DEFAULT_MAPPING_LANG = {
     'jpcoar:pageStart__lang': None,
     'jpcoar:pageEnd__lang': None,
     'datacite:date__lang': None,
-    'dc:publisher__lang': None
+    'dc:publisher__lang': None,
+    'jpcoar:publisher__lang': None,
 }
 """Dictionary mapping language default."""
 

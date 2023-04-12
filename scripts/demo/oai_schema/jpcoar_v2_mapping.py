@@ -965,7 +965,26 @@ xsd = {
                     }
                 ]
             }
-        }
+        },
+        "jpcoar:fundingStreamIdentifier": {
+            "type": {
+                "maxOccurs": "1",
+                "minOccurs": 0,
+            }
+        },
+        "jpcoar:fundingStream": {
+            "type": {
+                "maxOccurs": "unbounded",
+                "minOccurs": 0,
+            },
+            # "attributes": [
+            #     {
+            #         "use": "optional",
+            #         "name": "xml:lang",
+            #         "ref": "xml:lang"
+            #     }
+            # ]
+        },
     },
     "jpcoar:sourceIdentifier": {
         "type": {
@@ -1414,6 +1433,13 @@ xsd = {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
+            "attributes": [
+                {
+                    "use": "optional",
+                    "name": "xml:lang",
+                    "ref": "xml:lang"
+                }
+            ]
         },
         "jpcoar:publisherName": {
             "type": {
@@ -1441,6 +1467,11 @@ xsd = {
             "type": {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
+                "attributes": [{
+                    "use": "optional",
+                    "name": "xml:lang",
+                    "ref": "xml:lang"
+                }]
             }
         },
         "dcndl:publicationPlace": {
@@ -1450,4 +1481,16 @@ xsd = {
             }
         },
     },
+    "dcterms:date_dcterms": {
+        "type": {
+            "maxOccurs": "unbounded",
+            "minOccurs": 0,
+            "attributes": [{
+                "use": "optional",
+                "name": "xml:lang",
+                "ref": "xml:lang"
+            }]
+        },
+    },
 }
+    

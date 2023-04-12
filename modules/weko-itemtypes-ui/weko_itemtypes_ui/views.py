@@ -106,6 +106,11 @@ def replace_mapping_version(jp_key):
     elif jp_key == "publisher":
         return "publisher(dc)"
 
+    if jp_key == "date_dcterms":
+        return "date(dcterms)"
+    elif jp_key == "date":
+        return "date(datacite)"
+
     return jp_key
 
 @blueprint.teardown_request
