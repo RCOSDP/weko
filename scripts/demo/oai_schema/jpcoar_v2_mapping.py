@@ -970,20 +970,31 @@ xsd = {
             "type": {
                 "maxOccurs": "1",
                 "minOccurs": 0,
+                "attributes": [
+                    {
+                        "use": "optional",
+                        "name": "fundingStreamIdentifierType",
+                        "ref": None,
+                        "restriction": {
+                            "enumeration": [
+                                "Crossref Funder",
+                                "JGN_fundingStream",
+                            ]
+                        }
+                    }
+                ]
             }
         },
         "jpcoar:fundingStream": {
             "type": {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
+                "attributes": [{
+                    "use": "optional",
+                    "name": "xml:lang",
+                    "ref": "xml:lang",
+                }]
             },
-            # "attributes": [
-            #     {
-            #         "use": "optional",
-            #         "name": "xml:lang",
-            #         "ref": "xml:lang"
-            #     }
-            # ]
         },
     },
     "jpcoar:sourceIdentifier": {
@@ -1489,6 +1500,37 @@ xsd = {
                 "use": "optional",
                 "name": "xml:lang",
                 "ref": "xml:lang"
+            }]
+        },
+    },
+    "dcndl:edition": {
+        "type": {
+            "maxOccurs": "unbounded",
+            "minOccurs": 0,
+            "attributes": [{
+                "use": "optional",
+                "name": "xml:lang",
+                "ref": "xml:lang"
+            }]
+        },
+    },
+    "dcndl:volumeTitle": {
+        "type": {
+            "maxOccurs": "unbounded",
+            "minOccurs": 0,
+            "attributes": [{
+                "use": "optional",
+                "name": "xml:lang",
+                "ref": "xml:lang"
+            }]
+        },
+    },
+    "dcndl:originalLanguage": {
+        "type": {
+            "maxOccurs": "unbounded",
+            "minOccurs": 0,
+            "attributes": [{
+                "use": "optional",
             }]
         },
     },
