@@ -2063,12 +2063,11 @@ def cancel_action(activity_id='0', action_id=0):
                         cancel_pv.parent.object_uuid = \
                             parent_pid.object_uuid
 
-                    if '.' not in cancel_pid.pid_value:
-                        pids = PersistentIdentifier.query.filter_by(
-                            object_uuid=cancel_item_id)
-                        for p in pids:
-                            if not p.pid_value.endswith('.0'):
-                                p.status = PIDStatus.DELETED
+                pids = PersistentIdentifier.query.filter_by(
+                    object_uuid=cancel_item_id)
+                for p in pids:
+                    if not p.pid_value.endswith('.0'):
+                        p.status = PIDStatus.DELETED
             db.session.commit()
         except Exception:
             db.session.rollback()
