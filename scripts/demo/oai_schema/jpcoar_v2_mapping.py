@@ -1534,5 +1534,346 @@ xsd = {
             }]
         },
     },
+    "dcterms:extent": {
+        "type": {
+            "maxOccurs": "unbounded",
+            "minOccurs": 0,
+            "attributes": [{
+                "use": "optional",
+                "name": "xml:lang",
+                "ref": "xml:lang"
+            }]
+        },
+    },
+    "jpcoar:format": {
+        "type": {
+            "maxOccurs": "unbounded",
+            "minOccurs": 0,
+            "attributes": [{
+                "use": "optional",
+                "name": "xml:lang",
+                "ref": "xml:lang"
+            }]
+        },
+    },
+    "jpcoar:holdingAgent": {
+        "type": {
+            "maxOccurs": 1,
+            "minOccurs": 0,
+        },
+        "jpcoar:holdingAgentNameIdentifier": {
+            "type": {
+                "maxOccurs": 1,
+                "minOccurs": 1,
+                "attributes": [
+                    {
+                        "use": "required",
+                        "name": "nameIdentifierScheme",
+                        "ref": None,
+                        "restriction": {
+                            "enumeration": [
+                                "kakenhi",
+                                "ISNI",
+                                "Ringgold",
+                                "GRID",
+                                "ROR",
+                                "FANO",
+                                "ISIL",
+                                "MARC",
+                                "OCLC",
+                            ]
+                        }
+                    },
+                    {
+                        "use": "optional",
+                        "name": "nameIdentifierURI",
+                        "ref": None
+                    }
+                ]
+            }
+        },
+        "jpcoar:holdingAgentName": {
+            "type": {
+                "maxOccurs": "unbounded",
+                "minOccurs": 0,
+                "attributes": [{
+                    "use": "optional",
+                    "name": "xml:lang",
+                    "ref": "xml:lang"
+                }]
+            }
+        },
+    },
+    "jpcoar:datasetSeries": {
+        "type": {
+            "maxOccurs": 1,
+            "minOccurs": 0,
+            "attributes": [
+                {
+                    "use": "optional",
+                    "ref": None,
+                    "restriction": {
+                        "enumeration": [
+                            "True",
+                            "False",
+                        ]
+                    }
+                },
+            ]
+        },
+    },
+    "jpcoar:catalog": {
+        "type": {
+            "maxOccurs": "unbounded",
+            "minOccurs": 0,
+        },
+        "jpcoar:contributor": {
+            "type": {
+                "maxOccurs": "unbounded",
+                "minOccurs": 0,
+                "attributes": [
+                    {
+                        "use": "optional",
+                        "name": "contributorType",
+                        "ref": None,
+                        "restriction": {
+                            "enumeration": [
+                                "ContactPerson",
+                                "DataCollector",
+                                "DataCurator",
+                                "DataManager",
+                                "Distributor",
+                                "Editor",
+                                "HostingInstitution",
+                                "Producer",
+                                "ProjectLeader",
+                                "ProjectManager",
+                                "ProjectMember",
+                                "RegistrationAgency",
+                                "RegistrationAuthority",
+                                "RelatedPerson",
+                                "Researcher",
+                                "ResearchGroup",
+                                "Sponsor",
+                                "Supervisor",
+                                "WorkPackageLeader",
+                                "Other"
+                            ]
+                        }
+                    }
+                ]
+            },
+            "jpcoar:contributorName": {
+                "type": {
+                    "maxOccurs": "unbounded",
+                    "minOccurs": 1,
+                    "attributes": [{
+                        "use": "required",
+                        "name": "xml:lang",
+                        "ref": "xml:lang"
+                    }]
+                },
+            },
+        },
+        "jpcoar:identifier": {
+            "type": {
+                "maxOccurs": "unbounded",
+                "minOccurs": 0,
+                "attributes": [
+                    {
+                        "use": "required",
+                        "name": "identifierType",
+                        "ref": None,
+                        "restriction": {
+                            "enumeration": [
+                                "DOI",
+                                "HDL",
+                                "URI"
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "dc:title": {
+            "type": {
+                "maxOccurs": "unbounded",
+                "minOccurs": 0,
+                "attributes": [{
+                    "use": "required",
+                    "name": "xml:lang",
+                    "ref": "xml:lang"
+                }]
+            },
+        },
+        "datacite:description": {
+            "type": {
+                "maxOccurs": "unbounded",
+                "minOccurs": 0,
+                "attributes": [
+                    {
+                        "use": "optional",
+                        "name": "xml:lang",
+                        "ref": "xml:lang"
+                    },
+                    {
+                        "use": "required",
+                        "name": "descriptionType",
+                        "ref": None,
+                        "restriction": {
+                            "enumeration": [
+                                "Abstract",
+                                "Methods",
+                                "TableOfContents",
+                                "TechnicalInfo",
+                                "Other"
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "jpcoar:subject": {
+            "type": {
+                "maxOccurs": "unbounded",
+                "minOccurs": 0,
+                "attributes": [
+                    {
+                        "use": "optional",
+                        "name": "xml:lang",
+                        "ref": "xml:lang"
+                    },
+                    {
+                        "use": "optional",
+                        "name": "subjectURI",
+                        "ref": None
+                    },
+                    {
+                        "use": "required",
+                        "name": "subjectScheme",
+                        "ref": None,
+                        "restriction": {
+                            "enumeration": [
+                                "BSH",
+                                "DDC",
+                                "e-Rad",
+                                "LCC",
+                                "LCSH",
+                                "MeSH",
+                                "NDC",
+                                "NDLC",
+                                "NDLSH",
+                                "SciVal",
+                                "UDC",
+                                "Other",
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "jpcoar:license": {
+            "type": {
+                "maxOccurs": "unbounded",
+                "minOccurs": 0,
+                "attributes": [
+                    {
+                        "use": "optional",
+                        "name": "xml:lang",
+                        "ref": "xml:lang"
+                    },
+                    {
+                        "use": "required",
+                        "name": "licenseType",
+                        "ref": None,
+                        "restriction": {
+                            "enumeration": [
+                                "file",
+                                "metadata",
+                                "thumbnail",
+                            ]
+                        }
+                    },
+                    {
+                        "use": "required",
+                        "name": "rdf:resource",
+                        "ref": None
+                    },
+                ]
+            }
+        },
+        "dc:rights": {
+            "type": {
+                "maxOccurs": "unbounded",
+                "minOccurs": 0,
+                "attributes": [
+                    {
+                        "use": "required",
+                        "name": "xml:lang",
+                        "ref": "xml:lang"
+                    },
+                    {
+                        "use": "required",
+                        "name": "rdf:resource",
+                        "ref": None
+                    },
+                ]
+            }
+        },
+        "dcterms:accessRights": {
+            "type": {
+                "maxOccurs": 1,
+                "minOccurs": 0,
+                "attributes": [
+                    {
+                        "use": "required",
+                        "ref": None,
+                        "restriction": {
+                            "enumeration": [
+                                "e-Rad",
+                                "NRID",
+                                "ORCID",
+                                "ISNI",
+                                "VIAF",
+                                "AID",
+                                "kakenhi",
+                                "Ringgold",
+                                "GRID"
+                            ]
+                        }
+                    },
+                    {
+                        "use": "required",
+                        "name": "rdf:resource",
+                        "ref": None
+                    },
+                ]
+            }
+        },
+        "jpcoar:file": {
+            "type": {
+                "maxOccurs": "unbounded",
+                "minOccurs": 0
+            },
+            "jpcoar:URI": {
+                "type": {
+                    "maxOccurs": 1,
+                    "minOccurs": 0,
+                    "attributes": [
+                        {
+                            "use": "required",
+                            "name": "objectType",
+                            "ref": None,
+                            "restriction": {
+                                "enumeration": [
+                                    "thumbnail",
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+        },
+    },
 }
     
