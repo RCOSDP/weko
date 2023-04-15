@@ -1253,6 +1253,7 @@ class QueryRankingHelper(object):
             all_query = all_query_cfg.query_class(**all_query_cfg.query_config)
 
             all_res = all_query.run(**params)
+
             cls.Calculation(all_res, result)
 
         except es_exceptions.NotFoundError as e:

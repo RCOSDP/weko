@@ -596,4 +596,5 @@ class ESWekoRankingQuery(ESTermsQuery):
         agg_query = self.build_query(**kwargs)
 
         query_result = agg_query.execute().to_dict()
+        
         return query_result
