@@ -506,18 +506,18 @@ def add_access_right(schema, mapping, res, metadata):
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_apc(schema, mapping, res, metadata):
-    """Add apc.
+# def add_apc(schema, mapping, res, metadata):
+#     """Add apc.
 
-    Args:
-        schema ([type]): [description]
-        mapping ([type]): [description]
-        res ([type]): [description]
-        metadata ([type]): [description]
-    """
-    patterns = [
-        ('apc.@value', TEXT),
-    ]
+#     Args:
+#         schema ([type]): [description]
+#         mapping ([type]): [description]
+#         res ([type]): [description]
+#         metadata ([type]): [description]
+#     """
+#     patterns = [
+#         ('apc.@value', TEXT),
+#     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
@@ -809,17 +809,17 @@ def add_funding_reference(schema, mapping, res, metadata):
         ('fundingReference.funderName.@attributes.xml:lang',
             'jpcoar:funderName.@xml:lang'),
         ('fundingReference.funderIdentifier.@value',
-            'datacite:funderIdentifier.#text'),
+            'jpcoar:funderIdentifier.#text'),
         ('fundingReference.funderIdentifier.@attributes.funderIdentifierType',
-            'datacite:funderIdentifier.@funderIdentifierType'),
+            'jpcoar:funderIdentifier.@funderIdentifierType'),
         ('fundingReference.awardTitle.@value',
             'jpcoar:awardTitle.#text'),
         ('fundingReference.awardTitle.@attributes.xml:lang',
             'jpcoar:awardTitle.@xml:lang'),
         ('fundingReference.awardNumber.@value',
-            'datacite:awardNumber.#text'),
+            'jpcoar:awardNumber.#text'),
         ('fundingReference.awardNumber.@attributes.awardURI',
-            'datacite:awardNumber.@awardURI'),
+            'jpcoar:awardNumber.@awardURI'),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -1385,8 +1385,8 @@ class JPCOARMapper(BaseMapper):
                 partial(add_contributor_jpcoar, *args),
             'dcterms:accessRights':
                 partial(add_access_right, *args),
-            'rioxxterms:apc':
-                partial(add_apc, *args),
+            # 'rioxxterms:apc':
+            #     partial(add_apc, *args),
             'dc:rights':
                 partial(add_right, *args),
             'jpcoar:subject':

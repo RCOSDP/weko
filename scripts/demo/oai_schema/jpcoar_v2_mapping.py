@@ -49,7 +49,14 @@ xsd = {
     "jpcoar:creator": {
         "type": {
             "maxOccurs": "unbounded",
-            "minOccurs": 0
+            "minOccurs": 0,
+            "attributes": [
+                {
+                    "use": "optional",
+                    "name": "creatorType",
+                    "ref": None
+                }
+            ]
         },
         "jpcoar:nameIdentifier": {
             "type": {
@@ -91,6 +98,17 @@ xsd = {
                         "use": "optional",
                         "name": "xml:lang",
                         "ref": "xml:lang"
+                    },
+                    {
+                        "use": "required",
+                        "name": "nameType",
+                        "ref": None,
+                        "restriction": {
+                            "enumeration": [
+                                "Organizational",
+                                "Personal",
+                            ]
+                        }
                     }
                 ]
             }
@@ -261,6 +279,17 @@ xsd = {
                         "use": "optional",
                         "name": "xml:lang",
                         "ref": "xml:lang"
+                    },
+                    {
+                        "use": "required",
+                        "name": "nameType",
+                        "ref": None,
+                        "restriction": {
+                            "enumeration": [
+                                "Organizational",
+                                "Personal",
+                            ]
+                        }
                     }
                 ]
             }
@@ -376,22 +405,6 @@ xsd = {
             }
         }
     },
-    "rioxxterms:apc": {
-        "type": {
-            "maxOccurs": 1,
-            "minOccurs": 0,
-            "restriction": {
-                "enumeration": [
-                    "Paid",
-                    "Partially waived",
-                    "Fully waived",
-                    "Not charged",
-                    "Not required",
-                    "Unknown"
-                ]
-            }
-        }
-    },
     "dc:rights": {
         "type": {
             "maxOccurs": "unbounded",
@@ -483,15 +496,17 @@ xsd = {
                         "enumeration": [
                             "BSH",
                             "DDC",
+                            "e-Rad_field",
+                            "JEL",
                             "LCC",
                             "LCSH",
                             "MeSH",
                             "NDC",
                             "NDLC",
                             "NDLSH",
-                            "Sci-Val",
+                            "SciVal",
                             "UDC",
-                            "Other"
+                            "Other",
                         ]
                     }
                 }
@@ -906,7 +921,7 @@ xsd = {
             "maxOccurs": "unbounded",
             "minOccurs": 0
         },
-        "datacite:funderIdentifier": {
+        "jpcoar:funderIdentifier": {
             "type": {
                 "maxOccurs": 1,
                 "minOccurs": 0,
@@ -918,11 +933,18 @@ xsd = {
                         "restriction": {
                             "enumeration": [
                                 "Crossref Funder",
+                                "e-Rad_funder",
                                 "GRID",
                                 "ISNI",
-                                "Other"
+                                "ROR",
+                                "Other",
                             ]
-                        }
+                        },
+                    },
+                    {
+                        "use": "optional",
+                        "name": "funderIdentifierTypeURI",
+                        "ref": None
                     }
                 ]
             }
@@ -940,7 +962,7 @@ xsd = {
                 ]
             }
         },
-        "datacite:awardNumber": {
+        "jpcoar:awardNumber": {
             "type": {
                 "maxOccurs": 1,
                 "minOccurs": 0,
@@ -949,6 +971,16 @@ xsd = {
                         "use": "optional",
                         "name": "awardURI",
                         "ref": None
+                    },
+                    {
+                        "use": "optional",
+                        "name": "awardNumberType",
+                        "ref": None,
+                        "restriction": {
+                            "enumeration": [
+                                "JGN"
+                            ]
+                        },
                     }
                 ]
             }
