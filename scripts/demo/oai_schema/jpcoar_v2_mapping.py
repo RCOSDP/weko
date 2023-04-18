@@ -26,9 +26,9 @@ xsd = {
             "minOccurs": 1,
             "attributes": [
                 {
-                    "use": "optional",
+                    "use": "required",
                     "name": "xml:lang",
-                    "ref": "xml:lang"
+                    "ref": "xml:lang",
                 }
             ]
         }
@@ -168,15 +168,11 @@ xsd = {
                             "ref": None,
                             "restriction": {
                                 "enumeration": [
-                                    "e-Rad",
-                                    "NRID",
-                                    "ORCID",
-                                    "ISNI",
-                                    "VIAF",
-                                    "AID",
-                                    "kakenhi",
-                                    "Ringgold",
+                                    "kakenhi"
+                                    "ISNI"
+                                    "Ringgold"
                                     "GRID"
+                                    "ROR"
                                 ]
                             }
                         },
@@ -250,15 +246,11 @@ xsd = {
                         "ref": None,
                         "restriction": {
                             "enumeration": [
-                                "e-Rad",
-                                "NRID",
-                                "ORCID",
-                                "ISNI",
-                                "VIAF",
-                                "AID",
                                 "kakenhi",
+                                "ISNI",
                                 "Ringgold",
-                                "GRID"
+                                "GRID",
+                                "ROR",
                             ]
                         }
                     },
@@ -750,6 +742,9 @@ xsd = {
                     "ref": None,
                     "restriction": {
                         "enumeration": [
+                            "inSeries",
+                            "isCitedBy",
+                            "Cites",
                             "isVersionOf",
                             "hasVersion",
                             "isPartOf",
@@ -785,6 +780,7 @@ xsd = {
                             "enumeration": [
                                 "ARK",
                                 "arXiv",
+                                "CRID",
                                 "DOI",
                                 "HDL",
                                 "ICHUSHI",
