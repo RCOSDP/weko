@@ -853,10 +853,14 @@ class WorkActivity(object):
         try:
             with db.session.begin_nested():
                 activity = self.get_activity_by_id(activity_id)
-                activity.action_id = action_id
-                activity.action_status = action_status
-                if action_order:
-                    activity.action_order = action_order
+                if activity.activity_status not in [
+                    ActivityStatusPolicy.ACTIVITY_CANCEL
+                ]:
+                    current_app.logger.debug("change action_status")
+                    activity.action_id = action_id
+                    activity.action_status = action_status
+                    if action_order:
+                        activity.action_order = action_order
                 db.session.merge(activity)
             db.session.commit()
             return True

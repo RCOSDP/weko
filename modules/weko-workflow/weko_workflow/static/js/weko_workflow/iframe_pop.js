@@ -2,7 +2,14 @@ require([
   "jquery",
   "bootstrap"
 ], function() {
-
+  $(function(){
+    history.pushState(null,null,null)
+    window.addEventListener('popstate', function(e) {
+      $('a.back-button')[0].click()
+    });
+  })
+  
+  
   /**
    * Start Loading
    * @param actionButton
@@ -23,6 +30,8 @@ require([
 
   $("#step_item_login", parent.document).attr('height', '240px');
   $('#btn-finish').on('click', function(){
+    console.log("called push btn-finish1")
+    alert("called push btn-finish1")
     let _this = $(this);
     startLoading(_this);
     let post_uri = $(".cur_step", parent.document).data('next-uri');

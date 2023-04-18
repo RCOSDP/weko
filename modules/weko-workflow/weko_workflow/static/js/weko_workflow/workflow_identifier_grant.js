@@ -2,6 +2,12 @@ require([
   "jquery",
   "bootstrap"
 ], function () {
+  $(function(){
+    history.pushState(null,null,null)
+    window.addEventListener('popstate', function(e) {
+      $('a.back-button')[0].click()
+    });
+  })
   data_global = {
     post_uri: '',
     post_data: {}

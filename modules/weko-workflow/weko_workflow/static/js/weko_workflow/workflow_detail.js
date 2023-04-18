@@ -2,6 +2,12 @@ require([
   "jquery",
   "bootstrap"
 ], function () {
+  $(function(){
+    history.pushState(null,null,null)
+    window.addEventListener('popstate', function(e) {
+      $('a.back-button')[0].click()
+    });
+  })
   $('#btnContinue').on('click', function () {
     let activity_id = $("#activity_id").text().trim();
     let action_id = $("#hide-actionId").text().trim();
@@ -88,6 +94,7 @@ require([
   });
 
   $('#btn-finish').on('click', function () {
+    alert("called push btn-finish")
     let _this = $(this);
     startLoading(_this);
     let comment = '';
@@ -127,9 +134,12 @@ require([
       data: JSON.stringify(post_data),
       success: function (data, status) {
         if (0 == data.code) {
+          console.log("1data.code=0")
           if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
+            console.log("1exist redirect")
             document.location.href = data.data.redirect;
           } else {
+            console.log("1reload")
             document.location.reload(true);
           }
         } else {
