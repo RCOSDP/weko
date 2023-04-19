@@ -2058,9 +2058,13 @@ def cancel_action(activity_id='0', action_id=0):
                         cancel_pv.parent.object_uuid = \
                             parent_pid.object_uuid
             db.session.commit()
-            # delete item link info
+            # update item link info
             if cancel_record:
-                if not cancel_record.pid.pid_value.endswith('.0'):
+                if cancel_record.pid.pid_value.endswith('.0'):
+                    weko_record = WekoRecord.get_record_by_pid(cancel_record.pid.pid_value)
+                    if weko_record:
+                        weko_record.update_item_link(cancel_record.pid.pid_value.split('.')[0])
+                else:
                     item_link = ItemLink(cancel_record.pid.pid_value)
                     item_link.update([])
         except Exception:
