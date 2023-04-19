@@ -2060,8 +2060,9 @@ def cancel_action(activity_id='0', action_id=0):
             db.session.commit()
             # delete item link info
             if cancel_record:
-                item_link = ItemLink(cancel_record.pid.pid_value)
-                item_link.update([])
+                if not cancel_record.pid.pid_value.endswith('.0'):
+                    item_link = ItemLink(cancel_record.pid.pid_value)
+                    item_link.update([])
         except Exception:
             db.session.rollback()
             current_app.logger.error(
