@@ -4320,6 +4320,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       };
 
       $scope.saveDataJsonCallback = function (item_save_uri, startLoading) {
+        const activityID = $("#activity_id").text();
         $scope.unattachedSystemProperties();
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
         if (!angular.isUndefined($rootScope.filesVM)) {
@@ -4329,6 +4330,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             {},
             metainfo,
             {
+              'activity_id': activityID,
               'files': $rootScope.filesVM.files,
               'endpoints': $rootScope.filesVM.invenioFilesEndpoints
             }
