@@ -3489,6 +3489,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         if (!this.validateRequiredItem()) {
           // Check required item
           return false;
+        } else if(!this.validateDuplicateItems()) {
+          return false;
         }else if(!this.validatePosition()) {
           return false;
         } else if (!this.validateFieldMaxItems()) {
@@ -3503,6 +3505,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           }
           //Get error from schemaForm
           let listItemErrors = [];
+          
           if(schemaForm){
             for (let i = 0; i < schemaForm.length; i++) {
               let name_list = schemaForm[i].$name.split('.');
@@ -4017,6 +4020,119 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
         return true;
       }
+      
+      $scope.validateDuplicateItems = function () {
+        let listItemErrors = [];
+        let iRecordsForm = $rootScope.recordsVM.invenioRecordsForm
+        let iRecordsModel = $rootScope.recordsVM.invenioRecordsModel
+        let iRecordsModelKeys = Object.keys(iRecordsModel)
+        var itemsToBeCheckedForDuplication = []
+
+        console.log(iRecordsForm)
+        console.log(iRecordsModel)
+
+        iRecordsForm.forEach(item => {
+          let itemTitle = item.title.toLowerCase()
+          let key = item.key[0]
+          let itemSubItems = item.items
+          
+          // if (itemSubItems) {
+          //   console.log(`${itemTitle} - ${true}`)
+          // } else {
+          //   console.log(`${itemTitle} - ${false}`)
+          // }
+          // if (itemSubItems) {
+          //   var subItemKeyList = []
+
+          //   for (let index=0; index < itemSubItems.length; index++) {
+          //     subItemKey = itemSubItems[index][itemSubItems.length-1]
+          //     subItemKeyList.push(subItemKey)
+          //   }
+
+          //   if(subItemKeyList) {
+          //     for (let idx2=0; idx2 < subItemKeyList.length; idx2++) {
+          //       if (itemTitle == "title") {
+          //         modelObject = eval(`iRecordsModel.${subItemKeyList[idx2]}`)
+
+          //         console.log(modelObject)
+
+          //         for (let idx=0; idx < modelObject.length; idx++) {
+          //           if (!itemsToBeCheckedForDuplication.includes(modelObject[idx].subItemKey)) {
+          //             itemsToBeCheckedForDuplication.push(modelObject[idx].subItemKey)
+          //           } else {
+          //             listItemErrors.push(modelObject[idx].subItemKey)
+          //           }
+          //         }
+          //         itemsToBeCheckedForDuplication = []
+          //       }
+          //     }
+          //   }
+          
+          if (itemTitle == "title") {
+            // Language: subitem_1551255648112
+            modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].subitem_1551255648112)) {
+                itemsToBeCheckedForDuplication.push(modelObject[idxModelObject].subitem_1551255648112)
+              } else {
+                listItemErrors.push(modelObject[idxModelObject].subitem_1551255648112)
+              }
+            }
+            itemsToBeCheckedForDuplication = []
+          } else if (itemTitle == "creator") {
+            modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              subLevelItem = modelObject[idxModelObject]
+              subLevelItemKeys = Object.keys(subLevelItem)
+
+              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "creatorNames") {
+                  creatorNamesObject = subLevelItem.creatorNames
+
+                  for (let idxCreatorNamesObject=0; idxCreatorNamesObject < creatorNamesObject.length; idxCreatorNamesObject++) {
+                    if (!itemsToBeCheckedForDuplication.includes(creatorNamesObject[idxCreatorNamesObject].creatorNameLang)) {
+                      itemsToBeCheckedForDuplication.push(creatorNamesObject[idxCreatorNamesObject].creatorNameLang)
+                    } else {
+                      listItemErrors.push(creatorNamesObject[idxCreatorNamesObject].creatorNameLang)
+                    }
+                  } //idxCreatorNamesObject
+                } // if creatorNames
+              } // idxSubLevelItemKeys
+            } // idxModelObject
+            itemsToBeCheckedForDuplication = []
+          }
+
+          // if (item.key[0].toString() == "item_1617186331708") {
+          //   key = "iRecordsModel.item_1617186331708"
+          //   itemObj = iRecordsModel.item_1617186331708
+          //   for (let index=0; index < itemObj.length; index++) {
+          //     if (!titlesToBeChecked.includes(itemObj[index].subitem_1551255648112)) {
+          //       titlesToBeChecked.push(itemObj[index].subitem_1551255648112)
+          //     } else {
+          //       listItemErrors.push(itemObj[index].subitem_1551255648112)
+          //     }
+          //   }
+          // }
+
+        })
+
+        // console.log($rootScope.recordsVM)
+        // console.log($rootScope.recordsVM.invenioRecordsModel)
+        
+        if (listItemErrors.length > 0) {
+          let message = $("#duplicate_input_error").val() + '<br/><br/>';
+          message += listItemErrors[0];
+          for (let k = 1; k < listItemErrors.length; k++) {
+            let subMessage = ', ' + listItemErrors[k];
+            message += subMessage;
+          }
+          $("#inputModal").html(message);
+          $("#allModal").modal("show");
+          return false;
+        }
+        return true;
+      }
+
       $scope.UpdateApplicationDate = function () {
         var applicationDateKey = 'subitem_restricted_access_application_date';
         for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
