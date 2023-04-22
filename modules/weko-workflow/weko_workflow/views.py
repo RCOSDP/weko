@@ -2492,14 +2492,12 @@ def unlock_activity(activity_id="0"):
     if not check_flg:
         current_app.logger.error("unlock_activity: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
-        print("return 3")
         return jsonify(res.data), 400
     cache_key = 'workflow_locked_activity_{}'.format(activity_id)
     try:
         data = LockedValueSchema().load(json.loads(request.data.decode("utf-8")))
     except ValidationError as err:
         res = ResponseMessageSchema().load({'code':-1, 'msg':str(err)})
-        print("return 2")
         return jsonify(res.data), 400
     locked_value = str(data.data.get('locked_value'))
     current_app.logger.debug("id:{}".format(str(data.data.get('id'))))
@@ -2511,7 +2509,6 @@ def unlock_activity(activity_id="0"):
         delete_cache_data(cache_key)
         msg = _('Unlock success')
     res = ResponseUnlockSchema().load({'code':200,'msg':msg or _('Not unlock')})
-    print("return 1")
     return jsonify(res.data), 200
 
 
