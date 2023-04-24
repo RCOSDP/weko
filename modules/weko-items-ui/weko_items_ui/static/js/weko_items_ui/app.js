@@ -4025,7 +4025,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let listItemErrors = [];
         let iRecordsForm = $rootScope.recordsVM.invenioRecordsForm
         let iRecordsModel = $rootScope.recordsVM.invenioRecordsModel
-        let iRecordsModelKeys = Object.keys(iRecordsModel)
+        // let iRecordsModelKeys = Object.keys(iRecordsModel)
         var itemsToBeCheckedForDuplication = []
 
         console.log(iRecordsForm)
@@ -4034,91 +4034,319 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         iRecordsForm.forEach(item => {
           let itemTitle = item.title.toLowerCase()
           let key = item.key[0]
-          let itemSubItems = item.items
-          
-          // if (itemSubItems) {
-          //   console.log(`${itemTitle} - ${true}`)
-          // } else {
-          //   console.log(`${itemTitle} - ${false}`)
-          // }
-          // if (itemSubItems) {
-          //   var subItemKeyList = []
-
-          //   for (let index=0; index < itemSubItems.length; index++) {
-          //     subItemKey = itemSubItems[index][itemSubItems.length-1]
-          //     subItemKeyList.push(subItemKey)
-          //   }
-
-          //   if(subItemKeyList) {
-          //     for (let idx2=0; idx2 < subItemKeyList.length; idx2++) {
-          //       if (itemTitle == "title") {
-          //         modelObject = eval(`iRecordsModel.${subItemKeyList[idx2]}`)
-
-          //         console.log(modelObject)
-
-          //         for (let idx=0; idx < modelObject.length; idx++) {
-          //           if (!itemsToBeCheckedForDuplication.includes(modelObject[idx].subItemKey)) {
-          //             itemsToBeCheckedForDuplication.push(modelObject[idx].subItemKey)
-          //           } else {
-          //             listItemErrors.push(modelObject[idx].subItemKey)
-          //           }
-          //         }
-          //         itemsToBeCheckedForDuplication = []
-          //       }
-          //     }
-          //   }
           
           if (itemTitle == "title") {
-            // Language: subitem_1551255648112
             modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              // Language key name - subitem_1551255648112
               if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].subitem_1551255648112)) {
                 itemsToBeCheckedForDuplication.push(modelObject[idxModelObject].subitem_1551255648112)
               } else {
-                listItemErrors.push(modelObject[idxModelObject].subitem_1551255648112)
+                listItemErrors.push(`${item.title}-Language`)
               }
             }
             itemsToBeCheckedForDuplication = []
-          } else if (itemTitle == "creator") {
+          } //: TITLE
+          
+          else if (itemTitle == "creator") {
             modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
               subLevelItem = modelObject[idxModelObject]
               subLevelItemKeys = Object.keys(subLevelItem)
-
               for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
                 if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "creatorNames") {
                   creatorNamesObject = subLevelItem.creatorNames
-
-                  for (let idxCreatorNamesObject=0; idxCreatorNamesObject < creatorNamesObject.length; idxCreatorNamesObject++) {
-                    if (!itemsToBeCheckedForDuplication.includes(creatorNamesObject[idxCreatorNamesObject].creatorNameLang)) {
-                      itemsToBeCheckedForDuplication.push(creatorNamesObject[idxCreatorNamesObject].creatorNameLang)
+                  for (let idxcreatorNamesObject=0; idxcreatorNamesObject < creatorNamesObject.length; idxcreatorNamesObject++) {
+                    // Language key name - creatorNameLang
+                    if (!itemsToBeCheckedForDuplication.includes(creatorNamesObject[idxcreatorNamesObject].creatorNameLang)) {
+                      itemsToBeCheckedForDuplication.push(creatorNamesObject[idxcreatorNamesObject].creatorNameLang)
                     } else {
-                      listItemErrors.push(creatorNamesObject[idxCreatorNamesObject].creatorNameLang)
+                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
                     }
-                  } //idxCreatorNamesObject
-                } // if creatorNames
-              } // idxSubLevelItemKeys
-            } // idxModelObject
-            itemsToBeCheckedForDuplication = []
-          }
+                  } //: idxcreatorNamesObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if creatorNames
 
-          // if (item.key[0].toString() == "item_1617186331708") {
-          //   key = "iRecordsModel.item_1617186331708"
-          //   itemObj = iRecordsModel.item_1617186331708
-          //   for (let index=0; index < itemObj.length; index++) {
-          //     if (!titlesToBeChecked.includes(itemObj[index].subitem_1551255648112)) {
-          //       titlesToBeChecked.push(itemObj[index].subitem_1551255648112)
-          //     } else {
-          //       listItemErrors.push(itemObj[index].subitem_1551255648112)
-          //     }
-          //   }
-          // }
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "familyNames") {
+                  familyNamesObject = subLevelItem.familyNames
+                  for (let idxfamilyNamesObject=0; idxfamilyNamesObject < familyNamesObject.length; idxfamilyNamesObject++) {
+                    // Language key name - familyNameLang
+                    if (!itemsToBeCheckedForDuplication.includes(familyNamesObject[idxfamilyNamesObject].familyNameLang)) {
+                      itemsToBeCheckedForDuplication.push(familyNamesObject[idxfamilyNamesObject].familyNameLang)
+                    } else {
+                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                    }
+                  } //: familyNamesObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if familyNames
+
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "givenNames") {
+                  givenNamesObject = subLevelItem.givenNames
+                  for (let idxgivenNamesObject=0; idxgivenNamesObject < givenNamesObject.length; idxgivenNamesObject++) {
+                    // Language key name - givenNameLang
+                    if (!itemsToBeCheckedForDuplication.includes(givenNamesObject[idxgivenNamesObject].givenNameLang)) {
+                      itemsToBeCheckedForDuplication.push(givenNamesObject[idxgivenNamesObject].givenNameLang)
+                    } else {
+                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                    }
+                  } //: givenNamesObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if givenNames
+
+              } //: idxSubLevelItemKeys
+            } //: idxModelObject
+            itemsToBeCheckedForDuplication = []
+
+          } //: CREATOR
+          
+          else if (itemTitle == "contributor") {
+            modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              subLevelItem = modelObject[idxModelObject]
+              subLevelItemKeys = Object.keys(subLevelItem)
+              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "contributorNames") {
+                  contributorNamesObject = subLevelItem.contributorNames
+                  for (let idxcontributorNamesObject=0; idxcontributorNamesObject < contributorNamesObject.length; idxcontributorNamesObject++) {
+                    // Language key name - lang
+                    if (!itemsToBeCheckedForDuplication.includes(contributorNamesObject[idxcontributorNamesObject].lang)) {
+                      itemsToBeCheckedForDuplication.push(contributorNamesObject[idxcontributorNamesObject].lang)
+                    } else {
+                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                    }
+                  } //: idxcontributorNamesObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if contributorNames
+
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "familyNames") {
+                  familyNamesObject = subLevelItem.familyNames
+                  for (let idxfamilyNamesObject=0; idxfamilyNamesObject < familyNamesObject.length; idxfamilyNamesObject++) {
+                    // Language key name - familyNameLang
+                    if (!itemsToBeCheckedForDuplication.includes(familyNamesObject[idxfamilyNamesObject].familyNameLang)) {
+                      itemsToBeCheckedForDuplication.push(familyNamesObject[idxfamilyNamesObject].familyNameLang)
+                    } else {
+                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                    }
+                  } //: familyNamesObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if familyNames
+
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "givenNames") {
+                  givenNamesObject = subLevelItem.givenNames
+                  for (let idxgivenNamesObject=0; idxgivenNamesObject < givenNamesObject.length; idxgivenNamesObject++) {
+                    // Language key name - givenNameLang
+                    if (!itemsToBeCheckedForDuplication.includes(givenNamesObject[idxgivenNamesObject].givenNameLang)) {
+                      itemsToBeCheckedForDuplication.push(givenNamesObject[idxgivenNamesObject].givenNameLang)
+                    } else {
+                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                    }
+                  } //: givenNamesObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if givenNames
+
+              } //: idxSubLevelItemKeys
+            } //: idxModelObject
+            itemsToBeCheckedForDuplication = []
+          } //: CONTRIBUTOR
+
+          else if (itemTitle == "relation") {
+            modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              subLevelItem = modelObject[idxModelObject]
+              subLevelItemKeys = Object.keys(subLevelItem)
+              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
+                // Related Title key name - subitem_1523320863692
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1523320863692") {
+                  relatedTitleObject = subLevelItem.subitem_1523320863692
+                  for (let idxrelatedTitleObject=0; idxrelatedTitleObject < relatedTitleObject.length; idxrelatedTitleObject++) {
+                    // Language key name - subitem_1523320867455
+                    if (!itemsToBeCheckedForDuplication.includes(relatedTitleObject[idxrelatedTitleObject].subitem_1523320867455)) {
+                      itemsToBeCheckedForDuplication.push(relatedTitleObject[idxrelatedTitleObject].subitem_1523320867455)
+                    } else {
+                      listItemErrors.push(`${item.title}-Related Title-Language`)
+                    }
+                  } //: idxrelatedTitleObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if relatedTitle
+
+              } //: idxSubLevelItemKeys
+            } //: idxModelObject
+            itemsToBeCheckedForDuplication = []
+          } //: RELATION
+
+          else if (itemTitle == "funding reference") {
+            modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              subLevelItem = modelObject[idxModelObject]
+              subLevelItemKeys = Object.keys(subLevelItem)
+              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
+                // Funder Name key name - subitem_1522399412622
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1522399412622") {
+                  funderNameObject = subLevelItem.subitem_1522399412622
+                  for (let idxfunderNameObject=0; idxfunderNameObject < funderNameObject.length; idxfunderNameObject++) {
+                    // Language key name - subitem_1522399416691
+                    if (!itemsToBeCheckedForDuplication.includes(funderNameObject[idxfunderNameObject].subitem_1522399416691)) {
+                      itemsToBeCheckedForDuplication.push(funderNameObject[idxfunderNameObject].subitem_1522399416691)
+                    } else {
+                      listItemErrors.push(`${item.title}-Funder Name-Language`)
+                    }
+                  } //: idxfunderNameObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if funderName
+
+                // Award Title key name - subitem_1522399651758
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1522399651758") {
+                  awardTitleObject = subLevelItem.subitem_1522399651758
+                  for (let idxawardTitleObject=0; idxawardTitleObject < awardTitleObject.length; idxawardTitleObject++) {
+                    // Language key name - subitem_1522721910626
+                    if (!itemsToBeCheckedForDuplication.includes(awardTitleObject[idxawardTitleObject].subitem_1522721910626)) {
+                      itemsToBeCheckedForDuplication.push(awardTitleObject[idxawardTitleObject].subitem_1522721910626)
+                    } else {
+                      listItemErrors.push(`${item.title}-Award Title-Language`)
+                    }
+                  } //: idxawardTitleObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if awardTitle
+
+              } //: idxSubLevelItemKeys
+            } //: idxModelObject
+            itemsToBeCheckedForDuplication = []
+          } //: FUNDING REFERENCE
+
+          else if (itemTitle == "conference") {
+            modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              subLevelItem = modelObject[idxModelObject]
+              subLevelItemKeys = Object.keys(subLevelItem)
+              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
+                // Conference Name key name - subitem_1599711633003
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1599711633003") {
+                  conferenceNameObject = subLevelItem.subitem_1599711633003
+                  for (let idxconferenceNameObject=0; idxconferenceNameObject < conferenceNameObject.length; idxconferenceNameObject++) {
+                    // Language key name - subitem_1599711645590
+                    if (!itemsToBeCheckedForDuplication.includes(conferenceNameObject[idxconferenceNameObject].subitem_1599711645590)) {
+                      itemsToBeCheckedForDuplication.push(conferenceNameObject[idxconferenceNameObject].subitem_1599711645590)
+                    } else {
+                      listItemErrors.push(`${item.title}-Conference Name-Language`)
+                    }
+                  } //: idxconferenceNameObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if conferenceName
+
+                // Conference Sponsor key name - subitem_1599711660052
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1599711660052") {
+                  conferenceSponsorObject = subLevelItem.subitem_1599711660052
+                  for (let idxconferenceSponsorObject=0; idxconferenceSponsorObject < conferenceSponsorObject.length; idxconferenceSponsorObject++) {
+                    // Language key name - subitem_1599711686511
+                    if (!itemsToBeCheckedForDuplication.includes(conferenceSponsorObject[idxconferenceSponsorObject].subitem_1599711686511)) {
+                      itemsToBeCheckedForDuplication.push(conferenceSponsorObject[idxconferenceSponsorObject].subitem_1599711686511)
+                    } else {
+                      listItemErrors.push(`${item.title}-Conference Sponsor-Language`)
+                    }
+                  } //: idxconferenceSponsorObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if conferenceSponsor
+
+                // Conference Date key name - subitem_1599711699392
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1599711699392") {
+                  conferenceDateObject = subLevelItem.subitem_1599711699392
+                  for (let idxconferenceDateObject=0; idxconferenceDateObject < conferenceDateObject.length; idxconferenceDateObject++) {
+                    // Language key name - subitem_1599711745532
+                    if (!itemsToBeCheckedForDuplication.includes(conferenceDateObject[idxconferenceDateObject].subitem_1599711745532)) {
+                      itemsToBeCheckedForDuplication.push(conferenceDateObject[idxconferenceDateObject].subitem_1599711745532)
+                    } else {
+                      listItemErrors.push(`${item.title}-Conference Date-Language`)
+                    }
+                  } //: idxconferenceDateObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if conferenceDate
+
+                // Conference Venue key name - subitem_1599711758470
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1599711758470") {
+                  conferenceVenueObject = subLevelItem.subitem_1599711758470
+                  for (let idxconferenceVenueObject=0; idxconferenceVenueObject < conferenceVenueObject.length; idxconferenceVenueObject++) {
+                    // Language key name - subitem_1599711775943
+                    if (!itemsToBeCheckedForDuplication.includes(conferenceVenueObject[idxconferenceVenueObject].subitem_1599711775943)) {
+                      itemsToBeCheckedForDuplication.push(conferenceVenueObject[idxconferenceVenueObject].subitem_1599711775943)
+                    } else {
+                      listItemErrors.push(`${item.title}-Conference Venue-Language`)
+                    }
+                  } //: idxconferenceVenueObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if conferenceVenue
+
+                // Conference Place key name - subitem_1599711788485
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1599711788485") {
+                  conferencePlaceObject = subLevelItem.subitem_1599711788485
+                  for (let idxconferencePlaceObject=0; idxconferencePlaceObject < conferencePlaceObject.length; idxconferencePlaceObject++) {
+                    // Language key name - subitem_1599711803382
+                    if (!itemsToBeCheckedForDuplication.includes(conferencePlaceObject[idxconferencePlaceObject].subitem_1599711803382)) {
+                      itemsToBeCheckedForDuplication.push(conferencePlaceObject[idxconferencePlaceObject].subitem_1599711803382)
+                    } else {
+                      listItemErrors.push(`${item.title}-Conference Place-Language`)
+                    }
+                  } //: idxconferencePlaceObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if conferencePlace
+
+              } //: idxSubLevelItemKeys
+            } //: idxModelObject
+            itemsToBeCheckedForDuplication = []
+          } //: CONFERENCE
+
+          else if (itemTitle == "source title") {
+            modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              // Language key name - subitem_1522650068558
+              if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].subitem_1522650068558)) {
+                itemsToBeCheckedForDuplication.push(modelObject[idxModelObject].subitem_1522650068558)
+              } else {
+                listItemErrors.push(`${item.title}-Language`)
+              }
+            }
+            itemsToBeCheckedForDuplication = []
+          } //: SOURCE TITLE
+
+          else if (itemTitle == "degree name") {
+            modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              // Language key name - subitem_1551256129013
+              if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].subitem_1551256129013)) {
+                itemsToBeCheckedForDuplication.push(modelObject[idxModelObject].subitem_1551256129013)
+              } else {
+                listItemErrors.push(`${item.title}-Language`)
+              }
+            }
+            itemsToBeCheckedForDuplication = []
+          } //: DEGREE NAME
+
+          else if (itemTitle == "degree grantor") {
+            modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              subLevelItem = modelObject[idxModelObject]
+              subLevelItemKeys = Object.keys(subLevelItem)
+              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
+                // Degree Grantor Name key name - subitem_1551256037922
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1551256037922") {
+                  degreeGrantorNameObject = subLevelItem.subitem_1551256037922
+                  for (let idxdegreeGrantorNameObject=0; idxdegreeGrantorNameObject < degreeGrantorNameObject.length; idxdegreeGrantorNameObject++) {
+                    // Language key name - subitem_1551256047619
+                    if (!itemsToBeCheckedForDuplication.includes(degreeGrantorNameObject[idxdegreeGrantorNameObject].subitem_1551256047619)) {
+                      itemsToBeCheckedForDuplication.push(degreeGrantorNameObject[idxdegreeGrantorNameObject].subitem_1551256047619)
+                    } else {
+                      listItemErrors.push(`${item.title}-Degree Grantor Name-Language`)
+                    }
+                  } //: idxdegreeGrantorNameObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if degreeGrantorName
+
+              } //: idxSubLevelItemKeys
+            } //: idxModelObject
+            itemsToBeCheckedForDuplication = []
+          } //: FUNDING REFERENCE
 
         })
 
-        // console.log($rootScope.recordsVM)
-        // console.log($rootScope.recordsVM.invenioRecordsModel)
-        
         if (listItemErrors.length > 0) {
           let message = $("#duplicate_input_error").val() + '<br/><br/>';
           message += listItemErrors[0];
