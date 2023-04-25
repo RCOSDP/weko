@@ -3490,8 +3490,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           // Check required item
           return false;
         } else if(!this.validateDuplicateItems()) {
+          return false; 
+        } else if(!this.validateJaKana()) {
           return false;
-        }else if(!this.validatePosition()) {
+        } else if(!this.validatePosition()) {
           return false;
         } else if (!this.validateFieldMaxItems()) {
           return false;
@@ -4022,21 +4024,18 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       }
       
       $scope.validateDuplicateItems = function () {
-        let listItemErrors = [];
+        let listItemErrors = []
         let iRecordsForm = $rootScope.recordsVM.invenioRecordsForm
         let iRecordsModel = $rootScope.recordsVM.invenioRecordsModel
-        // let iRecordsModelKeys = Object.keys(iRecordsModel)
         var itemsToBeCheckedForDuplication = []
-
-        console.log(iRecordsForm)
-        console.log(iRecordsModel)
+        var itemsToBeCheckedForDuplicationForDateUse = []
 
         iRecordsForm.forEach(item => {
           let itemTitle = item.title.toLowerCase()
           let key = item.key[0]
           
           if (itemTitle == "title") {
-            modelObject = eval(`iRecordsModel.${key}`)
+            let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
               // Language key name - subitem_1551255648112
               if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].subitem_1551255648112)) {
@@ -4049,13 +4048,31 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           } //: TITLE
           
           else if (itemTitle == "creator") {
-            modelObject = eval(`iRecordsModel.${key}`)
+            let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
-              subLevelItem = modelObject[idxModelObject]
-              subLevelItemKeys = Object.keys(subLevelItem)
+              let subLevelItem = modelObject[idxModelObject]
+              let subLevelItemKeys = Object.keys(subLevelItem)
               for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
-                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "creatorNames") {
-                  creatorNamesObject = subLevelItem.creatorNames
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "creatorAffiliations") {
+                  let creatorAffiliations1stLevel = subLevelItem.creatorAffiliations
+                  for (let idxcreatorAffiliations1stLevel=0; idxcreatorAffiliations1stLevel < creatorAffiliations1stLevel.length; idxcreatorAffiliations1stLevel++) {
+                    let creatorAffiliations2ndLevel = creatorAffiliations1stLevel[idxcreatorAffiliations1stLevel]
+                    // affiliationNames array
+                    let affiliation_Names = creatorAffiliations2ndLevel.affiliationNames
+                    for (let idxaffiliation_Names=0; idxaffiliation_Names < affiliation_Names.length; idxaffiliation_Names++) {
+                      // Language key name - affiliationNameLang
+                      if (!itemsToBeCheckedForDuplication.includes(affiliation_Names[idxaffiliation_Names].affiliationNameLang)) {
+                        itemsToBeCheckedForDuplication.push(affiliation_Names[idxaffiliation_Names].affiliationNameLang)
+                      } else {
+                        listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-affiliationNames-Language`)
+                      }
+                    } //: affiliation_Names loop
+                  } //: creatorAffiliations1stLevel
+                  itemsToBeCheckedForDuplication = []
+                } //: if creatorAffiliations
+        
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "creatorNames") {
+                  let creatorNamesObject = subLevelItem.creatorNames
                   for (let idxcreatorNamesObject=0; idxcreatorNamesObject < creatorNamesObject.length; idxcreatorNamesObject++) {
                     // Language key name - creatorNameLang
                     if (!itemsToBeCheckedForDuplication.includes(creatorNamesObject[idxcreatorNamesObject].creatorNameLang)) {
@@ -4066,9 +4083,9 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   } //: idxcreatorNamesObject
                   itemsToBeCheckedForDuplication = []
                 } //: if creatorNames
-
+        
                 else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "familyNames") {
-                  familyNamesObject = subLevelItem.familyNames
+                  let familyNamesObject = subLevelItem.familyNames
                   for (let idxfamilyNamesObject=0; idxfamilyNamesObject < familyNamesObject.length; idxfamilyNamesObject++) {
                     // Language key name - familyNameLang
                     if (!itemsToBeCheckedForDuplication.includes(familyNamesObject[idxfamilyNamesObject].familyNameLang)) {
@@ -4079,9 +4096,9 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   } //: familyNamesObject
                   itemsToBeCheckedForDuplication = []
                 } //: if familyNames
-
+        
                 else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "givenNames") {
-                  givenNamesObject = subLevelItem.givenNames
+                  let givenNamesObject = subLevelItem.givenNames
                   for (let idxgivenNamesObject=0; idxgivenNamesObject < givenNamesObject.length; idxgivenNamesObject++) {
                     // Language key name - givenNameLang
                     if (!itemsToBeCheckedForDuplication.includes(givenNamesObject[idxgivenNamesObject].givenNameLang)) {
@@ -4092,21 +4109,39 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   } //: givenNamesObject
                   itemsToBeCheckedForDuplication = []
                 } //: if givenNames
-
+        
               } //: idxSubLevelItemKeys
             } //: idxModelObject
             itemsToBeCheckedForDuplication = []
-
+        
           } //: CREATOR
           
           else if (itemTitle == "contributor") {
-            modelObject = eval(`iRecordsModel.${key}`)
+            let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
-              subLevelItem = modelObject[idxModelObject]
-              subLevelItemKeys = Object.keys(subLevelItem)
+              let subLevelItem = modelObject[idxModelObject]
+              let subLevelItemKeys = Object.keys(subLevelItem)
               for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
-                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "contributorNames") {
-                  contributorNamesObject = subLevelItem.contributorNames
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "contributorAffiliations") {
+                  let contributorAffiliations1stLevel = subLevelItem.contributorAffiliations
+                  for (let idxcontributorAffiliations1stLevel=0; idxcontributorAffiliations1stLevel < contributorAffiliations1stLevel.length; idxcontributorAffiliations1stLevel++) {
+                    let contributorAffiliations2ndLevel = contributorAffiliations1stLevel[idxcontributorAffiliations1stLevel]
+                    // contributorAffiliationNames array
+                    let affiliation_Names = contributorAffiliations2ndLevel.contributorAffiliationNames
+                    for (let idxaffiliation_Names=0; idxaffiliation_Names < affiliation_Names.length; idxaffiliation_Names++) {
+                      // Language key name - contributorAffiliationNameLang
+                      if (!itemsToBeCheckedForDuplication.includes(affiliation_Names[idxaffiliation_Names].contributorAffiliationNameLang)) {
+                        itemsToBeCheckedForDuplication.push(affiliation_Names[idxaffiliation_Names].contributorAffiliationNameLang)
+                      } else {
+                        listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-contributorAffiliationNames-Language`)
+                      }
+                    } //: affiliation_Names loop
+                  } //: contributorAffiliations1stLevel
+                  itemsToBeCheckedForDuplication = []
+                } //: if contributorAffiliations
+        
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "contributorNames") {
+                  let contributorNamesObject = subLevelItem.contributorNames
                   for (let idxcontributorNamesObject=0; idxcontributorNamesObject < contributorNamesObject.length; idxcontributorNamesObject++) {
                     // Language key name - lang
                     if (!itemsToBeCheckedForDuplication.includes(contributorNamesObject[idxcontributorNamesObject].lang)) {
@@ -4117,9 +4152,9 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   } //: idxcontributorNamesObject
                   itemsToBeCheckedForDuplication = []
                 } //: if contributorNames
-
+        
                 else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "familyNames") {
-                  familyNamesObject = subLevelItem.familyNames
+                  let familyNamesObject = subLevelItem.familyNames
                   for (let idxfamilyNamesObject=0; idxfamilyNamesObject < familyNamesObject.length; idxfamilyNamesObject++) {
                     // Language key name - familyNameLang
                     if (!itemsToBeCheckedForDuplication.includes(familyNamesObject[idxfamilyNamesObject].familyNameLang)) {
@@ -4130,9 +4165,9 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   } //: familyNamesObject
                   itemsToBeCheckedForDuplication = []
                 } //: if familyNames
-
+        
                 else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "givenNames") {
-                  givenNamesObject = subLevelItem.givenNames
+                  let givenNamesObject = subLevelItem.givenNames
                   for (let idxgivenNamesObject=0; idxgivenNamesObject < givenNamesObject.length; idxgivenNamesObject++) {
                     // Language key name - givenNameLang
                     if (!itemsToBeCheckedForDuplication.includes(givenNamesObject[idxgivenNamesObject].givenNameLang)) {
@@ -4143,21 +4178,21 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   } //: givenNamesObject
                   itemsToBeCheckedForDuplication = []
                 } //: if givenNames
-
+        
               } //: idxSubLevelItemKeys
             } //: idxModelObject
             itemsToBeCheckedForDuplication = []
           } //: CONTRIBUTOR
-
+        
           else if (itemTitle == "relation") {
-            modelObject = eval(`iRecordsModel.${key}`)
+            let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
-              subLevelItem = modelObject[idxModelObject]
-              subLevelItemKeys = Object.keys(subLevelItem)
+              let subLevelItem = modelObject[idxModelObject]
+              let subLevelItemKeys = Object.keys(subLevelItem)
               for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
                 // Related Title key name - subitem_1523320863692
                 if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1523320863692") {
-                  relatedTitleObject = subLevelItem.subitem_1523320863692
+                  let relatedTitleObject = subLevelItem.subitem_1523320863692
                   for (let idxrelatedTitleObject=0; idxrelatedTitleObject < relatedTitleObject.length; idxrelatedTitleObject++) {
                     // Language key name - subitem_1523320867455
                     if (!itemsToBeCheckedForDuplication.includes(relatedTitleObject[idxrelatedTitleObject].subitem_1523320867455)) {
@@ -4168,21 +4203,21 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   } //: idxrelatedTitleObject
                   itemsToBeCheckedForDuplication = []
                 } //: if relatedTitle
-
+        
               } //: idxSubLevelItemKeys
             } //: idxModelObject
             itemsToBeCheckedForDuplication = []
           } //: RELATION
-
+        
           else if (itemTitle == "funding reference") {
-            modelObject = eval(`iRecordsModel.${key}`)
+            let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
-              subLevelItem = modelObject[idxModelObject]
-              subLevelItemKeys = Object.keys(subLevelItem)
+              let subLevelItem = modelObject[idxModelObject]
+              let subLevelItemKeys = Object.keys(subLevelItem)
               for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
                 // Funder Name key name - subitem_1522399412622
                 if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1522399412622") {
-                  funderNameObject = subLevelItem.subitem_1522399412622
+                  let funderNameObject = subLevelItem.subitem_1522399412622
                   for (let idxfunderNameObject=0; idxfunderNameObject < funderNameObject.length; idxfunderNameObject++) {
                     // Language key name - subitem_1522399416691
                     if (!itemsToBeCheckedForDuplication.includes(funderNameObject[idxfunderNameObject].subitem_1522399416691)) {
@@ -4193,10 +4228,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   } //: idxfunderNameObject
                   itemsToBeCheckedForDuplication = []
                 } //: if funderName
-
+        
                 // Award Title key name - subitem_1522399651758
                 else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1522399651758") {
-                  awardTitleObject = subLevelItem.subitem_1522399651758
+                  let awardTitleObject = subLevelItem.subitem_1522399651758
                   for (let idxawardTitleObject=0; idxawardTitleObject < awardTitleObject.length; idxawardTitleObject++) {
                     // Language key name - subitem_1522721910626
                     if (!itemsToBeCheckedForDuplication.includes(awardTitleObject[idxawardTitleObject].subitem_1522721910626)) {
@@ -4207,21 +4242,21 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   } //: idxawardTitleObject
                   itemsToBeCheckedForDuplication = []
                 } //: if awardTitle
-
+        
               } //: idxSubLevelItemKeys
             } //: idxModelObject
             itemsToBeCheckedForDuplication = []
           } //: FUNDING REFERENCE
-
+        
           else if (itemTitle == "conference") {
-            modelObject = eval(`iRecordsModel.${key}`)
+            let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
-              subLevelItem = modelObject[idxModelObject]
-              subLevelItemKeys = Object.keys(subLevelItem)
+              let subLevelItem = modelObject[idxModelObject]
+              let subLevelItemKeys = Object.keys(subLevelItem)
               for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
                 // Conference Name key name - subitem_1599711633003
                 if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1599711633003") {
-                  conferenceNameObject = subLevelItem.subitem_1599711633003
+                  let conferenceNameObject = subLevelItem.subitem_1599711633003
                   for (let idxconferenceNameObject=0; idxconferenceNameObject < conferenceNameObject.length; idxconferenceNameObject++) {
                     // Language key name - subitem_1599711645590
                     if (!itemsToBeCheckedForDuplication.includes(conferenceNameObject[idxconferenceNameObject].subitem_1599711645590)) {
@@ -4232,10 +4267,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   } //: idxconferenceNameObject
                   itemsToBeCheckedForDuplication = []
                 } //: if conferenceName
-
+        
                 // Conference Sponsor key name - subitem_1599711660052
                 else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1599711660052") {
-                  conferenceSponsorObject = subLevelItem.subitem_1599711660052
+                  let conferenceSponsorObject = subLevelItem.subitem_1599711660052
                   for (let idxconferenceSponsorObject=0; idxconferenceSponsorObject < conferenceSponsorObject.length; idxconferenceSponsorObject++) {
                     // Language key name - subitem_1599711686511
                     if (!itemsToBeCheckedForDuplication.includes(conferenceSponsorObject[idxconferenceSponsorObject].subitem_1599711686511)) {
@@ -4246,24 +4281,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   } //: idxconferenceSponsorObject
                   itemsToBeCheckedForDuplication = []
                 } //: if conferenceSponsor
-
-                // Conference Date key name - subitem_1599711699392
-                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1599711699392") {
-                  conferenceDateObject = subLevelItem.subitem_1599711699392
-                  for (let idxconferenceDateObject=0; idxconferenceDateObject < conferenceDateObject.length; idxconferenceDateObject++) {
-                    // Language key name - subitem_1599711745532
-                    if (!itemsToBeCheckedForDuplication.includes(conferenceDateObject[idxconferenceDateObject].subitem_1599711745532)) {
-                      itemsToBeCheckedForDuplication.push(conferenceDateObject[idxconferenceDateObject].subitem_1599711745532)
-                    } else {
-                      listItemErrors.push(`${item.title}-Conference Date-Language`)
-                    }
-                  } //: idxconferenceDateObject
-                  itemsToBeCheckedForDuplication = []
-                } //: if conferenceDate
-
+        
                 // Conference Venue key name - subitem_1599711758470
                 else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1599711758470") {
-                  conferenceVenueObject = subLevelItem.subitem_1599711758470
+                  let conferenceVenueObject = subLevelItem.subitem_1599711758470
                   for (let idxconferenceVenueObject=0; idxconferenceVenueObject < conferenceVenueObject.length; idxconferenceVenueObject++) {
                     // Language key name - subitem_1599711775943
                     if (!itemsToBeCheckedForDuplication.includes(conferenceVenueObject[idxconferenceVenueObject].subitem_1599711775943)) {
@@ -4274,10 +4295,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   } //: idxconferenceVenueObject
                   itemsToBeCheckedForDuplication = []
                 } //: if conferenceVenue
-
+        
                 // Conference Place key name - subitem_1599711788485
                 else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1599711788485") {
-                  conferencePlaceObject = subLevelItem.subitem_1599711788485
+                  let conferencePlaceObject = subLevelItem.subitem_1599711788485
                   for (let idxconferencePlaceObject=0; idxconferencePlaceObject < conferencePlaceObject.length; idxconferencePlaceObject++) {
                     // Language key name - subitem_1599711803382
                     if (!itemsToBeCheckedForDuplication.includes(conferencePlaceObject[idxconferencePlaceObject].subitem_1599711803382)) {
@@ -4288,14 +4309,29 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   } //: idxconferencePlaceObject
                   itemsToBeCheckedForDuplication = []
                 } //: if conferencePlace
-
+        
               } //: idxSubLevelItemKeys
+        
+              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
+                // Conference Date key name - subitem_1599711699392
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1599711699392") {
+                  let conferenceDateObject = subLevelItem.subitem_1599711699392
+                  // Language key name - subitem_1599711745532
+                  if (!itemsToBeCheckedForDuplicationForDateUse.includes(conferenceDateObject.subitem_1599711745532)) {
+                    itemsToBeCheckedForDuplicationForDateUse.push(conferenceDateObject.subitem_1599711745532)
+                  } else {
+                    listItemErrors.push(`${item.title}-Conference Date-Language`)
+                  }
+                } //: if conferenceDate
+              } //:idxSubLevelItemKeys - For Date Use
+        
             } //: idxModelObject
+            itemsToBeCheckedForDuplicationForDateUse = []
             itemsToBeCheckedForDuplication = []
           } //: CONFERENCE
-
+        
           else if (itemTitle == "source title") {
-            modelObject = eval(`iRecordsModel.${key}`)
+            let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
               // Language key name - subitem_1522650068558
               if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].subitem_1522650068558)) {
@@ -4305,10 +4341,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               }
             }
             itemsToBeCheckedForDuplication = []
-          } //: SOURCE TITLE
-
+          } //: SOURCETITLE
+          
           else if (itemTitle == "degree name") {
-            modelObject = eval(`iRecordsModel.${key}`)
+            let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
               // Language key name - subitem_1551256129013
               if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].subitem_1551256129013)) {
@@ -4319,16 +4355,16 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             }
             itemsToBeCheckedForDuplication = []
           } //: DEGREE NAME
-
+        
           else if (itemTitle == "degree grantor") {
-            modelObject = eval(`iRecordsModel.${key}`)
+            let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
-              subLevelItem = modelObject[idxModelObject]
-              subLevelItemKeys = Object.keys(subLevelItem)
+              let subLevelItem = modelObject[idxModelObject]
+              let subLevelItemKeys = Object.keys(subLevelItem)
               for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
                 // Degree Grantor Name key name - subitem_1551256037922
                 if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1551256037922") {
-                  degreeGrantorNameObject = subLevelItem.subitem_1551256037922
+                  let degreeGrantorNameObject = subLevelItem.subitem_1551256037922
                   for (let idxdegreeGrantorNameObject=0; idxdegreeGrantorNameObject < degreeGrantorNameObject.length; idxdegreeGrantorNameObject++) {
                     // Language key name - subitem_1551256047619
                     if (!itemsToBeCheckedForDuplication.includes(degreeGrantorNameObject[idxdegreeGrantorNameObject].subitem_1551256047619)) {
@@ -4339,16 +4375,272 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   } //: idxdegreeGrantorNameObject
                   itemsToBeCheckedForDuplication = []
                 } //: if degreeGrantorName
-
+        
               } //: idxSubLevelItemKeys
             } //: idxModelObject
             itemsToBeCheckedForDuplication = []
-          } //: FUNDING REFERENCE
+          } //: DEGREE GRANTOR
 
-        })
+          /* USE WHEN HOLDING AGENT AND CATALOG IS ALREADY MAPPED
+          else if (itemTitle == "holding agent") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              let subLevelItem = modelObject[idxModelObject]
+              let subLevelItemKeys = Object.keys(subLevelItem)
+              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
+                // Holding Agent Name key name - xxxxxxxxxx
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "xxxxxxxxxx") {
+                  let holdingAgentNameObject = subLevelItem.xxxxxxxxxx
+                  for (let idxholdingAgentNameObject=0; idxholdingAgentNameObject < holdingAgentNameObject.length; idxholdingAgentNameObject++) {
+                    // Language key name - yyyyyyyyyy
+                    if (!itemsToBeCheckedForDuplication.includes(holdingAgentNameObject[idxholdingAgentNameObject].yyyyyyyyyy)) {
+                      itemsToBeCheckedForDuplication.push(holdingAgentNameObject[idxholdingAgentNameObject].yyyyyyyyyy)
+                    } else {
+                      listItemErrors.push(`${item.title}-Holding Agent Name-Language`)
+                    }
+                  } //: idxholdingAgentNameObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if holdingAgentName
+        
+              } //: idxSubLevelItemKeys
+            } //: idxModelObject
+            itemsToBeCheckedForDuplication = []
+          } //: HOLDING AGENT
+
+          else if (itemTitle == "catalog") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              // Language key name - xxxxxxxxxxxxx
+              if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].xxxxxxxxxxxxx)) {
+                itemsToBeCheckedForDuplication.push(modelObject[idxModelObject].xxxxxxxxxxxxx)
+              } else {
+                listItemErrors.push(`${item.title}-Language`)
+              }
+            }
+            itemsToBeCheckedForDuplication = []
+          } //: CATALOG
+          */
+
+        }) //: iRecordsForm.forEach
 
         if (listItemErrors.length > 0) {
           let message = $("#duplicate_input_error").val() + '<br/><br/>';
+          message += listItemErrors[0];
+          for (let k = 1; k < listItemErrors.length; k++) {
+            let subMessage = ', ' + listItemErrors[k];
+            message += subMessage;
+          }
+          $("#inputModal").html(message);
+          $("#allModal").modal("show");
+          return false;
+        }
+        return true;
+      }
+
+      $scope.validateJaKana = function () {
+        let listItemErrors = []
+        let iRecordsForm = $rootScope.recordsVM.invenioRecordsForm
+        let iRecordsModel = $rootScope.recordsVM.invenioRecordsModel
+        var itemsToBeCheckedForJaKana = []
+
+        iRecordsForm.forEach(item => {
+          let itemTitle = item.title.toLowerCase()
+          let key = item.key[0]
+          
+          if (itemTitle == "title") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              // Language key name - subitem_1551255648112
+              if (!itemsToBeCheckedForJaKana.includes(modelObject[idxModelObject].subitem_1551255648112)) {
+                itemsToBeCheckedForJaKana.push(modelObject[idxModelObject].subitem_1551255648112)
+              } else {
+                listItemErrors.push(`${item.title}-Language`)
+              }
+            }
+            itemsToBeCheckedForJaKana = []
+          } //: TITLE
+          
+          else if (itemTitle == "creator") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              let subLevelItem = modelObject[idxModelObject]
+              let subLevelItemKeys = Object.keys(subLevelItem)
+              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "creatorAffiliations") {
+                  let creatorAffiliations1stLevel = subLevelItem.creatorAffiliations
+                  for (let idxcreatorAffiliations1stLevel=0; idxcreatorAffiliations1stLevel < creatorAffiliations1stLevel.length; idxcreatorAffiliations1stLevel++) {
+                    let creatorAffiliations2ndLevel = creatorAffiliations1stLevel[idxcreatorAffiliations1stLevel]
+                    // affiliationNames array
+                    let affiliation_Names = creatorAffiliations2ndLevel.affiliationNames
+                    for (let idxaffiliation_Names=0; idxaffiliation_Names < affiliation_Names.length; idxaffiliation_Names++) {
+                      // Language key name - affiliationNameLang
+                      if (!itemsToBeCheckedForJaKana.includes(affiliation_Names[idxaffiliation_Names].affiliationNameLang)) {
+                        itemsToBeCheckedForJaKana.push(affiliation_Names[idxaffiliation_Names].affiliationNameLang)
+                      } else {
+                        listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-affiliationNames-Language`)
+                      }
+                    } //: affiliation_Names loop
+                  } //: creatorAffiliations1stLevel
+                  itemsToBeCheckedForJaKana = []
+                } //: if creatorAffiliations
+        
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "creatorNames") {
+                  let creatorNamesObject = subLevelItem.creatorNames
+                  for (let idxcreatorNamesObject=0; idxcreatorNamesObject < creatorNamesObject.length; idxcreatorNamesObject++) {
+                    // Language key name - creatorNameLang
+                    if (!itemsToBeCheckedForJaKana.includes(creatorNamesObject[idxcreatorNamesObject].creatorNameLang)) {
+                      itemsToBeCheckedForJaKana.push(creatorNamesObject[idxcreatorNamesObject].creatorNameLang)
+                    } else {
+                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                    }
+                  } //: idxcreatorNamesObject
+                  itemsToBeCheckedForJaKana = []
+                } //: if creatorNames
+        
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "familyNames") {
+                  let familyNamesObject = subLevelItem.familyNames
+                  for (let idxfamilyNamesObject=0; idxfamilyNamesObject < familyNamesObject.length; idxfamilyNamesObject++) {
+                    // Language key name - familyNameLang
+                    if (!itemsToBeCheckedForJaKana.includes(familyNamesObject[idxfamilyNamesObject].familyNameLang)) {
+                      itemsToBeCheckedForJaKana.push(familyNamesObject[idxfamilyNamesObject].familyNameLang)
+                    } else {
+                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                    }
+                  } //: familyNamesObject
+                  itemsToBeCheckedForJaKana = []
+                } //: if familyNames
+        
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "givenNames") {
+                  let givenNamesObject = subLevelItem.givenNames
+                  for (let idxgivenNamesObject=0; idxgivenNamesObject < givenNamesObject.length; idxgivenNamesObject++) {
+                    // Language key name - givenNameLang
+                    if (!itemsToBeCheckedForJaKana.includes(givenNamesObject[idxgivenNamesObject].givenNameLang)) {
+                      itemsToBeCheckedForJaKana.push(givenNamesObject[idxgivenNamesObject].givenNameLang)
+                    } else {
+                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                    }
+                  } //: givenNamesObject
+                  itemsToBeCheckedForJaKana = []
+                } //: if givenNames
+        
+              } //: idxSubLevelItemKeys
+            } //: idxModelObject
+            itemsToBeCheckedForJaKana = []
+        
+          } //: CREATOR
+          
+          else if (itemTitle == "contributor") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              let subLevelItem = modelObject[idxModelObject]
+              let subLevelItemKeys = Object.keys(subLevelItem)
+              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "contributorAffiliations") {
+                  let contributorAffiliations1stLevel = subLevelItem.contributorAffiliations
+                  for (let idxcontributorAffiliations1stLevel=0; idxcontributorAffiliations1stLevel < contributorAffiliations1stLevel.length; idxcontributorAffiliations1stLevel++) {
+                    let contributorAffiliations2ndLevel = contributorAffiliations1stLevel[idxcontributorAffiliations1stLevel]
+                    // contributorAffiliationNames array
+                    let affiliation_Names = contributorAffiliations2ndLevel.contributorAffiliationNames
+                    for (let idxaffiliation_Names=0; idxaffiliation_Names < affiliation_Names.length; idxaffiliation_Names++) {
+                      // Language key name - contributorAffiliationNameLang
+                      if (!itemsToBeCheckedForJaKana.includes(affiliation_Names[idxaffiliation_Names].contributorAffiliationNameLang)) {
+                        itemsToBeCheckedForJaKana.push(affiliation_Names[idxaffiliation_Names].contributorAffiliationNameLang)
+                      } else {
+                        listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-contributorAffiliationNames-Language`)
+                      }
+                    } //: affiliation_Names loop
+                  } //: contributorAffiliations1stLevel
+                  itemsToBeCheckedForJaKana = []
+                } //: if contributorAffiliations
+        
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "contributorNames") {
+                  let contributorNamesObject = subLevelItem.contributorNames
+                  for (let idxcontributorNamesObject=0; idxcontributorNamesObject < contributorNamesObject.length; idxcontributorNamesObject++) {
+                    // Language key name - lang
+                    if (!itemsToBeCheckedForJaKana.includes(contributorNamesObject[idxcontributorNamesObject].lang)) {
+                      itemsToBeCheckedForJaKana.push(contributorNamesObject[idxcontributorNamesObject].lang)
+                    } else {
+                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                    }
+                  } //: idxcontributorNamesObject
+                  itemsToBeCheckedForJaKana = []
+                } //: if contributorNames
+        
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "familyNames") {
+                  let familyNamesObject = subLevelItem.familyNames
+                  for (let idxfamilyNamesObject=0; idxfamilyNamesObject < familyNamesObject.length; idxfamilyNamesObject++) {
+                    // Language key name - familyNameLang
+                    if (!itemsToBeCheckedForJaKana.includes(familyNamesObject[idxfamilyNamesObject].familyNameLang)) {
+                      itemsToBeCheckedForJaKana.push(familyNamesObject[idxfamilyNamesObject].familyNameLang)
+                    } else {
+                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                    }
+                  } //: familyNamesObject
+                  itemsToBeCheckedForJaKana = []
+                } //: if familyNames
+        
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "givenNames") {
+                  let givenNamesObject = subLevelItem.givenNames
+                  for (let idxgivenNamesObject=0; idxgivenNamesObject < givenNamesObject.length; idxgivenNamesObject++) {
+                    // Language key name - givenNameLang
+                    if (!itemsToBeCheckedForJaKana.includes(givenNamesObject[idxgivenNamesObject].givenNameLang)) {
+                      itemsToBeCheckedForJaKana.push(givenNamesObject[idxgivenNamesObject].givenNameLang)
+                    } else {
+                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                    }
+                  } //: givenNamesObject
+                  itemsToBeCheckedForJaKana = []
+                } //: if givenNames
+        
+              } //: idxSubLevelItemKeys
+            } //: idxModelObject
+            itemsToBeCheckedForJaKana = []
+          } //: CONTRIBUTOR
+
+          /* USE WHEN HOLDING AGENT AND CATALOG IS ALREADY MAPPED
+          else if (itemTitle == "holding agent") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              let subLevelItem = modelObject[idxModelObject]
+              let subLevelItemKeys = Object.keys(subLevelItem)
+              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
+                // Holding Agent Name key name - xxxxxxxxxx
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "xxxxxxxxxx") {
+                  let holdingAgentNameObject = subLevelItem.xxxxxxxxxx
+                  for (let idxholdingAgentNameObject=0; idxholdingAgentNameObject < holdingAgentNameObject.length; idxholdingAgentNameObject++) {
+                    // Language key name - yyyyyyyyyy
+                    if (!itemsToBeCheckedForDuplication.includes(holdingAgentNameObject[idxholdingAgentNameObject].yyyyyyyyyy)) {
+                      itemsToBeCheckedForDuplication.push(holdingAgentNameObject[idxholdingAgentNameObject].yyyyyyyyyy)
+                    } else {
+                      listItemErrors.push(`${item.title}-Holding Agent Name-Language`)
+                    }
+                  } //: idxholdingAgentNameObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if holdingAgentName
+        
+              } //: idxSubLevelItemKeys
+            } //: idxModelObject
+            itemsToBeCheckedForDuplication = []
+          } //: HOLDING AGENT
+
+          else if (itemTitle == "catalog") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              // Language key name - xxxxxxxxxxxxx
+              if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].xxxxxxxxxxxxx)) {
+                itemsToBeCheckedForDuplication.push(modelObject[idxModelObject].xxxxxxxxxxxxx)
+              } else {
+                listItemErrors.push(`${item.title}-Language`)
+              }
+            }
+            itemsToBeCheckedForDuplication = []
+          } //: CATALOG
+          */
+
+        }) //: iRecordsForm.forEach
+
+        if (listItemErrors.length > 0) {
+          let message = $("#ja_kana_error").val() + '<br/><br/>';
           message += listItemErrors[0];
           for (let k = 1; k < listItemErrors.length; k++) {
             let subMessage = ', ' + listItemErrors[k];

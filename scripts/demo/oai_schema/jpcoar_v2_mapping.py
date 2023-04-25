@@ -77,7 +77,8 @@ xsd = {
                                 "AID",
                                 "kakenhi",
                                 "Ringgold",
-                                "GRID"
+                                "GRID",
+                                "ROR"
                             ]
                         }
                     },
@@ -246,11 +247,16 @@ xsd = {
                         "ref": None,
                         "restriction": {
                             "enumeration": [
-                                "kakenhi",
+                                "e-Rad",
+                                "NRID",
+                                "ORCID",
                                 "ISNI",
+                                "VIAF",
+                                "AID",
+                                "kakenhi",
                                 "Ringgold",
                                 "GRID",
-                                "ROR",
+                                "ROR"
                             ]
                         }
                     },
