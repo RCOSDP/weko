@@ -26,7 +26,7 @@ import os
 import zipfile
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
-from typing import Dict, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
 import redis
 from redis import sentinel
@@ -71,12 +71,11 @@ def get_response_json(result_list, n_lst):
         newlst = []
         for rlst in result_list:
             adr_lst = rlst.get('addresses')
-            if isinstance(adr_lst, list):
-                for alst in adr_lst:
-                    alst['start_ip_address'] = alst['start_ip_address'].split(
-                        '.')
-                    alst['finish_ip_address'] = alst[
-                        'finish_ip_address'].split('.')
+            for alst in adr_lst:
+                alst['start_ip_address'] = alst['start_ip_address'].split(
+                    '.')
+                alst['finish_ip_address'] = alst[
+                    'finish_ip_address'].split('.')
             newlst.append(rlst.dumps())
         result.update(dict(site_license=newlst))
         del result_list
@@ -303,11 +302,9 @@ def get_unit_stats_report(target_id):
 
     list_unit = list()
     for unit in units:
-        try:
-            if target_units.index(unit['id']) is not None:
-                list_unit.append(unit)
-        except Exception:
-            pass
+        if target_units.find(unit['id']) != -1:
+            list_unit.append(unit)
+
     result['unit'] = list_unit
     return result
 
@@ -359,7 +356,7 @@ def package_reports(all_stats, year, month):
                                 f['stream'].getvalue().encode('utf-8-sig'))
         report_zip.close()
     except Exception as e:
-        current_app.logger.error('Unexpected error: ', e)
+        current_app.logger.error('Unexpected error: {}'.format(e))
         raise
     return zip_stream
 
@@ -506,7 +503,7 @@ def reset_redis_cache(cache_key, value, ttl=None):
         else:
             datastore.put(cache_key, value.encode('utf-8'),ttl)
     except Exception as e:
-        current_app.logger.error('Could not reset redis value', e)
+        current_app.logger.error('Could not reset redis value: {}'.format(e))
         raise
 
 
@@ -517,7 +514,7 @@ def is_exists_key_in_redis(key):
         datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         return datastore.redis.exists(key)
     except Exception as e:
-        current_app.logger.error('Could get value for ' + key, e)
+        current_app.logger.error('Could get value for ' + key + ": {}".format(e))
     return False
 
 
@@ -528,7 +525,7 @@ def is_exists_key_or_empty_in_redis(key):
         datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         return datastore.redis.exists(key) and datastore.redis.get(key) != b''
     except Exception as e:
-        current_app.logger.error('Could get value for ' + key, e)
+        current_app.logger.error('Could get value for ' + key + ": {}".format(e))
     return False
 
 
@@ -540,7 +537,7 @@ def get_redis_cache(cache_key):
         if datastore.redis.exists(cache_key):
             return datastore.get(cache_key).decode('utf-8')
     except Exception as e:
-        current_app.logger.error('Could get value for ' + cache_key, e)
+        current_app.logger.error('Could get value for ' + cache_key + ": {}".format(e))
     return None
 
 
@@ -648,7 +645,7 @@ class StatisticMail:
                     )
                     failed_mail += 1
         except Exception as ex:
-            current_app.logger.error('Error has occurred', str(ex))
+            current_app.logger.error('Error has occurred: {}'.format(ex))
         end_time = datetime.now()
         FeedbackMailHistory.create(
             session,
@@ -696,7 +693,7 @@ class StatisticMail:
             return int(download_count)
         except Exception as ex:
             current_app.logger.error(
-                'Cannot convert download count to int', ex)
+                'Cannot convert download count to int: {}'.format(ex))
             return 0
 
     @classmethod
@@ -1632,16 +1629,13 @@ def get_site_name_for_current_language(site_name):
     """
     lang_code_english = 'en'
     if site_name:
-        if hasattr(current_i18n, 'language'):
-            for sn in site_name:
-                if sn.get('language') == current_i18n.language:
-                    return sn.get("name")
-            for sn in site_name:
-                if sn.get('language') == lang_code_english:
-                    return sn.get("name")
-            return site_name[0].get("name")
-        else:
-            return site_name[0].get("name")
+        for sn in site_name:
+            if sn.get('language') == current_i18n.language:
+                return sn.get("name")
+        for sn in site_name:
+            if sn.get('language') == lang_code_english:
+                return sn.get("name")
+        return site_name[0].get("name")
     else:
         return ''
 
@@ -1719,13 +1713,13 @@ def get_init_display_index(init_disp_index: str) -> list:
     return init_display_indexes
 
 
-def get_restricted_access(key: str = None):
+def get_restricted_access(key: Optional[str] = None) -> Optional[dict]:
     """Get registered access settings.
 
     :param key:setting key.
     :return:
     """
-    restricted_access = AdminSettings.get('restricted_access', False)
+    restricted_access:dict = AdminSettings.get('restricted_access', False)
     if not restricted_access:
         restricted_access = current_app.config[
             'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
@@ -1741,11 +1735,36 @@ def update_restricted_access(restricted_access: dict):
 
     :param restricted_access:
     """
+    def parse_secret_URL_file_download():
+        if secret_URL_file_download.get('secret_expiration_date_unlimited_chk'):
+            secret_URL_file_download['secret_expiration_date'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
+        if secret_URL_file_download.get('secret_download_limit_unlimited_chk'):
+            secret_URL_file_download['secret_download_limit'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
+
+        secret_URL_file_download['secret_expiration_date'] = int(
+            secret_URL_file_download['secret_expiration_date'])
+        secret_URL_file_download['secret_download_limit'] = int(
+            secret_URL_file_download['secret_download_limit'])
+
+    def validate_secret_URL_file_download():
+        if not secret_URL_file_download.get(
+            'secret_expiration_date_unlimited_chk') and not secret_URL_file_download[
+            'secret_expiration_date'] or not secret_URL_file_download.get(
+            'secret_download_limit_unlimited_chk') and not \
+                secret_URL_file_download['secret_download_limit']:
+            return False
+        if secret_URL_file_download['secret_expiration_date'] and int(
+            secret_URL_file_download['secret_expiration_date']) < 1 or \
+            secret_URL_file_download['secret_download_limit'] and int(
+                secret_URL_file_download['secret_download_limit']) < 1:
+            return False
+        return True
+        
     def parse_content_file_download():
         if content_file_download.get('expiration_date_unlimited_chk'):
-            content_file_download['expiration_date'] = 9999999
+            content_file_download['expiration_date'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
         if content_file_download.get('download_limit_unlimited_chk'):
-            content_file_download['download_limit'] = 9999999
+            content_file_download['download_limit'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
 
         content_file_download['expiration_date'] = int(
             content_file_download['expiration_date'])
@@ -1778,10 +1797,17 @@ def update_restricted_access(restricted_access: dict):
 
     def parse_usage_report_wf_access():
         if usage_report_wf_access.get('expiration_date_access_unlimited_chk'):
-            usage_report_wf_access['expiration_date_access'] = 9999999
+            usage_report_wf_access['expiration_date_access'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
 
         usage_report_wf_access['expiration_date_access'] = int(
             usage_report_wf_access['expiration_date_access'])
+
+    # Secret URL file download.
+    if 'secret_URL_file_download' in restricted_access:
+        secret_URL_file_download = restricted_access['secret_URL_file_download']
+        if not validate_secret_URL_file_download():
+            return False
+        parse_secret_URL_file_download()
 
     # Content file download.
     if 'content_file_download' in restricted_access:

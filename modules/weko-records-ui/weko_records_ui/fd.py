@@ -20,10 +20,12 @@
 
 """Utilities for download file."""
 
+import json
 import mimetypes
+import traceback
 import unicodedata
 
-from flask import abort, current_app, render_template, request
+from flask import abort, current_app, render_template, request ,redirect ,url_for
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
@@ -37,20 +39,21 @@ from weko_accounts.views import _redirect_method
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_records.api import FilesMetadata, ItemTypes
+from weko_records_ui.utils import generate_one_time_download_url
 from weko_user_profiles.models import UserProfile
+from weko_workflow.utils import is_terms_of_use_only
 from werkzeug.datastructures import Headers
 from werkzeug.urls import url_quote
 
-from .models import PDFCoverPageSettings
+from .models import FileOnetimeDownload, FileSecretDownload, PDFCoverPageSettings
 from .pdf import make_combined_pdf
 from .permissions import check_original_pdf_download_permission, \
-    file_permission_factory
-from .utils import check_and_create_usage_report, \
-    check_and_send_usage_report, get_billing_file_download_permission, \
+    file_permission_factory, is_owners_or_superusers
+from .utils import check_and_send_usage_report, get_billing_file_download_permission, \
     get_groups_price, get_min_price_billing_file_download, \
-    get_onetime_download, is_billing_item, parse_one_time_download_token, \
-    update_onetime_download, validate_download_record, \
-    validate_onetime_download_token
+    get_onetime_download, get_secret_download, is_billing_item, parse_one_time_download_token, parse_secret_download_token, \
+    update_onetime_download, update_secret_download, validate_download_record, \
+    validate_onetime_download_token, validate_secret_download_token
 
 
 def weko_view_method(pid, record, template=None, **kwargs):
@@ -222,24 +225,31 @@ def file_ui(
     obj = fileobj.obj
 
     # Check file contents permission
+    is_terms_of_use_only = _is_terms_of_use_only(fileobj,request.args)
     if not file_permission_factory(record, fjson=fileobj).can():
-        if not current_user.is_authenticated:
-            return _redirect_method(has_next=True)
-        abort(403)
+        # [利用規約のみ]の場合、アクセス権無しでもファイルダウンロード可能。
+        if not is_terms_of_use_only:
+            if not current_user.is_authenticated:
+                return _redirect_method(has_next=True)
+            abort(403)
 
-    # Check and create usage report
     if not is_preview:
-        try:
-            check_and_create_usage_report(record, fileobj)
-            db.session.commit()
-        except SQLAlchemyError as ex:
-            current_app.logger.error("sqlalchemy error: {}".format(ex))
-            db.session.rollback()
-            abort(500)
-        except BaseException as ex:
-            current_app.logger.error("Unexpected error: {}".format(ex))
-            db.session.rollback()
-            abort(500)
+        # redirect open_restricted download
+        if 'open_restricted' in fileobj.get('accessrole', '') \
+            and not is_terms_of_use_only \
+            and not is_owners_or_superusers(record):
+
+            file_name = fileobj["filename"]
+            record_id = pid.pid_value
+            user_mail = current_user.email
+            onetime_download :FileOnetimeDownload = get_onetime_download(file_name ,record_id,user_mail)
+            if onetime_download is None:
+                current_app.logger.info('onetime_download is None')
+                abort(403)
+
+            onetime_file_url = generate_one_time_download_url(
+                file_name, record_id, user_mail )
+            return redirect(onetime_file_url) #redirect to file_download_onetime()
 
     # #Check permissions
     # ObjectResource.check_object_permission(obj)
@@ -449,7 +459,7 @@ def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):
             'accessrole'):
         extra_info = onetime_download.extra_info
         try:
-            error_msg = check_and_send_usage_report(extra_info, user_mail)
+            error_msg = check_and_send_usage_report(extra_info, user_mail ,record, file_object)
             if error_msg:
                 return render_template(error_template, error=error_msg)
             db.session.commit()
@@ -471,3 +481,98 @@ def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):
 
     return _download_file(file_object, False, 'en', file_object.obj, pid,
                           record)
+
+def _is_terms_of_use_only(file_obj:dict , req :dict) -> bool:
+    """
+        return true if the user can apply and apply workflow is terms_of_use_only
+        in case of terms_of_use_only download terms of use is agreed (or terms of use is not setted) 
+    Args
+        dict:file_obj :file object
+        dict:req :request.args
+    Returns
+        bool
+    """
+
+    consent:bool = req.get('terms_of_use_only',False)
+    if not consent :
+        return False
+
+    provides = file_obj.get("provide" , [])
+    workflow_id = ""
+    for provide in provides :
+        if current_user.is_authenticated :
+            roles = list(current_user.roles or [])
+            for role in roles :
+                if provide.get("role", "") == str(role.id) :
+                    workflow_id = provide.get("workflow", "")
+                    break
+        else :
+            if provide.get("role", "") == "none_loggin" :
+                workflow_id = provide.get("workflow", "")
+
+        if workflow_id != "" :
+            break
+    
+    return is_terms_of_use_only(workflow_id) if workflow_id != "" else False
+
+def file_download_secret(pid, record, _record_file_factory=None, **kwargs):
+    """File download secret.
+
+    :param pid:
+    :param record: Record json
+    :param _record_file_factory:
+    :param kwargs:
+    :return:
+    """
+    token = request.args.get('token', type=str)
+    filename:str = str(kwargs.get("filename"))
+    error_template = "weko_theme/error.html"
+    # Parse token
+    error, token_data = \
+        parse_secret_download_token(token)
+    if error:
+        return render_template(error_template, error=error)
+    record_id, id, date, secret_token = token_data
+
+    # Validate record status
+    validate_download_record(record)
+
+    # Get secret download record.
+    secret_download :FileSecretDownload = get_secret_download(
+        file_name=filename, record_id=pid.pid_value, id=id , created=date
+    )
+
+    if not secret_download:
+        abort(403)
+
+    # Validate token
+    is_valid, error = validate_secret_download_token(
+        secret_download, filename, pid.pid_value, id, secret_download.created, secret_token)
+    if not is_valid:
+        return render_template(error_template, error=error)
+    _record_file_factory = _record_file_factory or record_file_factory
+
+    # Get file object
+    file_object = _record_file_factory(pid, record, filename)
+    if not file_object or not file_object.obj:
+        return render_template(error_template,
+                                error="{} does not exist.".format(filename))
+
+    # Create updated data
+    update_data = dict(
+        file_name=filename, record_id=record_id, id=id, created=date,
+        download_count=secret_download.download_count - 1
+    )
+
+    # Update download data
+    if not update_secret_download(**update_data):
+        return render_template(error_template,
+                                error=_("Unexpected error occurred."))
+
+    # Get user's language and defautl language for PDF coverpage.
+    lang = 'en'
+    if current_user.is_authenticated :
+        user_profile = UserProfile.get_by_userid(current_user.get_id())
+        lang = user_profile.language if user_profile and user_profile.language \
+            else 'en'
+    return _download_file(file_object, False, lang, file_object.obj, pid, record)

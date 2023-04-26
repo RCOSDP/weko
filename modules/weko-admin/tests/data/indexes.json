@@ -85,7 +85,7 @@
         "harvest_public_state": true,
         "display_format": 1,
         "image_name": "",
-        "public_state": true,
+        "public_state": false,
         "public_date":null,
         "recursive_public_state": true,
         "rss_status": false,

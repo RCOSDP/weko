@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema targetNamespace="http://example.com/ns/collection"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+	xmlns="http://example.com/ns/collection">
+  <xs:group name="TestGroup">
+    <xs:sequence>
+      <xs:element name="test" type="xs:string"/>
+    </xs:sequence>
+  </xs:group>
+  <xs:element name="person" type="personType"/>
+  <xs:complexType name="personType">
+    <xs:sequence>
+      <xs:element name="name" type="xs:string"/>
+      <xs:element name="born" type="xs:date"/>
+      <xs:element name="dead" type="xs:date" minOccurs="0"/>
+      <xs:element name="qualification" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:ID" use="required"/>
+  </xs:complexType>
+</xs:schema>
