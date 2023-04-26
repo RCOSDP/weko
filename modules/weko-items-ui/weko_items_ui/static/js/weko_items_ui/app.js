@@ -3493,6 +3493,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           return false; 
         } else if(!this.validateJaKana()) {
           return false;
+        } else if(!this.validateJaLatn()) {
+          return false;
         } else if(!this.validatePosition()) {
           return false;
         } else if (!this.validateFieldMaxItems()) {
@@ -4381,7 +4383,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             itemsToBeCheckedForDuplication = []
           } //: DEGREE GRANTOR
 
-          /* USE WHEN HOLDING AGENT AND CATALOG IS ALREADY MAPPED
+          /* EDIT AND USE WHEN HOLDING AGENT AND CATALOG IS ALREADY MAPPED
           else if (itemTitle == "holding agent") {
             let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
@@ -4451,14 +4453,25 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
               // Language key name - subitem_1551255648112
-              if (!itemsToBeCheckedForJaKana.includes(modelObject[idxModelObject].subitem_1551255648112)) {
-                itemsToBeCheckedForJaKana.push(modelObject[idxModelObject].subitem_1551255648112)
-              } else {
-                listItemErrors.push(`${item.title}-Language`)
-              }
+              itemsToBeCheckedForJaKana.push(modelObject[idxModelObject].subitem_1551255648112)
+            }
+            if (itemsToBeCheckedForJaKana.includes("ja-Kana") && !itemsToBeCheckedForJaKana.includes("ja")) {
+              listItemErrors.push(`${item.title}-Language`)
             }
             itemsToBeCheckedForJaKana = []
           } //: TITLE
+
+          else if (itemTitle == "alternative title") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              // Language key name - subitem_1551255721061
+              itemsToBeCheckedForJaKana.push(modelObject[idxModelObject].subitem_1551255721061)
+            }
+            if (itemsToBeCheckedForJaKana.includes("ja-Kana") && !itemsToBeCheckedForJaKana.includes("ja")) {
+              listItemErrors.push(`${item.title}-Language`)
+            }
+            itemsToBeCheckedForJaKana = []
+          } //: ALTERNATIVE
           
           else if (itemTitle == "creator") {
             let modelObject = eval(`iRecordsModel.${key}`)
@@ -4466,34 +4479,27 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               let subLevelItem = modelObject[idxModelObject]
               let subLevelItemKeys = Object.keys(subLevelItem)
               for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
-                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "creatorAffiliations") {
-                  let creatorAffiliations1stLevel = subLevelItem.creatorAffiliations
-                  for (let idxcreatorAffiliations1stLevel=0; idxcreatorAffiliations1stLevel < creatorAffiliations1stLevel.length; idxcreatorAffiliations1stLevel++) {
-                    let creatorAffiliations2ndLevel = creatorAffiliations1stLevel[idxcreatorAffiliations1stLevel]
-                    // affiliationNames array
-                    let affiliation_Names = creatorAffiliations2ndLevel.affiliationNames
-                    for (let idxaffiliation_Names=0; idxaffiliation_Names < affiliation_Names.length; idxaffiliation_Names++) {
-                      // Language key name - affiliationNameLang
-                      if (!itemsToBeCheckedForJaKana.includes(affiliation_Names[idxaffiliation_Names].affiliationNameLang)) {
-                        itemsToBeCheckedForJaKana.push(affiliation_Names[idxaffiliation_Names].affiliationNameLang)
-                      } else {
-                        listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-affiliationNames-Language`)
-                      }
-                    } //: affiliation_Names loop
-                  } //: creatorAffiliations1stLevel
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "creatorAlternatives") {
+                  let creatorAlternativesObject = subLevelItem.creatorAlternatives
+                  for (let idxcreatorAlternativesObject=0; idxcreatorAlternativesObject < creatorAlternativesObject.length; idxcreatorAlternativesObject++) {
+                    // Language key name - creatorAlternativeLang
+                    itemsToBeCheckedForJaKana.push(creatorAlternativesObject[idxcreatorAlternativesObject].creatorAlternativeLang)
+                  } //: idxcreatorAlternativesObject
+                  if (itemsToBeCheckedForJaKana.includes("ja-Kana") && !itemsToBeCheckedForJaKana.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
                   itemsToBeCheckedForJaKana = []
-                } //: if creatorAffiliations
-        
+                } //: if creatorAlternatives
+
                 else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "creatorNames") {
                   let creatorNamesObject = subLevelItem.creatorNames
                   for (let idxcreatorNamesObject=0; idxcreatorNamesObject < creatorNamesObject.length; idxcreatorNamesObject++) {
                     // Language key name - creatorNameLang
-                    if (!itemsToBeCheckedForJaKana.includes(creatorNamesObject[idxcreatorNamesObject].creatorNameLang)) {
-                      itemsToBeCheckedForJaKana.push(creatorNamesObject[idxcreatorNamesObject].creatorNameLang)
-                    } else {
-                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
-                    }
+                    itemsToBeCheckedForJaKana.push(creatorNamesObject[idxcreatorNamesObject].creatorNameLang)
                   } //: idxcreatorNamesObject
+                  if (itemsToBeCheckedForJaKana.includes("ja-Kana") && !itemsToBeCheckedForJaKana.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
                   itemsToBeCheckedForJaKana = []
                 } //: if creatorNames
         
@@ -4501,12 +4507,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   let familyNamesObject = subLevelItem.familyNames
                   for (let idxfamilyNamesObject=0; idxfamilyNamesObject < familyNamesObject.length; idxfamilyNamesObject++) {
                     // Language key name - familyNameLang
-                    if (!itemsToBeCheckedForJaKana.includes(familyNamesObject[idxfamilyNamesObject].familyNameLang)) {
-                      itemsToBeCheckedForJaKana.push(familyNamesObject[idxfamilyNamesObject].familyNameLang)
-                    } else {
-                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
-                    }
+                    itemsToBeCheckedForJaKana.push(familyNamesObject[idxfamilyNamesObject].familyNameLang)
                   } //: familyNamesObject
+                  if (itemsToBeCheckedForJaKana.includes("ja-Kana") && !itemsToBeCheckedForJaKana.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
                   itemsToBeCheckedForJaKana = []
                 } //: if familyNames
         
@@ -4514,12 +4519,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   let givenNamesObject = subLevelItem.givenNames
                   for (let idxgivenNamesObject=0; idxgivenNamesObject < givenNamesObject.length; idxgivenNamesObject++) {
                     // Language key name - givenNameLang
-                    if (!itemsToBeCheckedForJaKana.includes(givenNamesObject[idxgivenNamesObject].givenNameLang)) {
-                      itemsToBeCheckedForJaKana.push(givenNamesObject[idxgivenNamesObject].givenNameLang)
-                    } else {
-                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
-                    }
+                    itemsToBeCheckedForJaKana.push(givenNamesObject[idxgivenNamesObject].givenNameLang)
                   } //: givenNamesObject
+                  if (itemsToBeCheckedForJaKana.includes("ja-Kana") && !itemsToBeCheckedForJaKana.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
                   itemsToBeCheckedForJaKana = []
                 } //: if givenNames
         
@@ -4535,34 +4539,27 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               let subLevelItem = modelObject[idxModelObject]
               let subLevelItemKeys = Object.keys(subLevelItem)
               for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
-                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "contributorAffiliations") {
-                  let contributorAffiliations1stLevel = subLevelItem.contributorAffiliations
-                  for (let idxcontributorAffiliations1stLevel=0; idxcontributorAffiliations1stLevel < contributorAffiliations1stLevel.length; idxcontributorAffiliations1stLevel++) {
-                    let contributorAffiliations2ndLevel = contributorAffiliations1stLevel[idxcontributorAffiliations1stLevel]
-                    // contributorAffiliationNames array
-                    let affiliation_Names = contributorAffiliations2ndLevel.contributorAffiliationNames
-                    for (let idxaffiliation_Names=0; idxaffiliation_Names < affiliation_Names.length; idxaffiliation_Names++) {
-                      // Language key name - contributorAffiliationNameLang
-                      if (!itemsToBeCheckedForJaKana.includes(affiliation_Names[idxaffiliation_Names].contributorAffiliationNameLang)) {
-                        itemsToBeCheckedForJaKana.push(affiliation_Names[idxaffiliation_Names].contributorAffiliationNameLang)
-                      } else {
-                        listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-contributorAffiliationNames-Language`)
-                      }
-                    } //: affiliation_Names loop
-                  } //: contributorAffiliations1stLevel
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "contributorAlternatives") {
+                  let contributorAlternativesObject = subLevelItem.contributorAlternatives
+                  for (let idxcontributorAlternativesObject=0; idxcontributorAlternativesObject < contributorAlternativesObject.length; idxcontributorAlternativesObject++) {
+                    // Language key name - lang
+                    itemsToBeCheckedForJaKana.push(contributorAlternativesObject[idxcontributorAlternativesObject].contributorAlternativeLang)
+                  } //: idxcontributorAlternativesObject
+                  if (itemsToBeCheckedForJaKana.includes("ja-Kana") && !itemsToBeCheckedForJaKana.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
                   itemsToBeCheckedForJaKana = []
-                } //: if contributorAffiliations
+                } //: if contributorAlternatives
         
                 else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "contributorNames") {
                   let contributorNamesObject = subLevelItem.contributorNames
                   for (let idxcontributorNamesObject=0; idxcontributorNamesObject < contributorNamesObject.length; idxcontributorNamesObject++) {
                     // Language key name - lang
-                    if (!itemsToBeCheckedForJaKana.includes(contributorNamesObject[idxcontributorNamesObject].lang)) {
-                      itemsToBeCheckedForJaKana.push(contributorNamesObject[idxcontributorNamesObject].lang)
-                    } else {
-                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
-                    }
+                    itemsToBeCheckedForJaKana.push(contributorNamesObject[idxcontributorNamesObject].lang)
                   } //: idxcontributorNamesObject
+                  if (itemsToBeCheckedForJaKana.includes("ja-Kana") && !itemsToBeCheckedForJaKana.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
                   itemsToBeCheckedForJaKana = []
                 } //: if contributorNames
         
@@ -4570,12 +4567,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   let familyNamesObject = subLevelItem.familyNames
                   for (let idxfamilyNamesObject=0; idxfamilyNamesObject < familyNamesObject.length; idxfamilyNamesObject++) {
                     // Language key name - familyNameLang
-                    if (!itemsToBeCheckedForJaKana.includes(familyNamesObject[idxfamilyNamesObject].familyNameLang)) {
-                      itemsToBeCheckedForJaKana.push(familyNamesObject[idxfamilyNamesObject].familyNameLang)
-                    } else {
-                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
-                    }
+                    itemsToBeCheckedForJaKana.push(familyNamesObject[idxfamilyNamesObject].familyNameLang)
                   } //: familyNamesObject
+                  if (itemsToBeCheckedForJaKana.includes("ja-Kana") && !itemsToBeCheckedForJaKana.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
                   itemsToBeCheckedForJaKana = []
                 } //: if familyNames
         
@@ -4583,12 +4579,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   let givenNamesObject = subLevelItem.givenNames
                   for (let idxgivenNamesObject=0; idxgivenNamesObject < givenNamesObject.length; idxgivenNamesObject++) {
                     // Language key name - givenNameLang
-                    if (!itemsToBeCheckedForJaKana.includes(givenNamesObject[idxgivenNamesObject].givenNameLang)) {
-                      itemsToBeCheckedForJaKana.push(givenNamesObject[idxgivenNamesObject].givenNameLang)
-                    } else {
-                      listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
-                    }
+                    itemsToBeCheckedForJaKana.push(givenNamesObject[idxgivenNamesObject].givenNameLang)
                   } //: givenNamesObject
+                  if (itemsToBeCheckedForJaKana.includes("ja-Kana") && !itemsToBeCheckedForJaKana.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
                   itemsToBeCheckedForJaKana = []
                 } //: if givenNames
         
@@ -4597,43 +4592,49 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             itemsToBeCheckedForJaKana = []
           } //: CONTRIBUTOR
 
-          /* USE WHEN HOLDING AGENT AND CATALOG IS ALREADY MAPPED
+           /* USE WHEN HOLDING AGENT AND CATALOG IS ALREADY MAPPED
           else if (itemTitle == "holding agent") {
             let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
               let subLevelItem = modelObject[idxModelObject]
               let subLevelItemKeys = Object.keys(subLevelItem)
               for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
-                // Holding Agent Name key name - xxxxxxxxxx
-                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "xxxxxxxxxx") {
-                  let holdingAgentNameObject = subLevelItem.xxxxxxxxxx
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "holdingAgentName") {
+                  let holdingAgentNameObject = subLevelItem.xxxxxxxxxxx
                   for (let idxholdingAgentNameObject=0; idxholdingAgentNameObject < holdingAgentNameObject.length; idxholdingAgentNameObject++) {
-                    // Language key name - yyyyyyyyyy
-                    if (!itemsToBeCheckedForDuplication.includes(holdingAgentNameObject[idxholdingAgentNameObject].yyyyyyyyyy)) {
-                      itemsToBeCheckedForDuplication.push(holdingAgentNameObject[idxholdingAgentNameObject].yyyyyyyyyy)
-                    } else {
-                      listItemErrors.push(`${item.title}-Holding Agent Name-Language`)
-                    }
+                    // Language key name - xxxxxxxxxxx
+                    itemsToBeCheckedForJaKana.push(holdingAgentNameObject[idxholdingAgentNameObject].xxxxxxxxxxx)
                   } //: idxholdingAgentNameObject
-                  itemsToBeCheckedForDuplication = []
+                  if (itemsToBeCheckedForJaKana.includes("ja-Kana") && !itemsToBeCheckedForJaKana.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
+                  itemsToBeCheckedForJaKana = []
                 } //: if holdingAgentName
-        
               } //: idxSubLevelItemKeys
             } //: idxModelObject
-            itemsToBeCheckedForDuplication = []
+            itemsToBeCheckedForJaKana = []
           } //: HOLDING AGENT
 
           else if (itemTitle == "catalog") {
             let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
-              // Language key name - xxxxxxxxxxxxx
-              if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].xxxxxxxxxxxxx)) {
-                itemsToBeCheckedForDuplication.push(modelObject[idxModelObject].xxxxxxxxxxxxx)
-              } else {
-                listItemErrors.push(`${item.title}-Language`)
-              }
-            }
-            itemsToBeCheckedForDuplication = []
+              let subLevelItem = modelObject[idxModelObject]
+              let subLevelItemKeys = Object.keys(subLevelItem)
+              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "catalogTitle") {
+                  let catalogTitleObject = subLevelItem.xxxxxxxxxxx
+                  for (let idxcatalogTitleObject=0; idxcatalogTitleObject < catalogTitleObject.length; idxcatalogTitleObject++) {
+                    // Language key name - xxxxxxxxxxx
+                    itemsToBeCheckedForJaKana.push(catalogTitleObject[idxcatalogTitleObject].xxxxxxxxxxx)
+                  } //: idxcatalogTitleObject
+                  if (itemsToBeCheckedForJaKana.includes("ja-Kana") && !itemsToBeCheckedForJaKana.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
+                  itemsToBeCheckedForJaKana = []
+                } //: if catalogTitle
+              } //: idxSubLevelItemKeys
+            } //: idxModelObject
+            itemsToBeCheckedForJaKana = []
           } //: CATALOG
           */
 
@@ -4641,6 +4642,224 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
         if (listItemErrors.length > 0) {
           let message = $("#ja_kana_error").val() + '<br/><br/>';
+          message += listItemErrors[0];
+          for (let k = 1; k < listItemErrors.length; k++) {
+            let subMessage = ', ' + listItemErrors[k];
+            message += subMessage;
+          }
+          $("#inputModal").html(message);
+          $("#allModal").modal("show");
+          return false;
+        }
+        return true;
+      }
+
+      $scope.validateJaLatn = function () {
+        let listItemErrors = []
+        let iRecordsForm = $rootScope.recordsVM.invenioRecordsForm
+        let iRecordsModel = $rootScope.recordsVM.invenioRecordsModel
+        var itemsToBeCheckedForJaLatn = []
+
+        console.log(iRecordsForm)
+        console.log(iRecordsModel)
+
+        iRecordsForm.forEach(item => {
+          let itemTitle = item.title.toLowerCase()
+          let key = item.key[0]
+          
+          if (itemTitle == "title") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              // Language key name - subitem_1551255648112
+              itemsToBeCheckedForJaLatn.push(modelObject[idxModelObject].subitem_1551255648112)
+            }
+            if (itemsToBeCheckedForJaLatn.includes("ja-Latn") && !itemsToBeCheckedForJaLatn.includes("ja")) {
+              listItemErrors.push(`${item.title}-Language`)
+            }
+            itemsToBeCheckedForJaLatn = []
+          } //: TITLE
+
+          else if (itemTitle == "alternative title") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              // Language key name - subitem_1551255721061
+              itemsToBeCheckedForJaLatn.push(modelObject[idxModelObject].subitem_1551255721061)
+            }
+            if (itemsToBeCheckedForJaLatn.includes("ja-Latn") && !itemsToBeCheckedForJaLatn.includes("ja")) {
+              listItemErrors.push(`${item.title}-Language`)
+            }
+            itemsToBeCheckedForJaLatn = []
+          } //: ALTERNATIVE
+          
+          else if (itemTitle == "creator") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              let subLevelItem = modelObject[idxModelObject]
+              let subLevelItemKeys = Object.keys(subLevelItem)
+              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "creatorAlternatives") {
+                  let creatorAlternativesObject = subLevelItem.creatorAlternatives
+                  for (let idxcreatorAlternativesObject=0; idxcreatorAlternativesObject < creatorAlternativesObject.length; idxcreatorAlternativesObject++) {
+                    // Language key name - creatorAlternativeLang
+                    itemsToBeCheckedForJaLatn.push(creatorAlternativesObject[idxcreatorAlternativesObject].creatorAlternativeLang)
+                  } //: idxcreatorAlternativesObject
+                  if (itemsToBeCheckedForJaLatn.includes("ja-Latn") && !itemsToBeCheckedForJaLatn.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
+                  itemsToBeCheckedForJaLatn = []
+                } //: if creatorAlternatives
+
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "creatorNames") {
+                  let creatorNamesObject = subLevelItem.creatorNames
+                  for (let idxcreatorNamesObject=0; idxcreatorNamesObject < creatorNamesObject.length; idxcreatorNamesObject++) {
+                    // Language key name - creatorNameLang
+                    itemsToBeCheckedForJaLatn.push(creatorNamesObject[idxcreatorNamesObject].creatorNameLang)
+                  } //: idxcreatorNamesObject
+                  if (itemsToBeCheckedForJaLatn.includes("ja-Latn") && !itemsToBeCheckedForJaLatn.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
+                  itemsToBeCheckedForJaLatn = []
+                } //: if creatorNames
+        
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "familyNames") {
+                  let familyNamesObject = subLevelItem.familyNames
+                  for (let idxfamilyNamesObject=0; idxfamilyNamesObject < familyNamesObject.length; idxfamilyNamesObject++) {
+                    // Language key name - familyNameLang
+                    itemsToBeCheckedForJaLatn.push(familyNamesObject[idxfamilyNamesObject].familyNameLang)
+                  } //: familyNamesObject
+                  if (itemsToBeCheckedForJaLatn.includes("ja-Latn") && !itemsToBeCheckedForJaLatn.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
+                  itemsToBeCheckedForJaLatn = []
+                } //: if familyNames
+        
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "givenNames") {
+                  let givenNamesObject = subLevelItem.givenNames
+                  for (let idxgivenNamesObject=0; idxgivenNamesObject < givenNamesObject.length; idxgivenNamesObject++) {
+                    // Language key name - givenNameLang
+                    itemsToBeCheckedForJaLatn.push(givenNamesObject[idxgivenNamesObject].givenNameLang)
+                  } //: givenNamesObject
+                  if (itemsToBeCheckedForJaLatn.includes("ja-Latn") && !itemsToBeCheckedForJaLatn.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
+                  itemsToBeCheckedForJaLatn = []
+                } //: if givenNames
+        
+              } //: idxSubLevelItemKeys
+            } //: idxModelObject
+            itemsToBeCheckedForJaLatn = []
+        
+          } //: CREATOR
+          
+          else if (itemTitle == "contributor") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              let subLevelItem = modelObject[idxModelObject]
+              let subLevelItemKeys = Object.keys(subLevelItem)
+              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "contributorAlternatives") {
+                  let contributorAlternativesObject = subLevelItem.contributorAlternatives
+                  for (let idxcontributorAlternativesObject=0; idxcontributorAlternativesObject < contributorAlternativesObject.length; idxcontributorAlternativesObject++) {
+                    // Language key name - lang
+                    itemsToBeCheckedForJaLatn.push(contributorAlternativesObject[idxcontributorAlternativesObject].contributorAlternativeLang)
+                  } //: idxcontributorAlternativesObject
+                  if (itemsToBeCheckedForJaLatn.includes("ja-Latn") && !itemsToBeCheckedForJaLatn.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
+                  itemsToBeCheckedForJaLatn = []
+                } //: if contributorAlternatives
+        
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "contributorNames") {
+                  let contributorNamesObject = subLevelItem.contributorNames
+                  for (let idxcontributorNamesObject=0; idxcontributorNamesObject < contributorNamesObject.length; idxcontributorNamesObject++) {
+                    // Language key name - lang
+                    itemsToBeCheckedForJaLatn.push(contributorNamesObject[idxcontributorNamesObject].lang)
+                  } //: idxcontributorNamesObject
+                  if (itemsToBeCheckedForJaLatn.includes("ja-Latn") && !itemsToBeCheckedForJaLatn.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
+                  itemsToBeCheckedForJaLatn = []
+                } //: if contributorNames
+        
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "familyNames") {
+                  let familyNamesObject = subLevelItem.familyNames
+                  for (let idxfamilyNamesObject=0; idxfamilyNamesObject < familyNamesObject.length; idxfamilyNamesObject++) {
+                    // Language key name - familyNameLang
+                    itemsToBeCheckedForJaLatn.push(familyNamesObject[idxfamilyNamesObject].familyNameLang)
+                  } //: familyNamesObject
+                  if (itemsToBeCheckedForJaLatn.includes("ja-Latn") && !itemsToBeCheckedForJaLatn.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
+                  itemsToBeCheckedForJaLatn = []
+                } //: if familyNames
+        
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "givenNames") {
+                  let givenNamesObject = subLevelItem.givenNames
+                  for (let idxgivenNamesObject=0; idxgivenNamesObject < givenNamesObject.length; idxgivenNamesObject++) {
+                    // Language key name - givenNameLang
+                    itemsToBeCheckedForJaLatn.push(givenNamesObject[idxgivenNamesObject].givenNameLang)
+                  } //: givenNamesObject
+                  if (itemsToBeCheckedForJaLatn.includes("ja-Latn") && !itemsToBeCheckedForJaLatn.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
+                  itemsToBeCheckedForJaLatn = []
+                } //: if givenNames
+        
+              } //: idxSubLevelItemKeys
+            } //: idxModelObject
+            itemsToBeCheckedForJaLatn = []
+          } //: CONTRIBUTOR
+
+           /* USE WHEN HOLDING AGENT AND CATALOG IS ALREADY MAPPED
+          else if (itemTitle == "holding agent") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              let subLevelItem = modelObject[idxModelObject]
+              let subLevelItemKeys = Object.keys(subLevelItem)
+              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "holdingAgentName") {
+                  let holdingAgentNameObject = subLevelItem.xxxxxxxxxxx
+                  for (let idxholdingAgentNameObject=0; idxholdingAgentNameObject < holdingAgentNameObject.length; idxholdingAgentNameObject++) {
+                    // Language key name - xxxxxxxxxxx
+                    itemsToBeCheckedForJaLatn.push(holdingAgentNameObject[idxholdingAgentNameObject].xxxxxxxxxxx)
+                  } //: idxholdingAgentNameObject
+                  if (itemsToBeCheckedForJaLatn.includes("ja-Latn") && !itemsToBeCheckedForJaLatn.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
+                  itemsToBeCheckedForJaLatn = []
+                } //: if holdingAgentName
+              } //: idxSubLevelItemKeys
+            } //: idxModelObject
+            itemsToBeCheckedForJaLatn = []
+          } //: HOLDING AGENT
+
+          else if (itemTitle == "catalog") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              let subLevelItem = modelObject[idxModelObject]
+              let subLevelItemKeys = Object.keys(subLevelItem)
+              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "catalogTitle") {
+                  let catalogTitleObject = subLevelItem.xxxxxxxxxxx
+                  for (let idxcatalogTitleObject=0; idxcatalogTitleObject < catalogTitleObject.length; idxcatalogTitleObject++) {
+                    // Language key name - xxxxxxxxxxx
+                    itemsToBeCheckedForJaLatn.push(catalogTitleObject[idxcatalogTitleObject].xxxxxxxxxxx)
+                  } //: idxcatalogTitleObject
+                  if (itemsToBeCheckedForJaLatn.includes("ja-Latn") && !itemsToBeCheckedForJaLatn.includes("ja")) {
+                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
+                  }
+                  itemsToBeCheckedForJaLatn = []
+                } //: if catalogTitle
+              } //: idxSubLevelItemKeys
+            } //: idxModelObject
+            itemsToBeCheckedForJaLatn = []
+          } //: CATALOG
+          */
+
+        }) //: iRecordsForm.forEach
+
+        if (listItemErrors.length > 0) {
+          let message = $("#ja_latn_error").val() + '<br/><br/>';
           message += listItemErrors[0];
           for (let k = 1; k < listItemErrors.length; k++) {
             let subMessage = ', ' + listItemErrors[k];
