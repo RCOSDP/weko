@@ -1865,7 +1865,7 @@ def send_mail_reminder(mail_info):
 
     :mail_info: object
     """
-    subject, body = get_mail_data(mail_info.get('mail_id'))
+    subject, body = (mail_info.get('mail_id'))
     if not body:
         raise ValueError('Cannot get email template')
     body = replace_characters(mail_info, body)
@@ -1987,6 +1987,53 @@ def get_mail_data(mail_id):
     else:
         return "", ""
 
+def get_mail_data_tpl(file_name):
+    """Get data of a email.
+
+    :file_name: file name template
+    """
+    file_path = get_file_path(file_name)
+    return get_subject_and_content(file_path)
+
+def get_subject_and_content(file_path):
+    """Get mail subject and content from template file.
+
+    :file_path: this is a full path
+    """
+    import os
+    if not os.path.exists(file_path):
+        return None, None
+    file = open(file_path, 'r')
+    subject = body = ''
+    index = 0
+    """ Get subject and content body from template file """
+    """ The first line is mail subject """
+    """ Exclude the first line is mail content """
+    for line in file:
+        if index == 0:
+            subject = line
+        else:
+            body += line
+        index += 1
+    """ Custom subject (remove 'Subject：' from subject) """
+    subject = subject.replace('Subject：', '')
+    subject = subject.replace('\n', '')
+    return subject, body
+
+def get_file_path(file_name):
+    """Get file path from file name.
+
+    :file_name: file name
+    """
+    config = current_app.config
+    template_folder_path = \
+        config.get("WEKO_WORKFLOW_MAIL_TEMPLATE_FOLDER_PATH")
+  
+    # Get file path (template path + file name)
+    if template_folder_path is not None and file_name is not None:        
+        return os.path.join(template_folder_path, file_name)
+    else:       
+        return ""
 
 def replace_characters(data, content):
     """Replace character for content.
@@ -2038,8 +2085,8 @@ def replace_characters(data, content):
         '[data_download_date]': 'data_download_date',
         '[usage_report_url]': 'usage_report_url',
         '[restricted_usage_activity_id]': 'restricted_usage_activity_id',
-        '[restricted_institution_name_ja]':'restricted_institution_name_ja',
-        '[restricted_institution_name_en]':'restricted_institution_name_en',
+#        '[restricted_institution_name_ja]':'restricted_institution_name_ja',
+#        '[restricted_institution_name_en]':'restricted_institution_name_en',
         '[file_name]' : 'file_name',
         '[restricted_download_count]':'restricted_download_count',
         '[restricted_download_count_ja]':'restricted_download_count_ja',
@@ -2197,8 +2244,8 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
             'subitem_restricted_access_application_date'),
         restricted_mail_address=item_info.get(
             'subitem_restricted_access_mail_address'),
-        restricted_institution_name_ja = institution_name,
-        restricted_institution_name_en = institution_name,
+#        restricted_institution_name_ja = institution_name,
+#        restricted_institution_name_en = institution_name,
         restricted_download_link='',
         restricted_expiration_date='',
         restricted_approver_name='',
@@ -3284,6 +3331,23 @@ def process_send_mail(mail_info, mail_id):
         body = replace_characters(mail_info, body)
         return send_mail(subject, mail_info['mail_recipient'], body)
 
+def process_send_mail_tpl(mail_info, mail_pattern_name):
+    """Send mail approval rejected.
+
+    :mail_info: object
+    """
+    if not mail_info.get("mail_recipient"):
+        current_app.logger.error('Mail address is not defined')
+        return
+
+    subject, body = get_mail_data_tpl(mail_pattern_name)
+    current_app.logger.error("subject:{}".format(subject))
+    current_app.logger.error("body:{}".format(body))
+
+    if body and subject:
+        body = replace_characters(mail_info, body)
+        current_app.logger.error('Mail send body and subject')
+        return send_mail(subject, mail_info['mail_recipient'], body)
 
 def cancel_expired_usage_reports():
     """Cancel expired usage reports."""
@@ -3320,24 +3384,23 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
             'guest_mail')
 
     if actions_mail_setting["approval"]:
-        if actions_mail_setting.get("previous", {}).get(
-                "inform_approval", False):
-            process_send_mail(
-                mail_info,
-                current_app.config["WEKO_WORKFLOW_APPROVE_DONE"])
+        if actions_mail_setting.get("previous", {}):
+            setting =actions_mail_setting.get("previous")\
+           .get("inform_approval", {})
+            if _check_mail_setting(setting):
+                process_send_mail(mail_info, setting["mail"])
 
-        if actions_mail_setting.get('next', {}).get("request_approval", False):
-            approval_user = None
-            if next_step_appover_id :
+        if actions_mail_setting.get('next', {}):
+            setting = actions_mail_setting.get("next") \
+                .get("request_approval", {})
+            if _check_mail_setting(setting):
                 approval_user = db.session.query(User).filter_by(
                     id=int(next_step_appover_id)).first()
-            if not approval_user:
-                current_app.logger.error("Does not have approval data")
-            else:
-                mail_info['mail_recipient'] = approval_user.email
-            process_send_mail(
-                mail_info,
-                current_app.config["WEKO_WORKFLOW_REQUEST_APPROVAL"])
+                if not approval_user:
+                    current_app.logger.error("Does not have approval data")
+                else:
+                    mail_info['mail_recipient'] = approval_user.email
+                    process_send_mail(mail_info, setting["mail"])
 
     if actions_mail_setting["reject"]:
         if actions_mail_setting.get("previous", {}):
@@ -3999,11 +4062,11 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
         for file in files:
             #{'url': {'url': 'https://weko3.example.org/record/1/files/aaa (1).txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2023-02-03'}], 'terms': 'term_free', 'format': 'text/plain', 'provide': [{'role': 'none_loggin', 'workflow': '2'}, {'role': '3', 'workflow': '1'}], 'version': '1', 'dataType': 'perfectures', 'filename': 'aaa (1).txt', 'filesize': [{'value': '5 B'}], 'mimetype': 'text/plain', 'accessrole': 'open_restricted', 'version_id': '2a0aa15b-d3e2-4846-9e3a-e1e734a1a620', 'displaytype': 'simple', 'licensefree': 'licence text', 'licensetype': 'license_free', 'termsDescription': '利用規約のフリーインプット本文です'}
             if file['accessrole'] in 'open_restricted':
-            
+
                 if file['filename'] != permission.file_name:
                     # create all open_restricted content records in unapplyed
                     FilePermission.init_file_permission(permission.user_id, permission.record_id, file['filename'], activity_id)
-                
+
                 #insert file_onetime_download
                 extra_info:dict = deepcopy(activity_detail.extra_info)
                 extra_info.update({'file_name' : file['filename']})
@@ -4017,7 +4080,7 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
         permissions = FilePermission.find_by_activity(activity_id)
         for permi in permissions:
             FilePermission.update_status(permi,1) #1:Approval
-    
+
     elif isinstance(permission,GuestActivity): #guest user
 
         #insert file_onetime_download

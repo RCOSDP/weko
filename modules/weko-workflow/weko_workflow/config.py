@@ -209,6 +209,8 @@ WEKO_WORKFLOW_CONTINUE_APPROVAL = False
 
 WEKO_WORKFLOW_ENGLISH_MAIL_TEMPLATE_FOLDER_PATH = ''
 WEKO_WORKFLOW_JAPANESE_MAIL_TEMPLATE_FOLDER_PATH = ''
+WEKO_WORKFLOW_MAIL_TEMPLATE_FOLDER_PATH = 'modules/weko-workflow/weko_workflow/templates/weko_workflow/email_templates/'
+"""Email template path"""
 
 WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE_PERFECTURE_AND_LOCATION_DATA_OF_GENERAL_USER = ''
 """Receiving Usage Application <Other than Perfecture Data & Location Data: General user> mail template"""

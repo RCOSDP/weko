@@ -64,7 +64,7 @@ from weko_workflow.api import WorkFlow
 
 from weko_records_ui.fd import add_signals_info
 from weko_records_ui.utils import check_items_settings, get_file_info_list
-from weko_workflow.utils import get_item_info, process_send_mail, set_mail_info
+from weko_workflow.utils import get_item_info, process_send_mail_tpl, set_mail_info 
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
@@ -715,10 +715,9 @@ def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord,
     
     #send mail
     mail_pattern_name:str = current_app.config.get('WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL')
-
     mail_info = set_mail_info(get_item_info(pid.object_uuid), type("" ,(object,),dict(activity_id = '')))
     mail_info.update(result)
-    if process_send_mail( mail_info = mail_info, mail_pattern_name=mail_pattern_name) :
+    if process_send_mail_tpl( mail_info = mail_info, mail_pattern_name = mail_pattern_name) :
         return _('Success Secret URL Generate')
     else:
         abort(500)
