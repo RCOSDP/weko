@@ -2314,10 +2314,11 @@ def process_send_notification_mail(activity_detail, action_endpoint,
     if 'item_login' in action_endpoint \
             and action_mails_setting.get("previous", {}):
         """ Send mail for register to notify that registration is done"""
-        setting = action_mails_setting.get("previous") \
-            .get("inform_itemReg", {})
-        if _check_mail_setting(setting):
-            send_mail_registration_done(mail_info, setting["mail"])
+        if not action_mails_setting["approval"]:
+            setting = action_mails_setting.get("previous") \
+                .get("inform_itemReg", {})
+            if _check_mail_setting(setting):
+                send_mail_registration_done(mail_info, setting["mail"])
     if current_user.is_authenticated and not is_guest_user:
         if 'approval_' in next_action_endpoint \
                 and 'administrator' not in next_action_endpoint:
@@ -3389,6 +3390,11 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
            .get("inform_approval", {})
             if _check_mail_setting(setting):
                 process_send_mail(mail_info, setting["mail"])
+            else:
+                setting =actions_mail_setting.get("previous")\
+                    .get("inform_itemReg", {})         
+                if _check_mail_setting(setting):
+                    process_send_mail(mail_info, setting["mail"])    
 
         if actions_mail_setting.get('next', {}):
             setting = actions_mail_setting.get("next") \
