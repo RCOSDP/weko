@@ -3489,12 +3489,17 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         if (!this.validateRequiredItem()) {
           // Check required item
           return false;
+        } else if(!this.validateDateFormat()) {
+            return false;
         } else if(!this.validateDuplicateItems()) {
           return false; 
-        } else if(!this.validateJaKana()) {
-          return false;
-        } else if(!this.validateJaLatn()) {
-          return false;
+        // } else if(!this.validateJaKana()) {
+        //   return false;
+        // } else if(!this.validateJaLatn()) {
+        //   return false;
+        // }
+        // } else if(!this.validateDateFormat()) {
+        //   return false;
         } else if(!this.validatePosition()) {
           return false;
         } else if (!this.validateFieldMaxItems()) {
@@ -4031,6 +4036,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let iRecordsModel = $rootScope.recordsVM.invenioRecordsModel
         var itemsToBeCheckedForDuplication = []
         var itemsToBeCheckedForDuplicationForDateUse = []
+        
+        console.log(iRecordsForm)
+        // console.log(Object.keys(iRecordsForm))
+        console.log(iRecordsModel)
 
         iRecordsForm.forEach(item => {
           let itemTitle = item.title.toLowerCase()
@@ -4039,9 +4048,16 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if (itemTitle == "title") {
             let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
-              // Language key name - subitem_1551255648112
-              if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].subitem_1551255648112)) {
-                itemsToBeCheckedForDuplication.push(modelObject[idxModelObject].subitem_1551255648112)
+              let formSubItem = item.items //Array
+              for (let idxformSubItem=0; idxformSubItem < formSubItem.length; idxformSubItem++) {
+                var languageKey = ""
+                var lastKeyElement = formSubItem[idxformSubItem].key.length - 1
+                if (formSubItem[idxformSubItem].title == "Language") {
+                  languageKey = formSubItem[idxformSubItem].key[lastKeyElement]
+                }
+              }
+              if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject][languageKey])) {
+                itemsToBeCheckedForDuplication.push(modelObject[idxModelObject][languageKey])
               } else {
                 listItemErrors.push(`${item.title}-Language`)
               }
@@ -4056,6 +4072,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               let subLevelItemKeys = Object.keys(subLevelItem)
               for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
                 if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "creatorAffiliations") {
+                  let formSubItemKey = item.items //Array
                   let creatorAffiliations1stLevel = subLevelItem.creatorAffiliations
                   for (let idxcreatorAffiliations1stLevel=0; idxcreatorAffiliations1stLevel < creatorAffiliations1stLevel.length; idxcreatorAffiliations1stLevel++) {
                     let creatorAffiliations2ndLevel = creatorAffiliations1stLevel[idxcreatorAffiliations1stLevel]
@@ -4190,23 +4207,37 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
               let subLevelItem = modelObject[idxModelObject]
-              let subLevelItemKeys = Object.keys(subLevelItem)
-              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
-                // Related Title key name - subitem_1523320863692
-                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1523320863692") {
-                  let relatedTitleObject = subLevelItem.subitem_1523320863692
-                  for (let idxrelatedTitleObject=0; idxrelatedTitleObject < relatedTitleObject.length; idxrelatedTitleObject++) {
-                    // Language key name - subitem_1523320867455
-                    if (!itemsToBeCheckedForDuplication.includes(relatedTitleObject[idxrelatedTitleObject].subitem_1523320867455)) {
-                      itemsToBeCheckedForDuplication.push(relatedTitleObject[idxrelatedTitleObject].subitem_1523320867455)
-                    } else {
-                      listItemErrors.push(`${item.title}-Related Title-Language`)
+              let formSubItem = item.items
+              
+              // For getting the last element of the target item's language key
+              for (let idxformSubItem=0; idxformSubItem < formSubItem.length; idxformSubItem++) {
+                if (formSubItem[idxformSubItem].title == "Related Title") {
+                  var languageKey = ""
+                  var lastKeyElement = ""
+                  let formTargetSubItems = formSubItem[idxformSubItem].items
+                  let lastKeyElementLevel1 = formSubItem[idxformSubItem].key.length - 1
+                  let targetTitleKey = formSubItem[idxformSubItem].key[lastKeyElementLevel1]
+
+                  for (let idxformTargetSubItems=0; idxformTargetSubItems < formTargetSubItems.length; idxformTargetSubItems++) {
+                    if (formTargetSubItems[idxformTargetSubItems].title == "Language") {
+                      lastKeyElement = formTargetSubItems[idxformTargetSubItems].key.length - 1
+                      languageKey = formTargetSubItems[idxformTargetSubItems].key[lastKeyElement]
                     }
-                  } //: idxrelatedTitleObject
-                  itemsToBeCheckedForDuplication = []
-                } //: if relatedTitle
-        
-              } //: idxSubLevelItemKeys
+                  }
+
+                  let subLevelItemKeys = eval(`subLevelItem.${targetTitleKey}`)
+
+                  for (let idxsubLevelItemKeys=0; idxsubLevelItemKeys < subLevelItemKeys.length; idxsubLevelItemKeys++) {
+                    if(eval(`subLevelItemKeys[idxsubLevelItemKeys].${languageKey}`)) {
+                      if (!itemsToBeCheckedForDuplication.includes(eval(`subLevelItemKeys[idxsubLevelItemKeys].${languageKey}`))) {
+                        itemsToBeCheckedForDuplication.push(eval(`subLevelItemKeys[idxsubLevelItemKeys].${languageKey}`))
+                      } else {
+                        listItemErrors.push(`${item.title}-Related Title-Language`)
+                      }
+                    } //: if eval(subLevelItemKeys)
+                  } //: for idxSubLevelItemKeys
+                } //: RELATED TITLE
+              }
             } //: idxModelObject
             itemsToBeCheckedForDuplication = []
           } //: RELATION
@@ -4860,6 +4891,60 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
         if (listItemErrors.length > 0) {
           let message = $("#ja_latn_error").val() + '<br/><br/>';
+          message += listItemErrors[0];
+          for (let k = 1; k < listItemErrors.length; k++) {
+            let subMessage = ', ' + listItemErrors[k];
+            message += subMessage;
+          }
+          $("#inputModal").html(message);
+          $("#allModal").modal("show");
+          return false;
+        }
+        return true;
+      }
+
+      $scope.validateDateFormat = function () {
+        let listItemErrors = []
+        let iRecordsForm = $rootScope.recordsVM.invenioRecordsForm
+        let iRecordsModel = $rootScope.recordsVM.invenioRecordsModel
+        let validDatePatterns = [
+          /\d{4}/, // YYYY
+          /\d{4}-\d{2}/, // YYYY-MM
+          /\d{4}-\d{2}-\d{2}/, // YYYY-MM-DD
+          /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}\+\d{2}:\d{2}/, // YYYY-MM-DDThh:mmTZD
+          /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}-\d{2}:\d{2}/, // YYYY-MM-DDThh:mmTZD
+          /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{2}:\d{2}/, // YYYY-MM -DDThh:mm:ssTZD
+          /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}-\d{2}:\d{2}/, // YYYY-MM -DDThh:mm:ssTZD
+          /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{2}\+\d{2}:\d{2}/, // YYYY-MM-DDThh:mm:ss.sTZD
+          /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{2}-\d{2}:\d{2}/, // YYYY-MM-DDThh:mm:ss.sTZD
+        ]
+
+        iRecordsForm.forEach(item => {
+          let itemTitle = item.title.toLowerCase()
+          let key = item.key[0]
+          
+          // NEEDS TO BE EDITTED AFTER MAPPING
+          if (itemTitle == "dcterms:date") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            var isValid = false
+            if (modelObject) {
+              // Date key name - subitem_source_title
+              givenDate = modelObject.subitem_source_title
+              validDatePatterns.forEach(element => {
+                if (givenDate.match(element)) {
+                  isValid = true
+                }
+              });
+              if (!isValid) {
+                listItemErrors.push(`${item.title}-Date`)
+              }
+              itemsToBeCheckedForDateFormat = []
+            } //: if modelObject
+          } //: DCTERMS:DATE
+        }) //: iRecordsForm.forEach
+
+        if (listItemErrors.length > 0) {
+          let message = $("#date_format_error").val() + '<br/><br/>';
           message += listItemErrors[0];
           for (let k = 1; k < listItemErrors.length; k++) {
             let subMessage = ', ' + listItemErrors[k];
