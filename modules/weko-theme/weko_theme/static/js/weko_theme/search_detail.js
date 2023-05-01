@@ -317,12 +317,16 @@
                 } else if (angular.element('#item_management_bulk_delete').length != 0) {
                     url = '/admin/items' + url + '&item_management=delete';
                 } else {
-                    let searchParam = window.facetSearchFunctions.getFacetSearchCondition ? 
+                    let searchParam = window.facetSearchFunctions && window.facetSearchFunctions.getFacetSearchCondition ? 
                         window.facetSearchFunctions.getFacetSearchCondition() : new URLSearchParams(window.location.search);
                     for(var entry of new URLSearchParams(query_str).entries()) {
                         searchParam.set(entry[0], entry[1]);
                     }
-                    window.invenioSearchFunctions.reSearchInvenio(searchParam);
+                    if(window.invenioSearchFunctions) {
+                        window.invenioSearchFunctions.reSearchInvenio(searchParam);
+                    }else{
+                        window.location.href = "/search?" + searchParam;
+                    }
                     return;
                 }
 
