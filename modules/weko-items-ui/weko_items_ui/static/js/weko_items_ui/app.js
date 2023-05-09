@@ -3489,17 +3489,14 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         if (!this.validateRequiredItem()) {
           // Check required item
           return false;
-        } else if(!this.validateDateFormat()) {
-            return false;
         } else if(!this.validateDuplicateItems()) {
           return false; 
-        // } else if(!this.validateJaKana()) {
-        //   return false;
-        // } else if(!this.validateJaLatn()) {
-        //   return false;
-        // }
-        // } else if(!this.validateDateFormat()) {
-        //   return false;
+        } else if(!this.validateJaKana()) {
+          return false;
+        } else if(!this.validateJaLatn()) {
+          return false;
+        } else if(!this.validateDateFormat()) {
+          return false;
         } else if(!this.validatePosition()) {
           return false;
         } else if (!this.validateFieldMaxItems()) {
@@ -4033,14 +4030,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.validateDuplicateItems = function () {
         let listItemErrors = []
         let iRecordsForm = $rootScope.recordsVM.invenioRecordsForm
-        let iRecordsModel = $rootScope.recordsVM.invenioRecordsModel
+        let iRecordsModel = $rootScope.recordsVM.invenioRecordsModel // Please do not delete this variable. It is being used
         var itemsToBeCheckedForDuplication = []
         var itemsToBeCheckedForDuplicationForDateUse = []
         
-        console.log(iRecordsForm)
-        // console.log(Object.keys(iRecordsForm))
-        console.log(iRecordsModel)
-
         iRecordsForm.forEach(item => {
           let itemTitle = item.title.toLowerCase()
           let key = item.key[0]
@@ -4048,19 +4041,24 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if (itemTitle == "title") {
             let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
-              let formSubItem = item.items //Array
-              for (let idxformSubItem=0; idxformSubItem < formSubItem.length; idxformSubItem++) {
-                var languageKey = ""
-                var lastKeyElement = formSubItem[idxformSubItem].key.length - 1
-                if (formSubItem[idxformSubItem].title == "Language") {
-                  languageKey = formSubItem[idxformSubItem].key[lastKeyElement]
+              if (modelObject[idxModelObject].subitem_1551255648112) {
+                // Language key name - subitem_1551255648112
+                if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].subitem_1551255648112)) {
+                  itemsToBeCheckedForDuplication.push(modelObject[idxModelObject].subitem_1551255648112)
+                } else {
+                  listItemErrors.push(`${item.title}-Language`)
                 }
               }
-              if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject][languageKey])) {
-                itemsToBeCheckedForDuplication.push(modelObject[idxModelObject][languageKey])
-              } else {
-                listItemErrors.push(`${item.title}-Language`)
+              
+              else if (modelObject[idxModelObject].subitem_title_language) {
+                // Language key name - subitem_title_language
+                if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].subitem_title_language)) {
+                  itemsToBeCheckedForDuplication.push(modelObject[idxModelObject].subitem_title_language)
+                } else {
+                  listItemErrors.push(`${item.title}-Language`)
+                }
               }
+              
             }
             itemsToBeCheckedForDuplication = []
           } //: TITLE
@@ -4249,12 +4247,26 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               let subLevelItemKeys = Object.keys(subLevelItem)
               for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
                 // Funder Name key name - subitem_1522399412622
-                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1522399412622") {
+                if (subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1522399412622") {
                   let funderNameObject = subLevelItem.subitem_1522399412622
                   for (let idxfunderNameObject=0; idxfunderNameObject < funderNameObject.length; idxfunderNameObject++) {
                     // Language key name - subitem_1522399416691
                     if (!itemsToBeCheckedForDuplication.includes(funderNameObject[idxfunderNameObject].subitem_1522399416691)) {
                       itemsToBeCheckedForDuplication.push(funderNameObject[idxfunderNameObject].subitem_1522399416691)
+                    } else {
+                      listItemErrors.push(`${item.title}-Funder Name-Language`)
+                    }
+                  } //: idxfunderNameObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if funderName
+
+                // Funder Name key name - subitem_funder_names
+                else if (subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_funder_names") {
+                  let funderNameObject = subLevelItem.subitem_funder_names
+                  for (let idxfunderNameObject=0; idxfunderNameObject < funderNameObject.length; idxfunderNameObject++) {
+                    // Language key name - subitem_funder_name_language
+                    if (!itemsToBeCheckedForDuplication.includes(funderNameObject[idxfunderNameObject].subitem_funder_name_language)) {
+                      itemsToBeCheckedForDuplication.push(funderNameObject[idxfunderNameObject].subitem_funder_name_language)
                     } else {
                       listItemErrors.push(`${item.title}-Funder Name-Language`)
                     }
@@ -4269,6 +4281,20 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                     // Language key name - subitem_1522721910626
                     if (!itemsToBeCheckedForDuplication.includes(awardTitleObject[idxawardTitleObject].subitem_1522721910626)) {
                       itemsToBeCheckedForDuplication.push(awardTitleObject[idxawardTitleObject].subitem_1522721910626)
+                    } else {
+                      listItemErrors.push(`${item.title}-Award Title-Language`)
+                    }
+                  } //: idxawardTitleObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if awardTitle
+
+                // Award Title key name - subitem_award_titles
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_award_titles") {
+                  let awardTitleObject = subLevelItem.subitem_award_titles
+                  for (let idxawardTitleObject=0; idxawardTitleObject < awardTitleObject.length; idxawardTitleObject++) {
+                    // Language key name - subitem_award_title_language
+                    if (!itemsToBeCheckedForDuplication.includes(awardTitleObject[idxawardTitleObject].subitem_award_title_language)) {
+                      itemsToBeCheckedForDuplication.push(awardTitleObject[idxawardTitleObject].subitem_award_title_language)
                     } else {
                       listItemErrors.push(`${item.title}-Award Title-Language`)
                     }
@@ -4300,6 +4326,20 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   } //: idxconferenceNameObject
                   itemsToBeCheckedForDuplication = []
                 } //: if conferenceName
+
+                // Conference Name key name - subitem_conference_names
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_conference_names") {
+                  let conferenceNameObject = subLevelItem.subitem_conference_names
+                  for (let idxconferenceNameObject=0; idxconferenceNameObject < conferenceNameObject.length; idxconferenceNameObject++) {
+                    // Language key name - subitem_conference_name_language
+                    if (!itemsToBeCheckedForDuplication.includes(conferenceNameObject[idxconferenceNameObject].subitem_conference_name_language)) {
+                      itemsToBeCheckedForDuplication.push(conferenceNameObject[idxconferenceNameObject].subitem_conference_name_language)
+                    } else {
+                      listItemErrors.push(`${item.title}-Conference Name-Language`)
+                    }
+                  } //: idxconferenceNameObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if conferenceName
         
                 // Conference Sponsor key name - subitem_1599711660052
                 else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1599711660052") {
@@ -4308,6 +4348,20 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                     // Language key name - subitem_1599711686511
                     if (!itemsToBeCheckedForDuplication.includes(conferenceSponsorObject[idxconferenceSponsorObject].subitem_1599711686511)) {
                       itemsToBeCheckedForDuplication.push(conferenceSponsorObject[idxconferenceSponsorObject].subitem_1599711686511)
+                    } else {
+                      listItemErrors.push(`${item.title}-Conference Sponsor-Language`)
+                    }
+                  } //: idxconferenceSponsorObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if conferenceSponsor
+
+                // Conference Sponsor key name - subitem_conference_sponsors
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_conference_sponsors") {
+                  let conferenceSponsorObject = subLevelItem.subitem_conference_sponsors
+                  for (let idxconferenceSponsorObject=0; idxconferenceSponsorObject < conferenceSponsorObject.length; idxconferenceSponsorObject++) {
+                    // Language key name - subitem_conference_sponsor_language
+                    if (!itemsToBeCheckedForDuplication.includes(conferenceSponsorObject[idxconferenceSponsorObject].subitem_conference_sponsor_language)) {
+                      itemsToBeCheckedForDuplication.push(conferenceSponsorObject[idxconferenceSponsorObject].subitem_conference_sponsor_language)
                     } else {
                       listItemErrors.push(`${item.title}-Conference Sponsor-Language`)
                     }
@@ -4328,6 +4382,20 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   } //: idxconferenceVenueObject
                   itemsToBeCheckedForDuplication = []
                 } //: if conferenceVenue
+
+                // Conference Venue key name - subitem_conference_venues
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_conference_venues") {
+                  let conferenceVenueObject = subLevelItem.subitem_conference_venues
+                  for (let idxconferenceVenueObject=0; idxconferenceVenueObject < conferenceVenueObject.length; idxconferenceVenueObject++) {
+                    // Language key name - subitem_conference_venue_language
+                    if (!itemsToBeCheckedForDuplication.includes(conferenceVenueObject[idxconferenceVenueObject].subitem_conference_venue_language)) {
+                      itemsToBeCheckedForDuplication.push(conferenceVenueObject[idxconferenceVenueObject].subitem_conference_venue_language)
+                    } else {
+                      listItemErrors.push(`${item.title}-Conference Venue-Language`)
+                    }
+                  } //: idxconferenceVenueObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if conferenceVenue
         
                 // Conference Place key name - subitem_1599711788485
                 else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1599711788485") {
@@ -4336,6 +4404,20 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                     // Language key name - subitem_1599711803382
                     if (!itemsToBeCheckedForDuplication.includes(conferencePlaceObject[idxconferencePlaceObject].subitem_1599711803382)) {
                       itemsToBeCheckedForDuplication.push(conferencePlaceObject[idxconferencePlaceObject].subitem_1599711803382)
+                    } else {
+                      listItemErrors.push(`${item.title}-Conference Place-Language`)
+                    }
+                  } //: idxconferencePlaceObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if conferencePlace
+
+                // Conference Place key name - subitem_conference_places
+                else if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_conference_places") {
+                  let conferencePlaceObject = subLevelItem.subitem_conference_places
+                  for (let idxconferencePlaceObject=0; idxconferencePlaceObject < conferencePlaceObject.length; idxconferencePlaceObject++) {
+                    // Language key name - subitem_conference_place_language
+                    if (!itemsToBeCheckedForDuplication.includes(conferencePlaceObject[idxconferencePlaceObject].subitem_conference_place_language)) {
+                      itemsToBeCheckedForDuplication.push(conferencePlaceObject[idxconferencePlaceObject].subitem_conference_place_language)
                     } else {
                       listItemErrors.push(`${item.title}-Conference Place-Language`)
                     }
@@ -4356,6 +4438,17 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                     listItemErrors.push(`${item.title}-Conference Date-Language`)
                   }
                 } //: if conferenceDate
+
+                // Conference Date key name - subitem_conference_date
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_conference_date") {
+                  let conferenceDateObject = subLevelItem.subitem_conference_date
+                  // Language key name - subitem_conference_date_language
+                  if (!itemsToBeCheckedForDuplicationForDateUse.includes(conferenceDateObject.subitem_conference_date_language)) {
+                    itemsToBeCheckedForDuplicationForDateUse.push(conferenceDateObject.subitem_conference_date_language)
+                  } else {
+                    listItemErrors.push(`${item.title}-Conference Date-Language`)
+                  }
+                } //: if conferenceDate
               } //:idxSubLevelItemKeys - For Date Use
         
             } //: idxModelObject
@@ -4366,12 +4459,24 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           else if (itemTitle == "source title") {
             let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
-              // Language key name - subitem_1522650068558
-              if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].subitem_1522650068558)) {
-                itemsToBeCheckedForDuplication.push(modelObject[idxModelObject].subitem_1522650068558)
-              } else {
-                listItemErrors.push(`${item.title}-Language`)
+              if (modelObject[idxModelObject].subitem_1522650068558) {
+                // Language key name - subitem_1522650068558
+                if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].subitem_1522650068558)) {
+                  itemsToBeCheckedForDuplication.push(modelObject[idxModelObject].subitem_1522650068558)
+                } else {
+                  listItemErrors.push(`${item.title}-Language`)
+                }
               }
+              
+              else if (modelObject[idxModelObject].subitem_source_title_language) {
+                // Language key name - subitem_source_title_language
+                if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].subitem_source_title_language)) {
+                  itemsToBeCheckedForDuplication.push(modelObject[idxModelObject].subitem_source_title_language)
+                } else {
+                  listItemErrors.push(`${item.title}-Language`)
+                }
+              }
+              
             }
             itemsToBeCheckedForDuplication = []
           } //: SOURCETITLE
@@ -4379,11 +4484,22 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           else if (itemTitle == "degree name") {
             let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
-              // Language key name - subitem_1551256129013
-              if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].subitem_1551256129013)) {
-                itemsToBeCheckedForDuplication.push(modelObject[idxModelObject].subitem_1551256129013)
-              } else {
-                listItemErrors.push(`${item.title}-Language`)
+              if (modelObject[idxModelObject].subitem_1551256129013) {
+                // Language key name - subitem_1551256129013
+                if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].subitem_1551256129013)) {
+                  itemsToBeCheckedForDuplication.push(modelObject[idxModelObject].subitem_1551256129013)
+                } else {
+                  listItemErrors.push(`${item.title}-Language`)
+                }
+              }
+
+              else if (modelObject[idxModelObject].subitem_degreename_language) {
+                // Language key name - subitem_degreename_language
+                if (!itemsToBeCheckedForDuplication.includes(modelObject[idxModelObject].subitem_degreename_language)) {
+                  itemsToBeCheckedForDuplication.push(modelObject[idxModelObject].subitem_degreename_language)
+                } else {
+                  listItemErrors.push(`${item.title}-Language`)
+                }
               }
             }
             itemsToBeCheckedForDuplication = []
@@ -4396,12 +4512,26 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               let subLevelItemKeys = Object.keys(subLevelItem)
               for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
                 // Degree Grantor Name key name - subitem_1551256037922
-                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1551256037922") {
+                if (subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1551256037922") {
                   let degreeGrantorNameObject = subLevelItem.subitem_1551256037922
                   for (let idxdegreeGrantorNameObject=0; idxdegreeGrantorNameObject < degreeGrantorNameObject.length; idxdegreeGrantorNameObject++) {
                     // Language key name - subitem_1551256047619
                     if (!itemsToBeCheckedForDuplication.includes(degreeGrantorNameObject[idxdegreeGrantorNameObject].subitem_1551256047619)) {
                       itemsToBeCheckedForDuplication.push(degreeGrantorNameObject[idxdegreeGrantorNameObject].subitem_1551256047619)
+                    } else {
+                      listItemErrors.push(`${item.title}-Degree Grantor Name-Language`)
+                    }
+                  } //: idxdegreeGrantorNameObject
+                  itemsToBeCheckedForDuplication = []
+                } //: if degreeGrantorName
+
+                // Degree Grantor Name key name - subitem_degreegrantor
+                else if (subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_degreegrantor") {
+                  let degreeGrantorNameObject = subLevelItem.subitem_degreegrantor
+                  for (let idxdegreeGrantorNameObject=0; idxdegreeGrantorNameObject < degreeGrantorNameObject.length; idxdegreeGrantorNameObject++) {
+                    // Language key name - subitem_degreegrantor_language
+                    if (!itemsToBeCheckedForDuplication.includes(degreeGrantorNameObject[idxdegreeGrantorNameObject].subitem_degreegrantor_language)) {
+                      itemsToBeCheckedForDuplication.push(degreeGrantorNameObject[idxdegreeGrantorNameObject].subitem_degreegrantor_language)
                     } else {
                       listItemErrors.push(`${item.title}-Degree Grantor Name-Language`)
                     }
@@ -4473,7 +4603,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.validateJaKana = function () {
         let listItemErrors = []
         let iRecordsForm = $rootScope.recordsVM.invenioRecordsForm
-        let iRecordsModel = $rootScope.recordsVM.invenioRecordsModel
+        let iRecordsModel = $rootScope.recordsVM.invenioRecordsModel // Please do not delete this variable. It is being used
         var itemsToBeCheckedForJaKana = []
 
         iRecordsForm.forEach(item => {
@@ -4483,8 +4613,15 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if (itemTitle == "title") {
             let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
-              // Language key name - subitem_1551255648112
-              itemsToBeCheckedForJaKana.push(modelObject[idxModelObject].subitem_1551255648112)
+              if (modelObject[idxModelObject].subitem_1551255648112) {
+                // Language key name - subitem_1551255648112
+                itemsToBeCheckedForJaKana.push(modelObject[idxModelObject].subitem_1551255648112)
+              }
+              
+              else if (modelObject[idxModelObject].subitem_title_language) {
+                // Language key name - subitem_title_language
+                itemsToBeCheckedForJaKana.push(modelObject[idxModelObject].subitem_title_language)
+              }
             }
             if (itemsToBeCheckedForJaKana.includes("ja-Kana") && !itemsToBeCheckedForJaKana.includes("ja")) {
               listItemErrors.push(`${item.title}-Language`)
@@ -4495,8 +4632,15 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           else if (itemTitle == "alternative title") {
             let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
-              // Language key name - subitem_1551255721061
-              itemsToBeCheckedForJaKana.push(modelObject[idxModelObject].subitem_1551255721061)
+              if (modelObject[idxModelObject].subitem_1551255721061) {
+                // Language key name - subitem_1551255721061
+                itemsToBeCheckedForJaKana.push(modelObject[idxModelObject].subitem_1551255721061)
+              }
+
+              else if (modelObject[idxModelObject].subitem_alternative_title_language) {
+                // Language key name - subitem_alternative_title_language
+                itemsToBeCheckedForJaKana.push(modelObject[idxModelObject].subitem_alternative_title_language)
+              }
             }
             if (itemsToBeCheckedForJaKana.includes("ja-Kana") && !itemsToBeCheckedForJaKana.includes("ja")) {
               listItemErrors.push(`${item.title}-Language`)
@@ -4688,11 +4832,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.validateJaLatn = function () {
         let listItemErrors = []
         let iRecordsForm = $rootScope.recordsVM.invenioRecordsForm
-        let iRecordsModel = $rootScope.recordsVM.invenioRecordsModel
+        let iRecordsModel = $rootScope.recordsVM.invenioRecordsModel // Please do not delete this variable. It is being used
         var itemsToBeCheckedForJaLatn = []
-
-        console.log(iRecordsForm)
-        console.log(iRecordsModel)
 
         iRecordsForm.forEach(item => {
           let itemTitle = item.title.toLowerCase()
@@ -4701,8 +4842,15 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if (itemTitle == "title") {
             let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
-              // Language key name - subitem_1551255648112
-              itemsToBeCheckedForJaLatn.push(modelObject[idxModelObject].subitem_1551255648112)
+              if (modelObject[idxModelObject].subitem_1551255648112) {
+                // Language key name - subitem_1551255648112
+                itemsToBeCheckedForJaLatn.push(modelObject[idxModelObject].subitem_1551255648112)
+              }
+              
+              else if (modelObject[idxModelObject].subitem_title_language) {
+                // Language key name - subitem_title_language
+                itemsToBeCheckedForJaLatn.push(modelObject[idxModelObject].subitem_title_language)
+              }
             }
             if (itemsToBeCheckedForJaLatn.includes("ja-Latn") && !itemsToBeCheckedForJaLatn.includes("ja")) {
               listItemErrors.push(`${item.title}-Language`)
@@ -4713,8 +4861,15 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           else if (itemTitle == "alternative title") {
             let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
-              // Language key name - subitem_1551255721061
-              itemsToBeCheckedForJaLatn.push(modelObject[idxModelObject].subitem_1551255721061)
+              if (modelObject[idxModelObject].subitem_1551255721061) {
+                // Language key name - subitem_1551255721061
+                itemsToBeCheckedForJaLatn.push(modelObject[idxModelObject].subitem_1551255721061)
+              }
+
+              else if (modelObject[idxModelObject].subitem_alternative_title_language) {
+                // Language key name - subitem_alternative_title_language
+                itemsToBeCheckedForJaLatn.push(modelObject[idxModelObject].subitem_alternative_title_language)
+              }
             }
             if (itemsToBeCheckedForJaLatn.includes("ja-Latn") && !itemsToBeCheckedForJaLatn.includes("ja")) {
               listItemErrors.push(`${item.title}-Language`)
@@ -4906,17 +5061,17 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.validateDateFormat = function () {
         let listItemErrors = []
         let iRecordsForm = $rootScope.recordsVM.invenioRecordsForm
-        let iRecordsModel = $rootScope.recordsVM.invenioRecordsModel
+        let iRecordsModel = $rootScope.recordsVM.invenioRecordsModel // Please do not delete this variable. It is being used
         let validDatePatterns = [
-          /\d{4}/, // YYYY
-          /\d{4}-\d{2}/, // YYYY-MM
-          /\d{4}-\d{2}-\d{2}/, // YYYY-MM-DD
-          /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}\+\d{2}:\d{2}/, // YYYY-MM-DDThh:mmTZD
-          /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}-\d{2}:\d{2}/, // YYYY-MM-DDThh:mmTZD
-          /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{2}:\d{2}/, // YYYY-MM -DDThh:mm:ssTZD
-          /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}-\d{2}:\d{2}/, // YYYY-MM -DDThh:mm:ssTZD
-          /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{2}\+\d{2}:\d{2}/, // YYYY-MM-DDThh:mm:ss.sTZD
-          /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{2}-\d{2}:\d{2}/, // YYYY-MM-DDThh:mm:ss.sTZD
+          /^[0-9]{4,4}$/, // YYYY
+          /^[0-9]{4,4}-[0-9]{2,2}$/, // YYYY-MM
+          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}$/, // YYYY-MM-DD
+          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}\+[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM-DDThh:mmTZD
+          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}-[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM-DDThh:mmTZD
+          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}\+[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM -DDThh:mm:ssTZD
+          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}-[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM -DDThh:mm:ssTZD
+          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}.[0-9]{2,2}\+[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM-DDThh:mm:ss.sTZD
+          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}.[0-9]{2,2}-[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM-DDThh:mm:ss.sTZD
         ]
 
         iRecordsForm.forEach(item => {
