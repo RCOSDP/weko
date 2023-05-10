@@ -1754,12 +1754,13 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
             current_app.logger.warning("Specified IndexID is invalid!")
 
         if index_info and len(index_info) == 1:
-            if index_name_path and index_name_path not in [
-                index_info[0].name.replace(
-                    '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']),
-                index_info[0].name_en.replace(
-                    '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']),
-            ]:
+            check_list = []
+            check_list.append(index_info[0].name_en.replace(
+                '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
+            if index_info[0].name:
+                check_list.append(index_info[0].name.replace(
+                    '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
+            if index_name_path and index_name_path not in check_list:
                 warnings.append(
                     _("Specified {} does not match with existing index.").format(
                         "POS_INDEX"
@@ -1775,9 +1776,10 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
             if index_infos:
                 for info in index_infos:
                     index_info = None
-                    if index_name_path == \
-                            info.name.replace(
-                                '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']):
+                    if (index_name_path == \
+                        info.name_en.replace('-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT'])) or \
+                        (info.name and index_name_path == \
+                         info.name.replace('-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT'])):
                         index_info = info
                     
                     if not index_info:

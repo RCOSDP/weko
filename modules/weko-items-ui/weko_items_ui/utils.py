@@ -1166,7 +1166,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         index_infos = Indexes.get_path_list(paths)
         for info in index_infos:
             records.attr_output[recid].append(info.cid)
-            records.attr_output[recid].append(info.name.replace(
+            records.attr_output[recid].append(info.name_en.replace(
                 '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
         records.attr_output[recid].extend(
             [''] * (max_path * 2 - len(records.attr_output[recid]))
@@ -3109,7 +3109,7 @@ def make_stats_file_with_permission(item_type_id, recids,
         index_infos = Indexes.get_path_list(paths)
         for info in index_infos:
             records.attr_output[recid].append(info.cid)
-            records.attr_output[recid].append(info.name.replace(
+            records.attr_output[recid].append(info.name_en.replace(
                 '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
         records.attr_output[recid].extend(
             [''] * (max_path * 2 - len(records.attr_output[recid]))
