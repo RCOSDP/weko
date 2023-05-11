@@ -32,8 +32,10 @@ import click
 from flask import current_app
 from flask.cli import with_appcontext
 from invenio_pidstore import current_pidstore
-
-
+from invenio_indexer.api import RecordIndexer
+from invenio_pidstore.errors import PIDDoesNotExistError
+from invenio_pidstore.models import PersistentIdentifier
+    
 def process_minter(value):
     """Load minter from PIDStore registry based on given value.
 
@@ -110,3 +112,26 @@ def edit(ids):
 @click.option('-i', '--id', 'ids', multiple=True)
 def discard(ids):
     """Discard selected deposits."""
+
+@deposit.command('reindex')
+@click.option('-r', '--recid', required=True)
+@with_appcontext
+def init_queue(recid):
+    """Initialize indexing queue."""
+
+    click.secho('Indexing record {} ...'.format(recid), fg='green')
+    try:
+        pid = PersistentIdentifier.get_by_object(pid_type='recid',
+                                                 object_type='rec',
+                                                 object_uuid=recid)
+        
+        if pid:
+            query = PersistentIdentifier.query.filter_by(pid_type='recid',object_type='rec',object_uuid=recid).values(PersistentIdentifier.object_uuid)
+            query = (x[0] for x in query)
+            RecordIndexer().bulk_index(query)
+            RecordIndexer().process_bulk_queue(es_bulk_kwargs={'raise_on_error': True})
+    except PIDDoesNotExistError as e:
+        click.secho('Chosen record doesn\'t exist', fg='red')
+    except Exception as e:
+        click.secho(e, fg='red')
+    click.secho('Reindex process finished!', fg='green')
