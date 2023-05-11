@@ -351,6 +351,21 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     type_key, resource_type = metadata_item.get_first_data_by_mapping(
         'type.@value')
 
+    print('\n\n\n')
+    print("item_metadata_validation")
+    print('\n')
+    print(f"metadata_item ~ {metadata_item}")
+    print(f"metadata_item-DIR ~ {dir(metadata_item)}")
+    print('\n')
+    print(f"item_type ~ {item_type}")
+    print(f"item_type-DIR ~ {dir(item_type)}")
+    print('\n')
+    print(f"type_key ~ {type_key}")
+    print(f"type_key-DIR ~ {dir(type_key)}")
+    print('\n')
+    print(f"resource_type ~ {resource_type}")
+    print('\n\n\n')
+
     error_list = {'required': [], 'required_key': [], 'pattern': [],
                   'either': [],  'either_key': [], 'mapping': [], 'other': ''}
     # check resource type request
@@ -387,12 +402,36 @@ def item_metadata_validation(item_id, identifier_type, record=None,
         # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
         if resource_type in journalarticle_type \
                 or resource_type in report_types \
-                or resource_type in thesis_types \
                 or resource_type in elearning_type \
                 or resource_type in datageneral_types:
-            required_properties = ['title']
+            required_properties = [
+                'title',
+                'publisher',
+                'date',
+                'dateGranted',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'pageStart',
+                'fileURI',
+            ]
             # remove 20220207
             # either_properties = ['version']
+
+        elif resource_type in thesis_types:
+            required_properties = [
+                'title',
+                'publisher',
+                'date',
+                'dateGranted',
+                'degreeGrantor',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'pageStart',
+                'fileURI',
+            ]
+
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif resource_type in dataset_type:
             required_properties = ['title',
@@ -626,6 +665,54 @@ def validattion_item_property_required(
     # check 収録物名 dc:publisher
     if 'publisher' in properties:
         mapping_keys = ['dc:publisher']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+    
+    # check dc:publisher
+    if 'publisher' in properties:
+        mapping_keys = ['dc:publisher']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+
+    # check datacite:date
+    if 'date' in properties:
+        mapping_keys = ['datacite:date']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+    
+    # check dcndl:dateGranted
+    if 'dateGranted' in properties:
+        mapping_keys = ['dcndl:dateGranted']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+
+    # check dc:type
+    if 'type' in properties:
+        mapping_keys = ['dc:type']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+    
+    # check jpcoar:identifier
+    if 'identifier' in properties:
+        mapping_keys = ['jpcoar:identifier']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+
+    # check jpcoar:identifierRegistration
+    if 'identifierRegistration' in properties:
+        mapping_keys = ['jpcoar:identifierRegistration']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+    
+    # check jpcoar:pageStart
+    if 'pageStart' in properties:
+        mapping_keys = ['jpcoar:pageStart']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+    
+    # check jpcoar:degreeGrantor
+    if 'degreeGrantor' in properties:
+        mapping_keys = ['jpcoar:degreeGrantor']
         handle_check_required_pattern_and_either(
             mapping_data, mapping_keys, error_list)
 

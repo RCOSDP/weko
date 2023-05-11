@@ -83,6 +83,34 @@ IDENTIFIER_GRANT_SELECT_DICT = {
 """Identifier grant selected enum."""
 
 DOI_VALIDATION_INFO = {
+    'datacite:date': [
+        ['date.@attributes.dateType', None],
+        ['date.@value', None]
+    ],
+    'dcndl:dateGranted': [
+        ['dateGranted.@value', None],
+    ],
+    'dc:type': [
+        ['type.@attributes.rdf:resource', None],
+        ['type.@value', None],
+    ],
+    'jpcoar:identifier': [
+        ['identifier.@attributes.identifierType', None],
+        ['identifier.@value', None],
+    ],
+    'jpcoar:identifierRegistration': [
+        ['identifierRegistration.@attributes.identifierType', None],
+        ['identifierRegistration.@value', None],
+    ],
+    'jpcoar:pageStart': [
+        ['pageStart.@value', None],
+    ],
+    'jpcoar:degreeGrantor': [
+        ['degreeGrantor.nameIdentifier.@attributes.nameIdentifierScheme', None],
+        ['degreeGrantor.nameIdentifier.@value', None],
+        ['degreeGrantor.degreeGrantorName.@attributes.xml:lang', None],
+        ['degreeGrantor.degreeGrantorName.@value', None],
+    ],
     'jpcoar:URI': [['file.URI.@value', None]],
     'dc:title': [['title.@value', None], ['title.@attributes.xml:lang', None]],
     'jpcoar:givenName': [['creator.givenName.@value', None]],
