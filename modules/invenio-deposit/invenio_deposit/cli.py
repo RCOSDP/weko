@@ -116,7 +116,7 @@ def discard(ids):
 @deposit.command('reindex')
 @click.option('-r', '--recid', required=True)
 @with_appcontext
-def init_queue(recid):
+def reindex(recid):
     """Initialize indexing queue."""
 
     click.secho('Indexing record {} ...'.format(recid), fg='green')
