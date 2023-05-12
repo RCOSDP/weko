@@ -3595,6 +3595,11 @@ def get_export_status():
     download_uri = None
     message = None
     run_message = ""
+    status = ""
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+    
+    current_app.logger.debug("redis exist in status:{}".format(datastore.redis.exists(cache_key)))
     try:
         task_id = get_redis_cache(cache_key)
         download_uri = get_redis_cache(cache_uri)
@@ -3603,11 +3608,12 @@ def get_export_status():
         if task_id:
             task = AsyncResult(task_id)
             status_cond = task.successful() or task.failed() or task.state == "REVOKED"
+            status = task.state
             export_status = True if not status_cond else False
     except Exception as ex:
         current_app.logger.error(ex)
         export_status = False
-    return export_status, download_uri, message, run_message
+    return export_status, download_uri, message, run_message, status
 
 
 def handle_check_item_is_locked(item):

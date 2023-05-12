@@ -100,6 +100,11 @@ def export_all_task(root_url, user_id, data):
         name=_task_config,
         user_id=user_id
     )
+    _task_key_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_TASK"]
+    _task_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+        name=_task_key_config,
+        user_id=user_id
+    )
 
     uri = export_all(root_url, user_id, data)
     reset_redis_cache(_cache_key, uri)
@@ -107,15 +112,20 @@ def export_all_task(root_url, user_id, data):
         args=(
             uri,
             _cache_key,
+            _task_key
         ),
         countdown=int(_expired_time) * 60,
     )
 
 
 @shared_task
-def delete_exported_task(uri, cache_key):
+def delete_exported_task(uri, cache_key, task_key):
     """Delete expired exported file."""
+    from weko_redis.redis import RedisConnection
     delete_exported(uri, cache_key)
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+    datastore.delete(task_key)
 
 
 def is_import_running():
