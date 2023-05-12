@@ -113,7 +113,14 @@ DOI_VALIDATION_INFO = {
     ],
     'jpcoar:URI': [['file.URI.@value', None]],
     'dc:title': [['title.@value', None], ['title.@attributes.xml:lang', None]],
-    'jpcoar:givenName': [['creator.givenName.@value', None]],
+    'jpcoar:givenName': [
+        ['creator.givenName.@value', None],
+        ['creator.givenName.@attributes.xml:lang', None]
+    ],
+    'jpcoar:creatorName': [
+        ['creator.creatorName.@value', None],
+        ['creator.creatorName.@attributes.xml:lang', None]
+    ],
     'jpcoar:sourceIdentifier': [
         ['sourceIdentifier.@value', None],
         ['sourceIdentifier.@attributes.identifierType', None]],

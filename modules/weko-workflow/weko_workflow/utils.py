@@ -396,14 +396,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLC']:
         # 別表2-1 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
-        # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
-        # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
-        # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
-        # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
-        if resource_type in journalarticle_type \
-                or resource_type in report_types \
-                or resource_type in elearning_type \
-                or resource_type in datageneral_types:
+        if resource_type in journalarticle_type:
             required_properties = [
                 'title',
                 'publisher',
@@ -418,6 +411,8 @@ def item_metadata_validation(item_id, identifier_type, record=None,
             # remove 20220207
             # either_properties = ['version']
 
+
+        # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         elif resource_type in thesis_types:
             required_properties = [
                 'title',
@@ -431,28 +426,105 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'pageStart',
                 'fileURI',
             ]
+        
+        # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
+        elif resource_type in report_types:
+            required_properties = [
+                'title',
+                'publisher',
+                'date',
+                'dateGranted',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'fileURI',
+            ]
+        
+        # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
+        elif resource_type in elearning_type:
+            required_properties = [
+                'title',
+                'publisher',
+                'date',
+                'dateGranted',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'fileURI',
+            ]
 
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif resource_type in dataset_type:
-            required_properties = ['title',
-                                   'givenName']
+            required_properties = [
+                'title',
+                'givenName',
+                'creatorName',
+                'publisher',
+                'date',
+                'dateGranted',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'fileURI',
+            ]
             # remove 20220207
             # either_properties = ['geoLocation']
+
+        # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
+        elif resource_type in datageneral_types:
+            required_properties = [
+                'title',
+                'publisher',
+                'date',
+                'dateGranted',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'fileURI',
+            ]
+            
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['Crossref']:
         if resource_type in journalarticle_type:
-            required_properties = ['title',
-                                   'publisher',
-                                   'sourceIdentifier',
-                                   'sourceTitle']
+            required_properties = [
+                'title',
+                'publisher',
+                'date',
+                'dateGranted',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'sourceIdentifier',
+                'sourceTitle',
+                'fileURI',
+            ]
         elif resource_type in report_types \
                 or resource_type in thesis_types:
-            required_properties = ['title']
+            required_properties = [
+                'title',
+                'publisher',
+                'date',
+                'dateGranted',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'fileURI',
+            ]
     # DataCite DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCite']:
         if resource_type in dataset_type:
-            required_properties = ['title',
-                                   'givenName']
+            required_properties = [
+                'title',
+                'givenName',
+                'creatorName',
+                'publisher',
+                'date',
+                'dateGranted',
+                'type',
+                # 'identifier',
+                # 'identifierRegistration',
+                'fileURI',
+            ]
             # remove 20220207
             # either_properties = ['geoLocation']
     # NDL JaLC DOI identifier registration
@@ -713,6 +785,12 @@ def validattion_item_property_required(
     # check jpcoar:degreeGrantor
     if 'degreeGrantor' in properties:
         mapping_keys = ['jpcoar:degreeGrantor']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+
+    # check jpcoar:creatorName
+    if 'creatorName' in properties:
+        mapping_keys = ['jpcoar:creatorName']
         handle_check_required_pattern_and_either(
             mapping_data, mapping_keys, error_list)
 
