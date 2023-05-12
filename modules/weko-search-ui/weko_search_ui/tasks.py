@@ -134,11 +134,11 @@ def export_all_task(root_url, user_id, data):
 @shared_task
 def delete_exported_task(uri, cache_key, task_key):
     """Delete expired exported file."""
+    from weko_redis.redis import RedisConnection
+    delete_exported(uri, cache_key)
     redis_connection = RedisConnection()
     datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
-    if datastore.redis.exists(cache_key):
-        datastore.delete(task_key)
-    delete_exported(uri, cache_key)
+    datastore.delete(task_key)
 
 
 def is_import_running():

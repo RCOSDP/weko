@@ -750,7 +750,7 @@ class ItemBulkExport(BaseView):
 
         # return Response(status=200)
         check = check_celery_is_run()
-        export_status, download_uri, message, run_message, status = get_export_status()
+        export_status, download_uri, message, run_message, _ = get_export_status()
         return jsonify(
             data={
                 "export_status": export_status,
