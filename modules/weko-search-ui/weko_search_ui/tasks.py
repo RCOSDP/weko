@@ -23,9 +23,12 @@ import shutil
 from datetime import datetime, timedelta
 
 from celery import shared_task
+from celery.result import AsyncResult
 from celery.task.control import inspect
 from flask import current_app
 from weko_admin.api import TempDirInfo
+from weko_admin.utils import get_redis_cache
+from weko_redis.redis import RedisConnection
 
 from .utils import (
     check_import_items,
@@ -90,6 +93,16 @@ def remove_temp_dir_task(path):
 
 
 @shared_task
+def delete_task_id_cache(task_id, cache_key):
+    """delete admin_cache_KEY_EXPORT_ALL_{user_id} from redis"""
+    if get_redis_cache(cache_key) == task_id:
+        state = AsyncResult(task_id).state
+        if state == "REVOKED":
+            redis_connection = RedisConnection()
+            datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+            datastore.delete(cache_key)
+
+@shared_task
 def export_all_task(root_url, user_id, data):
     """Export all items."""
     from weko_admin.utils import reset_redis_cache
@@ -121,11 +134,11 @@ def export_all_task(root_url, user_id, data):
 @shared_task
 def delete_exported_task(uri, cache_key, task_key):
     """Delete expired exported file."""
-    from weko_redis.redis import RedisConnection
-    delete_exported(uri, cache_key)
     redis_connection = RedisConnection()
     datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
-    datastore.delete(task_key)
+    if datastore.redis.exists(cache_key):
+        datastore.delete(task_key)
+    delete_exported(uri, cache_key)
 
 
 def is_import_running():

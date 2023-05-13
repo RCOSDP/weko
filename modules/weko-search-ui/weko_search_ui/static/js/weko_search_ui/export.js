@@ -166,10 +166,18 @@ class ExportComponent extends React.Component {
       url: urlCancelExport,
       success: function (response) {
         if (response.data) {
-          me.setState({
-            isDisableExport: !response.data.cancel_status,
-            isDisableCancel: response.data.cancel_status
-          });
+          if (!response.data.cancel_status){
+            me.setState({
+              isDisableExport: true,
+              isDisableCancel: false
+            })
+          } else {
+            me.setState({
+              isDisableExport: response.data.export_status,
+              isDisableCancel: !response.data.export_status,
+              taskStatus: response.data.status
+            })
+          }
         }
       },
       error: function () {
@@ -199,8 +207,9 @@ class ExportComponent extends React.Component {
       dataType: "json",
       success: function () {
         me.setState({
-          isDisableExport: true,
-          isDisableCancel: false
+          isDisableExport: response.data.export_status,
+          isDisableCancel: !response.data.export_status,
+          taskStatus: response.data.status
         });
       },
       error: function () {
