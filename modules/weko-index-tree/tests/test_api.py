@@ -209,7 +209,7 @@ def test_indexes_update(app, db, users, test_indices):
             with patch("weko_index_tree.tasks.update_oaiset_setting", return_value=True):
                 res = Indexes.update(2)
                 assert res.id==2
-                assert res.index_name=="Test index 2"
+                assert res.index_name=="Test index 2_ja"
 
                 res = Indexes.update(0)
                 assert res==None
@@ -528,7 +528,7 @@ def test_indexes_move(app, db, users, communities, test_indices):
 def test_update_set_info(i18n_app, db, users, test_indices):
     _tmp = Indexes.get_index(1)
     index_info = copy.deepcopy(dict(_tmp))
-    assert index_info["index_name"]=="Test index 1"
+    assert index_info["index_name"]=="Test index 1_ja"
     index_info["index_name"] = "TEST"
     with patch("weko_index_tree.tasks.update_oaiset_setting.delay",side_effect = MagicMock()):
         Indexes.update_set_info(index_info)
@@ -543,11 +543,14 @@ def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, 
         # get_index_tree
         res = Indexes.get_index_tree()
         assert len(res)==3
-
+        
+        res = Indexes.get_index_tree(lang="en")
+        assert len(res) == 3
+        
         # get_browsing_info
         res = Indexes.get_browsing_info()
         assert res["1"]["browsing_role"]==['3', '-99']
-        assert res["1"]["index_name"]=="Test index 1"
+        assert res["1"]["index_name"]=="Test index 1_ja"
         assert res["1"]["parent"]=="0"
         assert res["1"]["public_date"]==datetime(2022, 1, 1)
         assert res["1"]["harvest_public_state"]==True
@@ -605,37 +608,42 @@ def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, 
         res = Indexes.get_recursive_tree()
         assert len(res)==6
         res = Indexes.get_recursive_tree(11)
-        assert res==[(1, 11, 0, 'Test index 11', 'Test index link 11', True, True, None, '3,-99', '1,2,3,4,-98,-99', 'g1,g2', 'g1,g2', False, 0, False, False)]
+        assert res==[(1, 11, 0, 'Test index 11_ja', 'Test index link 11_ja', True, True, None, '3,-99', '1,2,3,4,-98,-99', 'g1,g2', 'g1,g2', False, 0, False, False)]
+        
+        res = Indexes.get_recursive_tree(lang="en")
+        assert len(res) == 6
+        res = Indexes.get_recursive_tree(11, lang="en")
+        assert res==[(1, 11, 0, 'Test index 11_en', 'Test index link 11_en', True, True, None, '3,-99', '1,2,3,4,-98,-99', 'g1,g2', 'g1,g2', False, 0, False, False)]
 
         # get_index_with_role
         res = Indexes.get_index_with_role(1)
-        assert res=={'biblio_flag': False, 'browsing_group': {'allow': [], 'deny': []}, 'browsing_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'}, {'id': 6, 'name': 'Original Role'}, {'id': -98, 'name': 'Authenticated User'}]}, 'comment': '', 'contribute_group': {'allow': [], 'deny': []}, 'contribute_role': {'allow': [{'id': 1, 'name': 'System Administrator'}, {'id': 2, 'name': 'Repository Administrator'}, {'id': 3, 'name': 'Contributor'}, {'id': 4, 'name': 'Community Administrator'}, {'id': -98, 'name': 'Authenticated User'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'}, {'id': 6, 'name': 'Original Role'}]}, 'coverpage_state': True, 'display_format': '1', 'display_no': 0, 'harvest_public_state': True, 'harvest_spec': '', 'id': 1, 'image_name': '', 'index_link_enabled': True, 'index_link_name': 'Test index link 1', 'index_link_name_english': 'Test index link 1', 'index_name': 'Test index 1', 'index_name_english': 'Test index 1', 'more_check': False, 'online_issn': '1234-5678', 'owner_user_id': 0, 'parent': 0, 'position': 0, 'public_date': '20220101', 'public_state': True, 'recursive_browsing_group': True, 'recursive_browsing_role': True, 'recursive_contribute_group': True, 'recursive_contribute_role': True, 'recursive_coverpage_check': True, 'recursive_public_state': False, 'rss_status': False}
+        assert res=={'biblio_flag': False, 'browsing_group': {'allow': [], 'deny': []}, 'browsing_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'}, {'id': 6, 'name': 'Original Role'}, {'id': -98, 'name': 'Authenticated User'}]}, 'comment': '', 'contribute_group': {'allow': [], 'deny': []}, 'contribute_role': {'allow': [{'id': 1, 'name': 'System Administrator'}, {'id': 2, 'name': 'Repository Administrator'}, {'id': 3, 'name': 'Contributor'}, {'id': 4, 'name': 'Community Administrator'}, {'id': -98, 'name': 'Authenticated User'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'}, {'id': 6, 'name': 'Original Role'}]}, 'coverpage_state': True, 'display_format': '1', 'display_no': 0, 'harvest_public_state': True, 'harvest_spec': '', 'id': 1, 'image_name': '', 'index_link_enabled': True, 'index_link_name': 'Test index link 1_ja', 'index_link_name_english': 'Test index link 1_en', 'index_name': 'Test index 1_ja', 'index_name_english': 'Test index 1_en', 'more_check': False, 'online_issn': '1234-5678', 'owner_user_id': 0, 'parent': 0, 'position': 0, 'public_date': '20220101', 'public_state': True, 'recursive_browsing_group': True, 'recursive_browsing_role': True, 'recursive_contribute_group': True, 'recursive_contribute_role': True, 'recursive_coverpage_check': True, 'recursive_public_state': False, 'rss_status': False}
         res = Indexes.get_index_with_role(22)
-        assert res=={'biblio_flag': True, 'browsing_group': {'allow': [], 'deny': []}, 'browsing_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'}, {'id': 6, 'name': 'Original Role'}, {'id': -98, 'name': 'Authenticated User'}]}, 'comment': '', 'contribute_group': {'allow': [], 'deny': []}, 'contribute_role': {'allow': [{'id': 1, 'name': 'System Administrator'}, {'id': 2, 'name': 'Repository Administrator'}, {'id': 3, 'name': 'Contributor'}, {'id': 4, 'name': 'Community Administrator'}, {'id': -98, 'name': 'Authenticated User'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'},  {'id': 6, 'name': 'Original Role'}]}, 'coverpage_state': False, 'display_format': '1', 'display_no': 1, 'harvest_public_state': True, 'harvest_spec': '', 'id': 22, 'image_name': '', 'index_link_enabled': True, 'index_link_name': 'Test index link 22', 'index_link_name_english': 'Test index link 22', 'index_name': 'Test index 22', 'index_name_english': 'Test index 22', 'more_check': False, 'online_issn': '', 'owner_user_id': 0, 'parent': 2, 'position': 1, 'public_date': '', 'public_state': True, 'recursive_browsing_group': False, 'recursive_browsing_role': False, 'recursive_contribute_group': False, 'recursive_contribute_role': False, 'recursive_coverpage_check': False, 'recursive_public_state': True, 'rss_status': False}
+        assert res=={'biblio_flag': True, 'browsing_group': {'allow': [], 'deny': []}, 'browsing_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'}, {'id': 6, 'name': 'Original Role'}, {'id': -98, 'name': 'Authenticated User'}]}, 'comment': '', 'contribute_group': {'allow': [], 'deny': []}, 'contribute_role': {'allow': [{'id': 1, 'name': 'System Administrator'}, {'id': 2, 'name': 'Repository Administrator'}, {'id': 3, 'name': 'Contributor'}, {'id': 4, 'name': 'Community Administrator'}, {'id': -98, 'name': 'Authenticated User'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'},  {'id': 6, 'name': 'Original Role'}]}, 'coverpage_state': False, 'display_format': '1', 'display_no': 1, 'harvest_public_state': True, 'harvest_spec': '', 'id': 22, 'image_name': '', 'index_link_enabled': True, 'index_link_name': 'Test index link 22_ja', 'index_link_name_english': 'Test index link 22_en', 'index_name': 'Test index 22_ja', 'index_name_english': 'Test index 22_en', 'more_check': False, 'online_issn': '', 'owner_user_id': 0, 'parent': 2, 'position': 1, 'public_date': '', 'public_state': True, 'recursive_browsing_group': False, 'recursive_browsing_role': False, 'recursive_contribute_group': False, 'recursive_contribute_role': False, 'recursive_coverpage_check': False, 'recursive_public_state': True, 'rss_status': False}
 
         # get_index
         res = Indexes.get_index(2)
         assert res.id==2
-        assert res.index_name=='Test index 2'
+        assert res.index_name=='Test index 2_ja'
         res = Indexes.get_index(2, True)
         assert res[0].id==2
-        assert res[0].index_name=='Test index 2'
+        assert res[0].index_name=='Test index 2_ja'
         assert res[1]==1
 
         # get_index_by_name
-        res = Indexes.get_index_by_name('Test index 2')
+        res = Indexes.get_index_by_name('Test index 2_ja')
         assert res.id==2
-        assert res.index_name=='Test index 2'
-        res = Indexes.get_index_by_name('Test index 22', 2)
+        assert res.index_name=='Test index 2_ja'
+        res = Indexes.get_index_by_name('Test index 22_ja', 2)
         assert res.id==22
-        assert res.index_name=='Test index 22'
+        assert res.index_name=='Test index 22_ja'
 
         # get_index_by_all_name
         res = Indexes.get_index_by_all_name()
         assert res==[]
-        res = Indexes.get_index_by_all_name("Test index 1")
+        res = Indexes.get_index_by_all_name("Test index 1_ja")
         assert res[0].id==1
-        assert res[0].index_name=='Test index 1'
+        assert res[0].index_name=='Test index 1_ja'
 
         # get_root_index_count
         res = Indexes.get_root_index_count()
@@ -644,22 +652,22 @@ def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, 
 
         # get_path_list
         res = Indexes.get_path_list([3])
-        assert res==[(0, 3, '3', 'Test index 3', 'Test index 3', 1, True, None, '', '3,-99', 'g1,g2', True)]
+        assert res==[(0, 3, '3', 'Test index 3_ja', 'Test index 3_en', 1, True, None, '', '3,-99', 'g1,g2', True)]
 
         # get_path_name
         res = Indexes.get_path_name([3])
-        assert res==[(0, 3, '3', 'Test index 3', 'Test index 3', 1, True, None, '', '3,-99', 'g1,g2', True)]
+        assert res==[(0, 3, '3', 'Test index 3_ja', 'Test index 3_en', 1, True, None, '', '3,-99', 'g1,g2', True)]
 
         # get_self_list
         res = Indexes.get_self_list(3)
-        assert res==[(0, 3, '3', 'Test index 3', 'Test index 3', 1, True, None, '', '3,-99', 'g1,g2', True)]
+        assert res==[(0, 3, '3', 'Test index 3_ja', 'Test index 3_en', 1, True, None, '', '3,-99', 'g1,g2', True)]
 
         res = Indexes.get_self_list(1, "comm1")
-        assert res==[(0, 1, '1', 'Test index 1', 'Test index 1', 1, True, datetime(2022, 1, 1, 0, 0), '', '3,-99', 'g1,g2', True),(1, 11, '1/11', 'Test index 1-/-Test index 11', 'Test index 1-/-Test index 11', 2, True, None, '', '3,-99', 'g1,g2', True)]
+        assert res==[(0, 1, '1', 'Test index 1_ja', 'Test index 1_en', 1, True, datetime(2022, 1, 1, 0, 0), '', '3,-99', 'g1,g2', True),(1, 11, '1/11', 'Test index 1_ja-/-Test index 11_ja', 'Test index 1_en-/-Test index 11_en', 2, True, None, '', '3,-99', 'g1,g2', True)]
 
         # get_self_path
         res = Indexes.get_self_path(3)
-        assert res==(0, 3, '3', 'Test index 3', 'Test index 3', 1, True, None, '', '3,-99', 'g1,g2', True)
+        assert res==(0, 3, '3', 'Test index 3_ja', 'Test index 3_en', 1, True, None, '', '3,-99', 'g1,g2', True)
 
         # is_index
         res = Indexes.is_index('1:11')
@@ -701,7 +709,7 @@ def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, 
 
         # get_child_list
         res = Indexes.get_child_list(1)
-        assert res==[(0, 1, '1', 'Test index 1', 'Test index 1', 1, True, datetime(2022, 1, 1, 0, 0), '', '3,-99', 'g1,g2', True),(1, 11, '1/11', 'Test index 1-/-Test index 11', 'Test index 1-/-Test index 11', 2, True, None, '', '3,-99', 'g1,g2', True)]
+        assert res==[(0, 1, '1', 'Test index 1_ja', 'Test index 1_en', 1, True, datetime(2022, 1, 1, 0, 0), '', '3,-99', 'g1,g2', True),(1, 11, '1/11', 'Test index 1_ja-/-Test index 11_ja', 'Test index 1_en-/-Test index 11_en', 2, True, None, '', '3,-99', 'g1,g2', True)]
 
         # get_child_id_list
         res = Indexes.get_child_id_list()

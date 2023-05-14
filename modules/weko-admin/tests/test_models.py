@@ -1017,7 +1017,10 @@ class TestFacetSearchSetting:
             mapping="test_mapping",
             aggregations=None,
             name_jp=None,
-            active=None
+            active=None,
+            ui_type="test_ui_type",
+            display_number=1,
+            is_open=None
         )
         db.session.add(fss)
         db.session.commit()
@@ -1048,7 +1051,10 @@ class TestFacetSearchSetting:
             "name_jp":"テスト設定",
             "mapping":"test_mapping",
             "aggregations":[],
-            "active":True
+            "active":True,
+            "ui_type":"SelectBox",
+            "display_number":1,
+            "is_open":True
         }
         result = FacetSearchSetting.create(data)
         assert result.name_en == "test setting"
