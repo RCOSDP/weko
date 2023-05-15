@@ -878,6 +878,22 @@ def item_path_search_factory(self, search, index_id=None):
         }
 
         q = request.values.get("q") or "0" if index_id is None else index_id
+        activity_id = request.values.get("item_link")
+
+        pid_value = None
+        if activity_id:
+            from weko_workflow.api import WorkActivity
+            from invenio_pidstore.models import PersistentIdentifier
+            from weko_deposit.pidstore import get_record_without_version
+
+            activity = WorkActivity().get_activity_detail(activity_id)
+            current_pid = PersistentIdentifier.get_by_object(
+                pid_type='recid',
+                object_type='rec',
+                object_uuid=activity.item_id)
+            pid_without_ver = get_record_without_version(current_pid)
+            pid_value = pid_without_ver.pid_value
+            query_q["query"]["bool"]["must_not"] = [{"match": {"control_number": pid_value}}]
 
         if q != "0":
             # add item type aggs
