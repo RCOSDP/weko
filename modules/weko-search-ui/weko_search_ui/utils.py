@@ -3596,10 +3596,7 @@ def get_export_status():
     message = None
     run_message = ""
     status = ""
-    redis_connection = RedisConnection()
-    datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
     
-    current_app.logger.debug("redis exist in status:{}".format(datastore.redis.exists(cache_key)))
     try:
         task_id = get_redis_cache(cache_key)
         download_uri = get_redis_cache(cache_uri)
