@@ -1792,6 +1792,8 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
                             errors.append(msg_not_exist.format("IndexID"))
                         else:
                             temp_res.append(index_info.cid)
+                if temp_res:
+                    errors.clear()
             else:
                 if index_id:
                     errors.append(msg_not_exist.format("IndexID, POS_INDEX"))
