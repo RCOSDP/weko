@@ -828,6 +828,33 @@ def test_handle_check_and_prepare_index_tree(i18n_app, record_with_metadata, ind
     )
 
 
+# def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_edit_indexes):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_and_prepare_index_tree2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_and_prepare_index_tree2(i18n_app, record_with_metadata, indices2):
+    i18n_app.config["WEKO_ITEMS_UI_INDEX_PATH_SPLIT"] = "///"
+    list_record = [record_with_metadata[0]]
+
+    list_record[0]["metadata"]["path"] = []
+    list_record[0]["pos_index"] = ["A///C"]
+    all_index_permission = False
+    handle_check_and_prepare_index_tree(
+        list_record, all_index_permission, None
+    )
+    assert list_record[0]["metadata"]["path"] == []
+
+    list_record[0]["metadata"]["path"] = []
+    handle_check_and_prepare_index_tree(
+        list_record, all_index_permission, [4]
+    )
+    assert list_record[0]["metadata"]["path"] == []
+
+    list_record[0]["metadata"]["path"] = []
+    handle_check_and_prepare_index_tree(
+        list_record, all_index_permission, [2]
+    )
+    assert list_record[0]["metadata"]["path"] == [2]
+
+
 # def handle_check_and_prepare_feedback_mail(list_record):
 def test_handle_check_and_prepare_feedback_mail(i18n_app, record_with_metadata):
     list_record = [record_with_metadata[0]]
