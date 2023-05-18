@@ -196,7 +196,7 @@ RECORDS_REST_SORT_OPTIONS[SEARCH_UI_SEARCH_INDEX] = dict(
     ),
     itemType=dict(
         title="ItemType",
-        fields=["itemtype"],
+        fields=["itemtype.keyword"],
         default_order="asc",
         order=10,
     ),
