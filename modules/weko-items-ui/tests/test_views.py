@@ -416,6 +416,7 @@ def test_iframe_save_model(
             },
             "shared_user_id": -1,
         },
+        'activity_id': "A-00000000-00000",
         "files": [],
         "endpoints": {"initialization": "/api/deposits/items"},
     }
