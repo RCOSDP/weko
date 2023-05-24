@@ -38,7 +38,7 @@ from invenio_indexer.api import RecordIndexer
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy.sql.expression import case, func, literal_column
+from sqlalchemy.sql.expression import case, func, literal_column, and_
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
 
@@ -1022,8 +1022,14 @@ class Indexes(object):
                 test_alias.parent,
                 test_alias.id,
                 rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
-                case([(func.length(test_alias.index_name) == 0, None)],
-                     else_=rec_alias.c.name + '-/-' + test_alias.index_name),
+                case(
+                    [
+                        (and_((func.length(rec_alias.c.name) > 0), (func.length(test_alias.index_name) == 0)), rec_alias.c.name + '-/-' + test_alias.index_name_english),
+                        (and_((func.length(rec_alias.c.name) == 0), (func.length(test_alias.index_name) > 0)), rec_alias.c.name_en + '-/-' + test_alias.index_name),
+                        (and_((func.length(rec_alias.c.name) > 0), (func.length(test_alias.index_name) > 0)), rec_alias.c.name + '-/-' + test_alias.index_name),
+                    ],
+                    else_=rec_alias.c.name_en + '-/-' + test_alias.index_name_english
+                ),
                 # add by ryuu at 1108 start
                 rec_alias.c.name_en + '-/-' + test_alias.index_name_english,
                 # add by ryuu at 1108 end
