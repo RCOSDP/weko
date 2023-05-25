@@ -863,6 +863,7 @@ def prepare_edit_item():
         recid, deposit = resolver.resolve(pid_value)
         authenticators = [str(deposit.get('owner')),
                           str(deposit.get('weko_shared_id'))]
+        index_list = deposit.get('path', [])
         user_id = str(get_current_user())
         activity = WorkActivity()
         latest_pid = PIDVersioning(child=recid).last_child
@@ -921,7 +922,8 @@ def prepare_edit_item():
                 recid.object_uuid
             )
             workflow = get_workflow_by_item_type_id(item_type.name_id,
-                                                    item_type_id)
+                                                    item_type_id,
+                                                    index_list)
             if not workflow:
                 return jsonify(
                     code=err_code,

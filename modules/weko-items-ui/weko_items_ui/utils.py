@@ -2358,20 +2358,46 @@ def translate_validation_message(item_property, cur_lang):
             translate_validation_message(value, cur_lang)
 
 
-def get_workflow_by_item_type_id(item_type_name_id, item_type_id):
+def get_workflow_by_item_type_id(item_type_name_id, item_type_id, index_list):
     """Get workflow settings by item type id."""
     from weko_workflow.models import WorkFlow
 
-    workflow = WorkFlow.query.filter_by(
-        itemtype_id=item_type_id).first()
-    if not workflow:
-        item_type_list = ItemTypes.get_by_name_id(item_type_name_id)
-        id_list = [x.id for x in item_type_list]
+    workflow = None
+    item_type_list = ItemTypes.get_by_name_id(item_type_name_id)
+    id_list = [x.id for x in item_type_list]
+
+    if len(index_list) == 1:
         workflow = (
             WorkFlow.query
-            .filter(WorkFlow.itemtype_id.in_(id_list))
-            .order_by(WorkFlow.itemtype_id.desc())
-            .order_by(WorkFlow.flow_id.asc()).first())
+                .filter(WorkFlow.itemtype_id==item_type_id)
+                .filter(WorkFlow.index_tree_id.in_(index_list))
+                .first()
+            )
+        if not workflow:
+            workflow = (
+                WorkFlow.query
+                .filter(WorkFlow.itemtype_id.in_(id_list))
+                .filter(WorkFlow.index_tree_id.in_(index_list))
+                .order_by(WorkFlow.itemtype_id.desc())
+                .order_by(WorkFlow.flow_id.asc()).first()
+            )
+    
+    if not workflow:
+        workflow = (
+            WorkFlow.query
+                .filter(WorkFlow.itemtype_id==item_type_id)
+                .filter(WorkFlow.index_tree_id.is_(None))
+                .first()
+            )
+        if not workflow:
+            workflow = (
+                WorkFlow.query
+                .filter(WorkFlow.itemtype_id.in_(id_list))
+                .filter(WorkFlow.index_tree_id.is_(None))
+                .order_by(WorkFlow.itemtype_id.desc())
+                .order_by(WorkFlow.flow_id.asc()).first()
+            )
+        
     return workflow
 
 
