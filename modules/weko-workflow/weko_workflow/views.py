@@ -366,6 +366,9 @@ def iframe_success():
             thumbnails_org=record_detail_alt.get('files_thumbnail')
         )
     )
+    
+    form = FlaskForm(request.form)
+    
     return render_template('weko_workflow/item_login_success.html',
                            page=page,
                            render_widgets=render_widgets,
@@ -384,6 +387,7 @@ def iframe_success():
                            files_thumbnail=files_thumbnail,
                            is_enable_item_name_link=is_enable_item_name_link(
                                action_endpoint, item_type_name),
+                           form=form,
                            **ctx)
 
 
@@ -824,21 +828,23 @@ def display_activity(activity_id="0"):
     step_item_login_url = None
     term_and_condition_content = ''
     title = ""
-
+    user_lock_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
     if action_endpoint in ['item_login',
                            'item_login_application',
                            'file_upload']:
         if not activity.get_activity_by_id(activity_id):
             pass
         if activity.get_activity_by_id(activity_id).action_status != ActionStatusPolicy.ACTION_CANCELED:
-            activity_session = dict(
-                activity_id=activity_id,
-                action_id=activity_detail.action_id,
-                action_version=cur_action.action_version,
-                action_status=ActionStatusPolicy.ACTION_DOING,
-                commond=''
-            )
-            session['activity_info'] = activity_session
+            cur_locked_val = str(get_cache_data(user_lock_key)) or str()
+            if not cur_locked_val:
+                activity_session = dict(
+                    activity_id=activity_id,
+                    action_id=activity_detail.action_id,
+                    action_version=cur_action.action_version,
+                    action_status=ActionStatusPolicy.ACTION_DOING,
+                    commond=''
+                )
+                session['activity_info'] = activity_session
         # get item edit page info.
 
         step_item_login_url, need_file, need_billing_file, \
@@ -912,17 +918,19 @@ def display_activity(activity_id="0"):
     if 'item_login' == action_endpoint or \
             'item_login_application' == action_endpoint or \
             'file_upload' == action_endpoint:
-        session['itemlogin_id'] = activity_id
-        session['itemlogin_activity'] = activity_detail
-        session['itemlogin_item'] = item
-        session['itemlogin_steps'] = steps
-        session['itemlogin_action_id'] = action_id
-        session['itemlogin_cur_step'] = cur_step
-        session['itemlogin_record'] = approval_record
-        session['itemlogin_histories'] = histories
-        session['itemlogin_res_check'] = res_check
-        session['itemlogin_pid'] = recid
-        session['itemlogin_community_id'] = community_id
+        cur_locked_val = str(get_cache_data(user_lock_key)) or str()
+        if not cur_locked_val:
+            session['itemlogin_id'] = activity_id
+            session['itemlogin_activity'] = activity_detail
+            session['itemlogin_item'] = item
+            session['itemlogin_steps'] = steps
+            session['itemlogin_action_id'] = action_id
+            session['itemlogin_cur_step'] = cur_step
+            session['itemlogin_record'] = approval_record
+            session['itemlogin_histories'] = histories
+            session['itemlogin_res_check'] = res_check
+            session['itemlogin_pid'] = recid
+            session['itemlogin_community_id'] = community_id
 
     user_id = current_user.id
     user_profile = {}
@@ -2320,6 +2328,100 @@ def get_feedback_maillist(activity_id='0'):
     res = ResponseMessageSchema().load({'code':-1,'msg':_('Error')})
     return jsonify(res.data), 400
 
+@workflow_blueprint.route('/activity/user_lock/<string:activity_id>', methods=["POST"])
+@login_required
+def user_lock_activity(activity_id="0"):
+    """アクティビティの操作者を確認し、そのユーザーが他にアクティビティを開いている場合ロックする
+    
+    Args:
+        activity_id (str, optional): 対象アクティビティID.パスパラメータから取得. Defaults to '0'.
+        
+    Result:
+        object: アクティビティの状態を示すjson data
+    
+    ---
+    post:
+        description: "user lock activity"
+        security:
+            - login_required: []
+        parameters:
+            - in: path
+                name: activity_id
+                description: 対象のアクティビティID
+                schema:
+                    type: string
+        responses:
+            200:
+                description: "success or locked"
+                content:
+                    application/json:
+                        example:
+                            {"code":200, "msg":"Success", "err": "","locked_by_email": "example@example.org"}
+    """
+    validate_csrf_header(request)
+    cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
+    timeout = current_app.permanent_session_lifetime.seconds
+    
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    
+    err = ""
+    if cur_locked_val:
+        err = _("Opened")
+    else:
+        update_cache_data(
+            cache_key,
+            activity_id,
+            timeout
+        )
+    locked_by_email, locked_by_username = get_account_info(str(current_user.get_id()))
+    res = {"code":200,"msg": "" if err else _("Success"),"err": err or "", "locked_by_username":locked_by_username}
+    return jsonify(res), 200
+
+@workflow_blueprint.route('/activity/user_unlock/<string:activity_id>', methods=["POST"])
+@login_required
+def user_unlock_activity(activity_id="0"):
+    """キャッシュデータを削除することによりロックを解除する
+    そのアクティビティがユーザーロックを受けていない場合のみ解除
+    Args:
+        activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得.. Defaults to "0".
+
+    Returns:
+        object: ロック解除が出来たかを示すResponse
+    
+    ---
+    post:
+        description: "user unlock activity"
+        security:
+            - login_required: []
+        requestBody:
+            required: false
+            content:
+                text/plain:
+                    example: '{"is_opened": true}'
+        parameters:
+            - in: path
+              name: activity_id
+              description: 対象のアクティビティID
+              schema:
+                type: string
+        responses:
+            200:
+                description: "success"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example: {"code":200,"msg":"Unlock success"}
+    """
+    cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    data = json.loads(request.data.decode("utf-8"))
+    msg = None
+    if cur_locked_val and not data["is_opened"]:
+        delete_cache_data(cache_key)
+        msg = "User Unlock Success"
+    res = {"code":200, "msg":msg or _("Not unlock")}
+    return jsonify(res), 200
 
 @workflow_blueprint.route('/activity/lock/<string:activity_id>', methods=['POST'])
 @login_required
