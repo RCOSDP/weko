@@ -1,0 +1,425 @@
+GLOB sdist-make: /code/modules/weko-index-tree/setup.py
+c1 recreate: /code/modules/weko-index-tree/.tox/c1
+c1 installdeps: pytest>=3, pytest-cov, -rrequirements.txt
+c1 inst: /code/modules/weko-index-tree/.tox/.tmp/package/1/weko-index-tree-0.1.0.dev20170000.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.6,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,kombu==4.6.10,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_handle&subdirectory=modules/weko-handle,weko-index-tree @ file:///code/modules/weko-index-tree/.tox/.tmp/package/1/weko-index-tree-0.1.0.dev20170000.zip,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='360717945'
+c1 run-test: commands[0] | pytest --cov=weko_index_tree tests -v -s -vv --cov-branch --cov-report=term --cov-report=xml --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/weko-index-tree/.tox/c1/bin/python
+cachedir: .tox/c1/.pytest_cache
+rootdir: /code/modules/weko-index-tree
+plugins: cov-4.0.0, celery-4.4.7, mock-3.6.1
+collecting ... collected 127 items
+
+tests/test_admin.py::test_IndexLinkSettingView[0-403] ERROR
+tests/test_admin.py::test_IndexLinkSettingView[1-403] PASSED
+tests/test_admin.py::test_IndexLinkSettingView[2-400] PASSED
+tests/test_admin.py::test_IndexLinkSettingView[3-400] PASSED
+tests/test_admin.py::test_IndexLinkSettingView[4-400] PASSED
+tests/test_admin.py::test_IndexEditSettingView[2-400] PASSED
+tests/test_admin.py::test_IndexEditSettingView[3-400] PASSED
+tests/test_admin.py::test_IndexEditSettingView[4-400] PASSED
+tests/test_api.py::test_indexes_create PASSED
+tests/test_api.py::test_indexes_update PASSED
+tests/test_api.py::test_indexes_delete PASSED
+tests/test_api.py::test_indexes_delete_by_action PASSED
+tests/test_api.py::test_indexes_move PASSED
+tests/test_api.py::test_update_set_info PASSED
+tests/test_api.py::test_indexes_get_index_tree (sqlite3.OperationalError) no such function: every [SQL: 'WITH RECURSIVE recursive_t_3(pid, cid, path, name, name_en, lev, public_state, public_date, comment, browsing_role, browsing_group, harvest_public_state) AS \n(SELECT "index".parent AS pid, "index".id AS cid, CAST("index".id AS TEXT) AS path, "index".index_name AS name, "index".index_name_english AS name_en, 1 AS lev, "index".public_state AS public_state, "index".public_date AS public_date, "index".comment AS comment, "index".browsing_role AS browsing_role, "index".browsing_group AS browsing_group, "index".harvest_public_state AS harvest_public_state \nFROM "index" \nWHERE "index".id = ? UNION ALL SELECT t_3.parent AS t_3_parent, t_3.id AS t_3_id, rec_3.path || ? || CAST(t_3.id AS TEXT) AS anon_3, CASE WHEN (length(t_3.index_name) = ?) THEN NULL ELSE rec_3.name || ? || t_3.index_name END AS anon_4, rec_3.name_en || ? || t_3.index_name_english AS anon_5, rec_3.lev + ? AS anon_6, t_3.public_state AS t_3_public_state, t_3.public_date AS t_3_public_date, t_3.comment AS t_3_comment, t_3.browsing_role AS t_3_browsing_role, t_3.browsing_group AS t_3_browsing_group, t_3.harvest_public_state AS t_3_harvest_public_state \nFROM "index" AS t_3, recursive_t_3 AS rec_3 \nWHERE t_3.id = rec_3.pid)\n SELECT bool_or(anon_1.parent_state) AS parent_state \nFROM (SELECT anon_2.parent_state AS parent_state \nFROM (SELECT every(recursive_t_3.public_state = 1 AND (recursive_t_3.public_date IS NULL OR recursive_t_3.public_date <= ?)) AS parent_state \nFROM recursive_t_3) AS anon_2) AS anon_1'] [parameters: (3, '/', 0, '-/-', '-/-', 1, '2023-03-24')] (Background on this error at: http://sqlalche.me/e/e3q8)
+PASSED
+tests/test_ext.py::test_WekoIndexTree PASSED
+tests/test_ext.py::test_WekoIndexTreeREST PASSED
+tests/test_models.py::test_Index PASSED
+tests/test_models.py::test_Index_get_all PASSED
+tests/test_models.py::test_IndexStyle PASSED
+tests/test_rest.py::test_need_record_permission PASSED
+tests/test_rest.py::test_tree_action_login[0-403] PASSED
+tests/test_rest.py::test_tree_action_login[1-403] PASSED
+tests/test_rest.py::test_tree_action_login[2-202] PASSED
+tests/test_rest.py::test_tree_action_login[3-202] PASSED
+tests/test_rest.py::test_tree_action_login[4-202] PASSED
+tests/test_rest.py::test_tree_action_login[5-403] PASSED
+tests/test_rest.py::test_tree_action_login[6-403] PASSED
+tests/test_rest.py::test_tree_action_login2[2-201] PASSED
+tests/test_rest.py::test_tree_action_login2[3-201] PASSED
+tests/test_rest.py::test_tree_action_login2[4-201] PASSED
+tests/test_rest.py::test_tree_action_guest PASSED
+tests/test_rest.py::test_create_blueprint PASSED
+tests/test_rest.py::test_index_action_get0_login PASSED
+tests/test_rest.py::test_index_action_get1_login PASSED
+tests/test_rest.py::test_index_action_get3_login PASSED
+tests/test_rest.py::test_index_action_get3_guest PASSED
+tests/test_rest.py::test_index_action_put_login[0-403] PASSED
+tests/test_rest.py::test_index_action_put_login[1-403] PASSED
+tests/test_rest.py::test_index_action_put_login[2-200] PASSED
+tests/test_rest.py::test_index_action_put_login[3-200] PASSED
+tests/test_rest.py::test_index_action_put_login[4-200] PASSED
+tests/test_rest.py::test_index_action_put_login[5-403] PASSED
+tests/test_rest.py::test_index_action_put_login[6-403] PASSED
+tests/test_rest.py::test_index_action_put_guest PASSED
+tests/test_rest.py::test_index_action_post1_login[0-403] PASSED
+tests/test_rest.py::test_index_action_post1_login[1-403] PASSED
+tests/test_rest.py::test_index_action_post1_login[2-200] PASSED
+tests/test_rest.py::test_index_action_post1_login[3-200] PASSED
+tests/test_rest.py::test_index_action_post1_login[4-200] PASSED
+tests/test_rest.py::test_index_action_post1_login[5-403] PASSED
+tests/test_rest.py::test_index_action_post1_login[6-403] PASSED
+tests/test_rest.py::test_index_action_post2_login[0-403] PASSED
+tests/test_rest.py::test_index_action_post2_login[1-403] PASSED
+tests/test_rest.py::test_index_action_post2_login[2-400] PASSED
+tests/test_rest.py::test_index_action_post2_login[3-400] PASSED
+tests/test_rest.py::test_index_action_post2_login[4-400] PASSED
+tests/test_rest.py::test_index_action_post2_login[5-403] PASSED
+tests/test_rest.py::test_index_action_post2_login[6-403] PASSED
+tests/test_rest.py::test_index_action_post3_login[0-403] PASSED
+tests/test_rest.py::test_index_action_post3_login[1-403] PASSED
+tests/test_rest.py::test_index_action_post3_login[2-201] PASSED
+tests/test_rest.py::test_index_action_post3_login[3-201] PASSED
+tests/test_rest.py::test_index_action_post3_login[4-201] PASSED
+tests/test_rest.py::test_index_action_post3_login[5-403] PASSED
+tests/test_rest.py::test_index_action_post3_login[6-403] PASSED
+tests/test_rest.py::test_index_action_post1_guest PASSED
+tests/test_rest.py::test_index_action_delete_login[0-403] PASSED
+tests/test_rest.py::test_index_action_delete_login[1-403] PASSED
+tests/test_rest.py::test_index_action_delete_login[2-200] PASSED
+tests/test_rest.py::test_index_action_delete_login[3-200] PASSED
+tests/test_rest.py::test_index_action_delete_login[4-200] PASSED
+tests/test_rest.py::test_index_action_delete_login[5-403] PASSED
+tests/test_rest.py::test_index_action_delete_login[6-403] PASSED
+tests/test_rest.py::test_index_action_delete_guest PASSED
+tests/test_rest.py::test_index_tree_action_get_login[0-403] PASSED
+tests/test_rest.py::test_index_tree_action_get_login[1-403] PASSED
+tests/test_rest.py::test_index_tree_action_get_login[2-200] PASSED
+tests/test_rest.py::test_index_tree_action_get_login[3-200] PASSED
+tests/test_rest.py::test_index_tree_action_get_login[4-200] PASSED
+tests/test_rest.py::test_index_tree_action_get_login[5-403] PASSED
+tests/test_rest.py::test_index_tree_action_get_login[6-403] PASSED
+tests/test_tasks.py::test_update_oaiset_setting PASSED
+tests/test_tasks.py::test_delete_oaiset_setting PASSED
+tests/test_utils.py::test_get_index_link_list PASSED
+tests/test_utils.py::test_is_index_tree_updated PASSED
+tests/test_utils.py::test_cached_index_tree_json PASSED
+tests/test_utils.py::test_reset_tree PASSED
+tests/test_utils.py::test_get_user_roles PASSED
+tests/test_utils.py::test_get_user_groups PASSED
+tests/test_utils.py::test_check_roles PASSED
+tests/test_utils.py::test_check_groups PASSED
+tests/test_utils.py::test_filter_index_list_by_role PASSED
+tests/test_utils.py::test_reduce_index_by_role PASSED
+tests/test_utils.py::test_get_index_id_list PASSED
+tests/test_utils.py::test_get_publish_index_id_list PASSED
+tests/test_utils.py::test_reduce_index_by_more PASSED
+tests/test_utils.py::test_get_admin_coverpage_setting PASSED
+tests/test_utils.py::test_get_elasticsearch_records_data_by_indexes PASSED
+tests/test_utils.py::test_generate_path PASSED
+tests/test_utils.py::test_get_index_id PASSED
+tests/test_utils.py::test_sanitize PASSED
+tests/test_utils.py::test_count_items PASSED
+tests/test_utils.py::test_recorrect_private_items_count PASSED
+tests/test_utils.py::test_check_doi_in_index PASSED
+tests/test_utils.py::test_get_record_in_es_of_index PASSED
+tests/test_utils.py::test_check_doi_in_list_record_es PASSED
+tests/test_utils.py::test_check_restrict_doi_with_indexes PASSED
+tests/test_utils.py::test_check_has_any_item_in_index_is_locked PASSED
+tests/test_utils.py::test_check_index_permissions PASSED
+tests/test_utils.py::test_check_doi_in_index_and_child_index PASSED
+tests/test_utils.py::test___get_redis_store PASSED
+tests/test_utils.py::test_lock_all_child_index PASSED
+tests/test_utils.py::test_unlock_index PASSED
+tests/test_utils.py::test_validate_before_delete_index PASSED
+tests/test_utils.py::test_is_index_locked PASSED
+tests/test_utils.py::test_perform_delete_index PASSED
+tests/test_utils.py::test_get_doi_items_in_index PASSED
+tests/test_utils.py::test_get_editing_items_in_index PASSED
+tests/test_utils.py::test_save_index_trees_to_redis PASSED
+tests/test_utils.py::test_str_to_datetime PASSED
+tests/test_views.py::test_get_rss_data PASSED
+tests/test_views.py::test_set_expand_login[0-200] PASSED
+tests/test_views.py::test_set_expand_guest PASSED
+tests/test_views.py::test_create_index PASSED
+tests/test_weko_index_tree.py::test_version PASSED
+tests/test_weko_index_tree.py::test_init PASSED
+
+==================================== ERRORS ====================================
+______________ ERROR at setup of test_IndexLinkSettingView[0-403] ______________
+
+self = <sqlalchemy.engine.base.Connection object at 0x7f2d0eb49780>
+dialect = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x7f2d11c230b8>
+constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext'>>
+statement = 'INSERT INTO accounts_user (email, password, active, confirmed_at, last_login_at, current_login_at, last_login_ip, current_login_ip, login_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+parameters = ('originalroleuser@test.org', '$pbkdf2-sha512$25000$ICQEoJRyrlWKcU5Jybm3Vg$/m/2QMMbKp/0lYXjLSgnW.yYhCeAKfEhlurbqK2rR4SMzEyJJQJD4KTklKSpVPJ18/e/b6QzrVCPX5w//Q1lmA', 1, None, None, None, ...)
+args = (<sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x7f2d0eb492e8>, [{'active': True, 'confirmed_at': None, 'current_login_at': None, 'current_login_ip': None, ...}])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7f2d0eb442e8>
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7f2d0eb490f0>
+
+    def _execute_context(
+        self, dialect, constructor, statement, parameters, *args
+    ):
+        """Create an :class:`.ExecutionContext` and execute, returning
+        a :class:`.ResultProxy`."""
+    
+        try:
+            try:
+                conn = self.__connection
+            except AttributeError:
+                # escape "except AttributeError" before revalidating
+                # to prevent misleading stacktraces in Py3K
+                conn = None
+            if conn is None:
+                conn = self._revalidate_connection()
+    
+            context = constructor(dialect, self, conn, *args)
+        except BaseException as e:
+            self._handle_dbapi_exception(
+                e, util.text_type(statement), parameters, None, None
+            )
+    
+        if context.compiled:
+            context.pre_exec()
+    
+        cursor, statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        if not context.executemany:
+            parameters = parameters[0]
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                statement, parameters = fn(
+                    self,
+                    cursor,
+                    statement,
+                    parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self.engine.logger.info(statement)
+            self.engine.logger.info(
+                "%r", sql_util._repr_params(parameters, batches=10)
+            )
+    
+        evt_handled = False
+        try:
+            if context.executemany:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor, statement, parameters, context
+                    )
+            elif not parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, statement, context
+                    )
+            else:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute(
+>                       cursor, statement, parameters, context
+                    )
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x7f2d11c230b8>
+cursor = <sqlite3.Cursor object at 0x7f2d0eb9e5e0>
+statement = 'INSERT INTO accounts_user (email, password, active, confirmed_at, last_login_at, current_login_at, last_login_ip, current_login_ip, login_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+parameters = ('originalroleuser@test.org', '$pbkdf2-sha512$25000$ICQEoJRyrlWKcU5Jybm3Vg$/m/2QMMbKp/0lYXjLSgnW.yYhCeAKfEhlurbqK2rR4SMzEyJJQJD4KTklKSpVPJ18/e/b6QzrVCPX5w//Q1lmA', 1, None, None, None, ...)
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7f2d0eb490f0>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlite3.IntegrityError: UNIQUE constraint failed: accounts_user.email
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: IntegrityError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/weko-index-tree/test.db>
+
+    @pytest.fixture()
+    def users(app, db):
+        """Create users."""
+        ds = app.extensions['invenio-accounts'].datastore
+        user_count = User.query.filter_by(email='user@test.org').count()
+        if user_count != 1:
+            user = create_test_user(email='user@test.org')
+            contributor = create_test_user(email='contributor@test.org')
+            comadmin = create_test_user(email='comadmin@test.org')
+            repoadmin = create_test_user(email='repoadmin@test.org')
+            sysadmin = create_test_user(email='sysadmin@test.org')
+            generaluser = create_test_user(email='generaluser@test.org')
+            originalroleuser = create_test_user(email='originalroleuser@test.org')
+            originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
+            noroleuser = create_test_user(email='noroleuser@test.org')
+        else:
+            user = User.query.filter_by(email='user@test.org').first()
+            contributor = User.query.filter_by(email='contributor@test.org').first()
+            comadmin = User.query.filter_by(email='comadmin@test.org').first()
+            repoadmin = User.query.filter_by(email='repoadmin@test.org').first()
+            sysadmin = User.query.filter_by(email='sysadmin@test.org').first()
+            generaluser = User.query.filter_by(email='generaluser@test.org')
+>           originalroleuser = create_test_user(email='originalroleuser@test.org')
+
+tests/conftest.py:576: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../invenio-accounts/invenio_accounts/testutils.py:49: in create_test_user
+    _datastore.commit()
+.tox/c1/lib/python3.6/site-packages/flask_security/datastore.py:31: in commit
+    self.db.session.commit()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/scoping.py:162: in do
+    return getattr(self.registry(), name)(*args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:1023: in commit
+    self.transaction.commit()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:487: in commit
+    self._prepare_impl()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:466: in _prepare_impl
+    self.session.flush()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2446: in flush
+    self._flush(objects)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2584: in _flush
+    transaction.rollback(_capture_exception=True)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/langhelpers.py:67: in __exit__
+    compat.reraise(exc_type, exc_value, exc_tb)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2544: in _flush
+    flush_context.execute()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/unitofwork.py:416: in execute
+    rec.execute(self)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/unitofwork.py:583: in execute
+    uow,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/persistence.py:245: in save_obj
+    insert,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/persistence.py:1116: in _emit_insert_statements
+    statement, params
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:273: in _execute_on_connection
+    return connection._execute_clauseelement(self, multiparams, params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1099: in _execute_clauseelement
+    distilled_params,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1240: in _execute_context
+    e, statement, parameters, cursor, context
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1458: in _handle_dbapi_exception
+    util.raise_from_cause(sqlalchemy_exception, exc_info)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: in _execute_context
+    cursor, statement, parameters, context
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x7f2d11c230b8>
+cursor = <sqlite3.Cursor object at 0x7f2d0eb9e5e0>
+statement = 'INSERT INTO accounts_user (email, password, active, confirmed_at, last_login_at, current_login_at, last_login_ip, current_login_ip, login_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+parameters = ('originalroleuser@test.org', '$pbkdf2-sha512$25000$ICQEoJRyrlWKcU5Jybm3Vg$/m/2QMMbKp/0lYXjLSgnW.yYhCeAKfEhlurbqK2rR4SMzEyJJQJD4KTklKSpVPJ18/e/b6QzrVCPX5w//Q1lmA', 1, None, None, None, ...)
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7f2d0eb490f0>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) UNIQUE constraint failed: accounts_user.email [SQL: 'INSERT INTO accounts_user (email, password, active, confirmed_at, last_login_at, current_login_at, last_login_ip, current_login_ip, login_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'] [parameters: ('originalroleuser@test.org', '$pbkdf2-sha512$25000$ICQEoJRyrlWKcU5Jybm3Vg$/m/2QMMbKp/0lYXjLSgnW.yYhCeAKfEhlurbqK2rR4SMzEyJJQJD4KTklKSpVPJ18/e/b6QzrVCPX5w//Q1lmA', 1, None, None, None, None, None, None)] (Background on this error at: http://sqlalche.me/e/gkpj)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: IntegrityError
+=============================== warnings summary ===============================
+../invenio-indexer/invenio_indexer/cli.py:108
+  /code/modules/invenio-indexer/invenio_indexer/cli.py:108: DeprecationWarning: 'resultcallback' has been renamed to 'result_callback'. The old name will be removed in Click 8.1.
+    @queue.resultcallback()
+
+.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3
+  /code/modules/weko-index-tree/.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3: DeprecationWarning: 'werkzeug.contrib.cache' is deprecated as of version 0.15 and will be removed in version 1.0. It has moved to https://github.com/pallets/cachelib.
+    from werkzeug.contrib.cache import NullCache, SimpleCache, FileSystemCache
+
+.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35
+  /code/modules/weko-index-tree/.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+    import imp
+
+.tox/c1/src/pypdf2/PyPDF2/generic.py:348
+  /code/modules/weko-index-tree/.tox/c1/src/pypdf2/PyPDF2/generic.py:348: DeprecationWarning: invalid escape sequence \c
+    b_("c") : b_("\c"),
+
+tests/test_admin.py: 208 warnings
+tests/test_api.py: 182 warnings
+tests/test_ext.py: 52 warnings
+tests/test_models.py: 78 warnings
+tests/test_rest.py: 1612 warnings
+tests/test_tasks.py: 52 warnings
+tests/test_utils.py: 884 warnings
+tests/test_views.py: 104 warnings
+  /code/modules/weko-index-tree/.tox/c1/lib/python3.6/site-packages/invenio_admin/ext.py:73: PendingDeprecationWarning: Usage of model and modelview kwargs are deprecated in favor of view_class, args and kwargs.
+    PendingDeprecationWarning
+
+tests/test_admin.py: 8 warnings
+tests/test_api.py: 7 warnings
+tests/test_ext.py: 2 warnings
+tests/test_models.py: 3 warnings
+tests/test_rest.py: 62 warnings
+tests/test_tasks.py: 2 warnings
+tests/test_utils.py: 34 warnings
+tests/test_views.py: 4 warnings
+  /code/modules/weko-index-tree/.tox/c1/lib/python3.6/site-packages/flask_admin/model/base.py:1416: UserWarning: Fields missing from ruleset: created_userId,created_date,updated_userId,updated_date
+    warnings.warn(text)
+
+tests/test_admin.py: 7 warnings
+tests/test_rest.py: 52 warnings
+tests/test_tasks.py: 1 warning
+tests/test_views.py: 3 warnings
+  /code/modules/weko-index-tree/.tox/c1/lib/python3.6/site-packages/flask/sessions.py:208: UserWarning: "TEST_SERVER" is not a valid cookie domain, it must contain a ".". Add an entry to your hosts file, for example "TEST_SERVER.localdomain", and use that instead.
+    ' "{rv}.localdomain", and use that instead.'.format(rv=rv)
+
+tests/test_api.py: 360 warnings
+tests/test_utils.py: 20064 warnings
+  /code/modules/invenio-oaiserver/invenio_oaiserver/receivers.py:28: DeprecationWarning: generator 'get_record_sets' raised StopIteration
+    new_sets = set(get_record_sets(record=record))
+
+-- Docs: https://docs.pytest.org/en/stable/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                             Stmts   Miss Branch BrPart  Cover
+------------------------------------------------------------------
+weko_index_tree/__init__.py          4      0      0      0   100%
+weko_index_tree/admin.py            53      1     14      0    99%
+weko_index_tree/api.py             815     38    259     20    93%
+weko_index_tree/bundles.py           6      0      0      0   100%
+weko_index_tree/config.py           22      0      0      0   100%
+weko_index_tree/errors.py           24      0     14      0   100%
+weko_index_tree/ext.py              31      0     18      0   100%
+weko_index_tree/models.py          106      0     26      0   100%
+weko_index_tree/permissions.py       4      0      0      0   100%
+weko_index_tree/rest.py            210     16    106     12    91%
+weko_index_tree/scopes.py            9      0      2      0   100%
+weko_index_tree/tasks.py            44      0     10      0   100%
+weko_index_tree/utils.py           517     23    237     26    94%
+weko_index_tree/version.py           2      0      0      0   100%
+weko_index_tree/views.py            96      7     24      6    89%
+------------------------------------------------------------------
+TOTAL                             1943     85    710     64    94%
+Coverage XML written to file coverage.xml
+
+=========================== short test summary info ============================
+ERROR tests/test_admin.py::test_IndexLinkSettingView[0-403] - sqlalchemy.exc....
+=========== 126 passed, 23785 warnings, 1 error in 975.29s (0:16:15) ===========
+ERROR: InvocationError for command /code/modules/weko-index-tree/.tox/c1/bin/pytest --cov=weko_index_tree tests -v -s -vv --cov-branch --cov-report=term --cov-report=xml --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp (exited with code 1)
+___________________________________ summary ____________________________________
+ERROR:   c1: commands failed

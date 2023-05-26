@@ -23,22 +23,32 @@
 import os
 from functools import wraps
 from wsgiref.util import request_uri
+from datetime import datetime, timezone, timedelta
 
 from flask import Blueprint, abort, current_app, jsonify, make_response, \
     request
 from flask_babelex import gettext as _
+from flask_babelex import get_locale as get_current_locale
+from flask_limiter import Limiter
 from flask_login import current_user
+from werkzeug.http import generate_etag
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
+#from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_db import db
+from weko_redis.redis import RedisConnection
+from redis.exceptions import RedisError
+from sqlalchemy.exc import SQLAlchemyError
 
 from .api import Indexes
 from .errors import IndexAddedRESTError, IndexNotFoundRESTError, \
-    IndexUpdatedRESTError, InvalidDataRESTError
+    IndexUpdatedRESTError, InvalidDataRESTError, VersionNotFoundRESTError, InternalServerError
 from .models import Index
+#from .scopes import get_index_scope
 from .utils import check_doi_in_index, check_index_permissions, \
-    is_index_locked, perform_delete_index, save_index_trees_to_redis
+    is_index_locked, perform_delete_index, save_index_trees_to_redis, check_etag, reset_tree
 
+JST = timezone(timedelta(hours=+9), 'JST')
 
 def need_record_permission(factory_name):
     """Decorator checking that the user has the required permissions on record.
@@ -127,6 +137,13 @@ def create_blueprint(app, endpoints):
             default_media_type=options.get('default_media_type'),
         )
 
+        itg = GetIndex.as_view(
+            GetIndex.view_name.format(endpoint),
+            ctx=ctx,
+            record_serializers=record_serializers,
+            default_media_type=options.get('default_media_type'),
+        )
+        
         ita = IndexTreeActionResource.as_view(
             IndexTreeActionResource.view_name.format(endpoint),
             ctx=ctx,
@@ -140,6 +157,18 @@ def create_blueprint(app, endpoints):
             methods=['GET', 'PUT', 'POST', 'DELETE'],
         )
 
+        blueprint.add_url_rule(
+            options.pop('get_index_tree'),
+            view_func=itg,
+            methods=['GET'],
+        )
+        
+        blueprint.add_url_rule(
+            options.pop('get_index_root_tree'),
+            view_func=itg,
+            methods=['GET'],
+        )
+        
         blueprint.add_url_rule(
             options.pop('tree_route'),
             view_func=ita,
@@ -377,7 +406,8 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                     else:
                         tree = self.record_class.get_more_browsing_tree(
                             pid=int(comm.root_node_id), more_ids=more_ids)
-
+                else:
+                    tree = []
             else:
                 tree = []
                 role_ids = []
@@ -429,3 +459,94 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
             save_index_trees_to_redis(tree)
         return make_response(
             jsonify({'status': status, 'message': msg}), status)
+
+class GetIndex(ContentNegotiatedMethodView):
+    """Get Index Tree API."""
+
+    view_name = '{0}_get_index_tree'
+
+    def __init__(self, ctx, record_serializers=None,
+                 default_media_type=None, **kwargs):
+        """Constructor."""
+        super(GetIndex, self).__init__(
+            method_serializers={
+                'GET': record_serializers,
+            },
+            default_method_media_type={
+                'GET': default_media_type,
+            },
+            default_media_type=default_media_type,
+            **kwargs
+        )
+        for key, value in ctx.items():
+            setattr(self, key, value)
+
+    # @require_api_auth()
+    # @require_oauth_scopes(get_index_scope.id)
+    def get(self, **kwargs):
+        """Get tree json."""
+        from invenio_communities.models import Community
+        from .config import WEKO_INDEX_TREE_GETINDEX_API_VERSION
+        version = kwargs.get('version')
+        get_index = WEKO_INDEX_TREE_GETINDEX_API_VERSION.get(version)
+        if get_index:
+            return get_index(self,**kwargs)
+        else:
+            raise VersionNotFoundRESTError()
+      
+    def get_v1(self, **kwargs):
+        try:
+            pid = kwargs.get('index_id')
+            
+            # Get Redis Last Save Time GMT and Etag String
+            redis_connection = RedisConnection()
+            datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'])
+            lastsave_time = datastore.lastsave().replace(tzinfo=JST).astimezone(tz=timezone.utc)
+            lastsave_time = lastsave_time.strftime("%a, %d %b %Y %H:%M:%S GMT")
+            hash_str = lastsave_time + str(pid)
+            
+            #Check Etag
+            etag = generate_etag(hash_str.encode('utf-8'))
+            if check_etag(etag):
+                return make_response("304 Not Modified",304)
+            
+            #Language setting
+            language = request.headers.get('Accept-Language')
+            if language == 'ja':
+                get_current_locale().language = language
+
+            #Get index tree
+            
+            if pid and pid != 0:
+                tree = self.record_class.get_index_tree(pid)
+                reset_tree(tree=tree)
+                result_tree = tree[0]
+            else:
+                tree = self.record_class.get_index_tree(pid=0)
+                reset_tree(tree=tree)
+                result_tree = dict(
+                  children = tree,
+                  cid = 0,
+                  name = 'Root-index',
+                  id = '0',
+                  public_state = True,
+                  value = 'Root-index'
+                )
+            
+            #Check pretty
+            if request.args.get('pretty') == "true":
+                current_app.debug = True
+                
+            #Setting Response
+            res = make_response(jsonify(result_tree), 200)
+            res.set_etag(etag)
+            return res
+
+        except RedisError:
+            raise InternalServerError() 
+
+        except SQLAlchemyError:
+            raise InternalServerError()
+
+        except Exception:
+            raise InvalidDataRESTError()

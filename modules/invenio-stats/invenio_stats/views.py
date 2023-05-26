@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 
 from elasticsearch.exceptions import NotFoundError
-from flask import Blueprint, abort, current_app, jsonify, request
+from flask import Blueprint, abort, current_app, jsonify, request, make_response
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_rest.views import ContentNegotiatedMethodView
@@ -195,7 +195,7 @@ class QueryRecordViewCount(WekoQuery):
             _data = list(self._get_data(
                 record_id=child.object_uuid,
                 query_date=query_date,
-                get_period=True) for child in versioning.children.all())
+                get_period=get_period) for child in versioning.children.all())
 
             countries = result['country']
             for _idx in _data:

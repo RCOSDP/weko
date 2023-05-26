@@ -623,6 +623,7 @@ def base_app(instance_path, search_class, request):
                     "application/json": ("weko_records.serializers" ":json_v1_search"),
                 },
                 index_route="/index/",
+                search_api_route="/<string:version>/search",
                 tree_route="/index",
                 item_tree_route="/index/<string:pid_value>",
                 index_move_route="/index/move/<int:index_id>",
@@ -635,6 +636,8 @@ def base_app(instance_path, search_class, request):
             tid=dict(
                 record_class="weko_index_tree.api:Indexes",
                 index_route="/tree/index/<int:index_id>",
+                get_index_tree='/<string:version>/tree/index/<int:index_id>',
+                get_index_root_tree='/<string:version>/tree/index',
                 tree_route="/tree",
                 item_tree_route="/tree/<string:pid_value>",
                 index_move_route="/tree/move/<int:index_id>",

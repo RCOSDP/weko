@@ -1,0 +1,797 @@
+GLOB sdist-make: /code/modules/invenio-communities/setup.py
+c1 recreate: /code/modules/invenio-communities/.tox/c1
+c1 installdeps: pytest>=3, pytest-cov, -rrequirements.txt
+c1 inst: /code/modules/invenio-communities/.tox/.tmp/package/1/invenio-communities-1.0.0a21.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.6,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,invenio-communities @ file:///code/modules/invenio-communities/.tox/.tmp/package/1/invenio-communities-1.0.0a21.zip,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,kombu==4.6.10,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='1551913976'
+c1 run-test: commands[0] | pytest --cov=invenio_communities tests -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/invenio-communities/.tox/c1/bin/python
+cachedir: .tox/c1/.pytest_cache
+rootdir: /code/modules/invenio-communities
+plugins: cov-4.0.0, celery-4.4.7, mock-3.6.1
+collecting ... collected 52 items
+
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl_guest PASSED [  1%]
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl[0-403] PASSED [  3%]
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl[1-200] PASSED [  5%]
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl[2-200] PASSED [  7%]
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl[3-200] PASSED [  9%]
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl[4-403] PASSED [ 11%]
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl[5-403] PASSED [ 13%]
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl[6-200] PASSED [ 15%]
+tests/test_admin.py::TestCommunityModelView::test_index_view_acl[7-403] PASSED [ 17%]
+tests/test_admin.py::TestCommunityModelView::test_get_query FAILED       [ 19%]
+tests/test_admin.py::TestCommunityModelView::test_get_count_query FAILED [ 21%]
+tests/test_admin.py::TestCommunityModelView::test__get_child_index_list FAILED [ 23%]
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl_guest PASSED [ 25%]
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[0-403] PASSED [ 26%]
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[1-200] PASSED [ 28%]
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[2-200] PASSED [ 30%]
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[3-200] PASSED [ 32%]
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[4-403] PASSED [ 34%]
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[5-403] PASSED [ 36%]
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[6-200] PASSED [ 38%]
+tests/test_admin.py::TestFeaturedCommunityModelView::test_index_view_acl[7-403] PASSED [ 40%]
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl_guest PASSED [ 42%]
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[0-403] PASSED [ 44%]
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[1-200] PASSED [ 46%]
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[2-200] PASSED [ 48%]
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[3-200] PASSED [ 50%]
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[4-403] PASSED [ 51%]
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[5-403] PASSED [ 53%]
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[6-200] PASSED [ 55%]
+tests/test_admin.py::TestInclusionRequestModelView::test_index_view_acl[7-403] PASSED [ 57%]
+tests/test_invenio_communities.py::test_version PASSED                   [ 59%]
+tests/test_invenio_communities.py::test_init PASSED                      [ 61%]
+tests/test_invenio_communities.py::test_alembic SKIPPED                  [ 63%]
+tests/test_invenio_communities.py::test_model_init PASSED                [ 65%]
+tests/test_invenio_communities.py::test_email_notification PASSED        [ 67%]
+tests/test_invenio_communities.py::test_model_featured_community PASSED  [ 69%]
+tests/test_invenio_communities.py::test_oaipmh_sets PASSED               [ 71%]
+tests/test_invenio_communities.py::test_communities_rest_all_communities FAILED [ 73%]
+tests/test_invenio_communities.py::test_community_delete PASSED          [ 75%]
+tests/test_invenio_communities.py::test_communities_rest_all_communities_query_and_sort FAILED [ 76%]
+tests/test_invenio_communities.py::test_communities_rest_pagination FAILED [ 78%]
+tests/test_invenio_communities.py::test_communities_rest_get_details FAILED [ 80%]
+tests/test_invenio_communities.py::test_communities_rest_etag FAILED     [ 82%]
+tests/test_invenio_communities.py::test_add_remove_corner_cases PASSED   [ 84%]
+tests/test_models.py::test_filter_community[<lambda>0] PASSED            [ 86%]
+tests/test_models.py::test_filter_community[<lambda>1] PASSED            [ 88%]
+tests/test_models.py::test_filter_community[<lambda>2] PASSED            [ 90%]
+tests/test_tasks.py::test_community_delete_task PASSED                   [ 92%]
+tests/test_tasks.py::test_delete_marked_communities PASSED               [ 94%]
+tests/test_tasks.py::test_delete_expired_requests FAILED                 [ 96%]
+tests/test_utils.py::test_template_formatting_from_string PASSED         [ 98%]
+tests/test_utils.py::test_email_formatting PASSED                        [100%]
+
+=================================== FAILURES ===================================
+____________________ TestCommunityModelView.test_get_query _____________________
+
+self = <tests.test_admin.TestCommunityModelView object at 0x7f0684e12550>
+
+    def test_get_query(self):
+>       assert self.get_query()
+E       AttributeError: 'TestCommunityModelView' object has no attribute 'get_query'
+
+tests/test_admin.py:42: AttributeError
+_________________ TestCommunityModelView.test_get_count_query __________________
+
+self = <tests.test_admin.TestCommunityModelView object at 0x7f06851c2470>
+
+    def test_get_count_query(self):
+>       assert self.get_count_query()
+E       AttributeError: 'TestCommunityModelView' object has no attribute 'get_count_query'
+
+tests/test_admin.py:45: AttributeError
+______________ TestCommunityModelView.test__get_child_index_list _______________
+
+self = <tests.test_admin.TestCommunityModelView object at 0x7f0684e66be0>
+
+    def test__get_child_index_list(self):
+>       assert self._get_child_index_list()
+E       AttributeError: 'TestCommunityModelView' object has no attribute '_get_child_index_list'
+
+tests/test_admin.py:50: AttributeError
+____________________ test_communities_rest_all_communities _____________________
+
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>
+communities = (<Community, ID: comm1>, <Community, ID: comm2>, <Community, ID: oth3>)
+
+    def test_communities_rest_all_communities(app, db, communities):
+        """Test the OAI-PMH Sets creation."""
+        with app.test_client() as client:
+            response = client.get('/api/communities/')
+            response_data = get_json(response)
+            assert response_data['hits']['total'] == 3
+            assert len(response_data['hits']['hits']) == 3
+    
+>           assert set(comm.id for comm in communities) == set(
+                comm['id'] for comm in response_data['hits']['hits']
+            )
+
+tests/test_invenio_communities.py:210: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/flask/testing.py:213: in __exit__
+    top.pop()
+.tox/c1/lib/python3.6/site-packages/flask/ctx.py:400: in pop
+    self.app.do_teardown_request(exc)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2170: in do_teardown_request
+    func(exc)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+exception = None
+
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+>       current_app.logger.debug("invenio_communities dbsession_clean: {}".format(exception))
+E       NameError: name 'current_app' is not defined
+
+invenio_communities/views/api.py:215: NameError
+_____________ test_communities_rest_all_communities_query_and_sort _____________
+
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>
+communities = (<Community, ID: comm1>, <Community, ID: comm2>, <Community, ID: oth3>)
+
+    def test_communities_rest_all_communities_query_and_sort(app, db, communities):
+        """Test the OAI-PMH Sets creation."""
+        with app.test_client() as client:
+            response = client.get('/api/communities/?q=comm&sort=title')
+            response_data = get_json(response)
+    
+            assert response_data['hits']['total'] == 2
+            assert response_data['hits']['hits'][0]['id'] == 'comm2'
+>           assert response_data['hits']['hits'][1]['id'] == 'comm1'
+
+tests/test_invenio_communities.py:239: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/flask/testing.py:213: in __exit__
+    top.pop()
+.tox/c1/lib/python3.6/site-packages/flask/ctx.py:400: in pop
+    self.app.do_teardown_request(exc)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2170: in do_teardown_request
+    func(exc)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+exception = None
+
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+>       current_app.logger.debug("invenio_communities dbsession_clean: {}".format(exception))
+E       NameError: name 'current_app' is not defined
+
+invenio_communities/views/api.py:215: NameError
+_______________________ test_communities_rest_pagination _______________________
+
+self = <Flask 'testapp'>
+environ = {'HTTP_HOST': 'test_server', 'HTTP_USER_AGENT': 'werkzeug/0.15.2', 'PATH_INFO': '/api/communities/', 'QUERY_STRING': 'page=1&size=1', ...}
+start_response = <function run_wsgi_app.<locals>.start_response at 0x7f0681a3d158>
+
+    def wsgi_app(self, environ, start_response):
+        """The actual WSGI application. This is not implemented in
+        :meth:`__call__` so that middlewares can be applied without
+        losing a reference to the app object. Instead of doing this::
+    
+            app = MyMiddleware(app)
+    
+        It's a better idea to do this instead::
+    
+            app.wsgi_app = MyMiddleware(app.wsgi_app)
+    
+        Then you still have the original application object around and
+        can continue to call methods on it.
+    
+        .. versionchanged:: 0.7
+            Teardown events for the request and app contexts are called
+            even if an unhandled error occurs. Other events may not be
+            called depending on when an error occurs during dispatch.
+            See :ref:`callbacks-and-errors`.
+    
+        :param environ: A WSGI environment.
+        :param start_response: A callable accepting a status code,
+            a list of headers, and an optional exception context to
+            start the response.
+        """
+        ctx = self.request_context(environ)
+        error = None
+        try:
+            try:
+>               ctx.push()
+
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2316: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <RequestContext 'http://test_server/api/communities/?page=1&size=1' [GET] of testapp>
+
+    def push(self):
+        """Binds the request context to the current context."""
+        # If an exception occurs in debug mode or if context preservation is
+        # activated under exception situations exactly one context stays
+        # on the stack.  The rationale is that you want to access that
+        # information under debug situations.  However if someone forgets to
+        # pop that context again we want to make sure that on the next push
+        # it's invalidated, otherwise we run at risk that something leaks
+        # memory.  This is usually only a problem in test suite since this
+        # functionality is not active in production environments.
+        top = _request_ctx_stack.top
+        if top is not None and top.preserved:
+>           top.pop(top._preserved_exc)
+
+.tox/c1/lib/python3.6/site-packages/flask/ctx.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <RequestContext 'http://test_server/api/communities/?size=1' [GET] of testapp>
+exc = None
+
+    def pop(self, exc=_sentinel):
+        """Pops the request context and unbinds it by doing that.  This will
+        also trigger the execution of functions registered by the
+        :meth:`~flask.Flask.teardown_request` decorator.
+    
+        .. versionchanged:: 0.9
+           Added the `exc` argument.
+        """
+        app_ctx = self._implicit_app_ctx_stack.pop()
+    
+        try:
+            clear_request = False
+            if not self._implicit_app_ctx_stack:
+                self.preserved = False
+                self._preserved_exc = None
+                if exc is _sentinel:
+                    exc = sys.exc_info()[1]
+>               self.app.do_teardown_request(exc)
+
+.tox/c1/lib/python3.6/site-packages/flask/ctx.py:400: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Flask 'testapp'>, exc = None
+
+    def do_teardown_request(self, exc=_sentinel):
+        """Called after the request is dispatched and the response is
+        returned, right before the request context is popped.
+    
+        This calls all functions decorated with
+        :meth:`teardown_request`, and :meth:`Blueprint.teardown_request`
+        if a blueprint handled the request. Finally, the
+        :data:`request_tearing_down` signal is sent.
+    
+        This is called by
+        :meth:`RequestContext.pop() <flask.ctx.RequestContext.pop>`,
+        which may be delayed during testing to maintain access to
+        resources.
+    
+        :param exc: An unhandled exception raised while dispatching the
+            request. Detected from the current exception information if
+            not passed. Passed to each teardown function.
+    
+        .. versionchanged:: 0.9
+            Added the ``exc`` argument.
+        """
+        if exc is _sentinel:
+            exc = sys.exc_info()[1]
+        funcs = reversed(self.teardown_request_funcs.get(None, ()))
+        bp = _request_ctx_stack.top.request.blueprint
+        if bp is not None and bp in self.teardown_request_funcs:
+            funcs = chain(funcs, reversed(self.teardown_request_funcs[bp]))
+        for func in funcs:
+>           func(exc)
+
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2170: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+exception = None
+
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+>       current_app.logger.debug("invenio_communities dbsession_clean: {}".format(exception))
+E       NameError: name 'current_app' is not defined
+
+invenio_communities/views/api.py:215: NameError
+
+During handling of the above exception, another exception occurred:
+
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>
+communities = (<Community, ID: comm1>, <Community, ID: comm2>, <Community, ID: oth3>)
+
+    def test_communities_rest_pagination(app, db, communities):
+        """Test the OAI-PMH Sets creation."""
+        def parse_path(app, path):
+            """Split the path in base and real relative url.
+    
+            Needed because in Flask 0.10.1 the client doesn't take into account the
+            query string in an external URL.
+            """
+            http_host = app.config.get('SERVER_NAME')
+            app_root = app.config.get('APPLICATION_ROOT')
+            url = url_parse(path)
+            base_url = 'http://{0}/'.format(url.netloc or http_host or 'localhost')
+            if app_root:
+                base_url += app_root.lstrip('/')
+            if url.netloc:
+                path = url.path
+                if url.query:
+                    path += '?' + url.query
+            return dict(path=path, base_url=base_url)
+    
+        def assert_header_links(response, ref, page, size):
+            """Check if there is a pagination in one of the headers."""
+            assert any(all(item in h[1] for item in [
+                'ref="{0}"'.format(ref),
+                'page={0}'.format(page),
+                'size={0}'.format(size)]) for h in response.headers)
+    
+        with app.test_client() as client:
+            response = client.get('/api/communities/?size=1')
+            assert_header_links(response, 'self', 1, 1)
+            assert_header_links(response, 'next', 2, 1)
+    
+            data = get_json(response)
+            assert 'self' in data['links']
+            assert len(data['hits']['hits']) == 1
+    
+            # Assert that self gives back the same result
+>           response = client.get(**parse_path(app, data['links']['self']))
+
+tests/test_invenio_communities.py:279: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1029: in get
+    return self.open(*args, **kw)
+.tox/c1/lib/python3.6/site-packages/flask/testing.py:196: in open
+    follow_redirects=follow_redirects
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:993: in open
+    response = self.run_wsgi_app(environ.copy(), buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:884: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1119: in run_wsgi_app
+    app_rv = app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2334: in __call__
+    return self.wsgi_app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2320: in wsgi_app
+    response = self.handle_exception(e)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1758: in handle_exception
+    handler = self._find_error_handler(InternalServerError())
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1622: in _find_error_handler
+    (request.blueprint, code), (None, code),
+.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:348: in __getattr__
+    return getattr(self._get_current_object(), name)
+.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:307: in _get_current_object
+    return self.__local()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'request'
+
+    def _lookup_req_object(name):
+        top = _request_ctx_stack.top
+        if top is None:
+>           raise RuntimeError(_request_ctx_err_msg)
+E           RuntimeError: Working outside of request context.
+E           
+E           This typically means that you attempted to use functionality that needed
+E           an active HTTP request.  Consult the documentation on testing for
+E           information about how to avoid this problem.
+
+.tox/c1/lib/python3.6/site-packages/flask/globals.py:37: RuntimeError
+______________________ test_communities_rest_get_details _______________________
+
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>
+communities = (<Community, ID: comm1>, <Community, ID: comm2>, <Community, ID: oth3>)
+
+    def test_communities_rest_get_details(app, db, communities):
+        """Test the OAI-PMH Sets creation."""
+        with app.test_client() as client:
+            response = client.get('/api/communities/comm1')
+            assert_community_serialization(
+                    get_json(response),
+                    description='Description1',
+                    title='Title1',
+                    id='comm1',
+                    page='',
+                    curation_policy='',
+                    logo_url=None,
+                    last_record_accepted='2000-01-01T00:00:00+00:00',
+                    links={
+                        'self': 'http://inveniosoftware.org/api/communities/comm1',
+>                       'html': 'http://inveniosoftware.org/communities/comm1/',
+                    },
+            )
+
+tests/test_invenio_communities.py:320: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+community = {'created': '2023-03-24T17:17:01.033848+00:00', 'curation_policy': '', 'description': 'Description1', 'id': 'comm1', ...}
+kwargs = {'curation_policy': '', 'description': 'Description1', 'id': 'comm1', 'last_record_accepted': '2000-01-01T00:00:00+00:00', ...}
+key = 'links'
+@py_assert0 = {'html': 'http://test_server/c/comm1/', 'self': 'http://test_server/api/communities/comm1'}
+@py_assert3 = {'html': 'http://inveniosoftware.org/communities/comm1/', 'self': 'http://inveniosoftware.org/api/communities/comm1'}
+@py_assert2 = False
+@py_format5 = "{'html': 'htt...nities/comm1'} == {'html': 'htt...nities/comm1'}\n~Differing items:\n~{'self': 'http://test_server/ap...m1/',\n~+  'html': 'http://test_server/c/comm1/',...\n~\n~...Full output truncated (6 lines hidden), use '-vv' to show"
+@py_format7 = "assert {'html': 'htt...nities/comm1'} == {'html': 'htt...nities/comm1'}\n~Differing items:\n~{'self': 'http://test_se...m1/',\n~+  'html': 'http://test_server/c/comm1/',...\n~\n~...Full output truncated (6 lines hidden), use '-vv' to show"
+
+    def assert_community_serialization(community, **kwargs):
+        """Check the values of a community."""
+        for key in kwargs.keys():
+>           assert community[key] == kwargs[key]
+E           AssertionError: assert {'html': 'htt...nities/comm1'} == {'html': 'htt...nities/comm1'}
+E             Differing items:
+E             {'self': 'http://test_server/api/communities/comm1'} != {'self': 'http://inveniosoftware.org/api/communities/comm1'}
+E             {'html': 'http://test_server/c/comm1/'} != {'html': 'http://inveniosoftware.org/communities/comm1/'}
+E             Full diff:
+E               {
+E             -  'html': 'http://inveniosoftware.org/communities/comm1/',
+E             +  'html': 'http://test_server/c/comm1/',...
+E             
+E             ...Full output truncated (6 lines hidden), use '-vv' to show
+
+tests/test_invenio_communities.py:61: AssertionError
+
+During handling of the above exception, another exception occurred:
+
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>
+communities = (<Community, ID: comm1>, <Community, ID: comm2>, <Community, ID: oth3>)
+
+    def test_communities_rest_get_details(app, db, communities):
+        """Test the OAI-PMH Sets creation."""
+        with app.test_client() as client:
+            response = client.get('/api/communities/comm1')
+            assert_community_serialization(
+                    get_json(response),
+                    description='Description1',
+                    title='Title1',
+                    id='comm1',
+                    page='',
+                    curation_policy='',
+                    logo_url=None,
+                    last_record_accepted='2000-01-01T00:00:00+00:00',
+                    links={
+                        'self': 'http://inveniosoftware.org/api/communities/comm1',
+>                       'html': 'http://inveniosoftware.org/communities/comm1/',
+                    },
+            )
+
+tests/test_invenio_communities.py:320: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/flask/testing.py:213: in __exit__
+    top.pop()
+.tox/c1/lib/python3.6/site-packages/flask/ctx.py:400: in pop
+    self.app.do_teardown_request(exc)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2170: in do_teardown_request
+    func(exc)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+exception = AssertionError("assert {'html': 'htt...nities/comm1'} == {'html': 'htt...nities/comm1'}\n  Differing items:\n  {'self'...\n  +  'html': 'http://test_server/c/comm1/',...\n  \n  ...Full output truncated (6 lines hidden), use '-vv' to show",)
+
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+>       current_app.logger.debug("invenio_communities dbsession_clean: {}".format(exception))
+E       NameError: name 'current_app' is not defined
+
+invenio_communities/views/api.py:215: NameError
+__________________________ test_communities_rest_etag __________________________
+
+self = <Flask 'testapp'>
+environ = {'HTTP_HOST': 'test_server', 'HTTP_IF_NONE_MATCH': '"8e2ffc6646edad0ca8b16757e3accab5a84769c8"', 'HTTP_USER_AGENT': 'werkzeug/0.15.2', 'PATH_INFO': '/api/communities/comm1', ...}
+start_response = <function run_wsgi_app.<locals>.start_response at 0x7f06823b7730>
+
+    def wsgi_app(self, environ, start_response):
+        """The actual WSGI application. This is not implemented in
+        :meth:`__call__` so that middlewares can be applied without
+        losing a reference to the app object. Instead of doing this::
+    
+            app = MyMiddleware(app)
+    
+        It's a better idea to do this instead::
+    
+            app.wsgi_app = MyMiddleware(app.wsgi_app)
+    
+        Then you still have the original application object around and
+        can continue to call methods on it.
+    
+        .. versionchanged:: 0.7
+            Teardown events for the request and app contexts are called
+            even if an unhandled error occurs. Other events may not be
+            called depending on when an error occurs during dispatch.
+            See :ref:`callbacks-and-errors`.
+    
+        :param environ: A WSGI environment.
+        :param start_response: A callable accepting a status code,
+            a list of headers, and an optional exception context to
+            start the response.
+        """
+        ctx = self.request_context(environ)
+        error = None
+        try:
+            try:
+>               ctx.push()
+
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2316: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <RequestContext 'http://test_server/api/communities/comm1' [GET] of testapp>
+
+    def push(self):
+        """Binds the request context to the current context."""
+        # If an exception occurs in debug mode or if context preservation is
+        # activated under exception situations exactly one context stays
+        # on the stack.  The rationale is that you want to access that
+        # information under debug situations.  However if someone forgets to
+        # pop that context again we want to make sure that on the next push
+        # it's invalidated, otherwise we run at risk that something leaks
+        # memory.  This is usually only a problem in test suite since this
+        # functionality is not active in production environments.
+        top = _request_ctx_stack.top
+        if top is not None and top.preserved:
+>           top.pop(top._preserved_exc)
+
+.tox/c1/lib/python3.6/site-packages/flask/ctx.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <RequestContext 'http://test_server/api/communities/comm1' [GET] of testapp>
+exc = None
+
+    def pop(self, exc=_sentinel):
+        """Pops the request context and unbinds it by doing that.  This will
+        also trigger the execution of functions registered by the
+        :meth:`~flask.Flask.teardown_request` decorator.
+    
+        .. versionchanged:: 0.9
+           Added the `exc` argument.
+        """
+        app_ctx = self._implicit_app_ctx_stack.pop()
+    
+        try:
+            clear_request = False
+            if not self._implicit_app_ctx_stack:
+                self.preserved = False
+                self._preserved_exc = None
+                if exc is _sentinel:
+                    exc = sys.exc_info()[1]
+>               self.app.do_teardown_request(exc)
+
+.tox/c1/lib/python3.6/site-packages/flask/ctx.py:400: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Flask 'testapp'>, exc = None
+
+    def do_teardown_request(self, exc=_sentinel):
+        """Called after the request is dispatched and the response is
+        returned, right before the request context is popped.
+    
+        This calls all functions decorated with
+        :meth:`teardown_request`, and :meth:`Blueprint.teardown_request`
+        if a blueprint handled the request. Finally, the
+        :data:`request_tearing_down` signal is sent.
+    
+        This is called by
+        :meth:`RequestContext.pop() <flask.ctx.RequestContext.pop>`,
+        which may be delayed during testing to maintain access to
+        resources.
+    
+        :param exc: An unhandled exception raised while dispatching the
+            request. Detected from the current exception information if
+            not passed. Passed to each teardown function.
+    
+        .. versionchanged:: 0.9
+            Added the ``exc`` argument.
+        """
+        if exc is _sentinel:
+            exc = sys.exc_info()[1]
+        funcs = reversed(self.teardown_request_funcs.get(None, ()))
+        bp = _request_ctx_stack.top.request.blueprint
+        if bp is not None and bp in self.teardown_request_funcs:
+            funcs = chain(funcs, reversed(self.teardown_request_funcs[bp]))
+        for func in funcs:
+>           func(exc)
+
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2170: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+exception = None
+
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+>       current_app.logger.debug("invenio_communities dbsession_clean: {}".format(exception))
+E       NameError: name 'current_app' is not defined
+
+invenio_communities/views/api.py:215: NameError
+
+During handling of the above exception, another exception occurred:
+
+app = <Flask 'testapp'>
+communities = (<Community, ID: comm1>, <Community, ID: comm2>, <Community, ID: oth3>)
+
+    def test_communities_rest_etag(app, communities):
+        """Test the OAI-PMH Sets creation."""
+        with app.test_client() as client:
+            # The first response should return the data with result code 200
+            response = client.get('/api/communities/comm1')
+            assert response.status_code == 200
+            assert response.get_data(as_text=True) != ''
+    
+            # The second response is empty and the result code is 304
+            response = client.get('/api/communities/comm1', headers=(
+>               ('If-None-Match', response.headers.get('ETag')),))
+
+tests/test_invenio_communities.py:335: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1029: in get
+    return self.open(*args, **kw)
+.tox/c1/lib/python3.6/site-packages/flask/testing.py:196: in open
+    follow_redirects=follow_redirects
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:993: in open
+    response = self.run_wsgi_app(environ.copy(), buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:884: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+.tox/c1/lib/python3.6/site-packages/werkzeug/test.py:1119: in run_wsgi_app
+    app_rv = app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2334: in __call__
+    return self.wsgi_app(environ, start_response)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2320: in wsgi_app
+    response = self.handle_exception(e)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1758: in handle_exception
+    handler = self._find_error_handler(InternalServerError())
+.tox/c1/lib/python3.6/site-packages/flask/app.py:1622: in _find_error_handler
+    (request.blueprint, code), (None, code),
+.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:348: in __getattr__
+    return getattr(self._get_current_object(), name)
+.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:307: in _get_current_object
+    return self.__local()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'request'
+
+    def _lookup_req_object(name):
+        top = _request_ctx_stack.top
+        if top is None:
+>           raise RuntimeError(_request_ctx_err_msg)
+E           RuntimeError: Working outside of request context.
+E           
+E           This typically means that you attempted to use functionality that needed
+E           an active HTTP request.  Consult the documentation on testing for
+E           information about how to avoid this problem.
+
+.tox/c1/lib/python3.6/site-packages/flask/globals.py:37: RuntimeError
+_________________________ test_delete_expired_requests _________________________
+
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/invenio-communities/test.db>
+communities = (<Community, ID: comm1>, <Community, ID: comm2>, <Community, ID: oth3>)
+
+    def test_delete_expired_requests(app, db, communities):
+        (comm1, comm2, comm3) = communities
+        communities_key = app.config["COMMUNITIES_RECORD_KEY"]
+        rec1 = Record.create({'title': 'Foobar'})
+        InclusionRequest.create(community=comm1, record=rec1,notify=False)
+>       assert delete_expired_requests()
+
+tests/test_tasks.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/celery/local.py:191: in __call__
+    return self._get_current_object()(*a, **kw)
+.tox/c1/lib/python3.6/site-packages/celery/app/task.py:393: in __call__
+    return self.run(*args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @shared_task(ignore_result=True)
+    def delete_expired_requests():
+        """Delete expired inclusion requests."""
+        InclusionRequest.query.filter_by(
+>           InclusionRequest.expiry_date > datetime.utcnow()).delete()
+E       AttributeError: type object 'InclusionRequest' has no attribute 'expiry_date'
+
+invenio_communities/tasks.py:51: AttributeError
+=============================== warnings summary ===============================
+../invenio-indexer/invenio_indexer/cli.py:108
+  /code/modules/invenio-indexer/invenio_indexer/cli.py:108: DeprecationWarning: 'resultcallback' has been renamed to 'result_callback'. The old name will be removed in Click 8.1.
+    @queue.resultcallback()
+
+.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3
+  /code/modules/invenio-communities/.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3: DeprecationWarning: 'werkzeug.contrib.cache' is deprecated as of version 0.15 and will be removed in version 1.0. It has moved to https://github.com/pallets/cachelib.
+    from werkzeug.contrib.cache import NullCache, SimpleCache, FileSystemCache
+
+.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35
+  /code/modules/invenio-communities/.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+    import imp
+
+.tox/c1/src/pypdf2/PyPDF2/generic.py:348
+  /code/modules/invenio-communities/.tox/c1/src/pypdf2/PyPDF2/generic.py:348: DeprecationWarning: invalid escape sequence \c
+    b_("c") : b_("\c"),
+
+tests/test_admin.py: 27 warnings
+tests/test_invenio_communities.py: 12 warnings
+tests/test_models.py: 3 warnings
+tests/test_tasks.py: 3 warnings
+tests/test_utils.py: 2 warnings
+  /code/modules/invenio-communities/.tox/c1/lib/python3.6/site-packages/flask_celeryext/app.py:36: UserWarning: Celery v4 installed, but detected Celery v3 configuration CELERY_ALWAYS_EAGER (use CELERY_TASK_ALWAYS_EAGER instead).
+    UserWarning
+
+tests/test_admin.py: 27 warnings
+tests/test_invenio_communities.py: 12 warnings
+tests/test_models.py: 3 warnings
+tests/test_tasks.py: 3 warnings
+tests/test_utils.py: 2 warnings
+  /code/modules/invenio-communities/.tox/c1/lib/python3.6/site-packages/flask_celeryext/app.py:36: UserWarning: Celery v4 installed, but detected Celery v3 configuration CELERY_EAGER_PROPAGATES_EXCEPTIONS (use CELERY_TASK_EAGER_PROPAGATES instead).
+    UserWarning
+
+tests/test_admin.py: 702 warnings
+tests/test_invenio_communities.py: 312 warnings
+tests/test_models.py: 78 warnings
+tests/test_tasks.py: 78 warnings
+tests/test_utils.py: 52 warnings
+  /code/modules/invenio-communities/.tox/c1/lib/python3.6/site-packages/invenio_admin/ext.py:73: PendingDeprecationWarning: Usage of model and modelview kwargs are deprecated in favor of view_class, args and kwargs.
+    PendingDeprecationWarning
+
+tests/test_admin.py: 27 warnings
+tests/test_invenio_communities.py: 12 warnings
+tests/test_models.py: 3 warnings
+tests/test_tasks.py: 3 warnings
+tests/test_utils.py: 2 warnings
+  /code/modules/invenio-communities/.tox/c1/lib/python3.6/site-packages/flask_admin/model/base.py:1416: UserWarning: Fields missing from ruleset: created_userId,created_date,updated_userId,updated_date
+    warnings.warn(text)
+
+tests/test_admin.py: 24 warnings
+  /code/modules/invenio-communities/.tox/c1/lib/python3.6/site-packages/flask/sessions.py:208: UserWarning: "test_server" is not a valid cookie domain, it must contain a ".". Add an entry to your hosts file, for example "test_server.localdomain", and use that instead.
+    ' "{rv}.localdomain", and use that instead.'.format(rv=rv)
+
+tests/test_invenio_communities.py: 11 warnings
+tests/test_models.py: 3 warnings
+tests/test_tasks.py: 3 warnings
+tests/test_utils.py: 1 warning
+  /code/modules/invenio-communities/.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2455: SAWarning: Usage of the 'Session.add()' operation is not currently supported within the execution stage of the flush process. Results may not be consistent.  Consider using alternative event listeners or connection-level operations instead.
+    "event listeners or connection-level operations instead." % method
+
+tests/test_invenio_communities.py::test_oaipmh_sets
+  /code/modules/invenio-communities/.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2455: SAWarning: Usage of the 'Session.delete()' operation is not currently supported within the execution stage of the flush process. Results may not be consistent.  Consider using alternative event listeners or connection-level operations instead.
+    "event listeners or connection-level operations instead." % method
+
+-- Docs: https://docs.pytest.org/en/stable/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                                                   Stmts   Miss Branch BrPart  Cover
+----------------------------------------------------------------------------------------
+invenio_communities/__init__.py                            5      0      0      0   100%
+invenio_communities/admin.py                              91     31     30      1    59%
+invenio_communities/bundles.py                            11      0      0      0   100%
+invenio_communities/cli.py                                52     26      4      0    46%
+invenio_communities/config.py                             40      0      0      0   100%
+invenio_communities/errors.py                             14      0     12      0   100%
+invenio_communities/ext.py                                34      1     10      1    95%
+invenio_communities/forms.py                              68     33     24      0    47%
+invenio_communities/links.py                              13      1      4      1    88%
+invenio_communities/models.py                            180     20     46      9    85%
+invenio_communities/permissions.py                        15      5      2      0    71%
+invenio_communities/proxies.py                             5      0      2      1    86%
+invenio_communities/receivers.py                          25      4      8      1    73%
+invenio_communities/serializers/__init__.py                5      0      0      0   100%
+invenio_communities/serializers/response.py               28      3      8      1    89%
+invenio_communities/serializers/schemas/__init__.py        2      0      0      0   100%
+invenio_communities/serializers/schemas/community.py      33      1      8      2    93%
+invenio_communities/signals.py                             6      0      0      0   100%
+invenio_communities/tasks.py                              13      3      0      0    77%
+invenio_communities/utils.py                              89     38     24      2    54%
+invenio_communities/version.py                             3      0      0      0   100%
+invenio_communities/views/__init__.py                      2      0      0      0   100%
+invenio_communities/views/api.py                          45      7     10      1    82%
+invenio_communities/views/ui.py                           96     62      8      0    33%
+----------------------------------------------------------------------------------------
+TOTAL                                                    875    235    200     20    70%
+
+=========================== short test summary info ============================
+FAILED tests/test_admin.py::TestCommunityModelView::test_get_query - Attribut...
+FAILED tests/test_admin.py::TestCommunityModelView::test_get_count_query - At...
+FAILED tests/test_admin.py::TestCommunityModelView::test__get_child_index_list
+FAILED tests/test_invenio_communities.py::test_communities_rest_all_communities
+FAILED tests/test_invenio_communities.py::test_communities_rest_all_communities_query_and_sort
+FAILED tests/test_invenio_communities.py::test_communities_rest_pagination - ...
+FAILED tests/test_invenio_communities.py::test_communities_rest_get_details
+FAILED tests/test_invenio_communities.py::test_communities_rest_etag - Runtim...
+FAILED tests/test_tasks.py::test_delete_expired_requests - AttributeError: ty...
+====== 9 failed, 42 passed, 1 skipped, 1410 warnings in 273.54s (0:04:33) ======
+ERROR: InvocationError for command /code/modules/invenio-communities/.tox/c1/bin/pytest --cov=invenio_communities tests -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp (exited with code 1)
+___________________________________ summary ____________________________________
+ERROR:   c1: commands failed

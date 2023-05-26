@@ -20,10 +20,10 @@ invenio-query-parser==0.6.0
 invenio-records-files==1.0.0a10
 invenio-records-ui==1.0.0
 invenio-rest==1.1.2
-# invenio-search==1.1.0
--e git+https://github.com/RCOSDP/invenio-search.git@feature/nii#egg=invenio-search
-#invenio-search-ui==1.0.0a9
+invenio-search==1.1.0
+#-e git+https://github.com/RCOSDP/invenio-search.git@feature/nii#egg=invenio-search
+invenio-search-ui==1.0.0a9
 #-e git+https://github.com/RCOSDP/invenio-search-ui.git@feature/nii#egg=invenio-search-ui
--e git+https://github.com/RCOSDP/invenio-search-ui.git@v1.0.0a9#egg=invenio-search-ui
+#-e git+https://github.com/RCOSDP/invenio-search-ui.git@v1.0.0a9#egg=invenio-search-ui
 invenio-theme==1.0.0b4
 invenio-csl-rest==1.0.0a1

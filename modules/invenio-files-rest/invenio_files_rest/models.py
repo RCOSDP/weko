@@ -289,7 +289,7 @@ class Location(db.Model, Timestamp):
 
     s3_endpoint_url = db.Column(db.String(128), nullable=True)
 
-    s3_send_file_directly = db.Column(db.Boolean, nullable=False, default=True)
+    s3_send_file_directly = db.Column(db.Boolean(name='s3_send_file_directly'), nullable=False, default=True)
     
     size = db.Column(db.BigInteger, default=0, nullable=True)
 

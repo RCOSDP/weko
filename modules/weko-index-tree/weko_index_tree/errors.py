@@ -78,3 +78,15 @@ class IndexMovedRESTError(RESTException):
 
     code = 400
     description = 'Could not move data.'
+
+class VersionNotFoundRESTError(RESTException):
+    """API Version error."""
+    
+    code = 400
+    description = 'This API version does not found'
+
+class InternalServerError(RESTException):
+    """Internal Server Error."""
+    
+    code = 500
+    description = 'Internal Server Error'

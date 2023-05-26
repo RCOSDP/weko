@@ -1,0 +1,297 @@
+GLOB sdist-make: /code/modules/invenio-stats/setup.py
+c1 recreate: /code/modules/invenio-stats/.tox/c1
+c1 installdeps: pytest>=3, pytest-cov, coverage, -rrequirements.txt
+c1 inst: /code/modules/invenio-stats/.tox/.tmp/package/1/invenio-stats-1.0.0a10.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.6,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,invenio-stats @ file:///code/modules/invenio-stats/.tox/.tmp/package/1/invenio-stats-1.0.0a10.zip,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,kombu==4.6.10,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='1143411738'
+c1 run-test: commands[0] | pytest --cov=invenio_stats tests -v -vv --cov-branch --cov-report=term --cov-report=xml --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/invenio-stats/.tox/c1/bin/python
+cachedir: .tox/c1/.pytest_cache
+rootdir: /code/modules/invenio-stats
+plugins: cov-4.0.0, celery-4.4.7, mock-3.6.1
+collecting ... collected 106 items
+
+tests/test_aggregations.py::test_BookmarkAPI PASSED                      [  0%]
+tests/test_aggregations.py::test_wrong_intervals PASSED                  [  1%]
+tests/test_aggregations.py::test_StatAggregator PASSED                   [  2%]
+tests/test_cli.py::test_events_process PASSED                            [  3%]
+tests/test_cli.py::test_events_delete_restore PASSED                     [  4%]
+tests/test_cli.py::test_aggregations_process[indexed_events0] PASSED     [  5%]
+tests/test_cli.py::test_aggregations_delete[aggregated_events0] PASSED   [  6%]
+tests/test_cli.py::test_aggregations_list_bookmarks[aggregated_events0] PASSED [  7%]
+tests/test_cli.py::test_aggregations_deleteindex_restore PASSED          [  8%]
+tests/test_event_builders.py::test_celery_task_event_builder PASSED      [  9%]
+tests/test_event_builders.py::test_file_download_event_builder PASSED    [ 10%]
+tests/test_event_builders.py::test_build_celery_task_unique_id PASSED    [ 11%]
+tests/test_event_builders.py::test_copy_record_index_list PASSED         [ 12%]
+tests/test_event_builders.py::test_copy_user_group_list PASSED           [ 13%]
+tests/test_event_builders.py::test_copy_search_keyword PASSED            [ 14%]
+tests/test_event_builders.py::test_copy_search_type PASSED               [ 15%]
+tests/test_event_builders.py::test_record_view_event_builder PASSED      [ 16%]
+tests/test_event_builders.py::test_top_view_event_builder PASSED         [ 16%]
+tests/test_event_builders.py::test_build_top_unique_id PASSED            [ 17%]
+tests/test_event_builders.py::test_build_item_create_unique_id PASSED    [ 18%]
+tests/test_event_builders.py::test_resolve_address PASSED                [ 19%]
+tests/test_event_builders.py::test_search_event_builder PASSED           [ 20%]
+tests/test_event_builders.py::test_build_search_unique_id PASSED         [ 21%]
+tests/test_event_builders.py::test_build_search_detail_condition PASSED  [ 22%]
+tests/test_event_builders.py::test_item_create_event_builder PASSED      [ 23%]
+tests/test_events.py::test_event_queues_declare SKIPPED                  [ 24%]
+tests/test_events.py::test_publish_and_consume_events SKIPPED            [ 25%]
+tests/test_invenio_stats.py::test_version PASSED                         [ 26%]
+tests/test_invenio_stats.py::test_init PASSED                            [ 27%]
+tests/test_processors.py::test_anonymize_user[131.169.180.47-None-None-None-timestamp0-DE-1850abef504ce64cb6b38fa60fe8f90aede1d2d2e9013735554af946-1850abef504ce64cb6b38fa60fe8f90aede1d2d2e9013735554af946] PASSED [ 28%]
+tests/test_processors.py::test_anonymize_user[188.184.37.205-100-None-None-timestamp1-CH-eaf6a44a598ea63c659e6e46722e2d11d0d7487694ec504ade273b9d-c6b85f117cd0636a07f1cf250a30d86714ec45e55a1110441d1a9e2b] PASSED [ 29%]
+tests/test_processors.py::test_anonymize_user[23.22.39.120-100-foo-bar-timestamp2-US-eaf6a44a598ea63c659e6e46722e2d11d0d7487694ec504ade273b9d-c6b85f117cd0636a07f1cf250a30d86714ec45e55a1110441d1a9e2b] PASSED [ 30%]
+tests/test_processors.py::test_anonymize_user[23.22.39.120-100-None-None-timestamp3-US-eaf6a44a598ea63c659e6e46722e2d11d0d7487694ec504ade273b9d-77536991d991e6e8251999fc6a8d78ec1be42847da3c8774221a03a0] PASSED [ 31%]
+tests/test_processors.py::test_anonymize_user[23.22.39.120-100-None-None-timestamp4-US-eaf6a44a598ea63c659e6e46722e2d11d0d7487694ec504ade273b9d-77536991d991e6e8251999fc6a8d78ec1be42847da3c8774221a03a0] PASSED [ 32%]
+tests/test_processors.py::test_anonymize_user[131.169.180.47-None-foo-None-timestamp5-DE-a78cc092c88fb4d060a873217f2cd466c2776f672a99ee06317c2858-ca28702a6ece34d18c6f6498ef79d77492a6bd653ac886beb5018880] PASSED [ 33%]
+tests/test_processors.py::test_anonymize_user[131.169.180.47-None-foo-bar-timestamp6-DE-a78cc092c88fb4d060a873217f2cd466c2776f672a99ee06317c2858-ca28702a6ece34d18c6f6498ef79d77492a6bd653ac886beb5018880] PASSED [ 33%]
+tests/test_processors.py::test_anonymize_user[131.169.180.47-None-foo-bar-timestamp7-DE-a78cc092c88fb4d060a873217f2cd466c2776f672a99ee06317c2858-ceb752c8b51c8c4a9c18a9d4404e9fb570fbf83195631ab3efb46b31] PASSED [ 34%]
+tests/test_processors.py::test_anonymize_user[188.184.37.205-None-None-bar-timestamp8-CH-e9c48686d21c21a9ee5b9eba58b1d86c9460272809b6de71649f6ce7-e9c48686d21c21a9ee5b9eba58b1d86c9460272809b6de71649f6ce7] PASSED [ 35%]
+tests/test_processors.py::test_anonymize_user[131.169.180.47-None-None-bar-timestamp9-DE-602e9bc738b422d5a19283e20fc31ec540a12d42b04ad7073d943fb2-602e9bc738b422d5a19283e20fc31ec540a12d42b04ad7073d943fb2] PASSED [ 36%]
+tests/test_processors.py::test_anonymize_user[131.169.180.47-None-None-bar-timestamp10-DE-4b30c060f422f304b073759553d4161a14784e0ddcf57284f55d7cae-4b30c060f422f304b073759553d4161a14784e0ddcf57284f55d7cae] PASSED [ 37%]
+tests/test_processors.py::test_anonymize_user[0.0.0.0-None-None-None-timestamp11-None-1850abef504ce64cb6b38fa60fe8f90aede1d2d2e9013735554af946-1850abef504ce64cb6b38fa60fe8f90aede1d2d2e9013735554af946] PASSED [ 38%]
+tests/test_processors.py::test_anonymiation_salt PASSED                  [ 39%]
+tests/test_processors.py::test_events_indexer_preprocessors PASSED       [ 40%]
+tests/test_processors.py::test_events_indexer_id_windowing PASSED        [ 41%]
+tests/test_processors.py::test_double_clicks FAILED                      [ 42%]
+tests/test_processors.py::test_failing_processors SKIPPED                [ 43%]
+tests/test_queries.py::test_histogram_query[aggregated_events0] SKIPPED  [ 44%]
+tests/test_queries.py::test_terms_query[mock_execute0-1-tests/data/ESTermsQuery_result01.json-aggregated_events0] PASSED [ 45%]
+tests/test_queries.py::test_terms_query[mock_execute1-1-tests/data/ESTermsQuery_result02.json-aggregated_events0] PASSED [ 46%]
+tests/test_queries.py::test_terms_query[mock_execute2-16-tests/data/ESTermsQuery_result03.json-aggregated_events0] PASSED [ 47%]
+tests/test_receivers.py::test_register_receivers SKIPPED                 [ 48%]
+tests/test_receivers.py::test_failing_receiver SKIPPED                   [ 49%]
+tests/test_tasks.py::test_process_events PASSED                          [ 50%]
+tests/test_utils.py::test_get_anonymization_salt PASSED                  [ 50%]
+tests/test_utils.py::test_get_geoip PASSED                               [ 51%]
+tests/test_utils.py::test_get_user PASSED                                [ 52%]
+tests/test_utils.py::test_obj_or_import_string PASSED                    [ 53%]
+tests/test_utils.py::test_load_or_import_from_config PASSED              [ 54%]
+tests/test_utils.py::test_default_permission_factory PASSED              [ 55%]
+tests/test_utils.py::test_get_aggregations PASSED                        [ 56%]
+tests/test_utils.py::test_get_start_end_date PASSED                      [ 57%]
+tests/test_utils.py::test_agg_bucket_sort PASSED                         [ 58%]
+tests/test_utils.py::test_parse_bucket_response PASSED                   [ 59%]
+tests/test_utils.py::test_get_doctype PASSED                             [ 60%]
+tests/test_utils.py::test_is_valid_access PASSED                         [ 61%]
+tests/test_utils.py::test_query_file_reports_helper PASSED               [ 62%]
+tests/test_utils.py::test_query_search_report_helper PASSED              [ 63%]
+tests/test_utils.py::test_query_common_reports_helper PASSED             [ 64%]
+tests/test_utils.py::test_query_record_view_per_index_report_helper PASSED [ 65%]
+tests/test_utils.py::test_query_record_view_report_helper PASSED         [ 66%]
+tests/test_utils.py::test_query_item_reg_report_helper PASSED            [ 66%]
+tests/test_utils.py::test_query_ranking_helper PASSED                    [ 67%]
+tests/test_views.py::test_stats_query_resource PASSED                    [ 68%]
+tests/test_views.py::test_query_record_view_count PASSED                 [ 69%]
+tests/test_views.py::test_query_file_stats_count PASSED                  [ 70%]
+tests/test_views.py::test_query_item_reg_report[0-403] PASSED            [ 71%]
+tests/test_views.py::test_query_item_reg_report[1-200] PASSED            [ 72%]
+tests/test_views.py::test_query_item_reg_report[2-200] PASSED            [ 73%]
+tests/test_views.py::test_query_item_reg_report[3-403] PASSED            [ 74%]
+tests/test_views.py::test_query_item_reg_report[4-403] PASSED            [ 75%]
+tests/test_views.py::test_query_record_view_report[0-403] PASSED         [ 76%]
+tests/test_views.py::test_query_record_view_report[1-200] PASSED         [ 77%]
+tests/test_views.py::test_query_record_view_report[2-200] PASSED         [ 78%]
+tests/test_views.py::test_query_record_view_report[3-403] PASSED         [ 79%]
+tests/test_views.py::test_query_record_view_report[4-403] PASSED         [ 80%]
+tests/test_views.py::test_query_record_view_per_index_report[0-403] PASSED [ 81%]
+tests/test_views.py::test_query_record_view_per_index_report[1-200] PASSED [ 82%]
+tests/test_views.py::test_query_record_view_per_index_report[2-200] PASSED [ 83%]
+tests/test_views.py::test_query_record_view_per_index_report[3-403] PASSED [ 83%]
+tests/test_views.py::test_query_record_view_per_index_report[4-403] PASSED [ 84%]
+tests/test_views.py::test_query_file_reports[0-403] PASSED               [ 85%]
+tests/test_views.py::test_query_file_reports[1-200] PASSED               [ 86%]
+tests/test_views.py::test_query_file_reports[2-200] PASSED               [ 87%]
+tests/test_views.py::test_query_file_reports[3-403] PASSED               [ 88%]
+tests/test_views.py::test_query_file_reports[4-403] PASSED               [ 89%]
+tests/test_views.py::test_query_common_reports PASSED                    [ 90%]
+tests/test_views.py::test_query_celery_task_report[0-403] PASSED         [ 91%]
+tests/test_views.py::test_query_celery_task_report[1-200] PASSED         [ 92%]
+tests/test_views.py::test_query_celery_task_report[2-200] PASSED         [ 93%]
+tests/test_views.py::test_query_celery_task_report[3-403] PASSED         [ 94%]
+tests/test_views.py::test_query_celery_task_report[4-403] PASSED         [ 95%]
+tests/test_views.py::test_query_search_report[0-403] PASSED              [ 96%]
+tests/test_views.py::test_query_search_report[1-200] PASSED              [ 97%]
+tests/test_views.py::test_query_search_report[2-200] PASSED              [ 98%]
+tests/test_views.py::test_query_search_report[3-403] PASSED              [ 99%]
+tests/test_views.py::test_query_search_report[4-403] PASSED              [100%]
+
+=================================== FAILURES ===================================
+______________________________ test_double_clicks ______________________________
+
+app = <Flask 'testapp'>, mock_event_queue = <Mock id='139719496748672'>
+es = <Elasticsearch([{'host': 'elasticsearch', 'port': 9200}])>
+
+    def test_double_clicks(app, mock_event_queue, es):
+        """Test that events occurring within a time window are counted as 1."""
+        event_type = 'file-download'
+        events = [_create_file_download_event(date) for date in
+                  [(2000, 6, 1, 10, 0, 10),
+                   (2000, 6, 1, 10, 0, 11),
+                   (2000, 6, 1, 10, 0, 19),
+                   (2000, 6, 1, 10, 0, 22)]]
+>       current_queues.declare()
+
+tests/test_processors.py:256: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../invenio-queues/invenio_queues/ext.py:71: in declare
+    self._action('declare', **kwargs)
+../invenio-queues/invenio_queues/ext.py:67: in _action
+    getattr(self.queues[q].queue, action)()
+.tox/c1/lib/python3.6/site-packages/kombu/entity.py:611: in declare
+    self._create_queue(nowait=nowait, channel=channel)
+.tox/c1/lib/python3.6/site-packages/kombu/entity.py:620: in _create_queue
+    self.queue_declare(nowait=nowait, passive=False, channel=channel)
+.tox/c1/lib/python3.6/site-packages/kombu/entity.py:655: in queue_declare
+    nowait=nowait,
+.tox/c1/lib/python3.6/site-packages/amqp/channel.py:1149: in queue_declare
+    spec.Queue.DeclareOk, returns_tuple=True,
+.tox/c1/lib/python3.6/site-packages/amqp/abstract_channel.py:88: in wait
+    self.connection.drain_events(timeout=timeout)
+.tox/c1/lib/python3.6/site-packages/amqp/connection.py:508: in drain_events
+    while not self.blocking_read(timeout):
+.tox/c1/lib/python3.6/site-packages/amqp/connection.py:514: in blocking_read
+    return self.on_inbound_frame(frame)
+.tox/c1/lib/python3.6/site-packages/amqp/method_framing.py:55: in on_frame
+    callback(channel, method_sig, buf, None)
+.tox/c1/lib/python3.6/site-packages/amqp/connection.py:521: in on_inbound_method
+    method_sig, payload, content,
+.tox/c1/lib/python3.6/site-packages/amqp/abstract_channel.py:145: in dispatch_method
+    listener(*args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <kombu.transport.pyamqp.Channel object at 0x7f12fef3ada0>
+reply_code = 406
+reply_text = "PRECONDITION_FAILED - inequivalent arg 'x-queue-type' for queue 'stats-file-download' in vhost '/': received none but current is the value 'quorum' of type 'longstr'"
+class_id = 50, method_id = 10
+
+    def _on_close(self, reply_code, reply_text, class_id, method_id):
+        """Request a channel close.
+    
+        This method indicates that the sender wants to close the
+        channel. This may be due to internal conditions (e.g. a forced
+        shut-down) or due to an error handling a specific method, i.e.
+        an exception.  When a close is due to an exception, the sender
+        provides the class and method id of the method which caused
+        the exception.
+    
+        RULE:
+    
+            After sending this method any received method except
+            Channel.Close-OK MUST be discarded.
+    
+        RULE:
+    
+            The peer sending this method MAY use a counter or timeout
+            to detect failure of the other peer to respond correctly
+            with Channel.Close-OK..
+    
+        PARAMETERS:
+            reply_code: short
+    
+                The reply code. The AMQ reply codes are defined in AMQ
+                RFC 011.
+    
+            reply_text: shortstr
+    
+                The localised reply text.  This text can be logged as an
+                aid to resolving issues.
+    
+            class_id: short
+    
+                failing method class
+    
+                When the close is provoked by a method exception, this
+                is the class of the method.
+    
+            method_id: short
+    
+                failing method ID
+    
+                When the close is provoked by a method exception, this
+                is the ID of the method.
+        """
+        self.send_method(spec.Channel.CloseOk)
+        if not self.connection.is_closing:
+            self._do_revive()
+            raise error_for_code(
+>               reply_code, reply_text, (class_id, method_id), ChannelError,
+            )
+E           amqp.exceptions.PreconditionFailed: Queue.declare: (406) PRECONDITION_FAILED - inequivalent arg 'x-queue-type' for queue 'stats-file-download' in vhost '/': received none but current is the value 'quorum' of type 'longstr'
+
+.tox/c1/lib/python3.6/site-packages/amqp/channel.py:280: PreconditionFailed
+=============================== warnings summary ===============================
+.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3
+  /code/modules/invenio-stats/.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3: DeprecationWarning: 'werkzeug.contrib.cache' is deprecated as of version 0.15 and will be removed in version 1.0. It has moved to https://github.com/pallets/cachelib.
+    from werkzeug.contrib.cache import NullCache, SimpleCache, FileSystemCache
+
+../invenio-indexer/invenio_indexer/cli.py:108
+  /code/modules/invenio-indexer/invenio_indexer/cli.py:108: DeprecationWarning: 'resultcallback' has been renamed to 'result_callback'. The old name will be removed in Click 8.1.
+    @queue.resultcallback()
+
+tests/test_aggregations.py::test_BookmarkAPI
+  /code/modules/invenio-stats/.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+    import imp
+
+tests/test_aggregations.py::test_BookmarkAPI
+  /code/modules/invenio-stats/.tox/c1/src/pypdf2/PyPDF2/generic.py:348: DeprecationWarning: invalid escape sequence \c
+    b_("c") : b_("\c"),
+
+tests/test_views.py: 31 warnings
+  /code/modules/invenio-stats/.tox/c1/lib/python3.6/site-packages/flask/sessions.py:208: UserWarning: "localhost" is not a valid cookie domain, it must contain a ".". Add an entry to your hosts file, for example "localhost.localdomain", and use that instead.
+    ' "{rv}.localdomain", and use that instead.'.format(rv=rv)
+
+-- Docs: https://docs.pytest.org/en/stable/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                                                                Stmts   Miss Branch BrPart  Cover
+-----------------------------------------------------------------------------------------------------
+invenio_stats/__init__.py                                               6      0      0      0   100%
+invenio_stats/aggregations.py                                         186     33     73      6    77%
+invenio_stats/cli.py                                                  168     18     34      6    86%
+invenio_stats/config.py                                                25      0      0      0   100%
+invenio_stats/contrib/__init__.py                                       1      0      0      0   100%
+invenio_stats/contrib/aggregations/__init__.py                          1      0      0      0   100%
+invenio_stats/contrib/aggregations/aggr_celery_task/__init__.py         1      1      0      0     0%
+invenio_stats/contrib/aggregations/aggr_file_download/__init__.py       1      0      0      0   100%
+invenio_stats/contrib/aggregations/aggr_file_preview/__init__.py        1      1      0      0     0%
+invenio_stats/contrib/aggregations/aggr_item_create/__init__.py         1      1      0      0     0%
+invenio_stats/contrib/aggregations/aggr_record_view/__init__.py         1      1      0      0     0%
+invenio_stats/contrib/aggregations/aggr_search/__init__.py              1      1      0      0     0%
+invenio_stats/contrib/aggregations/aggr_top_view/__init__.py            1      1      0      0     0%
+invenio_stats/contrib/celery_task/__init__.py                           1      1      0      0     0%
+invenio_stats/contrib/event_builders.py                               119      2     40     11    92%
+invenio_stats/contrib/file_download/__init__.py                         1      0      0      0   100%
+invenio_stats/contrib/file_preview/__init__.py                          1      1      0      0     0%
+invenio_stats/contrib/item_create/__init__.py                           1      1      0      0     0%
+invenio_stats/contrib/record_view/__init__.py                           1      0      0      0   100%
+invenio_stats/contrib/registrations.py                                 14      1      0      0    93%
+invenio_stats/contrib/search/__init__.py                                1      1      0      0     0%
+invenio_stats/contrib/top_view/__init__.py                              1      1      0      0     0%
+invenio_stats/errors.py                                                20      2     16      0    94%
+invenio_stats/ext.py                                                  110     10     56      8    89%
+invenio_stats/models.py                                               124     46     28      5    60%
+invenio_stats/permissions.py                                            4      0      0      0   100%
+invenio_stats/processors.py                                            95     10     32      3    88%
+invenio_stats/proxies.py                                                5      0      2      0   100%
+invenio_stats/queries.py                                              317     55    173     31    77%
+invenio_stats/queues.py                                                 4      0      2      0   100%
+invenio_stats/receivers.py                                             29     10     16      0    64%
+invenio_stats/tasks.py                                                 25      0      4      0   100%
+invenio_stats/templates.py                                              6      0      4      0   100%
+invenio_stats/utils.py                                                928    282    406     53    62%
+invenio_stats/version.py                                                3      0      0      0   100%
+invenio_stats/views.py                                                312     89     88     11    68%
+-----------------------------------------------------------------------------------------------------
+TOTAL                                                                2516    569    974    134    72%
+Coverage XML written to file coverage.xml
+
+=========================== short test summary info ============================
+FAILED tests/test_processors.py::test_double_clicks - amqp.exceptions.Precond...
+======= 1 failed, 99 passed, 6 skipped, 35 warnings in 177.10s (0:02:57) =======
+ERROR: InvocationError for command /code/modules/invenio-stats/.tox/c1/bin/pytest --cov=invenio_stats tests -v -vv --cov-branch --cov-report=term --cov-report=xml --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp (exited with code 1)
+___________________________________ summary ____________________________________
+ERROR:   c1: commands failed

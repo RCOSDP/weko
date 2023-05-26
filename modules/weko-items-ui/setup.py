@@ -86,6 +86,9 @@ setup(
         'invenio_base.apps': [
             'weko_items_ui = weko_items_ui:WekoItemsUI',
         ],
+        'invenio_base.api_apps': [
+            'weko_items_ui = weko_items_ui:WekoItemsREST',
+        ],
         'invenio_i18n.translations': [
             'messages = weko_items_ui',
         ],

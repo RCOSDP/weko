@@ -1,0 +1,69 @@
+{
+  "_oai": { "id": "oai:weko3.example.org:00000001" },
+  "path": ["1"],
+  "owner": "1",
+  "recid": "1",
+  "title": ["only file item"],
+  "pubdate": { "attribute_name": "PubDate", "attribute_value": "2023-02-28" },
+  "_buckets": { "deposit": "72d70254-6751-4bd4-b03b-f0d1339ab531" },
+  "_deposit": {
+    "id": "1",
+    "pid": { "type": "depid", "value": "1", "revision_id": 0 },
+    "owner": "1",
+    "owners": [1],
+    "status": "published",
+    "created_by": 1,
+    "owners_ext": {
+      "email": "wekosoftware@nii.ac.jp",
+      "username": "",
+      "displayname": ""
+    }
+  },
+  "item_title": "only file item",
+  "author_link": [],
+  "item_type_id": "1",
+  "publish_date": "2023-02-28",
+  "publish_status": "0",
+  "weko_shared_id": -1,
+  "item_1617186331708": {
+    "attribute_name": "Title",
+    "attribute_value_mlt": [
+      {
+        "subitem_1551255647225": "only file item",
+        "subitem_1551255648112": "ja"
+      }
+    ]
+  },
+  "item_1617258105262": {
+    "attribute_name": "Resource Type",
+    "attribute_value_mlt": [
+      {
+        "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+        "resourcetype": "conference paper"
+      }
+    ]
+  },
+  "item_1617605131499": {
+    "attribute_name": "File",
+    "attribute_type": "file",
+    "attribute_value_mlt": [
+      {
+        "url": { "url": "https://weko3.example.org/record/1/files/test1.txt" },
+        "date": [{ "dateType": "Available", "dateValue": "2023-02-28" }],
+        "format": "text/plain",
+        "filename": "test1.txt",
+        "filesize": [{ "value": "37 B" }],
+        "accessrole": "open_access",
+        "version_id": "b9c4a2bd-3cba-449b-908f-fe2eeb9427b6"
+      },
+      {
+        "url": { "url": "https://www.google.com/" },
+        "date": [{ "dateType": "Available", "dateValue": "2023-02-28" }],
+        "filename": "google",
+        "accessrole": "open_access",
+        "version_id": ""
+      }
+    ]
+  },
+  "relation_version_is_last": true
+}

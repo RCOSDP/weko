@@ -26,7 +26,7 @@ from operator import itemgetter
 
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import Bool, Exists, Q, QueryString
-from flask import Markup, current_app, session, json
+from flask import Markup, current_app, session, json, request
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
@@ -346,6 +346,8 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                     else:
                         children.clear()
                         tree.pop(i)
+            else:
+                tree.pop(i)
 
 
 def get_index_id_list(indexes, id_list=None):
@@ -1017,3 +1019,9 @@ def str_to_datetime(str_dt, format):
         return datetime.strptime(str_dt, format)
     except ValueError:
         return None
+
+def check_etag(etag):
+    """Check Request Header Etag"""
+  
+    request_etag = request.headers.get('If-None-Match')
+    return etag and etag == request_etag

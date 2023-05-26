@@ -23,7 +23,9 @@
 import pickle
 from functools import partial
 
-from flask import Blueprint, abort, current_app, jsonify, redirect, request, url_for
+from flask import Blueprint, abort, current_app, jsonify, redirect, request, url_for, make_response
+from flask_limiter import Limiter
+from elasticsearch.exceptions import ElasticsearchException
 from invenio_db import db
 from invenio_files_rest.storage import PyFSFileStorage
 from invenio_i18n.ext import current_i18n
@@ -56,6 +58,9 @@ from weko_index_tree.utils import count_items, recorrect_private_items_count
 from weko_records.models import ItemType
 from werkzeug.utils import secure_filename
 
+from .error import VersionNotFoundRESTError, InternalServerError, UnhandledElasticsearchError
+from .api import SearchSetting
+from .query import default_search_factory
 
 def create_blueprint(app, endpoints):
     """Create Invenio-Deposit-REST blueprint.
@@ -146,9 +151,23 @@ def create_blueprint(app, endpoints):
             default_media_type=options.get("default_media_type"),
         )
 
+        isr_api = IndexSearchResourceAPI.as_view(
+            IndexSearchResourceAPI.view_name.format(endpoint),
+            ctx=ctx,
+            search_serializers=search_serializers,
+            record_serializers=serializers,
+            default_media_type=options.get("default_media_type"),
+        )
+
         blueprint.add_url_rule(
             options.pop("index_route"),
             view_func=isr,
+            methods=['GET'],
+        )
+  
+        blueprint.add_url_rule(
+            options.pop("search_api_route"),
+            view_func=isr_api,
             methods=['GET'],
         )
 
@@ -478,3 +497,142 @@ def get_heading_info(data, lang, item_type):
         heading = heading_text
 
     return heading
+
+
+class IndexSearchResourceAPI(ContentNegotiatedMethodView):
+    """Resource for records searching."""
+
+    view_name = '{0}_searchapi'
+    def __init__(
+        self,
+        ctx,
+        search_serializers=None,
+        record_serializers=None,
+        default_media_type=None,
+        **kwargs
+    ):
+        """Constructor."""
+        super(IndexSearchResourceAPI, self).__init__(
+            method_serializers={
+                "GET": search_serializers,
+            },
+            default_method_media_type={
+                "GET": default_media_type,
+            },
+            default_media_type=default_media_type,
+            **kwargs
+        )
+        for key, value in ctx.items():
+            setattr(self, key, value)
+
+        self.pid_fetcher = current_pidstore.fetchers[self.pid_fetcher]
+        self.search_factory = default_search_factory
+
+    # @require_api_auth()
+    # @require_oauth_scopes(get_index_scope.id)
+    def get(self, **kwargs):
+        """Search records.
+
+        :returns: Search result containing hits and aggregations as
+                  returned by invenio-search.
+        """
+        from .config import WEKO_SEARCH_UI_API_VERSION
+        version = kwargs.get('version')
+        get_api_ver = WEKO_SEARCH_UI_API_VERSION.get(version)
+        if get_api_ver:
+            return get_api_ver(self,**kwargs)
+        else:
+            raise VersionNotFoundRESTError()
+          
+    def get_v1(self, **kwargs):
+        from weko_admin.models import FacetSearchSetting
+        from weko_admin.utils import get_facet_search_query
+        try:
+            params = {}
+            # Generate Search Query Class
+            search_obj = self.search_class()
+            search = search_obj.with_preference_param().params(version=True)
+            
+            # Pagenation Setting
+            page = request.values.get("page", type=int)
+            cursor = request.values.get("cursor")
+            size = request.values.get("size", 20, type=int)
+            if not page and cursor:
+                cursor = cursor.split(",")
+                search._extra.update(dict(search_after=cursor))
+                search._extra.update(dict(size=size))
+                
+            else:
+                if not page:
+                    page = 1
+                if page * size >= self.max_result_window:
+                    raise MaxResultWindowRESTError()
+                search = search[(page - 1) * size : page * size]
+            print("==cp1==")
+            # Query Generate
+            search, qs_kwargs = self.search_factory(self, search)
+            
+            # Sort Setting
+            sort = request.values.get("sort")
+            
+            sort_query = []
+            is_id_sort = False
+            if sort:
+                sort = sort.split(",")
+                for sort_key_element in sort:
+                    order = "asc"
+                    if sort_key_element.startswith("-"):
+                        sort_key_element = sort_key_element.lstrip("-")
+                        order = "desc"
+                    
+                    key_filed = SearchSetting.get_sort_key(sort_key_element)
+                    
+                    if  key_filed:
+                        sort_element ={}
+                        sort_element[key_filed] = {"order":order, "unmapped_type":"long"}
+                        sort_query.append(sort_element)
+                        if sort_key_element == 'controlnumber':
+                            is_id_sort = True
+                
+            if not is_id_sort:
+                sort_element ={}
+                sort_element['controlnumber'] = {"order":"asc", "unmapped_type":"long"}
+                sort_query.append(sort_element)
+
+            search._sort = sort_query
+            
+            # Facet Setting
+            # facets = get_facet_search_query()
+            # search_index = current_app.config["SEARCH_UI_SEARCH_INDEX"]
+            # if facets and search_index and "post_filters" in facets[search_index]:
+            #     post_filters = facets[search_index]["post_filters"]
+            #     for param in post_filters:
+            #         value = request.args.getlist(param)
+            #         if value:
+            #             params[param] = value
+            # weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
+            # for param in params:
+            #     query_key = weko_faceted_search_mapping[param]
+            #     search = search.post_filter({"terms": {query_key: params[param]}})
+            
+            # Execute search
+            search_result = search.execute()
+            # Check pretty
+            if request.args.get('pretty') == "true":
+                current_app.debug = True
+            
+            # Response header setting
+            res = make_response(jsonify(search_result.to_dict()),200)
+            res.headers['Cache-Control'] = 'no-store'
+            res.headers['Pragma'] = 'no-cache'
+            res.headers['Expires'] = 0
+            return res
+
+        except MaxResultWindowRESTError:
+            raise MaxResultWindowRESTError()
+
+        except ElasticsearchException:
+            raise InternalServerError()
+          
+        except Exception:
+            raise InternalServerError()

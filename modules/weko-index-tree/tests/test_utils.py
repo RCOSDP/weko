@@ -1,3 +1,6 @@
+import copy
+import os
+
 from weko_index_tree.utils import (
     get_index_link_list,
     is_index_tree_updated,
@@ -34,7 +37,9 @@ from weko_index_tree.utils import (
     check_restrict_doi_with_indexes,
     check_has_any_item_in_index_is_locked,
     check_index_permissions,
-    generate_path
+    generate_path,
+    save_index_trees_to_redis,
+    str_to_datetime
 )
 
 from invenio_accounts.testutils import login_user_via_session, client_authenticated
@@ -66,6 +71,7 @@ from invenio_deposit.api import Deposit
 
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
+from weko_index_tree.errors import IndexBaseRESTError
 from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
 from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
@@ -76,18 +82,30 @@ from weko_redis.redis import RedisConnection
 # from .errors import IndexBaseRESTError, IndexDeletedRESTError
 # from .models import Index
 
-
-#*** def get_index_link_list(pid=0):
-def test_get_index_link_list(i18n_app, users, indices, esindex):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        pid = 44
-        tree = Indexes.get_browsing_tree_ignore_more(pid)
-        
-        # Test 1
-        assert not get_index_link_list()
-
-        # Test 2
-        assert get_index_link_list(pid)
+# def get_index_link_list
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_get_index_link_list -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_get_index_link_list(app, db, users):
+    tree = [{
+        "id": "10",
+        "link_name": "Index link 10",
+        "index_link_enabled": True,
+        "children": [
+            {
+                "id": "11",
+                "link_name": "Index link 11",
+                "index_link_enabled": True,
+                "children": []
+            },
+            {
+                "id": "12",
+                "link_name": "Index link 12",
+                "index_link_enabled": False,
+                "children": []
+            }
+        ]
+    }]
+    with patch("weko_index_tree.api.Indexes.get_browsing_tree_ignore_more", return_value=tree):
+        assert get_index_link_list(10)==[(10, 'Index link 10'), (11, 'Index link 11')]
         
 
 #+++ def is_index_tree_updated():
@@ -100,13 +118,32 @@ def test_cached_index_tree_json(i18n_app):
     assert cached_index_tree_json()
 
 
-#+++ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
-def test_reset_tree(i18n_app, users, indices, records):
-    pid = 44    
-    tree = Indexes.get_browsing_tree_ignore_more(pid)
-    
-    # Doesn't return anything and will pass if there are no errors
-    assert reset_tree(tree) == None
+# def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_get_index_link_list -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_reset_tree(app, db, users):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        with app.test_request_context(headers=[("Accept-Language", "en")]):
+            tree = []
+            reset_tree(tree)
+            assert tree==[]
+
+            tree = []
+            reset_tree(tree, ignore_more=True)
+            assert tree==[]
+
+            tree = []
+            reset_tree(tree, "10")
+            assert tree==[]
+
+    with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
+        with app.test_request_context(headers=[("Accept-Language", "en")]):
+            tree = []
+            reset_tree(tree, ignore_more=True)
+            assert tree==[]
+
+            tree = []
+            reset_tree(tree, ["10"], more_ids=["10"])
+            assert tree==[]
 
 
 #*** def get_tree_json(index_list, root_id):
@@ -178,24 +215,99 @@ def test_filter_index_list_by_role(i18n_app, indices, users, db):
 
         assert len(filter_index_list_by_role([indices['index_non_dict']])) > 0
 
-    assert len(filter_index_list_by_role([indices['index_non_dict']])) == 0
+    assert len(filter_index_list_by_role([indices['index_non_dict']])) == 1
 
 
-#+++ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
-def test_reduce_index_by_role(i18n_app, indices, users, db_records, db):
-    g1 = Group.create(name="group_test1").add_member(users[-1]['obj'])
-    g2 = Group.create(name="group_test2").add_member(users[-1]['obj'])
+# def reduce_index_by_role
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_reduce_index_by_role -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_reduce_index_by_role(app, db, users):
+    """with db.session.begin_nested():
+        db.session.add(_base_index(100, 0, 1))
+        db.session.add(_base_index(110, 100, 1, public_date=datetime(2022, 1, 1), group="group_test1", browsing_role=None, contribute_role="1,2,3,4,-99"))
+    db.session.commit()"""
+
+    g1 = Group.create(name="group_test1").add_member(users[3]['obj'])
     db.session.add(g1)
-    db.session.add(g2)
     groups = [v for k,v in Group.get_group_list().items()]
 
-    roles = [role.name for role in users[-1]['obj'].roles]
-    roles.append('contribute_role')
+    admin_roles = (True, ["1"])
+    user_roles = (False, ["-98"])
+    #roles.append('contribute_role')
+    assert not reduce_index_by_role({}, admin_roles, groups)
+    assert not reduce_index_by_role([[]], admin_roles, groups)
 
-    tree = Indexes.get_browsing_tree_ignore_more(33)
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        with app.test_request_context(headers=[("Accept-Language", "en")]):
+            tree = [{
+                "id": "10",
+                "contribute_role": "1,2,3,4,-98,-99",
+                "public_state": True,
+                "public_date": datetime(2022, 1, 1, 0, 0),
+                "browsing_role": "3,-98,-99",
+                "contribute_group": "",
+                "browsing_group": "",
+                "children": [
+                    {
+                        "id": "11",
+                        "contribute_role": "1,2,3,4,-98,-99",
+                        "public_state": True,
+                        "public_date": datetime(2022, 1, 1, 0, 0),
+                        "browsing_role": "3,-98,-99",
+                        "contribute_group": "group_test1",
+                        "browsing_group": "group_test1",
+                        "children": [],
+                        "settings": []
+                    },
+                    {
+                        "id": "12",
+                        "contribute_role": "",
+                        "public_state": True,
+                        "public_date": "2022-01-01T00:00:00",
+                        "browsing_role": "",
+                        "contribute_group": "group_test1",
+                        "browsing_group": "group_test1",
+                        "children": [],
+                        "settings": []
+                    },
+                    {
+                        "id": "13",
+                        "contribute_role": "1,2,3,4,-98,-99",
+                        "public_state": True,
+                        "public_date": datetime(datetime.today().year + 1, 1, 1, 0, 0),
+                        "browsing_role": "3,-98,-99",
+                        "contribute_group": "group_test1",
+                        "browsing_group": "group_test1",
+                        "children": [],
+                        "settings": []
+                    }
+                ],
+                "settings": {
+                    "checked": False
+                }
+            }]
+            new_tree = copy.deepcopy(tree)
+            reduce_index_by_role(new_tree, admin_roles, groups, True)
+            assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': []}, {'id': '12', 'children': [], 'settings': []}], 'settings': {'checked': False}}]
 
-    # Doesn't return anything and will pass if there are no errors
-    assert not reduce_index_by_role(tree, roles, groups)
+            new_tree = copy.deepcopy(tree)
+            reduce_index_by_role(new_tree, user_roles, groups, True)
+            assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': []}, {'id': '12', 'children': [], 'settings': []}], 'settings': {'checked': False}}]
+
+            new_tree = copy.deepcopy(tree)
+            reduce_index_by_role(new_tree, user_roles, [], True)
+            assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': []}], 'settings': {'checked': False}}]
+
+            new_tree = copy.deepcopy(tree)
+            reduce_index_by_role(new_tree, admin_roles, groups, False)
+            assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': [], 'disabled': False}, {'id': '12', 'children': [], 'settings': [], 'disabled': False}, {'id': '13', 'children': [], 'settings': [], 'disabled': False}], 'settings': {'checked': False}, 'disabled': False}]
+
+            new_tree = copy.deepcopy(tree)
+            reduce_index_by_role(new_tree, user_roles, groups, False)
+            assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': [], 'disabled': False}, {'id': '12', 'children': [], 'settings': [], 'disabled': False}, {'id': '13', 'children': [], 'settings': [], 'disabled': False}], 'settings': {'checked': False}, 'disabled': False}]
+
+            new_tree = copy.deepcopy(tree)
+            reduce_index_by_role(new_tree, user_roles, [], False, ["10", "12"])
+            assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': [], 'disabled': False}, {'id': '13', 'children': [], 'settings': [], 'disabled': False}], 'settings': {'checked': True}, 'disabled': False}]
 
 
 #+++ def get_index_id_list(indexes, id_list=None):
@@ -226,12 +338,40 @@ def test_get_publish_index_id_list(indices, db):
     assert not get_publish_index_id_list(index_list)
 
 
-#+++ def reduce_index_by_more(tree, more_ids=None):
-def test_reduce_index_by_more(i18n_app, db_records, indices):
-    tree = Indexes.get_browsing_tree_ignore_more(44)
+# def reduce_index_by_more
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_reduce_index_by_more -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_reduce_index_by_more(app, db, users):
+    tree = [{
+        "id": "10",
+        "more_check": True,
+        "display_no": 2,
+        "children": [
+            {
+                "id": "11",
+                "more_check": True,
+                "display_no": 2,
+                "children": [[]]
+            },
+            {
+                "id": "12",
+                "more_check": False,
+                "display_no": 2,
+                "children": []
+            },
+            {
+                "id": "13",
+                "more_check": False,
+                "display_no": 2,
+                "children": []
+            }
+        ],
+        "settings": {
+            "checked": False
+        }
+    }]
 
-    # Doesn't return anything and will pass if there are no errors
-    assert not reduce_index_by_more(tree)
+    reduce_index_by_more(tree)
+    assert tree==[{'id': '10', 'more_check': True, 'display_no': 2, 'children': [{'id': '11', 'more_check': True, 'display_no': 2, 'children': [[]]}, {'id': '12', 'more_check': False, 'display_no': 2, 'children': []}, {'id': 'more', 'value': '<a href="#" class="more">more...</a>'}], 'settings': {'checked': False}}]
 
 
 #+++ def get_admin_coverpage_setting():
@@ -295,10 +435,28 @@ def test_get_record_in_es_of_index(i18n_app, indices, db_records, esindex):
     # assert get_record_in_es_of_index(33)
 
 
-#*** def check_doi_in_list_record_es(index_id):
-def test_check_doi_in_list_record_es(i18n_app, indices, esindex):
-    # Test 1
-   assert not check_doi_in_list_record_es(33)
+# def check_doi_in_list_record_es(index_id):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_doi_in_list_record_es -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_check_doi_in_list_record_es(app, db, users):
+    _data1 = [
+        {
+            "_source": {"control_number": "0", "path": ["1"]}
+        }
+    ]
+    _data2 = [
+        {
+            "_source": {"control_number": "1", "path": ["1", "2"]}
+        }
+    ]
+    with patch("weko_index_tree.utils.check_doi_in_index_and_child_index", return_value=[]):
+        assert check_doi_in_list_record_es(1)==False
+    with patch("weko_index_tree.utils.check_doi_in_index_and_child_index", return_value=_data1):
+        assert check_doi_in_list_record_es(1)==True
+    with patch("weko_index_tree.utils.check_doi_in_index_and_child_index", return_value=_data2):
+        with patch("weko_index_tree.utils.check_index_permissions", return_value=True):
+            assert check_doi_in_list_record_es(1)==False
+        with patch("weko_index_tree.utils.check_index_permissions", return_value=False):
+            assert check_doi_in_list_record_es(1)==True
 
 
 #+++ def check_restrict_doi_with_indexes(index_ids):
@@ -315,22 +473,22 @@ def test_check_has_any_item_in_index_is_locked(i18n_app, indices, records, esind
     # assert check_has_any_item_in_index_is_locked(33)
 
 
-#+++ def check_index_permissions(record=None, index_id=None, index_path_list=None, is_check_doi=False) -> bool
-def test_check_index_permissions(i18n_app, indices, db_records):
-    # for depid, recid, parent, doi, record, item in db_records:
-    record = db_records[0][4]
-    index_id = 33
-    index_path_list = [33]
-    
-    # Test 1
-    assert not check_index_permissions()
+# def check_index_permissions(record=None, index_id=None, index_path_list=None, is_check_doi=False) -> bool
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_index_permissions -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_check_index_permissions(app, db, users, test_indices, db_records):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        with app.test_request_context(headers=[("Accept-Language", "en")]):
+            assert check_index_permissions()==False
+            assert check_index_permissions(record={"path": "1"})==True
+            assert check_index_permissions(index_id="1")==True
+            assert check_index_permissions(index_path_list=["1", "2"], is_check_doi=True)==True
 
-    # Test 2
-    assert check_index_permissions(
-        record=record,
-        index_id=index_id,
-        index_path_list=index_path_list
-    )
+    with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
+        with app.test_request_context(headers=[("Accept-Language", "en")]):
+            assert check_index_permissions()==False
+            assert check_index_permissions(record={"path": "1"})==False
+            assert check_index_permissions(index_id="1")==False
+            assert check_index_permissions(index_path_list=["1", "2"], is_check_doi=True)==True
 
 
 # *** def check_doi_in_index_and_child_index(index_id, recursively=True):
@@ -389,29 +547,90 @@ def test_is_index_locked(i18n_app, indices, redis_connect):
     assert is_index_locked(key)
 
 
-#+++ def perform_delete_index(index_id, record_class, action: str):
-def test_perform_delete_index(i18n_app, indices, records):
-    record_list = RecordMetadata.query.all()
-    index_id = indices['index_non_dict'].id
-    
-    assert perform_delete_index(index_id, record_list[0], "all")
+# def perform_delete_index(index_id, record_class, action: str):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_perform_delete_index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_perform_delete_index(app, db, test_indices, users):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        with app.test_request_context(headers=[("Accept-Language", "en")]):
+            with patch("weko_index_tree.utils.is_index_locked", return_value=False):
+                assert perform_delete_index(1, Indexes, "move")==('', ['The index cannot be deleted because there is a link from an item that has a DOI.'])
+            with patch("weko_index_tree.utils.check_doi_in_index", return_value=False):
+                _data = [
+                    {
+                        "_source": {"_item_metadata": {"control_number": "0"}}
+                    },
+                    {
+                        "_source": {"_item_metadata": {"control_number": "1"}}
+                    }
+                ]
+                with patch("weko_index_tree.utils.get_record_in_es_of_index", return_value=_data):
+                    with patch("weko_workflow.utils.check_an_item_is_locked", return_value=True):
+                        assert perform_delete_index(1, Indexes, "move")==('', ['This index cannot be deleted because the item belonging to this index is being edited by the import function.'])
+                    with patch("weko_workflow.utils.check_an_item_is_locked", return_value=False):
+                        with pytest.raises(IndexBaseRESTError) as e:
+                            perform_delete_index(1, Indexes, "move")
+                        assert e.value.code == 400
+                        assert perform_delete_index(1, Indexes, "delete")==('Index deleted successfully.', [])
 
 
-#*** def get_doi_items_in_index(index_id, recursively=False):
-def test_get_doi_items_in_index(i18n_app, users, indices, esindex, records):
-    # Test 1
-    assert not get_doi_items_in_index(44, recursively=False)
+# def get_doi_items_in_index(index_id, recursively=False):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_save_index_trees_to_redis -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_get_doi_items_in_index(app):
+    _data = [
+        {
+            "_source": {"control_number": "0", "path": ["1"]}
+        },
+        {
+            "_source": {"control_number": "1", "path": []}
+        }
+    ]
+    with patch("weko_index_tree.utils.check_doi_in_index_and_child_index", return_value=_data):
+        res = get_doi_items_in_index("1")
+        assert res==["0"]
 
-    # Test 2
-    # with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
-    #     assert get_doi_items_in_index(44, recursively=False)
+
+# def get_editing_items_in_index(index_id, recursively=False):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_save_index_trees_to_redis -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_get_editing_items_in_index(app):
+    _es_data = [
+        {
+            "_source": {
+                "_item_metadata": {"control_number": "1"}
+            }
+        },
+        {
+            "_source": {
+                "_item_metadata": {"control_number": "2"}
+            }
+        }
+    ]
+    with patch("weko_index_tree.utils.get_record_in_es_of_index", return_value=_es_data):
+        with patch("weko_items_ui.utils.check_item_is_being_edit", return_value=True):
+            with patch("invenio_pidstore.models.PersistentIdentifier.get", return_value=True):
+                res = get_editing_items_in_index(0)
+                assert res == ["1", "2"]
+        
+        with patch("weko_items_ui.utils.check_item_is_being_edit", return_value=False):
+            with patch("invenio_pidstore.models.PersistentIdentifier.get", return_value=True):
+                with patch("weko_workflow.utils.check_an_item_is_locked", return_value=False):
+                    res = get_editing_items_in_index(0)
+                    assert res == []
 
 
-#*** def test_get_editing_items_in_index(index_id, recursively=False):
-def test_get_editing_items_in_index(i18n_app, users, indices, esindex, db_records, records):
-    # Test 1
-    assert not get_editing_items_in_index(44)
+# def save_index_trees_to_redis(tree):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_save_index_trees_to_redis -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_save_index_trees_to_redis(app, redis_connect):
+    tree = [{"id": "1"}]
+    os.environ['INVENIO_WEB_HOST_NAME'] = "test"
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        assert not save_index_trees_to_redis(tree)
 
-    # Test 2
-    # with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
-    #     assert get_doi_items_in_index(44)
+
+# def str_to_datetime(str_dt, format):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_str_to_datetime -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_str_to_datetime():
+    date_str = "2022-01-01"
+    date_format1 = "%Y-%m-%d"
+    date_format2 = "%Y-%m-%dT%H:%M:%S"
+    assert str_to_datetime(date_str, date_format1)==datetime(2022, 1, 1)
+    assert str_to_datetime(date_str, date_format2)==None

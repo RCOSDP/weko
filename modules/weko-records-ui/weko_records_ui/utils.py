@@ -28,7 +28,7 @@ from decimal import Decimal
 from typing import NoReturn, Tuple
 from urllib.parse import urlparse,quote
 
-from flask import abort, current_app, json, request, url_for
+from flask import abort, current_app, json, request, url_for, make_response
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
@@ -1435,8 +1435,8 @@ def get_google_detaset_meta(record,record_tree=None):
                 '@type': 'Place',
                 'geo': {
                     '@type': 'GeoCoordinates',
-                    'latitude': point_longitude.text,
-                    'longitude': point_latitude.text,
+                    'latitude': point_latitude.text,
+                    'longitude': point_longitude.text,
                 }
             })
 
@@ -1507,3 +1507,13 @@ def get_google_detaset_meta(record,record_tree=None):
     current_app.logger.debug("res_data: {}".format(json.dumps(res_data, ensure_ascii=False)))
 
     return json.dumps(res_data, ensure_ascii=False)
+
+def check_etag(etag):
+    """Check Request Header Etag"""
+    request_Etag = request.headers.get('If-None-Match')
+    return etag and etag == request_Etag
+
+def check_pretty():
+    """Check Request Header pretty"""
+    if request.args.get('pretty') == "true":
+        current_app.debug = True

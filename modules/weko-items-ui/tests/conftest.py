@@ -61,6 +61,8 @@ from invenio_deposit.config import (
     DEPOSIT_DEFAULT_JSONSCHEMA,
     DEPOSIT_JSONSCHEMAS_PREFIX,
 )
+from invenio_files_rest.models import Location, Bucket,ObjectVersion,FileInstance
+from invenio_records_files.api import RecordsBuckets
 from invenio_deposit.ext import InvenioDeposit, InvenioDepositREST
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.config import FILES_REST_STORAGE_CLASS_LIST
@@ -123,7 +125,7 @@ from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
 from werkzeug.local import LocalProxy
 
 from tests.helpers import create_record, json_data
-from weko_items_ui import WekoItemsUI
+from weko_items_ui import WekoItemsUI, WekoItemsREST
 from weko_items_ui.views import blueprint as weko_items_ui_blueprint
 from weko_items_ui.views import blueprint_api as weko_items_ui_blueprint_api
 from weko_groups import WekoGroups
@@ -233,6 +235,13 @@ def base_app(instance_path):
     )
     
     app_.config['WEKO_SEARCH_REST_ENDPOINTS']['recid']['search_index']='test-weko'
+    app_.config['WEKO_ITEMS_UI_RANKING_DEFAULT_SETTINGS'] = {
+    'is_show': True,
+    'new_item_period': 14,
+    'statistical_period': 365,
+    'display_rank': 10,
+    'rankings': {"new_items": True, "most_reviewed_items": True, "most_downloaded_items": False, "most_searched_keywords": True, "created_most_items_user": True}
+    }
     # tmp = app_.config['RECORDS_REST_SORT_OPTIONS']['tenant1-weko']
     # app_.config['RECORDS_REST_SORT_OPTIONS']['test-weko']=tmp
     # Babel(app_)
@@ -279,7 +288,7 @@ def base_app(instance_path):
     WekoSearchUI(app_)
     # ext.init_config(app_)
     WekoItemsUI(app_)
-
+    WekoItemsREST(app_)
     # app_.register_blueprint(invenio_accounts_blueprint)
     # app_.register_blueprint(weko_theme_blueprint)
     # app_.register_blueprint(weko_items_ui_blueprint)
@@ -832,6 +841,30 @@ def db_records2(db,instance_path,users):
  
     yield result
 
+@pytest.fixture()
+def db_records_file(app,db,instance_path,users):
+    index_metadata = {
+        'id': 1,
+        'parent': 0,
+        'value': 'Index(public_state = True,harvest_public_state = True)'
+    }
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        ret = Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(1)
+        index.public_state = True
+        index.harvest_public_state = True
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name="local", uri=instance_path, default=True)
+        db.session.add(loc)
+    db.session.commit()
+    record_data = json_data("data/record_file/record_metadata.json")
+    item_data = json_data("data/record_file/item_metadata.json")
+    with db.session.begin_nested():
+        depid, recid,parent,doi,record, item=create_record(record_data, item_data)
+    db.session.commit()
+    
+    return depid, recid,parent,doi,record, item
 
 @pytest.fixture()
 def db_workflow(app, db, db_itemtype, users):
@@ -1021,7 +1054,8 @@ def db_ranking(db):
     ranking_settings = RankingSettings(is_show=True,new_item_period=12,statistical_period=365,display_rank=10,rankings={"new_items": True, "most_reviewed_items": True, "most_downloaded_items": True, "most_searched_keywords": True, "created_most_items_user": True})
     with db.session.begin_nested():
         db.session.add(ranking_settings)
-
+    db.session.commit()
+    
     return {"settings":ranking_settings}
 
 # @pytest.fixture(autouse=True)

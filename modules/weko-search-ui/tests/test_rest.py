@@ -6,6 +6,7 @@ import pytest
 from mock import patch, MagicMock
 from flask import current_app
 from elasticsearch_dsl import response, Search
+from elasticsearch.exceptions import ElasticsearchException
 from tests.conftest import json_data
 
 from invenio_records_rest.errors import MaxResultWindowRESTError
@@ -321,3 +322,35 @@ def test_get_heading_info(i18n_app):
 
     assert not subitem_heading_banner_headline in get_heading_info(data_1, "en", data_3)
     assert not subitem_heading_headline in get_heading_info(data_1, "en", data_3)
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResourceAPI -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_IndexSearchResourceAPI(client_rest, db_register2):
+  with patch('invenio_search.api.RecordsSearch.execute', value={"Test":"API"}):
+    param = {"size":2,"page":1,"sort":"controlnumber"}
+    res =  client_rest.get(url("/v1.0/search", param))
+    
+    assert res.status_code == 200
+    assert res.headers['Cache-Control'] == 'no-store'
+    assert res.headers['Pragma'] == 'no-cache'
+    assert res.headers['Expires'] == '0'
+    try:
+        json.loads(res.get_data())
+        assert True
+    except:
+        assert False
+        
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResourceAPI_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_IndexSearchResourceAPI_error(client_rest,db_register2):
+    
+    param = {"size":1000,"page":1000}
+    res =  client_rest.get(url("/v1.0/search", param))
+    assert res.status_code == 400
+
+    param = {"size":1,"page":1000}
+    res =  client_rest.get(url("/ver1/search", param))
+    assert res.status_code == 400
+
+    with patch('weko_search_ui.query.default_search_factory', MagicMock(side_effect=ElasticsearchException())):
+        res =  client_rest.get(url("/v1.0/search"))
+        assert res.status_code == 500

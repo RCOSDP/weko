@@ -6,7 +6,9 @@ import json
 # from tkinter import W
 import pytest
 import os
-from mock import patch
+import copy
+import mock
+from mock import patch, MagicMock
 from tests.helpers import json_data
 
 from invenio_accounts import testutils
@@ -135,12 +137,50 @@ def test_copy_field_test(app, meta, k_v):
         'text3': ['概要', 'その他', 'materials: text']
     }
 
+    k_v1 = copy.deepcopy(k_v)
+    del k_v1[1]
+    k_v1[0]['inputType'] = "range"
+    with patch("weko_records.utils.get_values_from_dict", return_value=[1,2,3,4,5]):
+        with patch("weko_records.utils.convert_range_value", return_value=[1,2,3,4,5]):
+            assert copy_field_test(meta[0], k_v1, _jrc) == None
+
+            k_v1[0]['inputType'] = "geo_point"
+            k_v1[0]['item_value']['1']['path']['lat'] = '99.99'
+            k_v1[0]['item_value']['1']['path']['lon'] = '99.99'
+            k_v1[0]['item_value']['1']['path_type']['lat'] = '99.99'
+            k_v1[0]['item_value']['1']['path_type']['lon'] = '99.99'
+            k_v1[0]['item_value']['12']['path']['lat'] = '99.99'
+            k_v1[0]['item_value']['12']['path']['lon'] = '99.99'
+            k_v1[0]['item_value']['12']['path_type']['lat'] = '99.99'
+            k_v1[0]['item_value']['12']['path_type']['lon'] = '99.99'
+            assert copy_field_test(meta[0], k_v1, _jrc) == None
+
+            k_v1[0]['inputType'] = "geo_shape"
+            k_v1[0]['item_value']['1']['path']['coordinates'] = '99.99'
+            k_v1[0]['item_value']['1']['path']['type'] = '99.99'
+            k_v1[0]['item_value']['1']['path_type']['coordinates'] = '99.99'
+            k_v1[0]['item_value']['1']['path_type']['type'] = '99.99'
+            k_v1[0]['item_value']['12']['path']['coordinates'] = '99.99'
+            k_v1[0]['item_value']['12']['path']['type'] = '99.99'
+            k_v1[0]['item_value']['12']['path_type']['coordinates'] = '99.99'
+            k_v1[0]['item_value']['12']['path_type']['type'] = '99.99'
+            assert copy_field_test(meta[0], k_v1, _jrc) == None
+
 # def convert_range_value(start, end=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_convert_range_value -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_convert_range_value():
     assert convert_range_value('1')=={'gte': '1', 'lte': '1'}
     assert convert_range_value(None, '2')=={'gte': '2', 'lte': '2'}
     assert convert_range_value('1', '2')=={'gte': '1', 'lte': '2'}
+    assert convert_range_value('2', '1')=={'gte': '1', 'lte': '2'}
+    assert convert_range_value("1.1", "9.9")!={'gte': '1', 'lte': '2'}
+    assert convert_range_value("9.9", "1.1")!={'gte': '1', 'lte': '2'}
+
+    # Exception coverage
+    try:
+        assert convert_range_value('a', 'b')!={'gte': '1', 'lte': '2'}
+    except:
+        pass
 
 # def convert_date_range_value(start, end=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_convert_date_range_value -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -196,6 +236,8 @@ def test_get_value_from_dict(app, meta, jsonpath):
     assert get_value_from_dict(meta[0], jsonpath[1], 'json')=='2000-01-01/2021-03-30'
     assert get_value_from_dict(meta[0], jsonpath[2], 'json')=='概要'
     assert get_value_from_dict(meta[0], jsonpath[3], 'json')=='その他'
+    assert get_value_from_dict(meta[0], jsonpath[3], 'json')=='その他'
+    assert get_value_from_dict(meta[0], jsonpath[3], 'xml')==None
 
 # def get_values_from_dict(dc, path, path_type, iid=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_values_from_dict -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -208,12 +250,33 @@ def test_get_values_from_dict(app, meta, jsonpath):
         meta[0], jsonpath[2], 'json')==['概要', 'その他', 'materials: text']
     assert get_values_from_dict(
         meta[0], jsonpath[3], 'json')==['その他', 'materials: text']
+    assert get_values_from_dict(
+        meta[0], jsonpath[3], 'xml')==None
 
 # def copy_value_xml_path(dc, xml_path, iid=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_copy_value_xml_path -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_copy_value_xml_path(meta):
     res = copy_value_xml_path(meta[0], '')
     assert res==None
+
+    data1 = "<test>test<\test>"
+    data2 = MagicMock()
+
+    def text():
+        return(9999)
+
+    data3 = MagicMock()
+    data3.text = text
+
+    def findall(x, y):
+        return [data3]
+
+    data2.findall = findall
+
+    with patch("lxml.etree.tostring", return_value=data1):
+        with patch("invenio_oaiserver.response.getrecord", return_value=data1):
+            with patch("weko_records.utils.ET.fromstring", return_value=data2):
+                copy_value_xml_path(meta[0], ['/test', '/test/test'], iid=1)
 
 # def copy_value_json_path(meta, jsonpath):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_copy_value_json_path -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -375,6 +438,22 @@ def test_get_all_items():
 
     res = get_all_items(_nlst, _klst)
     assert res==[[{'item_1.subitem_1': 'en_value', 'item_1.subitem_1_lang': 'en'}], [{'item_1.subitem_1': 'ja_value', 'item_1.subitem_1_lang': 'ja'}]]
+
+    data1 = {
+        "k": "k",
+    }
+    data2 = ['k', ['k']]
+
+    assert get_all_items(_nlst, _klst, is_get_name=True) != None
+    assert get_all_items(data1, [data2], is_get_name=True) != None
+
+    data1['k'] = ['k']
+
+    assert get_all_items(data1, [data2], is_get_name=True) != None
+
+    data2 = ['k.k.k', ['k']]
+
+    assert get_all_items(data1, [data2], is_get_name=True) != None
 
 
 # def get_all_items2(nlst, klst):
@@ -549,6 +628,199 @@ async def test_sort_meta_data_by_options_no_item_type_id(i18n_app, db, admin_set
 #         def append_parent_key_for_list(parent_key, attr_val_mlt):
 #     def get_title_option(solst_dict_array):
 
+@pytest.mark.asyncio
+async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
+    record_hit = {
+        "_source":{
+            "item_item_id":"",
+            "_item_metadata":{}
+        }
+    }
+    _item_type_name=ItemTypeName(name="test")
+    item_type=ItemTypes.create(
+        name="test",
+        item_type_name=_item_type_name,
+        schema={},
+        render={},
+        form={},
+        tag=1
+    )
+    item_type_mapping=Mapping.create(
+        item_type_id=item_type.id,
+        mapping={}
+    )
+    settings = AdminSettings.get("items_display_settings")
+    
+    data1 = {
+        "key1.@attributes.xml:lang": "test",
+    }
+
+    data2 = MagicMock()
+    data2.model = MagicMock()
+    data2.model.form = {
+        "key": "item_type_id",
+        "title": "Title",
+        "isShowList": True,
+    }
+    data2.model.render = {
+        "meta_fix": {
+            "meta_fix_9999": "meta_fix_9999",
+            "item_type_id": {
+                "option": {
+                    "showlist": True,
+                    "hidden": False,
+                },
+            },
+        },
+        "meta_list": {
+            "meta_list_9999": "meta_list_9999",
+        }
+    }
+    
+    with patch("weko_records.serializers.utils.get_mapping", return_value=data1):
+        with patch("weko_search_ui.utils.get_data_by_property", return_value=("1", "2")):
+            await sort_meta_data_by_options(record_hit,settings,item_type_mapping,item_type)
+
+            record_hit_2 = {
+                "_source": {
+                    "file": "file_9999",
+                    "_comment": "_comment_9999",
+                    "item_item_id": "8888",
+                    "_item_metadata": {
+                        "item_type_id": {
+                            "attribute_value_mlt": [{
+                                "value": "value_7777",
+                                "url": {
+                                    "label": "",
+                                    "url": "url_9999",
+                                    "value": "value_6666",
+                                },
+                                "filename": "filename_9999",
+                                "version_id": "version_id_9999",
+                                "accessrole": "open_restricted",
+                                "subitem_thumbnail": ""
+                            }],
+                            "attribute_type": "file"
+                        },
+                    }
+                }
+            }
+
+            data3 = copy.deepcopy(data2)
+            data3.model.render["meta_fix"]["item_type_id"]["option"] = None
+
+            await sort_meta_data_by_options(
+                record_hit=record_hit_2,
+                settings=settings,
+                item_type_mapping=item_type_mapping,
+                item_type_data=data3
+            )
+
+            await sort_meta_data_by_options(
+                record_hit=record_hit_2,
+                settings=settings,
+                item_type_mapping=item_type_mapping,
+                item_type_data=data2
+            )
+
+            record_hit_2["_source"]["_item_metadata"]["item_type_id"]["attribute_value_mlt"][0]["version_id"] = ""
+            record_hit_2["_source"]["_item_metadata"]["item_type_id"]["attribute_value_mlt"][0]["accessrole"] = ""
+            record_hit_2["_source"]["_item_metadata"]["item_type_id"]["attribute_value_mlt"][0]["url"]["label"] = ""
+
+            await sort_meta_data_by_options(
+                record_hit=record_hit_2,
+                settings=settings,
+                item_type_mapping=item_type_mapping,
+                item_type_data=data2
+            )
+
+            data2.model.form["key"] = "1"
+
+            await sort_meta_data_by_options(
+                record_hit=record_hit_2,
+                settings=settings,
+                item_type_mapping=item_type_mapping,
+                item_type_data=data2
+            )
+
+            data2.model.form["key"] = "item_type_id.item_type_id_9999"
+            record_hit_2["_source"]["_item_metadata"]["item_type_id"]["attribute_value_mlt"][0]["version_id"] = "version_id_9999"
+            record_hit_2["_source"]["_item_metadata"]["item_type_id"]["attribute_value_mlt"][0]["url"]["label"] = "label_9999"
+
+            await sort_meta_data_by_options(
+                record_hit=record_hit_2,
+                settings=settings,
+                item_type_mapping=item_type_mapping,
+                item_type_data=data2
+            )
+
+            data2.model.form["key"] = "item_type_id"
+            record_hit_2["_source"]["_item_metadata"]["item_type_id"]["attribute_type"] = "not_file"
+            i18n_app.config["WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL"] = 99
+            record_hit_2["_source"]["_item_metadata"]["item_type_id"]["attribute_value_mlt"][0]["subitem_thumbnail"] = [{"thumbnail_label": "thumbnail_label_9999"}]
+
+            await sort_meta_data_by_options(
+                record_hit=record_hit_2,
+                settings=settings,
+                item_type_mapping=item_type_mapping,
+                item_type_data=data2
+            )
+
+            del record_hit_2["_source"]["_item_metadata"]["item_type_id"]["attribute_value_mlt"][0]["subitem_thumbnail"]
+
+            await sort_meta_data_by_options(
+                record_hit=record_hit_2,
+                settings=settings,
+                item_type_mapping=item_type_mapping,
+                item_type_data=data2
+            )
+
+            # data4.model.form["key"] = "bibliographic_titles"
+
+            data4 = MagicMock()
+            data4.model = MagicMock()
+            data4.model.form = {
+                "key": "item_type_id",
+                "title": "Title",
+                "isShowList": True,
+                "value": [{"value": "value"}],
+            }
+            data4.model.render = {
+                "meta_fix": {
+                    "meta_fix_9999": "meta_fix_9999",
+                    "item_type_id": {
+                        "option": {
+                            "showlist": True,
+                            "hidden": False,
+                        },
+                    },
+                },
+                "meta_list": {
+                    "meta_list_9999": "meta_list_9999",
+                }
+            } 
+
+            await sort_meta_data_by_options(
+                record_hit=record_hit_2,
+                settings=settings,
+                item_type_mapping=item_type_mapping,
+                item_type_data=data4
+            )
+
+            # coverage
+            # 806    if ojson is None:
+            # 807        ojson = ItemTypes.get_record(item_type_id)
+            try:
+                await sort_meta_data_by_options(
+                    record_hit=record_hit_2,
+                    settings=settings,
+                    item_type_mapping=item_type_mapping,
+                    item_type_data=None
+                )
+            except:
+                pass
+    
+
 # def get_keywords_data_load(str):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_keywords_data_load -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_get_keywords_data_load(app, db, item_type, item_type2):
@@ -565,6 +837,7 @@ def test_is_valid_openaire_type(app, db):
     assert str(e.value)=="name 'current_openaire' is not defined"
     res = is_valid_openaire_type({}, [])
     assert res==True
+
 
 # def check_has_attribute_value(node):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_check_has_attribute_value -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -599,6 +872,100 @@ def test_get_attribute_value_all_items(app):
 
     res = get_attribute_value_all_items('item_1', _nlst, _klst)
     assert res==[[[[{'en_item_1_title': 'en_value'}], [{'en_item_1_lang': 'en'}]]], [[[{'en_item_1_title': 'ja_value'}], [{'en_item_1_lang': 'ja'}]]]]
+
+    _nlst = [
+        {
+            'subitem_1': 'en_value',
+            'subitem_1_lang': 'en',
+            'creatorMail': "test_creatorMail",
+        },
+        {
+            'subitem_1': 'ja_value',
+            'subitem_1_lang': 'ja',
+            'creatorMail': "test_creatorMail",
+        },
+        {
+            'subitem_1': 'ja_value',
+            'subitem_1_lang': ['ja'],
+            'creatorMail': "test_creatorMail",
+        },
+        {
+            'subitem_1': 'ja_value',
+            'subitem_1_lang': {"ja": "ja"},
+            'creatorMail': "test_creatorMail",
+        },
+        {
+            'subitem_1': 'ja_value',
+            'subitem_1_lang': {
+                "item_name": "Language",
+                "non_display": "non_display",
+            },
+            'creatorMail': "test_creatorMail",
+        },
+        {
+            'subitem_1': 'ja_value',
+            'subitem_1_lang': {
+                "item_name": "Event",
+                "non_display": "non_display",
+            },
+            'creatorMail': "test_creatorMail",
+        },
+    ]
+
+    _klst = [
+        [
+            "item_1.subitem_1_lang",
+            "Event",
+            "en_item_1_title",
+            {
+                "required": False,
+                "show_list": False,
+                "specify_newline": False,
+                "hide": False,
+                "non_display": "AAAA",
+            },
+            "",
+        ],
+        [
+            "creatorMail.mail",
+            "item_1_title",
+            "en_item_1_title",
+            {
+                "required": False,
+                "show_list": True,
+                "specify_newline": False,
+                "hide": False,
+                "non_display": "BBBB",
+            },
+            "",
+        ],
+        [
+            "creatorMail.nameIdentifier",
+            "item_1_lang",
+            "en_item_1_lang",
+            {
+                "required": False,
+                "show_list": False,
+                "specify_newline": False,
+                "hide": False,
+                "non_display": "CCCC",
+            },
+            "",
+        ],
+    ]
+
+    app.config["WEKO_RECORDS_TIME_PERIOD_TITLES"] = ["item_1_title", "item_1_lang"]
+
+    get_attribute_value_all_items(
+        'item_1',
+        _nlst,
+        _klst,
+        is_author=False,
+        hide_email_flag=True,
+        non_display_flag=False,
+        one_line_flag=True,
+    )
+
 
 # def check_input_value(old, new):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_check_input_value -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -694,6 +1061,24 @@ def test_check_to_upgrade_version(app):
     res = check_to_upgrade_version(_old_render, _new_render)
     assert res==True
 
+    _old_render = {
+        'meta_list': {"1": 1},
+    }
+    _new_render = {
+        'meta_list': {"2": 2},
+    }
+
+    res = check_to_upgrade_version(_old_render, _new_render)
+    assert res == True
+
+    _new_render = {
+        'meta_list': {"1": 1},
+    }
+
+    with patch("weko_records.utils.check_input_value", return_value=True):
+        res = check_to_upgrade_version(_old_render, _new_render)
+        assert res == True
+
 # def remove_weko2_special_character(s: str):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_remove_weko2_special_character -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_remove_weko2_special_character():
@@ -702,6 +1087,10 @@ def test_remove_weko2_special_character():
     assert remove_weko2_special_character("HOGE,&EMPTY&")=="HOGE"
     assert remove_weko2_special_character("&EMPTY&,HOGE")=="HOGE"
     assert remove_weko2_special_character("HOGE,&EMPTY&,HOGE")=="HOGE,,HOGE"
+
+    with patch("re.sub", return_value=","):
+        assert remove_weko2_special_character(",,,,") == None
+        raise BaseException
 
 #     def __remove_special_character(_s_str: str):
 
@@ -722,6 +1111,18 @@ def test_selected_value_by_language(app, meta):
     app.config['WEKO_RECORDS_UI_LANG_DISP_FLG'] = True
     res = selected_value_by_language(['en'], ['Creator'], _lang_id, _val_id, 'en', meta[0])
     assert res=='Creator'
+
+    with patch("weko_records.utils.check_info_in_metadata", return_value="en"):
+        res = selected_value_by_language(["ja-Latn"], ['ja-Latn'], _lang_id, _val_id, 'en', meta[0])
+        assert res=='en'
+
+def test_selected_value_by_language_2(app, meta):
+    _lang_id = 'item_1551264308487.subitem_15512556481122'
+    _val_id = 'item_1551264308487.subitem_15512556472252'
+
+    with patch("weko_records.utils.check_info_in_metadata", return_value="en"):
+        res = selected_value_by_language(["en"], ['ja'], _lang_id, _val_id, 'ja', meta[0])
+        assert res=='en'
 
 # def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_check_info_in_metadata -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -1095,6 +1496,10 @@ def test_get_author_has_language(app):
     res = get_author_has_language(_create, {}, 'en', ['affiliationName2', 'af_lang2'])
     assert res=={}
 
+    with patch("weko_records.utils.get_value_by_selected_lang", return_value="test"):
+        res = get_author_has_language(_create, {}, 'en', ['test1', 'test1'])
+        assert res=={}
+
 # def add_author(author_data, stt_key, is_specify_newline_array, s, value, data_result, is_specify_newline, is_hide, is_show_list):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_add_author -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_add_author(app):
@@ -1151,6 +1556,27 @@ def test_convert_bibliographic():
 
 
 # def add_biographic(sys_bibliographic, bibliographic_key, s, stt_key, data_result, 
+def test_add_biographic(app):
+    def get_bibliographic_list(x):
+        return x
+
+    sys_bibliographic = MagicMock()
+    sys_bibliographic.get_bibliographic_list = get_bibliographic_list
+    bibliographic_key = "test"
+    s = {"key": "key"}
+    stt_key = []
+    data_result = {}
+    is_specify_newline_array = []
+
+    with patch("weko_records.utils.convert_bibliographic", return_value="test"):
+        add_biographic(
+            sys_bibliographic=sys_bibliographic,
+            bibliographic_key=bibliographic_key,
+            s=s,
+            stt_key=stt_key,
+            data_result=data_result,
+            is_specify_newline_array=is_specify_newline_array
+        )
 
 # def custom_record_medata_for_export(record_metadata: dict):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_custom_record_medata_for_export -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp

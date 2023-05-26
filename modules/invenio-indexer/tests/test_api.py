@@ -20,12 +20,16 @@ from invenio_records.api import Record
 from jsonresolver import JSONResolver
 from jsonresolver.contrib.jsonref import json_loader_factory
 from kombu.compat import Consumer
+from kombu import Exchange, Queue
+
 from mock import MagicMock, patch
 
 from invenio_indexer.api import BulkRecordIndexer, RecordIndexer
 from invenio_indexer.signals import before_record_index
 
+# .tox/c1/bin/pytest --cov=invenio_indexer tests/test_api.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-indexer/.tox/c1/tmp
 
+# .tox/c1/bin/pytest --cov=invenio_indexer tests/test_api.py::test_indexer_bulk_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-indexer/.tox/c1/tmp
 def test_indexer_bulk_index(app, queue):
     """Test delay indexing."""
     with app.app_context():
@@ -35,7 +39,7 @@ def test_indexer_bulk_index(app, queue):
             id2 = uuid.uuid4()
             indexer.bulk_index([id1, id2])
             indexer.bulk_delete([id1, id2])
-
+            
             consumer = Consumer(
                 connection=c,
                 queue=indexer.mq_queue.name,
@@ -207,7 +211,7 @@ def test_replace_refs(app):
     """Test replace refs."""
     app.config['INDEXER_REPLACE_REFS'] = False
     app.extensions['invenio-records'].loader_cls = json_loader_factory(
-            JSONResolver(plugins=['demo.json_resolver']))
+            JSONResolver(plugins=['tests.demo.json_resolver']))
 
     with app.app_context():
         record = Record({'$ref': 'http://dx.doi.org/10.1234/foo'})

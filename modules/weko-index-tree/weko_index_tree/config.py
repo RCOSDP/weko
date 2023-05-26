@@ -52,6 +52,8 @@ WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
     tid=dict(
         record_class='weko_index_tree.api:Indexes',
         index_route='/tree/index/<int:index_id>',
+        get_index_tree='/<string:version>/tree/index/<int:index_id>',
+        get_index_root_tree='/<string:version>/tree/index',
         tree_route='/tree',
         item_tree_route='/tree/<string:pid_value>',
         index_move_route='/tree/move/<int:index_id>',
@@ -92,3 +94,9 @@ WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS = 60
 
 WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX = "lock_index_"
 """Index lock key prefix."""
+
+from .rest import GetIndex
+WEKO_INDEX_TREE_GETINDEX_API_VERSION = {
+    "v1.0":GetIndex.get_v1
+}
+"""API version."""

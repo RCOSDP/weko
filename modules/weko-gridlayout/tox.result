@@ -1,0 +1,3509 @@
+GLOB sdist-make: /code/modules/weko-gridlayout/setup.py
+c1 recreate: /code/modules/weko-gridlayout/.tox/c1
+c1 installdeps: pytest>=3, pytest-cov, -rrequirements.txt
+c1 inst: /code/modules/weko-gridlayout/.tox/.tmp/package/1/weko-gridlayout-1.0.0.dev20190000.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,charset-normalizer==2.0.12,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.6,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,kombu==4.6.10,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.27.1,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_deposit&subdirectory=modules/weko-deposit,weko-gridlayout @ file:///code/modules/weko-gridlayout/.tox/.tmp/package/1/weko-gridlayout-1.0.0.dev20190000.zip,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='957465525'
+c1 run-test: commands[0] | pytest --cov=weko_gridlayout tests -v --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/weko-gridlayout/.tox/c1/bin/python
+cachedir: .tox/c1/.pytest_cache
+rootdir: /code/modules/weko-gridlayout
+plugins: cov-4.0.0, celery-4.4.7, mock-3.6.1
+collecting ... collected 228 items
+
+tests/test_admin.py::test_index_view_can_delete[True] PASSED             [  0%]
+tests/test_admin.py::test_index_view_can_delete[False] PASSED            [  0%]
+tests/test_admin.py::test_index_view_can_delete[None] PASSED             [  1%]
+tests/test_admin.py::test_index_view_sort_column[1] PASSED               [  1%]
+tests/test_admin.py::test_index_view_sort_column[None] PASSED            [  2%]
+tests/test_admin.py::test_index_view_editable_list_page_size_data[with list-with data] PASSED [  2%]
+tests/test_admin.py::test_index_view_editable_list_page_size_data[with list-without data] PASSED [  3%]
+tests/test_admin.py::test_index_view_editable_list_page_size_data[without list-with data] PASSED [  3%]
+tests/test_admin.py::test_index_view_editable_list_page_size_data[without list-without data] PASSED [  3%]
+tests/test_admin.py::test_index_view_editable_list_page_size_data[with page_size-with count] PASSED [  4%]
+tests/test_admin.py::test_index_view_editable_list_page_size_data[with page_size-without count] PASSED [  4%]
+tests/test_admin.py::test_index_view_editable_list_page_size_data[without page_size-with count] PASSED [  5%]
+tests/test_admin.py::test_index_view_editable_list_page_size_data[without page_size-without count] PASSED [  5%]
+tests/test_admin.py::test_pager_url[1] PASSED                            [  6%]
+tests/test_admin.py::test_pager_url[2] PASSED                            [  6%]
+tests/test_admin.py::test_sort_url[1-False-1] PASSED                     [  7%]
+tests/test_admin.py::test_sort_url[1-False-0] PASSED                     [  7%]
+tests/test_admin.py::test_sort_url[1-False-None] PASSED                  [  7%]
+tests/test_admin.py::test_sort_url[1-True-1] PASSED                      [  8%]
+tests/test_admin.py::test_sort_url[1-True-0] PASSED                      [  8%]
+tests/test_admin.py::test_sort_url[1-True-None] PASSED                   [  9%]
+tests/test_admin.py::test_sort_url[0-False-1] PASSED                     [  9%]
+tests/test_admin.py::test_sort_url[0-False-0] PASSED                     [ 10%]
+tests/test_admin.py::test_sort_url[0-False-None] PASSED                  [ 10%]
+tests/test_admin.py::test_sort_url[0-True-1] PASSED                      [ 10%]
+tests/test_admin.py::test_sort_url[0-True-0] FAILED                      [ 11%]
+tests/test_admin.py::test_sort_url[0-True-None] FAILED                   [ 11%]
+tests/test_admin.py::test_sort_url[None-False-1] PASSED                  [ 12%]
+tests/test_admin.py::test_sort_url[None-False-0] PASSED                  [ 12%]
+tests/test_admin.py::test_sort_url[None-False-None] PASSED               [ 13%]
+tests/test_admin.py::test_sort_url[None-True-1] PASSED                   [ 13%]
+tests/test_admin.py::test_sort_url[None-True-0] FAILED                   [ 14%]
+tests/test_admin.py::test_sort_url[None-True-None] FAILED                [ 14%]
+tests/test_admin.py::test_page_size_url[20] PASSED                       [ 14%]
+tests/test_admin.py::test_page_size_url[0] PASSED                        [ 15%]
+tests/test_admin.py::test_page_size_url[None] PASSED                     [ 15%]
+tests/test_admin.py::test_get_label_display_to_list_without_register_languages PASSED [ 16%]
+tests/test_admin.py::test_get_label_display_to_list_without_widget[1-None] PASSED [ 16%]
+tests/test_admin.py::test_get_label_display_to_list_without_widget[2-None] PASSED [ 17%]
+tests/test_admin.py::test_get_label_display_to_list[1-for test] PASSED   [ 17%]
+tests/test_admin.py::test_get_label_display_to_list[2-for test2] PASSED  [ 17%]
+tests/test_admin.py::test_get_label_display_to_list[3-None] PASSED       [ 18%]
+tests/test_admin.py::test_search_placeholder PASSED                      [ 18%]
+tests/test_admin.py::test_index_view_WidgetSettingView FAILED            [ 19%]
+tests/test_admin.py::test_create_view_WidgetSettingView FAILED           [ 19%]
+tests/test_admin.py::test_edit_view_WidgetSettingView FAILED             [ 20%]
+tests/test_admin.py::test_get_detail_value_WidgetSettingView PASSED      [ 20%]
+tests/test_admin.py::test_details_view_WidgetSettingView FAILED          [ 21%]
+tests/test_admin.py::test_action_delete_WidgetSettingView FAILED         [ 21%]
+tests/test_admin.py::test_get_count_query_WidgetSettingView PASSED       [ 21%]
+tests/test_admin.py::test_delete_model_WidgetSettingView PASSED          [ 22%]
+tests/test_api.py::test_build_general_data FAILED                        [ 22%]
+tests/test_api.py::test_build_settings_data PASSED                       [ 23%]
+tests/test_api.py::test_build_object PASSED                              [ 23%]
+tests/test_api.py::test_create FAILED                                    [ 24%]
+tests/test_api.py::test_update PASSED                                    [ 24%]
+tests/test_api.py::test_update_by_id PASSED                              [ 25%]
+tests/test_api.py::test_delete FAILED                                    [ 25%]
+tests/test_api.py::test_get_all_widget_items PASSED                      [ 25%]
+tests/test_api.py::test_validate_exist_multi_language PASSED             [ 26%]
+tests/test_api.py::test_is_existed FAILED                                [ 26%]
+tests/test_api.py::test_get_account_role PASSED                          [ 27%]
+tests/test_api.py::test_get_account_role_2 FAILED                        [ 27%]
+tests/test_api.py::test_parse_result PASSED                              [ 28%]
+tests/test_models.py::test_WidgetType_create PASSED                      [ 28%]
+tests/test_models.py::test_WidgetType_create_2 FAILED                    [ 28%]
+tests/test_models.py::test_get_id_by_repository_and_type PASSED          [ 29%]
+tests/test_models.py::test_get_sequence FAILED                           [ 29%]
+tests/test_models.py::test_update_by_id PASSED                           [ 30%]
+tests/test_models.py::test_update_setting_by_id PASSED                   [ 30%]
+tests/test_models.py::test_delete_by_id PASSED                           [ 31%]
+tests/test_models.py::test_get_by_id PASSED                              [ 31%]
+tests/test_models.py::test_update_by_id_WidgetMultiLangData PASSED       [ 32%]
+tests/test_models.py::test_delete_by_widget_id PASSED                    [ 32%]
+tests/test_models.py::test_select_all PASSED                             [ 32%]
+tests/test_models.py::test_update_WidgetDesignSetting PASSED             [ 33%]
+tests/test_models.py::test_create_WidgetDesignSetting PASSED             [ 33%]
+tests/test_models.py::test_create_or_update FAILED                       [ 34%]
+tests/test_models.py::test_delete_WidgetDesignPage FAILED                [ 34%]
+tests/test_models.py::test_update_settings_by_repository_id FAILED       [ 35%]
+tests/test_services.py::test_get_widget_by_id PASSED                     [ 35%]
+tests/test_services.py::test_save_command FAILED                         [ 35%]
+tests/test_services.py::test_get_by_id PASSED                            [ 36%]
+tests/test_services.py::test_create[widget_data0-Widget data is empty!] PASSED [ 36%]
+tests/test_services.py::test_create[widget_data1-Multiple language data is empty] PASSED [ 37%]
+tests/test_services.py::test_create[widget_data2-] PASSED                [ 37%]
+tests/test_services.py::test_create_exception PASSED                     [ 38%]
+tests/test_services.py::test_update_by_id[None-None-Widget data is empty!] PASSED [ 38%]
+tests/test_services.py::test_update_by_id[1-None-Widget data is empty!] PASSED [ 39%]
+tests/test_services.py::test_update_by_id[None-widget_data2-Widget data is empty!] PASSED [ 39%]
+tests/test_services.py::test_update_by_id[1-widget_data3-Multiple language data is empty] PASSED [ 39%]
+tests/test_services.py::test_update_by_id[1-widget_data4-] PASSED        [ 40%]
+tests/test_services.py::test_update_by_id_exception PASSED               [ 40%]
+tests/test_services.py::test_delete_by_id PASSED                         [ 41%]
+tests/test_services.py::test_load_edit_pack PASSED                       [ 41%]
+tests/test_services.py::test_get_locked_widget_info FAILED               [ 42%]
+tests/test_services.py::test_lock_widget PASSED                          [ 42%]
+tests/test_services.py::test_unlock_widget PASSED                        [ 42%]
+tests/test_services.py::test_get_repository_list PASSED                  [ 43%]
+tests/test_services.py::test_get_repository_list_2 PASSED                [ 43%]
+tests/test_services.py::test_get_widget_list PASSED                      [ 44%]
+tests/test_services.py::test_get_widget_preview PASSED                   [ 44%]
+tests/test_services.py::test_get_widget_design_setting_2 PASSED          [ 45%]
+tests/test_services.py::test__get_setting PASSED                         [ 45%]
+tests/test_services.py::test__get_design_base_on_current_language PASSED [ 46%]
+tests/test_services.py::test_update_widget_design_setting PASSED         [ 46%]
+tests/test_services.py::test_update_item_in_preview_widget_item PASSED   [ 46%]
+tests/test_services.py::test_handle_change_item_in_preview_widget_item FAILED [ 47%]
+tests/test_services.py::test_is_used_in_widget_design FAILED             [ 47%]
+tests/test_services.py::test_get_widget_design_setting PASSED            [ 48%]
+tests/test_services.py::test_add_or_update_page PASSED                   [ 48%]
+tests/test_services.py::test__update_main_layout_id_for_widget FAILED    [ 49%]
+tests/test_services.py::test__update_main_layout_page_id_for_widget_design FAILED [ 49%]
+tests/test_services.py::test__update_page_id_for_widget_design_setting PASSED [ 50%]
+tests/test_services.py::test__update_page_id_for_widget_item_setting PASSED [ 50%]
+tests/test_services.py::test_delete_page PASSED                          [ 50%]
+tests/test_services.py::test_get_page_list PASSED                        [ 51%]
+tests/test_services.py::test_get_page PASSED                             [ 51%]
+tests/test_services.py::test_get_new_arrivals_data PASSED                [ 52%]
+tests/test_services.py::test_get_arrivals_rss PASSED                     [ 52%]
+tests/test_services.py::test_get_widget_page_endpoints PASSED            [ 53%]
+tests/test_utils.py::test_get_widget_type_list PASSED                    [ 53%]
+tests/test_utils.py::test_delete_item_in_preview_widget_item PASSED      [ 53%]
+tests/test_utils.py::test_convert_popular_data PASSED                    [ 54%]
+tests/test_utils.py::test_update_general_item PASSED                     [ 54%]
+tests/test_utils.py::test_update_menu_item PASSED                        [ 55%]
+tests/test_utils.py::test_update_access_counter_item PASSED              [ 55%]
+tests/test_utils.py::test_update_new_arrivals_item PASSED                [ 56%]
+tests/test_utils.py::test_get_default_language PASSED                    [ 56%]
+tests/test_utils.py::test_get_unregister_language PASSED                 [ 57%]
+tests/test_utils.py::test_get_register_language PASSED                   [ 57%]
+tests/test_utils.py::test_get_system_language PASSED                     [ 57%]
+tests/test_utils.py::test_get_system_language_2 PASSED                   [ 58%]
+tests/test_utils.py::test_build_data PASSED                              [ 58%]
+tests/test_utils.py::test__escape_html_multi_lang_setting PASSED         [ 59%]
+tests/test_utils.py::test_build_data_setting PASSED                      [ 59%]
+tests/test_utils.py::test__build_access_counter_setting_data PASSED      [ 60%]
+tests/test_utils.py::test__build_new_arrivals_setting_data PASSED        [ 60%]
+tests/test_utils.py::test__build_notice_setting_data PASSED              [ 60%]
+tests/test_utils.py::test__build_header_setting_data PASSED              [ 61%]
+tests/test_utils.py::test_build_multi_lang_data PASSED                   [ 61%]
+tests/test_utils.py::test_convert_widget_data_to_dict PASSED             [ 62%]
+tests/test_utils.py::test_convert_widget_multi_lang_to_dict PASSED       [ 62%]
+tests/test_utils.py::test_convert_data_to_design_pack PASSED             [ 63%]
+tests/test_utils.py::test_convert_data_to_edit_pack PASSED               [ 63%]
+tests/test_utils.py::test_build_rss_xml PASSED                           [ 64%]
+tests/test_utils.py::test_find_rss_value[title] PASSED                   [ 64%]
+tests/test_utils.py::test_find_rss_value[link] PASSED                    [ 64%]
+tests/test_utils.py::test_find_rss_value[seeAlso] PASSED                 [ 65%]
+tests/test_utils.py::test_find_rss_value[creator] FAILED                 [ 65%]
+tests/test_utils.py::test_find_rss_value[publisher] PASSED               [ 66%]
+tests/test_utils.py::test_find_rss_value[sourceTitle] PASSED             [ 66%]
+tests/test_utils.py::test_find_rss_value[issn] PASSED                    [ 67%]
+tests/test_utils.py::test_find_rss_value[volume] PASSED                  [ 67%]
+tests/test_utils.py::test_find_rss_value[issue] PASSED                   [ 67%]
+tests/test_utils.py::test_find_rss_value[pageStart] PASSED               [ 68%]
+tests/test_utils.py::test_find_rss_value[pageEnd] PASSED                 [ 68%]
+tests/test_utils.py::test_find_rss_value[date] PASSED                    [ 69%]
+tests/test_utils.py::test_find_rss_value[description] FAILED             [ 69%]
+tests/test_utils.py::test_find_rss_value[_updated] PASSED                [ 70%]
+tests/test_utils.py::test_get_rss_data_source PASSED                     [ 70%]
+tests/test_utils.py::test_get_elasticsearch_result_by_date PASSED        [ 71%]
+tests/test_utils.py::test_validate_main_widget_insertion PASSED          [ 71%]
+tests/test_utils.py::test_get_widget_design_page_with_main PASSED        [ 71%]
+tests/test_utils.py::test_main_design_has_main_widget PASSED             [ 72%]
+tests/test_utils.py::TestWidgetBucket::test_get_file PASSED              [ 72%]
+tests/test_views.py::test_unlocked_widget_login[0-403] FAILED            [ 73%]
+tests/test_views.py::test_unlocked_widget_login[1-403] FAILED            [ 73%]
+tests/test_views.py::test_unlocked_widget_login[2-200] PASSED            [ 74%]
+tests/test_views.py::test_unlocked_widget_login[3-200] PASSED            [ 74%]
+tests/test_views.py::test_unlocked_widget_login[4-200] PASSED            [ 75%]
+tests/test_views.py::test_unlocked_widget_guest FAILED                   [ 75%]
+tests/test_views.py::test_save_widget_layout_setting_login[0-403] FAILED [ 75%]
+tests/test_views.py::test_save_widget_layout_setting_login[1-403] FAILED [ 76%]
+tests/test_views.py::test_save_widget_layout_setting_login[2-200] PASSED [ 76%]
+tests/test_views.py::test_save_widget_layout_setting_login[3-200] PASSED [ 77%]
+tests/test_views.py::test_save_widget_layout_setting_login[4-200] PASSED [ 77%]
+tests/test_views.py::test_save_widget_layout_setting_guest PASSED        [ 78%]
+tests/test_views.py::test_save_widget_item_login[0-403] FAILED           [ 78%]
+tests/test_views.py::test_save_widget_item_login[1-403] FAILED           [ 78%]
+tests/test_views.py::test_save_widget_item_login[2-200] PASSED           [ 79%]
+tests/test_views.py::test_save_widget_item_login[3-200] PASSED           [ 79%]
+tests/test_views.py::test_save_widget_item_login[4-200] PASSED           [ 80%]
+tests/test_views.py::test_save_widget_item_guest PASSED                  [ 80%]
+tests/test_views.py::test_save_widget_design_page_login[0-403] FAILED    [ 81%]
+tests/test_views.py::test_save_widget_design_page_login[1-403] FAILED    [ 81%]
+tests/test_views.py::test_save_widget_design_page_login[2-200] PASSED    [ 82%]
+tests/test_views.py::test_save_widget_design_page_login[3-200] PASSED    [ 82%]
+tests/test_views.py::test_save_widget_design_page_login[4-200] PASSED    [ 82%]
+tests/test_views.py::test_save_widget_design_page_guest PASSED           [ 83%]
+tests/test_views.py::test_load_widget_list_design_setting_login[0-403] FAILED [ 83%]
+tests/test_views.py::test_load_widget_list_design_setting_login[1-403] FAILED [ 84%]
+tests/test_views.py::test_load_widget_list_design_setting_login[2-200] PASSED [ 84%]
+tests/test_views.py::test_load_widget_list_design_setting_login[3-200] PASSED [ 85%]
+tests/test_views.py::test_load_widget_list_design_setting_login[4-200] PASSED [ 85%]
+tests/test_views.py::test_load_widget_list_design_setting_guest PASSED   [ 85%]
+tests/test_views.py::test_load_widget_design_setting_login[0-200] PASSED [ 86%]
+tests/test_views.py::test_load_widget_design_setting_login[1-200] PASSED [ 86%]
+tests/test_views.py::test_load_widget_design_setting_login[2-200] PASSED [ 87%]
+tests/test_views.py::test_load_widget_design_setting_login[3-200] PASSED [ 87%]
+tests/test_views.py::test_load_widget_design_setting_login[4-200] PASSED [ 88%]
+tests/test_views.py::test_load_widget_design_setting_guest PASSED        [ 88%]
+tests/test_views.py::test_load_widget_design_pages_login[0-403] FAILED   [ 89%]
+tests/test_views.py::test_load_widget_design_pages_login[1-403] FAILED   [ 89%]
+tests/test_views.py::test_load_widget_design_pages_login[2-200] PASSED   [ 89%]
+tests/test_views.py::test_load_widget_design_pages_login[3-200] PASSED   [ 90%]
+tests/test_views.py::test_load_widget_design_pages_login[4-200] PASSED   [ 90%]
+tests/test_views.py::test_load_widget_design_pages_guest PASSED          [ 91%]
+tests/test_views.py::test_load_widget_design_page_login[0-403] FAILED    [ 91%]
+tests/test_views.py::test_load_widget_design_page_login[1-403] FAILED    [ 92%]
+tests/test_views.py::test_load_widget_design_page_login[2-200] PASSED    [ 92%]
+tests/test_views.py::test_load_widget_design_page_login[3-200] PASSED    [ 92%]
+tests/test_views.py::test_load_widget_design_page_login[4-200] PASSED    [ 93%]
+tests/test_views.py::test_load_widget_design_page_guest PASSED           [ 93%]
+tests/test_views.py::test_delete_widget_item_login[0-403] FAILED         [ 94%]
+tests/test_views.py::test_delete_widget_item_login[1-403] FAILED         [ 94%]
+tests/test_views.py::test_delete_widget_item_login[2-200] PASSED         [ 95%]
+tests/test_views.py::test_delete_widget_item_login[3-200] PASSED         [ 95%]
+tests/test_views.py::test_delete_widget_item_login[4-200] PASSED         [ 96%]
+tests/test_views.py::test_delete_widget_item_guest PASSED                [ 96%]
+tests/test_views.py::test_delete_widget_design_page_login[0-403] FAILED  [ 96%]
+tests/test_views.py::test_delete_widget_design_page_login[1-403] FAILED  [ 97%]
+tests/test_views.py::test_delete_widget_design_page_login[2-200] PASSED  [ 97%]
+tests/test_views.py::test_delete_widget_design_page_login[3-200] PASSED  [ 98%]
+tests/test_views.py::test_delete_widget_design_page_login[4-200] PASSED  [ 98%]
+tests/test_views.py::test_delete_widget_design_page_guest PASSED         [ 99%]
+tests/test_weko_gridlayout.py::test_version PASSED                       [ 99%]
+tests/test_weko_gridlayout.py::test_init PASSED                          [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_sort_url[0-True-0] ____________________________
+
+app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
+admin_view = None
+view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc03b90af98>
+widget_item = [<WidgetItem 1>], desc = 0, invert = True, sort_desc = 0
+
+    @pytest.mark.parametrize("desc, invert, sort_desc",
+                             [(1, False, 1), (1, False, 0), (1, False, None),
+                              (1, True, 1), (1, True, 0), (1, True, None),
+                              (0, False, 1), (0, False, 0), (0, False, None),
+                              (0, True, 1), (0, True, 0), (0, True, None),
+                              (None, False, 1), (None, False, 0), (None, False, None),
+                              (None, True, 1), (None, True, 0), (None, True, None),
+                             ])
+    def test_sort_url(app, client, admin_view, view_instance,
+                       widget_item, desc, invert, sort_desc):
+        """Test flask-admin interace."""
+        view = view_instance
+        view_args = ViewArgs(page=1,
+                            page_size=20,
+                            sort=1,
+                            sort_desc=sort_desc,
+                            search=None,
+                            filters=None,
+                            extra_args={})
+        view.desc = desc
+        view.invert = invert
+        with patch("weko_gridlayout.admin.WidgetSettingView._get_list_extra_args", return_value=view_args):
+            with patch("weko_gridlayout.admin.WidgetSettingView.get_list", return_value=(1, widget_item)):
+                index_view_url = url_for("widgetitem.index_view")
+                res = client.get(index_view_url)
+                assert res.status_code == 200
+                if not desc and invert and not sort_desc:
+>                   assert view.desc == 1
+E                   assert 0 == 1
+E                     +0
+E                     -1
+
+tests/test_admin.py:149: AssertionError
+__________________________ test_sort_url[0-True-None] __________________________
+
+app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
+admin_view = None
+view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc03ba47198>
+widget_item = [<WidgetItem 1>], desc = 0, invert = True, sort_desc = None
+
+    @pytest.mark.parametrize("desc, invert, sort_desc",
+                             [(1, False, 1), (1, False, 0), (1, False, None),
+                              (1, True, 1), (1, True, 0), (1, True, None),
+                              (0, False, 1), (0, False, 0), (0, False, None),
+                              (0, True, 1), (0, True, 0), (0, True, None),
+                              (None, False, 1), (None, False, 0), (None, False, None),
+                              (None, True, 1), (None, True, 0), (None, True, None),
+                             ])
+    def test_sort_url(app, client, admin_view, view_instance,
+                       widget_item, desc, invert, sort_desc):
+        """Test flask-admin interace."""
+        view = view_instance
+        view_args = ViewArgs(page=1,
+                            page_size=20,
+                            sort=1,
+                            sort_desc=sort_desc,
+                            search=None,
+                            filters=None,
+                            extra_args={})
+        view.desc = desc
+        view.invert = invert
+        with patch("weko_gridlayout.admin.WidgetSettingView._get_list_extra_args", return_value=view_args):
+            with patch("weko_gridlayout.admin.WidgetSettingView.get_list", return_value=(1, widget_item)):
+                index_view_url = url_for("widgetitem.index_view")
+                res = client.get(index_view_url)
+                assert res.status_code == 200
+                if not desc and invert and not sort_desc:
+>                   assert view.desc == 1
+E                   assert 0 == 1
+E                     +0
+E                     -1
+
+tests/test_admin.py:149: AssertionError
+__________________________ test_sort_url[None-True-0] __________________________
+
+app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
+admin_view = None
+view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc03bf6bf28>
+widget_item = [<WidgetItem 1>], desc = None, invert = True, sort_desc = 0
+
+    @pytest.mark.parametrize("desc, invert, sort_desc",
+                             [(1, False, 1), (1, False, 0), (1, False, None),
+                              (1, True, 1), (1, True, 0), (1, True, None),
+                              (0, False, 1), (0, False, 0), (0, False, None),
+                              (0, True, 1), (0, True, 0), (0, True, None),
+                              (None, False, 1), (None, False, 0), (None, False, None),
+                              (None, True, 1), (None, True, 0), (None, True, None),
+                             ])
+    def test_sort_url(app, client, admin_view, view_instance,
+                       widget_item, desc, invert, sort_desc):
+        """Test flask-admin interace."""
+        view = view_instance
+        view_args = ViewArgs(page=1,
+                            page_size=20,
+                            sort=1,
+                            sort_desc=sort_desc,
+                            search=None,
+                            filters=None,
+                            extra_args={})
+        view.desc = desc
+        view.invert = invert
+        with patch("weko_gridlayout.admin.WidgetSettingView._get_list_extra_args", return_value=view_args):
+            with patch("weko_gridlayout.admin.WidgetSettingView.get_list", return_value=(1, widget_item)):
+                index_view_url = url_for("widgetitem.index_view")
+                res = client.get(index_view_url)
+                assert res.status_code == 200
+                if not desc and invert and not sort_desc:
+>                   assert view.desc == 1
+E                   assert None == 1
+E                     +None
+E                     -1
+
+tests/test_admin.py:149: AssertionError
+________________________ test_sort_url[None-True-None] _________________________
+
+app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
+admin_view = None
+view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc03b9df898>
+widget_item = [<WidgetItem 1>], desc = None, invert = True, sort_desc = None
+
+    @pytest.mark.parametrize("desc, invert, sort_desc",
+                             [(1, False, 1), (1, False, 0), (1, False, None),
+                              (1, True, 1), (1, True, 0), (1, True, None),
+                              (0, False, 1), (0, False, 0), (0, False, None),
+                              (0, True, 1), (0, True, 0), (0, True, None),
+                              (None, False, 1), (None, False, 0), (None, False, None),
+                              (None, True, 1), (None, True, 0), (None, True, None),
+                             ])
+    def test_sort_url(app, client, admin_view, view_instance,
+                       widget_item, desc, invert, sort_desc):
+        """Test flask-admin interace."""
+        view = view_instance
+        view_args = ViewArgs(page=1,
+                            page_size=20,
+                            sort=1,
+                            sort_desc=sort_desc,
+                            search=None,
+                            filters=None,
+                            extra_args={})
+        view.desc = desc
+        view.invert = invert
+        with patch("weko_gridlayout.admin.WidgetSettingView._get_list_extra_args", return_value=view_args):
+            with patch("weko_gridlayout.admin.WidgetSettingView.get_list", return_value=(1, widget_item)):
+                index_view_url = url_for("widgetitem.index_view")
+                res = client.get(index_view_url)
+                assert res.status_code == 200
+                if not desc and invert and not sort_desc:
+>                   assert view.desc == 1
+E                   assert None == 1
+E                     +None
+E                     -1
+
+tests/test_admin.py:149: AssertionError
+______________________ test_index_view_WidgetSettingView _______________________
+
+i18n_app = <Flask 'testapp'>
+view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc03b0dcf28>
+
+    def test_index_view_WidgetSettingView(i18n_app, view_instance):
+    
+        # Error
+>       assert view_instance.index_view()
+
+tests/test_admin.py:204: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:69: in inner
+    return self._run_view(f, *args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:368: in _run_view
+    return fn(self, *args, **kwargs)
+weko_gridlayout/admin.py:170: in index_view
+    filters=None))
+.tox/c1/lib/python3.6/site-packages/flask_admin/model/base.py:1789: in _get_list_url
+    return self.get_url('.index_view', **kwargs)
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:390: in get_url
+    return url_for(endpoint, **kwargs)
+.tox/c1/lib/python3.6/site-packages/flask/helpers.py:356: in url_for
+    return appctx.app.handle_url_build_error(error, endpoint, values)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2086: in handle_url_build_error
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/helpers.py:345: in url_for
+    force_external=external)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <werkzeug.routing.MapAdapter object at 0x7fc03b1490f0>
+endpoint = 'weko_gridlayout.index_view', values = {}, method = None
+force_external = False, append_unknown = True
+
+    def build(
+        self,
+        endpoint,
+        values=None,
+        method=None,
+        force_external=False,
+        append_unknown=True,
+    ):
+        """Building URLs works pretty much the other way round.  Instead of
+        `match` you call `build` and pass it the endpoint and a dict of
+        arguments for the placeholders.
+    
+        The `build` function also accepts an argument called `force_external`
+        which, if you set it to `True` will force external URLs. Per default
+        external URLs (include the server name) will only be used if the
+        target URL is on a different subdomain.
+    
+        >>> m = Map([
+        ...     Rule('/', endpoint='index'),
+        ...     Rule('/downloads/', endpoint='downloads/index'),
+        ...     Rule('/downloads/<int:id>', endpoint='downloads/show')
+        ... ])
+        >>> urls = m.bind("example.com", "/")
+        >>> urls.build("index", {})
+        '/'
+        >>> urls.build("downloads/show", {'id': 42})
+        '/downloads/42'
+        >>> urls.build("downloads/show", {'id': 42}, force_external=True)
+        'http://example.com/downloads/42'
+    
+        Because URLs cannot contain non ASCII data you will always get
+        bytestrings back.  Non ASCII characters are urlencoded with the
+        charset defined on the map instance.
+    
+        Additional values are converted to unicode and appended to the URL as
+        URL querystring parameters:
+    
+        >>> urls.build("index", {'q': 'My Searchstring'})
+        '/?q=My+Searchstring'
+    
+        When processing those additional values, lists are furthermore
+        interpreted as multiple values (as per
+        :py:class:`werkzeug.datastructures.MultiDict`):
+    
+        >>> urls.build("index", {'q': ['a', 'b', 'c']})
+        '/?q=a&q=b&q=c'
+    
+        Passing a ``MultiDict`` will also add multiple values:
+    
+        >>> urls.build("index", MultiDict((('p', 'z'), ('q', 'a'), ('q', 'b'))))
+        '/?p=z&q=a&q=b'
+    
+        If a rule does not exist when building a `BuildError` exception is
+        raised.
+    
+        The build method accepts an argument called `method` which allows you
+        to specify the method you want to have an URL built for if you have
+        different methods for the same endpoint specified.
+    
+        .. versionadded:: 0.6
+           the `append_unknown` parameter was added.
+    
+        :param endpoint: the endpoint of the URL to build.
+        :param values: the values for the URL to build.  Unhandled values are
+                       appended to the URL as query parameters.
+        :param method: the HTTP method for the rule if there are different
+                       URLs for different methods on the same endpoint.
+        :param force_external: enforce full canonical external URLs. If the URL
+                               scheme is not provided, this will generate
+                               a protocol-relative URL.
+        :param append_unknown: unknown parameters are appended to the generated
+                               URL as query string argument.  Disable this
+                               if you want the builder to ignore those.
+        """
+        self.map.update()
+    
+        if values:
+            if isinstance(values, MultiDict):
+                temp_values = {}
+                # iteritems(dict, values) is like `values.lists()`
+                # without the call or `list()` coercion overhead.
+                for key, value in iteritems(dict, values):
+                    if not value:
+                        continue
+                    if len(value) == 1:  # flatten single item lists
+                        value = value[0]
+                        if value is None:  # drop None
+                            continue
+                    temp_values[key] = value
+                values = temp_values
+            else:
+                # drop None
+                values = dict(i for i in iteritems(values) if i[1] is not None)
+        else:
+            values = {}
+    
+        rv = self._partial_build(endpoint, values, method, append_unknown)
+        if rv is None:
+>           raise BuildError(endpoint, values, method, self)
+E           werkzeug.routing.BuildError: Could not build url for endpoint 'weko_gridlayout.index_view'. Did you mean 'weko_gridlayout.index' instead?
+
+.tox/c1/lib/python3.6/site-packages/werkzeug/routing.py:2181: BuildError
+______________________ test_create_view_WidgetSettingView ______________________
+
+i18n_app = <Flask 'testapp'>
+view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc03b618630>
+
+    def test_create_view_WidgetSettingView(i18n_app, view_instance):
+        with patch("flask_admin.helpers.get_redirect_target", return_value="/"):
+    
+            # Error
+>           assert view_instance.create_view()
+
+tests/test_admin.py:212: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:69: in inner
+    return self._run_view(f, *args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:368: in _run_view
+    return fn(self, *args, **kwargs)
+weko_gridlayout/admin.py:233: in create_view
+    return_url = get_redirect_target() or self.get_url('.index_view')
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:390: in get_url
+    return url_for(endpoint, **kwargs)
+.tox/c1/lib/python3.6/site-packages/flask/helpers.py:356: in url_for
+    return appctx.app.handle_url_build_error(error, endpoint, values)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2086: in handle_url_build_error
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/helpers.py:345: in url_for
+    force_external=external)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <werkzeug.routing.MapAdapter object at 0x7fc03b5142b0>
+endpoint = 'weko_gridlayout.index_view', values = {}, method = None
+force_external = False, append_unknown = True
+
+    def build(
+        self,
+        endpoint,
+        values=None,
+        method=None,
+        force_external=False,
+        append_unknown=True,
+    ):
+        """Building URLs works pretty much the other way round.  Instead of
+        `match` you call `build` and pass it the endpoint and a dict of
+        arguments for the placeholders.
+    
+        The `build` function also accepts an argument called `force_external`
+        which, if you set it to `True` will force external URLs. Per default
+        external URLs (include the server name) will only be used if the
+        target URL is on a different subdomain.
+    
+        >>> m = Map([
+        ...     Rule('/', endpoint='index'),
+        ...     Rule('/downloads/', endpoint='downloads/index'),
+        ...     Rule('/downloads/<int:id>', endpoint='downloads/show')
+        ... ])
+        >>> urls = m.bind("example.com", "/")
+        >>> urls.build("index", {})
+        '/'
+        >>> urls.build("downloads/show", {'id': 42})
+        '/downloads/42'
+        >>> urls.build("downloads/show", {'id': 42}, force_external=True)
+        'http://example.com/downloads/42'
+    
+        Because URLs cannot contain non ASCII data you will always get
+        bytestrings back.  Non ASCII characters are urlencoded with the
+        charset defined on the map instance.
+    
+        Additional values are converted to unicode and appended to the URL as
+        URL querystring parameters:
+    
+        >>> urls.build("index", {'q': 'My Searchstring'})
+        '/?q=My+Searchstring'
+    
+        When processing those additional values, lists are furthermore
+        interpreted as multiple values (as per
+        :py:class:`werkzeug.datastructures.MultiDict`):
+    
+        >>> urls.build("index", {'q': ['a', 'b', 'c']})
+        '/?q=a&q=b&q=c'
+    
+        Passing a ``MultiDict`` will also add multiple values:
+    
+        >>> urls.build("index", MultiDict((('p', 'z'), ('q', 'a'), ('q', 'b'))))
+        '/?p=z&q=a&q=b'
+    
+        If a rule does not exist when building a `BuildError` exception is
+        raised.
+    
+        The build method accepts an argument called `method` which allows you
+        to specify the method you want to have an URL built for if you have
+        different methods for the same endpoint specified.
+    
+        .. versionadded:: 0.6
+           the `append_unknown` parameter was added.
+    
+        :param endpoint: the endpoint of the URL to build.
+        :param values: the values for the URL to build.  Unhandled values are
+                       appended to the URL as query parameters.
+        :param method: the HTTP method for the rule if there are different
+                       URLs for different methods on the same endpoint.
+        :param force_external: enforce full canonical external URLs. If the URL
+                               scheme is not provided, this will generate
+                               a protocol-relative URL.
+        :param append_unknown: unknown parameters are appended to the generated
+                               URL as query string argument.  Disable this
+                               if you want the builder to ignore those.
+        """
+        self.map.update()
+    
+        if values:
+            if isinstance(values, MultiDict):
+                temp_values = {}
+                # iteritems(dict, values) is like `values.lists()`
+                # without the call or `list()` coercion overhead.
+                for key, value in iteritems(dict, values):
+                    if not value:
+                        continue
+                    if len(value) == 1:  # flatten single item lists
+                        value = value[0]
+                        if value is None:  # drop None
+                            continue
+                    temp_values[key] = value
+                values = temp_values
+            else:
+                # drop None
+                values = dict(i for i in iteritems(values) if i[1] is not None)
+        else:
+            values = {}
+    
+        rv = self._partial_build(endpoint, values, method, append_unknown)
+        if rv is None:
+>           raise BuildError(endpoint, values, method, self)
+E           werkzeug.routing.BuildError: Could not build url for endpoint 'weko_gridlayout.index_view'. Did you mean 'weko_gridlayout.index' instead?
+
+.tox/c1/lib/python3.6/site-packages/werkzeug/routing.py:2181: BuildError
+_______________________ test_edit_view_WidgetSettingView _______________________
+
+i18n_app = <Flask 'testapp'>
+view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc03b0e2f98>
+
+    def test_edit_view_WidgetSettingView(i18n_app, view_instance):
+    
+        # Error
+>       assert view_instance.edit_view()
+
+tests/test_admin.py:219: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:69: in inner
+    return self._run_view(f, *args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:368: in _run_view
+    return fn(self, *args, **kwargs)
+weko_gridlayout/admin.py:248: in edit_view
+    return_url = get_redirect_target() or self.get_url('.index_view')
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:390: in get_url
+    return url_for(endpoint, **kwargs)
+.tox/c1/lib/python3.6/site-packages/flask/helpers.py:356: in url_for
+    return appctx.app.handle_url_build_error(error, endpoint, values)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2086: in handle_url_build_error
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/helpers.py:345: in url_for
+    force_external=external)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <werkzeug.routing.MapAdapter object at 0x7fc03b582ef0>
+endpoint = 'weko_gridlayout.index_view', values = {}, method = None
+force_external = False, append_unknown = True
+
+    def build(
+        self,
+        endpoint,
+        values=None,
+        method=None,
+        force_external=False,
+        append_unknown=True,
+    ):
+        """Building URLs works pretty much the other way round.  Instead of
+        `match` you call `build` and pass it the endpoint and a dict of
+        arguments for the placeholders.
+    
+        The `build` function also accepts an argument called `force_external`
+        which, if you set it to `True` will force external URLs. Per default
+        external URLs (include the server name) will only be used if the
+        target URL is on a different subdomain.
+    
+        >>> m = Map([
+        ...     Rule('/', endpoint='index'),
+        ...     Rule('/downloads/', endpoint='downloads/index'),
+        ...     Rule('/downloads/<int:id>', endpoint='downloads/show')
+        ... ])
+        >>> urls = m.bind("example.com", "/")
+        >>> urls.build("index", {})
+        '/'
+        >>> urls.build("downloads/show", {'id': 42})
+        '/downloads/42'
+        >>> urls.build("downloads/show", {'id': 42}, force_external=True)
+        'http://example.com/downloads/42'
+    
+        Because URLs cannot contain non ASCII data you will always get
+        bytestrings back.  Non ASCII characters are urlencoded with the
+        charset defined on the map instance.
+    
+        Additional values are converted to unicode and appended to the URL as
+        URL querystring parameters:
+    
+        >>> urls.build("index", {'q': 'My Searchstring'})
+        '/?q=My+Searchstring'
+    
+        When processing those additional values, lists are furthermore
+        interpreted as multiple values (as per
+        :py:class:`werkzeug.datastructures.MultiDict`):
+    
+        >>> urls.build("index", {'q': ['a', 'b', 'c']})
+        '/?q=a&q=b&q=c'
+    
+        Passing a ``MultiDict`` will also add multiple values:
+    
+        >>> urls.build("index", MultiDict((('p', 'z'), ('q', 'a'), ('q', 'b'))))
+        '/?p=z&q=a&q=b'
+    
+        If a rule does not exist when building a `BuildError` exception is
+        raised.
+    
+        The build method accepts an argument called `method` which allows you
+        to specify the method you want to have an URL built for if you have
+        different methods for the same endpoint specified.
+    
+        .. versionadded:: 0.6
+           the `append_unknown` parameter was added.
+    
+        :param endpoint: the endpoint of the URL to build.
+        :param values: the values for the URL to build.  Unhandled values are
+                       appended to the URL as query parameters.
+        :param method: the HTTP method for the rule if there are different
+                       URLs for different methods on the same endpoint.
+        :param force_external: enforce full canonical external URLs. If the URL
+                               scheme is not provided, this will generate
+                               a protocol-relative URL.
+        :param append_unknown: unknown parameters are appended to the generated
+                               URL as query string argument.  Disable this
+                               if you want the builder to ignore those.
+        """
+        self.map.update()
+    
+        if values:
+            if isinstance(values, MultiDict):
+                temp_values = {}
+                # iteritems(dict, values) is like `values.lists()`
+                # without the call or `list()` coercion overhead.
+                for key, value in iteritems(dict, values):
+                    if not value:
+                        continue
+                    if len(value) == 1:  # flatten single item lists
+                        value = value[0]
+                        if value is None:  # drop None
+                            continue
+                    temp_values[key] = value
+                values = temp_values
+            else:
+                # drop None
+                values = dict(i for i in iteritems(values) if i[1] is not None)
+        else:
+            values = {}
+    
+        rv = self._partial_build(endpoint, values, method, append_unknown)
+        if rv is None:
+>           raise BuildError(endpoint, values, method, self)
+E           werkzeug.routing.BuildError: Could not build url for endpoint 'weko_gridlayout.index_view'. Did you mean 'weko_gridlayout.index' instead?
+
+.tox/c1/lib/python3.6/site-packages/werkzeug/routing.py:2181: BuildError
+_____________________ test_details_view_WidgetSettingView ______________________
+
+i18n_app = <Flask 'testapp'>
+view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc03b76bfd0>
+
+    def test_details_view_WidgetSettingView(i18n_app, view_instance):
+        # Error
+        with patch("flask_admin.helpers.get_redirect_target", return_value="/"):
+    
+>           assert view_instance.details_view()
+
+tests/test_admin.py:237: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:69: in inner
+    return self._run_view(f, *args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:368: in _run_view
+    return fn(self, *args, **kwargs)
+weko_gridlayout/admin.py:328: in details_view
+    return_url = get_redirect_target() or self.get_url('.index_view')
+.tox/c1/lib/python3.6/site-packages/flask_admin/base.py:390: in get_url
+    return url_for(endpoint, **kwargs)
+.tox/c1/lib/python3.6/site-packages/flask/helpers.py:356: in url_for
+    return appctx.app.handle_url_build_error(error, endpoint, values)
+.tox/c1/lib/python3.6/site-packages/flask/app.py:2086: in handle_url_build_error
+    reraise(exc_type, exc_value, tb)
+.tox/c1/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/flask/helpers.py:345: in url_for
+    force_external=external)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <werkzeug.routing.MapAdapter object at 0x7fc03c3a2c88>
+endpoint = 'weko_gridlayout.index_view', values = {}, method = None
+force_external = False, append_unknown = True
+
+    def build(
+        self,
+        endpoint,
+        values=None,
+        method=None,
+        force_external=False,
+        append_unknown=True,
+    ):
+        """Building URLs works pretty much the other way round.  Instead of
+        `match` you call `build` and pass it the endpoint and a dict of
+        arguments for the placeholders.
+    
+        The `build` function also accepts an argument called `force_external`
+        which, if you set it to `True` will force external URLs. Per default
+        external URLs (include the server name) will only be used if the
+        target URL is on a different subdomain.
+    
+        >>> m = Map([
+        ...     Rule('/', endpoint='index'),
+        ...     Rule('/downloads/', endpoint='downloads/index'),
+        ...     Rule('/downloads/<int:id>', endpoint='downloads/show')
+        ... ])
+        >>> urls = m.bind("example.com", "/")
+        >>> urls.build("index", {})
+        '/'
+        >>> urls.build("downloads/show", {'id': 42})
+        '/downloads/42'
+        >>> urls.build("downloads/show", {'id': 42}, force_external=True)
+        'http://example.com/downloads/42'
+    
+        Because URLs cannot contain non ASCII data you will always get
+        bytestrings back.  Non ASCII characters are urlencoded with the
+        charset defined on the map instance.
+    
+        Additional values are converted to unicode and appended to the URL as
+        URL querystring parameters:
+    
+        >>> urls.build("index", {'q': 'My Searchstring'})
+        '/?q=My+Searchstring'
+    
+        When processing those additional values, lists are furthermore
+        interpreted as multiple values (as per
+        :py:class:`werkzeug.datastructures.MultiDict`):
+    
+        >>> urls.build("index", {'q': ['a', 'b', 'c']})
+        '/?q=a&q=b&q=c'
+    
+        Passing a ``MultiDict`` will also add multiple values:
+    
+        >>> urls.build("index", MultiDict((('p', 'z'), ('q', 'a'), ('q', 'b'))))
+        '/?p=z&q=a&q=b'
+    
+        If a rule does not exist when building a `BuildError` exception is
+        raised.
+    
+        The build method accepts an argument called `method` which allows you
+        to specify the method you want to have an URL built for if you have
+        different methods for the same endpoint specified.
+    
+        .. versionadded:: 0.6
+           the `append_unknown` parameter was added.
+    
+        :param endpoint: the endpoint of the URL to build.
+        :param values: the values for the URL to build.  Unhandled values are
+                       appended to the URL as query parameters.
+        :param method: the HTTP method for the rule if there are different
+                       URLs for different methods on the same endpoint.
+        :param force_external: enforce full canonical external URLs. If the URL
+                               scheme is not provided, this will generate
+                               a protocol-relative URL.
+        :param append_unknown: unknown parameters are appended to the generated
+                               URL as query string argument.  Disable this
+                               if you want the builder to ignore those.
+        """
+        self.map.update()
+    
+        if values:
+            if isinstance(values, MultiDict):
+                temp_values = {}
+                # iteritems(dict, values) is like `values.lists()`
+                # without the call or `list()` coercion overhead.
+                for key, value in iteritems(dict, values):
+                    if not value:
+                        continue
+                    if len(value) == 1:  # flatten single item lists
+                        value = value[0]
+                        if value is None:  # drop None
+                            continue
+                    temp_values[key] = value
+                values = temp_values
+            else:
+                # drop None
+                values = dict(i for i in iteritems(values) if i[1] is not None)
+        else:
+            values = {}
+    
+        rv = self._partial_build(endpoint, values, method, append_unknown)
+        if rv is None:
+>           raise BuildError(endpoint, values, method, self)
+E           werkzeug.routing.BuildError: Could not build url for endpoint 'weko_gridlayout.index_view'. Did you mean 'weko_gridlayout.index' instead?
+
+.tox/c1/lib/python3.6/site-packages/werkzeug/routing.py:2181: BuildError
+_____________________ test_action_delete_WidgetSettingView _____________________
+
+i18n_app = <Flask 'testapp'>
+view_instance = <weko_gridlayout.admin.WidgetSettingView object at 0x7fc03bac2cc0>
+
+    def test_action_delete_WidgetSettingView(i18n_app, view_instance):
+        ids = MagicMock()
+    
+        assert not view_instance.action_delete(ids)
+        # Exception coverage
+>       assert not view_instance.action_delete(0)
+
+tests/test_admin.py:246: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_gridlayout/admin.py:361: in action_delete
+    query = tools.get_query_for_ids(self.get_query(), self.model, ids)
+.tox/c1/lib/python3.6/site-packages/flask_admin/contrib/sqla/tools.py:113: in get_query_for_ids
+    query = modelquery.filter(model_pk.in_(ids))
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/operators.py:593: in in_
+    return self.operate(in_op, other)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:210: in operate
+    return op(self.comparator, *other, **kwargs)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/operators.py:1219: in in_op
+    return a.in_(b)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/operators.py:593: in in_
+    return self.operate(in_op, other)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/properties.py:305: in operate
+    return op(self.__clause_element__(), *other, **kwargs)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/operators.py:1219: in in_op
+    return a.in_(b)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/operators.py:593: in in_
+    return self.operate(in_op, other)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:707: in operate
+    return op(self.comparator, *other, **kwargs)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/operators.py:1219: in in_op
+    return a.in_(b)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/operators.py:593: in in_
+    return self.operate(in_op, other)
+<string>:1: in <lambda>
+    ???
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/type_api.py:66: in operate
+    return o[0](self.expr, op, *(other + o[1:]), **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+expr = Column('widget_id', Integer(), table=<widget_items>, primary_key=True, nullable=False)
+op = <function in_op at 0x7fc04eb4a6a8>, seq_or_selectable = 0
+negate_op = <function notin_op at 0x7fc04eb4a730>, kw = {}, args = []
+
+    def _in_impl(expr, op, seq_or_selectable, negate_op, **kw):
+        seq_or_selectable = _clause_element_as_expr(seq_or_selectable)
+    
+        if isinstance(seq_or_selectable, ScalarSelect):
+            return _boolean_compare(expr, op, seq_or_selectable, negate=negate_op)
+        elif isinstance(seq_or_selectable, SelectBase):
+    
+            # TODO: if we ever want to support (x, y, z) IN (select x,
+            # y, z from table), we would need a multi-column version of
+            # as_scalar() to produce a multi- column selectable that
+            # does not export itself as a FROM clause
+    
+            return _boolean_compare(
+                expr, op, seq_or_selectable.as_scalar(), negate=negate_op, **kw
+            )
+        elif isinstance(seq_or_selectable, (Selectable, TextClause)):
+            return _boolean_compare(
+                expr, op, seq_or_selectable, negate=negate_op, **kw
+            )
+        elif isinstance(seq_or_selectable, ClauseElement):
+            if (
+                isinstance(seq_or_selectable, BindParameter)
+                and seq_or_selectable.expanding
+            ):
+                return _boolean_compare(
+                    expr, op, seq_or_selectable, negate=negate_op
+                )
+            else:
+                raise exc.InvalidRequestError(
+                    "in_() accepts"
+                    " either a list of expressions, "
+                    'a selectable, or an "expanding" bound parameter: %r'
+                    % seq_or_selectable
+                )
+    
+        # Handle non selectable arguments as sequences
+        args = []
+>       for o in seq_or_selectable:
+E       TypeError: 'int' object is not iterable
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/default_comparator.py:194: TypeError
+___________________________ test_build_general_data ____________________________
+
+cls = <class 'weko_gridlayout.api.WidgetItems'>, data_object = 'data_object'
+widget_items = {'browsing_role': ['browsing_role'], 'edit_role': ['edit_role'], 'enable': 'enable', 'repository': 'repository', ...}
+is_update = False
+
+    @classmethod
+    def build_general_data(cls, data_object, widget_items, is_update=False):
+        """Build general data of object.
+    
+        :param data_object: object data
+        :param widget_items: widget item
+        :param is_update: Update flag
+        """
+        try:
+>           data_object["repository_id"] = widget_items.get('repository')
+E           TypeError: 'str' object does not support item assignment
+
+weko_gridlayout/api.py:44: TypeError
+
+During handling of the above exception, another exception occurred:
+
+    def test_build_general_data():
+>       test.test_build_general_data()
+
+tests/test_api.py:217: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_api.py:41: in test_build_general_data
+    assert not WidgetItems.build_general_data("data_object", widget_items)
+weko_gridlayout/api.py:58: in build_general_data
+    current_app.logger.debug(ex)
+.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:348: in __getattr__
+    return getattr(self._get_current_object(), name)
+.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:307: in _get_current_object
+    return self.__local()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _find_app():
+        top = _app_ctx_stack.top
+        if top is None:
+>           raise RuntimeError(_app_ctx_err_msg)
+E           RuntimeError: Working outside of application context.
+E           
+E           This typically means that you attempted to use functionality that needed
+E           to interface with the current application object in some way. To solve
+E           this, set up an application context with app.app_context().  See the
+E           documentation for more information.
+
+.tox/c1/lib/python3.6/site-packages/flask/globals.py:51: RuntimeError
+_________________________________ test_create __________________________________
+
+self = <sqlalchemy.util._collections.ScopedRegistry object at 0x7fc04b0100f0>
+
+    def __call__(self):
+        key = self.scopefunc()
+        try:
+>           return self.registry[key]
+E           KeyError: 140463991539520
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1005: KeyError
+
+During handling of the above exception, another exception occurred:
+
+cls = <class 'weko_gridlayout.api.WidgetItems'>
+widget_items = {'background_color': 'background_color', 'browsing_role': 'browsing_role', 'edit_role': 'edit_role', 'enable': 'enable', ...}
+
+    @classmethod
+    def create(cls, widget_items=None):
+        """Create the widget_items.
+    
+        :param widget_items: the widget item information.
+        :returns: The :class:`widget item` instance lists or None.
+        """
+        def _add_widget_item(widget_setting):
+            with db.session.begin_nested():
+                widget_item = WidgetItem(**widget_setting)
+                db.session.add(widget_item)
+            db.session.commit()
+    
+        if not isinstance(widget_items, dict):
+            return
+    
+        data = cls.build_object(widget_items)
+        is_ok = True
+        try:
+>           _add_widget_item(data)
+
+weko_gridlayout/api.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+widget_setting = {'browsing_role': 'browsing_role', 'edit_role': 'edit_role', 'is_enabled': 'enable', 'repository_id': 'repository', ...}
+
+    def _add_widget_item(widget_setting):
+>       with db.session.begin_nested():
+
+weko_gridlayout/api.py:106: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.orm.scoping.scoped_session object at 0x7fc04b0100b8>
+args = (), kwargs = {}
+
+    def do(self, *args, **kwargs):
+>       return getattr(self.registry(), name)(*args, **kwargs)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/scoping.py:162: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.util._collections.ScopedRegistry object at 0x7fc04b0100f0>
+
+    def __call__(self):
+        key = self.scopefunc()
+        try:
+            return self.registry[key]
+        except KeyError:
+>           return self.registry.setdefault(key, self.createfunc())
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1007: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = sessionmaker(class_='SignallingSession', db=<SQLAlchemy engine=None>, query_cls=<class 'flask_sqlalchemy.BaseQuery'>, bind=None, autoflush=True, autocommit=False, expire_on_commit=True)
+local_kw = {'autocommit': False, 'autoflush': True, 'bind': None, 'db': <SQLAlchemy engine=None>, ...}
+k = 'expire_on_commit', v = True
+
+    def __call__(self, **local_kw):
+        """Produce a new :class:`.Session` object using the configuration
+        established in this :class:`.sessionmaker`.
+    
+        In Python, the ``__call__`` method is invoked on an object when
+        it is "called" in the same way as a function::
+    
+            Session = sessionmaker()
+            session = Session()  # invokes sessionmaker.__call__()
+    
+        """
+        for k, v in self.kw.items():
+            if k == "info" and "info" in local_kw:
+                d = v.copy()
+                d.update(local_kw["info"])
+                local_kw["info"] = d
+            else:
+                local_kw.setdefault(k, v)
+>       return self.class_(**local_kw)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:3181: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.orm.session.SignallingSession object at 0x7fc03b972390>
+db = <SQLAlchemy engine=None>, autocommit = False, autoflush = True
+options = {'bind': None, 'expire_on_commit': True, 'query_cls': <class 'flask_sqlalchemy.BaseQuery'>}
+
+    def __init__(self, db, autocommit=False, autoflush=True, **options):
+        #: The application that this session belongs to.
+>       self.app = app = db.get_app()
+
+.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:141: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <SQLAlchemy engine=None>, reference_app = None
+
+    def get_app(self, reference_app=None):
+        """Helper method that implements the logic to look up an
+        application."""
+    
+        if reference_app is not None:
+            return reference_app
+    
+        if current_app:
+            return current_app._get_current_object()
+    
+        if self.app is not None:
+            return self.app
+    
+        raise RuntimeError(
+>           'No application found. Either work inside a view function or push'
+            ' an application context. See'
+            ' http://flask-sqlalchemy.pocoo.org/contexts/.'
+        )
+E       RuntimeError: No application found. Either work inside a view function or push an application context. See http://flask-sqlalchemy.pocoo.org/contexts/.
+
+.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:912: RuntimeError
+
+During handling of the above exception, another exception occurred:
+
+cls = <class 'weko_gridlayout.api.WidgetItems'>
+widget_items = {'background_color': 'background_color', 'browsing_role': 'browsing_role', 'edit_role': 'edit_role', 'enable': 'enable', ...}
+
+    @classmethod
+    def create(cls, widget_items=None):
+        """Create the widget_items.
+    
+        :param widget_items: the widget item information.
+        :returns: The :class:`widget item` instance lists or None.
+        """
+        def _add_widget_item(widget_setting):
+            with db.session.begin_nested():
+                widget_item = WidgetItem(**widget_setting)
+                db.session.add(widget_item)
+            db.session.commit()
+    
+        if not isinstance(widget_items, dict):
+            return
+    
+        data = cls.build_object(widget_items)
+        is_ok = True
+        try:
+            _add_widget_item(data)
+        except Exception as ex:
+            is_ok = False
+>           current_app.logger.debug(ex)
+
+weko_gridlayout/api.py:120: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <LocalProxy unbound>, name = 'logger'
+
+    def __getattr__(self, name):
+        if name == "__members__":
+            return dir(self._get_current_object())
+>       return getattr(self._get_current_object(), name)
+
+.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:348: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <LocalProxy unbound>
+
+    def _get_current_object(self):
+        """Return the current object.  This is useful if you want the real
+        object behind the proxy at a time for performance reasons or because
+        you want to pass the object into a different context.
+        """
+        if not hasattr(self.__local, "__release_local__"):
+>           return self.__local()
+
+.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:307: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _find_app():
+        top = _app_ctx_stack.top
+        if top is None:
+>           raise RuntimeError(_app_ctx_err_msg)
+E           RuntimeError: Working outside of application context.
+E           
+E           This typically means that you attempted to use functionality that needed
+E           to interface with the current application object in some way. To solve
+E           this, set up an application context with app.app_context().  See the
+E           documentation for more information.
+
+.tox/c1/lib/python3.6/site-packages/flask/globals.py:51: RuntimeError
+
+During handling of the above exception, another exception occurred:
+
+self = <sqlalchemy.util._collections.ScopedRegistry object at 0x7fc04b0100f0>
+
+    def __call__(self):
+        key = self.scopefunc()
+        try:
+>           return self.registry[key]
+E           KeyError: 140463991539520
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1005: KeyError
+
+During handling of the above exception, another exception occurred:
+
+    def test_create():
+>       test.test_create()
+
+tests/test_api.py:223: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_api.py:89: in test_create
+    assert not WidgetItems.create(widget_items)
+weko_gridlayout/api.py:124: in create
+    db.session.rollback()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/scoping.py:162: in do
+    return getattr(self.registry(), name)(*args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1007: in __call__
+    return self.registry.setdefault(key, self.createfunc())
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:3181: in __call__
+    return self.class_(**local_kw)
+.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:141: in __init__
+    self.app = app = db.get_app()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <SQLAlchemy engine=None>, reference_app = None
+
+    def get_app(self, reference_app=None):
+        """Helper method that implements the logic to look up an
+        application."""
+    
+        if reference_app is not None:
+            return reference_app
+    
+        if current_app:
+            return current_app._get_current_object()
+    
+        if self.app is not None:
+            return self.app
+    
+        raise RuntimeError(
+>           'No application found. Either work inside a view function or push'
+            ' an application context. See'
+            ' http://flask-sqlalchemy.pocoo.org/contexts/.'
+        )
+E       RuntimeError: No application found. Either work inside a view function or push an application context. See http://flask-sqlalchemy.pocoo.org/contexts/.
+
+.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:912: RuntimeError
+_________________________________ test_delete __________________________________
+
+db = <SQLAlchemy engine=sqlite:////code/modules/weko-gridlayout/test.db>
+
+    def test_delete(db):
+>       test.test_delete(db)
+
+tests/test_api.py:229: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_api.py:146: in test_delete
+    assert not WidgetItems.delete(1)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'weko_gridlayout.api.WidgetItems'>, widget_id = 1
+
+    @classmethod
+    def delete(cls, widget_id):
+        """Delete widget_item.
+    
+        :param widget_id: id of widget item to delete
+        :return:  true
+        """
+>       WidgetItem.delete(widget_id.get('repository'),
+                          widget_id.get('widget_type'),
+                          widget_id.get('label'),
+                          widget_id.get('language'))
+E       AttributeError: type object 'WidgetItem' has no attribute 'delete'
+
+weko_gridlayout/api.py:162: AttributeError
+_______________________________ test_is_existed ________________________________
+
+widget_item = [<WidgetItem 1>]
+
+    def test_is_existed(widget_item):
+>       test.test_is_existed(widget_item)
+
+tests/test_api.py:235: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_api.py:173: in test_is_existed
+    with patch("weko_gridlayout.api.WidgetItem.get_by_repo_and_type", return_value=""):
+.tox/c1/lib/python3.6/site-packages/mock/mock.py:1394: in __enter__
+    original, local = self.get_original()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <mock.mock._patch object at 0x7fc03c0ca518>
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+            raise AttributeError(
+>               "{} does not have the attribute {!r}".format(target, name)
+            )
+E           AttributeError: <class 'weko_gridlayout.models.WidgetItem'> does not have the attribute 'get_by_repo_and_type'
+
+.tox/c1/lib/python3.6/site-packages/mock/mock.py:1368: AttributeError
+___________________________ test_get_account_role_2 ____________________________
+
+self = <sqlalchemy.util._collections.ScopedRegistry object at 0x7fc04b0100f0>
+
+    def __call__(self):
+        key = self.scopefunc()
+        try:
+>           return self.registry[key]
+E           KeyError: 140463991539520
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1005: KeyError
+
+During handling of the above exception, another exception occurred:
+
+    def test_get_account_role_2():
+>       test.test_get_account_role_2()
+
+tests/test_api.py:239: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_api.py:188: in test_get_account_role_2
+    assert WidgetItems.get_account_role()
+weko_gridlayout/api.py:240: in get_account_role
+    with db.session.no_autoflush:
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/scoping.py:176: in get
+    return getattr(self.registry(), name)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1007: in __call__
+    return self.registry.setdefault(key, self.createfunc())
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:3181: in __call__
+    return self.class_(**local_kw)
+.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:141: in __init__
+    self.app = app = db.get_app()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <SQLAlchemy engine=None>, reference_app = None
+
+    def get_app(self, reference_app=None):
+        """Helper method that implements the logic to look up an
+        application."""
+    
+        if reference_app is not None:
+            return reference_app
+    
+        if current_app:
+            return current_app._get_current_object()
+    
+        if self.app is not None:
+            return self.app
+    
+        raise RuntimeError(
+>           'No application found. Either work inside a view function or push'
+            ' an application context. See'
+            ' http://flask-sqlalchemy.pocoo.org/contexts/.'
+        )
+E       RuntimeError: No application found. Either work inside a view function or push an application context. See http://flask-sqlalchemy.pocoo.org/contexts/.
+
+.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:912: RuntimeError
+___________________________ test_WidgetType_create_2 ___________________________
+
+self = <sqlalchemy.engine.base.Connection object at 0x7fc03c92c9e8>
+dialect = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x7fc03bd86d68>
+constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext'>>
+statement = 'INSERT INTO widget_type (type_id, type_name) VALUES (?, ?)'
+parameters = (1, 'test')
+args = (<sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x7fc03b268e10>, [{'type_id': 1, 'type_name': 'test'}])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fc03b3ae048>
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7fc03b268278>
+
+    def _execute_context(
+        self, dialect, constructor, statement, parameters, *args
+    ):
+        """Create an :class:`.ExecutionContext` and execute, returning
+        a :class:`.ResultProxy`."""
+    
+        try:
+            try:
+                conn = self.__connection
+            except AttributeError:
+                # escape "except AttributeError" before revalidating
+                # to prevent misleading stacktraces in Py3K
+                conn = None
+            if conn is None:
+                conn = self._revalidate_connection()
+    
+            context = constructor(dialect, self, conn, *args)
+        except BaseException as e:
+            self._handle_dbapi_exception(
+                e, util.text_type(statement), parameters, None, None
+            )
+    
+        if context.compiled:
+            context.pre_exec()
+    
+        cursor, statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        if not context.executemany:
+            parameters = parameters[0]
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                statement, parameters = fn(
+                    self,
+                    cursor,
+                    statement,
+                    parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self.engine.logger.info(statement)
+            self.engine.logger.info(
+                "%r", sql_util._repr_params(parameters, batches=10)
+            )
+    
+        evt_handled = False
+        try:
+            if context.executemany:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor, statement, parameters, context
+                    )
+            elif not parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, statement, context
+                    )
+            else:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute(
+>                       cursor, statement, parameters, context
+                    )
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x7fc03bd86d68>
+cursor = <sqlite3.Cursor object at 0x7fc03b105810>
+statement = 'INSERT INTO widget_type (type_id, type_name) VALUES (?, ?)'
+parameters = (1, 'test')
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7fc03b268278>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlite3.OperationalError: no such table: widget_type
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: OperationalError
+
+The above exception was the direct cause of the following exception:
+
+i18n_app = <Flask 'testapp'>
+
+    def test_WidgetType_create_2(i18n_app):
+        data = {
+            "type_id": 1,
+            "type_name": "test",
+        }
+    
+        # Coverage for execption
+>       assert WidgetType.create(data)
+
+tests/test_models.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_gridlayout/models.py:50: in create
+    db.session.add(data_obj)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:597: in __exit__
+    self.rollback()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/langhelpers.py:67: in __exit__
+    compat.reraise(exc_type, exc_value, exc_tb)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:594: in __exit__
+    self.commit()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:487: in commit
+    self._prepare_impl()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:466: in _prepare_impl
+    self.session.flush()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2446: in flush
+    self._flush(objects)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2584: in _flush
+    transaction.rollback(_capture_exception=True)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/langhelpers.py:67: in __exit__
+    compat.reraise(exc_type, exc_value, exc_tb)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2544: in _flush
+    flush_context.execute()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/unitofwork.py:416: in execute
+    rec.execute(self)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/unitofwork.py:583: in execute
+    uow,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/persistence.py:245: in save_obj
+    insert,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/persistence.py:1063: in _emit_insert_statements
+    c = cached_connections[connection].execute(statement, multiparams)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:273: in _execute_on_connection
+    return connection._execute_clauseelement(self, multiparams, params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1099: in _execute_clauseelement
+    distilled_params,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1240: in _execute_context
+    e, statement, parameters, cursor, context
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1458: in _handle_dbapi_exception
+    util.raise_from_cause(sqlalchemy_exception, exc_info)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: in _execute_context
+    cursor, statement, parameters, context
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x7fc03bd86d68>
+cursor = <sqlite3.Cursor object at 0x7fc03b105810>
+statement = 'INSERT INTO widget_type (type_id, type_name) VALUES (?, ?)'
+parameters = (1, 'test')
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7fc03b268278>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: widget_type [SQL: 'INSERT INTO widget_type (type_id, type_name) VALUES (?, ?)'] [parameters: (1, 'test')] (Background on this error at: http://sqlalche.me/e/e3q8)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: OperationalError
+------------------------------ Captured log call -------------------------------
+ERROR    flask.app:models.py:54 (sqlite3.OperationalError) no such table: widget_type [SQL: 'INSERT INTO widget_type (type_id, type_name) VALUES (?, ?)'] [parameters: (1, 'test')] (Background on this error at: http://sqlalche.me/e/e3q8)
+______________________________ test_get_sequence _______________________________
+
+i18n_app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/weko-gridlayout/test.db>
+
+    def test_get_sequence(i18n_app, db):
+        session = None
+    
+>       assert WidgetItem.get_sequence(session)
+
+tests/test_models.py:55: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_gridlayout/models.py:155: in get_sequence
+    next_id = session.execute(seq)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/scoping.py:162: in do
+    return getattr(self.registry(), name)(*args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:1263: in execute
+    clause, params or {}
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/schema.py:2105: in _execute_on_connection
+    return connection._execute_default(self, multiparams, params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1011: in _execute_default
+    ret = ctx._exec_default(None, default, None)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7fc03b08b048>
+column = None, default = Sequence('widget_items_widget_id_seq'), type_ = None
+
+    def _exec_default(self, column, default, type_):
+        if default.is_sequence:
+>           return self.fire_sequence(default, type_)
+E           AttributeError: 'SQLiteExecutionContext' object has no attribute 'fire_sequence'
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:1272: AttributeError
+____________________________ test_create_or_update _____________________________
+
+self = <sqlalchemy.engine.base.Connection object at 0x7fc03b3a7ef0>
+dialect = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x7fc03b8eaa90>
+constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext'>>
+statement = 'INSERT INTO widget_design_page (title, repository_id, url, template_name, content, settings, is_main_layout) VALUES (?, ?, ?, ?, ?, ?, ?)'
+parameters = ('1', '1', '/', None, <MagicMock id='140463617529056'>, '{}', ...)
+args = (<sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x7fc03b3a7e80>, [{'content': <MagicMock id='140463617529056'>, 'is_main_layout': False, 'repository_id': '1', 'template_name': None, ...}])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fc03b1e0358>
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7fc03b3a7b70>
+
+    def _execute_context(
+        self, dialect, constructor, statement, parameters, *args
+    ):
+        """Create an :class:`.ExecutionContext` and execute, returning
+        a :class:`.ResultProxy`."""
+    
+        try:
+            try:
+                conn = self.__connection
+            except AttributeError:
+                # escape "except AttributeError" before revalidating
+                # to prevent misleading stacktraces in Py3K
+                conn = None
+            if conn is None:
+                conn = self._revalidate_connection()
+    
+            context = constructor(dialect, self, conn, *args)
+        except BaseException as e:
+            self._handle_dbapi_exception(
+                e, util.text_type(statement), parameters, None, None
+            )
+    
+        if context.compiled:
+            context.pre_exec()
+    
+        cursor, statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        if not context.executemany:
+            parameters = parameters[0]
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                statement, parameters = fn(
+                    self,
+                    cursor,
+                    statement,
+                    parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self.engine.logger.info(statement)
+            self.engine.logger.info(
+                "%r", sql_util._repr_params(parameters, batches=10)
+            )
+    
+        evt_handled = False
+        try:
+            if context.executemany:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor, statement, parameters, context
+                    )
+            elif not parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, statement, context
+                    )
+            else:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute(
+>                       cursor, statement, parameters, context
+                    )
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x7fc03b8eaa90>
+cursor = <sqlite3.Cursor object at 0x7fc03afa69d0>
+statement = 'INSERT INTO widget_design_page (title, repository_id, url, template_name, content, settings, is_main_layout) VALUES (?, ?, ?, ?, ?, ?, ?)'
+parameters = ('1', '1', '/', None, <MagicMock id='140463617529056'>, '{}', ...)
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7fc03b3a7b70>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlite3.InterfaceError: Error binding parameter 4 - probably unsupported type.
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: InterfaceError
+
+The above exception was the direct cause of the following exception:
+
+i18n_app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/weko-gridlayout/test.db>
+
+    def test_create_or_update(i18n_app, db):
+        test1 = WidgetDesignSetting(repository_id="1")
+        db.session.add(test1)
+        db.session.commit()
+        repository_id = "1"
+        title = "1"
+        url = "/"
+        content = MagicMock()
+    
+        # Exception coverage
+>       assert not WidgetDesignPage.create_or_update(
+            repository_id=repository_id,
+            title=title,
+            url=url,
+            content=content
+        )
+
+tests/test_models.py:171: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_gridlayout/models.py:561: in create_or_update
+    raise ex
+weko_gridlayout/models.py:556: in create_or_update
+    db.session.merge(page)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:597: in __exit__
+    self.rollback()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/langhelpers.py:67: in __exit__
+    compat.reraise(exc_type, exc_value, exc_tb)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:594: in __exit__
+    self.commit()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:487: in commit
+    self._prepare_impl()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:466: in _prepare_impl
+    self.session.flush()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2446: in flush
+    self._flush(objects)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2584: in _flush
+    transaction.rollback(_capture_exception=True)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/langhelpers.py:67: in __exit__
+    compat.reraise(exc_type, exc_value, exc_tb)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2544: in _flush
+    flush_context.execute()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/unitofwork.py:416: in execute
+    rec.execute(self)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/unitofwork.py:583: in execute
+    uow,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/persistence.py:245: in save_obj
+    insert,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/persistence.py:1116: in _emit_insert_statements
+    statement, params
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:273: in _execute_on_connection
+    return connection._execute_clauseelement(self, multiparams, params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1099: in _execute_clauseelement
+    distilled_params,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1240: in _execute_context
+    e, statement, parameters, cursor, context
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1458: in _handle_dbapi_exception
+    util.raise_from_cause(sqlalchemy_exception, exc_info)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: in _execute_context
+    cursor, statement, parameters, context
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x7fc03b8eaa90>
+cursor = <sqlite3.Cursor object at 0x7fc03afa69d0>
+statement = 'INSERT INTO widget_design_page (title, repository_id, url, template_name, content, settings, is_main_layout) VALUES (?, ?, ?, ?, ?, ?, ?)'
+parameters = ('1', '1', '/', None, <MagicMock id='140463617529056'>, '{}', ...)
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7fc03b3a7b70>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlalchemy.exc.InterfaceError: (sqlite3.InterfaceError) Error binding parameter 4 - probably unsupported type. [SQL: 'INSERT INTO widget_design_page (title, repository_id, url, template_name, content, settings, is_main_layout) VALUES (?, ?, ?, ?, ?, ?, ?)'] [parameters: ('1', '1', '/', None, <MagicMock id='140463617529056'>, '{}', 0)] (Background on this error at: http://sqlalche.me/e/rvf5)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: InterfaceError
+------------------------------ Captured log call -------------------------------
+ERROR    flask.app:models.py:560 (sqlite3.InterfaceError) Error binding parameter 4 - probably unsupported type. [SQL: 'INSERT INTO widget_design_page (title, repository_id, url, template_name, content, settings, is_main_layout) VALUES (?, ?, ?, ?, ?, ?, ?)'] [parameters: ('1', '1', '/', None, <MagicMock id='140463617529056'>, '{}', 0)] (Background on this error at: http://sqlalche.me/e/rvf5)
+_________________________ test_delete_WidgetDesignPage _________________________
+
+i18n_app = <Flask 'testapp'>
+widget_items = [<WidgetItem 1>, <WidgetItem 2>, <WidgetItem 3>]
+
+    def test_delete_WidgetDesignPage(i18n_app, widget_items):
+        page_id = "1"
+    
+        assert WidgetDesignPage.delete(page_id)
+        assert not WidgetDesignPage.delete(False)
+>       assert not WidgetDesignPage.delete("a")
+
+tests/test_models.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_gridlayout/models.py:579: in delete
+    raise ex
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'weko_gridlayout.models.WidgetDesignPage'>, page_id = 'a'
+
+    @classmethod
+    def delete(cls, page_id):
+        """Delete widget design page.
+    
+        :param page_id: Page model's id
+        :return: True if successful or False
+        """
+        if page_id:
+            try:
+                with db.session.begin_nested():
+>                   cls.query.filter_by(id=int(page_id)).delete()
+E                   ValueError: invalid literal for int() with base 10: 'a'
+
+weko_gridlayout/models.py:573: ValueError
+------------------------------ Captured log call -------------------------------
+ERROR    flask.app:models.py:578 invalid literal for int() with base 10: 'a'
+____________________ test_update_settings_by_repository_id _____________________
+
+i18n_app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/weko-gridlayout/test.db>
+
+    def test_update_settings_by_repository_id(i18n_app, db):
+        test = WidgetDesignPage(
+            id=1,
+            repository_id="1",
+            url="/"
+        )
+        db.session.add(test)
+        db.session.commit()
+        page_id = 1
+    
+        assert WidgetDesignPage.update_settings(page_id)
+        assert not WidgetDesignPage.update_settings(9)
+>       assert not WidgetDesignPage.update_settings("a")
+
+tests/test_models.py:200: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_gridlayout/models.py:601: in update_settings
+    raise ex
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'weko_gridlayout.models.WidgetDesignPage'>, page_id = 'a'
+settings = None
+
+    @classmethod
+    def update_settings(cls, page_id, settings=None):
+        """Update design page setting.
+    
+        :param page_id: Identifier of the page.
+        :param settings: Page widget setting data.
+        :return: True if successful, otherwise False.
+        """
+        try:
+>           page = cls.query.filter_by(id=int(page_id)).one_or_none()
+E           ValueError: invalid literal for int() with base 10: 'a'
+
+weko_gridlayout/models.py:591: ValueError
+------------------------------ Captured log call -------------------------------
+ERROR    flask.app:models.py:600 invalid literal for int() with base 10: 'a'
+______________________________ test_save_command _______________________________
+
+i18n_app = <Flask 'testapp'>
+
+    def test_save_command(i18n_app):
+        data = {
+            "data": 1,
+            "flag_edit": False
+        }
+        return_data = {
+            "message": "test",
+            "success": "test"
+        }
+        return_data_2 = {
+            "error": False,
+        }
+        with patch("weko_gridlayout.utils.build_data", return_value=""):
+            with patch("weko_gridlayout.services.WidgetItemServices.create", return_value=return_data_2):
+>               assert WidgetItemServices.save_command(data)
+
+tests/test_services.py:44: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_gridlayout/services.py:89: in save_command
+    respond = cls.create(build_data(widget_data))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+data = 1
+
+    def build_data(data):
+        """Build data get from client to dictionary.
+    
+        Arguments:
+            data {json} -- Client data
+    
+        Returns:
+            dictionary -- server data
+    
+        """
+        result = dict()
+>       result['repository_id'] = data.get('repository')
+E       AttributeError: 'int' object has no attribute 'get'
+
+weko_gridlayout/utils.py:243: AttributeError
+_________________________ test_get_locked_widget_info __________________________
+
+i18n_app = <Flask 'testapp'>
+widget_items = [<WidgetItem 1>, <WidgetItem 2>, <WidgetItem 3>]
+
+    def test_get_locked_widget_info(i18n_app, widget_items):
+        import datetime
+        widget_id = "1"
+        # with patch("weko_gridlayout.services.WidgetItemServices.get_widget_by_id", return_value=return_data):
+        widget_item = MagicMock()
+        widget_item.updated = datetime.timedelta(0, 3)
+    
+        assert not WidgetItemServices.get_locked_widget_info(widget_id)
+>       assert WidgetItemServices.get_locked_widget_info(widget_id, widget_item)
+
+tests/test_services.py:182: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'weko_gridlayout.services.WidgetItemServices'>, widget_id = '1'
+widget_item = <MagicMock id='140463593610096'>, locked_value = None
+
+    @classmethod
+    def get_locked_widget_info(cls, widget_id, widget_item=None,
+                               locked_value=None):
+        """Get locked widget info.
+    
+        @param widget_id: widget identifier.
+        @param widget_item:Widget Item
+        @param locked_value:locked value
+        @return:
+        """
+        if widget_item is None:
+            widget_item = cls.get_widget_by_id(widget_id)
+        if widget_item.locked:
+            session_timeout = WEKO_ADMIN_DEFAULT_LIFETIME
+            if widget_item.updated + timedelta(
+>                   minutes=session_timeout) < datetime.utcnow():
+E                   TypeError: '<' not supported between instances of 'datetime.timedelta' and 'datetime.datetime'
+
+weko_gridlayout/services.py:341: TypeError
+________________ test_handle_change_item_in_preview_widget_item ________________
+
+i18n_app = <Flask 'testapp'>
+
+    def test_handle_change_item_in_preview_widget_item(i18n_app):
+        return_data = MagicMock()
+        return_data.repository_id = "1"
+        return_data.settings = "1"
+        return_data.id = "1"
+        widget_id = "1"
+        data_result = MagicMock()
+        with patch("weko_gridlayout.services.WidgetItemServices.get_widget_by_id", return_value=return_data):
+            with patch("weko_gridlayout.models.WidgetDesignSetting.select_by_repository_id", return_value=return_data):
+                with patch("weko_gridlayout.services.WidgetDesignPage.get_by_repository_id", return_value=[return_data]):
+                    with patch("weko_gridlayout.services.WidgetDesignServices.update_item_in_preview_widget_item", return_value="test"):
+                        with patch("weko_gridlayout.models.WidgetDesignPage.update_settings", return_value=False):
+                            assert not WidgetDesignServices.handle_change_item_in_preview_widget_item(widget_id, data_result)
+                        with patch("weko_gridlayout.models.WidgetDesignPage.update_settings", return_value=True):
+                            with patch("weko_gridlayout.utils.delete_widget_cache", return_value="test"):
+>                               assert WidgetDesignServices.handle_change_item_in_preview_widget_item(widget_id, data_result)
+E                               AssertionError: assert False
+E                                +  where False = <bound method WidgetDesignServices.handle_change_item_in_preview_widget_item of <class 'weko_gridlayout.services.WidgetDesignServices'>>('1', <MagicMock id='140463593160656'>)
+E                                +    where <bound method WidgetDesignServices.handle_change_item_in_preview_widget_item of <class 'weko_gridlayout.services.WidgetDesignServices'>> = WidgetDesignServices.handle_change_item_in_preview_widget_item
+
+tests/test_services.py:386: AssertionError
+------------------------------ Captured log call -------------------------------
+ERROR    flask.app:services.py:758 local variable 'store' referenced before assignment
+________________________ test_is_used_in_widget_design _________________________
+
+self = <sqlalchemy.engine.base.Connection object at 0x7fc03a6ef6d8>
+dialect = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x7fc03a6d9a58>
+constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext'>>
+statement = 'SELECT widget_items.created AS widget_items_created, widget_items.updated AS widget_items_updated, widget_items.widge...ked, widget_items.locked_by_user AS widget_items_locked_by_user \nFROM widget_items \nWHERE widget_items.widget_id = ?'
+parameters = ('1',)
+args = (<sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x7fc03a6ef518>, [immutabledict({})])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fc03a6e0668>
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7fc03a6ef3c8>
+
+    def _execute_context(
+        self, dialect, constructor, statement, parameters, *args
+    ):
+        """Create an :class:`.ExecutionContext` and execute, returning
+        a :class:`.ResultProxy`."""
+    
+        try:
+            try:
+                conn = self.__connection
+            except AttributeError:
+                # escape "except AttributeError" before revalidating
+                # to prevent misleading stacktraces in Py3K
+                conn = None
+            if conn is None:
+                conn = self._revalidate_connection()
+    
+            context = constructor(dialect, self, conn, *args)
+        except BaseException as e:
+            self._handle_dbapi_exception(
+                e, util.text_type(statement), parameters, None, None
+            )
+    
+        if context.compiled:
+            context.pre_exec()
+    
+        cursor, statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        if not context.executemany:
+            parameters = parameters[0]
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                statement, parameters = fn(
+                    self,
+                    cursor,
+                    statement,
+                    parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self.engine.logger.info(statement)
+            self.engine.logger.info(
+                "%r", sql_util._repr_params(parameters, batches=10)
+            )
+    
+        evt_handled = False
+        try:
+            if context.executemany:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor, statement, parameters, context
+                    )
+            elif not parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, statement, context
+                    )
+            else:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute(
+>                       cursor, statement, parameters, context
+                    )
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x7fc03a6d9a58>
+cursor = <sqlite3.Cursor object at 0x7fc03ac3eb20>
+statement = 'SELECT widget_items.created AS widget_items_created, widget_items.updated AS widget_items_updated, widget_items.widge...ked, widget_items.locked_by_user AS widget_items_locked_by_user \nFROM widget_items \nWHERE widget_items.widget_id = ?'
+parameters = ('1',)
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7fc03a6ef3c8>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlite3.OperationalError: no such table: widget_items
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: OperationalError
+
+The above exception was the direct cause of the following exception:
+
+cls = <class 'weko_gridlayout.services.WidgetDesignServices'>, widget_id = '1'
+
+    @classmethod
+    def is_used_in_widget_design(cls, widget_id):
+        """Validate widget item.
+    
+        :param: widget id
+        :return: true if widget item is used in widget design else return false
+        """
+        try:
+            if not widget_id:
+                return False
+>           widget_item = WidgetItemServices.get_widget_by_id(widget_id)
+
+weko_gridlayout/services.py:771: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'weko_gridlayout.services.WidgetItemServices'>, widget_id = '1'
+
+    @classmethod
+    def get_widget_by_id(cls, widget_id):
+        """Get widget by identifier.
+    
+        Arguments:
+            widget_id {int} -- id of widget item
+    
+        """
+>       return WidgetItem.get_by_id(widget_id)
+
+weko_gridlayout/services.py:62: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'weko_gridlayout.models.WidgetItem'>, widget_item_id = '1'
+
+    @classmethod
+    def get_by_id(cls, widget_item_id):
+        """Get a widget item by id."""
+>       widget = cls.query.filter_by(widget_id=widget_item_id).one_or_none()
+
+weko_gridlayout/models.py:121: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <flask_sqlalchemy.BaseQuery object at 0x7fc03a6e0fd0>
+
+    def one_or_none(self):
+        """Return at most one result or raise an exception.
+    
+        Returns ``None`` if the query selects
+        no rows.  Raises ``sqlalchemy.orm.exc.MultipleResultsFound``
+        if multiple object identities are returned, or if multiple
+        rows are returned for a query that returns only scalar values
+        as opposed to full identity-mapped entities.
+    
+        Calling :meth:`.Query.one_or_none` results in an execution of the
+        underlying query.
+    
+        .. versionadded:: 1.0.9
+    
+            Added :meth:`.Query.one_or_none`
+    
+        .. seealso::
+    
+            :meth:`.Query.first`
+    
+            :meth:`.Query.one`
+    
+        """
+>       ret = list(self)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/query.py:3008: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <flask_sqlalchemy.BaseQuery object at 0x7fc03a6e0fd0>
+
+    def __iter__(self):
+        context = self._compile_context()
+        context.statement.use_labels = True
+        if self._autoflush and not self._populate_existing:
+            self.session._autoflush()
+>       return self._execute_and_instances(context)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/query.py:3081: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <flask_sqlalchemy.BaseQuery object at 0x7fc03a6e0fd0>
+querycontext = <sqlalchemy.orm.query.QueryContext object at 0x7fc03c2e8990>
+
+    def _execute_and_instances(self, querycontext):
+        conn = self._get_bind_args(
+            querycontext, self._connection_from_session, close_with_result=True
+        )
+    
+>       result = conn.execute(querycontext.statement, self._params)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/query.py:3106: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.engine.base.Connection object at 0x7fc03a6ef6d8>
+object_ = <sqlalchemy.sql.selectable.Select at 0x7fc03a6e0c18; Select object>
+multiparams = (immutabledict({}),), params = {}
+meth = <bound method ClauseElement._execute_on_connection of <sqlalchemy.sql.selectable.Select at 0x7fc03a6e0c18; Select object>>
+
+    def execute(self, object_, *multiparams, **params):
+        r"""Executes a SQL statement construct and returns a
+        :class:`.ResultProxy`.
+    
+        :param object: The statement to be executed.  May be
+         one of:
+    
+         * a plain string
+         * any :class:`.ClauseElement` construct that is also
+           a subclass of :class:`.Executable`, such as a
+           :func:`~.expression.select` construct
+         * a :class:`.FunctionElement`, such as that generated
+           by :data:`.func`, will be automatically wrapped in
+           a SELECT statement, which is then executed.
+         * a :class:`.DDLElement` object
+         * a :class:`.DefaultGenerator` object
+         * a :class:`.Compiled` object
+    
+        :param \*multiparams/\**params: represent bound parameter
+         values to be used in the execution.   Typically,
+         the format is either a collection of one or more
+         dictionaries passed to \*multiparams::
+    
+             conn.execute(
+                 table.insert(),
+                 {"id":1, "value":"v1"},
+                 {"id":2, "value":"v2"}
+             )
+    
+         ...or individual key/values interpreted by \**params::
+    
+             conn.execute(
+                 table.insert(), id=1, value="v1"
+             )
+    
+         In the case that a plain SQL string is passed, and the underlying
+         DBAPI accepts positional bind parameters, a collection of tuples
+         or individual values in \*multiparams may be passed::
+    
+             conn.execute(
+                 "INSERT INTO table (id, value) VALUES (?, ?)",
+                 (1, "v1"), (2, "v2")
+             )
+    
+             conn.execute(
+                 "INSERT INTO table (id, value) VALUES (?, ?)",
+                 1, "v1"
+             )
+    
+         Note above, the usage of a question mark "?" or other
+         symbol is contingent upon the "paramstyle" accepted by the DBAPI
+         in use, which may be any of "qmark", "named", "pyformat", "format",
+         "numeric".   See `pep-249 <http://www.python.org/dev/peps/pep-0249/>`_
+         for details on paramstyle.
+    
+         To execute a textual SQL statement which uses bound parameters in a
+         DBAPI-agnostic way, use the :func:`~.expression.text` construct.
+    
+        """
+        if isinstance(object_, util.string_types[0]):
+            return self._execute_text(object_, multiparams, params)
+        try:
+            meth = object_._execute_on_connection
+        except AttributeError:
+            raise exc.ObjectNotExecutableError(object_)
+        else:
+>           return meth(self, multiparams, params)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.sql.selectable.Select at 0x7fc03a6e0c18; Select object>
+connection = <sqlalchemy.engine.base.Connection object at 0x7fc03a6ef6d8>
+multiparams = (immutabledict({}),), params = {}
+
+    def _execute_on_connection(self, connection, multiparams, params):
+        if self.supports_execution:
+>           return connection._execute_clauseelement(self, multiparams, params)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:273: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.engine.base.Connection object at 0x7fc03a6ef6d8>
+elem = <sqlalchemy.sql.selectable.Select at 0x7fc03a6e0c18; Select object>
+multiparams = (immutabledict({}),), params = {}
+
+    def _execute_clauseelement(self, elem, multiparams, params):
+        """Execute a sql.ClauseElement object."""
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_execute:
+                elem, multiparams, params = fn(self, elem, multiparams, params)
+    
+        distilled_params = _distill_params(multiparams, params)
+        if distilled_params:
+            # ensure we don't retain a link to the view object for keys()
+            # which links to the values, which we don't want to cache
+            keys = list(distilled_params[0].keys())
+        else:
+            keys = []
+    
+        dialect = self.dialect
+        if "compiled_cache" in self._execution_options:
+            key = (
+                dialect,
+                elem,
+                tuple(sorted(keys)),
+                self.schema_for_object.hash_key,
+                len(distilled_params) > 1,
+            )
+            compiled_sql = self._execution_options["compiled_cache"].get(key)
+            if compiled_sql is None:
+                compiled_sql = elem.compile(
+                    dialect=dialect,
+                    column_keys=keys,
+                    inline=len(distilled_params) > 1,
+                    schema_translate_map=self.schema_for_object
+                    if not self.schema_for_object.is_default
+                    else None,
+                )
+                self._execution_options["compiled_cache"][key] = compiled_sql
+        else:
+            compiled_sql = elem.compile(
+                dialect=dialect,
+                column_keys=keys,
+                inline=len(distilled_params) > 1,
+                schema_translate_map=self.schema_for_object
+                if not self.schema_for_object.is_default
+                else None,
+            )
+    
+        ret = self._execute_context(
+            dialect,
+            dialect.execution_ctx_cls._init_compiled,
+            compiled_sql,
+            distilled_params,
+            compiled_sql,
+>           distilled_params,
+        )
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1099: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.engine.base.Connection object at 0x7fc03a6ef6d8>
+dialect = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x7fc03a6d9a58>
+constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext'>>
+statement = 'SELECT widget_items.created AS widget_items_created, widget_items.updated AS widget_items_updated, widget_items.widge...ked, widget_items.locked_by_user AS widget_items_locked_by_user \nFROM widget_items \nWHERE widget_items.widget_id = ?'
+parameters = ('1',)
+args = (<sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x7fc03a6ef518>, [immutabledict({})])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fc03a6e0668>
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7fc03a6ef3c8>
+
+    def _execute_context(
+        self, dialect, constructor, statement, parameters, *args
+    ):
+        """Create an :class:`.ExecutionContext` and execute, returning
+        a :class:`.ResultProxy`."""
+    
+        try:
+            try:
+                conn = self.__connection
+            except AttributeError:
+                # escape "except AttributeError" before revalidating
+                # to prevent misleading stacktraces in Py3K
+                conn = None
+            if conn is None:
+                conn = self._revalidate_connection()
+    
+            context = constructor(dialect, self, conn, *args)
+        except BaseException as e:
+            self._handle_dbapi_exception(
+                e, util.text_type(statement), parameters, None, None
+            )
+    
+        if context.compiled:
+            context.pre_exec()
+    
+        cursor, statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        if not context.executemany:
+            parameters = parameters[0]
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                statement, parameters = fn(
+                    self,
+                    cursor,
+                    statement,
+                    parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self.engine.logger.info(statement)
+            self.engine.logger.info(
+                "%r", sql_util._repr_params(parameters, batches=10)
+            )
+    
+        evt_handled = False
+        try:
+            if context.executemany:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor, statement, parameters, context
+                    )
+            elif not parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, statement, context
+                    )
+            else:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute(
+                        cursor, statement, parameters, context
+                    )
+        except BaseException as e:
+            self._handle_dbapi_exception(
+>               e, statement, parameters, cursor, context
+            )
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1240: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.engine.base.Connection object at 0x7fc03a6ef6d8>
+e = OperationalError('no such table: widget_items',)
+statement = 'SELECT widget_items.created AS widget_items_created, widget_items.updated AS widget_items_updated, widget_items.widge...ked, widget_items.locked_by_user AS widget_items_locked_by_user \nFROM widget_items \nWHERE widget_items.widget_id = ?'
+parameters = ('1',), cursor = <sqlite3.Cursor object at 0x7fc03ac3eb20>
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7fc03a6ef3c8>
+
+    def _handle_dbapi_exception(
+        self, e, statement, parameters, cursor, context
+    ):
+        exc_info = sys.exc_info()
+    
+        if context and context.exception is None:
+            context.exception = e
+    
+        is_exit_exception = not isinstance(e, Exception)
+    
+        if not self._is_disconnect:
+            self._is_disconnect = (
+                isinstance(e, self.dialect.dbapi.Error)
+                and not self.closed
+                and self.dialect.is_disconnect(
+                    e,
+                    self.__connection if not self.invalidated else None,
+                    cursor,
+                )
+            ) or (is_exit_exception and not self.closed)
+    
+            if context:
+                context.is_disconnect = self._is_disconnect
+    
+        invalidate_pool_on_disconnect = not is_exit_exception
+    
+        if self._reentrant_error:
+            util.raise_from_cause(
+                exc.DBAPIError.instance(
+                    statement,
+                    parameters,
+                    e,
+                    self.dialect.dbapi.Error,
+                    dialect=self.dialect,
+                ),
+                exc_info,
+            )
+        self._reentrant_error = True
+        try:
+            # non-DBAPI error - if we already got a context,
+            # or there's no string statement, don't wrap it
+            should_wrap = isinstance(e, self.dialect.dbapi.Error) or (
+                statement is not None
+                and context is None
+                and not is_exit_exception
+            )
+    
+            if should_wrap:
+                sqlalchemy_exception = exc.DBAPIError.instance(
+                    statement,
+                    parameters,
+                    e,
+                    self.dialect.dbapi.Error,
+                    connection_invalidated=self._is_disconnect,
+                    dialect=self.dialect,
+                )
+            else:
+                sqlalchemy_exception = None
+    
+            newraise = None
+    
+            if (
+                self._has_events or self.engine._has_events
+            ) and not self._execution_options.get(
+                "skip_user_error_events", False
+            ):
+                # legacy dbapi_error event
+                if should_wrap and context:
+                    self.dispatch.dbapi_error(
+                        self, cursor, statement, parameters, context, e
+                    )
+    
+                # new handle_error event
+                ctx = ExceptionContextImpl(
+                    e,
+                    sqlalchemy_exception,
+                    self.engine,
+                    self,
+                    cursor,
+                    statement,
+                    parameters,
+                    context,
+                    self._is_disconnect,
+                    invalidate_pool_on_disconnect,
+                )
+    
+                for fn in self.dispatch.handle_error:
+                    try:
+                        # handler returns an exception;
+                        # call next handler in a chain
+                        per_fn = fn(ctx)
+                        if per_fn is not None:
+                            ctx.chained_exception = newraise = per_fn
+                    except Exception as _raised:
+                        # handler raises an exception - stop processing
+                        newraise = _raised
+                        break
+    
+                if self._is_disconnect != ctx.is_disconnect:
+                    self._is_disconnect = ctx.is_disconnect
+                    if sqlalchemy_exception:
+                        sqlalchemy_exception.connection_invalidated = (
+                            ctx.is_disconnect
+                        )
+    
+                # set up potentially user-defined value for
+                # invalidate pool.
+                invalidate_pool_on_disconnect = (
+                    ctx.invalidate_pool_on_disconnect
+                )
+    
+            if should_wrap and context:
+                context.handle_dbapi_exception(e)
+    
+            if not self._is_disconnect:
+                if cursor:
+                    self._safe_close_cursor(cursor)
+                with util.safe_reraise(warn_only=True):
+                    self._autorollback()
+    
+            if newraise:
+                util.raise_from_cause(newraise, exc_info)
+            elif should_wrap:
+>               util.raise_from_cause(sqlalchemy_exception, exc_info)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1458: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+exception = OperationalError('(sqlite3.OperationalError) no such table: widget_items',)
+exc_info = (<class 'sqlite3.OperationalError'>, OperationalError('no such table: widget_items',), <traceback object at 0x7fc03a6f2b08>)
+
+    def raise_from_cause(exception, exc_info=None):
+        if exc_info is None:
+            exc_info = sys.exc_info()
+        exc_type, exc_value, exc_tb = exc_info
+        cause = exc_value if exc_value is not exception else None
+>       reraise(type(exception), exception, tb=exc_tb, cause=cause)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tp = <class 'sqlalchemy.exc.OperationalError'>
+value = OperationalError('(sqlite3.OperationalError) no such table: widget_items',)
+tb = <traceback object at 0x7fc03a6f2b08>
+cause = OperationalError('no such table: widget_items',)
+
+    def reraise(tp, value, tb=None, cause=None):
+        if cause is not None:
+            assert cause is not value, "Same cause emitted"
+            value.__cause__ = cause
+        if value.__traceback__ is not tb:
+>           raise value.with_traceback(tb)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.engine.base.Connection object at 0x7fc03a6ef6d8>
+dialect = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x7fc03a6d9a58>
+constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext'>>
+statement = 'SELECT widget_items.created AS widget_items_created, widget_items.updated AS widget_items_updated, widget_items.widge...ked, widget_items.locked_by_user AS widget_items_locked_by_user \nFROM widget_items \nWHERE widget_items.widget_id = ?'
+parameters = ('1',)
+args = (<sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x7fc03a6ef518>, [immutabledict({})])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fc03a6e0668>
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7fc03a6ef3c8>
+
+    def _execute_context(
+        self, dialect, constructor, statement, parameters, *args
+    ):
+        """Create an :class:`.ExecutionContext` and execute, returning
+        a :class:`.ResultProxy`."""
+    
+        try:
+            try:
+                conn = self.__connection
+            except AttributeError:
+                # escape "except AttributeError" before revalidating
+                # to prevent misleading stacktraces in Py3K
+                conn = None
+            if conn is None:
+                conn = self._revalidate_connection()
+    
+            context = constructor(dialect, self, conn, *args)
+        except BaseException as e:
+            self._handle_dbapi_exception(
+                e, util.text_type(statement), parameters, None, None
+            )
+    
+        if context.compiled:
+            context.pre_exec()
+    
+        cursor, statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        if not context.executemany:
+            parameters = parameters[0]
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                statement, parameters = fn(
+                    self,
+                    cursor,
+                    statement,
+                    parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self.engine.logger.info(statement)
+            self.engine.logger.info(
+                "%r", sql_util._repr_params(parameters, batches=10)
+            )
+    
+        evt_handled = False
+        try:
+            if context.executemany:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor, statement, parameters, context
+                    )
+            elif not parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, statement, context
+                    )
+            else:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute(
+>                       cursor, statement, parameters, context
+                    )
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x7fc03a6d9a58>
+cursor = <sqlite3.Cursor object at 0x7fc03ac3eb20>
+statement = 'SELECT widget_items.created AS widget_items_created, widget_items.updated AS widget_items_updated, widget_items.widge...ked, widget_items.locked_by_user AS widget_items_locked_by_user \nFROM widget_items \nWHERE widget_items.widget_id = ?'
+parameters = ('1',)
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7fc03a6ef3c8>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: widget_items [SQL: 'SELECT widget_items.created AS widget_items_created, widget_items.updated AS widget_items_updated, widget_items.widget_id AS widget_items_widget_id, widget_items.repository_id AS widget_items_repository_id, widget_items.widget_type AS widget_items_widget_type, widget_items.settings AS widget_items_settings, widget_items.is_enabled AS widget_items_is_enabled, widget_items.is_deleted AS widget_items_is_deleted, widget_items.locked AS widget_items_locked, widget_items.locked_by_user AS widget_items_locked_by_user \nFROM widget_items \nWHERE widget_items.widget_id = ?'] [parameters: ('1',)] (Background on this error at: http://sqlalche.me/e/e3q8)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: OperationalError
+
+During handling of the above exception, another exception occurred:
+
+i18n_app = <Flask 'testapp'>
+
+    def test_is_used_in_widget_design(i18n_app):
+        return_data = MagicMock()
+        return_data.repository_id = "1"
+        return_data.settings = [{"widget_id": "1"}]
+        return_data.id = "1"
+        widget_id = "1"
+        data_result = MagicMock()
+        with patch("weko_gridlayout.services.WidgetItemServices.get_widget_by_id", return_value=return_data):
+            with patch("weko_gridlayout.models.WidgetDesignSetting.select_by_repository_id", return_value=return_data):
+                with patch("weko_gridlayout.services.WidgetDesignPage.get_by_repository_id", return_value=[return_data]):
+                    assert WidgetDesignServices.is_used_in_widget_design(widget_id)
+        assert not WidgetDesignServices.is_used_in_widget_design(widget_id="")
+>       assert WidgetDesignServices.is_used_in_widget_design(widget_id)
+
+tests/test_services.py:402: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_gridlayout/services.py:791: in is_used_in_widget_design
+    current_app.logger.error('Failed to validate record: ', e)
+/usr/local/lib/python3.6/logging/__init__.py:1337: in error
+    self._log(ERROR, msg, args, **kwargs)
+/usr/local/lib/python3.6/logging/__init__.py:1444: in _log
+    self.handle(record)
+/usr/local/lib/python3.6/logging/__init__.py:1454: in handle
+    self.callHandlers(record)
+/usr/local/lib/python3.6/logging/__init__.py:1516: in callHandlers
+    hdlr.handle(record)
+/usr/local/lib/python3.6/logging/__init__.py:865: in handle
+    self.emit(record)
+.tox/c1/lib/python3.6/site-packages/_pytest/logging.py:328: in emit
+    super().emit(record)
+/usr/local/lib/python3.6/logging/__init__.py:1000: in emit
+    self.handleError(record)
+/usr/local/lib/python3.6/logging/__init__.py:994: in emit
+    msg = self.format(record)
+/usr/local/lib/python3.6/logging/__init__.py:840: in format
+    return fmt.format(record)
+.tox/c1/lib/python3.6/site-packages/_pytest/logging.py:89: in format
+    return super().format(record)
+/usr/local/lib/python3.6/logging/__init__.py:577: in format
+    record.message = record.getMessage()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <LogRecord: flask.app, 40, /code/modules/weko-gridlayout/weko_gridlayout/services.py, 791, "Failed to validate record: ">
+
+    def getMessage(self):
+        """
+        Return the message for this LogRecord.
+    
+        Return the message for this LogRecord after merging any user-supplied
+        arguments with the message.
+        """
+        msg = str(self.msg)
+        if self.args:
+>           msg = msg % self.args
+E           TypeError: not all arguments converted during string formatting
+
+/usr/local/lib/python3.6/logging/__init__.py:338: TypeError
+____________________ test__update_main_layout_id_for_widget ____________________
+
+i18n_app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/weko-gridlayout/test.db>
+
+    def test__update_main_layout_id_for_widget(i18n_app, db):
+        test = WidgetDesignPage(
+            id=1,
+            repository_id="test",
+            url="/",
+            is_main_layout=True
+        )
+        db.session.add(test)
+        db.session.commit()
+        with patch("weko_gridlayout.models.WidgetItem.get_id_by_repository_and_type", return_value=["1"]):
+            with patch("weko_gridlayout.models.WidgetItem.get_by_id", return_value=""):
+                with patch("weko_gridlayout.services.WidgetDesignPageServices._update_page_id_for_widget_item_setting", return_value=""):
+>                   assert WidgetDesignPageServices._update_main_layout_id_for_widget("test")
+
+tests/test_services.py:452: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_gridlayout/services.py:884: in _update_main_layout_id_for_widget
+    page_id
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'weko_gridlayout.services.WidgetDesignPageServices'>
+repository_id = 'test', page_id = 1
+
+    @classmethod
+    def __update_main_layout_page_id_for_widget_item(cls, repository_id,
+                                                     page_id):
+        widget_item_id_list = WidgetItem.get_id_by_repository_and_type(
+            repository_id, WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE)
+        if widget_item_id_list:
+            for widget_id in widget_item_id_list:
+                widget_item = WidgetItem.get_by_id(widget_id)
+>               if widget_item.settings:
+E               AttributeError: 'str' object has no attribute 'settings'
+
+weko_gridlayout/services.py:929: AttributeError
+______________ test__update_main_layout_page_id_for_widget_design ______________
+
+i18n_app = <Flask 'testapp'>
+
+    def test__update_main_layout_page_id_for_widget_design(i18n_app):
+        repository_id = "1"
+        page_id = "1"
+        return_data = {
+            "settings": "test",
+        }
+        with patch("weko_gridlayout.services.WidgetDesignSetting.select_by_repository_id", return_value=return_data):
+            # Doesn't return any value
+>           assert not WidgetDesignPageServices._update_main_layout_page_id_for_widget_design(repository_id, page_id)
+
+tests/test_services.py:464: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_gridlayout/services.py:896: in _update_main_layout_page_id_for_widget_design
+    if isinstance(widget_design.get('settings', '[]'), str) \
+/usr/local/lib/python3.6/json/__init__.py:354: in loads
+    return _default_decoder.decode(s)
+/usr/local/lib/python3.6/json/decoder.py:339: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0x7fc0512eba58>, s = 'test', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.6/json/decoder.py:357: JSONDecodeError
+_________________________ test_find_rss_value[creator] _________________________
+
+i18n_app = <Flask 'testapp'>, keyword = 'creator', item_type = <ItemType 1>
+
+    @pytest.mark.parametrize('keyword', keywords)
+    def test_find_rss_value(i18n_app, keyword, item_type):
+        data = MagicMock()
+        data._source = {
+            "date": ["test"],
+            "creator": {
+                "familyName": ["test", "test"],
+                "givenName": ["test", "test"]
+            }
+        }
+        return_data = {
+            "description.@attributes.descriptionType": "test",
+            "description.@value": "test",
+        }
+        with patch("weko_gridlayout.utils.get_rss_data_source", return_value="Issued"):
+            with patch("weko_records.api.Mapping.get_record", return_value="test"):
+                with patch("weko_records.serializers.utils.get_mapping", return_value=return_data):
+>                   assert find_rss_value(data, keyword)
+E                   AssertionError: assert []
+E                    +  where [] = find_rss_value(<MagicMock id='140463578939968'>, 'creator')
+
+tests/test_utils.py:593: AssertionError
+_______________________ test_find_rss_value[description] _______________________
+
+i18n_app = <Flask 'testapp'>, keyword = 'description', item_type = <ItemType 1>
+
+    @pytest.mark.parametrize('keyword', keywords)
+    def test_find_rss_value(i18n_app, keyword, item_type):
+        data = MagicMock()
+        data._source = {
+            "date": ["test"],
+            "creator": {
+                "familyName": ["test", "test"],
+                "givenName": ["test", "test"]
+            }
+        }
+        return_data = {
+            "description.@attributes.descriptionType": "test",
+            "description.@value": "test",
+        }
+        with patch("weko_gridlayout.utils.get_rss_data_source", return_value="Issued"):
+            with patch("weko_records.api.Mapping.get_record", return_value="test"):
+                with patch("weko_records.serializers.utils.get_mapping", return_value=return_data):
+>                   assert find_rss_value(data, keyword)
+
+tests/test_utils.py:593: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+weko_gridlayout/utils.py:717: in find_rss_value
+    item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+item_type_mapping = 'test', mapping_type = 'jpcoar_mapping'
+
+    def get_mapping(item_type_mapping, mapping_type):
+        """Format itemtype mapping data.
+    
+        [Key:Schema, Value:ItemId]
+        :param item_type_mapping:
+        :param mapping_type:
+        :return:
+        """
+        def get_schema_key_info(schema, parent_key, schema_json={}):
+    
+            for k, v in schema.items():
+                key = parent_key + '.' + k if parent_key else k
+                if isinstance(v, dict):
+                    child_key = pickle.loads(pickle.dumps(key, -1))
+                    get_schema_key_info(v, child_key, schema_json)
+                else:
+                    schema_json[key] = v
+    
+            return schema_json
+    
+        schema = {}
+>       for item_id, maps in item_type_mapping.items():
+E       AttributeError: 'str' object has no attribute 'items'
+
+../weko-records/weko_records/serializers/utils.py:61: AttributeError
+______________________ test_unlocked_widget_login[0-403] _______________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 0, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_unlocked_widget_login(client, users, id, status_code):
+        login_user_via_session(client=client, email=users[id]["email"])
+        with patch("weko_gridlayout.views.WidgetItemServices.unlock_widget", return_value=True):
+            res = client.post("/admin/widget/unlock",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>           assert res.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:25: AssertionError
+______________________ test_unlocked_widget_login[1-403] _______________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 1, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_unlocked_widget_login(client, users, id, status_code):
+        login_user_via_session(client=client, email=users[id]["email"])
+        with patch("weko_gridlayout.views.WidgetItemServices.unlock_widget", return_value=True):
+            res = client.post("/admin/widget/unlock",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>           assert res.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:25: AssertionError
+__________________________ test_unlocked_widget_guest __________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+
+    def test_unlocked_widget_guest(client, users):
+        with patch("weko_gridlayout.views.WidgetItemServices.unlock_widget", return_value=True):
+            res = client.post("/admin/widget/unlock",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>           assert res.status_code == 302
+E           assert 200 == 302
+E             +200
+E             -302
+
+tests/test_views.py:33: AssertionError
+_________________ test_save_widget_layout_setting_login[0-403] _________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 0, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_save_widget_layout_setting_login(client, users, id, status_code):
+        login_user_via_session(client=client, email=users[id]["email"])
+        with patch("weko_gridlayout.views.WidgetDesignServices.update_widget_design_setting", return_value={}):
+            res = client.post("/admin/save_widget_layout_setting",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>           assert res.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:43: AssertionError
+_________________ test_save_widget_layout_setting_login[1-403] _________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 1, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_save_widget_layout_setting_login(client, users, id, status_code):
+        login_user_via_session(client=client, email=users[id]["email"])
+        with patch("weko_gridlayout.views.WidgetDesignServices.update_widget_design_setting", return_value={}):
+            res = client.post("/admin/save_widget_layout_setting",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>           assert res.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:43: AssertionError
+______________________ test_save_widget_item_login[0-403] ______________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 0, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_save_widget_item_login(client, users, id, status_code):
+        login_user_via_session(client=client, email=users[id]["email"])
+        with patch("weko_gridlayout.views.WidgetItemServices.save_command", return_value={}):
+            res = client.post("/admin/save_widget_item",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>           assert res.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:61: AssertionError
+______________________ test_save_widget_item_login[1-403] ______________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 1, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_save_widget_item_login(client, users, id, status_code):
+        login_user_via_session(client=client, email=users[id]["email"])
+        with patch("weko_gridlayout.views.WidgetItemServices.save_command", return_value={}):
+            res = client.post("/admin/save_widget_item",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>           assert res.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:61: AssertionError
+__________________ test_save_widget_design_page_login[0-403] ___________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 0, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_save_widget_design_page_login(client, users, id, status_code):
+        login_user_via_session(client=client, email=users[id]["email"])
+        with patch("weko_gridlayout.views.WidgetDesignPageServices.add_or_update_page", return_value={}):
+            res = client.post("/admin/save_widget_design_page",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>           assert res.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:79: AssertionError
+__________________ test_save_widget_design_page_login[1-403] ___________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 1, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_save_widget_design_page_login(client, users, id, status_code):
+        login_user_via_session(client=client, email=users[id]["email"])
+        with patch("weko_gridlayout.views.WidgetDesignPageServices.add_or_update_page", return_value={}):
+            res = client.post("/admin/save_widget_design_page",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>           assert res.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:79: AssertionError
+______________ test_load_widget_list_design_setting_login[0-403] _______________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 0, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_load_widget_list_design_setting_login(client, users, id, status_code):
+        from weko_gridlayout import views
+        from weko_gridlayout.services import WidgetDesignServices
+        views.get_default_language = Mock()
+        WidgetDesignServices.get_widget_list = Mock(return_value={})
+        WidgetDesignServices.get_widget_preview = Mock(return_value={})
+        login_user_via_session(client=client, email=users[id]["email"])
+        res = client.post("/admin/load_widget_list_design_setting",
+                              data=json.dumps({}),
+                              content_type="application/json")
+>       assert res.status_code == status_code
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_views.py:101: AssertionError
+______________ test_load_widget_list_design_setting_login[1-403] _______________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 1, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_load_widget_list_design_setting_login(client, users, id, status_code):
+        from weko_gridlayout import views
+        from weko_gridlayout.services import WidgetDesignServices
+        views.get_default_language = Mock()
+        WidgetDesignServices.get_widget_list = Mock(return_value={})
+        WidgetDesignServices.get_widget_preview = Mock(return_value={})
+        login_user_via_session(client=client, email=users[id]["email"])
+        res = client.post("/admin/load_widget_list_design_setting",
+                              data=json.dumps({}),
+                              content_type="application/json")
+>       assert res.status_code == status_code
+E       assert 200 == 403
+E         +200
+E         -403
+
+tests/test_views.py:101: AssertionError
+__________________ test_load_widget_design_pages_login[0-403] __________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 0, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_load_widget_design_pages_login(client, users, id, status_code):
+        login_user_via_session(client=client, email=users[id]["email"])
+        with patch("weko_gridlayout.views.get_default_language", return_vlaue={}):
+            with patch("weko_gridlayout.views.WidgetDesignPageServices.get_page_list", return_value={}):
+                res1 = client.post("/admin/load_widget_design_pages",
+                                      data=json.dumps({}),
+                                      content_type="application/json")
+>               assert res1.status_code == status_code
+E               assert 200 == 403
+E                 +200
+E                 -403
+
+tests/test_views.py:159: AssertionError
+__________________ test_load_widget_design_pages_login[1-403] __________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 1, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_load_widget_design_pages_login(client, users, id, status_code):
+        login_user_via_session(client=client, email=users[id]["email"])
+        with patch("weko_gridlayout.views.get_default_language", return_vlaue={}):
+            with patch("weko_gridlayout.views.WidgetDesignPageServices.get_page_list", return_value={}):
+                res1 = client.post("/admin/load_widget_design_pages",
+                                      data=json.dumps({}),
+                                      content_type="application/json")
+>               assert res1.status_code == status_code
+E               assert 200 == 403
+E                 +200
+E                 -403
+
+tests/test_views.py:159: AssertionError
+__________________ test_load_widget_design_page_login[0-403] ___________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 0, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_load_widget_design_page_login(client, users, id, status_code):
+        login_user_via_session(client=client, email=users[id]["email"])
+        with patch("weko_gridlayout.views.WidgetDesignPageServices.get_page", return_value={}):
+            res = client.post("/admin/load_widget_design_page",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>           assert res.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:186: AssertionError
+__________________ test_load_widget_design_page_login[1-403] ___________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 1, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_load_widget_design_page_login(client, users, id, status_code):
+        login_user_via_session(client=client, email=users[id]["email"])
+        with patch("weko_gridlayout.views.WidgetDesignPageServices.get_page", return_value={}):
+            res = client.post("/admin/load_widget_design_page",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>           assert res.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:186: AssertionError
+_____________________ test_delete_widget_item_login[0-403] _____________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 0, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_delete_widget_item_login(client, users, id, status_code):
+        login_user_via_session(client=client, email=users[id]["email"])
+        with patch("weko_gridlayout.views.WidgetItemServices.delete_by_id", return_value={}):
+            res = client.post("/admin/delete_widget_item",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>           assert res.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:204: AssertionError
+_____________________ test_delete_widget_item_login[1-403] _____________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 1, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_delete_widget_item_login(client, users, id, status_code):
+        login_user_via_session(client=client, email=users[id]["email"])
+        with patch("weko_gridlayout.views.WidgetItemServices.delete_by_id", return_value={}):
+            res = client.post("/admin/delete_widget_item",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>           assert res.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:204: AssertionError
+_________________ test_delete_widget_design_page_login[0-403] __________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 0, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_delete_widget_design_page_login(client, users, id, status_code):
+        login_user_via_session(client=client, email=users[id]["email"])
+        with patch("weko_gridlayout.views.WidgetDesignPageServices.delete_page", return_value={}):
+            res = client.post("/admin/delete_widget_design_page",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>           assert res.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:222: AssertionError
+_________________ test_delete_widget_design_page_login[1-403] __________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
+id = 1, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results1)
+    def test_delete_widget_design_page_login(client, users, id, status_code):
+        login_user_via_session(client=client, email=users[id]["email"])
+        with patch("weko_gridlayout.views.WidgetDesignPageServices.delete_page", return_value={}):
+            res = client.post("/admin/delete_widget_design_page",
+                                  data=json.dumps({}),
+                                  content_type="application/json")
+>           assert res.status_code == status_code
+E           assert 200 == 403
+E             +200
+E             -403
+
+tests/test_views.py:222: AssertionError
+=============================== warnings summary ===============================
+../invenio-indexer/invenio_indexer/cli.py:108
+  /code/modules/invenio-indexer/invenio_indexer/cli.py:108: DeprecationWarning: 'resultcallback' has been renamed to 'result_callback'. The old name will be removed in Click 8.1.
+    @queue.resultcallback()
+
+.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3
+  /code/modules/weko-gridlayout/.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3: DeprecationWarning: 'werkzeug.contrib.cache' is deprecated as of version 0.15 and will be removed in version 1.0. It has moved to https://github.com/pallets/cachelib.
+    from werkzeug.contrib.cache import NullCache, SimpleCache, FileSystemCache
+
+.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35
+  /code/modules/weko-gridlayout/.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+    import imp
+
+.tox/c1/src/pypdf2/PyPDF2/generic.py:348
+  /code/modules/weko-gridlayout/.tox/c1/src/pypdf2/PyPDF2/generic.py:348: DeprecationWarning: invalid escape sequence \c
+    b_("c") : b_("\c"),
+
+tests/test_admin.py: 51 warnings
+tests/test_api.py: 4 warnings
+tests/test_models.py: 16 warnings
+tests/test_services.py: 41 warnings
+tests/test_utils.py: 45 warnings
+tests/test_views.py: 60 warnings
+  /code/modules/weko-gridlayout/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:794: FSADeprecationWarning: SQLALCHEMY_TRACK_MODIFICATIONS adds significant overhead and will be disabled by default in the future.  Set it to True or False to suppress this warning.
+    'SQLALCHEMY_TRACK_MODIFICATIONS adds significant overhead and '
+
+tests/test_models.py::test_get_sequence
+  /code/modules/weko-gridlayout/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/langhelpers.py:556: SADeprecationWarning: The SchemaItem.quote attribute is deprecated and will be removed in a future release.  Use the quoted_name.quote attribute on the ``name`` field of the target schema item to retrievequoted status.
+    val = getattr(obj, arg, missing)
+
+tests/test_views.py: 58 warnings
+  /code/modules/weko-gridlayout/.tox/c1/lib/python3.6/site-packages/flask/sessions.py:208: UserWarning: "TEST_SERVER" is not a valid cookie domain, it must contain a ".". Add an entry to your hosts file, for example "TEST_SERVER.localdomain", and use that instead.
+    ' "{rv}.localdomain", and use that instead.'.format(rv=rv)
+
+-- Docs: https://docs.pytest.org/en/stable/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                          Stmts   Miss Branch BrPart  Cover
+---------------------------------------------------------------
+weko_gridlayout/__init__.py       5      0      0      0   100%
+weko_gridlayout/admin.py        194     57     74      5    68%
+weko_gridlayout/api.py          138     21     46      7    80%
+weko_gridlayout/bundles.py       16     16      0      0     0%
+weko_gridlayout/cli.py           23     23      0      0     0%
+weko_gridlayout/config.py        34      0      0      0   100%
+weko_gridlayout/ext.py           24      1     12      2    92%
+weko_gridlayout/models.py       313     50     84     16    82%
+weko_gridlayout/services.py     595    100    236     52    77%
+weko_gridlayout/utils.py        551    131    188     21    73%
+weko_gridlayout/version.py        3      0      0      0   100%
+weko_gridlayout/views.py        236    115     56      6    43%
+---------------------------------------------------------------
+TOTAL                          2132    514    696    109    72%
+Coverage XML written to file coverage.xml
+
+=========================== short test summary info ============================
+FAILED tests/test_admin.py::test_sort_url[0-True-0] - assert 0 == 1
+FAILED tests/test_admin.py::test_sort_url[0-True-None] - assert 0 == 1
+FAILED tests/test_admin.py::test_sort_url[None-True-0] - assert None == 1
+FAILED tests/test_admin.py::test_sort_url[None-True-None] - assert None == 1
+FAILED tests/test_admin.py::test_index_view_WidgetSettingView - werkzeug.rout...
+FAILED tests/test_admin.py::test_create_view_WidgetSettingView - werkzeug.rou...
+FAILED tests/test_admin.py::test_edit_view_WidgetSettingView - werkzeug.routi...
+FAILED tests/test_admin.py::test_details_view_WidgetSettingView - werkzeug.ro...
+FAILED tests/test_admin.py::test_action_delete_WidgetSettingView - TypeError:...
+FAILED tests/test_api.py::test_build_general_data - RuntimeError: Working out...
+FAILED tests/test_api.py::test_create - RuntimeError: No application found. E...
+FAILED tests/test_api.py::test_delete - AttributeError: type object 'WidgetIt...
+FAILED tests/test_api.py::test_is_existed - AttributeError: <class 'weko_grid...
+FAILED tests/test_api.py::test_get_account_role_2 - RuntimeError: No applicat...
+FAILED tests/test_models.py::test_WidgetType_create_2 - sqlalchemy.exc.Operat...
+FAILED tests/test_models.py::test_get_sequence - AttributeError: 'SQLiteExecu...
+FAILED tests/test_models.py::test_create_or_update - sqlalchemy.exc.Interface...
+FAILED tests/test_models.py::test_delete_WidgetDesignPage - ValueError: inval...
+FAILED tests/test_models.py::test_update_settings_by_repository_id - ValueErr...
+FAILED tests/test_services.py::test_save_command - AttributeError: 'int' obje...
+FAILED tests/test_services.py::test_get_locked_widget_info - TypeError: '<' n...
+FAILED tests/test_services.py::test_handle_change_item_in_preview_widget_item
+FAILED tests/test_services.py::test_is_used_in_widget_design - TypeError: not...
+FAILED tests/test_services.py::test__update_main_layout_id_for_widget - Attri...
+FAILED tests/test_services.py::test__update_main_layout_page_id_for_widget_design
+FAILED tests/test_utils.py::test_find_rss_value[creator] - AssertionError: as...
+FAILED tests/test_utils.py::test_find_rss_value[description] - AttributeError...
+FAILED tests/test_views.py::test_unlocked_widget_login[0-403] - assert 200 ==...
+FAILED tests/test_views.py::test_unlocked_widget_login[1-403] - assert 200 ==...
+FAILED tests/test_views.py::test_unlocked_widget_guest - assert 200 == 302
+FAILED tests/test_views.py::test_save_widget_layout_setting_login[0-403] - as...
+FAILED tests/test_views.py::test_save_widget_layout_setting_login[1-403] - as...
+FAILED tests/test_views.py::test_save_widget_item_login[0-403] - assert 200 =...
+FAILED tests/test_views.py::test_save_widget_item_login[1-403] - assert 200 =...
+FAILED tests/test_views.py::test_save_widget_design_page_login[0-403] - asser...
+FAILED tests/test_views.py::test_save_widget_design_page_login[1-403] - asser...
+FAILED tests/test_views.py::test_load_widget_list_design_setting_login[0-403]
+FAILED tests/test_views.py::test_load_widget_list_design_setting_login[1-403]
+FAILED tests/test_views.py::test_load_widget_design_pages_login[0-403] - asse...
+FAILED tests/test_views.py::test_load_widget_design_pages_login[1-403] - asse...
+FAILED tests/test_views.py::test_load_widget_design_page_login[0-403] - asser...
+FAILED tests/test_views.py::test_load_widget_design_page_login[1-403] - asser...
+FAILED tests/test_views.py::test_delete_widget_item_login[0-403] - assert 200...
+FAILED tests/test_views.py::test_delete_widget_item_login[1-403] - assert 200...
+FAILED tests/test_views.py::test_delete_widget_design_page_login[0-403] - ass...
+FAILED tests/test_views.py::test_delete_widget_design_page_login[1-403] - ass...
+=========== 46 failed, 182 passed, 280 warnings in 422.89s (0:07:02) ===========
+ERROR: InvocationError for command /code/modules/weko-gridlayout/.tox/c1/bin/pytest --cov=weko_gridlayout tests -v --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp (exited with code 1)
+___________________________________ summary ____________________________________
+ERROR:   c1: commands failed

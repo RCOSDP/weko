@@ -88,7 +88,6 @@ from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_mapping
-from weko_records_ui.utils import soft_delete
 from weko_redis.redis import RedisConnection
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import (
@@ -220,6 +219,7 @@ def delete_records(index_tree_id, ignore_items):
     hits = get_tree_items(index_tree_id)
     result = []
 
+    from weko_records_ui.utils import soft_delete
     for hit in hits:
         recid = hit.get("_id")
         record = Record.get_record(recid)
@@ -3275,6 +3275,7 @@ def export_all(root_url, user_id, data):
             item_datas["recids"],
             item_datas["data"],
             permissions,
+            export_path
         )
         keys, labels, is_systems, options = headers
         item_datas["recids"].sort()
