@@ -803,13 +803,7 @@ def test_indices(app, db):
         db.session.add(base_index(21, 2, 0))
         db.session.add(base_index(22, 2, 1))
     db.session.commit()
-#1
-#    11
-#2
-#    21
-#    22
-#3
-{'pre_parent': '0', 'parent': '1557820367608', 'position': 0}
+
 @pytest.yield_fixture
 def without_oaiset_signals(app):
     """Temporary disable oaiset signals."""
