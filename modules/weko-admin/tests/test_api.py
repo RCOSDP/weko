@@ -1,14 +1,17 @@
 
+import pytest
 from mock import patch
 from redis import RedisError
 from requests.models import Response
-from flask import make_response
-
+from flask import make_response, request
+from flask_wtf.csrf import CSRFError
+from wtforms import ValidationError
 from weko_admin.api import (
     is_restricted_user,
     _is_crawler,
     send_site_license_mail,
-    TempDirInfo
+    TempDirInfo,
+    validate_csrf_header
 )
 
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_api.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -55,19 +58,26 @@ def test_is_crawler(client,log_crawler_list,restricted_ip_addr,mocker):
     mocker.patch("weko_admin.api.RedisConnection.connection",return_value=mock_redis)
     mock_res=Response()
     mock_res._content = b"122.1.91.145\n122.1.91.146"
-    mocker.patch("weko_admin.api.requests.get",return_value=mock_res)
-    user_info={"user_agent":"","ip_address":""}
-    result = _is_crawler(user_info)
-    assert result == False
-    
-    user_info = {"user_agent":"","ip_address":"122.1.91.145"}
-    result = _is_crawler(user_info)
-    assert result == True
-    
-    mock_redis.srem_all(log_crawler_list[0].list_url)
-    with patch("weko_admin.api.RedisConnection.connection.smembers",side_effect=RedisError):
+    with patch("weko_admin.api.requests.get",return_value=mock_res):
+        user_info={"user_agent":"","ip_address":""}
+        result = _is_crawler(user_info)
+        assert result == False
+
+        user_info = {"user_agent":"","ip_address":"122.1.91.145"}
         result = _is_crawler(user_info)
         assert result == True
+
+        mock_redis.srem_all(log_crawler_list[0].list_url)
+        with patch("weko_admin.api.RedisConnection.connection.smembers",side_effect=RedisError):
+            result = _is_crawler(user_info)
+            assert result == True
+    
+    mock_res=Response()
+    mock_res._content = b""
+    with patch("weko_admin.api.requests.get", return_value=mock_res):
+        with patch("weko_admin.api.RedisConnection", side_effect=RedisError):
+            result = _is_crawler(user_info)
+            assert result == False
 
 
 #def send_site_license_mail(organization_name, mail_list, agg_date, data):
@@ -164,3 +174,64 @@ class TestTempDirInfo:
         temp = TempDirInfo("test_key")
         result = temp.get_all()
         assert result == {"test_path1":{"key1":"value1"},"test_path2":{"key2":"value2"}}
+
+# def validate_csrf_header(request,csrf_header="X-CSRFToken"):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_api.py::test_validate_csrf_header -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_validate_csrf_header(app, mocker):
+    import secrets
+    mocker.patch("weko_admin.api.validate_csrf")
+    currect_token = secrets.token_hex()
+    failed_token = "not_currect_token"
+    headers = [
+        ("X-CSRFToken",currect_token),
+        ("Referer","https://test_server/")
+    ]
+    with app.test_request_context(headers=headers,environ_overrides={
+            'wsgi.url_scheme': 'https'
+    }):
+        req = request
+        validate_csrf_header(request)
+    
+    # not exist referrer
+    headers = [
+        ("X-CSRFToken",currect_token),
+    ]
+    with app.test_request_context(headers=headers,environ_overrides={
+            'wsgi.url_scheme': 'https'
+    }):
+        req = request
+        with pytest.raises(CSRFError) as e:
+            validate_csrf_header(request)
+            assert str(e) == "The referrer header is missing."
+    headers = [
+        ("X-CSRFToken",currect_token),
+        ("Referer","https://test_server_not_correct/")
+    ]
+    with app.test_request_context(headers=headers,environ_overrides={
+            'wsgi.url_scheme': 'https'
+    }):
+        req = request
+        with pytest.raises(CSRFError) as e:
+            validate_csrf_header(request)
+            assert str(e) == "The referrer does not match the host."
+
+    headers = [
+        ("X-CSRFToken",currect_token),
+        ("Referer","https://test_server/")
+    ]
+    with app.test_request_context(headers=headers):
+        req = request
+        validate_csrf_header(req)
+
+    # validation error in csrf
+    mocker.patch("weko_admin.api.validate_csrf",side_effect=ValidationError("test_error"))
+    headers = [
+        ("X-CSRFToken",failed_token),
+    ]
+    with app.test_request_context(headers=headers,environ_overrides={
+            'wsgi.url_scheme': 'https'
+    }):
+        req = request
+        with pytest.raises(CSRFError) as e:
+            validate_csrf_header(request)
+            
