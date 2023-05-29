@@ -95,13 +95,6 @@ def count():
                         {
                             "publish_status": ["0", "1"]
                         }
-                    },
-                    {
-                        "range": {
-                            "publish_date": {
-                                "lte": evaluate_date
-                            }
-                        }
                     }
                 ]
             }
