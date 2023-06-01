@@ -907,13 +907,13 @@ def prepare_edit_item():
         item_uuid = latest_pid.object_uuid
         post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
 
-        if post_workflow:
-            if check_item_is_being_edit(recid, post_workflow, activity):
-                return jsonify(
-                    code=err_code,
-                    msg=_('This Item is being edited.')
-                )
+        if check_item_is_being_edit(recid, post_workflow, activity):
+            return jsonify(
+                code=err_code,
+                msg=_('This Item is being edited.')
+            )
 
+        if post_workflow:
             post_activity['workflow_id'] = post_workflow.workflow_id
             post_activity['flow_id'] = post_workflow.flow_id
         else:

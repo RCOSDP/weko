@@ -35,6 +35,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from weko_deposit.api import WekoDeposit
 from weko_records.serializers.utils import get_item_type_name
+from weko_index_tree.api import Indexes
 
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
@@ -1692,15 +1693,43 @@ class WorkActivity(object):
                     )
                 )
         return common_query
-
+    
     @staticmethod
-    def __format_activity_data_to_show_on_workflow(activities,
-                                                   action_activities):
+    def _check_community_permission(activity_data, index_ids):
+        flag = False
+        if activity_data.item_id:
+            dep = WekoDeposit.get_record(activity_data.item_id)
+            path = dep.get('path', [])
+            for i in path:
+                if str(i) in index_ids:
+                    flag = True
+                    break
+        return flag
+
+    def __format_activity_data_to_show_on_workflow(self, activities,
+                                                   action_activities,
+                                                   is_community_admin):
         """Format activity data to show on Workflow.
 
         @param activities:
         @param action_activities:
+        @param is_community_admin:
         """
+
+        index_ids = []
+        if is_community_admin:
+            role_ids = []
+            if current_user and current_user.is_authenticated:
+                role_ids = [role.id for role in current_user.roles]
+            if role_ids:
+                from invenio_communities.models import Community
+                comm_list = Community.query.filter(
+                    Community.id_role.in_(role_ids)
+                ).all()
+                for comm in comm_list:
+                    index_ids += [str(i.cid) for i in Indexes.get_self_list(comm.root_node_id)
+                                  if i.cid not in index_ids]
+
         for activity_data, last_update_user, \
             flow_name, action_name, role_name \
                 in action_activities:
@@ -1715,11 +1744,14 @@ class WorkActivity(object):
             else:
                 activity_data.StatusDesc = ActionStatusPolicy.describe(
                     ActionStatusPolicy.ACTION_DOING)
-
             activity_data.email = last_update_user
             activity_data.flows_name = flow_name
             activity_data.action_name = action_name
             activity_data.role_name = role_name if role_name else ''
+
+            if is_community_admin:
+                if not self._check_community_permission(activity_data, index_ids):
+                    continue
             # Append to do and action activities into the master list
             activities.append(activity_data)
 
@@ -1831,13 +1863,13 @@ class WorkActivity(object):
             if count > 0:
                 name_param, page = self.__get_activity_list_per_page(
                     activities, max_page, name_param, page,
-                    query_action_activities, size, tab, is_get_all
+                    query_action_activities, size, tab, is_community_admin, is_get_all
                 )
             return activities, max_page, size, page, name_param
 
     def __get_activity_list_per_page(
         self, activities, max_page, name_param,
-        page, query_action_activities, size, tab, is_get_all=False
+        page, query_action_activities, size, tab, is_community_admin, is_get_all=False
     ):
         """Get activity list per page.
 
@@ -1864,7 +1896,7 @@ class WorkActivity(object):
         if action_activities:
             # Format activities
             self.__format_activity_data_to_show_on_workflow(
-                activities, action_activities)
+                activities, action_activities, is_community_admin)
         return name_param, page
 
     def get_all_activity_list(self, community_id=None):

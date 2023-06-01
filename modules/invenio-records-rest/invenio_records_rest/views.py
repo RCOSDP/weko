@@ -1037,6 +1037,28 @@ class RecordResource(ContentNegotiatedMethodView):
 
         try:
             current_app.logger.debug(type(record))
+            role_ids = []
+            can_edit_indexes = []
+            if current_user and current_user.is_authenticated:
+                for role in current_user.roles:
+                    if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
+                        role_ids = []
+                        break
+                    else:
+                        role_ids.append(role.id)
+            if role_ids:
+                from invenio_communities.models import Community
+                from weko_index_tree.api import Indexes
+
+                comm_list = Community.query.filter(
+                    Community.id_role.in_(role_ids)
+                ).all()
+                for comm in comm_list:
+                    for index in Indexes.get_self_list(comm.root_node_id):
+                        if index.cid not in can_edit_indexes:
+                            can_edit_indexes.append(str(index.cid))
+                path = record.get('path', [])
+                data['index'] = list(set(path) - set(can_edit_indexes)) + data.get('index', [])
             record.clear()
             record.update(data)
             record.commit()
