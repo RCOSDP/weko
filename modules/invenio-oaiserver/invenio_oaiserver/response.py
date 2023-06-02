@@ -26,6 +26,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from weko_deposit.api import WekoRecord
 from weko_index_tree.api import Indexes
 from weko_schema_ui.schema import get_oai_metadata_formats
+from weko_schema_ui.models import PublishStatus
 
 from .api import OaiIdentify
 from .fetchers import oaiid_fetcher
@@ -328,8 +329,7 @@ def is_deleted_workflow(pid):
 
 def is_private_workflow(record):
     """Check publish status of workflow is private."""
-    private_status = 1
-    return int(record.get("publish_status")) == private_status
+    return str(record.get("publish_status")) == PublishStatus.PRIVATE.value
 
 
 def is_pubdate_in_future(record):

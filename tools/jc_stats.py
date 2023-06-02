@@ -8,6 +8,7 @@ from invenio_stats.utils import get_aggregations
 from weko_index_tree.api import Indexes
 from flask import current_app
 from weko_search_ui.utils import get_doi_prefix
+from weko_schema_ui.models import PublishStatus
 from invenio_search import RecordsSearch
 from elasticsearch import Elasticsearch, helpers
 import datetime
@@ -50,7 +51,7 @@ aggs_query = {
                     "must": [
                         {
                             "term": {
-                                "publish_status": "0"
+                                "publish_status": PublishStatus.PUBLIC.value
                             }
                         },
                         {
@@ -84,7 +85,10 @@ aggs_query = {
                 {
                     "terms":
                     {
-                        "publish_status": ["0", "1"]
+                        "publish_status": [
+                            PublishStatus.PUBLIC.value,
+                            PublishStatus.PRIVATE.value
+                        ]
                     }
                 },
                 {
@@ -116,7 +120,7 @@ aggs_query = {
                     "must": [
                         {
                             "term": {
-                                "publish_status": "0"
+                                "publish_status": PublishStatus.PUBLIC.value
                             }
                         },
                         {
@@ -150,7 +154,10 @@ aggs_query = {
                 {
                     "terms":
                     {
-                        "publish_status": ["0", "1"]
+                        "publish_status": [
+                            PublishStatus.PUBLIC.value,
+                            PublishStatus.PRIVATE.value
+                        ]
                     }
                 },
                 {
@@ -186,7 +193,7 @@ search = RecordsSearch(index=current_app.config['INDEXER_DEFAULT_INDEX']).sort(
 
 search = search.query('range',**{"dateGranted":{"gte":"2013-04-01"}})
 search = search.query('match', **{'relation_version_is_last': 'true'})
-search = search.query('terms', **{'publish_status': ['0', '1']})
+search = search.query('terms', **{'publish_status': [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]})
 search = search.query('exists',**{"field": "path"})
 
 for h in search.scan():
