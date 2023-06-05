@@ -329,7 +329,10 @@ def is_deleted_workflow(pid):
 
 def is_private_workflow(record):
     """Check publish status of workflow is private."""
-    return str(record.get("publish_status")) == PublishStatus.PRIVATE.value
+    return str(record.get("publish_status")) \
+        in [PublishStatus.DELETE.value,
+            PublishStatus.PRIVATE.value,
+            PublishStatus.NEW.value]
 
 
 def is_pubdate_in_future(record):
