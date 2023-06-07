@@ -2568,11 +2568,20 @@ def check_approval(activity_id='0'):
                  methods=['POST'])
 @login_required
 def send_mail(activity_id='0', mail_template=''):
-    """Send mail.
+    """
+    Sends an email for the specified activity using the given mail template.
 
-    :param activity_id:
-    :param mail_template:
-    :return:
+    This route is accessed via a POST request and requires the user to be logged in.
+
+    Args:
+        activity_id (str): The ID of the activity.
+        mail_template (str): The name of the mail template.
+
+    Returns:
+        Response: JSON response indicating the success or failure of sending the mail.
+
+    Raises:
+        None
     """
     try:
         work_activity = WorkActivity()
@@ -2643,9 +2652,15 @@ def save_activity():
 @workflow_blueprint.route('/usage-report', methods=['GET'])
 def usage_report():
     """
-    Get usage reports.
+    Retrieves and returns the usage reports for the 'usage-report' route.
 
-    @return:
+    This route is accessed via a GET request.
+
+    Returns:
+        Response: JSON response containing the usage reports.
+
+    Raises:
+        None
     """
     getargs = request.args
     item_type_usage_report = current_app.config.get(
@@ -2673,7 +2688,17 @@ def usage_report():
 @workflow_blueprint.route('/get-data-init', methods=['GET'])
 @login_required
 def get_data_init():
-    """Init data."""
+    """
+    Retrieves and returns initial data for the 'get-data-init' route.
+
+    This route is accessed via a GET request and requires the user to be logged in.
+
+    Returns:
+        Response: JSON response containing the initial data.
+
+    Raises:
+        None
+    """
     from weko_records_ui.utils import get_roles, get_terms, get_workflows
     init_workflows = get_workflows()
     init_roles = get_roles()
@@ -3101,6 +3126,18 @@ depositactivity_blueprint.add_url_rule(
 @workflow_blueprint.teardown_request
 @depositactivity_blueprint.teardown_request
 def dbsession_clean(exception):
+    """
+    Cleans up the database session after each request.
+
+    Args:
+        exception (Exception): The exception that occurred during the request.
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
     current_app.logger.debug("weko_workflow dbsession_clean: {}".format(exception))
     if exception is None:
         try:
