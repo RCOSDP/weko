@@ -322,17 +322,20 @@ def extract_paths_from_sets(sets):
     return _paths, _sets
 
 
-def is_deleted_workflow(pid):
+def is_new_workflow(record):
+    """Check workflow is new activity."""
+    return str(record.get("publish_status")) == PublishStatus.NEW.value
+
+
+def is_deleted_workflow(pid, record):
     """Check workflow is deleted."""
-    return pid.status == PIDStatus.DELETED
+    return pid.status == PIDStatus.DELETED or \
+        str(record.get("publish_status")) == PublishStatus.DELETE.value
 
 
 def is_private_workflow(record):
     """Check publish status of workflow is private."""
-    return str(record.get("publish_status")) \
-        in [PublishStatus.DELETE.value,
-            PublishStatus.PRIVATE.value,
-            PublishStatus.NEW.value]
+    return str(record.get("publish_status")) == PublishStatus.PRIVATE.value
 
 
 def is_pubdate_in_future(record):
@@ -409,15 +412,17 @@ def getrecord(**kwargs):
         "is_exists_doi(record):{}".format(is_exists_doi(record)))
     current_app.logger.debug(
         "is_pubdate_in_future(record):{}".format(is_pubdate_in_future(record)))
-    current_app.logger.debug("is_deleted_workflow(pid_object):{}".format(
-        is_deleted_workflow(pid_object)))
+    current_app.logger.debug("is_deleted_workflow(pid_object, record):{}".format(
+        is_deleted_workflow(pid_object, record)))
     current_app.logger.debug(
         "is_private_workflow(pid_object):{}".format(is_private_workflow(record)))
 
     # Harvest is private
+    # or New activity
     if path_list and (_is_output == HARVEST_PRIVATE or
                       (is_exists_doi(record) and
-                       (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record)))):
+                       (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record))) or
+                      is_new_workflow(record)):
         return error(get_error_code_msg(), **kwargs)
     # Item is deleted
     # or Harvest is public & Item is private
@@ -425,7 +430,7 @@ def getrecord(**kwargs):
     # or Harvest is public & There is no guest role in the index Browsing Privilege
     elif _is_output == PRIVATE_INDEX or \
             not path_list or \
-            is_deleted_workflow(pid_object) or \
+            is_deleted_workflow(pid_object, record) or \
             is_private_workflow(record) or \
             is_pubdate_in_future(record):
         header(
@@ -499,8 +504,8 @@ def listidentifiers(**kwargs):
                 "is_exists_doi(record):{}".format(is_exists_doi(record)))
             current_app.logger.debug(
                 "is_pubdate_in_future(record):{}".format(is_pubdate_in_future(record)))
-            current_app.logger.debug("is_deleted_workflow(pid_object):{}".format(
-                is_deleted_workflow(pid_object)))
+            current_app.logger.debug("is_deleted_workflow(pid_object, record):{}".format(
+                is_deleted_workflow(pid_object, record)))
             current_app.logger.debug(
                 "is_private_workflow(pid_object):{}".format(is_private_workflow(record)))
             # Harvest is private
@@ -514,7 +519,7 @@ def listidentifiers(**kwargs):
             # or Harvest is public & There is no guest role in the index Browsing Privilege
             elif _is_output == PRIVATE_INDEX or \
                     not path_list or \
-                    is_deleted_workflow(pid_object) or \
+                    is_deleted_workflow(pid_object, record) or \
                     is_private_workflow(record) or \
                     is_pubdate_in_future(record):
                 header(
@@ -597,8 +602,8 @@ def listrecords(**kwargs):
                 "is_exists_doi(record):{}".format(is_exists_doi(record)))
             current_app.logger.debug(
                 "is_pubdate_in_future(record):{}".format(is_pubdate_in_future(record)))
-            current_app.logger.debug("is_deleted_workflow(pid_object):{}".format(
-                is_deleted_workflow(pid_object)))
+            current_app.logger.debug("is_deleted_workflow(pid_object, record):{}".format(
+                is_deleted_workflow(pid_object, record)))
             current_app.logger.debug(
                 "is_private_workflow(pid_object):{}".format(is_private_workflow(record)))
             # Harvest is private
@@ -612,7 +617,7 @@ def listrecords(**kwargs):
             # or Harvest is public & There is no guest role in the index Browsing Privilege
             elif _is_output == PRIVATE_INDEX or \
                     not path_list or \
-                    is_deleted_workflow(pid_object) or \
+                    is_deleted_workflow(pid_object, record) or \
                     is_private_workflow(record) or \
                     is_pubdate_in_future(record):
                 e_record = SubElement(
