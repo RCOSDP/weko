@@ -393,7 +393,7 @@ def getrecord(**kwargs):
 
     identify = OaiIdentify.get_all()
     if not identify or not identify.outPutSetting:
-        return error(get_error_code_msg(), **kwargs)
+        return error([('idDoesNotExist', 'No matching identifier')])
 
     record_dumper = serializer(kwargs['metadataPrefix'])
     pid_object = OAIIDProvider.get(pid_value=kwargs['identifier']).pid
@@ -423,7 +423,7 @@ def getrecord(**kwargs):
                       (is_exists_doi(record) and
                        (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record))) or
                       is_new_workflow(record)):
-        return error(get_error_code_msg(), **kwargs)
+        return error([('idDoesNotExist', 'No matching identifier')])
     # Item is deleted
     # or Harvest is public & Item is private
     # or Harvest is public & Index is private
