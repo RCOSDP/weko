@@ -41,7 +41,7 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         dep.jrc = jrc
 
         # Update data based on data from DB
-        dep.jrc['weko_shared_id'] = im.get('weko_shared_id')
+        dep.jrc['weko_shared_ids'] = im.get('weko_shared_ids')
         dep.jrc['weko_creator_id'] = im.get('owner')
         dep.jrc['_item_metadata'] = im
         dep.jrc['control_number'] = im.get('recid')

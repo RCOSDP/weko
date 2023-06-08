@@ -135,8 +135,8 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
 
         # Get email list of created workflow user.
         user_id_list = [int(record['owner'])] if record.get('owner') else []
-        if record.get('weko_shared_id'):
-            user_id_list.append(record.get('weko_shared_id'))
+        if record.get('weko_shared_ids'):
+            user_id_list.extend(record.get('weko_shared_ids'))
         created_user_email_list = get_email_list_by_ids(user_id_list)
 
         # Registered user
@@ -174,11 +174,17 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     is_can = True
                 else:
                     try:
-                        date = fjson.get('date')
-                        if date and isinstance(date, list) and date[0]:
-                            adt = date[0].get('dateValue')
-                            pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
+                        date = fjson.get('accessdate')
+                        if date:
+                            pdt = to_utc(dt.strptime(date, '%Y-%m-%d'))
                             is_can = True if dt.utcnow() >= pdt else False
+                            
+                            roles = fjson.get('roles')
+                            if is_can and roles and isinstance(roles, list):
+                                for lst in list(current_user.roles or []):
+                                    if lst.role in [ role.get('role') for role in roles ]:
+                                        is_can = True
+                                        break
                     except BaseException:
                         is_can = False
 
@@ -198,6 +204,13 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                         if lst.name in users:
                             is_can = True
                             break
+
+                    roles = fjson.get('roles')
+                    if roles and isinstance(roles, list):
+                        for lst in list(current_user.roles or []):
+                            if lst.role in [ role.get('role') for role in roles ]:
+                                is_can = True
+                                break
 
                     # Billing file permission check
                     if fjson.get('groupsprice'):
@@ -450,7 +463,7 @@ def check_created_id(record):
 
     Args:
         record (dict): the record to check edit permission.
-        example: {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1657555088462']}, 'path': ['1657555088462'], 'owner': '1', 'recid': '1', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-12'}, '_buckets': {'deposit': '35004d51-8938-4e77-87d7-0c9e176b8e7b'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-12', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True}
+        example: {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1657555088462']}, 'path': ['1657555088462'], 'owner': '1', 'recid': '1', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-12'}, '_buckets': {'deposit': '35004d51-8938-4e77-87d7-0c9e176b8e7b'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-12', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True}
 
     Returns:
         bool: True is the current user has the edit permission.
@@ -460,12 +473,12 @@ def check_created_id(record):
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
     user_id = current_user.get_id() \
             if current_user and current_user.is_authenticated else None
-    if user_id is not None:    
+    if user_id is not None:
         created_id = record.get('_deposit', {}).get('created_by')
-        shared_id = record.get('weko_shared_id')
+        shared_ids = record.get('weko_shared_ids')
         if user_id and created_id and user_id == str(created_id):
             is_himself = True
-        elif user_id and shared_id and user_id == str(shared_id):
+        elif user_id and len(shared_ids)>0 and user_id in shared_ids:
             is_himself = True
         for lst in list(current_user.roles or []):
             # In case of supper user,it's always have permission
@@ -509,8 +522,8 @@ def is_owners_or_superusers(record) -> bool:
     """
     # Get email list of created workflow user.
     user_id_list = [int(record['owner'])] if record.get('owner') else []
-    if record.get('weko_shared_id'):
-        user_id_list.append(record.get('weko_shared_id'))
+    if record.get('weko_shared_ids'):
+        user_id_list.extend(record.get('weko_shared_ids'))
 
     # Registered user
     if current_user and \

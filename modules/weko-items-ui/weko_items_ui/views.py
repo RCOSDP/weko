@@ -230,6 +230,13 @@ def iframe_save_model():
             for key in metainfo.keys():
                 if key.startswith('either_valid_'):
                     del data['metainfo'][key]
+        # double check
+        for key, item in data.get('metainfo').items():
+            if type(item) == list:
+                for setting_vals in item:
+                    for setting_key in setting_vals:
+                        if setting_key == 'roles' or setting_key == 'provide':
+                            setting_vals[setting_key] = [dict(s) for s in set(frozenset(d.items()) for d in setting_vals[setting_key])]
 
         if data and data.get('activity_id'):
             activity_id = data.get('activity_id')
@@ -770,36 +777,42 @@ def validate_user_info():
 
     return jsonify(result)
 
-
-@blueprint_api.route('/get_user_info/<int:owner>/<int:shared_user_id>',
-                     methods=['GET'])
-def get_user_info(owner, shared_user_id):
+@blueprint_api.route('/get_user_info/<int:owner>', methods=['GET'])
+def get_user_info(owner):
     """get_user_info.
 
     Get username and password by querying user id
 
     param:
-        user_id: The user ID
-    return: The result json:
+        user_ids: The user ID list
+    return: The result json list:
+        userid: The userid,
         username: The username,
         email: The email,
         error: null if no error occurs
     """
-    result = {
-        'username': '',
-        'email': '',
-        'owner': False,
-        'error': ''
-    }
+    result = []
     try:
-        user_info = get_user_information(shared_user_id)
-        result['username'] = user_info['username']
-        result['email'] = user_info['email']
-        if owner != 0:
-            result['owner'] = get_user_permission(owner)
+        shared_user_ids = request.args.get('shared_user_ids', [])
+        user_infos = get_user_information(shared_user_ids)
+        for user_info in user_infos:
+            info = {
+            'userid': '',
+            'username': '',
+            'email': '',
+            'owner': False,
+            'error': ''
+            }
+            info['userid'] = user_info['userid']
+            info['username'] = user_info['username']
+            info['email'] = user_info['email']
+            if owner != 0:
+                info['owner'] = get_user_permission(owner)
+            
+            result.append(info)
     except Exception as e:
-        result['error'] = str(e)
-
+        result = {"error": str(e)} 
+    
     return jsonify(result)
 
 
@@ -821,6 +834,63 @@ def get_current_login_user_id():
         result['error'] = str(e)
 
     return jsonify(result)
+
+@blueprint_api.route('/is_login_user_email/<string:email>', methods=['GET'])
+def is_login_user_email(email):
+    result = {
+        'is_login_user': False,
+        'error': '',
+    }
+    # get user_id from delete email
+    user_info = get_user_info_by_email(email)
+    current_user_id = int(get_current_user())
+    print(user_info['user_id'] == current_user_id)
+    if (user_info != None and user_info['user_id'] == current_user_id):
+        message = "ログインユーザーは削除できません。"
+        result['error'] = message
+        result['is_login_user'] = True
+
+    return jsonify(result)
+
+@blueprint_api.route('/is_login_user_ids', methods=['GET'])
+def is_login_user_ids():
+    ids = request.args.getlist('ids')
+    result = {
+        'is_login_user_id' : False,
+        'error': ''
+    }
+    #admin user
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    current_user = get_current_user()
+    is_admin = False
+    for role in list(current_user.roles or []):
+        if role.name in supers:
+            is_admin = True
+    if not is_admin:
+        for target_id in ids:
+            if int(target_id) == int(current_user):
+                result['is_login_user_id'] = True
+                result['error'] = "ログインユーザーは削除できません。"
+                break
+    else:
+        result['is_login_user_id'] = False
+    return jsonify(result)
+
+@blueprint_api.route('/get_userinfo_by_emails', methods=['GET'])
+def get_userinfo_by_emails():
+    emails = request.args.getlist('emails')
+    user_infos = []
+    for email in emails :
+        user_info = get_user_info_by_email(email)
+        if not user_info or ('error' in user_info):
+            raise ConnectionError("wrong email or Cannot connect to server!")
+        
+        user_info['user_id'] = user_info['user_id']
+        user_info['username'] = user_info['username']
+        user_info['email'] = user_info['email']
+        user_infos.append(user_info)
+    
+    return jsonify(user_infos)
 
 
 @blueprint_api.route('/prepare_edit_item', methods=['POST'])
@@ -860,8 +930,7 @@ def prepare_edit_item():
                             object_type='rec',
                             getter=record_class.get_record)
         recid, deposit = resolver.resolve(pid_value)
-        authenticators = [str(deposit.get('owner')),
-                          str(deposit.get('weko_shared_id'))]
+        authenticators = [str(deposit.get('owner'))] + deposit.get('weko_shared_ids') if deposit.get('weko_shared_ids') is not None else []
         user_id = str(get_current_user())
         activity = WorkActivity()
         latest_pid = PIDVersioning(child=recid).last_child

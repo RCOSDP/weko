@@ -260,27 +260,19 @@ def get_user_info_by_email(email):
         result['error'] = str(e)
 
 
-def get_user_information(user_id):
+def get_user_information(user_ids):
     """
-    Get user information user_id.
+    Get user information user_id list.
 
     Query database to get email by using user_id
     Get username from database using user id
-    Pack response data: user id, user name, email
+    Pack response data list: [ user id, user name, email ]
 
     parameter:
-        user_id: The user_id
+        user_ids: The user_id list
     return: response
     """
-    result = {
-        'username': '',
-        'email': '',
-        'fullname': '',
-    }
-    user_info = UserProfile.get_by_userid(user_id)
-    if user_info is not None:
-        result['username'] = user_info.get_username
-        result['fullname'] = user_info.fullname
+    result = []
 
     metadata = MetaData()
     metadata.reflect(bind=db.engine)
@@ -291,11 +283,33 @@ def get_user_information(user_id):
 
     data = record.all()
 
-    for item in data:
-        if item[0] == user_id:
-            result['email'] = item[1]
-            return result
-
+    if type(user_ids) is int:
+        user_ids = [user_ids]
+    for user_id in user_ids:
+        info = {
+            'userid':'',
+            'username': '',
+            'email': '',
+            'fullname': ''
+        }
+        user_info = UserProfile.get_by_userid(user_id)
+        if user_info is not None:
+            info['userid'] = user_id
+            info['username'] = user_info.get_username
+            info['fullname'] = user_info.fullname
+            result.append(info)
+        for item in data:
+            if item[0] == user_id:
+                is_merge = False
+                for exist_info in result:
+                    if exist_info['userid'] == user_id:
+                        # update list
+                        exist_info['email'] = item[1]
+                        is_merge = True
+                if not is_merge:
+                    info['userid'] = user_id
+                    info['email'] = item[1]
+                    result.append(info)
     return result
 
 
@@ -1587,7 +1601,7 @@ def _export_item(record_id,
                                         False, False)
                 record_role_ids = {
                     'weko_creator_id': meta_data.get('weko_creator_id'),
-                    'weko_shared_id': meta_data.get('weko_shared_id')
+                    'weko_shared_ids': meta_data.get('weko_shared_ids')
                 }
                 list_item_role.update(
                     {exported_item['item_type_id']: record_role_ids})
@@ -2100,7 +2114,7 @@ def hide_meta_data_for_role(record):
     # Item Register users and Sharing users
     if record and current_user.get_id() in [
         record.get('weko_creator_id'),
-            str(record.get('weko_shared_id'))]:
+            str(record.get('weko_shared_ids'))]:
         is_hidden = False
 
     return is_hidden
