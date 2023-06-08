@@ -29,7 +29,7 @@ from __future__ import absolute_import, print_function
 
 from flask import Flask
 
-from invenio_oaiharvester import InvenioOAIHarvester
+from invenio_oaiharvester import InvenioOAIHarvester, JPCOARMapper
 
 
 def test_version():
@@ -49,3 +49,8 @@ def test_init():
     assert 'invenio-oaiharvester' not in app.extensions
     ext.init_app(app)
     assert 'invenio-oaiharvester' in app.extensions
+
+# class JPCOARMapper(BaseMapper):
+#     def map(self):
+# def test_JPCOARMapper_map():
+    

@@ -1057,6 +1057,11 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                             key_label.append(new_label.format('0'))
                             key_data.append('')
                     elif properties[key]['type'] in ['array', 'object']:
+                        print('\n\n')
+                        print(f'data - {data}')
+                        print(f'idx - {idx}')
+                        print(f'key - {key}')
+                        print('\n\n')
                         if data and idx < len(data) and data[idx].get(key):
                             m_data = data[idx][key]
                         else:
