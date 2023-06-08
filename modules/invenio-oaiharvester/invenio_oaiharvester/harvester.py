@@ -400,10 +400,14 @@ def add_creator_jpcoar(schema, mapping, res, metadata):
             'jpcoar:creatorName.#text'),
         ('creator.creatorName.@attributes.xml:lang',
             'jpcoar:creatorName.@xml:lang'),
+        ('creator.creatorName.@attributes.nameType',
+            'jpcoar:creatorName.@nameType'),
         ('creator.creatorAlternative.@value',
             'jpcoar:creatorAlternative.#text'),
         ('creator.creatorAlternative.@attributes.xml:lang',
             'jpcoar:creatorAlternative.@xml:lang'),
+        ('creator.@attributes.creatorType',
+            'jpcoar:creator.@creatorType'),
         # ('creator.nameIdentifier.@value',
         #     'jpcoar:nameIdentifier.#text'),
         # ('creator.nameIdentifier.@attributes.nameIdentifierURI',
@@ -455,6 +459,8 @@ def add_contributor_jpcoar(schema, mapping, res, metadata):
             'jpcoar:contributorName.#text'),
         ('contributor.contributorName.@attributes.xml:lang',
             'jpcoar:contributorName.@xml:lang'),
+        ('contributor.contributorName.@attributes.nameType',
+            'jpcoar:contributorName.@nameType'),
         ('contributor.contributorAlternative.@value',
             'jpcoar:contributorAlternative.#text'),
         ('contributor.contributorAlternative.@attributes.xml:lang',
@@ -481,7 +487,7 @@ def add_publisher_jpcoar(schema, mapping, res, metadata):
             'jpcoar:publisherName.#text'
         ),
         (
-            'publisher_jpcoar.publisherName.@attributes.xml.lang',
+            'publisher_jpcoar.publisherName.@attributes.xml:lang',
             'jpcoar:publisherName.@xml:lang'
         ),
         (
@@ -489,7 +495,7 @@ def add_publisher_jpcoar(schema, mapping, res, metadata):
             'jpcoar:publisherDescription.#text'
         ),
         (
-            'publisher_jpcoar.publisherDescription.@attributes.xml.lang',
+            'publisher_jpcoar.publisherDescription.@attributes.xml:lang',
             'jpcoar:publisherDescription.@xml:lang'
         ),
         (
@@ -552,10 +558,22 @@ def add_right(schema, mapping, res, metadata):
 def add_subject(schema, mapping, res, metadata):
     """Add subject."""
     patterns = [
-        ('subject.@value', TEXT),
-        ('subject.@attributes.xml:lang', LANG),
-        ('subject.@attributes.subjectURI', '@subjectURI'),
-        ('subject.@attributes.subjectScheme', '@subjectScheme'),
+        (
+            'subject.@value'
+             TEXT
+        ),
+        (
+            'subject.@attributes.xml:lang',
+            LANG
+        ),
+        (
+            'subject.@attributes.subjectURI',
+            'jpcoar:subject.@subjectURI'
+        ),
+        (
+            'subject.@attributes.subjectScheme',
+            'jpcoar:subject.@subjectScheme'
+        ),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -602,10 +620,212 @@ def add_date(schema, mapping, res, metadata):
 
 
 def add_date_dcterms(schema, mapping, res, metadata):
-    """Add titles other than the main title such as the \
-    title for a contents page or colophon."""
     patterns = [
         ('date_dcterms.@value', '#text'),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
+
+
+def add_edition(schema, mapping, res, metadata):
+    patterns = [
+        (
+            'edition.@value',
+            'dcndl:edition.#text'
+        ),
+        (
+            'edition.@attributes.xml:lang',
+            'dcndl:edition.@xml:lang'
+        ),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
+
+
+def add_volumeTitle(schema, mapping, res, metadata):
+    patterns = [
+        (
+            'volumeTitle.@value',
+            'dcndl:volumeTitle.#text'
+        ),
+        (
+            'volumeTitle.@attributes.xml:lang',
+            'dcndl:volumeTitle.@xml:lang'
+        ),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
+
+
+def add_originalLanguage(schema, mapping, res, metadata):
+    patterns = [
+        (
+            'originalLanguage.@value',
+            'dcndl:originalLanguage.#text'
+        ),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
+
+
+def add_extent(schema, mapping, res, metadata):
+    patterns = [
+        (
+            'extent.@value',
+            'dcterms:extent.#text'
+        ),
+        (
+            'extent.@attributes.xml:lang',
+            'dcterms:extent.@xml:lang'
+        ),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
+
+
+def add_format(schema, mapping, res, metadata):
+    patterns = [
+        (
+            'format.@value',
+            'jpcoar:format.#text'
+        ),
+        (
+            'format.@attributes.xml:lang',
+            'jpcoar:format.@xml:lang'
+        ),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
+
+
+def add_holdingAgent(schema, mapping, res, metadata):
+    patterns = [
+        (
+            'holdingAgent.holdingAgentNameIdentifier.@attributes.nameIdentifierScheme',
+            'jpcoar:holdingAgentNameIdentifier.@nameIdentifierScheme',
+        ),
+        (
+            'holdingAgent.holdingAgentNameIdentifier.@attributes.nameIdentifierURI',
+            'jpcoar:holdingAgentNameIdentifier.@nameIdentifierURI',
+        ),
+        (
+            'holdingAgent.holdingAgentName.@value',
+            'jpcoar:holdingAgentName.#text'
+        ),
+        (
+            'holdingAgent.holdingAgentName.@attributes.xml:lang',
+            'jpcoar:holdingAgentName.@xml:lang'
+        ),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
+
+
+def add_datasetSeries(schema, mapping, res, metadata):
+    patterns = [
+        (
+            'datasetSeries.@attributes.datasetSeriesType',
+            'jpcoar:datasetSeries.@datasetSeriesType',
+        ),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
+
+
+def add_catalog(schema, mapping, res, metadata):
+    patterns = [
+        (
+            'catalog.contributor.@attributes.contributorType',
+            'jpcoar:contributor.@contributorType',
+        ),
+        (
+            'catalog.contributorName.@value',
+            'jpcoar:contributorName.#text',
+        ),
+        (
+            'catalog.contributorName.@attribute.xml:lang',
+            'jpcoar:contributorName.@xml.lang',
+        ),
+        (
+            'catalog.identifier.@attributes.identifierType',
+            'jpcoar:identifier.@identifierType'
+        ),
+        (
+            'catalog.title.@value',
+            'dc:title.#text'
+        ),
+        (
+            'catalog.title.@attributes.xml:lang',
+            'dc:title.@xml:lang'
+        ),
+        (
+            'catalog.description.@value',
+            'datacite:description.#text'
+        ),
+        (
+            'catalog.description.@attributes.xml:lang',
+            'datacite:description.@xml:lang'
+        ),
+        (
+            'catalog.description.@attributes.descriptionType',
+            'datacite:description.@descriptionType'
+        ),
+        (
+            'catalog.subject.@value',
+            'jpcoar:subject.#text'
+        ),
+        (
+            'catalog.subject.@attributes.xml:lang',
+            'jpcoar:subject.@xml:lang'
+        ),
+        (
+            'catalog.subjectURI.@attributes.subjectURI',
+            'jpcoar:subject.@subjectURI
+        ),
+        (
+            'catalog.subjectScheme.@attributes.subjectScheme',
+            'jpcoar:subject.@subjectScheme
+        ),
+        (
+            'catalog.license.@value',
+            'jpcoar:license.#text'
+        ),
+        (
+            'catalog.license.@attributes.xml:lang',
+            'jpcoar:license.@xml:lang'
+        ),
+        (
+            'catalog.license.@attributes.licenseType',
+            'jpcoar:license.@licenseType
+        ),
+        (
+            'catalog.license.@attributes.rdf:resource',
+            'jpcoar:license.@rdf:resource
+        ),
+        (
+            'catalog.rights.@value',
+            'dc:rights.#text'
+        ),
+        (
+            'catalog.rights.@attributes.xml:lang',
+            'dc:rights.@xml:lang'
+        ),
+        (
+            'catalog.rights.@attributes.rdf:resource',
+            'dc:rights.@rdf:resource
+        ),
+        (
+            'catalog.accessRights.@attributes.accessRights',
+            'dc:accessRights.@accessRights'
+        ),
+        (
+            'catalog.accessRights.@attributes.rdf:resource',
+            'dc:accessRights.@rdf:resource
+        ),
+         (
+            'catalog.file.URI.@attributes.objectType',
+            'jpcoar:file.@objectType
+        ),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -840,15 +1060,31 @@ def add_funding_reference(schema, mapping, res, metadata):
         ),
         (
             'fundingReference.funderIdentifier.@value',
-            'datacite:funderIdentifier.#text'
+            'jpcoar:funderIdentifier.#text'
         ),
         (
             'fundingReference.funderIdentifier.@attributes.funderIdentifierType',
-            'datacite:funderIdentifier.@funderIdentifierType'
+            'jpcoar:funderIdentifier.@funderIdentifierType'
         ),
         (
-            'fundingReference.fundingStreamIdentifier.@attributes.funderIdentifierType',
-            'datacite:funderIdentifier.@funderIdentifierType'
+            'fundingReference.funderIdentifier.@attributes.funderIdentifierTypeURI',
+            'jpcoar:funderIdentifier.@funderIdentifierTypeURI'
+        ),
+        (
+            'fundingReference.fundingStreamIdentifier.@attributes.fundingStreamIdentifierType',
+            'jpcoar:fundingStreamIdentifier.@fundingStreamIdentifierType'
+        ),
+        (
+            'fundingReference.fundingStreamIdentifier.@attributes.fundingStreamIdentifierTypeURI',
+            'jpcoar:fundingReference.fundingStreamIdentifier.@fundingStreamIdentifierTypeURI',
+        ),
+        (
+            'fundingReference.fundingStream.@value',
+            'jpcoar:fundingStream.#text'
+        ),
+        (
+            'fundingReference.fundingStream.@attributes.xml:lang',
+            'jpcoar:fundingStream.@xml:lang'
         ),
         # (
         #     'fundingReference.funderIdentifier.@value',
@@ -875,12 +1111,8 @@ def add_funding_reference(schema, mapping, res, metadata):
             'datacite:awardNumber.@awardURI'
         ),
         (
-            'fundingReference.awardNumber.@value',
-            'jpcoar:awardNumber.#text'
-        ),
-        (
-            'fundingReference.awardNumber.@attributes.awardURI',
-            'jpcoar:awardNumber.@awardURI'
+            'fundingReference.awardNumber.@attributes.awardNumberType',
+            'datacite:awardNumber.@awardNumberType'
         ),
     ]
 
@@ -1507,6 +1739,24 @@ class JPCOARMapper(BaseMapper):
                 partial(add_identifier, *args),
             'jpcoar:publisher':
                 partial(add_publisher_jpcoar, *args),
+            'dcterms:date':
+                partial(add_date_dcterms, *args),
+            'dcndl:edition':
+                partial(add_edition, *args),
+            'dcndl:volumeTitle':
+                partial(add_volumeTitle, *args),
+            'dcndl:originalLanguage':
+                partial(add_originalLanguage, *args),
+            'dcterms:extent':
+                partial(add_extent, *args),
+            'jpcoar:format':
+                partial(add_format, *args),
+            'jpcoar:holdingAgent':
+                partial(add_holdingAgent, *args),
+            'jpcoar:datasetSeries':
+                partial(add_datasetSeries, *args),
+            'jpcoar:catalog':
+                partial(add_catalog, *args),
         }
 
         tags = self.json['record']['metadata']['jpcoar:jpcoar']

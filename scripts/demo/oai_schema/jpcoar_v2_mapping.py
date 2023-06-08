@@ -1629,6 +1629,7 @@ xsd = {
             "attributes": [
                 {
                     "use": "optional",
+                    "name": "datasetSeriesType"
                     "ref": None,
                     "restriction": {
                         "enumeration": [
@@ -1827,6 +1828,7 @@ xsd = {
                     {
                         "use": "required",
                         "ref": None,
+                        "name": "accessRights"
                         "restriction": {
                             "enumeration": [
                                 "embargoed access",
