@@ -351,21 +351,6 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     type_key, resource_type = metadata_item.get_first_data_by_mapping(
         'type.@value')
 
-    print('\n\n\n')
-    print("item_metadata_validation")
-    print('\n')
-    print(f"metadata_item ~ {metadata_item}")
-    print(f"metadata_item-DIR ~ {dir(metadata_item)}")
-    print('\n')
-    print(f"item_type ~ {item_type}")
-    print(f"item_type-DIR ~ {dir(item_type)}")
-    print('\n')
-    print(f"type_key ~ {type_key}")
-    print(f"type_key-DIR ~ {dir(type_key)}")
-    print('\n')
-    print(f"resource_type ~ {resource_type}")
-    print('\n\n\n')
-
     error_list = {'required': [], 'required_key': [], 'pattern': [],
                   'either': [],  'either_key': [], 'mapping': [], 'other': ''}
     # check resource type request
@@ -551,10 +536,11 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     current_app.logger.debug(properties)
     current_app.logger.debug(metadata_item)
 
-    if properties and \
-            ((identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCite']
-              and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC']
-              ) or is_import):
+    # if properties and \
+    #         ((identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCite']
+    #           and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC']
+    #           ) or is_import):
+    if properties and is_import:
         return validation_item_property(metadata_item, properties)
     else:
         return _('Cannot register selected DOI for current Item Type of this '

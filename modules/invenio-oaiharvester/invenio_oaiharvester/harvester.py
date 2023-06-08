@@ -476,14 +476,30 @@ def add_contributor_jpcoar(schema, mapping, res, metadata):
 def add_publisher_jpcoar(schema, mapping, res, metadata):
     """Add publisher."""
     patterns = [
-        ('publisher.@value', TEXT),
-        ('publisher.@attributes.xml:lang', LANG),
-        # ('publisher.publisherName.@value', 'jpcoar:publisherName.#text'),
-        # ('publisher.publisherName.@attributes.xml.lang', LANG),
-        # ('publisher.publisherDescription.@value', 'jpcoar:publisherDescription.#text'),
-        # ('publisher.publisherDescription.@attributes.xml.lang', LANG),
-        # ('publisher.location.@value', 'dcndl:location.#text'),
-        # ('publisher.publicationPlace.@value', 'dcndl:publicationPlace.#text'),
+        (
+            'publisher_jpcoar.publisherName.@value',
+            'jpcoar:publisherName.#text'
+        ),
+        (
+            'publisher_jpcoar.publisherName.@attributes.xml.lang',
+            'jpcoar:publisherName.@xml:lang'
+        ),
+        (
+            'publisher_jpcoar.publisherDescription.@value',
+            'jpcoar:publisherDescription.#text'
+        ),
+        (
+            'publisher_jpcoar.publisherDescription.@attributes.xml.lang',
+            'jpcoar:publisherDescription.@xml:lang'
+        ),
+        (
+            'publisher_jpcoar.location.@value',
+            'dcndl:location.#text'
+        ),
+        (
+            'publisher_jpcoar.publicationPlace.@value',
+            'dcndl:publicationPlace.#text'
+        ),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -506,18 +522,18 @@ def add_access_right(schema, mapping, res, metadata):
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-# def add_apc(schema, mapping, res, metadata):
-#     """Add apc.
+def add_apc(schema, mapping, res, metadata):
+    """Add apc.
 
-#     Args:
-#         schema ([type]): [description]
-#         mapping ([type]): [description]
-#         res ([type]): [description]
-#         metadata ([type]): [description]
-#     """
-#     patterns = [
-#         ('apc.@value', TEXT),
-#     ]
+    Args:
+        schema ([type]): [description]
+        mapping ([type]): [description]
+        res ([type]): [description]
+        metadata ([type]): [description]
+    """
+    patterns = [
+        ('apc.@value', TEXT),
+    ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
@@ -580,6 +596,16 @@ def add_date(schema, mapping, res, metadata):
     patterns = [
         ('date.@value', TEXT),
         ('date.@attributes.dateType', '@dateType'),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
+
+
+def add_date_dcterms(schema, mapping, res, metadata):
+    """Add titles other than the main title such as the \
+    title for a contents page or colophon."""
+    patterns = [
+        ('date_dcterms.@value', '#text'),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -804,22 +830,58 @@ def add_funding_reference(schema, mapping, res, metadata):
     """Add the grant information if you have received \
     financial support (funding) to create the resource."""
     patterns = [
-        ('fundingReference.funderName.@value',
-            'jpcoar:funderName.#text'),
-        ('fundingReference.funderName.@attributes.xml:lang',
-            'jpcoar:funderName.@xml:lang'),
-        ('fundingReference.funderIdentifier.@value',
-            'jpcoar:funderIdentifier.#text'),
-        ('fundingReference.funderIdentifier.@attributes.funderIdentifierType',
-            'jpcoar:funderIdentifier.@funderIdentifierType'),
-        ('fundingReference.awardTitle.@value',
-            'jpcoar:awardTitle.#text'),
-        ('fundingReference.awardTitle.@attributes.xml:lang',
-            'jpcoar:awardTitle.@xml:lang'),
-        ('fundingReference.awardNumber.@value',
-            'jpcoar:awardNumber.#text'),
-        ('fundingReference.awardNumber.@attributes.awardURI',
-            'jpcoar:awardNumber.@awardURI'),
+        (
+            'fundingReference.funderName.@value',
+            'jpcoar:funderName.#text'
+        ),
+        (
+            'fundingReference.funderName.@attributes.xml:lang',
+            'jpcoar:funderName.@xml:lang'
+        ),
+        (
+            'fundingReference.funderIdentifier.@value',
+            'datacite:funderIdentifier.#text'
+        ),
+        (
+            'fundingReference.funderIdentifier.@attributes.funderIdentifierType',
+            'datacite:funderIdentifier.@funderIdentifierType'
+        ),
+        (
+            'fundingReference.fundingStreamIdentifier.@attributes.funderIdentifierType',
+            'datacite:funderIdentifier.@funderIdentifierType'
+        ),
+        # (
+        #     'fundingReference.funderIdentifier.@value',
+        #     'jpcoar:funderIdentifier.#text'
+        # ),
+        # (
+        #     'fundingReference.funderIdentifier.@attributes.funderIdentifierType',
+        #     'jpcoar:funderIdentifier.@funderIdentifierType'
+        # ),
+        (
+            'fundingReference.awardTitle.@value',
+            'jpcoar:awardTitle.#text'
+        ),
+        (
+            'fundingReference.awardTitle.@attributes.xml:lang',
+            'jpcoar:awardTitle.@xml:lang'
+        ),
+        (
+            'fundingReference.awardNumber.@value',
+            'datacite:awardNumber.#text'
+        ),
+        (
+            'fundingReference.awardNumber.@attributes.awardURI',
+            'datacite:awardNumber.@awardURI'
+        ),
+        (
+            'fundingReference.awardNumber.@value',
+            'jpcoar:awardNumber.#text'
+        ),
+        (
+            'fundingReference.awardNumber.@attributes.awardURI',
+            'jpcoar:awardNumber.@awardURI'
+        ),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -1385,8 +1447,8 @@ class JPCOARMapper(BaseMapper):
                 partial(add_contributor_jpcoar, *args),
             'dcterms:accessRights':
                 partial(add_access_right, *args),
-            # 'rioxxterms:apc':
-            #     partial(add_apc, *args),
+            'rioxxterms:apc':
+                partial(add_apc, *args),
             'dc:rights':
                 partial(add_right, *args),
             'jpcoar:subject':

@@ -3961,6 +3961,9 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       }
 
       $scope.validateRequiredItem = function () {
+        let iRecordsForm = $rootScope.recordsVM.invenioRecordsForm
+        let iRecordsModel = $rootScope.recordsVM.invenioRecordsModel // Please do not delete this variable. It is being used
+        var catalogTitleChecker = []
         let schemaForm = $rootScope.recordsVM.invenioRecordsForm;
         let depositionForm = $scope.depositionForm;
         let listItemErrors = [];
@@ -3980,6 +3983,35 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             });
           });
         }
+
+        /* START - This code snippet will be editted for catalog title use when it is already mapped */
+        iRecordsForm.forEach(item => {
+          let itemTitle = item.title.toLowerCase()
+          let key = item.key[0]
+          let sourceTitle
+          let language
+          
+          // For Catalog Title Language Requirement Check
+          if (itemTitle == "source title") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              // Source title key name - subitem_1522650091861
+              sourceTitle = modelObject[idxModelObject].subitem_1522650091861 || modelObject[idxModelObject].subitem_source_title
+              // Language key name - subitem_1522650068558
+              langauge = modelObject[idxModelObject].subitem_1522650068558 || modelObject[idxModelObject].subitem_source_title_language
+
+              if (langauge) {
+                catalogTitleChecker.push(langauge)
+              }
+              if (catalogTitleChecker.length === 0 && sourceTitle) {
+                listItemErrors.push(`${item.title}-Language`)
+              }
+              catalogTitleChecker = []
+            }
+          } //: TEST
+        }) //: iRecordsForm.forEach
+        /* END - This code snippet will be editted for catalog title use when it is already mapped */
+
         for (let i = 0; i < schemaForm.length; i++) {
           let listSubItem = $scope.findRequiredItemInSchemaForm(schemaForm[i])
           if (listSubItem.length === 0) {
@@ -4033,7 +4065,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let iRecordsModel = $rootScope.recordsVM.invenioRecordsModel // Please do not delete this variable. It is being used
         var itemsToBeCheckedForDuplication = []
         var itemsToBeCheckedForDuplicationForDateUse = []
-        
+
         iRecordsForm.forEach(item => {
           let itemTitle = item.title.toLowerCase()
           let key = item.key[0]
@@ -4544,20 +4576,21 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             itemsToBeCheckedForDuplication = []
           } //: DEGREE GRANTOR
 
-          /* EDIT AND USE WHEN HOLDING AGENT AND CATALOG IS ALREADY MAPPED
-          else if (itemTitle == "holding agent") {
+          else if (itemTitle == "holdingAgent") {
             let modelObject = eval(`iRecordsModel.${key}`)
             for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
               let subLevelItem = modelObject[idxModelObject]
+              
+              /* EDIT WHEN THIS WILL BE MAPPED PERMANENTLY */
               let subLevelItemKeys = Object.keys(subLevelItem)
               for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
-                // Holding Agent Name key name - xxxxxxxxxx
-                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "xxxxxxxxxx") {
-                  let holdingAgentNameObject = subLevelItem.xxxxxxxxxx
+                // Holding Agent Name key name - subitem_1684475814086
+                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "subitem_1684475814086") {
+                  let holdingAgentNameObject = subLevelItem.subitem_1684475814086
                   for (let idxholdingAgentNameObject=0; idxholdingAgentNameObject < holdingAgentNameObject.length; idxholdingAgentNameObject++) {
-                    // Language key name - yyyyyyyyyy
-                    if (!itemsToBeCheckedForDuplication.includes(holdingAgentNameObject[idxholdingAgentNameObject].yyyyyyyyyy)) {
-                      itemsToBeCheckedForDuplication.push(holdingAgentNameObject[idxholdingAgentNameObject].yyyyyyyyyy)
+                    // Language key name - subitem_1684475819226
+                    if (!itemsToBeCheckedForDuplication.includes(holdingAgentNameObject[idxholdingAgentNameObject].subitem_1684475819226)) {
+                      itemsToBeCheckedForDuplication.push(holdingAgentNameObject[idxholdingAgentNameObject].subitem_1684475819226)
                     } else {
                       listItemErrors.push(`${item.title}-Holding Agent Name-Language`)
                     }
@@ -4566,6 +4599,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 } //: if holdingAgentName
         
               } //: idxSubLevelItemKeys
+
             } //: idxModelObject
             itemsToBeCheckedForDuplication = []
           } //: HOLDING AGENT
@@ -4582,7 +4616,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             }
             itemsToBeCheckedForDuplication = []
           } //: CATALOG
-          */
 
         }) //: iRecordsForm.forEach
 
@@ -4766,6 +4799,26 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             } //: idxModelObject
             itemsToBeCheckedForJaKana = []
           } //: CONTRIBUTOR
+
+          // This is just for testing Holding agent name and catalog title 
+          else if (itemTitle == "source title") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              if (modelObject[idxModelObject].subitem_1522650068558) {
+                // Language key name - subitem_1522650068558
+                itemsToBeCheckedForJaKana.push(modelObject[idxModelObject].subitem_1522650068558)
+              }
+              
+              else if (modelObject[idxModelObject].subitem_source_title_language) {
+                // Language key name - subitem_source_title_language
+                itemsToBeCheckedForJaKana.push(modelObject[idxModelObject].subitem_source_title_language)
+              }
+            }
+            if (itemsToBeCheckedForJaKana.includes("ja-Kana") && !itemsToBeCheckedForJaKana.includes("ja")) {
+              listItemErrors.push(`${item.title}-Language`)
+            }
+            itemsToBeCheckedForJaKana = []
+          } //: TEST
 
            /* USE WHEN HOLDING AGENT AND CATALOG IS ALREADY MAPPED
           else if (itemTitle == "holding agent") {
@@ -4996,6 +5049,26 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             itemsToBeCheckedForJaLatn = []
           } //: CONTRIBUTOR
 
+          // This is just for testing Holding agent name and catalog title 
+          else if (itemTitle == "source title") {
+            let modelObject = eval(`iRecordsModel.${key}`)
+            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
+              if (modelObject[idxModelObject].subitem_1522650068558) {
+                // Language key name - subitem_1522650068558
+                itemsToBeCheckedForJaLatn.push(modelObject[idxModelObject].subitem_1522650068558)
+              }
+              
+              else if (modelObject[idxModelObject].subitem_source_title_language) {
+                // Language key name - subitem_source_title_language
+                itemsToBeCheckedForJaLatn.push(modelObject[idxModelObject].subitem_source_title_language)
+              }
+            }
+            if (itemsToBeCheckedForJaLatn.includes("ja-Latn") && !itemsToBeCheckedForJaLatn.includes("ja")) {
+              listItemErrors.push(`${item.title}-Language`)
+            }
+            itemsToBeCheckedForJaLatn = []
+          } //: TEST
+
            /* USE WHEN HOLDING AGENT AND CATALOG IS ALREADY MAPPED
           else if (itemTitle == "holding agent") {
             let modelObject = eval(`iRecordsModel.${key}`)
@@ -5066,12 +5139,12 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           /^[0-9]{4,4}$/, // YYYY
           /^[0-9]{4,4}-[0-9]{2,2}$/, // YYYY-MM
           /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}$/, // YYYY-MM-DD
-          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}\+[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM-DDThh:mmTZD
-          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}-[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM-DDThh:mmTZD
-          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}\+[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM -DDThh:mm:ssTZD
-          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}-[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM -DDThh:mm:ssTZD
-          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}.[0-9]{2,2}\+[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM-DDThh:mm:ss.sTZD
-          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}.[0-9]{2,2}-[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM-DDThh:mm:ss.sTZD
+          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}\+[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM-DDThh:mmTZD+ 
+          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}-[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM-DDThh:mmTZD-
+          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}\+[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM -DDThh:mm:ssTZD+
+          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}-[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM -DDThh:mm:ssTZD^-
+          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}.[0-9]{2,2}\+[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM-DDThh:mm:ss.sTZD+
+          /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}.[0-9]{2,2}-[0-9]{2,2}:[0-9]{2,2}$/, // YYYY-MM-DDThh:mm:ss.sTZD-
         ]
 
         iRecordsForm.forEach(item => {
@@ -5079,24 +5152,39 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           let key = item.key[0]
           
           // NEEDS TO BE EDITTED AFTER MAPPING
-          if (itemTitle == "dcterms:date") {
+          if (itemTitle == "source title") {
             let modelObject = eval(`iRecordsModel.${key}`)
-            var isValid = false
             if (modelObject) {
-              // Date key name - subitem_source_title
-              givenDate = modelObject.subitem_source_title
+              var isValid = false
+              // Date key name - subitem_1684475814086
+              givenDate = modelObject[0].subitem_1684475814086
               validDatePatterns.forEach(element => {
-                if (givenDate.match(element)) {
+                if (givenDate && givenDate.match(element)) {
                   isValid = true
                 }
               });
               if (!isValid) {
-                listItemErrors.push(`${item.title}-Date`)
+                if (givenDate) {
+                  listItemErrors.push(`${item.title}-Date`)
+                }
               }
-              itemsToBeCheckedForDateFormat = []
+
+              // subitem_source_title
+              givenDate2 = modelObject[0].subitem_source_title
+              validDatePatterns.forEach(element => {
+                if (givenDate2 && givenDate2.match(element)) {
+                  isValid = true
+                }
+              });
+              if (!isValid) {
+                if (givenDate2) {
+                  listItemErrors.push(`${item.title}-Date`)
+                }
+              }
             } //: if modelObject
           } //: DCTERMS:DATE
         }) //: iRecordsForm.forEach
+        
 
         if (listItemErrors.length > 0) {
           let message = $("#date_format_error").val() + '<br/><br/>';

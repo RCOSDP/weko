@@ -5,7 +5,8 @@ from weko_schema_ui.schema import (
     schema_list_render,
     delete_schema,
     delete_schema_cache,
-    get_oai_metadata_formats)
+    get_oai_metadata_formats,
+)
 import pytest
 import os
 from flask import current_app
@@ -150,12 +151,25 @@ def test_SchemaConverter(app):
 #         def get_element(str):
 #         def get_key_list(nodes):
 #     # def get_node(self, dc, key=None):
+
 #     def find_nodes(self, mlst):
 #         # def del_type(nid):
 #         def cut_pre(str):
 #         def items_node(nid, nlst, index=0):
 #         def get_node_dic(key):
 #         def get_path_list(key):
+# def test_find_nodes(app, db_oaischema):
+#     record = dict()
+#     # with open("tests/data/schematree_result.json", "r") as f:
+#     #     record = json.load(f,object_pairs_hook=OrderedDict)
+        
+#     # instance = SchemaTree(record=record,schema_name="jpcoar_mapping")
+#     mlst = [
+#         {"publisher": "test"}
+#     ]
+#     print(instance.find_nodes(mlst))
+#     raise BaseException
+
 
 
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_schema.py::TestSchemaTree -vv --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
@@ -168,7 +182,78 @@ class TestSchemaTree:
         assert _schema_obj==""
         assert _item_type_id==""
         
+
+    # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_schema.py::TestSchemaTree::test_find_nodes -vv --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+
+    # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_schema.py::TestSchemaTree::test_find_nodes_publisher_type -vv --cov-report=html -cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+    # THIS TEST IS FOR CHECKING PUBLISHER_TYPE ONLY
+    def test_find_nodes_publisher_type(self,db_oaischema):
+        record = dict()
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+
+        with open("tests/data/schematree_result.json", "r") as f:
+            record = json.load(f,object_pairs_hook=OrderedDict)
         
+        record["jpcoar:publisher_jpcoar"] = {
+            "type": {
+                    "maxOccurs": "unbounded",
+                    "minOccurs": 0,
+                },
+                "jpcoar:publisherName": {
+                    "type": {
+                        "maxOccurs": "unbounded",
+                        "minOccurs": 0,
+                        "attributes": [{
+                            "use": "optional",
+                            "name": "xml:lang",
+                            "ref": "xml:lang"
+                        }]
+                    }
+                },
+                "jpcoar:publisherDescription": {
+                    "type": {
+                        "maxOccurs": "unbounded",
+                        "minOccurs": 0,
+                        "attributes": [{
+                            "use": "optional",
+                            "name": "xml:lang",
+                            "ref": "xml:lang"
+                        }]
+                    }
+                },
+                "dcndl:location": {
+                    "type": {
+                        "maxOccurs": "unbounded",
+                        "minOccurs": 0,
+                    }
+                },
+                "dcndl:publicationPlace": {
+                    "type": {
+                        "maxOccurs": "unbounded",
+                        "minOccurs": 0,
+                    }
+                },
+        }
+        jpcoar_v2_mapping_xsd = {   
+            "publisher_jpcoar": "jpcoar:publisher_jpcoar",
+        }
+        jpcoar_v2_mapping_xsd_2 = {   
+            "not_publisher_jpcoar": "jpcoar:not_publisher_jpcoar",
+        }
+        instance._schema_obj = record
+        mlst = [jpcoar_v2_mapping_xsd]
+        mlst2 = [jpcoar_v2_mapping_xsd_2]
+
+        result = list(instance.find_nodes(mlst)[0].keys())
+        assert "jpcoar:publisher" in result
+
+        result2 = list(instance.find_nodes(mlst2))
+        assert not "jpcoar:publisher" in result2
+
+
+        # not publisher test as well
+        
+
     def test_get_mapping_data_jpcoar(self,db_oaischema):
         record = dict()
         with open("tests/data/schematree_result.json", "r") as f:
