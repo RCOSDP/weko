@@ -511,7 +511,8 @@ def listidentifiers(**kwargs):
             # Harvest is private
             if path_list and (_is_output == HARVEST_PRIVATE or
                               (is_exists_doi(record) and
-                               (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record)))):
+                               (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record))) or
+                              is_new_workflow(record)):
                 continue
             # Item is deleted
             # or Harvest is public & Item is private
@@ -609,7 +610,8 @@ def listrecords(**kwargs):
             # Harvest is private
             if path_list and (_is_output == HARVEST_PRIVATE or
                               (is_exists_doi(record) and
-                               (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record)))):
+                               (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record))) or
+                              is_new_workflow(record)):
                 continue
             # Item is deleted
             # or Harvest is public & Item is private
