@@ -169,11 +169,11 @@ xsd = {
                             "ref": None,
                             "restriction": {
                                 "enumeration": [
-                                    "kakenhi"
-                                    "ISNI"
-                                    "Ringgold"
-                                    "GRID"
-                                    "ROR"
+                                    "kakenhi",
+                                    "ISNI",
+                                    "Ringgold",
+                                    "GRID",
+                                    "ROR",
                                 ]
                             }
                         },
@@ -347,15 +347,11 @@ xsd = {
                             "ref": None,
                             "restriction": {
                                 "enumeration": [
-                                    "e-Rad",
-                                    "NRID",
-                                    "ORCID",
-                                    "ISNI",
-                                    "VIAF",
-                                    "AID",
                                     "kakenhi",
+                                    "ISNI",
                                     "Ringgold",
-                                    "GRID"
+                                    "GRID",
+                                    "ROR",
                                 ]
                             }
                         },
@@ -1015,6 +1011,11 @@ xsd = {
                                 "JGN_fundingStream",
                             ]
                         }
+                    },
+                    {
+                        "use": "optional",
+                        "name": "fundingStreamIdentifierTypeURI",
+                        "ref": None,
                     }
                 ]
             }
@@ -1478,13 +1479,6 @@ xsd = {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
-            "attributes": [
-                {
-                    "use": "optional",
-                    "name": "xml:lang",
-                    "ref": "xml:lang"
-                }
-            ]
         },
         "jpcoar:publisherName": {
             "type": {
@@ -1512,11 +1506,6 @@ xsd = {
             "type": {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
-                "attributes": [{
-                    "use": "optional",
-                    "name": "xml:lang",
-                    "ref": "xml:lang"
-                }]
             }
         },
         "dcndl:publicationPlace": {
@@ -1530,11 +1519,6 @@ xsd = {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
-            "attributes": [{
-                "use": "optional",
-                "name": "xml:lang",
-                "ref": "xml:lang"
-            }]
         },
     },
     "dcndl:edition": {
@@ -1656,7 +1640,7 @@ xsd = {
             ]
         },
     },
-    "jpcoar:catalog": {
+    "jpcoar:catalog": { 
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
@@ -1672,26 +1656,7 @@ xsd = {
                         "ref": None,
                         "restriction": {
                             "enumeration": [
-                                "ContactPerson",
-                                "DataCollector",
-                                "DataCurator",
-                                "DataManager",
-                                "Distributor",
-                                "Editor",
                                 "HostingInstitution",
-                                "Producer",
-                                "ProjectLeader",
-                                "ProjectManager",
-                                "ProjectMember",
-                                "RegistrationAgency",
-                                "RegistrationAuthority",
-                                "RelatedPerson",
-                                "Researcher",
-                                "ResearchGroup",
-                                "Sponsor",
-                                "Supervisor",
-                                "WorkPackageLeader",
-                                "Other"
                             ]
                         }
                     }
@@ -1864,15 +1829,10 @@ xsd = {
                         "ref": None,
                         "restriction": {
                             "enumeration": [
-                                "e-Rad",
-                                "NRID",
-                                "ORCID",
-                                "ISNI",
-                                "VIAF",
-                                "AID",
-                                "kakenhi",
-                                "Ringgold",
-                                "GRID"
+                                "embargoed access",
+                                "metadata only access",
+                                "restricted access",
+                                "open access"
                             ]
                         }
                     },
@@ -1910,4 +1870,3 @@ xsd = {
         },
     },
 }
-    
