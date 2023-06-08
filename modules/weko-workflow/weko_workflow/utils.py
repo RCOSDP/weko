@@ -1375,7 +1375,7 @@ def convert_record_to_item_metadata(record_metadata):
         '$schema': record_metadata['item_type_id'],
         'pubdate': record_metadata['publish_date'],
         'title': record_metadata['item_title'],
-        'weko_shared_id': record_metadata['weko_shared_id']
+        'shared_user_ids': record_metadata['weko_shared_ids']
     }
     item_type = ItemTypes.get_by_id(record_metadata['item_type_id']).render
 
@@ -1417,12 +1417,11 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         pid_type='recid',
         pid_value="{}.0".format(recid.pid_value)
     ).one_or_none()
-
     if not draft_pid:
         draft_record = deposit.prepare_draft_item(recid)
         rtn = activity.init_activity(post_activity,
-                                     community,
-                                     draft_record.model.id)
+                                    community,
+                                    draft_record.model.id)
     else:
         # Clone org bucket into draft record.
         try:
@@ -1472,7 +1471,7 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         rtn = activity.init_activity(post_activity,
                                      community,
                                      draft_pid.object_uuid)
-
+    print('************rtn******** {}', rtn)
     if rtn:
         # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
         identifier_actionid = get_actionid('identifier_grant')
@@ -2274,7 +2273,7 @@ def process_send_reminder_mail(activity_detail, mail_id):
     mail_info = set_mail_info(item_info, activity_detail)
 
     from weko_items_ui.utils import get_user_information
-    update_user = get_user_information(activity_detail.activity_login_user)
+    update_user = get_user_information(activity_detail.activity_login_user)[0]
     if update_user.get('email') != '':
         mail_info['mail_address'] = update_user.get('email')
     else:
@@ -2775,7 +2774,7 @@ def save_activity_data(data: dict) -> NoReturn:
     activity_id = data.get("activity_id")
     activity_data = {
         "title": data.get("title"),
-        "shared_user_id": data.get("shared_user_id"),
+        "shared_user_ids": data.get("shared_user_ids"),
         "approval1": data.get("approval1"),
         "approval2": data.get("approval2"),
     }
@@ -3039,7 +3038,7 @@ def get_activity_display_info(activity_id: str):
         Activity: activity_detail
         Action: cur_action
         ActivityHistory: histories
-        _type_: item {'lang': 'ja', 'owner': '1', 'title': 'ddd', '$schema': '/items/jsonschema/15', 'pubdate': '2022-08-21', 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'ddd', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_beb9', 'resourcetype': 'data paper'}}
+        _type_: item {'lang': 'ja', 'owner': '1', 'title': 'ddd', '$schema': '/items/jsonschema/15', 'pubdate': '2022-08-21', 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ddd', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_beb9', 'resourcetype': 'data paper'}}
         _type_: steps
         _type_: temporary_comment [{'ActivityId': 'A-20220821-00003', 'ActionId': 1, 'ActionName': 'Start', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'begin_action', 'Author': 'wekosoftware@nii.ac.jp', 'Status': 'action_done', 'ActionOrder': 1}, {'ActivityId': 'A-20220821-00003', 'ActionId': 3, 'ActionName': 'Item Registration', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_login', 'Author': '', 'Status': ' ', 'ActionOrder': 2}, {'ActivityId': 'A-20220821-00003', 'ActionId': 4, 'ActionName': 'Approval', 'ActionVersion': '2.0.0', 'ActionEndpoint': 'approval', 'Author': '', 'Status': ' ', 'ActionOrder': 3}, {'ActivityId': 'A-20220821-00003', 'ActionId': 5, 'ActionName': 'Item Link', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_link', 'Author': '', 'Status': ' ', 'ActionOrder': 4}, {'ActivityId': 'A-20220821-00003', 'ActionId': 7, 'ActionName': 'Identifier Grant', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'identifier_grant', 'Author': '', 'Status': ' ', 'ActionOrder': 5}, {'ActivityId': 'A-20220821-00003', 'ActionId': 2, 'ActionName': 'End', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'end_action', 'Author': '', 'Status': ' ', 'ActionOrder': 6}]
         Workflow: workflow_detail
@@ -4098,3 +4097,37 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
 
     #url_and_expired_date of a applyed content.
     return url_and_expired_date
+
+def get_contributors(pid_value):
+    from weko_items_ui.utils import get_user_information, get_user_permission
+    
+    userid_list = []
+    if pid_value:
+        pid_value = pid_value.split('.')[0]
+        # Get Record by pid_value
+        record = WekoRecord.get_record_by_pid(pid_value)
+        owner_id = record['_deposit']['owner']
+        userid_list.append(owner_id)
+        userid_list.extend(record['weko_shared_ids'])
+
+    result = []
+    try:
+        user_infos = get_user_information(userid_list)
+        for user_info in user_infos:
+            info = {
+            'userid': '',
+            'username': '',
+            'email': '',
+            'owner': False,
+            'error': ''
+            }
+            info['userid'] = user_info['userid']
+            info['username'] = user_info['username']
+            info['email'] = user_info['email']
+            if owner_id != -1:
+                info['owner'] = get_user_permission(owner_id)
+            result.append(info)
+    except Exception as e:
+        result = {"error": str(e)} 
+    
+    return result

@@ -174,7 +174,7 @@
                 </div>
                 </div>
               {%- endif %}
-              <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+              <div id="weko_records_ctrl" ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                 {%- if is_show_autofill_metadata %}
                 <div class="row row-4">
                   <div class="col-sm-12">
@@ -211,30 +211,29 @@
                                 <br><label><input type="radio" role="presentation" onchange="handleSharePermission(this.value)" name="checkedSharePermiss" id="input" value="other_user" class="other_user_rad">Other user</label>
                             </div>
                           </div>
-                          <div class="form_share_permission">     
-                            <div class="row row-4" id="pd_username">
-                              <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_username">
-                                <label for="share_username">Username </label>
-                              </div>
-                              <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
-                                <div class="autocomplete">
-                                    <input id="share_username" autocomplete="off" type="text" name="share_username" placeholder="Username" class="form-control"  onclick="get_search_data('username')">
-                                    <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_username"></span>
-                                  </div>
+                          <div class="form_share_permission">
+                            <div class="radio" id="id_contributor_list">
+                            {% with users = contributors %}
+                              {% if users is not none or users|length == 0 %}
+                                <div id="contributor_new_row_0">
+                                  {% with default_id = '0_0' %}
+                                    {% include 'weko_items_ui/iframe/item_edit_contributor_new_row.html' %}
+                                  {% endwith %}
+                                </div>
+                              {% else %}
+                                {% include 'weko_items_ui/iframe/item_edit_contributor.html' %}
+                              {% endif %}
+                            {% endwith %}
+                              <div id="contributor_new_row" style="display: none;">
+                                {% with default_id = '0' %}
+                                  {% include 'weko_items_ui/iframe/item_edit_contributor_new_row.html' %}
+                                {% endwith %}
                               </div>
                             </div>
-                            <div class="row row-4">
-                              <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_email">
-                                <label for="share_email">Email </label>
-                              </div>
-                              <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
-                                <div class="autocomplete">
-                                    <input id="share_email" autocomplete="off" type="text" name="share_email" placeholder="Email" class="form-control" onclick="get_search_data('email')">
-                                    <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_email"></span>
-                                </div>
-                              </div>
-                            </div>      
-                          </div>             
+                            <button onclick="addUser()" type="button" class="btn btn-success pull-right clearfix">
+                              <i class="glyphicon glyphicon-plus"></i>New
+                            </button>
+                          </div>
                         </div>
                     </div>
                   </div>

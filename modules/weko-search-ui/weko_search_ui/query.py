@@ -102,8 +102,9 @@ def get_permission_filter(index_id: str = None):
 
         if result:
             shuld = [
-                Q("match", weko_creator_id=user_id),
-                Q("match", weko_shared_id=user_id),
+                Q("match", weko_creator_id=user_id)
+                #,
+                #Q("match", weko_shared_ids&[user_id]) #Q("match", weko_shared_ids&[user_id]) ESカラム更新後これにする old Q("match", weko_shared_id=user_id)
             ]
             shuld.append(Q("bool", must=mst))
             mut.append(Q("bool", should=shuld, must=[terms]))

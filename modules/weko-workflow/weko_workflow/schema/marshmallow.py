@@ -87,7 +87,7 @@ class GetFeedbackMailListSchema(ResponseSchema):
 class SaveActivitySchema(Schema):
     activity_id = fields.String(required=True)
     title = fields.String(required=True)
-    shared_user_id = fields.Integer(required=True,validate=Range(min=-1))
+    shared_user_ids = fields.List(fields.Integer(validate=Range(min=1)), required=True, allow_none=False)
     approval1 = fields.String(allow_none=True)
     approval2 = fields.String(allow_none=True)
     class Meta:

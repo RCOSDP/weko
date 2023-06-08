@@ -108,7 +108,7 @@ from .utils import IdentifierHandle, auto_fill_title, \
     save_activity_data, saving_doi_pidstore, \
     send_usage_application_mail_for_guest_user, set_files_display_type, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
-    validate_guest_activity_token
+    validate_guest_activity_token, get_contributors \
 
 workflow_blueprint = Blueprint(
     'weko_workflow',
@@ -837,6 +837,7 @@ def display_activity(activity_id="0"):
     application_item_type = False
     approval_record = []
     cur_step = action_endpoint
+    contributors = []
     data_type = activity_detail.extra_info.get(
         'related_title') if activity_detail.extra_info else None
     endpoints = {}
@@ -922,6 +923,9 @@ def display_activity(activity_id="0"):
             files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
 
             links = base_factory(recid)
+
+            # get contributors data
+            contributors = get_contributors(item.pid.value)
 
         except PIDDeletedError:
             current_app.logger.debug("PIDDeletedError: {}".format(sys.exc_info()))
@@ -1024,6 +1028,8 @@ def display_activity(activity_id="0"):
     
     form = FlaskForm(request.form)
 
+    print('~~~~~~~~~~~contributors~~~~~~~~~~~~~~~~')
+    print(contributors)
     return render_template(
         'weko_workflow/activity_detail.html',
         action_endpoint_key=current_app.config.get(
@@ -1038,6 +1044,7 @@ def display_activity(activity_id="0"):
         auto_fill_title=title,
         community_id=community_id,
         cur_step=cur_step,
+        contributors=contributors,
         enable_contributor=current_app.config[
             'WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'],
         enable_feedback_maillist=current_app.config[
@@ -1168,8 +1175,7 @@ def check_authority_action(activity_id='0', action_id=0,
         # Check if this activity has contributor equaling to current user
         im = ItemMetadata.query.filter_by(id=activity.item_id) \
             .filter(
-            cast(ItemMetadata.json['shared_user_id'], types.INT)
-            == int(cur_user)).one_or_none()
+            int(cur_user)._in(cast(ItemMetadata.json['shared_user_ids'], types.ARRAY))).one_or_none()
         if im:
             # There is an ItemMetadata with contributor equaling to current
             # user, allow to access
@@ -2640,7 +2646,7 @@ def save_activity():
                 application/json:
                     schema:
                         SaveActivitySchema
-                    example: {"activity_id": "A-20220830-00001", "title": "title", "shared_user_id": -1}
+                    example: {"activity_id": "A-20220830-00001", "title": "title", "shared_user_ids": []}
         responses:
             200:
                 description: "success"
@@ -2655,7 +2661,7 @@ def save_activity():
                     application/json:
                         schema:
                             ResponseMessageSchema
-                        example: {"code": -1,"msg":"{'shared_user_id': ['Missing data for required field.']}"}
+                        example: {"code": -1,"msg":"{'shared_user_ids': ['Missing data for required field.']}"}
     """
     response = {
         "success": True,

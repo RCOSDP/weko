@@ -1473,7 +1473,7 @@ class WorkActivity(object):
                 .filter(
                     or_(
                         _Activity.activity_login_user == self_user_id,
-                        _Activity.shared_user_id == self_user_id
+                        self_user_id.in_(_Activity.shared_user_ids)
                     )
                 ) \
                 .filter(
@@ -1481,25 +1481,25 @@ class WorkActivity(object):
                         and_(
                             _FlowActionRole.action_user != self_user_id,
                             _FlowActionRole.action_user_exclude == '0',
-                            _Activity.shared_user_id != self_user_id
+                            self_user_id.notin_(_Activity.shared_user_ids),
                         ),
                         and_(
                             _FlowActionRole.action_role.notin_(self_group_ids),
                             _FlowActionRole.action_role_exclude == '0',
-                            _Activity.shared_user_id != self_user_id
+                            self_user_id.notin_(_Activity.shared_user_ids),
                         ),
                         and_(
                             ActivityAction.action_handler != self_user_id,
-                            _Activity.shared_user_id != self_user_id
+                            self_user_id.notin_(_Activity.shared_user_ids),
                         ),
                         and_(
-                            _Activity.shared_user_id == self_user_id,
+                            self_user_id.in_(_Activity.shared_user_ids),
                             _FlowActionRole.action_user 
                             != _Activity.activity_login_user,
                             _FlowActionRole.action_user_exclude == '0'
                         ),
                         and_(
-                            _Activity.shared_user_id == self_user_id,
+                            self_user_id.in_(_Activity.shared_user_ids),
                             ActivityAction.action_handler 
                             != _Activity.activity_login_user
                         ),
@@ -1552,7 +1552,7 @@ class WorkActivity(object):
                         _FlowActionRole.action_role_exclude == '0'
                     ),
                     and_(
-                        _Activity.shared_user_id == self_user_id,
+                        self_user_id.in_(_Activity.shared_user_ids),
                         _FlowAction.action_id != 4
                     ),
                 )
@@ -1616,7 +1616,7 @@ class WorkActivity(object):
                             _FlowActionRole.id.is_(None)
                         ),
                         and_(
-                            _Activity.shared_user_id == self_user_id,
+                            self_user_id.in_(_Activity.shared_user_ids),
                         ),
                     )
                 )\
@@ -1639,7 +1639,7 @@ class WorkActivity(object):
                             _FlowActionRole.action_role_exclude == '0'
                         ),
                         and_(
-                            _Activity.shared_user_id == self_user_id,
+                            self_user_id.in_(_Activity.shared_user_ids)
                         ),
                     )
                 )
