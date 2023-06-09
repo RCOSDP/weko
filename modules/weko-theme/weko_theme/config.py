@@ -476,6 +476,16 @@ WEKO_THEME_ADMIN_MENU = [
                 'order': 2
             }
         ]
+    },
+    {
+        'name': 'Maintenance',
+        'order': 16,
+        'submenu': [
+            {
+                'name': 'ElasticSearch Index',
+                'order': 1
+            }
+        ]
     }
 ]
 
@@ -485,3 +495,7 @@ WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER = False
 
 DISPLAY_LOGIN = True
 """ Display Login/Sign up menu """
+
+
+ENABLE_COOKIE_CONSENT = False
+""" Enable klaro cookie consent function """

@@ -26,13 +26,20 @@ import tempfile
 import uuid
 import json
 from datetime import datetime
+from elasticsearch import Elasticsearch
+from invenio_indexer import InvenioIndexer
 import pytest
+from invenio_indexer.api import RecordIndexer
+from invenio_pidstore.minters import recid_minter
+from invenio_records import Record
+from invenio_oaiserver.minters import oaiid_minter
 
 from flask import Flask
 from flask_babelex import Babel
 from flask_mail import Mail
 from flask_menu import Menu
 from flask.cli import ScriptInfo
+from flask_celeryext import FlaskCeleryExt
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 from simplekv.memory.redisstore import RedisStore
@@ -53,6 +60,11 @@ from invenio_i18n import InvenioI18N
 from invenio_mail.models import MailConfig
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidstore import InvenioPIDStore
+from invenio_search import RecordsSearch,InvenioSearch
+from invenio_oaiserver.ext import InvenioOAIServer
+from invenio_records.ext import InvenioRecords
+from invenio_records.models import RecordMetadata
+from invenio_pidstore.models import PersistentIdentifier
 
 from weko_authors import WekoAuthors
 from weko_authors.models import Authors
@@ -63,6 +75,8 @@ from weko_records import WekoRecords
 from weko_records.models import SiteLicenseInfo, SiteLicenseIpAddress,ItemType,ItemTypeName
 from weko_redis.redis import RedisConnection
 from weko_theme import WekoTheme
+from weko_schema_ui import WekoSchemaUI
+from weko_search_ui import WekoSearchUI
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Action, ActionStatus,FlowDefine,FlowAction,WorkFlow,Activity,ActivityAction
 
@@ -75,6 +89,8 @@ from weko_admin.models import SessionLifetime,SiteInfo,SearchManagement,\
 from weko_admin.views import blueprint_api
 
 from tests.helpers import json_data, create_record
+from weko_admin.models import FacetSearchSetting
+from tests.helpers import json_data
 
 @pytest.yield_fixture()
 def instance_path():
@@ -106,8 +122,9 @@ def cache_config():
     return config
 
 @pytest.fixture()
-def base_app(instance_path, cache_config,request):
+def base_app(instance_path, cache_config,request ,search_class):
     """Flask application fixture."""
+    os.environ['INVENIO_ELASTICSEARCH_HOST']='elasticsearch_test'
     app_ = Flask('test_weko_admin_app', instance_path=instance_path)
     app_.config.update(
         SERVER_NAME='test_server',
@@ -134,6 +151,7 @@ def base_app(instance_path, cache_config,request):
         CACHE_TYPE="redis",
         SEARCH_UI_SEARCH_INDEX="test-weko",
         WEKO_AUTHORS_ES_INDEX_NAME="test_weko-authors",
+        INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
         INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
         INDEXER_FILE_DOC_TYPE="content",
         THEME_SITEURL = 'https://localhost',
@@ -165,6 +183,14 @@ def base_app(instance_path, cache_config,request):
     WekoIndexTree(app_)
     WekoTheme(app_)
     
+    FlaskCeleryExt(app_)
+    WekoSearchUI(app_)
+    WekoSchemaUI(app_)
+    search = InvenioSearch(app_, client=MockEs())
+    search.register_mappings(search_class.Meta.index, 'tests.mock_module.mappings')
+    InvenioIndexer(app_)
+    InvenioRecords(app_, client=MockEs())
+    InvenioOAIServer(app_)
     yield app_
 
 
@@ -188,6 +214,13 @@ def db(app):
     db_.session.remove()
     db_.drop_all()
 
+@pytest.yield_fixture()
+def i18n_app(app):
+    with app.test_request_context(
+        headers=[('Accept-Language','ja')]):
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        yield app
 
 def _database_setup(app, request):
     """Set up the database."""
@@ -718,6 +751,7 @@ def admin_settings(db):
     settings.append(AdminSettings(id=6,name="restricted_access",settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": []}))
     settings.append(AdminSettings(id=7,name="display_stats_settings",settings={"display_stats":False}))
     settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
+    settings.append(AdminSettings(id=8,name="elastic_reindex_settings",settings={"has_errored": False}))
     db.session.add_all(settings)
     db.session.commit()
     return settings
@@ -1000,3 +1034,118 @@ def identifier(db):
     db.session.add(iden)
     db.session.commit()
     return iden
+
+@pytest.yield_fixture()
+def i18n_app(app):
+    with app.test_request_context(headers=[("Accept-Language", "ja")]):
+        app.extensions["invenio-oauth2server"] = 1
+        app.extensions["invenio-queues"] = 1
+        yield app
+
+@pytest.yield_fixture(scope='session')
+def search_class():
+    """Search class."""
+    yield TestSearch
+class MockEs():
+    def __init__(self,**keywargs):
+        self.indices = self.MockIndices()
+        self.es = Elasticsearch()
+        self.cluster = self.MockCluster()
+    def index(self, id="",version="",version_type="",index="",doc_type="",body="",**arguments):
+        return {"_shards":{"failed":0} }
+    # def delete(self,id="",index="",doc_type="",**kwargs):
+    #     return Response(response=json.dumps({}),status=500)
+    def search(self,index="",doc_type="",body={},**kwargs):
+        return {"took":2,"timed_out":False,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":67,"max_score":1,"hits":[{"_index":"test-weko-item-v1.0.0","_type":"item-v1.0.0","_id":"oaiset-1669370353014","_score":1,"_source":{"query":{"query_string":{"query":"path:\"1669370353014\""}}}}]}}
+
+    @property
+    def transport(self):
+        return self.es.transport
+    class MockIndices():
+        def __init__(self,**keywargs):
+            self.mapping = dict()
+        # def delete(self,index="", ignore=""):
+        #     pass
+        # def delete_template(self,index=""):
+        #     pass
+        # def create(self,index="",body={},ignore=""):
+        #     self.mapping[index] = body
+        # def put_alias(self,index="", name="", ignore=""):
+        #     pass
+        # def put_template(self,name="", body={}, ignore=""):
+        #     pass
+        # def refresh(self,index=""):
+        #     pass
+        # def exists(self, index="", **kwargs):
+        #     if index in self.mapping:
+        #         return True
+        #     else:
+        #         return False
+        # def flush(self,index="",wait_if_ongoing=""):
+        #     pass
+        # def delete_alias(self, index="", name="",ignore=""):
+        #     pass
+        # def search(self,index="",doc_type="",body={},**kwargs):
+        #     pass
+        def put_mapping(self,index="",doc_type="", body={}, ignore=""):
+            pass
+        
+    class MockCluster():
+        def __init__(self,**kwargs):
+            pass
+        # def health(self, wait_for_status="", request_timeout=0):
+        #     pass
+class TestSearch(RecordsSearch):
+    """Test record search."""
+
+    class Meta:
+        """Test configuration."""
+
+        index = "test"
+        doc_types = "item-v1.0.0"
+
+    def __init__(self, **kwargs):
+        """Add extra options."""
+        super(TestSearch, self).__init__(**kwargs)
+        self._extra.update(**{'_source': {'excludes': ['_access']}})
+
+@pytest.fixture()
+def reindex_settings(i18n_app):
+    record0 = _create_record(i18n_app, {
+        '_oai': {'sets': ['1669370353014']}, 'title_statement': {'title': 'Test0'},
+        '$schema': {"test-weko-item-v1.0.0": "https://127.0.0.1/schema/deposits/deposit-v1.0.0.json"}
+    })
+    record1 = _create_record(i18n_app, {
+        '_oai': {'sets': ['1669959650594']}, 'title_statement': {'title': 'Test0'},
+        '$schema': {"test-weko-item-v1.0.0": "https://127.0.0.1/schema/deposits/deposit-v1.0.0.json"}
+    })
+    settings = list()
+    settings.append(PersistentIdentifier(object_uuid=record0.id,pid_type="oai",pid_value="oai:weko3.example.org:00000001",status="R",object_type="rec"))
+    settings.append(PersistentIdentifier(object_uuid=record1.id,pid_type="oai",pid_value="oai:weko3.example.org:00000002",status="R",object_type="rec"))
+    settings.append(RecordMetadata(id="{069a5c8b-b3df-4909-98a2-713527c8db50}",json={"_oai": {"id": "oai:weko3.example.org:00000005.1", "sets": []}, "path": ["1669370353013"], "owner": "1", "recid": "5.1", "title": ["タイトル"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-11-30"}, "_buckets": {"deposit": "07beac8f-6518-4894-923b-4160d3ab4c24"}, "_deposit": {"id": "5.1", "pid": {"type": "depid", "value": "5.1", "revision_id": 0}, "owner": "1", "owners": [1], "status": "published", "created_by": 1}, "item_title": "タイトル", "author_link": [], "item_type_id": "40002", "publish_date": "2022-11-30", "publish_status": "0", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_beb9", "resourcetype": "data paper"}]}, "item_1669786983830": {"attribute_name": "new_changed", "attribute_value_mlt": [{"subitem_1669370027424": [{"subitem_1669370032950": "new_text", "subitem_1669370036614": "new_text"}], "subitem_1669370028622": "2022-10-31"}]}, "relation_version_is_last": True},version_id=1))
+    settings.append(RecordMetadata(id="{06a3949a-44eb-477f-91bd-a2e8fe018e22}",json={"_oai": {"id": "oai:weko3.example.org:00000016.1", "sets": []}, "path": ["1669370353013"], "owner": "1", "recid": "16.1", "title": ["タイトル"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-12-02"}, "_buckets": {"deposit": "bc52eca2-fab8-4de5-b54a-d6991cf27f8f"}, "_deposit": {"id": "16.1", "pid": {"type": "depid", "value": "16.1", "revision_id": 0}, "owner": "1", "owners": [1], "status": "published", "created_by": 1}, "item_title": "タイトル", "author_link": [], "item_type_id": "40004", "publish_date": "2022-12-02", "publish_status": "0", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_6501", "resourcetype": "journal article"}]}, "item_1669942968526": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669942715232": "a"}]}, "item_1669942969646": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669942715232": "a"}]}, "item_1669942970526": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669940015843": ["a"]}]}, "item_1669942972286": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669942715232": "a"}]}, "item_1669943008966": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669942715232": "2022-12-02"}]}, "item_1669943105542": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669943076184": "a"}]}, "item_1669943517557": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669941342567": [{"subitem_1669942576264": "a", "subitem_1669942583842": "a", "subitem_1669942586009": ["a"], "subitem_1669942602505": "a"}]}]}, "relation_version_is_last": True},version_id=1))
+    db_.session.add_all(settings)
+    db_.session.commit()
+    return db_
+
+def _create_record(app, item_dict, mint_oaiid=True):
+    """Create test record."""
+    indexer = RecordIndexer()
+    with app.test_request_context():
+        record_id = uuid.uuid4()
+        recid = recid_minter(record_id, item_dict)
+        if mint_oaiid:
+            oaiid_minter(record_id, item_dict)
+        record = Record.create(item_dict, id_=record_id)
+        indexer.index(record)
+        return record
+
+
+def facet_search_setting(db):
+    datas = json_data("data/facet_search_setting.json")
+    settings = list()
+
+    for setting in datas:
+        settings.append(FacetSearchSetting(**datas[setting]))
+    with db.session.begin_nested():
+        db.session.add_all(settings)

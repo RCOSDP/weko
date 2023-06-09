@@ -81,7 +81,7 @@ jsonpath_ng==1.5.2
 jupyter-client==5.2.2
 jupyter-core==4.4.0
 jsonpath-ng == 1.5.2
-kombu==4.6.10
+-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu
 limits==1.2.1
 lxml==4.1.1
 Mako==1.0.7
@@ -194,7 +194,6 @@ invenio-celery>=1.1.3
 invenio-config==1.0.0
 invenio-formatter==1.0.0b3
 invenio-i18n==1.0.0
-invenio-indexer==1.0.2
 invenio-jsonschemas==1.0.0
 invenio-logging==1.0.0b3
 invenio-marc21==1.0.0a8
@@ -223,6 +222,7 @@ invenio-csl-rest==1.0.0a1
 -e ../invenio-records-rest
 -e ../invenio-communities
 -e ../invenio-mail
+-e ../invenio-indexer
 -e ../invenio-deposit
 -e ../invenio-resourcesyncserver
 -e ../invenio-resourcesyncclient

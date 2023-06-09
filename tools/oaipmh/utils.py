@@ -53,6 +53,7 @@ def dumpListRecords(baseURL='https://localhost/oai', meta='oai_dc', setspec=None
     sickle = Sickle(endpoint=baseURL,
                     max_retries=max_retries, timeout=timeout, verify=False, iterator=OAIResponseIterator)
     n = 0
+    total_interval = 0
     responses = sickle.ListRecords(metadataPrefix=meta)
     try:
         for r in responses:
@@ -61,6 +62,7 @@ def dumpListRecords(baseURL='https://localhost/oai', meta='oai_dc', setspec=None
                 sec = random.uniform(interval,max_interval)
                 time.sleep(sec)
                 print("sleep: {} ".format(sec))
+                total_interval = total_interval + sec
                 elapsedTime = time.time() - startTime
                 print("elapsed time: {0}".format(elapsedTime))
                 n = n+1
@@ -68,6 +70,7 @@ def dumpListRecords(baseURL='https://localhost/oai', meta='oai_dc', setspec=None
         print("{}".format(e))
     elapsedTime = time.time() - startTime
     print("elapsed time: {0}".format(elapsedTime))
+    print("total interval: {0}".format(total_interval))
 
 
 def OAIResponseFileValidator(filepath: str, validator: XSDValidator, debug: bool = False):

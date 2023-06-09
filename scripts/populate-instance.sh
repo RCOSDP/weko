@@ -125,6 +125,8 @@ set -o errexit
 ${INVENIO_WEB_INSTANCE} db drop --yes-i-know
 ${INVENIO_WEB_INSTANCE} db init
 ${INVENIO_WEB_INSTANCE} db create -v
+${INVENIO_WEB_INSTANCE} stats partition create $(date +%Y)
+${INVENIO_WEB_INSTANCE} stats partition create $(date -d 'year' +%Y)
 # sphinxdoc-create-database-end
 
 # sphinxdoc-index-initialisation-begin
@@ -464,6 +466,9 @@ ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
 ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
        4 "default_properties_settings" \
        "{'show_flag': True}"
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       5 "elastic_reindex_settings" \
+       "{'has_errored': False}"
 # create-admin-settings-end
 
 # create-default-authors-prefix-settings-begin
@@ -496,17 +501,17 @@ ${INVENIO_WEB_INSTANCE} widget init
 
 # create-facet-search-setting-begin
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Data Language"	"デ一タの言語"	"language"	"[]"	True
+       "Data Language"	"デ一タの言語"	"language"	"[]"	True   SelectBox     1      True   
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Access"	"アクセス制限"	"accessRights"	"[]"	True
+       "Access"	"アクセス制限"	"accessRights"	"[]"	True   SelectBox     2      True
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Location"	"地域"	"geoLocation.geoLocationPlace"	"[]"	True
+       "Location"	"地域"	"geoLocation.geoLocationPlace"	"[]"	True   SelectBox     3      True
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Temporal"	"時間的範囲"	"temporal"	"[]"	True
+       "Temporal"	"時間的範囲"	"temporal"	"[]"	True   SelectBox     4      True
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Topic"	"トピック"	"subject.value"	"[]"	True
+       "Topic"	"トピック"	"subject.value"	"[]"	True   SelectBox     5      True
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Distributor"	"配布者"	"contributor.contributorName"	"[{'agg_value': 'Distributor', 'agg_mapping': 'contributor.@attributes.contributorType'}]"	True
+       "Distributor"	"配布者"	"contributor.contributorName"	"[{'agg_value': 'Distributor', 'agg_mapping': 'contributor.@attributes.contributorType'}]"	True   SelectBox     6      True
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Data Type"	"デ一タタイプ"	"description.value"	"[{'agg_value': 'Other', 'agg_mapping': 'description.descriptionType'}]"	True
+       "Data Type"	"デ一タタイプ"	"description.value"	"[{'agg_value': 'Other', 'agg_mapping': 'description.descriptionType'}]"	True   SelectBox     7      True
 # create-facet-search-setting-end

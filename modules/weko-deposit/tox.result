@@ -1,0 +1,379 @@
+GLOB sdist-make: /code/modules/weko-deposit/setup.py
+c1 recreate: /code/modules/weko-deposit/.tox/c1
+c1 installdeps: pytest>=3, pytest-cov, -rrequirements.txt
+c1 inst: /code/modules/weko-deposit/.tox/.tmp/package/1/weko-deposit-0.1.0.dev20170000.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.6,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,kombu==4.6.10,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,tcptest==0.6.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,weko-deposit @ file:///code/modules/weko-deposit/.tox/.tmp/package/1/weko-deposit-0.1.0.dev20170000.zip,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='914800736'
+c1 run-test: commands[0] | pytest --cov=weko_deposit tests -v --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/weko-deposit/.tox/c1/bin/python
+cachedir: .tox/c1/.pytest_cache
+rootdir: /code/modules/weko-deposit
+plugins: cov-4.0.0, celery-4.4.7, mock-3.6.1
+collecting ... collected 149 items
+
+tests/test_api.py::TestWekoFileObject::test___init__ PASSED              [  0%]
+tests/test_api.py::TestWekoFileObject::test_info PASSED                  [  1%]
+tests/test_api.py::TestWekoFileObject::test_file_preview_able PASSED     [  2%]
+tests/test_api.py::TestWekoIndexer::test_get_es_index PASSED             [  2%]
+tests/test_api.py::TestWekoIndexer::test_upload_metadata PASSED          [  3%]
+tests/test_api.py::TestWekoIndexer::test_delete_file_index PASSED        [  4%]
+tests/test_api.py::TestWekoIndexer::test_update_relation_version_is_last PASSED [  4%]
+tests/test_api.py::TestWekoIndexer::test_update_es_data PASSED           [  5%]
+tests/test_api.py::TestWekoIndexer::test_index PASSED                    [  6%]
+tests/test_api.py::TestWekoIndexer::test_delete PASSED                   [  6%]
+tests/test_api.py::TestWekoIndexer::test_delete_by_id PASSED             [  7%]
+tests/test_api.py::TestWekoIndexer::test_get_count_by_index_id PASSED    [  8%]
+tests/test_api.py::TestWekoIndexer::test_get_pid_by_es_scroll PASSED     [  8%]
+tests/test_api.py::TestWekoIndexer::test_get_metadata_by_item_id PASSED  [  9%]
+tests/test_api.py::TestWekoIndexer::test_update_feedback_mail_list PASSED [ 10%]
+tests/test_api.py::TestWekoIndexer::test_update_author_link PASSED       [ 10%]
+tests/test_api.py::TestWekoIndexer::test_update_jpcoar_identifier PASSED [ 11%]
+tests/test_api.py::TestWekoIndexer::test_bulk_update PASSED              [ 12%]
+tests/test_api.py::TestWekoDeposit::test_item_metadata PASSED            [ 12%]
+tests/test_api.py::TestWekoDeposit::test_is_published PASSED             [ 13%]
+tests/test_api.py::TestWekoDeposit::test_merge_with_published PASSED     [ 14%]
+tests/test_api.py::TestWekoDeposit::test__patch PASSED                   [ 14%]
+tests/test_api.py::TestWekoDeposit::test__publish_new PASSED             [ 15%]
+tests/test_api.py::TestWekoDeposit::test__update_version_id PASSED       [ 16%]
+tests/test_api.py::TestWekoDeposit::test_publish PASSED                  [ 16%]
+tests/test_api.py::TestWekoDeposit::test_publish_without_commit PASSED   [ 17%]
+tests/test_api.py::TestWekoDeposit::test_create PASSED                   [ 18%]
+tests/test_api.py::TestWekoDeposit::test_update PASSED                   [ 18%]
+tests/test_api.py::TestWekoDeposit::test_clear PASSED                    [ 19%]
+tests/test_api.py::TestWekoDeposit::test_delete PASSED                   [ 20%]
+tests/test_api.py::TestWekoDeposit::test_commit PASSED                   [ 20%]
+tests/test_api.py::TestWekoDeposit::test_newversion FAILED               [ 21%]
+tests/test_api.py::TestWekoDeposit::test_get_content_files PASSED        [ 22%]
+tests/test_api.py::TestWekoDeposit::test_get_file_data PASSED            [ 22%]
+tests/test_api.py::TestWekoDeposit::test_save_or_update_item_metadata PASSED [ 23%]
+tests/test_api.py::TestWekoDeposit::test_delete_old_file_index PASSED    [ 24%]
+tests/test_api.py::TestWekoDeposit::test_delete_item_metadata PASSED     [ 24%]
+tests/test_api.py::TestWekoDeposit::test_convert_item_metadata PASSED    [ 25%]
+tests/test_api.py::TestWekoDeposit::test__convert_description_to_object PASSED [ 26%]
+tests/test_api.py::TestWekoDeposit::test__convert_jpcoar_data_to_es PASSED [ 26%]
+tests/test_api.py::TestWekoDeposit::test__convert_data_for_geo_location PASSED [ 27%]
+tests/test_api.py::TestWekoDeposit::test_delete_by_index_tree_id PASSED  [ 28%]
+tests/test_api.py::TestWekoDeposit::test_update_pid_by_index_tree_id PASSED [ 28%]
+tests/test_api.py::TestWekoDeposit::test_update_item_by_task PASSED      [ 29%]
+tests/test_api.py::TestWekoDeposit::test_delete_es_index_attempt PASSED  [ 30%]
+tests/test_api.py::TestWekoDeposit::test_update_author_link PASSED       [ 30%]
+tests/test_api.py::TestWekoDeposit::test_update_feedback_mail PASSED     [ 31%]
+tests/test_api.py::TestWekoDeposit::test_remove_feedback_mail PASSED     [ 32%]
+tests/test_api.py::TestWekoDeposit::test_clean_unuse_file_contents PASSED [ 32%]
+tests/test_api.py::TestWekoDeposit::test_merge_data_to_record_without_version PASSED [ 33%]
+tests/test_api.py::TestWekoDeposit::test_prepare_draft_item PASSED       [ 34%]
+tests/test_api.py::TestWekoDeposit::test_delete_content_files PASSED     [ 34%]
+tests/test_api.py::TestWekoRecord::test_pid PASSED                       [ 35%]
+tests/test_api.py::TestWekoRecord::test_pid_recid PASSED                 [ 36%]
+tests/test_api.py::TestWekoRecord::test_hide_file PASSED                 [ 36%]
+tests/test_api.py::TestWekoRecord::test_navi PASSED                      [ 37%]
+tests/test_api.py::TestWekoRecord::test_item_type_info PASSED            [ 38%]
+tests/test_api.py::TestWekoRecord::test_switching_language PASSED        [ 38%]
+tests/test_api.py::TestWekoRecord::test_get_titles PASSED                [ 39%]
+tests/test_api.py::TestWekoRecord::test_items_show_list PASSED           [ 40%]
+tests/test_api.py::TestWekoRecord::test_display_file_info PASSED         [ 40%]
+tests/test_api.py::TestWekoRecord::test__get_creator PASSED              [ 41%]
+tests/test_api.py::TestWekoRecord::test_is_input_open_access_date PASSED [ 42%]
+tests/test_api.py::TestWekoRecord::test_is_do_not_publish PASSED         [ 42%]
+tests/test_api.py::TestWekoRecord::test_get_open_date_value PASSED       [ 43%]
+tests/test_api.py::TestWekoRecord::test_is_future_open_date PASSED       [ 44%]
+tests/test_api.py::TestWekoRecord::test_pid_doi PASSED                   [ 44%]
+tests/test_api.py::TestWekoRecord::test_pid_cnri PASSED                  [ 45%]
+tests/test_api.py::TestWekoRecord::test_pid_parent PASSED                [ 46%]
+tests/test_api.py::TestWekoRecord::test_get_record_by_pid PASSED         [ 46%]
+tests/test_api.py::TestWekoRecord::test_get_record_by_uuid PASSED        [ 47%]
+tests/test_api.py::TestWekoRecord::test_get_record_cvs PASSED            [ 48%]
+tests/test_api.py::TestWekoRecord::test__get_pid PASSED                  [ 48%]
+tests/test_api.py::TestWekoRecord::test_update_item_link PASSED          [ 49%]
+tests/test_api.py::TestWekoRecord::test_get_file_data PASSED             [ 50%]
+tests/test_api.py::Test_FormatSysCreator::test___init__ PASSED           [ 51%]
+tests/test_api.py::Test_FormatSysCreator::test__get_creator_languages_order PASSED [ 51%]
+tests/test_api.py::Test_FormatSysCreator::test__format_creator_to_show_detail PASSED [ 52%]
+tests/test_api.py::Test_FormatSysCreator::test__get_creator_to_show_popup PASSED [ 53%]
+tests/test_api.py::Test_FormatSysCreator::test__get_creator_based_on_language PASSED [ 53%]
+tests/test_api.py::Test_FormatSysCreator::test_format_creator PASSED     [ 54%]
+tests/test_api.py::Test_FormatSysCreator::test__format_creator_on_creator_popup PASSED [ 55%]
+tests/test_api.py::Test_FormatSysCreator::test__format_creator_name PASSED [ 55%]
+tests/test_api.py::Test_FormatSysCreator::test__format_creator_affiliation PASSED [ 56%]
+tests/test_api.py::Test_FormatSysCreator::test__get_creator_to_display_on_popup PASSED [ 57%]
+tests/test_api.py::Test_FormatSysCreator::test__merge_creator_data PASSED [ 57%]
+tests/test_api.py::Test_FormatSysCreator::test__get_default_creator_name PASSED [ 58%]
+tests/test_api.py::Test__FormatSysBibliographicInformation::test___init__ PASSED [ 59%]
+tests/test_api.py::Test__FormatSysBibliographicInformation::test_is_bibliographic PASSED [ 59%]
+tests/test_api.py::Test__FormatSysBibliographicInformation::test_get_bibliographic_list PASSED [ 60%]
+tests/test_api.py::Test__FormatSysBibliographicInformation::test__get_bibliographic PASSED [ 61%]
+tests/test_api.py::Test__FormatSysBibliographicInformation::test__get_property_name PASSED [ 61%]
+tests/test_api.py::Test__FormatSysBibliographicInformation::test__get_translation_key PASSED [ 62%]
+tests/test_api.py::Test__FormatSysBibliographicInformation::test__get_bibliographic_information PASSED [ 63%]
+tests/test_api.py::Test__FormatSysBibliographicInformation::test__get_bibliographic_show_list PASSED [ 63%]
+tests/test_api.py::Test__FormatSysBibliographicInformation::test___get_source_title PASSED [ 64%]
+tests/test_api.py::Test__FormatSysBibliographicInformation::test__get_source_title_show_list PASSED [ 65%]
+tests/test_api.py::Test__FormatSysBibliographicInformation::test__get_page_tart_and_page_end PASSED [ 65%]
+tests/test_api.py::Test__FormatSysBibliographicInformation::test__get_issue_date PASSED [ 66%]
+tests/test_api.py::test_missing_location PASSED                          [ 67%]
+tests/test_api.py::test_record_create PASSED                             [ 67%]
+tests/test_api.py::test_weko_record PASSED                               [ 68%]
+tests/test_api.py::test_files_property PASSED                            [ 69%]
+tests/test_api.py::test_format_sys_creator PASSED                        [ 69%]
+tests/test_api.py::test_format_sys_bibliographic_information_multiple PASSED [ 70%]
+tests/test_api.py::test_weko_deposit PASSED                              [ 71%]
+tests/test_api.py::test_weko_indexer PASSED                              [ 71%]
+tests/test_api.py::test_weko_file_object PASSED                          [ 72%]
+tests/test_api.py::test_weko_deposit_new PASSED                          [ 73%]
+tests/test_api.py::test_delete_item_metadata PASSED                      [ 73%]
+tests/test_links.py::test_links_factory PASSED                           [ 74%]
+tests/test_links.py::test_base_factory PASSED                            [ 75%]
+tests/test_pidstore.py::test_weko_deposit_minter PASSED                  [ 75%]
+tests/test_pidstore.py::test_weko_deposit_fetcher PASSED                 [ 76%]
+tests/test_pidstore.py::test_get_latest_version_id PASSED                [ 77%]
+tests/test_pidstore.py::test_get_record_identifier PASSED                [ 77%]
+tests/test_pidstore.py::test_get_record_without_version PASSED           [ 78%]
+tests/test_receivers.py::test_append_file_content PASSED                 [ 79%]
+tests/test_rest.py::test_publish_guest FAILED                            [ 79%]
+tests/test_rest.py::test_publish_users[2-200] PASSED                     [ 80%]
+tests/test_rest.py::test_depid_item_put_acl_guest FAILED                 [ 81%]
+tests/test_rest.py::test_depid_item_put_acl_users[0-200] PASSED          [ 81%]
+tests/test_rest.py::test_depid_item_put_acl_users[1-200] PASSED          [ 82%]
+tests/test_rest.py::test_depid_item_put_acl_users[2-200] PASSED          [ 83%]
+tests/test_rest.py::test_depid_item_put_acl_users[3-200] PASSED          [ 83%]
+tests/test_rest.py::test_depid_item_put_acl_users[4-200] PASSED          [ 84%]
+tests/test_rest.py::test_depid_item_put_acl_users[5-200] PASSED          [ 85%]
+tests/test_rest.py::test_depid_item_put_acl_users[6-200] PASSED          [ 85%]
+tests/test_rest.py::test_depid_item_put_acl_users[7-200] PASSED          [ 86%]
+tests/test_rest.py::test_depid_item_put PASSED                           [ 87%]
+tests/test_rest.py::test_depid_item_post_guest FAILED                    [ 87%]
+tests/test_rest.py::test_depid_item_post_users[0-201] PASSED             [ 88%]
+tests/test_rest.py::test_depid_item_post_users[1-201] PASSED             [ 89%]
+tests/test_rest.py::test_depid_item_post_users[2-201] PASSED             [ 89%]
+tests/test_rest.py::test_depid_item_post_users[3-201] PASSED             [ 90%]
+tests/test_rest.py::test_depid_item_post_users[4-201] PASSED             [ 91%]
+tests/test_rest.py::test_depid_item_post_users[5-201] PASSED             [ 91%]
+tests/test_rest.py::test_depid_item_post_users[6-201] PASSED             [ 92%]
+tests/test_rest.py::test_depid_item_post_users[7-201] PASSED             [ 93%]
+tests/test_serializer.py::test_file_uploaded_owner PASSED                [ 93%]
+tests/test_serializer.py::test_file_uploaded_owner_with_userprofile PASSED [ 94%]
+tests/test_storage.py::TestWekoFileStorage::test__init_hash PASSED       [ 95%]
+tests/test_storage.py::TestWekoFileStorage::test_upload_file PASSED      [ 95%]
+tests/test_storage.py::test_make_path PASSED                             [ 96%]
+tests/test_storage.py::test_pyfs_storage_factory PASSED                  [ 97%]
+tests/test_tasks.py::test_update_authorInfo PASSED                       [ 97%]
+tests/test_weko_deposit.py::test_version PASSED                          [ 98%]
+tests/test_weko_deposit.py::test_init PASSED                             [ 99%]
+tests/test_weko_deposit.py::test_ItemResource_put PASSED                 [100%]
+
+=================================== FAILURES ===================================
+_______________________ TestWekoDeposit.test_newversion ________________________
+
+sel = <tests.test_api.TestWekoDeposit object at 0x7fee5cf7ca20>
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=sqlite:////code/modules/weko-deposit/test.db>
+location = testloc
+es_records = (<weko_deposit.api.WekoIndexer object at 0x7fee5ccd5940>, [{'depid': <PersistentIdentifier depid:1 / rec:4e4dd542-ba1c...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:9ca3e958-16fe-4b08-bd68-e61989940675 (R)>, ...}, ...])
+
+    def test_newversion(sel,app,db,location,es_records):
+        indexer, records = es_records
+        record = records[0]
+        deposit = record['deposit']
+>       with patch("weko_deposit.WekoDeposit.is_published",return_value=None):
+
+tests/test_api.py:541: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/mock/mock.py:1394: in __enter__
+    original, local = self.get_original()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <mock.mock._patch object at 0x7fee5d4a3978>
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+            raise AttributeError(
+>               "{} does not have the attribute {!r}".format(target, name)
+            )
+E           AttributeError: <class 'weko_deposit.ext.WekoDeposit'> does not have the attribute 'is_published'
+
+.tox/c1/lib/python3.6/site-packages/mock/mock.py:1368: AttributeError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+______________________________ test_publish_guest ______________________________
+
+client = <FlaskClient <Flask 'testapp'>>, deposit = '1'
+
+    def test_publish_guest(client, deposit):
+        """
+        Test of publish.
+        """
+        kwargs = {
+            'pid_value': deposit
+        }
+        url = url_for('weko_deposit_rest.publish', pid_value=kwargs['pid_value'],_external=True)
+        input = {}
+        res = client.put(url, data=json.dumps(input),
+                         content_type='application/json')
+>       assert res.status_code == 302
+E       assert 200 == 302
+E         +200
+E         -302
+
+tests/test_rest.py:55: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+----------------------------- Captured stdout call -----------------------------
+/deposits/publish/1
+________________________ test_depid_item_put_acl_guest _________________________
+
+client = <FlaskClient <Flask 'testapp'>>, deposit = '1'
+
+    def test_depid_item_put_acl_guest(client, deposit):
+        """
+        Test of depid_item post.
+        :param client: The flask client.
+        """
+        kwargs = {
+            'pid_value': deposit
+        }
+        url = url_for('weko_deposit_rest.depid_item',
+                      pid_value=kwargs['pid_value'])
+        input = {"item_1617186331708": [{"subitem_1551255647225": "tetest",
+                 "subitem_1551255648112": "en"}], "pubdate": "2021-01-01",
+                 "item_1617258105262": {"resourcetype": "conference paper",
+                                        "resourceuri": "http://purl.org/coar/resource_type/c_5794"},
+                 "shared_user_id": -1, "title": "tetest", "lang": "en",
+                 "deleted_items": ["item_1617186385884", "item_1617186419668",
+                                   "approval1", "approval2"],
+                 "$schema": "/items/jsonschema/15"}
+        res = client.put(url, data=json.dumps(input),
+                         content_type='application/json')
+>       assert res.status_code == 302
+E       assert 200 == 302
+E         +200
+E         -302
+
+tests/test_rest.py:113: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+----------------------------- Captured stdout call -----------------------------
+/deposits/redirect/1
+__________________________ test_depid_item_post_guest __________________________
+
+client = <FlaskClient <Flask 'testapp'>>, deposit = '1'
+
+    def test_depid_item_post_guest(client, deposit):
+        """
+        Test of depid_item post.
+        :param client: The flask client.
+        """
+        kwargs = {
+                'pid_value': deposit
+        }
+        url = url_for('weko_deposit_rest.depid_item',
+                      pid_value=kwargs['pid_value'])
+        input = {}
+        res = client.post(url,
+                          data=json.dumps(input),
+                          content_type='application/json')
+>       assert res.status_code == 302
+E       assert 201 == 302
+E         +201
+E         -302
+
+tests/test_rest.py:232: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+----------------------------- Captured stdout call -----------------------------
+/deposits/redirect/1
+=============================== warnings summary ===============================
+../invenio-indexer/invenio_indexer/cli.py:108
+  /code/modules/invenio-indexer/invenio_indexer/cli.py:108: DeprecationWarning: 'resultcallback' has been renamed to 'result_callback'. The old name will be removed in Click 8.1.
+    @queue.resultcallback()
+
+.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3
+  /code/modules/weko-deposit/.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3: DeprecationWarning: 'werkzeug.contrib.cache' is deprecated as of version 0.15 and will be removed in version 1.0. It has moved to https://github.com/pallets/cachelib.
+    from werkzeug.contrib.cache import NullCache, SimpleCache, FileSystemCache
+
+.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35
+  /code/modules/weko-deposit/.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+    import imp
+
+.tox/c1/src/pypdf2/PyPDF2/generic.py:348
+  /code/modules/weko-deposit/.tox/c1/src/pypdf2/PyPDF2/generic.py:348: DeprecationWarning: invalid escape sequence \c
+    b_("c") : b_("\c"),
+
+tests/test_api.py: 2678 warnings
+tests/test_links.py: 52 warnings
+tests/test_pidstore.py: 130 warnings
+tests/test_receivers.py: 26 warnings
+tests/test_rest.py: 546 warnings
+tests/test_serializer.py: 52 warnings
+tests/test_storage.py: 78 warnings
+tests/test_tasks.py: 26 warnings
+tests/test_weko_deposit.py: 26 warnings
+  /code/modules/weko-deposit/.tox/c1/lib/python3.6/site-packages/invenio_admin/ext.py:73: PendingDeprecationWarning: Usage of model and modelview kwargs are deprecated in favor of view_class, args and kwargs.
+    PendingDeprecationWarning
+
+tests/test_api.py: 103 warnings
+tests/test_links.py: 2 warnings
+tests/test_pidstore.py: 5 warnings
+tests/test_receivers.py: 1 warning
+tests/test_rest.py: 21 warnings
+tests/test_serializer.py: 2 warnings
+tests/test_storage.py: 3 warnings
+tests/test_tasks.py: 1 warning
+tests/test_weko_deposit.py: 1 warning
+  /code/modules/weko-deposit/.tox/c1/lib/python3.6/site-packages/flask_admin/model/base.py:1416: UserWarning: Fields missing from ruleset: created_userId,created_date,updated_userId,updated_date
+    warnings.warn(text)
+
+tests/test_api.py: 1 warning
+tests/test_rest.py: 21 warnings
+tests/test_weko_deposit.py: 1 warning
+  /code/modules/weko-deposit/.tox/c1/lib/python3.6/site-packages/flask/sessions.py:208: UserWarning: "TEST_SERVER" is not a valid cookie domain, it must contain a ".". Add an entry to your hosts file, for example "TEST_SERVER.localdomain", and use that instead.
+    ' "{rv}.localdomain", and use that instead.'.format(rv=rv)
+
+-- Docs: https://docs.pytest.org/en/stable/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                         Stmts   Miss Branch BrPart  Cover
+--------------------------------------------------------------
+weko_deposit/__init__.py         4      0      0      0   100%
+weko_deposit/api.py           1384    153    666    113    85%
+weko_deposit/config.py          30      0      0      0   100%
+weko_deposit/ext.py             29      1     14      2    93%
+weko_deposit/links.py           18      0      0      0   100%
+weko_deposit/pidstore.py        42      0     12      1    98%
+weko_deposit/receivers.py       52      1     12      2    95%
+weko_deposit/rest.py           137      8     46      7    92%
+weko_deposit/serializer.py      31      0     10      3    93%
+weko_deposit/signals.py          4      0      0      0   100%
+weko_deposit/storage.py         52      5     14      2    89%
+weko_deposit/tasks.py          190     12     96      6    93%
+weko_deposit/version.py          2      0      0      0   100%
+weko_deposit/views.py            3      0      0      0   100%
+--------------------------------------------------------------
+TOTAL                         1978    180    870    136    88%
+Coverage XML written to file coverage.xml
+
+=========================== short test summary info ============================
+FAILED tests/test_api.py::TestWekoDeposit::test_newversion - AttributeError: ...
+FAILED tests/test_rest.py::test_publish_guest - assert 200 == 302
+FAILED tests/test_rest.py::test_depid_item_put_acl_guest - assert 200 == 302
+FAILED tests/test_rest.py::test_depid_item_post_guest - assert 201 == 302
+========== 4 failed, 145 passed, 3780 warnings in 2075.82s (0:34:35) ===========
+ERROR: InvocationError for command /code/modules/weko-deposit/.tox/c1/bin/pytest --cov=weko_deposit tests -v --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/weko-deposit/.tox/c1/tmp (exited with code 1)
+___________________________________ summary ____________________________________
+ERROR:   c1: commands failed

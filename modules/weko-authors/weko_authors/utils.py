@@ -44,14 +44,23 @@ from weko_authors.contrib.validation import validate_by_extend_validator, \
 from .api import WekoAuthors
 from .config import WEKO_AUTHORS_FILE_MAPPING, \
     WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY, WEKO_AUTHORS_EXPORT_CACHE_URL_KEY
-from .models import AuthorsPrefixSettings
+from .models import AuthorsPrefixSettings, AuthorsAffiliationSettings
 
 
-def get_author_setting_obj(scheme):
+def get_author_prefix_obj(scheme):
     """Check item Scheme exist in DB."""
     try:
         return db.session.query(AuthorsPrefixSettings).filter(
             AuthorsPrefixSettings.scheme == scheme).one_or_none()
+    except Exception as ex:
+        current_app.logger.debug(ex)
+    return None
+
+def get_author_affiliation_obj(scheme):
+    """Check item Scheme exist in DB."""
+    try:
+        return db.session.query(AuthorsAffiliationSettings).filter(
+            AuthorsAffiliationSettings.scheme == scheme).one_or_none()
     except Exception as ex:
         current_app.logger.debug(ex)
     return None
@@ -339,7 +348,6 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping):
     list_import_id = []
     existed_authors_id, existed_external_authors_id = \
         WekoAuthors.get_author_for_validation()
-
     for item in file_data:
         errors = []
         warnings = []
@@ -497,7 +505,6 @@ def set_record_status(file_format, list_existed_author_id, item, errors, warning
     item['status'] = 'new'
     pk_id = item.get('pk_id')
     err_msg = _("Specified WEKO ID does not exist.")
-
     if item.get('is_deleted', '') == 'D':
         item['status'] = 'deleted'
         if not pk_id or list_existed_author_id.get(pk_id) is None:
@@ -526,9 +533,8 @@ def flatten_authors_mapping(mapping, parent_key=None):
         if item.get('child'):
             child_result_all, child_result_keys = flatten_authors_mapping(
                 item['child'], current_key)
-            if child_result_all and child_result_keys:
-                result_all.extend(child_result_all)
-                result_keys.extend(child_result_keys)
+            result_all.extend(child_result_all)
+            result_keys.extend(child_result_keys)
         else:
             result_all.append(dict(
                 key=current_key,

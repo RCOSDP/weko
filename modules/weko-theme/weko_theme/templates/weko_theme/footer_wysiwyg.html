@@ -25,6 +25,9 @@
   <div class="row">
     <div class="col-xs-12 col-sm-12 text-center-xs">
       {% trans link="https://github.com/RCOSDP/weko" %}<p>Powered by <a href="{{link}}">WEKO3</a><p>{% endtrans %}
+      {%- if config.ENABLE_COOKIE_CONSENT %}
+        <a class="button is-success" onclick="return klaro.show();">Change consent settings</a>
+      {%- endif %}
     </div>
   </div>
 </div>

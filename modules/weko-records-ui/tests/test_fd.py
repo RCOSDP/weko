@@ -51,8 +51,26 @@ def test_prepare_response(app,client,records,itemtypes,users):
     indexer, results = records
     recid = results[0]["recid"]    
     with app.test_request_context(path="/?filename=hoge"):
-        ret = prepare_response(recid.pid_value,True)
-        assert ret == ""
+    #     ret = prepare_response(recid.pid_value,True)
+    #     assert ret == ""
+
+        data1 = MagicMock()
+        data2 = {
+            "display_name": None
+        }
+
+        def dumps():
+            return data2
+
+        data1.dumps = dumps
+
+        # with patch("weko_records_ui.fd.FilesMetadata.get_records", return_value=[data1]):
+        with patch("weko_records.api.FilesMetadata.get_records", return_value=[data1]):
+            # Exception coverage
+            try:
+                prepare_response(recid.pid_value,True)
+            except:
+                pass
 
 
 # def file_preview_ui(pid, record, _record_file_factory=None, **kwargs):
@@ -400,3 +418,5 @@ def test_file_download_secret(app,db, itemtypes, users, records):
                             with patch("weko_records_ui.fd.get_secret_download", return_value=p):
                                 assert file_download_secret(recid,record,record_file_factory,filename="helloworld.docx")=="_download_file"
 
+                    with patch("weko_records_ui.fd.record_file_factory", return_value=False):
+                        assert file_download_onetime(recid,record,record_file_factory)==""

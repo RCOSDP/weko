@@ -14,7 +14,7 @@ from weko_schema_ui.utils import MISSING
 
 # def dumps_oai_etree(pid, records, **kwargs):
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_utils.py::test_dumps_oai_etree -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
-def test_dumps_oai_etree(app, db, records):
+def test_dumps_oai_etree(app, db,records):
     assert dumps_oai_etree(records[1][0]['recid'], {'_source': records[1][0]['record']}, schema_type='jpcoar_v1')
 
 # def dumps_etree(records, schema_type):
@@ -39,6 +39,9 @@ def test_dumps(app, db, records):
                   'updated': datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z')})
 
 # def export_tree(record, **kwargs):
+# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_utils.py::test_export_tree -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+def test_export_tree(app, records):
+    assert export_tree(records[1][0]['record'])==""
 
 # def json_merge_all(json_lst):
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_utils.py::test_json_merge_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp

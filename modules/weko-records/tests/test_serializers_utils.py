@@ -1,4 +1,6 @@
 import pytest
+import copy
+from mock import patch, MagicMock
 from tests.helpers import json_data
 
 from invenio_pidstore.models import PersistentIdentifier
@@ -47,6 +49,40 @@ def test_get_metadata_from_map(meta):
     _item_id = 'item_1551264308487'
     result = get_metadata_from_map(meta[0]['item_1551264308487'], _item_id)
     assert result == {'item_1551264308487.subitem_1551255647225': ['タイトル日本語', 'Title'], 'item_1551264308487.subitem_1551255648112': ['ja', 'en']}
+
+    item_data_1 = {
+        "attribute_name": "Title",
+        "attribute_value_mlt": [
+            {
+                "subitem_1551255647225": "タイトル日本語",
+                "subitem_1551255648112": "ja"
+            },
+            {
+                "subitem_1551255647225": "Title",
+                "subitem_1551255648112": "en"
+            },
+            {
+                "test": [{"test": ["test"]}],
+                "test": [{"test": "test"}]
+            },
+        ],
+    }
+    item_data_2 = {
+        "attribute_name": "Title",
+        "attribute_value_mlt": {
+            "test": [{"test": [{"key": "values"}]}],
+        },
+    }
+    item_data_3 = {
+        "attribute_name": "Title",
+        "attribute_value_mlt": {
+            "test": [{"test": [{"test": {"test": "test"}}]}],
+        },
+    }
+
+    get_metadata_from_map(item_data_1, _item_id)
+    get_metadata_from_map(item_data_2, _item_id)
+    get_metadata_from_map(item_data_3, _item_id)
 
 # def get_attribute_schema(schema_id):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_get_attribute_schema -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -112,3 +148,223 @@ def test_open_search_detail_data(app, db, db_index, render, form, mapping, hit, 
     data = OpenSearchDetailData(fetcher, _search_result, 'rss')
     with app.test_request_context():
         assert data.output_open_search_detail_data()
+
+sample = OpenSearchDetailData(
+    pid_fetcher = MagicMock(),
+    search_result = MagicMock(),
+    output_type = "atom",
+    links = MagicMock(),
+    item_links_factory = MagicMock(),
+    kwargs = MagicMock(),
+)
+
+# class OpenSearchDetailData:
+#     def output_open_search_detail_data(self): 
+def test_output_open_search_detail_data(app):
+    data0 = MagicMock()
+    data1 = MagicMock()
+    data1.query = MagicMock()
+    data1.args = {
+        "q": "test",
+        "index_id": 1,
+    }
+
+    def one_or_none():
+        return data0
+
+    data2 = MagicMock()
+    data2.one_or_none = one_or_none
+
+    def filter_by(item):
+        return data2
+
+    with app.test_request_context():
+        with patch("weko_records.serializers.utils.request", return_value=data1):
+            with patch("weko_records.serializers.utils.Index", return_value=data1):
+                assert sample.output_open_search_detail_data() == None
+
+
+#     def _set_publication_date(self, fe, item_map, item_metadata):
+def test__set_publication_date(app):
+    sample_copy = copy.deepcopy(sample)
+    fe = MagicMock()
+
+    item_map = {
+        "date.@value": "date.@value",
+        "date.@attributes.dateType": "date.@attributes.dateType"
+    }
+
+    item_metadata = {"date": "date"}
+
+    with patch("weko_records.serializers.utils.get_metadata_from_map", return_value=["date"]):
+        sample_copy._set_publication_date(fe=fe, item_map=item_map, item_metadata=item_metadata)
+    
+    with patch("weko_records.serializers.utils.get_metadata_from_map", return_value={"date.@value": "date.@value"}):
+        sample_copy._set_publication_date(fe=fe, item_map=item_map, item_metadata=item_metadata)
+    
+    with patch("weko_records.serializers.utils.get_metadata_from_map", return_value={"date.@value": ["date.@value"]}):
+        sample_copy._set_publication_date(fe=fe, item_map=item_map, item_metadata=item_metadata)
+
+    sample_copy.output_type = "test"
+    sample_copy._set_publication_date(fe=fe, item_map=item_map, item_metadata=item_metadata)
+
+    data1 = {
+        "date.@attributes.dateType": ["Issued"],
+        "date.@value": ["Issued"],
+    }
+
+    with patch("weko_records.serializers.utils.get_metadata_from_map", return_value=data1):
+        sample_copy._set_publication_date(fe=fe, item_map=item_map, item_metadata=item_metadata)
+
+    data2 = {
+        "date.@attributes.dateType": "Issued",
+        "date.@value": "Issued",
+    }
+
+    with patch("weko_records.serializers.utils.get_metadata_from_map", return_value=data2):
+        sample_copy._set_publication_date(fe=fe, item_map=item_map, item_metadata=item_metadata)
+    
+
+#     def _set_source_identifier(self, fe, item_map, item_metadata):
+def test__set_source_identifier(app):
+    sample_copy = copy.deepcopy(sample)
+    fe = MagicMock()
+    fe.prism = MagicMock()
+
+    def issn(item):
+        return item
+    
+    fe.prism.issn = issn
+
+    item_map = {
+        "date.@value": "date.@value",
+        "date.@attributes.dateType": "date.@attributes.dateType",
+        "sourceIdentifier.@value": "sourceIdentifier",
+        "sourceIdentifier.@attributes.identifierType": "sourceIdentifier.@attributes.identifierType",
+    }
+
+    item_metadata = {
+        "sourceIdentifier": "sourceIdentifier",
+        "@value": "@value",
+        "sourceIdentifier.@value": "sourceIdentifier",
+        "sourceIdentifier.@attributes.identifierType": "sourceIdentifier.@attributes.identifierType",
+    }
+
+    assert sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata) == None
+
+    item_metadata["sourceIdentifier"] = {
+        "sourceIdentifier": "sourceIdentifier",
+    }
+
+    item_metadata["@value"] = {
+        "@value": "@value",
+    }
+
+    with patch("weko_records.serializers.utils.get_metadata_from_map", return_value=item_metadata):
+        assert sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata) == None
+    
+    item_metadata["sourceIdentifier"] = [
+        "sourceIdentifier"
+    ]
+
+    with patch("weko_records.serializers.utils.get_metadata_from_map", return_value=item_metadata):
+        assert sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata) == None
+    
+    sample_copy.output_type = "not_atom"
+    item_metadata["sourceIdentifier"] = "ISSN"
+
+    with patch("weko_records.serializers.utils.get_metadata_from_map", return_value=item_metadata):
+        assert sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata) == None
+
+        item_metadata["sourceIdentifier.@attributes.identifierType"] = ["ISSN"]
+        item_metadata["sourceIdentifier"] = ["ISSN"]
+
+        assert sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata) == None
+    
+
+#     def _set_author_info(self, fe, item_map, item_metadata, request_lang):
+def test__set_author_info(app):
+    sample_copy = copy.deepcopy(sample)
+    fe = MagicMock()
+
+    item_map = {
+        "creator.creatorName.@value": "creator.creatorName.@value",
+    }
+
+    item_metadata = {
+        "creator.creatorName.@value": "creator.creatorName.@value",
+        "creator": "creator.creatorName.@value",
+        "creatorName": "creator.creatorName.@value",
+        "creator.creatorNameLang": ["en"],
+    }
+
+    request_lang = "en"
+
+    assert sample_copy._set_author_info(fe=fe, item_map=item_map, item_metadata=item_metadata, request_lang=request_lang) == None
+
+    with patch("weko_records.serializers.utils.get_metadata_from_map", return_value=item_metadata):
+        assert sample_copy._set_author_info(fe=fe, item_map=item_map, item_metadata=item_metadata, request_lang=request_lang) == None
+
+        request_lang = False
+
+        assert sample_copy._set_author_info(fe=fe, item_map=item_map, item_metadata=item_metadata, request_lang=request_lang) == None
+
+        item_metadata["creator.creatorNameLang"] = "en"
+
+        assert sample_copy._set_author_info(fe=fe, item_map=item_map, item_metadata=item_metadata, request_lang=request_lang) == None
+
+        request_lang = "en"
+
+        assert sample_copy._set_author_info(fe=fe, item_map=item_map, item_metadata=item_metadata, request_lang=request_lang) == None
+
+
+# def _set_publisher(self, fe, item_map, item_metadata, request_lang): 
+def test__set_publisher(app):
+    sample_copy = copy.deepcopy(sample)
+    fe = MagicMock()
+
+    item_map = {
+        "publisher.@value": "publisher.@value",
+        "publisher.@attributes.xml:lang": "publisher.@attributes.xml:lang",
+    }
+
+    item_metadata = {
+        "publisher": {
+            "attribute_value_mlt": "attribute_value_mlt",
+        },
+        "@value": "test2",
+    }
+
+    request_lang = "publisher.@value"
+
+    data1 = [["en", "publisher.@value"]]
+
+    with patch("weko_records_ui.utils.get_pair_value", return_value=data1):
+        assert sample_copy._set_publisher(fe=fe, item_map=item_map, item_metadata=item_metadata, request_lang=request_lang) == None
+
+
+# def _set_description(self, fe, item_map, item_metadata, request_lang):
+def test__set_description(app):
+    sample_copy = copy.deepcopy(sample)
+    fe = MagicMock()
+
+    item_map = {
+        "description.@value": "description.@value",
+        "description.@attributes.xml:lang": "description.@attributes.xml:lang",
+    }
+
+    item_metadata = {
+        "description": {
+            "attribute_value_mlt": "attribute_value_mlt",
+        },
+        "@value": "test2",
+    }
+
+    request_lang = "description.@value"
+
+    data1 = [["en", "description.@value"]]
+
+    with patch("weko_records_ui.utils.get_pair_value", return_value=data1):
+        assert sample_copy._set_description(fe=fe, item_map=item_map, item_metadata=item_metadata, request_lang=request_lang) == None
+
+

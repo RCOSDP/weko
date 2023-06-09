@@ -201,7 +201,7 @@ def subitem_recs(schema, keys, value, metadata):
     elif schema.get('properties', {}).get(item_key):
         subitems = {}
         if len(keys) > 1:
-            subitems = subitem_recs(schema[item_key], keys[1:],
+            subitems = subitem_recs(schema['properties'][item_key], keys[1:],
                                     value, metadata)
         else:
             if '.' in value:
@@ -289,50 +289,49 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
             items = {}
             for elem, value in patterns:
                 mapping = mappin.get(elem)
-                if not mappin.get(elem) or not value:
-                    continue
-                else:
+                #if not mappin.get(elem) or not value:
+                #    continue
+                #else:
+                if mappin.get(elem) and value:
                     mapping.sort()
 
-                subitems = None
-                if ',' in mapping[0]:
-                    subitems = mapping[0].split(',')[0].split('.')[1:]
-                else:
-                    subitems = mapping[0].split('.')[1:]
+                    subitems = None
+                    if ',' in mapping[0]:
+                        subitems = mapping[0].split(',')[0].split('.')[1:]
+                    else:
+                        subitems = mapping[0].split('.')[1:]
 
-                if subitems:
-                    if subitems[0] in item_schema:
-                        submetadata = subitem_recs(
-                            item_schema[subitems[0]],
-                            subitems[1:],
-                            value,
-                            it
-                        )
+                    if subitems:
+                        if subitems[0] in item_schema:
+                            submetadata = subitem_recs(
+                                item_schema[subitems[0]],
+                                subitems[1:],
+                                value,
+                                it
+                            )
 
-                        if submetadata:
-                            if isinstance(submetadata, list):
-                                if items.get(subitems[0]):
-                                    if len(items[subitems[0]]) != len(submetadata):
-                                        items[subitems[0]].extend(submetadata)
-                                        continue
+                            if submetadata:
+                                if isinstance(submetadata, list):
+                                    if items.get(subitems[0]):
+                                        if len(items[subitems[0]]) != len(submetadata):
+                                            items[subitems[0]].extend(submetadata)
+                                            continue
 
-                                    for idx, meta in enumerate(submetadata):
-                                        if isinstance(meta, dict):
-                                            items[subitems[0]][idx].update(
-                                                meta)
-                                        else:
-                                            items[subitems[0]].extend(meta)
+                                        for idx, meta in enumerate(submetadata):
+                                            if isinstance(meta, dict):
+                                                items[subitems[0]][idx].update(
+                                                    meta)
+                                            else:
+                                                items[subitems[0]].extend(meta)
+                                    else:
+                                        items[subitems[0]] = submetadata
+                                elif isinstance(submetadata, dict):
+                                    if items.get(subitems[0]):
+                                        items[subitems[0]].update(submetadata)
+                                    else:
+                                        items[subitems[0]] = submetadata
                                 else:
                                     items[subitems[0]] = submetadata
-                            elif isinstance(submetadata, dict):
-                                if items.get(subitems[0]):
-                                    items[subitems[0]].update(submetadata)
-                                else:
-                                    items[subitems[0]] = submetadata
-                            else:
-                                items[subitems[0]] = submetadata
-                else:
-                    continue
             if items:
                 ret.append(items)
 
@@ -923,7 +922,7 @@ def add_data_by_key(schema, res, resource_list, key):
         res[root_key].append(item)
 
 
-def add_source_dc(schema, res, source_list):
+def add_source_dc(schema, mapping, res, metadata):
     """Add source."""
     patterns = [
         ('source.@value', TEXT),
@@ -933,7 +932,7 @@ def add_source_dc(schema, res, source_list):
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_coverage_dc(schema, res, coverage_list):
+def add_coverage_dc(schema, mapping, res, metadata):
     """Add coverage."""
     patterns = [
         ('coverage.@value', TEXT),
@@ -973,7 +972,7 @@ def add_relation_dc(schema, mapping, res, metadata):
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_rights_dc(schema, res, rights, lang='', rights_resource=''):
+def add_rights_dc(schema, mapping, res, metadata):
     """Add rights."""
     patterns = [
         ('rights.@value', TEXT),
@@ -1226,8 +1225,7 @@ def map_sets(sets, encoding='utf-8'):
         if m:
             spec = m.group(1)
             name = m.group(2)
-            if spec and name:
-                res[spec] = name
+            res[spec] = name
     return res
 
 
@@ -1481,19 +1479,16 @@ class DDIMapper(BaseMapper):
                             current_temp[i_r] = {}
                     if isinstance(current_temp[i_r], dict):
                         current_temp[i_r].update(val)
-                    elif isinstance(current_temp[i_r], list):
+                    else:# isinstance(current_temp[i_r], list):
                         if current_temp[i_r]:
                             current_temp[i_r][0].update(val)
                         else:
                             current_temp[i_r].append(val)
-                    break
+                    # break
                 elif i_r in current_temp:
-                    current_temp = current_temp[i_r]
-                    target = target[i_r]
-                    if isinstance(current_temp, list):
-                        current_temp = current_temp[0]
-                        target = target[0]
-                elif i_r not in current_temp:
+                    current_temp = current_temp[i_r][0]
+                    target = target[i_r][0]
+                else:# i_r not in current_temp:
                     current_temp[i_r] = [] if '[]' in i else {}
                     if isinstance(current_temp[i_r], list):
                         current_temp[i_r] = target[i_r]
@@ -1565,7 +1560,7 @@ class DDIMapper(BaseMapper):
                     else:
                         full_key_val_obj = {
                             current_key: full_key_val_obj}
-                if {"full": full_key_val_obj, "key": sub_keys_clone, "val": {last_key: parse_data}} not in temp_list:
+                if {"full": full_key_val_obj, "key": sub_keys_clone, "val": {last_key: parse_data}} not in temp_lst:
                     temp_lst.append(
                         {"full": full_key_val_obj,
                          "key": sub_keys_clone,
@@ -1623,8 +1618,8 @@ class DDIMapper(BaseMapper):
                             else:
                                 if temp_data not in list_result:
                                     list_result.append(temp_data)
-                        elif root_key.replace("[]", "") in result_dict and isinstance(
-                                result_dict[root_key.replace("[]", "")], dict):
+                        else: # root_key.replace("[]", "") in result_dict and isinstance(
+                                #result_dict[root_key.replace("[]", "")], dict):
                             temp_data = result_dict[root_key.replace("[]", "")]
                             temp_set = set(temp_data.values()) - set(['ja', 'en'])
                             if temp_set not in list_temp:
@@ -1647,10 +1642,7 @@ class DDIMapper(BaseMapper):
             """Unify all to data to type of list."""
             result = []
             for i in src_lst:
-                if isinstance(i, list):
-                    result.extend(i)
-                else:
-                    result.append(i)
+                result.append(i)
             return result
 
         def get_all_keys_forms():
@@ -1683,15 +1675,14 @@ class DDIMapper(BaseMapper):
                 merge_data_by_mapping_keys(k, v)
         for k, v in dict_data.items():
             lst_keys_with_prefix = get_all_key(k)
-            if not lst_keys_with_prefix:
-                continue
-            lst_parsed, first_key = parse_to_obj_data_by_mapping_keys(
-                convert_to_lst(v), lst_keys_with_prefix)
-            if lst_parsed:
-                if not res.get(first_key):
-                    res[first_key] = lst_parsed
-                else:
-                    res[first_key].extend(lst_parsed)
+            if lst_keys_with_prefix:
+                lst_parsed, first_key = parse_to_obj_data_by_mapping_keys(
+                    convert_to_lst(v), lst_keys_with_prefix)
+                if lst_parsed:
+                    if not res.get(first_key):
+                        res[first_key] = lst_parsed
+                    else:
+                        res[first_key].extend(lst_parsed)
 
     def map_itemtype(self, type_tag):
         """Map itemtype."""

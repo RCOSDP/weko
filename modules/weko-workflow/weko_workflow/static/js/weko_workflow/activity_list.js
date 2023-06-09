@@ -12,6 +12,40 @@ require([
   $('#filter_form_submit').on('click', function () {
     submitFilterSearch();
   });
+  $('#filter_form_download').on('click', function () {
+    downloadActivities();
+  });
+
+  $('#filter_form_clear').on('click', function () {
+    $('#activitylogs_clear_modal').fadeIn();
+  });   
+
+  $('#confirm_clear_activitylogs').on('click', function () {
+    $('#activitylogs_clear_modal').fadeOut();
+    clearActivities();
+  });
+
+  $('#cancel_clear_activitylogs').on('click', function () {
+    $('#activitylogs_clear_modal').fadeOut();
+  });  
+
+  $('.clear-activitylog').on('click', function () {
+    $('#activitylog_clear_modal').fadeIn();
+    var activity_id=$(this).closest('tr').find('a').text();
+    $('#del_activity_id').text(activity_id);
+
+  });
+
+  $('#confirm_clear_activitylog').on('click', function () {
+    var activity_id=document.getElementById("del_activity_id").textContent;
+    $('#activitylog_clear_modal').fadeOut();
+
+    clearActivity(activity_id);
+  });
+  $('#cancel_clear_activitylog').on('click', function () {
+    $('#activitylog_clear_modal').fadeOut();
+  });   
+
   function changeParamPages() {
     if ($('#change_page_param').length == 1) {
       let result = [];
@@ -564,4 +598,145 @@ function analyzeParams(sURL) {
   }
   return (wfLst.length > 0 ? wfLst.indexOf(checkingConditions.workflow) > -1 : true) &&
     (statusLst.length > 0 ? statusLst.indexOf(checkingConditions.status.toLowerCase()) > -1 : true);
+}
+
+
+//download filtered activities
+async function downloadActivities(activity_id=''){
+  let paramsAfterFilter = [];
+  if (activity_id != '') {
+	    let tmp = {};
+      tmp.name = "activity_id";
+      tmp.value = activity_id;
+      paramsAfterFilter.push(tmp);
+  } else {
+
+    let params = $('#filter_form').serializeArray();
+    jQuery.each(params, function (i, field) {
+      if (field.value) {
+        field.name += "_" + i;
+        field.value = field.value.trim();
+        paramsAfterFilter.push(field);
+      }
+    });
+    if (window.location.search != '') {
+      let locationParam = window.location.search.split('?')[1].split('&');
+      let listParamName = ['tab', 'sizetodo', 'sizeall', 'sizewait'];
+      for (let key in locationParam) {
+        let paramName = locationParam[key].split('=')[0];
+        if (listParamName.indexOf(paramName) >= 0) {
+          let param = {};
+          param.name = paramName;
+          param.value = locationParam[key].split('=')[1];
+          paramsAfterFilter.push(param);
+        }
+      }
+    }
+
+    for (let key in paramsAfterFilter) {
+      paramsAfterFilter[key].name = decodeURIComponent(paramsAfterFilter[key].name.replace(/\+/g, ' '));
+      paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
+    }
+  }
+  return  setActivitylogSubmit(paramsAfterFilter);
+    
+}
+
+//clear all filtered activities
+function clearActivities(){
+
+  downloadActivities().then(()=>{
+
+    let params = $('#filter_form').serializeArray();
+    let paramsAfterFilter = [];
+    jQuery.each(params, function (i, field) {
+      if (field.value) {
+        field.name += "_" + i;
+        field.value = field.value.trim();
+        paramsAfterFilter.push(field);
+      }
+    });
+    if (window.location.search != '') {
+      let locationParam = window.location.search.split('?')[1].split('&');
+      let listParamName = ['tab', 'sizetodo', 'sizeall', 'sizewait'];
+      for (let key in locationParam) {
+        let paramName = locationParam[key].split('=')[0];
+        if (listParamName.indexOf(paramName) >= 0) {
+          let param = {};
+          param.name = paramName;
+          param.value = locationParam[key].split('=')[1];
+          paramsAfterFilter.push(param);
+        }
+      }
+    }
+  
+    let urlEncodedDataPairs = [];
+    for (let key in paramsAfterFilter) {
+      paramsAfterFilter[key].name = decodeURIComponent(paramsAfterFilter[key].name.replace(/\+/g, ' '));
+      paramsAfterFilter[key].value = decodeURIComponent(paramsAfterFilter[key].value.toString().replace(/\+/g, ' '));
+      urlEncodedDataPairs.push(encodeURIComponent(paramsAfterFilter[key].name) + '=' + encodeURIComponent(paramsAfterFilter[key].value));
+    }
+    clearURL = window.location.pathname + 'clear_activitylog/?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
+  
+    $.ajax({
+      url: clearURL,
+      method: 'GET',
+      success: function (res) {
+        activitylog_tsv = res;
+        location.reload();
+      },
+      error: function (error) {
+        console.error(error);
+      }
+    });
+  });
+    
+
+}
+
+//clear seletected activity
+function clearActivity(activity_id){
+
+  downloadActivities(activity_id).then(()=>{
+
+    clearURL = window.location.pathname + 'clear_activitylog/?activity_id=' + activity_id;
+  
+    $.ajax({
+      url: clearURL,
+      method: 'GET',
+      success: function (res) {
+        activitylog_tsv = res;
+        location.reload();
+      },
+      error: function (error) {
+        console.error(error);
+      }
+    });
+  });
+
+
+}
+
+async function setActivitylogSubmit(paramsAfterFilter) {
+  let form = document.getElementById("activitylog_file_form");
+  let children = [];
+  for(let key in paramsAfterFilter){
+    const input = document.createElement('input');
+
+    //input要素にtype属性とvalue属性を設定
+    input.setAttribute('type', 'hidden');
+    input.setAttribute('name', paramsAfterFilter[key].name)
+    input.setAttribute('value', paramsAfterFilter[key].value);
+
+    form.appendChild(input);
+    children[key] = input;
+  }
+  $('#activitylog_file_form').submit();
+  await setTimeout( 1000 );
+  if(form.hasChildNodes()){
+    for (let key in children) {
+      form.removeChild(children[key]);
+    }
+  }
+
 }

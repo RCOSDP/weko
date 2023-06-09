@@ -23,32 +23,24 @@
 from flask import Flask
 
 from weko_authors import WekoAuthors
+from weko_theme import WekoTheme
 
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_weko_authors.py -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 
-#def test_version():
-#    """Test version import."""
-#    from weko_authors import __version__
-#    assert __version__
-#
-#
-#def test_init():
-#    """Test extension initialization."""
-#    app = Flask('testapp')
-#    ext = WekoAuthors(app)
-#    assert 'weko-authors' in app.extensions
-#
-#    app = Flask('testapp')
-#    ext = WekoAuthors()
-#    assert 'weko-authors' not in app.extensions
-#    ext.init_app(app)
-#    assert 'weko-authors' in app.extensions
-#
-#
-#def bak_test_view(app):
-#    """Test view."""
-#    WekoAuthors(app)
-#    with app.test_client() as client:
-#        res = client.get("/")
-#        assert res.status_code == 200
-#        assert 'Welcome to weko-authors' in str(res.data)
-#
+def test_version():
+    """Test version import."""
+    from weko_authors import __version__
+    assert __version__
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_weko_authors.py::test_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_init():
+    """Test extension initialization."""
+    app = Flask('testapp')
+    ext = WekoAuthors(app)
+    assert 'weko-authors' in app.extensions
+
+    app = Flask('testapp')
+    ext = WekoAuthors()
+    assert 'weko-authors' not in app.extensions
+    ext.init_app(app)
+    assert 'weko-authors' in app.extensions

@@ -66,6 +66,7 @@
   {% set guest_email = activity.extra_info.guest_mail %}
 {% endif %}
 {%- block page_body_main %}
+{{ form.csrf_token }}
 <div class="row" style="height:100%">
   {%- if page %}
     <div id="widget-page-id" hidden>{{ page.id }}</div>

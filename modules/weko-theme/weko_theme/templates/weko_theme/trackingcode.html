@@ -1,21 +1,50 @@
+{%- set site_info = site_info|get_site_info %}
+{%- set google_tracking_id_user = site_info.get("google_tracking_id_user",config.GOOGLE_TRACKING_ID_USER) %}
+
+{%- if config.get('ENABLE_COOKIE_CONSENT', False) %}
+
 {%- if config.GOOGLE_TRACKING_ID_SYSTEM %}
 <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async data-type="application/javascript" type="text/plain" data-name="jairocloud"
+    src="https://www.googletagmanager.com/gtag/js?id={{ config.GOOGLE_TRACKING_ID_SYSTEM }}"></script>
+<script type="text/plain" data-type="application/javascript" data-name="jairocloud">
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', '{{ config.GOOGLE_TRACKING_ID_SYSTEM }}');
+</script>
+{%- endif %}
+{%- if google_tracking_id_user %}
+<script async data-type="application/javascript" type="text/plain" data-name="google-analytics"
+    src="https://www.googletagmanager.com/gtag/js?id={{ google_tracking_id_user }}"></script>
+<script type="text/plain" data-type="application/javascript" data-name="google-analytics">
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', '{{ google_tracking_id_user }}');
+
+</script>
+{%- endif %}
+{%- else %}
+{%- if config.GOOGLE_TRACKING_ID_SYSTEM %}
+<!-- Global site tag (gtag.js) - Google Analytics -->
+
 <script async src="https://www.googletagmanager.com/gtag/js?id={{ config.GOOGLE_TRACKING_ID_SYSTEM }}"></script>
 <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
     gtag('config', '{{ config.GOOGLE_TRACKING_ID_SYSTEM }}');
-
 </script>
 {%- endif %}
-{%- if config.GOOGLE_TRACKING_ID_USER %}
-<script async src="https://www.googletagmanager.com/gtag/js?id={{ config.GOOGLE_TRACKING_ID_USER }}"></script>
+{%- if google_tracking_id_user %}
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ google_tracking_id_user }}"></script>
 <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
-    gtag('config', '{{ config.GOOGLE_TRACKING_ID_USER }}');
+    gtag('config', '{{ google_tracking_id_user }}');
 
 </script>
+{%- endif %}
 {%- endif %}

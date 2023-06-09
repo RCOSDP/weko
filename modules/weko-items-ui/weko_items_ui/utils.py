@@ -53,6 +53,7 @@ from invenio_records.api import RecordBase
 from invenio_accounts.models import User
 from invenio_search import RecordsSearch
 from invenio_stats.utils import QueryRankingHelper, QuerySearchReportHelper
+from invenio_stats.views import QueryRecordViewCount
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
@@ -416,6 +417,9 @@ def get_permission_record(rank_type, es_data, display_rank, has_permission_index
             else data.get('_item_metadata').get('control_number')
         try:
             record = WekoRecord.get_record_by_pid(pid_value)
+            if (record.pid and record.pid.status == PIDStatus.DELETED) or \
+                    ('publish_status' in record and record['publish_status'] == '-1'):
+                continue
             if roles[0]:
                 add_flag = True
             else:
@@ -495,23 +499,26 @@ def parse_ranking_results(rank_type,
     if rank == -1:
         if date:
             res = dict(
+                key=key,
                 date=date,
                 title=title,
                 url=url
             )
         else:
             res = dict(
+                key=key,
                 title=title,
                 url=url
             )
     else:
         res = dict(
+            key=key,
             rank=rank,
             count=count,
             title=title,
             url=url
         )
-    
+
     return res
 
 
@@ -861,12 +868,13 @@ def package_export_file(item_type_data):
     return file_output
 
 
-def make_stats_file(item_type_id, recids, list_item_role):
+def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
     """Prepare TSV/CSV data for each Item Types.
 
     Arguments:
         item_type_id    -- ItemType ID
         recids          -- List records ID
+        export_path     -- path of temp_dir
     Returns:
         ret             -- Key properties
         ret_label       -- Label properties
@@ -1093,7 +1101,11 @@ def make_stats_file(item_type_id, recids, list_item_role):
                             str(idx)))
                         key_label.insert(0, '.ファイルパス[{}]'.format(
                             str(idx)))
-                        key_data.insert(0, '')
+                        output_path = ""
+                        if key_data[key_index]:
+                            file_path = "recid_{}/{}".format(str(self.cur_recid), key_data[key_index])
+                            output_path = file_path if os.path.exists(os.path.join(export_path,file_path)) else ""
+                        key_data.insert(0,output_path)
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
                             and len(item_key_split) == 2:
@@ -1151,18 +1163,11 @@ def make_stats_file(item_type_id, recids, list_item_role):
     for recid in recids:
         record = records.records[recid]
         paths = records.attr_data['path'][recid]
-        for path in paths:
-            records.attr_output[recid].append(path)
-            index_ids = path.split('/')
-            pos_index = []
-            for index_id in index_ids:
-                index_tree = Indexes.get_index(index_id)
-                index_name = ''
-                if index_tree:
-                    index_name = index_tree.index_name_english.replace(
-                        '/', r'\/')
-                pos_index.append(index_name)
-            records.attr_output[recid].append('/'.join(pos_index))
+        index_infos = Indexes.get_path_list(paths)
+        for info in index_infos:
+            records.attr_output[recid].append(info.cid)
+            records.attr_output[recid].append(info.name.replace(
+                '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
         records.attr_output[recid].extend(
             [''] * (max_path * 2 - len(records.attr_output[recid]))
         )
@@ -1396,7 +1401,8 @@ def write_files(item_types_data, export_path, list_item_role):
         headers, records = make_stats_file(
             item_type_id,
             item_types_data[item_type_id]['recids'],
-            list_item_role)
+            list_item_role,
+            export_path)
         current_app.logger.debug("headers:{}".format(headers))
         current_app.logger.debug("records:{}".format(records))
         keys, labels, is_systems, options = headers
@@ -1671,7 +1677,6 @@ def get_new_items_by_date(start_date: str, end_date: str, ranking=False) -> dict
                                                           indexes,
                                                           query_with_publish_status=False,
                                                           ranking=ranking)
-        print(search_instance.to_dict())
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError as e:
@@ -2487,10 +2492,15 @@ def get_ranking(settings):
             group_field='pid_value',
             count_field='count'
         )
-
+        
         current_app.logger.debug("finished getting most_reviewed_items data from ES")
         rankings['most_reviewed_items'] = get_permission_record('most_reviewed_items', result, settings.display_rank, has_permission_indexes)
 
+        q = QueryRecordViewCount() 
+        for item in rankings['most_reviewed_items']:
+            ret = q.get_data_by_pid_value(pid_value=item['key'])
+            item['count'] = int(ret['total'])
+            
     # most_downloaded_items
     current_app.logger.debug("get most_downloaded_items start")
     if settings.rankings['most_downloaded_items']:
@@ -2760,7 +2770,7 @@ def get_ignore_item(_item_type_id, item_type_mapping=None,
 
 
 def make_stats_file_with_permission(item_type_id, recids,
-                                   records_metadata, permissions):
+                                   records_metadata, permissions,export_path=""):
     """Prepare TSV/CSV data for each Item Types.
 
     Args:
@@ -2768,6 +2778,7 @@ def make_stats_file_with_permission(item_type_id, recids,
         recids (_type_): List records ID
         records_metadata (_type_): _description_
         permissions (_type_): _description_
+        export_path (str): path of temp_dir
 
     Returns:
         _type_: _description_
@@ -3037,7 +3048,11 @@ def make_stats_file_with_permission(item_type_id, recids,
                             str(idx)))
                         key_label.insert(0, '.ファイルパス[{}]'.format(
                             str(idx)))
-                        key_data.insert(0, '')
+                        output_path = ""
+                        if key_data[key_index]:
+                            file_path = "recid_{}/{}".format(str(self.cur_recid), key_data[key_index])
+                            output_path = file_path if os.path.exists(os.path.join(export_path,file_path)) else ""
+                        key_data.insert(0,output_path)
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
                             and len(item_key_split) == 2:
@@ -3091,18 +3106,11 @@ def make_stats_file_with_permission(item_type_id, recids,
     for recid in recids:
         record = records.records[recid]
         paths = records.attr_data['path'][recid]
-        for path in paths:
-            records.attr_output[recid].append(path)
-            index_ids = path.split('/')
-            pos_index = []
-            for index_id in index_ids:
-                index_tree = Indexes.get_index(index_id)
-                index_name = ''
-                if index_tree:
-                    index_name = index_tree.index_name_english.replace(
-                        '/', r'\/')
-                pos_index.append(index_name)
-            records.attr_output[recid].append('/'.join(pos_index))
+        index_infos = Indexes.get_path_list(paths)
+        for info in index_infos:
+            records.attr_output[recid].append(info.cid)
+            records.attr_output[recid].append(info.name.replace(
+                '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
         records.attr_output[recid].extend(
             [''] * (max_path * 2 - len(records.attr_output[recid]))
         )

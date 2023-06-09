@@ -170,7 +170,7 @@ def parse_date(date):
             return datetime.strptime(date, date_format).replace(
                 tzinfo=tzoffset(None, 0))
         except ValueError as e:
-            print(str(e))
+            current_app.logger.error(str(e))
             pass
     (date, offset) = get_timezone(date)
     iso_formats = "%Y-%m-%dT%H:%M:%S.%f"
@@ -178,7 +178,7 @@ def parse_date(date):
         return datetime.strptime(date, iso_formats).replace(
             tzinfo=tzoffset(None, offset))
     except ValueError as e:
-        print(str(e))
+        current_app.logger.error(str(e))
         pass
 
 

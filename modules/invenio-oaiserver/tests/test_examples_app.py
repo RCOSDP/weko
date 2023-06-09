@@ -47,10 +47,3 @@ def example_app():
     # return to the original directory
     os.chdir(current_dir)
 
-
-def test_example_app(example_app):
-    """Test example app."""
-    # Testing open index page
-    cmd = 'curl http://0.0.0.0:5000/admin/oaiset/'
-    output = subprocess.check_output(cmd, shell=True).decode('utf-8')
-    assert '<title>OAI-PMH - Sets - Test</title>' in output

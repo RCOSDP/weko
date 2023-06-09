@@ -37,10 +37,8 @@ blueprint_api = Blueprint(
 
 @blueprint.route("/")
 def index():
-    """Render a basic view."""
-    return render_template(
-        "weko_handle/index.html",
-        module_name=_('WEKO-Handle'))
+    """Renders a Page-Not-found screen"""
+    return render_template("invenio_theme/404.html")
 
 
 @blueprint.route('/retrieve', methods=['POST'])

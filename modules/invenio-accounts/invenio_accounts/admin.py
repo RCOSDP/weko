@@ -27,6 +27,8 @@ from werkzeug.local import LocalProxy
 from wtforms.fields import BooleanField
 from wtforms.validators import DataRequired
 
+from weko_workflow.models import WorkFlow, WorkflowRole
+
 from .cli import commit
 from .models import Role, SessionActivity, User
 from .sessions import delete_session
@@ -184,6 +186,29 @@ class RoleView(ModelView):
     form_ajax_refs = {
         'user': user_loader
     }
+
+    def after_model_change(self, form, model, is_created):
+        if is_created and current_app.config.get('ACCOUNTS_WORKFLOW_ROLE_HIDE_FILTER', False):
+            try:
+                workflows = WorkFlow.query.filter_by(
+                    is_deleted=False).all()
+                if workflows:
+                    id_list = [x.id for x in workflows]
+                    with db.session.begin_nested():
+                        for i in id_list:
+                            wfrole = dict(
+                                workflow_id=i,
+                                role_id=model.id
+                            )
+                            db.session.execute(WorkflowRole.__table__.insert(), wfrole)
+                    db.session.commit()
+            except Exception as ex:
+                current_app.logger.error(
+                    'Insert workflow_id_list: {}, role_id: {} into workflow_userrole fail.'
+                    .format(id_list, model.id)
+                )
+                current_app.logger.error(str(ex))
+                db.session.rollback()
 
 
 class SessionActivityView(ModelView):

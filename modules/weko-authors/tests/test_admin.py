@@ -213,9 +213,10 @@ class TestExportView():
         (7, False), # user
         (8, False), # student  
     ])
-    def test_download_acl(self,client,users,users_index,is_permission):
+    def test_download_acl(self,client,users,users_index,is_permission,mocker):
         login_user_via_session(client=client, email=users[users_index]['email'])
         url = url_for('authors/export.download')
+        mocker.patch("weko_authors.admin.get_export_url", return_value={})
         with patch("flask.templating._render", return_value=""):
             res =  client.get(url)
             assert_role(res,is_permission)
@@ -288,7 +289,7 @@ class TestExportView():
                 return self.state == "SUCCESS"
             def failed(self):
                 return self.state == "FAILURE"
-        
+
         login_user_via_session(client=client, email=users[0]['email'])
         url = url_for('authors/export.check_status')
         current_cache.set("weko_authors_export_status",{"key":"authors_export_status","task_id":"test_task"})
@@ -297,7 +298,7 @@ class TestExportView():
         res = client.get(url)
         test = {'code': 200, 'data': {'download_link': 'http://app/admin/authors/export/download/Creator_export_all', 'key': 'authors_exported_url'}}
         assert json.loads(res.data)==test
-        
+
         # not task.result
         current_cache.set("weko_authors_export_status",{"key":"authors_export_status","task_id":"test_task"})
         mocker.patch("weko_authors.admin.export_all.AsyncResult",return_value=MockAsyncResult("test_id","SUCCESS",{}))
@@ -306,18 +307,20 @@ class TestExportView():
         assert json.loads(res.data)==test
         
         # not task is success,failed,revoked
+        current_cache.set("weko_authors_export_status",{"key":"authors_export_status","task_id":"test_task"})
+        current_cache.set("weko_authors_exported_url",{"key":"authors_exported_url","file_uri":"test_file.txt"})
         mocker.patch("weko_authors.admin.export_all.AsyncResult",return_value=MockAsyncResult("test_id","STARTED",{}))
         res = client.get(url)
-        test = {'code': 200, 'data': {'download_link': 'http://app/admin/authors/export/download/Creator_export_all', 'key': 'authors_exported_url'}}
+        test = {'code': 200, 'data': {'download_link': 'http://app/admin/authors/export/download/Creator_export_all', 'key': 'authors_export_status', "task_id": "test_task"}}
         assert json.loads(res.data) == test
-        
+
         # not exist get_export_status
         current_cache.delete("weko_authors_export_status")
         current_cache.set("weko_authors_exported_url",{"key":"authors_exported_url","file_uri":"test_file.txt"})
         res = client.get(url)
         test = {'code': 200, 'data': {'download_link': 'http://app/admin/authors/export/download/Creator_export_all', 'key': 'authors_exported_url'}}
         assert json.loads(res.data) == test
-        
+
         # exist weko_authors_export_status,not exist weko_authors_export_status[task_id]
         current_cache.set("weko_authors_export_status",{"key":"authors_export_status"})
         res = client.get(url)
@@ -405,6 +408,13 @@ class TestExportView():
         res = client.post(url)
         assert json.loads(res.data) == {"code":200,"data":{"status":"fail"}}
         
+        # ranse Exception
+        test = {"code": 200, "data": {"status": "fail"}}
+        with patch("weko_authors.admin.get_export_status",side_effect=Exception("test_error")):
+            res = client.post(url)
+            assert json.loads(res.data) == test
+
+
 # class ImportView(BaseView):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_admin.py::TestImportView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 class TestImportView():

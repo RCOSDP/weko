@@ -59,6 +59,7 @@ from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import Record
+from invenio_records.models import RecordMetadata
 from invenio_records_rest.errors import InvalidQueryRESTError
 from invenio_search import RecordsSearch
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
@@ -218,6 +219,7 @@ def delete_records(index_tree_id, ignore_items):
     hits = get_tree_items(index_tree_id)
     result = []
 
+    from weko_records_ui.utils import soft_delete
     for hit in hits:
         recid = hit.get("_id")
         record = Record.get_record(recid)
@@ -225,28 +227,34 @@ def delete_records(index_tree_id, ignore_items):
 
         if record and record["path"] and pid not in ignore_items:
             paths = record["path"]
+            del_flag = False
             if len(paths) > 0:
                 # Remove the element which matches the index_tree_id
                 removed_path = None
                 for index_id in paths:
                     if index_id == str(index_tree_id):
                         removed_path = index_id
-                        paths.remove(index_id)
+                        if len(paths) == 1:
+                            del_flag = True
+                            pass
+                        else:
+                            paths.remove(index_id)
                         break
 
-                # Do update the path on record
-                record.update({"path": paths})
-                record.commit()
-                db.session.commit()
-
-                # Indexing
+                
                 indexer = WekoIndexer()
-                indexer.update_path(record, update_revision=False)
 
-                if len(paths) == 0 and removed_path is not None:
-                    WekoDeposit.delete_by_index_tree_id(removed_path, ignore_items)
-                    Record.get_record(recid).delete()  # flag as deleted
-                    db.session.commit()  # terminate the transaction
+                if not del_flag:
+                    # Do update the path on record
+                    record.update({"path": paths})
+                    # Update to ES
+                    indexer.update_es_data(record, update_revision=False)
+                    record.commit()
+                    db.session.commit()
+                elif del_flag and removed_path is not None:
+                    soft_delete(pid)
+                else:
+                    pass
 
                 result.append(pid)
 
@@ -1001,6 +1009,7 @@ def handle_check_exist_record(list_record) -> list:
                 errors.append(_("Specified URI and system" " URI do not match."))
                 item["status"] = None
             else:
+                item_exist = None
                 try:
                     item_exist = WekoRecord.get_record_by_pid(item_id)
                 except PIDDoesNotExistError:
@@ -1175,7 +1184,7 @@ def get_file_name(file_path):
     return file_path.split("/")[-1] if file_path.split("/")[-1] else ""
 
 
-def register_item_metadata(item, root_path, is_gakuninrdm=False):
+def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
     """Upload file content.
 
     :argument
@@ -1312,6 +1321,9 @@ def register_item_metadata(item, root_path, is_gakuninrdm=False):
                 new_data["deleted_items"] = deleted_items
 
     deposit.update(item_status, new_data)
+    deposit['_deposit']['owners'] = [int(owner)]
+    deposit['_deposit']['created_by'] = int(owner)
+    deposit['owner'] = str(owner)
     deposit.commit()
 
     feedback_mail_list = item["metadata"].get("feedback_mail_list")
@@ -1361,7 +1373,7 @@ def update_publish_status(item_id, status):
     record["publish_status"] = status
     record.commit()
     indexer = WekoIndexer()
-    indexer.update_publish_status(record)
+    indexer.update_es_data(record, update_revision=False, field='publish_status')
 
 
 def handle_workflow(item: dict):
@@ -1498,12 +1510,15 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
 
     """
 
+    owner = 1
+    if request_info and 'user_id' in request_info:
+        owner = request_info['user_id']
     if not request_info and request:
         request_info = {
             "remote_addr": request.remote_addr,
             "referrer": request.referrer,
             "hostname": request.host,
-            "user_id": 1
+            "user_id": owner
         }
 
     if not item:
@@ -1529,7 +1544,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                     PIDVersioning(child=pid).last_child.object_uuid
                 )
 
-            register_item_metadata(item, root_path, is_gakuninrdm)
+            register_item_metadata(item, root_path, owner, is_gakuninrdm)
             if not is_gakuninrdm:
                 if current_app.config.get("WEKO_HANDLE_ALLOW_REGISTER_CNRI"):
                     register_item_handle(item)
@@ -1719,57 +1734,81 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
     errors = []
     warnings = []
 
-    def check(index_id, index_name):
+    def check(index_id, index_name_path):
         """Check index_id/index_name.
 
         Args:
             index_id (str): Index id.
-            index_name (str): Index name.
+            index_name_path (str): Index name path.
 
         Returns:
             [bool]: Check result.
 
         """
-        result = None
-        index = None
+        temp_res = []
+        index_info = None
         try:
-            index = Indexes.get_index(index_id)
+            index_info = Indexes.get_path_list([index_id])
         except Exception:
+            db.session.rollback()
             current_app.logger.warning("Specified IndexID is invalid!")
 
-        if index:
-            if index_name and index_name not in [
-                index.index_name,
-                index.index_name_english,
+        if index_info and len(index_info) == 1:
+            if index_name_path and index_name_path not in [
+                index_info[0].name.replace(
+                    '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']),
+                index_info[0].name_en.replace(
+                    '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']),
             ]:
                 warnings.append(
                     _("Specified {} does not match with existing index.").format(
                         "POS_INDEX"
                     )
                 )
-            result = index.id
-        elif index_name:
-            index = Indexes.get_index_by_all_name(index_name)
+            temp_res = [index_info[0].cid]
+        elif index_name_path:
+            index_path_list = index_name_path.split(
+                current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT'])
+            index_all_name = Indexes.get_index_by_all_name(index_path_list[-1])
+            index_infos = Indexes.get_path_list([i.id for i in index_all_name])
             msg_not_exist = _("The specified {} does not exist in system.")
-            if not index:
+            if index_infos:
+                for info in index_infos:
+                    index_info = None
+                    if index_name_path == \
+                            info.name.replace(
+                                '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']):
+                        index_info = info
+                    
+                    if not index_info:
+                        if index_id:
+                            errors.append(msg_not_exist.format("IndexID, POS_INDEX"))
+                        else:
+                            errors.append(msg_not_exist.format("POS_INDEX"))
+                    else:
+                        if index_id:
+                            errors.append(msg_not_exist.format("IndexID"))
+                        else:
+                            temp_res.append(index_info.cid)
+            else:
                 if index_id:
                     errors.append(msg_not_exist.format("IndexID, POS_INDEX"))
                 else:
                     errors.append(msg_not_exist.format("POS_INDEX"))
-            else:
-                if index_id:
-                    errors.append(msg_not_exist.format("IndexID"))
-                else:
-                    result = index.id
-        if result and not all_index_permission:
+        result = []
+        if temp_res and not all_index_permission:
             msg_can_not_edit = _("Your role cannot register items in this index.")
             if not can_edit_indexes:
                 errors.append(msg_can_not_edit)
-                result = None
+                result = []
             elif can_edit_indexes[0] != 0:
-                if result not in can_edit_indexes:
+                for i in temp_res:
+                    if i in can_edit_indexes:
+                        result.append(i)
+                if not result:
                     errors.append(msg_can_not_edit)
-                    result = None
+            else:
+                result = temp_res
 
         return result
 
@@ -1784,15 +1823,16 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
             if not index_ids:
                 index_ids = ["" for _ in range(len(pos_index))]
             for x, index_id in enumerate(index_ids):
-                index_name = ""
+                index_name_path = ""
                 if pos_index and x <= len(pos_index) - 1:
-                    index_name = pos_index[x].strip()
+                    index_name_path = pos_index[x].strip()
                 else:
-                    index_name = ""
+                    index_name_path = ""
 
-                _index_id = check(index_id, index_name)
-                if _index_id:
-                    indexes.append(_index_id)
+                _index_ids = check(index_id, index_name_path)
+                for i in _index_ids:
+                    if i not in indexes:
+                        indexes.append(i)
 
         if indexes:
             item["metadata"]["path"] = indexes
@@ -2848,116 +2888,157 @@ def handle_fill_system_item(list_record):
         identifierRegistration_key = identifierRegistration_key.split(".")[0]
         
         item_doi = item.get("doi","")
+        item_doi_prefix = ""
+        item_doi_suffix = ""
+        
+        if item_doi and "/" in item_doi:
+            item_doi_prefix, item_doi_suffix = item_doi.split("/")
+        else:
+            item_doi_prefix = item_doi
+        
         item_doi_ra = item.get("doi_ra","")
-        item_id = item.get('id',None)
-        checked_doi_ra = False
+        item_id = item.get('id',"")
+        checked_registerd_doi_ra = False
         existed_doi = False
+        
         if identifierRegistration_key:
             item["identifier_key"] = identifierRegistration_key
+            is_change_identifier = item.get("is_change_identifier", False)
             doi_setting = prepare_doi_setting()
-            if item_id is not None and doi_setting is not None:
-                from weko_deposit.api import WekoRecord
-                rec = WekoRecord.get_record_by_pid(item_id)
-                pid_doi = rec.pid_doi
-                if pid_doi is not None:
-                    existed_doi = True
-                    doi_value = pid_doi.pid_value
-                    doi = doi_value.replace("https://doi.org/","")
-                    doi_prefix, doi_suffix = doi.split("/")
-                    checked_doi_ra = True
-                    if doi_setting.jalc_doi == doi_prefix:
-                        doi_ra = "JaLC"
-                    elif doi_setting.jalc_crossref_doi == doi_prefix:
-                        doi_ra = "Crossref"
-                    elif doi_setting.jalc_datacite_doi == doi_prefix:
-                        doi_ra = "DataCite"
-                    elif doi_setting.ndl_jalc_doi == doi_prefix:
-                        doi_ra = "NDL JaLC"
-                    else:
-                        checked_doi_ra = False
-                else:
-                    existed_doi = False
             
-            if existed_doi==False and doi_setting is not None:
-                __doi = item_doi.rstrip("/")
-                if doi_setting.jalc_doi == __doi:
-                    checked_doi_ra = (item_doi_ra == "JaLC")
-                elif doi_setting.jalc_crossref_doi == __doi:
-                    checked_doi_ra = (item_doi_ra == "Crossref")
-                elif doi_setting.jalc_datacite_doi == __doi:
-                    checked_doi_ra = (item_doi_ra == "DataCite")
-                elif doi_setting.ndl_jalc_doi == __doi:
-                    checked_doi_ra = (item_doi_ra == "NDL JaLC")
+            pid_doi = None
+            if item_id:
+                try:
+                    from weko_deposit.api import WekoRecord
+                    rec = WekoRecord.get_record_by_pid(item_id)
+                    pid_doi = rec.pid_doi
+                except PIDDoesNotExistError:
+                    pid_doi=None
+            
+            registerd_doi = None
+            registerd_doi_prefix = None
+            registerd_doi_suffix = None
+            registerd_doi_ra = None
+            
+            if pid_doi and doi_setting:
+                doi_value = pid_doi.pid_value
+                registerd_doi = doi_value.replace("https://doi.org/","")
+                registerd_doi_prefix, registerd_doi_suffix = registerd_doi.split("/")
+                existed_doi = True
+                checked_registerd_doi_ra = True
+                if doi_setting.jalc_doi == registerd_doi_prefix:
+                    registerd_doi_ra = "JaLC"
+                elif doi_setting.jalc_crossref_doi == registerd_doi_prefix:
+                    registerd_doi_ra = "Crossref"
+                elif doi_setting.jalc_datacite_doi == registerd_doi_prefix:
+                    registerd_doi_ra = "DataCite"
+                elif doi_setting.ndl_jalc_doi == registerd_doi_prefix:
+                    registerd_doi_ra = "NDL JaLC"
                 else:
-                    checked_doi_ra = False
+                    checked_registerd_doi_ra = False
+            else:
+                existed_doi = False
+            
+            checked_item_doi_ra = False
+            if item_doi_prefix is not "" and doi_setting:
+                if doi_setting.jalc_doi == item_doi_prefix:
+                    checked_item_doi_ra = (item_doi_ra == "JaLC")
+                elif doi_setting.jalc_crossref_doi == item_doi_prefix:
+                    checked_item_doi_ra = (item_doi_ra == "Crossref")
+                elif doi_setting.jalc_datacite_doi == item_doi_prefix:
+                    checked_item_doi_ra = (item_doi_ra == "DataCite")
+                elif doi_setting.ndl_jalc_doi == item_doi_prefix:
+                    checked_item_doi_ra = (item_doi_ra == "NDL JaLC")
+            elif item_doi == "" and item_doi_ra == "":
+                checked_item_doi_ra = True
 
             fixed_doi = False
             fixed_doi_ra = False
-                    
+            
+            if is_change_identifier:
+                item["doi"] = item_doi
+            elif is_change_identifier == False:
+                if existed_doi:
+                    item["doi"] = registerd_doi
+                    if registerd_doi != item_doi:
+                        fixed_doi = True
+            
+            if is_change_identifier == True:
+                item["doi_ra"] = item_doi_ra
+            elif is_change_identifier == False:
+                if existed_doi:
+                    item["doi_ra"] = registerd_doi_ra
+                    if registerd_doi_ra != item_doi_ra:
+                        fixed_doi_ra = True
+            
             if identifierRegistration_key in item["metadata"]:
-                if existed_doi:                    
+                if existed_doi and checked_registerd_doi_ra and checked_item_doi_ra:                    
                     if 'subitem_identifier_reg_type' in item["metadata"][identifierRegistration_key]:
                         _doi_ra = item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type']
                         if item.get("is_change_identifier", False) == True:
                             item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type'] = item_doi_ra
-                        elif _doi_ra != doi_ra and item.get("is_change_identifier",False)==False:
-                            item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type'] = doi_ra
-                            fixed_doi_ra = True
+                            if _doi_ra != "" and _doi_ra != item_doi_ra:
+                                fixed_doi_ra = True
+                        elif item.get("is_change_identifier",False) == False:
+                            item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type'] = registerd_doi_ra
+                            if item_doi_ra != registerd_doi_ra:
+                                fixed_doi_ra = True
+                            if _doi_ra != "" and _doi_ra != registerd_doi_ra:
+                                fixed_doi_ra = True
                     else:
-                        if item.get("is_change_identifier", False) == False:
-                            item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type'] = doi_ra
-                            fixed_doi_ra = True
+                        if item.get("is_change_identifier", False) == True:
+                            item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type'] = item_doi_ra
+                        elif item.get("is_change_identifier",False) == False:
+                            item["metadata"][identifierRegistration_key]['subitem_identifier_reg_type'] = registerd_doi_ra
+                            if registerd_doi_ra != item_doi_ra:
+                                fixed_doi_ra = True
 
                     if 'subitem_identifier_reg_text' in item["metadata"][identifierRegistration_key]:    
                         _doi = item["metadata"][identifierRegistration_key]['subitem_identifier_reg_text']
                         if item.get("is_change_identifier", False) == True:
                             item["metadata"][identifierRegistration_key]['subitem_identifier_reg_text'] = item_doi
-                        elif _doi != doi and item.get("is_change_identifier", False) == False:
-                            item["metadata"][identifierRegistration_key]['subitem_identifier_reg_text'] = doi
-                            fixed_doi = True
+                            if  _doi != "" and item_doi != _doi:
+                                fixed_doi = True
+                        elif item.get("is_change_identifier", False) == False:
+                            item["metadata"][identifierRegistration_key]['subitem_identifier_reg_text'] = registerd_doi
+                            if registerd_doi != item_doi:
+                                fixed_doi = True
+                            if  _doi != "" and registerd_doi != _doi:
+                                fixed_doi = True
                     else:
                         if item.get("is_change_identifier", False) == False:
-                            item["metadata"][identifierRegistration_key]['subitem_identifier_reg_text'] = doi
-                            fixed_doi = True                        
+                            item["metadata"][identifierRegistration_key]['subitem_identifier_reg_text'] = registerd_doi
+                            if registerd_doi != item_doi:
+                                fixed_doi = True                      
                 else:
                     del item["metadata"][identifierRegistration_key]
-                
-            elif existed_doi or item.get("is_change_identifier", False):
-                item["metadata"][identifierRegistration_key]={'subitem_identifier_reg_type':doi_ra, 'subitem_identifier_reg_text': doi}
-            
-            if item_doi is not None:
-                if existed_doi:
-                    if item.get("is_change_identifier", False) == True:
-                        item["doi"] = item_doi
-                    elif item.get("is_change_identifier", False) == False:
-                        item["doi"] = doi
-                        fixed_doi = True
-            else:
-                if item.get("is_change_identifier", False) == False:
-                    if existed_doi:
-                        item["doi"] = doi
-                        fixed_doi = True
-            
-            if item_doi_ra is not None:
-                if existed_doi:
-                    if item.get("is_change_identifier", False) == True:
-                        item["doi_ra"] = item_doi_ra
-                    elif item.get("is_change_identifier", False) == False:
-                        item["doi_ra"] = doi_ra
-                        fixed_doi_ra = True
-            else:
-                if item.get("is_change_identifier", False) == False:
-                    item["doi_ra"] = doi_ra
-                    fixed_doi_ra = True
+            elif item.get("is_change_identifier", False):
+                if item_doi_ra and item_doi_ra in ("JaLC","Crossref","DataCite","NDL JaLC"):
+                    item["metadata"][identifierRegistration_key]={'subitem_identifier_reg_type':item_doi_ra, 'subitem_identifier_reg_text': item_doi}
+            elif existed_doi:
+                item["metadata"][identifierRegistration_key]={'subitem_identifier_reg_type':registerd_doi_ra, 'subitem_identifier_reg_text': registerd_doi}
 
             if fixed_doi:
                 warnings.append(_('The specified DOI is wrong and fixed with the registered DOI.'))
                     
             if fixed_doi_ra:
-                warnings.append(_('The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'))    
+                warnings.append(_('The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'))
+            
+            if is_change_identifier:
+                if item_doi is "":
+                    errors.append(_('Please specify DOI prefix/suffix.'))
+                elif item_doi_suffix is "":
+                    errors.append(_('Please specify DOI suffix.'))
+            else:
+                if item_doi_suffix and existed_doi is False:
+                    errors.append(_('Do not specify DOI suffix.'))
+
+            if checked_item_doi_ra is False:
+                if item_doi_ra not in ("JaLC","Crossref","DataCite","NDL JaLC"):
+                    errors.append(_('DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'))
+                elif item_doi_prefix:
+                    errors.append(_('Specified Prefix of DOI is incorrect.'))     
                     
-
-
         item['errors'] = errors
         item['warnings'] = warnings
 
@@ -3194,6 +3275,7 @@ def export_all(root_url, user_id, data):
             item_datas["recids"],
             item_datas["data"],
             permissions,
+            export_path
         )
         keys, labels, is_systems, options = headers
         item_datas["recids"].sort()
@@ -3249,10 +3331,15 @@ def export_all(root_url, user_id, data):
                 # get all record id
                 if toid:
                     recids = db.session.query(
-                        PersistentIdentifier.pid_value, PersistentIdentifier.object_uuid
+                        PersistentIdentifier.pid_value,
+                        PersistentIdentifier.object_uuid,
+                        RecordMetadata.json
                     ).join(
                         ItemMetadata,
                         PersistentIdentifier.object_uuid == ItemMetadata.id,
+                    ).join(
+                        RecordMetadata,
+                        PersistentIdentifier.object_uuid == RecordMetadata.id,
                     ).filter(
                         PersistentIdentifier.pid_type == "recid",
                         PersistentIdentifier.status == PIDStatus.REGISTERED,
@@ -3272,10 +3359,15 @@ def export_all(root_url, user_id, data):
                     )).all()
                 else:
                     recids = db.session.query(
-                        PersistentIdentifier.pid_value, PersistentIdentifier.object_uuid
+                        PersistentIdentifier.pid_value,
+                        PersistentIdentifier.object_uuid,
+                        RecordMetadata.json
                     ).join(
                         ItemMetadata,
                         PersistentIdentifier.object_uuid == ItemMetadata.id,
+                    ).join(
+                        RecordMetadata,
+                        PersistentIdentifier.object_uuid == RecordMetadata.id,
                     ).filter(
                         PersistentIdentifier.pid_type == "recid",
                         PersistentIdentifier.status == PIDStatus.REGISTERED,
@@ -3294,7 +3386,9 @@ def export_all(root_url, user_id, data):
                     item_types.remove(it)
                     continue
 
-                record_ids = [(recid.pid_value, recid.object_uuid) for recid in recids]
+                record_ids = [(recid.pid_value, recid.object_uuid) 
+                    for recid in recids if 'publish_status' in recid.json 
+                    and recid.json['publish_status'] in ['0', '1']]
                 for recid, uuid in record_ids:
                     if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
                         # Create export info file

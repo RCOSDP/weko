@@ -61,6 +61,8 @@ from invenio_deposit.config import (
     DEPOSIT_DEFAULT_JSONSCHEMA,
     DEPOSIT_JSONSCHEMAS_PREFIX,
 )
+from invenio_files_rest.models import Location, Bucket,ObjectVersion,FileInstance
+from invenio_records_files.api import RecordsBuckets
 from invenio_deposit.ext import InvenioDeposit, InvenioDepositREST
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.config import FILES_REST_STORAGE_CLASS_LIST
@@ -76,6 +78,7 @@ from invenio_pidstore import InvenioPIDStore
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from invenio_records import InvenioRecords
 from invenio_records_rest import InvenioRecordsREST
+from weko_redis.redis import RedisConnection
 from invenio_rest import InvenioREST
 from invenio_search import InvenioSearch, RecordsSearch, current_search, current_search_client
 from invenio_stats import InvenioStats
@@ -362,6 +365,15 @@ def esindex(app,db_records):
         search.client.indices.delete(index=app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
         
 
+@pytest.fixture()
+def redis_connect(app):
+    redis_connection = RedisConnection().connection(db=app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    return redis_connection
+
+@pytest.fixture()
+def without_remove_session(app):
+    with patch("weko_items_ui.views.db.session.remove") as mock_remove:
+        yield
 
 @pytest.fixture()
 def users(app, db):
@@ -832,6 +844,30 @@ def db_records2(db,instance_path,users):
  
     yield result
 
+@pytest.fixture()
+def db_records_file(app,db,instance_path,users):
+    index_metadata = {
+        'id': 1,
+        'parent': 0,
+        'value': 'Index(public_state = True,harvest_public_state = True)'
+    }
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        ret = Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(1)
+        index.public_state = True
+        index.harvest_public_state = True
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name="local", uri=instance_path, default=True)
+        db.session.add(loc)
+    db.session.commit()
+    record_data = json_data("data/record_file/record_metadata.json")
+    item_data = json_data("data/record_file/item_metadata.json")
+    with db.session.begin_nested():
+        depid, recid,parent,doi,record, item=create_record(record_data, item_data)
+    db.session.commit()
+    
+    return depid, recid,parent,doi,record, item
 
 @pytest.fixture()
 def db_workflow(app, db, db_itemtype, users):
@@ -927,7 +963,7 @@ def db_workflow(app, db, db_itemtype, users):
         db.session.add(flow_action3)
         db.session.add(workflow)
         db.session.add(activity)
-
+    db.session.commit()
     return {
         "flow_define": flow_define,
         "workflow": workflow,
@@ -981,7 +1017,7 @@ def db_activity(db, db_records, db_itemtype, db_workflow, users):
     with db.session.begin_nested():
         db.session.add(activity)
         db.session.add(rel)
-
+    db.session.commit()
     return {"activity": activity, "recid": recid}
 
 

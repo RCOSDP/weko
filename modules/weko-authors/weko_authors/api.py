@@ -79,6 +79,7 @@ class WekoAuthors(object):
         """Update author."""
         def update_es_data(data):
             """Update author data in ES."""
+            es_id = None
             es_author = RecordIndexer().client.search(
                 index=config_index,
                 doc_type=config_doc_type,
@@ -108,7 +109,8 @@ class WekoAuthors(object):
                     doc_type=config_doc_type,
                     body=data
                 ).get('_id', '')
-
+            return es_id
+            
         es_id = None
         config_index = current_app.config['WEKO_AUTHORS_ES_INDEX_NAME']
         config_doc_type = current_app.config['WEKO_AUTHORS_ES_DOC_TYPE']
@@ -120,8 +122,8 @@ class WekoAuthors(object):
                     author.is_deleted = data.get('is_deleted', False)
                 else:
                     data['is_deleted'] = author.is_deleted
-
-                update_es_data(data)
+                    
+                es_id = update_es_data(data)
                 data['id'] = es_id
                 author.json = json.dumps(data)
                 db.session.merge(author)
@@ -264,19 +266,17 @@ class WekoAuthors(object):
                                 else:
                                     row.append(val)
                 else:
-                    try:
-                        if 'mask' in mapping:
-                            row.append(
-                                mapping['mask'].get(
-                                    str(json_data.get(
-                                        mapping['json_id'])).lower(),
-                                    None
-                                )
+                    if 'mask' in mapping:
+                        row.append(
+                            mapping['mask'].get(
+                                str(json_data.get(
+                                    mapping['json_id'])).lower(),
+                                None
                             )
-                        else:
-                            row.append(json_data.get(mapping['json_id']))
-                    except KeyError as ex:
-                        row.append(None)
+                        )
+                    else:
+                        row.append(json_data.get(mapping['json_id']))
+
             row_data.append(row)
 
         return row_header, row_label_en, row_label_jp, row_data

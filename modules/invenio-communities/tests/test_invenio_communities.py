@@ -29,6 +29,7 @@ from __future__ import absolute_import, print_function
 
 import json
 from datetime import datetime, timedelta
+from mock import patch
 
 import pytest
 from flask import Flask
@@ -66,7 +67,7 @@ def test_version():
     from invenio_communities import __version__
     assert __version__
 
-
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_invenio_communities.py::test_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 def test_init():
     """Test extension initialization."""
     app = Flask('testapp')
@@ -78,6 +79,26 @@ def test_init():
     assert 'invenio-communities' not in app.extensions
     ext.init_app(app)
     assert 'invenio-communities' in app.extensions
+    
+    # app.config['COMMUNITIES_OAI_ENABLED'] is False
+    from invenio_communities import config
+    def mock_init_config(app_):
+        app_.config.setdefault(
+            "COMMUNITIES_BASE_TEMPLATE",
+            app_.config.get("BASE_TEMPLATE",
+                           "invenio_communities/base.html"))
+
+        # Set default configuration
+        for k in dir(config):
+            if k.startswith("COMMUNITIES_"):
+                app_.config.setdefault(k, getattr(config, k))
+        app_.config.update(
+            COMMUNITIES_OAI_ENABLED=False
+        )
+    with patch("invenio_communities.ext.InvenioCommunities.init_config",side_effect=mock_init_config):
+        app = Flask('testapp')
+        ext = InvenioCommunities(app)
+        assert 'invenio-communities' in app.extensions
 
 
 def test_alembic(app, db):
@@ -145,9 +166,10 @@ def test_model_init(app, db, communities):
     pytest.raises(InclusionRequestObsoleteError, InclusionRequest.create,
                   community=comm1, record=rec1)
 
-
-def test_email_notification(app, db, communities, user):
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_invenio_communities.py::test_email_notification -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+def test_email_notification(app, db, communities, users):
     """Test mail notification sending for community request."""
+    user = users[2]["obj"]
     app.config['COMMUNITIES_MAIL_ENABLED'] = True
     # Mock the send method of the Flask-Mail extension
     with app.extensions['mail'].record_messages() as outbox:
@@ -157,10 +179,12 @@ def test_email_notification(app, db, communities, user):
         rec1 = Record.create({
             'title': 'Foobar', 'description': 'Baz bar.'})
 
-        with pytest.raises(AttributeError):
-            InclusionRequest.create(community=comm1, record=rec1, user=user)
-        assert len(outbox) == 0
-
+        InclusionRequest.create(community=comm1, record=rec1, user=user)
+        # Check emails being sent
+        assert len(outbox) == 1
+        sent_msg = outbox[0]
+        assert sent_msg.recipients == [user.email]
+        assert comm1.title in sent_msg.body
 
 def test_model_featured_community(app, db, communities):
     """Test the featured community model and actions."""
@@ -316,8 +340,8 @@ def test_communities_rest_get_details(app, db, communities):
                 logo_url=None,
                 last_record_accepted='2000-01-01T00:00:00+00:00',
                 links={
-                    'self': 'http://inveniosoftware.org/api/communities/comm1',
-                    'html': 'http://inveniosoftware.org/communities/comm1/',
+                    'self': 'http://test_server/api/communities/comm1',
+                    'html': 'http://test_server/c/comm1/',
                 },
         )
 
