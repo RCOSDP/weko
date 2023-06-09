@@ -76,7 +76,7 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
 
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow
-from .config import DOI_VALIDATION_INFO, IDENTIFIER_GRANT_SELECT_DICT, \
+from .config import DOI_VALIDATION_INFO_CROSSREF, DOI_VALIDATION_INFO_JALC, IDENTIFIER_GRANT_SELECT_DICT, \
     WEKO_SERVER_CNRI_HOST_LINK
 from .models import Action as _Action
 from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity
@@ -401,11 +401,13 @@ def item_metadata_validation(item_id, identifier_type, record=None,
             # either_properties = ['geoLocation']
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['Crossref']:
+        # 別表3-1 Crossref DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
         if resource_type in journalarticle_type:
             required_properties = ['title',
                                    'publisher',
                                    'sourceIdentifier',
                                    'sourceTitle']
+        # 別表3-2 Crossref DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
         elif resource_type in report_types \
                 or resource_type in thesis_types:
             required_properties = ['title']
@@ -444,7 +446,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
             ((identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCite']
               and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC']
               ) or is_import):
-        return validation_item_property(metadata_item, properties)
+        return validation_item_property(metadata_item, properties,identifier_type)
     else:
         return _('Cannot register selected DOI for current Item Type of this '
                  'item.')
@@ -473,7 +475,7 @@ def merge_doi_error_list(current, new):
         current['mapping'] = list(set(current['mapping']))
 
 
-def validation_item_property(mapping_data, properties):
+def validation_item_property(mapping_data, properties, identifier_type):
     """
     Validate item property.
 
@@ -487,13 +489,13 @@ def validation_item_property(mapping_data, properties):
 
     if properties.get('required'):
         error_list_required = validattion_item_property_required(
-            mapping_data, properties['required'])
+            mapping_data, properties['required'],identifier_type)
         if error_list_required:
             merge_doi_error_list(error_list, error_list_required)
 
     if properties.get('either'):
         error_list_either = validattion_item_property_either_required(
-            mapping_data, properties['either'])
+            mapping_data, properties['either'], identifier_type)
         if error_list_either:
             merge_doi_error_list(error_list, error_list_either)
 
@@ -525,7 +527,7 @@ def handle_check_required_data(mapping_data, mapping_key):
     return requirements, keys, values
 
 
-def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
+def handle_check_required_pattern_and_either(mapping_data, mapping_keys, identifier_type,
                                              error_list=None, is_either=False):
     """Check required, pattern and either required."""
     if not (mapping_data and mapping_keys):
@@ -537,8 +539,14 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
     keys = []
     num_map = 0
     requirements = []
+    validation_info = {}
+    if identifier_type == IDENTIFIER_GRANT_SELECT_DICT["Crossref"]:
+        validation_info = DOI_VALIDATION_INFO_CROSSREF
+    else: #identifier_type == IDENTIFIER_GRANT_SELECT_DICT["JaLC"]
+        validation_info = DOI_VALIDATION_INFO_JALC
+        
     for mapping_key in mapping_keys:
-        for elem, pattern in DOI_VALIDATION_INFO[mapping_key]:
+        for elem, pattern in validation_info[mapping_key]:
             check_required_info = handle_check_required_data(
                 mapping_data, elem)
             if not check_required_info[1]:
@@ -581,7 +589,7 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
 
 
 def validattion_item_property_required(
-        mapping_data, properties):
+        mapping_data, properties, identifier_type):
     """
     Validate item property is required.
 
@@ -597,37 +605,37 @@ def validattion_item_property_required(
     if 'fileURI' in properties:
         mapping_keys = ['jpcoar:URI']
         handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, error_list)
+            mapping_data, mapping_keys, identifier_type, error_list)
 
     # check タイトル dc:title
     if 'title' in properties:
         mapping_keys = ['dc:title']
         handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, error_list)
+            mapping_data, mapping_keys, identifier_type, error_list)
 
     # check 識別子 jpcoar:givenName
     if 'givenName' in properties:
         mapping_keys = ['jpcoar:givenName']
         handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, error_list)
+            mapping_data, mapping_keys, identifier_type, error_list)
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
         mapping_keys = ['jpcoar:sourceIdentifier']
         handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, error_list)
+            mapping_data, mapping_keys, identifier_type, error_list)
 
     # check 収録物名 jpcoar:sourceTitle
     if 'sourceTitle' in properties:
         mapping_keys = ['jpcoar:sourceTitle']
         handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, error_list)
+            mapping_data, mapping_keys, identifier_type, error_list)
 
     # check 収録物名 dc:publisher
     if 'publisher' in properties:
         mapping_keys = ['dc:publisher']
         handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, error_list)
+            mapping_data, mapping_keys, identifier_type, error_list)
 
     if error_list == empty_list:
         return None
@@ -639,7 +647,7 @@ def validattion_item_property_required(
 
 
 def validattion_item_property_either_required(
-        mapping_data, properties):
+        mapping_data, properties, identifier_type):
     """
     Validate item property is either required.
 
@@ -656,13 +664,13 @@ def validattion_item_property_either_required(
         # check 位置情報（点） datacite:geoLocationPoint
         mapping_keys = ['datacite:geoLocationPoint']
         geo_location = handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, None, True)
+            mapping_data, mapping_keys, identifier_type, None, True)
 
         # check 位置情報（空間） datacite:geoLocationBox
         if geo_location:
             mapping_keys = ['datacite:geoLocationBox']
             errors = handle_check_required_pattern_and_either(
-                mapping_data, mapping_keys, None, True)
+                mapping_data, mapping_keys, identifier_type, None, True)
             if not errors:
                 geo_location = None
             else:
@@ -672,7 +680,7 @@ def validattion_item_property_either_required(
         if geo_location:
             mapping_keys = ['datacite:geoLocationPlace']
             errors = handle_check_required_pattern_and_either(
-                mapping_data, mapping_keys, None, True)
+                mapping_data, mapping_keys, identifier_type, None, True)
             if not errors:
                 geo_location = None
             else:
@@ -690,13 +698,13 @@ def validattion_item_property_either_required(
         # check フォーマット jpcoar:mimeType
         mapping_keys = ['jpcoar:mimeType']
         version = handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, None, True)
+            mapping_data, mapping_keys, identifier_type, None, True)
 
         if version:
             # check バージョン datacite:version
             mapping_keys = ['datacite:version']
             errors = handle_check_required_pattern_and_either(
-                mapping_data, mapping_keys, None, True)
+                mapping_data, mapping_keys, identifier_type, None, True)
             if not errors:
                 version = None
             else:
@@ -706,7 +714,7 @@ def validattion_item_property_either_required(
             # check 出版タイプ oaire:version
             mapping_keys = ['oaire:version']
             errors = handle_check_required_pattern_and_either(
-                mapping_data, mapping_keys, None, True)
+                mapping_data, mapping_keys, identifier_type, None, True)
             if not errors:
                 version = None
             else:

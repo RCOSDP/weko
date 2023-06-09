@@ -82,7 +82,7 @@ IDENTIFIER_GRANT_SELECT_DICT = {
 }
 """Identifier grant selected enum."""
 
-DOI_VALIDATION_INFO = {
+DOI_VALIDATION_INFO_CROSSREF = {
     'jpcoar:URI': [['file.URI.@value', None]],
     'dc:title': [['title.@value', None], ['title.@attributes.xml:lang', None]],
     'jpcoar:givenName': [['creator.givenName.@value', None]],
@@ -111,6 +111,33 @@ DOI_VALIDATION_INFO = {
 }
 """List of DOI validation information."""
 
+DOI_VALIDATION_INFO_JALC = {
+    'jpcoar:URI': [['file.URI.@value', None]],
+    'dc:title': [['title.@value', None]],
+    'jpcoar:givenName': [['creator.givenName.@value', None]],
+    'jpcoar:sourceIdentifier': [
+        ['sourceIdentifier.@value', None],
+        ['sourceIdentifier.@attributes.identifierType', None]],
+    'jpcoar:sourceTitle': [
+        ['sourceTitle.@value', None],
+        ['sourceTitle.@attributes.xml:lang', 'en']],
+    'dc:publisher': [
+        ['publisher.@value', None],
+        ['publisher.@attributes.xml:lang', 'en']],
+    'datacite:geoLocationPoint': [
+        ['geoLocation.geoLocationPoint.pointLatitude.@value', None],
+        ['geoLocation.geoLocationPoint.pointLongitude.@value', None]],
+    'datacite:geoLocationBox': [
+        ['geoLocation.geoLocationBox.eastBoundLongitude.@value', None],
+        ['geoLocation.geoLocationBox.northBoundLatitude.@value', None],
+        ['geoLocation.geoLocationBox.southBoundLatitude.@value', None],
+        ['geoLocation.geoLocationBox.westBoundLongitude.@value', None]],
+    'datacite:geoLocationPlace': [['geoLocation.geoLocationPlace.@value', None]],
+    'jpcoar:mimeType': [['file.mimeType.@value', None]],
+    'datacite:version': [['version.@value', None]],
+    'oaire:version': [['versiontype.@value', None],
+                      ['versiontype.@attributes.rdf:resource', None]]
+}
 WEKO_SERVER_CNRI_HOST_LINK = 'http://hdl.handle.net/'
 """Host server of CNRI"""
 

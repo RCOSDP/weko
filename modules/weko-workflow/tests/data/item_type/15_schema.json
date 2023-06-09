@@ -3,7 +3,6 @@
     "$schema": "http://json-schema.org/draft-04/schema#",
     "required": [
         "pubdate",
-        "item_1617186331708",
         "item_1617258105262"
     ],
     "properties": {
@@ -104,10 +103,6 @@
             "type": "array",
             "items": {
                 "type": "object",
-                "required": [
-                    "subitem_1551255647225",
-                    "subitem_1551255648112"
-                ],
                 "properties": {
                     "subitem_1551255647225": {
                         "type": "string",
