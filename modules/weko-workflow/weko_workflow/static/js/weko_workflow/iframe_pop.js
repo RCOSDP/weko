@@ -22,6 +22,13 @@ require([
   }
 
   $("#step_item_login", parent.document).attr('height', '240px');
+
+  $('#btn-back').on('click', function () {
+    let origin = new URL(window.location.href).origin;
+    let redirect_uri = origin + "/workflow/activity/detail/" + $("#activity_id").text().trim();
+    document.location.href = redirect_uri;
+  });
+
   $('#btn-finish').on('click', function(){
     let _this = $(this);
     startLoading(_this);
@@ -72,9 +79,11 @@ require([
       }
     });
   });
+
   $('#link_record_detail').on('click', function () {
     $('#myModal').modal('show');
   });
+
   $('#btn-draft').on('click', function () {
     let _this = $(this);
     startLoading(_this);
