@@ -35,6 +35,7 @@ from invenio_communities.models import Community
 from invenio_records_rest.errors import InvalidQueryRESTError
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import get_user_roles
+from weko_schema_ui.models import PublishStatus
 from werkzeug.datastructures import MultiDict
 
 from . import config
@@ -65,9 +66,9 @@ def get_permission_filter(index_id: str = None):
     """
     is_admin, roles = get_user_roles()
     if is_admin:
-        pub_status = ["0", "1"]
+        pub_status = [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]
     else:
-        pub_status = ["0"]
+        pub_status = [PublishStatus.PUBLIC.value]
     is_perm = search_permission.can()
     status = Q("terms", publish_status=pub_status)
     version = Q("match", relation_version_is_last="true")
@@ -107,7 +108,8 @@ def get_permission_filter(index_id: str = None):
         user_id, result = check_permission_user()
 
         if result:
-            user_terms = Q("terms", publish_status=["0", "1"])
+            user_terms = Q("terms", publish_status=[
+                PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value])
             creator_user_match = Q("match", weko_creator_id=user_id)
             shared_user_match = Q("match", weko_shared_id=user_id)
             shuld = []
@@ -851,7 +853,7 @@ def item_path_search_factory(self, search, index_id=None):
                     },
                     "aggs": {
                         "date_range": {
-                            "filter": {"match": {"publish_status": "0"}},
+                            "filter": {"match": {"publish_status": PublishStatus.PUBLIC.value}},
                             "aggs": {
                                 "available": {
                                     "range": {
@@ -867,7 +869,7 @@ def item_path_search_factory(self, search, index_id=None):
                         "no_available": {
                             "filter": {
                                 "bool": {
-                                    "must_not": [{"match": {"publish_status": "0"}}]
+                                    "must_not": [{"match": {"publish_status": PublishStatus.PUBLIC.value}}]
                                 }
                             }
                         },
@@ -939,13 +941,15 @@ def item_path_search_factory(self, search, index_id=None):
 
                         query_q["query"]["bool"]["must"].append(
                             {"bool": {"should": div_indexes},
-                                "bool": {"must": [{"terms": {"publish_status": ["0", "1"]}}]}}
+                                "bool": {"must": [{"terms": {"publish_status": [
+                                    PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]}}]}}
                         )
                     else:
                         query_q["query"]["bool"]["must"].append({
                             "bool": {
                                 "must": [
-                                    {"terms": {"publish_status": ["0", "1"]}},
+                                    {"terms": {"publish_status": [
+                                        PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]}},
                                     {"terms": {"path": child_idx}}
                                 ]
                             }
@@ -976,7 +980,7 @@ def item_path_search_factory(self, search, index_id=None):
                         "terms": {"field": "path", "size": "@count"},
                         "aggs": {
                             "date_range": {
-                                "filter": {"match": {"publish_status": "0"}},
+                                "filter": {"match": {"publish_status": PublishStatus.PUBLIC.value}},
                                 "aggs": {
                                     "available": {
                                         "range": {
@@ -992,7 +996,7 @@ def item_path_search_factory(self, search, index_id=None):
                             "no_available": {
                                 "filter": {
                                     "bool": {
-                                        "must_not": [{"match": {"publish_status": "0"}}]
+                                        "must_not": [{"match": {"publish_status": PublishStatus.PUBLIC.value}}]
                                     }
                                 }
                             },
@@ -1026,13 +1030,15 @@ def item_path_search_factory(self, search, index_id=None):
                     div_indexes.append({"terms": {"path": child_idx[_right:_left]}})
                 query_not_q["query"]["bool"]["must"].append(
                     {"bool": {"should": div_indexes},
-                     "bool": {"must": [{"terms": {"publish_status": ["0", "1"]}}]}}
+                     "bool": {"must": [{"terms": {"publish_status": [
+                         PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]}}]}}
                 )
             else:
                 query_not_q["query"]["bool"]["must"].append({
                     "bool": {
                         "must": [
-                            {"terms": {"publish_status": ["0", "1"]}},
+                            {"terms": {"publish_status": [
+                                PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]}},
                             {"terms": {"path": child_idx}}
                         ]
                     }
@@ -1208,7 +1214,7 @@ def item_search_factory(
             current_app.config["INDEXER_DEFAULT_DOC_TYPE"]
         )
         if not query_with_publish_status:
-            query_string += " AND publish_status:0 "
+            query_string += " AND publish_status:{} ".format(PublishStatus.PUBLIC.value)
         query_string += " AND publish_date:[{} TO {}]".format(start_term, end_term)
 
         query_q = {
@@ -1235,7 +1241,7 @@ def item_search_factory(
             query_must_param.append({"exists": {"field": "path"}})
         if query_must_param:
             query_q["query"]["bool"]["must"] += query_must_param
-        query_q["query"]["bool"]["must_not"] = [{"match": {"publish_status": "-1"}}]
+        query_q["query"]["bool"]["must_not"] = [{"match": {"publish_status": PublishStatus.DELETE.value}}]
         return query_q
 
     query_q = _get_query(start_date, end_date, list_index_id)

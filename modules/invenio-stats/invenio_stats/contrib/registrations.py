@@ -21,6 +21,7 @@ from invenio_stats.processors import EventsIndexer, anonymize_user, \
 from invenio_stats.queries import ESDateHistogramQuery, ESTermsQuery, \
     ESWekoFileStatsQuery, ESWekoTermsQuery, ESWekoRankingQuery
 
+from weko_schema_ui.models import PublishStatus
 
 def register_events():
     """Register sample events."""
@@ -898,7 +899,10 @@ def register_queries():
                                 },
                                 {
                                     "terms": {
-                                        "publish_status": ["0", "1"]
+                                        "publish_status": [
+                                            PublishStatus.PUBLIC.value,
+                                            PublishStatus.PRIVATE.value
+                                        ]
                                     }
                                 }
                             ],

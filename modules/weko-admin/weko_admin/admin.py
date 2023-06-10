@@ -49,6 +49,7 @@ from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes, SiteLicense
 from weko_records.models import SiteLicenseInfo
 from weko_records_ui.utils import check_items_settings
+from weko_schema_ui.models import PublishStatus
 from wtforms.fields import StringField
 from wtforms.validators import ValidationError
 
@@ -358,7 +359,7 @@ class ReportView(BaseView):
                                 "must": [
                                     {
                                         "term": {
-                                            "publish_status": "0"
+                                            "publish_status": PublishStatus.PUBLIC.value
                                         }
                                     },
                                     {
@@ -392,7 +393,10 @@ class ReportView(BaseView):
                             {
                                 "terms":
                                 {
-                                    "publish_status": ["0", "1"]
+                                    "publish_status": [
+                                        PublishStatus.PUBLIC.value,
+                                        PublishStatus.PRIVATE.value
+                                    ]
                                 }
                             }
                         ]
