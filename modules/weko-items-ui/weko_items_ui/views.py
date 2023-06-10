@@ -33,6 +33,7 @@ from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
+from flask_wtf import FlaskForm
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -511,6 +512,8 @@ def iframe_items_index(pid_value='0'):
             # current_app.logger.debug("session['itemlogin_res_check']: {}".format(session['itemlogin_res_check']))
             # current_app.logger.debug("session['itemlogin_pid']: {}".format(session['itemlogin_pid']))
             
+            form = FlaskForm(request.form)
+            
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,
@@ -529,6 +532,7 @@ def iframe_items_index(pid_value='0'):
                 community_id=community_id,
                 files=files,
                 files_thumbnail=files_thumbnail,
+                form=form,
                 **ctx
             )
 
@@ -559,7 +563,7 @@ def iframe_items_index(pid_value='0'):
             """update item data info."""
             sessionstore.put(
                 'item_index_{}'.format(pid_value),
-                json.dumps(data),
+                bytes(json.dumps(data),"utf-8"),
                 ttl_secs=300)
         return jsonify(data)
     except KeyError as ex:

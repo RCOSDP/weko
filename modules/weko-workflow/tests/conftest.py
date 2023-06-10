@@ -28,6 +28,7 @@ import uuid
 from datetime import datetime
 from six import BytesIO
 import base64
+from mock import patch
 
 import pytest
 from flask import Flask, session, url_for, Response
@@ -577,6 +578,11 @@ def redis_connect(app):
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
     redis_connection.put('updated_json_schema_A-00000001-10001',bytes('test', 'utf-8'))
     return redis_connection
+
+@pytest.fixture()
+def without_remove_session(app):
+    with patch("weko_workflow.views.db.session.remove"):
+        yield
 
 @pytest.fixture()
 def users(app, db):
