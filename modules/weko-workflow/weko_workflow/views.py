@@ -1482,11 +1482,10 @@ def next_action(activity_id='0', action_id=0):
 
         item_link = ItemLink(current_pid.pid_value)
         relation_data = post_json.get('link_data')
-        if relation_data:
-            err = item_link.update(relation_data)
-            if err:
-                res = ResponseMessageSchema().load({"code":-1, "msg":_(err)})
-                return jsonify(res.data), 500
+        err = item_link.update(relation_data)
+        if err:
+            res = ResponseMessageSchema().load({"code":-1, "msg":_(err)})
+            return jsonify(res.data), 500
         if post_json.get('temporary_save') == 1:
             work_activity.upt_activity_action_comment(
                 activity_id=activity_id,
@@ -2069,6 +2068,15 @@ def cancel_action(activity_id='0', action_id=0):
                     if not p.pid_value.endswith('.0'):
                         p.status = PIDStatus.DELETED
             db.session.commit()
+            # update item link info
+            if cancel_record:
+                if cancel_record.pid.pid_value.endswith('.0'):
+                    weko_record = WekoRecord.get_record_by_pid(cancel_record.pid.pid_value)
+                    if weko_record:
+                        weko_record.update_item_link(cancel_record.pid.pid_value.split('.')[0])
+                else:
+                    item_link = ItemLink(cancel_record.pid.pid_value)
+                    item_link.update([])
         except Exception:
             db.session.rollback()
             current_app.logger.error(

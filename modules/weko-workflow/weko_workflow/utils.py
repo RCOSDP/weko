@@ -1419,6 +1419,11 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         rtn = activity.init_activity(post_activity,
                                      community,
                                      draft_record.model.id)
+        # create item link info of draft record from parent record
+        weko_record = WekoRecord.get_record_by_pid(
+            draft_record.pid.pid_value)
+        if weko_record:
+            weko_record.update_item_link(recid.pid_value)
     else:
         # Clone org bucket into draft record.
         try:
@@ -1547,7 +1552,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                 ver_attaching_deposit.update_feedback_mail()
             ver_attaching_deposit.publish()
 
-            weko_record = WekoRecord.get_record_by_pid(current_pid.pid_value)
+            weko_record = WekoRecord.get_record_by_pid(new_deposit.pid.pid_value)
             if weko_record:
                 weko_record.update_item_link(current_pid.pid_value)
             updated_item.publish(deposit)
@@ -1583,6 +1588,11 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_parent_record.update_feedback_mail()
                     new_parent_record.commit()
                     updated_item.publish(new_parent_record)
+                    # update item link info of main record
+                    weko_record = WekoRecord.get_record_by_pid(
+                        maintain_record.pid.pid_value)
+                    if weko_record:
+                        weko_record.update_item_link(current_pid.pid_value)
                 else:  # Handle Upgrade workflow
                     draft_pid = PersistentIdentifier.get(
                         'recid',
@@ -1597,7 +1607,13 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_draft_record.update_feedback_mail()
                     new_draft_record.commit()
                     updated_item.publish(new_draft_record)
+                    # update item link info of draft record
+                    weko_record = WekoRecord.get_record_by_pid(
+                        draft_deposit.pid.pid_value)
+                    if weko_record:
+                        weko_record.update_item_link(current_pid.pid_value)
 
+                # update item link info of parent record
                 weko_record = WekoRecord.get_record_by_pid(
                     pid_without_ver.pid_value)
                 if weko_record:
