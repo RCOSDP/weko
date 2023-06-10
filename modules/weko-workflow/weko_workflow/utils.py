@@ -3053,6 +3053,8 @@ def get_activity_display_info(activity_id: str):
     item = None
     if activity_detail and activity_detail.item_id:
         try:
+            #obj = RecordMetadata.query.filter_by(id=activity_detail.item_id).one_or_none()
+            #item = ItemsMetadata(obj.json, model=obj)
             item = ItemsMetadata.get_record(id_=activity_detail.item_id)
         except NoResultFound as ex:
             current_app.logger.exception(str(ex))
@@ -3696,16 +3698,16 @@ def get_record_first_version(deposit):
     return deposit, pid.object_uuid
 
 
-def get_files_and_thumbnail(activity_id, item):
+def get_files_and_thumbnail(activity_id, item_id):
     """Get files and thumbnail from activity id.
 
     Args:
         activity_id: The activity identifier.
-        item:  Item metadata.
+        item_id:  Item uuid.
     """
     from weko_items_ui.utils import to_files_js
     files, files_thumbnail = [], []
-    deposit = WekoDeposit.get_record(item.id)
+    deposit = WekoDeposit.get_record(item_id)
     activity = WorkActivity()
     metadata = activity.get_activity_metadata(activity_id)
     # Load files from metadata.
@@ -3796,7 +3798,7 @@ def get_main_record_detail(activity_id,
     if item and not approval_record:
         recid, approval_record = get_pid_and_record(item.id)
     if item and not files:
-        files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
+        files, files_thumbnail = get_files_and_thumbnail(activity_id, item.id)
 
     record_metadata = []
     item_type_id = approval_record.get('item_type_id')

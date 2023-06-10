@@ -879,11 +879,14 @@ def display_activity(activity_id="0"):
 
 
     # if 'approval' == action_endpoint:
-    if item:
+    if activity_detail and \
+            activity_detail.item_id and \
+            activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
         try:
+            item_id = str(activity_detail.item_id)
             # get record data for the first time access to editing item screen
-            recid, approval_record = get_pid_and_record(item.id)
-            files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
+            recid, approval_record = get_pid_and_record(item_id)
+            files, files_thumbnail = get_files_and_thumbnail(activity_id, item_id)
 
             links = base_factory(recid)
 
@@ -948,21 +951,22 @@ def display_activity(activity_id="0"):
         ctx['item_link'] = item_link
 
     # Get item link info.
-    record_detail_alt = get_main_record_detail(
-        activity_id, activity_detail, action_endpoint, item,
-        approval_record, files, files_thumbnail)
-    if not record_detail_alt:
-        current_app.logger.error("display_activity: bad value for record_detail_alt")
-        return render_template("weko_theme/error.html",
-                    error="can not get data required for rendering")
+    if activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
+        record_detail_alt = get_main_record_detail(
+            activity_id, activity_detail, action_endpoint, item,
+            approval_record, files, files_thumbnail)
+        if not record_detail_alt:
+            current_app.logger.error("display_activity: bad value for record_detail_alt")
+            return render_template("weko_theme/error.html",
+                        error="can not get data required for rendering")
 
-    ctx.update(
-        dict(
-            record_org=record_detail_alt.get('record'),
-            files_org=record_detail_alt.get('files'),
-            thumbnails_org=record_detail_alt.get('files_thumbnail')
+        ctx.update(
+            dict(
+                record_org=record_detail_alt.get('record'),
+                files_org=record_detail_alt.get('files'),
+                thumbnails_org=record_detail_alt.get('files_thumbnail')
+            )
         )
-    )
 
     # Get email approval key
     approval_email_key = get_approval_keys()
@@ -2058,6 +2062,12 @@ def cancel_action(activity_id='0', action_id=0):
                             parent_pid.object_type
                         cancel_pv.parent.object_uuid = \
                             parent_pid.object_uuid
+
+                pids = PersistentIdentifier.query.filter_by(
+                    object_uuid=cancel_item_id)
+                for p in pids:
+                    if not p.pid_value.endswith('.0'):
+                        p.status = PIDStatus.DELETED
             db.session.commit()
         except Exception:
             db.session.rollback()
