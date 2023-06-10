@@ -1444,7 +1444,10 @@ class TestFacetSearchSettingView:
             name_jp="データの言語",
             mapping="language",
             aggregations=[],
-            active=True
+            active=True,
+            ui_type="SelectBox",
+            display_number=1,
+            is_open=True
         )
         db.session.add(language)
         db.session.commit()
@@ -1462,7 +1465,10 @@ class TestFacetSearchSettingView:
                 "mapping": "language",
                 "active": True,
                 "aggregations": [],
-                "mapping_list": mapping_list
+                "mapping_list": mapping_list,
+                "display_number":1,
+                "is_open":True,
+                "ui_type":"SelectBox"
             }
             client.get(url)
             args, kwargs = mock_render.call_args
@@ -1486,7 +1492,10 @@ class TestFacetSearchSettingView:
             name_jp="データの言語",
             mapping="language",
             aggregations=[],
-            active=True
+            active=True,
+            ui_type="SelectBox",
+            display_number=1,
+            is_open=True
         )
         db.session.add(language)
         db.session.commit()
@@ -1504,7 +1513,10 @@ class TestFacetSearchSettingView:
                 "mapping": "language",
                 "active": True,
                 "aggregations": [],
-                "mapping_list": mapping_list
+                "mapping_list": mapping_list,
+                "display_number":1,
+                "is_open":True,
+                "ui_type":"SelectBox"
             }
             client.get(url)
             args, kwargs = mock_render.call_args
@@ -1529,7 +1541,10 @@ class TestFacetSearchSettingView:
             name_jp="データの言語",
             mapping="language",
             aggregations=[],
-            active=True
+            active=True,
+            ui_type="SelectBox",
+            display_number=1,
+            is_open=True
         )
         db.session.add(language)
         db.session.commit()
@@ -1553,6 +1568,9 @@ class TestFacetSearchSettingView:
                 "mapping": "language",
                 "active": True,
                 "aggregations": [],
+                "display_number":1,
+                "is_open":True,
+                "ui_type":"SelectBox"
             }
             client.get(url)
             args, kwargs = mock_render.call_args

@@ -543,9 +543,9 @@ class Indexes(object):
 
     @classmethod
     @cached_index_tree_json(timeout=None,)
-    def get_index_tree(cls, pid=0):
+    def get_index_tree(cls, pid=0, lang=None):
         """Get index tree json."""
-        return get_tree_json(cls.get_recursive_tree(pid), pid)
+        return get_tree_json(cls.get_recursive_tree(pid, lang), pid)
 
     @classmethod
     def get_browsing_info(cls):
@@ -639,12 +639,12 @@ class Indexes(object):
         return tree
 
     @classmethod
-    def get_recursive_tree(cls, pid: int = 0):
+    def get_recursive_tree(cls, pid: int = 0, lang: str = None):
         """Get recursive tree."""
         with db.session.begin_nested():
-            recursive_t = cls.recs_tree_query(pid)
+            recursive_t = cls.recs_tree_query(pid, lang)
             if pid != 0:
-                recursive_t = cls.recs_root_tree_query(pid)
+                recursive_t = cls.recs_root_tree_query(pid, lang)
             qlst = [
                 recursive_t.c.pid,
                 recursive_t.c.cid,
@@ -1040,13 +1040,14 @@ class Indexes(object):
         return recursive_t
 
     @classmethod
-    def recs_tree_query(cls, pid=0, ):
+    def recs_tree_query(cls, pid=0, lang=None):
         """
         Init select condition of index.
 
         :return: the query of db.session.
         """
-        lang = current_i18n.language
+        if lang is None:
+            lang = current_i18n.language
         if lang == 'ja':
             recursive_t = db.session.query(
                 Index.parent.label("pid"),
@@ -1164,13 +1165,14 @@ class Indexes(object):
         return recursive_t
 
     @classmethod
-    def recs_root_tree_query(cls, pid=0):
+    def recs_root_tree_query(cls, pid=0, lang=None):
         """
         Init select condition of index.
 
         :return: the query of db.session.
         """
-        lang = current_i18n.language
+        if lang is None:
+            lang = current_i18n.language
         if lang == 'ja':
             recursive_t = db.session.query(
                 Index.parent.label("pid"),
