@@ -3553,7 +3553,7 @@ def delete_exported(uri, cache_key):
     except Exception as ex:
         current_app.logger.error(ex)
 
-
+from weko_search_ui.tasks import delete_task_id_cache
 def cancel_export_all():
     """Cancel Process Share_task Export ALL with revoke.
 
@@ -3564,13 +3564,20 @@ def cancel_export_all():
         name=WEKO_SEARCH_UI_BULK_EXPORT_TASK,
         user_id=current_user.get_id()
     )
+    _expired_time=current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_TASKID_EXPIRED_TIME"]
     try:
         task_id = get_redis_cache(cache_key)
-        task_status = get_export_status()
+        export_status, _, _, _, _ = get_export_status()
 
-        if task_status:
+        if export_status:
             revoke(task_id, terminate=True)
-
+            delete_task_id_cache.apply_async(
+                args=(
+                    task_id,
+                    cache_key
+                ),
+                countdown=int(_expired_time) * 60
+            )
         return True
     except Exception as ex:
         current_app.logger.error(ex)
@@ -3603,6 +3610,8 @@ def get_export_status():
     download_uri = None
     message = None
     run_message = ""
+    status = ""
+    
     try:
         task_id = get_redis_cache(cache_key)
         download_uri = get_redis_cache(cache_uri)
@@ -3611,11 +3620,12 @@ def get_export_status():
         if task_id:
             task = AsyncResult(task_id)
             status_cond = task.successful() or task.failed() or task.state == "REVOKED"
+            status = task.state
             export_status = True if not status_cond else False
     except Exception as ex:
         current_app.logger.error(ex)
         export_status = False
-    return export_status, download_uri, message, run_message
+    return export_status, download_uri, message, run_message, status
 
 
 def handle_check_item_is_locked(item):

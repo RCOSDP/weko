@@ -4,6 +4,7 @@ const item_type_label = document.getElementById("item_type").value;
 const item_id_label = document.getElementById("item_id").value;
 const export_item_label = document.getElementById("export_item").value;
 const download_url_label = document.getElementById("download_url").value;
+const status_label = document.getElementById("status").value;
 const export_label = document.getElementById("export").value;
 const export_messaage = document.getElementById("export_messaage").value;
 const cancel_messaage = document.getElementById("cancel_messaage").value;
@@ -58,6 +59,7 @@ class ExportComponent extends React.Component {
       interval_time: 3000,
       isDisableExport: false,
       isDisableCancel: true,
+      taskStatus: "",
       isExport: false,
       confirmMessage: "",
       last_item_id: "",
@@ -164,10 +166,18 @@ class ExportComponent extends React.Component {
       url: urlCancelExport,
       success: function (response) {
         if (response.data) {
-          me.setState({
-            isDisableExport: !response.data.cancel_status,
-            isDisableCancel: response.data.cancel_status
-          });
+          if (!response.data.cancel_status){
+            me.setState({
+              isDisableExport: true,
+              isDisableCancel: false
+            })
+          } else {
+            me.setState({
+              isDisableExport: response.data.export_status,
+              isDisableCancel: !response.data.export_status,
+              taskStatus: response.data.status
+            })
+          }
         }
       },
       error: function () {
@@ -197,8 +207,9 @@ class ExportComponent extends React.Component {
       dataType: "json",
       success: function () {
         me.setState({
-          isDisableExport: true,
-          isDisableCancel: false
+          isDisableExport: response.data.export_status,
+          isDisableCancel: !response.data.export_status,
+          taskStatus: response.data.status
         });
       },
       error: function () {
@@ -232,7 +243,8 @@ class ExportComponent extends React.Component {
             exportStatus: response.data.export_status,
             uriStatus: response.data.uri_status,
             isDisableExport: response.data.export_status || !response.data.celery_is_run,
-            isDisableCancel: !response.data.export_status
+            isDisableCancel: !response.data.export_status,
+            taskStatus: response.data.status
           });
           if (!response.data.celery_is_run) {
             $('#errors').append(
@@ -270,6 +282,7 @@ class ExportComponent extends React.Component {
       show,
       isDisableExport,
       isDisableCancel,
+      taskStatus,
       esportRunMessage,
       exportStatus,
       uriStatus,
@@ -324,6 +337,11 @@ class ExportComponent extends React.Component {
               </div>
               <div className="col-xs-12">
                 <label>{esportRunMessage}</label>
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-xs-12">
+                <label>{status_label}: {taskStatus}</label>
               </div>
             </div>
             <div className="row">

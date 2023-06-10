@@ -2043,16 +2043,53 @@ def test_delete_exported(i18n_app, file_instance_mock):
 
 
 # def cancel_export_all():
-# def test_cancel_export_all(i18n_app, users):
-# with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-# with patch("weko_admin.utils.get_redis_cache", return_value=""):
-# with patch("weko_search_ui.utils.get_export_status", return_value=True):
-# with patch("celery.task.control.revoke", return_value=""):
-# assert cancel_export_all()
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_cancel_export_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_cancel_export_all(i18n_app, users, redis_connect, mocker):
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        cache_key = i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name="KEY_EXPORT_ALL", user_id=current_user.get_id()
+        )
+        datastore = redis_connect
+        datastore.put(cache_key, "test_task_key".encode("utf-8"), ttl_secs=30)
+
+        # export_status is True
+        with patch("weko_search_ui.utils.get_export_status", return_value=(True,None,None,None,None)):
+            mock_revoke = mocker.patch("weko_search_ui.utils.revoke")
+            mock_delete_id = mocker.patch("weko_search_ui.utils.delete_task_id_cache.apply_async")
+            result = cancel_export_all()
+            assert result == True
+            mock_revoke.assert_called_with("test_task_key",terminate=True)
+            mock_delete_id.assert_called_with(args=("test_task_key","admin_cache_KEY_EXPORT_ALL_5"),countdown=60)
+        
+        # export_status is False
+        with patch("weko_search_ui.utils.get_export_status", return_value=(False,None,None,None,None)):
+            mock_revoke = mocker.patch("weko_search_ui.utils.revoke")
+            mock_delete_id = mocker.patch("weko_search_ui.utils.delete_task_id_cache.apply_async")
+            result = cancel_export_all()
+            assert result == True
+            mock_revoke.assert_not_called()
+            mock_delete_id.assert_not_called()
+        
+        # raise Exception
+        with patch("weko_search_ui.utils.get_export_status",side_effect=Exception("test_error")):
+            result = cancel_export_all()
+            assert result == False
 
 
 # def get_export_status():
-def test_get_export_status(i18n_app, users, redis_connect):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_export_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_get_export_status(i18n_app, users, redis_connect,mocker):
+    class MockAsyncResult:
+        def __init__(self,task_id):
+            self.task_id=task_id
+        @property
+        def state(self):
+            return self.task_id.replace("_task","")
+        def successful(self):
+            return self.state == "SUCCESS"
+        def failed(self):
+            return self.state == "FAILED"
+    mocker.patch("weko_search_ui.utils.AsyncResult",side_effect=MockAsyncResult)
     with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
         cache_key = i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
             name="KEY_EXPORT_ALL", user_id=current_user.get_id()
@@ -2067,11 +2104,30 @@ def test_get_export_status(i18n_app, users, redis_connect):
             name="RUN_MSG_EXPORT_ALL", user_id=current_user.get_id()
         )
         datastore = redis_connect
-        datastore.put(cache_key, json.dumps({"1": "a"}).encode("utf-8"), ttl_secs=30)
-        datastore.put(cache_uri, json.dumps({"1": "a"}).encode("utf-8"), ttl_secs=30)
-        datastore.put(cache_msg, json.dumps({"1": "a"}).encode("utf-8"), ttl_secs=30)
-        datastore.put(run_msg, json.dumps({"1": "a"}).encode("utf-8"), ttl_secs=30)
-        assert get_export_status()
+        
+        datastore.put(cache_uri, "test_uri".encode("utf-8"), ttl_secs=30)
+        datastore.put(cache_msg, "test_msg".encode("utf-8"), ttl_secs=30)
+        datastore.put(run_msg, "test_run_msg".encode("utf-8"), ttl_secs=30)
+        # task is success, failed, revoked
+        datastore.put(cache_key, "SUCCESS_task".encode("utf-8"), ttl_secs=30)
+        result=get_export_status()
+        assert result == (False, "test_uri", "test_msg", "test_run_msg", "SUCCESS")
+        
+        # task is not success, failed, revoked
+        datastore.delete(cache_key)
+        datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
+        result=get_export_status()
+        assert result == (True, "test_uri", "test_msg", "test_run_msg", "PENDING")
+        
+        # not exist task_id
+        datastore.delete(cache_key)
+        result=get_export_status()
+        assert result == (False, "test_uri", "test_msg", "test_run_msg", "")
+        
+        # raise Exception
+        with patch("weko_search_ui.utils.AsyncResult",side_effect=Exception("test_error")):
+            result=get_export_status()
+            assert result == (False, "test_uri", "test_msg", "test_run_msg", "")
 
 
 # def handle_check_item_is_locked(item):
