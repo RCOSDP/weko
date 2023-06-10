@@ -268,11 +268,11 @@ def soft_delete(recid):
                 dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
                 FeedbackMailList.delete(ver.object_uuid)
                 dep.remove_feedback_mail()
-                for i in range(len(dep.files)):
-                    if dep.files[i].file.uri not in del_files:
-                        del_files[dep.files[i].file.uri] = dep.files[i].file.storage()
-                        dep.files[i].bucket.location.size -= dep.files[i].file.size
-                    dep.files[i].bucket.deleted = True
+                for f in dep.files:
+                    if f.file.uri not in del_files:
+                        del_files[f.file.uri] = f.file.storage()
+                        f.bucket.location.size -= f.file.size
+                    f.bucket.deleted = True
                 dep.commit()
             pids = PersistentIdentifier.query.filter_by(
                 object_uuid=ver.object_uuid)
