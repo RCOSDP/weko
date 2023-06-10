@@ -491,6 +491,37 @@ def test_indexes_move(app, db, users, communities, test_indices):
 #         def recursive_p():
 #     def recs_reverse_query(cls, pid=0):
 #     def recs_query(cls, pid=0):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_Indexes_recs_query -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_Indexes_recs_query(i18n_app, db):
+    def make_index(id, parent, position, index_name, index_name_english):
+        return Index(
+            id=id,
+            parent=parent,position=position,
+            index_name=index_name,index_name_english=index_name_english,
+        )
+    with db.session.begin_nested():
+        db.session.add(make_index(1,0,0,"テストインデックス1","test_index1"))
+        db.session.add(make_index(11,1,0,"テストインデックス11","test_index11"))
+        db.session.add(make_index(12,1,2,None,"test_index12"))
+        db.session.add(make_index(2,0,1,None,"test_index2"))
+        db.session.add(make_index(21,2,0,"テストインデックス21","test_index21"))
+        db.session.add(make_index(22,2,1,None,"test_index22"))
+    db.session.commit()
+
+    recursive_t = Indexes.recs_query()
+    result = db.session.query(recursive_t).all()
+    test = [
+        (0, 1, '1', 'テストインデックス1', 'test_index1', 1, False, None, '', None, None, True), 
+        (0, 2, '2', '', 'test_index2', 1, False, None, '', None, None, True), 
+        (1, 11, '1/11', 'テストインデックス1-/-テストインデックス11', 'test_index1-/-test_index11', 2, False, None, '', None, None, True), 
+        (1, 12, '1/12', 'テストインデックス1-/-test_index12', 'test_index1-/-test_index12', 2, False, None, '', None, None, True), 
+        (2, 21, '2/21', 'test_index2-/-テストインデックス21', 'test_index2-/-test_index21', 2, False, None, '', None, None, True), 
+        (2, 22, '2/22', 'test_index2-/-test_index22', 'test_index2-/-test_index22', 2, False, None, '', None, None, True)
+    ]
+    assert result == test
+    
+    assert 1==2
+    
 #     def recs_tree_query(cls, pid=0, ):
 #     def recs_root_tree_query(cls, pid=0):
 #     def get_harvest_public_state(cls, paths):
