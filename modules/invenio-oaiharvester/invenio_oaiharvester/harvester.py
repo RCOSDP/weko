@@ -559,7 +559,7 @@ def add_subject(schema, mapping, res, metadata):
     """Add subject."""
     patterns = [
         (
-            'subject.@value'
+            'subject.@value',
              TEXT
         ),
         (
@@ -780,11 +780,11 @@ def add_catalog(schema, mapping, res, metadata):
         ),
         (
             'catalog.subjectURI.@attributes.subjectURI',
-            'jpcoar:subject.@subjectURI
+            'jpcoar:subject.@subjectURI'
         ),
         (
             'catalog.subjectScheme.@attributes.subjectScheme',
-            'jpcoar:subject.@subjectScheme
+            'jpcoar:subject.@subjectScheme'
         ),
         (
             'catalog.license.@value',
@@ -796,11 +796,11 @@ def add_catalog(schema, mapping, res, metadata):
         ),
         (
             'catalog.license.@attributes.licenseType',
-            'jpcoar:license.@licenseType
+            'jpcoar:license.@licenseType'
         ),
         (
             'catalog.license.@attributes.rdf:resource',
-            'jpcoar:license.@rdf:resource
+            'jpcoar:license.@rdf:resource'
         ),
         (
             'catalog.rights.@value',
@@ -812,7 +812,7 @@ def add_catalog(schema, mapping, res, metadata):
         ),
         (
             'catalog.rights.@attributes.rdf:resource',
-            'dc:rights.@rdf:resource
+            'dc:rights.@rdf:resource'
         ),
         (
             'catalog.accessRights.@attributes.accessRights',
@@ -820,11 +820,11 @@ def add_catalog(schema, mapping, res, metadata):
         ),
         (
             'catalog.accessRights.@attributes.rdf:resource',
-            'dc:accessRights.@rdf:resource
+            'dc:accessRights.@rdf:resource'
         ),
          (
             'catalog.file.URI.@attributes.objectType',
-            'jpcoar:file.@objectType
+            'jpcoar:file.@objectType'
         ),
     ]
 
@@ -1767,6 +1767,8 @@ class JPCOARMapper(BaseMapper):
                 else:
                     metadata = tags[t]
                 add_funcs[t](metadata)
+
+        raise BaseException
 
         return res
 
