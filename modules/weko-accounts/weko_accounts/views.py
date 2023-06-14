@@ -330,8 +330,8 @@ def shib_stub_login():
     if not current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']:
         return abort(403)
 
-    return_url = request.args.get('next', '/')
-    session['next'] = return_url
+    session['next'] = request.args.get('next', '/')
+    return_url = _shib_login_url.format(request.url_root)
 
     sp_entityID = "https://" + current_app.config["WEB_HOST_NAME"]+"/shibboleth-sp"
     if 'SP_ENTITYID' in current_app.config:

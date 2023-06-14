@@ -34,22 +34,19 @@ details.
 //////////////////// ESSENTIAL SETTINGS ////////////////////
  
 // URL of the WAYF to use
-// Examples: "https://wayf.switch.ch/SWITCHaai/WAYF", "https://wayf-test.switch.ch/aaitest/WAYF";
 // [Mandatory]
-var wayf_URL = "https://ds.gakunin.nii.ac.jp/WAYF";
- 
+//var wayf_URL = "https://ds.gakunin.nii.ac.jp/WAYF";
+var wayf_URL = "https://test-ds.gakunin.nii.ac.jp/WAYF";
+
 // EntityID of the Service Provider that protects this Resource
-// Examples: "https://econf.switch.ch/shibboleth", "https://dokeos.unige.ch/shibboleth"
 // [Mandatory]
 var wayf_sp_entityID = "{{ sp_entityID }}";
  
 // Shibboleth Service Provider handler URL
-// Examples: "https://point.switch.ch/Shibboleth.sso", "https://rr.aai.switch.ch/aaitest/Shibboleth.sso"
 // [Mandatory, if wayf_use_discovery_service = false]
 var wayf_sp_handlerURL = "{{ sp_handlerURL }}";
  
 // URL on this resource that the user shall be returned to after authentication
-// Examples: "https://econf.switch.ch/aai/home", "https://olat.uzh.ch/my/courses"
 // [Mandatory]
 var wayf_return_url = "{{ return_url }}";
  
