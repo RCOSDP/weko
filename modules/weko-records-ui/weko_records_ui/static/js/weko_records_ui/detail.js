@@ -210,7 +210,10 @@ require([
       let recordId = $btnStartWorkflow.data('record-id');
       let fileName = $btnStartWorkflow.data('filename');
       let itemTitle =$btnStartWorkflow.data('itemtitle');
-      startWorkflow(workflowId, communityId, recordId, fileName, itemTitle);
+      var deferred = startWorkflow(workflowId, communityId, recordId, fileName, itemTitle);
+      deferred.done(function(){
+        $("#term_and_condtion_modal_" + file_version_id).modal("hide");
+      });
     }
   });
 

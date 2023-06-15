@@ -1039,7 +1039,6 @@ class WekoDeposit(Deposit):
             # and this is the latest version
             versioning = PIDVersioning(child=pid)
             record = WekoDeposit.get_record(pid.object_uuid)
-            print("******************************* record={}", record)
 
             assert PIDStatus.REGISTERED == pid.status
             if not record or not versioning.exists or versioning.draft_child:
