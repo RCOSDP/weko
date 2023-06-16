@@ -1471,7 +1471,6 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         rtn = activity.init_activity(post_activity,
                                      community,
                                      draft_pid.object_uuid)
-    print('************rtn******** {}', rtn)
     if rtn:
         # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
         identifier_actionid = get_actionid('identifier_grant')

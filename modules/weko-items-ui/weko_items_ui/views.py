@@ -844,9 +844,8 @@ def is_login_user_email(email):
     # get user_id from delete email
     user_info = get_user_info_by_email(email)
     current_user_id = int(get_current_user())
-    print(user_info['user_id'] == current_user_id)
     if (user_info != None and user_info['user_id'] == current_user_id):
-        message = "ログインユーザーは削除できません。"
+        message = _("Logged-in user cannot be deleted.")
         result['error'] = message
         result['is_login_user'] = True
 
@@ -870,7 +869,7 @@ def is_login_user_ids():
         for target_id in ids:
             if int(target_id) == int(current_user):
                 result['is_login_user_id'] = True
-                result['error'] = "ログインユーザーは削除できません。"
+                result['error'] = _("Logged-in user cannot be deleted.")
                 break
     else:
         result['is_login_user_id'] = False

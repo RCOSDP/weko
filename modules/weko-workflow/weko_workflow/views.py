@@ -108,7 +108,7 @@ from .utils import IdentifierHandle, auto_fill_title, \
     save_activity_data, saving_doi_pidstore, \
     send_usage_application_mail_for_guest_user, set_files_display_type, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
-    validate_guest_activity_token, get_contributors \
+    validate_guest_activity_token, get_contributors
 
 workflow_blueprint = Blueprint(
     'weko_workflow',
@@ -1028,8 +1028,6 @@ def display_activity(activity_id="0"):
     
     form = FlaskForm(request.form)
 
-    print('~~~~~~~~~~~contributors~~~~~~~~~~~~~~~~')
-    print(contributors)
     return render_template(
         'weko_workflow/activity_detail.html',
         action_endpoint_key=current_app.config.get(

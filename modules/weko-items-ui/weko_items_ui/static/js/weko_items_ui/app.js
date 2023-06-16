@@ -383,7 +383,7 @@ function autocomplete(inp, arr) {
 }
 
 // 新規行の場合user_id=0 更新行の場合row_id=0
-get_search_data = function (keyword, row_id) {
+get_search_data = function (keyword, row_id='share_'+keyword+'_0') {
   get_search_data_url = '/api/items/get_search_data/' + keyword;
   let id;
   if (keyword == 'username') {
@@ -2648,7 +2648,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let model = $rootScope.recordsVM.invenioRecordsModel;
         // ownerは必ず指定する
         if($("input[name='checkedSharePermiss']:checked").val() =='other_user' & $("input[name='owner_radio']:checked").length == 0) {
-          $("#inputModal").html('Ownerは必ず選択してください。');
+          $("#inputModal").html('[Be sure to select an owner.]');
           $("#allModal").modal("show");
           return false;
         }
