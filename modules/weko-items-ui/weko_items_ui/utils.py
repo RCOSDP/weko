@@ -1504,18 +1504,23 @@ def export_items(post_data):
         # Create bag
         bagit.make_bag(export_path)
         # Create download file
-        shutil.make_archive(export_path, 'zip', export_path)
+        # zip filename: export_{uuid}-{%Y%m%d%H%M%S}
+        zip_path = tempfile.gettempdir()+"/"+export_path.split("/")[-2]+"-"+export_path.split("/")[-1]
+        shutil.make_archive(zip_path, 'zip', export_path)
     except Exception:
         current_app.logger.error('-' * 60)
         traceback.print_exc(file=sys.stdout)
         current_app.logger.error('-' * 60)
         flash(_('Error occurred during item export.'), 'error')
         return redirect(url_for('weko_items_ui.export'))
-    return send_file(
-        export_path + '.zip',
+    resp = send_file(
+        zip_path+".zip",
         as_attachment=True,
         attachment_filename='export.zip'
     )
+    os.remove(zip_path+".zip")
+    return resp
+
 
 
 def _get_max_export_items():
