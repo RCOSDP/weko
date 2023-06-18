@@ -2,6 +2,8 @@
 # fix tool for issue 37855
 # 使い方
 # docker-compose exec web invenio shell /code/tools/update/fixTitleLang.py
+# docker-compose exec web invenio index reindex -t recid --yes-i-know
+# docker-compose exec web invenio index run -d -c 3 --skip-errors
 
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
