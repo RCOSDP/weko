@@ -1768,8 +1768,6 @@ class JPCOARMapper(BaseMapper):
                     metadata = tags[t]
                 add_funcs[t](metadata)
 
-        raise BaseException
-
         return res
 
 
