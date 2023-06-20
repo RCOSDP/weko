@@ -2197,8 +2197,6 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
             'subitem_restricted_access_application_date'),
         restricted_mail_address=item_info.get(
             'subitem_restricted_access_mail_address'),
-        restricted_institution_name_ja = institution_name,
-        restricted_institution_name_en = institution_name,
         restricted_download_link='',
         restricted_expiration_date='',
         restricted_approver_name='',
