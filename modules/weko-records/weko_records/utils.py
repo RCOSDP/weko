@@ -1759,9 +1759,9 @@ def selected_value_by_language(
 
     @param lang_array:
     @param value_array:
-    @param lang_selected:
     @param lang_id:
     @param val_id:
+    @param lang_selected:
     @param _item_metadata:
     @return:
     """
@@ -1782,6 +1782,19 @@ def selected_value_by_language(
                 )
                 if value is not None:
                     return value
+            
+            if len(value_array)>len(lang_array): # First title without language code
+                value0 = value_array[0]
+                tmp = copy.copy(value_array)
+                for lang in lang_array:
+                    value = check_info_in_metadata(
+                        lang_id, val_id, lang, _item_metadata
+                    )
+                    if value and value in tmp:
+                        tmp.remove(value)
+                if len(tmp)>0 and tmp[0]==value0:
+                    return tmp[0]
+            
             if "ja-Latn" in lang_array:  # ja_Latn
                 value = check_info_in_metadata(
                     lang_id, val_id, "ja-Latn", _item_metadata
