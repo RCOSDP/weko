@@ -62,26 +62,27 @@ def get_temp_dir_info():
     return result
 
 
-def get_exporting_dir(tasks, tmp_dir):
+def get_exporting_dir(tasks, dir_list):
     """現在実行中のエクスポートタスクによって生成されたディレクトリを取得
     """
     export_tasks = [task for task in tasks if task["name"] == "weko_search_ui.tasks.export_all_task"]
-    export_dir = [p for p in glob.glob(tempdir+"/**") if re.search(r"weko_export_.*",p)]
+    export_dir = [dir for dir in dir_list if re.search(r"weko_export_.*", dir.split("/")[-1])]
     exporting_dir = {}
     if export_tasks and export_dir:
         for task in export_tasks:
             start_time = datetime.fromtimestamp(task["time_start"])
             filtered_dirs = [d for d in export_dir if datetime.fromtimestamp(os.path.getctime(d)) > start_time]
-            newest_dir = min(filtered_dirs, key=lambda d: datetime.fromtimestamp(os.path.getctime(os.path.join(tmp_dir, d))) - start_time)
+            newest_dir = min(filtered_dirs, key=lambda d: datetime.fromtimestamp(os.path.getctime(d)) - start_time)
             exporting_dir[newest_dir] = task["id"]
     return exporting_dir
     
 if __name__ == "__main__":
     tempdir = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("TMPDIR")
+    dir_list = glob.glob(tempdir+"/**")
     tasks, actives, reserveds = get_tasks()
     tmp_dir_info = get_temp_dir_info()
-    exporting_dir = get_exporting_dir(actives, tempdir)
-    for dir  in glob.glob(tempdir+"/**"):
+    exporting_dir = get_exporting_dir(actives, dir_list)
+    for dir  in dir_list:
         try:
             # delete weko_export_{uuid}
             if re.search(r"weko_export_.*",dir):
@@ -113,7 +114,7 @@ if __name__ == "__main__":
             # delete pymp-{uuid}
             elif re.search(r"/pymp-.{8}",dir):
                 _dir = glob.glob(dir+"/**")
-                if len(_dir)==0:
+                if len(_dir)==0 or (len(_dir)==1 and re.search(r"\.nfs.*",_dir[0].split("/")[-1])):
                     shutil.rmtree(dir)
 
             # delete comb_pdfs
@@ -132,7 +133,7 @@ if __name__ == "__main__":
                     shutil.rmtree(dir)
             
             # delete python file
-            elif re.search(r".*.py", dir):
+            elif re.search(r".*\.py", dir):
                 os.remove(dir)
 
             # delete other import
