@@ -668,15 +668,6 @@ def check_has_any_item_in_index_is_locked(index_id):
 
 def check_index_permissions(record=None, index_id=None, index_path_list=None,
                             is_check_doi=False) -> bool:
-
-    print("\n\n")
-    print("check_index_permissions")
-    print(f"record ~ {record}")
-    print(f"index_id ~ {index_id}")
-    print(f"is_check_doi ~ {is_check_doi}")
-    print("\n\n")
-
-
     """Check indexes of record is private.
 
     :param record:Record data.
@@ -789,11 +780,6 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
     index_roles = {}
     # Check index status.
     for index in indexes:
-        print("\n\n")
-        print("index")
-        print(f"index ~ {index}")
-        print(f"check_index_method(index) ~ {check_index_method(index)}")
-        print("\n\n")
         index_roles.update({
             str(index.cid): check_index_method(index)
         })

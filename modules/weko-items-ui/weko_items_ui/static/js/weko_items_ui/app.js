@@ -5068,53 +5068,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             }
             itemsToBeCheckedForJaLatn = []
           } //: TEST
-
-           /* USE WHEN HOLDING AGENT AND CATALOG IS ALREADY MAPPED
-          else if (itemTitle == "holding agent") {
-            let modelObject = eval(`iRecordsModel.${key}`)
-            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
-              let subLevelItem = modelObject[idxModelObject]
-              let subLevelItemKeys = Object.keys(subLevelItem)
-              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
-                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "holdingAgentName") {
-                  let holdingAgentNameObject = subLevelItem.xxxxxxxxxxx
-                  for (let idxholdingAgentNameObject=0; idxholdingAgentNameObject < holdingAgentNameObject.length; idxholdingAgentNameObject++) {
-                    // Language key name - xxxxxxxxxxx
-                    itemsToBeCheckedForJaLatn.push(holdingAgentNameObject[idxholdingAgentNameObject].xxxxxxxxxxx)
-                  } //: idxholdingAgentNameObject
-                  if (itemsToBeCheckedForJaLatn.includes("ja-Latn") && !itemsToBeCheckedForJaLatn.includes("ja")) {
-                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
-                  }
-                  itemsToBeCheckedForJaLatn = []
-                } //: if holdingAgentName
-              } //: idxSubLevelItemKeys
-            } //: idxModelObject
-            itemsToBeCheckedForJaLatn = []
-          } //: HOLDING AGENT
-
-          else if (itemTitle == "catalog") {
-            let modelObject = eval(`iRecordsModel.${key}`)
-            for (let idxModelObject=0; idxModelObject < modelObject.length; idxModelObject++) {
-              let subLevelItem = modelObject[idxModelObject]
-              let subLevelItemKeys = Object.keys(subLevelItem)
-              for (let idxSubLevelItemKeys=0; idxSubLevelItemKeys < subLevelItemKeys.length; idxSubLevelItemKeys++) {
-                if(subLevelItemKeys[idxSubLevelItemKeys].toString() == "catalogTitle") {
-                  let catalogTitleObject = subLevelItem.xxxxxxxxxxx
-                  for (let idxcatalogTitleObject=0; idxcatalogTitleObject < catalogTitleObject.length; idxcatalogTitleObject++) {
-                    // Language key name - xxxxxxxxxxx
-                    itemsToBeCheckedForJaLatn.push(catalogTitleObject[idxcatalogTitleObject].xxxxxxxxxxx)
-                  } //: idxcatalogTitleObject
-                  if (itemsToBeCheckedForJaLatn.includes("ja-Latn") && !itemsToBeCheckedForJaLatn.includes("ja")) {
-                    listItemErrors.push(`${item.title}-${subLevelItemKeys[idxSubLevelItemKeys].toString()}-Language`)
-                  }
-                  itemsToBeCheckedForJaLatn = []
-                } //: if catalogTitle
-              } //: idxSubLevelItemKeys
-            } //: idxModelObject
-            itemsToBeCheckedForJaLatn = []
-          } //: CATALOG
-          */
-
         }) //: iRecordsForm.forEach
 
         if (listItemErrors.length > 0) {

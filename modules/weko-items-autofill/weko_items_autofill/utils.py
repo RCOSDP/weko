@@ -507,8 +507,6 @@ def get_cinii_data_by_key(api, keyword):
             data.get('prism:publicationDate'))
     elif keyword == 'publisher' and data.get('dc:publisher'):
         result[keyword] = get_basic_cinii_data(data.get('dc:publisher'))
-    # elif keyword == 'publisher' and data.get('jpcoar:publisher'):
-    #     result[keyword] = get_basic_cinii_data(data.get('jpcoar:publisher'))
     elif keyword == 'sourceIdentifier':
         result[keyword] = pack_data_with_multiple_type_cinii(
             data.get('prism:issn'),
