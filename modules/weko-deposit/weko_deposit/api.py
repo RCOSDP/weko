@@ -1893,17 +1893,22 @@ class WekoRecord(Record):
         for value in data:
             if value.get('language', '') == current_lang:
                 return value.get('title', '')
-        else:
-            for value in data:
-                if value.get('language', '') == 'en':
-                    return value.get('title', '')
-            else:
-                for value in data:
-                    if value.get('language', ''):
-                        return value.get('title', '')
-                else:
-                    if len(data) > 0:
-                        return data[0].get('title', '')
+        
+        if len(data) > 0:
+            if data[0].get('language',None) == None:
+                return data[0].get('title', '')
+
+        for value in data:
+            if value.get('language', '') == 'en':
+                return value.get('title', '')
+                
+        for value in data:
+            if value.get('language', ''):
+                return value.get('title', '')
+                
+        if len(data) > 0:
+            return data[0].get('title', '')
+        
         return ''
 
     @staticmethod
