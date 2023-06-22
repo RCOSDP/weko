@@ -2851,7 +2851,7 @@ def make_stats_file_with_permission(item_type_id, recids,
 
                 if permissions['hide_meta_data_for_role'](record) and \
                         not current_app.config['EMAIL_DISPLAY_FLG']:
-                    record = hide_by_email(record)
+                    record = hide_by_email(record, True)
 
                     return True
 

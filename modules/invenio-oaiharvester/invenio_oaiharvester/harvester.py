@@ -1543,7 +1543,7 @@ class DDIMapper(BaseMapper):
             def get_same_key_from_form(sub_key):
                 """Get the same key with sub_key in form."""
                 for item_sub_key_form in item_sub_keys_form:
-                    if item_sub_key_form.replace("[]", "") == sub_key:
+                    if item_sub_key_form.replace("[]", "") in sub_key.split(','):
                         sub_key = item_sub_key_form
                         break
                 return sub_key

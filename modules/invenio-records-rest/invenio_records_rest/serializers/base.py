@@ -155,19 +155,35 @@ class PreprocessorMixin(PreprocessorMixinInterface):
         def get_mapping(item_type_id):
             """Get keys of metadata record by mapping."""
             # Get default mapping key and lang from config (defaults are None).
+            from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
             mapping_dict = RECORDS_REST_DEFAULT_MAPPING_DICT
             # Get mapping of this record.
-            mapping = Mapping.get_record(item_type_id)
-            if not mapping:
+            meta_option, item_type_mapping = get_options_and_order_list(item_type_id)
+            hide_list = get_hide_list_by_schema_form(item_type_id)
+            if not item_type_mapping:
                 return mapping_dict
             # Update default mapping key and lang by mapping of this record.
             identifier = 'system_identifier'
-            for k, v in mapping.items():
-                if not type(v.get('jpcoar_mapping')) is dict:
+            for k, v in item_type_mapping.items():
+                prop_hidden = meta_option.get(k, {}).get('option', {}).get('hidden', False)
+                if not type(v.get('jpcoar_mapping')) is dict \
+                        or prop_hidden:
                     continue
                 for k1, v1 in v.get('jpcoar_mapping').items():
+                    skip_flag = False
+                    for h in hide_list:
+                        if k in h and \
+                                (('@value' in v1.keys() and 
+                                  v1.get('@value').split('.')[-1] in h) or \
+                                 ('creatorName' in v1.keys() and 
+                                  v1.get('creatorName', {}).get('@value').split('.')[-1] in h)):
+                            skip_flag = True
+                    if skip_flag:
+                        continue
                     for k2, v2 in mapping_dict.items():
-                        if k1 != k2.split(':')[1] or not type(v1) is dict:
+                        if k1 != k2.split(':')[1] or \
+                                not type(v1) is dict or \
+                                mapping_dict[k2]:
                             continue
                         key = identifier if identifier in k else k
                         key_arr = ['metadata', key, 'attribute_value_mlt', 0]

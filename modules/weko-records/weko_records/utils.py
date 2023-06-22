@@ -1183,6 +1183,9 @@ async def sort_meta_data_by_options(
                     }
                 )
         # selected title
+        from weko_items_ui.utils import get_hide_list_by_schema_form
+        solst, meta_options = get_options_and_order_list(item_type_id, item_type_data)
+        hide_list = get_hide_list_by_schema_form(item_type_id)
         title_obj = language_dict.get("title")
         if title_obj is not None:
             lang_arr = title_obj.get("lang")
@@ -1191,7 +1194,7 @@ async def sort_meta_data_by_options(
             val_id = title_obj.get("val-id")
             if lang_arr and len(lang_arr) > 0 and lang_arr != "null":
                 result = selected_value_by_language(
-                    lang_arr, val_arr, lang_id, val_id, web_screen_lang, _item_metadata
+                    lang_arr, val_arr, lang_id, val_id, web_screen_lang, _item_metadata, meta_options, hide_list
                 )
                 if result is not None:
                     for idx, val in enumerate(record_hit["_source"]["title"]):
@@ -1209,7 +1212,6 @@ async def sort_meta_data_by_options(
 
         if not item_type_id:
             return
-        solst, meta_options = get_options_and_order_list(item_type_id, item_type_data)
         solst_dict_array = convert_data_to_dict(solst)
         files_info = []
         thumbnail = None
@@ -1753,7 +1755,7 @@ def remove_weko2_special_character(s: str):
 
 
 def selected_value_by_language(
-    lang_array, value_array, lang_id, val_id, lang_selected, _item_metadata
+    lang_array, value_array, lang_key_str, val_key_str, lang_selected, _item_metadata, meta_option={}, hide_list=[]
 ):
     """Select value by language.
 
@@ -1765,61 +1767,75 @@ def selected_value_by_language(
     @param _item_metadata:
     @return:
     """
-    if (
-        (lang_array is not None)
-        and (value_array is not None)
-        and isinstance(lang_selected, str)
-    ):
-        if len(value_array) < 1:
-            return None
-        else:
-            if len(lang_array) > 0:
-                for idx, lang in enumerate(lang_array):
-                    lang_array[idx] = lang.strip()
-            if lang_selected in lang_array:  # Web screen display language
-                value = check_info_in_metadata(
-                    lang_id, val_id, lang_selected, _item_metadata
-                )
-                if value is not None:
-                    return value
-            if "ja-Latn" in lang_array:  # ja_Latn
-                value = check_info_in_metadata(
-                    lang_id, val_id, "ja-Latn", _item_metadata
-                )
-                if value is not None:
-                    return value
-            if "en" in lang_array and (
-                lang_selected != "ja"
-                or not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)
-            ):  # English
-                value = check_info_in_metadata(lang_id, val_id, "en", _item_metadata)
-                if value is not None:
-                    return value
-            # 1st language when registering items
-            if len(lang_array) > 0:
-                noreturn = False
-                for idx, lg in enumerate(lang_array):
-                    if current_app.config.get(
-                        "WEKO_RECORDS_UI_LANG_DISP_FLG", False
-                    ) and (
-                        (lg == "ja" and lang_selected == "en")
-                        or (lg == "en" and lang_selected == "ja")
-                    ):
-                        noreturn = True
-                        break
-                    if len(lg) > 0:
+    result = None
+    lang_key_list = lang_key_str.split(",")
+    val_key_list = val_key_str.split(",")
+    for val_key in val_key_list:
+        val_parent_key = val_key.split(".")[0]
+        val_sub_key = val_key.split(".")[-1]
+        for lang_key in lang_key_list:
+            if val_parent_key == lang_key.split(".")[0]:
+                prop_hidden = meta_option.get(val_parent_key, {}).get('option', {}).get('hidden', False)
+                for h in hide_list:
+                    if val_parent_key in h and val_sub_key in h:
+                        prop_hidden = True
+                if (
+                    lang_array is not None
+                    and value_array is not None
+                    and isinstance(lang_selected, str)
+                    and len(value_array) > 0
+                    and not prop_hidden
+                ):
+                    if len(lang_array) > 0:
+                        for idx, lang in enumerate(lang_array):
+                            lang_array[idx] = lang.strip()
+                    if lang_selected in lang_array:  # Web screen display language
                         value = check_info_in_metadata(
-                            lang_id, val_id, lg, _item_metadata
+                            lang_key, val_key, lang_selected, _item_metadata
                         )
                         if value is not None:
-                            return value
-                if noreturn:
-                    return None
-            # 1st value when registering without language
-            if len(value_array) > 0:
-                return value_array[0]
-    else:
-        return None
+                            result = value
+                    if not result and "ja-Latn" in lang_array:  # ja_Latn
+                        value = check_info_in_metadata(
+                            lang_key, val_key, "ja-Latn", _item_metadata
+                        )
+                        if value is not None:
+                            result = value
+                    if not result and "en" in lang_array and (
+                        lang_selected != "ja"
+                        or not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)
+                    ):  # English
+                        value = check_info_in_metadata(lang_key, val_key, "en", _item_metadata)
+                        if value is not None:
+                            result = value
+                    # 1st language when registering items
+                    if not result and len(lang_array) > 0:
+                        noreturn = False
+                        for idx, lg in enumerate(lang_array):
+                            if current_app.config.get(
+                                "WEKO_RECORDS_UI_LANG_DISP_FLG", False
+                            ) and (
+                                (lg == "ja" and lang_selected == "en")
+                                or (lg == "en" and lang_selected == "ja")
+                            ):
+                                noreturn = True
+                                break
+                            if len(lg) > 0:
+                                value = check_info_in_metadata(
+                                    lang_key, val_key, lg, _item_metadata
+                                )
+                                if value is not None:
+                                    result = value
+                        if noreturn:
+                            result = None
+                    # 1st value when registering without language
+                    if not result and len(value_array) > 0:
+                        result = value_array[0]
+            if not result:
+                break
+        if not result:
+            break
+    return result
 
 
 def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):

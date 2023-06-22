@@ -1300,11 +1300,13 @@ def get_wekoid_record_data(recid, item_type_id):
     mapping_des = Mapping.get_record(item_type_id)
     item_map_des = get_mapping(mapping_des, "jpcoar_mapping")
     item_map_data_des = {}
-    for mapping_key, item_key in item_map_des.items():
-        if mapping_key in item_map_data_src.keys():
-            value = item_map_data_src.get(mapping_key)
-            if not all(x is None for x in value):
-                item_map_data_des[item_key] = value
+    for mapping_key, item_key_str in item_map_des.items():
+        for item_key in item_key_str.split(','):
+            if mapping_key in item_map_data_src.keys():
+                value = item_map_data_src.get(mapping_key)
+                if not all(x is None for x in value):
+                    item_map_data_des[item_key] = value
+                    break
     # Convert structure of schema to record model.
     record_model = build_record_model_for_wekoid(
         item_type_id, item_map_data_des)
