@@ -1972,6 +1972,12 @@ def get_value_by_selected_lang(source_title, current_lang):
             elif key:
                 title_data_langs.append(title)
 
+    if len(title_data_langs_none)>0:
+        source = list(source_title.values())[0]
+        target = list(title_data_langs_none[0].values())[0] 
+        if source==target:
+            return target
+        
     if value_latn:
         return value_latn
 
