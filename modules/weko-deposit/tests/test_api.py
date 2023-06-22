@@ -909,6 +909,24 @@ class TestWekoRecord:
             data = {}
             result = record.switching_language(data)
             assert result == ""
+        
+        # no language
+        with app.test_request_context(headers=[('Accept-Language', 'da')]):
+            data = [{"title":"title"},{"title":"en_title","language":"en"}]
+            result = record.switching_language(data)
+            assert result == "title"
+        
+        # no language
+        with app.test_request_context(headers=[('Accept-Language', 'en')]):
+            data = [{"title":"title"},{"title":"en_title","language":"en"}]
+            result = record.switching_language(data)
+            assert result == "en_title"
+        
+        # no language
+        with app.test_request_context(headers=[('Accept-Language', 'ja')]):
+            data = [{"title":"en_title","language":"en"},{"title":"title"}]
+            result = record.switching_language(data)
+            assert result == "en_title"
             
 
     #     def __get_titles_key(item_type_mapping):
