@@ -1,0 +1,72 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Form from "../components/Form.vue";
+import FileListTable from "../components/FileList/FileListTable.vue";
+import ModalFilterFileList from "../components/Modal/ModalFilterFileList.vue";
+import ButtonFilter from "/images/btn/btn-filter.svg";
+import BtnGotoTopSp from "/images/btn/btn-gototop_sp.svg";
+---
+
+<Layout title="MIBY" pageIndex="filelist" catch="未病データベースタイトル＆キャッチコピー">
+  <Form client:only="vue" />
+  <main class="max-w-[1024px] mx-auto px-2.5">
+    <div class="breadcrumb flex w-full">
+      <a class="text-miby-link-blue" href="/"><span class="font-medium underline">TOP</span></a>
+      <p class="text-miby-dark-gray">ファイルリスト</p>
+    </div>
+    <div class="w-full">
+      <div class="w-full">
+        <div class="bg-miby-light-blue w-full">
+          <p class="text-white leading-[43px] pl-5 icons icon-list font-bold">検索結果</p>
+        </div>
+        <div class="w-full bg-miby-searchtags-blue p-5">
+          <div class="flex flex-wrap justify-between items-center">
+            <div class="flex flex-wrap gap-5 items-center">
+              <div class="text-miby-black text-sm font-medium flex items-center">
+                <span>表示件数：</span>
+                <select
+                  class="cursor-pointer bg-white border border-gray-300 text-miby-black py-0 text-[10px] pr-1 rounded block"
+                >
+                  <option value="20" selected>20</option>
+                  <option value="40">40</option>
+                  <option value="60">60</option>
+                  <option value="80">80</option>
+                  <option value="100">100</option>
+                  <option value="150">150</option>
+                  <option value="200">200</option>
+                </select>
+                <span class="ml-1">/986</span>
+              </div>
+              <div class="text-miby-black text-sm font-medium flex items-center">
+                <span>DL回数統計対象期間：</span>
+                <select
+                  class="cursor-pointer bg-white border border-gray-300 text-miby-black py-0 text-[10px] pr-1 rounded block"
+                >
+                  <option value="" selected>全期間</option>
+                </select>
+                <span class="ml-1">/986</span>
+              </div>
+            </div>
+
+            <div class="flex gap-2.5">
+              <button class="btn-modal block cursor-pointer" data-target="FilterFileList">
+                <img src={ButtonFilter} alt="フィルター" />
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="p-5 bg-miby-bg-gray">
+          <div class="flex flex-wrap justify-end items-center mb-10">
+            <a class="pl-1.5 md:pl-0 icons icon-download after" href=""
+              ><span class="underline text-sm text-miby-link-blue font-medium pr-1"
+                >検索結果全てをDLする</span
+              ></a
+            >
+          </div>
+          <FileListTable client:only="vue" />
+        </div>
+      </div>
+    </div>
+    <ModalFilterFileList />
+  </main>
+</Layout>

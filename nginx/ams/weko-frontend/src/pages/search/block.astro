@@ -1,0 +1,23 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Form from "../../components/Form.vue";
+import SearchResultBlock from "../../components/SearchResult/SearchResultBlock.vue";
+import ModalFilter from "../../components/Modal/ModalFilter.vue";
+import ModalDisplayItem from "../../components/Modal/ModalDisplayItem.vue";
+import ButtonFilter from "/images/btn/btn-filter.svg";
+import ButtonDisplayItem from "/images/btn/btn-display-item.svg";
+import SearchConditions from "../../components/SearchResult/SearchConditions.vue";
+import SearchResultPage from "../../components/SearchResult/SearchResultPage.vue";
+
+import searchResult from '../../data/Search/search.json'
+---
+
+<Layout title="MIBY" pageIndex="search" catch="未病データベースタイトル＆キャッチコピー">
+  <Form client:only="vue" />
+  <SearchResultPage client:only="vue" page={"block"} />
+</Layout>
+
+
+<script>
+  
+</script>

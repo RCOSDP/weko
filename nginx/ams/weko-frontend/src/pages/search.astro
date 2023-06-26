@@ -1,0 +1,86 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Form from "../components/Form.vue";
+import SearchResultCommon from "../components/SearchResult/SearchResultCommon.vue";
+import SearchResultTable from "../components/SearchResult/SearchResultTable.vue";
+import SearchResultSummary from "../components/SearchResult/SearchResultSummary.vue";
+import SearchResultBlock from "../components/SearchResult/SearchResultBlock.vue";
+import ModalFilter from "../components/Modal/ModalFilter.vue";
+import ModalDisplayItem from "../components/Modal/ModalDisplayItem.vue";
+import ButtonFilter from "/images/btn/btn-filter.svg";
+import ButtonDisplayItem from "/images/btn/btn-display-item.svg";
+import SearchConditions from "../components/SearchResult/SearchConditions.vue";
+import BtnGotoTopSp from "/images/btn/btn-gototop_sp.svg";
+
+import searchResult from '../data/Search/search.json'
+
+//TODO 本物のapiから取得
+---
+
+<Layout title="MIBY" pageIndex="search" catch="未病データベースタイトル＆キャッチコピー">
+  <Form client:only="vue" />
+  <main class="max-w-[1024px] mx-auto px-2.5">
+    <div class="breadcrumb flex w-full">
+      <a class="text-miby-link-blue" href="/"><span class="font-medium underline">TOP</span></a>
+      <p class="text-miby-dark-gray">検索結果リスト</p>
+    </div>
+    
+    <div class="w-full">
+      <div class="w-full">
+        <div class="bg-miby-light-blue w-full">
+          <p class="text-white leading-[43px] pl-5 icons icon-list font-bold">検索結果</p>
+        </div>
+        <SearchConditions client:only="vue" isBlock={true} />
+        <div class="p-5 bg-miby-bg-gray">
+          <div class="flex flex-wrap justify-between items-center">
+            <div class="checkbox">
+              <input class="absolute" type="checkbox" name="checkList" id="checkAllResult" />
+              <label class="text-sm checkbox-label text-miby-black" for="checkAllResult"
+                >全てをマイリストに登録</label
+              >
+            </div>
+            <a class="pl-1.5 md:pl-0 icons icon-download after" href=""
+              ><span class="underline text-sm text-miby-link-blue font-medium pr-1"
+                >検索結果全てをDLする</span
+              ></a
+            >
+          </div>
+          <div class="max-w-[500px] ml-auto mt-4 mb-8 text-center">
+            <div class="w-full flex gap-5 justify-end">
+              <p class="icons-type icon-published">
+                <span>一般公開</span>
+              </p>
+              <p class="icons-type icon-group">
+                <span>グループ内公開</span>
+              </p>
+              <p class="icons-type icon-private">
+                <span>非公開</span>
+              </p>
+              <p class="icons-type icon-limited">
+                <span>制限公開</span>
+              </p>
+            </div>
+          </div>
+          <!-- <SearchResultTable client:only="vue" /> -->
+          <!-- <SearchResultSummary client:only="vue" /> -->
+          <!-- data="block"ってなに？ SearchResultBlockのpropだった -->
+          <SearchResultBlock client:only="vue" />
+        </div>
+      </div>
+    </div>
+    <ModalFilter />
+    <ModalDisplayItem />
+  </main>
+</Layout>
+<script is:inline>
+  const buttons = document.querySelectorAll("button.btn-modal");
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      if (button.dataset?.target) {
+        document.getElementById("modal" + button.dataset?.target).showModal();
+        // document.body.classList.add("overflow-hidden");
+        return false;
+      }
+    });
+  });
+</script>

@@ -1,0 +1,31 @@
+{
+  "name": "ams",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/node": "^5.2.0",
+    "@astrojs/tailwind": "^3.1.1",
+    "@astrojs/vue": "^2.1.1",
+    "@vuepic/vue-datepicker": "^5.2.0",
+    "@vueuse/core": "^10.1.2",
+    "astro": "^2.6.4",
+    "flowbite": "^1.6.5",
+    "tailwindcss": "^3.3.1",
+    "vue": "^3.2.47",
+    "vuejs-dialog": "^1.4.2"
+  },
+  "devDependencies": {
+    "sass": "^1.62.1",
+    "stylelint": "^15.6.0",
+    "stylelint-config-prettier-scss": "^0.0.1",
+    "stylelint-config-recess-order": "^4.0.0",
+    "stylelint-config-standard-scss": "^9.0.0"
+  }
+}

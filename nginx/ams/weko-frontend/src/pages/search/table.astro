@@ -1,0 +1,27 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Form from "../../components/Form.vue";
+import SearchResultTable from "../../components/SearchResult/SearchResultTable.vue";
+import ModalFilter from "../../components/Modal/ModalFilter.vue";
+import ModalDisplayItem from "../../components/Modal/ModalDisplayItem.vue";
+import ButtonFilter from "/images/btn/btn-filter.svg";
+import ButtonDisplayItem from "/images/btn/btn-display-item.svg";
+import SearchResultPage from "../../components/SearchResult/SearchResultPage.vue";
+---
+
+<Layout title="MIBY" pageIndex="search" catch="未病データベースタイトル＆キャッチコピー">
+  <Form client:only="vue" />
+  <SearchResultPage client:only="vue" page={"table"} />
+</Layout>
+
+<script is:inline>
+  const buttons = document.querySelectorAll("button.btn-modal");
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      if (button.dataset?.target) {
+        document.getElementById("modal" + button.dataset?.target).showModal();
+        return false;
+      }
+    });
+  });
+</script>

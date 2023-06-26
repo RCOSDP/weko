@@ -1,0 +1,199 @@
+[
+  {
+    "id": 1,
+    "name": "word",
+    "label": "",
+    "default": true,
+    "multiple": true,
+    "data": [
+      {
+        "name": "word-type",
+        "form_type": "radio",
+        "values": ["全文", "キーワード"]
+      },
+      {
+        "name": "word-text",
+        "form_type": "text",
+        "placeholder": "入力後、ENTERを押して検索してください"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "type_public",
+    "label": "公開区分",
+    "default": true,
+    "multiple": false,
+    "form_type": "checkbox",
+    "data": [
+      {
+        "value": "only-group",
+        "label": "グループ内公開"
+      },
+      {
+        "value": "published",
+        "label": "一般公開"
+      },
+      {
+        "value": "private",
+        "label": "非公開"
+      },
+      {
+        "value": "limited",
+        "label": "制限公開"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "type_download",
+    "label": "ダウンロード区分",
+    "default": true,
+    "multiple": false,
+    "form_type": "checkbox",
+    "data": [
+      {
+        "value": "unlimited",
+        "label": "無制限"
+      },
+      {
+        "value": "permission",
+        "label": "利用許可申請必要"
+      },
+      {
+        "value": "contract",
+        "label": "守秘義務契約必要"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "title",
+    "label": "タイトル",
+    "default": true,
+    "multiple": false,
+    "form_type": "text",
+    "placeholder": "テキストテキストテキストテキストテキストテキストテキスト"
+  },
+  {
+    "id": 5,
+    "name": "category",
+    "label": "分野",
+    "default": true,
+    "multiple": false,
+    "form_type": "checkbox",
+    "data": [
+      {
+        "value": "medicine",
+        "label": "医学"
+      },
+      {
+        "value": "biology",
+        "label": "生物学"
+      },
+      {
+        "value": "pharmacy",
+        "label": "薬学"
+      },
+      {
+        "value": "clinical",
+        "label": "臨床医学"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "publication_date",
+    "label": "掲載日",
+    "default": true,
+    "multiple": true,
+    "form_type": "date",
+    "data": [
+      {
+        "name": "publication_before"
+      },
+      {
+        "name": "publication_after"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "update_date",
+    "label": "更新日",
+    "default": true,
+    "multiple": true,
+    "form_type": "date",
+    "data": [
+      {
+        "name": "update_before"
+      },
+      {
+        "name": "update_after"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "creator",
+    "label": "作成者",
+    "default": true,
+    "multiple": false,
+    "form_type": "text",
+    "placeholder": "テキストテキストテキストテキストテキストテキストテキスト"
+  },
+  {
+    "id": 9,
+    "name": "type",
+    "default": true,
+    "multiple": false,
+    "label": "ヒト/動物/その他",
+    "form_type": "text",
+    "placeholder": "テキストテキストテキストテキストテキストテキストテキスト"
+  },
+  {
+    "id": 10,
+    "name": "repository",
+    "label": "リポジトリ",
+    "default": true,
+    "multiple": false,
+    "form_type": "text",
+    "placeholder": "テキストテキストテキストテキストテキストテキストテキスト"
+  },
+  {
+    "id": 11,
+    "name": "creator_group",
+    "label": "作成者所属",
+    "default": false,
+    "multiple": false,
+    "form_type": "text",
+    "placeholder": "テキストテキストテキストテキストテキストテキストテキスト"
+  },
+  {
+    "id": 12,
+    "name": "admin",
+    "label": "管理者",
+    "default": false,
+    "multiple": false,
+    "form_type": "text",
+    "placeholder": "テキストテキストテキストテキストテキストテキストテキスト"
+  },
+  {
+    "id": 13,
+    "name": "admin_group",
+    "label": "管理者所属",
+    "default": false,
+    "multiple": false,
+    "form_type": "text",
+    "placeholder": "テキストテキストテキストテキストテキストテキストテキスト"
+  },
+  {
+    "id": 14,
+    "name": "file",
+    "label": "ファイル",
+    "default": false,
+    "multiple": false,
+    "form_type": "text",
+    "placeholder": "テキストテキストテキストテキストテキストテキストテキスト"
+  }
+]

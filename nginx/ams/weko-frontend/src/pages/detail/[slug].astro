@@ -1,0 +1,43 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Form from "../../components/Form.vue";
+import DetailContent from "../../components/Detail/DetailContent.vue";
+import DetailSideMenu from "../../components/Detail/DetailSideMenu.vue";
+
+const id = Astro.params.slug
+const res = await fetch(`https://ams-dev.ir.rcos.nii.ac.jp/api/v1.0/records/${id}/detail`);
+const item = await res.json();
+
+---
+
+<Layout title="MIBY" pageIndex="detail" catch="未病データベースタイトル＆キャッチコピー">
+  <Form client:only="vue" />
+  <main class="max-w-[1024px] mx-auto px-2.5">
+    <div class="breadcrumb flex w-full">
+      <a class="text-miby-link-blue" href="/"
+        ><span class="font-medium underline">TOP</span></a
+      >
+      <a class="text-miby-link-blue" href="/"
+      ><span class="font-medium underline">大カテゴリー</span></a
+      >
+      <a class="text-miby-link-blue" href="/"
+      ><span class="font-medium underline">中カテゴリー</span></a
+      >
+      <a class="text-miby-link-blue" href="/"
+      ><span class="font-medium underline">小カテゴリー</span></a
+      >
+      <a class="text-miby-link-blue" href="/"
+      ><span class="font-medium underline">AAA</span></a
+      >
+      <p class="text-miby-dark-gray">詳細AAA</p>
+    </div>
+    <div class="flex flex-wrap w-full">
+      <DetailContent item={item} client:only="vue" />
+      <DetailSideMenu item={item} client:only="vue" />
+    </div>
+  </main>
+</Layout>
+
+<script>
+ 
+</script>
