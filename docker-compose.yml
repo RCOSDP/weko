@@ -37,7 +37,7 @@ services:
       - INVENIO_WEB_HOST=127.0.0.1
       - INVENIO_WEB_INSTANCE=invenio
       - INVENIO_WEB_VENV=invenio
-      - INVENIO_WEB_HOST_NAME=weko3.example.org
+      - INVENIO_WEB_HOST_NAME=ams-dev.ir.rcos.nii.ac.jp
       - INVENIO_WEB_PROTOCOL=https
       - INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp
       - INVENIO_USER_PASS=uspass123
@@ -145,7 +145,7 @@ services:
   postgresql:
     restart: "always"
     image: postgres:12
-#    command: postgres -c log_destination=stderr -c log_statement=all -c log_connections=on -c log_disconnections=on
+    #    command: postgres -c log_destination=stderr -c log_statement=all -c log_connections=on -c log_disconnections=on
     environment:
       - POSTGRES_USER=invenio
       - POSTGRES_DB=invenio
@@ -200,8 +200,8 @@ services:
     volumes:
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
       - data_data:/home/invenio/.virtualenvs/invenio/var/instance/data
-#      - letsencrypt_etc:/etc/letsencrypt
-#      - letsencrypt_html:/var/www/html
+    #      - letsencrypt_etc:/etc/letsencrypt
+    #      - letsencrypt_html:/var/www/html
     links:
       - web
     deploy:
@@ -209,12 +209,12 @@ services:
         limits:
           memory: 300m
 
-#  certbot:
-#    image: certbot/certbot:latest
-#    volumes:
-#      - letsencrypt_etc:/etc/letsencrypt
-#      - letsencrypt_html:/var/www/html
-#    command: ["--version"]
+  #  certbot:
+  #    image: certbot/certbot:latest
+  #    volumes:
+  #      - letsencrypt_etc:/etc/letsencrypt
+  #      - letsencrypt_html:/var/www/html
+  #    command: ["--version"]
 
   flower:
     restart: "always"
