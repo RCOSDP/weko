@@ -519,6 +519,7 @@ def hide_by_email(item_metadata, force_flag=False):
     """Hiding emails.
 
     :param item_metadata:
+    :param force_flag: force to hide
     :return:
     """
     from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form

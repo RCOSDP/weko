@@ -1765,6 +1765,8 @@ def selected_value_by_language(
     @param lang_id:
     @param val_id:
     @param _item_metadata:
+    @param meta_option:
+    @param hide_list:
     @return:
     """
     result = None
