@@ -536,8 +536,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             if attribute:
                 data_result = get_sub_item_value(attribute, subkey_list[-1])
                 if data_result:
-                    for value in data_result:
-                        _rights_values.append(value)
+                    if isinstance(data_result, list):
+                        for value in data_result:
+                            _rights_values.append(value)
+                    elif isinstance(data_result, str):
+                        _rights_values.append(data_result)
             prop_hidden = meta_options.get(subkey_list[0], {}).get('option', {}).get('hidden', False)
             if not prop_hidden and (subkey_list[0] not in hide_list or subkey_list[-1] not in hide_list):
                 _get_rights_title(rights_values, k, _rights_values,
@@ -552,9 +555,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             attribute = record.get(subkey_list[0])
             if attribute and not prop_hidden and (subkey_list[0] not in hide_list or subkey_list[-1] not in hide_list):
                 data_result = get_sub_item_value(attribute, subkey_list[-1])
-                if data_result and len(data_result) > 0:
-                    accessRight = data_result[0]
-                    break
+                if data_result:
+                    if isinstance(data_result, list) and len(data_result) > 0:
+                        accessRight = data_result[0]
+                        break
+                    elif isinstance(data_result, str):
+                        accessRight = data_result
+                        break
 
     pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
     # Check if user has the permission to download original pdf file

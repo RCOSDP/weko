@@ -318,10 +318,16 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
 
     try:
         lang_field = item_map['language.@value'].split('.')
-        if item_metadata_json[lang_field[0]][lang_field[1]] == 'eng':
-            item_metadata_json['lang'] = 'English'
-        elif item_metadata_json[lang_field[0]][lang_field[1]] == 'jpn':
-            item_metadata_json['lang'] = 'Japanese'
+        if isinstance(item_metadata_json[lang_field[0]], dict):
+            if item_metadata_json[lang_field[0]][lang_field[1]] == 'eng':
+                item_metadata_json['lang'] = 'English'
+            elif item_metadata_json[lang_field[0]][lang_field[1]] == 'jpn':
+                item_metadata_json['lang'] = 'Japanese'
+        elif isinstance(item_metadata_json[lang_field[0]], list):
+            if item_metadata_json[lang_field[0]][0][lang_field[1]] == 'eng':
+                item_metadata_json['lang'] = 'English'
+            elif item_metadata_json[lang_field[0]][0][lang_field[1]] == 'jpn':
+                item_metadata_json['lang'] = 'Japanese'
     except BaseException:
         pass
 
@@ -387,7 +393,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
                 continue
             for j in item_map[keyword_attr_lang].split(','):
                 lang_key_list = j.split('.')
-                if publisher_item_id == lang_key_list[0]:
+                if keyword_item_id == lang_key_list[0]:
                     keyword_item_langs = lang_key_list[1:]
                     keyword_item_values = value_key_list[1:]
                     keyword_base = item_metadata_json.get(keyword_item_id)
@@ -409,24 +415,32 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     if _creator in item_map:
         for k in item_map[_creator].split(','):
             hide_email = False
+            hide_name = False
+            hide_affiliation = False
             value_key_list = k.split('.')
             _creator_item_id = value_key_list[0]
             prop_hidden = meta_options.get(_creator_item_id, {}).get('option', {}).get('hidden', False)
             for h in hide_list:
-                if _creator_item_id in h and value_key_list[-1] in h:
-                    prop_hidden = True
+                if _creator_item_id in h and 'creatorMails' in h:
+                    hide_email = True
+                elif _creator_item_id in h and 'creatorNames' in h:
+                    hide_name = True
+                elif _creator_item_id in h and 'creatorAffiliations' in h:
+                    hide_affiliation = True
             if prop_hidden:
                 continue
-            if _creator_item_id in h and 'creatorMails' in h:
-                hide_email = True
             _items_list = item_metadata_json.get(_creator_item_id, [])
             if isinstance(_items_list, dict):
                 creator_items += [_items_list]
             elif isinstance(_items_list, list):
                 creator_items += _items_list
             for creator_item in creator_items:
-                if 'creatorMails' in creator_item:
-                    creator_item.pop('creator_item')
+                if hide_email and 'creatorMails' in creator_item:
+                    creator_item.pop('creatorMails')
+                if hide_name and 'creatorNames' in creator_item:
+                    creator_item.pop('creatorNames')
+                if hide_affiliation and 'creatorAffiliations' in creator_item:
+                    creator_item.pop('creatorAffiliations')
 
     creator_mail_list = []
     creator_name_list = []

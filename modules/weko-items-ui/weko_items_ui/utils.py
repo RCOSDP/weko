@@ -2053,11 +2053,18 @@ def set_multi_language_name(item, cur_lang):
     :param cur_lang: current language
     :return: The modified json object.
     """
-    if 'titleMap' in item:
-        for value in item['titleMap']:
-            if 'name_i18n' in value \
-                    and len(value['name_i18n'][cur_lang]) > 0:
-                value['name'] = value['name_i18n'][cur_lang]
+    try:
+        if 'titleMap' in item:
+            for value in item['titleMap']:
+                if 'name_i18n' in value \
+                        and len(value['name_i18n'][cur_lang]) > 0:
+                    value['name'] = value['name_i18n'][cur_lang]
+    except Exception as ex:
+        if 'titleMap' in item:
+            for value in item['titleMap']:
+                if 'name_i18n' in value \
+                        and len(value['name_i18n']['en']) > 0:
+                    value['name'] = value['name_i18n']['en']
 
 
 def get_data_authors_prefix_settings():
@@ -2189,12 +2196,13 @@ def get_hide_list_by_schema_form(item_type_id=None, schemaform=None):
     if item_type_id and not schemaform:
         item_type = ItemTypes.get_by_id(item_type_id).render
         schemaform = item_type.get('table_row_map', {}).get('form', {})
-    for item in schemaform:
-        if not item.get('items'):
-            if item.get('isHide'):
-                ids.append(item.get('key'))
-        else:
-            ids += get_hide_list_by_schema_form(schemaform=item.get('items'))
+    if schemaform:
+        for item in schemaform:
+            if not item.get('items'):
+                if item.get('isHide'):
+                    ids.append(item.get('key'))
+            else:
+                ids += get_hide_list_by_schema_form(schemaform=item.get('items'))
     return ids
 
 
@@ -2266,9 +2274,12 @@ def get_options_and_order_list(item_type_id, item_type_mapping=None,
     :return: options dict and item type mapping
     """
     from weko_records.api import Mapping
-    meta_options = get_options_list(item_type_id, item_type_data)
-    if item_type_mapping is None:
-        item_type_mapping = Mapping.get_record(item_type_id)
+    meta_options = None
+    item_type_mapping = None
+    if item_type_id:
+        meta_options = get_options_list(item_type_id, item_type_data)
+        if item_type_mapping is None:
+            item_type_mapping = Mapping.get_record(item_type_id)
     return meta_options, item_type_mapping
 
 
@@ -2491,7 +2502,8 @@ def get_ranking(settings):
             agg_size=settings.display_rank + rank_buffer,
             event_type='record-view',
             group_field='pid_value',
-            count_field='count'
+            count_field='count',
+            must_not=json.dumps([{"wildcard": {"pid_value": "*.*"}}])
         )
         
         current_app.logger.debug("finished getting most_reviewed_items data from ES")
@@ -2511,7 +2523,8 @@ def get_ranking(settings):
             agg_size=settings.display_rank + rank_buffer,
             event_type='file-download',
             group_field='item_id',
-            count_field='count'
+            count_field='count',
+            must_not=json.dumps([{"wildcard": {"item_id": "*.*"}}])
         )
 
         current_app.logger.debug("finished getting most_downloaded_items data from ES")

@@ -1405,7 +1405,7 @@ def set_val_for_record_model(record_model, item_map_data):
         keys = k.split('.')
         if len(keys) > the_most_levels:
             the_most_levels = len(keys)
-        set_val_for_all_child(keys, record_model, item_map_data.get(k))
+        set_val_for_all_child(keys, record_model, v)
     # Remove item if value is empty.
     # values map with this condition => remove.
     condition = [[], {}, [{}], '']
@@ -1434,10 +1434,10 @@ def set_val_for_all_child(keys, models, values):
                 if k == keys[-1]:
                     model_temp[k] = val if val else ''
     if isinstance(model_temp, list):
-        if len(model_temp) == len(values):
-            # Set value for case multiple data.
-            i = 0
-            for val in values:
+        organization_item = copy.deepcopy(model_temp[0])
+        for i, val in enumerate(values):
+            if i < len(model_temp):
+                # Set value for case multiple data.
                 if not model_temp[i].get(keys[-1]) is None and model_temp[i][
                         keys[-1]].get(keys[-1]) is None:
                     model_temp[i][keys[-1]] = val if val else ''
@@ -1450,12 +1450,8 @@ def set_val_for_all_child(keys, models, values):
                                 keys[-1]) is None:
                             model_temp[i][k] = v
                             model_temp[i][k][0][keys[-1]] = val if val else ''
-                i += 1
-        else:
-            # The first time set value for this item.
-            organization_item = model_temp[0]
-            model_temp.remove(organization_item)
-            for val in values:
+            else:
+                # The first time set value for this item.
                 temp = copy.deepcopy(organization_item)
                 if not temp.get(keys[-1]) is None and temp[keys[-1]].get(
                         keys[-1]) is None:
