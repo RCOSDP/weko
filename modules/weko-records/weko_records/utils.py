@@ -1773,12 +1773,12 @@ def selected_value_by_language(
     for val_key in val_key_list:
         val_parent_key = val_key.split(".")[0]
         val_sub_key = val_key.split(".")[-1]
+        prop_hidden = meta_option.get(val_parent_key, {}).get('option', {}).get('hidden', False)
+        for h in hide_list:
+            if val_parent_key in h and val_sub_key in h:
+                prop_hidden = True
         for lang_key in lang_key_list:
             if val_parent_key == lang_key.split(".")[0]:
-                prop_hidden = meta_option.get(val_parent_key, {}).get('option', {}).get('hidden', False)
-                for h in hide_list:
-                    if val_parent_key in h and val_sub_key in h:
-                        prop_hidden = True
                 if (
                     lang_array is not None
                     and value_array is not None
@@ -1834,6 +1834,13 @@ def selected_value_by_language(
             if not result:
                 break
         if not result:
+            if (len(value_array) > 0
+                and lang_array is not None
+                and value_array is not None
+                and isinstance(lang_selected, str)
+                and not prop_hidden
+            ):
+                result = value_array[0]
             break
     return result
 
