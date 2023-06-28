@@ -173,13 +173,13 @@ class PreprocessorMixin(PreprocessorMixinInterface):
                         key_arr = ['metadata', key, 'attribute_value_mlt', 0]
                         lang_arr = key_arr.copy()
                         if k1 == 'creator':
-                            name = v1.get('creatorName')
+                            name = v1.get('creatorName', {})
                             # Set all key for __lang
                             attr = name.get('@attributes', {})
                             xml_lang = attr.get('xml:lang', '').split('.')
                             lang_arr.extend(get_keys(xml_lang))
                             # Set all key for key
-                            name_arr = name.get('@value').split('.')
+                            name_arr = name.get('@value', '').split('.')
                             key_arr.extend(get_keys(name_arr))
                         elif '.' in v1.get('@value', ''):
                             # Set key for __lang
@@ -187,14 +187,14 @@ class PreprocessorMixin(PreprocessorMixinInterface):
                             xml_lang = attr.get('xml:lang', '').split('.')
                             lang_arr.extend(get_keys(xml_lang))
                             # Set all key for key
-                            name_arr = v1.get('@value').split('.')
+                            name_arr = v1.get('@value', '').split('.')
                             key_arr.extend(get_keys(name_arr))
                         else:
                             # Set key for __lang
                             attr = v1.get('@attributes', {})
-                            lang_arr.append(attr.get('xml:lang'))
+                            lang_arr.append(attr.get('xml:lang', ''))
                             # Set all key for key
-                            key_arr.append(v1.get('@value'))
+                            key_arr.append(v1.get('@value', ''))
                         mapping_dict[k2] = key_arr
                         mapping_dict['{}__lang'.format(k2)] = lang_arr
             return mapping_dict
