@@ -1445,10 +1445,10 @@ class SchemaTree:
                         return None
 
                     aff_data = _item.get("attribute_value_mlt")[creator_idx]
-                    if not aff_data.get(_item_key):
+                    if not aff_data.get(_item_key, None):
                         return None
 
-                    for _subitem in aff_data.get(_item_key):
+                    for _subitem in aff_data.get(_item_key, []):
                         _len_affname = 0
                         _len_nameidt = 0
                         for item in _subitem.get(_name_keys, []):
