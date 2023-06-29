@@ -71,6 +71,7 @@ from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
+from weko_schema_ui.models import PublishStatus
 from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
@@ -417,7 +418,7 @@ def get_permission_record(rank_type, es_data, display_rank, has_permission_index
         try:
             record = WekoRecord.get_record_by_pid(pid_value)
             if (record.pid and record.pid.status == PIDStatus.DELETED) or \
-                    ('publish_status' in record and record['publish_status'] == '-1'):
+                    ('publish_status' in record and record['publish_status'] == PublishStatus.DELETE.value):
                 continue
             if roles[0]:
                 add_flag = True
@@ -1169,7 +1170,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         )
 
         records.attr_output[recid].append(
-            'public' if record['publish_status'] == '0' else 'private')
+            'public' if record['publish_status'] == PublishStatus.PUBLIC.value else 'private')
         feedback_mail_list = records.attr_data['feedback_mail_list'] \
             .get(recid, [])
         records.attr_output[recid].extend(feedback_mail_list)
@@ -3108,7 +3109,7 @@ def make_stats_file_with_permission(item_type_id, recids,
         )
 
         records.attr_output[recid].append(
-            'public' if record['publish_status'] == '0' else 'private')
+            'public' if record['publish_status'] == PublishStatus.PUBLIC.value else 'private')
         feedback_mail_list = records.attr_data['feedback_mail_list'] \
             .get(recid, [])
         records.attr_output[recid].extend(feedback_mail_list)

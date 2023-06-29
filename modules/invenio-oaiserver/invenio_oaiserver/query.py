@@ -18,6 +18,7 @@ from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch, current_search_client
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
+from weko_schema_ui.models import PublishStatus
 from werkzeug.utils import cached_property, import_string
 
 from . import current_oaiserver
@@ -156,7 +157,10 @@ def get_records(**kwargs):
             search = search.filter('range', **{'_updated': time_range})
 
         search = search.query('match', **{'relation_version_is_last': 'true'})
-        search = search.query('terms', **{'publish_status': ['-1', '0', '1']})
+        search = search.query('terms', **{'publish_status': [
+            PublishStatus.DELETE.value,
+            PublishStatus.PUBLIC.value,
+            PublishStatus.PRIVATE.value]})
         #search = search.query('range', **{'publish_date': {'lte': 'now/d'}})
         query_filter = []
         if indexes and 'set' not in kwargs:

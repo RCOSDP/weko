@@ -55,6 +55,7 @@ from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow
 from weko_workflow.utils import check_an_item_is_locked, \
     get_record_by_root_ver, get_thumbnails, prepare_edit_workflow, \
     set_files_display_type
+from weko_schema_ui.models import PublishStatus
 from werkzeug.utils import import_string
 from webassets.exceptions import BuildError
 from werkzeug.exceptions import BadRequest
@@ -379,7 +380,7 @@ def items_index(pid_value='0'):
             return redirect(url_for('.index'))
 
         record = WekoRecord.get_record_by_pid(pid_value)
-        action = 'private' if record.get('publish_status', '1') == '1' \
+        action = 'private' if record.get('publish_status', PublishStatus.PRIVATE.value) == PublishStatus.PRIVATE.value \
             else 'publish'
 
         from weko_theme.utils import get_design_layout
@@ -447,7 +448,7 @@ def iframe_items_index(pid_value='0'):
             return redirect(url_for('.iframe_index'))
 
         record = WekoRecord.get_record_by_pid(pid_value)
-        action = 'private' if record.get('publish_status', '1') == '1' \
+        action = 'private' if record.get('publish_status', PublishStatus.PRIVATE.value) == PublishStatus.PRIVATE.value \
             else 'publish'
 
         community_id = session.get('itemlogin_community_id')

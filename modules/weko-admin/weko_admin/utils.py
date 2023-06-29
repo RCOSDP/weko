@@ -52,6 +52,7 @@ from jinja2 import Template
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
+from weko_schema_ui.models import PublishStatus
 
 from weko_records.api import ItemsMetadata
 from weko_redis.redis import RedisConnection
@@ -2112,7 +2113,7 @@ def create_facet_search_query():
                 create_agg_by_aggregations(facet.aggregations, key, val))
             # Update agg query for no permission.
             facet.aggregations.append(
-                {'agg_mapping': 'publish_status', 'agg_value': '0'})
+                {'agg_mapping': 'publish_status', 'agg_value': PublishStatus.PUBLIC.value})
             agg_no_permission_query.update(
                 create_agg_by_aggregations(facet.aggregations, key, val))
         return agg_has_permission_query, agg_no_permission_query
