@@ -88,7 +88,7 @@ from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_mapping
-from weko_records_ui.utils import soft_delete
+
 from weko_redis.redis import RedisConnection
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import (
@@ -252,6 +252,7 @@ def delete_records(index_tree_id, ignore_items):
                     record.commit()
                     db.session.commit()
                 elif del_flag and removed_path is not None:
+                    from weko_records_ui.utils import soft_delete
                     soft_delete(pid)
                 else:
                     pass
