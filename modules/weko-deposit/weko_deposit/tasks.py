@@ -33,6 +33,7 @@ from invenio_search import RecordsSearch
 from sqlalchemy.exc import SQLAlchemyError
 from weko_authors.models import AuthorsPrefixSettings, AuthorsAffiliationSettings
 from weko_records.api import ItemsMetadata
+from weko_schema_ui.models import PublishStatus
 
 from .api import WekoDeposit
 
@@ -246,8 +247,8 @@ def update_items_by_authorInfo(origin_list, target):
                     "must": [
                         {
                             "query_string": {
-                                "query": "publish_status:0 AND "
-                                         "relation_version_is_last:true"
+                                "query": "publish_status: {} AND relation_version_is_last:true".format(
+                                    PublishStatus.PUBLIC.value)
                             }
                         }, {
                             "terms": {

@@ -90,6 +90,7 @@ from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_mapping
 
 from weko_redis.redis import RedisConnection
+from weko_schema_ui.models import PublishStatus
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import (
     IDENTIFIER_GRANT_LIST,
@@ -3394,7 +3395,7 @@ def export_all(root_url, user_id, data):
 
                 record_ids = [(recid.pid_value, recid.object_uuid) 
                     for recid in recids if 'publish_status' in recid.json 
-                    and recid.json['publish_status'] in ['0', '1']]
+                    and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
                 for recid, uuid in record_ids:
                     if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
                         # Create export info file
