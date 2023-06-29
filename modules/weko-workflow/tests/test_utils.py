@@ -265,10 +265,68 @@ def test_register_hdl(app,db_records,db_register):#c
 
 # def item_metadata_validation(item_id, identifier_type, record=None,
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_item_metadata_validation -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_item_metadata_validation(db_records):
+def test_item_metadata_validation(db_records,item_type):
     recid, depid, record, item, parent, doi, deposit = db_records[0]
-    result = item_metadata_validation(recid.id,"hdl")
-    assert result == ""
+    #result = item_metadata_validation(recid.id,"hdl")
+    result = item_metadata_validation(None,"hdl",record=record)
+    assert result == None
+    recid, depid, record, item, parent, doi, deposit = db_records[2]
+    
+    without_ver = get_record_without_version(recid)
+    print("tts:{}".format(without_ver))
+    # identifiery_type is JaLC, new resource_type in journalarticle_type, old resource_type in elearning_type
+    with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
+        side_effect=[("item_1617258105262.resourcetype", ['conference paper']),(None,["learning object"])]):
+        result = item_metadata_validation(recid.object_uuid,"1",without_ver_id=without_ver.object_uuid)
+        assert result == {'required': [], 'required_key': [], 'pattern': [],
+                  'either': [],  'either_key': [], 'mapping': [], 'other': 'You cannot change the resource type of items that have been grant a DOI.'}
+    print("tt4.1")
+    # identifiery_type is JaLC, new resource_type in report_types, old resource_type in thesis_types
+    with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
+        side_effect=[("item_1617258105262.resourcetype", ['thesis']),(None,["report"])]):
+        result = item_metadata_validation(recid.object_uuid,"1",without_ver_id=without_ver.object_uuid)
+        assert result == {'required': [], 'required_key': [], 'pattern': [],
+                  'either': [],  'either_key': [], 'mapping': [], 'other': 'You cannot change the resource type of items that have been grant a DOI.'}
+    # identifiery_type is JaLC, new resource_type in dataset_type, old resource_type in datageneral_types
+    with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
+        side_effect=[("item_1617258105262.resourcetype", ['software']),(None,["internal report"])]):
+        result = item_metadata_validation(recid.object_uuid,"1",without_ver_id=without_ver.object_uuid)
+        assert result == {'required': [], 'required_key': [], 'pattern': [],
+                  'either': [],  'either_key': [], 'mapping': [], 'other': 'You cannot change the resource type of items that have been grant a DOI.'}
+    
+    # identifiery_type is JaLC, new resource_type in else, old resource_type in else
+    with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
+        side_effect=[("item_1617258105262.resourcetype", ['else']),(None,["else"])]):
+        result = item_metadata_validation(recid.object_uuid,"1",without_ver_id=without_ver.object_uuid)
+        assert result == {'required': ['item_1617605131499.url.url'], 'required_key': ['jpcoar:URI'], 'pattern': [],
+                  'either': [],  'either_key': [], 'mapping': [], }
+
+    # identifiery_type is CrossRef, new resource_type in thesis_types, old resource_type in report_types
+    with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
+        side_effect=[("item_1617258105262.resourcetype", ['thesis']),(None,["report"])]):
+        result = item_metadata_validation(recid.object_uuid,"2",without_ver_id=without_ver.object_uuid)
+        assert result == {'required': ['item_1617605131499.url.url'], 'required_key': ['jpcoar:URI'], 'pattern': [],
+                  'either': [],  'either_key': [], 'mapping': [], }
+
+    # identifiery_type is CrossRef, new resource_type in journalarticle_type, old resource_type in else
+    with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
+        side_effect=[("item_1617258105262.resourcetype", ['conference paper']),(None,["else"])]):
+        result = item_metadata_validation(recid.object_uuid,"2",without_ver_id=without_ver.object_uuid)
+        assert result == {'required': [], 'required_key': [], 'pattern': [],
+                  'either': [],  'either_key': [], 'mapping': [], 'other': 'You cannot change the resource type of items that have been grant a DOI.'}
+    # identifiery_type is DataCite, new resource_type in dataset_type, old resource_type in else
+    with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
+        side_effect=[("item_1617258105262.resourcetype", ['dataset']),(None,["thesis"])]):
+        result = item_metadata_validation(recid.object_uuid,"3",without_ver_id=without_ver.object_uuid)
+        assert result == {'required': [], 'required_key': [], 'pattern': [],
+                  'either': [],  'either_key': [], 'mapping': [], 'other': 'You cannot change the resource type of items that have been grant a DOI.'}
+    
+    # identifiery_type is other
+    with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
+        side_effect=[("item_1617258105262.resourcetype", ['thesis']),(None,["report"])]):
+        result = item_metadata_validation(recid.object_uuid,"4",without_ver_id=without_ver.object_uuid)
+        assert result == "Cannot register selected DOI for current Item Type of this item."
+
     
 # def merge_doi_error_list(current, new):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
