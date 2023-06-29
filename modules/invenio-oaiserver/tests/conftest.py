@@ -452,16 +452,62 @@ def records(app, db):
               },
             "_oai":{"sets":[]},
             "item_type_id":"1"
+        },
+        {
+            "path":["1557819692844"],
+            "publish_date":"2000-08-09",
+            "publish_status": 2,
+            "json":{
+              "_source":{
+                  "_item_metadata":{
+                      "system_identifier_doi":{
+                          "attribute_value_mlt":[
+                              {"subitem_systemidt_identifier_type":"test doi"}
+                          ]
+                      }
+                    }
+                  }
+              },
+            "_oai":{"sets":[]},
+            "system_identifier_doi":"DOI",
+            "item_type_id":"1"
+        },
+        {
+            "path":["1557819692844"],
+            "publish_date":"2000-08-09",
+            "publish_status": -1,
+            "json":{
+              "_source":{
+                  "_item_metadata":{}
+                  }
+              },
+            "_oai":{"sets":[]},
+            "item_type_id":"1"
+        },
+        {
+            "path":["1557819692844"],
+            "publish_date":"2000-08-09",
+            "publish_status": 1,
+            "json":{
+              "_source":{
+                  "_item_metadata":{}
+                  }
+              },
+            "_oai":{"sets":[]},
+            "item_type_id":"1"
         }
     ]
     item_data = [
         {"title":"listrecords if1"},
         {"title":"listrecords if2"},
         {"title":"listrecords if3"},
-        {"title":"listrecords if3_2"}
+        {"title":"listrecords if3_2"},
+        {"title":"publis_status_2"},
+        {"title":"publis_status_-1"},
+        {"title":"publis_status_1"},
     ]
     for i in range(len(record_data)):
-        returns.append(create_record_oai(record_data[i],item_data[i]))
+        returns.append(create_record_oai(record_data[i], item_data[i]))
     db.session.commit()
     yield returns
 

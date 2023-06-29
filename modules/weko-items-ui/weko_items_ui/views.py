@@ -380,7 +380,9 @@ def items_index(pid_value='0'):
             return redirect(url_for('.index'))
 
         record = WekoRecord.get_record_by_pid(pid_value)
-        action = 'private' if record.get('publish_status', PublishStatus.PRIVATE.value) == PublishStatus.PRIVATE.value \
+        action = 'private' \
+            if record.get('publish_status', PublishStatus.PRIVATE.value) \
+                in [PublishStatus.DELETE.value, PublishStatus.PRIVATE.value, PublishStatus.NEW.value] \
             else 'publish'
 
         from weko_theme.utils import get_design_layout
@@ -448,7 +450,9 @@ def iframe_items_index(pid_value='0'):
             return redirect(url_for('.iframe_index'))
 
         record = WekoRecord.get_record_by_pid(pid_value)
-        action = 'private' if record.get('publish_status', PublishStatus.PRIVATE.value) == PublishStatus.PRIVATE.value \
+        action = 'private' \
+            if record.get('publish_status', PublishStatus.PRIVATE.value) \
+                in [PublishStatus.DELETE.value, PublishStatus.PRIVATE.value, PublishStatus.NEW.value] \
             else 'publish'
 
         community_id = session.get('itemlogin_community_id')
@@ -909,10 +913,12 @@ def prepare_edit_item():
         post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
 
         if post_workflow:
-            if check_item_is_being_edit(recid, post_workflow, activity):
+            is_begin_edit = check_item_is_being_edit(recid, post_workflow, activity)
+            if is_begin_edit:
                 return jsonify(
                     code=err_code,
-                    msg=_('This Item is being edited.')
+                    msg=_('This Item is being edited.'),
+                    activity_id=is_begin_edit
                 )
 
             post_activity['workflow_id'] = post_workflow.workflow_id

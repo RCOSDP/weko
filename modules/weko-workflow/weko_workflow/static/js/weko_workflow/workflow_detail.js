@@ -2,6 +2,14 @@ require([
   "jquery",
   "bootstrap"
 ], function () {
+  /*
+  $(function(){
+    history.pushState(null,null,null)
+    window.addEventListener('popstate', function(e) {
+      $('a.back-button')[0].click()
+    });
+  })
+  */
   $('#btnContinue').on('click', function () {
     let activity_id = $("#activity_id").text().trim();
     let action_id = $("#hide-actionId").text().trim();
