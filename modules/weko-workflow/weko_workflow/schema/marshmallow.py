@@ -58,7 +58,7 @@ class ResponseLockSchema(Schema):
     msg = fields.String()
     err = fields.String()
     locked_value = fields.String()
-    locked_by_email = fields.Email(allow_none=True)
+    locked_by_email = fields.String(allow_none=True)
     locked_by_username = fields.String(allow_none=True)
     class Meta:
         strict = True
