@@ -591,7 +591,7 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
             handle_check_cnri(list_record)
             handle_check_doi_indexes(list_record)
             handle_check_doi_ra(list_record)
-            current_app.logger.error(list_record)
+            #current_app.logger.error(list_record)
             handle_check_doi(list_record)
         result["list_record"] = list_record
     except Exception as ex:
@@ -1754,7 +1754,8 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
             db.session.rollback()
             current_app.logger.warning("Specified IndexID is invalid!")
 
-        if index_info and len(index_info) == 1:
+        msg_not_exist = _("The specified {} does not exist in system.")
+        if index_info and len(index_info) == 1:     # index exists by index id
             if index_name_path and index_name_path not in [
                 index_info[0].name.replace(
                     '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']),
@@ -1767,13 +1768,12 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
                     )
                 )
             temp_res = [index_info[0].cid]
-        elif index_name_path:
+        elif index_name_path:          # has pos_index info
             index_path_list = index_name_path.split(
                 current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT'])
             index_all_name = Indexes.get_index_by_all_name(index_path_list[-1])
             index_infos = Indexes.get_path_list([i.id for i in index_all_name])
-            msg_not_exist = _("The specified {} does not exist in system.")
-            if index_infos:
+            if index_infos:      # index exists by index name
                 for info in index_infos:
                     index_info = None
                     if index_name_path == \
@@ -1781,21 +1781,23 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
                                 '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']):
                         index_info = info
                     
-                    if not index_info:
+                    if not index_info:      # index does not exist by index path
                         if index_id:
                             errors.append(msg_not_exist.format("IndexID, POS_INDEX"))
                         else:
                             errors.append(msg_not_exist.format("POS_INDEX"))
-                    else:
+                    else:      # index exists by index path
                         if index_id:
                             errors.append(msg_not_exist.format("IndexID"))
                         else:
                             temp_res.append(index_info.cid)
-            else:
+            else:      # index does not exist by index name
                 if index_id:
                     errors.append(msg_not_exist.format("IndexID, POS_INDEX"))
                 else:
                     errors.append(msg_not_exist.format("POS_INDEX"))
+        else:         # index does not exist by index id and index path
+            errors.append(msg_not_exist.format("IndexID"))
         result = []
         if temp_res and not all_index_permission:
             msg_can_not_edit = _("Your role cannot register items in this index.")
@@ -2891,6 +2893,7 @@ def handle_fill_system_item(list_record):
         item_doi = item.get("doi","")
         item_doi_prefix = ""
         item_doi_suffix = ""
+        item_cnri = item.get("cnri", "")
         
         if item_doi and "/" in item_doi:
             item_doi_prefix, item_doi_suffix = item_doi.split("/")
@@ -3026,10 +3029,13 @@ def handle_fill_system_item(list_record):
                 warnings.append(_('The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'))
             
             if is_change_identifier:
-                if item_doi is "":
-                    errors.append(_('Please specify DOI prefix/suffix.'))
-                elif item_doi_suffix is "":
-                    errors.append(_('Please specify DOI suffix.'))
+                current_app.logger.error("cnri:{}".format(item_cnri))
+                current_app.logger.error("cnrWEKO_HANDLE_ALLOW_REGISTER_CNRIi:{}".format(current_app.config["WEKO_HANDLE_ALLOW_REGISTER_CNRI"]))
+                if not (current_app.config["WEKO_HANDLE_ALLOW_REGISTER_CNRI"] and item_cnri):
+                    if item_doi is "":
+                        errors.append(_('Please specify DOI prefix/suffix.'))
+                    elif item_doi_suffix is "":
+                        errors.append(_('Please specify DOI suffix.'))
             else:
                 if item_doi_suffix and existed_doi is False:
                     errors.append(_('Do not specify DOI suffix.'))
