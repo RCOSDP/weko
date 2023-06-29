@@ -2946,6 +2946,10 @@ class _FormatSysBibliographicInformation:
                 else:
                     title_data_none_lang.append(value)
 
+        if len(title_data_none_lang) > 0:
+            if source_titles[0].get('bibliographic_title')==title_data_none_lang[0]:
+                return title_data_none_lang[0],''
+            
         if value_latn:
             return value_latn, 'ja-Latn'
 
