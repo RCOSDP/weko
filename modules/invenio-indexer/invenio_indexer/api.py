@@ -242,7 +242,7 @@ class RecordIndexer(object):
                         current_app.logger.error(traceback.format_exc())
                         # consumer.close()
                 count = (success,fail)
-                current_app.logger.error("count(success, error): {}".format(count))
+                current_app.logger.debug("count(success, error): {}".format(count))
                      
         return count
 
