@@ -11,6 +11,7 @@
 from __future__ import absolute_import, print_function
 
 import copy
+import traceback
 from contextlib import contextmanager
 
 import pytz
@@ -22,6 +23,7 @@ from invenio_search import current_search_client
 from kombu import Producer as KombuProducer
 from kombu.compat import Consumer
 from sqlalchemy.orm.exc import NoResultFound
+from elasticsearch.helpers import BulkIndexError
 
 from .proxies import current_record_to_index
 from .signals import before_record_index
@@ -181,27 +183,67 @@ class RecordIndexer(object):
         :param dict es_bulk_kwargs: Passed to
             :func:`elasticsearch:elasticsearch.helpers.bulk`.
         """
-        with current_celery_app.pool.acquire(block=True) as conn:
-            consumer = Consumer(
-                connection=conn,
-                queue=self.mq_queue.name,
-                exchange=self.mq_exchange.name,
-                routing_key=self.mq_routing_key,
-            )
-
-            req_timeout = current_app.config['INDEXER_BULK_REQUEST_TIMEOUT']
-
-            es_bulk_kwargs = es_bulk_kwargs or {}
-            count = bulk(
-                self.client,
-                self._actionsiter(consumer.iterqueue()),
-                stats_only=True,
-                request_timeout=req_timeout,
-                **es_bulk_kwargs
-            )
-
-            consumer.close()
-
+        success = 0
+        fail = 0
+        while True:
+            with current_celery_app.pool.acquire(block=True) as conn:
+                # check 
+                chan = conn.channel()
+                name, b4_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
+                current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, b4_queues_cnt, consumers))
+                if b4_queues_cnt == 0:
+                    break
+                consumer = Consumer(
+                    connection=conn,
+                    queue=self.mq_queue.name,
+                    exchange=self.mq_exchange.name,
+                    routing_key=self.mq_routing_key,
+                )
+                
+                req_timeout = current_app.config['INDEXER_BULK_REQUEST_TIMEOUT']
+                es_bulk_kwargs = es_bulk_kwargs or {}
+                error_ids = []
+                
+                with consumer:
+                    try:
+                        _success,_fail  = bulk(
+                            self.client,
+                            self._actionsiter(consumer.iterqueue()),
+                            stats_only=True,
+                            request_timeout=req_timeout,
+                            # raise_on_error=True,
+                            # raise_on_exception=True,
+                            **es_bulk_kwargs
+                        )
+                        success = success + _success
+                        fail = fail + _fail
+                    except BulkIndexError as be:
+                        chan = conn.channel()
+                        name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
+                        current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, af_queues_cnt, consumers))
+                        
+                        
+                        for error in be.errors:
+                            error_ids.append(error['index']['_id'])
+                        _success,_fail = bulk(
+                            self.client,
+                            self._actionsiter2(error_ids),
+                            stats_only=True,
+                            request_timeout=req_timeout,
+                            # raise_on_error=True,
+                            # raise_on_exception=True,
+                            **es_bulk_kwargs
+                        )
+                        success = success + (b4_queues_cnt-(af_queues_cnt+_fail))
+                        # success = success + _success
+                        fail = fail + _fail
+                    except Exception as e:
+                        current_app.logger.error("{}".format(e))
+                        current_app.logger.error(traceback.format_exc())
+                        # consumer.close()
+                count = (success,fail)
+                current_app.logger.error("count(success, error): {}".format(count))
+                     
         return count
 
     @contextmanager
@@ -256,7 +298,15 @@ class RecordIndexer(object):
                 current_app.logger.error(
                     "Failed to index record {0}".format(payload.get('id')),
                     exc_info=True)
+    
+    def _actionsiter2(self, ids):
+        """Iterate bulk actions.
 
+        :param message_iterator: Iterator yielding messages from a queue.
+        """
+        for id in ids:
+            yield self._index_action2(id,True)
+            
     def _delete_action(self, payload):
         """Bulk delete action.
 
@@ -281,12 +331,26 @@ class RecordIndexer(object):
         :param payload: Decoded message body.
         :returns: Dictionary defining an Elasticsearch bulk 'index' action.
         """
-        record = Record.get_record(payload['id'])
+        
+        return self._index_action2(payload['id'])
+
+    def _index_action2(self, id,deleteFile=False):
+        """Bulk index action.
+
+        :param payload: Decoded message body.
+        :returns: Dictionary defining an Elasticsearch bulk 'index' action.
+        """
+        record = Record.get_record(id)
+        current_app.logger.debug("indexing id:{}".format(id))
         index, doc_type = self.record_to_index(record)
 
         arguments = {}
         body = self._prepare_record(record, index, doc_type, arguments)
-
+        if deleteFile:
+            if 'content' in body:
+                for f in body['content']:
+                    f['file'] = ""
+                    
         action = {
             '_op_type': 'index',
             '_index': index,
@@ -299,7 +363,7 @@ class RecordIndexer(object):
         action.update(arguments)
 
         return action
-
+    
     @staticmethod
     def _prepare_record(record, index, doc_type, arguments=None, **kwargs):
         """Prepare record data for indexing.
