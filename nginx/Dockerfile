@@ -80,6 +80,18 @@ ADD ./login.php /usr/share/nginx/html/secure/login.php
 ADD ./shib_clear_headers /etc/nginx/shib_clear_headers
 ADD ./shib_fastcgi_params /etc/nginx/shib_fastcgi_params
 
+RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+RUN apt-get update && apt-get install -y nodejs
+ADD ./ams/weko-frontend /usr/local/weko-frontend
+WORKDIR /usr/local/weko-frontend
+RUN npm install
+RUN npm run build
+RUN npm install -g pm2
+EXPOSE 8080
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+ADD ./startup.sh /usr/local
+RUN chmod +x /usr/local/startup.sh
+
+CMD ["/usr/local/startup.sh"]
+#CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
 
