@@ -11,8 +11,8 @@ const props = defineProps({
 
 <template>
   <div>
-    <div class="grid grid-cols-2 md:grid-cols-5">
-      <div class="col-span-1" v-for="result in searchResult">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-y-4">
+      <div class="bg-white col-span-1 border-[1px] border-miby-thin-gray" v-for="result in searchResult">
         <SearchResultBlockCard :result="result" />
       </div>
     </div>

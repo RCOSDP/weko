@@ -2,7 +2,7 @@
     <div>
         <div class="max-w-[300px] mx-auto mt-3.5 mb-16 flex justify-center">
             <div v-for="page in pages">
-                <a class="page-numbers" :href="page == '...' ? null : `?page=${page}`">{{ page }}</a>
+                <a :class="{'current': page == currentPage}" class="page-numbers" :href="page == '...' ? null : `?page=${page}`">{{ page }}</a>
             </div>
       </div>
     </div>

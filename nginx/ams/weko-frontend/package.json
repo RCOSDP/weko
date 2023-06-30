@@ -17,6 +17,8 @@
     "@vueuse/core": "^10.1.2",
     "astro": "^2.6.4",
     "flowbite": "^1.6.5",
+    "lodash.debounce": "^4.0.8",
+    "lodash.throttle": "^4.1.1",
     "tailwindcss": "^3.3.1",
     "vue": "^3.2.47",
     "vuejs-dialog": "^1.4.2"

@@ -2,7 +2,6 @@
 import Layout from "../layouts/Layout.astro";
 import BtnGotoTop from "/images/btn/btn-gototop.svg";
 import BtnGotoTopSp from "/images/btn/btn-gototop_sp.svg";
-export const prerender = true;
 ---
 
 <Layout
@@ -203,10 +202,11 @@ export const prerender = true;
         </div>
         <div class="relative mt-16 pb-10">
           <a class="block text-center underline text-sm text-miby-link-blue" href="/contact">お問い合わせはこちら</a>
-          <button id="page-top" class="lg:block w-10 h-10 absolute right-5 top-0"><img src={BtnGotoTop} alt=""></button>
+          <button id="page-top" class="hidden lg:block w-10 h-10 absolute right-5 top-0"><img src={BtnGotoTop} alt=""></button>
         </div>
       </div>
     </div>
+    <button id="page-top" class="block lg:hidden w-10 h-10 z-40 fixed right-5 bottom-2.5"><img src={BtnGotoTopSp} alt=""></button>
   </main>
 </Layout>
 

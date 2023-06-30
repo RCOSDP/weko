@@ -10,8 +10,8 @@ const props = defineProps({
 </script>
 
 <template>
-  <div class="w-full">
-    <div v-for="result in searchResult" class="w-full">
+  <div class="w-full overflow-x-auto">
+    <div v-for="result in searchResult" class="w-full whitespace-nowrap">
       <SearchResultSummaryCard :result="result" />
     </div>
   </div>

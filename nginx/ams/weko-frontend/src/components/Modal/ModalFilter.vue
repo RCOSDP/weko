@@ -1,18 +1,24 @@
 <script setup>
 import ButtonClose from "/images/btn/btn-close.svg";
 function closeFilterModal() {
+  document.body.classList.remove("overflow-hidden");
   document.getElementById("modalFilter").close();
+}
+const submit = () => {
+  //submit機能
+  closeFilterModal()
 }
 </script>
 <template>
-  <dialog id="modalFilter" class="w-11/12 md:w-full max-w-[728px] mx-auto z-10">
-    <div class="bg-miby-light-blue w-full rounded-t relative">
+  <dialog @click="closeFilterModal" id="modalFilter" class="w-11/12 md:w-full max-w-[728px] mx-auto z-10">
+    <div @click.stop class="bg-miby-light-blue w-full rounded-t relative">
       <p class="text-white leading-[43px] pl-5 text-center font-medium relative">フィルター</p>
       <button id="" type="button" class="btn-close" @click="closeFilterModal">
         <img :src="ButtonClose" alt="×" />
       </button>
     </div>
     <form
+      @click.stop
       method="dialog"
       class="border-4 border-miby-light-blue mt-[-3px] md:mt-0 md:border-0 rounded-b-md px-2.5"
     >
@@ -129,7 +135,8 @@ function closeFilterModal() {
                   class="border border-miby-thin-gray text-miby-black text-sm py-2.5 px-5 h-7 w-[160px] rounded focus:ring-miby-orange focus:border-miby-orange"
                 />
               </div>
-              <span class="px-2.5 align-top w-full md:w-[24px]">—</span>
+              <span class="hidden sm:block pl-1.5 align-top w-full md:w-[24px]">— </span>
+              <span class="sm:hidden pl-1.5 align-top w-full md:w-[24px] mb-0.5">|</span>
               <div class="relative">
                 <input
                   name="end"
@@ -152,6 +159,7 @@ function closeFilterModal() {
         </a>
 
         <button
+          @click="submit"
           id="filtersubmit"
           class="text-white text-sm text-center bg-miby-orange border border-miby-orange font-medium py-1.5 px-5 block min-w-[96px] rounded"
         >

@@ -59,12 +59,12 @@ const loadIndexTree = async () => {
 </script>
 
 <template>
-  <dialog id="IndexTreeContent" :class="[isIndexTreeModalShow ? 'visible z-5 relative is-open' : 'invisible']">
+  <dialog @click="onCloseIndexTree" id="IndexTreeContent" :class="[isIndexTreeModalShow ? 'visible z-5 relative is-open' : 'invisible']">
     <div class="modal-left" :class="[isIndexTreeModalShow ? 'is-open' : '']">
       <button class="btn-close" @click="onCloseIndexTree">
         <img :src="ButtonClose" alt="close" />
       </button>
-      <div class="wrapper">
+      <div @click.stop class="wrapper">
         <div v-for="item in allItems.children" :key="item.id">
           <IndexTreeCard :indexes="item" />
         </div>
@@ -72,7 +72,7 @@ const loadIndexTree = async () => {
     </div>
     <div class="backdrop"></div>
   </dialog>
-  <div
+  <!-- <div
     id="IndexTree"
     class="hidden md:block index-tree w-full"
     :class="[isIndexTreeModalShow ? 'show z-10' : (isIndexTreeBtnViewFlg ? 'scroll' : '')]"
@@ -80,5 +80,5 @@ const loadIndexTree = async () => {
     <button class="pl-5 pt-1.5" @click="onOpenIndexTree(true)">
       <img :src="ButtonIndex" alt="インデックスツリー" />
     </button>
-  </div>
+  </div> -->
 </template>

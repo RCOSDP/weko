@@ -1,8 +1,8 @@
 <template>
-  <div class="w-full border-miby-thin-gray border-[1px]">
-    <div class="search-block__head">
+  <div class="w-full">
+    <div class="search-block__head border-miby-thin-gray border-b-[1px]">
       <input class="" type="checkbox" name="publish-type" />
-      <p class="icons-type icon-published"><span>一般公開</span></p>
+      <p class="icons-type icon-published"><span>{{ result._source._item_metadata.item_1685585170888.attribute_value_mlt[0].subitem_1685583776261.subitem_1685583784534 }}</span></p>
     </div>
     <div class="search-block__content">
       <div class="image"><img class="" :src="ImageSample" alt="" /></div>

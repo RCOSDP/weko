@@ -1,16 +1,27 @@
 <script setup>
 import ButtonClose from "/images/btn/btn-close.svg";
 import columns from "../../data/data-column.json";
+
+const closeDisplayItemModal = () => {
+  document.body.classList.remove("overflow-hidden");
+  document.getElementById('modalDisplayItem').close()
+}
+
+const submit = () => {
+  //submit機能
+  closeDisplayItemModal()
+}
 </script>
 <template>
-  <dialog id="modalDisplayItem" class="w-11/12 md:w-full max-w-[728px] mx-auto z-10">
-    <div class="bg-miby-light-blue w-full rounded-t relative">
+  <dialog @click="closeDisplayItemModal" id="modalDisplayItem" class="w-11/12 md:w-full max-w-[728px] mx-auto z-10">
+    <div @click.stop class="bg-miby-light-blue w-full rounded-t relative">
       <p class="text-white leading-[43px] pl-5 text-center font-medium relative">項目表示</p>
       <button id="" type="button" class="btn-close" @click="closeDisplayItemModal">
         <img :src="ButtonClose" alt="×" />
       </button>
     </div>
     <form
+      @click.stop
       method="dialog"
       class="border-4 border-miby-light-blue mt-[-3px] md:mt-0 md:border-0 rounded-b-md px-2.5"
     >
@@ -41,6 +52,7 @@ import columns from "../../data/data-column.json";
         </a>
 
         <button
+          @click="submit"
           id="filtersubmit"
           class="text-white text-sm text-center bg-miby-orange border border-miby-orange font-medium py-1.5 px-5 block min-w-[96px] rounded"
         >

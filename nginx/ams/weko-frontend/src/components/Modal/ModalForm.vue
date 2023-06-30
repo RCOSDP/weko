@@ -14,7 +14,7 @@ const props = defineProps({
 const onCloseFormModal = () => {
   props.isFormModalShow.value = false;
 };
-const emit = defineEmits(["update:isFormModalShow"]);
+const emit = defineEmits(["update:isFormModalShow", 'close-modal']);
 
 watchEffect(() => {
   // emit("update:isFormModalShow", onCloseFormModal());
@@ -78,24 +78,25 @@ const previousConditions = ref(JSON.parse(sessionStorage.getItem('search-conditi
 const searchConditions = reactive({
   searchType: previousConditions.value?.searchType ?? '',
   keyWord: previousConditions.value?.keyWord ?? '',
+  date: previousConditions.value?.date ?? null,
   checkbox: previousConditions.value?.checkbox ?? [],
   text: previousConditions.value?.text ?? [],
   addCondition: previousConditions.value?.addCondition || 'default'
 })
 
-const submit = () => {
-  sessionStorage.setItem('search-conditions', JSON.stringify(searchConditions))
+const submit = async () => {
+  await sessionStorage.setItem('search-conditions', JSON.stringify(searchConditions))
   location = '/search/summary'
 }
-
+ 
 </script>
 
 <template>
-  <dialog :class="[isFormModalShow ? 'visible z-50' : 'invisible']">
-    <div class="modal modal-center">
+  <dialog @click="emit('close-modal');" :class="[isFormModalShow ? 'visible z-50' : 'invisible']">
+    <div @click.stop class="modal modal-center">
       <div class="bg-miby-light-blue w-full rounded-t relative">
         <p class="text-white leading-[43px] pl-5 text-center font-medium relative">詳細検索</p>
-        <button id="" type="button" class="btn-close" @click="onCloseFormModal">
+        <button id="" type="button" class="btn-close" @click="emit('close-modal')">
           <img :src="ButtonClose" alt="×" />
         </button>
       </div>
@@ -173,7 +174,7 @@ const submit = () => {
                         :value="{type: column.name, value: checkbox_item.label}"
                         v-model="searchConditions.checkbox"
                       />
-                      <label class="text-sm checkbox-label" :for="checkbox_item.value">
+                      <label class="text-md min-[769px]:text-sm checkbox-label" :for="checkbox_item.value">
                         {{ checkbox_item.label }}
                       </label>
                     </div>
@@ -184,7 +185,7 @@ const submit = () => {
                   v-else-if="column.form_type == 'date'"
                   class="ml-9 flex flex-wrap md:flex-nowrap items-center md:justify-start max-w-[345px]"
                 >
-                  <VueDatePicker v-model="date" range />
+                  <VueDatePicker v-model="searchConditions.date" range />
                   <!-- <FormDate /> -->
                   <!-- <VueDatePicker v-model="date" model-auto text-input class="h-[30px]"></VueDatePicker> -->
                   <!-- <span class="w-full md:w-[34px] px-2.5 align-top">—</span> -->

@@ -1,13 +1,14 @@
 ---
 import Logo1 from "/images/logo/logo01.png";
 import Logo2 from "/images/logo/logo02.png";
+import BtnLogout from "/images/btn/btn-logout.svg";
 import IndexTree from "./IndexTree.vue";
-import MenuMobile from "./Menu/MenuMobile.astro";
+import MenuMobile from "./Menu/MenuMobile.vue";
 ---
 
 <header class="top-0 inset-x-0">
-  <div class="flex md:items-center justify-between relative p-2.5 md:p-5 bg-miby-header-blue">
-    <div class="flex items-end flex-wrap md:flex-nowrap">
+  <div class="flex md:items-center justify-between relative p-2.5 md:p-[5px] bg-gradient-to-b from-miby-header-blue to-bg-miby-light-blue">
+    <div class="flex items-end flex-wrap sm:flex-nowrap">
       <p class="mr-[5px]">
         <a href="/"><img src={Logo1} alt="MIBY" /></a>
       </p>
@@ -19,25 +20,28 @@ import MenuMobile from "./Menu/MenuMobile.astro";
       </p>
     </div>
     <nav class="flex justify-end items-flex-start md:items-center">
-      <div class="hidden md:block w-24 relative">
+      <!-- <div class="w-24 relative">
         <button class="btn-lang icons icon-lang text-sm text-white py-1 px-3">JP</button>
-        <div class="link-lang absolute top-full mt-1 w-40 bg-white text-sm rounded hidden">
+        <div class="link-lang absolute top-full mt-1 bg-white text-sm rounded hidden">
           <p class="px-3 py-1 text-white bg-miby-orange w-full rounded-tl rounded-tr">JP</p>
           <a class="block px-3 py-1 text-miby-black w-full" href="/en">EN</a>
         </div>
       </div>
-      <button class="h-5 md:h-auto md:border md:py-1 pl-2 pr-2.5 rounded icons icon-logout">
+      <button class="hidden md:block h-5 md:h-auto md:border md:py-1 pl-2 pr-2.5 rounded">
+        <img src={BtnLogout} alt="ログアウト" />
+      </button> -->
+      <!-- <button class="block md:hidden h-5 md:h-auto md:border md:py-1 pl-2 pr-2.5 rounded icons icon-logout">
         <span class="hidden md:inline-block text-white">ログアウト</span>
-      </button>
-      <button class="btn-sp-menu block md:hidden">
+      </button> -->
+      <!-- <button class="btn-sp-menu block md:absolute md:top-3 md:right-3">
         <span class="inline-block h-[1px] w-full bg-white"></span>
         <span class="inline-block h-[1px] w-full bg-white"></span>
         <span class="inline-block h-[1px] w-full bg-white"></span>
-      </button>
+      </button> -->
     </nav>
   </div>
-  <IndexTree client:only="vue" />
-  <MenuMobile />
+  <!-- <IndexTree client:only="vue" /> -->
+  <MenuMobile client:only="vue" />
 </header>
 
 <script is:inline>
@@ -55,9 +59,9 @@ import MenuMobile from "./Menu/MenuMobile.astro";
   window.addEventListener("resize", fixedMenu);
   window.addEventListener("scroll", fixedMenu);
 
-  document.querySelector(".btn-lang").addEventListener("click", () => {
-    document.querySelector(".link-lang").classList.toggle("hidden");
-  });
+  // document.querySelector(".btn-lang").addEventListener("click", () => {
+  //   document.querySelector(".link-lang").classList.toggle("hidden");
+  // });
 
   var mobileMenuBtn = document.querySelector(".btn-sp-menu");
   mobileMenuBtn?.addEventListener("click", () => {

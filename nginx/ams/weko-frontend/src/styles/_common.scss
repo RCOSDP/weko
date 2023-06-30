@@ -5,11 +5,19 @@
     &.icon-lang {
         &::before {
             @include icons;
-            width: 14px;
-            height: 14px;
+            width: 20px;
+            height: 20px;
             background-image: url(../images/icon/icon_language.svg);
-            padding-right: 10px;
-            vertical-align: baseline;
+            padding-left: 0px;
+            // vertical-align: baseline;
+            margin-bottom: 3px;
+
+            @include min-screen(1022px) {
+                padding-right: 10px;
+                margin-bottom: 2.5px;
+                width: 14px;
+                height: 14px;
+            }
         }
 
         &::after {
@@ -19,6 +27,11 @@
             background-image: url(../images/icon/icon_down-arrow.svg);
             margin-left: 5px;
             vertical-align: middle;
+
+            @include max-screen(1022px) {
+                width: 0px;
+                height: 0px;
+            }
         }
     }
 
@@ -72,8 +85,8 @@
 
     &.icon-logout::before {
         @include icons;
-        width: 15px;
-        height: 15px;
+        width: 17px;
+        height: 17px;
         background-image: url(../images/icon/icon_logout.svg);
     }
 
@@ -129,8 +142,8 @@
 
     &.icon-noro::before {
         @include icons;
-        width: 16px;
-        height: 18px;
+        width: 14px;
+        height: 16px;
         background-image: url(../images/icon/icon_organization.svg);
     }
 
@@ -151,9 +164,9 @@
 
     &.icon-publish::before {
         @include icons;
-        margin-right: 10px;
         width: 10px;
         height: 10px;
+        vertical-align: baseline;
         background-image: url(../images/icon/icon_upload-date.svg);
     }
 
@@ -325,8 +338,8 @@
         &.before::before,
         &.after::after {
             @include icons;
-            width: 11px;
-            height: 11px;
+            width: 13px;
+            height: 13px;
             background-image: url(../images/icon/icon_download.svg);
         }
     }
@@ -478,7 +491,7 @@
 .data {
     &-statistics {
         :not(#index) & {
-            display: none;
+            display: all;
         }
     }
 
@@ -509,16 +522,16 @@
         text-align: left;
 
         .tag-link {
-            margin-right: 5px;
+            // margin-right: 5px;
 
             span {
-                margin-right: 5px;
+                // margin-right: 5px;
                 text-decoration-line: underline;
                 text-decoration-color: #333333;
             }
 
             &:not(:last-of-type)::after {
-                content: "/";
+                content: ", ";
             }
         }
     }
@@ -693,7 +706,7 @@ dialog {
                 max-width: 600px;
                 margin: auto;
                 padding: 0 40px;
-                max-height: calc(100vh - 400px);
+                max-height: calc(100vh - 300px);
 
                 @include max-screen($breakpoint-mobile) {
                     padding: 20px;
@@ -775,6 +788,7 @@ dialog {
 
         .modal-left {
             top: 0;
+            left: 0;
             height: 100vh;
         }
 
@@ -784,8 +798,9 @@ dialog {
         }
 
         .wrapper {
-            height: 100vh;
+            max-height: 100vh;
             padding: 10px 0;
+            overflow-y: auto;
 
             @include max-screen($breakpoint-mobile) {
                 width: calc(100% - 60px);
@@ -848,15 +863,16 @@ dialog {
         a {
             display: block;
             text-indent: -30px;
-            padding-bottom: 15px;
+            padding-bottom: 10px;
 
             &::before {
                 content: "";
                 display: inline-block;
-                margin-right: 6px;
-                width: 19px;
-                height: 21px;
+                // margin-right: 6px;
+                width: 21px;
+                height: 25px;
                 margin-right: 10px;
+                margin-top: 1px;
                 background-image: url(../images/icon/icon_rhombus.svg);
                 background-position: center;
                 background-size: 19px 21px;
@@ -1003,6 +1019,11 @@ input[type="file"] {
         text-align: center;
         transition: all 250ms ease;
         border: 2px solid $miby-thin-gray;
+
+        @include max-screen($breakpoint-tablet) {
+            width: 18px;
+            height: 18px;
+        }
     }
 }
 
@@ -1056,6 +1077,8 @@ input[type="file"] {
         border-bottom: 2px dashed $miby-border-black;
         padding-bottom: 15px;
         margin-bottom: 15px;
+        min-width: 640px;
+        max-width: auto;
 
         &:last-of-type {
             margin-bottom: 40px;
@@ -1122,8 +1145,9 @@ input[type="file"] {
                 display: block;
                 margin-bottom: 5px;
                 font-size: 12px;
-                font-weight: 500;
+                font-weight: 400;
                 text-align: justify;
+                color: #333;
                 text-decoration-line: underline;
                 text-decoration-color: $miby-black;
             }

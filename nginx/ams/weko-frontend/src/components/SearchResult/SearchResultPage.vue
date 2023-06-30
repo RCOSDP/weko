@@ -28,7 +28,7 @@ const displayValue = ref(displayAmount ?? 20)
 const typePublic = ref([])
 const typeDownload = ref([])
 const category = ref([])
-const sort = ref(sortConditions ?? [])
+const sort = ref(sortConditions ?? '-createdate')
 
 const sortCheckBoxes = () => {
   if(!searchConditions?.value.checkbox){
@@ -89,7 +89,7 @@ const loadSearchData = async () => {
     size: displayValue.value,
     page: currentPage.value,
     sort: sortToUse.value,
-    title: searchConditions?.value?.text ? searchConditions?.value?.text[3] : '',
+    // title: searchConditions?.value?.text ? searchConditions?.value?.text[3] : '',
     // creator: searchConditions?.value.text[7],
     // category: searchConditions?.value.text[8],
     // repository: searchConditions?.value.text[9],
@@ -106,17 +106,19 @@ watch([displayValue, sort, tableSortValue], () => {
 
 const openFilterModal = () => {
     document.getElementById('modalFilter').showModal();
+    document.body.classList.add("overflow-hidden");
 }
 
 const openDisplayItem = () => {
     document.getElementById('modalDisplayItem').showModal();
+    document.body.classList.add("overflow-hidden");
 }
 </script>
 
 <template>
     <div>
         <main class="max-w-[1024px] mx-auto px-2.5">
-            <div class="breadcrumb flex w-full">
+            <div class="breadcrumb flex flex-wrap w-full">
             <a class="text-miby-link-blue" href="/"><span class="font-medium underline">TOP</span></a>
             <p class="text-miby-dark-gray">検索結果リスト</p>
             </div>
@@ -152,13 +154,13 @@ const openDisplayItem = () => {
                     >
                     </div>
                     <a class="pl-1.5 md:pl-0 icons icon-download after" href=""
-                    ><span class="underline text-sm text-miby-link-blue font-medium pr-1"
+                    ><span class="underline text-sm text-miby-link-blue pr-1"
                         >検索結果全てをDLする</span
                     ></a
                     >
                 </div>
                 <div class="max-w-[500px] ml-auto mt-4 mb-8 text-center">
-                    <div class="w-full flex gap-5 justify-end">
+                    <div class="w-full flex flex-wrap gap-5 justify-end">
                     <p class="icons-type icon-published">
                         <span>一般公開</span>
                     </p>

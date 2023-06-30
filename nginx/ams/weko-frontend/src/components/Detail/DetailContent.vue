@@ -5,6 +5,7 @@ import ImageSample1 from "/images/img-sample01.png";
 import ImageSample2 from "/images/img-sample02.png";
 import ImageSample3 from "/images/img-sample03.png";
 import ImageSample4 from "/images/img-sample04.png";
+import BtnGotoTop from "/images/btn/btn-gototop.svg";
 import Pager from "../Pager.vue";
 import {computed} from 'vue'
 
@@ -16,6 +17,11 @@ const props = defineProps({
 
 const keyWords = computed(() => {
   return props.item.item_1685585100256.attribute_value_mlt[0].subitem_1685583657917.subitem_1685583664589.split(',')
+})
+
+const uptotop = computed(() => {
+  window.scrollTo({top: 0, behavior: 'smooth'})
+  return false;
 })
 
 
@@ -34,33 +40,32 @@ const keyWords = computed(() => {
         <div class="detail__head-image"><img :src="ImageSample" alt="" /></div>
         <div class="detail__head-text">
           <div class="flex flex-wrap mb-1.5 gap-2 md:gap-5 items-center">
-            <p class="icons-type icon-group"><span>グループ内公開</span></p>
+            <p class="icons-type icon-group"><span>{{ item.item_1685585170888.attribute_value_mlt[0].subitem_1685583776261.subitem_1685583784534 }}</span></p>
             <p class="date-upload icons icon-publish">{{ item.item_1685585050910.attribute_value_mlt[0].subitem_1685583626611.subitem_1685583628794 }}</p>
             <p class="date-update icons icon-update">{{ item.item_1685585050910.attribute_value_mlt[0].subitem_1685583626611.subitem_1685583633388 }}</p>
           </div>
           <a class="data-title text-left" href=""
             >{{ item.title.join(',') }}</a
           >
-          <div class="flex mb-1">
+          <div class="text-left sm:flex mb-1">
             <p class="data-note">分野：<span class="">{{ item.item_1685585121449.attribute_value_mlt[0].subitem_1685583691205 }}</span></p>
             <p class="data-note author">
-              作成者：<span v-for="person in item.item_1685585204873.attribute_value_mlt[0].subitem_1685584180890" class="">
-                <span><a class="underline" href="">{{ person }}</a></span>
-              </span>
+              作成者：<span><a class="underline" href="">{{ item.item_1685585204873.attribute_value_mlt[0].subitem_1685584180890.subitem_1685584186042 }}</a></span>
+                <span><a class="underline" href="">{{ item.item_1685585204873.attribute_value_mlt[0].subitem_1685584180890.subitem_1685584185026 }}</a></span>
             </p>
           </div>
-          <div class="flex flex-wrap">
+          <div class="text-left sm:flex flex-wrap">
             <p class="data-note">ヒト/動物/その他：<span class="font-medium">{{ item.item_1685585235282.attribute_value_mlt[0].subitem_1685584345785 }}</span></p>
-            <p class="data-note access-type">アクセス権：<span v-for="accessType in item.item_1685585170888.attribute_value_mlt[0].subitem_1685583776261" class="font-medium">{{ accessType }}</span></p>
+            <p class="data-note access-type">アクセス権：<span>{{ item.item_1685585170888.attribute_value_mlt[0].subitem_1685583776261.subitem_1685583784534 }}</span></p>
             <p class="data-note">
               ファイル：<span class="font-medium"
-                ><a class="underline text-miby-link-blue" href="/filelist">あり（250）</a></span
+                ><a class="underline text-miby-link-blue" href="/filelist">{{+item.item_1685585153905.attribute_value_mlt[0].subitem_1685583723733.subitem_1685583728790 < 1 ? 'なし' : `あり（${item.item_1685585153905.attribute_value_mlt[0].subitem_1685583723733.subitem_1685583728790}）`}}</a></span
               >
             </p>
           </div>
           <div class="data-tags">
-            <span class="tag-link key-word" v-for="keyWord in keyWords">
-              <a><span>{{ keyWord }}</span></a>
+            <span class="tag-link" v-for="keyWord in keyWords">
+              <a><span class="hover:cursor-pointer">{{ keyWord }}</span></a>
             </span>
           </div>
         </div>
@@ -166,6 +171,7 @@ const keyWords = computed(() => {
       <div class="pt-2.5 pb-28">
       <Pager :itemId="item._deposit.id" />
       </div>
+      <button id="page-top" class="hidden lg:block w-10 h-10 absolute right-5 bottom-[60px]" @click="uptotop"><img :src="BtnGotoTop" alt=""></button>
     </div>
   </div>
 </template>
@@ -184,13 +190,4 @@ const keyWords = computed(() => {
   content: "";
 }
 
-.key-word span {
-  display: inline-block;
-}
-.key-word span::before {
-  content: "/";
-}
-.key-word span:first-child::before{
-  content: "";
-}
 </style>

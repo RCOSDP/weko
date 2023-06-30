@@ -1,6 +1,7 @@
 <script setup>
 import LicensePD from "/images/license-sample01.png";
 import LicenseCC from "/images/license-sample02.png";
+import Download from "/images/icon/icon_dl-rank.svg"
 </script>
 
 <template>
@@ -382,6 +383,11 @@ import LicenseCC from "/images/license-sample02.png";
           </tr>
         </tbody>
       </table>
+    </div>
+    <div class="flex justify-center mt-2 mb-4">
+      <button class="flex gap-1 bg-miby-link-blue text-white px-4 py-2 rounded">
+        <img :src="Download" alt="">ダウンロード
+      </button>
     </div>
     <div class="max-w-[300px] mx-auto mt-3.5 mb-16">
       <a class="page-numbers" href="?paged=1">1</a>

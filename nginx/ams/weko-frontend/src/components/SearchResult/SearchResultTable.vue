@@ -55,12 +55,12 @@ watch(sortItem, () => {
     <div class="w-full overflow-x-auto">
       <table class="search-lists w-[1274px] border-collapse border border-slate-500 table-auto">
         <thead>
-          <tr>
+          <tr class="bg-[#F9F9F9]">
             <th class="w-[44px]">選択</th>
             <th class="w-[110px]"><div class="flex justify-center">No <div class="flex flex-col"><span @click="toggleSort('controlnumber')" class="-my-1.5 hover:cursor-pointer">&#x25B4;</span><span @click="toggleSort('-controlnumber')" class="-my-1.5 hover:cursor-pointer">&#x25BE;</span></div></div></th>
             <th class="w-[100px]"><div class="flex justify-center">公開区分 <div class="flex flex-col"><span class="-my-1.5 hover:cursor-pointer">&#x25B4;</span><span class="-my-1.5 hover:cursor-pointer">&#x25BE;</span></div></div></th>
-            <th class="w-[200px]"><div class="flex justify-center">タイトル <div class="flex flex-col"><span @click="toggleSort('wtl')" class="-my-1.5 hover:cursor-pointer">&#x25B4;</span><span @click="toggleSort('-wtl')" class="-my-1.5 hover:cursor-pointer">&#x25BE;</span></div></div></th>
-            <th class="w-[120px]"><div class="flex justify-center">分野 <div class="flex flex-col"><span class="-my-1.5 hover:cursor-pointer">&#x25B4;</span><span class="-my-1.5 hover:cursor-pointer">&#x25BE;</span></div></div></th>
+            <th class="w-[250px]"><div class="flex justify-center">タイトル <div class="flex flex-col"><span @click="toggleSort('wtl')" class="-my-1.5 hover:cursor-pointer">&#x25B4;</span><span @click="toggleSort('-wtl')" class="-my-1.5 hover:cursor-pointer">&#x25BE;</span></div></div></th>
+            <th class="w-[140px]"><div class="flex justify-center">分野 <div class="flex flex-col"><span class="-my-1.5 hover:cursor-pointer">&#x25B4;</span><span class="-my-1.5 hover:cursor-pointer">&#x25BE;</span></div></div></th>
             <th class="w-[120px]"><div class="flex justify-center">作成者 <div class="flex flex-col"><span @click="toggleSort('creator')" class="-my-1.5 hover:cursor-pointer">&#x25B4;</span><span @click="toggleSort('-creator')" class="-my-1.5 hover:cursor-pointer">&#x25BE;</span></div></div></th>
             <th class="w-[120px]"><div class="flex justify-center">掲載日 <div class="flex flex-col"><span @click="toggleSort('-createdate')" class="-my-1.5 hover:cursor-pointer">&#x25B4;</span><span @click="toggleSort('createdate')" class="-my-1.5 hover:cursor-pointer">&#x25BE;</span></div></div></th>
             <th class="w-[120px]"><div class="flex justify-center">更新日 <div class="flex flex-col"><span class="-my-1.5 hover:cursor-pointer">&#x25B4;</span><span class="-my-1.5 hover:cursor-pointer">&#x25BE;</span></div></div></th>

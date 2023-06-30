@@ -14,47 +14,59 @@ const props = defineProps({
 const displayAmount = JSON.parse(sessionStorage.getItem('display-value'))
 const sortConditions = JSON.parse(sessionStorage.getItem('sort'))
 const displayValue = ref(displayAmount ?? 20)
-const sort = ref(sortConditions ?? [])
+const sort = ref(sortConditions ?? '-createdate')
 
 const emit = defineEmits(['display-value', 'sort', 'open-filter', 'open-display'])
+
+const formatDate = (date) => {
+  let objectDate = new Date(date);
+
+  let day = objectDate.getDate(date);
+
+  let month = objectDate.getMonth(date) + 1;
+  
+  let year = objectDate.getFullYear(date);
+
+  return `${year}/${month}/${day}`;
+}
 </script>
 
 <template>
     <div>
         <div class="w-full bg-miby-searchtags-blue p-5">
           <div class="mb-2.5 flex flex-wrap">
-            <p class="text-sm font-medium text-miby-dark-gray">
-              [公開区分]<span class="ml-px mr-2 text-miby-black">{{ typePublic?.join(', ') ?? null }}</span>
+            <p class="text-sm text-miby-dark-gray">
+              [公開区分]<span class="ml-px mr-2 text-miby-black">{{ typePublic?.length ? typePublic?.join(', ') : '指定なし' }}</span>
             </p>
-            <p class="text-sm font-medium text-miby-dark-gray">
-              [ダウンロード区分]<span class="ml-px mr-2 text-miby-black">{{ typeDownload?.join(', ') ?? null }}</span>
+            <p class="text-sm text-miby-dark-gray">
+              [ダウンロード区分]<span class="ml-px mr-2 text-miby-black">{{ typeDownload?.length ? typeDownload?.join(', ') : '指定なし' }}</span>
             </p>
-            <p class="text-sm font-medium text-miby-dark-gray">
+            <p class="text-sm text-miby-dark-gray">
               [タイトル]<span class="ml-px mr-2 text-miby-black"
-                >{{searchConditions?.text ? searchConditions?.text[3] : null}}</span
+                >{{(searchConditions?.text && searchConditions?.text[3] != '') ? searchConditions?.text[3] : '指定なし'}}</span
               >
             </p>
-            <p class="text-sm font-medium text-miby-dark-gray">
-              [分野]<span class="ml-px mr-2 text-miby-black">{{ category?.join(', ') ?? null }}</span>
+            <p class="text-sm text-miby-dark-gray">
+              [分野]<span class="ml-px mr-2 text-miby-black">{{ category?.length ? category?.join(', ') : '指定なし' }}</span>
             </p>
-            <p class="text-sm font-medium text-miby-dark-gray">
-              [掲載日]<span class="ml-px mr-2 text-miby-black">{{ searchConditions?.publishedStart }}-{{ searchConditions?.publishedEnd }}</span>
+            <p class="text-sm text-miby-dark-gray">
+              [掲載日]<span class="ml-px mr-2 text-miby-black">{{ searchConditions?.date ? formatDate(searchConditions?.date[0]) : '指定なし' }}～{{ searchConditions?.date ? formatDate(searchConditions?.date[1]) : '指定なし'}}</span>
             </p>
-            <p class="text-sm font-medium text-miby-dark-gray">
-              [更新日]<span class="ml-px mr-2 text-miby-black">{{ searchConditions?.updatedStart }}-{{ searchConditions?.updatedEnd }}</span>
+            <p class="text-sm text-miby-dark-gray">
+              [更新日]<span class="ml-px mr-2 text-miby-black">{{ searchConditions?.date ? formatDate(searchConditions?.date[0]) : '指定なし'}}～{{ searchConditions?.date ? formatDate(searchConditions?.date[1]) : '指定なし'}}</span>
             </p>
-            <p class="text-sm font-medium text-miby-dark-gray">
+            <p class="text-sm text-miby-dark-gray">
               [作成者]<span class="ml-px mr-2 text-miby-black"
-                >{{ searchConditions?.text ? searchConditions?.text[7] : null }}</span
+                >{{ (searchConditions?.text && searchConditions?.text[7] != '') ? searchConditions?.text[7] : '指定なし' }}</span
               >
             </p>
-            <p class="text-sm font-medium text-miby-dark-gray">
-              [ヒト/動物/その他]<span class="ml-px mr-2 text-miby-black">{{ searchConditions?.text ? searchConditions?.text[8] : null }}</span>
+            <p class="text-sm text-miby-dark-gray">
+              [ヒト/動物/その他]<span class="ml-px mr-2 text-miby-black">{{ (searchConditions?.text && searchConditions?.text[8] != '') ? searchConditions?.text[8] : '指定なし' }}</span>
             </p>
-            <p class="text-sm font-medium text-miby-dark-gray">
-              [リポジトリ]<span class="ml-px mr-2 text-miby-black">{{ searchConditions?.text ? searchConditions?.text[9] : null }}</span>
+            <p class="text-sm text-miby-dark-gray">
+              [リポジトリ]<span class="ml-px mr-2 text-miby-black">{{ (searchConditions?.text && searchConditions?.text[9] != '') ? searchConditions?.text[9] : '指定なし' }}</span>
             </p>
-            <p class="text-sm font-medium text-miby-dark-gray">
+            <p class="text-sm text-miby-dark-gray">
               [表示件数]<span class="ml-px mr-2 text-miby-black">{{ displayValue }}</span>
             </p>
           </div>
@@ -65,7 +77,7 @@ const emit = defineEmits(['display-value', 'sort', 'open-filter', 'open-display'
                 <select
                   @change="emit('display-value', displayValue)"
                   v-model="displayValue"
-                  class="cursor-pointer bg-white border border-gray-300 text-miby-black py-0 text-[10px] pr-1 rounded block"
+                  class="cursor-pointer bg-white border text-sm border-gray-300 rounded text-miby-black block"
                 >
                   <option value="20" selected>20</option>
                   <option value="40">40</option>
@@ -88,7 +100,7 @@ const emit = defineEmits(['display-value', 'sort', 'open-filter', 'open-display'
               <div v-if="page != 'table'" class="text-miby-black text-sm font-medium mr-10">
                 <span>並び順：</span>
                 <!-- <label class="icons icon-order" for="sort-dropdown"></label> -->
-                <select id="sort-dropdown" v-model="sort" @change="emit('sort', sort)">
+                <select id="sort-dropdown" class="border text-sm border-gray-300 rounded" v-model="sort" @change="emit('sort', sort)">
                   <option selected value=""></option>
                   <option value="-createdate">最新順</option>
                   <option value="wtl">タイトル</option>
@@ -100,7 +112,7 @@ const emit = defineEmits(['display-value', 'sort', 'open-filter', 'open-display'
               <button @click="emit('open-filter')" class="btn-modal block cursor-pointer" data-target="Filter">
                 <img :src="ButtonFilter" alt="フィルター" />
               </button>
-              <button @click="emit('open-display')" v-if="page == 'table' || page == 'block'" class="btn-modal block cursor-pointer" data-target="DisplayItem">
+              <button @click="emit('open-display')" v-if="page == 'table'" class="btn-modal block cursor-pointer" data-target="DisplayItem">
                 <img :src="ButtonDisplayItem" alt="項目表示" />
               </button>
             </div>
