@@ -158,16 +158,16 @@ class PreprocessorMixin(PreprocessorMixinInterface):
             mapping_dict = RECORDS_REST_DEFAULT_MAPPING_DICT
             # Get mapping of this record.
             mapping = Mapping.get_record(item_type_id)
-            if not mapping:
+            if not mapping or not isinstance(mapping, dict):
                 return mapping_dict
             # Update default mapping key and lang by mapping of this record.
             identifier = 'system_identifier'
             for k, v in mapping.items():
-                if not type(v.get('jpcoar_mapping')) is dict:
+                if not v or not isinstance(v.get('jpcoar_mapping'), dict):
                     continue
                 for k1, v1 in v.get('jpcoar_mapping').items():
                     for k2, v2 in mapping_dict.items():
-                        if k1 != k2.split(':')[1] or not type(v1) is dict:
+                        if k1 != k2.split(':')[1] or not isinstance(v1, dict):
                             continue
                         key = identifier if identifier in k else k
                         key_arr = ['metadata', key, 'attribute_value_mlt', 0]
@@ -223,9 +223,9 @@ class PreprocessorMixin(PreprocessorMixinInterface):
         links_factory = links_factory or (lambda x, **k: dict())
         record = dict(
             pid=pid,
-            metadata=record_hit['_source'],
+            metadata=record_hit.get('_source', {}),
             links=links_factory(pid, record_hit=record_hit, **kwargs),
-            revision=record_hit['_version'],
+            revision=record_hit.get('_version', 0),
             created=None,
             updated=None,
         )
