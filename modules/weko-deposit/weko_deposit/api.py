@@ -53,6 +53,7 @@ from invenio_records.models import RecordMetadata
 from invenio_records_files.api import FileObject, Record
 from invenio_records_files.models import RecordsBuckets
 from invenio_records_rest.errors import PIDResolveRESTError
+from invenio_files_rest.errors import StorageError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
@@ -1150,15 +1151,21 @@ class WekoDeposit(Deposit):
                                 if file.obj.file.size <= file_size_max and \
                                         file.obj.mimetype in mimetypes:
                                     ## invenio_files_rest.errors.StorageError
-                                    file_content = file.obj.file.read_file(lst)
+                                    file_content = ""
+                                    try:
+                                        file_content = file.obj.file.read_file(lst)
+                                    except StorageError as se:
+                                        import traceback
+                                        current_app.logger.error(se)
+                                        current_app.logger.error(traceback.format_exc())
                                 content.update({"file": file_content})
                                 contents.append(content)
-
-                            except Exception as e:
+                            except Exception as e2:
                                 import traceback
+                                current_app.logger.error(e2)
                                 current_app.logger.error(
                                     traceback.format_exc())
-                                abort(500, '{}'.format(str(e)))
+                                abort(500, '{}'.format(str(e2)))
                             break
             self.jrc.update({'content': contents})
 
