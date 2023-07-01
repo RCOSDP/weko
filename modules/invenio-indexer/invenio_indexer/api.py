@@ -13,6 +13,7 @@ from __future__ import absolute_import, print_function
 import copy
 import traceback
 from contextlib import contextmanager
+import click
 
 import pytz
 from celery import current_app as current_celery_app
@@ -185,6 +186,7 @@ class RecordIndexer(object):
         """
         success = 0
         fail = 0
+        count = (success,fail)
         while True:
             with current_celery_app.pool.acquire(block=True) as conn:
                 # check 
@@ -202,7 +204,7 @@ class RecordIndexer(object):
                 
                 req_timeout = current_app.config['INDEXER_BULK_REQUEST_TIMEOUT']
                 es_bulk_kwargs = es_bulk_kwargs or {}
-                error_ids = []
+                
                 
                 with consumer:
                     try:
@@ -221,29 +223,30 @@ class RecordIndexer(object):
                         chan = conn.channel()
                         name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
                         current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, af_queues_cnt, consumers))
-                        
-                        
+                        success = success + (b4_queues_cnt-af_queues_cnt-len(be.errors))
+                        error_ids = []
                         for error in be.errors:
                             error_ids.append(error['index']['_id'])
-                        _success,_fail = bulk(
-                            self.client,
-                            self._actionsiter2(error_ids),
-                            stats_only=True,
-                            request_timeout=req_timeout,
-                            # raise_on_error=True,
-                            # raise_on_exception=True,
-                            **es_bulk_kwargs
-                        )
-                        success = success + (b4_queues_cnt-(af_queues_cnt+_fail))
-                        # success = success + _success
-                        fail = fail + _fail
-                    except Exception as e:
-                        current_app.logger.error("{}".format(e))
-                        current_app.logger.error(traceback.format_exc())
-                        # consumer.close()
+                        try:
+                            _success,_fail = bulk(
+                                self.client,
+                                self._actionsiter2(error_ids),
+                                stats_only=True,
+                                request_timeout=req_timeout,
+                                #raise_on_error=False,
+                                # raise_on_exception=True,
+                                **es_bulk_kwargs
+                            )
+                            success = success + _success
+                            fail = fail + _fail
+                        except BulkIndexError as be2:
+                            success = success + (len(error_ids)-len(be2.errors))
+                            fail = fail + len(be2.errors)
+                            for error in be2.errors:
+                                click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')   
+                
                 count = (success,fail)
-                current_app.logger.debug("count(success, error): {}".format(count))
-                     
+                click.secho("count(success, error): {}".format(count),fg='green')              
         return count
 
     @contextmanager
@@ -350,7 +353,7 @@ class RecordIndexer(object):
             if 'content' in body:
                 for f in body['content']:
                     f['file'] = ""
-                    
+        
         action = {
             '_op_type': 'index',
             '_index': index,
