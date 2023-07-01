@@ -25,6 +25,7 @@ from kombu import Producer as KombuProducer
 from kombu.compat import Consumer
 from sqlalchemy.orm.exc import NoResultFound
 from elasticsearch.helpers import BulkIndexError
+from elasticsearch.exceptions import ConnectionTimeout
 
 from .proxies import current_record_to_index
 from .signals import before_record_index
@@ -186,7 +187,9 @@ class RecordIndexer(object):
         """
         success = 0
         fail = 0
+        self.count = 0
         count = (success,fail)
+        req_timeout = current_app.config['INDEXER_BULK_REQUEST_TIMEOUT']
         while True:
             with current_celery_app.pool.acquire(block=True) as conn:
                 # check 
@@ -202,7 +205,7 @@ class RecordIndexer(object):
                     routing_key=self.mq_routing_key,
                 )
                 
-                req_timeout = current_app.config['INDEXER_BULK_REQUEST_TIMEOUT']
+                
                 es_bulk_kwargs = es_bulk_kwargs or {}
                 
                 
@@ -244,9 +247,20 @@ class RecordIndexer(object):
                             fail = fail + len(be2.errors)
                             for error in be2.errors:
                                 click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')   
+                    except ConnectionTimeout as ce:
+                        click.secho("Error: {}".format(ce),fg='red')
+                        click.secho("INDEXER_BULK_REQUEST_TIMEOUT: {} sec".format(req_timeout),fg='red')
+                        click.secho("Please change value of INDEXER_BULK_REQUEST_TIMEOUT and retry it.",fg='red')
+                        click.secho("processing: {}".format(self.count),fg='red')
+                        click.secho("latest processing id: {}".format(self.latest_item_id),fg='red')
+                        break
+                    except Exception as e:
+                        current_app.logger.error(e)
+                        current_app.logger.error(traceback.format_exc())
+                        break
                 
-                count = (success,fail)
-                click.secho("count(success, error): {}".format(count),fg='green')              
+        count = (success,fail)
+        click.secho("count(success, error): {}".format(count),fg='green')              
         return count
 
     @contextmanager
@@ -345,6 +359,8 @@ class RecordIndexer(object):
         """
         record = Record.get_record(id)
         current_app.logger.debug("indexing id:{}".format(id))
+        self.count = self.count + 1
+        self.latest_item_id = id
         index, doc_type = self.record_to_index(record)
 
         arguments = {}
