@@ -3284,7 +3284,8 @@ def check_item_is_being_edit(
             in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]:
         current_app.logger.debug("post_workflow: {0} status: {1}".format(
             post_workflow, post_workflow.action_status))
-        return True
+        #return True
+        return post_workflow.activity_id
 
     draft_pid = PersistentIdentifier.query.filter_by(
         pid_type='recid',
@@ -3298,7 +3299,8 @@ def check_item_is_being_edit(
                                              ASP.ACTION_DOING]:
             current_app.logger.debug("draft_workflow: {0} status: {1}".format(
                 draft_pid.object_uuid, draft_workflow.action_status))
-            return True
+            #return True
+            return draft_workflow.activity_id
 
         pv = PIDVersioning(child=recid)
         latest_pid = PIDVersioning(parent=pv.parent,child=recid).get_children(
@@ -3312,8 +3314,10 @@ def check_item_is_being_edit(
                                               ASP.ACTION_DOING]:
             current_app.logger.debug("latest_workflow: {0} status: {1}".format(
                 latest_pid.object_uuid, latest_workflow.action_status))
-            return True
-    return False
+            #return True
+            return latest_workflow.activity_id
+    #return False
+    return ""
 
 
 def check_item_is_deleted(recid):

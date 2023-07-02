@@ -706,3 +706,6 @@ WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI = "import_unuse_files_uri_{}"
 
 WEKO_SEARCH_UI_BULK_EXPORT_RETRY_INTERVAL = 1
 """ retry interval(sec) """
+
+CELERY_TASK_TRACK_STARTED=True
+""" If True the task will report its status as ‘started’ when the task is executed by a worker. """

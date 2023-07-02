@@ -1111,6 +1111,28 @@ def test_selected_value_by_language(app, meta):
     app.config['WEKO_RECORDS_UI_LANG_DISP_FLG'] = True
     res = selected_value_by_language(['en'], ['Creator'], _lang_id, _val_id, 'en', meta[0])
     assert res=='Creator'
+    with patch("weko_records.utils.check_info_in_metadata", return_value="en"):
+        res = selected_value_by_language(["ja-Latn"], ['ja-Latn'], _lang_id, _val_id, 'en', meta[0])
+        assert res=='en'
+
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_selected_value_by_language_2 -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_selected_value_by_language_2(app, meta):
+    _lang_id = 'item_1551264308487.subitem_15512556481122'
+    _val_id = 'item_1551264308487.subitem_15512556472252'
+
+    with patch("weko_records.utils.check_info_in_metadata", return_value="en"):
+        res = selected_value_by_language(["en"], ['ja'], _lang_id, _val_id, 'ja', meta[0])
+        assert res=='en'
+
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_selected_value_by_language_3 -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_selected_value_by_language_3(app):
+    _lang_id = 'item_titles.subitem_title_language'
+    _val_id = 'item_titles.subitem_title'
+    meta = {'item_titles': {'attribute_name': 'タイトル', 'attribute_value_mlt': [{'subitem_title': 'title_with_nolang'}, {'subitem_title': 'title_en', 'subitem_title_language': 'en'}]}}
+    res = selected_value_by_language(["en"], ['title_with_nolang','title_en'], _lang_id, _val_id, 'ja', meta)
+    assert res!='title_en'
+    assert res=='title_with_nolang'
+    
 
     with patch("weko_records.utils.check_info_in_metadata", return_value="en"):
         res = selected_value_by_language(["ja-Latn"], ['ja-Latn'], _lang_id, _val_id, 'en', meta[0])
@@ -1199,6 +1221,12 @@ def test_get_value_by_selected_lang(app):
     _source_title4 = {
         'None Language': 'no_lang_test'
     }
+    _source_title5 = {
+        'ja': 'ja_test',
+        'en': 'en_test',
+        'id': 'id_test',
+        'None Language': 'no_lang_test'
+    }
 
     res = get_value_by_selected_lang({}, 'ja')
     assert res==None
@@ -1206,20 +1234,28 @@ def test_get_value_by_selected_lang(app):
     res = get_value_by_selected_lang(_source_title1, 'ja')
     assert res=='ja_test'
     res = get_value_by_selected_lang(_source_title1, 'zh')
-    assert res=='ja_latn_test'
+    assert res=='no_lang_test'
     res = get_value_by_selected_lang(_source_title2, 'zh')
-    assert res=='en_test'
+    assert res=='no_lang_test'
     res = get_value_by_selected_lang(_source_title2, 'ja')
-    assert res=='en_test'
+    assert res=='no_lang_test'
     res = get_value_by_selected_lang(_source_title3, 'en')
-    assert res=='ja_test'
+    assert res=='no_lang_test'
     res = get_value_by_selected_lang(_source_title4, 'th')
     assert res=='no_lang_test'
+    res = get_value_by_selected_lang(_source_title5, 'ja')
+    assert res=='ja_test'
+    res = get_value_by_selected_lang(_source_title5, 'en')
+    assert res=='en_test'
+    res = get_value_by_selected_lang(_source_title5, 'zh')
+    assert res=='en_test'
     app.config['WEKO_RECORDS_UI_LANG_DISP_FLG'] = True
     res = get_value_by_selected_lang(_source_title2, 'ja')
-    assert res=='id_test'
+    assert res=='no_lang_test'
     res = get_value_by_selected_lang(_source_title3, 'en')
-    assert res=='id_test'
+    assert res=='no_lang_test'
+
+    
 
 # def get_show_list_author(solst_dict_array, hide_email_flag, author_key, creates):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_show_list_author -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
