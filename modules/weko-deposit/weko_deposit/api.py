@@ -1156,8 +1156,8 @@ class WekoDeposit(Deposit):
                                         file_content = file.obj.file.read_file(lst)
                                     except StorageError as se:
                                         import traceback
-                                        current_app.logger.error(se)
-                                        current_app.logger.error(traceback.format_exc())
+                                        current_app.logger.critical("StorageError: {}".format(se))
+                                        current_app.logger.critical(traceback.format_exc())
                                 content.update({"file": file_content})
                                 contents.append(content)
                             except Exception as e2:
