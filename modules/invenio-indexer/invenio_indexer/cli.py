@@ -39,17 +39,24 @@ def abort_if_false(ctx, param, value):
 @click.option(
     '--raise-on-error/--skip-errors', default=True,
     help='Controls if Elasticsearch bulk indexing errors raise an exception.')
+@click.option('--chunk-size',type=int,default=500,help='number of docs in one chunk sent to es (default: 500)')
+@click.option('--max-chunk-bytes',type=int,default=104857600,help='the maximum size of the request in bytes (default: 100MB)')
+@click.option('--max-retries',type=int,default=0,help='maximum number of times a document will be retired when 429 is received, set to 0 (default) for no retries on 429')
+@click.option('--initial_backoff',type=int,default=2,help='number of secconds we should wait before the first retry.')
+@click.option('--max-backoff',type=int,default=600,help='maximim number of seconds a retry will wait')
+
 @with_appcontext
 def run(delayed, concurrency, version_type=None, queue=None,
-        raise_on_error=True):
+        raise_on_error=True,chunk_size=500,max_chunk_bytes=104857600,max_retries=0,initial_backoff=2,max_backoff=600):
     """Run bulk record indexing."""
     if delayed:
         celery_kwargs = {
             'kwargs': {
                 'version_type': version_type,
-                'es_bulk_kwargs': {'raise_on_error': raise_on_error},
+                'es_bulk_kwargs': {'raise_on_error': raise_on_error,'chunk_size':chunk_size,'max_chunk_bytes':max_chunk_bytes,'max_retries': max_retries,'initial_backoff': initial_backoff,'max_backoff': max_backoff},
             }
         }
+        
         click.secho(
             'Starting {0} tasks for indexing records...'.format(concurrency),
             fg='green')
@@ -60,7 +67,11 @@ def run(delayed, concurrency, version_type=None, queue=None,
     else:
         click.secho('Indexing records...', fg='green')
         RecordIndexer(version_type=version_type).process_bulk_queue(
-            es_bulk_kwargs={'raise_on_error': raise_on_error})
+            es_bulk_kwargs={'raise_on_error': raise_on_error,
+                            'chunk_size':chunk_size,'max_chunk_bytes':max_chunk_bytes,
+                            'max_retries': max_retries,
+                            'initial_backoff': initial_backoff,
+                            'max_backoff': max_backoff})
 
 
 @index.command()
