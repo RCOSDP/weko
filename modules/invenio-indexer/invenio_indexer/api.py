@@ -209,6 +209,7 @@ class RecordIndexer(object):
                 es_bulk_kwargs = es_bulk_kwargs or {}
                 
                 
+                
                 with consumer:
                     try:
                         _success,_fail  = bulk(
