@@ -117,7 +117,7 @@ def reindex(pid_type, include_delete,skip_exists,size):
         PersistentIdentifier.object_uuid
     )
     _values = (str(x[0]) for x in values)
-    cnt = sum(1 for _ in values)
+    # cnt = sum(1 for _ in list(_values))
     if skip_exists:
         index=current_app.config["SEARCH_INDEX_PREFIX"]+"weko-item-v1.0.0"
         query = {"query": {"bool": {"must":{"exists":{"field":"itemtype"}}}},"_source":["itemtype"],"sort" : [{"_id":"asc"}],"size":size}
@@ -126,7 +126,6 @@ def reindex(pid_type, include_delete,skip_exists,size):
         total = res['hits']['total']
         hits = res['hits']['hits']
         ids = [x["_id"] for x in hits]
-        
         while len(hits) == size:
             last_sort_key = hits[-1]['sort']
             query['search_after'] = last_sort_key
@@ -142,9 +141,9 @@ def reindex(pid_type, include_delete,skip_exists,size):
         _ids = set(ids)
         diff = list(_tmp - _ids) 
         _values = (x for x in diff)
-        cnt = sum(1 for _ in diff)
+        # cnt = sum(1 for _ in diff)
 
-    click.secho('Queueing {} records..'.format(cnt),fg='green')
+    # click.secho('Queueing {} records..'.format(cnt),fg='green')
     RecordIndexer().bulk_index(_values)
     click.secho('Execute "run" command to process the queue!',
                 fg='yellow')
