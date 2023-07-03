@@ -11,6 +11,8 @@
 from __future__ import absolute_import, print_function
 
 import click
+import copy
+import uuid
 from celery.messaging import establish_connection
 from flask import current_app
 from flask.cli import with_appcontext
@@ -71,7 +73,8 @@ def run(delayed, concurrency, version_type=None, queue=None,
         click.secho('Indexing records...', fg='green')
         RecordIndexer(version_type=version_type).process_bulk_queue(
             es_bulk_kwargs={'raise_on_error': raise_on_error,
-                            'chunk_size':chunk_size,'max_chunk_bytes':max_chunk_bytes,
+                            'chunk_size':chunk_size,
+                            'max_chunk_bytes':max_chunk_bytes,
                             'max_retries': max_retries,
                             'initial_backoff': initial_backoff,
                             'max_backoff': max_backoff})
@@ -112,18 +115,37 @@ def reindex(pid_type, include_delete,skip_exists):
     values = query.values(
         PersistentIdentifier.object_uuid
     )
-    values = (x[0] for x in values)
+    _values = (str(x[0]) for x in values)
+    cnt = sum(1 for _ in values)
     if skip_exists:
-        res = current_search_client.search(index=current_app.config["SEARCH_INDEX_PREFIX"]+"weko-item-v1.0.0",body={"query": {"bool": {"must":{"exists":{"field":"control_number"}}}},"_source":["control_number"]})
-        import uuid
-        ids = [uuid.UUID(x["_id"]) for x in res['hits']['hits']]
-        _values = set(values)
-        _ids = set(ids)
-        diff = _ids ^ _values 
-        values = (x for x in diff)
+        index=current_app.config["SEARCH_INDEX_PREFIX"]+"weko-item-v1.0.0"
+        size = 100
+        query = {"query": {"bool": {"must":{"exists":{"field":"itemtype"}}}},"_source":["itemtype"],"sort" : [{"_id":"asc"}],"size":size}
+        res = current_search_client.search(index=index,
+                                           body=query)
+        total = res['hits']['total']
+        hits = res['hits']['hits']
+        ids = [x["_id"] for x in hits]
         
-    click.secho('Queueing {} records..'.format(sum(1 for _ in values)),fg='green')
-    RecordIndexer().bulk_index(values)
+        while len(hits) == size:
+            last_sort_key = hits[-1]['sort']
+            query['search_after'] = last_sort_key
+            _res = current_search_client.search(
+                index=index,
+                body=query
+            )
+            hits = _res['hits']['hits']
+            _ids = [x["_id"] for x in hits]
+            ids.extend(_ids)
+        
+        _tmp = set(_values)
+        _ids = set(ids)
+        diff = list(_ids ^ _tmp) 
+        _values = (x for x in diff)
+        cnt = sum(1 for _ in diff)
+
+    click.secho('Queueing {} records..'.format(cnt),fg='green')
+    RecordIndexer().bulk_index(_values)
     click.secho('Execute "run" command to process the queue!',
                 fg='yellow')
 
