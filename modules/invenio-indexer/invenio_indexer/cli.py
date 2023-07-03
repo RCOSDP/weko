@@ -140,7 +140,7 @@ def reindex(pid_type, include_delete,skip_exists,size):
         
         _tmp = set(_values)
         _ids = set(ids)
-        diff = list(_ids ^ _tmp) 
+        diff = list(_tmp - _ids) 
         _values = (x for x in diff)
         cnt = sum(1 for _ in diff)
 
