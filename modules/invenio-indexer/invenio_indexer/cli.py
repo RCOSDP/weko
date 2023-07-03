@@ -48,7 +48,6 @@ def abort_if_false(ctx, param, value):
 @click.option('--max-retries',type=int,default=0,help='maximum number of times a document will be retired when 429 is received, set to 0 (default) for no retries on 429')
 @click.option('--initial_backoff',type=int,default=2,help='number of secconds we should wait before the first retry.')
 @click.option('--max-backoff',type=int,default=600,help='maximim number of seconds a retry will wait')
-
 @with_appcontext
 def run(delayed, concurrency, version_type=None, queue=None,
         raise_on_error=True,chunk_size=500,max_chunk_bytes=104857600,max_retries=0,initial_backoff=2,max_backoff=600):
