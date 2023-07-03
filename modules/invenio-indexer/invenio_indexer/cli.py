@@ -87,8 +87,9 @@ def run(delayed, concurrency, version_type=None, queue=None,
 @click.option('-t', '--pid-type', multiple=True, required=True)
 @click.option('--include-delete', is_flag=True, default=False)
 @click.option('--skip-exists', is_flag=True, default=False)
+@click.option('--size',type=int,default=6000)
 @with_appcontext
-def reindex(pid_type, include_delete,skip_exists):
+def reindex(pid_type, include_delete,skip_exists,size):
     """Reindex all records.
 
     :param pid_type: Pid type.
@@ -119,7 +120,6 @@ def reindex(pid_type, include_delete,skip_exists):
     cnt = sum(1 for _ in values)
     if skip_exists:
         index=current_app.config["SEARCH_INDEX_PREFIX"]+"weko-item-v1.0.0"
-        size = 100
         query = {"query": {"bool": {"must":{"exists":{"field":"itemtype"}}}},"_source":["itemtype"],"sort" : [{"_id":"asc"}],"size":size}
         res = current_search_client.search(index=index,
                                            body=query)
