@@ -346,7 +346,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             publisher_item_id = value_key_list[0]
             prop_hidden = meta_options.get(publisher_item_id, {}).get('option', {}).get('hidden', False)
             for h in hide_list:
-                if publisher_item_id in h and value_key_list[-1] in h:
+                if h.startswith(publisher_item_id) and h.endswith(value_key_list[-1]):
                     prop_hidden = True
             if prop_hidden:
                 continue
@@ -387,7 +387,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             keyword_item_id = value_key_list[0]
             prop_hidden = meta_options.get(keyword_item_id, {}).get('option', {}).get('hidden', False)
             for h in hide_list:
-                if keyword_item_id in h and value_key_list[-1] in h:
+                if h.startswith(keyword_item_id) and h.endswith(value_key_list[-1]):
                     prop_hidden = True
             if prop_hidden:
                 continue
@@ -421,11 +421,11 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             _creator_item_id = value_key_list[0]
             prop_hidden = meta_options.get(_creator_item_id, {}).get('option', {}).get('hidden', False)
             for h in hide_list:
-                if _creator_item_id in h and 'creatorMails' in h:
+                if h.startswith(_creator_item_id) and 'creatorMails' in h:
                     hide_email = True
-                elif _creator_item_id in h and 'creatorNames' in h:
+                elif h.startswith(_creator_item_id) and h.endswith('creatorName'):
                     hide_name = True
-                elif _creator_item_id in h and 'creatorAffiliations' in h:
+                elif h.startswith(_creator_item_id) and 'creatorAffiliations' in h and h.endswith('affiliationName'):
                     hide_affiliation = True
             if prop_hidden:
                 continue

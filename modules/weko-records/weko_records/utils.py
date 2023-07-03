@@ -1777,7 +1777,7 @@ def selected_value_by_language(
         val_sub_key = val_key.split(".")[-1]
         prop_hidden = meta_option.get(val_parent_key, {}).get('option', {}).get('hidden', False)
         for h in hide_list:
-            if val_parent_key in h and val_sub_key in h:
+            if h.startswith(val_parent_key) and h.endswith(val_sub_key):
                 prop_hidden = True
         for lang_key in lang_key_list:
             if val_parent_key == lang_key.split(".")[0]:

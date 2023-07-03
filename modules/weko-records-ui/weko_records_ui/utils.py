@@ -545,7 +545,7 @@ def hide_by_email(item_metadata, force_flag=False):
                 if _value is not None:
                     for key in subitem_keys:
                         for h in hide_list:
-                            if item in h and key in h:
+                            if h.startswith(item) and h.endswith(key):
                                 prop_hidden = True
                         if key in _value.keys() and (force_flag or not show_email_flag or prop_hidden):
                             del _item['attribute_value_mlt'][_idx][key]

@@ -1706,7 +1706,7 @@ def handle_item_title(list_record):
                 if val_parent_key == lang_key.split(".")[0]:
                     prop_hidden = meta_option.get(val_parent_key, {}).get('option', {}).get('hidden', False)
                     for h in hide_list:
-                        if val_parent_key in h and val_sub_key in h:
+                        if h.startswith(val_parent_key) and h.endswith(val_sub_key):
                             prop_hidden = True
                     if (
                         title_lang_data is not None

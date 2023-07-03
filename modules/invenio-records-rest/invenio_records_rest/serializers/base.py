@@ -172,11 +172,11 @@ class PreprocessorMixin(PreprocessorMixinInterface):
                 for k1, v1 in v.get('jpcoar_mapping').items():
                     skip_flag = False
                     for h in hide_list:
-                        if k in h and \
+                        if h.startswith(k) and \
                                 (('@value' in v1.keys() and 
-                                  v1.get('@value').split('.')[-1] in h) or \
+                                  h.endswith(v1.get('@value').split('.')[-1])) or \
                                  ('creatorName' in v1.keys() and 
-                                  v1.get('creatorName', {}).get('@value').split('.')[-1] in h)):
+                                  h.endswith(v1.get('creatorName', {}).get('@value').split('.')[-1]))):
                             skip_flag = True
                     if skip_flag:
                         continue

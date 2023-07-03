@@ -732,7 +732,7 @@ def find_rss_value(data, keyword):
                     desc_dat = source.get('_item_metadata').get(typ_key_list[0])
                     if desc_dat and desc_dat.get('attribute_value_mlt') and not prop_hidden:
                         for h in hide_list:
-                            if val_key_list[0] in h and val_key_list[-1] in h:
+                            if h.startswith(val_key_list[0]) and h.endswith(val_key_list[-1]):
                                 skip_flag = True
                                 break
                         if not skip_flag:
