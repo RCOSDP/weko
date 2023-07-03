@@ -16,6 +16,7 @@ from flask import current_app
 from flask.cli import with_appcontext
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
+from invenio_search import current_search_client
 from invenio_search.cli import index
 from sqlalchemy.dialects import postgresql
 
@@ -83,8 +84,9 @@ def run(delayed, concurrency, version_type=None, queue=None,
               prompt='Do you really want to reindex all records?')
 @click.option('-t', '--pid-type', multiple=True, required=True)
 @click.option('--include-delete', is_flag=True, default=False)
+@click.option('--skip-exists', is_flag=True, default=False)
 @with_appcontext
-def reindex(pid_type, include_delete):
+def reindex(pid_type, include_delete,skip_exists):
     """Reindex all records.
 
     :param pid_type: Pid type.
@@ -112,6 +114,15 @@ def reindex(pid_type, include_delete):
         PersistentIdentifier.object_uuid
     )
     values = (x[0] for x in values)
+    if skip_exists:
+        res = current_search_client.search(index=current_app.config["SEARCH_INDEX_PREFIX"]+"weko-item-v1.0.0",body={"query": {"bool": {"must":{"exists":{"field":"control_number"}}}},"_source":["control_number"]})
+        import uuid
+        ids = [uuid.UUID(x["_id"]) for x in res['hits']['hits']]
+        _values = set(values)
+        _ids = set(ids)
+        diff = _ids ^ _values 
+        values = (x for x in diff)
+        
     click.secho('Queueing {} records..'.format(sum(1 for _ in values)),fg='green')
     RecordIndexer().bulk_index(values)
     click.secho('Execute "run" command to process the queue!',
