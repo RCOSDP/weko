@@ -1830,6 +1830,38 @@ def test_send_mail_users(client, users, users_index, status_code):
         assert res.status_code == status_code
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_user_lock_activity_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_is_user_locked_nologin(client, db_register2):
+    url = url_for('weko_workflow.is_user_locked')
+    res = client.post(url)
+    assert res.status_code == 302
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_user_lock_activity_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('users_index', [ i for i in range(7)])
+def test_is_user_locked_acl(client, users, db_register2, users_index):
+    login(client=client, email=users[users_index]['email'])
+    url = url_for('weko_workflow.is_user_locked')
+    res = client.post(url)
+    assert res.status_code != 302
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_is_user_locked -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_is_user_locked(client,db_register2, users):
+    login(client=client, email=users[2]['email'])
+    current_cache.delete("workflow_userlock_activity_5")
+    url = url_for('weko_workflow.is_user_locked')
+    
+    # not exist cache
+    res = client.get(url)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"is_open": False, "activity_id": ""}
+    
+    current_cache.set("workflow_userlock_activity_5","1")
+    res = client.get(url)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"is_open": True, "activity_id": "1"}
+    
+    current_cache.delete("workflow_userlock_activity_5")
+    
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_user_lock_activity_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_user_lock_activity_nologin(client,db_register2):
     url = url_for('weko_workflow.user_lock_activity', activity_id='1',_external=False)
     res = client.post(url)

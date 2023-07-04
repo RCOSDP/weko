@@ -581,8 +581,11 @@ msgstr "表示名"
 msgid "This activity is being locked ({})."
 msgstr "このアクティビティはロック中です（{}）。"
 
-msgid "Already have another activity open ({})."
-msgstr "他のアクティビティを既に開いています（{}）。"
+msgid "already open another activity ({})."
+msgstr "既に別のアクティビティ({})を開いています。"
+
+msgid "Already have another activity open ({}). Close any open activities."
+msgstr "他のアクティビティ（{}）を既に開いています。開いているアクティビティを閉じてください。"
 
 msgid "Do you want to unlock this activity?"
 msgstr "このアクティビティのロックを解除してよろしいでしょうか。"

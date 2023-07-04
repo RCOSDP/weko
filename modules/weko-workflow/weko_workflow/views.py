@@ -2346,6 +2346,19 @@ def get_feedback_maillist(activity_id='0'):
     res = ResponseMessageSchema().load({'code':-1,'msg':_('Error')})
     return jsonify(res.data), 400
 
+@workflow_blueprint.route('/activity/user_lock', methods=["GET"])
+@login_required
+def is_user_locked():
+    cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    if cur_locked_val:
+        is_open=True
+    else:
+        is_open=False
+    
+    res = {"is_open": is_open, "activity_id": cur_locked_val or ""}
+    return jsonify(res), 200
+
 @workflow_blueprint.route('/activity/user_lock/<string:activity_id>', methods=["POST"])
 @login_required
 def user_lock_activity(activity_id="0"):
@@ -2624,7 +2637,6 @@ def unlock_activity(activity_id="0"):
     msg = None
     # get lock activity from cache
     cur_locked_val = str(get_cache_data(cache_key)) or str()
-    cur_locked_val = None
     if cur_locked_val and cur_locked_val == locked_value:
         delete_cache_data(cache_key)
         msg = _('Unlock success')
