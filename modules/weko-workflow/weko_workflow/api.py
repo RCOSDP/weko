@@ -245,22 +245,6 @@ class Flow(object):
                             'user_deny') if '0' != action.get(
                                 'user') else False
                     )
-                elif int(action.get('user')) == current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID"):
-                    flowactionrole = _FlowActionRole(
-                        flow_action_id=flowaction.id,
-                        action_role=action.get(
-                            'role') if '0' != action.get('role') else None,
-                        action_role_exclude=action.get(
-                            'role_deny') if '0' != action.get(
-                            'role') else False,
-                        action_user= None,
-                        specify_property=None,
-                        action_user_exclude=action.get(
-                            'user_deny') if '0' != action.get(
-                                'user') else False,
-                        action_item_registrant = True if '0' != action.get(
-                                'user') else False
-                    )
                 else:
                     flowactionrole = _FlowActionRole(
                         flow_action_id=flowaction.id,
@@ -2018,7 +2002,6 @@ class WorkActivity(object):
 
     def get_activity_action_role(self, activity_id, action_id, action_order):
         """Get activity action."""
-        from weko_records.api import ItemsMetadata
         roles = {
             'allow': [],
             'deny': []
@@ -2045,16 +2028,6 @@ class WorkActivity(object):
                     users['deny'].append(action_role.action_user)
                 elif action_role.action_user:
                     users['allow'].append(action_role.action_user)
-                if action_role.action_user_exclude and action_role.action_item_registrant:
-                    item_metadata = ItemsMetadata.get_record(activity.item_id)
-                    owner_id = item_metadata["owner"]
-                    if owner_id:
-                        users['deny'].append(owner_id)
-                elif not action_role.action_user_exclud and action_role.action_item_registrant:
-                    item_metadata = ItemsMetadata.get_record(activity.item_id)
-                    owner_id = item_metadata["owner"]
-                    if owner_id:
-                        users['allow'].append(owner_id)
             return roles, users
 
     def del_activity(self, activity_id):

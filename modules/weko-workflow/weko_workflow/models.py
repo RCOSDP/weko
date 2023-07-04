@@ -609,11 +609,6 @@ class FlowActionRole(db.Model, TimestampMixin):
     specify_property = db.Column(
         db.String(255), nullable=True)
     """the name of flows."""
-    
-    action_item_registrant = db.Column(
-        db.Boolean(name='item_registrant'),
-        nullable=False, default=False, server_default='0')
-    """If set to True, item_registrant allow action"""
 
 
 class WorkFlow(db.Model, TimestampMixin):
