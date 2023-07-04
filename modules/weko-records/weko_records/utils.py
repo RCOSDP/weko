@@ -947,6 +947,8 @@ async def sort_meta_data_by_options(
         if _license_dict:
             _ignore_items.append(_license_dict[0].get("value"))
         for i, s in enumerate(solst_dict_array):
+            if not s['key']:
+                continue
             value = s["value"]
             option = s["option"]
             parent_option = s["parent_option"]
