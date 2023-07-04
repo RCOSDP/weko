@@ -1980,12 +1980,14 @@ class WekoRecord(Record):
             AttributeError: 'NoneType' object has no attribute 'model'
             KeyError: 'WEKO_PERMISSION_SUPER_ROLE_USER'
             KeyError: 'WEKO_PERMISSION_ROLE_COMMUNITY'
-        """        
+        """
+        from weko_items_ui.utils import get_hide_list_by_schema_form, del_hide_sub_item
         items = []
         settings = AdminSettings.get('items_display_settings')
         hide_email_flag = not settings.items_display_email
         solst, meta_options = get_options_and_order_list(
             self.get('item_type_id'))
+        hide_list = get_hide_list_by_schema_form(self.get('item_type_id'))
         item_type = ItemTypes.get_by_id(self.get('item_type_id'))
         meta_list = item_type.render.get('meta_list', []) if item_type else {}
 
@@ -2005,6 +2007,7 @@ class WekoRecord(Record):
             if mlt is not None:
                 mlt = copy.deepcopy(mlt)
 
+                del_hide_sub_item(key.replace('[]', '').split('.')[0], mlt, hide_list)
                 self.__remove_special_character_of_weko2(mlt)
                 nval = dict()
                 nval['attribute_name'] = val.get('attribute_name')
@@ -2796,7 +2799,7 @@ class _FormatSysBibliographicInformation:
         :return: title_data, magazine, length
         """
         title_data = []
-        language = 'ja'
+        language = ''
         if bibliographic.get('bibliographic_titles'):
             if is_get_list:
                 current_lang = current_i18n.language
@@ -2808,6 +2811,8 @@ class _FormatSysBibliographicInformation:
                 title_data = self._get_source_title(
                     bibliographic.get('bibliographic_titles'))
         if is_get_list:
+            if not language:
+                language = current_lang
             bibliographic_info, length = self._get_bibliographic_show_list(
                 bibliographic, language)
         else:

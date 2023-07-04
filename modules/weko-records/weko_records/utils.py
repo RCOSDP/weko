@@ -934,6 +934,7 @@ async def sort_meta_data_by_options(
                 else child_option.get(option_type)
             )
 
+        from weko_items_ui.utils import del_hide_sub_item
         result = []
         data_result = {}
         stt_key = []
@@ -949,6 +950,8 @@ async def sort_meta_data_by_options(
             value = s["value"]
             option = s["option"]
             parent_option = s["parent_option"]
+            parent_key = s["key"].replace('[]', '').split('.')[0]
+            del_hide_sub_item(parent_key, mlt, hide_list)
             # Get 'show list', 'specify newline', 'hide' flag.
             is_show_list = get_option_value("show_list", parent_option, option)
             is_specify_newline = get_option_value(
@@ -981,6 +984,7 @@ async def sort_meta_data_by_options(
                 # Format creator data to display on item list
                 author_key = s["key"]
                 attr_mlt = src.get(s["key"], {}).get("attribute_value_mlt", {})
+                del_hide_sub_item(parent_key, attr_mlt, hide_list)
                 author_data = get_show_list_author(
                     solst_dict_array, hide_email_flag, author_key, attr_mlt
                 )
@@ -995,6 +999,7 @@ async def sort_meta_data_by_options(
                     "attribute_value_mlt"
                 )
                 if mlt_bibliographic:
+                    del_hide_sub_item(parent_key, mlt_bibliographic, hide_list)
                     sys_bibliographic = _FormatSysBibliographicInformation(
                         pickle.loads(pickle.dumps(mlt_bibliographic, -1)), pickle.loads(pickle.dumps(solst, -1))
                     )
@@ -1209,7 +1214,10 @@ async def sort_meta_data_by_options(
 
         if not item_type_id:
             return
+        
+        from weko_items_ui.utils import get_hide_list_by_schema_form
         solst, meta_options = get_options_and_order_list(item_type_id, item_type_data)
+        hide_list = get_hide_list_by_schema_form(item_type_id)
         solst_dict_array = convert_data_to_dict(solst)
         files_info = []
         thumbnail = None

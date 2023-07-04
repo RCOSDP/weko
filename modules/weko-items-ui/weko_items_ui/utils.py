@@ -2183,6 +2183,23 @@ def get_mapping_name_item_type_by_sub_key(key, item_type_mapping):
     return tree_name
 
 
+def del_hide_sub_item(key, mlt, hide_list):
+    if isinstance(mlt, dict):
+        for k, v in mlt.copy().items():
+            if isinstance(v, dict) or isinstance(v, list):
+                del_hide_sub_item(key, v, hide_list)
+            elif isinstance(v, str):
+                for h in hide_list:
+                    if h.startswith(key) and h.endswith(k) and k in mlt:
+                        mlt.pop(k) 
+            else:
+                pass
+    elif isinstance(mlt, list):
+        for v in mlt:
+            del_hide_sub_item(key, v, hide_list)
+    else:
+        pass
+
 def get_hide_list_by_schema_form(item_type_id=None, schemaform=None):
     """Get hide list by schema form."""
     ids = []
