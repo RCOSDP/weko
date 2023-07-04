@@ -330,3 +330,6 @@ WEKO_WORKFLOW_GAKUNINRDM_DATA = [
 
 WEKO_WORKFLOW_GAKUNINRDM_PREFIX = 'GakuninRDM'
 """GekuninRDM prefix for logging."""
+
+WEKO_WORKFLOW_ITEM_REGISTRANT_ID = -2
+"""Item registrant id."""
