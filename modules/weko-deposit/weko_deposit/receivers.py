@@ -36,7 +36,7 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         for key in pops:
             json.pop(key)
         metadata = dep.item_metadata
-        _, jrc, _ = json_loader(metadata, pid)
+        _, jrc, _ = json_loader(metadata, pid, with_deleted=kwargs.get("with_deleted",False))
         dep.data = metadata
         dep.jrc = jrc
 
