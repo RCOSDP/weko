@@ -13,6 +13,7 @@ from __future__ import absolute_import, print_function
 import click
 import copy
 import uuid
+import itertools
 from celery.messaging import establish_connection
 from flask import current_app
 from flask.cli import with_appcontext
@@ -80,6 +81,8 @@ def run(delayed, concurrency, version_type=None, queue=None,
                             'max_backoff': max_backoff})
 
 
+
+
 @index.command()
 @click.option('--yes-i-know', is_flag=True, callback=abort_if_false,
               expose_value=False,
@@ -143,7 +146,9 @@ def reindex(pid_type, include_delete,skip_exists,size):
         _values = (x for x in diff)
         # cnt = sum(1 for _ in diff)
 
-    # click.secho('Queueing {} records..'.format(cnt),fg='green')
+    _values, _values2 = itertools.tee(_values)
+    cnt = sum(1 for _ in _values2)
+    click.secho('Queueing {} records..'.format(cnt),fg='green')
     RecordIndexer().bulk_index(_values)
     click.secho('Execute "run" command to process the queue!',
                 fg='yellow')
