@@ -719,7 +719,7 @@ class WorkActivity(object):
                 workflow_id=activity.get('workflow_id'),
                 flow_id=activity.get('flow_id'),
                 action_id=next_action_id,
-                action_status=ActionStatusPolicy.ACTION_BEGIN,
+                action_status=ActionStatusPolicy.ACTION_DOING,
                 activity_login_user=activity_login_user,
                 activity_update_user=activity_update_user,
                 activity_status=ActivityStatusPolicy.ACTIVITY_MAKING,
@@ -764,10 +764,13 @@ class WorkActivity(object):
                             flow_action.action_id)
                         action_handler = activity_login_user \
                             if not action.action_endpoint == 'approval' else -1
+                        action_status = ActionStatusPolicy.ACTION_DOING \
+                            if flow_action.action_id == next_action_id \
+                            else ActionStatusPolicy.ACTION_DONE
                         db_activity_action = ActivityAction(
                             activity_id=db_activity.activity_id,
                             action_id=flow_action.action_id,
-                            action_status=ActionStatusPolicy.ACTION_DONE,
+                            action_status=action_status,
                             action_handler=action_handler,
                             action_order=flow_action.action_order
                         )
