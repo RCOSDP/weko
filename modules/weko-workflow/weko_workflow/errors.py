@@ -34,6 +34,41 @@ class ActivityBaseRESTError(RESTException):
     description = _('Invalid ID supplied.')
 
 
+class VersionNotFoundRESTError(RESTException):
+    """API Version error."""
+
+    code = 400
+    description = _('This API version does not found.')
+
+
+class InvalidParameterError(RESTException):
+    """Invalid parameter."""
+
+    code = 400
+    description = _('Invalid request parameter.')
+
+
+class InvalidParameterValueError(RESTException):
+    """Invalid value."""
+
+    code = 400
+    description = _('Invalid request parameter value.')
+
+
+class StatusNotApproveError(RESTException):
+    """Status is Not Approve Error."""
+
+    code = 400
+    description = _('Activity status is not Approval.')
+
+
+class PermissionError(RESTException):
+    """Permission error."""
+
+    code = 403
+    description = _('Permission denied.')
+
+
 class InvalidInputRESTError(RESTException):
     """Invalid request body."""
 
@@ -60,3 +95,10 @@ class DeleteActivityFailedRESTError(RESTException):
 
     code = 404
     description = _('登録アクティビティを削除エラー。')
+
+
+class InternalServerError(RESTException):
+    """Internal Server Error."""
+
+    code = 500
+    description = _('Internal Server Error.')
