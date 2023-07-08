@@ -90,47 +90,47 @@ importlib-resources==5.4.0
 infinity==1.4
 intervals==0.8.0
 invenio-access==1.1.0
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_accounts&subdirectory=modules/invenio-accounts
+-e ../invenio-accounts
 invenio-admin==1.1.2
 invenio-app==1.1.0
 invenio-assets==1.0.0
 invenio-base==1.0.2
 invenio-cache==1.0.0
 invenio-celery==1.1.3
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_communities&subdirectory=modules/invenio-communities
+-e ../invenio-communities
 invenio-config==1.0.0
 invenio-csl-rest==1.0.0a1
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_db&subdirectory=modules/invenio-db
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_deposit&subdirectory=modules/invenio-deposit
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest
+-e ../invenio-db
+-e ../invenio-deposit
+-e ../invenio-files-rest
 invenio-formatter==1.0.0b3
 invenio-i18n==1.0.0
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_iiif&subdirectory=modules/invenio-iiif
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_indexer&subdirectory=modules/invenio-indexer
+-e ../invenio-iiif
+-e ../invenio-indexer
 invenio-jsonschemas==1.0.0
 invenio-logging==1.0.0b3
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_mail&subdirectory=modules/invenio-mail
+-e ../invenio-mail
 invenio-marc21==1.0.0a8
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server
+-e ../invenio-oaiharvester
+-e ../invenio-oaiserver
+-e ../invenio-oauth2server
 invenio-oauthclient==1.0.0
 invenio-pidrelations==1.0.0a4
 invenio-pidstore==1.0.0
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_previewer&subdirectory=modules/invenio-previewer
+-e ../invenio-previewer
 invenio-query-parser==0.6.0
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_queues&subdirectory=modules/invenio-queues
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_records&subdirectory=modules/invenio-records
+-e ../invenio-queues
+-e ../invenio-records
 invenio-records-files==1.0.0a10
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest
+-e ../invenio-records-rest
 invenio-records-ui==1.0.0
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver
+-e ../invenio-resourcesyncclient
+-e ../invenio-resourcesyncserver
 invenio-rest==1.1.2
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_s3&subdirectory=modules/invenio-s3
+-e ../invenio-s3
 -e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search
 -e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui
--e git+https://mhaya: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@github.com/RCOSDP/weko.git@b931ff9d0333707a015b1d9903ccbff23bb70951#egg=invenio_stats&subdirectory=modules/invenio-stats
+-e ../invenio-stats
 invenio-theme==1.0.0b4
 ipaddress==1.0.19
 ipython==6.2.1
@@ -242,49 +242,30 @@ wcwidth==0.1.7
 webargs==5.5.2
 webassets==0.12.1
 webencodings==0.5.1
--e /code/modules/invenio-files-rest
--e /code/modules/invenio-s3
--e /code/modules/invenio-oaiserver
--e /code/modules/invenio-oaiharvester
--e /code/modules/invenio-oauth2server
--e /code/modules/invenio-records
--e /code/modules/invenio-previewer
--e /code/modules/invenio-stats
--e /code/modules/invenio-records-rest
--e /code/modules/invenio-communities
--e /code/modules/invenio-mail
--e /code/modules/invenio-indexer
--e /code/modules/invenio-deposit
--e /code/modules/invenio-resourcesyncserver
--e /code/modules/invenio-resourcesyncclient
--e /code/modules/invenio-queues
--e /code/modules/invenio-db
--e /code/modules/invenio-accounts
--e /code/modules/weko-theme
--e /code/modules/weko-itemtypes-ui
--e /code/modules/weko-items-ui
--e /code/modules/weko-accounts
--e /code/modules/weko-admin
--e /code/modules/weko-logging
--e /code/modules/weko-gridlayout
--e /code/modules/weko-groups
--e /code/modules/weko-search-ui
--e /code/modules/weko-records
--e /code/modules/weko-records-ui
--e /code/modules/weko-schema-ui
--e /code/modules/weko-index-tree
--e /code/modules/weko-user-profiles
--e /code/modules/weko-deposit
--e /code/modules/weko-authors
--e /code/modules/weko-handle
--e /code/modules/weko-workflow
--e /code/modules/weko-indextree-journal
--e /code/modules/weko-bulkupdate
--e /code/modules/weko-items-autofill
--e /code/modules/weko-sitemap
--e /code/modules/invenio-iiif
--e /code/modules/weko-redis
--e /code/modules/weko-swordserver
+-e ../weko-accounts
+-e ../weko-admin
+-e ../weko-authors
+-e ../weko-bulkupdate
+-e ../weko-deposit
+-e ../weko-gridlayout
+-e ../weko-groups
+-e ../weko-handle
+-e ../weko-index-tree
+-e ../weko-indextree-journal
+-e ../weko-items-autofill
+-e ../weko-items-ui
+-e ../weko-itemtypes-ui
+-e ../weko-logging
+-e ../weko-records
+-e ../weko-records-ui
+-e ../weko-redis
+-e ../weko-schema-ui
+-e ../weko-search-ui
+-e ../weko-sitemap
+-e ../weko-swordserver
+-e ../weko-theme
+-e ../weko-user-profiles
+-e ../weko-workflow
 Werkzeug==0.15.2
 whichcraft==0.4.1
 WTForms==2.1
