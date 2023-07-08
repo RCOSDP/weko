@@ -161,6 +161,7 @@ maxminddb==1.5.2
 maxminddb-geolite2==2017.803
 mistune==0.8.3
 more-itertools==8.10.0
+mock==5.0.2
 msgpack==0.6.2
 nbconvert==5.3.1
 nbformat==4.4.0
@@ -204,6 +205,7 @@ requests-oauthlib==1.1.0
 resync==1.0.9
 s3fs==0.1.6
 s3transfer==0.1.13
+selenium
 Sickle==0.6.4
 simplegeneric==0.8.1
 simplejson==3.12.0

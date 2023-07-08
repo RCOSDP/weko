@@ -1,0 +1,2773 @@
+GLOB sdist-make: /code/modules/invenio-previewer/setup.py
+c1 recreate: /code/modules/invenio-previewer/.tox/c1
+c1 installdeps: pytest>=3, pytest-cov, -rrequirements2.txt
+c1 inst: /code/modules/invenio-previewer/.tox/.tmp/package/1/invenio-previewer-1.0.0a11.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@83148ee01e9da37a8a1134febe83bc32b95bac6e#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,intervals==0.8.0,invenio-access==1.1.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,invenio-previewer @ file:///code/modules/invenio-previewer/.tox/.tmp/package/1/invenio-previewer-1.0.0a11.zip,invenio-query-parser==0.6.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==4.2.0,pytest-cov==2.9.0,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,toml==0.10.2,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_records&subdirectory=modules/weko-records,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@4354c223a93c57314dba6d9a94c9eb42aa72c458#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='1427638624'
+c1 run-test: commands[0] | pytest --cov=invenio_previewer tests -v --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/invenio-previewer/.tox/c1/tmp
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-4.2.0, py-1.11.0, pluggy-0.13.1 -- /code/modules/invenio-previewer/.tox/c1/bin/python
+cachedir: .tox/c1/.pytest_cache
+rootdir: /code/modules/invenio-previewer, inifile:
+plugins: celery-4.4.4, cov-2.9.0
+collecting ... collected 28 items
+
+tests/test_invenio_previewer.py::test_version PASSED                     [  3%]
+tests/test_invenio_previewer.py::test_init PASSED                        [  7%]
+tests/test_invenio_previewer.py::test_entrypoint_previewer PASSED        [ 10%]
+tests/test_macros.py::test_default_extension ERROR                       [ 14%]
+tests/test_macros.py::test_markdown_extension ERROR                      [ 17%]
+tests/test_macros.py::test_pdf_extension ERROR                           [ 21%]
+tests/test_macros.py::test_csv_dthreejs_extension ERROR                  [ 25%]
+tests/test_macros.py::test_csv_dthreejs_delimiter ERROR                  [ 28%]
+tests/test_macros.py::test_zip_extension ERROR                           [ 32%]
+tests/test_macros.py::test_json_extension ERROR                          [ 35%]
+tests/test_macros.py::test_max_file_size ERROR                           [ 39%]
+tests/test_macros.py::test_xml_extension ERROR                           [ 42%]
+tests/test_macros.py::test_ipynb_extension ERROR                         [ 46%]
+tests/test_macros.py::test_simple_image_extension ERROR                  [ 50%]
+tests/test_macros.py::test_view_macro_file_list PASSED                   [ 53%]
+tests/test_utils.py::test_default_file_reader ERROR                      [ 57%]
+tests/test_utils.py::test_detect_encoding[\xce\x93\xce\xba\xcf\x81\xce\xae\xce\xba \xce\xa3\xcf\x84\xcf\x81\xce\xaf\xce\xbd\xce\xb3\xce\xba-0.99-UTF-8-UTF-8] PASSED [ 60%]
+tests/test_utils.py::test_detect_encoding[dh\xc7\xbek: kjd k\xc3\xb6d, dd\xc8\xaaj@dd.k-0.87625-UTF-8-None] PASSED [ 64%]
+tests/test_utils.py::test_detect_encoding[\xe0\xa4\x95\xe0\xa5\x8d\xe0\xa4\xaf\xe0\xa4\xbe \xe0\xa4\xb9\xe0\xa4\xbe\xe0\xa4\xb2 \xe0\xa4\xa4\xe0\xa5\x81\xe0\xa4\xae \xe0\xa4\xaf\xe0\xa4\xbe \xe0\xa4\x95\xe0\xa4\xb0 \xe0\xa4\xb0\xe0\xa4\xb9\xe0\xa5\x87 \xe0\xa4\xb9\xe0\xa5\x8b?-0.99-UTF-8-UTF-8] PASSED [ 67%]
+tests/test_utils.py::test_detect_encoding[\xc0\xd0\xb8\xb6\xbb\xe1 \xb0\xdc\xc5\xbe\xa4\xcf\xa1\xd6\xb4\xfb\xc4\xea\xcf\xa9\xc0\xfe\xa1\xd7-0.46666-EUC-JP-None] PASSED [ 71%]
+tests/test_utils.py::test_detect_encoding[Hi bye sigh die-1.0-UTF-8-UTF-8] PASSED [ 75%]
+tests/test_utils.py::test_detect_encoding[Monkey donkey cow crow-0.0-ASCII-None] PASSED [ 78%]
+tests/test_utils.py::test_detect_encoding[Monkey donkey cow crow-0.9-EUC-JP-None] PASSED [ 82%]
+tests/test_utils.py::test_detect_encoding[Monkey donkey cow crow-0.90001-EUC-JP-EUC-JP] PASSED [ 85%]
+tests/test_utils.py::test_detect_encoding[Monkey donkey cow crow-0.5-UTF-8-None] PASSED [ 89%]
+tests/test_utils.py::test_detect_encoding_exception PASSED               [ 92%]
+tests/test_views.py::test_view_macro_file_list PASSED                    [ 96%]
+tests/test_views.py::test_previwable_test PASSED                         [100%]
+
+==================================== ERRORS ====================================
+___________________ ERROR at setup of test_default_extension ___________________
+
+app = <Flask 'testapp'>
+
+    @pytest.yield_fixture()
+    def db(app):
+        """Setup database."""
+        if not database_exists(str(db_.engine.url)):
+            create_database(str(db_.engine.url))
+>       db_.create_all()
+
+/code/modules/invenio-previewer/tests/conftest.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:963: in create_all
+    self._execute_for_all_tables(app, bind, 'create_all')
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:955: in _execute_for_all_tables
+    op(bind=self.get_engine(app, bind), **extra)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/schema.py:4200: in create_all
+    ddl.SchemaGenerator, self, checkfirst=checkfirst, tables=tables
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2011: in _run_visitor
+    conn._run_visitor(visitorcallable, element, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1599: in _run_visitor
+    visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:779: in visit_metadata
+    _is_metadata_operation=True,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:824: in visit_table
+    include_foreign_key_constraints,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:72: in _execute_on_connection
+    return connection._execute_ddl(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1035: in _execute_ddl
+    else None,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:448: in compile
+    return self._compiler(dialect, bind=bind, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:29: in _compiler
+    return dialect.ddl_compiler(dialect, self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:310: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2818: in visit_create_table
+    _include_foreign_key_constraints=create.include_foreign_key_constraints,  # noqa
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2869: in create_table_constraints
+    for constraint in constraints
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2866: in <genexpr>
+    p
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2875: in <genexpr>
+    not self.dialect.supports_alter
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:103: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:3067: in visit_check_constraint
+    formatted_name = self.preparer.format_constraint(constraint)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:3538: in format_constraint
+    constraint, constraint.table
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/naming.py:137: in _constraint_name_for_table
+    % ConventionDict(const, table, metadata.naming_convention)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/naming.py:88: in __getitem__
+    return getattr(self, "_key_%s" % key)()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.sql.naming.ConventionDict object at 0x7f0f4553aba8>
+
+    def _key_constraint_name(self):
+        if isinstance(self._const_name, (type(None), _defer_none_name)):
+            raise exc.InvalidRequestError(
+>               "Naming convention including "
+                "%(constraint_name)s token requires that "
+                "constraint is explicitly named."
+            )
+E           sqlalchemy.exc.InvalidRequestError: Naming convention including %(constraint_name)s token requires that constraint is explicitly named.
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/naming.py:52: InvalidRequestError
+---------------------------- Captured stdout setup -----------------------------
+angular-underscore@0.0.3 node_modules/angular-underscore
+
+almond@0.3.3 node_modules/almond
+
+underscore@1.8.3 node_modules/underscore
+
+typeahead.js-bootstrap-css@1.2.1 node_modules/typeahead.js-bootstrap-css
+
+angular-sanitize@1.4.14 node_modules/angular-sanitize
+
+objectpath@1.2.2 node_modules/objectpath
+
+react-dom@0.14.8 node_modules/react-dom
+
+angular-animate@1.4.14 node_modules/angular-animate
+
+tv4@1.2.7 node_modules/tv4
+
+flightjs@1.5.2 node_modules/flightjs
+
+angular-gettext@2.3.11 node_modules/angular-gettext
+
+angular-schema-form-ckeditor@0.0.1 node_modules/angular-schema-form-ckeditor
+
+requirejs@2.3.6 node_modules/requirejs
+
+angular-loading-bar@0.9.0 node_modules/angular-loading-bar
+
+angular-translate@2.11.1 node_modules/angular-translate
+
+angular@1.4.14 node_modules/angular
+
+angular-ui-sortable@0.14.4 node_modules/angular-ui-sortable
+
+jqueryui@1.11.1 node_modules/jqueryui
+
+font-awesome@4.4.0 node_modules/font-awesome
+
+bootstrap-switch@3.0.2 node_modules/bootstrap-switch
+
+typeahead.js@0.11.1 node_modules/typeahead.js
+
+angular-schema-form@0.8.13 node_modules/angular-schema-form
+└── tv4@1.0.18
+
+bootstrap-sass@3.3.7 node_modules/bootstrap-sass
+
+moment@2.9.0 node_modules/moment
+
+ui-select@0.18.1 node_modules/ui-select
+
+invenio-csl-js@0.1.3 node_modules/invenio-csl-js
+├── angular-mocks@1.4.8
+├── angular-scenario@1.4.8
+└── angular@1.4.8
+
+invenio-files-js@0.0.2 node_modules/invenio-files-js
+├── angular-mocks@1.4.8
+├── angular-scenario@1.4.8
+└── angular@1.4.8
+
+jquery@1.9.1 node_modules/jquery
+
+ng-file-upload@12.0.4 node_modules/ng-file-upload
+
+bootstrap@3.4.1 node_modules/bootstrap
+
+angular-ui-bootstrap@0.13.4 node_modules/angular-ui-bootstrap
+
+angular-schema-form-dynamic-select@0.13.1 node_modules/angular-schema-form-dynamic-select
+├── ui-select@0.14.10
+└── bootstrap@3.4.1
+
+bootstrap-datepicker@1.7.1 node_modules/bootstrap-datepicker
+
+select2@4.0.13 node_modules/select2
+
+invenio-records-js@0.0.8 node_modules/invenio-records-js
+├── karma-read-json@1.1.0
+├── angular-mocks@1.4.8
+├── angular-scenario@1.4.8
+└── angular@1.4.8
+
+pdfjs-dist@1.4.192 node_modules/pdfjs-dist
+
+d3@3.5.17 node_modules/d3
+
+rr-ng-ckeditor@0.2.3 node_modules/rr-ng-ckeditor
+
+angular-strap@2.3.12 node_modules/angular-strap
+
+invenio-search-js@1.5.4 node_modules/invenio-search-js
+├── angular-mocks@1.4.8
+├── angular-scenario@1.4.8
+└── angular@1.4.8
+
+prismjs@1.4.1 node_modules/prismjs
+
+admin-lte@2.3.11 node_modules/admin-lte
+
+three@0.127.0 node_modules/three
+
+react@0.14.8 node_modules/react
+├── envify@3.4.1 (through@2.3.8, jstransform@11.0.3)
+└── fbjs@0.6.1 (whatwg-fetch@0.9.0, ua-parser-js@0.7.35, loose-envify@1.4.0, promise@7.3.1, core-js@1.2.7)
+
+ckeditor@4.5.11 node_modules/ckeditor
+---------------------------- Captured stderr setup -----------------------------
+npm WARN package.json testapp@ No description
+npm WARN package.json testapp@ No repository field.
+npm WARN package.json testapp@ No README data
+npm WARN package.json testapp@ No license field.
+npm WARN deprecated angular@1.4.14: For the actively supported Angular, see https://www.npmjs.com/package/@angular/core. AngularJS support has officially ended. For extended AngularJS support options, see https://goo.gle/angularjs-path-forward.
+npm WARN deprecated angular-sanitize@1.4.14: For the actively supported Angular, see https://www.npmjs.com/package/@angular/core. AngularJS support has officially ended. For extended AngularJS support options, see https://goo.gle/angularjs-path-forward.
+npm WARN deprecated angular-animate@1.4.14: For the actively supported Angular, see https://www.npmjs.com/package/@angular/core. AngularJS support has officially ended. For extended AngularJS support options, see https://goo.gle/angularjs-path-forward.
+npm WARN deprecated ckeditor@4.5.11: We have renamed the @ckeditor package. New versions are available under the @ckeditor4 name.
+npm WARN peerDependencies The peer dependency bootstrap@^3.x included from angular-ui-bootstrap will no
+npm WARN peerDependencies longer be automatically installed to fulfill the peerDependency 
+npm WARN peerDependencies in npm 3+. Your application will need to depend on it explicitly.
+npm WARN engine bootstrap@3.4.1: wanted: {"node":">=6"} (current: {"node":"4.8.7","npm":"2.15.11"})
+npm WARN engine bootstrap@3.4.1: wanted: {"node":">=6"} (current: {"node":"4.8.7","npm":"2.15.11"})
+npm WARN deprecated angular@1.4.8: For the actively supported Angular, see https://www.npmjs.com/package/@angular/core. AngularJS support has officially ended. For extended AngularJS support options, see https://goo.gle/angularjs-path-forward.
+npm WARN deprecated angular-scenario@1.4.8: For the actively supported Angular, see https://www.npmjs.com/package/@angular/core. AngularJS support has officially ended. For extended AngularJS support options, see https://goo.gle/angularjs-path-forward.
+npm WARN deprecated core-js@1.2.7: core-js@<3.23.3 is no longer maintained and not recommended for usage due to the number of issues. Because of the V8 engine whims, feature detection in old core-js versions could cause a slowdown up to 100x even if nothing is polyfilled. Some versions have web compatibility issues. Please, upgrade your dependencies to the actual version of core-js.
+------------------------------ Captured log setup ------------------------------
+script.py                  167 INFO     Building bundle: gen/i18n.%(version)s.js
+__________________ ERROR at setup of test_markdown_extension ___________________
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbebe80>
+create = <sqlalchemy.sql.ddl.CreateTable object at 0x7f0f6dbeb860>
+
+    def visit_create_table(self, create):
+        table = create.element
+        preparer = self.preparer
+    
+        text = "\nCREATE "
+        if table._prefixes:
+            text += " ".join(table._prefixes) + " "
+        text += "TABLE " + preparer.format_table(table) + " "
+    
+        create_table_suffix = self.create_table_suffix(table)
+        if create_table_suffix:
+            text += create_table_suffix + " "
+    
+        text += "("
+    
+        separator = "\n"
+    
+        # if only one primary key, specify it along with the column
+        first_pk = False
+        for create_column in create.columns:
+            column = create_column.element
+            try:
+                processed = self.process(
+>                   create_column, first_pk=column.primary_key and not first_pk
+                )
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbebe80>
+obj = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6daa5908>
+kwargs = {'first_pk': False}
+
+    def process(self, obj, **kwargs):
+>       return obj._compiler_dispatch(self, **kwargs)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6daa5908>
+visitor = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbebe80>
+kw = {'first_pk': False}
+meth = <bound method DDLCompiler.visit_create_column of <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbebe80>>
+
+    def _compiler_dispatch(self, visitor, **kw):
+        try:
+            meth = getter(visitor)
+        except AttributeError:
+            raise exc.UnsupportedCompilationError(visitor, cls)
+        else:
+>           return meth(self, **kw)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbebe80>
+create = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6daa5908>
+first_pk = False
+
+    def visit_create_column(self, create, first_pk=False):
+        column = create.element
+    
+        if column.system:
+            return None
+    
+>       text = self.get_column_specification(column, first_pk=first_pk)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbebe80>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'testapp'>
+
+    @pytest.yield_fixture()
+    def db(app):
+        """Setup database."""
+        if not database_exists(str(db_.engine.url)):
+            create_database(str(db_.engine.url))
+>       db_.create_all()
+
+/code/modules/invenio-previewer/tests/conftest.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:963: in create_all
+    self._execute_for_all_tables(app, bind, 'create_all')
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:955: in _execute_for_all_tables
+    op(bind=self.get_engine(app, bind), **extra)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/schema.py:4200: in create_all
+    ddl.SchemaGenerator, self, checkfirst=checkfirst, tables=tables
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2011: in _run_visitor
+    conn._run_visitor(visitorcallable, element, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1599: in _run_visitor
+    visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:779: in visit_metadata
+    _is_metadata_operation=True,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:824: in visit_table
+    include_foreign_key_constraints,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:72: in _execute_on_connection
+    return connection._execute_ddl(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1035: in _execute_ddl
+    else None,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:448: in compile
+    return self._compiler(dialect, bind=bind, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:29: in _compiler
+    return dialect.ddl_compiler(dialect, self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:310: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2812: in visit_create_table
+    % (table.description, column.name, ce.args[0])
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: in visit_create_table
+    create_column, first_pk=column.primary_key and not first_pk
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: in visit_create_column
+    text = self.get_column_specification(column, first_pk=first_pk)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbebe80>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: (in table 'sitelicense_ip_address', column 'organization_no'): SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+_____________________ ERROR at setup of test_pdf_extension _____________________
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d73fdd8>
+create = <sqlalchemy.sql.ddl.CreateTable object at 0x7f0f6d73ff28>
+
+    def visit_create_table(self, create):
+        table = create.element
+        preparer = self.preparer
+    
+        text = "\nCREATE "
+        if table._prefixes:
+            text += " ".join(table._prefixes) + " "
+        text += "TABLE " + preparer.format_table(table) + " "
+    
+        create_table_suffix = self.create_table_suffix(table)
+        if create_table_suffix:
+            text += create_table_suffix + " "
+    
+        text += "("
+    
+        separator = "\n"
+    
+        # if only one primary key, specify it along with the column
+        first_pk = False
+        for create_column in create.columns:
+            column = create_column.element
+            try:
+                processed = self.process(
+>                   create_column, first_pk=column.primary_key and not first_pk
+                )
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d73fdd8>
+obj = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6d73f0f0>
+kwargs = {'first_pk': False}
+
+    def process(self, obj, **kwargs):
+>       return obj._compiler_dispatch(self, **kwargs)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6d73f0f0>
+visitor = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d73fdd8>
+kw = {'first_pk': False}
+meth = <bound method DDLCompiler.visit_create_column of <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d73fdd8>>
+
+    def _compiler_dispatch(self, visitor, **kw):
+        try:
+            meth = getter(visitor)
+        except AttributeError:
+            raise exc.UnsupportedCompilationError(visitor, cls)
+        else:
+>           return meth(self, **kw)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d73fdd8>
+create = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6d73f0f0>
+first_pk = False
+
+    def visit_create_column(self, create, first_pk=False):
+        column = create.element
+    
+        if column.system:
+            return None
+    
+>       text = self.get_column_specification(column, first_pk=first_pk)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d73fdd8>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'testapp'>
+
+    @pytest.yield_fixture()
+    def db(app):
+        """Setup database."""
+        if not database_exists(str(db_.engine.url)):
+            create_database(str(db_.engine.url))
+>       db_.create_all()
+
+/code/modules/invenio-previewer/tests/conftest.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:963: in create_all
+    self._execute_for_all_tables(app, bind, 'create_all')
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:955: in _execute_for_all_tables
+    op(bind=self.get_engine(app, bind), **extra)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/schema.py:4200: in create_all
+    ddl.SchemaGenerator, self, checkfirst=checkfirst, tables=tables
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2011: in _run_visitor
+    conn._run_visitor(visitorcallable, element, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1599: in _run_visitor
+    visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:779: in visit_metadata
+    _is_metadata_operation=True,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:824: in visit_table
+    include_foreign_key_constraints,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:72: in _execute_on_connection
+    return connection._execute_ddl(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1035: in _execute_ddl
+    else None,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:448: in compile
+    return self._compiler(dialect, bind=bind, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:29: in _compiler
+    return dialect.ddl_compiler(dialect, self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:310: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2812: in visit_create_table
+    % (table.description, column.name, ce.args[0])
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: in visit_create_table
+    create_column, first_pk=column.primary_key and not first_pk
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: in visit_create_column
+    text = self.get_column_specification(column, first_pk=first_pk)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d73fdd8>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: (in table 'sitelicense_ip_address', column 'organization_no'): SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+________________ ERROR at setup of test_csv_dthreejs_extension _________________
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dae6978>
+create = <sqlalchemy.sql.ddl.CreateTable object at 0x7f0f6dae6f60>
+
+    def visit_create_table(self, create):
+        table = create.element
+        preparer = self.preparer
+    
+        text = "\nCREATE "
+        if table._prefixes:
+            text += " ".join(table._prefixes) + " "
+        text += "TABLE " + preparer.format_table(table) + " "
+    
+        create_table_suffix = self.create_table_suffix(table)
+        if create_table_suffix:
+            text += create_table_suffix + " "
+    
+        text += "("
+    
+        separator = "\n"
+    
+        # if only one primary key, specify it along with the column
+        first_pk = False
+        for create_column in create.columns:
+            column = create_column.element
+            try:
+                processed = self.process(
+>                   create_column, first_pk=column.primary_key and not first_pk
+                )
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dae6978>
+obj = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6dae6a20>
+kwargs = {'first_pk': False}
+
+    def process(self, obj, **kwargs):
+>       return obj._compiler_dispatch(self, **kwargs)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6dae6a20>
+visitor = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dae6978>
+kw = {'first_pk': False}
+meth = <bound method DDLCompiler.visit_create_column of <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dae6978>>
+
+    def _compiler_dispatch(self, visitor, **kw):
+        try:
+            meth = getter(visitor)
+        except AttributeError:
+            raise exc.UnsupportedCompilationError(visitor, cls)
+        else:
+>           return meth(self, **kw)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dae6978>
+create = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6dae6a20>
+first_pk = False
+
+    def visit_create_column(self, create, first_pk=False):
+        column = create.element
+    
+        if column.system:
+            return None
+    
+>       text = self.get_column_specification(column, first_pk=first_pk)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dae6978>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'testapp'>
+
+    @pytest.yield_fixture()
+    def db(app):
+        """Setup database."""
+        if not database_exists(str(db_.engine.url)):
+            create_database(str(db_.engine.url))
+>       db_.create_all()
+
+/code/modules/invenio-previewer/tests/conftest.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:963: in create_all
+    self._execute_for_all_tables(app, bind, 'create_all')
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:955: in _execute_for_all_tables
+    op(bind=self.get_engine(app, bind), **extra)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/schema.py:4200: in create_all
+    ddl.SchemaGenerator, self, checkfirst=checkfirst, tables=tables
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2011: in _run_visitor
+    conn._run_visitor(visitorcallable, element, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1599: in _run_visitor
+    visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:779: in visit_metadata
+    _is_metadata_operation=True,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:824: in visit_table
+    include_foreign_key_constraints,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:72: in _execute_on_connection
+    return connection._execute_ddl(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1035: in _execute_ddl
+    else None,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:448: in compile
+    return self._compiler(dialect, bind=bind, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:29: in _compiler
+    return dialect.ddl_compiler(dialect, self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:310: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2812: in visit_create_table
+    % (table.description, column.name, ce.args[0])
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: in visit_create_table
+    create_column, first_pk=column.primary_key and not first_pk
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: in visit_create_column
+    text = self.get_column_specification(column, first_pk=first_pk)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dae6978>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: (in table 'sitelicense_ip_address', column 'organization_no'): SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+________________ ERROR at setup of test_csv_dthreejs_delimiter _________________
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6def2e48>
+create = <sqlalchemy.sql.ddl.CreateTable object at 0x7f0f6def2ef0>
+
+    def visit_create_table(self, create):
+        table = create.element
+        preparer = self.preparer
+    
+        text = "\nCREATE "
+        if table._prefixes:
+            text += " ".join(table._prefixes) + " "
+        text += "TABLE " + preparer.format_table(table) + " "
+    
+        create_table_suffix = self.create_table_suffix(table)
+        if create_table_suffix:
+            text += create_table_suffix + " "
+    
+        text += "("
+    
+        separator = "\n"
+    
+        # if only one primary key, specify it along with the column
+        first_pk = False
+        for create_column in create.columns:
+            column = create_column.element
+            try:
+                processed = self.process(
+>                   create_column, first_pk=column.primary_key and not first_pk
+                )
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6def2e48>
+obj = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6def2e10>
+kwargs = {'first_pk': False}
+
+    def process(self, obj, **kwargs):
+>       return obj._compiler_dispatch(self, **kwargs)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6def2e10>
+visitor = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6def2e48>
+kw = {'first_pk': False}
+meth = <bound method DDLCompiler.visit_create_column of <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6def2e48>>
+
+    def _compiler_dispatch(self, visitor, **kw):
+        try:
+            meth = getter(visitor)
+        except AttributeError:
+            raise exc.UnsupportedCompilationError(visitor, cls)
+        else:
+>           return meth(self, **kw)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6def2e48>
+create = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6def2e10>
+first_pk = False
+
+    def visit_create_column(self, create, first_pk=False):
+        column = create.element
+    
+        if column.system:
+            return None
+    
+>       text = self.get_column_specification(column, first_pk=first_pk)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6def2e48>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'testapp'>
+
+    @pytest.yield_fixture()
+    def db(app):
+        """Setup database."""
+        if not database_exists(str(db_.engine.url)):
+            create_database(str(db_.engine.url))
+>       db_.create_all()
+
+/code/modules/invenio-previewer/tests/conftest.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:963: in create_all
+    self._execute_for_all_tables(app, bind, 'create_all')
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:955: in _execute_for_all_tables
+    op(bind=self.get_engine(app, bind), **extra)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/schema.py:4200: in create_all
+    ddl.SchemaGenerator, self, checkfirst=checkfirst, tables=tables
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2011: in _run_visitor
+    conn._run_visitor(visitorcallable, element, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1599: in _run_visitor
+    visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:779: in visit_metadata
+    _is_metadata_operation=True,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:824: in visit_table
+    include_foreign_key_constraints,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:72: in _execute_on_connection
+    return connection._execute_ddl(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1035: in _execute_ddl
+    else None,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:448: in compile
+    return self._compiler(dialect, bind=bind, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:29: in _compiler
+    return dialect.ddl_compiler(dialect, self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:310: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2812: in visit_create_table
+    % (table.description, column.name, ce.args[0])
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: in visit_create_table
+    create_column, first_pk=column.primary_key and not first_pk
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: in visit_create_column
+    text = self.get_column_specification(column, first_pk=first_pk)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6def2e48>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: (in table 'sitelicense_ip_address', column 'organization_no'): SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+_____________________ ERROR at setup of test_zip_extension _____________________
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d8e6240>
+create = <sqlalchemy.sql.ddl.CreateTable object at 0x7f0f6d8e6518>
+
+    def visit_create_table(self, create):
+        table = create.element
+        preparer = self.preparer
+    
+        text = "\nCREATE "
+        if table._prefixes:
+            text += " ".join(table._prefixes) + " "
+        text += "TABLE " + preparer.format_table(table) + " "
+    
+        create_table_suffix = self.create_table_suffix(table)
+        if create_table_suffix:
+            text += create_table_suffix + " "
+    
+        text += "("
+    
+        separator = "\n"
+    
+        # if only one primary key, specify it along with the column
+        first_pk = False
+        for create_column in create.columns:
+            column = create_column.element
+            try:
+                processed = self.process(
+>                   create_column, first_pk=column.primary_key and not first_pk
+                )
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d8e6240>
+obj = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6d8e6080>
+kwargs = {'first_pk': False}
+
+    def process(self, obj, **kwargs):
+>       return obj._compiler_dispatch(self, **kwargs)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6d8e6080>
+visitor = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d8e6240>
+kw = {'first_pk': False}
+meth = <bound method DDLCompiler.visit_create_column of <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d8e6240>>
+
+    def _compiler_dispatch(self, visitor, **kw):
+        try:
+            meth = getter(visitor)
+        except AttributeError:
+            raise exc.UnsupportedCompilationError(visitor, cls)
+        else:
+>           return meth(self, **kw)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d8e6240>
+create = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6d8e6080>
+first_pk = False
+
+    def visit_create_column(self, create, first_pk=False):
+        column = create.element
+    
+        if column.system:
+            return None
+    
+>       text = self.get_column_specification(column, first_pk=first_pk)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d8e6240>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'testapp'>
+
+    @pytest.yield_fixture()
+    def db(app):
+        """Setup database."""
+        if not database_exists(str(db_.engine.url)):
+            create_database(str(db_.engine.url))
+>       db_.create_all()
+
+/code/modules/invenio-previewer/tests/conftest.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:963: in create_all
+    self._execute_for_all_tables(app, bind, 'create_all')
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:955: in _execute_for_all_tables
+    op(bind=self.get_engine(app, bind), **extra)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/schema.py:4200: in create_all
+    ddl.SchemaGenerator, self, checkfirst=checkfirst, tables=tables
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2011: in _run_visitor
+    conn._run_visitor(visitorcallable, element, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1599: in _run_visitor
+    visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:779: in visit_metadata
+    _is_metadata_operation=True,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:824: in visit_table
+    include_foreign_key_constraints,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:72: in _execute_on_connection
+    return connection._execute_ddl(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1035: in _execute_ddl
+    else None,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:448: in compile
+    return self._compiler(dialect, bind=bind, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:29: in _compiler
+    return dialect.ddl_compiler(dialect, self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:310: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2812: in visit_create_table
+    % (table.description, column.name, ce.args[0])
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: in visit_create_table
+    create_column, first_pk=column.primary_key and not first_pk
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: in visit_create_column
+    text = self.get_column_specification(column, first_pk=first_pk)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d8e6240>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: (in table 'sitelicense_ip_address', column 'organization_no'): SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+____________________ ERROR at setup of test_json_extension _____________________
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6db720f0>
+create = <sqlalchemy.sql.ddl.CreateTable object at 0x7f0f6db72320>
+
+    def visit_create_table(self, create):
+        table = create.element
+        preparer = self.preparer
+    
+        text = "\nCREATE "
+        if table._prefixes:
+            text += " ".join(table._prefixes) + " "
+        text += "TABLE " + preparer.format_table(table) + " "
+    
+        create_table_suffix = self.create_table_suffix(table)
+        if create_table_suffix:
+            text += create_table_suffix + " "
+    
+        text += "("
+    
+        separator = "\n"
+    
+        # if only one primary key, specify it along with the column
+        first_pk = False
+        for create_column in create.columns:
+            column = create_column.element
+            try:
+                processed = self.process(
+>                   create_column, first_pk=column.primary_key and not first_pk
+                )
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6db720f0>
+obj = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6db72278>
+kwargs = {'first_pk': False}
+
+    def process(self, obj, **kwargs):
+>       return obj._compiler_dispatch(self, **kwargs)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6db72278>
+visitor = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6db720f0>
+kw = {'first_pk': False}
+meth = <bound method DDLCompiler.visit_create_column of <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6db720f0>>
+
+    def _compiler_dispatch(self, visitor, **kw):
+        try:
+            meth = getter(visitor)
+        except AttributeError:
+            raise exc.UnsupportedCompilationError(visitor, cls)
+        else:
+>           return meth(self, **kw)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6db720f0>
+create = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6db72278>
+first_pk = False
+
+    def visit_create_column(self, create, first_pk=False):
+        column = create.element
+    
+        if column.system:
+            return None
+    
+>       text = self.get_column_specification(column, first_pk=first_pk)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6db720f0>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'testapp'>
+
+    @pytest.yield_fixture()
+    def db(app):
+        """Setup database."""
+        if not database_exists(str(db_.engine.url)):
+            create_database(str(db_.engine.url))
+>       db_.create_all()
+
+/code/modules/invenio-previewer/tests/conftest.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:963: in create_all
+    self._execute_for_all_tables(app, bind, 'create_all')
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:955: in _execute_for_all_tables
+    op(bind=self.get_engine(app, bind), **extra)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/schema.py:4200: in create_all
+    ddl.SchemaGenerator, self, checkfirst=checkfirst, tables=tables
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2011: in _run_visitor
+    conn._run_visitor(visitorcallable, element, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1599: in _run_visitor
+    visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:779: in visit_metadata
+    _is_metadata_operation=True,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:824: in visit_table
+    include_foreign_key_constraints,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:72: in _execute_on_connection
+    return connection._execute_ddl(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1035: in _execute_ddl
+    else None,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:448: in compile
+    return self._compiler(dialect, bind=bind, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:29: in _compiler
+    return dialect.ddl_compiler(dialect, self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:310: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2812: in visit_create_table
+    % (table.description, column.name, ce.args[0])
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: in visit_create_table
+    create_column, first_pk=column.primary_key and not first_pk
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: in visit_create_column
+    text = self.get_column_specification(column, first_pk=first_pk)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6db720f0>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: (in table 'sitelicense_ip_address', column 'organization_no'): SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+_____________________ ERROR at setup of test_max_file_size _____________________
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbc7d68>
+create = <sqlalchemy.sql.ddl.CreateTable object at 0x7f0f6dbc7dd8>
+
+    def visit_create_table(self, create):
+        table = create.element
+        preparer = self.preparer
+    
+        text = "\nCREATE "
+        if table._prefixes:
+            text += " ".join(table._prefixes) + " "
+        text += "TABLE " + preparer.format_table(table) + " "
+    
+        create_table_suffix = self.create_table_suffix(table)
+        if create_table_suffix:
+            text += create_table_suffix + " "
+    
+        text += "("
+    
+        separator = "\n"
+    
+        # if only one primary key, specify it along with the column
+        first_pk = False
+        for create_column in create.columns:
+            column = create_column.element
+            try:
+                processed = self.process(
+>                   create_column, first_pk=column.primary_key and not first_pk
+                )
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbc7d68>
+obj = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6dbc7fd0>
+kwargs = {'first_pk': False}
+
+    def process(self, obj, **kwargs):
+>       return obj._compiler_dispatch(self, **kwargs)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6dbc7fd0>
+visitor = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbc7d68>
+kw = {'first_pk': False}
+meth = <bound method DDLCompiler.visit_create_column of <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbc7d68>>
+
+    def _compiler_dispatch(self, visitor, **kw):
+        try:
+            meth = getter(visitor)
+        except AttributeError:
+            raise exc.UnsupportedCompilationError(visitor, cls)
+        else:
+>           return meth(self, **kw)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbc7d68>
+create = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6dbc7fd0>
+first_pk = False
+
+    def visit_create_column(self, create, first_pk=False):
+        column = create.element
+    
+        if column.system:
+            return None
+    
+>       text = self.get_column_specification(column, first_pk=first_pk)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbc7d68>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'testapp'>
+
+    @pytest.yield_fixture()
+    def db(app):
+        """Setup database."""
+        if not database_exists(str(db_.engine.url)):
+            create_database(str(db_.engine.url))
+>       db_.create_all()
+
+/code/modules/invenio-previewer/tests/conftest.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:963: in create_all
+    self._execute_for_all_tables(app, bind, 'create_all')
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:955: in _execute_for_all_tables
+    op(bind=self.get_engine(app, bind), **extra)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/schema.py:4200: in create_all
+    ddl.SchemaGenerator, self, checkfirst=checkfirst, tables=tables
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2011: in _run_visitor
+    conn._run_visitor(visitorcallable, element, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1599: in _run_visitor
+    visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:779: in visit_metadata
+    _is_metadata_operation=True,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:824: in visit_table
+    include_foreign_key_constraints,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:72: in _execute_on_connection
+    return connection._execute_ddl(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1035: in _execute_ddl
+    else None,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:448: in compile
+    return self._compiler(dialect, bind=bind, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:29: in _compiler
+    return dialect.ddl_compiler(dialect, self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:310: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2812: in visit_create_table
+    % (table.description, column.name, ce.args[0])
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: in visit_create_table
+    create_column, first_pk=column.primary_key and not first_pk
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: in visit_create_column
+    text = self.get_column_specification(column, first_pk=first_pk)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbc7d68>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: (in table 'sitelicense_ip_address', column 'organization_no'): SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+_____________________ ERROR at setup of test_xml_extension _____________________
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d9e49b0>
+create = <sqlalchemy.sql.ddl.CreateTable object at 0x7f0f6d9e40b8>
+
+    def visit_create_table(self, create):
+        table = create.element
+        preparer = self.preparer
+    
+        text = "\nCREATE "
+        if table._prefixes:
+            text += " ".join(table._prefixes) + " "
+        text += "TABLE " + preparer.format_table(table) + " "
+    
+        create_table_suffix = self.create_table_suffix(table)
+        if create_table_suffix:
+            text += create_table_suffix + " "
+    
+        text += "("
+    
+        separator = "\n"
+    
+        # if only one primary key, specify it along with the column
+        first_pk = False
+        for create_column in create.columns:
+            column = create_column.element
+            try:
+                processed = self.process(
+>                   create_column, first_pk=column.primary_key and not first_pk
+                )
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d9e49b0>
+obj = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6d9e42e8>
+kwargs = {'first_pk': False}
+
+    def process(self, obj, **kwargs):
+>       return obj._compiler_dispatch(self, **kwargs)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6d9e42e8>
+visitor = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d9e49b0>
+kw = {'first_pk': False}
+meth = <bound method DDLCompiler.visit_create_column of <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d9e49b0>>
+
+    def _compiler_dispatch(self, visitor, **kw):
+        try:
+            meth = getter(visitor)
+        except AttributeError:
+            raise exc.UnsupportedCompilationError(visitor, cls)
+        else:
+>           return meth(self, **kw)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d9e49b0>
+create = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6d9e42e8>
+first_pk = False
+
+    def visit_create_column(self, create, first_pk=False):
+        column = create.element
+    
+        if column.system:
+            return None
+    
+>       text = self.get_column_specification(column, first_pk=first_pk)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d9e49b0>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'testapp'>
+
+    @pytest.yield_fixture()
+    def db(app):
+        """Setup database."""
+        if not database_exists(str(db_.engine.url)):
+            create_database(str(db_.engine.url))
+>       db_.create_all()
+
+/code/modules/invenio-previewer/tests/conftest.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:963: in create_all
+    self._execute_for_all_tables(app, bind, 'create_all')
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:955: in _execute_for_all_tables
+    op(bind=self.get_engine(app, bind), **extra)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/schema.py:4200: in create_all
+    ddl.SchemaGenerator, self, checkfirst=checkfirst, tables=tables
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2011: in _run_visitor
+    conn._run_visitor(visitorcallable, element, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1599: in _run_visitor
+    visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:779: in visit_metadata
+    _is_metadata_operation=True,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:824: in visit_table
+    include_foreign_key_constraints,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:72: in _execute_on_connection
+    return connection._execute_ddl(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1035: in _execute_ddl
+    else None,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:448: in compile
+    return self._compiler(dialect, bind=bind, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:29: in _compiler
+    return dialect.ddl_compiler(dialect, self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:310: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2812: in visit_create_table
+    % (table.description, column.name, ce.args[0])
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: in visit_create_table
+    create_column, first_pk=column.primary_key and not first_pk
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: in visit_create_column
+    text = self.get_column_specification(column, first_pk=first_pk)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d9e49b0>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: (in table 'sitelicense_ip_address', column 'organization_no'): SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+____________________ ERROR at setup of test_ipynb_extension ____________________
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d4f2cc0>
+create = <sqlalchemy.sql.ddl.CreateTable object at 0x7f0f6d4f2128>
+
+    def visit_create_table(self, create):
+        table = create.element
+        preparer = self.preparer
+    
+        text = "\nCREATE "
+        if table._prefixes:
+            text += " ".join(table._prefixes) + " "
+        text += "TABLE " + preparer.format_table(table) + " "
+    
+        create_table_suffix = self.create_table_suffix(table)
+        if create_table_suffix:
+            text += create_table_suffix + " "
+    
+        text += "("
+    
+        separator = "\n"
+    
+        # if only one primary key, specify it along with the column
+        first_pk = False
+        for create_column in create.columns:
+            column = create_column.element
+            try:
+                processed = self.process(
+>                   create_column, first_pk=column.primary_key and not first_pk
+                )
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d4f2cc0>
+obj = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6d4f2080>
+kwargs = {'first_pk': False}
+
+    def process(self, obj, **kwargs):
+>       return obj._compiler_dispatch(self, **kwargs)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6d4f2080>
+visitor = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d4f2cc0>
+kw = {'first_pk': False}
+meth = <bound method DDLCompiler.visit_create_column of <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d4f2cc0>>
+
+    def _compiler_dispatch(self, visitor, **kw):
+        try:
+            meth = getter(visitor)
+        except AttributeError:
+            raise exc.UnsupportedCompilationError(visitor, cls)
+        else:
+>           return meth(self, **kw)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d4f2cc0>
+create = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6d4f2080>
+first_pk = False
+
+    def visit_create_column(self, create, first_pk=False):
+        column = create.element
+    
+        if column.system:
+            return None
+    
+>       text = self.get_column_specification(column, first_pk=first_pk)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d4f2cc0>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'testapp'>
+
+    @pytest.yield_fixture()
+    def db(app):
+        """Setup database."""
+        if not database_exists(str(db_.engine.url)):
+            create_database(str(db_.engine.url))
+>       db_.create_all()
+
+/code/modules/invenio-previewer/tests/conftest.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:963: in create_all
+    self._execute_for_all_tables(app, bind, 'create_all')
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:955: in _execute_for_all_tables
+    op(bind=self.get_engine(app, bind), **extra)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/schema.py:4200: in create_all
+    ddl.SchemaGenerator, self, checkfirst=checkfirst, tables=tables
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2011: in _run_visitor
+    conn._run_visitor(visitorcallable, element, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1599: in _run_visitor
+    visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:779: in visit_metadata
+    _is_metadata_operation=True,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:824: in visit_table
+    include_foreign_key_constraints,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:72: in _execute_on_connection
+    return connection._execute_ddl(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1035: in _execute_ddl
+    else None,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:448: in compile
+    return self._compiler(dialect, bind=bind, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:29: in _compiler
+    return dialect.ddl_compiler(dialect, self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:310: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2812: in visit_create_table
+    % (table.description, column.name, ce.args[0])
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: in visit_create_table
+    create_column, first_pk=column.primary_key and not first_pk
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: in visit_create_column
+    text = self.get_column_specification(column, first_pk=first_pk)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6d4f2cc0>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: (in table 'sitelicense_ip_address', column 'organization_no'): SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+________________ ERROR at setup of test_simple_image_extension _________________
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbb0550>
+create = <sqlalchemy.sql.ddl.CreateTable object at 0x7f0f6dbb04a8>
+
+    def visit_create_table(self, create):
+        table = create.element
+        preparer = self.preparer
+    
+        text = "\nCREATE "
+        if table._prefixes:
+            text += " ".join(table._prefixes) + " "
+        text += "TABLE " + preparer.format_table(table) + " "
+    
+        create_table_suffix = self.create_table_suffix(table)
+        if create_table_suffix:
+            text += create_table_suffix + " "
+    
+        text += "("
+    
+        separator = "\n"
+    
+        # if only one primary key, specify it along with the column
+        first_pk = False
+        for create_column in create.columns:
+            column = create_column.element
+            try:
+                processed = self.process(
+>                   create_column, first_pk=column.primary_key and not first_pk
+                )
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbb0550>
+obj = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6dbb0438>
+kwargs = {'first_pk': False}
+
+    def process(self, obj, **kwargs):
+>       return obj._compiler_dispatch(self, **kwargs)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6dbb0438>
+visitor = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbb0550>
+kw = {'first_pk': False}
+meth = <bound method DDLCompiler.visit_create_column of <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbb0550>>
+
+    def _compiler_dispatch(self, visitor, **kw):
+        try:
+            meth = getter(visitor)
+        except AttributeError:
+            raise exc.UnsupportedCompilationError(visitor, cls)
+        else:
+>           return meth(self, **kw)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbb0550>
+create = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6dbb0438>
+first_pk = False
+
+    def visit_create_column(self, create, first_pk=False):
+        column = create.element
+    
+        if column.system:
+            return None
+    
+>       text = self.get_column_specification(column, first_pk=first_pk)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbb0550>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'testapp'>
+
+    @pytest.yield_fixture()
+    def db(app):
+        """Setup database."""
+        if not database_exists(str(db_.engine.url)):
+            create_database(str(db_.engine.url))
+>       db_.create_all()
+
+/code/modules/invenio-previewer/tests/conftest.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:963: in create_all
+    self._execute_for_all_tables(app, bind, 'create_all')
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:955: in _execute_for_all_tables
+    op(bind=self.get_engine(app, bind), **extra)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/schema.py:4200: in create_all
+    ddl.SchemaGenerator, self, checkfirst=checkfirst, tables=tables
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2011: in _run_visitor
+    conn._run_visitor(visitorcallable, element, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1599: in _run_visitor
+    visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:779: in visit_metadata
+    _is_metadata_operation=True,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:824: in visit_table
+    include_foreign_key_constraints,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:72: in _execute_on_connection
+    return connection._execute_ddl(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1035: in _execute_ddl
+    else None,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:448: in compile
+    return self._compiler(dialect, bind=bind, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:29: in _compiler
+    return dialect.ddl_compiler(dialect, self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:310: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2812: in visit_create_table
+    % (table.description, column.name, ce.args[0])
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: in visit_create_table
+    create_column, first_pk=column.primary_key and not first_pk
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: in visit_create_column
+    text = self.get_column_specification(column, first_pk=first_pk)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6dbb0550>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: (in table 'sitelicense_ip_address', column 'organization_no'): SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+__________________ ERROR at setup of test_default_file_reader __________________
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6db0c438>
+create = <sqlalchemy.sql.ddl.CreateTable object at 0x7f0f6db0c668>
+
+    def visit_create_table(self, create):
+        table = create.element
+        preparer = self.preparer
+    
+        text = "\nCREATE "
+        if table._prefixes:
+            text += " ".join(table._prefixes) + " "
+        text += "TABLE " + preparer.format_table(table) + " "
+    
+        create_table_suffix = self.create_table_suffix(table)
+        if create_table_suffix:
+            text += create_table_suffix + " "
+    
+        text += "("
+    
+        separator = "\n"
+    
+        # if only one primary key, specify it along with the column
+        first_pk = False
+        for create_column in create.columns:
+            column = create_column.element
+            try:
+                processed = self.process(
+>                   create_column, first_pk=column.primary_key and not first_pk
+                )
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6db0c438>
+obj = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6db0c160>
+kwargs = {'first_pk': False}
+
+    def process(self, obj, **kwargs):
+>       return obj._compiler_dispatch(self, **kwargs)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6db0c160>
+visitor = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6db0c438>
+kw = {'first_pk': False}
+meth = <bound method DDLCompiler.visit_create_column of <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6db0c438>>
+
+    def _compiler_dispatch(self, visitor, **kw):
+        try:
+            meth = getter(visitor)
+        except AttributeError:
+            raise exc.UnsupportedCompilationError(visitor, cls)
+        else:
+>           return meth(self, **kw)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6db0c438>
+create = <sqlalchemy.sql.ddl.CreateColumn object at 0x7f0f6db0c160>
+first_pk = False
+
+    def visit_create_column(self, create, first_pk=False):
+        column = create.element
+    
+        if column.system:
+            return None
+    
+>       text = self.get_column_specification(column, first_pk=first_pk)
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6db0c438>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'testapp'>
+
+    @pytest.yield_fixture()
+    def db(app):
+        """Setup database."""
+        if not database_exists(str(db_.engine.url)):
+            create_database(str(db_.engine.url))
+>       db_.create_all()
+
+/code/modules/invenio-previewer/tests/conftest.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:963: in create_all
+    self._execute_for_all_tables(app, bind, 'create_all')
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:955: in _execute_for_all_tables
+    op(bind=self.get_engine(app, bind), **extra)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/schema.py:4200: in create_all
+    ddl.SchemaGenerator, self, checkfirst=checkfirst, tables=tables
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:2011: in _run_visitor
+    conn._run_visitor(visitorcallable, element, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1599: in _run_visitor
+    visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:779: in visit_metadata
+    _is_metadata_operation=True,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:130: in traverse_single
+    return meth(obj, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:824: in visit_table
+    include_foreign_key_constraints,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:72: in _execute_on_connection
+    return connection._execute_ddl(self, multiparams, params)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1035: in _execute_ddl
+    else None,
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:448: in compile
+    return self._compiler(dialect, bind=bind, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/ddl.py:29: in _compiler
+    return dialect.ddl_compiler(dialect, self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:310: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2812: in visit_create_table
+    % (table.description, column.name, ce.args[0])
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2800: in visit_create_table
+    create_column, first_pk=column.primary_key and not first_pk
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:341: in process
+    return obj._compiler_dispatch(self, **kwargs)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/visitors.py:90: in _compiler_dispatch
+    return meth(self, **kw)
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/compiler.py:2832: in visit_create_column
+    text = self.get_column_specification(column, first_pk=first_pk)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x7f0f6db0c438>
+column = Column('organization_no', Integer(), table=<sitelicense_ip_address>, primary_key=True, nullable=False)
+kwargs = {'first_pk': False}, coltype = 'INTEGER'
+colspec = 'organization_no INTEGER NOT NULL', default = None
+
+    def get_column_specification(self, column, **kwargs):
+        coltype = self.dialect.type_compiler.process(
+            column.type, type_expression=column
+        )
+        colspec = self.preparer.format_column(column) + " " + coltype
+        default = self.get_column_default_string(column)
+        if default is not None:
+            if isinstance(column.server_default.arg, ColumnElement):
+                default = "(" + default + ")"
+            colspec += " DEFAULT " + default
+    
+        if not column.nullable:
+            colspec += " NOT NULL"
+    
+        if column.primary_key:
+            if (
+                column.autoincrement is True
+                and len(column.table.primary_key.columns) != 1
+            ):
+                raise exc.CompileError(
+>                   "SQLite does not support autoincrement for "
+                    "composite primary keys"
+                )
+E               sqlalchemy.exc.CompileError: (in table 'sitelicense_ip_address', column 'organization_no'): SQLite does not support autoincrement for composite primary keys
+
+/code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/sqlalchemy/dialects/sqlite/base.py:925: CompileError
+=============================== warnings summary ===============================
+tests/test_invenio_previewer.py::test_version
+  /code/modules/invenio-previewer/.tox/c1/src/pypdf2/PyPDF2/generic.py:348: DeprecationWarning: invalid escape sequence \c
+    b_("c") : b_("\c"),
+
+tests/test_invenio_previewer.py::test_version
+  /code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/pkg_resources/_vendor/packaging/specifiers.py:276: DeprecationWarning: Creating a LegacyVersion has been deprecated and will be removed in the next major release
+    DeprecationWarning,
+
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_invenio_previewer.py::test_version
+tests/test_views.py::test_previwable_test
+tests/test_views.py::test_previwable_test
+tests/test_views.py::test_previwable_test
+tests/test_views.py::test_previwable_test
+  /code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/pkg_resources/_vendor/packaging/version.py:114: DeprecationWarning: Creating a LegacyVersion has been deprecated and will be removed in the next major release
+    DeprecationWarning,
+
+tests/test_views.py::test_previwable_test
+  /code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/nbconvert/exporters/exporter_locator.py:28: DeprecationWarning: `nbconvert.exporters.exporter_locator` is deprecated in favor of `nbconvert.exporters.base` since nbconvert 5.0.
+    DeprecationWarning)
+
+tests/test_views.py::test_previwable_test
+  /code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/nbconvert/preprocessors/regexremove.py:41: DeprecationWarning: Traits should be given as instances, not types (for example, `Int()`, not `Int`). Passing types is deprecated in traitlets 4.1.
+    patterns = List(Unicode, default_value=[r'\Z']).tag(config=True)
+
+tests/test_views.py::test_previwable_test
+tests/test_views.py::test_previwable_test
+tests/test_views.py::test_previwable_test
+tests/test_views.py::test_previwable_test
+  /code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/traitlets/traitlets.py:2367: DeprecationWarning: Traits should be given as instances, not types (for example, `Int()`, not `Int`). Passing types is deprecated in traitlets 4.1.
+    super(Set, self).__init__(trait, default_value, minlen, maxlen, **kwargs)
+
+tests/test_views.py::test_previwable_test
+  /code/modules/invenio-previewer/.tox/c1/lib/python3.6/site-packages/wand/api.py:169: PendingDeprecationWarning: dist() and linux_distribution() functions are deprecated in Python 3.5
+    distname, _, __ = platform.linux_distribution()
+
+-- Docs: https://docs.pytest.org/en/latest/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                                                Stmts   Miss Branch BrPart  Cover
+-------------------------------------------------------------------------------------
+invenio_previewer/__init__.py                           6      0      0      0   100%
+invenio_previewer/_compat.py                            9      2      2      1    73%
+invenio_previewer/api.py                               87     64     24      0    24%
+invenio_previewer/bundles.py                           14      0      0      0   100%
+invenio_previewer/config.py                            15      0      0      0   100%
+invenio_previewer/ext.py                               83     30     30      3    60%
+invenio_previewer/extensions/__init__.py                2      0      0      0   100%
+invenio_previewer/extensions/csv_dthreejs.py           27     17      2      0    34%
+invenio_previewer/extensions/default.py                 8      2      0      0    75%
+invenio_previewer/extensions/iiif_presentation.py      34     23     14      0    23%
+invenio_previewer/extensions/ipynb.py                  20     12      0      0    40%
+invenio_previewer/extensions/json_prismjs.py           27     16      2      0    38%
+invenio_previewer/extensions/mistune.py                15      6      0      0    60%
+invenio_previewer/extensions/pdfjs.py                   9      2      0      0    78%
+invenio_previewer/extensions/simple_image.py           12      5      0      0    58%
+invenio_previewer/extensions/threejs.py                 8      2      0      0    75%
+invenio_previewer/extensions/xml_prismjs.py            27     17      2      0    34%
+invenio_previewer/extensions/zip.py                    57     43     22      0    18%
+invenio_previewer/proxies.py                            5      0      2      0   100%
+invenio_previewer/utils.py                             16      0      2      0   100%
+invenio_previewer/version.py                            3      0      0      0   100%
+invenio_previewer/views.py                             34     22      8      0    29%
+-------------------------------------------------------------------------------------
+TOTAL                                                 518    263    110      4    44%
+Coverage XML written to file coverage.xml
+
+============== 16 passed, 253 warnings, 12 error in 43.73 seconds ==============
+ERROR: InvocationError for command /code/modules/invenio-previewer/.tox/c1/bin/pytest --cov=invenio_previewer tests -v --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/invenio-previewer/.tox/c1/tmp (exited with code 1)
+___________________________________ summary ____________________________________
+ERROR:   c1: commands failed
