@@ -75,7 +75,6 @@ def test_admin_createuser(app, admin_view):
             data={'email': ''},
             follow_redirects=True
         )
-        print(res.data)
         assert b'This field is required.' in res.data
 
         # Reproduces the workflow described in #154

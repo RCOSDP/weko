@@ -105,7 +105,7 @@ class IndexJournalSettingView(BaseView):
     def get_journal_by_index_id(self, index_id=0):
         """Get journal by index id."""
         try:
-            result = None
+            journal = None
             if index_id > 0:
                 journal = Journals.get_journal_by_index_id(index_id)
 
@@ -145,7 +145,7 @@ class IndexJournalSettingView(BaseView):
                 current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE'])
 
             json_schema = json.load(open(schema_file))
-            if json_schema is None:
+            if json_schema == {}:
                 return '{}'
 
             properties = json_schema.get('properties')
@@ -189,23 +189,22 @@ class IndexJournalSettingView(BaseView):
                 current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'])
 
             schema_form = json.load(open(form_file))
-            if schema_form is None:
+            if schema_form == []:
                 return '["*"]'
 
-            if 'default' != cur_lang:
-                for elem in schema_form:
-                    if 'title_i18n' in elem:
-                        if cur_lang in elem['title_i18n']:
-                            if len(elem['title_i18n'][cur_lang]) > 0:
-                                elem['title'] = elem['title_i18n'][cur_lang]
-                    if 'items' in elem:
-                        for sub_elem in elem['items']:
-                            if 'title_i18n' in sub_elem:
-                                if cur_lang in sub_elem['title_i18n']:
-                                    if len(sub_elem['title_i18n']
-                                           [cur_lang]) > 0:
-                                        sub_elem['title'] = sub_elem['title_i18n'][
-                                            cur_lang]
+            for elem in schema_form:
+                if 'title_i18n' in elem:
+                    if cur_lang in elem['title_i18n']:
+                        if len(elem['title_i18n'][cur_lang]) > 0:
+                            elem['title'] = elem['title_i18n'][cur_lang]
+                if 'items' in elem:
+                    for sub_elem in elem['items']:
+                        if 'title_i18n' in sub_elem:
+                            if cur_lang in sub_elem['title_i18n']:
+                                if len(sub_elem['title_i18n']
+                                       [cur_lang]) > 0:
+                                    sub_elem['title'] = sub_elem['title_i18n'][
+                                        cur_lang]
         except BaseException:
             current_app.logger.error(
                 "Unexpected error: {}".format(sys.exc_info()))

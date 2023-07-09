@@ -1383,7 +1383,6 @@ class Indexes(object):
 
             return result.parent_state
         except Exception as se:
-            print(se)
             current_app.logger.debug(se)
             return False
 
@@ -1478,7 +1477,7 @@ class Indexes(object):
     @classmethod
     def have_children(cls, index_id):
         """Have children."""
-        return Index.get_children(index_id)
+        return Index.have_children(index_id)
 
     @classmethod
     def get_coverpage_state(cls, indexes: list):

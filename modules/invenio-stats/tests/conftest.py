@@ -59,13 +59,14 @@ from invenio_records.api import Record
 from invenio_search import InvenioSearch, current_search, current_search_client
 from werkzeug.local import LocalProxy
 
-from invenio_stats import InvenioStats
+from invenio_stats import InvenioStats, current_stats as _current_stats
 from invenio_stats.contrib.event_builders import build_file_unique_id, \
     build_record_unique_id, file_download_event_builder
 from invenio_stats.contrib.registrations import register_queries
 from invenio_stats.config import STATS_EVENTS, STATS_AGGREGATIONS, STATS_QUERIES
 from invenio_stats.processors import EventsIndexer
-from invenio_stats.tasks import aggregate_events
+from invenio_stats.models import StatsEvents, StatsAggregation, StatsBookmark
+from invenio_stats.tasks import aggregate_events, process_events
 from invenio_stats.views import blueprint
 
 from tests.helpers import json_data, create_record
@@ -260,7 +261,7 @@ def base_app(instance_path, mock_gethostbyaddr):
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
         # ),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest',
+        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
         SEARCH_ELASTIC_HOSTS=os.environ.get(
             'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -281,7 +282,7 @@ def base_app(instance_path, mock_gethostbyaddr):
         PIDRELATIONS_RELATION_TYPES=PIDRELATIONS_RELATION_TYPES,
         STATS_QUERIES=STATS_QUERIES,
         STATS_EVENTS=stats_events,
-        STATS_AGGREGATIONS={'file-download-agg': {}},
+        STATS_AGGREGATIONS=STATS_AGGREGATIONS,
         INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"})
     ))
     FlaskCeleryExt(app_)
@@ -502,6 +503,60 @@ def es(app):
     enabled events.
     """
     current_search_client.indices.delete(index='test-*')
+    # item_create event
+    with open("invenio_stats/contrib/item_create/v6/item-create-v1.json", "r") as f:
+        item_create_mapping = json.load(f)
+    item_create_mapping.update({'aliases':
+        {'{}events-stats-item-create'.format(app.config['SEARCH_INDEX_PREFIX']): {'is_write_index': True}}})
+    current_search_client.indices.create(
+        index='{}events-stats-item-create-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
+        body=item_create_mapping, ignore=[400, 404]
+    )
+    # item_create aggr
+    with open("invenio_stats/contrib/aggregations/aggr_item_create/v6/aggr-item-create-v1.json", "r") as f:
+        aggr_item_create_mapping = json.load(f)
+    aggr_item_create_mapping.update({'aliases':
+        {'{}stats-item-create'.format(app.config['SEARCH_INDEX_PREFIX']): {'is_write_index': True}}})
+    current_search_client.indices.create(
+        index='{}stats-item-create-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
+        body=aggr_item_create_mapping, ignore=[400, 404]
+    )
+    # top_view event
+    with open("invenio_stats/contrib/top_view/v6/top-view-v1.json", "r") as f:
+        top_view_mapping = json.load(f)
+    top_view_mapping.update({'aliases':
+        {'{}events-stats-top-view'.format(app.config['SEARCH_INDEX_PREFIX']): {'is_write_index': True}}})
+    current_search_client.indices.create(
+        index='{}events-stats-top-view-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
+        body=top_view_mapping, ignore=[400, 404]
+    )
+    # top_view aggr
+    with open("invenio_stats/contrib/aggregations/aggr_top_view/v6/aggr-top-view-v1.json", "r") as f:
+        aggr_top_view_mapping = json.load(f)
+    aggr_top_view_mapping.update({'aliases':
+        {'{}stats-top-view'.format(app.config['SEARCH_INDEX_PREFIX']): {'is_write_index': True}}})
+    current_search_client.indices.create(
+        index='{}stats-top-view-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
+        body=aggr_top_view_mapping, ignore=[400, 404]
+    )
+    # search event
+    with open("invenio_stats/contrib/search/v6/search-v1.json", "r") as f:
+        search_mapping = json.load(f)
+    search_mapping.update({'aliases':
+        {'{}events-stats-search'.format(app.config['SEARCH_INDEX_PREFIX']): {'is_write_index': True}}})
+    current_search_client.indices.create(
+        index='{}events-stats-search-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
+        body=search_mapping, ignore=[400, 404]
+    )
+    # search aggr
+    with open("invenio_stats/contrib/aggregations/aggr_search/v6/aggr-search-v1.json", "r") as f:
+        aggr_search_mapping = json.load(f)
+    aggr_search_mapping.update({'aliases':
+        {'{}stats-search'.format(app.config['SEARCH_INDEX_PREFIX']): {'is_write_index': True}}})
+    current_search_client.indices.create(
+        index='{}stats-search-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
+        body=aggr_search_mapping, ignore=[400, 404]
+    )
     # file_download event
     with open("invenio_stats/contrib/file_download/v6/file-download-v1.json", "r") as f:
         file_download_mapping = json.load(f)
@@ -519,6 +574,24 @@ def es(app):
     current_search_client.indices.create(
         index='{}stats-file-download-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
         body=aggr_file_download_mapping, ignore=[400, 404]
+    )
+    # file_preview event
+    with open("invenio_stats/contrib/file_preview/v6/file-preview-v1.json", "r") as f:
+        file_preview_mapping = json.load(f)
+    file_preview_mapping.update({'aliases':
+        {'{}events-stats-file-preview'.format(app.config['SEARCH_INDEX_PREFIX']): {'is_write_index': True}}})
+    current_search_client.indices.create(
+        index='{}events-stats-file-preview-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
+        body=file_preview_mapping, ignore=[400, 404]
+    )
+    # file_preview aggr
+    with open("invenio_stats/contrib/aggregations/aggr_file_preview/v6/aggr-file-preview-v1.json", "r") as f:
+        aggr_file_preview_mapping = json.load(f)
+    aggr_file_preview_mapping.update({'aliases':
+        {'{}stats-file-preview'.format(app.config['SEARCH_INDEX_PREFIX']): {'is_write_index': True}}})
+    current_search_client.indices.create(
+        index='{}stats-file-preview-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
+        body=aggr_file_preview_mapping, ignore=[400, 404]
     )
     # record_view event
     with open("invenio_stats/contrib/record_view/v6/record-view-v1.json", "r") as f:
@@ -740,9 +813,9 @@ def mock_es_execute():
     return _dummy_response
 
 
-def generate_events(app, file_number=5, event_number=100, robot_event_number=0,
-                    start_date=datetime.date(2021, 1, 1),
-                    end_date=datetime.date(2021, 1, 7)):
+def generate_file_events(app, event_type, file_number=5, event_number=100, robot_event_number=0,
+                    start_date=datetime.date(2022, 10, 1),
+                    end_date=datetime.date(2022, 10, 7)):
     """Queued events for processing tests."""
     current_queues.declare()
 
@@ -754,7 +827,9 @@ def generate_events(app, file_number=5, event_number=100, robot_event_number=0,
 
     def generator_list():
         unique_ts = _unique_ts_gen()
+        res = []
         for file_idx in range(file_number):
+            user_data = user_role[file_idx % 3]
             for entry_date in date_range(start_date, end_date):
                 file_id = 'F000000000000000000000000000000{}'.\
                     format(file_idx + 1)
@@ -771,49 +846,113 @@ def generate_events(app, file_number=5, event_number=100, robot_event_number=0,
                         isoformat(),
                         bucket_id=bucket_id,
                         file_id=file_id,
+                        root_file_id=file_id,
                         file_key='test.pdf',
                         size=9000,
+                        accessrole='open_access',
                         visitor_id=100,
                         is_robot=is_robot,
+                        item_id='1',
+                        index_list='test_index',
+                        userrole=user_data["role"],
+                        site_license_flag=False,
+                        is_restricted=False,
+                        user_goup_names="",
+                        cur_user_id=user_data["id"],
+                        item_title='test_item',
                         remote_addr="test_remote_addr",
+                        hostname='test_hostname',
                         unique_session_id="xxxxxxx"
                     )
 
                 for event_idx in range(event_number):
-                    yield build_event()
+                    res.append(build_event())
                 for event_idx in range(robot_event_number):
-                    yield build_event(True)
+                    res.append(build_event(True))
+        return res
 
-    mock_queue = Mock()
-    mock_queue.consume.return_value = generator_list()
-    mock_queue.routing_key = 'stats-file-download'
+    user_role = [
+        {
+            "id": 2,
+            "role": "System Administrator"
+        },
+        {
+            "id": 7,
+            "role": ""
+        },
+        {
+            "id": 0,
+            "role": "guest"
+        }
+    ]
+    events = generator_list()
+    for e in events:
+        e = build_file_unique_id(e)
 
-    EventsIndexer(
-        mock_queue,
-        preprocessors=[
-            build_file_unique_id
-        ],
-        double_click_window=0
-    ).run()
-    current_search_client.indices.refresh(index='test-*')
+    # register into elastisearch.
+    event_type = 'file-download'
+    _current_stats.publish(event_type, events)
+    process_events([event_type])
 
 
 @pytest.yield_fixture()
-def indexed_events(app, es, mock_user_ctx, request):
+def indexed_file_download_events(app, es, mock_user_ctx, request):
     """Parametrized pre indexed sample events."""
-    generate_events(app=app, **request.param)
+    generate_file_events(app=app, event_type="file-download", **request.param)
+    current_search_client.indices.flush(index='test-*')
     yield
 
 
 @pytest.yield_fixture()
-def aggregated_events(app, es, mock_user_ctx, request):
+def aggregated_file_download_events(app, es, mock_user_ctx, request):
     """Parametrized pre indexed sample events."""
     for t in current_search.put_templates(ignore=[400]):
         pass
-    generate_events(app=app, **request.param)
-    aggregate_events(['file-download-agg'])
+    generate_file_events(app=app, event_type="file-download", **request.param)
+    aggregate_events(
+        ['file-download-agg'],
+        start_date='2022-10-01',
+        end_date='2022-10-30',
+        update_bookmark=False,
+        manual=True)
     current_search_client.indices.flush(index='test-*')
     yield
+
+@pytest.yield_fixture()
+def indexed_file_preview_events(app, es, mock_user_ctx, request):
+    """Parametrized pre indexed sample events."""
+    generate_file_events(app=app, event_type="file-preview", **request.param)
+    yield
+
+
+@pytest.yield_fixture()
+def aggregated_file_preview_events(app, es, mock_user_ctx, request):
+    """Parametrized pre indexed sample events."""
+    for t in current_search.put_templates(ignore=[400]):
+        pass
+    generate_file_events(app=app, event_type="file-preview", **request.param)
+    aggregate_events(['file-preview-agg'])
+    current_search_client.indices.flush(index='test-*')
+    yield
+
+
+@pytest.yield_fixture()
+def stats_events_for_db(app, db):
+    def base_event(id, event_type):
+        return StatsEvents(
+            source_id=str(id),
+            index='test-events-stats-{}'.format(event_type),
+            type='stats-{}'.format(event_type),
+            source=json.dumps({'test': 'test'}),
+            date=datetime.datetime(2023, 1, 1, 1, 0, 0)
+        )
+    
+    try:
+        with db.session.begin_nested():
+            db.session.add(base_event(1, 'top-view'))
+        db.session.commit()
+    except:
+        db.session.rollback()
 
 
 @pytest.fixture()

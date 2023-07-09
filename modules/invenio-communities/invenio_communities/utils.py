@@ -218,7 +218,7 @@ def send_community_request_email(increq):
     msg = Message(
         msg_title,
         sender=sender,
-        recipients=[increq.community.owner.email, ],
+        recipients=[increq.community.owner_user.email, ],
         body=msg_body
     )
 

@@ -207,7 +207,6 @@ def check_import_data(file_name: str, file_content: str):
         file_format = file_name.split('.')[-1].lower()
         file_data = unpackage_and_check_import_file(
             file_format, file_name, temp_file.name, flat_mapping_ids)
-        print(file_data)
         result['list_import_data'] = validate_import_data(
             file_format, file_data, flat_mapping_ids, flat_mapping_all)
     except Exception as ex:
@@ -277,9 +276,7 @@ def unpackage_and_check_import_file(file_format, file_name, temp_file, mapping_i
             for num, data_row in enumerate(file_reader, start=1):
                 if num == 1:
                     header = data_row
-                    print("header:{}".format(header))
                     header[0] = header[0].replace('#', '', 1)
-                    print("header:{}".format(header))
                     # remove BOM
                     # header[0] = header[0].replace('\ufeff', '')
                     duplication_item_ids = \
@@ -351,7 +348,6 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping):
     list_import_id = []
     existed_authors_id, existed_external_authors_id = \
         WekoAuthors.get_author_for_validation()
-    print("es:{}".format(existed_external_authors_id))
     for item in file_data:
         errors = []
         warnings = []
@@ -509,8 +505,6 @@ def set_record_status(file_format, list_existed_author_id, item, errors, warning
     item['status'] = 'new'
     pk_id = item.get('pk_id')
     err_msg = _("Specified WEKO ID does not exist.")
-    print("pk:{}".format(pk_id))
-    print("ex:{}".format(list_existed_author_id))
     if item.get('is_deleted', '') == 'D':
         item['status'] = 'deleted'
         if not pk_id or list_existed_author_id.get(pk_id) is None:

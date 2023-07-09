@@ -30,12 +30,15 @@ from __future__ import absolute_import, print_function
 import os
 import shutil
 import tempfile
+import json
 from os.path import dirname, exists, join
 import pytest
 from flask import Flask
 from flask_babelex import Babel
 from flask_celeryext import FlaskCeleryExt
+from flask.cli import ScriptInfo
 from flask_menu import Menu
+from invenio_i18n import InvenioI18N
 from invenio_access import InvenioAccess
 from invenio_accounts import InvenioAccounts
 from invenio_admin import InvenioAdmin
@@ -44,8 +47,12 @@ from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import Role, User
 from invenio_accounts.testutils import create_test_user
 from invenio_assets import InvenioAssets
+from invenio_cache import InvenioCache
 from invenio_db import InvenioDB
 from invenio_db import db as db_
+from invenio_deposit import InvenioDeposit
+from invenio_files_rest import InvenioFilesREST
+from invenio_files_rest.models import Location
 from invenio_indexer import InvenioIndexer
 from invenio_mail import InvenioMail
 from invenio_oaiserver import InvenioOAIServer
@@ -55,6 +62,12 @@ from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 from weko_index_tree.models import Index
 
+import copy
+import uuid
+from invenio_pidstore.models import PersistentIdentifier,PIDStatus,RecordIdentifier
+from invenio_pidrelations.models import PIDRelation
+from weko_records.api import ItemsMetadata
+
 from invenio_communities import InvenioCommunities
 from invenio_communities.models import Community
 from invenio_communities.views.api import blueprint as api_blueprint
@@ -62,11 +75,16 @@ from invenio_communities.views.ui import blueprint as ui_blueprint
 
 
 @pytest.yield_fixture()
-def app(request):
+def instance_path():
+    path = tempfile.mkdtemp()
+    yield path
+    shutil.rmtree(path)
+    
+@pytest.fixture()
+def base_app(instance_path, request):
     """Flask application fixture."""
-    instance_path = tempfile.mkdtemp()
-    app = Flask('testapp', instance_path=instance_path,static_folder=join(instance_path, "static"),)
-    app.config.update(
+    app_ = Flask('testapp', instance_path=instance_path,static_folder=join(instance_path, "static"),)
+    app_.config.update(
         TESTING=True,
         CELERY_ALWAYS_EAGER=True,
         CELERY_CACHE_BACKEND="memory",
@@ -78,7 +96,7 @@ def app(request):
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI',
         #     'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest',
+        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
         SEARCH_ELASTIC_HOSTS=os.environ.get(
             'SEARCH_ELASTIC_HOSTS', None),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -88,45 +106,50 @@ def app(request):
         SERVER_NAME='test_server',
         THEME_SITEURL='https://inveniosoftware.org',
         MAIL_SUPPRESS_SEND=True,
+        SEARCH_INDEX_PREFIX="test-",
+        INDEXER_DEFAULT_DOCTYPE='item-v1.0.0',
+        INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
+        SEARCH_UI_SEARCH_INDEX="{}-weko".format("test"),
     )
-    FlaskCeleryExt(app)
-    Menu(app)
-    Babel(app)
-    InvenioDB(app)
-    InvenioAccounts(app)
-    InvenioAssets(app)
-    InvenioAccess(app)
-    InvenioAdmin(app)
-    InvenioSearch(app)
-    InvenioRecords(app)
-    InvenioIndexer(app)
-    InvenioOAIServer(app)
-    InvenioCommunities(app)
-    InvenioMail(app)
+    FlaskCeleryExt(app_)
+    Menu(app_)
+    Babel(app_)
+    InvenioI18N(app_)
+    InvenioDB(app_)
+    InvenioDeposit(app_)
+    InvenioAccounts(app_)
+    InvenioAssets(app_)
+    InvenioAccess(app_)
+    #InvenioAdmin(app_)
+    InvenioCache(app_)
+    InvenioSearch(app_)
+    InvenioRecords(app_)
+    InvenioIndexer(app_)
+    InvenioOAIServer(app_)
+    InvenioFilesREST(app_)
+    InvenioCommunities(app_)
+    InvenioMail(app_)
 
-    app.register_blueprint(ui_blueprint)
-    app.register_blueprint(api_blueprint, url_prefix='/api/communities')
+    app_.register_blueprint(ui_blueprint)
+    app_.register_blueprint(api_blueprint, url_prefix='/api/communities')
 
-    with app.app_context():
-        yield app
+    return app_
 
-    shutil.rmtree(instance_path)
-
-
+@pytest.yield_fixture()
+def app(base_app):
+    with base_app.app_context():
+        yield base_app
+        
+        
 @pytest.yield_fixture()
 def db(app):
     """Database fixture."""
-    if not database_exists(str(db_.engine.url)) and \
-            app.config['SQLALCHEMY_DATABASE_URI'] != 'sqlite://':
-        create_database(db_.engine.url)
+    if not database_exists(str(db_.engine.url)):
+        create_database(str(db_.engine.url))
     db_.create_all()
-
     yield db_
-
     db_.session.remove()
-    db_.session.close()
-    if str(db_.engine.url) != 'sqlite://':
-        drop_database(str(db_.engine.url))
+    db_.drop_all()
 
 
 @pytest.fixture()
@@ -264,16 +287,27 @@ def users(app, db):
     ]
 
 
+@pytest.fixture()
+def location(app,db):
+    """Create default location."""
+    tmppath = tempfile.mkdtemp()
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name='local', uri=tmppath, default=True)
+        db.session.add(loc)
+    db.session.commit()
+    return location
 
 @pytest.fixture()
-def communities(app, db, user):
+def communities(app, db, users):
     """Create some example communities."""
-    user1 = db_.session.merge(user)
-    ds = app.extensions['invenio-accounts'].datastore
-    r = ds.create_role(name='superuser', description='1234')
-    ds.add_role_to_user(user1, r)
-    ds.commit()
-
+    #user1 = db_.session.merge(user)
+    #ds = app.extensions['invenio-accounts'].datastore
+    #r = ds.create_role(name='superuser', description='1234')
+    #ds.add_role_to_user(user1, r)
+    #ds.commit()
+    user1 = users[2]["obj"]
+    r = Role.query.filter_by(name="System Administrator").first()
     index = Index()
     db.session.add(index)
     db.session.commit()
@@ -289,6 +323,10 @@ def communities(app, db, user):
                              root_node_id=index.id)
     return comm0, comm1, comm2
 
+@pytest.fixture
+def script_info(app):
+    """Get ScriptInfo object for testing CLI."""
+    return ScriptInfo(create_app=lambda info: app)
 
 @pytest.yield_fixture()
 def disable_request_email(app):
@@ -332,3 +370,56 @@ def communities_for_filtering(app, db, user):
 def client(app):
     with app.test_client() as client:
         yield client
+
+def create_record(db, record_data, item_data):
+    from weko_deposit.api import WekoDeposit, WekoRecord
+    with db.session.begin_nested():
+        record_data = copy.deepcopy(record_data)
+        item_data = copy.deepcopy(item_data)
+        rec_uuid = uuid.uuid4()
+        recid = PersistentIdentifier.create('recid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        depid = PersistentIdentifier.create('depid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        rel = PIDRelation.create(recid,depid,3)
+        db.session.add(rel)
+        parent=None
+        doi = None
+        
+        if '.' in record_data["recid"]:
+            parent = PersistentIdentifier.get("recid",int(float(record_data["recid"])))
+            recid_p = PIDRelation.get_child_relations(parent).one_or_none()
+            PIDRelation.create(recid_p.parent, recid,2)
+        else:
+            parent = PersistentIdentifier.create('parent', "parent:{}".format(record_data["recid"]),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            rel = PIDRelation.create(parent, recid,2,0)
+            db.session.add(rel)
+            RecordIdentifier.next()
+        if record_data.get("_oai").get("id"):
+            oaiid = PersistentIdentifier.create('oai', record_data["_oai"]["id"],pid_provider="oai",object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            hvstid = PersistentIdentifier.create('hvstid', record_data["_oai"]["id"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        if "item_1612345678910" in record_data:
+            for i in range(len(record_data["item_1612345678910"]["attribute_value_mlt"])):
+                data = record_data["item_1612345678910"]["attribute_value_mlt"][i]
+                PersistentIdentifier.create(data.get("subitem_16345678901234").lower(),data.get("subitem_1623456789123"),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        record = WekoRecord.create(record_data, id_=rec_uuid)
+        item = ItemsMetadata.create(item_data, id_=rec_uuid)
+        deposit = WekoDeposit(record, record.model)
+
+        #deposit.commit()
+        
+    return recid, depid, record, item, parent, doi, deposit
+
+@pytest.fixture()
+def db_records(app,db,mocker):
+    mocker.patch("invenio_records.api.before_record_insert.send")
+    mocker.patch("invenio_records.api.after_record_insert.send")
+    record_datas = list()
+    with open("tests/data/test_record/record_metadata.json") as f:
+        record_datas = json.load(f)
+    
+    item_datas = list()
+    with open("tests/data/test_record/item_metadata.json") as f:
+        item_datas = json.load(f)
+        
+    recid, depid, record, item, parent, doi, deposit = create_record(db,record_datas[0],item_datas[0])
+        
+    return recid, depid, record, item, parent, doi, deposit

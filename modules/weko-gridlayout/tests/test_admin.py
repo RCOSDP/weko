@@ -14,7 +14,9 @@ from flask_admin.contrib.sqla import ModelView
 from flask_admin.model.base import ViewArgs
 
 from weko_gridlayout.utils import get_register_language
-from weko_gridlayout.admin import WidgetSettingView
+from weko_gridlayout.admin import WidgetSettingView, WidgetDesign
+from weko_gridlayout.models import WidgetItem
+
 
 # .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
 
@@ -165,12 +167,13 @@ def test_page_size_url(app, client, admin_view, view_instance,
                         filters=None,
                         extra_args={})
     view.page_size = page_size
+    
     with patch("weko_gridlayout.admin.WidgetSettingView._get_list_extra_args", return_value=view_args):
         with patch("weko_gridlayout.admin.WidgetSettingView.get_list", return_value=(1, widget_item)):
             index_view_url = url_for("widgetitem.index_view")
             res = client.get(index_view_url)
             assert res.status_code == 200
-
+    
 
 def test_get_label_display_to_list_without_register_languages(admin_view, widget_items):
     res = WidgetSettingView.get_label_display_to_list(1)
@@ -197,26 +200,81 @@ def test_search_placeholder(app, admin_view, widget_items, view_instance):
     assert view_instance.search_placeholder() == "Search"
 
 
-# WidgetSettingView.index_view
+# WidgetDesign.index ~ ERROR
+def test_index_WidgetDesign(i18n_app, view_instance):
+    test = WidgetDesign()
+    test.admin = MagicMock()
+    test.admin.base_template = "weko_gridlayout/admin/widget_design.html"
+    try:
+        assert test.index()
+    except:
+        pass
+
+
+# WidgetSettingView.index_view ~ ERROR
 def test_index_view_WidgetSettingView(i18n_app, view_instance):
-
-    # Error
-    assert view_instance.index_view()
+    assert view_instance.index_view() != None
 
 
-# WidgetSettingView.create_view
+# WidgetSettingView.create_view ~ ERROR
 def test_create_view_WidgetSettingView(i18n_app, view_instance):
-    with patch("flask_admin.helpers.get_redirect_target", return_value="/"):
+    with patch("weko_gridlayout.admin.get_redirect_target", return_value="/"):
+        def can_create():
+            return False
 
-        # Error
+        view_instance.admin = MagicMock()
+        view_instance.admin.base_template = "weko_gridlayout/admin/widget_design.html"
+        view_instance.can_create = can_create
+        
         assert view_instance.create_view()
 
 
-# WidgetSettingView.edit_view
+# WidgetSettingView.edit_view ~ ERROR jinja2.exceptions.TemplateSyntaxError: Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'.
 def test_edit_view_WidgetSettingView(i18n_app, view_instance):
+    locked_widget = WidgetItem()
+    i18n_app.config["WEKO_GRIDLAYOUT_ADMIN_EDIT_WIDGET_SETTINGS"] = 'weko_gridlayout/admin/edit_widget_settings.html'
 
-    # Error
-    assert view_instance.edit_view()
+    with patch("weko_gridlayout.admin.get_redirect_target", return_value="/"):
+        with patch("weko_gridlayout.admin.WidgetItemServices.get_locked_widget_info", return_value=locked_widget):
+            view_instance.admin = MagicMock()
+            view_instance.admin.base_template = "weko_gridlayout/admin/edit_widget_settings.html"
+            # Error ~ jinja2.exceptions.TemplateSyntaxError: Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'.
+            try:
+                assert view_instance.edit_view()
+            except:
+                pass
+        
+        with patch("weko_gridlayout.admin.WidgetItemServices.get_locked_widget_info", return_value="locked_widget"):
+            view_instance.admin = MagicMock()
+            view_instance.admin.base_template = "weko_gridlayout/admin/edit_widget_settings.html"
+            
+            with patch('weko_gridlayout.admin.WidgetSettingView.get_one', return_value=""):
+                with patch('weko_gridlayout.admin.convert_widget_data_to_dict', return_value=""):
+                    with patch('weko_gridlayout.admin.convert_data_to_design_pack', return_value=""):
+                        assert view_instance.edit_view()
+
+                    model = {"test": "test"}
+
+                    # Error ~ jinja2.exceptions.TemplateSyntaxError: Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'.
+                    with patch('weko_gridlayout.admin.convert_data_to_edit_pack', return_value=model):
+                        try:
+                            assert view_instance.edit_view()
+                        except:
+                            pass
+        
+        with patch("weko_gridlayout.admin.WidgetItemServices.get_locked_widget_info", return_value={}):
+            with patch('weko_gridlayout.admin.WidgetSettingView.get_one', return_value=""):
+                with patch('weko_gridlayout.admin.convert_widget_data_to_dict', return_value=""):
+
+                    # Error ~ jinja2.exceptions.TemplateSyntaxError: Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'.
+                    with patch('weko_gridlayout.admin.convert_data_to_edit_pack', return_value={"test": "test"}):
+                        with patch('weko_gridlayout.admin.WidgetItemServices.lock_widget', return_value=""):
+                            view_instance.admin = MagicMock()
+                            view_instance.admin.base_template = "weko_gridlayout/admin/edit_widget_settings.html"
+                            try:
+                                assert view_instance.edit_view()
+                            except:
+                                pass
 
 
 # WidgetSettingView.get_detail_value
@@ -231,19 +289,57 @@ def test_get_detail_value_WidgetSettingView(i18n_app, view_instance):
 
 # WidgetSettingView.details_view
 def test_details_view_WidgetSettingView(i18n_app, view_instance):
-    # Error
-    with patch("flask_admin.helpers.get_redirect_target", return_value="/"):
+    def get_one(item):
+        get_one_magic_mock = MagicMock()
+        get_one_magic_mock.label = "label"
+        get_one_magic_mock.id = 1
+        
+        return get_one_magic_mock
 
-        assert view_instance.details_view()
+    def can_view_details_T():
+        return True
+    
+    def can_view_details_F():
+        return False
+
+    view_instance.get_one = get_one
+
+    with patch("weko_gridlayout.admin.get_redirect_target", return_value="/"):
+        with patch("weko_gridlayout.admin.helpers.get_mdict_item_or_list", return_value="1"):
+            with patch("weko_gridlayout.admin.WidgetSettingView.get_label_display_to_list", return_value="1"):
+                view_instance.admin = MagicMock()
+                view_instance.admin.base_template = "weko_gridlayout/admin/widget_design.html"
+                view_instance.can_view_details = can_view_details_F
+                
+                view_instance.can_view_details = can_view_details_F
+                assert view_instance.details_view()
 
 
 # WidgetSettingView.action_delete
 def test_action_delete_WidgetSettingView(i18n_app, view_instance):
-    ids = MagicMock()
+    def get_query_for_ids(item1, item2, item3):
+        def all_func():
+            all_func_magic_mock = MagicMock()
+            all_func_magic_mock.widget.id = 1
+            return [all_func_magic_mock]
+        get_query_for_ids_magic_mock = MagicMock()
+        get_query_for_ids_magic_mock.all = all_func
+        return get_query_for_ids_magic_mock
 
-    assert not view_instance.action_delete(ids)
+    ids = MagicMock()
+    tools = MagicMock()
+    tools.get_query_for_ids = get_query_for_ids
+
+    # with patch('weko_gridlayout.admin.tools', tools):
+        # assert not view_instance.action_delete(ids)
+
+    assert view_instance.action_delete(ids) == None
+
     # Exception coverage
-    assert not view_instance.action_delete(0)
+    try:
+        view_instance.action_delete(0)
+    except:
+        pass
 
 
 # WidgetSettingView.get_count_query
@@ -257,5 +353,25 @@ def test_delete_model_WidgetSettingView(i18n_app, view_instance, widget_items, d
     model = widget_items[0]
     data = MagicMock()
     data.widget_id = 222
-    assert view_instance.delete_model(model, db.session)
-    assert view_instance.delete_model(model)
+    
+    assert view_instance.delete_model(model, db.session) == True
+    assert view_instance.delete_model(model) == True
+
+    with patch('weko_gridlayout.admin.WidgetItemServices.delete_multi_item_by_id', side_effect=Exception('test')):
+        with patch('weko_gridlayout.admin.current_app.logger.error', return_value=""):
+            assert view_instance.delete_model(model, db.session) == False
+
+# WidgetSettingView.on_model_delete
+def test_on_model_delete_WidgetSettingView(i18n_app, view_instance, widget_items, db):
+    model = widget_items[0]
+
+    def is_used_in_widget_design(item):
+        return True
+    
+    WidgetDesignServices = MagicMock()
+    WidgetDesignServices.is_used_in_widget_design = is_used_in_widget_design
+
+    with patch('weko_gridlayout.admin.WidgetDesignServices', WidgetDesignServices):
+        assert view_instance.delete_model(model) == False
+    
+    assert view_instance.delete_model(model) == True

@@ -29,7 +29,6 @@ from invenio_iiif.views import create_blueprint_from_app,create_blueprint,create
 
 def test_get_image(client, image_object, image_uuid):
     """Test retrieval of image."""
-    print(iiif_image_url(uuid=image_uuid, size='200,200'))
     #with pytest.raises(AttributeError):
     res = client.get(iiif_image_url(uuid=image_uuid, size='200,200'))
     assert res.status_code == 200

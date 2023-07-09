@@ -88,7 +88,6 @@ from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_mapping
-
 from weko_redis.redis import RedisConnection
 from weko_schema_ui.models import PublishStatus
 from weko_workflow.api import Flow, WorkActivity
@@ -221,6 +220,7 @@ def delete_records(index_tree_id, ignore_items):
     hits = get_tree_items(index_tree_id)
     result = []
 
+    from weko_records_ui.utils import soft_delete
     for hit in hits:
         recid = hit.get("_id")
         record = Record.get_record(recid)
@@ -3030,8 +3030,6 @@ def handle_fill_system_item(list_record):
                 warnings.append(_('The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'))
             
             if is_change_identifier:
-                current_app.logger.error("cnri:{}".format(item_cnri))
-                current_app.logger.error("cnrWEKO_HANDLE_ALLOW_REGISTER_CNRIi:{}".format(current_app.config["WEKO_HANDLE_ALLOW_REGISTER_CNRI"]))
                 if not (current_app.config["WEKO_HANDLE_ALLOW_REGISTER_CNRI"] and item_cnri):
                     if item_doi is "":
                         errors.append(_('Please specify DOI prefix/suffix.'))
@@ -3283,6 +3281,7 @@ def export_all(root_url, user_id, data):
             item_datas["recids"],
             item_datas["data"],
             permissions,
+            export_path
         )
         keys, labels, is_systems, options = headers
         item_datas["recids"].sort()

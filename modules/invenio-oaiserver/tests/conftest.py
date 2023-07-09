@@ -76,7 +76,7 @@ def base_app(instance_path):
         SECRET_KEY='CHANGE_ME',
         # SQLALCHEMY_DATABASE_URI=os.environ.get('SQLALCHEMY_DATABASE_URI',
         #                                        'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest',
+        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SERVER_NAME='app',
         OAISERVER_ID_PREFIX='oai:inveniosoftware.org:recid/',

@@ -211,7 +211,7 @@ def test_events_indexer_preprocessors(app, mock_event_queue):
             _source=event,
         ))
 
-    assert received_docs == []
+    assert len(received_docs) == 100
 
 
 def test_events_indexer_id_windowing(app, mock_event_queue):
@@ -240,9 +240,9 @@ def test_events_indexer_id_windowing(app, mock_event_queue):
     with patch('elasticsearch.helpers.bulk', side_effect=bulk):
         indexer.run()
 
-    assert len(received_docs) == 0
+    assert len(received_docs) == 5
     ids = set(doc['_id'] for doc in received_docs)
-    assert len(ids) == 0
+    assert len(ids) == 3
 
 
 def test_double_clicks(app, mock_event_queue, es):
@@ -260,7 +260,7 @@ def test_double_clicks(app, mock_event_queue, es):
     res = es.search(
         index='test-events-stats-file-download-0001',
     )
-    assert res['hits']['total'] == 0
+    assert res['hits']['total'] == 2
 
 
 @pytest.mark.skip('This test dont ever finish')

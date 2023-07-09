@@ -28,7 +28,9 @@ from click.testing import CliRunner
 
 from invenio_oaiharvester.cli import harvest
 
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_cli.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_cli.py::test_cli_harvest_idents -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 @responses.activate
 def test_cli_harvest_idents(script_info, sample_record_xml, tmpdir):
     """Test create user CLI."""
@@ -45,6 +47,18 @@ def test_cli_harvest_idents(script_info, sample_record_xml, tmpdir):
         ['-u', 'http://export.arxiv.org/oai2',
          '-m', 'arXiv',
          '-i', 'oai:arXiv.org:1507.03011'],
+        obj=script_info
+    )
+    assert result.exit_code == 0
+
+    # not send signal, quiet is true
+    result = runner.invoke(
+        harvest,
+        ['-u', 'http://export.arxiv.org/oai2',
+         '-m', 'arXiv',
+         '-i', 'oai:arXiv.org:1507.03011',
+         '--quiet',
+         '--no-signals'],
         obj=script_info
     )
     assert result.exit_code == 0
@@ -91,7 +105,7 @@ def test_cli_harvest_idents(script_info, sample_record_xml, tmpdir):
     )
     assert result.exit_code != 0
 
-
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_cli.py::test_cli_harvest_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 @responses.activate
 def test_cli_harvest_list(script_info, sample_empty_set):
     """Test create user CLI."""

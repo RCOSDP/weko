@@ -256,7 +256,11 @@ def facet_search_setting():
 @click.argument('mapping')
 @click.argument('aggregations')
 @click.argument('active')
+@click.argument('ui_type')
+@click.argument('display_number')
+@click.argument('is_open')
 @click.option('--active', is_flag=True, default=False)
+@click.option('--is_open', is_flag=True, default=False)
 @with_appcontext
 def insert_facet_search_to_db(name_en, name_jp, mapping, aggregations, active, ui_type, display_number, is_open):
     """Insert facet search."""

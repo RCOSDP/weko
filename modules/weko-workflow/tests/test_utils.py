@@ -149,7 +149,6 @@ def test_get_term_and_condition_content(app):#c
     result = None
     with open(join(dirname(__file__),"data/test_file/test_item_type_en.txt"),"r") as f:
         result = f.read().splitlines()
-    print("test data:{}".format(result))
     current_app.config.update(
         WEKO_WORKFLOW_TERM_AND_CONDITION_FILE_EXTENSION = ".txt",
         WEKO_WORKFLOW_TERM_AND_CONDITION_FILE_LOCATION = join(dirname(__file__),"data/test_file/")
@@ -586,7 +585,6 @@ def test_filter_all_condition(app, mocker):
     for key in WEKO_WORKFLOW_FILTER_PARAMS:
         dic.add("{}_1".format(key), "{}_1".format(key))
     dic.add("dummy_0", "dummy2")
-    print(dic)
     with app.test_request_context():
         # mocker.patch("flask.request.args.get", side_effect=dic)
         assert filter_all_condition(dic) == {
@@ -781,11 +779,8 @@ def test_get_record_by_root_ver(app, db_records):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_disptype_and_ver_in_metainfo -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_disptype_and_ver_in_metainfo(db_records):
     record = WekoRecord.get_record(db_records[0][2].id)
-    print("record:{}".format(record))
     result = get_disptype_and_ver_in_metainfo(record)
-    print("result:{}".format(result))
     file = json_data("data/test_records.json")[0]["item_1617605131499"]["attribute_value_mlt"][0]
-    print("file:{}".format(file))
     version_id = file["version_id"]
     displaytype = file["displaytype"]
     licensetype = file["licensetype"]
@@ -844,7 +839,6 @@ def test_get_thumbnails(db_records):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_allow_multi_thumbnail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_allow_multi_thumbnail(app, db_register):
     result = get_allow_multi_thumbnail(1,"1")
-    print("result:{}".format(result))
     assert result == False
     
     result = get_allow_multi_thumbnail(1,None)
@@ -1197,7 +1191,6 @@ def test_get_approval_dates(app,mocker):
 def test_get_item_info(db_records):
     result = get_item_info(db_records[0][3].id)
     assert result == {'type': 'depid', 'value': '1', 'revision_id': 0, 'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': '', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper', 'subitem_thumbnail': [{'thumbnail_url': '/api/files/29ad484d-4ed1-4caf-8b21-ab348ae7bf28/test.png?versionId=ecd5715e-4ca5-4e45-b93c-5089f52860a0', 'thumbnail_label': 'test.png'}]}
-    print("reslt:{}".format(result))
     
     with patch("weko_workflow.utils.ItemsMetadata.get_record",side_effect=Exception("test error")):
         result = get_item_info("item_id")
@@ -2319,7 +2312,6 @@ def test_recursive_get_specified_properties():
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_approval_keys -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_approval_keys(item_type):
     result = get_approval_keys()
-    print("result:{}".format(result))
     assert result == ['parentkey.subitem_restricted_access_guarantor_mail_address']
 # def process_send_mail(mail_info, mail_pattern_name):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_process_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp

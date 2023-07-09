@@ -28,6 +28,8 @@ from __future__ import absolute_import, print_function
 
 from flask import render_template_string
 
+from invenio_previewer.views import preview, dbsession_clean
+from mock import patch, MagicMock
 
 def test_view_macro_file_list(app):
     """Test file list macro."""
@@ -77,3 +79,26 @@ def test_previwable_test(app):
 
     file['type'] = ''
     assert render_template_string(template, file=file) == "Not previwable"
+
+
+# def preview(pid, record, template=None, **kwargs):
+# def test_preview(app):
+    # Exception coverage
+    # with patch('invenio_previewer.views.current_previewer.record_file_factory', return_value=False):
+    # with patch('invenio_previewer.proxies.current_previewer.record_file_factory', return_value=False):
+    # try:
+    #     preview(
+    #         pid=1,
+    #         record={}
+    #     )
+    # except:
+    #     pass
+
+
+# def dbsession_clean(exception):
+def test_dbsession_clean(app):
+    exception = "ValueError"
+    dbsession_clean(exception=exception)
+
+    exception = None
+    dbsession_clean(exception=exception)
