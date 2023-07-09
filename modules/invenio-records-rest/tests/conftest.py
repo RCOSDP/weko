@@ -198,9 +198,10 @@ def app(request, search_class):
             )
         },
         SERVER_NAME='localhost:5000',
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'
-        ),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'
+        # ),
+        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest',
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         TESTING=True,
     )

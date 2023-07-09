@@ -35,8 +35,9 @@ def app():
     app.config.update(
         DB_VERSIONING=False,
         DB_VERSIONING_USER_MODEL=None,
-        SQLALCHEMY_DATABASE_URI=os.environ.get('SQLALCHEMY_DATABASE_URI',
-                                               'sqlite:///test.db')
+        # SQLALCHEMY_DATABASE_URI=os.environ.get('SQLALCHEMY_DATABASE_URI',
+        #                                        'sqlite:///test.db')
+        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest',
     )
     return app
 
