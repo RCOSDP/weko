@@ -159,9 +159,8 @@ class HarvestSettingView(ModelView):
             log.__dict__.pop('_sa_instance_state')
             start_time = log.__dict__['start_time']
             end_time = log.__dict__['end_time']
-            if start_time:
-                start_time = localize_time(start_time)
-                log.__dict__['start_time'] = start_time.isoformat()
+            start_time = localize_time(start_time)
+            log.__dict__['start_time'] = start_time.isoformat()
             if end_time:
                 end_time = localize_time(end_time)
                 log.__dict__['end_time'] = end_time.isoformat()

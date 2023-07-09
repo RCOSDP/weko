@@ -334,11 +334,9 @@ def compare_csv(data1, data2):
         for t, w in enumerate(row):
             if "," in w:
                 if not set([a.strip() for a in w.split(",")]) == set([a.strip() for a in csv2[i][t].split(",")]):
-                    print("data at {i}:{t} don't mathch:{d1} - {d2}".format(i=i,t=t,d1=w,d2=csv2[i][t]))
                     return False
             else:
                 if not w == csv2[i][t]:
-                    print("data at {i}:{t} don't mathch:{d1} - {d2}".format(i=i,t=t,d1=w,d2=csv2[i][t]))
                     return False
     return True
 

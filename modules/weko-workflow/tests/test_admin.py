@@ -55,7 +55,6 @@ class TestFlowSettingView:
         flow_define = workflow['flow']
         login(client=client, email=users[users_index]['email'])
         url = '/admin/workflowsetting/{}'.format(0)
-        print(url)
         with patch("flask.templating._render", return_value=""):
             res =  client.get(url)
             assert res.status_code == status_code

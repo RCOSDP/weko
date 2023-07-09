@@ -53,6 +53,7 @@ from invenio_records.api import RecordBase
 from invenio_accounts.models import User
 from invenio_search import RecordsSearch
 from invenio_stats.utils import QueryRankingHelper, QuerySearchReportHelper
+from invenio_stats.views import QueryRecordViewCount
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
@@ -499,23 +500,26 @@ def parse_ranking_results(rank_type,
     if rank == -1:
         if date:
             res = dict(
+                key=key,
                 date=date,
                 title=title,
                 url=url
             )
         else:
             res = dict(
+                key=key,
                 title=title,
                 url=url
             )
     else:
         res = dict(
+            key=key,
             rank=rank,
             count=count,
             title=title,
             url=url
         )
-    
+
     return res
 
 
@@ -1674,7 +1678,6 @@ def get_new_items_by_date(start_date: str, end_date: str, ranking=False) -> dict
                                                           indexes,
                                                           query_with_publish_status=False,
                                                           ranking=ranking)
-        print(search_instance.to_dict())
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError as e:
@@ -2490,10 +2493,15 @@ def get_ranking(settings):
             group_field='pid_value',
             count_field='count'
         )
-
+        
         current_app.logger.debug("finished getting most_reviewed_items data from ES")
         rankings['most_reviewed_items'] = get_permission_record('most_reviewed_items', result, settings.display_rank, has_permission_indexes)
 
+        q = QueryRecordViewCount() 
+        for item in rankings['most_reviewed_items']:
+            ret = q.get_data_by_pid_value(pid_value=item['key'])
+            item['count'] = int(ret['total'])
+            
     # most_downloaded_items
     current_app.logger.debug("get most_downloaded_items start")
     if settings.rankings['most_downloaded_items']:
