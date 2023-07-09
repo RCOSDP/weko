@@ -22,11 +22,28 @@
 
 import uuid
 from collections import OrderedDict
+from enum import Enum
 
 from invenio_db import db
 from invenio_records.models import Timestamp
 from sqlalchemy.dialects import postgresql
 from sqlalchemy_utils.types import JSONType, UUIDType
+
+
+class PublishStatus(Enum):
+    """Publish status."""
+
+    DELETE = "-1"
+    """Publish status of delete item."""
+
+    PUBLIC = "0"
+    """Publish status of public item."""
+
+    PRIVATE = "1"
+    """Publish status of private item."""
+
+    NEW = "2"
+    """Publish status of new item. Registered items."""
 
 
 class OAIServerSchema(db.Model, Timestamp):

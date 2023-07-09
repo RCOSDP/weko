@@ -49,6 +49,7 @@ from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
+from weko_schema_ui.models import PublishStatus
 from weko_workflow.api import WorkActivity, WorkFlow
 
 from weko_records_ui.models import InstitutionName
@@ -264,7 +265,7 @@ def soft_delete(recid):
                     id=ver.object_uuid).first()
                 dep = WekoDeposit(rec.json, rec)
                 #dep['path'] = []
-                dep['publish_status'] = '-1'
+                dep['publish_status'] = PublishStatus.DELETE.value
                 dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
                 FeedbackMailList.delete(ver.object_uuid)
                 dep.remove_feedback_mail()
@@ -322,7 +323,7 @@ def restore(recid):
                 rec = RecordMetadata.query.filter_by(
                     id=ver.object_uuid).first()
                 dep = WekoDeposit(rec.json, rec)
-                dep['publish_status'] = '0'
+                dep['publish_status'] = PublishStatus.PUBLIC.value
                 dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
                 dep.commit()
             pids = PersistentIdentifier.query.filter_by(
@@ -1057,7 +1058,7 @@ def validate_download_record(record: dict):
 
     :param record:
     """
-    if record['publish_status'] != "0":
+    if record['publish_status'] != PublishStatus.PUBLIC.value:
         abort(403)
     if is_private_index(record):
         abort(403)

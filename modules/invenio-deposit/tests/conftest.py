@@ -36,6 +36,7 @@ from time import sleep
 import pytest
 from elasticsearch.exceptions import RequestError
 from flask import Flask
+from flask.cli import ScriptInfo
 from flask_babelex import Babel
 from flask_breadcrumbs import Breadcrumbs
 from flask_celeryext import FlaskCeleryExt
@@ -73,7 +74,7 @@ from werkzeug.wsgi import DispatcherMiddleware
 from invenio_deposit import InvenioDeposit, InvenioDepositREST
 from invenio_deposit.api import Deposit
 from invenio_deposit.scopes import write_scope
-
+from kombu import Exchange, Queue
 
 def object_as_dict(obj):
     """Make a dict from SQLAlchemy object."""
@@ -88,6 +89,8 @@ def base_app(request):
 
     def init_app(app_):
         app_.config.update(
+            BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
+            CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
             CELERY_ALWAYS_EAGER=True,
             CELERY_CACHE_BACKEND='memory',
             CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
@@ -95,8 +98,9 @@ def base_app(request):
             JSONSCHEMAS_URL_SCHEME='http',
             SECRET_KEY='CHANGE_ME',
             SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            SQLALCHEMY_DATABASE_URI=os.environ.get(
-                'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+            # SQLALCHEMY_DATABASE_URI=os.environ.get(
+            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+            SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest',
             SEARCH_ELASTIC_HOSTS=os.environ.get(
                 'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
             SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -110,6 +114,11 @@ def base_app(request):
             OAUTHLIB_INSECURE_TRANSPORT=True,
             OAUTH2_CACHE_TYPE='simple',
             ACCOUNTS_JWT_ENABLE=False,
+            INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
+            INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
+            INDEXER_MQ_QUEUE = Queue("indexer", 
+                                 exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
+        
         )
         Babel(app_)
         FlaskCeleryExt(app_)
@@ -380,3 +389,8 @@ def oauth2_headers_user_2(app, json_headers, write_token_user_2):
     It uses the token associated with the second user.
     """
     return fill_oauth2_headers(json_headers, write_token_user_2)
+
+@pytest.fixture()
+def script_info(app):
+    """Get ScriptInfo object for testing CLI."""
+    return ScriptInfo(create_app=lambda info: app)

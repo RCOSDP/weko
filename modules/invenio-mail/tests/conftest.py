@@ -38,9 +38,11 @@ def email_admin_app():
     base_app.config.update(
         SECRET_KEY='SECRET KEY',
         SESSION_TYPE='memcached',
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI',
-            'sqlite://'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI',
+        #     'sqlite://'),
+        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest',
+        
     )
     InvenioDB(base_app)
     InvenioMail(base_app)
@@ -66,9 +68,10 @@ def email_task_app(request):
     """Flask application fixture."""
     app = Flask('testapp')
     app.config.update(
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI',
-            'sqlite://'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI',
+        #     'sqlite://'),
+        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest',
         CELERY_ALWAYS_EAGER=True,
         CELERY_RESULT_BACKEND='cache',
         CELERY_CACHE_BACKEND='memory',

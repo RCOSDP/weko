@@ -67,9 +67,10 @@ def app():
         'testapp', static_folder=instance_path, instance_path=instance_path)
     app_.config.update(
         TESTING=True,
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI',
-            'sqlite:///:memory:'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI',
+        #     'sqlite:///:memory:'),
+        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest',
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         RECORDS_UI_DEFAULT_PERMISSION_FACTORY=None,
         RECORDS_UI_ENDPOINTS=dict(

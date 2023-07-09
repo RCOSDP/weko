@@ -88,8 +88,9 @@ from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_mapping
-from weko_records_ui.utils import soft_delete
+
 from weko_redis.redis import RedisConnection
+from weko_schema_ui.models import PublishStatus
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import (
     IDENTIFIER_GRANT_LIST,
@@ -252,6 +253,7 @@ def delete_records(index_tree_id, ignore_items):
                     record.commit()
                     db.session.commit()
                 elif del_flag and removed_path is not None:
+                    from weko_records_ui.utils import soft_delete
                     soft_delete(pid)
                 else:
                     pass
@@ -590,7 +592,7 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
             handle_check_cnri(list_record)
             handle_check_doi_indexes(list_record)
             handle_check_doi_ra(list_record)
-            current_app.logger.error(list_record)
+            #current_app.logger.error(list_record)
             handle_check_doi(list_record)
         result["list_record"] = list_record
     except Exception as ex:
@@ -1753,7 +1755,8 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
             db.session.rollback()
             current_app.logger.warning("Specified IndexID is invalid!")
 
-        if index_info and len(index_info) == 1:
+        msg_not_exist = _("The specified {} does not exist in system.")
+        if index_info and len(index_info) == 1:     # index exists by index id
             if index_name_path and index_name_path not in [
                 index_info[0].name.replace(
                     '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']),
@@ -1766,13 +1769,12 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
                     )
                 )
             temp_res = [index_info[0].cid]
-        elif index_name_path:
+        elif index_name_path:          # has pos_index info
             index_path_list = index_name_path.split(
                 current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT'])
             index_all_name = Indexes.get_index_by_all_name(index_path_list[-1])
             index_infos = Indexes.get_path_list([i.id for i in index_all_name])
-            msg_not_exist = _("The specified {} does not exist in system.")
-            if index_infos:
+            if index_infos:      # index exists by index name
                 for info in index_infos:
                     index_info = None
                     if index_name_path == \
@@ -1780,21 +1782,23 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
                                 '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']):
                         index_info = info
                     
-                    if not index_info:
+                    if not index_info:      # index does not exist by index path
                         if index_id:
                             errors.append(msg_not_exist.format("IndexID, POS_INDEX"))
                         else:
                             errors.append(msg_not_exist.format("POS_INDEX"))
-                    else:
+                    else:      # index exists by index path
                         if index_id:
                             errors.append(msg_not_exist.format("IndexID"))
                         else:
                             temp_res.append(index_info.cid)
-            else:
+            else:      # index does not exist by index name
                 if index_id:
                     errors.append(msg_not_exist.format("IndexID, POS_INDEX"))
                 else:
                     errors.append(msg_not_exist.format("POS_INDEX"))
+        else:         # index does not exist by index id and index path
+            errors.append(msg_not_exist.format("IndexID"))
         result = []
         if temp_res and not all_index_permission:
             msg_can_not_edit = _("Your role cannot register items in this index.")
@@ -2890,6 +2894,7 @@ def handle_fill_system_item(list_record):
         item_doi = item.get("doi","")
         item_doi_prefix = ""
         item_doi_suffix = ""
+        item_cnri = item.get("cnri", "")
         
         if item_doi and "/" in item_doi:
             item_doi_prefix, item_doi_suffix = item_doi.split("/")
@@ -3025,10 +3030,13 @@ def handle_fill_system_item(list_record):
                 warnings.append(_('The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'))
             
             if is_change_identifier:
-                if item_doi is "":
-                    errors.append(_('Please specify DOI prefix/suffix.'))
-                elif item_doi_suffix is "":
-                    errors.append(_('Please specify DOI suffix.'))
+                current_app.logger.error("cnri:{}".format(item_cnri))
+                current_app.logger.error("cnrWEKO_HANDLE_ALLOW_REGISTER_CNRIi:{}".format(current_app.config["WEKO_HANDLE_ALLOW_REGISTER_CNRI"]))
+                if not (current_app.config["WEKO_HANDLE_ALLOW_REGISTER_CNRI"] and item_cnri):
+                    if item_doi is "":
+                        errors.append(_('Please specify DOI prefix/suffix.'))
+                    elif item_doi_suffix is "":
+                        errors.append(_('Please specify DOI suffix.'))
             else:
                 if item_doi_suffix and existed_doi is False:
                     errors.append(_('Do not specify DOI suffix.'))
@@ -3387,7 +3395,7 @@ def export_all(root_url, user_id, data):
 
                 record_ids = [(recid.pid_value, recid.object_uuid) 
                     for recid in recids if 'publish_status' in recid.json 
-                    and recid.json['publish_status'] in ['0', '1']]
+                    and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
                 for recid, uuid in record_ids:
                     if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
                         # Create export info file
@@ -3544,7 +3552,7 @@ def delete_exported(uri, cache_key):
     except Exception as ex:
         current_app.logger.error(ex)
 
-
+from weko_search_ui.tasks import delete_task_id_cache
 def cancel_export_all():
     """Cancel Process Share_task Export ALL with revoke.
 
@@ -3555,13 +3563,20 @@ def cancel_export_all():
         name=WEKO_SEARCH_UI_BULK_EXPORT_TASK,
         user_id=current_user.get_id()
     )
+    _expired_time=current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_TASKID_EXPIRED_TIME"]
     try:
         task_id = get_redis_cache(cache_key)
-        task_status = get_export_status()
+        export_status, _, _, _, _ = get_export_status()
 
-        if task_status:
+        if export_status:
             revoke(task_id, terminate=True)
-
+            delete_task_id_cache.apply_async(
+                args=(
+                    task_id,
+                    cache_key
+                ),
+                countdown=int(_expired_time) * 60
+            )
         return True
     except Exception as ex:
         current_app.logger.error(ex)
@@ -3594,6 +3609,8 @@ def get_export_status():
     download_uri = None
     message = None
     run_message = ""
+    status = ""
+    
     try:
         task_id = get_redis_cache(cache_key)
         download_uri = get_redis_cache(cache_uri)
@@ -3602,11 +3619,12 @@ def get_export_status():
         if task_id:
             task = AsyncResult(task_id)
             status_cond = task.successful() or task.failed() or task.state == "REVOKED"
+            status = task.state
             export_status = True if not status_cond else False
     except Exception as ex:
         current_app.logger.error(ex)
         export_status = False
-    return export_status, download_uri, message, run_message
+    return export_status, download_uri, message, run_message, status
 
 
 def handle_check_item_is_locked(item):

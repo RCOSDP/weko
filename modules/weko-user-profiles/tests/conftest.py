@@ -73,8 +73,9 @@ def base_app(instance_path):
         SERVER_NAME='TEST_SERVER.localdomain',
         #SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
         #                                  'sqlite://'),
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest',
         TEST_USER_EMAIL='test_user@example.com',
         TEST_USER_PASSWORD='test_password',
         TESTING=True,

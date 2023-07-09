@@ -39,6 +39,7 @@ from simplekv.memory.redisstore import RedisStore
 from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
 from weko_redis.redis import RedisConnection
+from weko_schema_ui.models import PublishStatus
 
 from .config import WEKO_INDEX_TREE_STATE_PREFIX
 from .errors import IndexBaseRESTError, IndexDeletedRESTError
@@ -597,7 +598,10 @@ def get_record_in_es_of_index(index_id, recursively=True):
     must_query = [
         QueryString(query=query_string),
         Q("terms", path=child_idx),
-        Q("terms", publish_status=["0", "1"])
+        Q("terms", publish_status=[
+            PublishStatus.PUBLIC.value,
+            PublishStatus.PRIVATE.value
+        ])
     ]
     search = search.query(
         Bool(filter=must_query)
@@ -800,7 +804,7 @@ def check_doi_in_index_and_child_index(index_id, recursively=True):
         child_idx = Indexes.get_child_list_recursive(index_id)
     else:
         child_idx = [index_id]
-    query_string = "relation_version_is_last:true AND publish_status:0"
+    query_string = "relation_version_is_last:true AND publish_status: {}".format(PublishStatus.PUBLIC.value)
     search = RecordsSearch(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
     must_query = [

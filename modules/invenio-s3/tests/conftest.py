@@ -32,8 +32,9 @@ def app_config(app_config):
     app_config['S3_ENDPOINT_URL'] = None
     app_config['S3_ACCCESS_KEY_ID'] = ''
     app_config['S3_SECRECT_ACCESS_KEY'] = ''
-    app_config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-        'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db')
+    # app_config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+    #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db')
+    SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest',
     app_config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
     app_config['TESTING'] = True
     return app_config

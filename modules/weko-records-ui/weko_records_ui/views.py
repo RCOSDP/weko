@@ -58,6 +58,7 @@ from weko_records.serializers.utils import get_mapping
 from weko_records.utils import custom_record_medata_for_export, \
     remove_weko2_special_character, selected_value_by_language
 from weko_search_ui.api import get_search_detail_keyword
+from weko_schema_ui.models import PublishStatus
 from weko_workflow.api import WorkFlow
 
 from weko_records_ui.fd import add_signals_info
@@ -138,11 +139,11 @@ def publish(pid, record, template=None, **kwargs):
     last_record = WekoRecord.get_record_by_pid(pid_ver.last_child.pid_value)
 
     if not publish_status:
-        record.update({'publish_status': (status or '0')})
-        last_record.update({'publish_status': (status or '0')})
+        record.update({'publish_status': (status or PublishStatus.PUBLIC.value)})
+        last_record.update({'publish_status': (status or PublishStatus.PUBLIC.value)})
     else:
-        record['publish_status'] = (status or '0')
-        last_record['publish_status'] = (status or '0')
+        record['publish_status'] = (status or PublishStatus.PUBLIC.value)
+        last_record['publish_status'] = (status or PublishStatus.PUBLIC.value)
 
     record.commit()
     last_record.commit()

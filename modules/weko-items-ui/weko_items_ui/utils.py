@@ -71,6 +71,7 @@ from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
+from weko_schema_ui.models import PublishStatus
 from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
@@ -417,7 +418,7 @@ def get_permission_record(rank_type, es_data, display_rank, has_permission_index
         try:
             record = WekoRecord.get_record_by_pid(pid_value)
             if (record.pid and record.pid.status == PIDStatus.DELETED) or \
-                    ('publish_status' in record and record['publish_status'] == '-1'):
+                    ('publish_status' in record and record['publish_status'] == PublishStatus.DELETE.value):
                 continue
             if roles[0]:
                 add_flag = True
@@ -864,12 +865,13 @@ def package_export_file(item_type_data):
     return file_output
 
 
-def make_stats_file(item_type_id, recids, list_item_role):
+def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
     """Prepare TSV/CSV data for each Item Types.
 
     Arguments:
         item_type_id    -- ItemType ID
         recids          -- List records ID
+        export_path     -- path of temp_dir
     Returns:
         ret             -- Key properties
         ret_label       -- Label properties
@@ -1096,7 +1098,11 @@ def make_stats_file(item_type_id, recids, list_item_role):
                             str(idx)))
                         key_label.insert(0, '.ファイルパス[{}]'.format(
                             str(idx)))
-                        key_data.insert(0, '')
+                        output_path = ""
+                        if key_data[key_index]:
+                            file_path = "recid_{}/{}".format(str(self.cur_recid), key_data[key_index])
+                            output_path = file_path if os.path.exists(os.path.join(export_path,file_path)) else ""
+                        key_data.insert(0,output_path)
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
                             and len(item_key_split) == 2:
@@ -1164,7 +1170,7 @@ def make_stats_file(item_type_id, recids, list_item_role):
         )
 
         records.attr_output[recid].append(
-            'public' if record['publish_status'] == '0' else 'private')
+            'public' if record['publish_status'] == PublishStatus.PUBLIC.value else 'private')
         feedback_mail_list = records.attr_data['feedback_mail_list'] \
             .get(recid, [])
         records.attr_output[recid].extend(feedback_mail_list)
@@ -1392,7 +1398,8 @@ def write_files(item_types_data, export_path, list_item_role):
         headers, records = make_stats_file(
             item_type_id,
             item_types_data[item_type_id]['recids'],
-            list_item_role)
+            list_item_role,
+            export_path)
         current_app.logger.debug("headers:{}".format(headers))
         current_app.logger.debug("records:{}".format(records))
         keys, labels, is_systems, options = headers
@@ -2756,7 +2763,7 @@ def get_ignore_item(_item_type_id, item_type_mapping=None,
 
 
 def make_stats_file_with_permission(item_type_id, recids,
-                                   records_metadata, permissions):
+                                   records_metadata, permissions,export_path=""):
     """Prepare TSV/CSV data for each Item Types.
 
     Args:
@@ -2764,6 +2771,7 @@ def make_stats_file_with_permission(item_type_id, recids,
         recids (_type_): List records ID
         records_metadata (_type_): _description_
         permissions (_type_): _description_
+        export_path (str): path of temp_dir
 
     Returns:
         _type_: _description_
@@ -3033,7 +3041,11 @@ def make_stats_file_with_permission(item_type_id, recids,
                             str(idx)))
                         key_label.insert(0, '.ファイルパス[{}]'.format(
                             str(idx)))
-                        key_data.insert(0, '')
+                        output_path = ""
+                        if key_data[key_index]:
+                            file_path = "recid_{}/{}".format(str(self.cur_recid), key_data[key_index])
+                            output_path = file_path if os.path.exists(os.path.join(export_path,file_path)) else ""
+                        key_data.insert(0,output_path)
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
                             and len(item_key_split) == 2:
@@ -3097,7 +3109,7 @@ def make_stats_file_with_permission(item_type_id, recids,
         )
 
         records.attr_output[recid].append(
-            'public' if record['publish_status'] == '0' else 'private')
+            'public' if record['publish_status'] == PublishStatus.PUBLIC.value else 'private')
         feedback_mail_list = records.attr_data['feedback_mail_list'] \
             .get(recid, [])
         records.attr_output[recid].extend(feedback_mail_list)
@@ -3264,7 +3276,8 @@ def check_item_is_being_edit(
             in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]:
         current_app.logger.debug("post_workflow: {0} status: {1}".format(
             post_workflow, post_workflow.action_status))
-        return True
+        #return True
+        return post_workflow.activity_id
 
     draft_pid = PersistentIdentifier.query.filter_by(
         pid_type='recid',
@@ -3278,7 +3291,8 @@ def check_item_is_being_edit(
                                              ASP.ACTION_DOING]:
             current_app.logger.debug("draft_workflow: {0} status: {1}".format(
                 draft_pid.object_uuid, draft_workflow.action_status))
-            return True
+            #return True
+            return draft_workflow.activity_id
 
         pv = PIDVersioning(child=recid)
         latest_pid = PIDVersioning(parent=pv.parent,child=recid).get_children(
@@ -3292,8 +3306,10 @@ def check_item_is_being_edit(
                                               ASP.ACTION_DOING]:
             current_app.logger.debug("latest_workflow: {0} status: {1}".format(
                 latest_pid.object_uuid, latest_workflow.action_status))
-            return True
-    return False
+            #return True
+            return latest_workflow.activity_id
+    #return False
+    return ""
 
 
 def check_item_is_deleted(recid):
