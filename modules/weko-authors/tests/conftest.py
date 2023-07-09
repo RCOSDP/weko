@@ -147,7 +147,7 @@ def base_app(instance_path,search_class):
         #    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest',
+        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         INDEX_IMG='indextree/36466818-image.jpg',
         SEARCH_UI_SEARCH_INDEX='test-weko',
