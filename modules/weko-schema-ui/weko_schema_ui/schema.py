@@ -313,7 +313,8 @@ class SchemaTree:
         description_type = "descriptionType"
         _need_to_nested = ('subjectScheme', 'dateType', 'identifierType',
                            'objectType', description_type)
-
+        _need_to_nested_key = ('subject', 'date', 'identifier', 'relatedIdentifier'
+                               'identifierRegistration', 'sourceIdentifier', 'URI')
         def list_reduce(olst):
             if isinstance(olst, list):
                 for lst in olst:
@@ -345,7 +346,7 @@ class SchemaTree:
                 is_valid = False
             return is_valid
 
-        def json_reduce(node):
+        def json_reduce(node, field=None):
             if isinstance(node, dict):
                 val = node.get(self._v)
                 attr = node.get(self._atr)
@@ -370,12 +371,13 @@ class SchemaTree:
                                     list_attr))
                             else:
                                 return []
-
+                    elif field in _need_to_nested_key:
+                        return list(map(lambda x: {"value": x}, list(list_reduce(val))))
                     return list(list_reduce(val))
                 else:
                     for k, v in node.items():
                         if k != self._atr:
-                            node[k] = json_reduce(v)
+                            node[k] = json_reduce(v, field=k)
                     return node
 
         json_reduce(node)

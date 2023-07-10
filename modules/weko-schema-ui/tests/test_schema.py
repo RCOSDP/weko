@@ -279,7 +279,32 @@ class TestSchemaTree:
     #         ret = instance.to_list()
     #         assert ret==""
         
-        
+    # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_schema.py::TestSchemaTree::test_converter -vv -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+    def test_converter(self, db_oaischema):
+        schema = SchemaTree()
+        # not nested
+        node = {'title': {'@value': [['test']], '@attributes': {'xml:lang': [['ja']]}}}
+        result = schema._SchemaTree__converter(node)
+        assert result == {"title": ["test"]}
+
+        # exist _need_to_nested
+        node = {'identifier': {'@value': [['open_access']], '@attributes': {'identifierType': [['open_access']]}}}
+        result = schema._SchemaTree__converter(node)
+        assert result == {"identifier": [{"identifierType": "open_access", "value": "open_access"}]}
+
+        # not exist _need_to_nested, exist _need_to_nested_key
+        node = {'identifier': {'@value': [['open_access']]}}
+        result = schema._SchemaTree__converter(node)
+        assert result == {"identifier": [{"value": "open_access"}]}
+
+        # description with descriptionType
+        node = {'description': {'@value': [['this is description.']], '@attributes': {'xml:lang': [['ja']], 'descriptionType': [['Abstract']]}}}
+        result = schema._SchemaTree__converter(node)
+        assert result == {'description': [{'descriptionType': 'Abstract', 'value': 'this is description.'}]}
+
+        node = {'description': {'@value': [['this is description.']], '@attributes':{'xml:lang': [['ja']], 'descriptionType': [[None]]}}}
+        result = schema._SchemaTree__converter(node)
+        assert result == {'description': ['this is description.']}
 
 
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_schema.py::test_SchemaTree -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
