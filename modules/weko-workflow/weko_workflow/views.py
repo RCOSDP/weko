@@ -1273,10 +1273,9 @@ def next_action(activity_id='0', action_id=0):
             current_app.logger.error("next_action: can not get schema by action_id")
             res = ResponseMessageSchema().load({"code":-2, "msg":"can not get schema by action_id"})
             return jsonify(res.data), 500
-        req_body = request.get_json()
-        if action_endpoint == 'approval':
-            if not req_body or 'action_version' not in req_body:
-                req_body = {'action_version': action.action_version}
+        req_body = request.get_json() or {}
+        if 'action_version' not in req_body:
+            req_body['action_version'] = action.action_version
         schema_load = schema.load(req_body)
     except ValidationError as err:
         current_app.logger.error("next_action: "+str(err))
@@ -1781,11 +1780,10 @@ def previous_action(activity_id='0', action_id=0, req=0):
         res = ResponseMessageSchema().load({"code":-1,"msg":"argument error"})
         return jsonify(res.data), 500
     try:
-        req_body = request.get_json()
         action = Action().get_action_detail(action_id)
-        if action.action_endpoint == 'approval':
-            if not req_body or 'action_version' not in req_body:
-                req_body = {'action_version': action.action_version}
+        req_body = request.get_json() or {}
+        if 'action_version' not in req_body:
+            req_body['action_version'] = action.action_version
         schema_load = ActionSchema().load(req_body)
     except ValidationError as err:
         current_app.logger.error("previous_action: "+str(err))
