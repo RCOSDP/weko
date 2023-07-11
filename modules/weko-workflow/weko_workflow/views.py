@@ -189,7 +189,7 @@ def index():
 
     tab = request.args.get('tab',WEKO_WORKFLOW_TODO_TAB)
     if 'community' in request.args:
-        activities, maxpage, size, pages, name_param = activity \
+        activities, maxpage, size, pages, name_param, _ = activity \
             .get_activity_list(community_id=request.args.get('community'),
                                conditions=conditions)
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
@@ -197,7 +197,7 @@ def index():
         if comm is not None:
             community_id = comm.id
     else:
-        activities, maxpage, size, pages, name_param = activity \
+        activities, maxpage, size, pages, name_param, _ = activity \
             .get_activity_list(conditions=conditions)
 
     # WEKO_WORKFOW_PAGINATION_VISIBLE_PAGES = 1
@@ -573,7 +573,7 @@ def list_activity():
     getargs = request.args
     conditions = filter_all_condition(getargs)
 
-    activities, maxpage, size, pages, name_param = activity.get_activity_list(
+    activities, maxpage, size, pages, name_param, _ = activity.get_activity_list(
         conditions=conditions)
 
     from weko_theme.utils import get_design_layout
@@ -2696,7 +2696,7 @@ def usage_report():
     conditions['status'] = ['doing']
     activity = WorkActivity()
     # For usage report, just get all activities with provided conditions
-    activities, _, _, _, _ = activity \
+    activities, _, _, _, _, _ = activity \
         .get_activity_list(conditions=conditions, is_get_all=True)
     get_workflow_item_type_names(activities)
     activities_result = []

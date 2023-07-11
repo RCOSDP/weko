@@ -1422,8 +1422,8 @@ def prepare_edit_workflow(post_activity, recid, deposit):
     if not draft_pid:
         draft_record = deposit.prepare_draft_item(recid)
         rtn = activity.init_activity(post_activity,
-                                     community,
-                                     draft_record.model.id)
+                                    community,
+                                    draft_record.model.id)
     else:
         # Clone org bucket into draft record.
         try:
@@ -4111,19 +4111,17 @@ def create_conditions_dict(status, limit, page):
     :return: search condition of dict type.
     """
     conditions = dict()
+    conditions.update({'tab': [status]})
 
-    tab = status if status else 'todo'
-    conditions.update({'tab': tab})
-
-    if tab == 'todo':
-        conditions.update({'sizetodo': limit if limit else 20})
-        conditions.update({'pagestodo': page if page else 1})
-    elif tab == 'wait':
-        conditions.update({'sizewait': limit if limit else 20})
-        conditions.update({'pageswait': page if page else 1})
-    elif tab == 'all':
-        conditions.update({'sizeall': limit if limit else 20})
-        conditions.update({'pagesall': page if page else 1})
+    if status == 'todo':
+        conditions.update({'sizetodo' : [limit]})
+        conditions.update({'pagestodo' : [page]})
+    elif status == 'wait':
+        conditions.update({'sizewait' : [limit]})
+        conditions.update({'pageswait' : [page]})
+    elif status == 'all':
+        conditions.update({'sizeall' : [limit]})
+        conditions.update({'pagesall' : [page]})
     else:
         raise InvalidParameterValueError()
 
@@ -4134,8 +4132,8 @@ def check_role():
     """
     Check if user has role.
 
-    :return: return false if guest user.
-    """
+    :return: return false if guest user / return true if any other.
+    """        
     role_list = current_app.config['WEKO_PERMISSION_ROLE_USER']
 
     for role in list(current_user.roles or []):
@@ -4146,14 +4144,23 @@ def check_role():
 
 
 def check_etag(etag):
-    """Check request header ETag."""
-    request_Etag = request.headers.get('If-None-Match')
+    """
+    Check request header ETag.
+
+    :param etag: content hash.
+    :return: return true if function arguments and request parameters have the same value.
+    """
+    request_Etag = request.headers.get('If-None-Match', '')
     return etag and etag == request_Etag
 
 
-def check_pretty():
-    """Check request parameter pretty."""
-    if request.values.get('pretty').lower() in WEKO_STR_TRUE:
+def check_pretty(pretty):
+    """
+    Check request parameter pretty.
+
+    :param pretty: boolean of string type.
+    """
+    if pretty.lower() in WEKO_STR_TRUE:
         current_app.debug = True
     else:
         current_app.debug = False
