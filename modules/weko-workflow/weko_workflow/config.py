@@ -330,3 +330,36 @@ WEKO_WORKFLOW_GAKUNINRDM_DATA = [
 
 WEKO_WORKFLOW_GAKUNINRDM_PREFIX = 'GakuninRDM'
 """GekuninRDM prefix for logging."""
+
+WEKO_STR_TRUE = ['true', 't', 'yes', '1']
+
+WEKO_WORKFLOW_REST_ENDPOINTS = dict(
+    activities=dict(
+        activities_route='/<string:version>/activities',
+        default_media_type='application/json',
+    ),
+    approve=dict(
+        route='/<string:version>/workflow/activities/<string:activity_id>/approve',
+        default_media_type='application/json',
+    ),
+    throw_out=dict(
+        route='/<string:version>/workflow/activities/<string:activity_id>/throw-out',
+        default_media_type='application/json',
+    ),
+)
+
+from .rest import GetActivities, ApproveActivity, ThrowOutActivity
+WEKO_GET_ACTIVITIES_API_VERSION = {
+    "v1.0": GetActivities.get_v1
+}
+"""API version."""
+
+WEKO_APPROVE_API_VERSION = {
+    'post-v1.0': ApproveActivity.post_v1
+}
+"""API version."""
+
+WEKO_THROW_OUT_API_VERSION = {
+    'post-v1.0': ThrowOutActivity.post_v1
+}
+"""API version."""

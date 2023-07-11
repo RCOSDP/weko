@@ -78,7 +78,8 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow , Flow
 from .config import DOI_VALIDATION_INFO, IDENTIFIER_GRANT_SELECT_DICT, \
-    WEKO_SERVER_CNRI_HOST_LINK
+    WEKO_SERVER_CNRI_HOST_LINK, WEKO_STR_TRUE
+from .errors import InvalidParameterValueError
 from .models import Action as _Action, Activity
 from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity,FlowAction 
 from .models import WorkFlow as _WorkFlow
@@ -4098,3 +4099,61 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
 
     #url_and_expired_date of a applyed content.
     return url_and_expired_date
+
+
+def create_conditions_dict(status, limit, page):
+    """
+    Create get_activity_list parameter(conditions).
+
+    :param status: tab type.
+    :param limit: number of date to get.
+    :param page: page to get.
+    :return: search condition of dict type.
+    """
+    conditions = dict()
+
+    tab = status if status else 'todo'
+    conditions.update({'tab': tab})
+
+    if tab == 'todo':
+        conditions.update({'sizetodo': limit if limit else 20})
+        conditions.update({'pagestodo': page if page else 1})
+    elif tab == 'wait':
+        conditions.update({'sizewait': limit if limit else 20})
+        conditions.update({'pageswait': page if page else 1})
+    elif tab == 'all':
+        conditions.update({'sizeall': limit if limit else 20})
+        conditions.update({'pagesall': page if page else 1})
+    else:
+        raise InvalidParameterValueError()
+
+    return conditions
+
+
+def check_role():
+    """
+    Check if user has role.
+
+    :return: return false if guest user.
+    """
+    role_list = current_app.config['WEKO_PERMISSION_ROLE_USER']
+
+    for role in list(current_user.roles or []):
+        if role.name in role_list:
+            return True
+
+    return False
+
+
+def check_etag(etag):
+    """Check request header ETag."""
+    request_Etag = request.headers.get('If-None-Match')
+    return etag and etag == request_Etag
+
+
+def check_pretty():
+    """Check request parameter pretty."""
+    if request.values.get('pretty').lower() in WEKO_STR_TRUE:
+        current_app.debug = True
+    else:
+        current_app.debug = False

@@ -1253,6 +1253,11 @@ def next_action(activity_id='0', action_id=0):
         res = ResponseMessageSchema().load({"code":-1, "msg":"argument error"})
         return jsonify(res.data), 500
 
+    action = Action().get_action_detail(action_id)
+    action_endpoint = action.action_endpoint
+
+    current_app.logger.debug('action_endpoint: {0}'.format(action_endpoint))
+
     work_activity = WorkActivity()
     history = WorkActivityHistory()
     activity_detail = work_activity.get_activity_detail(activity_id)
@@ -1268,7 +1273,10 @@ def next_action(activity_id='0', action_id=0):
             current_app.logger.error("next_action: can not get schema by action_id")
             res = ResponseMessageSchema().load({"code":-2, "msg":"can not get schema by action_id"})
             return jsonify(res.data), 500
-        schema_load = schema.load(request.get_json())
+        req_body = request.get_json() or {}
+        if 'action_version' not in req_body:
+            req_body['action_version'] = action.action_version
+        schema_load = schema.load(req_body)
     except ValidationError as err:
         current_app.logger.error("next_action: "+str(err))
         res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
@@ -1295,11 +1303,6 @@ def next_action(activity_id='0', action_id=0):
         commond=post_json.get('commond'),
         action_order=action_order
     )
-
-    action = Action().get_action_detail(action_id)
-    action_endpoint = action.action_endpoint
-
-    current_app.logger.debug('action_endpoint: {0}'.format(action_endpoint))
 
     if action_endpoint == 'begin_action':
         res = ResponseMessageSchema().load({"code":0, "msg":_("success")})
@@ -1777,7 +1780,11 @@ def previous_action(activity_id='0', action_id=0, req=0):
         res = ResponseMessageSchema().load({"code":-1,"msg":"argument error"})
         return jsonify(res.data), 500
     try:
-        schema_load = ActionSchema().load(request.get_json())
+        action = Action().get_action_detail(action_id)
+        req_body = request.get_json() or {}
+        if 'action_version' not in req_body:
+            req_body['action_version'] = action.action_version
+        schema_load = ActionSchema().load(req_body)
     except ValidationError as err:
         current_app.logger.error("previous_action: "+str(err))
         res = ResponseMessageSchema().load({"code":-1, "msg":str(err)})
