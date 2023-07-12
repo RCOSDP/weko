@@ -144,7 +144,6 @@ class GetActivities(ContentNegotiatedMethodView):
 
             # Check ETag
             etag = generate_etag(str(param_status + param_limit + param_page + param_pretty).encode('utf-8'))
-            print(etag)
             if check_etag(etag):
                 return make_response('304 Not Modified', 304)
             

@@ -4161,6 +4161,6 @@ def check_pretty(pretty):
     :param pretty: boolean of string type.
     """
     if pretty.lower() in WEKO_STR_TRUE:
-        current_app.debug = True
+        current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
     else:
-        current_app.debug = False
+        current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
