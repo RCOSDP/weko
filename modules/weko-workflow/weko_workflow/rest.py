@@ -29,7 +29,7 @@ from invenio_rest import ContentNegotiatedMethodView
 from werkzeug.http import generate_etag
 
 from .api import WorkActivity, Action, WorkActivityHistory
-from .errors import InternalServerError, InvalidParameterValueError, InvalidParameterError, PermissionError, VersionNotFoundRESTError, \
+from .errors import InternalServerError, InvalidParameterValueError, PermissionError, VersionNotFoundRESTError, \
     StatusNotApproveError
 from .scopes import activity_scope
 from .utils import create_conditions_dict, check_role, check_etag, check_pretty, get_activity_display_info
@@ -46,7 +46,7 @@ def create_blueprint(app, endpoints):
     blueprint = Blueprint(
         'weko_workflow_rest',
         __name__,
-        url_prefix="",
+        url_prefix = '',
     )
 
     @blueprint.teardown_request
@@ -66,7 +66,7 @@ def create_blueprint(app, endpoints):
                 default_media_type=options.get('default_media_type')
             )
             blueprint.add_url_rule(
-                options.pop("activities_route"),
+                options.pop('activities_route'),
                 view_func=activities,
                 methods=['GET']
             )
@@ -93,7 +93,6 @@ def create_blueprint(app, endpoints):
 
     return blueprint
 
-
 class GetActivities(ContentNegotiatedMethodView):
     """Resource to get workflow activities."""
     view_name = '{0}_activities'
@@ -117,14 +116,14 @@ class GetActivities(ContentNegotiatedMethodView):
 
         version = kwargs.get('version')
         get_api_ver = WEKO_GET_ACTIVITIES_API_VERSION.get(version)
-
+        
         if get_api_ver:
             return get_api_ver(self, **kwargs)
         else:
             raise VersionNotFoundRESTError()
-
+          
     def get_v1(self, **kwargs):
-        from .config import WEKO_STR_TRUE
+        from .config import WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB, WEKO_WORKFLOW_ALL_TAB
 
         try:
             # Check user and permission
@@ -132,42 +131,61 @@ class GetActivities(ContentNegotiatedMethodView):
                 raise PermissionError()
 
             # Get parameter
-            param_status = request.values.get("status") if request.values.get("status") else 'todo'
-            param_limit = int(request.values.get("limit")) if request.values.get("limit") else 20
-            param_page = int(request.values.get("page")) if request.values.get("page") else 1
-            param_pretty = 'true' if request.values.get('pretty').lower() in WEKO_STR_TRUE else 'false'
+            param_pretty = str(request.values.get('pretty', 'false'))
+            param_status = str(request.values.get('status', 'todo'))
+            param_limit = str(request.values.get('limit', '20'))
+            param_page = str(request.values.get('page', '1'))
+
+            # Check parameter
+            if not param_status in [WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB, WEKO_WORKFLOW_ALL_TAB]:
+                raise InvalidParameterValueError()
+            if not param_limit.isnumeric() or not param_page.isnumeric():
+                raise InvalidParameterValueError()
 
             # Check ETag
             etag = generate_etag(str(param_status + param_limit + param_page + param_pretty).encode('utf-8'))
             if check_etag(etag):
-                return make_response("304 Not Modified", 304)
-
+                return make_response('304 Not Modified', 304)
+            
             # Check pretty
-            check_pretty()
+            check_pretty(param_pretty)
 
             # Setting language
             # TODO: support for other languages
-            language = request.headers.get('Accept-Language')
+            language = request.headers.get('Accept-Language', 'en')
             if language == 'ja':
                 get_current_locale().language = language
-
+            
             # Get activity list
             work_activity = WorkActivity()
             rst_activities, _, rst_size, rst_page, _, rst_count = \
                 work_activity.get_activity_list(None, create_conditions_dict(param_status, param_limit, param_page), False)
 
+            activity_list = []
+            for activity in rst_activities:
+                _activity = \
+                    {
+                        'created': activity.created.strftime('%Y-%m-%d %H:%M:%S'),
+                        'updated': activity.updated.strftime('%Y-%m-%d %H:%M:%S'),
+                        'activity_id': activity.activity_id,
+                        'item_name': activity.title,
+                        'workflow_type': activity.workflow.flows_name,
+                        'action': activity.action.action_name,
+                        'status': activity.StatusDesc,
+                        'user': activity.email
+                    }
+                activity_list.append(_activity)
+
             # Response setting
             json_dict = dict()
             json_dict.update({'total': rst_count})
-            json_dict.update({'conditin': dict(status=param_status, limit=rst_size, page=rst_page)})
-            json_dict.update({'activities': rst_activities})
+            json_dict.update({'condition': dict(status = param_status, limit = rst_size, page = rst_page)})
+            json_dict.update({'activities': activity_list})
             response = make_response(jsonify(json_dict), 200)
             response.headers['ETag'] = etag
-
+            
             return response
 
-        except KeyError:
-            raise InvalidParameterError()
         except InvalidParameterValueError:
             raise InvalidParameterValueError()
         except PermissionError:

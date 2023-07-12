@@ -87,9 +87,9 @@ class WekoWorkflowREST(object):
         :param app: An instance of :class:`flask.Flask`.
         """
         self.init_config(app)
-        blueprint = create_blueprint(app, app.config["WEKO_WORKFLOW_REST_ENDPOINTS"])
+        blueprint = create_blueprint(app, app.config['WEKO_WORKFLOW_REST_ENDPOINTS'])
         app.register_blueprint(blueprint)
-        app.extensions["weko_workflow_rest"] = self
+        app.extensions['weko_workflow_rest'] = self
 
     def init_config(self, app):
         """
@@ -99,4 +99,6 @@ class WekoWorkflowREST(object):
         """
         for k in dir(config):
             if k.startswith('WEKO_WORKFLOW_'):
+                app.config.setdefault(k, getattr(config, k))
+            if k == 'WEKO_ITEMS_UI_MULTIPLE_APPROVALS':
                 app.config.setdefault(k, getattr(config, k))

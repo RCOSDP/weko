@@ -36,16 +36,9 @@ class ActivityBaseRESTError(RESTException):
 
 class VersionNotFoundRESTError(RESTException):
     """API Version error."""
-
+    
     code = 400
     description = _('This API version does not found.')
-
-
-class InvalidParameterError(RESTException):
-    """Invalid parameter."""
-
-    code = 400
-    description = _('Invalid request parameter.')
 
 
 class InvalidParameterValueError(RESTException):
@@ -99,6 +92,6 @@ class DeleteActivityFailedRESTError(RESTException):
 
 class InternalServerError(RESTException):
     """Internal Server Error."""
-
+    
     code = 500
     description = _('Internal Server Error.')
