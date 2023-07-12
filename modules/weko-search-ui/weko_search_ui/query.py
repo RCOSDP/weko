@@ -87,20 +87,20 @@ def get_permission_filter(index_id: str = None):
             if index_id in is_perm_indexes:
                 should_path.append(Q("terms", path=index_id))
 
-            mst.append(status)
-            mst.append(rng)
             terms = Q("bool", should=should_path)
         else:  # In case search_type is keyword or index
             if index_id in is_perm_indexes:
                 term_list.append(index_id)
 
-            mst.append(status)
-            mst.append(rng)
             terms = Q("terms", path=term_list)
+    else:
+        terms = Q("terms", path=is_perm_indexes)
+    
+    if is_admin:
+        mst.append(status)
     else:
         mst.append(status)
         mst.append(rng)
-        terms = Q("terms", path=is_perm_indexes)
 
     mut = []
 
