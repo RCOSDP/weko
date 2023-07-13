@@ -1104,8 +1104,8 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                             str(idx)))
                         output_path = ""
                         if key_data[key_index]:
-                            file_path = "recid_{}/{}".format(str(self.cur_recid), key_data[key_index])
-                            output_path = file_path if os.path.exists(os.path.join(export_path,file_path)) else ""
+                            output_path = "recid_{}/{}".format(str(self.cur_recid), key_data[key_index])
+                            #output_path = file_path if os.path.exists(os.path.join(export_path,file_path)) else ""
                         key_data.insert(0,output_path)
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
@@ -3051,8 +3051,8 @@ def make_stats_file_with_permission(item_type_id, recids,
                             str(idx)))
                         output_path = ""
                         if key_data[key_index]:
-                            file_path = "recid_{}/{}".format(str(self.cur_recid), key_data[key_index])
-                            output_path = file_path if os.path.exists(os.path.join(export_path,file_path)) else ""
+                            output_path = "recid_{}/{}".format(str(self.cur_recid), key_data[key_index])
+                            #output_path = file_path if os.path.exists(os.path.join(export_path,file_path)) else ""
                         key_data.insert(0,output_path)
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
