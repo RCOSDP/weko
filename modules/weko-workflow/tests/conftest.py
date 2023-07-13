@@ -26,7 +26,7 @@ import shutil
 import tempfile
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from six import BytesIO
 import base64
 
@@ -34,6 +34,7 @@ import pytest
 from flask import Flask, session, url_for, Response
 from flask_babelex import Babel, lazy_gettext as _
 from flask_menu import Menu
+from flask_oauthlib.provider import OAuth2Provider
 from elasticsearch import Elasticsearch
 from invenio_theme import InvenioTheme
 from invenio_theme.views import blueprint as invenio_theme_blueprint
@@ -45,6 +46,7 @@ from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
 from invenio_accounts.views.settings import blueprint \
     as invenio_accounts_blueprint
+from invenio_deposit import InvenioDeposit
 from invenio_i18n import InvenioI18N
 from invenio_cache import InvenioCache
 from invenio_admin import InvenioAdmin
@@ -56,7 +58,11 @@ from invenio_communities import InvenioCommunities
 from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_communities.models import Community
 from invenio_jsonschemas import InvenioJSONSchemas
+from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
+from invenio_oauth2server.models import Client, Token
+from invenio_oauth2server.views import settings_blueprint as oauth2server_settings_blueprint
 from invenio_records_ui import InvenioRecordsUI
+from invenio_rest import InvenioREST
 from weko_search_ui.config import WEKO_SYS_USER
 from weko_records_ui import WekoRecordsUI
 from weko_theme import WekoTheme
@@ -73,12 +79,15 @@ from weko_workflow import WekoWorkflow
 from weko_search_ui import WekoSearchUI
 from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory,GuestActivity, WorkflowRole
 from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
-from weko_workflow.config import WEKO_WORKFLOW_GAKUNINRDM_DATA,WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR
+from weko_workflow.config import WEKO_WORKFLOW_GAKUNINRDM_DATA,WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR,WEKO_WORKFLOW_REST_ENDPOINTS
+from weko_workflow.ext import WekoWorkflowREST
+from weko_workflow.scopes import activity_scope
+from weko_theme.config import THEME_INSTITUTION_NAME
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
-from tests.helpers import json_data, create_record
+from tests.helpers import json_data, create_record, fill_oauth2_headers
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy import event
@@ -508,6 +517,9 @@ def base_app(instance_path, search_class, cache_config):
                 record_class='invenio_records_files.api:Record',
             ),
         ),
+        THEME_INSTITUTION_NAME=THEME_INSTITUTION_NAME,
+        OAUTH2_CACHE_TYPE='simple',
+        WEKO_WORKFLOW_REST_ENDPOINTS=WEKO_WORKFLOW_REST_ENDPOINTS,
     )
     
     app_.testing = True
@@ -515,11 +527,13 @@ def base_app(instance_path, search_class, cache_config):
     InvenioI18N(app_)
     Menu(app_)
     # InvenioTheme(app_)
+    OAuth2Provider(app_)
     InvenioAccess(app_)
     InvenioAccounts(app_)
     InvenioFilesREST(app_)
     InvenioCache(app_)
     InvenioDB(app_)
+    InvenioDeposit(app_)
     InvenioStats(app_)
     InvenioAssets(app_)
     InvenioAdmin(app_)
@@ -528,6 +542,9 @@ def base_app(instance_path, search_class, cache_config):
     InvenioPIDStore(app_)
     InvenioRecords
     InvenioRecordsUI(app_)
+    InvenioREST(app_)
+    InvenioOAuth2Server(app_)
+    InvenioOAuth2ServerREST(app_)
     WekoRecordsUI(app_)
     search = InvenioSearch(app_, client=MockEs())
     search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
@@ -548,6 +565,8 @@ def base_app(instance_path, search_class, cache_config):
     # app_.register_blueprint(weko_theme_blueprint)
     # app_.register_blueprint(weko_admin_blueprint)
     app_.register_blueprint(weko_workflow_blueprint)
+    WekoWorkflowREST(app_)
+    app_.register_blueprint(oauth2server_settings_blueprint)
 
     return app_
 
@@ -2128,6 +2147,271 @@ def db_register_usage_application(app, db, db_records, users, action_data, item_
     #         "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item4,activity_item5,activity_item6]}
 
 
+@pytest.fixture()
+def workflow_approval(app, db, item_type, action_data, users):
+    """Register data for approval API in DB."""
+
+    # Register data in workflow_flow_define table
+    flow_define = FlowDefine(flow_id=uuid.uuid4(), flow_name='Registration Flow', flow_user=1,)
+    with db.session.begin_nested():
+        db.session.add(flow_define)
+    db.session.commit()
+
+    # Register data in workflow_flow_action table
+    flow_actions = []
+    # start
+    flow_actions.append(
+        FlowAction(
+            status='N',
+            flow_id=flow_define.flow_id,
+            action_id=1,
+            action_version='1.0.0',
+            action_order=1,
+            action_condition='',
+            action_status='A',
+            action_date=datetime.strptime('2023/07/01 14:00:00', '%Y/%m/%d %H:%M:%S'),
+            send_mail_setting={},
+        )
+    )
+    # item register
+    flow_actions.append(
+        FlowAction(
+            status='N',
+            flow_id=flow_define.flow_id,
+            action_id=3,
+            action_version='1.0.0',
+            action_order=2,
+            action_condition='',
+            action_status='A',
+            action_date=datetime.strptime('2023/07/01 14:00:00', '%Y/%m/%d %H:%M:%S'),
+            send_mail_setting={},
+        )
+    )
+    # item link
+    flow_actions.append(
+        FlowAction(
+            status='N',
+            flow_id=flow_define.flow_id,
+            action_id=5,
+            action_version='1.0.0',
+            action_order=3,
+            action_condition='',
+            action_status='A',
+            action_date=datetime.strptime('2023/07/01 14:00:00', '%Y/%m/%d %H:%M:%S'),
+            send_mail_setting={},
+        )
+    )
+    # identifier grant
+    flow_actions.append(
+        FlowAction(
+            status='N',
+            flow_id=flow_define.flow_id,
+            action_id=7,
+            action_version='1.0.0',
+            action_order=4,
+            action_condition='',
+            action_status='A',
+            action_date=datetime.strptime('2023/07/01 14:00:00', '%Y/%m/%d %H:%M:%S'),
+            send_mail_setting={},
+        )
+    )
+    # approval
+    flow_actions.append(
+        FlowAction(
+            status='N',
+            flow_id=flow_define.flow_id,
+            action_id=4,
+            action_version='1.0.0',
+            action_order=5,
+            action_condition='',
+            action_status='A',
+            action_date=datetime.strptime('2023/07/01 14:00:00', '%Y/%m/%d %H:%M:%S'),
+            send_mail_setting={},
+        )
+    )
+    # approval
+    flow_actions.append(
+        FlowAction(
+            status='N',
+            flow_id=flow_define.flow_id,
+            action_id=4,
+            action_version='1.0.0',
+            action_order=6,
+            action_condition='',
+            action_status='A',
+            action_date=datetime.strptime('2023/07/01 14:00:00', '%Y/%m/%d %H:%M:%S'),
+            send_mail_setting={},
+        )
+    )
+    # end
+    flow_actions.append(
+        FlowAction(
+            status='N',
+            flow_id=flow_define.flow_id,
+            action_id=2,
+            action_version='1.0.0',
+            action_order=7,
+            action_condition='',
+            action_status='A',
+            action_date=datetime.strptime('2023/07/01 14:00:00', '%Y/%m/%d %H:%M:%S'),
+            send_mail_setting={},
+        )
+    )
+    with db.session.begin_nested():
+        db.session.add_all(flow_actions)
+    db.session.commit()
+
+    # Register data in workflow_workflow table
+    workflow = WorkFlow(
+        flows_id=uuid.uuid4(),
+        flows_name='test workflow01',
+        itemtype_id=1,
+        index_tree_id=None,
+        flow_id=1,
+        is_deleted=False,
+        open_restricted=False,
+        location_id=None,
+        is_gakuninrdm=False,
+    )
+    with db.session.begin_nested():
+        db.session.add(workflow)
+    db.session.commit()
+
+    return {
+        "flow": flow_define,
+        "flow_action": flow_actions,
+        "workflow": workflow
+    }
+
+
+@pytest.fixture()
+def db_register_approval(app, db, db_records, workflow_approval, users):
+    """Register data for approval API in DB."""
+
+    # Register data in workflow_activity table
+    # Next action is approval
+    activities = []
+    activities.append(
+        Activity(
+            activity_id='1', item_id=db_records[0][2].id, workflow_id=1, flow_id=workflow_approval['flow'].id, action_id=4,
+            activity_login_user=1, activity_update_user=1,
+            activity_start=datetime.strptime('2023/07/10 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+            activity_community_id=3,
+            activity_confirm_term_of_use=True,
+            title='test', shared_user_id=-1, extra_info={}, action_order=5,
+        )
+    )
+    # Next action is item register
+    activities.append(
+        Activity(
+            activity_id='2', item_id=db_records[1][2].id, workflow_id=1, flow_id=workflow_approval['flow'].id, action_id=3,
+            activity_login_user=1, activity_update_user=1,
+            activity_start=datetime.strptime('2023/07/10 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+            activity_community_id=3,
+            activity_confirm_term_of_use=True,
+            title='test', shared_user_id=-1, extra_info={}, action_order=2,
+        )
+    )
+    with db.session.begin_nested():
+        db.session.add_all(activities)
+    db.session.commit()
+
+    # Register data in workflow_activity_action table
+    activity1_actions = []
+    activity1_actions.append(ActivityAction(activity_id=activities[0].activity_id, action_id=1, action_status="F", action_handler=1, action_order=1,))
+    activity1_actions.append(ActivityAction(activity_id=activities[0].activity_id, action_id=3, action_status="F", action_handler=1, action_order=2,))
+    activity1_actions.append(ActivityAction(activity_id=activities[0].activity_id, action_id=5, action_status="F", action_handler=1, action_order=3,))
+    activity1_actions.append(ActivityAction(activity_id=activities[0].activity_id, action_id=7, action_status="F", action_handler=1, action_order=4,))
+    activity1_actions.append(ActivityAction(activity_id=activities[0].activity_id, action_id=4, action_status="F", action_handler=1, action_order=5,))
+    activity1_actions.append(ActivityAction(activity_id=activities[0].activity_id, action_id=4, action_status="F", action_handler=1, action_order=6,))
+    activity1_actions.append(ActivityAction(activity_id=activities[0].activity_id, action_id=2, action_status="F", action_handler=1, action_order=7,))
+    activity2_actions = []
+    activity2_actions.append(ActivityAction(activity_id=activities[1].activity_id, action_id=1, action_status="F", action_handler=1, action_order=1,))
+    activity2_actions.append(ActivityAction(activity_id=activities[1].activity_id, action_id=3, action_status="F", action_handler=1, action_order=2,))
+    activity2_actions.append(ActivityAction(activity_id=activities[1].activity_id, action_id=5, action_status="F", action_handler=1, action_order=3,))
+    activity2_actions.append(ActivityAction(activity_id=activities[1].activity_id, action_id=7, action_status="F", action_handler=1, action_order=4,))
+    activity2_actions.append(ActivityAction(activity_id=activities[1].activity_id, action_id=4, action_status="F", action_handler=1, action_order=5,))
+    activity2_actions.append(ActivityAction(activity_id=activities[1].activity_id, action_id=4, action_status="F", action_handler=1, action_order=6,))
+    activity2_actions.append(ActivityAction(activity_id=activities[1].activity_id, action_id=2, action_status="F", action_handler=1, action_order=7,))
+    with db.session.begin_nested():
+        db.session.add_all(activity1_actions)
+        db.session.add_all(activity2_actions)
+    db.session.commit()
+
+    # Register data in workflow_action_history table
+    activity1_histories = []
+    activity1_histories.append(
+        ActivityHistory(
+            activity_id=activities[0].activity_id,
+            action_id=workflow_approval['flow_action'][0].action_id,
+            action_version=workflow_approval['flow_action'][0].action_version,
+            action_status='F',
+            action_user=users[2]['id'],
+            action_date=datetime.strptime('2023/07/10 10:00:01.000', '%Y/%m/%d %H:%M:%S.%f'),
+            action_comment=None,
+            action_order=workflow_approval['flow_action'][0].action_order,
+        )
+    )
+    activity1_histories.append(
+        ActivityHistory(
+            activity_id=activities[0].activity_id,
+            action_id=workflow_approval['flow_action'][1].action_id,
+            action_version=workflow_approval['flow_action'][1].action_version,
+            action_status='F',
+            action_user=users[2]['id'],
+            action_date=datetime.strptime('2023/07/10 10:00:03.000', '%Y/%m/%d %H:%M:%S.%f'),
+            action_comment=None,
+            action_order=workflow_approval['flow_action'][1].action_order,
+        )
+    )
+    activity1_histories.append(
+        ActivityHistory(
+            activity_id=activities[0].activity_id,
+            action_id=workflow_approval['flow_action'][2].action_id,
+            action_version=workflow_approval['flow_action'][2].action_version,
+            action_status='F',
+            action_user=users[2]['id'],
+            action_date=datetime.strptime('2023/07/10 10:00:05.000', '%Y/%m/%d %H:%M:%S.%f'),
+            action_comment=None,
+            action_order=workflow_approval['flow_action'][2].action_order,
+        )
+    )
+    activity1_histories.append(
+        ActivityHistory(
+            activity_id=activities[0].activity_id,
+            action_id=workflow_approval['flow_action'][3].action_id,
+            action_version=workflow_approval['flow_action'][3].action_version,
+            action_status='F',
+            action_user=users[2]['id'],
+            action_date=datetime.strptime('2023/07/10 10:00:07.000', '%Y/%m/%d %H:%M:%S.%f'),
+            action_comment=None,
+            action_order=workflow_approval['flow_action'][3].action_order,
+        )
+    )
+    activity2_histories = []
+    activity2_histories.append(
+        ActivityHistory(
+            activity_id=activities[1].activity_id,
+            action_id=workflow_approval['flow_action'][0].action_id,
+            action_version=workflow_approval['flow_action'][0].action_version,
+            action_status='F',
+            action_user=users[2]['id'],
+            action_date=datetime.strptime('2023/07/10 10:00:01.000', '%Y/%m/%d %H:%M:%S.%f'),
+            action_comment=None,
+            action_order=workflow_approval['flow_action'][0].action_order,
+        )
+    )
+    with db.session.begin_nested():
+        db.session.add_all(activity1_histories)
+        db.session.add_all(activity2_histories)
+    db.session.commit()
+
+    return {
+        'activity': activities,
+        'action': [activity1_actions, activity2_actions],
+        'activity_history': [activity1_histories, activity2_histories]
+    }
+
 
 @pytest.fixture()
 def site_info(db):
@@ -2151,7 +2435,73 @@ def db_guestactivity(db):
     with db.session.begin_nested():
         db.session.add(record)
     db.session.commit()
-    
 
 
+@pytest.fixture()
+def client_oauth(users):
+    """Create client."""
+    # create resource_owner -> client_1
+    client_ = Client(
+        client_id='client_test_u1c1',
+        client_secret='client_test_u1c1',
+        name='client_test_u1c1',
+        description='',
+        is_confidential=False,
+        user=users[2]['obj'],
+        _redirect_uris='',
+        _default_scopes='',
+    )
+    with db_.session.begin_nested():
+        db_.session.add(client_)
+    db_.session.commit()
+    return client_
 
+
+@pytest.fixture()
+def create_oauth_token(client, client_oauth, users):
+    """Create token."""
+    token1_ = Token(
+        client=client_oauth,
+        user=users[2]['obj'],   # sysadmin
+        token_type='u',
+        access_token='dev_access_1',
+        refresh_token='dev_refresh_1',
+        expires=datetime.now() + timedelta(hours=10),
+        is_personal=False,
+        is_internal=True,
+        _scopes=activity_scope.id,
+    )
+    token2_ = Token(
+        client=client_oauth,
+        user=users[8]['obj'],   # student
+        token_type='u',
+        access_token='dev_access_2',
+        refresh_token='dev_refresh_2',
+        expires=datetime.now() + timedelta(hours=10),
+        is_personal=False,
+        is_internal=True,
+        _scopes=activity_scope.id,
+    )
+    with db_.session.begin_nested():
+        db_.session.add(token1_)
+        db_.session.add(token2_)
+    db_.session.commit()
+    return [token1_, token2_]
+
+
+@pytest.fixture()
+def json_headers():
+    """JSON headers."""
+    return [('Content-Type', 'application/json'), ('Accept', 'application/json')]
+
+
+@pytest.fixture()
+def auth_headers(client, json_headers, create_oauth_token):
+    """Authentication headers (with a valid oauth2 token).
+
+    It uses the token associated with the first user.
+    """
+    return [
+        fill_oauth2_headers(json_headers, create_oauth_token[0]),
+        fill_oauth2_headers(json_headers, create_oauth_token[1]),
+    ]
