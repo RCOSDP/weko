@@ -44,6 +44,7 @@ from invenio_deposit.config import (
     DEPOSIT_DEFAULT_JSONSCHEMA,
     DEPOSIT_JSONSCHEMAS_PREFIX,
 )
+from kombu import Exchange, Queue
 from invenio_stats.contrib.event_builders import (
     build_file_unique_id,
     build_record_unique_id,
@@ -135,6 +136,12 @@ def base_app(instance_path):
         SECRET_KEY='SECRET_KEY',
         WEKO_INDEX_TREE_UPDATED=True,
         TESTING=True,
+        BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
+        CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
+        CELERY_ALWAYS_EAGER=True,
+        CELERY_CACHE_BACKEND='memory',
+        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_RESULT_BACKEND='cache',
         FILES_REST_DEFAULT_QUOTA_SIZE = None,
         FILES_REST_DEFAULT_STORAGE_CLASS = 'S',
         FILES_REST_STORAGE_CLASS_LIST = {
@@ -433,7 +440,7 @@ def base_app(instance_path):
         },
         WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_edit_setting.html',
         WEKO_INDEX_TREE_LIST_API = "/api/tree",
-        WEKO_INDEX_TREE_API = "/api/tree/index/",
+        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer",type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
     )
     app_.url_map.converters['pid'] = PIDConverter
 

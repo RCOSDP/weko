@@ -1,90 +1,13 @@
 GLOB sdist-make: /code/modules/invenio-oaiharvester/setup.py
-<<<<<<< HEAD
 c1 inst-nodeps: /code/modules/invenio-oaiharvester/.tox/.tmp/package/1/invenio-oaiharvester-1.0.0a4.dev20171205.zip
-c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.7,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,invenio-oaiharvester @ file:///code/modules/invenio-oaiharvester/.tox/.tmp/package/1/invenio-oaiharvester-1.0.0a4.dev20171205.zip,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,responses==0.10.15,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_records&subdirectory=modules/weko-records,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@7ad69513df30aa043c8d79e8ad9fe7104eee0d6a#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
-c1 run-test-pre: PYTHONHASHSEED='3483977045'
-=======
-c1 recreate: /code/modules/invenio-oaiharvester/.tox/c1
-c1 installdeps: pytest>=3, pytest-cov, -rrequirements.txt
-c1 inst: /code/modules/invenio-oaiharvester/.tox/.tmp/package/1/invenio-oaiharvester-1.0.0a4.dev20171205.zip
-c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.6,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,invenio-oaiharvester @ file:///code/modules/invenio-oaiharvester/.tox/.tmp/package/1/invenio-oaiharvester-1.0.0a4.dev20171205.zip,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,kombu==4.6.10,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,responses==0.10.15,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records&subdirectory=modules/weko-records,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://github.com/RCOSDP/weko.git@76430b4c7fb0c43f0e7c651235e280a7adbcc333#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
-c1 run-test-pre: PYTHONHASHSEED='4263788759'
->>>>>>> origin/feature/change-pub-status-enum
-c1 run-test: commands[0] | pytest --cov=invenio_oaiharvester tests -v --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.7,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,invenio-oaiharvester @ file:///code/modules/invenio-oaiharvester/.tox/.tmp/package/1/invenio-oaiharvester-1.0.0a4.dev20171205.zip,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,responses==0.10.15,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_records&subdirectory=modules/weko-records,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='1417763583'
+c1 run-test: commands[0] | pytest --cov=invenio_oaiharvester tests -v --cov-branch --cov-report=term --cov-report=xml --cov-report=html --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 ============================= test session starts ==============================
 platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/invenio-oaiharvester/.tox/c1/bin/python
 cachedir: .tox/c1/.pytest_cache
 rootdir: /code/modules/invenio-oaiharvester
-<<<<<<< HEAD
 plugins: celery-4.4.7, mock-3.6.1, cov-4.0.0
-collecting ... collected 33 items
-
-tests/test_admin.py::test_admin PASSED                                   [  3%]
-tests/test_cli.py::test_cli_harvest_idents PASSED                        [  6%]
-tests/test_cli.py::test_cli_harvest_list PASSED                          [  9%]
-tests/test_harvesting.py::test_model_based_harvesting PASSED             [ 12%]
-tests/test_harvesting.py::test_model_based_utf8_harvesting PASSED        [ 15%]
-tests/test_harvesting.py::test_model_based_harvesting_list PASSED        [ 18%]
-tests/test_harvesting.py::test_raise_missing_info PASSED                 [ 21%]
-tests/test_harvesting.py::test_raise_wrong_date PASSED                   [ 24%]
-tests/test_harvesting.py::test_list_records PASSED                       [ 27%]
-tests/test_harvesting.py::test_list_no_records PASSED                    [ 30%]
-tests/test_harvesting.py::test_get_from_identifiers PASSED               [ 33%]
-tests/test_harvesting.py::test_get_from_identifiers_with_prefix PASSED   [ 36%]
-tests/test_harvesting.py::test_harvester_list_sets ERROR                 [ 39%]
-tests/test_harvesting.py::test_harvester_list_records ERROR              [ 42%]
-tests/test_invenio_oaiharvester.py::test_version PASSED                  [ 45%]
-tests/test_invenio_oaiharvester.py::test_init PASSED                     [ 48%]
-tests/test_tasks.py::test_get_specific_records PASSED                    [ 51%]
-tests/test_tasks.py::test_list_records_from_dates PASSED                 [ 54%]
-tests/test_tasks.py::test_create_indexes PASSED                          [ 57%]
-tests/test_tasks.py::test_map_indexes PASSED                             [ 60%]
-tests/test_tasks.py::test_event_counter PASSED                           [ 63%]
-tests/test_tasks.py::test_process_item PASSED                            [ 66%]
-tests/test_tasks.py::test_run_harvesting PASSED                          [ 69%]
-tests/test_utils.py::test_identifier_extraction PASSED                   [ 72%]
-tests/test_utils.py::test_identifier_extraction_with_namespace PASSED    [ 75%]
-tests/test_utils.py::test_records_extraction_without_namespace PASSED    [ 78%]
-tests/test_utils.py::test_records_extraction_with_namespace_getrecord PASSED [ 81%]
-tests/test_utils.py::test_records_extraction_with_namespace_listrecords PASSED [ 84%]
-tests/test_utils.py::test_records_extraction_from_file PASSED            [ 87%]
-tests/test_utils.py::test_identifier_filter PASSED                       [ 90%]
-tests/test_utils.py::test_check_or_create_dir PASSED                     [ 93%]
-tests/test_utils.py::test_write_to_dir PASSED                            [ 96%]
-tests/test_utils.py::test_create_file_name PASSED                        [100%]
-
-==================================== ERRORS ====================================
-__________________ ERROR at setup of test_harvester_list_sets __________________
-
-    @pytest.fixture
-    def sample_jpcoar_list_xml():
-        raw_cs_xml = open(os.path.join(
-            os.path.dirname(__file__),
->           "data/oai.xml"
-        )).read()
-E       FileNotFoundError: [Errno 2] No such file or directory: '/code/modules/invenio-oaiharvester/tests/data/oai.xml'
-
-tests/conftest.py:359: FileNotFoundError
------------------------------- Captured log setup ------------------------------
-WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
-________________ ERROR at setup of test_harvester_list_records _________________
-
-    @pytest.fixture
-    def sample_jpcoar_list_xml():
-        raw_cs_xml = open(os.path.join(
-            os.path.dirname(__file__),
->           "data/oai.xml"
-        )).read()
-E       FileNotFoundError: [Errno 2] No such file or directory: '/code/modules/invenio-oaiharvester/tests/data/oai.xml'
-
-tests/conftest.py:359: FileNotFoundError
------------------------------- Captured log setup ------------------------------
-WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
-=============================== warnings summary ===============================
-../invenio-indexer/invenio_indexer/cli.py:162
-  /code/modules/invenio-indexer/invenio_indexer/cli.py:162: DeprecationWarning: 'resultcallback' has been renamed to 'result_callback'. The old name will be removed in Click 8.1.
-=======
-plugins: cov-4.0.0, celery-4.4.7, mock-3.6.1
 collecting ... collected 117 items
 
 tests/test_admin.py::test_admin PASSED                                   [  0%]
@@ -187,11 +110,11 @@ tests/test_tasks.py::test_list_records_from_dates PASSED                 [ 82%]
 tests/test_tasks.py::test_create_indexes PASSED                          [ 83%]
 tests/test_tasks.py::test_map_indexes PASSED                             [ 84%]
 tests/test_tasks.py::test_event_counter PASSED                           [ 85%]
-tests/test_tasks.py::test_process_item PASSED                            [ 86%]
+tests/test_tasks.py::test_process_item FAILED                            [ 86%]
 tests/test_tasks.py::test_link_success_handler PASSED                    [ 87%]
 tests/test_tasks.py::test_link_error_handler PASSED                      [ 88%]
 tests/test_tasks.py::test_is_harvest_running PASSED                      [ 88%]
-tests/test_tasks.py::test_run_harvesting PASSED                          [ 89%]
+tests/test_tasks.py::test_run_harvesting FAILED                          [ 89%]
 tests/test_tasks.py::test_check_schedules_and_run PASSED                 [ 90%]
 tests/test_utils.py::test_identifier_extraction_from_string PASSED       [ 91%]
 tests/test_utils.py::test_records_extraction_without_namespace PASSED    [ 92%]
@@ -205,10 +128,516 @@ tests/test_utils.py::test_write_to_dir PASSED                            [ 98%]
 tests/test_utils.py::test_create_file_name PASSED                        [ 99%]
 tests/test_views.py::test_dbsession_clean PASSED                         [100%]
 
+=================================== FAILURES ===================================
+______________________________ test_process_item _______________________________
+
+self = <sqlalchemy.engine.base.Connection object at 0x7f4445455c18>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f44459fd208>
+constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
+statement = 'SELECT pidstore_pid.created AS pidstore_pid_created, pidstore_pid.updated AS pidstore_pid_updated, pidstore_pid.id AS...t_uuid \nFROM pidstore_pid \nWHERE pidstore_pid.pid_type = %(pid_type_1)s AND pidstore_pid.pid_value = %(pid_value_1)s'
+parameters = {'pid_type_1': 'depid', 'pid_value_1': 1}
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7f4445455cc0>, [immutabledict({})])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7f4445455b70>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f4445455b38>
+
+    def _execute_context(
+        self, dialect, constructor, statement, parameters, *args
+    ):
+        """Create an :class:`.ExecutionContext` and execute, returning
+        a :class:`.ResultProxy`."""
+    
+        try:
+            try:
+                conn = self.__connection
+            except AttributeError:
+                # escape "except AttributeError" before revalidating
+                # to prevent misleading stacktraces in Py3K
+                conn = None
+            if conn is None:
+                conn = self._revalidate_connection()
+    
+            context = constructor(dialect, self, conn, *args)
+        except BaseException as e:
+            self._handle_dbapi_exception(
+                e, util.text_type(statement), parameters, None, None
+            )
+    
+        if context.compiled:
+            context.pre_exec()
+    
+        cursor, statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        if not context.executemany:
+            parameters = parameters[0]
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                statement, parameters = fn(
+                    self,
+                    cursor,
+                    statement,
+                    parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self.engine.logger.info(statement)
+            self.engine.logger.info(
+                "%r", sql_util._repr_params(parameters, batches=10)
+            )
+    
+        evt_handled = False
+        try:
+            if context.executemany:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor, statement, parameters, context
+                    )
+            elif not parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, statement, context
+                    )
+            else:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute(
+>                       cursor, statement, parameters, context
+                    )
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f44459fd208>
+cursor = <cursor object at 0x7f44475a6710; closed: -1>
+statement = 'SELECT pidstore_pid.created AS pidstore_pid_created, pidstore_pid.updated AS pidstore_pid_updated, pidstore_pid.id AS...t_uuid \nFROM pidstore_pid \nWHERE pidstore_pid.pid_type = %(pid_type_1)s AND pidstore_pid.pid_value = %(pid_value_1)s'
+parameters = {'pid_type_1': 'depid', 'pid_value_1': 1}
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f4445455b38>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       psycopg2.ProgrammingError: operator does not exist: character varying = integer
+E       LINE 3: ...dstore_pid.pid_type = 'depid' AND pidstore_pid.pid_value = 1
+E                                                                           ^
+E       HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: ProgrammingError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
+esindex = <Elasticsearch([{'host': 'elasticsearch'}])>
+location = <[InternalError('(psycopg2.InternalError) current transaction is aborted, commands ignored until end of transaction block\n',) raised in repr()] Location object at 0x7f444503f8d0>
+db_itemtype = {'item_type_ddi': <ItemType 11>, 'item_type_ddi_mapping': <ItemTypeMapping 11>, 'item_type_ddi_name': <ItemTypeName 11>, 'item_type_multiple': <ItemType 10>, ...}
+harvest_setting = [<HarvestSettings 1>, <HarvestSettings 2>, <HarvestSettings 3>, <HarvestSettings 4>]
+db_records = None
+mocker = <pytest_mock.plugin.MockerFixture object at 0x7f444426f898>
+
+    def test_process_item(app, db, esindex, location, db_itemtype,harvest_setting,db_records,mocker):
+        mocker.patch("weko_search_ui.utils.send_item_created_event_to_es")
+        mock_resource_type_map={
+            'conference paper':'Harvesting dc'
+        }
+        mocker.patch("invenio_oaiharvester.harvester.RESOURCE_TYPE_MAP",mock_resource_type_map)
+        # jpcoar
+        # mapper.is_deleted is true
+        _etree = etree.fromstring('<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><responseDate>2023-03-01T02:07:10Z</responseDate><request metadataPrefix="oai_dc" identifier="oai:weko3.example.org:00000001" verb="GetRecord">https://192.168.56.103/oai</request><GetRecord><record><header status="deleted"><identifier>oai:weko3.example.org:00000005</identifier><datestamp>2023-02-20T06:24:47Z</datestamp></header></record></GetRecord></OAI-PMH>')
+        _records = _etree.findall('./GetRecord/record', namespaces=_etree.nsmap)
+        _counter = {}
+        res = process_item(_records[0], harvest_setting[0], _counter, None)
+        assert res==None
+    
+        ## pubdate > mapper.datestamp, update_style=1
+        _etree = etree.fromstring('<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><GetRecord><record><header><identifier>oai:weko3.example.org:00000001</identifier><datestamp>2020-02-20T06:24:47Z</datestamp><setSpec>1557819692844:1557819733276</setSpec><setSpec>1557820086539</setSpec></header><metadata><jpcoar:jpcoar xmlns:datacite="https://schema.datacite.org/meta/kernel-4/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:jpcoar="https://github.com/JPCOAR/schema/blob/master/1.0/" xmlns:oaire="http://namespace.openaire.eu/schema/oaire/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rioxxterms="http://www.rioxx.net/schema/v2.0/rioxxterms/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="https://github.com/JPCOAR/schema/blob/master/1.0/" xsi:schemaLocation="https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd"><dc:title xml:lang="ja">test full item</dc:title><dcterms:alternative xml:lang="en">other title</dcterms:alternative><jpcoar:creator><jpcoar:nameIdentifier nameIdentifierURI="https://orcid.org/1234" nameIdentifierScheme="ORCID">1234</jpcoar:nameIdentifier><jpcoar:creatorName xml:lang="ja">テスト, 太郎</jpcoar:creatorName><jpcoar:familyName xml:lang="ja">テスト</jpcoar:familyName><jpcoar:givenName xml:lang="ja">太郎</jpcoar:givenName><jpcoar:creatorAlternative xml:lang="ja">テスト　別郎</jpcoar:creatorAlternative><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="http://www.isni.org/isni/5678" nameIdentifierScheme="ISNI">5678</jpcoar:nameIdentifier></jpcoar:affiliation></jpcoar:creator><jpcoar:contributor contributorType="ContactPerson"><jpcoar:nameIdentifier nameIdentifierURI="https://orcid.org/5678" nameIdentifierScheme="ORCID">5678</jpcoar:nameIdentifier><jpcoar:contributorName xml:lang="en">test, smith</jpcoar:contributorName><jpcoar:familyName xml:lang="en">test</jpcoar:familyName><jpcoar:givenName xml:lang="en">smith</jpcoar:givenName><jpcoar:contributorAlternative xml:lang="en">other smith</jpcoar:contributorAlternative><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="http://www.isni.org/isni/1234" nameIdentifierScheme="ISNI">1234</jpcoar:nameIdentifier></jpcoar:affiliation></jpcoar:contributor><dcterms:accessRights rdf:resource="http://purl.org/coar/access_right/c_14cb">metadata only access</dcterms:accessRights><rioxxterms:apc>Paid</rioxxterms:apc><dc:rights xml:lang="ja" rdf:resource="テスト権利情報Resource">テスト権利情報</dc:rights><jpcoar:rightsHolder><jpcoar:rightsHolderName xml:lang="ja">テスト　太郎</jpcoar:rightsHolderName></jpcoar:rightsHolder><jpcoar:subject xml:lang="ja" subjectURI="http://bsh.com" subjectScheme="BSH">テスト主題</jpcoar:subject><datacite:description xml:lang="en" descriptionType="Abstract">this is test abstract.</datacite:description><dc:publisher xml:lang="ja">test publisher</dc:publisher><datacite:date dateType="Accepted">2022-10-20</datacite:date><datacite:date dateType="Issued">2022-10-19</datacite:date><dc:language>jpn</dc:language><dc:type rdf:resource="http://purl.org/coar/resource_type/c_2fe3">newspaper</dc:type><datacite:version>1.1</datacite:version><oaire:version rdf:resource="http://purl.org/coar/version/c_b1a7d7d4d402bcce">AO</oaire:version><jpcoar:identifier identifierType="DOI">1111</jpcoar:identifier><jpcoar:identifier identifierType="DOI">https://doi.org/1234/0000000001</jpcoar:identifier><jpcoar:identifier identifierType="URI">https://192.168.56.103/records/1</jpcoar:identifier><jpcoar:identifierRegistration identifierType="JaLC">1234/0000000001</jpcoar:identifierRegistration><jpcoar:relation relationType="isVersionOf"><jpcoar:relatedIdentifier identifierType="ARK">1111111</jpcoar:relatedIdentifier><jpcoar:relatedTitle xml:lang="ja">関連情報テスト</jpcoar:relatedTitle></jpcoar:relation><jpcoar:relation relationType="isVersionOf"><jpcoar:relatedIdentifier identifierType="URI">https://192.168.56.103/records/3</jpcoar:relatedIdentifier></jpcoar:relation><dcterms:temporal xml:lang="ja">1 to 2</dcterms:temporal><datacite:geoLocation><datacite:geoLocationPoint><datacite:pointLongitude>12345</datacite:pointLongitude><datacite:pointLatitude>67890</datacite:pointLatitude></datacite:geoLocationPoint><datacite:geoLocationBox><datacite:westBoundLongitude>123</datacite:westBoundLongitude><datacite:eastBoundLongitude>456</datacite:eastBoundLongitude><datacite:southBoundLatitude>789</datacite:southBoundLatitude><datacite:northBoundLatitude>1112</datacite:northBoundLatitude></datacite:geoLocationBox><datacite:geoLocationPlace>テスト位置情報</datacite:geoLocationPlace></datacite:geoLocation><jpcoar:fundingReference><datacite:funderIdentifier funderIdentifierType="Crossref Funder">22222</datacite:funderIdentifier><jpcoar:funderName xml:lang="ja">テスト助成機関</jpcoar:funderName><datacite:awardNumber awardURI="https://test.research.com">1111</datacite:awardNumber><jpcoar:awardTitle xml:lang="ja">テスト研究</jpcoar:awardTitle></jpcoar:fundingReference><jpcoar:sourceIdentifier identifierType="PISSN">test source Identifier</jpcoar:sourceIdentifier><jpcoar:sourceTitle xml:lang="ja">test collectibles</jpcoar:sourceTitle><jpcoar:sourceTitle xml:lang="ja">test title book</jpcoar:sourceTitle><jpcoar:volume>5</jpcoar:volume><jpcoar:volume>1</jpcoar:volume><jpcoar:issue>2</jpcoar:issue><jpcoar:issue>2</jpcoar:issue><jpcoar:numPages>333</jpcoar:numPages><jpcoar:numPages>555</jpcoar:numPages><jpcoar:pageStart>123</jpcoar:pageStart><jpcoar:pageStart>789</jpcoar:pageStart><jpcoar:pageEnd>456</jpcoar:pageEnd><jpcoar:pageEnd>234</jpcoar:pageEnd><dcndl:dissertationNumber>9999</dcndl:dissertationNumber><dcndl:degreeName xml:lang="ja">テスト学位</dcndl:degreeName><dcndl:dateGranted>2022-10-19</dcndl:dateGranted><jpcoar:degreeGrantor><jpcoar:nameIdentifier nameIdentifierScheme="kakenhi">学位授与機関識別子テスト</jpcoar:nameIdentifier><jpcoar:degreeGrantorName xml:lang="ja">学位授与機関</jpcoar:degreeGrantorName></jpcoar:degreeGrantor><jpcoar:conference><jpcoar:conferenceName xml:lang="ja">テスト会議</jpcoar:conferenceName><jpcoar:conferenceSequence>12345</jpcoar:conferenceSequence><jpcoar:conferenceSponsor xml:lang="ja">テスト機関</jpcoar:conferenceSponsor><jpcoar:conferenceDate endDay="1" endYear="2005" endMonth="12" startDay="11" xml:lang="ja" startYear="2000" startMonth="4">12</jpcoar:conferenceDate><jpcoar:conferenceVenue xml:lang="ja">テスト会場</jpcoar:conferenceVenue><jpcoar:conferenceCountry>JPN</jpcoar:conferenceCountry></jpcoar:conference><jpcoar:file><jpcoar:URI>https://weko3.example.org/record/1/files/test1.txt</jpcoar:URI><jpcoar:mimeType>text/plain</jpcoar:mimeType><jpcoar:extent>18 B</jpcoar:extent><datacite:date dateType="Accepted">2022-10-20</datacite:date><datacite:version>1.0</datacite:version></jpcoar:file><jpcoar:file><jpcoar:URI>https://weko3.example.org/record/1/files/test2</jpcoar:URI><jpcoar:mimeType>application/octet-stream</jpcoar:mimeType><jpcoar:extent>18 B</jpcoar:extent><datacite:version>1.2</datacite:version></jpcoar:file><jpcoar:file><jpcoar:URI>https://weko3.example.org/record/1/files/test3.png</jpcoar:URI><jpcoar:mimeType>image/png</jpcoar:mimeType><jpcoar:extent>18 B</jpcoar:extent><datacite:version>2.1</datacite:version></jpcoar:file></jpcoar:jpcoar></metadata></record></GetRecord></OAI-PMH>')
+        _records = _etree.findall('./GetRecord/record', namespaces=_etree.nsmap)
+        _counter = {}
+        jpcoar_setting2 = HarvestSettings(
+            id=10,
+            repository_name="jpcoar_test2",
+            base_url="http://export.arxiv.org/oai2",
+            from_date=datetime(2022, 10, 1),
+            until_date=datetime(2022, 10, 2),
+            metadata_prefix="jpcoar_1.0",
+            index_id=2,
+            update_style="1",
+            auto_distribution="0"
+        )
+        with db.session.begin_nested():
+            db.session.add(jpcoar_setting2)
+        db.session.commit()
+        res = process_item(_records[0], jpcoar_setting2, _counter, None)
+        assert res==None
+    
+        ## json_data is none
+        _etree = etree.fromstring('<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><GetRecord><record><header><identifier>oai:weko3.example.org:00000001</identifier><datestamp>2023-02-20T06:24:47Z</datestamp><setSpec>1557819692844:1557819733276</setSpec><setSpec>11</setSpec></header><metadata><jpcoar:jpcoar xmlns:datacite="https://schema.datacite.org/meta/kernel-4/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:jpcoar="https://github.com/JPCOAR/schema/blob/master/1.0/" xmlns:oaire="http://namespace.openaire.eu/schema/oaire/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rioxxterms="http://www.rioxx.net/schema/v2.0/rioxxterms/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="https://github.com/JPCOAR/schema/blob/master/1.0/" xsi:schemaLocation="https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd"><dc:title xml:lang="ja">test full item</dc:title><dcterms:alternative xml:lang="en">other title</dcterms:alternative><jpcoar:creator><jpcoar:nameIdentifier nameIdentifierURI="https://orcid.org/1234" nameIdentifierScheme="ORCID">1234</jpcoar:nameIdentifier><jpcoar:creatorName xml:lang="ja">テスト, 太郎</jpcoar:creatorName><jpcoar:familyName xml:lang="ja">テスト</jpcoar:familyName><jpcoar:givenName xml:lang="ja">太郎</jpcoar:givenName><jpcoar:creatorAlternative xml:lang="ja">テスト　別郎</jpcoar:creatorAlternative><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="http://www.isni.org/isni/5678" nameIdentifierScheme="ISNI">5678</jpcoar:nameIdentifier></jpcoar:affiliation></jpcoar:creator><jpcoar:contributor contributorType="ContactPerson"><jpcoar:nameIdentifier nameIdentifierURI="https://orcid.org/5678" nameIdentifierScheme="ORCID">5678</jpcoar:nameIdentifier><jpcoar:contributorName xml:lang="en">test, smith</jpcoar:contributorName><jpcoar:familyName xml:lang="en">test</jpcoar:familyName><jpcoar:givenName xml:lang="en">smith</jpcoar:givenName><jpcoar:contributorAlternative xml:lang="en">other smith</jpcoar:contributorAlternative><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="http://www.isni.org/isni/1234" nameIdentifierScheme="ISNI">1234</jpcoar:nameIdentifier></jpcoar:affiliation></jpcoar:contributor><dcterms:accessRights rdf:resource="http://purl.org/coar/access_right/c_14cb">metadata only access</dcterms:accessRights><rioxxterms:apc>Paid</rioxxterms:apc><dc:rights xml:lang="ja" rdf:resource="テスト権利情報Resource">テスト権利情報</dc:rights><jpcoar:rightsHolder><jpcoar:rightsHolderName xml:lang="ja">テスト　太郎</jpcoar:rightsHolderName></jpcoar:rightsHolder><jpcoar:subject xml:lang="ja" subjectURI="http://bsh.com" subjectScheme="BSH">テスト主題</jpcoar:subject><datacite:description xml:lang="en" descriptionType="Abstract">this is test abstract.</datacite:description><dc:publisher xml:lang="ja">test publisher</dc:publisher><datacite:date dateType="Accepted">2022-10-20</datacite:date><datacite:date dateType="Issued">2022-10-19</datacite:date><dc:language>jpn</dc:language><dc:type rdf:resource="http://purl.org/coar/resource_type/c_2fe3">newspaper</dc:type><datacite:version>1.1</datacite:version><oaire:version rdf:resource="http://purl.org/coar/version/c_b1a7d7d4d402bcce">AO</oaire:version><jpcoar:identifier identifierType="DOI">1111</jpcoar:identifier><jpcoar:identifier identifierType="DOI">https://doi.org/1234/0000000001</jpcoar:identifier><jpcoar:identifier identifierType="URI">https://192.168.56.103/records/1</jpcoar:identifier><jpcoar:identifierRegistration identifierType="JaLC">1234/0000000001</jpcoar:identifierRegistration><jpcoar:relation relationType="isVersionOf"><jpcoar:relatedIdentifier identifierType="ARK">1111111</jpcoar:relatedIdentifier><jpcoar:relatedTitle xml:lang="ja">関連情報テスト</jpcoar:relatedTitle></jpcoar:relation><jpcoar:relation relationType="isVersionOf"><jpcoar:relatedIdentifier identifierType="URI">https://192.168.56.103/records/3</jpcoar:relatedIdentifier></jpcoar:relation><dcterms:temporal xml:lang="ja">1 to 2</dcterms:temporal><datacite:geoLocation><datacite:geoLocationPoint><datacite:pointLongitude>12345</datacite:pointLongitude><datacite:pointLatitude>67890</datacite:pointLatitude></datacite:geoLocationPoint><datacite:geoLocationBox><datacite:westBoundLongitude>123</datacite:westBoundLongitude><datacite:eastBoundLongitude>456</datacite:eastBoundLongitude><datacite:southBoundLatitude>789</datacite:southBoundLatitude><datacite:northBoundLatitude>1112</datacite:northBoundLatitude></datacite:geoLocationBox><datacite:geoLocationPlace>テスト位置情報</datacite:geoLocationPlace></datacite:geoLocation><jpcoar:fundingReference><datacite:funderIdentifier funderIdentifierType="Crossref Funder">22222</datacite:funderIdentifier><jpcoar:funderName xml:lang="ja">テスト助成機関</jpcoar:funderName><datacite:awardNumber awardURI="https://test.research.com">1111</datacite:awardNumber><jpcoar:awardTitle xml:lang="ja">テスト研究</jpcoar:awardTitle></jpcoar:fundingReference><jpcoar:sourceIdentifier identifierType="PISSN">test source Identifier</jpcoar:sourceIdentifier><jpcoar:sourceTitle xml:lang="ja">test collectibles</jpcoar:sourceTitle><jpcoar:sourceTitle xml:lang="ja">test title book</jpcoar:sourceTitle><jpcoar:volume>5</jpcoar:volume><jpcoar:volume>1</jpcoar:volume><jpcoar:issue>2</jpcoar:issue><jpcoar:issue>2</jpcoar:issue><jpcoar:numPages>333</jpcoar:numPages><jpcoar:numPages>555</jpcoar:numPages><jpcoar:pageStart>123</jpcoar:pageStart><jpcoar:pageStart>789</jpcoar:pageStart><jpcoar:pageEnd>456</jpcoar:pageEnd><jpcoar:pageEnd>234</jpcoar:pageEnd><dcndl:dissertationNumber>9999</dcndl:dissertationNumber><dcndl:degreeName xml:lang="ja">テスト学位</dcndl:degreeName><dcndl:dateGranted>2022-10-19</dcndl:dateGranted><jpcoar:degreeGrantor><jpcoar:nameIdentifier nameIdentifierScheme="kakenhi">学位授与機関識別子テスト</jpcoar:nameIdentifier><jpcoar:degreeGrantorName xml:lang="ja">学位授与機関</jpcoar:degreeGrantorName></jpcoar:degreeGrantor><jpcoar:conference><jpcoar:conferenceName xml:lang="ja">テスト会議</jpcoar:conferenceName><jpcoar:conferenceSequence>12345</jpcoar:conferenceSequence><jpcoar:conferenceSponsor xml:lang="ja">テスト機関</jpcoar:conferenceSponsor><jpcoar:conferenceDate endDay="1" endYear="2005" endMonth="12" startDay="11" xml:lang="ja" startYear="2000" startMonth="4">12</jpcoar:conferenceDate><jpcoar:conferenceVenue xml:lang="ja">テスト会場</jpcoar:conferenceVenue><jpcoar:conferenceCountry>JPN</jpcoar:conferenceCountry></jpcoar:conference><jpcoar:file><jpcoar:URI>https://weko3.example.org/record/1/files/test1.txt</jpcoar:URI><jpcoar:mimeType>text/plain</jpcoar:mimeType><jpcoar:extent>18 B</jpcoar:extent><datacite:date dateType="Accepted">2022-10-20</datacite:date><datacite:version>1.0</datacite:version></jpcoar:file><jpcoar:file><jpcoar:URI>https://weko3.example.org/record/1/files/test2</jpcoar:URI><jpcoar:mimeType>application/octet-stream</jpcoar:mimeType><jpcoar:extent>18 B</jpcoar:extent><datacite:version>1.2</datacite:version></jpcoar:file><jpcoar:file><jpcoar:URI>https://weko3.example.org/record/1/files/test3.png</jpcoar:URI><jpcoar:mimeType>image/png</jpcoar:mimeType><jpcoar:extent>18 B</jpcoar:extent><datacite:version>2.1</datacite:version></jpcoar:file></jpcoar:jpcoar></metadata></record></GetRecord></OAI-PMH>')
+        _records = _etree.findall('./GetRecord/record', namespaces=_etree.nsmap)
+        _counter = {}
+        with patch('invenio_oaiharvester.tasks.JPCOARMapper.map', return_value=[]):
+            res = process_item(_records[0], harvest_setting[0], _counter, None)
+            assert res == None
+    
+        _etree = etree.fromstring('<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><GetRecord><record><header><identifier>oai:weko3.example.org:00000001</identifier><datestamp>2023-02-20T06:24:47Z</datestamp><setSpec>1557819692844:1557819733276</setSpec><setSpec>1557820086539</setSpec></header><metadata><jpcoar:jpcoar xmlns:datacite="https://schema.datacite.org/meta/kernel-4/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:jpcoar="https://github.com/JPCOAR/schema/blob/master/1.0/" xmlns:oaire="http://namespace.openaire.eu/schema/oaire/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rioxxterms="http://www.rioxx.net/schema/v2.0/rioxxterms/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="https://github.com/JPCOAR/schema/blob/master/1.0/" xsi:schemaLocation="https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd"><dc:title xml:lang="ja">test full item</dc:title><dcterms:alternative xml:lang="en">other title</dcterms:alternative><jpcoar:creator><jpcoar:nameIdentifier nameIdentifierURI="https://orcid.org/1234" nameIdentifierScheme="ORCID">1234</jpcoar:nameIdentifier><jpcoar:creatorName xml:lang="ja">テスト, 太郎</jpcoar:creatorName><jpcoar:familyName xml:lang="ja">テスト</jpcoar:familyName><jpcoar:givenName xml:lang="ja">太郎</jpcoar:givenName><jpcoar:creatorAlternative xml:lang="ja">テスト　別郎</jpcoar:creatorAlternative><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="http://www.isni.org/isni/5678" nameIdentifierScheme="ISNI">5678</jpcoar:nameIdentifier></jpcoar:affiliation></jpcoar:creator><jpcoar:contributor contributorType="ContactPerson"><jpcoar:nameIdentifier nameIdentifierURI="https://orcid.org/5678" nameIdentifierScheme="ORCID">5678</jpcoar:nameIdentifier><jpcoar:contributorName xml:lang="en">test, smith</jpcoar:contributorName><jpcoar:familyName xml:lang="en">test</jpcoar:familyName><jpcoar:givenName xml:lang="en">smith</jpcoar:givenName><jpcoar:contributorAlternative xml:lang="en">other smith</jpcoar:contributorAlternative><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="http://www.isni.org/isni/1234" nameIdentifierScheme="ISNI">1234</jpcoar:nameIdentifier></jpcoar:affiliation></jpcoar:contributor><dcterms:accessRights rdf:resource="http://purl.org/coar/access_right/c_14cb">metadata only access</dcterms:accessRights><rioxxterms:apc>Paid</rioxxterms:apc><dc:rights xml:lang="ja" rdf:resource="テスト権利情報Resource">テスト権利情報</dc:rights><jpcoar:rightsHolder><jpcoar:rightsHolderName xml:lang="ja">テスト　太郎</jpcoar:rightsHolderName></jpcoar:rightsHolder><jpcoar:subject xml:lang="ja" subjectURI="http://bsh.com" subjectScheme="BSH">テスト主題</jpcoar:subject><datacite:description xml:lang="en" descriptionType="Abstract">this is test abstract.</datacite:description><dc:publisher xml:lang="ja">test publisher</dc:publisher><datacite:date dateType="Accepted">2022-10-20</datacite:date><datacite:date dateType="Issued">2022-10-19</datacite:date><dc:language>jpn</dc:language><dc:type rdf:resource="http://purl.org/coar/resource_type/c_2fe3">newspaper</dc:type><datacite:version>1.1</datacite:version><oaire:version rdf:resource="http://purl.org/coar/version/c_b1a7d7d4d402bcce">AO</oaire:version><jpcoar:identifier identifierType="DOI">1111</jpcoar:identifier><jpcoar:identifier identifierType="DOI">https://doi.org/1234/0000000001</jpcoar:identifier><jpcoar:identifier identifierType="URI">https://192.168.56.103/records/1</jpcoar:identifier><jpcoar:identifierRegistration identifierType="JaLC">1234/0000000001</jpcoar:identifierRegistration><jpcoar:relation relationType="isVersionOf"><jpcoar:relatedIdentifier identifierType="ARK">1111111</jpcoar:relatedIdentifier><jpcoar:relatedTitle xml:lang="ja">関連情報テスト</jpcoar:relatedTitle></jpcoar:relation><jpcoar:relation relationType="isVersionOf"><jpcoar:relatedIdentifier identifierType="URI">https://192.168.56.103/records/3</jpcoar:relatedIdentifier></jpcoar:relation><dcterms:temporal xml:lang="ja">1 to 2</dcterms:temporal><datacite:geoLocation><datacite:geoLocationPoint><datacite:pointLongitude>12345</datacite:pointLongitude><datacite:pointLatitude>67890</datacite:pointLatitude></datacite:geoLocationPoint><datacite:geoLocationBox><datacite:westBoundLongitude>123</datacite:westBoundLongitude><datacite:eastBoundLongitude>456</datacite:eastBoundLongitude><datacite:southBoundLatitude>789</datacite:southBoundLatitude><datacite:northBoundLatitude>1112</datacite:northBoundLatitude></datacite:geoLocationBox><datacite:geoLocationPlace>テスト位置情報</datacite:geoLocationPlace></datacite:geoLocation><jpcoar:fundingReference><datacite:funderIdentifier funderIdentifierType="Crossref Funder">22222</datacite:funderIdentifier><jpcoar:funderName xml:lang="ja">テスト助成機関</jpcoar:funderName><datacite:awardNumber awardURI="https://test.research.com">1111</datacite:awardNumber><jpcoar:awardTitle xml:lang="ja">テスト研究</jpcoar:awardTitle></jpcoar:fundingReference><jpcoar:sourceIdentifier identifierType="PISSN">test source Identifier</jpcoar:sourceIdentifier><jpcoar:sourceTitle xml:lang="ja">test collectibles</jpcoar:sourceTitle><jpcoar:sourceTitle xml:lang="ja">test title book</jpcoar:sourceTitle><jpcoar:volume>5</jpcoar:volume><jpcoar:volume>1</jpcoar:volume><jpcoar:issue>2</jpcoar:issue><jpcoar:issue>2</jpcoar:issue><jpcoar:numPages>333</jpcoar:numPages><jpcoar:numPages>555</jpcoar:numPages><jpcoar:pageStart>123</jpcoar:pageStart><jpcoar:pageStart>789</jpcoar:pageStart><jpcoar:pageEnd>456</jpcoar:pageEnd><jpcoar:pageEnd>234</jpcoar:pageEnd><dcndl:dissertationNumber>9999</dcndl:dissertationNumber><dcndl:degreeName xml:lang="ja">テスト学位</dcndl:degreeName><dcndl:dateGranted>2022-10-19</dcndl:dateGranted><jpcoar:degreeGrantor><jpcoar:nameIdentifier nameIdentifierScheme="kakenhi">学位授与機関識別子テスト</jpcoar:nameIdentifier><jpcoar:degreeGrantorName xml:lang="ja">学位授与機関</jpcoar:degreeGrantorName></jpcoar:degreeGrantor><jpcoar:conference><jpcoar:conferenceName xml:lang="ja">テスト会議</jpcoar:conferenceName><jpcoar:conferenceSequence>12345</jpcoar:conferenceSequence><jpcoar:conferenceSponsor xml:lang="ja">テスト機関</jpcoar:conferenceSponsor><jpcoar:conferenceDate endDay="1" endYear="2005" endMonth="12" startDay="11" xml:lang="ja" startYear="2000" startMonth="4">12</jpcoar:conferenceDate><jpcoar:conferenceVenue xml:lang="ja">テスト会場</jpcoar:conferenceVenue><jpcoar:conferenceCountry>JPN</jpcoar:conferenceCountry></jpcoar:conference><jpcoar:file><jpcoar:URI>https://weko3.example.org/record/1/files/test1.txt</jpcoar:URI><jpcoar:mimeType>text/plain</jpcoar:mimeType><jpcoar:extent>18 B</jpcoar:extent><datacite:date dateType="Accepted">2022-10-20</datacite:date><datacite:version>1.0</datacite:version></jpcoar:file><jpcoar:file><jpcoar:URI>https://weko3.example.org/record/1/files/test2</jpcoar:URI><jpcoar:mimeType>application/octet-stream</jpcoar:mimeType><jpcoar:extent>18 B</jpcoar:extent><datacite:version>1.2</datacite:version></jpcoar:file><jpcoar:file><jpcoar:URI>https://weko3.example.org/record/1/files/test3.png</jpcoar:URI><jpcoar:mimeType>image/png</jpcoar:mimeType><jpcoar:extent>18 B</jpcoar:extent><datacite:version>2.1</datacite:version></jpcoar:file></jpcoar:jpcoar></metadata></record></GetRecord></OAI-PMH>')
+        _records = _etree.findall('./GetRecord/record', namespaces=_etree.nsmap)
+        _counter = {}
+        res = process_item(_records[0], harvest_setting[0], _counter, None)
+        assert res == None
+    
+        ## dep.pid.status == deleted
+>       dep_pid = PersistentIdentifier.query.filter_by(pid_type="depid",pid_value=1).one()
+
+tests/test_tasks.py:248: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/query.py:3039: in one
+    ret = self.one_or_none()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/query.py:3008: in one_or_none
+    ret = list(self)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/query.py:3081: in __iter__
+    return self._execute_and_instances(context)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/query.py:3106: in _execute_and_instances
+    result = conn.execute(querycontext.statement, self._params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:273: in _execute_on_connection
+    return connection._execute_clauseelement(self, multiparams, params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1099: in _execute_clauseelement
+    distilled_params,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1240: in _execute_context
+    e, statement, parameters, cursor, context
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1458: in _handle_dbapi_exception
+    util.raise_from_cause(sqlalchemy_exception, exc_info)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: in _execute_context
+    cursor, statement, parameters, context
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f44459fd208>
+cursor = <cursor object at 0x7f44475a6710; closed: -1>
+statement = 'SELECT pidstore_pid.created AS pidstore_pid_created, pidstore_pid.updated AS pidstore_pid_updated, pidstore_pid.id AS...t_uuid \nFROM pidstore_pid \nWHERE pidstore_pid.pid_type = %(pid_type_1)s AND pidstore_pid.pid_value = %(pid_value_1)s'
+parameters = {'pid_type_1': 'depid', 'pid_value_1': 1}
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f4445455b38>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlalchemy.exc.ProgrammingError: (psycopg2.ProgrammingError) operator does not exist: character varying = integer
+E       LINE 3: ...dstore_pid.pid_type = 'depid' AND pidstore_pid.pid_value = 1
+E                                                                           ^
+E       HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+E        [SQL: 'SELECT pidstore_pid.created AS pidstore_pid_created, pidstore_pid.updated AS pidstore_pid_updated, pidstore_pid.id AS pidstore_pid_id, pidstore_pid.pid_type AS pidstore_pid_pid_type, pidstore_pid.pid_value AS pidstore_pid_pid_value, pidstore_pid.pid_provider AS pidstore_pid_pid_provider, pidstore_pid.status AS pidstore_pid_status, pidstore_pid.object_type AS pidstore_pid_object_type, pidstore_pid.object_uuid AS pidstore_pid_object_uuid \nFROM pidstore_pid \nWHERE pidstore_pid.pid_type = %(pid_type_1)s AND pidstore_pid.pid_value = %(pid_value_1)s'] [parameters: {'pid_type_1': 'depid', 'pid_value_1': 1}] (Background on this error at: http://sqlalche.me/e/f405)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: ProgrammingError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
+_____________________________ test_run_harvesting ______________________________
+
+self = <sqlalchemy.engine.base.Connection object at 0x7f4443d6bef0>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f444355bac8>
+constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
+statement = 'INSERT INTO harvest_logs (harvest_setting_id, start_time, end_time, status, errmsg, requrl, counter, setting) VALUES ... %(start_time)s, %(end_time)s, %(status)s, %(errmsg)s, %(requrl)s, %(counter)s, %(setting)s) RETURNING harvest_logs.id'
+parameters = {'counter': '{"processed_items": 0, "created_items": 0, "updated_items": 0, "deleted_items": 0, "error_items": 0}', 'end_time': None, 'errmsg': None, 'harvest_setting_id': 1, ...}
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7f4443d6be80>, [{'counter': {'created_items'...ms': 0, 'error_items': 0, 'processed_items': 0, ...}, 'end_time': None, 'errmsg': None, 'harvest_setting_id': 1, ...}])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7f44440e01d0>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f4443d6bda0>
+
+    def _execute_context(
+        self, dialect, constructor, statement, parameters, *args
+    ):
+        """Create an :class:`.ExecutionContext` and execute, returning
+        a :class:`.ResultProxy`."""
+    
+        try:
+            try:
+                conn = self.__connection
+            except AttributeError:
+                # escape "except AttributeError" before revalidating
+                # to prevent misleading stacktraces in Py3K
+                conn = None
+            if conn is None:
+                conn = self._revalidate_connection()
+    
+            context = constructor(dialect, self, conn, *args)
+        except BaseException as e:
+            self._handle_dbapi_exception(
+                e, util.text_type(statement), parameters, None, None
+            )
+    
+        if context.compiled:
+            context.pre_exec()
+    
+        cursor, statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        if not context.executemany:
+            parameters = parameters[0]
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                statement, parameters = fn(
+                    self,
+                    cursor,
+                    statement,
+                    parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self.engine.logger.info(statement)
+            self.engine.logger.info(
+                "%r", sql_util._repr_params(parameters, batches=10)
+            )
+    
+        evt_handled = False
+        try:
+            if context.executemany:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor, statement, parameters, context
+                    )
+            elif not parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, statement, context
+                    )
+            else:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute(
+>                       cursor, statement, parameters, context
+                    )
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f444355bac8>
+cursor = <cursor object at 0x7f44475a6be8; closed: -1>
+statement = 'INSERT INTO harvest_logs (harvest_setting_id, start_time, end_time, status, errmsg, requrl, counter, setting) VALUES ... %(start_time)s, %(end_time)s, %(status)s, %(errmsg)s, %(requrl)s, %(counter)s, %(setting)s) RETURNING harvest_logs.id'
+parameters = {'counter': '{"processed_items": 0, "created_items": 0, "updated_items": 0, "deleted_items": 0, "error_items": 0}', 'end_time': None, 'errmsg': None, 'harvest_setting_id': 1, ...}
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f4443d6bda0>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       psycopg2.IntegrityError: duplicate key value violates unique constraint "pk_harvest_logs"
+E       DETAIL:  Key (id)=(1) already exists.
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: IntegrityError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
+mocker = <pytest_mock.plugin.MockerFixture object at 0x7f444355bbe0>
+
+    @responses.activate
+    def test_run_harvesting(app, db,mocker):
+        mocker.patch("invenio_oaiharvester.tasks.send_run_status_mail")
+        index = Index()
+        db.session.add(index)
+        db.session.commit()
+        # result with resumptiontoken
+        body1 = \
+            '<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">'\
+            '<responseDate>2023-03-01T10:54:40Z</responseDate>'\
+            '<request verb="ListRecords" metadataPrefix="jpcoar_1.0">https://192.168.56.103/oai</request>'\
+            '<ListRecords>'\
+            '<resumptionToken>test_token</resumptionToken>'\
+            '<record>test_record1</record>'\
+            '<record>test_record2</record>'\
+            '</ListRecords>'\
+            '</OAI-PMH>'
+        # result without resummptiontoken
+        body2 = \
+            '<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">'\
+            '<responseDate>2023-03-01T10:54:40Z</responseDate>'\
+            '<request verb="ListRecords" metadataPrefix="jpcoar_1.0">https://192.168.56.103/oai</request>'\
+            '<ListRecords>'\
+            '<record>test_record3</record>'\
+            '<record>test_record4</record>'\
+            '</ListRecords>'\
+            '</OAI-PMH>'
+        responses.add(
+            responses.GET,
+            "http://export.arxiv.org/oai2/?verb=ListRecords&from=2022-10-01&until=2022-10-02&metadataPrefix=jpcoar_1.0",
+            body=body1,
+            content_type='text/xml'
+        )
+        responses.add(
+            responses.GET,
+            "http://export.arxiv.org/oai2/?verb=ListRecords&metadataPrefix=jpcoar_1.0&resumptionToken=test_token",
+            body=body2,
+            content_type='text/xml'
+        )
+        body3 = \
+        '<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">'\
+            '<request verb="ListSets">https://192.168.56.103/oai</request>'\
+            '<ListSets>'\
+                '<set>'\
+                    '<setSpec>test_repo3</setSpec>'\
+                '</set>'\
+                '<set>'\
+                    '<setSpec>test_repo4</setSpec>'\
+                '</set>'\
+            '</ListSets>'\
+        '</OAI-PMH>'
+        responses.add(
+            responses.GET,
+            "http://export.arxiv.org/oai2/?verb=ListSets",
+            body=body3,
+            content_type='text/xml'
+        )
+    
+        jpcoar_setting1 = HarvestSettings(
+            id=1,
+            repository_name="jpcoar_test1",
+            base_url="http://export.arxiv.org/oai2/",
+            from_date=datetime(2022, 10, 1),
+            until_date=datetime(2022, 10, 2),
+            metadata_prefix="jpcoar_1.0",
+            index_id=1,
+            update_style="0",
+            auto_distribution="1"
+        )
+        jpcoar_setting2 = HarvestSettings(
+            id=2,
+            repository_name="jpcoar_test2",
+            base_url="http://export.arxiv.org/oai2/",
+            from_date=datetime(2022, 10, 1),
+            until_date=datetime(2022, 10, 2),
+            metadata_prefix="jpcoar_1.0",
+            index_id=1,
+            update_style="0",
+            auto_distribution="0",
+            resumption_token="test_token"
+        )
+        logs = HarvestLogs(
+            id=1,
+            harvest_setting_id=2
+        )
+        with db.session.begin_nested():
+            db.session.add(jpcoar_setting1)
+            db.session.add(jpcoar_setting2)
+            db.session.add(logs)
+        db.session.commit()
+    
+        # is_harvest_running is True
+        with patch('invenio_oaiharvester.tasks.is_harvest_running', return_value=True):
+            res = run_harvesting(1, '2022-10-01T00:00:00', '2022-10-01T23:59:59', {})
+            assert res == ({"task_state":"SUCCESS","task_id":None},"2022-10-01T23:59:59")
+            #assert res==({'task_state': 'SUCCESS', 'start_time': '2022-10-01T00:00:00', 'end_time': res[0]['end_time'], 'total_records': 0, 'execution_time': res[0]['execution_time'], 'task_name': 'harvest', 'repository_name': 'weko', 'task_id': None}, '2022-10-01T23:59:59')
+    
+        with patch('invenio_oaiharvester.tasks.is_harvest_running', return_value=False):
+            with patch("invenio_oaiharvester.tasks.process_item"):
+>               res = run_harvesting(1, '2022-10-01T00:00:00', '2022-10-01T23:59:59', {})
+
+tests/test_tasks.py:517: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.tox/c1/lib/python3.6/site-packages/celery/local.py:191: in __call__
+    return self._get_current_object()(*a, **kw)
+.tox/c1/lib/python3.6/site-packages/celery/app/task.py:393: in __call__
+    return self.run(*args, **kwargs)
+invenio_oaiharvester/tasks.py:424: in run_harvesting
+    db.session.commit()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/scoping.py:162: in do
+    return getattr(self.registry(), name)(*args, **kwargs)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:1023: in commit
+    self.transaction.commit()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:487: in commit
+    self._prepare_impl()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:466: in _prepare_impl
+    self.session.flush()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2446: in flush
+    self._flush(objects)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2584: in _flush
+    transaction.rollback(_capture_exception=True)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/langhelpers.py:67: in __exit__
+    compat.reraise(exc_type, exc_value, exc_tb)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: in reraise
+    raise value
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2544: in _flush
+    flush_context.execute()
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/unitofwork.py:416: in execute
+    rec.execute(self)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/unitofwork.py:583: in execute
+    uow,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/persistence.py:245: in save_obj
+    insert,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/persistence.py:1116: in _emit_insert_statements
+    statement, params
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:273: in _execute_on_connection
+    return connection._execute_clauseelement(self, multiparams, params)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1099: in _execute_clauseelement
+    distilled_params,
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1240: in _execute_context
+    e, statement, parameters, cursor, context
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1458: in _handle_dbapi_exception
+    util.raise_from_cause(sqlalchemy_exception, exc_info)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: in _execute_context
+    cursor, statement, parameters, context
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f444355bac8>
+cursor = <cursor object at 0x7f44475a6be8; closed: -1>
+statement = 'INSERT INTO harvest_logs (harvest_setting_id, start_time, end_time, status, errmsg, requrl, counter, setting) VALUES ... %(start_time)s, %(end_time)s, %(status)s, %(errmsg)s, %(requrl)s, %(counter)s, %(setting)s) RETURNING harvest_logs.id'
+parameters = {'counter': '{"processed_items": 0, "created_items": 0, "updated_items": 0, "deleted_items": 0, "error_items": 0}', 'end_time': None, 'errmsg': None, 'harvest_setting_id': 1, ...}
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f4443d6bda0>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlalchemy.exc.IntegrityError: (psycopg2.IntegrityError) duplicate key value violates unique constraint "pk_harvest_logs"
+E       DETAIL:  Key (id)=(1) already exists.
+E        [SQL: 'INSERT INTO harvest_logs (harvest_setting_id, start_time, end_time, status, errmsg, requrl, counter, setting) VALUES (%(harvest_setting_id)s, %(start_time)s, %(end_time)s, %(status)s, %(errmsg)s, %(requrl)s, %(counter)s, %(setting)s) RETURNING harvest_logs.id'] [parameters: {'harvest_setting_id': 1, 'start_time': datetime.datetime(2023, 7, 10, 5, 22, 4, 295411), 'end_time': None, 'status': 'Running', 'errmsg': None, 'requrl': None, 'counter': '{"processed_items": 0, "created_items": 0, "updated_items": 0, "deleted_items": 0, "error_items": 0}', 'setting': '{"repository_name": "jpcoar_test1", "base_url": "http://export.arxiv.org/oai2/", "from_date": "2022-10-01", "until_date": "2022-10-02", "set_spec": null, "metadata_prefix": "jpcoar_1.0", "target_index": "", "update_style": "0", "auto_distribution": "1"}'}] (Background on this error at: http://sqlalche.me/e/gkpj)
+
+.tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: IntegrityError
+------------------------------ Captured log setup ------------------------------
+WARNING  flask.app:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 =============================== warnings summary ===============================
-../invenio-indexer/invenio_indexer/cli.py:108
-  /code/modules/invenio-indexer/invenio_indexer/cli.py:108: DeprecationWarning: 'resultcallback' has been renamed to 'result_callback'. The old name will be removed in Click 8.1.
->>>>>>> origin/feature/change-pub-status-enum
+../invenio-indexer/invenio_indexer/cli.py:162
+  /code/modules/invenio-indexer/invenio_indexer/cli.py:162: DeprecationWarning: 'resultcallback' has been renamed to 'result_callback'. The old name will be removed in Click 8.1.
     @queue.resultcallback()
 
 .tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3
@@ -219,33 +648,6 @@ tests/test_views.py::test_dbsession_clean PASSED                         [100%]
   /code/modules/invenio-oaiharvester/.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
     import imp
 
-<<<<<<< HEAD
-tests/test_admin.py: 1 warning
-tests/test_cli.py: 2 warnings
-tests/test_harvesting.py: 11 warnings
-tests/test_tasks.py: 7 warnings
-tests/test_utils.py: 8 warnings
-  /code/modules/invenio-oaiharvester/.tox/c1/lib/python3.6/site-packages/flask_celeryext/app.py:36: UserWarning: Celery v4 installed, but detected Celery v3 configuration CELERY_ALWAYS_EAGER (use CELERY_TASK_ALWAYS_EAGER instead).
-    UserWarning
-
-tests/test_admin.py: 1 warning
-tests/test_cli.py: 2 warnings
-tests/test_harvesting.py: 11 warnings
-tests/test_tasks.py: 7 warnings
-tests/test_utils.py: 8 warnings
-  /code/modules/invenio-oaiharvester/.tox/c1/lib/python3.6/site-packages/flask_celeryext/app.py:36: UserWarning: Celery v4 installed, but detected Celery v3 configuration CELERY_EAGER_PROPAGATES_EXCEPTIONS (use CELERY_TASK_EAGER_PROPAGATES instead).
-    UserWarning
-
-tests/test_admin.py: 1 warning
-tests/test_cli.py: 2 warnings
-tests/test_harvesting.py: 11 warnings
-tests/test_tasks.py: 7 warnings
-tests/test_utils.py: 8 warnings
-=======
-.tox/c1/src/pypdf2/PyPDF2/generic.py:348
-  /code/modules/invenio-oaiharvester/.tox/c1/src/pypdf2/PyPDF2/generic.py:348: DeprecationWarning: invalid escape sequence \c
-    b_("c") : b_("\c"),
-
 tests/test_admin.py: 9 warnings
 tests/test_api.py: 4 warnings
 tests/test_cli.py: 2 warnings
@@ -276,7 +678,6 @@ tests/test_harvesting.py: 9 warnings
 tests/test_tasks.py: 11 warnings
 tests/test_utils.py: 8 warnings
 tests/test_views.py: 1 warning
->>>>>>> origin/feature/change-pub-status-enum
   /code/modules/invenio-oaiharvester/.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:794: FSADeprecationWarning: SQLALCHEMY_TRACK_MODIFICATIONS adds significant overhead and will be disabled by default in the future.  Set it to True or False to suppress this warning.
     'SQLALCHEMY_TRACK_MODIFICATIONS adds significant overhead and '
 
@@ -284,12 +685,8 @@ tests/test_admin.py::test_admin
   /code/modules/invenio-oaiharvester/.tox/c1/lib/python3.6/site-packages/flask/sessions.py:208: UserWarning: "TEST_SERVER" is not a valid cookie domain, it must contain a ".". Add an entry to your hosts file, for example "TEST_SERVER.localdomain", and use that instead.
     ' "{rv}.localdomain", and use that instead.'.format(rv=rv)
 
-<<<<<<< HEAD
-tests/test_tasks.py::test_process_item
-  /code/modules/invenio-oaiharvester/.tox/c1/lib/python3.6/site-packages/bs4/__init__.py:424: MarkupResemblesLocatorWarning: "https://www.pdrc.keio.ac.jp/pdrc/" looks like a URL. Beautiful Soup is not an HTTP client. You should probably use an HTTP client like requests to get the document behind the URL, and feed that document to Beautiful Soup.
-=======
 tests/test_admin.py::TestHarvestSettingView::test_pause
-  /code/modules/invenio-oaiharvester/.tox/c1/lib/python3.6/site-packages/kombu/utils/compat.py:93: DeprecationWarning: SelectableGroups dict interface is deprecated. Use select.
+  /code/modules/invenio-oaiharvester/.tox/c1/src/kombu/kombu/utils/compat.py:93: DeprecationWarning: SelectableGroups dict interface is deprecated. Use select.
     for ep in importlib_metadata.entry_points().get(namespace, [])
 
 tests/test_harvester.py::TestDDIMapper::test_ddi_harvest_processing
@@ -297,25 +694,11 @@ tests/test_harvester.py::TestDDIMapper::test_ddi_harvest_processing
     MarkupResemblesLocatorWarning
 
 tests/test_harvester.py::TestDDIMapper::test_ddi_harvest_processing
-tests/test_tasks.py::test_process_item
   /code/modules/invenio-oaiharvester/.tox/c1/lib/python3.6/site-packages/bs4/__init__.py:424: MarkupResemblesLocatorWarning: "http://hdl.handle.net/test_doi" looks like a URL. Beautiful Soup is not an HTTP client. You should probably use an HTTP client like requests to get the document behind the URL, and feed that document to Beautiful Soup.
     MarkupResemblesLocatorWarning
 
 tests/test_harvester.py::TestDDIMapper::test_ddi_harvest_processing
   /code/modules/invenio-oaiharvester/.tox/c1/lib/python3.6/site-packages/bs4/__init__.py:424: MarkupResemblesLocatorWarning: "http://other_prefix" looks like a URL. Beautiful Soup is not an HTTP client. You should probably use an HTTP client like requests to get the document behind the URL, and feed that document to Beautiful Soup.
-    MarkupResemblesLocatorWarning
-
-tests/test_tasks.py::test_process_item
-  /code/modules/invenio-oaiharvester/.tox/c1/lib/python3.6/site-packages/bs4/__init__.py:424: MarkupResemblesLocatorWarning: "http://test.url.com" looks like a URL. Beautiful Soup is not an HTTP client. You should probably use an HTTP client like requests to get the document behind the URL, and feed that document to Beautiful Soup.
-    MarkupResemblesLocatorWarning
-
-tests/test_tasks.py::test_process_item
-  /code/modules/invenio-oaiharvester/.tox/c1/lib/python3.6/site-packages/bs4/__init__.py:424: MarkupResemblesLocatorWarning: "http://doi.org/test_doi1" looks like a URL. Beautiful Soup is not an HTTP client. You should probably use an HTTP client like requests to get the document behind the URL, and feed that document to Beautiful Soup.
-    MarkupResemblesLocatorWarning
-
-tests/test_tasks.py::test_process_item
-  /code/modules/invenio-oaiharvester/.tox/c1/lib/python3.6/site-packages/bs4/__init__.py:424: MarkupResemblesLocatorWarning: "http://doi.org/test_doi2" looks like a URL. Beautiful Soup is not an HTTP client. You should probably use an HTTP client like requests to get the document behind the URL, and feed that document to Beautiful Soup.
->>>>>>> origin/feature/change-pub-status-enum
     MarkupResemblesLocatorWarning
 
 -- Docs: https://docs.pytest.org/en/stable/warnings.html
@@ -324,51 +707,28 @@ tests/test_tasks.py::test_process_item
 Name                                Stmts   Miss Branch BrPart  Cover
 ---------------------------------------------------------------------
 invenio_oaiharvester/__init__.py        6      0      0      0   100%
-<<<<<<< HEAD
-invenio_oaiharvester/admin.py         120     67     22      0    40%
-invenio_oaiharvester/api.py            93     18     38      5    75%
-invenio_oaiharvester/cli.py            63      0     22      2    98%
-invenio_oaiharvester/config.py         15      0      0      0   100%
-invenio_oaiharvester/errors.py          8      0     12      0   100%
-invenio_oaiharvester/ext.py            18      0      8      0   100%
-invenio_oaiharvester/harvester.py     656    198    318     50    67%
-invenio_oaiharvester/models.py         57      0     16      3    96%
-invenio_oaiharvester/signals.py         5      0      0      0   100%
-invenio_oaiharvester/tasks.py         286     71    114     32    68%
-invenio_oaiharvester/utils.py          98      2     30      3    96%
-invenio_oaiharvester/version.py         3      0      0      0   100%
-invenio_oaiharvester/views.py          14      7      4      1    44%
----------------------------------------------------------------------
-TOTAL                                1442    363    584     96    71%
-Coverage XML written to file coverage.xml
-
-=========================== short test summary info ============================
-ERROR tests/test_harvesting.py::test_harvester_list_sets - FileNotFoundError:...
-ERROR tests/test_harvesting.py::test_harvester_list_records - FileNotFoundErr...
-============= 31 passed, 92 warnings, 2 errors in 70.81s (0:01:10) =============
-ERROR: InvocationError for command /code/modules/invenio-oaiharvester/.tox/c1/bin/pytest --cov=invenio_oaiharvester tests -v --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp (exited with code 1)
-___________________________________ summary ____________________________________
-ERROR:   c1: commands failed
-=======
 invenio_oaiharvester/admin.py         119      0     20      0   100%
 invenio_oaiharvester/api.py            93      0     38      0   100%
 invenio_oaiharvester/cli.py            63      0     22      0   100%
 invenio_oaiharvester/config.py         15      0      0      0   100%
 invenio_oaiharvester/errors.py          8      0     12      0   100%
 invenio_oaiharvester/ext.py            18      0      8      0   100%
-invenio_oaiharvester/harvester.py     643      0    306      0   100%
+invenio_oaiharvester/harvester.py     643      0    306      1    99%
 invenio_oaiharvester/models.py         57      0     16      0   100%
 invenio_oaiharvester/signals.py         5      0      0      0   100%
-invenio_oaiharvester/tasks.py         282      0    108      0   100%
+invenio_oaiharvester/tasks.py         282     97    108     13    62%
 invenio_oaiharvester/utils.py          98      0     30      0   100%
 invenio_oaiharvester/version.py         3      0      0      0   100%
 invenio_oaiharvester/views.py          14      0      4      0   100%
 ---------------------------------------------------------------------
-TOTAL                                1424      0    564      0   100%
+TOTAL                                1424     97    564     14    93%
+Coverage HTML written to dir htmlcov
 Coverage XML written to file coverage.xml
 
-=========== 115 passed, 2 skipped, 328 warnings in 276.46s (0:04:36) ===========
+=========================== short test summary info ============================
+FAILED tests/test_tasks.py::test_process_item - sqlalchemy.exc.ProgrammingErr...
+FAILED tests/test_tasks.py::test_run_harvesting - sqlalchemy.exc.IntegrityErr...
+====== 2 failed, 113 passed, 2 skipped, 323 warnings in 441.85s (0:07:21) ======
+ERROR: InvocationError for command /code/modules/invenio-oaiharvester/.tox/c1/bin/pytest --cov=invenio_oaiharvester tests -v --cov-branch --cov-report=term --cov-report=xml --cov-report=html --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp (exited with code 1)
 ___________________________________ summary ____________________________________
-  c1: commands succeeded
-  congratulations :)
->>>>>>> origin/feature/change-pub-status-enum
+ERROR:   c1: commands failed
