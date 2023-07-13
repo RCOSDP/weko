@@ -66,7 +66,7 @@ def create_blueprint(app, endpoints):
                 default_media_type=options.get('default_media_type')
             )
             blueprint.add_url_rule(
-                options.pop('activities_route'),
+                options.get('activities_route'),
                 view_func=activities,
                 methods=['GET']
             )
@@ -76,7 +76,7 @@ def create_blueprint(app, endpoints):
                 default_media_type=options.get('default_media_type')
             )
             blueprint.add_url_rule(
-                options.pop('route'),
+                options.get('route'),
                 view_func=view_func,
                 methods=['POST']
             )
@@ -86,7 +86,7 @@ def create_blueprint(app, endpoints):
                 default_media_type=options.get('default_media_type')
             )
             blueprint.add_url_rule(
-                options.pop('route'),
+                options.get('route'),
                 view_func=view_func,
                 methods=['POST']
             )
