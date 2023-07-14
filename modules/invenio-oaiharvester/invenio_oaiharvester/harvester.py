@@ -1761,7 +1761,6 @@ class JPCOARMapper(BaseMapper):
 
         tags = self.json['record']['metadata']['jpcoar:jpcoar']
         for t in tags:
-            current_app.logger.debug(f'\n-tttt ~ {t}-\n')
             if t in add_funcs:
                 if not isinstance(tags[t], list):
                     metadata = [tags[t]]
