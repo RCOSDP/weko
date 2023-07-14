@@ -1174,8 +1174,6 @@ class TestJPCOARMapper:
         record = tree.findall("./GetRecord/record",namespaces=tree.nsmap)[0]
         xml = etree.tostring(record,encoding="utf-8").decode()
         mapper = JPCOARMapper(xml)
-        # mapper.itemtype = ItemType.query.all()[-1]
-        # mapper.itemtype = ItemType.query.filter_by(id=2).one()
         mapper.json["record"]["metadata"]["jpcoar:jpcoar"] = OrderedDict(
             [
                 ("@xmlns:datacite", "https://schema.datacite.org/meta/kernel-4/"),
@@ -1892,11 +1890,11 @@ class TestJPCOARMapper:
             ]
         )
         result = mapper.map()
-        print('\n\n')
-        print("result")
-        print(result)
-        print('\n\n')
-        raise BaseException
+
+        # assert condition will be updated once update_item_type.py be updated with jpcoar2 properties created
+        # right now jpcoar2 items added to harvester.py is being covered by this test case and there are no errors
+        # 
+        assert result 
 
 # class DDIMapper(BaseMapper):
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::TestDDIMapper -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp

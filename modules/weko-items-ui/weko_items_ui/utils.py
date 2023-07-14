@@ -570,14 +570,1017 @@ def validate_form_input_data(
     # current_app.logger.error("result: {}".format(result))
     # current_app.logger.error("item_id: {}".format(item_id))
     # current_app.logger.error("data: {}".format(data))
+    def _get_jpcoar_mapping_value_mapping(key, item_type_mapping):
+        return item_type_mapping[key]["jpcoar_mapping"]
+
+    def _get_keys_that_exist_from_data(given_data: dict) -> list:
+        return list(given_data.keys())
+
+    # Get langauge key - DONE
+    # Iterate data for validating the value - 
+    # Check each item and raise an error for duplicate langauge value - 
+
     item_type = ItemTypes.get_by_id(item_id)
     json_schema = item_type.schema.copy()
+    data_keys = list(data.keys())
+    item_type_mapping: Object = Mapping.get_record(item_type.id)
+    item_type_mapping_keys = list(item_type_mapping.keys())
+    is_error = False
+    items_to_be_checked_for_duplication: list = []
+    items_to_be_checked_for_ja_kana: list = []
+    items_to_be_checked_for_ja_latn: list = []
+    items_to_be_checked_for_date_format: list = []
+
+    # TITLE VARIABLES
+    mapping_title_item_key: str = ""
+    mapping_title_language_key: tuple = ()
+
+    # ALTERNATIVE TITLE VARIABLES
+    mapping_alternative_title_item_key: str = ""
+    mapping_alternative_title_language_key: tuple = ()
+
+    # CREATOR VARIABLES
+    mapping_creator_item_key: str = ""
+    mapping_creator_given_name_language_key: tuple = ()
+    mapping_creator_family_name_language_key: tuple = ()
+    mapping_creator_affiliation_name_language_key: tuple = ()
+    mapping_creator_creator_name_language_key: tuple = ()
+    mapping_creator_alternative_name_language_key: tuple = ()
+
+    # CONTRIBUTOR VARIABLES
+    mapping_contributor_item_key = ""
+    mapping_contributor_given_name_language_key: tuple = ()
+    mapping_contributor_family_name_language_key: tuple = ()
+    mapping_contributor_affiliation_name_language_key: tuple = ()
+    mapping_contributor_contributor_name_language_key: tuple = ()
+    mapping_contributor_alternative_name_language_key: tuple = ()
+
+    # RELATION VARIABLES
+    mapping_relation_item_key = ""
+    mapping_related_title_language_key: tuple = ()
+
+    # FUNDING REFERENCE VARIABLES
+    mapping_funding_reference_item_key = ""
+    mapping_funding_reference_funder_name_language_key: tuple = ()
+    mapping_funding_reference_award_title_language_key: tuple = ()
+
+    # SOURCE TITLE VARIABLES
+    mapping_source_title_item_key: str = ""
+    mapping_source_title_language_key: tuple = ()
+
+    # DEGREE NAME VARIABLES
+    mapping_degree_name_item_key: str = ""
+    mapping_degree_name_language_key: str = ""
+
+    # DEGREE GRANTOR NAME VARIABLES
+    mapping_degree_grantor_item_key: str = ""
+    mapping_degree_grantor_name_language_key: tuple = ()
+
+    # CONFERENCE VARIABLES
+    mapping_conference_item_key: str = ""
+    mapping_conference_date_language_key: tuple = ()
+    mapping_conference_name_language_key: tuple = ()
+    mapping_conference_venue_language_key: tuple = ()
+    mapping_conference_place_language_key: tuple = ()
+    mapping_conference_sponsor_language_key: tuple = ()
+
+    # HOLDING AGENT VARIABLES
+    mapping_holding_agent_item_key: str = ""
+    mapping_holding_agent_name_language_key: tuple = ()
+
+    # CATALOG VARIABLES
+    mapping_catalog_item_key: str = ""
+    mapping_catalog_title_language_key: tuple = ()
+
+    # DATE PATTERN VARIABLES
+    date_pattern_list = [
+        # YYYY
+        # 1997
+        r"^[0-9]{4}$",
+        # YYYY-MM
+        # 1997-07
+        r'^[0-9]{4}-[0-9]{2}$',
+        # YYYY-MM-DD
+        # 1997-07-16
+        r'^[0-9]{4}-[0-9]{2}-[0-9]{2}$',
+        # YYYY-MM-DDThh:mm+TZD
+        # 1997-07-16T19:20+01:00
+        r'^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}\+[0-9]{2}:[0-9]{2}$',
+        # YYYY-MM-DDThh:mm-TZD
+        # 1997-07-16T19:20-01:00
+        r'^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}-[0-9]{2}:[0-9]{2}$',
+        # YYYY-MM-DDThh:mm:ss+TZD
+        # 1997-07-16T19:20:30+01:00
+        r'^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\+[0-9]{2}:[0-9]{2}$',
+        # YYYY-MM-DDThh:mm:ss-TZD
+        # 1997-07-16T19:20:30-01:00
+        r'^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}-[0-9]{2}:[0-9]{2}$',
+        # YYYY-MM-DDThh:mm:ss.ss+TZD
+        # 1997-07-16T19:20:30.45+01:00
+        r'^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{2}\+[0-9]{2}:[0-9]{2}$',
+        # YYYY-MM-DDThh:mm:ss.ss-TZD
+        # 1997-07-16T19:20:30.45-01:00
+        r'^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{2}-[0-9]{2}:[0-9]{2}$',
+    ]
+
+    """
+    This code snippet is for dcterms date format validation. Once 'dcterms date' property is created and added to
+    デフォルトアイテムタイプ（フル）とデフォルトアイテムタイプ（シンプル）metadata via update_item_type.py 'dcterms date'
+    validation code will be added inside this function using the code snippet below.
+
+    ### CODE SNIPPET FOR DCTERMS DATE FORMAT VALIDATION -- START
+    elif mapping_dcterms_date_item_key == data_key:
+            for data_dcterms_date_values in data_item_value_list:
+                items_to_be_checked_for_date_format.append(data_dcterms_date_values.get("subitem_1522650091861"))
+            # Validation for DATE FORMAT
+            validation_date_format_error_checker(
+                _("DATE FORMAT TEST"),
+                items_to_be_checked_for_date_format
+            )
+            # Reset validation lists below for the next item to be validated
+            items_to_be_checked_for_date_format = []
+    ### DATE FORMAT TEST -- END
+    """
+
+    """
+    This loop snippet is for getting the mapping language key of each item that is stored in the database
+    """
+    for key in item_type_mapping_keys:
+        jpcoar_value: dict = _get_jpcoar_mapping_value_mapping(key, item_type_mapping)
+        jpcoar_value_keys_lv1: list = list(jpcoar_value)
+        
+        for key_lv1 in jpcoar_value_keys_lv1:
+            if "title" == key_lv1:
+                title_sub_items: dict = jpcoar_value[key_lv1]
+                title_sub_items_keys: list = list(title_sub_items.keys())
+                mapping_title_item_key: str = key
+                
+                for title_sub_item in title_sub_items:
+                    if "@attributes" == title_sub_item:
+                        mapping_title_language_key: list = title_sub_items.get(title_sub_item, {}).get("xml:lang", "_").split(".")
+
+            elif "alternative" == key_lv1:
+                alternative_title_sub_items: dict = jpcoar_value[key_lv1]
+                alternative_title_sub_items_title_sub_items_keys: list = list(alternative_title_sub_items.keys())
+                mapping_alternative_title_item_key: str = key
+                
+                for alternative_title_sub_item in alternative_title_sub_items:
+                    if "@attributes" == alternative_title_sub_item:
+                        mapping_alternative_title_language_key: list = alternative_title_sub_items.get(alternative_title_sub_item, {}).get("xml:lang", "_").split(".")
+                
+            elif "creator" == key_lv1:
+                mapping_creator_item_key: str = key
+                creator_sub_items: dict = jpcoar_value[key_lv1]
+                creator_sub_items_keys: list = list(creator_sub_items.keys())
+
+                for creator_sub_item in creator_sub_items:
+                    if creator_sub_item == "givenName":
+                        mapping_creator_given_name_language_key = (
+                            creator_sub_items.get(creator_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+                    elif creator_sub_item == "familyName":
+                        mapping_creator_family_name_language_key = (
+                            creator_sub_items.get(creator_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+                    elif creator_sub_item == "affiliation":
+                        mapping_creator_affiliation_name_language_key = (
+                            creator_sub_items.get(creator_sub_item, {}).get("affiliationName", {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+                    elif creator_sub_item == "creatorName":
+                        mapping_creator_creator_name_language_key = (
+                            creator_sub_items.get(creator_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+                    elif creator_sub_item == "creatorAlternative":
+                        mapping_creator_alternative_name_language_key = (
+                            creator_sub_items.get(creator_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+            
+            elif "contributor" == key_lv1:
+                mapping_contributor_item_key: str = key
+                contributor_sub_items: dict = jpcoar_value[key_lv1]
+                contributor_sub_items_keys: list = list(contributor_sub_items.keys())
+
+                for contributor_sub_item in contributor_sub_items:
+                    if contributor_sub_item == "givenName":
+                        mapping_contributor_given_name_language_key = (
+                            contributor_sub_items.get(contributor_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+                    elif contributor_sub_item == "familyName":
+                        mapping_contributor_family_name_language_key = (
+                            contributor_sub_items.get(contributor_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+                    elif contributor_sub_item == "affiliation":
+                        mapping_contributor_affiliation_name_language_key = (
+                            contributor_sub_items.get(contributor_sub_item, {}).get("affiliationName", {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+                    elif contributor_sub_item == "contributorName":
+                        mapping_contributor_contributor_name_language_key = (
+                            contributor_sub_items.get(contributor_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+                    elif contributor_sub_item == "contributorAlternative":
+                        mapping_contributor_alternative_name_language_key = (
+                            contributor_sub_items.get(contributor_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+
+            elif "relation" == key_lv1:
+                mapping_relation_item_key: str = key
+                relation_sub_items: dict = jpcoar_value[key_lv1]
+                relation_sub_items_keys:list  = list(relation_sub_items.keys())
+
+                for relation_sub_item in relation_sub_items:
+                    if relation_sub_item == "relatedTitle":
+                        mapping_related_title_language_key = (
+                            relation_sub_items.get(relation_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+
+            elif "fundingReference" == key_lv1:
+                mapping_funding_reference_item_key: str = key
+                funding_reference_sub_items: dict = jpcoar_value[key_lv1]
+                funding_reference_sub_items_keys: list = list(funding_reference_sub_items.keys())
+
+                for funding_reference_sub_item in funding_reference_sub_items:
+                    if funding_reference_sub_item == "funderName":
+                        mapping_funding_reference_funder_name_language_key = (
+                            funding_reference_sub_items.get(funding_reference_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+                    elif funding_reference_sub_item == "awardTitle":
+                        mapping_funding_reference_award_title_language_key = (
+                            funding_reference_sub_items.get(funding_reference_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+
+            elif "sourceTitle" == key_lv1:
+                if len(jpcoar_value.keys()) == 1:
+                    source_title_sub_items: dict = jpcoar_value[key_lv1]
+                    source_title_sub_items_keys: list = list(source_title_sub_items.keys())
+                    mapping_source_title_item_key: str = key
+                    
+                    for source_title_sub_item in source_title_sub_items:
+                        if "@attributes" == source_title_sub_item:
+                            mapping_source_title_language_key: list = source_title_sub_items.get(source_title_sub_item, {}).get("xml:lang", "_").split(".")
+            
+            elif "degreeName" == key_lv1:
+                degree_name_sub_items: dict = jpcoar_value[key_lv1]
+                degree_name_sub_items_keys: list = list(degree_name_sub_items.keys())
+                mapping_degree_name_item_key: str = key
+                
+                for degree_name_sub_item in degree_name_sub_items:
+                    if "@attributes" == degree_name_sub_item:
+                        mapping_degree_name_language_key: list = degree_name_sub_items.get(degree_name_sub_item, {}).get("xml:lang", "_").split(".")
+
+            elif "degreeGrantor" == key_lv1:
+                mapping_degree_grantor_item_key: str = key
+                degree_grantor_sub_items: dict = jpcoar_value[key_lv1]
+                degree_grantor_sub_items_keys:list  = list(degree_grantor_sub_items.keys())
+
+                for degree_grantor_sub_item in degree_grantor_sub_items:
+                    if degree_grantor_sub_item == "degreeGrantorName":
+                        mapping_degree_grantor_name_language_key = (
+                            degree_grantor_sub_items.get(degree_grantor_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+
+            elif "conference" == key_lv1:
+                mapping_conference_item_key: str = key
+                conference_sub_items: dict = jpcoar_value[key_lv1]
+                conference_sub_items_keys: list = list(conference_sub_items.keys())
+                for conference_sub_item in conference_sub_items:
+                    if conference_sub_item == "conferenceDate":
+                        mapping_conference_date_language_key = (
+                            conference_sub_items.get(conference_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+                    elif conference_sub_item == "conferenceName":
+                        mapping_conference_name_language_key = (
+                            conference_sub_items.get(conference_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+                    elif conference_sub_item == "conferencePlace":
+                        mapping_conference_place_language_key = (
+                            conference_sub_items.get(conference_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+                    elif conference_sub_item == "conferenceVenue":
+                        mapping_conference_venue_language_key = (
+                            conference_sub_items.get(conference_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+                    elif conference_sub_item == "conferenceSponsor":
+                        mapping_conference_sponsor_language_key = (
+                            conference_sub_items.get(conference_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
+                        )
+            
+    """
+    For iterating the argument 'data' and validating its language value
+    """
+    def validation_duplication_error_checker(item_error_message: str, items_to_be_checked_for_duplication: list):
+
+        def _validate_language_value(
+                language_value_list: list,
+                language_value: str,
+                duplication_error: str,
+                item_error_message: str
+        ):
+            if language_value_list.count(language_value) > 1:
+                raise ValidationError(f"{item_error_message} -- {duplication_error}")
+        
+        duplication_error: str = """
+            Please ensure that the following applicable items have no duplicate language values:
+            Title, Creator Name ,Creator Family Name, Creator Given Name, Creator Affliation Name, 
+            Contributor Name ,Contributor Family Name, Contributor Given Name, Contributor Affliation Name, 
+            Related Title, Funding Reference Funder Name, Funding Reference Award Title, Source Title, Degree Name, 
+            Degree Grantor Name, Conference Name, Conference Sponsor, Conference Date, Conference Venue, Conference Place, 
+            Holding Agent Name, Catalog Title
+        """
+
+        try:
+            for lang_value in items_to_be_checked_for_duplication:
+                _validate_language_value(
+                    items_to_be_checked_for_duplication,
+                    lang_value,
+                    duplication_error,
+                    item_error_message
+                )
+
+        except ValidationError as error:
+            current_app.logger.error(error)
+            result["is_valid"] = False
+            result['error'] = f"{item_error_message} -- {duplication_error}"
+
+    def validation_ja_kana_error_checker(item_error_message: str, items_to_be_checked_for_ja_kana: list):
+
+        def _validate_language_value(
+                language_value_list: list,
+                language_value: str,
+                ja_kana_error: str,
+                item_error_message: str
+        ):
+            if language_value == "ja-Kana" and "ja" not in language_value_list:
+                raise ValidationError(f"{item_error_message} -- {ja_kana_error}")
+        
+        ja_kana_error: str = """
+            If ja-Kana is used, please ensure that the following applicable items have ja language values:
+            Creator Name ,Creator Family Name, Creator Given Name, Creator Alternative Name, 
+            Contributor Name ,Contributor Family Name, Contributor Given Name, Contributor Alternative Name, 
+            Holding Agent Name, Catalog Title.
+        """
+
+        try:
+            for lang_value in items_to_be_checked_for_ja_kana:
+                _validate_language_value(
+                    items_to_be_checked_for_ja_kana,
+                    lang_value,
+                    ja_kana_error,
+                    item_error_message
+                )
+
+        except ValidationError as error:
+            current_app.logger.error(error)
+            result["is_valid"] = False
+            result['error'] = f"{item_error_message} -- {ja_kana_error}"
+
+    def validation_ja_latn_error_checker(item_error_message: str, items_to_be_checked_for_ja_latn: list):
+
+        def _validate_language_value(
+                language_value_list: list,
+                language_value: str,
+                ja_latn_error: str,
+                item_error_message: str
+        ):
+            if language_value == "ja-Latn" and "ja" not in language_value_list:
+                raise ValidationError(f"{item_error_message} -- {ja_latn_error}")
+        
+        ja_latn_error: str = """
+            If ja-Latn is used, please ensure that the following applicable items have ja language values:
+            Creator Name ,Creator Family Name, Creator Given Name, Creator Alternative Name, 
+            Contributor Name ,Contributor Family Name, Contributor Given Name, Contributor Alternative Name, 
+            Holding Agent Name, Catalog Title.
+        """
+
+        try:
+            for lang_value in items_to_be_checked_for_ja_latn:
+                _validate_language_value(
+                    items_to_be_checked_for_ja_latn,
+                    lang_value,
+                    ja_latn_error,
+                    item_error_message
+                )
+
+        except ValidationError as error:
+            current_app.logger.error(error)
+            result["is_valid"] = False
+            result['error'] = f"{item_error_message} -- {ja_latn_error}"
+
+    def validation_date_format_error_checker(item_error_message: str, items_to_be_checked_for_date_format: list):
+
+        def _validate_date_format(
+                date_value: str,
+                date_format_error: str,
+                item_error_message: str
+        ):
+            result = False
+
+            for pattern in date_pattern_list:
+                if re.match(pattern, date_value):
+                    result = True
+
+            if not result:
+                raise ValidationError(f"{item_error_message} -- {date_format_error}")
+        
+        date_format_error: str = """
+            Please ensure that entered date has the following formats: YYYY, YYYY-MM, YYYY-MM-DD, 
+            YYYY-MM-DDThh:mm+TZD, YYYY-MM-DDThh:mm-TZD, YYYY-MM-DDThh:mm:ss+TZD, YYYY-MM-DDThh:mm:ss-TZD, 
+            YYYY-MM-DDThh:mm:ss.ss+TZD, YYYY-MM-DDThh:mm:ss.ss-TZD
+        """
+
+        try:
+            for date_value in items_to_be_checked_for_date_format:
+                _validate_date_format(
+                    date_value,
+                    date_format_error,
+                    item_error_message
+                )
+
+        except ValidationError as error:
+            current_app.logger.error(error)
+            """
+            Commeneted out result["is_valid"] and result["error"] will be enabled when "dcterms date" will be used
+            """
+            # result["is_valid"] = False
+            # result['error'] = f"{item_error_message} -- {date_format_error}"
+
+    """
+    This snippet is for testing 'validation_date_format_error_checker' while 'dcterms date' doesn't exist yet
+    """
+    date_format_test_data = [
+        "1997",
+        "1997-07",
+        "1997-07-16",
+        "1997-07-16T19:20+01:00",
+        "1997-07-16T19:20-01:00",
+        "1997-07-16T19:20:30+01:00",
+        "1997-07-16T19:20:30-01:00",
+        "1997-07-16T19:20:30.45+01:00",
+        "1997-07-16T19:20:30.45-01:00",
+        "199-this-will-result-in-error"
+    ]
+    for date in date_format_test_data:
+        validation_date_format_error_checker("DATE FORMAT TEST", [date])
+
+    for data_key in data_keys:
+        data_item_value_list = data[data_key]
+        # Validate TITLE item values from data
+        if mapping_title_item_key == data_key:
+            for data_item_values in data_item_value_list:
+                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(data_item_values)
+                for mapping_key in list(set(mapping_title_language_key)):
+                    if mapping_key in keys_that_exist_in_data:
+                        # Append TITLE LANGUAGE value to items_to_be_checked_for_duplication list
+                        items_to_be_checked_for_duplication.append(data_item_values.get(mapping_key))
+                        items_to_be_checked_for_ja_kana.append(data_item_values.get(mapping_key))
+                        items_to_be_checked_for_ja_latn.append(data_item_values.get(mapping_key))
+                    else:
+                        pass
+            # Validation for TITLE
+            validation_duplication_error_checker(
+                _("Title"),
+                items_to_be_checked_for_duplication
+            )
+            validation_ja_kana_error_checker(
+                _("Title"),
+                items_to_be_checked_for_ja_kana
+            )
+            validation_ja_latn_error_checker(
+                _("Title"),
+                items_to_be_checked_for_ja_latn
+            )
+            # Reset validation lists below for the next item to be validated
+            items_to_be_checked_for_duplication = []
+            items_to_be_checked_for_ja_kana = []
+            items_to_be_checked_for_ja_latn = []
+
+        # Validate ALTERNATIVE TITLE item values from data
+        elif mapping_alternative_title_item_key == data_key:
+            for data_item_values in data_item_value_list:
+                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(data_item_values)
+                for mapping_key in list(set(mapping_alternative_title_language_key)):
+                    if mapping_key in keys_that_exist_in_data:
+                        # Append ALTERNATIVE TITLE LANGUAGE value to items_to_be_checked_for_duplication list
+                        items_to_be_checked_for_ja_kana.append(data_item_values.get(mapping_key))
+                        items_to_be_checked_for_ja_latn.append(data_item_values.get(mapping_key))
+                    else:
+                        pass
+            
+            # Validation for ALTERNATIVE TITLE
+            validation_ja_kana_error_checker(
+                _("Alternative Title"),
+                items_to_be_checked_for_ja_kana
+            )
+            validation_ja_latn_error_checker(
+                _("Alternative Title"),
+                items_to_be_checked_for_ja_latn
+            )
+            # Reset validation lists below for the next item to be validated
+            items_to_be_checked_for_ja_kana = []
+            items_to_be_checked_for_ja_latn = []
+
+        # Validate CREATOR item values from data
+        elif mapping_creator_item_key == data_key:
+            for data_creator_item_values in data_item_value_list:
+                if isinstance(data_creator_item_values, dict):
+                    for data_creator_item_values_key in list(data_creator_item_values.keys()):
+                        # CREATOR GIVEN NAMES
+                        if data_creator_item_values_key == mapping_creator_given_name_language_key[0]:
+                            given_names_values: [dict] = data_creator_item_values.get(mapping_creator_given_name_language_key[0])
+                            for given_name_values in given_names_values:
+                                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(given_name_values)
+                                for mapping_key in mapping_creator_given_name_language_key:
+                                    if mapping_key in keys_that_exist_in_data:
+                                        # Append CREATOR GIVEN NAME LANGUAGE value to items_to_be_checked_for_duplication list
+                                        items_to_be_checked_for_duplication.append(given_name_values.get(mapping_key))
+                                        items_to_be_checked_for_ja_kana.append(given_name_values.get(mapping_key))
+                                        items_to_be_checked_for_ja_latn.append(given_name_values.get(mapping_key))
+                            # Validation for CREATOR GIVEN NAMES
+                            validation_duplication_error_checker(
+                                _("Creator Given Name"),
+                                items_to_be_checked_for_duplication
+                            )
+                            validation_ja_kana_error_checker(
+                                _("Creator Given Name"),
+                                items_to_be_checked_for_ja_kana
+                            )
+                            validation_ja_latn_error_checker(
+                                _("Creator Given Name"),
+                                items_to_be_checked_for_ja_latn
+                            )
+                            # Reset validation lists below for the next item to be validated
+                            items_to_be_checked_for_duplication = []
+                            items_to_be_checked_for_ja_kana = []
+                            items_to_be_checked_for_ja_latn = []
+
+                        # CREATOR FAMILY NAMES
+                        elif data_creator_item_values_key == mapping_creator_family_name_language_key[0]:
+                            family_names_values: [dict] = data_creator_item_values.get(mapping_creator_family_name_language_key[0])
+                            for family_name_values in family_names_values:
+                                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(family_name_values)
+                                for mapping_key in mapping_creator_family_name_language_key:
+                                    if mapping_key in keys_that_exist_in_data:
+                                        # Append CREATOR FAMILY NAMES NAME LANGUAGE value to items_to_be_checked_for_duplication list
+                                        items_to_be_checked_for_duplication.append(family_name_values.get(mapping_key))
+                                        items_to_be_checked_for_ja_kana.append(family_name_values.get(mapping_key))
+                                        items_to_be_checked_for_ja_latn.append(family_name_values.get(mapping_key))
+                            # Validation for CREATOR FAMILY NAMES
+                            validation_duplication_error_checker(
+                                _("Creator Family Name"),
+                                items_to_be_checked_for_duplication
+                            )
+                            validation_ja_kana_error_checker(
+                                _("Creator Family Name"),
+                                items_to_be_checked_for_ja_kana
+                            )
+                            validation_ja_latn_error_checker(
+                                _("Creator Family Name"),
+                                items_to_be_checked_for_ja_latn
+                            )
+                            # Reset validation lists below for the next item to be validated
+                            items_to_be_checked_for_duplication = []
+                            items_to_be_checked_for_ja_kana = []
+                            items_to_be_checked_for_ja_latn = []
+                        
+                        # CREATOR AFFLIATION NAMES
+                        elif data_creator_item_values_key == mapping_creator_affiliation_name_language_key[0]:
+                            creator_affiliations: [dict] = data_creator_item_values.get(mapping_creator_affiliation_name_language_key[0])
+                            for creator_affiliation in creator_affiliations:
+                                creator_affiliation_names: [dict] = creator_affiliation.get(mapping_creator_affiliation_name_language_key[1])
+                                for creator_affiliation_name_values in creator_affiliation_names:
+                                    keys_that_exist_in_data: list = _get_keys_that_exist_from_data(creator_affiliation_name_values)
+                                    for mapping_key in list(set(mapping_creator_affiliation_name_language_key)):
+                                        if mapping_key in keys_that_exist_in_data:
+                                            # Append CREATOR AFFLIATION NAMES LANGUAGE value to items_to_be_checked_for_duplication list
+                                            items_to_be_checked_for_duplication.append(creator_affiliation_name_values.get(mapping_key))
+                                # Validation for CREATOR AFFLIATION NAMES
+                                validation_duplication_error_checker(
+                                    _("Creator Affiliation Name"),
+                                    items_to_be_checked_for_duplication
+                                )
+                                # Reset validation lists below for the next item to be validated
+                                items_to_be_checked_for_duplication = []
+
+                        # CREATOR NAMES
+                        elif data_creator_item_values_key == mapping_creator_creator_name_language_key[0]:
+                            creator_names_values: [dict] = data_creator_item_values.get(mapping_creator_creator_name_language_key[0])
+                            for creator_name_values in creator_names_values:
+                                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(creator_name_values)
+                                for mapping_key in list(set(mapping_creator_creator_name_language_key)):
+                                    if mapping_key in keys_that_exist_in_data:
+                                        # Append CREATOR AFFLIATION NAMES LANGUAGE value to items_to_be_checked_for_duplication list
+                                        items_to_be_checked_for_duplication.append(creator_name_values.get(mapping_key))
+                                        items_to_be_checked_for_ja_kana.append(creator_name_values.get(mapping_key))
+                                        items_to_be_checked_for_ja_latn.append(creator_name_values.get(mapping_key))
+                            # Validation for CREATOR NAMES
+                            validation_duplication_error_checker(
+                                _("Creator Name"),
+                                items_to_be_checked_for_duplication
+                            )
+                            validation_ja_kana_error_checker(
+                                _("Creator Name"),
+                                items_to_be_checked_for_ja_kana
+                            )
+                            validation_ja_latn_error_checker(
+                                _("Creator Name"),
+                                items_to_be_checked_for_ja_latn
+                            )
+                            # Reset validation lists below for the next item to be validated
+                            items_to_be_checked_for_duplication = []
+                            items_to_be_checked_for_ja_kana = []
+                            items_to_be_checked_for_ja_latn = []
+
+                        # CREATOR ALTERNATIVE NAMES
+                        elif data_creator_item_values_key == mapping_creator_alternative_name_language_key[0]:
+                            creator_alternative_names_values: [dict] = data_creator_item_values.get(mapping_creator_alternative_name_language_key[0])
+                            for creator_alternative_name_values in creator_alternative_names_values:
+                                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(creator_alternative_name_values)
+                                for mapping_key in list(set(mapping_creator_alternative_name_language_key)):
+                                    if mapping_key in keys_that_exist_in_data:
+                                        # Append CREATOR ALTERNATIVE NAMES LANGUAGE value to items_to_be_checked_for_duplication list
+                                        items_to_be_checked_for_ja_kana.append(creator_alternative_name_values.get(mapping_key))
+                                        items_to_be_checked_for_ja_latn.append(creator_alternative_name_values.get(mapping_key))
+                            # Validation for CREATOR ALTERNATIVE NAMES
+                            validation_ja_kana_error_checker(
+                                _("Creator Alternative Name"),
+                                items_to_be_checked_for_ja_kana
+                            )
+                            validation_ja_latn_error_checker(
+                                _("Creator Alternative Name"),
+                                items_to_be_checked_for_ja_latn
+                            )
+                            # Reset validation lists below for the next item to be validated
+                            items_to_be_checked_for_ja_kana = []
+                            items_to_be_checked_for_ja_latn = []
+
+                        else:
+                            pass
+
+        # Validate CONTRIBUTOR item values from data
+        elif mapping_contributor_item_key == data_key:
+            for data_contributor_item_values in data_item_value_list:
+                if isinstance(data_contributor_item_values, dict):
+                    for data_contributor_item_values_key in list(data_contributor_item_values.keys()):
+                        # CONTRIBUTOR GIVEN NAMES
+                        if data_contributor_item_values_key == mapping_contributor_given_name_language_key[0]:
+                            given_names_values: [dict] = data_contributor_item_values.get(mapping_contributor_given_name_language_key[0])
+                            for given_name_values in given_names_values:
+                                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(given_name_values)
+                                for mapping_key in list(set(mapping_contributor_given_name_language_key)):
+                                    if mapping_key in keys_that_exist_in_data:
+                                        # Append CONTRIBUTOR GIVEN NAMES LANGUAGE value to items_to_be_checked_for_duplication list
+                                        items_to_be_checked_for_duplication.append(given_name_values.get(mapping_key))
+                                        items_to_be_checked_for_ja_kana.append(given_name_values.get(mapping_key))
+                                        items_to_be_checked_for_ja_latn.append(given_name_values.get(mapping_key))
+                            # Validation for CONTRIBUTOR GIVEN NAMES
+                            validation_duplication_error_checker(
+                                _("Contributor Given Name"),
+                                items_to_be_checked_for_duplication
+                            )
+                            validation_ja_kana_error_checker(
+                                _("Contributor Given Name"),
+                                items_to_be_checked_for_ja_kana
+                            )
+                            validation_ja_latn_error_checker(
+                                _("Contributor Given Name"),
+                                items_to_be_checked_for_ja_latn
+                            )
+                            # Reset validation lists below for the next item to be validated
+                            items_to_be_checked_for_duplication = []
+                            items_to_be_checked_for_ja_kana = []
+                            items_to_be_checked_for_ja_latn = []
+
+                        # CONTRIBUTOR FAMILY NAMES
+                        elif data_contributor_item_values_key == mapping_contributor_family_name_language_key[0]:
+                            family_names_values: [dict] = data_contributor_item_values.get(mapping_contributor_family_name_language_key[0])
+                            for family_name_values in family_names_values:
+                                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(family_name_values)
+                                for mapping_key in list(set(mapping_contributor_family_name_language_key)):
+                                    if mapping_key in keys_that_exist_in_data:
+                                        # Append CONTRIBUTOR FAMILY NAMES LANGUAGE value to items_to_be_checked_for_duplication list
+                                        items_to_be_checked_for_duplication.append(family_name_values.get(mapping_key))
+                                        items_to_be_checked_for_ja_kana.append(family_name_values.get(mapping_key))
+                                        items_to_be_checked_for_ja_latn.append(family_name_values.get(mapping_key))
+                            # Validation for CONTRIBUTOR FAMILY NAMES
+                            validation_duplication_error_checker(
+                                _("Contributor Family Name"),
+                                items_to_be_checked_for_duplication
+                            )
+                            validation_ja_kana_error_checker(
+                                _("Contributor Family Name"),
+                                items_to_be_checked_for_ja_kana
+                            )
+                            validation_ja_latn_error_checker(
+                                _("Contributor Family Name"),
+                                items_to_be_checked_for_ja_latn
+                            )
+                            # Reset validation lists below for the next item to be validated
+                            items_to_be_checked_for_duplication = []
+                            items_to_be_checked_for_ja_kana = []
+                            items_to_be_checked_for_ja_latn = []
+                        
+                        # CONTRIBUTOR AFFLIATION NAMES
+                        elif data_contributor_item_values_key == mapping_contributor_affiliation_name_language_key[0]:
+                            contributor_affiliations: [dict] = data_contributor_item_values.get(mapping_contributor_affiliation_name_language_key[0])
+                            for contributor_affiliation in contributor_affiliations:
+                                contributor_affiliation_names: [dict] = contributor_affiliation.get(mapping_contributor_affiliation_name_language_key[1])
+                                for contributor_affiliation_name_values in contributor_affiliation_names:
+                                    keys_that_exist_in_data: list = _get_keys_that_exist_from_data(contributor_affiliation_name_values)
+                                    for mapping_key in list(set(mapping_contributor_affiliation_name_language_key)):
+                                        if mapping_key in keys_that_exist_in_data:
+                                            # Append CONTRIBUTOR AFFILIATION NAMES LANGUAGE value to items_to_be_checked_for_duplication list
+                                            items_to_be_checked_for_duplication.append(contributor_affiliation_name_values.get(mapping_key))
+                                # Validation for CONTRIBUTOR AFFILIATION NAMES
+                                validation_duplication_error_checker(
+                                    _("Contributor Affiliation Name"),
+                                    items_to_be_checked_for_duplication
+                                )
+                                # Reset validation lists below for the next item to be validated
+                                items_to_be_checked_for_duplication = []
+
+                        # CONTRIBUTOR NAMES
+                        elif data_contributor_item_values_key == mapping_contributor_contributor_name_language_key[0]:
+                            contributor_names_values: [dict] = data_contributor_item_values.get(mapping_contributor_contributor_name_language_key[0])
+                            for contributor_name_values in contributor_names_values:
+                                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(contributor_name_values)
+                                for mapping_key in list(set(mapping_contributor_contributor_name_language_key)):
+                                    if mapping_key in keys_that_exist_in_data:
+                                        # Append CONTRIBUTOR NAMES LANGUAGE value to items_to_be_checked_for_duplication list
+                                        items_to_be_checked_for_duplication.append(contributor_name_values.get(mapping_key))
+                                        items_to_be_checked_for_ja_kana.append(contributor_name_values.get(mapping_key))
+                                        items_to_be_checked_for_ja_latn.append(contributor_name_values.get(mapping_key))
+                            # Validation for CONTRIBUTOR NAMES
+                            validation_duplication_error_checker(
+                                _("Contributor Name"),
+                                items_to_be_checked_for_duplication
+                            )
+                            validation_ja_kana_error_checker(
+                                _("Contributor Name"),
+                                items_to_be_checked_for_ja_kana
+                            )
+                            validation_ja_latn_error_checker(
+                                _("Contributor Name"),
+                                items_to_be_checked_for_ja_latn
+                            )
+                            # Reset validation lists below for the next item to be validated
+                            items_to_be_checked_for_duplication = []
+                            items_to_be_checked_for_ja_kana = []
+                            items_to_be_checked_for_ja_latn = []
+
+                        # CONTRIBUTOR ALTERNATIVE NAMES
+                        elif data_contributor_item_values_key == mapping_contributor_alternative_name_language_key[0]:
+                            contributor_alternative_names_values: [dict] = data_contributor_item_values.get(mapping_contributor_alternative_name_language_key[0])
+                            for contributor_alternative_name_values in contributor_alternative_names_values:
+                                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(contributor_alternative_name_values)
+                                for mapping_key in list(set(mapping_contributor_alternative_name_language_key)):
+                                    if mapping_key in keys_that_exist_in_data:
+                                        # Append CONTRIBUTOR ALTERNATIVE NAMES LANGUAGE value to items_to_be_checked_for_duplication list
+                                        items_to_be_checked_for_ja_kana.append(contributor_alternative_name_values.get(mapping_key))
+                                        items_to_be_checked_for_ja_latn.append(contributor_alternative_name_values.get(mapping_key))
+                            # Validation for CONTRIBUTOR ALTERNATIVE NAMES
+                            validation_ja_kana_error_checker(
+                                _("Contributor Alternative Name"),
+                                items_to_be_checked_for_ja_kana
+                            )
+                            validation_ja_latn_error_checker(
+                                _("Contributor Alternative Name"),
+                                items_to_be_checked_for_ja_latn
+                            )
+                            # Reset validation lists below for the next item to be validated
+                            items_to_be_checked_for_ja_kana = []
+                            items_to_be_checked_for_ja_latn = []
+
+                        else:
+                            pass
+
+        # Validate RELATION item values from data
+        elif mapping_relation_item_key == data_key:
+            for data_relation_item_values in data_item_value_list:
+                if isinstance(data_relation_item_values, dict):
+                    for data_relation_item_values_key in list(data_relation_item_values.keys()):
+                        # RELATED TITLE
+                        if data_relation_item_values_key == mapping_related_title_language_key[0]:
+                            related_title_values: [dict] = data_relation_item_values.get(mapping_related_title_language_key[0])
+                            for related_title_value in related_title_values:
+                                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(related_title_value)
+                                for mapping_key in list(set(mapping_related_title_language_key)):
+                                    if mapping_key in keys_that_exist_in_data:
+                                        # Append CREATOR AFFILIATION NAMES LANGUAGE value to items_to_be_checked_for_duplication list
+                                        items_to_be_checked_for_duplication.append(related_title_value.get(mapping_key))
+                            # Validation for RELATED TITLE
+                            validation_duplication_error_checker(
+                                _("Relation Related Title"),
+                                items_to_be_checked_for_duplication
+                            )
+                            # Reset validation lists below for the next item to be validated
+                            items_to_be_checked_for_duplication = []
+
+                        else:
+                            pass
+
+        # Validate FUNDING REFERENCE item values from data
+        elif mapping_funding_reference_item_key == data_key:
+            for data_funding_reference_item_values in data_item_value_list:
+                if isinstance(data_funding_reference_item_values, dict):
+                    for data_funding_reference_item_values_key in list(data_funding_reference_item_values.keys()):
+                        # FUNDING REFERENCE FUNDER NAME
+                        if data_funding_reference_item_values_key == mapping_funding_reference_funder_name_language_key[0]:
+                            funding_reference_funder_name_values: [dict] = data_funding_reference_item_values.get(mapping_funding_reference_funder_name_language_key[0])
+                            for funding_reference_funder_name_value in funding_reference_funder_name_values:
+                                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(funding_reference_funder_name_value)
+                                for mapping_key in list(set(mapping_funding_reference_funder_name_language_key)):
+                                    if mapping_key in keys_that_exist_in_data:
+                                        # Append FUNDING REFERENCE FUNDER NAME LANGUAGE value to items_to_be_checked_for_duplication list
+                                        items_to_be_checked_for_duplication.append(funding_reference_funder_name_value.get(mapping_key))
+                            # Validation for FUNDING REFERENCE FUNDER NAME
+                            validation_duplication_error_checker(
+                                _("Funding Reference Funder Name"),
+                                items_to_be_checked_for_duplication
+                            )
+                            # Reset validation lists below for the next item to be validated
+                            items_to_be_checked_for_duplication = []
+
+                        # FUNDING REFERENCE AWARD TITLE
+                        elif data_funding_reference_item_values_key == mapping_funding_reference_award_title_language_key[0]:
+                            funding_reference_award_title_values: [dict] = data_funding_reference_item_values.get(mapping_funding_reference_award_title_language_key[0])
+                            for funding_reference_award_title_value in funding_reference_award_title_values:
+                                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(funding_reference_award_title_value)
+                                for mapping_key in list(set(mapping_funding_reference_award_title_language_key)):
+                                    if mapping_key in keys_that_exist_in_data:
+                                        # Append FUNDING REFERENCE AWARD TITLE LANGUAGE value to items_to_be_checked_for_duplication list
+                                        items_to_be_checked_for_duplication.append(funding_reference_award_title_value.get(mapping_key))
+                            # Validation for FUNDING REFERENCE AWARD TITLE
+                            validation_duplication_error_checker(
+                                _("Funding Reference Award Title"),
+                                items_to_be_checked_for_duplication
+                            )
+                            # Reset validation lists below for the next item to be validated
+                            items_to_be_checked_for_duplication = []
+
+                        else:
+                            pass
+
+        # Validate SOURCE TITLE item values from data
+        elif mapping_source_title_item_key == data_key:
+            for data_source_title_values in data_item_value_list:
+                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(data_source_title_values)
+                for mapping_key in list(set(mapping_source_title_language_key)):
+                    if mapping_key in keys_that_exist_in_data:
+                        # Append SOURCE TITLE LANGUAGE value to items_to_be_checked_for_duplication list
+                        items_to_be_checked_for_duplication.append(data_source_title_values.get(mapping_key))
+                else:
+                    pass
+            # Validation for SOURCE TITLE
+            validation_duplication_error_checker(
+                _("Source Title"),
+                items_to_be_checked_for_duplication
+            )
+            # Reset validation lists below for the next item to be validated
+            items_to_be_checked_for_duplication = []
+
+        # Validate DEGREE NAME item values from data
+        elif mapping_degree_name_item_key == data_key:
+            for data_degree_name_values in data_item_value_list:
+                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(data_degree_name_values)
+                for mapping_key in list(set(mapping_degree_name_language_key)):
+                    if mapping_key in keys_that_exist_in_data:
+                        # Append DEGREE NAME LANGUAGE value to items_to_be_checked_for_duplication list
+                        items_to_be_checked_for_duplication.append(data_degree_name_values.get(mapping_key))
+                else:
+                    pass
+            # Validation for DEGREE NAME
+            validation_duplication_error_checker(
+                _("Degree Name"),
+                items_to_be_checked_for_duplication
+            )
+            # Reset validation lists below for the next item to be validated
+            items_to_be_checked_for_duplication = []
+
+        # Validate DEGREE GRANTOR item values from data
+        elif mapping_degree_grantor_item_key == data_key:
+            for data_degree_grantor_item_values in data_item_value_list:
+                if isinstance(data_degree_grantor_item_values, dict):
+                    for data_degree_grantor_item_values_key in list(data_degree_grantor_item_values.keys()):
+                        # DEGREE GRANTOR
+                        if data_degree_grantor_item_values_key == mapping_degree_grantor_name_language_key[0]:
+                            degree_grantor_values: [dict] = data_degree_grantor_item_values.get(mapping_degree_grantor_name_language_key[0])
+                            for degree_grantor_values in degree_grantor_values:
+                                # Append DEGREE GRANTOR NAME LANGUAGE value to items_to_be_checked_for_duplication list
+                                items_to_be_checked_for_duplication.append(degree_grantor_values.get(mapping_degree_grantor_name_language_key[1]))
+                            # Validation for DEGREE GRANTOR NAME
+                            validation_duplication_error_checker(
+                                _("Degree Grantor Name"),
+                                items_to_be_checked_for_duplication
+                            )
+                            # Reset validation lists below for the next item to be validated
+                            items_to_be_checked_for_duplication = []
+                        else:
+                            pass
+
+        # Validate CONFERENCE item values from data
+        elif mapping_conference_item_key == data_key:
+            # EXCLUSIVE LOOP FOR CONFERENCE DATE
+            for data_conference_item_values in data_item_value_list:
+                if isinstance(data_conference_item_values, dict):
+                    for data_conference_item_values_key in list(data_conference_item_values.keys()):
+                        if data_conference_item_values_key == mapping_conference_date_language_key[0]:
+                            date_values: dict = data_conference_item_values.get(mapping_conference_date_language_key[0])
+                            keys_that_exist_in_data: list = _get_keys_that_exist_from_data(date_values)
+                            for mapping_key in list(set(mapping_conference_date_language_key)):
+                                if mapping_key in keys_that_exist_in_data:
+                                    # Append CONFERENCE DATE LANGUAGE value to items_to_be_checked_for_duplication list
+                                    items_to_be_checked_for_duplication.append(date_values.get(mapping_key))
+            if isinstance(data_conference_item_values, dict):                                    
+                # Validation for CONFERENCE DATE
+                validation_duplication_error_checker(
+                    _("Conference Date"),
+                    items_to_be_checked_for_duplication
+                )
+                # Reset validation lists below for the next item to be validated
+                items_to_be_checked_for_duplication = []
+
+            for data_conference_item_values in data_item_value_list:
+                if isinstance(data_conference_item_values, dict):
+                    for data_conference_item_values_key in list(data_conference_item_values.keys()):
+                        # CONFERENCE NAMES
+                        if data_conference_item_values_key == mapping_conference_name_language_key[0]:
+                            conference_names_values: [dict] = data_conference_item_values.get(mapping_conference_name_language_key[0])
+                            for conference_name_values in conference_names_values:
+                                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(conference_name_values)
+                                for mapping_key in list(set(mapping_conference_name_language_key)):
+                                    if mapping_key in keys_that_exist_in_data:
+                                        # Append CONFERENCE NAME LANGUAGE value to items_to_be_checked_for_duplication list
+                                        items_to_be_checked_for_duplication.append(conference_name_values.get(mapping_key))
+                            # Validation for CONFERENCE NAMES
+                            validation_duplication_error_checker(
+                                _("Conference Name"),
+                                items_to_be_checked_for_duplication
+                            )
+                            # Reset validation lists below for the next item to be validated
+                            items_to_be_checked_for_duplication = []
+                        
+                        # CONFERENCE PLACE
+                        elif data_conference_item_values_key == mapping_conference_place_language_key[0]:
+                            conference_places_values: [dict] = data_conference_item_values.get(mapping_conference_place_language_key[0])
+                            for conference_place_values in conference_places_values:
+                                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(conference_place_values)
+                                for mapping_key in list(set(mapping_conference_place_language_key)):
+                                    if mapping_key in keys_that_exist_in_data:
+                                        # Append CONFERENCE PLACE LANGUAGE value to items_to_be_checked_for_duplication list
+                                        items_to_be_checked_for_duplication.append(conference_place_values.get(mapping_key))
+                            # Validation for CONFERENCE PLACES
+                            validation_duplication_error_checker(
+                                _("Conference Place"),
+                                items_to_be_checked_for_duplication
+                            )
+                            # Reset validation lists below for the next item to be validated
+                            items_to_be_checked_for_duplication = []
+
+                        # CONFERENCE VENUE
+                        elif data_conference_item_values_key == mapping_conference_venue_language_key[0]:
+                            conference_venue_values: [dict] = data_conference_item_values.get(mapping_conference_venue_language_key[0])
+                            for conference_venue_value in conference_venue_values:
+                                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(conference_venue_value)
+                                for mapping_key in list(set(mapping_conference_venue_language_key)):
+                                    if mapping_key in keys_that_exist_in_data:
+                                        # Append CONFERENCE PLACE LANGUAGE value to items_to_be_checked_for_duplication list
+                                        items_to_be_checked_for_duplication.append(conference_venue_value.get(mapping_key))
+                            # Validation for CONFERENCE VENUE
+                            validation_duplication_error_checker(
+                                _("Conference Venue"),
+                                items_to_be_checked_for_duplication
+                            )
+                            # Reset validation lists below for the next item to be validated
+                            items_to_be_checked_for_duplication = []
+
+                        # CONFERENCE SPONSOR
+                        elif data_conference_item_values_key == mapping_conference_sponsor_language_key[0]:
+                            conference_sponsor_values: [dict] = data_conference_item_values.get(mapping_conference_sponsor_language_key[0])
+                            for conference_sponsor_value in conference_sponsor_values:
+                                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(conference_sponsor_value)
+                                for mapping_key in list(set(mapping_conference_sponsor_language_key)):
+                                    if mapping_key in keys_that_exist_in_data:
+                                        # Append CONFERENCE SPONSOR LANGUAGE value to items_to_be_checked_for_duplication list
+                                        items_to_be_checked_for_duplication.append(conference_sponsor_value.get(mapping_key))
+                            # Validation for CONFERENCE SPONSOR
+                            validation_duplication_error_checker(
+                                _("Conference Sponsor"),
+                                items_to_be_checked_for_duplication
+                            )
+                            # Reset validation lists below for the next item to be validated
+                            items_to_be_checked_for_duplication = []
+
+                        else:
+                            pass
+
+        else:
+            pass
 
     # Remove excluded item in json_schema
     remove_excluded_items_in_json_schema(item_id, json_schema)
 
     data['$schema'] = json_schema.copy()
     validation_data = RecordBase(data)
+
     try:
         validation_data.validate()
     except ValidationError as error:
