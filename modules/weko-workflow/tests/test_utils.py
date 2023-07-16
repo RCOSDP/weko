@@ -47,6 +47,7 @@ from weko_workflow.utils import (
     validation_item_property,
     handle_check_required_data,
     get_activity_id_of_record_without_version,
+    handle_check_required_pattern_and_either,
     check_required_data,get_sub_item_value,
     get_item_value_in_deep,
     delete_bucket,
@@ -356,18 +357,18 @@ def test_validation_item_property(db_records,item_type,mocker):
     not_error = {"required":[],"either":[],"pattern":[],"mapping":[]}
     with patch("weko_workflow.utils.validattion_item_property_required",return_value=None):
         with patch("weko_workflow.utils.validattion_item_property_either_required",return_value=None):
-            result = validation_item_property(mapping_item,properties)
+            result = validation_item_property(mapping_item,properties,"1")
             assert result == None
 
     required_error = {"required":["error1"],"either":[],"pattern":[],"mapping":[]}
     either_error = {"required":[],"either":["error2"],"pattern":[],"mapping":[]}
     with patch("weko_workflow.utils.validattion_item_property_required",return_value=required_error):
         with patch("weko_workflow.utils.validattion_item_property_either_required",return_value=either_error):
-            result = validation_item_property(mapping_item,properties)
+            result = validation_item_property(mapping_item,properties,"1")
             assert result == {"required":["error1"],"required_key":[],"either":["error2"],"either_key":[],"pattern":[],"mapping":[]}
 
     properties = {}
-    result = validation_item_property(mapping_item, properties)
+    result = validation_item_property(mapping_item, properties,"1")
     assert result == None
 
 
@@ -397,8 +398,80 @@ def test_handle_check_required_data(db_records, item_type):#c
 
 
 # def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_handle_check_required_pattern_and_either -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_handle_check_required_pattern_and_either(db,item_type):
+    # mapping_data is None, mapping_key is None
+    result = handle_check_required_pattern_and_either(None,None,None)
+    assert result == None
+    
+    rec_uuid1 = uuid.uuid4()
+    record_data = {
+        "path":["1"],"recid":"1","title":["title"],"item_title": "title","item_type_id": "1",
+        "item_1617186331708": {"attribute_name": "Title","attribute_value_mlt": [{ "subitem_1551255647225": "title1"}]},
+        "item_1617258105262": {"attribute_name": "Resource Type","attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794","resourcetype": "conference paper"}]},
+        "item_1617605131499": {"attribute_name": "File","attribute_type": "file","attribute_value_mlt": [{"url": {"url": "https://localhost/record/1/files/test.txt"},"date": [{"dateType": "Available","dateValue": "2022-10-03"}],"format": "text/tab-separated-values","filename": "check_2022-03-10.tsv","filesize": [{"value": "460 B"}],"accessrole": "open_access","version_id": "29dd361d-dc7f-49bc-b471-bdb5752afef5","displaytype": "detail","licensetype": "license_12",}]}
+    }
+    record = record = WekoRecord.create(record_data, id_=rec_uuid1)
+    mapping_data = MappingData(record=record)
+    # identifier_type = JaLC, not exist error
+    result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],"1")
+    assert result == None
+    
+    
+    rec_uuid2 = uuid.uuid4()
+    record_data = {
+        "path":["1"],"recid":"2","title":["title"],"item_title": "title","item_type_id": "1",
+        "item_1617186331708": {"attribute_name": "Title","attribute_value_mlt": [{ "subitem_1551255647225": "title1"}]},
+        "item_1617186941041": {"attribute_name": "Source Title","attribute_value_mlt": [{"subitem_1522650091861": "source_title1","subitem_1522650068558":"en"}]},
+        "item_1617258105262": {"attribute_name": "Resource Type","attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794","resourcetype": "conference paper"}]},
+        "item_1617605131499": {"attribute_name": "File","attribute_type": "file","attribute_value_mlt": [{"url": {"url": "https://localhost/record/1/files/test.txt"},"date": [{"dateType": "Available","dateValue": "2022-10-03"}],"format": "text/tab-separated-values","filename": "check_2022-03-10.tsv","filesize": [{"value": "460 B"}],"accessrole": "open_access","version_id": "29dd361d-dc7f-49bc-b471-bdb5752afef5","displaytype": "detail","licensetype": "license_12",}]}
+    }
+    record = record = WekoRecord.create(record_data, id_=rec_uuid2)
+    mapping_data = MappingData(record=record)
+    # current pattern
+    result = handle_check_required_pattern_and_either(mapping_data,['jpcoar:sourceTitle'],"1")
+    assert result == None
+    
+    
+    rec_uuid3 = uuid.uuid4()
+    record_data = {
+        "path":["1"],"recid":"3","title":["title"],"item_title": "title","item_type_id": "1",
+        "item_1617186331708": {"attribute_name": "Title","attribute_value_mlt": [{ "subitem_1551255647225": "title1"}]},
+        "item_1617186941041": {"attribute_name": "Source Title","attribute_value_mlt": [{"subitem_1522650091861": "source_title1","subitem_1522650068558":"ja"}]},
+        "item_1617258105262": {"attribute_name": "Resource Type","attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794","resourcetype": "conference paper"}]},
+        "item_1617605131499": {"attribute_name": "File","attribute_type": "file","attribute_value_mlt": [{"url": {"url": "https://localhost/record/1/files/test.txt"},"date": [{"dateType": "Available","dateValue": "2022-10-03"}],"format": "text/tab-separated-values","filename": "check_2022-03-10.tsv","filesize": [{"value": "460 B"}],"accessrole": "open_access","version_id": "29dd361d-dc7f-49bc-b471-bdb5752afef5","displaytype": "detail","licensetype": "license_12",}]}
+    }
+    record = record = WekoRecord.create(record_data, id_=rec_uuid3)
+    mapping_data = MappingData(record=record)
+    # not current pattern
+    result = handle_check_required_pattern_and_either(mapping_data,['jpcoar:sourceTitle'],"1")
+    assert result == {'required': [], 'required_key': [], 'pattern': ['item_1617186941041.subitem_1522650068558'], 'either': [], 'either_key': [], 'mapping': []}
+    
+    # not exist mapping
+    with patch("weko_workflow.utils.DOI_VALIDATION_INFO_JALC",{"dc:title":[["not_exist.@value",None]]}):
+        result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],"1")
+        assert result == {'required': [], 'required_key': [], 'pattern': [], 'either': [], 'either_key': [], 'mapping': ['dc:title']}
+        
+    # identifier_type = Crossref
+    # exist requirements, is_either = False
+    result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],"2")
+    assert result == {'required': ['item_1617186331708.subitem_1551255648112'], 'required_key': ['dc:title'], 'pattern': [], 'either': [], 'either_key': [], 'mapping': []}
+    
+    rec_uuid4 = uuid.uuid4()
+    record_data = {
+        "path":["1"],"recid":"4","title":["title"],"item_title": "title","item_type_id": "1",
+        "item_1617258105262": {"attribute_name": "Resource Type","attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794","resourcetype": "conference paper"}]},
+        "item_1617605131499": {"attribute_name": "File","attribute_type": "file","attribute_value_mlt": [{"url": {"url": "https://localhost/record/1/files/test.txt"},"date": [{"dateType": "Available","dateValue": "2022-10-03"}],"format": "text/tab-separated-values","filename": "check_2022-03-10.tsv","filesize": [{"value": "460 B"}],"accessrole": "open_access","version_id": "29dd361d-dc7f-49bc-b471-bdb5752afef5","displaytype": "detail","licensetype": "license_12",}]}
+    }
+    record = record = WekoRecord.create(record_data, id_=rec_uuid4)
+    mapping_data = MappingData(record=record)
+    # is_either is True, either not in error_list
+    result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],"2",is_either=True)
+    assert result == {'required': [], 'required_key': [], 'pattern': [], 'either': [['item_1617186331708.subitem_1551255647225', 'item_1617186331708.subitem_1551255648112']], 'either_key': ['dc:title'], 'mapping': []}
+    
+    # is_either is True, either in error_list
+    result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],"2",error_list=result,is_either=True)
+    assert result == {'required': [], 'required_key': [], 'pattern': [], 'either': [['item_1617186331708.subitem_1551255647225', 'item_1617186331708.subitem_1551255648112'], [['item_1617186331708.subitem_1551255647225', 'item_1617186331708.subitem_1551255648112']]], 'either_key': ['dc:title', 'dc:title'], 'mapping': []}
 # def validattion_item_property_required(
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 

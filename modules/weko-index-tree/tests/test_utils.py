@@ -39,6 +39,7 @@ from weko_index_tree.utils import (
     check_index_permissions,
     generate_path,
     save_index_trees_to_redis,
+    delete_index_trees_from_redis,
     str_to_datetime
 )
 
@@ -619,12 +620,34 @@ def test_get_editing_items_in_index(app):
 
 # def save_index_trees_to_redis(tree):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_save_index_trees_to_redis -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
-def test_save_index_trees_to_redis(app, redis_connect):
+def test_save_index_trees_to_redis(app, redis_connect,caplog):
     tree = [{"id": "1"}]
     os.environ['INVENIO_WEB_HOST_NAME'] = "test"
-    with app.test_request_context(headers=[("Accept-Language", "en")]):
-        assert not save_index_trees_to_redis(tree)
+    caplog.set_level(40) # set logging level to ERROR
+    with app.test_request_context(headers=[('Accept-Language','en')]):
+        # lang is None
+        save_index_trees_to_redis(tree)
+        assert json.loads(redis_connect.get("index_tree_view_test_en")) == [{"id":"1"}]
+        
+        # lang is not None
+        save_index_trees_to_redis(tree, lang="ja")
+        assert json.loads(redis_connect.get("index_tree_view_test_ja")) == [{"id":"1"}]
+        
+        # except ConnectionError
+        with patch("simplekv.memory.redisstore.RedisStore.put",side_effect=ConnectionError("test_error")):
+            save_index_trees_to_redis(tree, lang="ja")
+            assert caplog.record_tuples == [('flask.app', 40, 'Fail save index_tree to redis')]
+    redis_connect.delete("index_tree_view_test_en")
+    redis_connect.delete("index_tree_view_test_ja")
 
+# def delete_index_trees_from_redis(lang):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_delete_index_trees_from_redis -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_delete_index_trees_from_redis(app, redis_connect):
+    os.environ['INVENIO_WEB_HOST_NAME'] = "test"
+    redis_connect.put("index_tree_view_test_ja","test_ja_cache".encode("UTF-8"),ttl_secs=30)
+    delete_index_trees_from_redis("ja")
+    assert redis_connect.redis.exists("index_tree_view_test_ja") == False
+    delete_index_trees_from_redis("ja")
 
 # def str_to_datetime(str_dt, format):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_str_to_datetime -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp

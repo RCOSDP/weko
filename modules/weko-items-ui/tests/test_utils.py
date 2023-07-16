@@ -7381,6 +7381,7 @@ def test_update_schema_remove_hidden_item(db_itemtype):
         if form.get("items")
         and form["items"][0]["key"].split(".")[1] == "subitem_systemidt_identifier"
     ]
+    print(hidden_items)
     assert (
         update_schema_remove_hidden_item(
             item_type.schema, item_type.render, hidden_items

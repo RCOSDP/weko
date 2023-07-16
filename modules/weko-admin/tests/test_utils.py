@@ -1876,7 +1876,10 @@ def test_get_facet_search(client,facet_search_settings):
         "name_jp": "",
         "mapping": "",
         "active": True,
-        "aggregations": []
+        "aggregations": [],
+        "display_number": 5,
+        "is_open":True,
+        "ui_type": "CheckboxList"
     }
     result = get_facet_search(None)
     assert result == test
@@ -2069,7 +2072,7 @@ from weko_admin.utils import (
 )
 
 # def get_title_facets():
-def test_get_title_facets(i18n_app, users, facet_search_setting):
+def test_get_title_facets(i18n_app, users, facet_search_settings):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         titles, order, uiTypes, isOpens, displayNumbers = get_title_facets()
         assert uiTypes

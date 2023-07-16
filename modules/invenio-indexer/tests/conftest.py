@@ -49,14 +49,13 @@ def base_app(request):
         SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
         INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
         INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
         INDEXER_MQ_QUEUE = Queue("indexer", 
                                  exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        # SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
         TESTING=True,
     )
     FlaskCeleryExt(app)

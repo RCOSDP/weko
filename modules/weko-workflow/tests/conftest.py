@@ -28,6 +28,7 @@ import uuid
 from datetime import datetime
 from six import BytesIO
 import base64
+from mock import patch
 
 import pytest
 from flask import Flask, session, url_for, Response
@@ -212,11 +213,10 @@ def base_app(instance_path, search_class, cache_config):
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
         SERVER_NAME='TEST_SERVER.localdomain',
-        # SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-        #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         ACCOUNTS_USERINFO_HEADERS=True,
         WEKO_PERMISSION_SUPER_ROLE_USER=['System Administrator',
@@ -578,6 +578,11 @@ def redis_connect(app):
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
     redis_connection.put('updated_json_schema_A-00000001-10001',bytes('test', 'utf-8'))
     return redis_connection
+
+@pytest.fixture()
+def without_remove_session(app):
+    with patch("weko_workflow.views.db.session.remove"):
+        yield
 
 @pytest.fixture()
 def users(app, db):

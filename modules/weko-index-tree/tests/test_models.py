@@ -18,13 +18,13 @@ def test_Index(app, db, test_indices):
     # get_index_by_id
     res = Index.get_index_by_id(1)
     assert res.id == 1
-    assert res.index_name == "Test index 1"
+    assert res.index_name == "Test index 1_ja"
 
     # __str__
     with app.test_request_context(headers=[("Accept-Language", "en")]):
-        assert str(res) == "Index <id=1, name=Test index 1>"
+        assert str(res) == "Index <id=1, name=Test index 1_en>"
     with app.test_request_context(headers=[("Accept-Language", "ja")]):
-        assert str(res) == "Index <id=1, name=Test index 1>"
+        assert str(res) == "Index <id=1, name=Test index 1_ja>"
 
 
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_models.py::test_Index_get_all -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
