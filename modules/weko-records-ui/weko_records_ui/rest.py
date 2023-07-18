@@ -20,8 +20,11 @@
 
 """Blueprint for schema rest."""
 
-from flask import Blueprint, current_app, jsonify, make_response, request
-from invenio_pidstore.errors import PIDInvalidAction
+from flask import Blueprint, current_app, jsonify, make_response, request, abort
+from invenio_db import db
+from invenio_deposit.scopes import actions_scope
+from invenio_oauth2server import require_api_auth, require_oauth_scopes
+from invenio_pidstore.errors import PIDInvalidAction, PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
@@ -32,6 +35,8 @@ from invenio_rest.views import create_api_errorhandler
 from weko_deposit.api import WekoRecord
 from weko_records.serializers import citeproc_v1
 
+from .errors import VersionNotFoundRESTError
+from .utils import get_file_info_list
 from .views import escape_str
 
 
@@ -44,6 +49,45 @@ def create_error_handlers(blueprint):
 
 
 def create_blueprint(endpoints):
+    """
+    Create Weko-Records-ui-REST blueprint.
+    See: :data:`weko_records_ui.config.WEKO_RECORDS_UI_REST_ENDPOINTS`.
+
+    :param endpoints: List of endpoints configuration.
+    :returns: The configured blueprint.
+    """
+    blueprint = Blueprint(
+        'weko_records_ui_rest',
+        __name__,
+        url_prefix='',
+    )
+
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+        current_app.logger.debug("weko_records_ui dbsession_clean: {}".format(exception))
+        if exception is None:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+        db.session.remove()
+
+    for endpoint, options in (endpoints or {}).items():
+        if endpoint == 'need_restricted_access':
+            view_func = NeedRestrictedAccess.as_view(
+                NeedRestrictedAccess.view_name.format(endpoint),
+                default_media_type=options.get('default_media_type'),
+            )
+            blueprint.add_url_rule(
+                options.get('route'),
+                view_func=view_func,
+                methods=['GET'],
+            )
+
+    return blueprint
+
+
+def create_blueprint_cites(endpoints):
     """Create Weko-Records-UI-Cites-REST blueprint.
 
     See: :data:`invenio_deposit.config.DEPOSIT_REST_ENDPOINTS`.
@@ -56,7 +100,7 @@ def create_blueprint(endpoints):
         __name__,
         url_prefix='',
     )
-    
+
     @blueprint.teardown_request
     def dbsession_clean(exception):
         current_app.logger.debug("weko_records_ui dbsession_clean: {}".format(exception))
@@ -105,12 +149,67 @@ def create_blueprint(endpoints):
             default_media_type=options.get('default_media_type'),
         )
         blueprint.add_url_rule(
-            options.pop('cites_route'),
+            options.get('cites_route'),
             view_func=cites,
             methods=['GET'],
         )
 
     return blueprint
+
+
+class NeedRestrictedAccess(ContentNegotiatedMethodView):
+    view_name = 'records_ui_{0}'
+
+    def __init__(self, *args, **kwargs):
+        """Constructor."""
+        super(NeedRestrictedAccess, self).__init__(*args, **kwargs)
+
+    @require_api_auth(True)
+    @require_oauth_scopes(actions_scope.id)
+    def get(self, **kwargs):
+        """
+        Check if need restricted access.
+
+        Returns:
+            Result for each file.
+        """
+        from .config import WEKO_NEED_RESTRICTED_ACCESS_API_VERSION
+        version = kwargs.get('version')
+        func = WEKO_NEED_RESTRICTED_ACCESS_API_VERSION.get(f'get-{version}')
+
+        if func:
+            return func(self, **kwargs)
+        else:
+            raise VersionNotFoundRESTError()
+
+    def get_v1(self, **kwargs):
+        # Get record
+        pid_value = kwargs.get('pid_value')
+        try:
+            pid = PersistentIdentifier.get('depid', pid_value)
+        except PIDDoesNotExistError:
+            abort(404)
+        record = WekoRecord.get_record(pid.object_uuid)
+
+        # Get files
+        _, files = get_file_info_list(record)
+
+        res_json = []
+        for file in files:
+            # Check if file is restricted access.
+            from .permissions import check_file_download_permission, check_content_clickable
+            access_permission = check_file_download_permission(record, file)
+            applicable = check_content_clickable(record, file)
+            need_restricted_access = not access_permission and applicable
+
+            # Create response
+            res_json.append({
+                'need_restricted_access': need_restricted_access,
+                'filename': file.get('filename')
+            })
+
+        response = make_response(jsonify(res_json), 200)
+        return response
 
 
 class WekoRecordsCitesResource(ContentNegotiatedMethodView):
