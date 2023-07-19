@@ -24,6 +24,7 @@ import os
 from flask_babelex import lazy_gettext as _
 from invenio_records_rest.utils import allow_all
 
+from .rest import NeedRestrictedAccess
 from .views import blueprint
 
 WEKO_RECORDS_UI_DETAIL_TEMPLATE = 'weko_records_ui/detail.html'
@@ -636,3 +637,15 @@ WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False
 
 WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
 """ Display item type name on item detail. """
+
+WEKO_RECORDS_UI_REST_ENDPOINTS = {
+    'need_restricted_access': {
+        'route': '/<string:version>/records/<int:pid_value>/need-restricted-access',
+        'default_media_type': 'application/json',
+    },
+}
+
+WEKO_NEED_RESTRICTED_ACCESS_API_VERSION = {
+    'get-v1.0': NeedRestrictedAccess.get_v1
+}
+"""API version."""
