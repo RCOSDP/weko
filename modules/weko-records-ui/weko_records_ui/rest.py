@@ -36,7 +36,6 @@ from weko_deposit.api import WekoRecord
 from weko_records.serializers import citeproc_v1
 
 from .errors import VersionNotFoundRESTError
-from .utils import get_file_info_list
 from .views import escape_str
 
 
@@ -190,8 +189,11 @@ class NeedRestrictedAccess(ContentNegotiatedMethodView):
         except PIDDoesNotExistError:
             abort(404)
         record = WekoRecord.get_record(pid.object_uuid)
+        if not record:
+            abort(404)
 
         # Get files
+        from .utils import get_file_info_list
         _, files = get_file_info_list(record)
 
         res_json = []
