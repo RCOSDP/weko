@@ -20,7 +20,115 @@
 
 """Module tests."""
 
+import copy
+
 from flask import json, current_app
+
+def url(root, kwargs = {}):
+    args = ["{key}={value}".format(key = key, value = value) for key, value in kwargs.items()]
+    url = "{root}?{param}".format(root = root, param = "&".join(args)) if kwargs else root
+    return url
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_rest.py::test_GetActivities_get -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_GetActivities_get(app, client, db, db_register_activity, auth_headers, users):
+
+    # test preparation
+    path = '/v1.0/activities'
+    invalid_path = '/v0.0/activities'
+    param = {
+        'status': 'todo',
+        'limit': '20',
+        'page': '1',
+        'pretty': 'true'
+    }
+    headers_sysadmin = copy.deepcopy(auth_headers[0])
+    headers_sysadmin.append(('Accept-Language', 'en'))
+    headers_sysadmin.append(('If-None-Match', '444b63615da43896b04f8c4c18f28e8f'))
+    headers_student = copy.deepcopy(auth_headers[1])
+    headers_student.append(('Accept-Language', 'en'))
+    headers_language = copy.deepcopy(auth_headers[0])
+    headers_language.append(('Accept-Language', 'ja'))
+
+    # Invalid version : 400 error
+    res = client.get(url(invalid_path, param), headers=headers_sysadmin)
+    assert res.status_code == 400
+    try:
+        json.loads(res.get_data())
+    except:
+        assert False
+
+    # Permission error : 403
+    res = client.get(url(path, param), headers=headers_student)
+    assert res.status_code == 403
+    try:
+        json.loads(res.get_data())
+    except:
+        assert False
+
+    # Invalid request parameter : 400
+    param1 = copy.deepcopy(param)
+    param1['status'] = 'test'
+    res = client.get(url(path, param1), headers=headers_sysadmin)
+    assert res.status_code == 400
+    try:
+        json.loads(res.get_data())
+    except:
+        assert False
+
+    param2 = copy.deepcopy(param)
+    param2['limit'] = '1.0'
+    res = client.get(url(path, param2), headers=headers_sysadmin)
+    assert res.status_code == 400
+    try:
+        json.loads(res.get_data())
+    except:
+        assert False
+
+    param3 = copy.deepcopy(param)
+    param3['limit'] = 'aaa'
+    res = client.get(url(path, param3), headers=headers_sysadmin)
+    assert res.status_code == 400
+    try:
+        json.loads(res.get_data())
+    except:
+        assert False
+
+    param4 = copy.deepcopy(param)
+    param4['page'] = '1.0'
+    res = client.get(url(path, param4), headers=headers_sysadmin)
+    assert res.status_code == 400
+    try:
+        json.loads(res.get_data())
+    except:
+        assert False
+
+    param5 = copy.deepcopy(param)
+    param5['page'] = 'aaa'
+    res = client.get(url(path, param5), headers=headers_sysadmin)
+    assert res.status_code == 400
+    try:
+        json.loads(res.get_data())
+    except:
+        assert False
+
+    # Match Etag : 304
+    param6 = copy.deepcopy(param)
+    param6['limit'] = '10'
+    res = client.get(url(path, param6), headers=headers_sysadmin)
+    assert res.status_code == 304
+
+    # Normal : 200
+    res = client.get(url(path, param), headers=headers_sysadmin)
+    res_data = json.loads(res.get_data())
+    assert res.status_code == 200
+    assert res_data['total'] == 3
+    assert res_data['condition']['status'] == 'todo'
+    assert res_data['condition']['limit'] == '20'
+    assert res_data['condition']['page'] == '1'
+
+    # Cange language : 200 *** Confirmed by integration test ***
+    # res = client.get(url(path, param), headers=headers_language)
+    # res_data = json.loads(res.get_data())
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_rest.py::test_ApproveActivity_post -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
