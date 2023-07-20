@@ -211,6 +211,7 @@ def handle_license_free(record_metadata):
 
 
 def get_index_state():
+    from weko_records_ui.utils import is_future
     index_state = {}
     ids = Indexes.get_all_indexes()
     for index in ids:
@@ -222,8 +223,7 @@ def get_index_state():
             }
         elif '-99' not in index.browsing_role \
                 or not index.public_state \
-                or (index.public_date and
-                    index.public_date > datetime.utcnow()):
+                or is_future(index.public_date):
             index_state[index_id] = {
                 'parent': None,
                 'msg': PRIVATE_INDEX
