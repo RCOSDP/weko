@@ -105,9 +105,8 @@ def json_loader(data, pid, owner_id=None):
     data.get("$schema")
     author_link = []
     for k, v in data.items():
-        if k != "pubdate":
-            if k == "$schema" or mp.get(k) is None:
-                continue
+        if k == "$schema" or mp.get(k) is None:
+            continue
 
         item.clear()
         try:
@@ -164,7 +163,7 @@ def json_loader(data, pid, owner_id=None):
         dc[k] = item.copy()
         if k != "pubdate":
             item.update(mp.get(k))
-        else:
+        elif k == "pubdate":
             pubdate = v
         jpcoar[k] = item.copy()
 
@@ -180,7 +179,7 @@ def json_loader(data, pid, owner_id=None):
     if dc:
         # get the tile name to detail page
         title = data.get("title")
-
+        weko_shared_ids = data.get("shared_user_ids", [])
         if "control_number" in dc:
             del dc["control_number"]
 
@@ -188,6 +187,7 @@ def json_loader(data, pid, owner_id=None):
         dc.update(dict(item_type_id=item_type_id))
         dc.update(dict(control_number=pid))
         dc.update(dict(author_link=author_link))
+        dc.update(dict(weko_shared_ids=weko_shared_ids))
 
         if COPY_NEW_FIELD:
             copy_field_test(dc, WEKO_TEST_FIELD, jrc)
@@ -242,27 +242,28 @@ def json_loader(data, pid, owner_id=None):
             current_user_id = current_user.get_id()
         else:
             current_user_id = "1"
-        if current_user_id:
-            # jrc is saved on elastic
-            jrc_weko_creator_id = jrc.get("weko_creator_id", None)
-            if not jrc_weko_creator_id:
-                # in case first time create record
-                jrc.update(dict(weko_creator_id=owner_id or current_user_id))
-                jrc.update(dict(weko_shared_ids=data.get("shared_user_ids", [])))
-            else:
-                # incase record is end and someone is updating record
-                if current_user_id == int(jrc_weko_creator_id):
-                    # just allow owner update shared_user_ids
-                    jrc.update(dict(weko_shared_ids=data.get("shared_user_ids", [])))
 
-            # dc js saved on postgresql
-            dc_owner = dc.get("owner", None)
-            if not dc_owner:
-                dc.update(dict(weko_shared_ids=data.get("shared_user_ids", [])))
-                dc.update(dict(owner=owner_id or current_user_id))
-            else:
-                if current_user_id == int(dc_owner):
-                    dc.update(dict(weko_shared_ids=data.get("shared_user_ids", [])))
+        # jrc is saved on elastic
+        jrc_weko_creator_id = jrc.get("weko_creator_id", None)
+        if not jrc_weko_creator_id:
+            # in case first time create record
+            jrc.update(dict(weko_creator_id=current_user_id))
+        else:
+            # just allow owner update shared_user_ids
+            jrc.update(dict(weko_creator_id=jrc_weko_creator_id))
+        jrc.update(dict(weko_shared_ids=weko_shared_ids))
+        if owner_id:
+            jrc.update(dict(owner=int(owner_id)))
+            jrc.update(dict(owners=[int(owner_id)]))
+
+        # dc js saved on postgresql
+        dc.update(dict(weko_shared_ids=weko_shared_ids))
+        if not owner_id:
+            dc.update(dict(owner=current_user_id))
+            dc.update(dict(owners=[current_user_id]))
+        else:
+            dc.update(dict(owner=int(owner_id)))
+            dc.update(dict(owners=[int(owner_id)]))
 
     del ojson, mjson, item
     return dc, jrc, is_edit

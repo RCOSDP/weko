@@ -746,6 +746,9 @@ class WekoDeposit(Deposit):
         if '$schema' in data:
             data.pop('$schema')
         
+        # shared_user_ids -> [数値,数値,…]に変更
+        cls.convert_type_shared_user_ids(data)
+
         # Get workflow storage location
         location_name = None
         if session and 'activity_info' in session:
@@ -1045,7 +1048,10 @@ class WekoDeposit(Deposit):
                 return None
 
             data = record.dumps()
+            owner = data['_deposit']['owner']
             owners = data['_deposit']['owners']
+            weko_shared_ids = data['_deposit']['weko_shared_ids']
+            
             keys_to_remove = ('_deposit', 'doi', '_oai',
                               '_files', '_buckets', '$schema')
             for k in keys_to_remove:
@@ -1064,7 +1070,9 @@ class WekoDeposit(Deposit):
             # Injecting owners is required in case of creating new
             # version this outside of request context
 
+            deposit['_deposit']['owner'] = owner
             deposit['_deposit']['owners'] = owners
+            deposit['_deposit']['weko_shared_ids'] = weko_shared_ids
 
             recid = PersistentIdentifier.get(
                 'recid', str(data['_deposit']['id']))
@@ -1095,7 +1103,8 @@ class WekoDeposit(Deposit):
             
             index = {'index': self.get('path', []),
                      'actions': self.get('publish_status')}
-            if 'activity_info' in session:
+
+            if session and 'activity_info' in session:
                 del session['activity_info']
             if is_draft:
                 from weko_workflow.utils import convert_record_to_item_metadata
@@ -1204,12 +1213,17 @@ class WekoDeposit(Deposit):
             None
 
         """
-        deposit_owners = self.get('_deposit', {}).get('owners')
-        owner = str(deposit_owners[0] if deposit_owners else 1)
-        if owner:
-            dc_owner = self.data.get("owner", None)
-            if not dc_owner:
-                self.data.update(dict(owner=owner))
+        deposit_owners = self.get('_deposit', {}).get('owners', [])
+        owner_id = self.get('owner', None)
+        if len(deposit_owners)==0 and owner_id:
+            self.data.update(dict(owners=[owner_id]))
+        elif len(deposit_owners)>0 and not owner_id:
+            self.data.update(dict(owner=deposit_owners[0]))
+        elif len(deposit_owners)>0 and owner_id:
+            self.data.update(dict(owner=owner_id))
+            self.data.update(dict(owners=[owner_id]))
+        else:
+            pass
 
         if ItemMetadata.query.filter_by(id=self.id).first():
             obj = ItemsMetadata.get_record(self.id)
@@ -1331,9 +1345,12 @@ class WekoDeposit(Deposit):
 
         # Convert item meta data
         try:
-            deposit_owners = self.get('_deposit', {}).get('owners')
-            owner_id = str(deposit_owners[0] if deposit_owners else 1)
+            self.convert_type_shared_user_ids(data)
+            owner_id = data.get("owner", None)
             dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
+            # dataのownerとownersを合わせる(redisのデータ不正)
+            data['owners'] = [int(data['owner'])]
+
             dc['publish_date'] = data.get('pubdate')
             dc['title'] = [data.get('title')]
             dc['relation_version_is_last'] = True
@@ -1370,6 +1387,34 @@ class WekoDeposit(Deposit):
         ps = dict(publish_status=pubs)
         jrc.update(ps)
         dc.update(ps)
+
+        # # set pid data for item_matadata
+        # self.data["id"] = self.pid.pid_value
+        # self.data["pid"] = { "type":"recid", "value":self.pid.pid_value, "revision_id":0 }
+        # # set created_by owners_ext status for item_matadata
+        # if 'created_by' in self['_deposit']:
+        #     self.data['created_by'] = self['_deposit']['created_by']
+        # elif 'created_by' in self:
+        #     self.data['created_by'] = self['created_by']
+
+        # if 'owners_ext' in self['_deposit']:
+        #     self.data['owners_ext'] = self['_deposit']['owners_ext']
+        # elif 'owners_ext' in self:
+        #     self.data['owners_ext'] = self['owners_ext']
+
+        # if 'status' in self['_deposit']:
+        #     self.data['status'] = self['_deposit']['status']
+        # elif 'status' in self:
+        #     self.data['status'] = self['status']
+
+        if 'shared_user_ids' in self:
+            self.pop('shared_user_ids')
+        # update '_deposit':{'owners':[?]} by owner for record_metadata
+        self['_deposit']['owner'] = int(dc['owner'])
+        self['_deposit']['owners'] = [int(dc['owner'])]
+        self['_deposit']['weko_shared_ids'] = dc['weko_shared_ids']
+        self['_deposit']['created_by'] = int(self.data['created_by'])
+
         if data:
             self.delete_item_metadata(data)
         return dc, data.get('deleted_items')
@@ -1800,6 +1845,18 @@ class WekoDeposit(Deposit):
                 if content.get('file'):
                     del content['file']
 
+    @classmethod
+    def convert_type_shared_user_ids(cls, data):
+        shared_user_ids = []
+        if 'shared_user_ids' in data:
+            tmp = data['shared_user_ids'] if data['shared_user_ids'] else []
+            for rec in tmp:
+                if type(rec) == int:
+                    shared_user_ids.append(rec)
+                    continue
+                if 'user' in rec:
+                    shared_user_ids.append(int(rec['user']))
+        data['shared_user_ids'] = shared_user_ids
 
 class WekoRecord(Record):
     """Extend Record obj for record ui."""

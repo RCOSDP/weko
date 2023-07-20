@@ -49,7 +49,7 @@ from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, has_request_context, request
 from flask_babelex import gettext as _
 from flask_login import current_user
-from invenio_communities.utils import get_user_role_ids
+
 from invenio_db import db
 from invenio_files_rest.models import FileInstance, Location, ObjectVersion
 from invenio_files_rest.proxies import current_files_rest
@@ -3884,47 +3884,61 @@ def handle_check_restricted_access_property(list_record):
                 for key in item_type.get("table_row"):
                     if(form.get('key') == key):
                         if form.get("items") is not None:
-                            item_index = 0
                             for items in form.get("items", {}):
                                 # systemに利用規約が存在するかチェック
                                 if items.get('key') == key + '[].terms':
-                                    if not check_terms_in_system(key, item_index, item):
+                                    if not check_terms_in_system(key, item):
                                         error = _("ERROR:The specified terms does not exist in the system")
 
                                 # systemのworkflow/roleに存在するかチェック
                                 if items.get('key') == key + '[].provide':
-                                    provides = items.get('items', {})
-                                    if not check_provide_in_system(key, item_index, item, provides):
+                                    if not check_provide_in_system(key, item):
                                         error = _("ERROR:The specified provinding method does not exist in the system")
-
-                                item_index += 1
 
         if error:
             item["errors"] = item["errors"] + [error] if item.get("errors") else [error]
             item["errors"] = list(set(item["errors"]))
 
-def check_terms_in_system(key, item_index, item):
-    terms_key = key + f'[{item_index}].terms'
+def check_terms_in_system(key, item):
     system_terms_list = get_restricted_access('terms_and_conditions')
-    is_terms_exist = False
-    for system_terms in system_terms_list:
-        if system_terms.get('key') == item.get('metadata').get(terms_key):
-            is_terms_exist = True
-    return is_terms_exist
+    metadata_count = len(item.get('metadata').get(key))
+    is_terms_exist = []
+    for _ in range(metadata_count):
+        is_terms_exist.append(False)
+    for idx in range(metadata_count):
+        for system_terms in system_terms_list:
+            if not item.get('metadata').get(key)[idx].get('terms'):
+                is_terms_exist[idx] = True
+            if str(system_terms.get('key')) == str(item.get('metadata').get(key)[idx].get('terms')):
+                is_terms_exist[idx] = True
+    return all(is_terms_exist)
 
-def check_provide_in_system(key, item_index, item, provides):
-    is_provide_exist = True
-    provide_index = 0
-    for provide in provides:
-        workflow_key = key + f'[{item_index}].provide[{provide_index}].workflow'
-        role_key = key + f'[{item_index}].provide[{provide_index}].roles'
+def check_provide_in_system(key, item):
+    from weko_records_ui.utils import get_roles
+    metadata_count = len(item.get('metadata').get(key))
+    is_provide_exist = []
+    for _ in range(metadata_count):
+        is_provide_exist.append(True)
+    
+    for idx in range(metadata_count):
         workflow_list = WorkFlowApi().get_workflow_list()
-        if not item.get('metadata').get(workflow_key) in workflow_list:
-            is_provide_exist = False
+        provide_metadata = item.get('metadata').get(key)[idx].get('provide')
+        if not provide_metadata:
             break
-        role_ids = get_user_role_ids()
-        if not item.get('metadata').get(role_key) in role_ids:
-            is_provide_exist = False
-            break
-        provide_index += 1
-    return is_provide_exist
+        for provide_index in range(len(provide_metadata)):
+            setting_workflow_value = provide_metadata[provide_index].get('workflow')
+            if not setting_workflow_value and type(setting_workflow_value) != int:
+                break
+            workflow_list = [workflow.id for workflow in workflow_list]
+            if not setting_workflow_value in workflow_list:
+                is_provide_exist[idx] = False
+                break
+            
+            setting_role_value = provide_metadata[provide_index].get('role')
+            if not setting_role_value:
+                break
+            role_list = [role['id'] for role in get_roles()]
+            if not setting_role_value in role_list:
+                is_provide_exist[idx] = False
+                break
+    return all(is_provide_exist)
