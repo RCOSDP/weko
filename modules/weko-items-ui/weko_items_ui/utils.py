@@ -290,19 +290,28 @@ def get_user_information(user_ids):
             'userid':'',
             'username': '',
             'email': '',
-            'fullname': ''
+            'fullname': '',
+            'error': ''
         }
         user_info = UserProfile.get_by_userid(user_id)
         if user_info is not None:
             info['userid'] = user_id
             info['username'] = user_info.get_username
             info['fullname'] = user_info.fullname
-            result.append(info)
+        else:
+            info['userid'] = user_id
+        
+        temp = list(map(lambda x : x[0], data))
+        if not user_id in temp:
+            info['error'] = "The specified user ID is incorrect"
+        
+        result.append(info)
+
         for item in data:
-            if item[0] == user_id:
+            if int(item[0]) == int(user_id):
                 is_merge = False
                 for exist_info in result:
-                    if exist_info['userid'] == user_id:
+                    if int(exist_info['userid']) == int(user_id):
                         # update list
                         exist_info['email'] = item[1]
                         is_merge = True
@@ -312,8 +321,24 @@ def get_user_information(user_ids):
                     result.append(info)
     return result
 
-
 def get_user_permission(user_id):
+    """
+    Get user permission user_id.
+
+    Compare current id with id of current user
+    parameter:
+        user_id: The user_id
+    return: true if current id is the same with id of current user.
+    If not return false
+    """
+    current_id = current_user.get_id()
+    if current_id is None:
+        return False
+    if str(user_id) == current_id:
+        return True
+    return False
+
+def is_current_user(user_id):
     """
     Get user permission user_id.
 
@@ -2642,14 +2667,15 @@ def save_title(activity_id, request_data):
     """
     activity = WorkActivity()
     db_activity = activity.get_activity_detail(activity_id)
-    item_type_id = db_activity.workflow.itemtype.id
-    if item_type_id:
-        item_type_mapping = Mapping.get_record(item_type_id)
-        # current_app.logger.debug("item_type_mapping:{}".format(item_type_mapping))
-        key, key_child = get_key_title_in_item_type_mapping(item_type_mapping)
-    if key and key_child:
-        title = get_title_in_request(request_data, key, key_child)
-        activity.update_title(activity_id, title)
+    if db_activity and db_activity.workflow:
+        item_type_id = db_activity.workflow.itemtype.id
+        if item_type_id:
+            item_type_mapping = Mapping.get_record(item_type_id)
+            # current_app.logger.debug("item_type_mapping:{}".format(item_type_mapping))
+            key, key_child = get_key_title_in_item_type_mapping(item_type_mapping)
+        if key and key_child:
+            title = get_title_in_request(request_data, key, key_child)
+            activity.update_title(activity_id, title)
 
 
 def get_key_title_in_item_type_mapping(item_type_mapping):

@@ -208,7 +208,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     roles = fjson.get('roles')
                     if roles and isinstance(roles, list):
                         for lst in list(current_user.roles or []):
-                            if lst.role in [ role.get('role') for role in roles ]:
+                            if lst.id in [ role.get('role') for role in roles ]:
                                 is_can = True
                                 break
 
@@ -478,7 +478,7 @@ def check_created_id(record):
         shared_ids = record.get('weko_shared_ids')
         if user_id and created_id and user_id == str(created_id):
             is_himself = True
-        elif user_id and len(shared_ids)>0 and user_id in shared_ids:
+        elif user_id and len(shared_ids)>0 and int(user_id) in shared_ids:
             is_himself = True
         for lst in list(current_user.roles or []):
             # In case of supper user,it's always have permission

@@ -783,7 +783,20 @@ class Activity(db.Model, TimestampMixin):
 
     title = db.Column(db.Text, nullable=True)
 
-    shared_user_ids = db.Column(postgresql.ARRAY(db.Integer), nullable=False)
+    shared_user_ids = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
 
     temp_data = db.Column(
         db.JSON().with_variant(

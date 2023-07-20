@@ -1372,9 +1372,12 @@ def convert_record_to_item_metadata(record_metadata):
     """Convert record_metadata to item_metadata."""
     item_metadata = {
         'id': record_metadata['recid'],
+        'pid': record_metadata['_deposit']['pid'],
         '$schema': record_metadata['item_type_id'],
         'pubdate': record_metadata['publish_date'],
         'title': record_metadata['item_title'],
+        'owner': record_metadata['owner'],
+        'owners': record_metadata['owners'],
         'shared_user_ids': record_metadata['weko_shared_ids']
     }
     item_type = ItemTypes.get_by_id(record_metadata['item_type_id']).render
@@ -3049,7 +3052,6 @@ def get_activity_display_info(activity_id: str):
         try:
             item = ItemsMetadata.get_record(id_=activity_detail.item_id)
         except NoResultFound as ex:
-            current_app.logger.exception(str(ex))
             item = None
     steps = activity.get_activity_steps(activity_id)
     history = WorkActivityHistory()
@@ -3074,6 +3076,14 @@ def get_activity_display_info(activity_id: str):
         action_order=activity_detail.action_order)
     if action_data:
         temporary_comment = action_data.action_comment
+    metadata = activity.get_activity_metadata(activity_id)
+    if metadata:
+        item_json = json.loads(metadata).get('metainfo')
+        owner_id = item_json.get('owner')
+        shared_user_ids = item_json.get('shared_user_ids')
+    else:
+        owner_id = -1
+        shared_user_ids = []
 
     current_app.logger.debug("action_endpoint:{}".format(action_endpoint))
     current_app.logger.debug("action_id:{}".format(action_id))
@@ -3084,9 +3094,11 @@ def get_activity_display_info(activity_id: str):
     current_app.logger.debug("steps:{}".format(steps))
     current_app.logger.debug("temporary_comment:{}".format(temporary_comment))
     current_app.logger.debug("workflow_detail:{}".format(workflow_detail))
+    current_app.logger.debug("owner_id:{}".format(owner_id))
+    current_app.logger.debug("shared_user_ids:{}".format(shared_user_ids))
 
     return action_endpoint, action_id, activity_detail, cur_action, histories, \
-        item, steps, temporary_comment, workflow_detail
+        item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids
 
 
 def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
@@ -3098,7 +3110,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
     """
     from weko_records_ui.utils import get_list_licence
     action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-        steps, temporary_comment, workflow_detail = \
+        steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = \
         get_activity_display_info(activity_id)
     item_type_name = get_item_type_name(workflow_detail.itemtype_id)
     # Check auto set index
@@ -3211,6 +3223,8 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
         files_thumbnail=files_thumbnail,
         allow_multi_thumbnail=allow_multi_thumbnail,
         id=workflow_detail.itemtype_id,
+        owner_id = owner_id,
+        shared_user_ids=shared_user_ids,
     )
 
 
@@ -4097,36 +4111,45 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
     #url_and_expired_date of a applyed content.
     return url_and_expired_date
 
-def get_contributors(pid_value):
-    from weko_items_ui.utils import get_user_information, get_user_permission
+def get_contributors(pid_value, user_id_list_json=None, owner_id=-1):
+    from weko_items_ui.utils import get_user_information
     
     userid_list = []
+    # item登録済みユーザーデータ
     if pid_value:
         pid_value = pid_value.split('.')[0]
         # Get Record by pid_value
         record = WekoRecord.get_record_by_pid(pid_value)
         owner_id = record['_deposit']['owner']
-        userid_list.append(owner_id)
+        userid_list.append(int(owner_id))
         userid_list.extend(record['weko_shared_ids'])
+    # 一時保存ユーザーデータ
+    elif user_id_list_json and owner_id != -1:
+        if type(user_id_list_json) == list:
+            for rec in user_id_list_json:
+                if type(rec) == dict:
+                     userid_list.append(int(rec['user']))
+                elif type(rec) == int:
+                    userid_list.append(rec)
+        userid_list.append(int(owner_id))
 
     result = []
-    try:
-        user_infos = get_user_information(userid_list)
-        for user_info in user_infos:
-            info = {
-            'userid': '',
-            'username': '',
-            'email': '',
-            'owner': False,
-            'error': ''
-            }
-            info['userid'] = user_info['userid']
-            info['username'] = user_info['username']
-            info['email'] = user_info['email']
-            if owner_id != -1:
-                info['owner'] = get_user_permission(owner_id)
-            result.append(info)
-    except Exception as e:
-        result = {"error": str(e)} 
+
+    user_infos = get_user_information(userid_list)
+    for user_info in user_infos:
+        info = {
+        'userid': '',
+        'username': '',
+        'email': '',
+        'owner': False,
+        'error': ''
+        }
+        info['userid'] = int(user_info['userid'])
+        info['username'] = user_info['username'] if not user_info['username'] == None else ''
+        info['email'] = user_info['email']
+        info['error'] = user_info['error']
+        if int(owner_id) != -1 and int(owner_id) == int(user_info['userid']):
+            info['owner'] = True
+        result.append(info)
     
     return result

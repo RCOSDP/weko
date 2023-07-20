@@ -64,7 +64,7 @@ from .utils import _get_max_export_items, check_item_is_being_edit, \
     export_items, get_current_user, get_data_authors_prefix_settings, \
     get_data_authors_affiliation_settings, \
     get_list_email, get_list_username, get_ranking, get_user_info_by_email, \
-    get_user_info_by_username, get_user_information, get_user_permission, \
+    get_user_info_by_username, get_user_information, \
     get_workflow_by_item_type_id, hide_form_items, is_schema_include_key, \
     remove_excluded_items_in_json_schema, sanitize_input_data, save_title, \
     set_multi_language_name, to_files_js, translate_schema_form, \
@@ -234,9 +234,10 @@ def iframe_save_model():
         for key, item in data.get('metainfo').items():
             if type(item) == list:
                 for setting_vals in item:
-                    for setting_key in setting_vals:
-                        if setting_key == 'roles' or setting_key == 'provide':
-                            setting_vals[setting_key] = [dict(s) for s in set(frozenset(d.items()) for d in setting_vals[setting_key])]
+                    if type(setting_vals) is dict:
+                        for setting_key in setting_vals:
+                            if setting_key == 'roles' or setting_key == 'provide':
+                                setting_vals[setting_key] = [dict(s) for s in set(frozenset(d.items()) for d in setting_vals[setting_key])]
 
         if data and data.get('activity_id'):
             activity_id = data.get('activity_id')
@@ -777,6 +778,76 @@ def validate_user_info():
 
     return jsonify(result)
 
+@blueprint_api.route('/validate_users_info', methods=['POST'])
+def validate_users_info():
+    """validate_users_info.
+
+    Host the api which provide 2 service:
+        Validate users list information: check if users is exist
+
+    request:
+        header: Content type must be json
+        data:
+            'results': [
+                {
+                    'username' : The username,
+                    'email' : The email,
+                    'owner' : True/False
+                }
+            ]
+    return: response pack:
+        [
+            {
+                'owner' : True/False,
+                'info': users information if users is valid,
+                'validation': 'true' if user is valid, other case return 'false',
+                'error': return error message, empty if no error occurs
+            }
+        ]
+
+    How to use: Validation: fill both username and email
+    """
+    result = {'results':[]}
+
+    if request.headers['Content-Type'] != 'application/json':
+        """Check header of request"""
+        result['error'] = _('Header Error')
+        return jsonify(result)
+    
+    data_list = request.get_json()
+    for data in data_list:
+        info = {
+            'owner': False,
+            'info': '',
+            'validation': '',
+            'error': ''
+        }
+        username = data.get('username', '')
+        email = data.get('email', '')
+
+        try:
+            info['owner'] = data.get('owner', False)
+            if username != "":
+                if email == "":
+                    info['info'] = get_user_info_by_username(username)
+                    info['validation'] = True
+                else:
+                    validate_data = validate_user(username, email)
+                    info['info'] = validate_data['results']
+                    info['validation'] = validate_data['validation']
+                result['results'].append(info)
+
+            if email != "" and username == "":
+                info['info'] = get_user_info_by_email(email)
+                info['validation'] = True
+                result['results'].append(info)
+
+        except Exception as e:
+            info['error'] = str(e)
+            result['results'].append(info)
+
+    return jsonify(result)
+
 @blueprint_api.route('/get_user_info/<int:owner>', methods=['GET'])
 def get_user_info(owner):
     """get_user_info.
@@ -792,26 +863,25 @@ def get_user_info(owner):
         error: null if no error occurs
     """
     result = []
-    try:
-        shared_user_ids = request.args.get('shared_user_ids', [])
-        user_infos = get_user_information(shared_user_ids)
-        for user_info in user_infos:
-            info = {
-            'userid': '',
-            'username': '',
-            'email': '',
-            'owner': False,
-            'error': ''
-            }
-            info['userid'] = user_info['userid']
-            info['username'] = user_info['username']
-            info['email'] = user_info['email']
-            if owner != 0:
-                info['owner'] = get_user_permission(owner)
-            
-            result.append(info)
-    except Exception as e:
-        result = {"error": str(e)} 
+
+    shared_user_ids = request.args.getlist('shared_user_ids', type=int)
+    shared_user_ids.append(owner)
+    user_infos = get_user_information(shared_user_ids)
+    for user_info in user_infos:
+        info = {
+        'userid': '',
+        'username': '',
+        'email': '',
+        'owner': False,
+        'error': ''
+        }
+        info['userid'] = user_info['userid']
+        info['username'] = user_info['username']
+        info['email'] = user_info['email']
+        if owner == user_info['userid']:
+            info['owner'] = True
+        
+        result.append(info)
     
     return jsonify(result)
 
@@ -855,24 +925,23 @@ def is_login_user_email(email):
 def is_login_user_ids():
     ids = request.args.getlist('ids')
     result = {
-        'is_login_user_id' : False,
+        'is_login_user' : False,
         'error': ''
     }
     #admin user
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-    current_user = get_current_user()
     is_admin = False
     for role in list(current_user.roles or []):
         if role.name in supers:
             is_admin = True
     if not is_admin:
         for target_id in ids:
-            if int(target_id) == int(current_user):
-                result['is_login_user_id'] = True
+            if int(target_id) == int(get_current_user()):
+                result['is_login_user'] = True
                 result['error'] = _("Logged-in user cannot be deleted.")
                 break
     else:
-        result['is_login_user_id'] = False
+        result['is_login_user'] = False
     return jsonify(result)
 
 @blueprint_api.route('/get_userinfo_by_emails', methods=['GET'])
@@ -880,6 +949,8 @@ def get_userinfo_by_emails():
     emails = request.args.getlist('emails')
     user_infos = []
     for email in emails :
+        # Flaskのrequest.args.getでは記号「+」が空白になる為、変換する
+        email = email.replace(' ', '+')
         user_info = get_user_info_by_email(email)
         if not user_info or ('error' in user_info):
             raise ConnectionError("wrong email or Cannot connect to server!")

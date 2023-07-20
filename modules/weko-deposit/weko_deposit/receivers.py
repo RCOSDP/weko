@@ -18,7 +18,7 @@ from .api import WekoDeposit
 from .pidstore import get_record_without_version
 
 
-def append_file_content(sender, json=None, record=None, index=None, **kwargs):
+def append_file_content(sender, json={}, record=None, index=None, **kwargs):
     """Append file content to ES record."""
     try:
         dep = WekoDeposit.get_record(record.id)
@@ -63,7 +63,6 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         if dep.jrc.get('content', None):
             kwargs['arguments']['pipeline'] = 'item-file-pipeline'
         json.update(dep.jrc)
-
         # Updated FeedbackMail List
         mail_list = FeedbackMailList.get_mail_list_by_item_id(record.id)
         if mail_list:
