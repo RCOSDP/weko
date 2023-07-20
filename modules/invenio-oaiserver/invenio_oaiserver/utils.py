@@ -211,6 +211,34 @@ def handle_license_free(record_metadata):
     return record_metadata
 
 
+
+def get_index_state():
+    from weko_records_ui.utils import is_future
+    index_state = {}
+    ids = Indexes.get_all_indexes()
+    for index in ids:
+        index_id = str(index.id)
+        if not index.harvest_public_state:
+            index_state[index_id] = {
+                'parent': None,
+                'msg': HARVEST_PRIVATE
+            }
+        elif '-99' not in index.browsing_role \
+                or not index.public_state \
+                or (index.public_date and
+                    is_future(index.public_date)):
+            index_state[index_id] = {
+                'parent': None,
+                'msg': PRIVATE_INDEX
+            }
+        else:
+            index_state[index_id] = {
+                'parent': str(index.parent),
+                'msg': OUTPUT_HARVEST
+            }
+    return index_state
+
+
 def is_output_harvest(path_list):
     utc = pytz.timezone('UTC')
     def _check(index_id):
