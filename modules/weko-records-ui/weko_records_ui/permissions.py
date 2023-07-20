@@ -34,7 +34,6 @@ from weko_index_tree.utils import check_index_permissions, get_user_roles
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkActivity
 
-from .utils import is_future
 from .ipaddr import check_site_license_permission
 from .models import FilePermission
 
@@ -152,6 +151,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                 return is_can
 
         try:
+            from .utils import is_future
             # can access
             if 'open_access' in acsrole:
                 if is_display_file_info:
@@ -369,6 +369,7 @@ def check_publish_status(record):
     :param record:
     :return: record is public
     """
+    from .utils import is_future
     pst = record.get('publish_status')
     pdt = record.get('pubdate', {}).get('attribute_value')
     return pst and '0' in pst and not is_future(pdt)
