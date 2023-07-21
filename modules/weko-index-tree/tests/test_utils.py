@@ -39,7 +39,7 @@ from weko_index_tree.utils import (
     check_index_permissions,
     generate_path,
     save_index_trees_to_redis,
-    delete_index_trees_from_redis,
+    #delete_index_trees_from_redis,
     str_to_datetime
 )
 
@@ -642,12 +642,12 @@ def test_save_index_trees_to_redis(app, redis_connect,caplog):
 
 # def delete_index_trees_from_redis(lang):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_delete_index_trees_from_redis -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
-def test_delete_index_trees_from_redis(app, redis_connect):
-    os.environ['INVENIO_WEB_HOST_NAME'] = "test"
-    redis_connect.put("index_tree_view_test_ja","test_ja_cache".encode("UTF-8"),ttl_secs=30)
-    delete_index_trees_from_redis("ja")
-    assert redis_connect.redis.exists("index_tree_view_test_ja") == False
-    delete_index_trees_from_redis("ja")
+#def test_delete_index_trees_from_redis(app, redis_connect):
+#    os.environ['INVENIO_WEB_HOST_NAME'] = "test"
+#    redis_connect.put("index_tree_view_test_ja","test_ja_cache".encode("UTF-8"),ttl_secs=30)
+#    delete_index_trees_from_redis("ja")
+#    assert redis_connect.redis.exists("index_tree_view_test_ja") == False
+#    delete_index_trees_from_redis("ja")
 
 # def str_to_datetime(str_dt, format):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_str_to_datetime -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp

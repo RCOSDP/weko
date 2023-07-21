@@ -1,7 +1,7 @@
 GLOB sdist-make: /code/modules/invenio-stats/setup.py
 c1 inst-nodeps: /code/modules/invenio-stats/.tox/.tmp/package/1/invenio-stats-1.0.0a10.zip
-c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.7,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,invenio-stats @ file:///code/modules/invenio-stats/.tox/.tmp/package/1/invenio-stats-1.0.0a10.zip,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_records&subdirectory=modules/weko-records,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@b6d063b45722b12bcf7ec0a937354cb7fbdc71f5#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
-c1 run-test-pre: PYTHONHASHSEED='3827603623'
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.7,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,invenio-stats @ file:///code/modules/invenio-stats/.tox/.tmp/package/1/invenio-stats-1.0.0a10.zip,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_records&subdirectory=modules/weko-records,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='3972814578'
 c1 run-test: commands[0] | pytest --cov=invenio_stats tests -v -vv --cov-branch --cov-report=term --cov-report=xml --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 ============================= test session starts ==============================
 platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/invenio-stats/.tox/c1/bin/python
@@ -79,7 +79,7 @@ tests/test_utils.py::test_get_user PASSED                                [ 51%]
 tests/test_utils.py::test_obj_or_import_string PASSED                    [ 51%]
 tests/test_utils.py::test_load_or_import_from_config PASSED              [ 52%]
 tests/test_utils.py::test_default_permission_factory PASSED              [ 53%]
-tests/test_utils.py::test_get_aggregations FAILED                        [ 54%]
+tests/test_utils.py::test_get_aggregations PASSED                        [ 54%]
 tests/test_utils.py::test_get_start_end_date PASSED                      [ 55%]
 tests/test_utils.py::test_agg_bucket_sort PASSED                         [ 55%]
 tests/test_utils.py::test_parse_bucket_response PASSED                   [ 56%]
@@ -95,7 +95,7 @@ tests/test_utils.py::test_query_record_view_per_index_report_helper PASSED [ 63%
 tests/test_utils.py::test_query_record_view_per_index_report_helper_error PASSED [ 64%]
 tests/test_utils.py::test_query_record_view_report_helper FAILED         [ 65%]
 tests/test_utils.py::test_query_record_view_report_helper_error PASSED   [ 65%]
-tests/test_utils.py::test_query_item_reg_report_helper[aggregated_file_download_events0] ERROR [ 66%]
+tests/test_utils.py::test_query_item_reg_report_helper FAILED            [ 66%]
 tests/test_utils.py::test_query_item_reg_report_helper_error PASSED      [ 67%]
 tests/test_utils.py::test_query_ranking_helper PASSED                    [ 68%]
 tests/test_utils.py::test_query_ranking_helper_error PASSED              [ 68%]
@@ -153,9 +153,9 @@ request = <SubRequest 'indexed_file_download_events' for <Function test_aggregat
         """Parametrized pre indexed sample events."""
 >       generate_file_events(app=app, event_type="file-download", **request.param)
 
-tests/conftest.py:901: 
+tests/conftest.py:899: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-tests/conftest.py:895: in generate_file_events
+tests/conftest.py:893: in generate_file_events
     process_events([event_type])
 .tox/c1/lib/python3.6/site-packages/celery/local.py:191: in __call__
     return self._get_current_object()(*a, **kw)
@@ -213,7 +213,7 @@ invenio_stats/processors.py:192: in actionsiter
     listener(*args)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <kombu.transport.pyamqp.Channel object at 0x7f12e8265438>
+self = <kombu.transport.pyamqp.Channel object at 0x7f251894d2e8>
 reply_code = 406
 reply_text = "PRECONDITION_FAILED - inequivalent arg 'x-queue-type' for queue 'stats-file-download' in vhost '/': received the value 'quorum' of type 'longstr' but current is none"
 class_id = 50, method_id = 10
@@ -287,9 +287,9 @@ request = <SubRequest 'aggregated_file_download_events' for <Function test_aggre
             pass
 >       generate_file_events(app=app, event_type="file-download", **request.param)
 
-tests/conftest.py:911: 
+tests/conftest.py:909: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-tests/conftest.py:895: in generate_file_events
+tests/conftest.py:893: in generate_file_events
     process_events([event_type])
 .tox/c1/lib/python3.6/site-packages/celery/local.py:191: in __call__
     return self._get_current_object()(*a, **kw)
@@ -347,7 +347,7 @@ invenio_stats/processors.py:192: in actionsiter
     listener(*args)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <kombu.transport.pyamqp.Channel object at 0x7f12e7f7c978>
+self = <kombu.transport.pyamqp.Channel object at 0x7f251883a5f8>
 reply_code = 406
 reply_text = "PRECONDITION_FAILED - inequivalent arg 'x-queue-type' for queue 'stats-file-download' in vhost '/': received the value 'quorum' of type 'longstr' but current is none"
 class_id = 50, method_id = 10
@@ -421,9 +421,9 @@ request = <SubRequest 'aggregated_file_download_events' for <Function test_aggre
             pass
 >       generate_file_events(app=app, event_type="file-download", **request.param)
 
-tests/conftest.py:911: 
+tests/conftest.py:909: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-tests/conftest.py:895: in generate_file_events
+tests/conftest.py:893: in generate_file_events
     process_events([event_type])
 .tox/c1/lib/python3.6/site-packages/celery/local.py:191: in __call__
     return self._get_current_object()(*a, **kw)
@@ -481,7 +481,7 @@ invenio_stats/processors.py:192: in actionsiter
     listener(*args)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <kombu.transport.pyamqp.Channel object at 0x7f12e85b5ba8>
+self = <kombu.transport.pyamqp.Channel object at 0x7f2518b184e0>
 reply_code = 406
 reply_text = "PRECONDITION_FAILED - inequivalent arg 'x-queue-type' for queue 'stats-file-download' in vhost '/': received the value 'quorum' of type 'longstr' but current is none"
 class_id = 50, method_id = 10
@@ -555,9 +555,9 @@ request = <SubRequest 'aggregated_file_download_events' for <Function test_terms
             pass
 >       generate_file_events(app=app, event_type="file-download", **request.param)
 
-tests/conftest.py:911: 
+tests/conftest.py:909: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-tests/conftest.py:895: in generate_file_events
+tests/conftest.py:893: in generate_file_events
     process_events([event_type])
 .tox/c1/lib/python3.6/site-packages/celery/local.py:191: in __call__
     return self._get_current_object()(*a, **kw)
@@ -615,7 +615,7 @@ invenio_stats/processors.py:192: in actionsiter
     listener(*args)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <kombu.transport.pyamqp.Channel object at 0x7f12e7ffd240>
+self = <kombu.transport.pyamqp.Channel object at 0x7f25146d3ac8>
 reply_code = 406
 reply_text = "PRECONDITION_FAILED - inequivalent arg 'x-queue-type' for queue 'stats-file-download' in vhost '/': received the value 'quorum' of type 'longstr' but current is none"
 class_id = 50, method_id = 10
@@ -689,9 +689,9 @@ request = <SubRequest 'aggregated_file_download_events' for <Function test_terms
             pass
 >       generate_file_events(app=app, event_type="file-download", **request.param)
 
-tests/conftest.py:911: 
+tests/conftest.py:909: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-tests/conftest.py:895: in generate_file_events
+tests/conftest.py:893: in generate_file_events
     process_events([event_type])
 .tox/c1/lib/python3.6/site-packages/celery/local.py:191: in __call__
     return self._get_current_object()(*a, **kw)
@@ -749,7 +749,7 @@ invenio_stats/processors.py:192: in actionsiter
     listener(*args)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <kombu.transport.pyamqp.Channel object at 0x7f12e79d42e8>
+self = <kombu.transport.pyamqp.Channel object at 0x7f251876b748>
 reply_code = 406
 reply_text = "PRECONDITION_FAILED - inequivalent arg 'x-queue-type' for queue 'stats-file-download' in vhost '/': received the value 'quorum' of type 'longstr' but current is none"
 class_id = 50, method_id = 10
@@ -823,9 +823,9 @@ request = <SubRequest 'aggregated_file_download_events' for <Function test_terms
             pass
 >       generate_file_events(app=app, event_type="file-download", **request.param)
 
-tests/conftest.py:911: 
+tests/conftest.py:909: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-tests/conftest.py:895: in generate_file_events
+tests/conftest.py:893: in generate_file_events
     process_events([event_type])
 .tox/c1/lib/python3.6/site-packages/celery/local.py:191: in __call__
     return self._get_current_object()(*a, **kw)
@@ -883,7 +883,7 @@ invenio_stats/processors.py:192: in actionsiter
     listener(*args)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <kombu.transport.pyamqp.Channel object at 0x7f12e3faf7b8>
+self = <kombu.transport.pyamqp.Channel object at 0x7f25183b3048>
 reply_code = 406
 reply_text = "PRECONDITION_FAILED - inequivalent arg 'x-queue-type' for queue 'stats-file-download' in vhost '/': received the value 'quorum' of type 'longstr' but current is none"
 class_id = 50, method_id = 10
@@ -957,9 +957,9 @@ request = <SubRequest 'aggregated_file_download_events' for <Function test_query
             pass
 >       generate_file_events(app=app, event_type="file-download", **request.param)
 
-tests/conftest.py:911: 
+tests/conftest.py:909: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-tests/conftest.py:895: in generate_file_events
+tests/conftest.py:893: in generate_file_events
     process_events([event_type])
 .tox/c1/lib/python3.6/site-packages/celery/local.py:191: in __call__
     return self._get_current_object()(*a, **kw)
@@ -1017,141 +1017,7 @@ invenio_stats/processors.py:192: in actionsiter
     listener(*args)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <kombu.transport.pyamqp.Channel object at 0x7f12e7e5a9e8>
-reply_code = 406
-reply_text = "PRECONDITION_FAILED - inequivalent arg 'x-queue-type' for queue 'stats-file-download' in vhost '/': received the value 'quorum' of type 'longstr' but current is none"
-class_id = 50, method_id = 10
-
-    def _on_close(self, reply_code, reply_text, class_id, method_id):
-        """Request a channel close.
-    
-        This method indicates that the sender wants to close the
-        channel. This may be due to internal conditions (e.g. a forced
-        shut-down) or due to an error handling a specific method, i.e.
-        an exception.  When a close is due to an exception, the sender
-        provides the class and method id of the method which caused
-        the exception.
-    
-        RULE:
-    
-            After sending this method any received method except
-            Channel.Close-OK MUST be discarded.
-    
-        RULE:
-    
-            The peer sending this method MAY use a counter or timeout
-            to detect failure of the other peer to respond correctly
-            with Channel.Close-OK..
-    
-        PARAMETERS:
-            reply_code: short
-    
-                The reply code. The AMQ reply codes are defined in AMQ
-                RFC 011.
-    
-            reply_text: shortstr
-    
-                The localised reply text.  This text can be logged as an
-                aid to resolving issues.
-    
-            class_id: short
-    
-                failing method class
-    
-                When the close is provoked by a method exception, this
-                is the class of the method.
-    
-            method_id: short
-    
-                failing method ID
-    
-                When the close is provoked by a method exception, this
-                is the ID of the method.
-        """
-        self.send_method(spec.Channel.CloseOk)
-        if not self.connection.is_closing:
-            self._do_revive()
-            raise error_for_code(
->               reply_code, reply_text, (class_id, method_id), ChannelError,
-            )
-E           amqp.exceptions.PreconditionFailed: Queue.declare: (406) PRECONDITION_FAILED - inequivalent arg 'x-queue-type' for queue 'stats-file-download' in vhost '/': received the value 'quorum' of type 'longstr' but current is none
-
-.tox/c1/lib/python3.6/site-packages/amqp/channel.py:280: PreconditionFailed
-_ ERROR at setup of test_query_item_reg_report_helper[aggregated_file_download_events0] _
-
-app = <Flask 'testapp'>
-es = <Elasticsearch([{'host': 'elasticsearch', 'port': 9200}])>
-mock_user_ctx = None
-request = <SubRequest 'aggregated_file_download_events' for <Function test_query_item_reg_report_helper[aggregated_file_download_events0]>>
-
-    @pytest.yield_fixture()
-    def aggregated_file_download_events(app, es, mock_user_ctx, request):
-        """Parametrized pre indexed sample events."""
-        for t in current_search.put_templates(ignore=[400]):
-            pass
->       generate_file_events(app=app, event_type="file-download", **request.param)
-
-tests/conftest.py:911: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-tests/conftest.py:895: in generate_file_events
-    process_events([event_type])
-.tox/c1/lib/python3.6/site-packages/celery/local.py:191: in __call__
-    return self._get_current_object()(*a, **kw)
-.tox/c1/lib/python3.6/site-packages/celery/app/task.py:393: in __call__
-    return self.run(*args, **kwargs)
-invenio_stats/tasks.py:27: in process_events
-    results.append((e, processor.run()))
-invenio_stats/processors.py:243: in run
-    chunk_size=50
-.tox/c1/lib/python3.6/site-packages/elasticsearch/helpers/__init__.py:257: in bulk
-    for ok, item in streaming_bulk(client, actions, **kwargs):
-.tox/c1/lib/python3.6/site-packages/elasticsearch/helpers/__init__.py:180: in streaming_bulk
-    client.transport.serializer):
-.tox/c1/lib/python3.6/site-packages/elasticsearch/helpers/__init__.py:58: in _chunk_actions
-    for action, data in actions:
-invenio_stats/processors.py:192: in actionsiter
-    for msg in self.queue.consume():
-../invenio-queues/invenio_queues/queue.py:128: in consume
-    with self.create_consumer() as consumer:
-/usr/local/lib/python3.6/contextlib.py:81: in __enter__
-    return next(self.gen)
-../invenio-queues/invenio_queues/queue.py:117: in create_consumer
-    yield self.consumer(conn)
-../invenio-queues/invenio_queues/queue.py:104: in consumer
-    no_ack=self.no_ack,
-.tox/c1/src/kombu/kombu/compat.py:119: in __init__
-    super(Consumer, self).__init__(self.backend, queue, **kwargs)
-.tox/c1/src/kombu/kombu/messaging.py:386: in __init__
-    self.revive(self.channel)
-.tox/c1/src/kombu/kombu/compat.py:123: in revive
-    super(Consumer, self).revive(channel)
-.tox/c1/src/kombu/kombu/messaging.py:408: in revive
-    self.declare()
-.tox/c1/src/kombu/kombu/messaging.py:421: in declare
-    queue.declare()
-.tox/c1/src/kombu/kombu/entity.py:611: in declare
-    self._create_queue(nowait=nowait, channel=channel)
-.tox/c1/src/kombu/kombu/entity.py:620: in _create_queue
-    self.queue_declare(nowait=nowait, passive=False, channel=channel)
-.tox/c1/src/kombu/kombu/entity.py:655: in queue_declare
-    nowait=nowait,
-.tox/c1/lib/python3.6/site-packages/amqp/channel.py:1149: in queue_declare
-    spec.Queue.DeclareOk, returns_tuple=True,
-.tox/c1/lib/python3.6/site-packages/amqp/abstract_channel.py:88: in wait
-    self.connection.drain_events(timeout=timeout)
-.tox/c1/lib/python3.6/site-packages/amqp/connection.py:508: in drain_events
-    while not self.blocking_read(timeout):
-.tox/c1/lib/python3.6/site-packages/amqp/connection.py:514: in blocking_read
-    return self.on_inbound_frame(frame)
-.tox/c1/lib/python3.6/site-packages/amqp/method_framing.py:55: in on_frame
-    callback(channel, method_sig, buf, None)
-.tox/c1/lib/python3.6/site-packages/amqp/connection.py:521: in on_inbound_method
-    method_sig, payload, content,
-.tox/c1/lib/python3.6/site-packages/amqp/abstract_channel.py:145: in dispatch_method
-    listener(*args)
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-self = <kombu.transport.pyamqp.Channel object at 0x7f12e3c3bb38>
+self = <kombu.transport.pyamqp.Channel object at 0x7f25146f5518>
 reply_code = 406
 reply_text = "PRECONDITION_FAILED - inequivalent arg 'x-queue-type' for queue 'stats-file-download' in vhost '/': received the value 'quorum' of type 'longstr' but current is none"
 class_id = 50, method_id = 10
@@ -1215,7 +1081,7 @@ E           amqp.exceptions.PreconditionFailed: Queue.declare: (406) PRECONDITIO
 _____________________________ test_events_process ______________________________
 
 app = <Flask 'testapp'>
-script_info = <flask.cli.ScriptInfo object at 0x7f12e849d8d0>
+script_info = <flask.cli.ScriptInfo object at 0x7f2518b7acf8>
 es = <Elasticsearch([{'host': 'elasticsearch', 'port': 9200}])>
 event_queues = None
 
@@ -1251,7 +1117,7 @@ E         -0
 tests/test_cli.py:48: AssertionError
 ______________________________ test_double_clicks ______________________________
 
-app = <Flask 'testapp'>, mock_event_queue = <Mock id='139719171346896'>
+app = <Flask 'testapp'>, mock_event_queue = <Mock id='139797234307704'>
 es = <Elasticsearch([{'host': 'elasticsearch', 'port': 9200}])>
 
     def test_double_clicks(app, mock_event_queue, es):
@@ -1292,7 +1158,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     listener(*args)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <kombu.transport.pyamqp.Channel object at 0x7f12e8451358>
+self = <kombu.transport.pyamqp.Channel object at 0x7f2518b30668>
 reply_code = 406
 reply_text = "PRECONDITION_FAILED - inequivalent arg 'x-queue-type' for queue 'stats-file-download' in vhost '/': received none but current is the value 'quorum' of type 'longstr'"
 class_id = 50, method_id = 10
@@ -1431,7 +1297,7 @@ invenio_stats/processors.py:192: in actionsiter
     listener(*args)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <kombu.transport.pyamqp.Channel object at 0x7f12e7a307b8>
+self = <kombu.transport.pyamqp.Channel object at 0x7f2518b4ddd8>
 reply_code = 406
 reply_text = "PRECONDITION_FAILED - inequivalent arg 'x-queue-type' for queue 'stats-file-download' in vhost '/': received the value 'quorum' of type 'longstr' but current is none"
 class_id = 50, method_id = 10
@@ -1491,42 +1357,12 @@ class_id = 50, method_id = 10
 E           amqp.exceptions.PreconditionFailed: Queue.declare: (406) PRECONDITION_FAILED - inequivalent arg 'x-queue-type' for queue 'stats-file-download' in vhost '/': received the value 'quorum' of type 'longstr' but current is none
 
 .tox/c1/lib/python3.6/site-packages/amqp/channel.py:280: PreconditionFailed
-____________________________ test_get_aggregations _____________________________
-
-app = <Flask 'testapp'>
-es = <Elasticsearch([{'host': 'elasticsearch', 'port': 9200}])>
-
-    def test_get_aggregations(app, es):
-        res = get_aggregations('', {})
-        assert res=={}
-    
-        res = get_aggregations('test-stats-search', {'aggs': {}})
->       assert res=={'_shards': {'failed': 0, 'skipped': 0, 'successful': 5, 'total': 5}, 'hits': {'hits': [], 'max_score': None, 'total': 0}, 'timed_out': False, 'took': 0}
-E       AssertionError: assert {'_shards': {'failed': 0, 'skipped': 0, 'successful': 5, 'total': 5},\n 'hits': {'hits': [], 'max_score': None, 'total': 0},\n 'timed_out': False,\n 'took': 1} == {'_shards': {'failed': 0, 'skipped': 0, 'successful': 5, 'total': 5},\n 'hits': {'hits': [], 'max_score': None, 'total': 0},\n 'timed_out': False,\n 'took': 0}
-E         Common items:
-E         {'_shards': {'failed': 0, 'skipped': 0, 'successful': 5, 'total': 5},
-E          'hits': {'hits': [], 'max_score': None, 'total': 0},
-E          'timed_out': False}
-E         Differing items:
-E         {'took': 1} != {'took': 0}
-E         Full diff:
-E           {
-E            '_shards': {'failed': 0, 'skipped': 0, 'successful': 5, 'total': 5},
-E            'hits': {'hits': [], 'max_score': None, 'total': 0},
-E            'timed_out': False,
-E         -  'took': 0,
-E         ?          ^
-E         +  'took': 1,
-E         ?          ^
-E           }
-
-tests/test_utils.py:107: AssertionError
 _____________________ test_query_record_view_report_helper _____________________
 
 app = <Flask 'testapp'>
 es = <Elasticsearch([{'host': 'elasticsearch', 'port': 9200}])>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
-records = [(<PersistentIdentifier recid:1 / rec:8d2351a3-e8c5-49c8-a3e8-bd9d4d5a1223 (R)>, {'recid': '1', 'year': 2015, 'stars':...': '4', 'year': 4242, 'stars': 5, 'title': ['Unknown film'], 'item_title': 'Unknown film'}, {'title': 'Unknown film'})]
+records = [(<PersistentIdentifier recid:1 / rec:f877c368-f4ce-4fa0-afdf-aafdd81652cf (R)>, {'recid': '1', 'year': 2015, 'stars':...': '4', 'year': 4242, 'stars': 5, 'title': ['Unknown film'], 'item_title': 'Unknown film'}, {'title': 'Unknown film'})]
 
     def test_query_record_view_report_helper(app, es, db, records):
         _id1 = str(uuid.uuid4())
@@ -1559,6 +1395,73 @@ records = [(<PersistentIdentifier recid:1 / rec:8d2351a3-e8c5-49c8-a3e8-bd9d4d5a
 E           Failed: DID NOT RAISE <class 'Exception'>
 
 tests/test_utils.py:556: Failed
+______________________ test_query_item_reg_report_helper _______________________
+
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
+event_queues = None
+es = <Elasticsearch([{'host': 'elasticsearch', 'port': 9200}])>
+
+    def test_query_item_reg_report_helper(app, db, event_queues,es):
+        # get
+        from invenio_search import current_search_client
+        res = QueryItemRegReportHelper.get(target_report='1', unit='Day', start_date='2022-09-01', end_date='2022-09-15')
+        assert res=={'num_page': 2, 'page': 1, 'data': [{'count': 0.0, 'start_date': '2022-09-01 00:00:00', 'end_date': '2022-09-01 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-02 00:00:00', 'end_date': '2022-09-02 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-03 00:00:00', 'end_date': '2022-09-03 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-04 00:00:00', 'end_date': '2022-09-04 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-05 00:00:00', 'end_date': '2022-09-05 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-06 00:00:00', 'end_date': '2022-09-06 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-07 00:00:00', 'end_date': '2022-09-07 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-08 00:00:00', 'end_date': '2022-09-08 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-09 00:00:00', 'end_date': '2022-09-09 23:59:59', 'is_restricted': False}, {'count': 0.0, 'start_date': '2022-09-10 00:00:00', 'end_date': '2022-09-10 23:59:59', 'is_restricted': False}]}
+    
+        _res = {
+            'buckets': [
+                {
+                    'date': '2022-10-01T00:00:00',
+                    'value': 1
+                },
+                {
+                    'date': '2022-10-01T01:00:00',
+                    'value': 0
+                },
+            ]
+        }
+        with patch('invenio_stats.queries.ESDateHistogramQuery.run', return_value=_res):
+            res = QueryItemRegReportHelper.get(target_report='1', unit='Day', start_date='0', end_date='0')
+            assert res=={'num_page': 1, 'page': 1, 'data': [{'count': 1, 'start_date': '2022-10-01', 'end_date': '2022-10-01'}]}
+    
+        res = QueryItemRegReportHelper.get(target_report='1', unit='Week', start_date='2022-09-01', end_date='2022-09-15')
+>       assert res=={'num_page': 1, 'page': 1, 'data': [{'start_date': '2022-09-01 00:00:00', 'end_date': '2022-09-07 23:59:59', 'is_restricted': False, 'count': 0.0}, {'start_date': '2022-09-08 00:00:00', 'end_date': '2022-09-14 23:59:59', 'is_restricted': False, 'count': 0.0}, {'start_date': '2022-09-15 00:00:00', 'end_date': '2022-09-15 23:59:59', 'is_restricted': False, 'count': 0.0}]}
+E       AssertionError: assert {'data': [{'count': 0.0,\n           'end_date': '2022-09-07',\n           'is_restricted': False,\n           'start_date': '2022-09-01'},\n          {'count': 0.0,\n           'end_date': '2022-09-14',\n           'is_restricted': False,\n           'start_date': '2022-09-08'},\n          {'count': 0.0,\n           'end_date': '2022-09-15',\n           'is_restricted': False,\n           'start_date': '2022-09-15'}],\n 'num_page': 1,\n 'page': 1} == {'data': [{'count': 0.0,\n           'end_date': '2022-09-07 23:59:59',\n           'is_restricted': False,\n           'start_date': '2022-09-01 00:00:00'},\n          {'count': 0.0,\n           'end_date': '2022-09-14 23:59:59',\n           'is_restricted': False,\n           'start_date': '2022-09-08 00:00:00'},\n          {'count': 0.0,\n           'end_date': '2022-09-15 23:59:59',\n           'is_restricted': False,\n           'start_date': '2022-09-15 00:00:00'}],\n 'num_page': 1,\n 'page': 1}
+E         Common items:
+E         {'num_page': 1, 'page': 1}
+E         Differing items:
+E         {'data': [{'count': 0.0, 'end_date': '2022-09-07', 'is_restricted': False, 'start_date': '2022-09-01'}, {'count': 0.0,...rt_date': '2022-09-08'}, {'count': 0.0, 'end_date': '2022-09-15', 'is_restricted': False, 'start_date': '2022-09-15'}]} != {'data': [{'count': 0.0, 'end_date': '2022-09-07 23:59:59', 'is_restricted': False, 'start_date': '2022-09-01 00:00:00...:00'}, {'count': 0.0, 'end_date': '2022-09-15 23:59:59', 'is_restricted': False, 'start_date': '2022-09-15 00:00:00'}]}
+E         Full diff:
+E           {
+E            'data': [{'count': 0.0,
+E         -            'end_date': '2022-09-07 23:59:59',
+E         ?                                   ---------
+E         +            'end_date': '2022-09-07',
+E                      'is_restricted': False,
+E         -            'start_date': '2022-09-01 00:00:00'},
+E         ?                                     ---------
+E         +            'start_date': '2022-09-01'},
+E                     {'count': 0.0,
+E         -            'end_date': '2022-09-14 23:59:59',
+E         ?                                   ---------
+E         +            'end_date': '2022-09-14',
+E                      'is_restricted': False,
+E         -            'start_date': '2022-09-08 00:00:00'},
+E         ?                                     ---------
+E         +            'start_date': '2022-09-08'},
+E                     {'count': 0.0,
+E         -            'end_date': '2022-09-15 23:59:59',
+E         ?                                   ---------
+E         +            'end_date': '2022-09-15',
+E                      'is_restricted': False,
+E         -            'start_date': '2022-09-15 00:00:00'}],
+E         ?                                     ---------
+E         +            'start_date': '2022-09-15'}],
+E            'num_page': 1,
+E            'page': 1,
+E           }
+
+tests/test_utils.py:632: AssertionError
 =============================== warnings summary ===============================
 .tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3
   /code/modules/invenio-stats/.tox/c1/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3: DeprecationWarning: 'werkzeug.contrib.cache' is deprecated as of version 0.15 and will be removed in version 1.0. It has moved to https://github.com/pallets/cachelib.
@@ -1666,11 +1569,11 @@ invenio_stats/queues.py                                                 4      0
 invenio_stats/receivers.py                                             29     10     16      0    64%
 invenio_stats/tasks.py                                                 25     12      4      1    48%
 invenio_stats/templates.py                                              6      0      4      0   100%
-invenio_stats/utils.py                                                928    191    406     36    75%
+invenio_stats/utils.py                                                928    173    406     33    78%
 invenio_stats/version.py                                                3      0      0      0   100%
 invenio_stats/views.py                                                328     19     98      1    93%
 -----------------------------------------------------------------------------------------------------
-TOTAL                                                                2522    410    978     81    80%
+TOTAL                                                                2522    392    978     78    81%
 Coverage HTML written to dir htmlcov
 Coverage XML written to file coverage.xml
 
@@ -1678,8 +1581,8 @@ Coverage XML written to file coverage.xml
 FAILED tests/test_cli.py::test_events_process - assert 1 == 0
 FAILED tests/test_processors.py::test_double_clicks - amqp.exceptions.Precond...
 FAILED tests/test_tasks.py::test_process_events - amqp.exceptions.Preconditio...
-FAILED tests/test_utils.py::test_get_aggregations - AssertionError: assert {'...
 FAILED tests/test_utils.py::test_query_record_view_report_helper - Failed: DI...
+FAILED tests/test_utils.py::test_query_item_reg_report_helper - AssertionErro...
 ERROR tests/test_cli.py::test_aggregations_process[indexed_file_download_events0]
 ERROR tests/test_cli.py::test_aggregations_delete[aggregated_file_download_events0]
 ERROR tests/test_cli.py::test_aggregations_list_bookmarks[aggregated_file_download_events0]
@@ -1687,8 +1590,7 @@ ERROR tests/test_queries.py::test_terms_query[mock_execute0-1-tests/data/ESTerms
 ERROR tests/test_queries.py::test_terms_query[mock_execute1-1-tests/data/ESTermsQuery_result02.json-aggregated_file_download_events0]
 ERROR tests/test_queries.py::test_terms_query[mock_execute2-16-tests/data/ESTermsQuery_result03.json-aggregated_file_download_events0]
 ERROR tests/test_utils.py::test_query_file_reports_helper[aggregated_file_download_events0]
-ERROR tests/test_utils.py::test_query_item_reg_report_helper[aggregated_file_download_events0]
-= 5 failed, 111 passed, 5 skipped, 49 warnings, 8 errors in 403.68s (0:06:43) ==
+= 5 failed, 112 passed, 5 skipped, 49 warnings, 7 errors in 402.82s (0:06:42) ==
 ERROR: InvocationError for command /code/modules/invenio-stats/.tox/c1/bin/pytest --cov=invenio_stats tests -v -vv --cov-branch --cov-report=term --cov-report=xml --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp (exited with code 1)
 ___________________________________ summary ____________________________________
 ERROR:   c1: commands failed

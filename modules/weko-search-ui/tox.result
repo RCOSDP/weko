@@ -1,0 +1,255 @@
+GLOB sdist-make: /code/modules/weko-search-ui/setup.py
+c1 inst-nodeps: /code/modules/weko-search-ui/.tox/.tmp/package/1/weko-search-ui-0.1.0.dev20170000.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.7,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.0.9,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_records&subdirectory=modules/weko-records,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,weko-search-ui @ file:///code/modules/weko-search-ui/.tox/.tmp/package/1/weko-search-ui-0.1.0.dev20170000.zip,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='3918938741'
+c1 run-test: commands[0] | pytest --cov=weko_search_ui tests -v -s -vv --cov-branch --cov-report=term --cov-report=xml --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/weko-search-ui/.tox/c1/bin/python
+cachedir: .tox/c1/.pytest_cache
+rootdir: /code/modules/weko-search-ui
+plugins: celery-4.4.7, mock-3.6.1, cov-4.0.0
+collecting ... collected 376 items
+
+tests/test_admin.py::test_ItemManagementBulkDelete_index PASSED
+tests/test_admin.py::test_ItemManagementBulkDelete_check PASSED
+tests/test_admin.py::TestItemManagementCustomSort::test_index_acl PASSED
+tests/test_admin.py::test_ItemManagementCustomSort_save_sort PASSED
+tests/test_admin.py::TestItemManagementBulkSearch::test_index_acl FAILED
+tests/test_admin.py::test_ItemManagementBulkSearch_is_visible PASSED
+tests/test_admin.py::TestItemImportView::test_index_acl PASSED
+tests/test_admin.py::test_ItemImportView_check FAILED
+tests/test_admin.py::test_ItemImportView_get_check_status PASSED
+tests/test_admin.py::test_ItemImportView_download_check PASSED
+tests/test_admin.py::test_ItemImportView_import_items PASSED
+tests/test_admin.py::test_ItemImportView_get_status PASSED
+tests/test_admin.py::test_ItemImportView_download_import PASSED
+tests/test_admin.py::test_ItemImportView_get_disclaimer_text PASSED
+tests/test_admin.py::test_ItemImportView_export_template PASSED
+tests/test_admin.py::test_ItemBulkExport_index PASSED
+tests/test_admin.py::TestItemBulkExport::test_check_export_status FAILED
+tests/test_admin.py::TestItemBulkExport::test_cancel_export PASSED
+tests/test_admin.py::test_export_template PASSED
+tests/test_api.py::test_get_results_setting PASSED
+tests/test_api.py::test_get_default_sort PASSED
+tests/test_api.py::test_get_sort_key PASSED
+tests/test_api.py::test_get_custom_sort PASSED
+tests/test_api.py::test_get_nested_sorting PASSED
+tests/test_api.py::test_get_search_detail_keyword PASSED
+tests/test_api.py::test_get_childinfo PASSED
+tests/test_api.py::test_escape_str PASSED
+tests/test_bundles.py::test_catalog PASSED
+tests/test_ext.py::test_WekoSearchUI PASSED
+tests/test_ext.py::test_WekoSearchUI_2 PASSED
+tests/test_ext.py::test_WekoSearchREST PASSED
+tests/test_links.py::test_default_links_factory PASSED
+tests/test_query.py::test_get_item_type_aggs PASSED
+tests/test_query.py::test_get_permission_filter FAILED
+tests/test_query.py::test_default_search_factory PASSED
+tests/test_query.py::test_item_path_search_factory PASSED
+tests/test_query.py::test_check_permission_user PASSED
+tests/test_query.py::test_opensearch_factory PASSED
+tests/test_query.py::test_item_search_factory PASSED
+tests/test_query.py::test_feedback_email_search_factory PASSED
+tests/test_query.py::test_function_issue35902 FAILED
+tests/test_rest.py::test_IndexSearchResource_get_Exception FAILED
+tests/test_rest.py::test_IndexSearchResource_get_MaxResultWindowRESTError PASSED
+tests/test_rest.py::test_create_blueprint PASSED
+tests/test_rest.py::test_IndexSearchResource_get PASSED
+tests/test_rest.py::test_get_heading_info PASSED
+tests/test_tasks.py::test_check_import_items_task Traceback (most recent call last):
+  File "/code/modules/weko-search-ui/weko_search_ui/utils.py", line 533, in check_import_items
+    with zipfile.ZipFile(file) as z:
+  File "/usr/local/lib/python3.6/zipfile.py", line 1113, in __init__
+    self.fp = io.open(file, filemode)
+FileNotFoundError: [Errno 2] No such file or directory: '/test/test/test.txt'
+PASSED
+tests/test_tasks.py::test_import_item PASSED
+tests/test_tasks.py::test_remove_temp_dir_task PASSED
+tests/test_tasks.py::test_delete_task_id_cache PASSED
+tests/test_tasks.py::test_export_all_task PASSED
+tests/test_tasks.py::test_delete_exported_task PASSED
+tests/test_tasks.py::test_is_import_running PASSED
+tests/test_tasks.py::test_check_celery_is_run PASSED
+tests/test_utils.py::test_DefaultOrderDict_deepcopy PASSED
+tests/test_utils.py::test_get_tree_items PASSED
+tests/test_utils.py::test_delete_records FAILED
+tests/test_utils.py::test_get_journal_info PASSED
+tests/test_utils.py::test_get_feedback_mail_list FAILED
+tests/test_utils.py::test_check_permission PASSED
+tests/test_utils.py::test_get_content_workflow PASSED
+tests/test_utils.py::test_set_nested_item PASSED
+tests/test_utils.py::test_define_default_dict PASSED
+tests/test_utils.py::test_defaultify PASSED
+tests/test_utils.py::test_handle_generate_key_path PASSED
+tests/test_utils.py::test_parse_to_json_form PASSED
+tests/test_utils.py::test_check_import_items Traceback (most recent call last):
+  File "/code/modules/weko-search-ui/weko_search_ui/utils.py", line 547, in check_import_items
+    list_csv = list(filter(lambda x: x.endswith(".csv"), os.listdir(data_path)))
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/weko_import_20230717082011/data'
+PASSED
+tests/test_utils.py::test_unpackage_import_file FAILED
+tests/test_utils.py::test_getEncode /code/modules/weko-search-ui/tests/data/csv/eucjp_lf_items.csv
+/code/modules/weko-search-ui/tests/data/csv/iso2022jp_lf_items.csv
+/code/modules/weko-search-ui/tests/data/csv/sjis_lf_items.csv
+/code/modules/weko-search-ui/tests/data/csv/utf8_cr_items.csv
+/code/modules/weko-search-ui/tests/data/csv/utf8_crlf_items.csv
+/code/modules/weko-search-ui/tests/data/csv/utf8_lf_items.csv
+/code/modules/weko-search-ui/tests/data/csv/utf8bom_lf_items.csv
+/code/modules/weko-search-ui/tests/data/csv/utf16be_bom_lf_items.csv
+/code/modules/weko-search-ui/tests/data/csv/utf16le_bom_lf_items.csv
+/code/modules/weko-search-ui/tests/data/csv/big5.txt
+PASSED
+tests/test_utils.py::test_read_stats_file FAILED
+tests/test_utils.py::test_handle_convert_validate_msg_to_jp PASSED
+tests/test_utils.py::test_handle_validate_item_import PASSED
+tests/test_utils.py::test_represents_int PASSED
+tests/test_utils.py::test_get_item_type PASSED
+tests/test_utils.py::test_handle_check_exist_record PASSED
+tests/test_utils.py::test_make_file_by_line PASSED
+tests/test_utils.py::test_make_stats_file PASSED
+tests/test_utils.py::test_create_deposit PASSED
+tests/test_utils.py::test_clean_thumbnail_file PASSED
+tests/test_utils.py::test_up_load_file PASSED
+tests/test_utils.py::test_get_file_name PASSED
+tests/test_utils.py::test_register_item_metadata FAILED
+tests/test_utils.py::test_update_publish_status PASSED
+tests/test_utils.py::test_handle_workflow PASSED
+tests/test_utils.py::test_create_work_flow PASSED
+tests/test_utils.py::test_create_flow_define PASSED
+tests/test_utils.py::test_send_item_created_event_to_es FAILED
+tests/test_utils.py::test_import_items_to_system FAILED
+tests/test_utils.py::test_handle_item_title PASSED
+tests/test_utils.py::test_handle_check_and_prepare_publish_status PASSED
+tests/test_utils.py::test_handle_check_and_prepare_index_tree FAILED
+tests/test_utils.py::test_handle_check_and_prepare_feedback_mail FAILED
+tests/test_utils.py::test_handle_set_change_identifier_flag PASSED
+tests/test_utils.py::test_handle_check_cnri FAILED
+tests/test_utils.py::test_handle_check_cnri_2 PASSED
+tests/test_utils.py::test_handle_check_doi_indexes PASSED
+tests/test_utils.py::test_handle_check_doi_ra PASSED
+tests/test_utils.py::test_handle_check_doi FAILED
+tests/test_utils.py::test_register_item_handle PASSED
+tests/test_utils.py::test_prepare_doi_setting PASSED
+tests/test_utils.py::test_get_doi_prefix[JaLC] PASSED
+tests/test_utils.py::test_get_doi_prefix[Crossref] PASSED
+tests/test_utils.py::test_get_doi_prefix[DataCite] PASSED
+tests/test_utils.py::test_get_doi_prefix[NDL JaLC] PASSED
+tests/test_utils.py::test_get_doi_link PASSED
+tests/test_utils.py::test_prepare_doi_link PASSED
+tests/test_utils.py::test_register_item_doi PASSED
+tests/test_utils.py::test_register_item_update_publish_status PASSED
+tests/test_utils.py::test_handle_doi_required_check ERROR
+tests/test_utils.py::test_handle_check_date PASSED
+tests/test_utils.py::test_handle_check_id PASSED
+tests/test_utils.py::test_get_data_in_deep_dict PASSED
+tests/test_utils.py::test_validation_file_open_date PASSED
+tests/test_utils.py::test_validation_date_property PASSED
+tests/test_utils.py::test_get_list_key_of_iso_date PASSED
+tests/test_utils.py::test_get_current_language PASSED
+tests/test_utils.py::test_get_change_identifier_mode_content PASSED
+tests/test_utils.py::test_get_root_item_option PASSED
+tests/test_utils.py::test_get_sub_item_option PASSED
+tests/test_utils.py::test_check_sub_item_is_system PASSED
+tests/test_utils.py::test_get_lifetime PASSED
+tests/test_utils.py::test_get_system_data_uri PASSED
+tests/test_utils.py::test_handle_fill_system_item FAILED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi0-after_doi0-warnings0-errors0-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi1-after_doi1-warnings1-errors1-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi2-after_doi2-warnings2-errors2-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi3-after_doi3-warnings3-errors3-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi4-after_doi4-warnings4-errors4-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi5-after_doi5-warnings5-errors5-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi6-after_doi6-warnings6-errors6-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi7-after_doi7-warnings7-errors7-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi8-after_doi8-warnings8-errors8-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi9-after_doi9-warnings9-errors9-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi10-after_doi10-warnings10-errors10-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi11-after_doi11-warnings11-errors11-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi12-after_doi12-warnings12-errors12-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi13-after_doi13-warnings13-errors13-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi14-after_doi14-warnings14-errors14-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi15-after_doi15-warnings15-errors15-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi16-after_doi16-warnings16-errors16-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi17-after_doi17-warnings17-errors17-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi18-after_doi18-warnings18-errors18-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi19-after_doi19-warnings19-errors19-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi20-after_doi20-warnings20-errors20-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi21-after_doi21-warnings21-errors21-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi22-after_doi22-warnings22-errors22-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi23-after_doi23-warnings23-errors23-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi24-after_doi24-warnings24-errors24-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi25-after_doi25-warnings25-errors25-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi26-after_doi26-warnings26-errors26-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi27-after_doi27-warnings27-errors27-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi28-after_doi28-warnings28-errors28-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi29-after_doi29-warnings29-errors29-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi30-after_doi30-warnings30-errors30-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi31-after_doi31-warnings31-errors31-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi32-after_doi32-warnings32-errors32-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[1-before_doi33-after_doi33-warnings33-errors33-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi34-after_doi34-warnings34-errors34-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi35-after_doi35-warnings35-errors35-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi36-after_doi36-warnings36-errors36-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi37-after_doi37-warnings37-errors37-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi38-after_doi38-warnings38-errors38-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi39-after_doi39-warnings39-errors39-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi40-after_doi40-warnings40-errors40-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi41-after_doi41-warnings41-errors41-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi42-after_doi42-warnings42-errors42-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi43-after_doi43-warnings43-errors43-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi44-after_doi44-warnings44-errors44-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi45-after_doi45-warnings45-errors45-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi46-after_doi46-warnings46-errors46-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi47-after_doi47-warnings47-errors47-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi48-after_doi48-warnings48-errors48-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi49-after_doi49-warnings49-errors49-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi50-after_doi50-warnings50-errors50-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi51-after_doi51-warnings51-errors51-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi52-after_doi52-warnings52-errors52-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi53-after_doi53-warnings53-errors53-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi54-after_doi54-warnings54-errors54-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi55-after_doi55-warnings55-errors55-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi56-after_doi56-warnings56-errors56-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi57-after_doi57-warnings57-errors57-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi58-after_doi58-warnings58-errors58-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi59-after_doi59-warnings59-errors59-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi60-after_doi60-warnings60-errors60-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi61-after_doi61-warnings61-errors61-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi62-after_doi62-warnings62-errors62-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi63-after_doi63-warnings63-errors63-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi64-after_doi64-warnings64-errors64-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi65-after_doi65-warnings65-errors65-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi66-after_doi66-warnings66-errors66-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[2-before_doi67-after_doi67-warnings67-errors67-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi68-after_doi68-warnings68-errors68-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi69-after_doi69-warnings69-errors69-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi70-after_doi70-warnings70-errors70-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi71-after_doi71-warnings71-errors71-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi72-after_doi72-warnings72-errors72-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi73-after_doi73-warnings73-errors73-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi74-after_doi74-warnings74-errors74-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi75-after_doi75-warnings75-errors75-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi76-after_doi76-warnings76-errors76-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi77-after_doi77-warnings77-errors77-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi78-after_doi78-warnings78-errors78-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi79-after_doi79-warnings79-errors79-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi80-after_doi80-warnings80-errors80-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi81-after_doi81-warnings81-errors81-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi82-after_doi82-warnings82-errors82-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi83-after_doi83-warnings83-errors83-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi84-after_doi84-warnings84-errors84-False-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi85-after_doi85-warnings85-errors85-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi86-after_doi86-warnings86-errors86-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi87-after_doi87-warnings87-errors87-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi88-after_doi88-warnings88-errors88-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi89-after_doi89-warnings89-errors89-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi90-after_doi90-warnings90-errors90-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi91-after_doi91-warnings91-errors91-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi92-after_doi92-warnings92-errors92-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi93-after_doi93-warnings93-errors93-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi94-after_doi94-warnings94-errors94-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi95-after_doi95-warnings95-errors95-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi96-after_doi96-warnings96-errors96-True-False] PASSED
+tests/test_utils.py::test_handle_fill_system_item3[3-before_doi97-after_doi97-warnings97-errors97-True-False] ERROR: InvocationError for command /code/modules/weko-search-ui/.tox/c1/bin/pytest --cov=weko_search_ui tests -v -s -vv --cov-branch --cov-report=term --cov-report=xml --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp (exited with code -9 (SIGKILL)) (exited with code -9)
+___________________________________ summary ____________________________________
+ERROR:   c1: commands failed

@@ -14,7 +14,7 @@ import json
 
 import mock
 import pytest
-from conftest import IndexFlusher
+from .conftest import IndexFlusher
 from tests.helpers import _mock_validate_fail, assert_hits_len, get_json, record_url
 
 
