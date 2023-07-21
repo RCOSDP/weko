@@ -223,7 +223,8 @@ def get_index_state():
             }
         elif '-99' not in index.browsing_role \
                 or not index.public_state \
-                or is_future(index.public_date):
+                or (index.public_date and
+                    is_future(index.public_date)):
             index_state[index_id] = {
                 'parent': None,
                 'msg': PRIVATE_INDEX
