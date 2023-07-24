@@ -281,7 +281,7 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
             item_schema = props[item_key]['items']['properties']
         else:
             item_schema = props[item_key]['properties']
-
+            
         # current_app.logger.debug('{0} {1} {2}: {3}'.format(
         #     __file__, 'parsing_metadata()', 'item_schema', item_schema))
         ret = []
@@ -414,16 +414,16 @@ def add_creator_jpcoar(schema, mapping, res, metadata):
         #     'jpcoar:nameIdentifier.@nameIdentifierURI'),
         # ('creator.nameIdentifier.@attributes.nameIdentifierScheme',
         #     'jpcoar:nameIdentifier.@nameIdentifierScheme'),
-        # ('creator.affiliation.nameIdentifier.@value',
-        #     TEXT),
-        # ('creator.affiliation.nameIdentifier.@attributes.nameIdentifierURI',
-        #     None),
-        # ('creator.affiliation.nameIdentifier.@attributes.nameIdentifierScheme',
-        #     None),
-        # ('creator.affiliation.affiliationName.@value',
-        #     TEXT),
-        # ('creator.affiliation.affiliationName.@attributes.xml:lang',
-        #     LANG),
+        ('creator.affiliation.nameIdentifier.@value',
+            "jpcoar:affiliation.jpcoar:nameIdentifier.#text"),
+        ('creator.affiliation.nameIdentifier.@attributes.nameIdentifierURI',
+            'jpcoar:affiliation.jpcoar:nameIdentifier.@nameIdentifierURI'),
+        ('creator.affiliation.nameIdentifier.@attributes.nameIdentifierScheme',
+            'jpcoar:affiliation.jpcoar:nameIdentifier.@nameIdentifierScheme'),
+        ('creator.affiliation.affiliationName.@value',
+            'jpcoar:affiliation.jpcoar:affiliationName.#text'),
+        ('creator.affiliation.affiliationName.@attributes.xml:lang',
+            'jpcoar:affiliation.jpcoar:affiliationName.@xml:lang'),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -441,12 +441,12 @@ def add_contributor_jpcoar(schema, mapping, res, metadata):
     patterns = [
         ('contributor.@attributes.contributorType',
          '@contributorType'),
-        # ('contributor.nameIdentifier.@value',
-        #     'jpcoar:nameIdentifier.#text'),
-        # ('contributor.nameIdentifier.@attributes.nameIdentifierURI',
-        #     'jpcoar:nameIdentifier.@nameIdentifierURI'),
-        # ('contributor.nameIdentifier.@attributes.nameIdentifierScheme',
-        #     'jpcoar:nameIdentifier.@nameIdentifierScheme'),
+        ('contributor.nameIdentifier.@value',
+            'jpcoar:nameIdentifier.#text'),
+        ('contributor.nameIdentifier.@attributes.nameIdentifierURI',
+            'jpcoar:nameIdentifier.@nameIdentifierURI'),
+        ('contributor.nameIdentifier.@attributes.nameIdentifierScheme',
+            'jpcoar:nameIdentifier.@nameIdentifierScheme'),
         ('contributor.givenName.@value',
             'jpcoar:givenName#text'),
         ('contributor.givenName.@attributes.xml:lang',
@@ -465,15 +465,15 @@ def add_contributor_jpcoar(schema, mapping, res, metadata):
             'jpcoar:contributorAlternative.#text'),
         ('contributor.contributorAlternative.@attributes.xml:lang',
             'jpcoar:contributorAlternative.@xml:lang'),
-        # ('contributor.affiliation.nameIdentifier.@value',
-        #     None),
-        # ('contributor.affiliation.nameIdentifier.@attributes.nameIdentifierURI',
-        #     None),
-        # ('contributor.affiliation.nameIdentifier.@attributes.nameIdentifierScheme',
-        #     None),
-        # ('contributor.affiliation.affiliationName.@value', None),
-        # ('contributor.affiliation.affiliationName.@attributes.xml:lang',
-        #     None),
+        ('contributor.affiliation.nameIdentifier.@value',
+            None),
+        ('contributor.affiliation.nameIdentifier.@attributes.nameIdentifierURI',
+            None),
+        ('contributor.affiliation.nameIdentifier.@attributes.nameIdentifierScheme',
+            None),
+        ('contributor.affiliation.affiliationName.@value', None),
+        ('contributor.affiliation.affiliationName.@attributes.xml:lang',
+            None),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -568,11 +568,11 @@ def add_subject(schema, mapping, res, metadata):
         ),
         (
             'subject.@attributes.subjectURI',
-            'jpcoar:subject.@subjectURI'
+            '@subjectURI'
         ),
         (
             'subject.@attributes.subjectScheme',
-            'jpcoar:subject.@subjectScheme'
+            '@subjectScheme'
         ),
     ]
 
@@ -631,11 +631,11 @@ def add_edition(schema, mapping, res, metadata):
     patterns = [
         (
             'edition.@value',
-            'dcndl:edition.#text'
+            '#text'
         ),
         (
             'edition.@attributes.xml:lang',
-            'dcndl:edition.@xml:lang'
+            '@xml:lang'
         ),
     ]
 
@@ -646,11 +646,11 @@ def add_volumeTitle(schema, mapping, res, metadata):
     patterns = [
         (
             'volumeTitle.@value',
-            'dcndl:volumeTitle.#text'
+            '#text'
         ),
         (
             'volumeTitle.@attributes.xml:lang',
-            'dcndl:volumeTitle.@xml:lang'
+            '@xml:lang'
         ),
     ]
 
@@ -661,7 +661,7 @@ def add_originalLanguage(schema, mapping, res, metadata):
     patterns = [
         (
             'originalLanguage.@value',
-            'dcndl:originalLanguage.#text'
+            '#text'
         ),
     ]
 
@@ -672,11 +672,11 @@ def add_extent(schema, mapping, res, metadata):
     patterns = [
         (
             'extent.@value',
-            'dcterms:extent.#text'
+            '#text'
         ),
         (
             'extent.@attributes.xml:lang',
-            'dcterms:extent.@xml:lang'
+            '@xml:lang'
         ),
     ]
 
@@ -687,11 +687,11 @@ def add_format(schema, mapping, res, metadata):
     patterns = [
         (
             'format.@value',
-            'jpcoar:format.#text'
+            '#text'
         ),
         (
             'format.@attributes.xml:lang',
-            'jpcoar:format.@xml:lang'
+            '@xml:lang'
         ),
     ]
 
@@ -701,20 +701,24 @@ def add_format(schema, mapping, res, metadata):
 def add_holdingAgent(schema, mapping, res, metadata):
     patterns = [
         (
-            'holdingAgent.holdingAgentNameIdentifier.@attributes.nameIdentifierScheme',
-            'jpcoar:holdingAgentNameIdentifier.@nameIdentifierScheme',
-        ),
-        (
-            'holdingAgent.holdingAgentNameIdentifier.@attributes.nameIdentifierURI',
-            'jpcoar:holdingAgentNameIdentifier.@nameIdentifierURI',
-        ),
-        (
             'holdingAgent.holdingAgentName.@value',
             'jpcoar:holdingAgentName.#text'
         ),
         (
             'holdingAgent.holdingAgentName.@attributes.xml:lang',
             'jpcoar:holdingAgentName.@xml:lang'
+        ),
+        (
+            'holdingAgent.holdingAgentNameIdentifier.@value',
+            'jpcoar:holdingAgentNameIdentifier.#text',
+        ),
+        (
+            'holdingAgent.holdingAgentNameIdentifier.@attributes.nameIdentifierScheme',
+            'jpcoar:holdingAgentNameIdentifier.@nameIdentifierScheme',
+        ),
+        (
+            'holdingAgent.holdingAgentNameIdentifier.@attributes.nameIdentifierURI',
+            'jpcoar:holdingAgentNameIdentifier.@nameIdentifierURI',
         ),
     ]
 
@@ -724,8 +728,8 @@ def add_holdingAgent(schema, mapping, res, metadata):
 def add_datasetSeries(schema, mapping, res, metadata):
     patterns = [
         (
-            'datasetSeries.@attributes.datasetSeriesType',
-            'jpcoar:datasetSeries.@datasetSeriesType',
+            'datasetSeries.@value',
+            '#text',
         ),
     ]
 
@@ -739,12 +743,16 @@ def add_catalog(schema, mapping, res, metadata):
             'jpcoar:contributor.@contributorType',
         ),
         (
-            'catalog.contributorName.@value',
+            'catalog.contributor.contributorName.@value',
             'jpcoar:contributorName.#text',
         ),
         (
-            'catalog.contributorName.@attribute.xml:lang',
-            'jpcoar:contributorName.@xml.lang',
+            'catalog.contributor.contributorName.@attribute.xml:lang',
+            'jpcoar:contributor.jpcoar:contributorName.@xml.lang',
+        ),
+        (
+            'catalog.identifier.@attributes.identifierType',
+            'jpcoar:identifier.@identifierType'
         ),
         (
             'catalog.identifier.@attributes.identifierType',
@@ -779,11 +787,11 @@ def add_catalog(schema, mapping, res, metadata):
             'jpcoar:subject.@xml:lang'
         ),
         (
-            'catalog.subjectURI.@attributes.subjectURI',
+            'catalog.subject.@attributes.subjectURI',
             'jpcoar:subject.@subjectURI'
         ),
         (
-            'catalog.subjectScheme.@attributes.subjectScheme',
+            'catalog.subject.@attributes.subjectScheme',
             'jpcoar:subject.@subjectScheme'
         ),
         (
@@ -815,12 +823,12 @@ def add_catalog(schema, mapping, res, metadata):
             'dc:rights.@rdf:resource'
         ),
         (
-            'catalog.accessRights.@attributes.accessRights',
-            'dc:accessRights.@accessRights'
+            'catalog.accessRights.@value',
+            'dcterms:accessRights.#text'
         ),
         (
             'catalog.accessRights.@attributes.rdf:resource',
-            'dc:accessRights.@rdf:resource'
+            'dcterms:accessRights.@rdf:resource'
         ),
          (
             'catalog.file.URI.@attributes.objectType',
@@ -1086,14 +1094,6 @@ def add_funding_reference(schema, mapping, res, metadata):
             'fundingReference.fundingStream.@attributes.xml:lang',
             'jpcoar:fundingStream.@xml:lang'
         ),
-        # (
-        #     'fundingReference.funderIdentifier.@value',
-        #     'jpcoar:funderIdentifier.#text'
-        # ),
-        # (
-        #     'fundingReference.funderIdentifier.@attributes.funderIdentifierType',
-        #     'jpcoar:funderIdentifier.@funderIdentifierType'
-        # ),
         (
             'fundingReference.awardTitle.@value',
             'jpcoar:awardTitle.#text'
