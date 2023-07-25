@@ -305,20 +305,11 @@ def get_user_information(user_ids):
         if not user_id in temp:
             info['error'] = "The specified user ID is incorrect"
         
-        result.append(info)
-
         for item in data:
             if int(item[0]) == int(user_id):
-                is_merge = False
-                for exist_info in result:
-                    if int(exist_info['userid']) == int(user_id):
-                        # update list
-                        exist_info['email'] = item[1]
-                        is_merge = True
-                if not is_merge:
-                    info['userid'] = user_id
-                    info['email'] = item[1]
-                    result.append(info)
+                info['email'] = item[1]
+        result.append(info)
+
     return result
 
 def get_user_permission(user_id):
@@ -337,24 +328,6 @@ def get_user_permission(user_id):
     if str(user_id) == current_id:
         return True
     return False
-
-def is_current_user(user_id):
-    """
-    Get user permission user_id.
-
-    Compare current id with id of current user
-    parameter:
-        user_id: The user_id
-    return: true if current id is the same with id of current user.
-    If not return false
-    """
-    current_id = current_user.get_id()
-    if current_id is None:
-        return False
-    if str(user_id) == current_id:
-        return True
-    return False
-
 
 def get_current_user():
     """
@@ -1628,6 +1601,7 @@ def _export_item(record_id,
                     'weko_creator_id': meta_data.get('weko_creator_id'),
                     'weko_shared_ids': meta_data.get('weko_shared_ids')
                 }
+                print(f'record_role_ids={record_role_ids}')
                 list_item_role.update(
                     {exported_item['item_type_id']: record_role_ids})
                 if hide_meta_data_for_role(record_role_ids):

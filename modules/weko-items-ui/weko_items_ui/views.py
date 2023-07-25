@@ -983,6 +983,7 @@ def prepare_edit_item():
     err_code = current_app.config.get('WEKO_ITEMS_UI_API_RETURN_CODE_ERROR',
                                       -1)
     if request.headers['Content-Type'] != 'application/json':
+        print(jsonify(code=err_code, msg=_('Header Error')))
         """Check header of request"""
         return jsonify(
             code=err_code,

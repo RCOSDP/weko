@@ -1378,6 +1378,7 @@ def convert_record_to_item_metadata(record_metadata):
         'title': record_metadata['item_title'],
         'owner': record_metadata['owner'],
         'owners': record_metadata['owners'],
+        'created_by': record_metadata['created_by'],
         'shared_user_ids': record_metadata['weko_shared_ids']
     }
     item_type = ItemTypes.get_by_id(record_metadata['item_type_id']).render

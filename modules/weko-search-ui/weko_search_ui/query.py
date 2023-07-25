@@ -103,8 +103,7 @@ def get_permission_filter(index_id: str = None):
         if result:
             shuld = [
                 Q("match", weko_creator_id=user_id),
-                # TODO ESカラム更新後以下のコメント#を外す org. Q("match", weko_shared_id=user_id)
-                Q("terms", weko_shared_ids=user_id)  
+                Q("terms", weko_shared_ids=user_id) 
             ]
             shuld.append(Q("bool", must=mst))
             mut.append(Q("bool", should=shuld, must=[terms]))

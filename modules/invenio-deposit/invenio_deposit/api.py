@@ -243,6 +243,12 @@ class Deposit(Record):
         if current_user.is_authenticated:
             data['_deposit']['created_by'] = int(current_user.get_id())
         if 'owner' in data and data['owner']:
+            data['owners'] = [int(data['owner'])]
+            data['_deposit']['owner'] = int(data['owner'])
+            data['_deposit']['owners'] = [int(data['owner'])]
+        else:
+            data['owner'] = int(current_user.get_id())
+            data['owners'] = [data['owner']]
             data['_deposit']['owner'] = int(data['owner'])
             data['_deposit']['owners'] = [int(data['owner'])]
         if 'weko_shared_ids' in data:

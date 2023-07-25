@@ -186,7 +186,7 @@ def test_get_list_licence(app):
 def test_get_license_pdf(app):
     app.config['WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION'] = "/static/images/creative_commons/"
     lic ='license_12'
-    item_metadata_json={'id': '23.1', 'pid': {'type': 'depid', 'value': '23.1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'test', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-09-28', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_ddb1', 'resourcetype': 'dataset'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/23.1/files/sample_arial.pdf'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-28'}], 'format': 'application/pdf', 'filename': 'sample_arial.pdf', 'filesize': [{'value': '28 KB'}], 'mimetype': 'application/pdf', 'accessrole': 'open_access', 'version_id': '72b25fac-c471-44af-9971-c608f684f863', 'displaytype': 'preview', 'licensetype': 'license_12'}]}
+    item_metadata_json={'id': '23.1', 'pid': {'type': 'depid', 'value': '23.1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'test', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-09-28', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_ddb1', 'resourcetype': 'dataset'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/23.1/files/sample_arial.pdf'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-28'}], 'format': 'application/pdf', 'filename': 'sample_arial.pdf', 'filesize': [{'value': '28 KB'}], 'mimetype': 'application/pdf', 'accessrole': 'open_access', 'version_id': '72b25fac-c471-44af-9971-c608f684f863', 'displaytype': 'preview', 'licensetype': 'license_12'}]}
     file_item_id = 'item_1617605131499'
     footer_w =90
     footer_h = 4
@@ -388,6 +388,23 @@ def test_replace_license_free(app,records):
 def test_get_file_info_list(app,records):
     indexer, results = records
     record = results[0]["record"]
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        ret =  get_file_info_list(record)
+        assert len(ret)==2
+
+# def get_file_info_list(record):
+#     def get_file_size(p_file):
+#     def set_message_for_file(p_file):
+#     def get_data_by_key_array_json(key, array_json, get_key):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_file_info_list_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_file_info_list_1(app, records_restricted):
+    indexer, results = records_restricted
+    record = results[-2]["record"]
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        ret =  get_file_info_list(record)
+        assert len(ret)==2
+
+    record = results[-1]["record"]
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         ret =  get_file_info_list(record)
         assert len(ret)==2

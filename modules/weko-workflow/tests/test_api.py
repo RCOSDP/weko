@@ -1,6 +1,18 @@
+from mock import Mock, patch
+
+from flask import current_app, session
 from flask_login.utils import login_user
+from invenio_accounts.models import Role, User
+from sqlalchemy import and_, or_, not_
 
 from weko_workflow.api import Flow, WorkActivity
+from weko_workflow.models import Action as _Action
+from weko_workflow.models import Activity as _Activity
+from weko_workflow.models import ActivityAction
+from weko_workflow.models import FlowAction as _FlowAction
+from weko_workflow.models import FlowActionRole as _FlowActionRole
+from weko_workflow.models import FlowDefine as _Flow
+from weko_workflow.models import WorkFlow as _WorkFlow
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_Flow_action(app, client, users, db, action_data):
@@ -128,3 +140,69 @@ def test_WorkActivity_get_corresponding_usage_activities(app, db_register):
     usage_application_list, output_report_list = activity.get_corresponding_usage_activities(1)
     assert usage_application_list == {'activity_data_type': {}, 'activity_ids': []}
     assert output_report_list == {'activity_data_type': {}, 'activity_ids': []}
+
+# def query_activities_by_tab_is_wait(query)
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_query_activities_by_tab_is_wait -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_query_activities_by_tab_is_wait(users, db):
+    current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] = False
+    with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
+        query = db.session.query(
+                _Activity,
+                User.email,
+                _WorkFlow.flows_name,
+                _Action.action_name,
+                Role.name
+            ).outerjoin(_Flow).outerjoin(
+                _WorkFlow,
+                and_(_Activity.workflow_id == _WorkFlow.id,)
+            ).outerjoin(_Action).outerjoin(_FlowAction).outerjoin(_FlowActionRole).outerjoin(
+                ActivityAction,
+                and_(
+                    ActivityAction.activity_id == _Activity.activity_id,
+                    ActivityAction.action_id == _Activity.action_id,
+                )
+            ).outerjoin(
+                User,
+                and_(
+                    _Activity.activity_update_user == User.id,
+                )
+                )
+        expected = "AND (workflow_activity.activity_login_user = ? OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%')) AND (workflow_flow_action_role.action_user != ? AND workflow_flow_action_role.action_user_exclude = ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR workflow_flow_action_role.action_role NOT IN (?) AND workflow_flow_action_role.action_role_exclude = ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR workflow_activity_action.action_handler != ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%') AND workflow_flow_action_role.action_user != workflow_activity.activity_login_user AND workflow_flow_action_role.action_user_exclude = ? OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%') AND workflow_activity_action.action_handler != workflow_activity.activity_login_user)"
+        ret = WorkActivity.query_activities_by_tab_is_wait(query)
+
+        assert str(ret).find(expected)
+
+    
+# def query_activities_by_tab_is_all(query, is_community_admin, community_user_ids)
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_query_activities_by_tab_is_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_query_activities_by_tab_is_all(users, db):
+    is_community_admin=False
+    community_user_ids=[]
+    with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
+        query = db.session.query(
+                _Activity,
+                User.email
+            ).outerjoin(
+                User,
+                and_(
+                    _Activity.activity_update_user == User.id,
+                )
+            )
+        
+        expected = "(workflow_activity.shared_user_ids LIKE '%' || ? || '%') AND workflow_flow_action.action_id != ?"
+        ret = WorkActivity.query_activities_by_tab_is_all(query, is_community_admin, community_user_ids)
+        assert str(ret).find(expected)
+
+# def query_activities_by_tab_is_todo(query, is_admin)
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_query_activities_by_tab_is_todo -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_query_activities_by_tab_is_todo(users, db):
+    is_admin=False
+    with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
+        query = db.session.query(
+                _Activity,
+                _FlowActionRole
+            )
+        expected = "(workflow_activity.shared_user_ids LIKE '%' || ? || '%')"
+        ret = WorkActivity.query_activities_by_tab_is_todo(query, is_admin)
+        
+        assert str(ret).find(expected)

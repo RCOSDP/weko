@@ -63,7 +63,7 @@ from weko_records.models import ItemTypeName
 
 # def json_loader(data, pid, owner_id=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_json_loader -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, records):
+def test_json_loader(app, db, users, item_type, item_type2, item_type_mapping2, records):
     _data1 = {}
     _data2 = {
         '$schema': 'http://schema/1/A-test'
@@ -71,6 +71,18 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, records
     _data3 = records[0][1]
     _data3['$schema'] = 'http://schema/2'
     _pid = records[0][0]
+
+    _data4 = records[4][1]
+    _data4['$schema'] = 'http://schema/2'
+
+    _data5 = records[5][1]
+    _data5['$schema'] = 'http://schema/2'
+
+    _data6 = records[6][1]
+    _data6['$schema'] = 'http://schema/2'
+
+    _data7 = records[7][1]
+    _data7['$schema'] = 'http://schema/2'
 
     _dc_data = {
         '_oai': {'id': '1'},
@@ -81,8 +93,9 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, records
                                             'attribute_value': 'Item'}]},
         'item_title': ['Back to the Future'],
         'item_type_id': '2',
-        'owner': '1',
-        'weko_shared_id': -1
+        'owner': 1,
+        'owners':[1],
+        'weko_shared_ids': []
     }
     _jrc_data = {
         '_item_metadata': {
@@ -97,8 +110,9 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, records
             'control_number': '1',
             'author_link': [],
             '_oai': {'id': '1'},
-            'weko_shared_id': -1,
-            'owner': '1'
+            'weko_shared_ids': [],
+            'owner': 1,
+            'owners':[1]
         },
         '_oai': {'id': '1'},
         'author_link': [],
@@ -106,7 +120,87 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, records
         'itemtype': 'test2',
         'publish_date': None,
         'weko_creator_id': '1',
-        'weko_shared_id': -1
+        'weko_shared_ids': [],
+        'owner': 1,
+        'owners':[1]
+    }
+
+    _jrc_data_4 = {
+        'control_number': '1',
+        '_oai': {'id': '1'},
+        '_item_metadata': {
+            'item_1': {
+                'attribute_name': 'item_1',
+                'attribute_value_mlt': [
+                    {'attribute_name': 'item_1',
+                     'attribute_value': 'Item'}]
+            },
+            'item_title': ['weko_shared_ids_1'],
+            'item_type_id': '2',
+            'control_number': '1',
+            'author_link': [],
+            'weko_shared_ids': [],
+            'owner': '1',
+            'owners':['1']
+        },
+        'itemtype': 'test2',
+        'publish_date': None,
+        'author_link': [],
+        'weko_creator_id': '1',
+        'weko_shared_ids': []
+    }
+
+    _jrc_data_5 = {
+        'control_number': '1',
+        '_oai': {'id': '1'},
+        '_item_metadata': {
+            'item_1': {
+                'attribute_name': 'item_1',
+                'attribute_value_mlt': [
+                    {'attribute_name': 'item_1',
+                     'attribute_value': 'Item'}]
+            },
+            'item_title': ['weko_shared_ids_2'],
+            'item_type_id': '2',
+            'control_number': '1',
+            'author_link': [],
+            'weko_shared_ids': [1,2],
+            'owner': 1,
+            'owners':[1]
+        },
+        'itemtype': 'test2',
+        'publish_date': None,
+        'author_link': [],
+        'weko_creator_id': '5',
+        'weko_shared_ids': [1,2],
+        'owner': 1,
+        'owners':[1]
+    }
+
+    _dc_data_6 = {
+        'control_number': '1',
+        'author_link': [],
+        'item_1': {'attribute_name': 'item_1',
+                   'attribute_value_mlt': [{'attribute_name': 'item_1',
+                                            'attribute_value': 'Item'}]},
+        'item_title': ['weko_shared_ids_3'],
+        'item_type_id': '2',
+        'owner': '5',
+        'owners':['5'],
+        'weko_shared_ids': [1,2]
+    }
+
+    _dc_data_7 = {
+        'control_number': '1',
+        'author_link': [],
+        'item_1': {'attribute_name': 'item_1',
+                   'attribute_value_mlt': [{'attribute_name': 'item_1',
+                                            'attribute_value': 'Item'}]},
+        'item_title': ['weko_shared_ids_4'],
+        'item_type_id': '2',
+        'owner': 1,
+        'owners':[1],
+        'weko_shared_ids': [1,2]
     }
 
     # do nothing
@@ -120,10 +214,31 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, records
     # running
     app.config['WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME'] = 'jpcoar_v1_mapping'
     app.config['WEKO_SCHEMA_DDI_SCHEMA_NAME'] = 'ddi_mapping'
-    dc, jrc, is_edit = json_loader(_data3, _pid)
-    assert dc==_dc_data
-    assert jrc==_jrc_data
+    dc, jrc, is_edit = json_loader(_data3, _pid, owner_id=1)
+    assert dict(dc)==_dc_data
+    assert dict(jrc)==_jrc_data
     assert is_edit==False
+
+    # shared_user_ids=[]
+    dc, jrc, is_edit = json_loader(_data4, _pid)
+    jrc['_item_metadata'] = dict(jrc['_item_metadata'])
+    assert dict(jrc)==_jrc_data_4
+
+    # shared_user_ids=[{"user":1},{"user":2}] user=admin, weko_creator_id=1
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        dc, jrc, is_edit = json_loader(_data5, _pid, owner_id=1)
+        jrc['_item_metadata'] = dict(jrc['_item_metadata'])
+        assert dict(jrc)==_jrc_data_5
+
+    # shared_user_ids=[{"user":1},{"user":2}] user=admin, owner未設定
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        dc, jrc, is_edit = json_loader(_data6, _pid)
+        assert dict(dc)==_dc_data_6
+
+    # shared_user_ids=[{"user":1},{"user":2}] user=admin, owner=1
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        dc, jrc, is_edit = json_loader(_data7, _pid, owner_id=1)
+        assert dict(dc)==_dc_data_7
 
 # def copy_field_test(dc, map, jrc, iid=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_copy_field_test -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
