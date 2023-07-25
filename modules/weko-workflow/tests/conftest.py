@@ -520,6 +520,12 @@ def base_app(instance_path, search_class, cache_config):
         THEME_INSTITUTION_NAME=THEME_INSTITUTION_NAME,
         OAUTH2_CACHE_TYPE='simple',
         WEKO_WORKFLOW_REST_ENDPOINTS=WEKO_WORKFLOW_REST_ENDPOINTS,
+        WEKO_PERMISSION_ROLE_USER=[
+            'System Administrator',
+            'Repository Administrator',
+            'Contributor',
+            'Community Administrator'
+        ]
     )
     
     app_.testing = True
@@ -576,6 +582,12 @@ def app(base_app):
     """Flask application fixture."""
     with base_app.app_context():
         yield base_app
+
+
+@pytest.yield_fixture()
+def i18n_app(app):
+    with app.test_request_context(headers=[('If-None-Match', 'match')]):
+        yield app
 
 
 @pytest.yield_fixture()
@@ -2410,6 +2422,131 @@ def db_register_approval(app, db, db_records, workflow_approval, users):
         'activity': activities,
         'action': [activity1_actions, activity2_actions],
         'activity_history': [activity1_histories, activity2_histories]
+    }
+
+
+@pytest.fixture()
+def db_register_activity(app, db, db_records, workflow_approval, users):
+    """Data for GetActivities."""
+
+    # Register data in workflow_activity table
+    activities = []
+    activities.append(
+        Activity(
+            activity_id='A-20230714-00001',
+            item_id=db_records[0][2].id,
+            workflow_id=1,
+            flow_id=1,
+            action_id=1,
+            activity_login_user=users[0]['id'],
+            activity_update_user=users[0]['id'],
+            activity_status='B',
+            activity_start=datetime.strptime('2023/07/10 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+            activity_community_id=3,
+            activity_confirm_term_of_use=True,
+            title='contributor-todo',
+            shared_user_id=users[0]['id'],
+            extra_info={},
+            action_order=5
+        )
+    )
+    activities.append(
+        Activity(
+            activity_id='A-20230714-00002',
+            item_id=db_records[0][2].id,
+            workflow_id=1,
+            flow_id=1,
+            action_id=1,
+            activity_login_user=users[2]['id'],
+            activity_update_user=users[2]['id'],
+            activity_status='B',
+            activity_start=datetime.strptime('2023/07/10 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+            activity_community_id=3,
+            activity_confirm_term_of_use=True,
+            title='sysadmin-todo',
+            shared_user_id=users[2]['id'],
+            extra_info={},
+            action_order=7
+        )
+    )
+    activities.append(
+        Activity(
+            activity_id='A-20230714-00003',
+            item_id=db_records[0][2].id,
+            workflow_id=1,
+            flow_id=1,
+            action_id=2,
+            activity_login_user=users[0]['id'],
+            activity_update_user=users[0]['id'],
+            activity_status='M',
+            activity_start=datetime.strptime('2023/07/10 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+            activity_community_id=3,
+            activity_confirm_term_of_use=True,
+            title='contributor-wait',
+            shared_user_id=users[2]['id'],
+            extra_info={},
+            action_order=5
+        )
+    )
+    with db.session.begin_nested():
+        db.session.add_all(activities)
+    db.session.commit()
+
+    # Register data in workflow_flow_define table
+    flow_define = FlowDefine(flow_name='Registration Activities', flow_user=1,)
+    with db.session.begin_nested():
+        db.session.add(flow_define)
+    db.session.commit()
+
+    # Register data in workflow_flow_action table
+    flow_actions = []
+    flow_actions.append(
+        FlowAction(
+            status='N',
+            flow_id=flow_define.flow_id,
+            action_id=1,
+            action_version='1.0.0',
+            action_order=5,
+            action_condition='',
+            action_status='A',
+            action_date=datetime.strptime('2023/07/01 14:00:00', '%Y/%m/%d %H:%M:%S'),
+            send_mail_setting={},
+        )
+    )
+    flow_actions.append(
+        FlowAction(
+            status='N',
+            flow_id=flow_define.flow_id,
+            action_id=1,
+            action_version='1.0.0',
+            action_order=5,
+            action_condition='',
+            action_status='A',
+            action_date=datetime.strptime('2023/07/01 14:00:00', '%Y/%m/%d %H:%M:%S'),
+            send_mail_setting={},
+        )
+    )
+    with db.session.begin_nested():
+        db.session.add_all(flow_actions)
+    db.session.commit()
+
+    # Register data in workflow_activity_action table
+    activity1_actions = []
+    activity1_actions.append(
+        ActivityAction(
+            activity_id=activities[2].activity_id,
+            action_id=2,
+            action_status='M',
+            action_handler=users[2]['id'],
+            action_order=5
+        )
+    )
+    with db.session.begin_nested():
+        db.session.add_all(activity1_actions)
+    db.session.commit()
+
+    return {
+        'activity': activities,
     }
 
 

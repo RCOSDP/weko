@@ -21,7 +21,8 @@
 """Blueprint for Weko index tree rest."""
 
 from flask import Blueprint, current_app, jsonify, request, make_response
-from flask_babelex import get_locale as get_current_locale
+from flask_babelex import get_locale
+from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
@@ -151,14 +152,13 @@ class GetActivities(ContentNegotiatedMethodView):
             check_pretty(param_pretty)
 
             # Setting language
-            # TODO: support for other languages
             language = request.headers.get('Accept-Language', 'en')
-            if language == 'ja':
-                get_current_locale().language = language
-            
+            if language == 'en' or language == 'ja':
+                get_locale().language = language
+
             # Get activity list
             work_activity = WorkActivity()
-            rst_activities, _, rst_size, rst_page, _, rst_count = \
+            rst_activities, _rst_max, rst_size, rst_page, _rst_name, rst_count = \
                 work_activity.get_activity_list(None, create_conditions_dict(param_status, param_limit, param_page), False)
 
             activity_list = []
@@ -170,8 +170,8 @@ class GetActivities(ContentNegotiatedMethodView):
                         'activity_id': activity.activity_id,
                         'item_name': activity.title,
                         'workflow_type': activity.workflow.flows_name,
-                        'action': activity.action.action_name,
-                        'status': activity.StatusDesc,
+                        'action': _(activity.action.action_name),
+                        'status': _(activity.StatusDesc),
                         'user': activity.email
                     }
                 activity_list.append(_activity)
@@ -224,7 +224,7 @@ class ApproveActivity(ContentNegotiatedMethodView):
         activity_id = kwargs.get('activity_id')
 
         # Check if activity status is approval
-        action_endpoint, action_id, activity_detail, _, _, _, _, _, _ = \
+        action_endpoint, action_id, activity_detail, _cur_action, _histories, _item, _steps, _temporary_comment, _workflow_detail = \
             get_activity_display_info(activity_id)
         if action_endpoint != 'approval':
             raise StatusNotApproveError
@@ -310,7 +310,7 @@ class ThrowOutActivity(ContentNegotiatedMethodView):
         activity_id = kwargs.get('activity_id')
 
         # Check if activity status is approval
-        action_endpoint, action_id, activity_detail, _, _, _, _, _, _ = \
+        action_endpoint, action_id, activity_detail, _cur_action, _histories, _item, _steps, _temporary_comment, _workflow_detail = \
             get_activity_display_info(activity_id)
         if action_endpoint != 'approval':
             raise StatusNotApproveError

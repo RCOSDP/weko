@@ -1,3 +1,5 @@
+import pytest
+
 from flask_login.utils import login_user
 
 from weko_workflow.api import Flow, WorkActivity
@@ -88,6 +90,109 @@ def test_WorkActivity_filter_by_date(app, db):
     query = db.session.query()
     activity = WorkActivity()
     assert activity.filter_by_date('2022-01-01', '2022-01-02', query)
+
+
+conditions = [
+    {
+        'tab': ['todo'],
+        'pagestodo': ['1'],
+        'sizetodo': ['10']
+    },
+    {
+        'tab': ['wait'],
+        'pageswait': ['1'],
+        'sizewait': ['10']
+    },
+    {
+        'tab': ['all'],
+        'pagesall': ['1'],
+        'sizeall': ['10']
+    },
+    {
+        'tab': ['todo']
+    },
+    {
+        'tab': ['wait']
+    },
+    {
+        'tab': ['all']
+    }
+]
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_get_activity_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('conditions', conditions)
+def test_WorkActivity_get_activity_list(app, users, db_register_activity, conditions):
+    # test preparation
+    activity = WorkActivity()
+
+    # contributor
+    with app.test_request_context():
+        login_user(users[0]['obj'])
+        activities, max_page, size, page, name_param, count = \
+            activity.get_activity_list(None, conditions, False)
+        
+        if conditions.get('tab')[0] == 'todo':
+            assert size == conditions.get('sizetodo')[0] if conditions.get('sizetodo') else '20'
+            assert page == conditions.get('pagestodo')[0] if conditions.get('pagestodo') else '1'
+            assert max_page == 1
+            assert count == 1
+            assert name_param == ''
+            assert activities[0].activity_id == db_register_activity.get('activity')[0].activity_id
+            assert activities[0].title == db_register_activity.get('activity')[0].title
+        elif conditions.get('tab')[0] == 'wait':
+            assert size == conditions.get('sizewait')[0] if conditions.get('sizewait') else '20'
+            assert page == conditions.get('pageswait')[0] if conditions.get('pageswait') else '1'
+            assert max_page == 1
+            assert count == 1
+            assert name_param == ''
+            assert activities[0].activity_id == db_register_activity.get('activity')[2].activity_id
+            assert activities[0].title == db_register_activity.get('activity')[2].title
+        elif conditions.get('tab')[0] == 'all':
+            assert size == conditions.get('sizeall')[0] if conditions.get('sizeall') else '20'
+            assert page == conditions.get('pagesall')[0] if conditions.get('pagesall') else '1'
+            assert max_page == 1
+            assert count == 1
+            assert name_param == ''
+            assert activities[0].activity_id == db_register_activity.get('activity')[0].activity_id
+            assert activities[0].title == db_register_activity.get('activity')[0].title
+        else:
+            assert False
+    
+    # sysadmin
+    with app.test_request_context():
+        login_user(users[2]['obj'])
+        activities, max_page, size, page, name_param, count = \
+            activity.get_activity_list(None, conditions, False)
+            
+        if conditions.get('tab')[0] == 'todo':
+            assert size == conditions.get('sizetodo')[0] if conditions.get('sizetodo') else '20'
+            assert page == conditions.get('pagestodo')[0] if conditions.get('pagestodo') else '1'
+            assert max_page == 1
+            assert count == 3
+            assert name_param == ''
+            for i in range(0, 3):
+                assert activities[i].activity_id == db_register_activity.get('activity')[2-i].activity_id
+            for i in range(0, 3):
+                assert activities[i].title == db_register_activity.get('activity')[2-i].title
+        elif conditions.get('tab')[0] == 'wait':
+            assert size == conditions.get('sizetodo')[0] if conditions.get('sizetodo') else '20'
+            assert page == conditions.get('pagestodo')[0] if conditions.get('pagestodo') else '1'
+            assert max_page == 1
+            assert count == 1
+            assert activities[0].activity_id == db_register_activity.get('activity')[2].activity_id
+            assert activities[0].title == db_register_activity.get('activity')[2].title
+        elif conditions.get('tab')[0] == 'all':
+            assert size == conditions.get('sizeall')[0] if conditions.get('sizeall') else '20'
+            assert page == conditions.get('pagesall')[0] if conditions.get('pagesall') else '1'
+            assert max_page == 1
+            assert count == 3
+            assert name_param == ''
+            for i in range(0, 3):
+                assert activities[i].activity_id == db_register_activity.get('activity')[2-i].activity_id
+            for i in range(0, 3):
+                assert activities[i].title == db_register_activity.get('activity')[2-i].title
+        else:
+            assert False
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_get_all_activity_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
