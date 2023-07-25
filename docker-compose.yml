@@ -141,7 +141,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 4000m
+          memory: 8000m
 
   postgresql:
     restart: "always"

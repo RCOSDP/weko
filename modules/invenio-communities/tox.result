@@ -1,7 +1,7 @@
 GLOB sdist-make: /code/modules/invenio-communities/setup.py
 c1 inst-nodeps: /code/modules/invenio-communities/.tox/.tmp/package/1/invenio-communities-1.0.0a21.zip
-c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@83148ee01e9da37a8a1134febe83bc32b95bac6e#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,intervals==0.8.0,invenio-access==1.1.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,invenio-communities @ file:///code/modules/invenio-communities/.tox/.tmp/package/1/invenio-communities-1.0.0a21.zip,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==4.2.0,pytest-cov==2.9.0,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,toml==0.10.2,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_records&subdirectory=modules/weko-records,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@12ca42e97e91b7c99133a4bc9aaf7c4e0b675aa4#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
-c1 run-test-pre: PYTHONHASHSEED='3777053461'
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@83148ee01e9da37a8a1134febe83bc32b95bac6e#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,intervals==0.8.0,invenio-access==1.1.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,invenio-communities @ file:///code/modules/invenio-communities/.tox/.tmp/package/1/invenio-communities-1.0.0a21.zip,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==4.2.0,pytest-cov==2.9.0,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,toml==0.10.2,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_records&subdirectory=modules/weko-records,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='3290224996'
 c1 run-test: commands[0] | pytest --cov=invenio_communities tests -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 ============================= test session starts ==============================
 platform linux -- Python 3.6.15, pytest-4.2.0, py-1.11.0, pluggy-0.13.1 -- /code/modules/invenio-communities/.tox/c1/bin/python
@@ -57,8 +57,8 @@ Content-Transfer-Encoding: 7bit
 Subject: A record was requested to be added to your community (Title1).
 From: info@inveniosoftware.org
 To: sysadmin@test.org
-Date: Sun, 16 Jul 2023 15:53:29 +0000
-Message-ID: <168952280904.34481.8314411604380358303@baa36feaf8eb>
+Date: Mon, 24 Jul 2023 14:28:39 +0000
+Message-ID: <169020891950.11929.7669417064005348597@d52635c415c7>
 
 A new upload requests to be added to your community (Title1):
 
@@ -113,8 +113,8 @@ Content-Transfer-Encoding: 7bit
 Subject: A record was requested to be added to your community (Title1).
 From: info@inveniosoftware.org
 To: sysadmin@test.org
-Date: Sun, 16 Jul 2023 15:56:59 +0000
-Message-ID: <168952301999.34481.9371327608130223109@baa36feaf8eb>
+Date: Mon, 24 Jul 2023 14:32:16 +0000
+Message-ID: <169020913619.11929.15336331410949566661@d52635c415c7>
 
 A new upload requests to be added to your community (Title1):
 
@@ -299,9 +299,9 @@ E       fixture 'mocker' not found
 =================================== FAILURES ===================================
 _______________ TestCommunityModelView.test_index_view_acl_guest _______________
 
-self = <tests.test_admin.TestCommunityModelView object at 0x7f0cc3748940>
+self = <tests.test_admin.TestCommunityModelView object at 0x7f87d4b6ef98>
 app = <Flask 'testapp'>
-setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>, <flask_admin.base.Admin object at 0x7f0cc27cf320>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f0cc2823fd0>)
+setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>, <flask_admin.base.Admin object at 0x7f87d3c5a470>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f87d3c5a080>)
 client = <FlaskClient <Flask 'testapp'>>
 
     def test_index_view_acl_guest(self,app,setup_view_community,client):
@@ -350,7 +350,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     query = self.get_query()
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <invenio_communities.admin.CommunityModelView object at 0x7f0cc2823fd0>
+self = <invenio_communities.admin.CommunityModelView object at 0x7f87d3c5a080>
 
     def get_query(self):
         """Return a query for the model type.
@@ -371,9 +371,9 @@ E               ValueError: min() arg is an empty sequence
 invenio_communities/admin.py:148: ValueError
 ______________ TestCommunityModelView.test_index_view_acl[0-403] _______________
 
-self = <tests.test_admin.TestCommunityModelView object at 0x7f0cc2684ef0>
+self = <tests.test_admin.TestCommunityModelView object at 0x7f87d3ac0eb8>
 app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
-setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>, <flask_admin.base.Admin object at 0x7f0cc2a50358>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f0cc250c3c8>)
+setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>, <flask_admin.base.Admin object at 0x7f87d38d8550>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f87d38d8128>)
 users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
 id = 0, status_code = 403
 
@@ -403,9 +403,9 @@ E             +403
 tests/test_admin.py:71: AssertionError
 ______________ TestCommunityModelView.test_index_view_acl[4-403] _______________
 
-self = <tests.test_admin.TestCommunityModelView object at 0x7f0cc1dfd898>
+self = <tests.test_admin.TestCommunityModelView object at 0x7f87d31d01d0>
 app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
-setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>, <flask_admin.base.Admin object at 0x7f0cc1d257f0>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f0cc1d253c8>)
+setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>, <flask_admin.base.Admin object at 0x7f87d30d0320>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f87d31301d0>)
 users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
 id = 4, status_code = 403
 
@@ -435,9 +435,9 @@ E             +403
 tests/test_admin.py:71: AssertionError
 ______________ TestCommunityModelView.test_index_view_acl[5-403] _______________
 
-self = <tests.test_admin.TestCommunityModelView object at 0x7f0cc1c2b588>
+self = <tests.test_admin.TestCommunityModelView object at 0x7f87d3104358>
 app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
-setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>, <flask_admin.base.Admin object at 0x7f0cc1d2e630>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f0cc1ae6470>)
+setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>, <flask_admin.base.Admin object at 0x7f87d2fa74e0>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f87d2fa72b0>)
 users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
 id = 5, status_code = 403
 
@@ -467,9 +467,9 @@ E             +403
 tests/test_admin.py:71: AssertionError
 ______________ TestCommunityModelView.test_index_view_acl[7-403] _______________
 
-self = <tests.test_admin.TestCommunityModelView object at 0x7f0cc1920cf8>
+self = <tests.test_admin.TestCommunityModelView object at 0x7f87d2c47400>
 app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
-setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>, <flask_admin.base.Admin object at 0x7f0cc1b0ec50>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f0cc1ad8da0>)
+setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>, <flask_admin.base.Admin object at 0x7f87d3114860>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f87d2c53f60>)
 users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
 id = 7, status_code = 403
 
@@ -534,7 +534,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     query = self.get_query()
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <invenio_communities.admin.CommunityModelView object at 0x7f0cc1ad8da0>
+self = <invenio_communities.admin.CommunityModelView object at 0x7f87d2c53f60>
 
     def get_query(self):
         """Return a query for the model type.
@@ -555,8 +555,8 @@ E               ValueError: min() arg is an empty sequence
 invenio_communities/admin.py:148: ValueError
 ____________________ TestCommunityModelView.test_get_query _____________________
 
-self = <tests.test_admin.TestCommunityModelView object at 0x7f0cc1e8d0f0>
-setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>, <flask_admin.base.Admin object at 0x7f0cc16fd518>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f0cc16fd4e0>)
+self = <tests.test_admin.TestCommunityModelView object at 0x7f87d2efd7b8>
+setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>, <flask_admin.base.Admin object at 0x7f87d381cf28>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f87d33fe710>)
 users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
 
     def test_get_query(self,setup_view_community,users):
@@ -571,13 +571,13 @@ users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 
             result = view.get_query()
 >           assert "WHERE communities_community.id_role IN (?) OR communities_community.id_user = ?" in str(result)
 E           AssertionError: assert 'WHERE communities_community.id_role IN (?) OR communities_community.id_user = ?' in 'SELECT communities_community.created AS communities_community_created, communities_community.updated AS communities_c...es_community \nWHERE communities_community.id_role IN (%(id_role_1)s) OR communities_community.id_user = %(id_user_1)s'
-E            +  where 'SELECT communities_community.created AS communities_community_created, communities_community.updated AS communities_c...es_community \nWHERE communities_community.id_role IN (%(id_role_1)s) OR communities_community.id_user = %(id_user_1)s' = str(<flask_sqlalchemy.BaseQuery object at 0x7f0cc18cacf8>)
+E            +  where 'SELECT communities_community.created AS communities_community_created, communities_community.updated AS communities_c...es_community \nWHERE communities_community.id_role IN (%(id_role_1)s) OR communities_community.id_user = %(id_user_1)s' = str(<flask_sqlalchemy.BaseQuery object at 0x7f87d35587b8>)
 
 tests/test_admin.py:100: AssertionError
 _________________ TestCommunityModelView.test_get_count_query __________________
 
-self = <tests.test_admin.TestCommunityModelView object at 0x7f0cc18c2160>
-setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>, <flask_admin.base.Admin object at 0x7f0cc18766d8>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f0cc18765c0>)
+self = <tests.test_admin.TestCommunityModelView object at 0x7f87d2cc1198>
+setup_view_community = (<Flask 'testapp'>, <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>, <flask_admin.base.Admin object at 0x7f87d2a55630>, <User 5>, <invenio_communities.admin.CommunityModelView object at 0x7f87d2a55400>)
 users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
 
     def test_get_count_query(self,setup_view_community,users):
@@ -592,12 +592,12 @@ users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 
             result = view.get_count_query()
 >           assert "WHERE communities_community.id_role IN (?) OR communities_community.id_user = ?" in str(result)
 E           AssertionError: assert 'WHERE communities_community.id_role IN (?) OR communities_community.id_user = ?' in 'SELECT count(%(count_2)s) AS count_1 \nFROM communities_community \nWHERE communities_community.id_role IN (%(id_role_1)s) OR communities_community.id_user = %(id_user_1)s'
-E            +  where 'SELECT count(%(count_2)s) AS count_1 \nFROM communities_community \nWHERE communities_community.id_role IN (%(id_role_1)s) OR communities_community.id_user = %(id_user_1)s' = str(<flask_sqlalchemy.BaseQuery object at 0x7f0cc18954e0>)
+E            +  where 'SELECT count(%(count_2)s) AS count_1 \nFROM communities_community \nWHERE communities_community.id_role IN (%(id_role_1)s) OR communities_community.id_user = %(id_user_1)s' = str(<flask_sqlalchemy.BaseQuery object at 0x7f87d2b743c8>)
 
 tests/test_admin.py:114: AssertionError
 ___________ TestFeaturedCommunityModelView.test_index_view_acl_guest ___________
 
-self = <tests.test_admin.TestFeaturedCommunityModelView object at 0x7f0cc15f1080>
+self = <tests.test_admin.TestFeaturedCommunityModelView object at 0x7f87d2a0f518>
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 client = <FlaskClient <Flask 'testapp'>>
@@ -620,7 +620,7 @@ E         +302
 tests/test_admin.py:202: AssertionError
 __________ TestFeaturedCommunityModelView.test_index_view_acl[0-403] ___________
 
-self = <tests.test_admin.TestFeaturedCommunityModelView object at 0x7f0cc1824d30>
+self = <tests.test_admin.TestFeaturedCommunityModelView object at 0x7f87d272cd30>
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 client = <FlaskClient <Flask 'testapp'>>
@@ -658,7 +658,7 @@ E         +403
 tests/test_admin.py:228: AssertionError
 __________ TestFeaturedCommunityModelView.test_index_view_acl[4-403] ___________
 
-self = <tests.test_admin.TestFeaturedCommunityModelView object at 0x7f0cc10965f8>
+self = <tests.test_admin.TestFeaturedCommunityModelView object at 0x7f87d24fe400>
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 client = <FlaskClient <Flask 'testapp'>>
@@ -696,7 +696,7 @@ E         +403
 tests/test_admin.py:228: AssertionError
 __________ TestFeaturedCommunityModelView.test_index_view_acl[5-403] ___________
 
-self = <tests.test_admin.TestFeaturedCommunityModelView object at 0x7f0cc0f18898>
+self = <tests.test_admin.TestFeaturedCommunityModelView object at 0x7f87d21c8ac8>
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 client = <FlaskClient <Flask 'testapp'>>
@@ -734,7 +734,7 @@ E         +403
 tests/test_admin.py:228: AssertionError
 __________ TestFeaturedCommunityModelView.test_index_view_acl[7-403] ___________
 
-self = <tests.test_admin.TestFeaturedCommunityModelView object at 0x7f0cc0c53940>
+self = <tests.test_admin.TestFeaturedCommunityModelView object at 0x7f87d20a9cc0>
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 client = <FlaskClient <Flask 'testapp'>>
@@ -772,7 +772,7 @@ E         +403
 tests/test_admin.py:228: AssertionError
 ___________ TestInclusionRequestModelView.test_index_view_acl_guest ____________
 
-self = <tests.test_admin.TestInclusionRequestModelView object at 0x7f0cc096f7b8>
+self = <tests.test_admin.TestInclusionRequestModelView object at 0x7f87d1f78358>
 app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 
@@ -793,7 +793,7 @@ E         +302
 tests/test_admin.py:243: AssertionError
 ___________ TestInclusionRequestModelView.test_index_view_acl[0-403] ___________
 
-self = <tests.test_admin.TestInclusionRequestModelView object at 0x7f0cc07e1a20>
+self = <tests.test_admin.TestInclusionRequestModelView object at 0x7f87d1dd4518>
 app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
@@ -831,7 +831,7 @@ E         +403
 tests/test_admin.py:270: AssertionError
 ___________ TestInclusionRequestModelView.test_index_view_acl[4-403] ___________
 
-self = <tests.test_admin.TestInclusionRequestModelView object at 0x7f0cc086a390>
+self = <tests.test_admin.TestInclusionRequestModelView object at 0x7f87d1c86cc0>
 app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
@@ -869,7 +869,7 @@ E         +403
 tests/test_admin.py:270: AssertionError
 ___________ TestInclusionRequestModelView.test_index_view_acl[5-403] ___________
 
-self = <tests.test_admin.TestInclusionRequestModelView object at 0x7f0cc0645fd0>
+self = <tests.test_admin.TestInclusionRequestModelView object at 0x7f87d197c6a0>
 app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
@@ -907,7 +907,7 @@ E         +403
 tests/test_admin.py:270: AssertionError
 ___________ TestInclusionRequestModelView.test_index_view_acl[7-403] ___________
 
-self = <tests.test_admin.TestInclusionRequestModelView object at 0x7f0cc0392400>
+self = <tests.test_admin.TestInclusionRequestModelView object at 0x7f87d18757b8>
 app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 5>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
@@ -945,14 +945,14 @@ E         +403
 tests/test_admin.py:270: AssertionError
 _________________________________ test_alembic _________________________________
 
-self = <sqlalchemy.engine.base.Connection object at 0x7f0cc09aff60>
-dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f0cc0911160>
+self = <sqlalchemy.engine.base.Connection object at 0x7f87d0e59d68>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f87d154cda0>
 constructor = <bound method DefaultExecutionContext._init_ddl of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
 statement = 'ALTER TABLE admin_lang_settings ADD CONSTRAINT uq_admin_lang_settings_lang_code UNIQUE (lang_code)'
 parameters = {}
-args = (<sqlalchemy.dialects.postgresql.base.PGDDLCompiler object at 0x7f0cbfb6e828>,)
-conn = <sqlalchemy.pool._ConnectionFairy object at 0x7f0cbfd3bf60>
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f0cbfb6ecc0>
+args = (<sqlalchemy.dialects.postgresql.base.PGDDLCompiler object at 0x7f87d0f45f98>,)
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7f87d12fee80>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f87d0f45c18>
 
     def _execute_context(
         self, dialect, constructor, statement, parameters, *args
@@ -1041,11 +1041,11 @@ context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 o
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f0cc0911160>
-cursor = <cursor object at 0x7f0cc291cce0; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f87d154cda0>
+cursor = <cursor object at 0x7f87d34d7618; closed: -1>
 statement = 'ALTER TABLE admin_lang_settings ADD CONSTRAINT uq_admin_lang_settings_lang_code UNIQUE (lang_code)'
 parameters = {}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f0cbfb6ecc0>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f87d0f45c18>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -1113,11 +1113,11 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     cursor, statement, parameters, context
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f0cc0911160>
-cursor = <cursor object at 0x7f0cc291cce0; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f87d154cda0>
+cursor = <cursor object at 0x7f87d34d7618; closed: -1>
 statement = 'ALTER TABLE admin_lang_settings ADD CONSTRAINT uq_admin_lang_settings_lang_code UNIQUE (lang_code)'
 parameters = {}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f0cbfb6ecc0>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f87d0f45c18>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -1127,14 +1127,14 @@ E        [SQL: 'ALTER TABLE admin_lang_settings ADD CONSTRAINT uq_admin_lang_set
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: ProgrammingError
 _____________________________ test_dbsession_clean _____________________________
 
-self = <sqlalchemy.engine.base.Connection object at 0x7f0cbd8b3908>
-dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f0cbd67dda0>
+self = <sqlalchemy.engine.base.Connection object at 0x7f87cea453c8>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f87ceab6198>
 constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
 statement = 'SELECT communities_community.created AS communities_community_created, communities_community.updated AS communities_c...s_community_root_node_id \nFROM communities_community \nWHERE communities_community.id = %(id_1)s \n LIMIT %(param_1)s'
 parameters = {'id_1': 1, 'param_1': 1}
-args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7f0cbd8b3fd0>, [immutabledict({})])
-conn = <sqlalchemy.pool._ConnectionFairy object at 0x7f0cbd8b3a58>
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f0cbd8f5c88>
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7f87cea45780>, [immutabledict({})])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7f87cea457b8>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f87cea45710>
 
     def _execute_context(
         self, dialect, constructor, statement, parameters, *args
@@ -1223,11 +1223,11 @@ context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 o
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f0cbd67dda0>
-cursor = <cursor object at 0x7f0cc291c048; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f87ceab6198>
+cursor = <cursor object at 0x7f87d34d7238; closed: -1>
 statement = 'SELECT communities_community.created AS communities_community_created, communities_community.updated AS communities_c...s_community_root_node_id \nFROM communities_community \nWHERE communities_community.id = %(id_1)s \n LIMIT %(param_1)s'
 parameters = {'id_1': 1, 'param_1': 1}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f0cbd8f5c88>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f87cea45710>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -1287,11 +1287,11 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     cursor, statement, parameters, context
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f0cbd67dda0>
-cursor = <cursor object at 0x7f0cc291c048; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f87ceab6198>
+cursor = <cursor object at 0x7f87d34d7238; closed: -1>
 statement = 'SELECT communities_community.created AS communities_community_created, communities_community.updated AS communities_c...s_community_root_node_id \nFROM communities_community \nWHERE communities_community.id = %(id_1)s \n LIMIT %(param_1)s'
 parameters = {'id_1': 1, 'param_1': 1}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f0cbd8f5c88>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f87cea45710>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -1304,14 +1304,14 @@ E        [SQL: 'SELECT communities_community.created AS communities_community_cr
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: ProgrammingError
 _____________________________ test_dbsession_clean _____________________________
 
-self = <sqlalchemy.engine.base.Connection object at 0x7f0cbd0ff5f8>
-dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f0cbd15c710>
+self = <sqlalchemy.engine.base.Connection object at 0x7f87ce5163c8>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f87ce5831d0>
 constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
 statement = 'SELECT communities_community.created AS communities_community_created, communities_community.updated AS communities_c...s_community_root_node_id \nFROM communities_community \nWHERE communities_community.id = %(id_1)s \n LIMIT %(param_1)s'
 parameters = {'id_1': 1, 'param_1': 1}
-args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7f0cbd0ffd68>, [immutabledict({})])
-conn = <sqlalchemy.pool._ConnectionFairy object at 0x7f0cbd0ffda0>
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f0cbd0ffcf8>
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7f87ce516390>, [immutabledict({})])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7f87ce516160>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f87ce516320>
 
     def _execute_context(
         self, dialect, constructor, statement, parameters, *args
@@ -1400,11 +1400,11 @@ context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 o
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f0cbd15c710>
-cursor = <cursor object at 0x7f0cc291c428; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f87ce5831d0>
+cursor = <cursor object at 0x7f87d34d7520; closed: -1>
 statement = 'SELECT communities_community.created AS communities_community_created, communities_community.updated AS communities_c...s_community_root_node_id \nFROM communities_community \nWHERE communities_community.id = %(id_1)s \n LIMIT %(param_1)s'
 parameters = {'id_1': 1, 'param_1': 1}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f0cbd0ffcf8>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f87ce516320>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -1464,11 +1464,11 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     cursor, statement, parameters, context
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f0cbd15c710>
-cursor = <cursor object at 0x7f0cc291c428; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f87ce5831d0>
+cursor = <cursor object at 0x7f87d34d7520; closed: -1>
 statement = 'SELECT communities_community.created AS communities_community_created, communities_community.updated AS communities_c...s_community_root_node_id \nFROM communities_community \nWHERE communities_community.id = %(id_1)s \n LIMIT %(param_1)s'
 parameters = {'id_1': 1, 'param_1': 1}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f0cbd0ffcf8>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f87ce516320>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -28753,7 +28753,7 @@ invenio_communities/views/ui.py                                            96   
 TOTAL                                                                     885    118    184     10    86%
 Coverage HTML written to dir htmlcov
 
-======= 20 failed, 53 passed, 27190 warnings, 16 error in 547.00 seconds =======
+======= 20 failed, 53 passed, 27190 warnings, 16 error in 557.06 seconds =======
 ERROR: InvocationError for command /code/modules/invenio-communities/.tox/c1/bin/pytest --cov=invenio_communities tests -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/invenio-communities/.tox/c1/tmp (exited with code 1)
 ___________________________________ summary ____________________________________
 ERROR:   c1: commands failed
