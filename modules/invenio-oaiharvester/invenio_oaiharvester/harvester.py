@@ -207,7 +207,27 @@ def subitem_recs(schema, keys, value, metadata):
             if '.' in value:
                 _v = value.split('.')
                 if len(_v) > 2 or not metadata.get(_v[0]):
-                    return None
+
+                    if len(_v) > 2:
+                        subitems[item_key] = metadata.get(_v[0], {}).get(_v[1], {}).get(_v[2], {})
+                        print('\n')
+                        print('CCCC-2222')
+                        print("🚀 ~ file: harvester.py:210 ~ metadata:", metadata)
+                        print("🚀 ~ file: harvester.py:147 ~ value:", value)
+                        print("🚀 ~ file: harvester.py:147 ~ keys:", keys)
+                        print("🚀 ~ file: harvester.py:220 ~ value.split('.'):", value.split('.'))
+                        print("🚀 ~ file: harvester.py:213 ~ subitems:", subitems)
+                        print('\n')
+                    
+                    else:
+                        print('\n')
+                        print('CCCC')
+                        print("🚀 ~ file: harvester.py:210 ~ metadata:", metadata)
+                        print("🚀 ~ file: harvester.py:147 ~ value:", value)
+                        print("🚀 ~ file: harvester.py:147 ~ keys:", keys)
+                        print("🚀 ~ file: harvester.py:220 ~ value.split('.'):", value.split('.'))
+                        print('\n')
+                        return None
 
                 if isinstance(metadata.get(_v[0]), str) and _v[1] == TEXT:
                     subitems[item_key] = metadata.get(_v[0])
@@ -242,6 +262,14 @@ def subitem_recs(schema, keys, value, metadata):
     else:
         current_app.logger.debug("item_key: {0}".format(item_key))
 
+    # print('\n\n subitem_recs ~~~~~~~~~')
+    # print("🚀 ~ file: harvester.py:147 ~ schema:", schema)
+    # print("🚀 ~ file: harvester.py:147 ~ metadata:", metadata)
+    # print("🚀 ~ file: harvester.py:147 ~ value:", value)
+    # print("🚀 ~ file: harvester.py:147 ~ keys:", keys)
+    # print("🚀 ~ file: harvester.py:204 ~ subitems:", subitems)
+    # print('\n\n')
+
     return subitems
 
 
@@ -275,19 +303,31 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
         mapping.sort()
 
     item_key = mapping[0].split('.')[0]
-
+    
     if item_key and props.get(item_key):
         if props[item_key].get('items'):
             item_schema = props[item_key]['items']['properties']
         else:
             item_schema = props[item_key]['properties']
-            
+        
+        # if item_key == "item_1690176779835":
+        #     print('\n\n')        
+        #     print("🚀 ~ file: harvester.py:282 ~ item_schema:", item_schema)
+        #     print('\n\n')
+
         # current_app.logger.debug('{0} {1} {2}: {3}'.format(
         #     __file__, 'parsing_metadata()', 'item_schema', item_schema))
         ret = []
         for it in metadata:
             items = {}
             for elem, value in patterns:
+                # print('\n\n')
+                # print("🚀 ~ file: harvester.py:292 ~ mapping:", mapping)
+                # print('\n')
+                # print("🚀 ~ file: harvester.py:294 ~ value:", value)
+                # print('\n')
+                # print("🚀 ~ file: harvester.py:296 ~ elem:", elem)
+                # print('\n\n')
                 mapping = mappin.get(elem)
                 #if not mappin.get(elem) or not value:
                 #    continue
@@ -300,7 +340,7 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
                         subitems = mapping[0].split(',')[0].split('.')[1:]
                     else:
                         subitems = mapping[0].split('.')[1:]
-
+                    
                     if subitems:
                         if subitems[0] in item_schema:
                             submetadata = subitem_recs(
@@ -326,8 +366,15 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
                                     else:
                                         items[subitems[0]] = submetadata
                                 elif isinstance(submetadata, dict):
+                                    print('\n\n 9999')
+                                    print("🚀 ~ file: harvester.py:369 ~ submetadata:", submetadata)
+                                    print("🚀 ~ file: harvester.py:346 ~ subitems:", subitems)
+                                    print("🚀 ~ file: harvester.py:374 ~ items:", items)
+                                    print('\n\n')
                                     if items.get(subitems[0]):
                                         items[subitems[0]].update(submetadata)
+                                    elif items.get(subitems[1]):
+                                        items[subitems[1]].update(submetadata)
                                     else:
                                         items[subitems[0]] = submetadata
                                 else:
@@ -345,7 +392,20 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
         #     __file__, 'parsing_metadata()', 'item_key', item_key))
         # current_app.logger.debug('{0} {1} {2}: {3}'.format(
         #     __file__, 'parsing_metadata()', 'ret', ret))
+
+        # print('\n\n\n')
+        # print("🚀 ~ file: harvester.py:359 ~ ret:", ret)
+        # print('\n')
+        # print("🚀 ~ file: harvester.py:359 ~ item_key:", item_key)
+        # print("🚀 ~ file: harvester.py:249 ~ mappin:", mappin)
+        # print('\n')
+        # print("🚀 ~ file: harvester.py:249 ~ metadata:", metadata)
+        # print('\n')
+        # print("🚀 ~ file: harvester.py:249 ~ patterns:", patterns)
+        # print('\n\n\n')        
+
         return item_key, ret
+        
     else:
         return None, None
 
@@ -415,7 +475,7 @@ def add_creator_jpcoar(schema, mapping, res, metadata):
         # ('creator.nameIdentifier.@attributes.nameIdentifierScheme',
         #     'jpcoar:nameIdentifier.@nameIdentifierScheme'),
         ('creator.affiliation.nameIdentifier.@value',
-            "jpcoar:affiliation.jpcoar:nameIdentifier.#text"),
+            'jpcoar:affiliation.jpcoar:nameIdentifier.#text'),
         ('creator.affiliation.nameIdentifier.@attributes.nameIdentifierURI',
             'jpcoar:affiliation.jpcoar:nameIdentifier.@nameIdentifierURI'),
         ('creator.affiliation.nameIdentifier.@attributes.nameIdentifierScheme',
@@ -466,14 +526,15 @@ def add_contributor_jpcoar(schema, mapping, res, metadata):
         ('contributor.contributorAlternative.@attributes.xml:lang',
             'jpcoar:contributorAlternative.@xml:lang'),
         ('contributor.affiliation.nameIdentifier.@value',
-            None),
+            'jpcoar:affiliation.jpcoar:nameIdentifier.#text'),
         ('contributor.affiliation.nameIdentifier.@attributes.nameIdentifierURI',
-            None),
+            'jpcoar:affiliation.jpcoar:nameIdentifier.@nameIdentifierURI'),
         ('contributor.affiliation.nameIdentifier.@attributes.nameIdentifierScheme',
-            None),
-        ('contributor.affiliation.affiliationName.@value', None),
+            'jpcoar:affiliation.jpcoar:nameIdentifier.@nameIdentifierScheme'),
+        ('contributor.affiliation.affiliationName.@value', 
+            'jpcoar:affiliation.jpcoar:affiliationName.#text'),
         ('contributor.affiliation.affiliationName.@attributes.xml:lang',
-            None),
+            'jpcoar:affiliation.jpcoar:affiliationName.@xml:lang'),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -744,7 +805,7 @@ def add_catalog(schema, mapping, res, metadata):
         ),
         (
             'catalog.contributor.contributorName.@value',
-            'jpcoar:contributorName.#text',
+            'jpcoar:contributor.jpcoar:contributorName.#text',
         ),
         (
             'catalog.contributor.contributorName.@attribute.xml:lang',
@@ -1104,15 +1165,15 @@ def add_funding_reference(schema, mapping, res, metadata):
         ),
         (
             'fundingReference.awardNumber.@value',
-            'datacite:awardNumber.#text'
+            'jpcoar:awardNumber.#text'
         ),
         (
             'fundingReference.awardNumber.@attributes.awardURI',
-            'datacite:awardNumber.@awardURI'
+            'jpcoar:awardNumber.@awardURI'
         ),
         (
             'fundingReference.awardNumber.@attributes.awardNumberType',
-            'datacite:awardNumber.@awardNumberType'
+            'jpcoar:awardNumber.@awardNumberType'
         ),
     ]
 
@@ -1668,6 +1729,12 @@ class JPCOARMapper(BaseMapper):
 
         args = [self.itemtype.schema.get('properties'), item_map, res]
 
+        # print('\n\n 9999')
+        # print("🚀 ~ file: harvester.py:1695 ~ item_type_mapping:", item_type_mapping)
+        # print('\n')
+        # print("🚀 ~ file: harvester.py:1697 ~ item_map:", item_map)
+        # print('\n\n')
+
         add_funcs = {
             'dc:title':
                 partial(add_title, *args),
@@ -1760,6 +1827,11 @@ class JPCOARMapper(BaseMapper):
         }
 
         tags = self.json['record']['metadata']['jpcoar:jpcoar']
+        
+        # print('\n\n')
+        # print("🚀 ~ file: harvester.py:1797 ~ tags:", tags)
+        # print('\n\n')
+
         for t in tags:
             if t in add_funcs:
                 if not isinstance(tags[t], list):
