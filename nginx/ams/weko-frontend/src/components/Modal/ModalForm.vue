@@ -1,7 +1,7 @@
 <script setup>
 import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
-import { computed, ref, watchEffect, onMounted, reactive } from "vue";
+import { computed, ref, watchEffect, onMounted, reactive, watch } from "vue";
 import { onClickOutside } from "@vueuse/core";
 import searchColumns from "../../data/data-search.json";
 import ButtonClose from "/images/btn/btn-close.svg";
@@ -59,20 +59,53 @@ const addForm = (index) => {
   });
 };
 
-const deleteForm = (index) => {
-  console.log(index);
-  forms.value.splice(index, 1);
-  // setFormColumns.splice(index, 1);
+const deleteForm = (column) => {
+  if(column.form_type == 'checkbox'){
+   searchConditions.checkbox.forEach((item) => {
+    if(item.type == column.name){
+      item.checked = false
+      searchConditions.checkbox = searchConditions.checkbox.filter(thing => thing.type != column.name)
+    }
+   })
+  }
+  if(column.form_type == 'text'){
+    searchConditions.text[column.id - 1] = null
+  }
+  if(column.form_type == 'date'){
+    searchConditions.date = null
+  }
 };
 
 const date = ref();
 const timezones = ["Asia/Tokyo"];
+const checkboxes = ref([])
+const radioButtons = ref([])
 
 onMounted(() => {
   const startDate = new Date();
   const endDate = new Date(new Date().setDate(startDate.getDate() + 7));
   date.value = [startDate, endDate];
+  checkboxes.value = document.querySelectorAll('.form-checkbox')
+  radioButtons.value = document.querySelectorAll('.form-radio')
 });
+
+const hideCheckBoxesThenClose = () => {
+  checkboxes.value.forEach((checkbox) => {
+    checkbox.style.display = 'none'
+  })
+  radioButtons.value.forEach((button) => {
+    button.style.display = 'none'
+  })
+  emit('close-modal')
+}
+const showCheckBoxesWhenOpen = () => {
+  checkboxes.value.forEach((checkbox) => {
+    checkbox.style.display = 'flex'
+  })
+  radioButtons.value.forEach((button) => {
+    button.style.display = 'inline-block'
+  })
+}
 
 const previousConditions = ref(JSON.parse(sessionStorage.getItem('search-conditions')))
 const searchConditions = reactive({
@@ -84,19 +117,32 @@ const searchConditions = reactive({
   addCondition: previousConditions.value?.addCondition || 'default'
 })
 
+const clearSearchConditions = () => {
+  searchConditions.searchType = '',
+  searchConditions.keyWord = '',
+  searchConditions.date = null,
+  searchConditions.checkbox = [],
+  searchConditions.text = [],
+  searchConditions.addCondition = 'default'
+}
+
 const submit = async () => {
   await sessionStorage.setItem('search-conditions', JSON.stringify(searchConditions))
   location = '/search/summary'
 }
- 
+
+defineExpose({
+  showCheckBoxesWhenOpen
+})
+
 </script>
 
 <template>
-  <dialog @click="emit('close-modal');" :class="[isFormModalShow ? 'visible z-50' : 'invisible']">
+  <dialog @click="hideCheckBoxesThenClose" :class="[isFormModalShow ? 'visible z-50' : 'invisible']">
     <div @click.stop class="modal modal-center">
       <div class="bg-miby-light-blue w-full rounded-t relative">
         <p class="text-white leading-[43px] pl-5 text-center font-medium relative">詳細検索</p>
-        <button id="" type="button" class="btn-close" @click="emit('close-modal')">
+        <button id="" type="button" class="btn-close" @click="hideCheckBoxesThenClose">
           <img :src="ButtonClose" alt="×" />
         </button>
       </div>
@@ -112,7 +158,7 @@ const submit = async () => {
               <div v-if="column.name == 'word'">
                 <div class="mb-2.5 flex justify-between items-center">
                   <div>
-                    <div class="radio">
+                    <div class="radio form-radio">
                       <input
                         v-model="searchConditions.searchType" 
                         value="type-full-text"
@@ -124,7 +170,7 @@ const submit = async () => {
                       />
                       <label class="text-sm radio-label" for="modal-text-full">全文</label>
                     </div>
-                    <div class="radio">
+                    <div class="radio form-radio">
                       <input v-model="searchConditions.searchType" value="type-key-word" type="radio" name="form-type" id="modal-text-keyword" />
                       <label class="text-sm radio-label" for="modal-text-keyword"
                         >キーワード
@@ -149,7 +195,7 @@ const submit = async () => {
 
               <div v-else>
                 <button
-                  @click="deleteForm(column.id)"
+                  @click.prevent="deleteForm(column)"
                   class="block mb-2 removeForm text-miby-black text-sm font-medium"
                 >
                   <span class="icons icon-remove align-middle">
@@ -164,7 +210,7 @@ const submit = async () => {
                     <div
                       v-for="checkbox_item in column.data"
                       :key="checkbox_item.id"
-                      class="checkbox"
+                      class="checkbox form-checkbox"
                     >
                       <input
                         class="absolute"
@@ -185,7 +231,7 @@ const submit = async () => {
                   v-else-if="column.form_type == 'date'"
                   class="ml-9 flex flex-wrap md:flex-nowrap items-center md:justify-start max-w-[345px]"
                 >
-                  <VueDatePicker v-model="searchConditions.date" range />
+                  <VueDatePicker v-model="searchConditions.date" :enable-time-picker="false" range />
                   <!-- <FormDate /> -->
                   <!-- <VueDatePicker v-model="date" model-auto text-input class="h-[30px]"></VueDatePicker> -->
                   <!-- <span class="w-full md:w-[34px] px-2.5 align-top">—</span> -->
@@ -225,6 +271,7 @@ const submit = async () => {
 
         <div class="flex items-center justify-center pt-5 gap-4">
           <button
+            @click.prevent="clearSearchConditions"
             id="seachClear"
             class="text-miby-black text-sm text-center font-medium border border-miby-black py-1.5 px-5 block min-w-[96px] rounded"
           >

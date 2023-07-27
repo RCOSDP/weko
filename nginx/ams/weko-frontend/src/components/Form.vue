@@ -12,8 +12,10 @@ const props = defineProps({
 })
 
 const isFormModalShow = ref(false); 
+const modalForm = ref()
 
 const onOpenFormModal = () => {
+  modalForm.value.showCheckBoxesWhenOpen()
   isFormModalShow.value = true;
   document.body.classList.add("overflow-hidden");
 };
@@ -107,5 +109,5 @@ const submit = () => {
       </div>
     </div>
   </div>
-  <ModalForm client:only="vue" v-model:isFormModalShow="isFormModalShow" @close-modal="closeFormModal"/>
+  <ModalForm ref="modalForm" client:only="vue" v-model:isFormModalShow="isFormModalShow" @close-modal="closeFormModal"/>
 </template>

@@ -51,6 +51,10 @@ sortCheckBoxes()
 const setDisplayValue = (value) => {
     displayValue.value = value
     sessionStorage.setItem('display-value', JSON.stringify(displayValue.value))
+    if(currentPage.value != 1){
+        currentPage.value = 1
+        history.pushState(null, '', '?page=1')
+    }
 }
 
 const setSort = (value) => {
@@ -97,6 +101,7 @@ const loadSearchData = async () => {
   const data = await res.json()
   searchResult.value = await data.hits.hits
   total.value = await data.hits.total
+  sessionStorage.setItem('page', JSON.stringify(currentPage.value))
 }
 loadSearchData()
 
@@ -104,14 +109,19 @@ watch([displayValue, sort, tableSortValue], () => {
     loadSearchData()
 })
 
+const modalFilter = ref()
+const modalDisplayItem = ref()
+
 const openFilterModal = () => {
     document.getElementById('modalFilter').showModal();
     document.body.classList.add("overflow-hidden");
+    modalFilter.value.showCheckBoxesWhenOpen()
 }
 
 const openDisplayItem = () => {
     document.getElementById('modalDisplayItem').showModal();
     document.body.classList.add("overflow-hidden");
+    modalDisplayItem.value.showCheckBoxesWhenOpen()
 }
 </script>
 
@@ -138,7 +148,9 @@ const openDisplayItem = () => {
                 :typePublic="typePublic"
                 :typeDownload="typeDownload"
                 :category="category"
-                :searchConditions="searchConditions" />
+                :searchConditions="searchConditions" 
+                :total="+total"
+                />
                 
                 <div class="p-5 bg-miby-bg-gray">
                 <div class="flex flex-wrap justify-between items-center">
@@ -187,8 +199,8 @@ const openDisplayItem = () => {
                 </div>
             </div>
         </main>
-        <ModalFilter />
-        <ModalDisplayItem />
+        <ModalFilter ref="modalFilter" />
+        <ModalDisplayItem ref="modalDisplayItem" />
     </div>
 </template>
 

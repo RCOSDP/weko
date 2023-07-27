@@ -7,13 +7,11 @@ import ImageSample3 from "/images/img-sample03.png";
 import ImageSample4 from "/images/img-sample04.png";
 import BtnGotoTop from "/images/btn/btn-gototop.svg";
 import Pager from "../Pager.vue";
-import {computed} from 'vue'
+import {computed, ref} from 'vue'
 
 const props = defineProps({
   item: Object,
 })
-
-// console.log(props.item)
 
 const keyWords = computed(() => {
   return props.item.item_1685585100256.attribute_value_mlt[0].subitem_1685583657917.subitem_1685583664589.split(',')
@@ -24,6 +22,23 @@ const uptotop = computed(() => {
   return false;
 })
 
+const outlineTab = ref(true)
+
+const showOutlineTab = () => {
+  outlineTab.value = true
+  history.pushState(null, '', `/detail/${props.item.recid}`)
+}
+
+const showDataTab = () => {
+  outlineTab.value = false
+  history.pushState(null, '', `/detail/${props.item.recid}`)
+}
+
+const section = ref('section-outline')
+
+const scrollToSection = () => {
+  window.location = `#${section.value}`
+}
 
 //todo FIX COMMA
 </script>
@@ -59,7 +74,7 @@ const uptotop = computed(() => {
             <p class="data-note access-type">アクセス権：<span>{{ item.item_1685585170888.attribute_value_mlt[0].subitem_1685583776261.subitem_1685583784534 }}</span></p>
             <p class="data-note">
               ファイル：<span class="font-medium"
-                ><a class="underline text-miby-link-blue" href="/filelist">{{+item.item_1685585153905.attribute_value_mlt[0].subitem_1685583723733.subitem_1685583728790 < 1 ? 'なし' : `あり（${item.item_1685585153905.attribute_value_mlt[0].subitem_1685583723733.subitem_1685583728790}）`}}</a></span
+                ><a class="underline text-miby-link-blue" :href="`/filelist/${item.recid}`">{{+item.item_1685585153905.attribute_value_mlt[0].subitem_1685583723733.subitem_1685583728790 < 1 ? 'なし' : `あり（${item.item_1685585153905.attribute_value_mlt[0].subitem_1685583723733.subitem_1685583728790}）`}}</a></span
               >
             </p>
           </div>
@@ -73,23 +88,25 @@ const uptotop = computed(() => {
       <div class="detail-tab">
         <ul class="tab-btn__wrap">
           <li class="tab-btn__item">
-            <input class="tab-btn__radio hidden" type="radio" name="tab" id="tab-btn1" checked />
+            <input @click="showOutlineTab" class="tab-btn__radio hidden" type="radio" name="tab" id="tab-btn1" checked />
             <label class="tab-btn__label" for="tab-btn1">概要</label>
           </li>
           <li class="tab-btn__item">
-            <input class="tab-btn__radio hidden" type="radio" name="tab" id="tab-btn2" />
+            <input @click="showDataTab" class="tab-btn__radio hidden" type="radio" name="tab" id="tab-btn2" />
             <label class="tab-btn__label" for="tab-btn2">データ</label>
           </li>
         </ul>
         <div class="tab-content__wrap">
-          <div id="tab-content1" class="tab-content">
+          <div v-if="outlineTab" id="tab-content1" class="tab-content">
             <div class="">
               <div class="flex flex-wrap justify-between items-center">
                 <h3 class="text-miby-black text-xl font-bold">研究概要</h3>
                 <div class="inline-block">
-                  <label class="text-sm text-miby-black" for="section">セクション：</label>
-                  <select id="section" class="border border-miby-dark-gray text-sm text-center p-1">
-                    <option selected>その他情報</option>
+                  <label class="text-sm text-miby-black" for="section-outline">セクション：</label>
+                  <select v-model="section" @change="scrollToSection" id="section-outline" class="border border-miby-dark-gray text-sm text-center p-1">
+                    <option value="section-outline">研究概要</option>
+                    <option value="section-info">追加情報</option>
+                    <option value="section-other">その他情報</option>
                   </select>
                 </div>
               </div>
@@ -122,9 +139,11 @@ const uptotop = computed(() => {
               <div class="flex flex-wrap justify-between items-center">
                 <h3 class="text-miby-black text-xl font-bold">追加情報</h3>
                 <div class="inline-block">
-                  <label class="text-sm text-miby-black" for="section">セクション：</label>
-                  <select id="section" class="border border-miby-dark-gray text-sm text-center p-1">
-                    <option selected>その他情報</option>
+                  <label class="text-sm text-miby-black" for="section-info">セクション：</label>
+                  <select v-model="section" @change="scrollToSection" id="section-info" class="border border-miby-dark-gray text-sm text-center p-1">
+                    <option value="section-outline">研究概要</option>
+                    <option value="section-info">追加情報</option>
+                    <option value="section-other">その他情報</option>
                   </select>
                 </div>
               </div>
@@ -141,9 +160,11 @@ const uptotop = computed(() => {
               <div class="flex flex-wrap justify-between items-center">
                 <h3 class="text-miby-black text-xl font-bold">その他の情報</h3>
                 <div class="inline-block">
-                  <label class="text-sm text-miby-black" for="section">セクション：</label>
-                  <select id="section" class="border border-miby-dark-gray text-sm text-center p-1">
-                    <option selected>その他情報</option>
+                  <label class="text-sm text-miby-black" for="section-other">セクション：</label>
+                  <select v-model="section" @change="scrollToSection" id="section-other" class="border border-miby-dark-gray text-sm text-center p-1">
+                    <option value="section-outline">研究概要</option>
+                    <option value="section-info">追加情報</option>
+                    <option value="section-other">その他情報</option>
                   </select>
                 </div>
               </div>
@@ -165,7 +186,43 @@ const uptotop = computed(() => {
               </div>
             </div>
           </div>
-          <div id="tab-content2" class="tab-content"></div>
+          <div v-else id="tab-content2" class="tab-content">
+            <div class="">
+              <div class="flex flex-wrap justify-between items-center">
+                <h3 class="text-miby-black text-xl font-bold">実験データ</h3>
+                <div class="inline-block">
+                  <label class="text-sm text-miby-black" for="section">セクション：</label>
+                  <select id="section" class="border border-miby-dark-gray text-sm text-center p-1">
+                    <option selected>その他情報</option>
+                  </select>
+                </div>
+              </div>
+              <div class="mt-2.5">
+                <h5 class="text-md text-miby-black text-left font-medium icons icon-border">
+                  実験の説明
+                </h5>
+                <div>
+                  <p class="text-sm text-miby-black text-left pt-1 pl-6">
+                    {{ item.item_1685585100256.attribute_value_mlt[0].subitem_1685583657917.subitem_1685583662235 }}
+                  </p>
+                </div>
+                <div class="flex flex-wrap gap-1 mt-7.5">
+                  <div class="">
+                    <img :src="ImageSample1" alt="画像" />
+                  </div>
+                  <div class="">
+                    <img :src="ImageSample2" alt="画像" />
+                  </div>
+                  <div class="">
+                    <img :src="ImageSample3" alt="画像" />
+                  </div>
+                  <div class="">
+                    <img :src="ImageSample4" alt="画像" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="pt-2.5 pb-28">

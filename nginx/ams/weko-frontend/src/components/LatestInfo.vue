@@ -24,7 +24,7 @@
             <p class="data-note access-type">アクセス権：<span>{{ item._source._item_metadata.item_1685585170888.attribute_value_mlt[0].subitem_1685583776261.subitem_1685583784534 }}</span></p>
             <p class="data-note">
               ファイル：<span class="font-medium"
-                ><a class="underline text-miby-link-blue" href="/filelist">{{+item._source._item_metadata.item_1685585153905.attribute_value_mlt[0].subitem_1685583723733.subitem_1685583728790 < 1 ? 'なし' : `あり（${item._source._item_metadata.item_1685585153905.attribute_value_mlt[0].subitem_1685583723733.subitem_1685583728790}）`}}</a></span
+                ><a class="underline text-miby-link-blue" :href="`/filelist/${item._source.control_number}`">{{+item._source._item_metadata.item_1685585153905.attribute_value_mlt[0].subitem_1685583723733.subitem_1685583728790 < 1 ? 'なし' : `あり（${item._source._item_metadata.item_1685585153905.attribute_value_mlt[0].subitem_1685583723733.subitem_1685583728790}）`}}</a></span
               >
             </p>
           </div>
@@ -38,7 +38,6 @@
 const props = defineProps({
   item: Object
 })
-
 </script>
 
 <style scoped lang="scss">

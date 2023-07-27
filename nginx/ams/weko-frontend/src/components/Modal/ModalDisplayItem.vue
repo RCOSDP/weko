@@ -1,16 +1,45 @@
 <script setup>
 import ButtonClose from "/images/btn/btn-close.svg";
 import columns from "../../data/data-column.json";
+import { onMounted, ref, watch } from "vue";
+
+const modalDisplayItemCheckboxes = ref([])
+
+onMounted(() => {
+  modalDisplayItemCheckboxes.value = document.querySelectorAll('.display-item-checkbox')
+})
+
+const hideCheckBoxesThenClose = () => {
+  modalDisplayItemCheckboxes.value.forEach((checkbox) => {
+    checkbox.style.display = 'none'
+  })
+}
+const showCheckBoxesWhenOpen = () => {
+  modalDisplayItemCheckboxes.value.forEach((checkbox) => {
+    checkbox.style.display = 'block'
+  })
+}
 
 const closeDisplayItemModal = () => {
+  hideCheckBoxesThenClose()
   document.body.classList.remove("overflow-hidden");
   document.getElementById('modalDisplayItem').close()
+}
+
+const filters = ref([])
+
+const clearFilters = () => {
+  filters.value = []
 }
 
 const submit = () => {
   //submit機能
   closeDisplayItemModal()
 }
+
+defineExpose({
+  showCheckBoxesWhenOpen
+})
 </script>
 <template>
   <dialog @click="closeDisplayItemModal" id="modalDisplayItem" class="w-11/12 md:w-full max-w-[728px] mx-auto z-10">
@@ -27,8 +56,9 @@ const submit = () => {
     >
       <div class="modalForm pt-5 pb-10 overflow-y-auto scroll-smooth h-full">
         <div class="max-w-[566px] mx-auto flex flex-wrap">
-          <div v-for="column in columns" :key="column.name" class="checkbox">
+          <div v-for="column in columns" :key="column.name" class="checkbox display-item-checkbox">
             <input
+              v-model="filters"
               class="absolute"
               type="checkbox"
               name="field"
@@ -44,12 +74,13 @@ const submit = () => {
       </div>
 
       <div class="flex items-center justify-center py-5 gap-4">
-        <a
+        <button
+          @click.prevent="clearFilters"
           id="seachClear"
           class="text-miby-black text-sm text-center font-medium border border-miby-black py-1.5 px-5 block min-w-[96px] rounded"
         >
           クリア
-        </a>
+      </button>
 
         <button
           @click="submit"

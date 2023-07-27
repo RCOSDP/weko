@@ -9,6 +9,7 @@ const props = defineProps({
   typePublic: Array,
   typeDownload: Array,
   category: Array,
+  total: Number,
 })
 
 const displayAmount = JSON.parse(sessionStorage.getItem('display-value'))
@@ -50,10 +51,10 @@ const formatDate = (date) => {
               [分野]<span class="ml-px mr-2 text-miby-black">{{ category?.length ? category?.join(', ') : '指定なし' }}</span>
             </p>
             <p class="text-sm text-miby-dark-gray">
-              [掲載日]<span class="ml-px mr-2 text-miby-black">{{ searchConditions?.date ? formatDate(searchConditions?.date[0]) : '指定なし' }}～{{ searchConditions?.date ? formatDate(searchConditions?.date[1]) : '指定なし'}}</span>
+              [掲載日]<span class="ml-px mr-2 text-miby-black">{{ searchConditions?.date ? formatDate(searchConditions?.date[0]) : '指定なし' }} - {{ searchConditions?.date ? formatDate(searchConditions?.date[1]) : '指定なし'}}</span>
             </p>
             <p class="text-sm text-miby-dark-gray">
-              [更新日]<span class="ml-px mr-2 text-miby-black">{{ searchConditions?.date ? formatDate(searchConditions?.date[0]) : '指定なし'}}～{{ searchConditions?.date ? formatDate(searchConditions?.date[1]) : '指定なし'}}</span>
+              [更新日]<span class="ml-px mr-2 text-miby-black">{{ searchConditions?.date ? formatDate(searchConditions?.date[0]) : '指定なし'}} - {{ searchConditions?.date ? formatDate(searchConditions?.date[1]) : '指定なし'}}</span>
             </p>
             <p class="text-sm text-miby-dark-gray">
               [作成者]<span class="ml-px mr-2 text-miby-black"
@@ -87,7 +88,7 @@ const formatDate = (date) => {
                   <option value="150">150</option>
                   <option value="200">200</option>
                 </select>
-                <span class="ml-1">/986</span>
+                <span class="ml-1">/{{ total }}</span>
               </div>
               <div class="text-miby-black text-sm font-medium">
                 <span>表示形式：</span>

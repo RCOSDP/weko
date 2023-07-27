@@ -1,7 +1,7 @@
 <template>
     <div class="search-rows">
         <div class="rows-checkbox">
-          <input class="" type="checkbox" name="publish-type" />
+          <input class="ml-2" type="checkbox" name="publish-type" />
         </div>
         <div class="rows-index">9,999,999,999</div>
         <div class="rows-image"><img :src="ImageSample" alt="" /></div>
@@ -26,7 +26,7 @@
             <p class="data-note access-type">アクセス権：<span>{{ result._source._item_metadata.item_1685585170888.attribute_value_mlt[0].subitem_1685583776261.subitem_1685583784534 }}</span></p>
             <p class="data-note">
               ファイル：<span class="font-medium"
-                ><a class="underline text-miby-link-blue" href="/filelist">{{+result._source._item_metadata.item_1685585153905.attribute_value_mlt[0].subitem_1685583723733.subitem_1685583728790 < 1 ? 'なし' : `あり（${result._source._item_metadata.item_1685585153905.attribute_value_mlt[0].subitem_1685583723733.subitem_1685583728790}）`}}</a></span
+                ><a class="underline text-miby-link-blue" :href="`/filelist/${result._source.control_number}`">{{+result._source._item_metadata.item_1685585153905.attribute_value_mlt[0].subitem_1685583723733.subitem_1685583728790 < 1 ? 'なし' : `あり（${result._source._item_metadata.item_1685585153905.attribute_value_mlt[0].subitem_1685583723733.subitem_1685583728790}）`}}</a></span
               >
             </p>
           </div>
@@ -40,7 +40,6 @@ import ImageSample from "/images/img-search-sample.png";
 const props = defineProps({
     result: Object
 })
-console.log(props.result._source._item_metadata.item_1685585204873.attribute_value_mlt[0].subitem_1685584180890)
 </script>
 
 <style scoped>

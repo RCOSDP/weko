@@ -1,6 +1,25 @@
 <script setup>
+import { onMounted, ref } from "vue";
 import ButtonClose from "/images/btn/btn-close.svg";
-function closeFilterModal() {
+
+const filterCheckboxes = ref([])
+
+onMounted(() => {
+  filterCheckboxes.value = document.querySelectorAll('.filter-checkbox')
+})
+
+const hideCheckBoxesThenClose = () => {
+  filterCheckboxes.value.forEach((checkbox) => {
+    checkbox.style.display = 'none'
+  })
+}
+const showCheckBoxesWhenOpen = () => {
+  filterCheckboxes.value.forEach((checkbox) => {
+    checkbox.style.display = 'flex'
+  })
+}
+async function closeFilterModal() {
+  hideCheckBoxesThenClose()
   document.body.classList.remove("overflow-hidden");
   document.getElementById("modalFilter").close();
 }
@@ -8,6 +27,10 @@ const submit = () => {
   //submit機能
   closeFilterModal()
 }
+
+defineExpose({
+  showCheckBoxesWhenOpen
+})
 </script>
 <template>
   <dialog @click="closeFilterModal" id="modalFilter" class="w-11/12 md:w-full max-w-[728px] mx-auto z-10">
@@ -29,7 +52,7 @@ const submit = () => {
               <span class="icons icon-minus align-middle">配布者</span>
             </button>
             <div class="pl-5">
-              <div class="block checkbox">
+              <div class="block checkbox filter-checkbox">
                 <input
                   class="absolute"
                   type="checkbox"
@@ -41,19 +64,19 @@ const submit = () => {
                   >〇〇大学経済研究所（34293）</label
                 >
               </div>
-              <div class="block checkbox">
+              <div class="block checkbox filter-checkbox">
                 <input class="absolute" type="checkbox" name="publish-type" id="type-publish" />
                 <label class="text-sm checkbox-label" for="type-publish"
                   >〇〇大学史料編纂所（1799）</label
                 >
               </div>
-              <div class="block checkbox">
+              <div class="block checkbox filter-checkbox">
                 <input class="absolute" type="checkbox" name="publish-type" id="type-private" />
                 <label class="text-sm checkbox-label" for="type-private"
                   >JGSS研究センター（75）</label
                 >
               </div>
-              <div class="block checkbox">
+              <div class="block checkbox filter-checkbox">
                 <input class="absolute" type="checkbox" name="publish-type" id="type-limited" />
                 <label class="text-sm checkbox-label" for="type-limited"
                   >〇〇大学パネルデータ設計・解析センター（47）</label
@@ -66,7 +89,7 @@ const submit = () => {
               <span class="icons icon-minus align-middle">データの言語</span>
             </button>
             <div class="pl-5">
-              <div class="block checkbox">
+              <div class="block checkbox filter-checkbox">
                 <input
                   class="absolute"
                   type="checkbox"
@@ -76,7 +99,7 @@ const submit = () => {
                 />
                 <label class="text-sm checkbox-label" for="type-group">jp（34293）</label>
               </div>
-              <div class="block checkbox">
+              <div class="block checkbox filter-checkbox">
                 <input class="absolute" type="checkbox" name="publish-type" id="type-publish" />
                 <label class="text-sm checkbox-label" for="type-publish">en（1799）</label>
               </div>
@@ -87,7 +110,7 @@ const submit = () => {
               <span class="icons icon-minus align-middle">アクセス権</span>
             </button>
             <div class="pl-5">
-              <div class="block checkbox">
+              <div class="block checkbox filter-checkbox">
                 <input
                   class="absolute"
                   type="checkbox"
@@ -99,11 +122,11 @@ const submit = () => {
                   >metadata only（34293）</label
                 >
               </div>
-              <div class="block checkbox">
+              <div class="block checkbox filter-checkbox">
                 <input class="absolute" type="checkbox" name="publish-type" id="type-publish" />
                 <label class="text-sm checkbox-label" for="type-publish">open（1799）</label>
               </div>
-              <div class="block checkbox">
+              <div class="block checkbox filter-checkbox">
                 <input class="absolute" type="checkbox" name="publish-type" id="type-publish" />
                 <label class="text-sm checkbox-label" for="type-publish">restricted（75）</label>
               </div>
