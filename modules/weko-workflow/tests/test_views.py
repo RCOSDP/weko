@@ -2467,10 +2467,12 @@ def test_display_activity_guestlogin(app,db_register ,guest):
     }
 
     workflow_detail = WorkFlow.query.filter_by(id=1).one_or_none()
+    owner_id = 1
+    shared_user_ids = []
     mock_render_template = MagicMock(return_value=jsonify({}))
     with patch('weko_workflow.views.get_activity_display_info',
             return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-            steps, temporary_comment, workflow_detail)):
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.check_authority_action'):
             with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
                     return_value=(roles, action_users)):
@@ -2517,10 +2519,12 @@ def test_display_activity_users(client, users, db_register, users_index, status_
     }
 
     workflow_detail = WorkFlow.query.filter_by(id=1).one_or_none()
+    owner_id = 1
+    shared_user_ids = []
     mock_render_template = MagicMock(return_value=jsonify({}))
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-               steps, temporary_comment, workflow_detail)):
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.check_authority_action'):
             with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
                        return_value=(roles, action_users)):
@@ -2528,6 +2532,7 @@ def test_display_activity_users(client, users, db_register, users_index, status_
                     res = client.post(url, json=input)
                     mock_render_template.assert_called()
 
+#.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko_workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
@@ -2605,6 +2610,9 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
         files=None,
         files_thumbnail=None,
         pid=None)
+    
+    owner_id = 1
+    shared_user_ids = []
 
     mocker.patch('weko_workflow.views.WorkActivity.get_activity_action_role',
                 return_value=(roles, action_users))
@@ -2626,7 +2634,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-               steps, temporary_comment, workflow_detail)):
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -2646,7 +2654,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
             return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-            steps, temporary_comment, workflow_detail)):
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.type_null_check',return_value=False):
             with patch('weko_workflow.views.item_login',return_value=(template_url,
                     need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
@@ -2667,7 +2675,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-               steps, temporary_comment, workflow_detail)):
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -2686,7 +2694,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
             return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-            steps, temporary_comment, workflow_detail)):
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -2706,7 +2714,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
             return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-            steps, temporary_comment, workflow_detail)):
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -2725,7 +2733,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
             return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-            steps, temporary_comment, workflow_detail)):
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -2745,7 +2753,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-               steps, temporary_comment, workflow_detail)):
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -2766,7 +2774,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-               steps, temporary_comment, workflow_detail)):
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -2786,7 +2794,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
             return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-            steps, temporary_comment, workflow_detail)):
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -2805,7 +2813,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
             return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-            steps, temporary_comment, workflow_detail)):
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -2826,7 +2834,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
             return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-            steps, temporary_comment, workflow_detail)):
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -2848,7 +2856,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
             return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-            steps, temporary_comment, workflow_detail)):
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -2870,7 +2878,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-               steps, temporary_comment, workflow_detail)):
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -2892,7 +2900,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-               steps, temporary_comment, workflow_detail)):
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.ItemLink.get_item_link_info'):
             with patch('weko_workflow.views.item_login',return_value=(template_url,
                     need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
@@ -2915,7 +2923,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-               steps, temporary_comment, workflow_detail)):
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.ItemLink.get_item_link_info'):
             with patch('weko_workflow.views.item_login',return_value=(template_url,
                     need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
@@ -2939,7 +2947,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-               steps, temporary_comment, workflow_detail)):
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -2961,7 +2969,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-               steps, temporary_comment, workflow_detail)):
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -2983,7 +2991,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-               steps, temporary_comment, workflow_detail)):
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -3005,7 +3013,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-               steps, temporary_comment, workflow_detail)):
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -3027,7 +3035,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-               steps, temporary_comment, workflow_detail)):
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):
@@ -3049,7 +3057,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
 
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-               steps, temporary_comment, workflow_detail)):
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
         with patch('weko_workflow.views.item_login',return_value=(template_url,
                 need_file,need_billing_file,record,json_schema,schema_form,item_save_uri,
                 files,endpoints,need_thumbnail,files_thumbnail,allow_multi_thumbnail)):

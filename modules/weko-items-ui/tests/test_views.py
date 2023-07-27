@@ -20694,6 +20694,57 @@ def test_validate_user_info_guest(client_api, users):
     )
     assert res.status_code == 200
 
+# def validate_users_info():
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_validate_users_info_login -vv --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_validate_users_info_login(client_api, users, db_userprofile):
+    login_user_via_session(client=client_api, email=users[2]["email"])
+
+    res = client_api.post(
+        "/api/items/validate_users_info",
+        data=json.dumps(
+            [{"username": "", "email": users[0]["email"], "owner": False},
+            {"username": "repoadmin", "email": "", "owner": True},
+            {"username": "", "email": users[2]["email"], "owner": False}]
+            ),
+        content_type="application/json",
+    )
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"results": [
+            {"owner": False, "info":{"email": users[0]["email"], "user_id":users[0]["id"], "username": "contributor"}, "validation": True, "error":''},
+            {"owner": True,  "info":{"email": users[1]["email"], "user_id":users[1]["id"], "username": "repoadmin"}, "validation": True, "error":''},
+            {"owner": False, "info":{"email": users[2]["email"], "user_id":users[2]["id"], "username": "sysadmin"}, "validation": True, "error":''}
+            ]}
+
+    # username:存在しない値 "email":存在しない値
+    res1 = client_api.post(
+        "/api/items/validate_users_info",
+        data=json.dumps(
+            [{"username": "", "email": users[3]["email"], "owner": False},
+            {"username": '', "email": "hogehoge@ivis.co.jp", "owner": False},
+            {"username": 'hogehoge', "email": "", "owner": False},
+            {"username": "hogehoge", "email": "hogehoge@ivis.co.jp", "owner": False},]
+            ),
+        content_type="application/json",
+    )
+    assert res1.status_code == 200
+    assert json.loads(res1.data) == {"results": [
+            {"error":'', "owner": False, "info":{'email':users[3]["email"],'user_id':users[3]["id"],'username':'comadmin'},"validation": True},
+            {"error":"Not Found Email", "info": None, "owner": False,"validation": False},
+            {"error":"Not Found Username", "info": None, "owner": False,"validation": False},
+            {"error":'No row was found for one()',"info": '',"owner": False,"validation": False}
+            ]}
+    
+    # headers error 
+    res2 = client_api.post(
+        "/api/items/validate_users_info",
+        data=json.dumps(
+            [{"username": "", "email": users[0]["email"], "owner": False}]
+            ),
+        content_type="text/json",
+    )
+    assert res2.status_code == 200
+    assert json.loads(res2.data) == {"results":[], 'error': 'Header Error'}
+
 
 # def get_user_info(owner, shared_user_ids):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_user_info_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp

@@ -4134,6 +4134,8 @@ def get_contributors(pid_value, user_id_list_json=None, owner_id=-1):
                     userid_list.append(rec)
         userid_list.append(int(owner_id))
 
+    #　重複を削除
+    userid_list = list(set(userid_list))
     result = []
 
     user_infos = get_user_information(userid_list)

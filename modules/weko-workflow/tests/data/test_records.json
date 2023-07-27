@@ -2,7 +2,9 @@
   {
     "_oai": { "id": "oai:weko3.example.org:00000001", "sets": ["1"] },
     "path": ["1"],
-    "owner": "1",
+    "owner": 1,
+    "owners": [1],
+    "created_by": 1,
     "recid": "1",
     "title": ["title"],
     "pubdate": { "attribute_name": "PubDate", "attribute_value": "2022-08-20" },
@@ -10,7 +12,7 @@
     "_deposit": {
       "id": "1",
       "pid": { "type": "depid", "value": "1", "revision_id": 0 },
-      "owner": "1",
+      "owner": 1,
       "owners": [1],
       "status": "published",
       "created_by": 1,
@@ -97,7 +99,9 @@
   {
     "_oai": { "id": "oai:weko3.example.org:00000001.0", "sets": [] },
     "path": ["1"],
-    "owner": "1",
+    "owner": 1,
+    "owners": [1],
+    "created_by": 1,
     "recid": "1.0",
     "title": ["title"],
     "pubdate": { "attribute_name": "PubDate", "attribute_value": "2022-08-20" },
@@ -105,7 +109,7 @@
     "_deposit": {
       "id": "1.0",
       "pid": { "type": "depid", "value": "1.0", "revision_id": 0 },
-      "owner": "1",
+      "owner": 1,
       "owners": [1],
       "status": "published",
       "created_by": 1
@@ -145,7 +149,9 @@
   {
     "_oai": { "id": "oai:weko3.example.org:00000001.1", "sets": [] },
     "path": ["1"],
-    "owner": "1",
+    "owner": 1,
+    "owners": [1],
+    "created_by": 1,
     "recid": "1.1",
     "title": ["title"],
     "pubdate": { "attribute_name": "PubDate", "attribute_value": "2022-08-20" },
@@ -153,7 +159,7 @@
     "_deposit": {
       "id": "1.1",
       "pid": { "type": "depid", "value": "1.1", "revision_id": 0 },
-      "owner": "1",
+      "owner": 1,
       "owners": [1],
       "status": "published",
       "created_by": 1
@@ -193,7 +199,9 @@
   {
     "_oai": { "id": "oai:weko3.example.org:00000002", "sets": ["2"] },
     "path": ["2"],
-    "owner": "1",
+    "owner": 1,
+    "owners": [1],
+    "created_by": 1,
     "recid": "2",
     "title": ["title2"],
     "pubdate": { "attribute_name": "PubDate", "attribute_value": "2022-08-20" },
@@ -201,7 +209,7 @@
     "_deposit": {
       "id": "2",
       "pid": { "type": "depid", "value": "2", "revision_id": 0 },
-      "owner": "1",
+      "owner": 1,
       "owners": [1],
       "status": "published",
       "created_by": 1,
@@ -246,7 +254,9 @@
   {
     "_oai": { "id": "oai:weko3.example.org:00000002.0", "sets": [] },
     "path": ["2"],
-    "owner": "1",
+    "owner": 1,
+    "owners": [1],
+    "created_by": 1,
     "recid": "2.0",
     "title": ["title2"],
     "pubdate": { "attribute_name": "PubDate", "attribute_value": "2022-08-20" },
@@ -254,7 +264,7 @@
     "_deposit": {
       "id": "2.0",
       "pid": { "type": "depid", "value": "2.0", "revision_id": 0 },
-      "owner": "1",
+      "owner": 1,
       "owners": [1],
       "status": "published",
       "created_by": 1
@@ -285,7 +295,9 @@
   {
     "_oai": { "id": "oai:weko3.example.org:00000002.1", "sets": [] },
     "path": ["2"],
-    "owner": "1",
+    "owner": 1,
+    "owners": [1],
+    "created_by": 1,
     "recid": "2.1",
     "title": ["title2"],
     "pubdate": { "attribute_name": "PubDate", "attribute_value": "2022-08-20" },
@@ -293,7 +305,7 @@
     "_deposit": {
       "id": "2.1",
       "pid": { "type": "depid", "value": "2.1", "revision_id": 0 },
-      "owner": "1",
+      "owner": 1,
       "owners": [1],
       "status": "published",
       "created_by": 1
@@ -324,7 +336,9 @@
   {
     "_oai": { "id": "oai:weko3.example.org:00000194"},
     "path": ["1679618435874"],
-    "owner": "1",
+    "owner": 1,
+    "owners": [1],
+    "created_by": 1,
     "recid": "194",
     "title": ["テスト タイトル1"],
     "pubdate": {
@@ -335,7 +349,7 @@
     "_deposit": {
       "id": "194",
       "pid": {"type": "depid","value": "194","revision_id": 0},
-      "owner": "1",
+      "owner": 1,
       "owners": [1],
       "status": "published",
       "created_by": 1,
@@ -371,7 +385,9 @@
   {
     "_oai": { "id": "oai:weko3.example.org:00000195"},
     "path": ["1679618435874"],
-    "owner": "1",
+    "owner": 1,
+    "owners": [1],
+    "created_by": 1,
     "recid": "195",
     "title": ["テスト タイトル2"],
     "pubdate": {
@@ -382,7 +398,7 @@
     "_deposit": {
       "id": "1",
       "pid": {"type": "depid","value": "195","revision_id": 0},
-      "owner": "1",
+      "owner": 1,
       "owners": [1],
       "status": "published",
       "created_by": 1,

@@ -313,7 +313,24 @@ def test_check_import_items(i18n_app):
     file_name = "sample_file.zip"
     file_path = os.path.join(current_path, "data", "sample_file", file_name)
 
-    assert check_import_items(file_path, True)
+    ret = check_import_items(file_path, True)
+
+    prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
+    assert ret["data_path"].startswith(f'/tmp/{prefix}')
+
+    # is_gakuninrdm = False
+    ret = check_import_items(file_path, True)
+    '/tmp/weko_import_'
+    assert ret["data_path"].startswith('/tmp/deposit_activity_')
+
+    # current_pathがdict
+    class TestFile(object):
+        @property
+        def filename(self):
+            return 'test_file.txt'
+        
+    file = TestFile()
+    assert check_import_items(file, True)
 
 
 # def unpackage_import_file(data_path: str, file_name: str, file_format: str, force_new=False):

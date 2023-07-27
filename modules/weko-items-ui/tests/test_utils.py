@@ -39,6 +39,7 @@ from weko_items_ui.utils import (
     __sanitize_string,
     _custom_export_metadata,
     _export_item,
+
     _get_max_export_items,
     check_approval_email,
     check_approval_email_in_flow,
@@ -7130,7 +7131,7 @@ def test__get_max_export_items(app,users):
 # def _export_item(record_id,
 #     def del_hide_sub_metadata(keys, metadata):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test__export_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test__export_item(app,users,db_records,db_itemtype):
+def test__export_item(app, db, users, db_records, db_itemtype):
     depid, recid, parent, doi, record, item = db_records[0]
     records_data={'created': '2022-08-25T12:56:26.587349+00:00', 'id': 1, 
                   'links': {'self': 'https://localhost:8443/api/records/1'}, 
@@ -7192,23 +7193,72 @@ def test__export_item(app,users,db_records,db_itemtype):
                                                 'updated': '2022-08-26T12:57:36.376731+00:00'}
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+            # 不正なrecord_id
+            with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=None):
+                assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({}, {})
             
             assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id }, {'1': {'weko_creator_id': '1', "weko_shared_ids": []}})
 
+            # records_data is None
+            assert _export_item(1,'JSON',False,'./tests/data/') == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id }, {})
+
             # weko_shared_ids=あり contributor
             assert _export_item(1,'JSON',False,'./tests/data/',records_data_2) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id }, {'1': {'weko_creator_id': str(users[0]["id"]), "weko_shared_ids": [int(users[0]["id"])]}})
-            """
-            # filesあり
-            print("record.pid = {}".format(record.pid))
-            record_1 = WekoRecord.get_record_by_uuid(depid.object_uuid)
-            print("record_1 = {}".format(record_1))
-            stream = BytesIO(b'Hello, World')
+            
+            # exported_item['item_type_id'] = False
+            rec = WekoRecord.get_record_by_pid(1)
+            rec["item_type_id"] = None
+            rec.commit()
+            assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({'files': [],'item_type_id': None,'name': 'recid_1','path': 'recid_1','record_id': record.id }, {})
+            rec = WekoRecord.get_record_by_pid(1)
+            rec["item_type_id"] = 1
+            rec.commit()
 
-            record_1.files['hello.txt'] = stream
-            record_1.files.dumps()
-            record_1.commit()
-            assert _export_item(1,'JSON',True,'./tests/data/',records_data) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id }, {'1': {'weko_creator_id': '1', "weko_shared_ids": []}})
-            """
+            # hide_meta_data_for_role(record_role_ids) == True
+            with patch("weko_items_ui.utils.get_ignore_item_from_mapping", return_value=['_comment','item_1617186476635', ['item_1617186499011','item_1617186609386']]):
+                with patch("weko_items_ui.utils.hide_meta_data_for_role", return_value=True):
+                    assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id }, {'1': {'weko_creator_id': '1', "weko_shared_ids": []}})
+            
+            list_hidden = ['_comment_2', ['dummy', 'item_1617186499011','item_1617186609386']]
+            with patch("weko_items_ui.utils.get_ignore_item_from_mapping", return_value=list_hidden):
+                with patch("weko_items_ui.utils.hide_meta_data_for_role", return_value=True):
+                    assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id }, {'1': {'weko_creator_id': '1', "weko_shared_ids": []}})
+
+            list_hidden = ['feedback_mail_list', ['description', 'type']]
+            with patch("weko_items_ui.utils.get_ignore_item_from_mapping", return_value=list_hidden):
+                with patch("weko_items_ui.utils.hide_meta_data_for_role", return_value=True):
+                    assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id }, {'1': {'weko_creator_id': '1', "weko_shared_ids": []}})
+            
+            list_hidden = [['description', 'descriptionType'], ['degreeGrantor', 'nameIdentifier']]
+            with patch("weko_items_ui.utils.get_ignore_item_from_mapping", return_value=list_hidden):
+                with patch("weko_items_ui.utils.hide_meta_data_for_role", return_value=True):
+                    assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id }, {'1': {'weko_creator_id': '1', "weko_shared_ids": []}})
+
+            from invenio_files_rest.models import Bucket, ObjectVersion
+            from invenio_records_files.models import RecordsBuckets
+            # filesあり
+            record = WekoRecord.get_record_by_pid(1)
+
+            b = Bucket.create()
+            r = RecordsBuckets.create(bucket=b, record=record.model)
+            ObjectVersion.create(b, 'hello.txt')
+            stream = BytesIO(b'Hello, World')
+            record.files['hello.txt'] = stream
+            record.files.dumps()
+            record.commit()
+            db.session.commit()
+
+            assert _export_item(1,'JSON',True,'./tests/data/',records_data)[0] == { 'files': [{
+                                                                                    'bucket':str(record.files[0].bucket),
+                                                                                    'checksum':record.files[0].file.checksum,
+                                                                                    'key': record.files[0].key,
+                                                                                    'size': record.files[0].file.size,
+                                                                                    'version_id': str(record.files[0].version_id)}],
+                                                                                    'item_type_id': '1',
+                                                                                    'name': 'recid_1',
+                                                                                    'path': 'recid_1',
+                                                                                    'record_id': record.id }
+            assert _export_item(1,'JSON',True,'./tests/data/',records_data)[1] == {'1': {'weko_creator_id': '1', "weko_shared_ids": []}}
 
 
 # def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,

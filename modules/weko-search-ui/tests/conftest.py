@@ -823,6 +823,47 @@ def client_request_args(app, file_instance_mock):
             )
         yield r
 
+@pytest.yield_fixture()
+def client_request_args_FULL_TEXT(app, file_instance_mock):
+    app.register_blueprint(
+        create_blueprint(app, app.config["WEKO_SEARCH_REST_ENDPOINTS"])
+    )
+
+    file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "data",
+        "sample_file",
+        "sample_file.txt",
+    )
+
+    # files = {'upload_file': open(file_path,'rb')}
+    # values = {'DB': 'photcat', 'OUT': 'txt', 'SHORT': 'short'}
+
+    # r = requests.post(url, files=files, data=values)
+
+    with app.test_client() as client:
+        with patch("flask.templating._render", return_value=""):
+            r = client.get(
+                "/",
+                query_string={
+                    "index_id": "33",
+                    "page": 1,
+                    "count": 20,
+                    "term": 14,
+                    "lang": "en",
+                    "parent_id": 33,
+                    "index_info": {},
+                    "community": "comm1",
+                    "item_link": "1",
+                    "is_search": 1,
+                    "search_type": WEKO_SEARCH_TYPE_DICT["FULL_TEXT"],
+                    "is_change_identifier": True,
+                    "remote_addr": "0.0.0.0",
+                    "referrer": "test",
+                    "host": "127.0.0.1",
+                },
+            )
+        yield r
 
 @pytest.fixture()
 def location(app, db):

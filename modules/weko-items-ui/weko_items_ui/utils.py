@@ -1587,7 +1587,7 @@ def _export_item(record_id,
         exported_item['name'] = 'recid_{}'.format(record_id)
         exported_item['files'] = []
         exported_item['path'] = 'recid_' + str(record_id)
-        exported_item['item_type_id'] = record.get('item_type_id')
+        exported_item['item_type_id'] = str(record.get('item_type_id')) if record.get('item_type_id') else None
         if not records_data:
             records_data = record
         if exported_item['item_type_id']:
@@ -1601,9 +1601,8 @@ def _export_item(record_id,
                     'weko_creator_id': meta_data.get('weko_creator_id'),
                     'weko_shared_ids': meta_data.get('weko_shared_ids')
                 }
-                print(f'record_role_ids={record_role_ids}')
                 list_item_role.update(
-                    {exported_item['item_type_id']: record_role_ids})
+                    {str(exported_item['item_type_id']): record_role_ids})
                 if hide_meta_data_for_role(record_role_ids):
                     for hide_key in list_hidden:
                         if isinstance(hide_key, str) \

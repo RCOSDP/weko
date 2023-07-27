@@ -819,7 +819,7 @@ def validate_users_info():
         info = {
             'owner': False,
             'info': '',
-            'validation': '',
+            'validation': False,
             'error': ''
         }
         username = data.get('username', '')
@@ -830,15 +830,21 @@ def validate_users_info():
             if username != "":
                 if email == "":
                     info['info'] = get_user_info_by_username(username)
+                    if not info['info']:
+                        raise Exception('Not Found Username')
                     info['validation'] = True
                 else:
                     validate_data = validate_user(username, email)
                     info['info'] = validate_data['results']
                     info['validation'] = validate_data['validation']
+                    if validate_data['error'] != "":
+                        raise Exception(validate_data['error'])
                 result['results'].append(info)
 
             if email != "" and username == "":
                 info['info'] = get_user_info_by_email(email)
+                if not info['info']:
+                    raise Exception('Not Found Email')
                 info['validation'] = True
                 result['results'].append(info)
 
