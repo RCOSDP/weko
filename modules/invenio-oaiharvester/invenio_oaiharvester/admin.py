@@ -111,19 +111,13 @@ class HarvestSettingView(ModelView):
             "user_id": user_id
         }
 
-        run_harvesting(
+        run_harvesting.apply_async(args=(
             request.args.get('id'),
             datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),
             user_data,
-            request_info)
-
-        # run_harvesting.apply_async(args=(
-        #     request.args.get('id'),
-        #     datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),
-        #     user_data,
-        #     request_info),
-        #     link=link_success_handler.s(),
-        #     link_error=link_error_handler.s())
+            request_info),
+            link=link_success_handler.s(),
+            link_error=link_error_handler.s())
         return redirect(url_for('harvestsettings.details_view',
                                 id=request.args.get('id')))
 
