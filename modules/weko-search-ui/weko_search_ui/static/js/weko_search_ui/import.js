@@ -863,7 +863,7 @@ class CheckComponent extends React.Component {
       for(let i = 0;i < errors.length; i++) {
         result += "ERRORS: " + errors[i];
         if (i != errors.length -1 ){
-          result += ", ";
+          result += "; ";
         }
       }
     }else{
