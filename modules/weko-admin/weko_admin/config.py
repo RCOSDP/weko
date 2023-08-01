@@ -28,6 +28,9 @@ WEKO_ADMIN_DEFAULT_AGGREGATION_MONTH = 2
 WEKO_ADMIN_DEFAULT_LIFETIME = 60
 """ Session time out setting, default 60 minutes """
 
+WEKO_ADMIN_IMPORT_PAGE_LIFETIME = 43200
+""" Session time out setting in import page, default 43200 seconds (12 hours) """
+
 WEKO_ADMIN_BASE_TEMPLATE = 'weko_admin/base.html'
 """Base template for weko-admin module."""
 
