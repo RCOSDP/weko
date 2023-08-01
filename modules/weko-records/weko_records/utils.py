@@ -278,8 +278,8 @@ def copy_field_test(dc, map, jrc, iid=None):
                             _id = k_v.get("id")
                             _inputType = k_v.get("inputType")
                             current_app.logger.debug(
-                                "id: {0} , inputType: {1} , path: {2}".format(_id, _inputType,val['path'])
-                            )                            
+                                "id: {0} , inputType: {1}  , path: {2}".format(_id, _inputType,val['path'])
+                            )
                             if _inputType == "text":
                                 txt = get_values_from_dict(
                                     dc, val["path"], val["path_type"], iid
@@ -299,9 +299,8 @@ def copy_field_test(dc, map, jrc, iid=None):
                                     for idx in range(len(_gte)):
                                         a = _gte[idx]
                                         b = None
-                                        if _lte:
-                                            if idx < len(_lte):
-                                                b = _lte[idx]
+                                        if idx < len(_lte):
+                                            b = _lte[idx]
                                         ranges.append(convert_range_value(a, b))
                                 if len(ranges) > 0:
                                     value_range = {id: ranges}
@@ -319,9 +318,8 @@ def copy_field_test(dc, map, jrc, iid=None):
                                     for idx in range(len(_gte)):
                                         a = _gte[idx]
                                         b = None
-                                        if _lte:
-                                            if idx < len(_lte):
-                                                b = _lte[idx]
+                                        if idx < len(_lte):
+                                            b = _lte[idx]
                                         dateRanges.append(convert_date_range_value(a, b))
                                 if len(dateRanges) > 0:
                                     value_range = {id: dateRanges}

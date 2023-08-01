@@ -540,3 +540,60 @@ class ESWekoTermsQuery(ESTermsQuery):
             agg_query = agg_query.filter('terms', **kwargs.get('agg_filter'))
 
         return agg_query
+
+
+class ESWekoRankingQuery(ESTermsQuery):
+    """Weko ES Query for Ranking Page."""
+
+    def __init__(self, main_fields=None, main_query=None, *args, **kwargs):
+        """Constructor.
+
+        :param main_fields: name of the timestamp field.
+        :param main_query: list of fields to copy from the top hit document
+            into the resulting aggregation.
+        """
+        super(ESWekoRankingQuery, self).__init__(*args, **kwargs)
+        self.main_fields = main_fields or []
+        self.main_query = main_query or {}
+
+    def build_query(self, **kwargs):
+        """Build the elasticsearch query."""
+        search_index_prefix = current_app.config['SEARCH_INDEX_PREFIX'].strip('-')
+        es_index = self.index.format(search_index_prefix, kwargs.get("event_type"))
+        es_doc_type = self.doc_type.format(kwargs.get("event_type")) if self.doc_type else ''
+        agg_query = Search(using=self.client,
+                           index=es_index,
+                           doc_type=es_doc_type)[0:0]
+
+        query_q = json.dumps(self.main_query)
+        for _field in self.main_fields:
+            query_q = query_q.replace(
+                "@{}".format(_field), kwargs.get(_field, ""))
+
+        query_q = query_q.replace(
+            "@time_zone", current_app.config['STATS_WEKO_DEFAULT_TIMEZONE']
+        )
+        query_q = json.loads(query_q)
+        if kwargs.get("must_not"):
+            query_q['query']['bool']['must_not'] = json.loads(kwargs.get('must_not'))
+        else:
+            del query_q['query']['bool']['must_not']
+        agg_query.update_from_dict(query_q)
+        return agg_query
+
+    def run(self, start_date=None, end_date=None, **kwargs):
+        """Run the query."""
+        if kwargs['new_items']:
+            kwargs['start_date'] = start_date
+            kwargs['end_date'] = end_date
+        else:
+            start_date = self.extract_date(start_date) if start_date else None
+            end_date = self.extract_date(end_date) if end_date else None
+            self.validate_arguments(start_date, end_date, **kwargs)
+
+            kwargs['start_date'] = start_date.isoformat()
+            kwargs['end_date'] = end_date.isoformat()
+        agg_query = self.build_query(**kwargs)
+
+        query_result = agg_query.execute().to_dict()
+        return query_result

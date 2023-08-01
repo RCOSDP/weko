@@ -5,6 +5,8 @@ import pytest
 from mock import patch
 from invenio_accounts.testutils import login_user_via_session
 
+from weko_schema_ui.api import WekoSchema
+
 
 # class OAISchemaSettingView(BaseView):
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_admin.py::TestOAISchemaSettingView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
@@ -21,12 +23,12 @@ class TestOAISchemaSettingView():
         "id, status_code",
         [
         (0, 403), # contributor
-        (1, 200), # repoadmin
+        (1, 403), # repoadmin
         (2, 200), # sysadmin
         (3, 403), # comadmin
         (4, 403), # generaluser
         (5, 403), # original role
-        (6, 200), # original role + repoadmin
+        (6, 403), # original role + repoadmin
         (7, 403), # no role
     ],
     )
@@ -48,12 +50,12 @@ class TestOAISchemaSettingView():
         "id, status_code",
         [
         (0, 403), # contributor
-        (1, 200), # repoadmin
+        (1, 403), # repoadmin
         (2, 200), # sysadmin
         (3, 403), # comadmin
         (4, 403), # generaluser
         (5, 403), # original role
-        (6, 200), # original role + repoadmin
+        (6, 403), # original role + repoadmin
         (7, 403), # no role
     ],
     )
@@ -78,18 +80,21 @@ class TestOAISchemaSettingView():
         "id, status_code",
         [
         (0, 403), # contributor
-        (1, 200), # repoadmin
-        (2, 200), # sysadmin
+        (1, 403), # repoadmin
+        (2, 302), # sysadmin
         (3, 403), # comadmin
         (4, 403), # generaluser
         (5, 403), # original role
-        (6, 200), # original role + repoadmin
+        (6, 403), # original role + repoadmin
         (7, 403), # no role
     ],
     )
-    def test_delete_acl(self,app,client,users,id,status_code):
-        url = url_for('schemasettings.delete',pid=None)
-        login_user_via_session(client,email=users[id]["email"])
+    def test_delete_acl(self, app, client, users, db_oaischema, id, status_code):
+        login_user_via_session(client, email=users[id]["email"])
+        schema_obj = WekoSchema.get_record_by_name('oai_dc_mapping')
+        _id = str(schema_obj.id)
+
+        url = url_for('schemasettings.delete', pid=_id)
         res = client.get(url)
         assert res.status_code == 405
         

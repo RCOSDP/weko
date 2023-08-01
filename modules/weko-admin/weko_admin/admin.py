@@ -31,7 +31,7 @@ import ipaddress
 from datetime import datetime, timedelta
 
 from flask import abort, current_app, flash, jsonify, make_response, \
-    redirect, render_template, request, url_for
+    redirect, render_template, request, url_for 
 from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.fields import QuerySelectField
@@ -40,6 +40,7 @@ from flask_admin.helpers import get_redirect_target
 from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_mail import Attachment
+from flask_wtf import FlaskForm,Form
 from invenio_communities.models import Community
 from invenio_db import db
 from invenio_files_rest.storage.pyfs import remove_dir_with_file
@@ -51,16 +52,134 @@ from weko_records_ui.utils import check_items_settings
 from wtforms.fields import StringField
 from wtforms.validators import ValidationError
 
+
 from .config import WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR, \
     WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR
 from .models import AdminSettings, FacetSearchSetting, Identifier, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
     RankingSettings, SearchManagement, StatisticsEmail
-from .permissions import admin_permission_factory
+from .permissions import admin_permission_factory ,superuser_access
 from .utils import get_facet_search, get_item_mapping_list, \
-    get_response_json, get_restricted_access, get_search_setting
+    get_response_json, get_restricted_access, get_search_setting, get_detail_search_list
 from .utils import get_user_report_data as get_user_report
-from .utils import package_reports, str_to_bool
+from .utils import package_reports, str_to_bool 
+from .tasks import is_reindex_running ,reindex
+
+
+class ReindexElasticSearchView(BaseView):
+
+    @expose('/', methods=['GET'])
+    @superuser_access.require(http_exception=403)
+    def index(self):
+        """ 
+        show view Maintenance/ElasticSearch 
+        
+        Returns:
+            'weko_admin/admin/reindex_elasticsearch.html'
+        """
+        try:
+            status =  self._check_reindex_is_running()
+            is_error = status.get("isError")
+            is_executing = status.get("isExecuting")
+            disabled_btn = status.get("disabled_Btn")
+
+            return self.render(
+                template=current_app.config['WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE']
+                ,isError=is_error
+                ,isExecuting=is_executing
+                ,disabled_Btn=disabled_btn 
+            )
+        except BaseException:
+            import traceback
+            estr = traceback.format_exc()
+            current_app.logger.error('Unexpected error: {}'.format( estr ))
+            return abort(500)
+
+    @expose('/reindex', methods=['POST'])
+    @superuser_access.require(http_exception=403)
+    def reindex(self):
+        """ 
+        Processing when "Executing Button" is pressed
+
+        Args:
+        is_db_to_es : boolean (GET paramater)
+            if True,  index Documents from DB data
+            if False, index Documents from ES data itself
+
+        Returns:
+            responce json text and responce code
+
+        Todo:
+        if you change this codes or operating, please keep in mind Todo of the method "elasticsearch_reindex"
+        in .utils.py .
+        """
+
+        
+        try:
+            ## exclusion check
+            status =  self._check_reindex_is_running()
+            is_error = status.get("isError")
+            is_executing = status.get("isExecuting")
+            if is_error:
+                return jsonify({"error" : _('haserror')}) , 400
+            if is_executing:
+                return jsonify({"error" : _('executing...')}) , 400
+
+            is_db_to_es=request.args.get('is_db_to_es') == 'true'
+            # execute in celery task
+            res = reindex.apply_async(args=(is_db_to_es,))
+            res_output = res.get() #wait until celery task finish
+            current_app.logger.info(res_output)
+            return jsonify({"responce" : _('completed')}), 200
+
+        except BaseException:
+            import traceback
+            estr = traceback.format_exc()
+            current_app.logger.error('Unexpected error: {}'.format( estr ))
+            AdminSettings.update(current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS'] 
+            , dict({current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']:True}))
+            return jsonify({"error" : estr }), 500
+            
+    @expose('/is_reindex_running', methods=['GET'])
+    @superuser_access.require(http_exception=403)
+    def check_reindex_is_running(self):
+        """
+        Monitor whether the reindex process is running/error is occurred
+        by Celery task and admin_settings
+
+        Returns:
+            str : View state json text
+                isError      : boolean
+                isExecuting  : boolean
+                disabled_Btn : boolean
+            
+        """
+        try:
+            return jsonify(self._check_reindex_is_running())
+        except BaseException:
+            import traceback
+            estr = traceback.format_exc()
+            current_app.logger.error('Unexpected error: {}'.format( estr ))
+            return abort(500)
+
+    def _check_reindex_is_running(self):
+        """
+        Monitor whether the reindex process is running/error is occurred
+        by Celery task and admin_settings
+        """
+        ELASTIC_REINDEX_SETTINGS = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS']
+        HAS_ERRORED = current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']
+
+        admin_setting = AdminSettings.get(ELASTIC_REINDEX_SETTINGS,False)
+        is_error = admin_setting.get(HAS_ERRORED)
+        is_executing = is_reindex_running()
+        result = dict({
+            "isError": is_error
+            ,"isExecuting": is_executing
+            ,"disabled_Btn": is_error or is_executing 
+        })
+        return result
+
 
 
 # FIXME: Change all setting views' path to be under settings/
@@ -269,6 +388,12 @@ class ReportView(BaseView):
                                 {
                                     "field": "path"
                                 }
+                            },
+                            {
+                                "terms":
+                                {
+                                    "publish_status": ["0", "1"]
+                                }
                             }
                         ]
                     }
@@ -463,16 +588,18 @@ class StatsSettingsView(BaseView):
 class LogAnalysisSettings(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
-        if request.method == 'POST':
+        form = FlaskForm(request.form)
+        if request.method == 'POST' and form.validate():
             crawler_lists, new_ip_addresses = self.parse_form_data(
                 request.form)
             try:
                 LogAnalysisRestrictedIpAddress.update_table(new_ip_addresses)
                 LogAnalysisRestrictedCrawlerList.update_or_insert_list(
                     crawler_lists)
+                flash(_('Successfully Changed Settings.'))
             except Exception as e:
                 current_app.logger.error(
-                    'Could not save restricted data: ', e)
+                    'Could not save restricted data: {}'.format(e))
                 flash(_('Could not save data.'), 'error')
 
         # Get most current restricted addresses/user agents
@@ -484,7 +611,7 @@ class LogAnalysisSettings(BaseView):
                     "WEKO_ADMIN_DEFAULT_CRAWLER_LISTS"])
                 shared_crawlers = LogAnalysisRestrictedCrawlerList.get_all()
         except Exception as e:
-            current_app.logger.error(_('Could not get restricted data: '), e)
+            current_app.logger.error(_('Could not get restricted data: %s'), e)
             flash(_('Could not get restricted data.'), 'error')
             restricted_ip_addresses = []
             shared_crawlers = []
@@ -492,7 +619,8 @@ class LogAnalysisSettings(BaseView):
         return self.render(
             current_app.config["WEKO_ADMIN_LOG_ANALYSIS_SETTINGS_TEMPLATE"],
             restricted_ip_addresses=restricted_ip_addresses,
-            shared_crawlers=shared_crawlers
+            shared_crawlers=shared_crawlers,
+            form = form
         )
 
     def parse_form_data(self, raw_data):
@@ -521,7 +649,8 @@ class RankingSettingsView(BaseView):
 
     @expose('/', methods=['GET', 'POST'])
     def index(self):
-        if request.method == 'POST':
+        f = FlaskForm(request.form)
+        if request.method == 'POST' and f.validate():
             try:
                 form = request.form.get('submit', None)
                 if form == 'save_ranking_settings':
@@ -599,7 +728,8 @@ class RankingSettingsView(BaseView):
             new_item_period=new_item_period,
             statistical_period=statistical_period,
             display_rank=display_rank,
-            rankings=rankings
+            rankings=rankings,
+            form=f
         )
 
 
@@ -669,7 +799,7 @@ class SearchSettingsView(BaseView):
                 jfy['status'] = 201
                 jfy['message'] = 'Search setting was successfully updated.'
             except BaseException as e:
-                current_app.logger.error('Could not save search settings', e)
+                current_app.logger.error('Could not save search settings: {}'.format(e))
                 jfy['status'] = 500
                 jfy['message'] = 'Failed to update search setting.'
             return make_response(jsonify(jfy), jfy['status'])
@@ -684,7 +814,7 @@ class SearchSettingsView(BaseView):
                 lists=lists,
             )
         except BaseException as e:
-            current_app.logger.error('Could not save search settings', e)
+            current_app.logger.error('Could not save search settings: {}'.format(e))
             abort(500)
             # flash(_('Unable to change search settings.'), 'error')
 
@@ -728,7 +858,7 @@ class SiteLicenseSettingsView(BaseView):
                 jfy['status'] = 201
                 jfy['message'] = 'Site license was successfully updated.'
             except BaseException as ex:
-                current_app.logger.error('Failed to update site license', ex)
+                current_app.logger.error('Failed to update site license: {}'.format(ex))
                 jfy['status'] = 500
                 jfy['message'] = 'Failed to update site license.'
             return make_response(jsonify(jfy), jfy['status'])
@@ -743,7 +873,7 @@ class SiteLicenseSettingsView(BaseView):
                 current_app.config['WEKO_ADMIN_SITE_LICENSE_TEMPLATE'],
                 result=json.dumps(result))
         except BaseException as e:
-            current_app.logger.error('Could not save site license settings', e)
+            current_app.logger.error('Could not save site license settings {}'.format(e))
             abort(500)
 
 
@@ -888,6 +1018,8 @@ class SiteInfoView(BaseView):
 
 class IdentifierSettingView(ModelView):
     """Pidstore Identifier admin view."""
+    # use flask-wtf CSRF protection
+    form_base_class = Form
 
     can_create = True
     can_edit = True
@@ -1091,6 +1223,7 @@ class IdentifierSettingView(ModelView):
         return form
 
     def _get_community_list(self):
+        query_data = []
         try:
             query_data = Community.query.all()
             query_data.insert(0, Community(id='Root Index'))
@@ -1166,6 +1299,7 @@ class FacetSearchSettingView(ModelView):
             return redirect(return_url)
         facet_search = get_facet_search()
         facet_search.update({'mapping_list': get_item_mapping_list()})
+        facet_search.update({'detail_condition': get_detail_search_list()})
         return self.render(
             current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
             data=json.dumps(facet_search),
@@ -1179,6 +1313,7 @@ class FacetSearchSettingView(ModelView):
             return redirect(return_url)
         facet_search = get_facet_search(id=id)
         facet_search.update({'mapping_list': get_item_mapping_list()})
+        facet_search.update({'detail_condition': get_detail_search_list()})
         return self.render(
             current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
             data=json.dumps(facet_search),
@@ -1193,6 +1328,7 @@ class FacetSearchSettingView(ModelView):
             return redirect(return_url)
         facet_search = get_facet_search(id=id)
         facet_search.update({'mapping_list': get_item_mapping_list()})
+        #facet_search.update({'detail_condition': get_detail_search_list()})
         return self.render(
             current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
             data=json.dumps(facet_search),
@@ -1368,6 +1504,16 @@ facet_search_adminview = dict(
     endpoint='facet-search'
 )
 
+reindex_elasticsearch_adminview = {
+    'view_class': ReindexElasticSearchView,
+    'kwargs': {
+        'category': _('Maintenance'),
+        'name': _('ElasticSearch Index'),
+        'endpoint': 'reindex_es'
+    }
+}
+
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -1385,5 +1531,6 @@ __all__ = (
     'site_info_settings_adminview',
     'restricted_access_adminview',
     'identifier_adminview',
-    'facet_search_adminview'
+    'facet_search_adminview',
+    'reindex_elasticsearch_adminview'
 )

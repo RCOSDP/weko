@@ -24,14 +24,17 @@ import json
 import re
 import sys
 from datetime import datetime
+from datetime import timezone
 from functools import partial
 
 from elasticsearch_dsl.query import Bool, Q
 from flask import current_app, request
 from flask_security import current_user
+from flask_babelex import get_timezone
 from invenio_communities.models import Community
 from invenio_records_rest.errors import InvalidQueryRESTError
 from weko_index_tree.api import Indexes
+from weko_index_tree.utils import get_user_roles
 from werkzeug.datastructures import MultiDict
 
 from . import config
@@ -60,10 +63,16 @@ def get_permission_filter(index_id: str = None):
         List: Query command.
 
     """
+    is_admin, roles = get_user_roles()
+    if is_admin:
+        pub_status = ["0", "1"]
+    else:
+        pub_status = ["0"]
     is_perm = search_permission.can()
-    match = Q("match", publish_status="0")
+    status = Q("terms", publish_status=pub_status)
     version = Q("match", relation_version_is_last="true")
-    rng = Q("range", **{"publish_date": {"lte": "now/d"}})
+
+    rng = Q("range", **{"publish_date": {"lte": "now/d","time_zone":str(get_timezone())}})
     term_list = []
     mst = []
     is_perm_paths = Indexes.get_browsing_tree_paths()
@@ -77,38 +86,40 @@ def get_permission_filter(index_id: str = None):
             if index_id in is_perm_indexes:
                 should_path.append(Q("terms", path=index_id))
 
-            mst.append(match)
+            mst.append(status)
             mst.append(rng)
             terms = Q("bool", should=should_path)
         else:  # In case search_type is keyword or index
             if index_id in is_perm_indexes:
                 term_list.append(index_id)
 
-            mst.append(match)
+            mst.append(status)
             mst.append(rng)
             terms = Q("terms", path=term_list)
     else:
-        mst.append(match)
+        mst.append(status)
         mst.append(rng)
         terms = Q("terms", path=is_perm_indexes)
 
     mut = []
 
     if is_perm:
-        user_id, result = check_admin_user()
+        user_id, result = check_permission_user()
 
         if result:
-            shuld = [
-                Q("match", weko_creator_id=user_id),
-                Q("match", weko_shared_id=user_id),
-            ]
+            user_terms = Q("terms", publish_status=["0", "1"])
+            creator_user_match = Q("match", weko_creator_id=user_id)
+            shared_user_match = Q("match", weko_shared_id=user_id)
+            shuld = []
+            shuld.append(Q("bool", must=[user_terms, creator_user_match]))
+            shuld.append(Q("bool", must=[user_terms, shared_user_match]))
             shuld.append(Q("bool", must=mst))
             mut.append(Q("bool", should=shuld, must=[terms]))
             mut.append(Q("bool", must=version))
     else:
         mut = mst
         mut.append(terms)
-        base_mut = [match, version]
+        base_mut = [status, version]
         mut.append(Q("bool", must=base_mut))
 
     return mut, is_perm_paths
@@ -652,18 +663,13 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         # multi keywords search filter
         mkq = _get_detail_keywords_query()
 
-        # detail search
         if mkq:
+            # details search
             mst.extend(mkq)
-            q = _get_search_qs_query(qs)
 
-            if q:
-                mst.append(q)
-        else:
-            # Full Text Search
-            if qstr:
-                q_s = _get_file_content_query(qstr)
-                mst.append(q_s)
+        if qstr:
+            q_s = _get_file_content_query(qstr)
+            mst.append(q_s)
 
         return Q("bool", must=mst) if mst else Q()
 
@@ -684,18 +690,13 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         # multi keywords search filter
         mkq = _get_detail_keywords_query()
 
-        # detail search
         if mkq:
+            # details search
             mst.extend(mkq)
-            q = _get_search_qs_query(qs)
 
-            if q:
-                mst.append(q)
-        else:
-            # Full Text Search
-            if qstr:
-                q_s = _get_file_content_query(qstr)
-                mst.append(q_s)
+        if qstr:
+            q_s = _get_file_content_query(qstr)
+            mst.append(q_s)
 
         return Q("bool", must=mst) if mst else Q()
 
@@ -893,7 +894,9 @@ def item_path_search_factory(self, search, index_id=None):
                 post_filter = query_q["post_filter"]
 
                 if mut[0].get("bool"):
-                    post_filter["bool"] = mut[0]["bool"]
+                    mst = mut[0]["bool"]["must"]
+                    mst.append({"bool": {"should":  mut[0]["bool"]["should"]}})
+                    post_filter["bool"] = {"must": mst}
                 else:
                     post_filter["bool"] = {"must": mut}
 
@@ -920,12 +923,18 @@ def item_path_search_factory(self, search, index_id=None):
                             )
 
                         query_q["query"]["bool"]["must"].append(
-                            {"bool": {"should": div_indexes}}
+                            {"bool": {"should": div_indexes},
+                                "bool": {"must": [{"terms": {"publish_status": ["0", "1"]}}]}}
                         )
                     else:
-                        query_q["query"]["bool"]["must"].append(
-                            {"terms": {"path": child_idx}}
-                        )
+                        query_q["query"]["bool"]["must"].append({
+                            "bool": {
+                                "must": [
+                                    {"terms": {"publish_status": ["0", "1"]}},
+                                    {"terms": {"path": child_idx}}
+                                ]
+                            }
+                        })
 
                     query_q = json.dumps(query_q).replace("@idxchild", child_idx_str)
                     query_q = json.loads(query_q)
@@ -1001,12 +1010,18 @@ def item_path_search_factory(self, search, index_id=None):
                     )
                     div_indexes.append({"terms": {"path": child_idx[_right:_left]}})
                 query_not_q["query"]["bool"]["must"].append(
-                    {"bool": {"should": div_indexes}}
+                    {"bool": {"should": div_indexes},
+                     "bool": {"must": [{"terms": {"publish_status": ["0", "1"]}}]}}
                 )
             else:
-                query_not_q["query"]["bool"]["must"].append(
-                    {"terms": {"path": child_idx}}
-                )
+                query_not_q["query"]["bool"]["must"].append({
+                    "bool": {
+                        "must": [
+                            {"terms": {"publish_status": ["0", "1"]}},
+                            {"terms": {"path": child_idx}}
+                        ]
+                    }
+                })
 
             query_not_q["aggs"]["path"]["aggs"].update(
                 get_item_type_aggs(search._index[0])
@@ -1017,7 +1032,9 @@ def item_path_search_factory(self, search, index_id=None):
                 post_filter = query_not_q["post_filter"]
 
                 if mut[0].get("bool"):
-                    post_filter["bool"] = mut[0]["bool"]
+                    mst = mut[0]["bool"]["must"]
+                    mst.append({"bool": {"should":  mut[0]["bool"]["should"]}})
+                    post_filter["bool"] = {"must": mst}
                 else:
                     post_filter["bool"] = {"must": mut}
 
@@ -1102,9 +1119,9 @@ def item_path_search_factory(self, search, index_id=None):
     return search, urlkwargs
 
 
-def check_admin_user():
+def check_permission_user():
     """
-    Check administrator role user.
+    Check role user.
 
     :return: result
     """
@@ -1120,7 +1137,6 @@ def check_admin_user():
 
         for lst in list(current_user.roles or []):
 
-            # if is administrator
             if lst.name == users[2]:
                 result = True
 
@@ -1204,6 +1220,7 @@ def item_search_factory(
             query_must_param.append({"exists": {"field": "path"}})
         if query_must_param:
             query_q["query"]["bool"]["must"] += query_must_param
+        query_q["query"]["bool"]["must_not"] = [{"match": {"publish_status": "-1"}}]
         return query_q
 
     query_q = _get_query(start_date, end_date, list_index_id)

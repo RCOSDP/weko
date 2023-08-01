@@ -1,116 +1,311 @@
 {#
-  # This file is part of WEKO3.
-  # Copyright (C) 2017 National Institute of Informatics.
-  #
-  # WEKO3 is free software; you can redistribute it and/or modify it
-  # under the terms of the MIT License; see LICENSE file for more details.
-  #}
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#}
 <!DOCTYPE html>
-<html {% if html_css_classes %} class="{{ html_css_classes|join(' ') }}"{% endif %} lang="{{ current_i18n.locale.language|safe }}" dir="{{ current_i18n.locale.text_direction }}">
-  <head>
-    {%- block head %}
-    {%- block head_meta %}
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    {%- if google_scholar_meta %}
-        {%- for metadata in google_scholar_meta %}
-    <meta name="{{ metadata.name }}" content="{{ metadata.data }}">
-        {%- endfor %}
-    {%- endif %}
-    {%- if google_dataset_meta %}
-    <script type="application/ld+json">{% autoescape false %}{{ google_dataset_meta }}{% endautoescape %}</script>
-    {%- endif %}
-    {%- if description %}<meta name="description" content="{{ description }}" />{% endif %}
-    {%- if keywords %}<meta name="keywords" content="{{ keywords }}" />{% endif %}
-    {%- if config.get('THEME_GOOGLE_SITE_VERIFICATION', None) %}
-      {%- for google_id in config.THEME_GOOGLE_SITE_VERIFICATION %}
-    <meta name="google-site-verification" content="{{google_id}}"/>
-      {%- endfor %}
-    {%- endif %}
-    {%- endblock head_meta %}
-    {%- from "weko_theme/macros/site_info.html" import site_info %}
-      {{ site_info() }}
-    {%- block head_links %}
-<!--    <link rel="shortcut icon" href="{{ config.get('WEKO_SITE_INFO').favicon }}"/>-->
-    {%- if keywords %}<link rel="canonical" href="{{ canonical_url }}"/>{% endif %}
-    {%- block head_links_langs %}
-      {%- if alternate_urls %}
-        {%- for alt_ln, alternate_url in alternate_urls.items() %}
-    <link rel="alternate" hreflang="{{ alt_ln }}" href="{{ alternate_url }}"/>
-        {%- endfor %}
-      {%- endif %}
-    {%- endblock head_links_langs %}
-    {%- block head_apple_icons %}
-    {%- for size in [144, 114, 72, 57] %}
-      {%- set icon_name = 'apple-touch-icon-%d-precomposed.png' | format(size) %}
-    <link rel="apple-touch-icon-precomposed" sizes="{{ size }}x{{ size }}" href="{{ url_for('static', filename=icon_name) }}"/>
-    {%- endfor %}
-    {%- endblock head_apple_icons %}
-    {%- endblock head_links %}
-    {%- block header %}
+<html {% if html_css_classes %} class="{{ html_css_classes|join(' ') }}" {% endif %}
+  lang="{{ current_i18n.locale.language|safe }}" dir="{{ current_i18n.locale.text_direction }}">
 
-    {% endblock header %}
-    {%- block css %}
-    {% assets "weko_theme_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-    {% assets "weko_theme_css_bootstrap" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
+<head>
+  {%- block head %}
+  {%- block head_meta %}
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {%- if google_scholar_meta %}
+  {%- for metadata in google_scholar_meta %}
+  <meta name="{{ metadata.name }}" content="{{ metadata.data }}">
+  {%- endfor %}
+  {%- endif %}
+
+
+  {%- if google_dataset_meta %}
+  <script type="application/ld+json">{% autoescape false %}{{ google_dataset_meta }}{% endautoescape %}</script>
+  {%- endif %}
+  {%- if description %}
+  <meta name="description" content="{{ description }}" />{% endif %}
+  {%- if keywords %}
+  <meta name="keywords" content="{{ keywords }}" />{% endif %}
+  {%- if config.get('THEME_GOOGLE_SITE_VERIFICATION', None) %}
+  {%- for google_id in config.THEME_GOOGLE_SITE_VERIFICATION %}
+  <meta name="google-site-verification" content="{{google_id}}" />
+  {%- endfor %}
+  {%- endif %}
+  {%- endblock head_meta %}
+  {%- from "weko_theme/macros/site_info.html" import site_info %}
+  {{ site_info() }}
+  {%- block head_links %}
+  <!--    <link rel="shortcut icon" href="{{ config.get('WEKO_SITE_INFO').favicon }}"/>-->
+  {%- if keywords %}
+  <link rel="canonical" href="{{ canonical_url }}" />{% endif %}
+  {%- block head_links_langs %}
+  {%- if alternate_urls %}
+  {%- for alt_ln, alternate_url in alternate_urls.items() %}
+  <link rel="alternate" hreflang="{{ alt_ln }}" href="{{ alternate_url }}" />
+  {%- endfor %}
+  {%- endif %}
+  {%- endblock head_links_langs %}
+  {%- block head_apple_icons %}
+  {%- for size in [144, 114, 72, 57] %}
+  {%- set icon_name = 'apple-touch-icon-%d-precomposed.png' | format(size) %}
+  <link rel="apple-touch-icon-precomposed" sizes="{{ size }}x{{ size }}"
+    href="{{ url_for('static', filename=icon_name) }}" />
+  {%- endfor %}
+  {%- endblock head_apple_icons %}
+  {%- endblock head_links %}
+  {%- block header %}
+
+  {% endblock header %}
+  {%- block css %}
+  {% assets "weko_theme_css" %}
+  <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css_bootstrap" %}
+  <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+  <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
-    <!--    <link href="{{ url_for('static', filename='css/weko_theme/styling.css') }}" rel="stylesheet">-->
-    {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-    {% assets "weko_theme_css_widget" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-    {% assets "weko_admin_quill_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-    {%- endblock css %}
-    <!-- start tracking code -->
-    {%- block trackingcode %}{% include config.THEME_TRACKINGCODE_TEMPLATE %}
-    {%- endblock trackingcode %}
-    <!-- end tracking code -->
-    {%- endblock head %}
-  </head>
-  <body {% if body_css_classes %} class="{{ body_css_classes|join(' ') }}"{% endif %}{% if g.ln %} lang="{{ g.ln.split('_', 1)[0]|safe }}"{% if rtl_direction %} {{ rtl_direction|safe }}{% endif %}{% endif %} itemscope itemtype="http://schema.org/WebPage" data-spy="scroll" data-target=".scrollspy-target">
-    {%- block body %}
-    {%- block browserupgrade %}
-    <!--[if lt IE 8]>
+  <!--    <link href="{{ url_for('static', filename='css/weko_theme/styling.css') }}" rel="stylesheet">-->
+  {% assets "weko_theme_css_buttons" %}
+  <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css_widget" %}
+  <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_admin_quill_css" %}
+  <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {%- endblock css %}
+  <!-- start tracking code -->
+  {%- block trackingcode %}{% include config.THEME_TRACKINGCODE_TEMPLATE with context %}
+  {%- endblock trackingcode %}
+  <!-- end tracking code -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  {%- endblock head %}
+</head>
+
+<body {% if body_css_classes %} class="{{ body_css_classes|join(' ') }}" {% endif %}{% if g.ln %}
+  lang="{{ g.ln.split('_', 1)[0]|safe }}" {% if rtl_direction %} {{ rtl_direction|safe }}{% endif %}{% endif %}
+  itemscope itemtype="http://schema.org/WebPage" data-spy="scroll" data-target=".scrollspy-target">
+  {%- if config.get('ENABLE_COOKIE_CONSENT', False) %}
+  <script type="application/javascript">
+    var klaroConfig = {
+      version: 2,
+      elementID: 'klaro',
+      styling: {
+        theme: ['dark', 'bottom', 'wide'],
+      },
+      noAutoLoad: false,
+      htmlTexts: true,
+      embedded: false,
+      groupByPurpose: true,
+      storageMethod: 'cookie',
+      cookieName: 'klaro',
+      cookieExpiresAfterDays: 365,
+      default: false,
+      mustConsent: false,
+      acceptAll: true,
+      hideDeclineAll: true,
+      hideLearnMore: false,
+      noticeAsModal: false,
+      poweredBy: 'https://github.com/RCOSDP/weko',
+      translations: {
+        en: {
+          privacyPolicyUrl: '/sitepolicy',
+          acceptAll: "Accept all",
+          acceptSelected: "Accept selected",
+          save: "Save",
+          privacyPolicy: {
+            name: "Privacy policy",
+            text: "To learn more, please read our {privacyPolicy}.",
+          },
+          close: "Close",
+          consentModal: {
+            description:
+              "This website uses third-party applications. To protect and manage your privacy you can review and control these apps here.",
+            title: "Services we would like to use",
+
+          },
+          consentNotice: {
+            description: "By using this website, you agree to the use of cookies as described in our {privacyPolicy}.",
+            learnMore: "Let me choose",
+          },
+          ok: "That's ok",
+          poweredBy: "Powered by Klaro",
+          purposeItem: {
+            service: "service",
+            services: "services"
+          },
+          purposes: {
+            analytics: {
+              description: "Analytics",
+              title: "Analytics"
+            },
+            jairocloud: {
+              description: "JAIRO Cloud",
+              title: "JAIRO Cloud"
+            },
+          },
+          service: {
+            purpose: "purpose",
+            purposes: "purposes",
+            required: {
+              title: "required"
+            },  
+          },
+        },
+        ja: {
+          privacyPolicyUrl: '/sitepolicy',
+          acceptAll: "すべて同意",
+          acceptSelected: "選択して同意",
+          save: "保存",
+          privacyPolicy: {
+            name: "サイトポリシー",
+            text: "詳細は {privacyPolicy} をご確認ください。",
+          },
+          consentModal: {
+            description:
+              "当サイトでは、より良いサービスを提供するため、クッキーおよびサードパーティ製のアプリケーションを利用しています。以下の設定からクッキー設定を制御できます。",
+            title: "クッキー設定",
+            
+          },
+          consentNotice: {
+            description: "当サイトでは、より良いサービスを提供するため、クッキーを利用しています。クッキーの使用に同意いただける場合は「同意」ボタンをクリックし、クッキーポリシーについては「詳細を見る」をクリックしてください。詳しくは当サイトの {privacyPolicy} をご確認ください。",
+            learnMore: "詳細を見る",
+          },
+          contextualConsent:{
+            description: "サードパティ製アプリケーションを利用しています。",
+            acceptOnce: "一時的に同意する"
+          },
+          ok: "同意",
+          poweredBy: "Powered by Klaro",
+          purposeItem: {
+            service: "service",
+            services: "services"
+          },
+          purposes: {
+            analytics: {
+              description: "分析",
+              title: "分析"
+            },
+            jairocloud: {
+              description: "JAIRO Cloudサービスの品質向上目的で利用します。",
+              title: "JAIRO Cloud"
+            },
+          },
+          service: {
+            purpose: "purpose",
+            purposes: "purposes",
+            required: {
+              title: "required"
+            },  
+          },
+        },
+     },
+      // Services categorization settings
+      services: [
+      {
+        name: 'jairocloud',
+        default: true,
+        title: 'Google Analytics',
+        purposes: ['jairocloud'],
+        callback: function (consent, service) {
+          console.log(
+            'User consent for service ' + service.name + ': consent=' + consent
+          );
+        },
+        //contextualConsentOnly: true,
+        required: true,
+        optOut: false,
+        onlyOnce: true,
+      },
+        {
+          name: 'google-analytics',
+          default: false,
+          title: 'Google Analytics',
+          purposes: ['analytics'],
+          callback: function (consent, service) {
+            console.log(
+              'User consent for service ' + service.name + ': consent=' + consent
+            );
+          },
+          //contextualConsentOnly: true,
+          required: false,
+          optOut: false,
+          onlyOnce: true,
+        },
+        {
+          name: 'addthis',
+          default: false,
+          title: 'Addthis',
+          purposes: ['analytics'],
+          callback: function (consent, service) {
+            console.log(
+              'User consent for service ' + service.name + ': consent=' + consent
+            );
+          },
+          required: false,
+          optOut: false,
+          onlyOnce: true,
+        },
+      ],
+    };
+
+  </script>
+  <!-- Styling for the consent pop-up -->
+  <link rel="stylesheet" href="https://cdn.kiprotect.com/klaro/v0.7.16/klaro.min.css" />
+  <!-- Klaro Consent Pop-up Library -->
+  <script type="text/javascript" src="https://cdn.kiprotect.com/klaro/v0.7.16/klaro.js"></script>
+  <div id="klaro"></div>
+  {%- endif %}
+
+  {%- block body %}
+  {%- block browserupgrade %}
+  <!--[if lt IE 8]>
       <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
     <![endif]-->
-    {%- endblock browserupgrade %}
-    {%- block body_inner %}
-    {%- if page %}
-        <div id="widget-page-id" hidden>{{ page.id }}</div>
-    {%- endif %}
-    {%- if not community_id %}
-    <div class="lds-ring-background hidden">
-      <div class="lds-ring"></div>
+  {%- endblock browserupgrade %}
+  {%- block body_inner %}
+  {%- if page %}
+  <div id="widget-page-id" hidden>{{ page.id }}</div>
+  {%- endif %}
+  {%- if not community_id %}
+  <div class="lds-ring-background hidden">
+    <div class="lds-ring"></div>
+  </div>
+  <div id="page_body" class="grid-stack" {%- if render_widgets is not none %}style="display: None;" {%- endif %}>
+    {%- block page_header %}
+    {% include config.THEME_HEADER_TEMPLATE %}
+    {%- endblock page_header %}
+    <div id="main_contents">
+      {%- endif%}
+      <input type="hidden" id="current_language" value="{{ current_i18n.language }}" />
+      {%- block page_body %}
+      {%- endblock page_body %}
+      {%- if not community_id and not community %}
     </div>
-    <div id="page_body" class="grid-stack" {%- if render_widgets is not none %}style="display: None;"{%- endif %}>
-      {%- block page_header %}
-        {% include config.THEME_HEADER_TEMPLATE %}
-      {%- endblock page_header %}
-      <div id="main_contents">
-    {%- endif%}
-    <input type="hidden" id="current_language" value="{{ current_i18n.language }}" />
-    {%- block page_body %}
-    {%- endblock page_body %}
-    {%- if not community_id and not community %}
-      </div>
-      {% if render_header_footer %}
-        <div id="main_footer" class="hidden">
+    {% if render_header_footer %}
+    <div id="main_footer" class="hidden">
       {% else %}
-      <div id="main_footer" {%- if render_widgets or page %}class="hidden"{%- endif %}>
-      {%- endif %}
+      <div id="main_footer" {%- if render_widgets or page %}class="hidden" {%- endif %}>
+        {%- endif %}
         {%- block page_footer %}
-          {% include config.THEME_FOOTER_TEMPLATE %}
+        {% include config.THEME_FOOTER_TEMPLATE %}
         {%- endblock page_footer %}
       </div>
     </div>
     {%- endif%}
+
+
+
     {%- endblock body_inner %}
     {%- block javascript %}
-{% include config.THEME_JAVASCRIPT_TEMPLATE %}
-{% assets "weko_theme_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% include config.THEME_JAVASCRIPT_TEMPLATE %}
+    {% assets "weko_theme_js" %}
+    <script src="{{ ASSET_URL }}"></script>{% endassets %}
+
 
 
 
@@ -118,5 +313,6 @@
 
     {%- endblock body %}
 
-  </body>
+</body>
+
 </html>

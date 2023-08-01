@@ -263,8 +263,9 @@ def soft_delete(recid):
                 rec = RecordMetadata.query.filter_by(
                     id=ver.object_uuid).first()
                 dep = WekoDeposit(rec.json, rec)
-                dep['path'] = []
-                dep.indexer.update_path(dep, update_revision=False)
+                #dep['path'] = []
+                dep['publish_status'] = '-1'
+                dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
                 FeedbackMailList.delete(ver.object_uuid)
                 dep.remove_feedback_mail()
                 for i in range(len(dep.files)):
@@ -321,7 +322,8 @@ def restore(recid):
                 rec = RecordMetadata.query.filter_by(
                     id=ver.object_uuid).first()
                 dep = WekoDeposit(rec.json, rec)
-                dep.indexer.update_path(dep, update_revision=False)
+                dep['publish_status'] = '0'
+                dep.indexer.update_es_data(dep, update_revision=False, field='publish_status')
                 dep.commit()
             pids = PersistentIdentifier.query.filter_by(
                 object_uuid=ver.object_uuid)
@@ -618,7 +620,8 @@ def is_show_email_of_creator(item_type_id):
 
     is_hide = item_type_show_email(item_type_id)
     is_display = item_setting_show_email()
-    return not is_hide and not is_display
+    
+    return not is_hide and is_display
 
 
 def replace_license_free(record_metadata, is_change_label=True):
@@ -1185,7 +1188,7 @@ def display_oaiset_path(record_metadata):
     record_metadata['_oai']['sets'] = index_paths
 
 
-def get_google_scholar_meta(record):
+def get_google_scholar_meta(record, record_tree=None):
     """
     _get_google_scholar_meta [make a google scholar metadata]
 
@@ -1193,6 +1196,7 @@ def get_google_scholar_meta(record):
 
     Args:
         record ([type]): [description]
+        record_tree (etree): Return value of getrecord method
 
     Returns:
         [type]: [description]
@@ -1210,12 +1214,16 @@ def get_google_scholar_meta(record):
 
     if '_oai' not in record and 'id' not in record['_oai']:
         return
-    recstr = etree.tostring(
-        getrecord(
-            identifier=record['_oai'].get('id'),
-            metadataPrefix='jpcoar',
-            verb='getrecord'))
-    et = etree.fromstring(recstr)
+    if record_tree is None:
+        recstr = etree.tostring(
+            getrecord(
+                identifier=record['_oai'].get('id'),
+                metadataPrefix='jpcoar',
+                verb='getrecord'))
+        et = etree.fromstring(recstr)
+    else:
+        et = record_tree
+
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     if mtdata is None:
         return
@@ -1276,8 +1284,7 @@ def get_google_scholar_meta(record):
     res.append({'name': 'citation_abstract_html_url', 'data': record_url})
     return res
 
-
-def get_google_detaset_meta(record):
+def get_google_detaset_meta(record,record_tree=None):
     """
     _get_google_detaset_meta [summary]
 
@@ -1285,6 +1292,7 @@ def get_google_detaset_meta(record):
 
     Args:
         record ([type]): [description]
+        record_tree (etree): Return value of getrecord method
 
     Returns:
         [type]: [description]
@@ -1301,13 +1309,15 @@ def get_google_detaset_meta(record):
 
     if '_oai' not in record and 'id' not in record['_oai']:
         return
-        
-    recstr = etree.tostring(
-        getrecord(
-            identifier=record['_oai'].get('id'),
-            metadataPrefix='jpcoar',
-            verb='getrecord'))
-    et = etree.fromstring(recstr)
+    if record_tree is None:
+        recstr = etree.tostring(
+            getrecord(
+                identifier=record['_oai'].get('id'),
+                metadataPrefix='jpcoar',
+                verb='getrecord'))
+        et = etree.fromstring(recstr)
+    else:
+        et = record_tree
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     if mtdata is None:
         return
@@ -1425,8 +1435,8 @@ def get_google_detaset_meta(record):
                 '@type': 'Place',
                 'geo': {
                     '@type': 'GeoCoordinates',
-                    'latitude': point_longitude.text,
-                    'longitude': point_latitude.text,
+                    'latitude': point_latitude.text,
+                    'longitude': point_longitude.text,
                 }
             })
 

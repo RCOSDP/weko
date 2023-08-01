@@ -10,6 +10,7 @@ import pytest
 import json
 from mock import patch, MagicMock, Mock
 from datetime import datetime
+
 from weko_gridlayout.utils import (
     get_widget_type_list,
     delete_item_in_preview_widget_item,
@@ -645,3 +646,25 @@ def test_main_design_has_main_widget(db_register):
 # def compress_widget_response(response):
 # def delete_widget_cache(repository_id, page_id=None):
 # def validate_upload_file(community_id: str):
+
+
+class TestWidgetBucket:
+    # def __init__(self):
+    # def initialize_widget_bucket(self):
+    #         location = Location.get_default()
+    #                         default_storage_class=storage_class)
+    # def __validate(self, file_stream, file_name, community_id="0", file_size=0):
+    # def save_file(self, file_stream, file_name: str, mimetype: str,
+    
+    # def get_file(self, file_name, community_id=0):
+    # .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_utils.py::TestWidgetBucket::test_get_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
+    def test_get_file(self,app,widget_upload):
+        w = WidgetBucket()
+        obj = widget_upload["obj"]
+        key = widget_upload["key"]
+        assert key=='0_test.png'
+        with app.test_request_context():
+            ret = w.get_file("test.png")
+            assert ret.status_code==200
+            assert ret.headers['Content-length'] == str(obj.file.size)
+        

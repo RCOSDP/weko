@@ -297,7 +297,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     }
     $http({
       method: 'GET',
-      url: '/get_child_list/' + $rootScope.index_id_q + '?time=' + currentTime,
+      url: '/get_child_list/' + $rootScope.index_id_q,
       headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
       child_list = response.data;
@@ -311,18 +311,11 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $scope.sort_index_list = function (data_list) {
     let temp_key_list = []
     $scope.sorted_child_list = []
-    if (child_list.length == 0) {
-      for (var j = 1; j < data_list.length; j++) {
-        $scope.sorted_child_list.push(data_list[j]);
-      }
-    }
-    else {
-      for (var i = 0; i < child_list.length; i++) {
-        for (var j = 0; j < data_list.length; j++) {
-          if (temp_key_list.indexOf(data_list[j].key) == -1 && child_list[i] == data_list[j].key.split('/').pop()) {
-            temp_key_list.push(data_list[j].key);
-            $scope.sorted_child_list.push(data_list[j]);
-          }
+    for (var i = 0; i < child_list.length; i++) {
+      for (var j = 0; j < data_list.length; j++) {
+        if (temp_key_list.indexOf(data_list[j].key) == -1 && child_list[i] == data_list[j].key.split('/').pop()) {
+          temp_key_list.push(data_list[j].key);
+          $scope.sorted_child_list.push(data_list[j]);
         }
       }
     }
@@ -342,7 +335,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     }
     $http({
       method: 'GET',
-      url: '/get_path_name_dict/' + path_str + '?time=' + currentTime,
+      url: '/get_path_name_dict/' + path_str,
       headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
       $rootScope.vm.invenioSearchResults.aggregations.path.buckets[0][0]['path_name_dict'] = response.data;
@@ -355,7 +348,47 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $scope.$on('invenio.search.finished', function (evt) {
     $scope.getPathName();
     $rootScope.display_comment_jounal();
+    if(window.location.pathname != '/' &&
+      window.facetSearchFunctions && window.facetSearchFunctions.useFacetSearch()) {
+        // Apply the search results to faceted items except for the first search result.
+        let search = new URLSearchParams(window.location.search);
+        if(search.get('search_type') == 2){
+          window.facetSearchFunctions.resetFacetData(evt.targetScope.vm.invenioSearchResults.aggregations.aggregations[0]);
+        }else {
+          window.facetSearchFunctions.resetFacetData(evt.targetScope.vm.invenioSearchResults.aggregations);
+        }
+        
+    }
   });
+
+  /**
+   * This process is performed when searching without loading the full screen.
+   * In this process, the search is reflected only in the search results,
+   * but in the event [invenio.search.finished] after the search,
+   * the search results are also reflected in the facet items.
+   * 
+   * @param {URLSearchParams} search Search Conditions.
+   */
+  $rootScope.reSearchInvenio = (search) => {
+
+    //TODO PAGE と TimeStampを入れ替える。
+    search.set('page','1');
+    search.set('size', $scope.vm.invenioSearchArgs.size);
+    search.set('sort', $scope.vm.invenioSearchArgs.sort);
+    search.set('timestamp',Date.now().toString());
+    window.history.pushState(null,document.title,"/search?" + search);
+    
+    let url = search.get('search_type') == 2 ? "/api/index/" : "/api/records/";
+
+    $rootScope.$apply(function() {
+      $rootScope.vm.invenioSearchCurrentArgs.url = url;
+      $rootScope.vm.invenioSearchArgs.page = 1;
+      $rootScope.vm.invenioSearchLoading = true;
+      $rootScope.vm.invenioSearchHiddenParams = [];
+    })
+  }
+  window.invenioSearchFunctions = {};
+  window.invenioSearchFunctions.reSearchInvenio = $scope.reSearchInvenio;
 }
 
 // Item export controller
@@ -477,7 +510,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     let request_url = '';
 
     if (search_type == "2") {
-      request_url = '/api/index/?page=1&size=9999&search_type=' + search_type + '&q=' + q + "&time=" + currentTime;
+      request_url = '/api/index/?page=1&size=9999&search_type=' + search_type + '&q=' + q;
     } else {
       if (search_type === null) {
         search_type = "0";
@@ -485,7 +518,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
       if (q === null) {
         q = "";
       }
-      request_url = '/api/records/?page=1&size=9999&search_type=' + search_type + '&q=' + q + "&time=" + currentTime;
+      request_url = '/api/records/?page=1&size=9999&search_type=' + search_type + '&q=' + q;
     }
 
     let search_results = []

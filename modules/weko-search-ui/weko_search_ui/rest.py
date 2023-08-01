@@ -46,6 +46,7 @@ from invenio_records_rest.views import (
     need_record_permission,
     pass_record,
 )
+from invenio_records_rest.facets import terms_condition_filter, range_filter
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
 from webargs import fields
@@ -70,6 +71,17 @@ def create_blueprint(app, endpoints):
         __name__,
         url_prefix="",
     )
+    
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+        current_app.logger.debug("weko_search_ui dbsession_clean: {}".format(exception))
+        if exception is None:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+        db.session.remove()
+    
 
     for endpoint, options in (endpoints or {}).items():
         if "record_serializers" in options:
@@ -185,7 +197,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         from weko_admin.utils import get_facet_search_query
 
         page = request.values.get("page", 1, type=int)
-        size = request.values.get("size", 20, type=int)
+        size = request.values.get("size", 20, type=int) 
         is_search = request.values.get("is_search", 0 ,type=int ) #toppage and search_page is 1
         community_id = request.values.get("community")
         params = {}
@@ -207,15 +219,26 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         query = request.values.get("q")
         if query:
             urlkwargs["q"] = query
-
+        
         # Execute search
         weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
+        from weko_admin.utils import get_title_facets
+        titles, order, uiTypes, isOpens, displayNumbers, searchConditions = get_title_facets()
+        current_app.logger.warning(search)
         for param in params:
             query_key = weko_faceted_search_mapping[param]
-            search = search.post_filter({"terms": {query_key: params[param]}})
-
+            if query_key == 'temporal':
+                range_value = params[param][0].split('--')
+                search = search.post_filter({"range": {"date_range1": {"gte": range_value[0], "lte": range_value[1]}}})
+            else:
+                if searchConditions[param]  == 'AND':
+                    q_list = []
+                    for value in params[param]:
+                        q_list.append({ "term": {query_key: value}})
+                    search = search.post_filter({"bool": {"must": q_list}})
+                else: 
+                    search = search.post_filter({"terms": {query_key: params[param]}})
         search_result = search.execute()
-
         # Generate links for prev/next
         urlkwargs.update(
             size=size,
@@ -313,7 +336,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 private_count, public_count = count_items(_child_indexes)
                 current_idx["date_range"]["pub_cnt"] = public_count
                 current_idx["date_range"]["un_pub_cnt"] = private_count
-                nlst.append(current_idx)
+                if p.path in is_perm_paths:
+                    nlst.append(current_idx)
         else:
             for p in paths:
                 m = 0
@@ -351,7 +375,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 private_count, public_count = count_items(_child_indexes)
                 current_idx["date_range"]["pub_cnt"] = public_count
                 current_idx["date_range"]["un_pub_cnt"] = private_count
-                nlst.append(current_idx)
+                if p.path in is_perm_paths:
+                    nlst.append(current_idx)
         agp.clear()
         # process index tree image info
         if len(nlst):
@@ -404,6 +429,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     hit["_source"]["pageEnd"] = []
         except Exception as ex:
             current_app.logger.error(ex)
+
         return self.make_response(
             pid_fetcher=self.pid_fetcher,
             search_result=rd,

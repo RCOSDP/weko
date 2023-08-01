@@ -188,12 +188,32 @@ msgstr ""
 msgid "OpenClose Close"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:67
 msgid "DisplayNumber Validation1"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:68
 msgid "DisplayNumber Validation2"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
+msgid "UiType"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+msgid "Search Condition"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+msgid "Search Condition or"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:66
+msgid "Search Condition and"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:69
+msgid "NameEN Validation"
 msgstr ""
 
 #: weko_admin/admin.py:1210 weko_admin/admin.py:1237 weko_admin/admin.py:1246
@@ -1572,3 +1592,46 @@ msgstr ""
 msgid "Update"
 msgstr ""
 
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "reindex item_index"
+msgstr "アイテムインデックスの再作成"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "reindex item"
+msgstr "アイテムの再インデックス"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "execute"
+msgstr "実行"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "Maintenance"
+msgstr "メンテナンス"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "ElasticSearch Index"
+msgstr "インデックス再作成"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "waiting..."
+msgstr "実行可能"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "executing..."
+msgstr "実行中..."
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "haserror"
+msgstr "エラー発生中につき実行できません"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "validationMsg1"
+msgstr "実行モードが選ばれていません。"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "confirmMessage"
+msgstr "本処理の実行にはかなりの時間がかかることが予想されます。インデックスの再作成処理を実行してよいですか？"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "completed"
+msgstr "処理が完了しました。"

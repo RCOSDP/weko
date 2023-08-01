@@ -24,35 +24,31 @@ import os
 import pytest
 from mock import MagicMock, PropertyMock
 
+from invenio_oaiharvester.errors import InvenioOAIHarvesterConfigNotFound
+
 from invenio_oaiharvester.utils import check_or_create_dir, create_file_name, \
     get_identifier_names, identifier_extraction_from_string, \
-    record_extraction_from_file, record_extraction_from_string, write_to_dir
+    record_extraction_from_file, record_extraction_from_string, write_to_dir,get_oaiharvest_object
 
 
-def test_identifier_extraction(app):
-    """Test extracting identifier from OAI XML."""
-    with app.app_context():
-        xml_sample = ("<record><test></test>"
-                      "<identifier>identifier1</identifier></record>")
-        result = identifier_extraction_from_string(
-            xml_sample, oai_namespace=""
-        )
-
-        assert result == "identifier1"
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 
 
-def test_identifier_extraction_with_namespace(app):
-    """Test extracting identifier from OAI XML."""
-    with app.app_context():
-        xml_sample = ("<OAI-PMH xmlns='http://www.openarchives.org/OAI/2.0/'>"
-                      "<record><test></test>"
-                      "<identifier>identifier1</identifier></record>"
-                      "</OAI-PMH>")
-        result = identifier_extraction_from_string(xml_sample)
-
-        assert result == "identifier1"
-
-
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_utils.py::test_identifier_extraction_from_string -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+def test_identifier_extraction_from_string(app):
+    # without namespace, node is not none
+    xml_sample = ("<record><test></test>"
+                    "<identifier>identifier1</identifier></record>")
+    result = identifier_extraction_from_string(xml_sample,oai_namespace="")
+    assert result == "identifier1"
+    
+    # with namespaces, node is none
+    xml_sample = ("<OAI-PMH xmlns='http://www.openarchives.org/OAI/2.0/'>"
+                    "<record><test></test></record>"
+                    "</OAI-PMH>")
+    result = identifier_extraction_from_string(xml_sample)
+    assert result == None
+    
 def test_records_extraction_without_namespace(app):
     """Test extracting records from OAI XML without a namespace."""
     with app.app_context():
@@ -110,13 +106,25 @@ def test_identifier_filter():
     assert get_identifier_names([]) == []
     assert get_identifier_names(None) == []
 
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_utils.py::test_get_oaiharvest_object -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+def test_get_oaiharvest_object(app,sample_config):
+    result = get_oaiharvest_object(sample_config)
+    assert result.name == sample_config
+    assert result.baseurl == "http://export.arxiv.org/oai2"
+    
+    name = "not_exist_config"
+    with pytest.raises(InvenioOAIHarvesterConfigNotFound) as e:
+        result = get_oaiharvest_object(name)
+    error = e.value
+    assert str(error) == "Unable to find OAIHarvesterConfig obj with name not_exist_config."
+    
 
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_utils.py::test_check_or_create_dir -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 def test_check_or_create_dir(app, tmpdir):
     """oaiharvest - testing dir creation."""
     with app.app_context():
         check_or_create_dir(app.instance_path)
-        check_or_create_dir(tmpdir.dirname + 'foo')
-
+        check_or_create_dir(os.path.join(tmpdir.dirname, 'foo'))
 
 def test_write_to_dir(app, tmpdir):
     """oaiharvest - testing dir creation."""

@@ -1001,6 +1001,7 @@ def ranking():
     page, render_widgets = get_design_layout(
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
+    
     rankings = get_ranking(settings)
 
     x = rankings.get('most_searched_keywords')
@@ -1192,9 +1193,11 @@ def get_authors_prefix_settings():
     if author_prefix_settings is not None:
         results = []
         for prefix in author_prefix_settings:
+            name = prefix.name
             scheme = prefix.scheme
             url = prefix.url
             result = dict(
+                name=name,
                 scheme=scheme,
                 url=url
             )
@@ -1270,3 +1273,14 @@ def check_record_doi_indexes(pid_value='0'):
         })
 
     return jsonify({'code': 0})
+
+@blueprint.teardown_request
+@blueprint_api.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_items_ui dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

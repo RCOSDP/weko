@@ -25,6 +25,7 @@ from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
 from flask_menu import register_menu
+from invenio_db import db
 
 from .api import current_userprofile
 from .forms import EmailProfileForm, ProfileForm, VerificationForm, \
@@ -170,3 +171,15 @@ def profile_form_factory():
             obj=current_userprofile,
             prefix='profile', )
         return form
+
+@blueprint.teardown_request
+@blueprint_ui_init.teardown_request
+@blueprint_api_init.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_user_profiles dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

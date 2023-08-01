@@ -29,6 +29,7 @@ from flask import Blueprint, current_app, jsonify, make_response, request, \
     session
 from flask_login import current_user
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
+from invenio_db import db
 
 from .api import Indexes
 from .config import WEKO_INDEX_TREE_RSS_COUNT_LIMIT, \
@@ -93,7 +94,7 @@ def get_rss_data():
     es_data = hits.get('hits')
     item_id_list = list(map(itemgetter('_id'), es_data))
     idx_tree_full_ids = generate_path(Indexes.get_recursive_tree(index_id))
-    hidden_items = find_hidden_items(item_id_list, idx_tree_full_ids)
+    hidden_items = find_hidden_items(item_id_list, idx_tree_full_ids, True)
 
     rss_data = []
     for es_item in es_data:
@@ -178,3 +179,14 @@ def create_index():
     except Exception as e:
         current_app.logger.error(e)
         return make_response(str(e), 400)
+
+@blueprint.teardown_request
+@blueprint_api.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_index_tree dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

@@ -189,6 +189,8 @@ WEKO_ITEMS_UI_MULTIPLE_APPROVALS = True
 
 WEKO_ITEMS_UI_EXPORT_TMP_PREFIX = 'weko_export_'
 
+WEKO_ITEMS_UI_INDEX_PATH_SPLIT = '///'
+
 WEKO_ITEMS_UI_SAVE_FREQUENCY = 600000
 """Save once every millisecond."""
 
@@ -199,3 +201,7 @@ WEKO_ITEMS_UI_RANKING_DEFAULT_SETTINGS = {
     'display_rank': 10,
     'rankings': {"new_items": False, "most_reviewed_items": False, "most_downloaded_items": False, "most_searched_keywords": False, "created_most_items_user": False}
 }
+
+WEKO_ITEMS_UI_RANKING_BUFFER = 100
+
+WEKO_ITEMS_UI_SEARCH_RANK_KEY_FILTER = ['']

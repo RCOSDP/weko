@@ -17,6 +17,9 @@ import os
 import shutil
 import tempfile
 import pytest
+import io
+from PIL import Image
+from uuid import UUID
 from mock import patch, MagicMock
 from flask import Flask
 from flask_admin import Admin
@@ -28,10 +31,14 @@ from tests.helpers import create_record, json_data
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.testutils import create_test_user, login_user_via_session
 from invenio_access.models import ActionUsers
+from invenio_files_rest import InvenioFilesREST
+from invenio_files_rest.models import ObjectVersion,Bucket, Location
 from invenio_access import InvenioAccess
 from invenio_db import InvenioDB, db as db_
 from invenio_accounts.models import User, Role
+from invenio_communities.models import Community
 
+from weko_redis.redis import RedisConnection
 from weko_records.models import ItemTypeProperty
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records.api import Mapping
@@ -81,15 +88,28 @@ def base_app(instance_path):
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         TESTING=True,
+        SERVER_NAME="TEST_SERVER",
         SEARCH_INDEX_PREFIX='test-',
         INDEXER_DEFAULT_DOC_TYPE='testrecord',
         SEARCH_UI_SEARCH_INDEX='tenant1-weko',
         SECRET_KEY='SECRET_KEY',
+        CACHE_REDIS_DB='0',
+        CACHE_TYPE='0',
+        WEKO_GRIDLAYOUT_BUCKET_UUID='61531203-4104-4425-a51b-d32881eeab22',
+        FILES_REST_DEFAULT_STORAGE_CLASS="S",
+        FILES_REST_STORAGE_CLASS_LIST={
+            "S": "Standard",
+            "A": "Archive",
+        },
+        FILES_REST_DEFAULT_QUOTA_SIZE=None,
+        FILES_REST_DEFAULT_MAX_FILE_SIZE=None,
+        FILES_REST_OBJECT_KEY_MAX_LEN=255,
     )
     Babel(app_)
     InvenioDB(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
+    InvenioFilesREST(app_)
     #WekoAdmin(app_)
     app_.register_blueprint(blueprint)
     app_.register_blueprint(blueprint_api)
@@ -223,7 +243,7 @@ def widget_item(db):
             "is_enabled": True,
             "is_deleted": False,
             "locked": False,
-            "is_main_layout": True,
+            # "is_main_layout": True,
             "locked_by_user": None,
             "multiLangSetting": {
                 "en": {
@@ -458,3 +478,73 @@ def item_type(db):
     )
     db.session.commit()
     return item_type
+
+
+@pytest.fixture()
+def user(app, db):
+    """Create a example user."""
+    return create_test_user(email='test@test.org')
+
+
+@pytest.fixture()
+def communities(app, db, user, indices):
+    """Create some example communities."""
+    user1 = db_.session.merge(user)
+    ds = app.extensions['invenio-accounts'].datastore
+    r = ds.create_role(name='superuser', description='1234')
+    ds.add_role_to_user(user1, r)
+    ds.commit()
+    db.session.commit()
+
+    comm0 = Community.create(community_id='comm1', role_id=r.id,
+                             id_user=user1.id, title='Title1',
+                             description='Description1',
+                             root_node_id=33)
+    db.session.add(comm0)
+
+    return comm0
+
+
+@pytest.fixture
+def redis_connect(app):
+    redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+    return redis_connection
+
+@pytest.fixture()
+def location(app, db):
+    """Create default location."""
+    tmppath = tempfile.mkdtemp()
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name="local", uri=tmppath, default=True)
+        db.session.add(loc)
+    db.session.commit()
+    return location
+
+@pytest.fixture
+def widget_upload(app,db,location):
+    bucket_id = app.config['WEKO_GRIDLAYOUT_BUCKET_UUID']
+    bucket_id = UUID(bucket_id)
+    storage_class = app.config[
+                'FILES_REST_DEFAULT_STORAGE_CLASS']
+    location = Location.get_default()
+    bucket = Bucket(id=bucket_id,
+                            location=location,
+                            default_storage_class=storage_class)
+    db.session.add(bucket)
+    
+            
+    img = Image.new("L", (128, 128))
+    img_bytes = io.BytesIO()
+    
+    key = "{0}_{1}".format(0,"test.png")
+    img.save(img_bytes, format='PNG')
+    img_bytes.seek(0)
+    obj = ObjectVersion.create(
+            bucket, key, stream=img_bytes,
+            mimetype="image/png"
+                    )
+    db.session.add(obj)
+    db.session.commit()
+    return {"obj":obj,"key":key}
+                

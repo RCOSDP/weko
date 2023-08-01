@@ -1,3 +1,5 @@
+import pytest
+
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_WekoBibTexSerializer.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
 
 
@@ -88,20 +90,43 @@ def test_bibtexfields(app,db,db_oaischema):
 #     def __get_dates(dates):
 #     def __get_identifier(identifier_type, identifier_types_data):
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_WekoBibTexSerializer.py::test_wekobibtexserializer -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
-def test_wekobibtexserializer(records):
+def test_wekobibtexserializer(app, records):
     from weko_schema_ui.serializers.WekoBibTexSerializer import WekoBibTexSerializer
+    from weko_schema_ui.serializers.wekoxml import WekoXMLSerializer
+
+    app.config['WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME'] = 'jpcoar_mapping'
+
     indexer, results = records
     record = results[0]['record']
     pid = results[0]['recid']
     serializer = WekoBibTexSerializer()
     assert isinstance(serializer,WekoBibTexSerializer)
     ret = serializer.serialize(pid,record)
-    assert ret==('@inproceedings{oai:weko3.example.org:00000001,\n'
-                 ' author = {情報, 太郎 and Joho, Taro and 情報, 太郎 and Joho, Taro and 情報, 太郎 and '
-                 'Joho, Taro},\n'
+    assert ret==('@misc{oai:weko3.example.org:00000001,\n'
+                 ' author = {情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and xxxxxxx and zzzzzzz and 情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and zzzzzzz and 情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and zzzzzzz},\n'
+                 ' month = {Jun, Jun, },\n'
+                 ' note = {Description\n'
+                 'Description<br/>Description, 概要\n'
+                 '概要\n'
+                 '概要\n'
+                 '概要},\n'
+                 ' title = {ja_conference '
+                 'paperITEM00000009(public_open_access_open_access_simple)},\n'
+                 ' year = {2021, 2021, 2021},\n'
+                 ' yomi = {4 and xxxxxxx and xxxxxxx}\n'
+                 '}\n'
+                 '\n')
+
+    record = results[1]['record']
+    pid = results[1]['recid']
+    serializer = WekoBibTexSerializer()
+    assert isinstance(serializer,WekoBibTexSerializer)
+    ret = serializer.serialize(pid,record)
+    assert ret==('@inproceedings{oai:weko3.example.org:00000002,\n'
+                 ' author = {情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and xxxxxxx and zzzzzzz and 情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and zzzzzzz and 情報, 太郎 and ジョウホウ, タロウ and xxxxxxx and Joho, Taro and zzzzzzz},\n'
                  ' book = {Source Title},\n'
                  ' issue = {111},\n'
-                 ' month = {2021-06-30},\n'
+                 ' month = {Jun, Jun, },\n'
                  ' note = {Description\n'
                  'Description<br/>Description, 概要\n'
                  '概要\n'
@@ -112,8 +137,13 @@ def test_wekobibtexserializer(records):
                  ' title = {ja_conference '
                  'paperITEM00000009(public_open_access_open_access_simple)},\n'
                  ' volume = {1},\n'
-                 ' year = {},\n'
-                 ' yomi = {ジョウホウ, タロウ and ジョウホウ, タロウ and ジョウホウ, タロウ}\n'
+                 ' year = {2021, 2021, 2021},\n'
+                 ' yomi = {4 and xxxxxxx and xxxxxxx}\n'
                  '}\n'
                  '\n')
-    
+
+    record.update({'@export_schema_type': 'ddi'})
+    serializer = WekoXMLSerializer()
+    data = serializer.serialize(pid, record)
+    assert data
+

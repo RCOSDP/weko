@@ -24,6 +24,7 @@
 {%- block css %}
 {{ super() }}
 {% assets "workflow_datepicker_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% assets "workflow_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -149,6 +150,18 @@
 </div>
 <div class="form-inline flow-root">
   <button type="submit" id="filter_form_submit" class="btn btn-primary">{{_('Apply')}}</button>
+  {%- if current_user.is_authenticated and current_user.roles and delete_activity_log_enable == True and tab=="all"%}
+    {% set flag_1=True %}
+    {%- for role in current_user.roles %}
+       {%- if role in activitylog_roles and flag_1 == True %}
+          <button type="submit" id="filter_form_download" class="btn btn-primary">{{_('Download')}}</button>                           
+          <button type="submit" id="filter_form_clear" class="btn btn-danger">{{_('Clear')}} </button>
+          <form method="GET" name="activitylog_file_form" id="activitylog_file_form" action={{url_for('weko_workflow.download_activitylog')}}>
+          </form>
+          {% set flag_1= False %}
+       {%- endif %}
+    {%- endfor %}
+  {%- endif %}
   <div class="pull-right">
     <div class="form-group">
       <label for="page_count">{{_('Display Number')}}</label>
@@ -221,6 +234,17 @@
                 {%- endif %}
               {%- endif %}
             {%- endfor %}
+            {%- if current_user.is_authenticated and current_user.roles and delete_activity_log_enable == True and tab=="all"%}
+              {% set flag_2=True %}
+              {%- for role in current_user.roles %}
+                {%- if role in activitylog_roles and flag_2==True%}
+                  <th>
+                    <button type="input" class="btn clear-activitylog">{{_('Clear')}}</button>
+                  </th>
+                  {% set flag_2= False %}
+                {%- endif %}
+              {%- endfor %}
+            {%- endif %}
           </tr>
         {%- endfor %}
         </tbody>
@@ -456,4 +480,62 @@
       </div>
     </div>
   </div>
+</div>
+
+<div role="dialog" tabindex="-1" class="fade in modal" id='activitylogs_clear_modal'>
+  <div class="modal-dialog row popup_notice">
+    <div class="modal-content" role="document">
+      <div class="modal-header">
+        <h4 class="modal-title">{{_('Clear Confirm')}}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="container-modal">
+          <div class="row">
+            <div class="col-sm-12 col-md-12">{{ _('Deleted activities cannot be restored.') }}</div>
+            <div class="col-sm-12 col-md-12">{{ _('Are you sure you want to delete filtered activities?') }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="col text-center">
+          <button type="submit" class="btn btn-danger" id="confirm_clear_activitylogs">
+            OK
+          </button>
+          <button type="submit" class="btn btn-primary" id="cancel_clear_activitylogs">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div role="dialog" tabindex="-1" class="fade in modal" id='activitylog_clear_modal'>
+  <div class="modal-dialog row popup_notice">
+    <div class="modal-content" role="document">
+      <div class="modal-header">
+        <h4 class="modal-title">{{_('Clear Confirm')}}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="container-modal">
+          <div class="row">
+            <div class="col-sm-12 col-md-12">{{ _('Deleted activity cannot be restored.') }}</div>
+            <div class="col-sm-12 col-md-12" id="del_activity_id"></div>
+            <div class="col-sm-12 col-md-12">{{ _('Are you sure you want to delete the filtered activity?') }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="col text-center">
+          <button type="submit" class="btn btn-danger" id="confirm_clear_activitylog">
+            OK
+          </button>
+          <button type="submit" class="btn btn-primary" id="cancel_clear_activitylog">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {%- endblock page_body_main %}

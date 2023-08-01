@@ -485,7 +485,7 @@ def update_records_metadata(oai_sets: list = []):
                         is_deleted = False
                         if metadata_id in delete_records:
                             is_deleted = True
-                        deposit.indexer.update_path(
+                        deposit.indexer.update_es_data(
                             deposit,
                             update_revision=False,
                             update_oai=True,

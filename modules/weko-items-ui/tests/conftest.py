@@ -61,6 +61,8 @@ from invenio_deposit.config import (
     DEPOSIT_DEFAULT_JSONSCHEMA,
     DEPOSIT_JSONSCHEMAS_PREFIX,
 )
+from invenio_files_rest.models import Location, Bucket,ObjectVersion,FileInstance
+from invenio_records_files.api import RecordsBuckets
 from invenio_deposit.ext import InvenioDeposit, InvenioDepositREST
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.config import FILES_REST_STORAGE_CLASS_LIST
@@ -832,6 +834,30 @@ def db_records2(db,instance_path,users):
  
     yield result
 
+@pytest.fixture()
+def db_records_file(app,db,instance_path,users):
+    index_metadata = {
+        'id': 1,
+        'parent': 0,
+        'value': 'Index(public_state = True,harvest_public_state = True)'
+    }
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        ret = Indexes.create(0, index_metadata)
+        index = Index.get_index_by_id(1)
+        index.public_state = True
+        index.harvest_public_state = True
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name="local", uri=instance_path, default=True)
+        db.session.add(loc)
+    db.session.commit()
+    record_data = json_data("data/record_file/record_metadata.json")
+    item_data = json_data("data/record_file/item_metadata.json")
+    with db.session.begin_nested():
+        depid, recid,parent,doi,record, item=create_record(record_data, item_data)
+    db.session.commit()
+    
+    return depid, recid,parent,doi,record, item
 
 @pytest.fixture()
 def db_workflow(app, db, db_itemtype, users):
