@@ -20,6 +20,8 @@
 
 """Base configuration for weko-accounts."""
 
+from .rest import WekoLogin, WekoLogout
+
 WEKO_ACCOUNTS_LOGGER_ENABLED = True
 """Enable logger login activity tracking."""
 
@@ -108,3 +110,23 @@ WEKO_ACCOUNTS_REAL_IP = None # X-Real-IP > X-Forwarded-For[0] > remote_addr
 # WEKO_ACCOUNTS_REAL_IP = "x_forwarded_for" # X-Forwarded-For[first] > remote_addr
 # WEKO_ACCOUNTS_REAL_IP = "x_forwarded_for_rev" # X-Forwarded-For[last] > remote_addr
 
+WEKO_ACCOUNTS_REST_ENDPOINTS = {
+    'login': {
+        'route': '/<string:version>/login',
+        'default_media_type': 'application/json',
+    },
+    'logout': {
+        'route': '/<string:version>/logout',
+        'default_media_type': 'application/json',
+    },
+}
+
+WEKO_ACCOUNTS_LOGIN_API_VERSION = {
+    'post-v1.0': WekoLogin.post_v1
+}
+"""API version."""
+
+WEKO_ACCOUNTS_LOGOUT_API_VERSION = {
+    'post-v1.0': WekoLogout.post_v1
+}
+"""API version."""
