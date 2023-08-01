@@ -58,7 +58,7 @@ from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
-from weko_records.models import ItemType
+from weko_records.models import ItemType, ItemMetadata
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
 from weko_records_ui.models import FilePermission, InstitutionName
 from weko_redis import RedisConnection
@@ -1378,7 +1378,7 @@ def convert_record_to_item_metadata(record_metadata):
         'title': record_metadata['item_title'],
         'owner': record_metadata['owner'],
         'owners': record_metadata['owners'],
-        'created_by': record_metadata['created_by'],
+        'created_by': record_metadata['_deposit']['created_by'],
         'shared_user_ids': record_metadata['weko_shared_ids']
     }
     item_type = ItemTypes.get_by_id(record_metadata['item_type_id']).render
@@ -2143,16 +2143,18 @@ def get_item_info(item_id):
     """
     if not item_id:
         return dict()
-    try:
-        item = ItemsMetadata.get_record(id_=item_id)
-    except Exception as ex:
-        current_app.logger.exception('Cannot get item data:', ex)
-        temp = dict()
-        return temp
     item_info = dict()
-    for k, v in item.items():
-        if isinstance(v, dict):
-            item_info.update(v)
+    if ItemMetadata.query.filter_by(id=item_id).first():
+        try:
+            item = ItemsMetadata.get_record(id_=item_id)
+        except Exception as ex:
+            current_app.logger.exception('Cannot get item data:', ex)
+            temp = dict()
+            return temp
+
+        for k, v in item.items():
+            if isinstance(v, dict):
+                item_info.update(v)
     return item_info
 
 
@@ -3080,8 +3082,8 @@ def get_activity_display_info(activity_id: str):
     metadata = activity.get_activity_metadata(activity_id)
     if metadata:
         item_json = json.loads(metadata).get('metainfo')
-        owner_id = item_json.get('owner')
-        shared_user_ids = item_json.get('shared_user_ids')
+        owner_id = item_json.get('owner', -1)
+        shared_user_ids = item_json.get('shared_user_ids', [])
     else:
         owner_id = -1
         shared_user_ids = []

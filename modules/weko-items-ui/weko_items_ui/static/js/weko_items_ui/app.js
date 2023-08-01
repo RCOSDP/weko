@@ -1443,13 +1443,12 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 }
               }
             }
-            /*Add data for 'Role' in File.*/
+            /*Add data for 'Roles' in File.*/
             var roles_schema = filemeta_schema.items.properties['roles'];
             if (roles_schema) {
               if (!dataInit) {
                 dataInit = $scope.getDataInit();
               }
-              /*Add data for 'Role' in File.*/
               var role_schema_child = roles_schema.items.properties['role'];
               if (role_schema_child) {
                 // Add enum in schema.
@@ -4767,6 +4766,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
           var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
           let permission = false;
+          let error_message = 'An error ocurred while processing the user data!<br><br>';
           $scope.$broadcast('schemaFormValidate');
           if (enableFeedbackMail === 'True' && enableContributor === 'True') {
             if (!invalidFlg && $scope.is_item_owner) {
@@ -4775,10 +4775,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   permission = true;
                 }
               }).catch((msg) => {
-                $("#inputModal").html(msg);
-                $("#allModal").modal("show");
-                $scope.endLoading();
-                return false;
+                error_message = msg;
               });
             } else {
               permission = true;
@@ -4793,8 +4790,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               this.saveDataJsonCallback(item_save_uri, startLoading);
               this.saveFeedbackMailListCallback(currentActionId);
             } else {
-              var msg = 'An error ocurred while processing the user data!<br><br>'
-              $("#inputModal").html(msg);
+              $("#inputModal").html(error_message);
               $("#allModal").modal("show");
               $scope.endLoading();
               return false;

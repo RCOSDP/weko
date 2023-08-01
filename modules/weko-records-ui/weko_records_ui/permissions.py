@@ -174,10 +174,19 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     is_can = True
                 else:
                     try:
-                        date = fjson.get('accessdate')
-                        if date:
-                            pdt = to_utc(dt.strptime(date, '%Y-%m-%d'))
-                            is_can = True if dt.utcnow() >= pdt else False
+                        contents_open_date = fjson.get('accessdate')
+                        item_open_date = fjson.get('date')
+                        if contents_open_date and item_open_date and isinstance(item_open_date, list) and item_open_date[0]:
+                            contents_open_pdt = to_utc(dt.strptime(contents_open_date, '%Y-%m-%d'))
+                            adt = item_open_date[0].get('dateValue')
+                            if adt:
+                                item_open_pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
+                                if dt.utcnow() >= item_open_pdt and dt.utcnow() >= contents_open_pdt:
+                                    is_can = True
+                                else:
+                                    is_can = False
+                            else:
+                                is_can = True if dt.utcnow() >= contents_open_pdt else False
                             
                             roles = fjson.get('roles')
                             if is_can and roles and isinstance(roles, list):
