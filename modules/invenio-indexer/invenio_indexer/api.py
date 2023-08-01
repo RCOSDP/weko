@@ -193,11 +193,12 @@ class RecordIndexer(object):
         while True:
             with current_celery_app.pool.acquire(block=True) as conn:
                 # check 
-                chan = conn.channel()
-                name, b4_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
-                current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, b4_queues_cnt, consumers))
-                if b4_queues_cnt == 0:
-                    break
+                b4_queues_cnt = 0
+                with conn.channel() as chan:
+                    name, b4_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
+                    current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, b4_queues_cnt, consumers))
+                    if b4_queues_cnt == 0:
+                        break
                 consumer = Consumer(
                     connection=conn,
                     queue=self.mq_queue.name,
@@ -224,10 +225,10 @@ class RecordIndexer(object):
                         success = success + _success
                         fail = fail + _fail
                     except BulkIndexError as be:
-                        chan = conn.channel()
-                        name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
-                        current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, af_queues_cnt, consumers))
-                        success = success + (b4_queues_cnt-af_queues_cnt-len(be.errors))
+                        with conn.channel() as chan:
+                            name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
+                            current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, af_queues_cnt, consumers))
+                            success = success + (b4_queues_cnt-af_queues_cnt-len(be.errors))
                         error_ids = []
                         for error in be.errors:
                             error_ids.append(error['index']['_id'])
