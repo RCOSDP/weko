@@ -64,7 +64,7 @@ def create_blueprint(app, endpoints):
                 default_media_type=options.get('default_media_type')
             )
             blueprint.add_url_rule(
-                options.pop('route'),
+                options.get('route'),
                 view_func=view_func,
                 methods=['POST']
             )
@@ -74,7 +74,7 @@ def create_blueprint(app, endpoints):
                 default_media_type=options.get('default_media_type')
             )
             blueprint.add_url_rule(
-                options.pop('route'),
+                options.get('route'),
                 view_func=view_func,
                 methods=['POST']
             )
@@ -168,6 +168,7 @@ class WekoLogout(ContentNegotiatedMethodView):
     def post_v1(self, **kwargs):
 
         # Logout
-        logout_user()
+        if current_user.is_authenticated:
+            logout_user()
 
         return make_response('', 200)
