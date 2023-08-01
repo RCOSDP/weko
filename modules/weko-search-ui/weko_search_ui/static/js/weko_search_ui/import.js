@@ -856,6 +856,21 @@ class CheckComponent extends React.Component {
       return title.substring(0, len + 1) + '...'
     }
   }
+  create_errors(errors) {
+    let result = "";
+    if (errors[0]) {
+      
+      for(let i = 0;i < errors.length; i++) {
+        result += "ERRORS: " + errors[i];
+        if (i != errors.length -1 ){
+          result += ", ";
+        }
+      }
+    }else{
+      result = "ERRORS";
+    }
+    return result
+  }
 
   handleDownload() {
     const { list_record } = this.state
@@ -865,7 +880,7 @@ class CheckComponent extends React.Component {
         'Item Type': item.item_type_name,
         'Item Id': item.id,
         'Title': item['item_title'] ? item['item_title'] : '',
-        'Check result': item['errors'] ? 'ERRORS' + (item['errors'][0] ? ': ' + item['errors'][0] : '') : item.status === 'new' ? 'Register' : item.status === 'keep' ? 'Keep' : item.status === 'upgrade' ? 'Upgrade' : ''
+        'Check result': item['errors'] ? this.create_errors(item['errors']) : item.status === 'new' ? 'Register' : item.status === 'keep' ? 'Keep' : item.status === 'upgrade' ? 'Upgrade' : ''
       }
     })
     const data = {
@@ -1076,6 +1091,7 @@ class ResultComponent extends React.Component {
     return (
       <div className="result_container row">
         <div className="col-md-12 text-align-right">
+          <p>test</p>
           <button
             className="btn btn-primary"
             onClick={this.handleDownload}
