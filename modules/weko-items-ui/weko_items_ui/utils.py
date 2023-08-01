@@ -494,7 +494,9 @@ def parse_ranking_results(rank_type,
         title = key
     elif rank_type == 'created_most_items_user':
         url = None
-        user_info = UserProfile.get_by_userid(key)
+        user_info = None
+        if key:
+            user_info = UserProfile.get_by_userid(key)
         title = '{}'.format(user_info.username) if user_info else 'None'
 
     if rank == -1:
