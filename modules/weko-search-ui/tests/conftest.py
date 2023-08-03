@@ -1026,6 +1026,57 @@ def indices(app, db):
     }
 
 
+@pytest.fixture
+def indices2(app, db):
+    dict_list = []
+    with db.session.begin_nested():
+        testIndexA = Index(
+            index_name="A",
+            index_name_english="A",
+            browsing_role="3,-98,-99",
+            parent=0,
+            position=1,
+            public_state=True,
+            id=1
+        )
+        testIndexAC = Index(
+            index_name="C",
+            index_name_english="C",
+            browsing_role="3,-98,-99",
+            parent=1,
+            position=1,
+            public_state=True,
+            id=2
+        )
+        testIndexB = Index(
+            index_name="B",
+            index_name_english="B",
+            browsing_role="3,-98,-99",
+            parent=0,
+            position=2,
+            public_state=True,
+            id=3
+        )
+        testIndexBC = Index(
+            index_name="C",
+            index_name_english="C",
+            browsing_role="3,-98,-99",
+            parent=3,
+            position=1,
+            public_state=True,
+            id=4
+        )
+
+        db.session.add(testIndexA)
+        db.session.add(testIndexAC)
+        db.session.add(testIndexB)
+        db.session.add(testIndexBC)
+        dict_list.append(testIndexA)
+        dict_list.append(testIndexAC)
+        dict_list.append(testIndexB)
+        dict_list.append(testIndexBC)
+
+
 @pytest.fixture()
 def esindex(app, db_records):
     current_search_client.indices.delete(index="test-*")

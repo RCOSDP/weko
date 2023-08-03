@@ -35,6 +35,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from weko_deposit.api import WekoDeposit
 from weko_records.serializers.utils import get_item_type_name
+from weko_schema_ui.models import PublishStatus
 
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
@@ -2665,9 +2666,9 @@ class UpdateItem(object):
         from weko_deposit.api import WekoIndexer
         publish_status = record.get('publish_status')
         if not publish_status:
-            record.update({'publish_status': '0'})
+            record.update({'publish_status': PublishStatus.PUBLIC.value})
         else:
-            record['publish_status'] = '0'
+            record['publish_status'] = PublishStatus.PUBLIC.value
 
         record.commit()
         db.session.commit()
@@ -2675,7 +2676,7 @@ class UpdateItem(object):
         indexer = WekoIndexer()
         indexer.update_es_data(record, update_revision=False, field='publish_status')
 
-    def update_status(self, record, status='1'):
+    def update_status(self, record, status=PublishStatus.PRIVATE.value):
         r"""Record update status.
 
         :param pid: PID object.

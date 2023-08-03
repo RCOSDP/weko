@@ -39,6 +39,7 @@ from invenio_db import db
 from sqlalchemy.orm import session
 from weko_accounts.utils import roles_required
 from weko_records.models import SiteLicenseInfo
+from weko_index_tree.utils import delete_index_trees_from_redis
 from werkzeug.local import LocalProxy
 
 from .api import send_site_license_mail
@@ -76,8 +77,13 @@ blueprint_api = Blueprint(
 
 def _has_admin_access():
     """Use to check if a user has any admin access."""
-    return current_user.is_authenticated and current_admin \
-        .permission_factory(current_admin.admin.index_view).can()
+    from invenio_access.utils import get_identity
+    id = get_identity(current_user)
+    permission = current_admin.permission_factory(current_admin.admin.index_view)
+    # return (current_user.is_authenticated and current_admin \
+    #     .permission_factory(current_admin.admin.index_view).can())
+    return (current_user.is_authenticated and permission.allows(id))
+
 
 
 @blueprint.route('/session/lifetime/<int:minutes>', methods=['GET'])
@@ -201,6 +207,9 @@ def save_lang_list():
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg='Header Error')
     data = request.get_json()
+    for lang_code in [lang["lang_code"] for lang in data if not lang["is_registered"]]:
+        delete_index_trees_from_redis(lang_code)
+        
     result = update_admin_lang_setting(data)
 
     return jsonify(msg=result)

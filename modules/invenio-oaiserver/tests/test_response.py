@@ -29,7 +29,7 @@ from weko_deposit.api import WekoRecord
 from weko_records.models import ItemMetadata, ItemTypeMapping
 
 from invenio_oaiserver.models import Identify, OAISet
-from invenio_oaiserver.utils import HARVEST_PRIVATE, OUTPUT_HARVEST,datetime_to_datestamp
+from invenio_oaiserver.utils import HARVEST_PRIVATE, OUTPUT_HARVEST, PRIVATE_INDEX, datetime_to_datestamp
 
 from invenio_oaiserver.response import (
     NS_DC, NS_OAIDC, NS_OAIPMH,NS_JPCOAR,
@@ -51,8 +51,7 @@ from invenio_oaiserver.response import (
     create_files_url,
     get_identifier,
     header,
-    identify,
-    listidentifiers
+    identify
 )
 
 
@@ -65,6 +64,7 @@ NAMESPACES = {'x': NS_OAIPMH, 'y': NS_OAIDC, 'z': NS_DC}
 #    record = {"path": "example_path"}
 #    res = is_private_index(record)
 
+# def getrecord
 # .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_response.py::test_getrecord -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
 def test_getrecord(app, records, item_type, mock_execute, db, mocker):
     """Test of method which creates OAI-PMH response for verb GetRecord."""
@@ -155,19 +155,56 @@ def test_getrecord(app, records, item_type, mock_execute, db, mocker):
         mocker.patch("invenio_oaiserver.response.get_identifier",return_value=None)
         mocker.patch("weko_schema_ui.schema.cache_schema",return_value=ns)
         with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
-            # return error 1
+            # not identify
+            with patch("invenio_oaiserver.response.OaiIdentify.get_all",return_value=None):
+                res = getrecord(**kwargs)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
+
+            # output setting of identity = false 
             identify = Identify(
                 outPutSetting=False
             )
             with patch("invenio_oaiserver.response.OaiIdentify.get_all",return_value=identify):
                 res = getrecord(**kwargs)
-                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
 
-            # return error 2
+            # harvest setting of index = private
             with patch("invenio_oaiserver.response.is_output_harvest",return_value=HARVEST_PRIVATE):
                 res = getrecord(**kwargs)
-                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
 
+        # path is none
+        dummy_data = {
+            "hits": {
+                "total": 1,
+                "hits": [
+                    {
+                        "_source": {
+                            "_oai": {"id": str(records[2][0])},
+                            "_updated": "2022-01-01T10:10:10"
+                        },
+                        "_id": records[1][2].id,
+                    }
+                ]
+            }
+        }
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="GetRecord",
+            identifier=str(records[1][0])
+        )
+        with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
+            res = getrecord(**kwargs)
+            identifier = res.xpath(
+                '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
+                namespaces=NAMESPACES)
+            assert identifier == [str(records[1][0])]
+            header = res.xpath(
+                '/x:OAI-PMH/x:GetRecord/x:record/x:header[@status="deleted"]',
+                namespaces=NAMESPACES)
+            assert len(header) == 1
+
+        # publish_status = 0 (public item)
         dummy_data = {
             "hits": {
                 "total": 1,
@@ -187,9 +224,9 @@ def test_getrecord(app, records, item_type, mock_execute, db, mocker):
             verb="GetRecord",
             identifier=str(records[2][0])
         )
-        # not etree_record.get("system_identifier_doi")
-        with patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
-            with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
+        with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
+            # not etree_record.get("system_identifier_doi")
+            with patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
                 res = getrecord(**kwargs)
                 identifier = res.xpath(
                     '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
@@ -199,6 +236,18 @@ def test_getrecord(app, records, item_type, mock_execute, db, mocker):
                     '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:datestamp/text()',
                     namespaces=NAMESPACES)
                 assert datestamp == [datetime_to_datestamp(records[2][0].updated)]
+
+                # private index
+                with patch("invenio_oaiserver.response.is_output_harvest",return_value=PRIVATE_INDEX):
+                    res = getrecord(**kwargs)
+                    identifier = res.xpath(
+                        '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
+                        namespaces=NAMESPACES)
+                    assert identifier == [str(records[2][0])]
+                    header = res.xpath(
+                        '/x:OAI-PMH/x:GetRecord/x:record/x:header[@status="deleted"]',
+                        namespaces=NAMESPACES)
+                    assert len(header) == 1
 
             kwargs = dict(
                 metadataPrefix='jpcoar_1.0',
@@ -214,10 +263,119 @@ def test_getrecord(app, records, item_type, mock_execute, db, mocker):
                 assert identifier == [str(records[3][0])]
                 assert len(res.xpath('/x:OAI-PMH/x:GetRecord/x:record/x:metadata',
                                         namespaces=NAMESPACES)) == 1
+                
+                # private index
+                with patch("invenio_oaiserver.response.is_output_harvest",return_value=PRIVATE_INDEX):
+                    res = getrecord(**kwargs)
+                    assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
+        
+        # publish_status = 2 (new item)
+        dummy_data = {
+            "hits": {
+                "total": 1,
+                "hits": [
+                    {
+                        "_source": {
+                            "_oai": {"id": str(records[4][0])},
+                            "_updated": "2022-01-01T10:10:10"
+                        },
+                        "_id": records[4][2].id,
+                    }
+                ]
+            }
+        }
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="GetRecord",
+            identifier=str(records[4][0])
+        )
+        with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
+            # not etree_record.get("system_identifier_doi")
+            with patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
+                res = getrecord(**kwargs)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
+
+            kwargs = dict(
+                metadataPrefix='jpcoar_1.0',
+                verb="GetRecord",
+                identifier=str(records[4][0])
+            )
+            # etree_record.get("system_identifier_doi")
+            with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
+                res = getrecord(**kwargs)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
+
+        # publish_status = -1 (deleted item)
+        dummy_data = {
+            "hits": {
+                "total": 1,
+                "hits": [
+                    {
+                        "_source": {
+                            "_oai": {"id": str(records[4][0])},
+                            "_updated": "2022-01-01T10:10:10"
+                        },
+                        "_id": records[5][2].id,
+                    }
+                ]
+            }
+        }
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="GetRecord",
+            identifier=str(records[5][0])
+        )
+        with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
+            # not etree_record.get("system_identifier_doi")
+            with patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
+                res = getrecord(**kwargs)
+                identifier = res.xpath(
+                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
+                    namespaces=NAMESPACES)
+                assert identifier == [str(records[5][0])]
+                header = res.xpath(
+                    '/x:OAI-PMH/x:GetRecord/x:record/x:header[@status="deleted"]',
+                    namespaces=NAMESPACES)
+                assert len(header) == 1
+
+        # publish_status = 1 (private item)
+        dummy_data = {
+            "hits": {
+                "total": 1,
+                "hits": [
+                    {
+                        "_source": {
+                            "_oai": {"id": str(records[4][0])},
+                            "_updated": "2022-01-01T10:10:10"
+                        },
+                        "_id": records[6][2].id,
+                    }
+                ]
+            }
+        }
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="GetRecord",
+            identifier=str(records[6][0])
+        )
+        with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
+            # not etree_record.get("system_identifier_doi")
+            with patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
+                res = getrecord(**kwargs)
+                identifier = res.xpath(
+                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
+                    namespaces=NAMESPACES)
+                assert identifier == [str(records[6][0])]
+                header = res.xpath(
+                    '/x:OAI-PMH/x:GetRecord/x:record/x:header[@status="deleted"]',
+                    namespaces=NAMESPACES)
+                assert len(header) == 1
 
 
-def test_getrecord_header_deleted(app,records,item_type,mock_execute,db,mocker):
+def test_getrecord_future_item(app,records,item_type,mock_execute,db,mocker):
     """Test of method which creates OAI-PMH response for verb GetRecord."""
+    # publish_status = 0 (public item)
+    # pubdate is future date
     with app.app_context():
         identify = Identify(
             outPutSetting=True
@@ -289,13 +447,319 @@ def test_getrecord_header_deleted(app,records,item_type,mock_execute,db,mocker):
                 ]
             }
         }
-        with patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
-            with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
+        with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
+            with patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
                 res = getrecord(**kwargs)
                 header = res.xpath(
                     '/x:OAI-PMH/x:GetRecord/x:record/x:header[@status="deleted"]',
                     namespaces=NAMESPACES)
                 assert len(header) == 1
+            
+            with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
+                res = getrecord(**kwargs)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
+
+# def listidentifiers(**kwargs):
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_response.py::test_listidentifiers -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_listidentifiers(es_app,records,item_type,mock_execute,db,mocker):
+    with es_app.app_context():
+        identify = Identify(
+            outPutSetting=True
+        )
+        oaiset = OAISet(
+            spec="1557819692844"
+        )
+        index_metadata = {
+            "id":1557819692844,
+            "parent":0,
+            "position":0,
+            "index_name":"コンテンツタイプ (Contents Type)",
+            "index_name_english":"Contents Type",
+            "index_link_name":"",
+            "index_link_name_english":"New Index",
+            "index_link_enabled":False,
+            "more_check":False,
+            "display_no":5,
+            "harvest_public_state":True,
+            "display_format":1,
+            "image_name":"",
+            "public_state":True,
+            "recursive_public_state":True,
+            "rss_status":False,
+            "coverpage_state":False,
+            "recursive_coverpage_check":False,
+            "browsing_role":"3,-98,-99",
+            "recursive_browsing_role":False,
+            "contribute_role":"1,2,3,4,-98,-99",
+            "recursive_contribute_role":False,
+            "browsing_group":"",
+            "recursive_browsing_group":False,
+            "recursive_contribute_group":False,
+            "owner_user_id":1,
+            "item_custom_sort":{"2":1}
+        }
+        index = Index(**index_metadata)
+        mapping = Mapping.create(
+            item_type_id=item_type.id,
+            mapping={}
+        )
+        with db.session.begin_nested():
+            db.session.add(identify)
+            db.session.add(index)
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="ListIdentifiers",
+            set="1557819692844",
+        )
+        dummy_data={
+            "hits":{
+                "total": 7,
+                "hits":[
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[0][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[0][2].id,
+                    },
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[1][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[1][2].id,
+                    },
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[2][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[2][2].id,
+                    },
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[3][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[3][2].id,
+                    },
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[4][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[4][2].id,
+                    },
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[5][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[5][2].id,
+                    },
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[6][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[6][2].id,
+                    },
+                ]
+            }
+        }
+
+        class MockPagenation():
+            page = 1
+            per_page = 100
+            def __init__(self,dummy):
+                self.data = dummy
+                self.total = self.data["hits"]["total"]
+            @cached_property
+            def has_next(self):
+                return self.page * self.per_page <= self.total
+
+            @cached_property
+            def next_num(self):
+                return self.page + 1 if self.has_next else None
+            @property
+            def items(self):
+                """Return iterator."""
+                for result in self.data['hits']['hits']:
+                    if '_oai' in result['_source']:
+                        yield {
+                            'id': result['_id'],
+                            'json': result,
+                            'updated': datetime.strptime(
+                                result['_source']['_updated'][:19],
+                                '%Y-%m-%dT%H:%M:%S'
+                            ),
+                        }
+            
+        ns={"root_name": "jpcoar", "namespaces":{'': 'https://github.com/JPCOAR/schema/blob/master/1.0/',
+            'dc': 'http://purl.org/dc/elements/1.1/', 'xs': 'http://www.w3.org/2001/XMLSchema',
+            'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'xml': 'http://www.w3.org/XML/1998/namespace',
+            'dcndl': 'http://ndl.go.jp/dcndl/terms/', 'oaire': 'http://namespace.openaire.eu/schema/oaire/',
+            'jpcoar': 'https://github.com/JPCOAR/schema/blob/master/1.0/', 'dcterms': 'http://purl.org/dc/terms/',
+            'datacite': 'https://schema.datacite.org/meta/kernel-4/', 'rioxxterms': 'http://www.rioxx.net/schema/v2.0/rioxxterms/'}}
+        mocker.patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=oaiset)
+        mocker.patch("invenio_oaiserver.response.to_utc",side_effect=lambda x:x)
+        mocker.patch("weko_index_tree.utils.get_user_groups",return_value=[])
+        mocker.patch("weko_index_tree.utils.check_roles",return_value=True)
+        mocker.patch("invenio_oaiserver.response.get_identifier",return_value=None)
+        mocker.patch("weko_schema_ui.schema.cache_schema",return_value=ns)
+        with patch("invenio_oaiserver.response.get_records",return_value=MockPagenation(dummy_data)):
+            # private index
+            with patch("invenio_oaiserver.response.is_output_harvest",return_value=PRIVATE_INDEX):
+                # not etree_reocrd.get("system_identifier_doi")
+                with patch("invenio_oaiserver.response.is_exists_doi", return_value=False):
+                    res=listidentifiers(**kwargs)
+                    # total
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 6
+                    # future item
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[1]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[0][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[1][@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # path is none
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[2]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[1][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[2][@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # publish_status = 0 (public item)
+                    # has sys doi data
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[2][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3][@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # publish_status = 0 (public item)
+                    # not sys doi data
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[3][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4][@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # publish_status = -1 (delete item)
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[5][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5][@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # publish_status = 1 (private item)
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[6]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[6][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[6][@status="deleted"]', namespaces=NAMESPACES)) == 1
+
+                # etree_reocrd.get("system_identifier_doi")
+                with patch("invenio_oaiserver.response.is_exists_doi", return_value=True):
+                    res=listidentifiers(**kwargs)
+                    # total
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 1
+                    # path is none
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[1]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[1][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[1][@status="deleted"]', namespaces=NAMESPACES)) == 1
+
+            # public index
+            with patch("invenio_oaiserver.response.is_output_harvest",return_value=OUTPUT_HARVEST):
+                # not etree_reocrd.get("system_identifier_doi")
+                with patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
+                    res=listidentifiers(**kwargs)
+                    # total
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 6
+                    # future item
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[1]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[0][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[1][@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # path is none
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[2]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[1][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[2][@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # publish_status = 0 (public item)
+                    # has sys doi data
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[2][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3][@status="deleted"]', namespaces=NAMESPACES)) == 0
+                    # publish_status = 0 (public item)
+                    # not sys doi data
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[3][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4][@status="deleted"]', namespaces=NAMESPACES)) == 0
+                    # publish_status = -1 (delete item)
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[5][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5][@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # publish_status = 1 (private item)
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[6]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[6][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[6][@status="deleted"]', namespaces=NAMESPACES)) == 1
+
+                # etree_reocrd.get("system_identifier_doi")
+                with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
+                    res=listidentifiers(**kwargs)
+                    # total
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 5
+                    # path is none
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[1]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[1][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[1][@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # publish_status = 0 (public item)
+                    # has sys doi data
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[2]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[2][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[2][@status="deleted"]', namespaces=NAMESPACES)) == 0
+                    # publish_status = 0 (public item)
+                    # not sys doi data
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[3][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3][@status="deleted"]', namespaces=NAMESPACES)) == 0
+                    # publish_status = -1 (delete item)
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[5][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4][@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # publish_status = 1 (private item)
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[6][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5][@status="deleted"]', namespaces=NAMESPACES)) == 1
+
+
+        # not identify
+        with patch("invenio_oaiserver.response.OaiIdentify.get_all",return_value=None):
+            res=listidentifiers(**kwargs)
+            assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+
+        # output setting of identity = false 
+        identify = Identify(
+            outPutSetting=False
+        )
+        with patch("invenio_oaiserver.response.OaiIdentify.get_all",return_value=identify):
+            res=listidentifiers(**kwargs)
+            assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+
+        # not oaiset
+        with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=None):
+            res=listidentifiers(**kwargs)
+            assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+
+        # harvest setting of index = private
+        with patch("invenio_oaiserver.response.is_output_harvest",return_value=HARVEST_PRIVATE):
+            res=listidentifiers(**kwargs)
+            assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+
+        # not data
+        class MockResult:
+            def __init__(self):
+                pass
+            @property
+            def total(self):
+                return None
+        with patch("invenio_oaiserver.response.get_records",return_value=MockResult()):
+            res=listidentifiers(**kwargs)
+            assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+
+        # return Exception
+        dummy_data={
+            "hits":{
+                "total": 1,
+                "hits":[
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[2][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[2][2].id,
+                    }
+                ]
+            }
+        }
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="ListIdentifiers",
+        )
+        with patch("invenio_oaiserver.response.get_records",return_value=MockPagenation(dummy_data)):
+            # raise PIDDoesNotExistError
+            with patch("invenio_oaiserver.response.OAIIDProvider.get",side_effect=PIDDoesNotExistError("test pid_type","test pid_value")):
+                res=listidentifiers(**kwargs)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+            # raise NoResultFound
+            with patch("invenio_oaiserver.response.WekoRecord.get_record_by_uuid",side_effect=NoResultFound()):
+                res=listidentifiers(**kwargs)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+
 
 # .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_response.py::test_listrecords -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
 def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
@@ -350,7 +814,7 @@ def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
         )
         dummy_data={
             "hits":{
-                "total":4,
+                "total": 7,
                 "hits":[
                     {
                         "_source":{
@@ -372,6 +836,34 @@ def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
                             "_updated":"2022-01-01T10:10:10"
                         },
                         "_id":records[2][2].id,
+                    },
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[3][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[3][2].id,
+                    },
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[4][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[4][2].id,
+                    },
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[5][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[5][2].id,
+                    },
+                    {
+                        "_source":{
+                            "_oai":{"id":str(records[6][0])},
+                            "_updated":"2022-01-01T10:10:10"
+                        },
+                        "_id":records[6][2].id,
                     },
                 ]
             }
@@ -417,11 +909,101 @@ def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
         mocker.patch("invenio_oaiserver.response.get_identifier",return_value=None)
         mocker.patch("weko_schema_ui.schema.cache_schema",return_value=ns)
         with patch("invenio_oaiserver.response.get_records",return_value=MockPagenation(dummy_data)):
-            res=listrecords(**kwargs)
-            assert res.xpath("/x:OAI-PMH/x:ListRecords/x:record[1]/x:header/x:identifier/text()",namespaces=NAMESPACES) == [str(records[1][0])]
-            assert res.xpath("/x:OAI-PMH/x:ListRecords/x:record[2]/x:header/x:identifier/text()",namespaces=NAMESPACES) == [str(records[2][0])]
+            # private index
+            with patch("invenio_oaiserver.response.is_output_harvest",return_value=PRIVATE_INDEX):
+                # not etree_reocrd.get("system_identifier_doi")
+                with patch("invenio_oaiserver.response.is_exists_doi", return_value=False):
+                    res=listrecords(**kwargs)
+                    # total
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 6
+                    # future item
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[1]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[0][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[1]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # path is none
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[2]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[1][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[2]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # publish_status = 0 (public item)
+                    # has sys doi data
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[2][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # publish_status = 0 (public item)
+                    # not sys doi data
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[3][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # publish_status = -1 (delete item)
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[5][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # publish_status = 1 (private item)
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[6]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[6][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[6]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
 
-        # return error 1
+                # etree_reocrd.get("system_identifier_doi")
+                with patch("invenio_oaiserver.response.is_exists_doi", return_value=True):
+                    res=listrecords(**kwargs)
+                    # total
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 1
+                    # path is none
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[1]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[1][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[1]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
+
+            # public index
+            with patch("invenio_oaiserver.response.is_output_harvest",return_value=OUTPUT_HARVEST):
+                # not etree_reocrd.get("system_identifier_doi")
+                with patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
+                    res=listrecords(**kwargs)
+                    # total
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 6
+                    # future item
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[1]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[0][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[1]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # path is none
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[2]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[1][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[2]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # publish_status = 0 (public item)
+                    # has sys doi data
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[2][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
+                    # publish_status = 0 (public item)
+                    # not sys doi data
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[3][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
+                    # publish_status = -1 (delete item)
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[5][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # publish_status = 1 (private item)
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[6]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[6][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[6]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
+
+                # etree_reocrd.get("system_identifier_doi")
+                with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
+                    res=listrecords(**kwargs)
+                    # total
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 5
+                    # path is none
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[1]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[1][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[1]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # publish_status = 0 (public item)
+                    # has sys doi data
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[2]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[2][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[2]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
+                    # publish_status = 0 (public item)
+                    # not sys doi data
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[3][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
+                    # publish_status = -1 (delete item)
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[5][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    # publish_status = 1 (private item)
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[6][0])]
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
+
+
+        # not identify
+        with patch("invenio_oaiserver.response.OaiIdentify.get_all",return_value=None):
+            res=listrecords(**kwargs)
+            assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+
+        # output setting of identity = false 
         identify = Identify(
             outPutSetting=False
         )
@@ -429,17 +1011,17 @@ def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
             res=listrecords(**kwargs)
             assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
 
-        # return error 2
+        # not oaiset
         with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=None):
             res=listrecords(**kwargs)
             assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
 
-        # return error 3
+        # harvest setting of index = private
         with patch("invenio_oaiserver.response.is_output_harvest",return_value=HARVEST_PRIVATE):
             res=listrecords(**kwargs)
             assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
 
-        # return error 4
+        # not data
         class MockResult:
             def __init__(self):
                 pass
@@ -450,16 +1032,17 @@ def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
             res=listrecords(**kwargs)
             assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
 
+        # return Exception
         dummy_data={
             "hits":{
-                "total":1,
+                "total": 1,
                 "hits":[
                     {
                         "_source":{
-                            "_oai":{"id":str(records[0][0])},
+                            "_oai":{"id":str(records[2][0])},
                             "_updated":"2022-01-01T10:10:10"
                         },
-                        "_id":records[0][2].id,
+                        "_id":records[2][2].id,
                     }
                 ]
             }
@@ -469,35 +1052,14 @@ def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
             verb="ListRecords",
         )
         with patch("invenio_oaiserver.response.get_records",return_value=MockPagenation(dummy_data)):
-            # return error5
-            res=listrecords(**kwargs)
-            assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+            # raise PIDDoesNotExistError
             with patch("invenio_oaiserver.response.OAIIDProvider.get",side_effect=PIDDoesNotExistError("test pid_type","test pid_value")):
-                # raise PIDDoesNotExistError
                 res=listrecords(**kwargs)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+            # raise NoResultFound
             with patch("invenio_oaiserver.response.WekoRecord.get_record_by_uuid",side_effect=NoResultFound()):
-                # raise NoResultFound
                 res=listrecords(**kwargs)
-
-        dummy_data={
-            "hits":{
-                "total":1,
-                "hits":[
-                    {
-                        "_source":{
-                            "_oai":{"id":str(records[3][0])},
-                            "_updated":"2022-01-01T10:10:10"
-                        },
-                        "_id":records[3][2].id,
-                    }
-                ]
-            }
-        }
-        # not etree_reocrd.get("system_identifier_doi")
-        with patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
-            with patch("invenio_oaiserver.response.get_records",return_value=MockPagenation(dummy_data)):
-                res=listrecords(**kwargs)
-                assert res.xpath("/x:OAI-PMH/x:ListRecords/x:record[1]/x:header/x:identifier/text()",namespaces=NAMESPACES) == [str(records[3][0])]
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
 
 
 # def envelope(**kwargs):
@@ -934,203 +1496,10 @@ def test_is_private_index_by_public_list():
     public_ids = ["4","5","6"]
     result = is_private_index_by_public_list(item_path, public_ids)
     assert result == True
+
 # def set_identifier(param_record, param_rec):
 # def is_exists_doi(param_record):
-# def getrecord(**kwargs):
-# def listidentifiers(**kwargs):
-# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_response.py::test_listidentifiers -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
-def test_listidentifiers(app,db,without_oaiset_signals,mocker):
-    with app.test_request_context():
-        mocker.patch("invenio_oaiserver.response.resumption_token")
-        tree_str = \
-            '<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">'\
-            '<responseDate>2023-02-21T00:05:52Z</responseDate>'\
-            '<request verb="ListRecords" metadataPrefix="jpcoar_1.0">http://app/oai</request>'\
-            '</OAI-PMH>'
-        tree = etree.fromstring(tree_str)
-        e_element = SubElement(tree, etree.QName(NS_OAIPMH,"ListIdentifiers"))
 
-        # not identify
-        with patch("invenio_oaiserver.response.verb",return_value=(tree, e_element)):
-            result = listidentifiers()
-            error = result.xpath("//x:error",namespaces=NAMESPACES)[0]
-            assert error.attrib == {"code":"noRecordsMatch"}
-            assert error.text == "The combination of the values of the from, until, set and metadataPrefix arguments results in an empty list."
-
-        iden = Identify(
-            id=1,
-            outPutSetting=True,
-            emails="test@test.org",
-            repositoryName="test_repository",
-            earliestDatastamp=datetime(2023,1,10,10,2,33)
-        )
-        db.session.add(iden)
-        index1 = Index(
-            id=1,
-            parent=0,
-            position=1,
-            index_name_english="test_index",
-            index_link_name_english="test_index_link",
-            harvest_public_state=True,
-            public_state=True,
-            browsing_role="3,-99"
-        )
-        index2 = Index(# harvest_public_state is False
-            id=2,
-            parent=0,
-            position=2,
-            index_name_english="test_index1",
-            index_link_name_english="test_index_link1",
-            harvest_public_state=False,
-            public_state=True,
-            browsing_role="3,-99"
-        )
-        index3 = Index(# -99 in browsing_role, publis_state is False
-            id=3,
-            parent=0,
-            position=3,
-            index_name_english="test_index1",
-            index_link_name_english="test_index_link1",
-            harvest_public_state=True,
-            public_state=False,
-            browsing_role="3"
-        )
-        db.session.add_all([index1,index2,index3])
-        oaiset1 = OAISet(
-                spec="1557819692844"
-            )
-        oaiset2 = OAISet(
-            spec="1"
-        )
-        db.session.add_all([oaiset1,oaiset2])
-        db.session.commit()
-
-        tree = etree.fromstring(tree_str)
-        e_element = SubElement(tree, etree.QName(NS_OAIPMH,"ListIdentifiers"))
-
-        with patch("invenio_oaiserver.response.verb",return_value=(tree, e_element)):
-
-            # not set_obj
-            kwargs = {"set":"111111111"}
-            result = listidentifiers(**kwargs)
-            error = result.xpath("//x:error",namespaces=NAMESPACES)[0]
-            assert error.attrib == {"code":"noRecordsMatch"}
-            assert error.text == "The combination of the values of the from, until, set and metadataPrefix arguments results in an empty list."
-
-
-            with patch("invenio_oaiserver.response.is_output_harvest",return_value=HARVEST_PRIVATE):
-                kwargs = {"set":"1557819692844"}
-                result = listidentifiers(**kwargs)
-                error = result.xpath("//x:error",namespaces=NAMESPACES)[0]
-                assert error.attrib == {"code":"noRecordsMatch"}
-                assert error.text == "The combination of the values of the from, until, set and metadataPrefix arguments results in an empty list."
-
-
-            # result.total is 0, set not in kwargs
-            class not_total_response:
-                @property
-                def total(self):
-                    return 0
-            with patch("invenio_oaiserver.response.is_output_harvest",return_value=OUTPUT_HARVEST):
-                with patch("invenio_oaiserver.response.get_records",return_value=not_total_response()):
-                    result = listidentifiers()
-                    error = result.xpath("//x:error",namespaces=NAMESPACES)[0]
-                    assert error.attrib == {"code":"noRecordsMatch"}
-                    assert error.text == "The combination of the values of the from, until, set and metadataPrefix arguments results in an empty list."
-
-
-            with patch("invenio_oaiserver.response.is_output_harvest",return_value=OUTPUT_HARVEST):
-                # raise PIDDoesNotExistError
-                rec_uuid1 = uuid.uuid4()
-                recid1 = PersistentIdentifier.create('oai', "http://oai:{}".format(rec_uuid1),object_type='rec', object_uuid=rec_uuid1,status=PIDStatus.REGISTERED,pid_provider="oai")
-                class MockPagenation():
-                    @property
-                    def total(self):
-                        return 2
-                    @property
-                    def items(self):
-                        for i in range(1):
-                            yield {"id":i+1,"json":{"_source":{"_oai":{"id":recid1.pid_value}}}}
-                with patch("invenio_oaiserver.response.WekoRecord.get_record_by_uuid",side_effect=PIDDoesNotExistError("oai","test_value")):
-                    with patch("invenio_oaiserver.response.get_records",return_value=MockPagenation()):
-                        kwargs = {"set":"1557819692844"}
-                        result = listidentifiers(**kwargs)
-                        error = result.xpath("//x:error",namespaces=NAMESPACES)[0]
-                        assert error.attrib == {"code":"noRecordsMatch"}
-                        assert error.text == "The combination of the values of the from, until, set and metadataPrefix arguments results in an empty list."
-
-
-                # raise NoResultFound
-                rec_uuid2 = uuid.uuid4()
-                recid2 = PersistentIdentifier.create('oai', "http://oai:{}".format(rec_uuid2),object_type='rec', object_uuid=rec_uuid2,status=PIDStatus.REGISTERED,pid_provider="oai")
-                class MockPagenation():
-                    @property
-                    def total(self):
-                        return 2
-                    @property
-                    def items(self):
-                        for i in range(1):
-                            yield {"id":i+1,"json":{"_source":{"_oai":{"id":recid2.pid_value}}}}
-                with patch("invenio_oaiserver.response.WekoRecord.get_record_by_uuid",side_effect=NoResultFound("test_error")):
-                    with patch("invenio_oaiserver.response.get_records",return_value=MockPagenation()):
-                        kwargs = {"set":"1557819692844"}
-                        result = listidentifiers(**kwargs)
-                        error = result.xpath("//x:error",namespaces=NAMESPACES)[0]
-                        assert error.attrib == {"code":"noRecordsMatch"}
-                        assert error.text == "The combination of the values of the from, until, set and metadataPrefix arguments results in an empty list."
-            
-            
-            def create_record(data_):
-                rec_uuid = uuid.uuid4()
-                rec = RecordMetadata(id=rec_uuid,json=data_)
-                recid_oai = PersistentIdentifier.create('oai', "http://oai:{}".format(rec_uuid),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED,pid_provider="oai")
-                recid = PersistentIdentifier.create('recid', data_["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-                depid = PersistentIdentifier.create('depid', data_["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-                rel_depid = PIDRelation.create(recid,depid,3)
-                db.session.add(rel_depid)
-                parent = PersistentIdentifier.create('parent', "parent:{}".format(data_["recid"]),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-                rel = PIDRelation.create(parent, recid,2,0)
-                db.session.add(rel)
-                db.session.add(rec)
-                return rec_uuid, recid_oai
-            
-            # _is_output is HARVEST_PRIVATE
-            data = {"recid":"1","_deposit":{"id":"1"},"publish_date":"2100-11-11","publish_status":"0","path":["2"]}
-            uuid3, oai3 = create_record(data)
-            
-            # _is_output is PRIVATE_INDEX
-            data = {"recid":"2","_deposit":{"id":"2"},"publish_date":"2100-11-11","publish_status":"0"}
-            uuid4, oai4 = create_record(data)
-            
-            # else
-            data = {"recid":"3","_oai":{"sets":["1"]},"_deposit":{"id":"3"},"publish_date":"2000-11-11","publish_status":"0","path":["1"]}
-            uuid5, oai5 = create_record(data)
-            db.session.commit()
-            class MockPagenation():
-                @property
-                def total(self):
-                    return 3
-                @property
-                def items(self):
-                    data = [oai3, oai4, oai5]
-                    for i in range(len(data)):
-                        yield {"id":i+1,"json":{"_source":{"_oai":{"id":data[i].pid_value}}}}
-
-            with patch("invenio_oaiserver.response.get_records",return_value=MockPagenation()):
-                result = listidentifiers()
-                
-                headers = result.xpath("//x:ListIdentifiers/x:header",namespaces=NAMESPACES)
-                assert len(headers) == 2
-                deleted_record = headers[0]
-                assert deleted_record.attrib == {"status":"deleted"}
-                assert deleted_record.xpath("./x:identifier",namespaces=NAMESPACES)[0].text == "http://oai:"+str(uuid4)
-                
-                spec_record = headers[1]
-                assert spec_record.xpath("./x:identifier",namespaces=NAMESPACES)[0].text == "http://oai:"+str(uuid5)
-                assert spec_record.xpath("./x:setSpec",namespaces=NAMESPACES)[0].text == "1"
-
-            
-# def listrecords(**kwargs):
 # def get_error_code_msg(code=''):
 # .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_response.py::test_get_error_code_msg -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
 def test_get_error_code_msg(app):

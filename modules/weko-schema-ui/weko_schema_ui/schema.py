@@ -296,11 +296,13 @@ class SchemaTree:
                 self.item_type_mapping = mjson
                 mp = mjson.dumps()
                 if mjson:
-                    for k, v in self._record.items():
-                        if isinstance(v, dict) and mp.get(k) and k != "_oai":
-                            v.update({self._schema_name: mp.get(
-                                k).get(self._schema_name)})
+                    for k, v in mp.items():
+                        if k in self._record:
+                            self._record[k].update({self._schema_name: v.get(self._schema_name)})
+                        else:
+                            self._record[k] = {self._schema_name: v.get(self._schema_name)}
                 return _id
+
 
         # inject mappings info to record
         item_type_id = get_mapping()
@@ -484,16 +486,24 @@ class SchemaTree:
             # for ex:"subitem_1551257025236.subitem_1551257043769"
             if isinstance(list_key, list) and len(list_key) > 1:
                 key = list_key.pop(0)
-                if isinstance(atr_vm, dict) and atr_vm.get(key):
-                    for a, b in get_value_from_content_by_mapping_key(
-                            atr_vm.get(key), list_key):
-                        yield a, b
+                if isinstance(atr_vm, dict):
+                    if atr_vm.get(key):
+                        for a, b in get_value_from_content_by_mapping_key(
+                                atr_vm.get(key), list_key):
+                            yield a, b
+                    else:
+                        if list_key[-1].startswith("="):
+                            yield list_key[-1][1:], id(list_key[-1])
                 elif isinstance(atr_vm, list):
-                    for i in atr_vm:
-                        if i.get(key):
-                            for a, b in get_value_from_content_by_mapping_key(
-                                    i.get(key), list_key):
-                                yield a, b
+                    if key not in set([x for atr_ in atr_vm for x in list(atr_.keys())]):
+                        if list_key[-1].startswith("="):
+                            yield list_key[-1][1:], id(list_key[-1])
+                    else:
+                        for i in atr_vm:
+                            if i.get(key):
+                                for a, b in get_value_from_content_by_mapping_key(
+                                        i.get(key), list_key):
+                                    yield a, b
             elif isinstance(list_key, list) and len(list_key) == 1:
                 try:
                     key = list_key[0]
@@ -962,7 +972,7 @@ class SchemaTree:
                 # List or string
                 atr_v = value_item_parent.get('attribute_value')
                 # List of dict
-                atr_vm = value_item_parent.get('attribute_value_mlt')
+                atr_vm = value_item_parent.get('attribute_value_mlt',[])
                 # attr of name
                 atr_name = value_item_parent.get('attribute_name')
 
@@ -983,17 +993,26 @@ class SchemaTree:
                     set_value(mpdic, atr_v)
                     # current_app.logger.debug("mpdic:{0}".format(mpdic))
                     vlst.append(mpdic)
-                elif atr_vm and atr_name and isinstance(atr_vm, list) \
-                        and isinstance(mpdic, dict):
-                    for atr_vm_item in atr_vm:
-                        if self._ignore_list_all:
-                            remove_hide_data(atr_vm_item, key_item_parent)
-                        if self._schema_name == current_app.config[
-                                'WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME']:
-                            replace_resource_type_for_jpcoar_v1(atr_vm_item)
-                        vlst_child = get_mapping_value(mpdic, atr_vm_item,
-                                                       key_item_parent,
-                                                       atr_name)
+                elif isinstance(atr_vm, list) and isinstance(mpdic, dict):
+                    if len(atr_vm) > 0:
+                        for atr_vm_item in atr_vm:
+                            if self._ignore_list_all:
+                                remove_hide_data(atr_vm_item, key_item_parent)
+                            if self._schema_name == current_app.config[
+                                    'WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME']:
+                                replace_resource_type_for_jpcoar_v1(atr_vm_item)
+                            vlst_child = get_mapping_value(mpdic, atr_vm_item,
+                                                           key_item_parent,
+                                                           atr_name)
+                            if vlst_child[0]:
+                                vlst.extend(vlst_child)
+                    else:
+                        from weko_records.models import ItemType
+                        item_type = ItemType.query.filter_by(id=self._item_type_id).one_or_none()
+                        atr_name = item_type.schema["properties"][key_item_parent]["title"]
+                        vlst_child = get_mapping_value(mpdic, {},
+                                                           key_item_parent,
+                                                           atr_name)
                         if vlst_child[0]:
                             vlst.extend(vlst_child)
         return vlst
@@ -1867,7 +1886,7 @@ def cache_schema(schema_name, delete=False):
         try:
             schema = get_schema()
             if schema:
-                datastore.put(cache_key, json.dumps(schema))
+                datastore.put(cache_key, json.dumps(schema).encode("utf-8"))
         except BaseException:
             return get_schema()
         else:

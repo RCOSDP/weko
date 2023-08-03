@@ -38,7 +38,7 @@ from invenio_indexer.api import RecordIndexer
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy.sql.expression import case, func, literal_column
+from sqlalchemy.sql.expression import case, func, literal_column, and_
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
 
@@ -543,9 +543,9 @@ class Indexes(object):
 
     @classmethod
     @cached_index_tree_json(timeout=None,)
-    def get_index_tree(cls, pid=0):
+    def get_index_tree(cls, pid=0, lang=None):
         """Get index tree json."""
-        return get_tree_json(cls.get_recursive_tree(pid), pid)
+        return get_tree_json(cls.get_recursive_tree(pid, lang), pid)
 
     @classmethod
     def get_browsing_info(cls):
@@ -639,12 +639,12 @@ class Indexes(object):
         return tree
 
     @classmethod
-    def get_recursive_tree(cls, pid: int = 0):
+    def get_recursive_tree(cls, pid: int = 0, lang: str = None):
         """Get recursive tree."""
         with db.session.begin_nested():
-            recursive_t = cls.recs_tree_query(pid)
+            recursive_t = cls.recs_tree_query(pid, lang)
             if pid != 0:
-                recursive_t = cls.recs_root_tree_query(pid)
+                recursive_t = cls.recs_root_tree_query(pid, lang)
             qlst = [
                 recursive_t.c.pid,
                 recursive_t.c.cid,
@@ -1022,8 +1022,14 @@ class Indexes(object):
                 test_alias.parent,
                 test_alias.id,
                 rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
-                case([(func.length(test_alias.index_name) == 0, None)],
-                     else_=rec_alias.c.name + '-/-' + test_alias.index_name),
+                case(
+                    [
+                        (and_((func.length(rec_alias.c.name) > 0), (func.length(test_alias.index_name) == 0)), rec_alias.c.name + '-/-' + test_alias.index_name_english),
+                        (and_((func.length(rec_alias.c.name) == 0), (func.length(test_alias.index_name) > 0)), rec_alias.c.name_en + '-/-' + test_alias.index_name),
+                        (and_((func.length(rec_alias.c.name) > 0), (func.length(test_alias.index_name) > 0)), rec_alias.c.name + '-/-' + test_alias.index_name),
+                    ],
+                    else_=rec_alias.c.name_en + '-/-' + test_alias.index_name_english
+                ),
                 # add by ryuu at 1108 start
                 rec_alias.c.name_en + '-/-' + test_alias.index_name_english,
                 # add by ryuu at 1108 end
@@ -1040,13 +1046,14 @@ class Indexes(object):
         return recursive_t
 
     @classmethod
-    def recs_tree_query(cls, pid=0, ):
+    def recs_tree_query(cls, pid=0, lang=None):
         """
         Init select condition of index.
 
         :return: the query of db.session.
         """
-        lang = current_i18n.language
+        if lang is None:
+            lang = current_i18n.language
         if lang == 'ja':
             recursive_t = db.session.query(
                 Index.parent.label("pid"),
@@ -1164,13 +1171,14 @@ class Indexes(object):
         return recursive_t
 
     @classmethod
-    def recs_root_tree_query(cls, pid=0):
+    def recs_root_tree_query(cls, pid=0, lang=None):
         """
         Init select condition of index.
 
         :return: the query of db.session.
         """
-        lang = current_i18n.language
+        if lang is None:
+            lang = current_i18n.language
         if lang == 'ja':
             recursive_t = db.session.query(
                 Index.parent.label("pid"),
@@ -1383,7 +1391,6 @@ class Indexes(object):
 
             return result.parent_state
         except Exception as se:
-            print(se)
             current_app.logger.debug(se)
             return False
 

@@ -627,10 +627,6 @@ def test_check_created_id(app, users):
                 for s in supers:
                     if s in obj.roles:
                         super_flg = True
-                print("email:{}".format(obj.email))
-                print("id:{}".format(obj.id))
-                print("roles:{}".format(obj.roles))
-                print("super_flg:{}".format(super_flg))
 
                 # no item_type_id
                 record["item_type_id"] = ""

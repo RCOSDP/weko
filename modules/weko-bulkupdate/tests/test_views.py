@@ -17,7 +17,6 @@ def test_index(mocker):
     WekoBulkupdate(app)
     app.register_blueprint(blueprint)
     with app.app_context():
-        print(url_for("weko_bulkupdate.index"))
         with app.test_client() as client:
             mock_render = mocker.patch("weko_bulkupdate.views.render_template",return_value=make_response())
             res = client.get(url_for("weko_bulkupdate.index"))

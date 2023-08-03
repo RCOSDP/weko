@@ -39,6 +39,7 @@ from simplekv.memory.redisstore import RedisStore
 from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
 from weko_redis.redis import RedisConnection
+from weko_schema_ui.models import PublishStatus
 
 from .config import WEKO_INDEX_TREE_STATE_PREFIX
 from .errors import IndexBaseRESTError, IndexDeletedRESTError
@@ -599,7 +600,10 @@ def get_record_in_es_of_index(index_id, recursively=True):
     must_query = [
         QueryString(query=query_string),
         Q("terms", path=child_idx),
-        Q("terms", publish_status=["0", "1"])
+        Q("terms", publish_status=[
+            PublishStatus.PUBLIC.value,
+            PublishStatus.PRIVATE.value
+        ])
     ]
     search = search.query(
         Bool(filter=must_query)
@@ -802,7 +806,7 @@ def check_doi_in_index_and_child_index(index_id, recursively=True):
         child_idx = Indexes.get_child_list_recursive(index_id)
     else:
         child_idx = [index_id]
-    query_string = "relation_version_is_last:true AND publish_status:0"
+    query_string = "relation_version_is_last:true AND publish_status: {}".format(PublishStatus.PUBLIC.value)
     search = RecordsSearch(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
     must_query = [
@@ -998,7 +1002,7 @@ def get_editing_items_in_index(index_id, recursively=False):
 
     return result
 
-def save_index_trees_to_redis(tree):
+def save_index_trees_to_redis(tree, lang=None):
     """save inde_tree to redis for roles
     
     """
@@ -1008,11 +1012,22 @@ def save_index_trees_to_redis(tree):
         else:
             return str(o)
     redis = __get_redis_store()
+    if lang is None:
+        lang = current_i18n.language
     try:
         v = bytes(json.dumps(tree, default=default), encoding='utf-8')
-        redis.put("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language,v)
+        
+        redis.put("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + lang,v)
     except ConnectionError:
         current_app.logger.error("Fail save index_tree to redis")
+
+def delete_index_trees_from_redis(lang):
+    """delete index_tree from redis
+    """
+    redis = __get_redis_store()
+    key = "index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + lang
+    if redis.redis.exists(key):
+        redis.delete(key)
 
 def str_to_datetime(str_dt, format):
     try:

@@ -64,6 +64,7 @@ from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, remove_weko2_special_character, \
     set_timestamp
+from weko_schema_ui.models import PublishStatus
 from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
 
@@ -1349,10 +1350,10 @@ class WekoDeposit(Deposit):
             # es setting
             sub_sort[pth[-13:]] = ""
         dc.update(dict(path=index_lst))
-        pubs = '2'
+        pubs = PublishStatus.NEW.value
         actions = index_obj.get('actions')
-        if actions == 'publish' or actions == '0':
-            pubs = '0'
+        if actions == 'publish' or actions == PublishStatus.PUBLIC.value:
+            pubs = PublishStatus.PUBLIC.value
         elif 'id' in data:
             recid = PersistentIdentifier.query.filter_by(
                 pid_type='recid', pid_value=data['id']).first()
@@ -2311,8 +2312,7 @@ class WekoRecord(Record):
                          sele_id=item.reference_type)
             relation_data.append(_item)
 
-        if relation_data:
-            item_link.update(relation_data)
+        item_link.update(relation_data)
 
     def get_file_data(self):
         """Get file data."""

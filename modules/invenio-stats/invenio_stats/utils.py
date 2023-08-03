@@ -1008,11 +1008,15 @@ class QueryItemRegReportHelper(object):
                         for i in range(total_results):
                             if page_index * \
                                     reports_per_page <= i < (page_index + 1) * reports_per_page:
-                                start_date_string = d.strftime('%Y-%m-%d')
+                                d_start = d.replace(hour=0, minute=0, second=0,
+                                                    microsecond=0)
+                                start_date_string = d_start.strftime('%Y-%m-%d %H:%M:%S')
                                 d1 = d + delta - delta1
                                 if d1 > end_date:
                                     d1 = end_date
-                                end_date_string = d1.strftime('%Y-%m-%d')
+                                d_end = d1.replace(hour=23, minute=59, second=59,
+                                                  microsecond=9999)
+                                end_date_string = d_end.strftime('%Y-%m-%d %H:%M:%S')
                                 temp = {
                                     'start_date': start_date_string,
                                     'end_date': end_date_string,
@@ -1068,9 +1072,9 @@ class QueryItemRegReportHelper(object):
                         for i in range(total_results):
                             if page_index * \
                                     reports_per_page <= i < (page_index + 1) * reports_per_page:
-                                start_date_string = '{}-01-01'.format(
+                                start_date_string = '{}-01-01 00:00:00'.format(
                                     start_year + i)
-                                end_date_string = '{}-12-31'.format(
+                                end_date_string = '{}-12-31 23:59:59'.format(
                                     start_year + i)
                                 params = {'interval': 'year',
                                           'start_date': start_date_string,
@@ -1090,10 +1094,10 @@ class QueryItemRegReportHelper(object):
                     end_date_string = ''
                     params = {'is_restricted': False}
                     if start_date is not None:
-                        start_date_string = start_date.strftime('%Y-%m-%d')
+                        start_date_string = start_date.strftime('%Y-%m-%d 00:00:00')
                         params.update({'start_date': start_date_string})
                     if end_date is not None:
-                        end_date_string = end_date.strftime('%Y-%m-%d')
+                        end_date_string = end_date.strftime('%Y-%m-%d 23:59:59')
                         params.update({'end_date': end_date_string})
                     if not kwargs.get('ranking', False):
                         # Limit size
@@ -1134,10 +1138,10 @@ class QueryItemRegReportHelper(object):
                     end_date_string = ''
                     params = {'is_restricted': False}
                     if start_date is not None:
-                        start_date_string = start_date.strftime('%Y-%m-%d')
+                        start_date_string = start_date.strftime('%Y-%m-%d 00:00:00')
                         params.update({'start_date': start_date_string})
                     if end_date is not None:
-                        end_date_string = end_date.strftime('%Y-%m-%d')
+                        end_date_string = end_date.strftime('%Y-%m-%d 23:59:59')
                         params.update({'end_date': end_date_string})
                     res_total = query_total.run(**params)
                     i = 0
@@ -1253,6 +1257,7 @@ class QueryRankingHelper(object):
             all_query = all_query_cfg.query_class(**all_query_cfg.query_config)
 
             all_res = all_query.run(**params)
+
             cls.Calculation(all_res, result)
 
         except es_exceptions.NotFoundError as e:
@@ -1272,7 +1277,7 @@ class QueryRankingHelper(object):
             end_date = kwargs.get('end_date')
             params = {
                 'start_date': start_date,
-                'end_date': end_date,
+                'end_date': end_date + 'T23:59:59',
                 'agg_size': str(kwargs.get('agg_size', 10)),
                 'must_not': kwargs.get('must_not', ''),
                 'new_items': True

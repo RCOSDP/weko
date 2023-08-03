@@ -480,6 +480,7 @@ def site_license(db):
     db.session.add(result)
     addr1 = SiteLicenseIpAddress(
         organization_id=0,
+        organization_no=0,
         start_ip_address="123.456.789.012",
         finish_ip_address="987.654.321.098"
     )
@@ -751,7 +752,7 @@ def admin_settings(db):
     settings.append(AdminSettings(id=6,name="restricted_access",settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": []}))
     settings.append(AdminSettings(id=7,name="display_stats_settings",settings={"display_stats":False}))
     settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
-    settings.append(AdminSettings(id=8,name="elastic_reindex_settings",settings={"has_errored": False}))
+    settings.append(AdminSettings(id=9,name="elastic_reindex_settings",settings={"has_errored": False}))
     db.session.add_all(settings)
     db.session.commit()
     return settings
@@ -905,21 +906,30 @@ def facet_search_settings(db):
         name_jp="データの言語",
         mapping="language",
         aggregations=[],
-        active=True
+        active=True,
+        ui_type="SelectBox",
+        display_number=1,
+        is_open=True
     )
     access = FacetSearchSetting(
         name_en="Access",
         name_jp="アクセス制限",
         mapping="accessRights",
         aggregations=[],
-        active=False
+        active=False,
+        ui_type="SelectBox",
+        display_number=2,
+        is_open=True
     )
     data_type = FacetSearchSetting(
         name_en="Data Type",
         name_jp="データタイプ",
         mapping="description.value",
         aggregations=[{"agg_value":"Other","agg_mapping":"description.descriptionType"}],
-        active=True
+        active=True,
+        ui_type="SelectBox",
+        display_number=3,
+        is_open=True
     )
     
     fields_raw = FacetSearchSetting(
@@ -927,7 +937,10 @@ def facet_search_settings(db):
         name_jp="raw_test",
         mapping="test.fields.raw",
         aggregations=[],
-        active=True
+        active=True,
+        ui_type="SelectBox",
+        display_number=4,
+        is_open=True
     )
     db.session.add(language)
     db.session.add(access)

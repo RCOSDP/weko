@@ -331,12 +331,12 @@ def test_get_permission_record(app, users, db_itemtype, db_records):
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         with app.test_request_context():
             res = get_permission_record('most_downloaded_items', es_data, 1, [1])
-            assert res == [{'rank': 1, 'count': 1, 'title': 'title', 'url': '../records/6'}]
+            assert res == [{'rank': 1, 'key': '6', 'count': 1, 'title': 'title', 'url': '../records/6'}]
 
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         with app.test_request_context():
             res = get_permission_record('new_items', es_data, 1, [1])
-            assert res == [{'date': '2022-09-02', 'title': 'title', 'url': '../records/6'}]
+            assert res == [{'date': '2022-09-02', 'key': '6', 'title': 'title', 'url': '../records/6'}]
 
 
 
@@ -344,10 +344,10 @@ def test_get_permission_record(app, users, db_itemtype, db_records):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_parse_ranking_results -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_parse_ranking_results(app, users):
     res = parse_ranking_results('most_searched_keywords', 'search_key', 2, 1)
-    assert res == {'rank': 1, 'count': 2, 'title': 'search_key', 'url': '../search?page=1&size=20&search_type=1&q=search_key'}
+    assert res == {'rank': 1, 'key': 'search_key', 'count': 2, 'title': 'search_key', 'url': '../search?page=1&size=20&search_type=1&q=search_key'}
 
     res = parse_ranking_results('created_most_items_user', 1, 2, 1)
-    assert res == {'rank': 1, 'count': 2, 'title': 'None', 'url': None}
+    assert res == {'rank': 1, 'key': 1, 'count': 2, 'title': 'None', 'url': None}
 
 
 # def parse_ranking_new_items(result_data):
@@ -8216,7 +8216,6 @@ def test_update_schema_remove_hidden_item(db_itemtype):
         if form.get("items")
         and form["items"][0]["key"].split(".")[1] == "subitem_systemidt_identifier"
     ]
-    print(hidden_items)
     assert (
         update_schema_remove_hidden_item(
             item_type.schema, item_type.render, hidden_items

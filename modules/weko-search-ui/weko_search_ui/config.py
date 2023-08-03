@@ -196,7 +196,7 @@ RECORDS_REST_SORT_OPTIONS[SEARCH_UI_SEARCH_INDEX] = dict(
     ),
     itemType=dict(
         title="ItemType",
-        fields=["itemtype"],
+        fields=["itemtype.keyword"],
         default_order="asc",
         order=10,
     ),
@@ -689,6 +689,8 @@ WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG = "RUN_MSG_EXPORT_ALL"
 
 WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
 """Template for the Admin Bulk Export page."""
+
+WEKO_SEARCH_UI_BULK_EXPORT_TASKID_EXPIRED_TIME = 1
 
 WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 1000
 """The number of items exported to tsv/csv file each once."""

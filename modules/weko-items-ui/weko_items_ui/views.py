@@ -33,6 +33,7 @@ from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
+from flask_wtf import FlaskForm
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -55,6 +56,7 @@ from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow
 from weko_workflow.utils import check_an_item_is_locked, \
     get_record_by_root_ver, get_thumbnails, prepare_edit_workflow, \
     set_files_display_type
+from weko_schema_ui.models import PublishStatus
 from werkzeug.utils import import_string
 from webassets.exceptions import BuildError
 from werkzeug.exceptions import BadRequest
@@ -379,7 +381,9 @@ def items_index(pid_value='0'):
             return redirect(url_for('.index'))
 
         record = WekoRecord.get_record_by_pid(pid_value)
-        action = 'private' if record.get('publish_status', '1') == '1' \
+        action = 'private' \
+            if record.get('publish_status', PublishStatus.PRIVATE.value) \
+                in [PublishStatus.DELETE.value, PublishStatus.PRIVATE.value, PublishStatus.NEW.value] \
             else 'publish'
 
         from weko_theme.utils import get_design_layout
@@ -447,7 +451,9 @@ def iframe_items_index(pid_value='0'):
             return redirect(url_for('.iframe_index'))
 
         record = WekoRecord.get_record_by_pid(pid_value)
-        action = 'private' if record.get('publish_status', '1') == '1' \
+        action = 'private' \
+            if record.get('publish_status', PublishStatus.PRIVATE.value) \
+                in [PublishStatus.DELETE.value, PublishStatus.PRIVATE.value, PublishStatus.NEW.value] \
             else 'publish'
 
         community_id = session.get('itemlogin_community_id')
@@ -511,6 +517,8 @@ def iframe_items_index(pid_value='0'):
             # current_app.logger.debug("session['itemlogin_res_check']: {}".format(session['itemlogin_res_check']))
             # current_app.logger.debug("session['itemlogin_pid']: {}".format(session['itemlogin_pid']))
             
+            form = FlaskForm(request.form)
+            
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,
@@ -529,6 +537,7 @@ def iframe_items_index(pid_value='0'):
                 community_id=community_id,
                 files=files,
                 files_thumbnail=files_thumbnail,
+                form=form,
                 **ctx
             )
 
@@ -559,7 +568,7 @@ def iframe_items_index(pid_value='0'):
             """update item data info."""
             sessionstore.put(
                 'item_index_{}'.format(pid_value),
-                json.dumps(data),
+                bytes(json.dumps(data),"utf-8"),
                 ttl_secs=300)
         return jsonify(data)
     except KeyError as ex:
