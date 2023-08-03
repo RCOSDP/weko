@@ -598,40 +598,40 @@ def validate_form_input_data(
 
     # TITLE VARIABLES
     mapping_title_item_key: str = ""
-    mapping_title_language_key: tuple = ()
+    mapping_title_language_key: tuple = ("_","_")
 
     # ALTERNATIVE TITLE VARIABLES
     mapping_alternative_title_item_key: str = ""
-    mapping_alternative_title_language_key: tuple = ()
+    mapping_alternative_title_language_key: tuple = ("_","_")
 
     # CREATOR VARIABLES
     mapping_creator_item_key: str = ""
-    mapping_creator_given_name_language_key: tuple = ()
-    mapping_creator_family_name_language_key: tuple = ()
-    mapping_creator_affiliation_name_language_key: tuple = ()
-    mapping_creator_creator_name_language_key: tuple = ()
-    mapping_creator_alternative_name_language_key: tuple = ()
+    mapping_creator_given_name_language_key: tuple = ("_","_")
+    mapping_creator_family_name_language_key: tuple = ("_","_")
+    mapping_creator_affiliation_name_language_key: tuple = ("_","_")
+    mapping_creator_creator_name_language_key: tuple = ("_","_")
+    mapping_creator_alternative_name_language_key: tuple = ("_","_")
 
     # CONTRIBUTOR VARIABLES
     mapping_contributor_item_key = ""
-    mapping_contributor_given_name_language_key: tuple = ()
-    mapping_contributor_family_name_language_key: tuple = ()
-    mapping_contributor_affiliation_name_language_key: tuple = ()
-    mapping_contributor_contributor_name_language_key: tuple = ()
-    mapping_contributor_alternative_name_language_key: tuple = ()
+    mapping_contributor_given_name_language_key: tuple = ("_","_")
+    mapping_contributor_family_name_language_key: tuple = ("_","_")
+    mapping_contributor_affiliation_name_language_key: tuple = ("_","_")
+    mapping_contributor_contributor_name_language_key: tuple = ("_","_")
+    mapping_contributor_alternative_name_language_key: tuple = ("_","_")
 
     # RELATION VARIABLES
     mapping_relation_item_key = ""
-    mapping_related_title_language_key: tuple = ()
+    mapping_related_title_language_key: tuple = ("_","_")
 
     # FUNDING REFERENCE VARIABLES
     mapping_funding_reference_item_key = ""
-    mapping_funding_reference_funder_name_language_key: tuple = ()
-    mapping_funding_reference_award_title_language_key: tuple = ()
+    mapping_funding_reference_funder_name_language_key: tuple = ("_","_")
+    mapping_funding_reference_award_title_language_key: tuple = ("_","_")
 
     # SOURCE TITLE VARIABLES
     mapping_source_title_item_key: str = ""
-    mapping_source_title_language_key: tuple = ()
+    mapping_source_title_language_key: tuple = ("_","_")
 
     # DEGREE NAME VARIABLES
     mapping_degree_name_item_key: str = ""
@@ -639,23 +639,23 @@ def validate_form_input_data(
 
     # DEGREE GRANTOR NAME VARIABLES
     mapping_degree_grantor_item_key: str = ""
-    mapping_degree_grantor_name_language_key: tuple = ()
+    mapping_degree_grantor_name_language_key: tuple = ("_","_")
 
     # CONFERENCE VARIABLES
     mapping_conference_item_key: str = ""
-    mapping_conference_date_language_key: tuple = ()
-    mapping_conference_name_language_key: tuple = ()
-    mapping_conference_venue_language_key: tuple = ()
-    mapping_conference_place_language_key: tuple = ()
-    mapping_conference_sponsor_language_key: tuple = ()
+    mapping_conference_date_language_key: tuple = ("_","_")
+    mapping_conference_name_language_key: tuple = ("_","_")
+    mapping_conference_venue_language_key: tuple = ("_","_")
+    mapping_conference_place_language_key: tuple = ("_","_")
+    mapping_conference_sponsor_language_key: tuple = ("_","_")
 
     # HOLDING AGENT VARIABLES
     mapping_holding_agent_item_key: str = ""
-    mapping_holding_agent_name_language_key: tuple = ()
+    mapping_holding_agent_name_language_key: tuple = ("_","_")
 
     # CATALOG VARIABLES
     mapping_catalog_item_key: str = ""
-    mapping_catalog_title_language_key: tuple = ()
+    mapping_catalog_title_language_key: tuple = ("_","_")
 
     # DATE PATTERN VARIABLES
     date_pattern_list = [
