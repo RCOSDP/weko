@@ -1180,9 +1180,7 @@ def check_authority_action(activity_id='0', action_id=0,
         # Check if this activity has contributor equaling to current user
         im = ItemMetadata.query.filter_by(id=activity.item_id) \
             .filter(
-                #cast(ItemMetadata.json['shared_user_ids'], types.JSON).contains(int(cur_user))) \
-                cast(ItemMetadata.json['shared_user_ids'], postgresql.ARRAY(types.INT)).contains(int(cur_user))) \
-            .one_or_none()
+                cast(ItemMetadata.json['shared_user_ids'], postgresql.JSONB).contains([cur_user])).one_or_none()
         if im:
             # There is an ItemMetadata with contributor equaling to current
             # user, allow to access

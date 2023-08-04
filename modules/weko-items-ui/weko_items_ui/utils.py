@@ -88,14 +88,12 @@ def get_list_username():
     return: list of username
     TODO: 
     """
-    current_user_id = current_user.get_id()
-    current_app.logger.debug("current_user:{}".format(current_user))
     from weko_user_profiles.models import UserProfile
 
-    users = UserProfile.query.filter(UserProfile.user_id != current_user_id).all()
+    users = UserProfile.query.all()
     result = list()
     for user in users:
-        username = user.get_username
+        username = user.username
         if username:
             result.append(username)
     
@@ -137,7 +135,7 @@ def get_list_email():
 def get_user_info_by_username(username):
     """Get user information by username.
 
-    Query database to get user id by using username
+    Query database to get user id by using displayname
     Get email from database using user id
     Pack response data: user id, user name, email
 
@@ -147,7 +145,7 @@ def get_user_info_by_username(username):
     """
     result = dict()
     try:
-        user = UserProfile.get_by_username(username)
+        user = UserProfile.get_by_displayname(username)
         user_id = user.user_id
 
         metadata = MetaData()
@@ -192,7 +190,7 @@ def validate_user(username, email):
         'error': ''
     }
     try:
-        user = UserProfile.get_by_username(username)
+        user = UserProfile.get_by_displayname(username)
         user_id = 0
 
         metadata = MetaData()
