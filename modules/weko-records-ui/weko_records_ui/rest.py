@@ -20,15 +20,13 @@
 
 """Blueprint for schema rest."""
 
-import hashlib
-import json
 from flask import Flask, Blueprint, current_app, jsonify, make_response, request, abort, url_for
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_login import current_user
-from marshmallow import ValidationError
+from urllib import parse
 from invenio_db import db
 from invenio_deposit.scopes import actions_scope
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
@@ -45,6 +43,7 @@ from weko_deposit.api import WekoRecord
 from weko_records.api import ItemTypes
 from weko_records.serializers import citeproc_v1
 from weko_workflow.api import WorkActivity, WorkFlow
+from weko_workflow.models import GuestActivity
 from weko_workflow.schema.marshmallow import ActivitySchema
 from weko_workflow.utils import check_etag, check_pretty, init_activity_for_guest_user, is_terms_of_use_only
 from werkzeug.http import generate_etag
@@ -365,12 +364,12 @@ class FileApplication(ContentNegotiatedMethodView):
         if not current_user.is_authenticated:
             try :
                 from email_validator import validate_email
-                email_object = validate_email(mail)
+                validate_email(mail, check_deliverability=False)
                 is_guest = True
             except Exception:
                 # invalid email
                 raise InvalidEmailError() # 400 Error
-        
+
         # Check pretty
         check_pretty(param_pretty)
 
@@ -388,59 +387,11 @@ class FileApplication(ContentNegotiatedMethodView):
         if not record:
             raise ContentsNotFoundError() # 404 Error
 
-        # Get files
+        # Get files info
         from .utils import get_file_info_list
         __, files = get_file_info_list(record)
 
-        print("record:", record)
-        print("files:", files)
-        """
-        [
-            {
-                "url": {
-                    "url": "https://weko3.example.org/record/1/files/ocr.pdf"
-                }, 
-                "date": [
-                    {
-                        "dateType": "Available", 
-                        "dateValue": "2023-07-27"
-                    }
-                ], 
-                "terms": "規約１", 
-                "format": "application/pdf", 
-                "provide": [
-                    {
-                        "role": "非ログインユーザー", 
-                        "workflow": "利用申請", 
-                        "workflow_id": "2", 
-                        "role_id": "none_loggin"
-                    }, 
-                    {
-                        "role": "Contributor", 
-                        "workflow": "利用申請", 
-                        "workflow_id": "2", 
-                        "role_id": "3"
-                    }
-                ], 
-                "filename": "ocr.pdf", 
-                "filesize": [
-                    {
-                        "value": "132 KB"
-                    }
-                ], 
-                "accessrole": "open_restricted", 
-                "version_id": "9571b14d-d8d1-4526-af30-f51afa0e1935", 
-                "is_thumbnail": false, 
-                "future_date_message": "", 
-                "download_preview_message": "", 
-                "size": 132000.0, 
-                "mimetype": "application/pdf", 
-                "terms_content": "好きなだけ\nつかうと\nいいよ", 
-                "file_order": 0
-            }
-        ]
-        """
-
+        # Get target file info
         filename = ''
         terms_content = ''
         workflow_id = None
@@ -452,17 +403,15 @@ class FileApplication(ContentNegotiatedMethodView):
                 break
         if filename == '':
             raise ContentsNotFoundError() # 404 Error
-        
+
         # Get workflow
         if not workflow_id:
             # Available workflow not found
             raise InvalidWorkflowError() # 403 Error
-        workflow =  WorkFlow.get_workflow_by_id(workflow_id)
+        workflow =  WorkFlow().get_workflow_by_id(workflow_id)
         if not workflow:
             # Workflow not found
             raise ContentsNotFoundError() # 404 Error
-        
-        print("workflow:", workflow)
 
         # Check terms
         if not terms_content:
@@ -470,9 +419,9 @@ class FileApplication(ContentNegotiatedMethodView):
                 raise InvalidTokenError()
 
         # Create workflow activity
-        activity_id = str(0)
-        activity_url = ""
-        item_type_schema = {}
+        activity_id = ''
+        activity_url = ''
+        token = ''
         try:
             if is_guest:
                 # Prepare activity data.
@@ -489,7 +438,16 @@ class FileApplication(ContentNegotiatedMethodView):
                         "is_restricted_access": True,
                     }
                 }
-                __, activity_url = init_activity_for_guest_user(data)
+                activity, activity_url = init_activity_for_guest_user(data)
+                if not activity:
+                    guest_activity = GuestActivity.find(**data['extra_info'])
+                    if guest_activity:
+                        activity_id = guest_activity[0].activity_id
+                if activity_url:
+                    query_str = parse.urlparse(activity_url).query
+                    query_dic = parse.parse_qs(query_str)
+                    if query_dic and query_dic['token'] and len(query_dic['token']) > 0:
+                        token = query_dic['token'][0]
             else:
                 data = {
                     'itemtype_id': workflow.itemtype_id,
@@ -508,7 +466,8 @@ class FileApplication(ContentNegotiatedMethodView):
                 rtn = activity.init_activity(data)
                 if rtn is None:
                     raise Exception()
-                activity_url = url_for('weko_workflow.display_activity', activity_id=rtn.activity_id, _external=True, _method='https')
+                activity_id = rtn.activity_id
+                activity_url = url_for('weko_workflow.display_activity', activity_id=activity_id, _external=True, _method='https')
 
             db.session.commit()
         except SQLAlchemyError as ex:
@@ -527,8 +486,10 @@ class FileApplication(ContentNegotiatedMethodView):
         res_json = {
             "activity_id": activity_id,
             "activity_url": activity_url,
-            "item_type_schema": json.dumps(item_type.schema)
+            "item_type_schema": item_type.schema
         }
+        if token:
+            res_json['token'] = token
 
         response = make_response(jsonify(res_json), 200)
         return response
