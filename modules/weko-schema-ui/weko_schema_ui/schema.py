@@ -1432,12 +1432,14 @@ class SchemaTree:
                     for _subitem in aff_data.get(_item_key):
                         _len_affname = 0
                         _len_nameidt = 0
-                        for item in _subitem.get(_name_keys, []):
-                            if item.get(_name_key):
-                                _len_affname += 1
-                        for item in _subitem.get(_idtf_keys, []):
-                            if item.get(_idtf_key):
-                                _len_nameidt += 1
+                        if _subitem.get(_name_keys):
+                            for item in _subitem.get(_name_keys, []):
+                                if item.get(_name_key):
+                                    _len_affname += 1
+                        if _subitem.get(_idtf_keys):
+                            for item in _subitem.get(_idtf_keys, []):
+                                if item.get(_idtf_key):
+                                    _len_nameidt += 1
 
                         ret.append({
                             jpcoar_affname: _len_affname,
