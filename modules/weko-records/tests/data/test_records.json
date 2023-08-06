@@ -87,5 +87,19 @@
       },
       "owner": 1,
       "shared_user_ids": [1,2]
+    },
+    {
+      "recid": "9",
+      "year": 1900,
+      "stars": 5,
+      "title": ["weko_shared_ids_1"],
+      "item_title": "weko_shared_ids_1",
+      "system_file":"exists",
+      "pubdate": {
+        "attribute_name": "PubDate",
+        "attribute_value": "2023-12-31"
+      },
+      "owner": 1,
+      "shared_user_ids": []
     }
 ]

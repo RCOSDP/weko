@@ -112,7 +112,7 @@ def test_delete_cascade(app,db):
 
         assert UserProfile.get_by_userid(u.id) is None
 
-
+# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_models.py::test_create_profile -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
 def test_create_profile(app,db):
     """Test that userprofile can be patched using UserAccount constructor."""
     with app.app_context():
@@ -123,6 +123,14 @@ def test_create_profile(app,db):
         db.session.commit()
 
         user_id = user.id
+
+        profile = UserProfile(user=user, username="test_username")
+        # set displayname
+        profile.username = "test_displayname"
+        db.session.add(profile)
+        db.session.commit()
+
+        assert "test_displayname" == UserProfile.get_by_displayname("test_displayname").username
         # patch_user = User(
         #     id=user_id,
         #     email='updated_test@example.org',

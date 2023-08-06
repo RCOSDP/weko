@@ -1186,10 +1186,10 @@ def test_get_approval_dates(app,mocker):
 def test_get_item_info(db_records):
     result = get_item_info(db_records[0][3].id)
     assert result == {'type': 'depid', 'value': '1', 'revision_id': 0, 'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': '', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper', 'subitem_thumbnail': [{'thumbnail_url': '/api/files/29ad484d-4ed1-4caf-8b21-ab348ae7bf28/test.png?versionId=ecd5715e-4ca5-4e45-b93c-5089f52860a0', 'thumbnail_label': 'test.png'}]}
-    print("reslt:{}".format(result))
-    
+    print("result:{}".format(result))
+
     with patch("weko_workflow.utils.ItemsMetadata.get_record",side_effect=Exception("test error")):
-        result = get_item_info("item_id")
+        result = get_item_info(-1)
         assert result == {}
     
     result = get_item_info("")
@@ -1815,7 +1815,7 @@ def test_save_activity_data_1(db_register, mocker):
         "approval2":"test2@test.org"
     }
     save_activity_data(data)
-    assert db_register['activities'][0].shared_user_ids == []
+    assert db_register['activities'][0].shared_user_ids == '[]'
     # テストデータの元からshared_user_idsは[]だったので戻す必要なし
 
 # def save_activity_data(data: dict) -> NoReturn:

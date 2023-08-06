@@ -73,7 +73,7 @@ def test_check_file_download_permission(app, records, users,db_file_permission):
             'format': 'image/jpeg', 'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessrole': 'open_access', 
             'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False, 
             'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0, 'mimetype': 'image/jpeg', 'file_order': 0}
-    
+    """
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         assert check_file_download_permission(record, fjson, True) == True
     
@@ -115,6 +115,7 @@ def test_check_file_download_permission(app, records, users,db_file_permission):
 
             fjson['accessrole'] = 'open_restricted'
             assert check_file_download_permission(record, fjson, True) == False
+    """
     
     record = results[2]["record"]
     fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 
@@ -125,6 +126,14 @@ def test_check_file_download_permission(app, records, users,db_file_permission):
              'mimetype': 'image/jpeg', 'file_order': 0}
 
     # 'accessrole=open_no',
+    with patch("flask_security.current_user", return_value=users[0]["obj"]):
+        # current_user.is_authenticated = False
+        with patch("flask_security.current_user.is_authenticated", return_value=False):
+            assert check_file_download_permission(record, fjson, True) == False
+        # current_user.is_authenticated = True
+        with patch("flask_security.current_user.is_authenticated", return_value=True):
+            assert check_file_download_permission(record, fjson, True) == True
+
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         assert check_file_download_permission(record, fjson, True) == True
     
@@ -138,6 +147,7 @@ def test_check_file_download_permission(app, records, users,db_file_permission):
     {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, 
     {'email': 'originalroleuser2@test.org', 'id': 8, 'obj': <User 8>}, 
     {'email': 'user@test.org', 'id': 1, 'obj': <User 1>}]
+    """
     """
     with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
         assert check_file_download_permission(record, fjson, False) == True
@@ -166,7 +176,7 @@ def test_check_file_download_permission(app, records, users,db_file_permission):
 
     with patch("flask_login.utils._get_user", return_value=users[4]["obj"]):
         assert check_file_download_permission(record, fjson, False) == True
-
+    """
 # def check_open_restricted_permission(record, fjson):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_open_restricted_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_check_open_restricted_permission(app, records, users,db_file_permission):

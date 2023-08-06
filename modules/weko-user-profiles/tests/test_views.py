@@ -23,6 +23,7 @@
 
 """Tests for user profile views."""
 
+import pytest
 from flask import url_for, json,make_response, current_app, g, jsonify
 from flask_breadcrumbs import current_breadcrumbs
 from flask_security import url_for_security
@@ -329,7 +330,7 @@ def test_userprofile(db,users,user_profiles):
 
 # def get_profile_info():
 # .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_views.py::test_get_profile_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
-def test_get_profile_info(client,app,admin_app,register_bp,users,mocker):
+def test_get_profile_info(client,app,admin_app,register_bp,users,mocker,user_profiles):
     url = url_for("weko_user_profiles_api_init.get_profile_info")
 
     res = client.get(url)
@@ -367,7 +368,9 @@ def test_profile(client,register_bp,users,mocker):
     # no login
     res = client.get(url)
     assert res.status_code == 302
-    login_user_via_session(client=client,email=users[0]["email"])
+    user = User.query.filter_by(email=users[0]["email"]).first()
+    mocker.patch("invenio_accounts.models.User.get_id", return_value=users[0]["id"])
+    login_user_via_session(client=client,user=user)
 
     mocker.patch("weko_user_profiles.views.profile_form_factory")
     mocker.patch("weko_user_profiles.views.render_template",return_value=make_response())

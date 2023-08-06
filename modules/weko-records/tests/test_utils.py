@@ -63,7 +63,7 @@ from weko_records.models import ItemTypeName
 
 # def json_loader(data, pid, owner_id=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_json_loader -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_json_loader(app, db, users, item_type, item_type2, item_type_mapping2, records):
+def test_json_loader(app, db, users, item_type, item_type2, item_type3, item_type_mapping2, item_type_mapping3, records):
     _data1 = {}
     _data2 = {
         '$schema': 'http://schema/1/A-test'
@@ -84,6 +84,17 @@ def test_json_loader(app, db, users, item_type, item_type2, item_type_mapping2, 
     _data7 = records[7][1]
     _data7['$schema'] = 'http://schema/2'
 
+    _data8 = records[4][1]
+    _data8['$schema'] = 'http://schema/2'
+    _data8['author_link'] = ["4"]
+    _data8['item_1'] = [{
+        "attribute_name": "item_1",
+        "attribute_value": "Item"
+      }]
+    
+    _data9 = records[8][1]
+    _data9['$schema'] = 'http://schema/3'
+    
     _dc_data = {
         '_oai': {'id': '1'},
         'author_link': [],
@@ -140,13 +151,96 @@ def test_json_loader(app, db, users, item_type, item_type2, item_type_mapping2, 
             'control_number': '1',
             'author_link': [],
             'weko_shared_ids': [],
-            'owner': '1',
-            'owners':['1']
+            'owner': 1,
+            'owners':[1]
         },
         'itemtype': 'test2',
         'publish_date': None,
+        'weko_creator_id':'1',
         'author_link': [],
-        'weko_creator_id': '1',
+        'weko_shared_ids': []
+    }
+
+    _jrc_data_4_1 = {
+        'control_number': '1',
+        '_oai': {'id': '1'},
+        '_item_metadata': {
+            'item_1': {
+                'attribute_name': 'item_1',
+                'attribute_type': 'creator',
+                'attribute_value_mlt': [
+                    {'attribute_name': 'item_1',
+                     'attribute_value': 'Item'}]
+            },
+            'item_title': ['weko_shared_ids_1'],
+            'item_type_id': '2',
+            'control_number': '1',
+            'author_link': [],
+            'weko_shared_ids': [],
+            'owner': 1,
+            'owners':[1]
+        },
+        'itemtype': 'test2',
+        'publish_date': None,
+        'weko_creator_id':'5',
+        'author_link': [],
+        'owner': 1,
+        'owners': [1],
+        'weko_shared_ids': []
+    }
+
+    _jrc_data_4_2 = {
+        'control_number': '1',
+        '_oai': {'id': '1'},
+        '_item_metadata': {
+            'item_1': {
+                'attribute_name': 'item_1',
+                'attribute_type': 'file',
+                'attribute_value_mlt': [
+                    {'attribute_name': 'item_1',
+                     'attribute_value': 'Item'}]
+            },
+            'item_title': ['weko_shared_ids_1'],
+            'item_type_id': '2',
+            'control_number': '1',
+            'author_link': [],
+            'weko_shared_ids': [],
+            'owner': 1,
+            'owners':[1]
+        },
+        'itemtype': 'test2',
+        'publish_date': None,
+        'weko_creator_id':'5',
+        'author_link': [],
+        'owner': 1,
+        'owners': [1],
+        'weko_shared_ids': []
+    }
+
+    _jrc_data_4_3 = {
+        'control_number': '1',
+        '_oai': {'id': '1'},
+        '_item_metadata': {
+            'item_1': {
+                'attribute_name': 'item_1',
+                'attribute_type': 'file',
+                'attribute_value': ['test']
+            },
+            'item_title': ['weko_shared_ids_1'],
+            'item_type_id': '2',
+            'control_number': '1',
+            'author_link': [],
+            'weko_shared_ids': [],
+            'owner': 1,
+            'owners':[1]
+        },
+        'item':['test'],
+        'itemtype': 'test2',
+        'publish_date': None,
+        'weko_creator_id':'5',
+        'author_link': [],
+        'owner': 1,
+        'owners': [1],
         'weko_shared_ids': []
     }
 
@@ -185,8 +279,8 @@ def test_json_loader(app, db, users, item_type, item_type2, item_type_mapping2, 
                                             'attribute_value': 'Item'}]},
         'item_title': ['weko_shared_ids_3'],
         'item_type_id': '2',
-        'owner': '5',
-        'owners':['5'],
+        'owner': 5,
+        'owners':[5],
         'weko_shared_ids': [1,2]
     }
 
@@ -202,7 +296,7 @@ def test_json_loader(app, db, users, item_type, item_type2, item_type_mapping2, 
         'owners':[1],
         'weko_shared_ids': [1,2]
     }
-
+    
     # do nothing
     result = json_loader(_data1, _pid)
     assert result==None
@@ -239,6 +333,89 @@ def test_json_loader(app, db, users, item_type, item_type2, item_type_mapping2, 
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         dc, jrc, is_edit = json_loader(_data7, _pid, owner_id=1)
         assert dict(dc)==_dc_data_7
+    
+    # Exception発生
+    ojson = ItemTypes.get_record(2)
+    del ojson['properties']['item_1']
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
+            with pytest.raises(Exception):
+                dc, jrc, is_edit = json_loader(_data4, _pid)
+                assert e.type==KeyError
+
+    # "object" == creator["type"]
+    ojson = ItemTypes.get_record(2)
+    ojson["properties"]["item_1"] = {'type': 'object', 'properties': ['iscreator']}
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
+            dc, jrc, is_edit = json_loader(_data4, _pid, owner_id=1)
+            jrc['_item_metadata'] = dict(jrc['_item_metadata'])
+            assert dict(jrc)==_jrc_data_4_1
+
+    # "array" == creator["type"]
+    ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['iscreator']}}
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
+            dc, jrc, is_edit = json_loader(_data4, _pid, owner_id=1)
+            jrc['_item_metadata'] = dict(jrc['_item_metadata'])
+            assert dict(jrc)==_jrc_data_4_1
+
+    # "array" == item_data.get("type")
+    ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['filename']}}
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
+            dc, jrc, is_edit = json_loader(_data4, _pid, owner_id=1)
+            jrc['_item_metadata'] = dict(jrc['_item_metadata'])
+            assert dict(jrc)==_jrc_data_4_2
+
+    # isinstance(v, list):
+    ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['filename']}}
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
+            dc, jrc, is_edit = json_loader(_data8, _pid, owner_id=1)
+            jrc['_item_metadata'] = dict(jrc['_item_metadata'])
+            assert dict(jrc)==_jrc_data_4_2
+
+    # isinstance(v, list): 
+    ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['filename']}}
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
+            _data8['item_1'] = ["test"]
+            dc, jrc, is_edit = json_loader(_data8, _pid, owner_id=1)
+            jrc['_item_metadata'] = dict(jrc['_item_metadata'])
+            assert dict(jrc)==_jrc_data_4_3
+    
+    app.config['WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME'] = 'jpcoar_v1_mapping'
+    app.config['WEKO_SCHEMA_DDI_SCHEMA_NAME'] = 'ddi_mapping'
+    ojson = ItemTypes.get_record(2)
+    # isinstance(v, str):
+    ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['filename']}}
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
+            _data8['item_1'] = "test"
+            dc, jrc, is_edit = json_loader(_data8, _pid, owner_id=1)
+            jrc['_item_metadata'] = dict(jrc['_item_metadata'])
+            assert dict(jrc)["_item_metadata"]["item_1"]["attribute_value"]=="test"
+    
+    # pubdateを通すだけ
+    ojson = ItemTypes.get_record(3)
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
+            with pytest.raises(Exception) as e:
+                dc, jrc, is_edit = json_loader(_data9, _pid, owner_id=1)
+            
+    ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['filename']}}
+    ojson["properties"]["control_number"] = {'type': 'int', 'items': {'properties': 1}}
+    ojson = ItemTypes.get_record(2)
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
+            _data8['control_number'] = 1
+            dc, jrc, is_edit = json_loader(_data8, _pid, owner_id=1)
+            jrc['_item_metadata'] = dict(jrc['_item_metadata'])
+            assert dc['control_number'] == _pid
+
+    with patch("weko_admin.models.SearchManagement.get", return_value={}):
+        pass
 
 # def copy_field_test(dc, map, jrc, iid=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_copy_field_test -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp

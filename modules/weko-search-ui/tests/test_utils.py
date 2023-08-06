@@ -309,17 +309,17 @@ def test_parse_to_json_form(i18n_app, record_with_metadata):
 
 # def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
 def test_check_import_items(i18n_app):
+    # is_gakuninrdm = False
     current_path = os.path.dirname(os.path.abspath(__file__))
     file_name = "sample_file.zip"
     file_path = os.path.join(current_path, "data", "sample_file", file_name)
-
-    ret = check_import_items(file_path, True)
+    ret = check_import_items(file_path, True, False)
 
     prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
     assert ret["data_path"].startswith(f'/tmp/{prefix}')
 
-    # is_gakuninrdm = False
-    ret = check_import_items(file_path, True)
+    # is_gakuninrdm = True
+    ret = check_import_items(file_path, True, True)
     '/tmp/weko_import_'
     assert ret["data_path"].startswith('/tmp/deposit_activity_')
 
@@ -330,8 +330,17 @@ def test_check_import_items(i18n_app):
             return 'test_file.txt'
         
     file = TestFile()
-    assert check_import_items(file, True)
+    assert check_import_items(file, True, True)
+    """
+    # 例外
+    with pytest.raises(FileNotFoundError) as e:
+        ret = check_import_items("/var/abc/filename.zip", False, True)
 
+    with pytest.raises(UnicodeDecodeError) as e:
+        pass
+    with pytest.raises(FileExistsError) as e:
+        pass
+    """
 
 # def unpackage_import_file(data_path: str, file_name: str, file_format: str, force_new=False):
 def test_unpackage_import_file(app, mocker, mocker_itemtype):
@@ -2034,6 +2043,11 @@ def test_check_terms_in_system(terms, record_restricted):
     # 正常系
     key = "item_1685583796047"
     item = record_restricted[1]
+    assert check_terms_in_system(key, item) == True
+
+    # metadataにtermsが存在しない
+    key = "item_1685583796047"
+    item = record_restricted[8]
     assert check_terms_in_system(key, item) == True
 
     # "terms": システムに存在しない適当な値

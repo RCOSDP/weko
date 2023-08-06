@@ -128,6 +128,7 @@ def test_get_list_username(app, client, users, db_userprofile):
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         assert get_list_username() == [
             "user",
+            "contributor",
             "comadmin",
             "repoadmin",
             "sysadmin",

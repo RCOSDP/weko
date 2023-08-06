@@ -593,6 +593,7 @@ def db_userprofile(app, db):
             p = UserProfile()
             p.user_id = user.id
             p._username = (user.email).split("@")[0]
+            p._displayname = (user.email).split("@")[0]
             profiles[user.email] = p
             db.session.add(p)
     return profiles
