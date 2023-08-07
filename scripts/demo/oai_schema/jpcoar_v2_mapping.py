@@ -1828,7 +1828,7 @@ xsd = {
                     {
                         "use": "required",
                         "ref": None,
-                        "name": "accessRights"
+                        "name": "accessRights",
                         "restriction": {
                             "enumeration": [
                                 "embargoed access",
