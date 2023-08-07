@@ -427,12 +427,13 @@ class ItemImportView(BaseView):
         """Import item into System."""
         data = request.get_json() or {}
         data_path = data.get("data_path")
-        user_id = current_user.get_id() if current_user else 1
+        user_id = current_user.get_id() if current_user else -1
         request_info = {
             "remote_addr": request.remote_addr,
             "referrer": request.referrer,
             "hostname": request.host,
-            "user_id": user_id
+            "user_id": user_id,
+            "action": "IMPORT"
         }
         # update temp dir expire to 1 day from now
         expire = datetime.now() + timedelta(days=1)

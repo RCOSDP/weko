@@ -97,7 +97,7 @@ class HarvestSettingView(ModelView):
     @expose('/run/')
     def run(self):
         """Run harvesting."""
-        user_id = current_user.get_id() if current_user and current_user.is_authenticated else 1
+        user_id = current_user.get_id() if current_user and current_user.is_authenticated else -1
         user_data = {
             'ip_address': get_remote_addr(),
             'user_agent': request.user_agent.string,
@@ -108,7 +108,8 @@ class HarvestSettingView(ModelView):
             "remote_addr": request.remote_addr,
             "referrer": request.referrer,
             "hostname": request.host,
-            "user_id": user_id
+            "user_id": user_id,
+            "action": "HARVEST"
         }
         run_harvesting.apply_async(args=(
             request.args.get('id'),
