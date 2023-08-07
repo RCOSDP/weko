@@ -1629,7 +1629,7 @@ xsd = {
             "attributes": [
                 {
                     "use": "optional",
-                    "name": "datasetSeriesType"
+                    "name": "datasetSeriesType",
                     "ref": None,
                     "restriction": {
                         "enumeration": [
