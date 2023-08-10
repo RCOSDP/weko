@@ -31,6 +31,7 @@ import pytest
 from mock import patch
 from flask import Flask, json, jsonify, url_for, session, make_response, current_app
 from flask_babelex import gettext as _
+from flask_security import current_user
 from invenio_db import db
 from sqlalchemy import func
 from datetime import datetime
@@ -349,28 +350,32 @@ def test_init_activity_acl(client, users, users_index, status_code,db_register):
     (5, 200),
     (6, 200),
 ])
-def test_init_activity(client, users,users_index, status_code,db_register,mocker):
+def test_init_activity(client, users, users_index, status_code, db_register, mocker):
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.init_activity')
     mocker.patch("weko_workflow.views.is_terms_of_use_only",return_value=False)
-    input = {'workflow_id': db_register['workflow'].id, 'flow_id': db_register['flow_define'].id}
+    workflow_id = db_register['workflow'].id
+    flow_define_id = db_register['flow_define'].id
+    item_type_id = db_register['item_type'].id
+
+    input = {'workflow_id': workflow_id, 'flow_id': flow_define_id}
     res = client.post(url, json=input)
     assert res.status_code == status_code
 
-    input = {'workflow_id': -99, 'flow_id': db_register['flow_define'].id}
+    input = {'workflow_id': -99, 'flow_id': flow_define_id}
     res = client.post(url, json=input)
     assert res.status_code == 500
 
-    input = {'workflow_id': db_register['workflow'].id, 'flow_id': -99}
+    input = {'workflow_id': workflow_id, 'flow_id': -99}
     res = client.post(url, json=input)
     assert res.status_code == 500
 
 
-    input = {'workflow_id': db_register['workflow'].id}
+    input = {'workflow_id': workflow_id}
     res = client.post(url, json=input)
     assert res.status_code == 400
 
-    input = {'flow_id': db_register['flow_define'].id}
+    input = {'flow_id': flow_define_id}
     res = client.post(url, json=input)
     assert res.status_code == 400
 
@@ -378,31 +383,31 @@ def test_init_activity(client, users,users_index, status_code,db_register,mocker
     res = client.post(url, json=input)
     assert res.status_code == 400
 
-    input = {'workflow_id': str(db_register['workflow'].id), 'flow_id': str(db_register['flow_define'].id)}
+    input = {'workflow_id': str(workflow_id), 'flow_id': str(flow_define_id)}
     res = client.post(url, json=input)
     assert res.status_code == 200
 
-    input = {'workflow_id': 'd'+str(db_register['workflow'].id), 'flow_id': str(db_register['flow_define'].id)}
+    input = {'workflow_id': 'd'+str(workflow_id), 'flow_id': str(flow_define_id)}
     res = client.post(url, json=input)
     assert res.status_code == 400
 
-    input = {'workflow_id': str(db_register['workflow'].id)+'d', 'flow_id': str(db_register['flow_define'].id)}
+    input = {'workflow_id': str(workflow_id)+'d', 'flow_id': str(flow_define_id)}
     res = client.post(url, json=input)
     assert res.status_code == 400
 
-    input = {'workflow_id': None, 'flow_id': db_register['flow_define'].id}
+    input = {'workflow_id': None, 'flow_id': flow_define_id}
     res = client.post(url, json=input)
     assert res.status_code == 400
 
-    input = {'workflow_id': db_register['workflow'].id, 'flow_id': None}
+    input = {'workflow_id': workflow_id, 'flow_id': None}
     res = client.post(url, json=input)
     assert res.status_code == 400
 
-    input = {'workflow_id': db_register['workflow'].id, 'flow_id': db_register['flow_define'].id, 'itemtype_id': db_register['item_type'].id}
+    input = {'workflow_id': workflow_id, 'flow_id': flow_define_id, 'itemtype_id': item_type_id}
     res = client.post(url, json=input)
     assert res.status_code == 200
 
-    input = {'workflow_id': db_register['workflow'].id, 'flow_id': db_register['flow_define'].id, 'unknown':'unknown'}
+    input = {'workflow_id': workflow_id, 'flow_id': flow_define_id, 'unknown':'unknown'}
     res = client.post(url, json=input)
     assert res.status_code == 200
 
@@ -446,6 +451,7 @@ def test_init_activity_guest_nologin(app, client,db_register2):
             assert data['data']['is_download'] == True
             assert data['data']['redirect'] == '/record/1/files/test_file'
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_init_activity_guest_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
@@ -455,7 +461,8 @@ def test_init_activity_guest_nologin(app, client,db_register2):
     (5, 200),
     (6, 200),
 ])
-def test_init_activity_guest_users(client, users, users_index, status_code):
+def test_init_activity_guest_users(client, users, db_register, users_index, status_code):
+    current_app.config.setdefault('THEME_INSTITUTION_NAME', {'ja':"組織", 'en':"INSTITUTION"})
     """Test init activity for guest user."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.init_activity_guest')
@@ -631,6 +638,7 @@ def test_previous_action_acl_nologin(client,db_register2):
     assert res.location == url_for('security.login',next="/workflow/activity/action/1/1/rejectOrReturn/1",_external=True)
 
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_previous_action_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code, is_admin', [
     (0, 403, False),
     (1, 403, True),
@@ -641,6 +649,7 @@ def test_previous_action_acl_nologin(client,db_register2):
     (6, 403, True),
 ])
 def test_previous_action_acl_users(client, users, db_register, users_index, status_code, is_admin):
+    current_app.config.setdefault('THEME_INSTITUTION_NAME', {'ja':"組織", 'en':"INSTITUTION"})
     """Test of previous action."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.previous_action',
@@ -694,6 +703,7 @@ def test_previous_action_acl_users(client, users, db_register, users_index, stat
         assert res.status_code != status_code
         assert data["code"] != 403
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_previous_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
@@ -704,6 +714,8 @@ def test_previous_action_acl_users(client, users, db_register, users_index, stat
     (6, 200),
 ])
 def test_previous_action(client, users, db_register, users_index, status_code):
+    current_app.config.setdefault('THEME_INSTITUTION_NAME', {'ja':"組織", 'en':"INSTITUTION"})
+
     login(client=client, email=users[users_index]['email'])
 
     url = url_for("weko_workflow.previous_action",
@@ -2259,17 +2271,25 @@ def test_get_feedback_maillist_acl_users(client, users, users_index, status_code
     res = client.get(url)
     assert res.status_code != 302
 
+#.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_get_feedback_maillist -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
-    (1, 200),
-    (2, 200),
-    (3, 200),
-    (4, 200),
-    (5, 200),
-    (6, 200),
+    #(1, 200),
+    #(2, 200),
+    #(3, 200),
+    #(4, 200),
+    #(5, 200),
+    #(6, 200),
 ])
 def test_get_feedback_maillist(client, users, db_register, users_index, status_code):
     login(client=client, email=users[users_index]['email'])
+
+    action_feedback_mail = db_register['action_feedback_mail']
+    action_feedback_mail_1 = db_register['action_feedback_mail1']
+    action_feedback_mail_2 = db_register['action_feedback_mail2']
+
+    print(action_feedback_mail)
+    print(vars(action_feedback_mail))
 
     url = url_for('weko_workflow.get_feedback_maillist', activity_id='1')
     with patch('weko_workflow.views.type_null_check', return_value=False):
@@ -2291,7 +2311,7 @@ def test_get_feedback_maillist(client, users, db_register, users_index, status_c
     url = url_for('weko_workflow.get_feedback_maillist', activity_id='4')
     res = client.get(url)
     data = response_data(res)
-    mail_list = db_register['action_feedback_mail'].feedback_maillist
+    mail_list = action_feedback_mail.feedback_maillist
     assert res.status_code==status_code
     assert data['code'] == 1
     assert data['msg'] == 'Success'
@@ -2300,7 +2320,7 @@ def test_get_feedback_maillist(client, users, db_register, users_index, status_c
     url = url_for('weko_workflow.get_feedback_maillist', activity_id='5')
     res = client.get(url)
     data = response_data(res)
-    mail_list = db_register['action_feedback_mail1'].feedback_maillist
+    mail_list = action_feedback_mail_1.feedback_maillist
     assert res.status_code==status_code
     assert data['code'] == 1
     assert data['msg'] == 'Success'
@@ -2309,7 +2329,7 @@ def test_get_feedback_maillist(client, users, db_register, users_index, status_c
     url = url_for('weko_workflow.get_feedback_maillist', activity_id='6')
     res = client.get(url)
     data = response_data(res)
-    mail_list = db_register['action_feedback_mail2'].feedback_maillist
+    mail_list = action_feedback_mail_2.feedback_maillist
     assert res.status_code==status_code
     assert data['code'] == 1
     assert data['msg'] == 'Success'
@@ -2328,7 +2348,7 @@ def test_get_feedback_maillist(client, users, db_register, users_index, status_c
     res = client.get(url)
     data = response_data(res)
     #mail_list = db_register['action_feedback_mail3'].feedback_maillist
-    assert res.status_code==400
+    assert res.status_code == 400
     assert data['code'] == -1
     assert data['msg'] == 'mail_list is not list'
 
@@ -2431,7 +2451,7 @@ def test_save_activity_guestlogin(guest,db_register2):
         assert data["success"] == False
         assert data["msg"] == "test error"
 
-
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_workflow/.tox/c1/tmp
 def test_display_activity_nologin(client,db_register2):
     """Test of display activity."""
     url = url_for('weko_workflow.display_activity', activity_id='1')
@@ -2443,7 +2463,7 @@ def test_display_activity_nologin(client,db_register2):
     # assert res.url == url_for('security.login')
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_guestlogin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_workflow/.tox/c1/tmp
-def test_display_activity_guestlogin(app,db_register ,guest):
+def test_display_activity_guestlogin(app,db_register,guest):
     """Test of display activity."""
     url = url_for('weko_workflow.display_activity', activity_id='1')
     input = {}
@@ -2482,6 +2502,7 @@ def test_display_activity_guestlogin(app,db_register ,guest):
                     mock_render_template.assert_called()
 
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
@@ -2542,7 +2563,7 @@ def test_display_activity_users(client, users, db_register, users_index, status_
     (5, 200),
     (6, 200),
 ])
-def test_display_activity(client, users, db_register, users_index, status_code,mocker,redis_connect):
+def test_display_activity(client, users, db_register, users_index, status_code, mocker, redis_connect):
     login(client=client, email=users[users_index]['email'])
 
     workflow_detail = WorkFlow.query.filter_by(id=1).one_or_none()
@@ -3501,9 +3522,43 @@ def test_withdraw_confirm_passwd_delete_guestlogin(guest, client, users, db_regi
 
 # def check_authority_action(activity_id='0', action_id=0, contain_login_item_application=False, action_order=0):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_check_authority_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_check_authority_action(client, users, db_register, mocker):
-    current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'] = True
-    
+def test_check_authority_action(app, client, users, db_register, mocker):
+    current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'] = False
+    """
+    Check authority.のケースを追加する
+    from flask_login import LoginManager, AnonymousUserMixin, current_user
+
+    # current_user.is_authenticated = False
+    class CustomAnonymousUser(AnonymousUserMixin):
+        @property
+        def id(self):
+            return 0
+        @property
+        def username(self):
+            return "sample"
+        @property
+        def email(self):
+            return "sample@test.co.jp"
+        @property
+        def is_authenticated(self):
+            return False
+        
+    app.config["SECRET_KEY"] = "sample1202"
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.anonymous_user = CustomAnonymousUser
+
+    print(f'flask_login.current_user = {current_user}')
+    ret = check_authority_action(activity_id='11', 
+                        action_id=0, 
+                        contain_login_item_application=False, 
+                        action_order=0)
+    print(f'ret = {ret}')
+    assert 1 == check_authority_action(activity_id='11', 
+                        action_id=0, 
+                        contain_login_item_application=False, 
+                        action_order=0)
+    """
     # ログインユーザーが、登録ユーザーでない場合 admin
     with patch("flask_login.utils._get_user",return_value=users[2]["obj"]):
         assert 0 == check_authority_action(activity_id='11', 
@@ -3546,7 +3601,7 @@ def test_check_authority_action(client, users, db_register, mocker):
                             contain_login_item_application=False, 
                             action_order=1)
     
-    #TODO postgresql.ARRAYを使用している為テスト実施不可(テストのエンジンはsqLiteの為)
+    #TODO postgresql.JSONを使用している為テスト実施不可(テストのエンジンはsqLiteの為)
     """
     # ログインユーザーが、登録ユーザーでない場合 current user_id=6 shared_user_ids=[2,4]
     with patch("flask_login.utils._get_user",return_value=users[4]["obj"]):

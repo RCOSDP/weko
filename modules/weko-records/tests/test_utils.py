@@ -11,7 +11,7 @@ from tests.helpers import json_data
 
 from invenio_accounts import testutils
 from invenio_i18n.ext import current_i18n
-from weko_admin.models import AdminSettings
+from weko_admin.models import AdminSettings, SearchManagement
 from weko_records.utils import (
     json_loader,
     copy_field_test,
@@ -57,7 +57,8 @@ from weko_records.utils import (
     add_biographic,
     custom_record_medata_for_export,
     replace_fqdn,
-    replace_fqdn_of_file_metadata)
+    replace_fqdn_of_file_metadata,
+    get_author_link)
 from weko_records.api import ItemTypes, Mapping
 from weko_records.models import ItemTypeName
 
@@ -352,6 +353,22 @@ def test_json_loader(app, db, users, item_type, item_type2, item_type3, item_typ
             jrc['_item_metadata'] = dict(jrc['_item_metadata'])
             assert dict(jrc)==_jrc_data_4_1
 
+    ojson["properties"]["item_1"] = {'type': 'object', 'properties': ['iscreator', 'other']}
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
+            dc, jrc, is_edit = json_loader(_data4, _pid, owner_id=1)
+            jrc['_item_metadata'] = dict(jrc['_item_metadata'])
+            assert dict(jrc)==_jrc_data_4_1
+
+    _data4["weko_creator_id"] = '1'
+    ojson["properties"]["item_1"] = {'type': 'object', 'properties': ['iscreator', 'other']}
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
+            dc, jrc, is_edit = json_loader(_data4, _pid, owner_id=1)
+            jrc['_item_metadata'] = dict(jrc['_item_metadata'])
+            assert dict(jrc)["weko_creator_id"]==_jrc_data_4_1["weko_creator_id"]
+
+    
     # "array" == creator["type"]
     ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['iscreator']}}
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
@@ -412,10 +429,56 @@ def test_json_loader(app, db, users, item_type, item_type2, item_type3, item_typ
             _data8['control_number'] = 1
             dc, jrc, is_edit = json_loader(_data8, _pid, owner_id=1)
             jrc['_item_metadata'] = dict(jrc['_item_metadata'])
-            assert dc['control_number'] == _pid
+            assert dc['control_number'] == _pid.pid_value
 
-    with patch("weko_admin.models.SearchManagement.get", return_value={}):
-        pass
+    ojson = ItemTypes.get_record(2)
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
+            data = {'dlt_dis_num_selected': '', 'dlt_index_sort_selected': '',
+                    'dlt_keyword_sort_selected': '', 'sort_options':'',
+                    'detail_condition':'', 'display_control':'',
+                    'init_disp_setting': ''}
+            sm = SearchManagement.create(data)
+            with patch("weko_admin.models.SearchManagement.get", return_value=sm):
+                dc, jrc, is_edit = json_loader(_data8, _pid, owner_id=1)
+                jrc['_item_metadata'] = dict(jrc['_item_metadata'])
+
+# def get_author_link(author_link, value)
+# .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_author_link -v -s -vv --cov-branch --cov-report=term --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_author_link():
+    author_link = []
+    value_list = [
+        {
+            "nameIdentifiers":[{
+                "nameIdentifierScheme": 'WEKO', 
+                "nameIdentifier": 'v1'
+                }]
+        },
+        {
+            "nameIdentifiers":[{
+                "nameIdentifierScheme": 'WEKO3',
+                "nameIdentifier": 'v2'
+            }]
+        }
+    ]
+
+    ret = get_author_link(author_link, value_list)
+    assert ['v1'] == author_link
+
+    author_link = []
+    value_dict = {
+            "nameIdentifiers":[{
+                "nameIdentifierScheme": 'WEKO', 
+                "nameIdentifier": 'v2'
+                }]
+    }
+    ret = get_author_link(author_link, value_dict)
+    assert ['v2'] == author_link
+
+    author_link = []
+    value_str = 'v2'
+    ret = get_author_link(author_link, value_str)
+    assert [] == author_link
 
 # def copy_field_test(dc, map, jrc, iid=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_copy_field_test -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp

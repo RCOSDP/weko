@@ -225,7 +225,15 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             query_key = weko_faceted_search_mapping[param]
             search = search.post_filter({"terms": {query_key: params[param]}})
 
+        print("************** _query_proxy ********************")
+        print(search.query.to_dict())
+        print("************** _post_filter_proxy ********************")
+        print(search.filter().to_dict())
+
         search_result = search.execute()
+
+        print("result.hits.total = {}".format(search_result.hits.total))
+
         # Generate links for prev/next
         urlkwargs.update(
             size=size,

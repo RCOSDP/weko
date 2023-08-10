@@ -655,6 +655,10 @@ def replace_license_free(record_metadata, is_change_label=True):
                         attr[_license_note] = attr[_license_free]
                         del attr[_license_free]
 
+def get_data_by_key_array_json(key, array_json, get_key):
+    for item in array_json:
+        if str(item.get('id')) == str(key):
+            return item.get(get_key)
 
 def get_file_info_list(record):
     """File Information of all file in record.
@@ -699,11 +703,6 @@ def get_file_info_list(record):
                     message = "Download / Preview is available from {}/{}/{}."
                     p_file['download_preview_message'] = _(message).format(
                         pdt.year, pdt.month, pdt.day)
-
-    def get_data_by_key_array_json(key, array_json, get_key):
-        for item in array_json:
-            if str(item.get('id')) == str(key):
-                return item.get(get_key)
 
     workflows = get_workflows()
     roles = get_roles()

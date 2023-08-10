@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import mock  # python2, after pip install mock
 import pytest
-from flask import Flask, json, jsonify, session, url_for
+from flask import Flask, json, jsonify, session, url_for, current_app
 from flask_babelex import get_locale, to_user_timezone, to_utc
 from flask_login import current_user
 from flask_security import login_user
@@ -66,7 +66,13 @@ def test_file_permission_factory(app, records, users,db_file_permission):
 #    def get_email_list_by_ids(user_id_list):
 #    def __check_user_permission(user_id_list):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_file_download_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_check_file_download_permission(app, records, users,db_file_permission):
+def test_check_file_download_permission(app, records, users):#, db_file_permission
+    current_app.extensions['invenio-search'] = MagicMock()
+    print("invenio-search current_app")
+    #print(vars(current_app.extensions['invenio-search']['app']))
+    print("invenio-search app")
+    #print(vars(app.extensions['invenio-search']['app']))
+    
     indexer, results = records
     record = results[0]["record"]
     fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-27'}], 
@@ -115,8 +121,8 @@ def test_check_file_download_permission(app, records, users,db_file_permission):
 
             fjson['accessrole'] = 'open_restricted'
             assert check_file_download_permission(record, fjson, True) == False
+
     """
-    
     record = results[2]["record"]
     fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 
              'date': [{'dateType': 'Available', 'dateValue': '2022-09-27'}], 'format': 'image/jpeg', 
@@ -312,7 +318,7 @@ def test_check_publish_status(app):
         record = {
             "_oai": {"id": "oai:weko3.example.org:00000001", "sets": ["1658073625012"]},
             "path": ["1658073625012"],
-            "owner": "1",
+            "owner": 1,
             "recid": "1",
             "title": ["2022-07-18"],
             "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-07-18"},
@@ -320,7 +326,7 @@ def test_check_publish_status(app):
             "_deposit": {
                 "id": "1",
                 "pid": {"type": "depid", "value": "1", "revision_id": 0},
-                "owner": "1",
+                "owner": 1,
                 "owners": [1],
                 "status": "published",
                 "created_by": 1,
@@ -482,7 +488,7 @@ def test_check_publish_status2(app,publish_status,pubdate,expect_result):
         record = {
             "_oai": {"id": "oai:weko3.example.org:00000001", "sets": ["1658073625012"]},
             "path": ["1658073625012"],
-            "owner": "1",
+            "owner": 1,
             "recid": "1",
             "title": ["2022-07-18"],
             "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-07-18"},
@@ -490,7 +496,7 @@ def test_check_publish_status2(app,publish_status,pubdate,expect_result):
             "_deposit": {
                 "id": "1",
                 "pid": {"type": "depid", "value": "1", "revision_id": 0},
-                "owner": "1",
+                "owner": 1,
                 "owners": [1],
                 "status": "published",
                 "created_by": 1,
@@ -620,7 +626,7 @@ def test_check_created_id(app, users):
     record = {
         "_oai": {"id": "oai:weko3.example.org:00000001", "sets": ["1657555088462"]},
         "path": ["1657555088462"],
-        "owner": "1",
+        "owner": 1,
         "recid": "1",
         "title": ["a"],
         "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-07-12"},
@@ -628,7 +634,7 @@ def test_check_created_id(app, users):
         "_deposit": {
             "id": "1",
             "pid": {"type": "depid", "value": "1", "revision_id": 0},
-            "owner": "1",
+            "owner": 1,
             "owners": [1],
             "status": "published",
             "created_by": 1,
@@ -767,7 +773,7 @@ def test_check_created_id(app, users):
     record = {
         "_oai": {"id": "oai:weko3.example.org:00000001", "sets": ["1657555088462"]},
         "path": ["1657555088462"],
-        "owner": "1",
+        "owner": 1,
         "recid": "1",
         "title": ["a"],
         "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-07-12"},
@@ -775,7 +781,7 @@ def test_check_created_id(app, users):
         "_deposit": {
             "id": "1",
             "pid": {"type": "depid", "value": "1", "revision_id": 0},
-            "owner": "1",
+            "owner": 1,
             "owners": [1],
             "status": "published",
             "created_by": 1,

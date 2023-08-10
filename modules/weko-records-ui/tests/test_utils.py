@@ -1,5 +1,5 @@
 import pytest
-from weko_records_ui.utils import create_usage_report_for_user,get_data_usage_application_data,send_usage_report_mail_for_user,check_and_send_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,is_show_email_of_creator,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings,get_valid_onetime_download,create_secret_url,_generate_secret_download_url,parse_secret_download_token,validate_secret_download_token,get_secret_download,_create_secret_download_url,update_secret_download
+from weko_records_ui.utils import create_usage_report_for_user,get_data_usage_application_data,send_usage_report_mail_for_user,check_and_send_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,is_show_email_of_creator,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings,get_valid_onetime_download,create_secret_url,_generate_secret_download_url,parse_secret_download_token,validate_secret_download_token,get_secret_download,_create_secret_download_url,update_secret_download,get_data_by_key_array_json
 import base64
 from unittest.mock import MagicMock
 import copy
@@ -186,7 +186,7 @@ def test_get_list_licence(app):
 def test_get_license_pdf(app):
     app.config['WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION'] = "/static/images/creative_commons/"
     lic ='license_12'
-    item_metadata_json={'id': '23.1', 'pid': {'type': 'depid', 'value': '23.1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'test', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-09-28', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_ddb1', 'resourcetype': 'dataset'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/23.1/files/sample_arial.pdf'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-28'}], 'format': 'application/pdf', 'filename': 'sample_arial.pdf', 'filesize': [{'value': '28 KB'}], 'mimetype': 'application/pdf', 'accessrole': 'open_access', 'version_id': '72b25fac-c471-44af-9971-c608f684f863', 'displaytype': 'preview', 'licensetype': 'license_12'}]}
+    item_metadata_json={'id': '23.1', 'pid': {'type': 'depid', 'value': '23.1', 'revision_id': 0}, 'lang': 'ja', 'owner': 1, 'title': 'test', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-09-28', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_ddb1', 'resourcetype': 'dataset'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/23.1/files/sample_arial.pdf'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-28'}], 'format': 'application/pdf', 'filename': 'sample_arial.pdf', 'filesize': [{'value': '28 KB'}], 'mimetype': 'application/pdf', 'accessrole': 'open_access', 'version_id': '72b25fac-c471-44af-9971-c608f684f863', 'displaytype': 'preview', 'licensetype': 'license_12'}]}
     file_item_id = 'item_1617605131499'
     footer_w =90
     footer_h = 4
@@ -408,6 +408,17 @@ def test_get_file_info_list_1(app, records_restricted):
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         ret =  get_file_info_list(record)
         assert len(ret)==2
+
+# def get_data_by_key_array_json(record):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_data_by_key_array_json -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_data_by_key_array_json(app):
+    array_json = [{'id': 'test1', 'value':'value1'}, {'id': 'test2', 'value':'value2'}, {'hoge': 1}]
+    key = 'test2'
+    get_key = 'value'
+    assert 'value2' == get_data_by_key_array_json(key, array_json, get_key)
+    none_key = 'abc'
+    assert None == get_data_by_key_array_json(none_key, array_json, get_key)
+    assert None == get_data_by_key_array_json(key, [], get_key)
 
 # def create_usage_report_for_user(onetime_download_extra_info: dict):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

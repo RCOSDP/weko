@@ -44,6 +44,27 @@ from weko_schema_ui.schema import SchemaTree
 from .api import ItemTypes, Mapping
 from .config import COPY_NEW_FIELD, WEKO_TEST_FIELD
 
+def get_author_link(author_link, value):
+    """Get author link data."""
+    if isinstance(value, list):
+        for v in value:
+            if (
+                "nameIdentifiers" in v
+                and len(v["nameIdentifiers"]) > 0
+                and "nameIdentifierScheme" in v["nameIdentifiers"][0]
+                and v["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
+                and "nameIdentifier" in v["nameIdentifiers"][0]
+            ):
+                author_link.append(v["nameIdentifiers"][0]["nameIdentifier"])
+    elif (
+        isinstance(value, dict)
+        and "nameIdentifiers" in value
+        and len(value["nameIdentifiers"]) > 0
+        and "nameIdentifierScheme" in value["nameIdentifiers"][0]
+        and value["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
+        and "nameIdentifier" in value["nameIdentifiers"][0]
+    ):
+        author_link.append(value["nameIdentifiers"][0]["nameIdentifier"])
 
 def json_loader(data, pid, owner_id=None):
     """Convert the item data and mapping to jpcoar.
@@ -53,26 +74,6 @@ def json_loader(data, pid, owner_id=None):
     :param owner_id: record owner.
     :return: dc, jrc, is_edit
     """
-
-    def _get_author_link(author_link, value):
-        """Get author link data."""
-        if isinstance(value, list):
-            for v in value:
-                if (
-                    "nameIdentifiers" in v
-                    and len(v["nameIdentifiers"]) > 0
-                    and "nameIdentifierScheme" in v["nameIdentifiers"][0]
-                    and v["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
-                ):
-                    author_link.append(v["nameIdentifiers"][0]["nameIdentifier"])
-        elif (
-            isinstance(value, dict)
-            and "nameIdentifiers" in value
-            and len(value["nameIdentifiers"]) > 0
-            and "nameIdentifierScheme" in value["nameIdentifiers"][0]
-            and value["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
-        ):
-            author_link.append(value["nameIdentifiers"][0]["nameIdentifier"])
 
     dc = OrderedDict()
     jpcoar = OrderedDict()
@@ -149,21 +150,21 @@ def json_loader(data, pid, owner_id=None):
         if isinstance(v, list):
             if len(v) > 0 and isinstance(v[0], dict):
                 item["attribute_value_mlt"] = v
-                _get_author_link(author_link, v)
+                get_author_link(author_link, v)
             else:
                 item["attribute_value"] = v
         elif isinstance(v, dict):
             ar.append(v)
             item["attribute_value_mlt"] = ar
             ar = []
-            _get_author_link(author_link, v)
+            get_author_link(author_link, v)
         else:
             item["attribute_value"] = v
 
         dc[k] = item.copy()
         if k != "pubdate":
             item.update(mp.get(k))
-        elif k == "pubdate":
+        else:
             pubdate = v
         jpcoar[k] = item.copy()
 
@@ -176,6 +177,8 @@ def json_loader(data, pid, owner_id=None):
     if list_key:
         for key in list_key:
             del jrc[key]
+
+    # このIF分は意味がない
     if dc:
         # get the tile name to detail page
         title = data.get("title")

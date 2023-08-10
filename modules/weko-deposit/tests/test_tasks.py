@@ -39,7 +39,7 @@ from weko_deposit.tasks import update_items_by_authorInfo
         "_deposit": {
             "id": "3",
             "pid": { "type": "depid", "value": "3", "revision_id": 0 },
-            "owner": "1",
+            "owner": 1,
             "owners": [1],
             "status": "published",
             "created_by": 1,

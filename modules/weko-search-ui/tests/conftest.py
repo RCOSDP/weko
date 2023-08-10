@@ -2374,7 +2374,7 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
                 "_deposit": {
                     "id": "{}".format(i),
                     "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0},
-                    "owner": "1",
+                    "owner": 1,
                     "owners": [1],
                     "status": "draft",
                     "created_by": 1,
@@ -2446,7 +2446,7 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
                 "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0},
                 "lang": "ja",
                 "publish_status": "public",
-                "owner": "1",
+                "owner": 1,
                 "title": "title",
                 "owners": [1],
                 "item_type_id": 1,
@@ -2805,7 +2805,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype, doi_prefix=None):
             "sets": ["{}".format((i % 2) + 1)],
         },
         "path": ["{}".format((i % 2) + 1)],
-        "owner": "1",
+        "owner": 1,
         "recid": "{}".format(i),
         "title": [
             "ja_conference paperITEM00000009(public_open_access_open_access_simple)"
@@ -3350,7 +3350,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype, doi_prefix=None):
         "id": "{}".format(i),
         "pid": {"type": "recid", "value": "{}".format(i), "revision_id": 0},
         "path": ["{}".format((i % 2) + 1)],
-        "owner": "1",
+        "owner": 1,
         "title": "ja_conference paperITEM00000009(public_open_access_open_access_simple)",
         "owners": [1],
         "status": "draft",

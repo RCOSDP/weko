@@ -763,7 +763,7 @@ def test_get_record_by_root_ver(app, db_records):
     record, files = get_record_by_root_ver("1")
 
     assert files == []
-    assert record == {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1']}, 'path': ['1'], 'owner': '1', 'recid': '1', 'title': ['title'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}, '_buckets': {'deposit': '3e99cfca-098b-42ed-b8a0-20ddd09b3e02'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'title', 'author_link': [], 'item_type_id': '1', 'publish_date': '2022-08-20', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'title', 'subitem_1551255648112': 'ja','subitem_stop/continue': 'Continue'}]}, "item_1617186819068": {"attribute_name": "Identifier Registration","attribute_value_mlt": [{"subitem_identifier_reg_text" :"test/0000000001","subitem_identifier_reg_type": "JaLC"}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]},'item_1617605131499': {'attribute_name': 'File','attribute_type': 'file','attribute_value_mlt': [{'accessrole': 'open_access','date': [{'dateType': 'Available','dateValue': '2022-10-03'}],'displaytype': 'detail','filename': 'check_2022-03-10.tsv','filesize': [{'value': '460 ''B'}],'format': 'text/tab-separated-values','is_thumbnail': True,'licensetype': 'license_12','url': {'url': 'https://localhost/record/1/files/test.txt'},'version_id': '29dd361d-dc7f-49bc-b471-bdb5752afef5'}]},'item_1664947259584': {'attribute_name': 'サムネイル','attribute_value_mlt': [{'subitem_thumbnail': [{'thumbnail_label': 'test.png','thumbnail_url': '/api/files/29ad484d-4ed1-4caf-8b21-ab348ae7bf28/test.png?versionId=ecd5715e-4ca5-4e45-b93c-5089f52860a0'}]}]}, 'relation_version_is_last': True}
+    assert record == {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1']}, 'path': ['1'], 'owner': 1, 'owners': [1], 'recid': '1', 'title': ['title'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}, '_buckets': {'deposit': '3e99cfca-098b-42ed-b8a0-20ddd09b3e02'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': 1, 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'title', 'author_link': [], 'created_by': 1, 'item_type_id': '1', 'publish_date': '2022-08-20', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'title', 'subitem_1551255648112': 'ja','subitem_stop/continue': 'Continue'}]}, "item_1617186819068": {"attribute_name": "Identifier Registration","attribute_value_mlt": [{"subitem_identifier_reg_text" :"test/0000000001","subitem_identifier_reg_type": "JaLC"}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]},'item_1617605131499': {'attribute_name': 'File','attribute_type': 'file','attribute_value_mlt': [{'accessrole': 'open_access','date': [{'dateType': 'Available','dateValue': '2022-10-03'}],'displaytype': 'detail','filename': 'check_2022-03-10.tsv','filesize': [{'value': '460 ''B'}],'format': 'text/tab-separated-values','is_thumbnail': True,'licensetype': 'license_12','url': {'url': 'https://localhost/record/1/files/test.txt'},'version_id': '29dd361d-dc7f-49bc-b471-bdb5752afef5'}]},'item_1664947259584': {'attribute_name': 'サムネイル','attribute_value_mlt': [{'subitem_thumbnail': [{'thumbnail_label': 'test.png','thumbnail_url': '/api/files/29ad484d-4ed1-4caf-8b21-ab348ae7bf28/test.png?versionId=ecd5715e-4ca5-4e45-b93c-5089f52860a0'}]}]}, 'relation_version_is_last': True}
 
 
 # def get_disptype_and_ver_in_metainfo(metadata):
@@ -1186,10 +1186,12 @@ def test_get_approval_dates(app,mocker):
 def test_get_item_info(db_records):
     result = get_item_info(db_records[0][3].id)
     assert result == {'type': 'depid', 'value': '1', 'revision_id': 0, 'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': '', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper', 'subitem_thumbnail': [{'thumbnail_url': '/api/files/29ad484d-4ed1-4caf-8b21-ab348ae7bf28/test.png?versionId=ecd5715e-4ca5-4e45-b93c-5089f52860a0', 'thumbnail_label': 'test.png'}]}
-    print("result:{}".format(result))
+
+    result = get_item_info(0)
+    assert result == {}
 
     with patch("weko_workflow.utils.ItemsMetadata.get_record",side_effect=Exception("test error")):
-        result = get_item_info(-1)
+        result = get_item_info(db_records[0][3].id)
         assert result == {}
     
     result = get_item_info("")
@@ -1513,7 +1515,7 @@ def test_create_record_metadata(app,db,users,db_register,mocker):
         "flow_id":workflow.flow_id
     }
     def mock_modify_item_metadata(item_,item_type_id_,new_activity_id_,activity_id_,data_dict_,schema_,owner_id_,related_title_):
-        item_ = {'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'related_title - ja_usage_title - 2 - ', 'owners': [1], 'status': 'published', '$schema': 'items/jsonschema/1', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}
+        item_ = {'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': 1, 'title': 'related_title - ja_usage_title - 2 - ', 'owners': [1], 'status': 'published', '$schema': 'items/jsonschema/1', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}
     mocker.patch("weko_workflow.utils.modify_item_metadata",side_effect=mock_modify_item_metadata)
     
     class MockDeposit:
@@ -1591,7 +1593,7 @@ def test_modify_item_metadata(app,db,db_register,users,mocker):
         "subitem_identifier_reg_type":"item_1617186819068"
     }
     
-    test = {'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'related_title - ja_usage_title - 2 - ', 'owners': [1], 'status': 'published', '$schema': 'items/jsonschema/1', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}
+    test = {'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': 1, 'title': 'related_title - ja_usage_title - 2 - ', 'owners': [1], 'status': 'published', '$schema': 'items/jsonschema/1', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}
     mocker.patch("weko_workflow.utils.get_shema_dict",return_value=schema_dict)
     result = modify_item_metadata(item,item_type_id,"new activity",activity_id,
                          data_dict,schema,owner_id,related_title)
@@ -2049,7 +2051,7 @@ def test_delete_guest_activity(client,workflow):
     assert result == False
 # def get_activity_display_info(activity_id: str):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_activity_display_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_get_activity_display_info(app,db, users, db_register,mocker):
+def test_get_activity_display_info(app,db, users, db_register, mocker):
     with app.test_request_context():
         activity = db_register["activities"][1]
         activity_id = activity.activity_id
@@ -2064,9 +2066,10 @@ def test_get_activity_display_info(app,db, users, db_register,mocker):
         with db.session.begin_nested():
             db.session.add(db_history1)
         test_steps = [
-            {"ActivityId":activity_id,"ActionId":1,"ActionName":"Start","ActionVersion":"1.0.0","ActionEndpoint":"begin_action","Author":"contributor@test.org","Status":"action_doing","ActionOrder":1},
-            {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login","Author":"","Status":" ","ActionOrder":2},
-            {"ActivityId":activity_id,"ActionId":5,"ActionName":"Item Link","ActionVersion":"1.0.0","ActionEndpoint":"item_link","Author":"","Status":" ","ActionOrder":3}
+            {"ActivityId":activity_id,"ActionId":1,"ActionName":"Start","ActionVersion":"1.0.0","ActionEndpoint":"begin_action", "Author":"contributor@test.org", "Status":"action_doing", "ActionOrder":1},
+            {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login", "Author":"contributor@test.org", "Status":"action_doing","ActionOrder":1},
+            {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login", "Author":"", "Status":" ","ActionOrder":2},
+            {"ActivityId":activity_id,"ActionId":5,"ActionName":"Item Link","ActionVersion":"1.0.0","ActionEndpoint":"item_link", "Author":"", "Status":" ","ActionOrder":3}
         ]
         endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
         assert endpoint == "begin_action"
@@ -2094,6 +2097,23 @@ def test_get_activity_display_info(app,db, users, db_register,mocker):
         assert steps == test_steps
         assert temporary_comment == ""
         assert workflow_detail == db_register["workflow"]
+
+        # if activity_detail and activity_detail.item_id = FALSE
+        sutab_get_activity_detail = WorkActivity().get_activity_detail(activity_id)
+        sutab_get_activity_detail.item_id = None
+        with patch("weko_workflow.api.WorkActivity.get_activity_detail", return_value=sutab_get_activity_detail):
+            endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
+            assert item is None
+
+        # if metadata: == True
+        import json
+        target_activity = Activity.query.filter_by(activity_id=activity_id).first()
+        target_activity.temp_data = json.dumps({"metainfo":{"owner": 2, "shared_user_ids":[{"user": -1}, {"user": 1}]}})
+        db.session.merge(activity)
+        db.session.commit()
+        endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
+        assert owner_id == 2
+        assert shared_user_ids == [{"user": -1}, {"user": 1}]
         
 # def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test___init_activity_detail_data_for_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -2114,9 +2134,10 @@ def test___init_activity_detail_data_for_guest(app, db, users, db_register, mock
             db.session.add(db_history1)
 
         test_steps = [
-            {"ActivityId":activity_id,"ActionId":1,"ActionName":"Start","ActionVersion":"1.0.0","ActionEndpoint":"begin_action","Author":"contributor@test.org","Status":"action_doing","ActionOrder":1},
-            {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login","Author":"","Status":" ","ActionOrder":2},
-            {"ActivityId":activity_id,"ActionId":5,"ActionName":"Item Link","ActionVersion":"1.0.0","ActionEndpoint":"item_link","Author":"","Status":" ","ActionOrder":3}
+            {"ActivityId":activity_id,"ActionId":1,"ActionName":"Start","ActionVersion":"1.0.0","ActionEndpoint":"begin_action", "Author":"contributor@test.org", "Status":"action_doing", "ActionOrder":1},
+            {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login", "Author":"contributor@test.org", "Status":"action_doing","ActionOrder":1},
+            {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login", "Author":"", "Status":" ","ActionOrder":2},
+            {"ActivityId":activity_id,"ActionId":5,"ActionName":"Item Link","ActionVersion":"1.0.0","ActionEndpoint":"item_link", "Author":"", "Status":" ","ActionOrder":3}
         ]
         action_endpoint = "begin_action"
         action_id=1
@@ -2198,7 +2219,7 @@ def test___init_activity_detail_data_for_guest(app, db, users, db_register, mock
             step_item_login_url="weko_items_ui/iframe/item_edit.html",
             need_file=True,
             need_billing_file=False,
-            records={'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'title', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}},
+            records={'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': 1, 'title': 'title', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}},
             record=[],
             jsonschema="/items/jsonschema/1",
             schemaform="/items/schemaform/1",
@@ -2214,7 +2235,7 @@ def test___init_activity_detail_data_for_guest(app, db, users, db_register, mock
         )
 
         result = __init_activity_detail_data_for_guest(activity_id,community_id)
-        assert result == test
+        assert test == result
 
 # def prepare_data_for_guest_activity(activity_id: str) -> dict:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_data_for_guest_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -2300,7 +2321,7 @@ def test_prepare_data_for_guest_activity(app,db,users,db_register,mocker):
                 step_item_login_url="weko_items_ui/iframe/item_edit.html",
                 need_file=True,
                 need_billing_file=False,
-                records={'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'title', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}},
+                records={'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': 1, 'title': 'title', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}},
                 record=[],
                 jsonschema="/items/jsonschema/1",
                 schemaform="/items/schemaform/1",

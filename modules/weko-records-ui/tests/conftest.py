@@ -791,7 +791,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype, shared_ids):
     record_data = {
         "_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]},
         "path": ["{}".format((i % 2) + 1)],
-        "owner": "1",
+        "owner": 1,
         "recid": "{}".format(i),
         "title": [
             "ja_conference paperITEM00000009(public_open_access_open_access_simple)"
@@ -1334,7 +1334,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype, shared_ids):
         "id": "{}".format(i),
         "pid": {"type": "recid", "value": "{}".format(i), "revision_id": 0},
         "path": ["{}".format((i % 2) + 1)],
-        "owner": "1",
+        "owner": 1,
         "title": "ja_conference paperITEM00000009(public_open_access_open_access_simple)",
         "owners": [1],
         "status": "draft",
@@ -1937,7 +1937,7 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
     record_data = {
         "_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]},
         "path": ["{}".format((i % 2) + 1)],
-        "owner": "1",
+        "owner": 1,
         "recid": "{}".format(i),
         "title": [
             "ja_conference paperITEM00000009(public_open_access_open_access_simple)"
@@ -2480,7 +2480,7 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
         "id": "{}".format(i),
         "pid": {"type": "recid", "value": "{}".format(i), "revision_id": 0},
         "path": ["{}".format((i % 2) + 1)],
-        "owner": "1",
+        "owner": 1,
         "title": "ja_conference paperITEM00000009(public_open_access_open_access_simple)",
         "owners": [1],
         "status": "draft",
@@ -3056,7 +3056,7 @@ def make_record_restricted_open_login(db, indexer, i, filepath, filename, mimety
     record_data = {
         "_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]},
         "path": ["{}".format((i % 2) + 1)],
-        "owner": "1",
+        "owner": 1,
         "recid": "{}".format(i),
         "title": [
             "ja_conference paperITEM00000009(public_open_access_open_access_simple)"
@@ -3600,7 +3600,7 @@ def make_record_restricted_open_login(db, indexer, i, filepath, filename, mimety
         "id": "{}".format(i),
         "pid": {"type": "recid", "value": "{}".format(i), "revision_id": 0},
         "path": ["{}".format((i % 2) + 1)],
-        "owner": "1",
+        "owner": 1,
         "title": "ja_conference paperITEM00000009(public_open_access_open_access_simple)",
         "owners": [1],
         "status": "draft",

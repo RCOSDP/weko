@@ -2148,7 +2148,7 @@ def get_item_info(item_id):
         try:
             item = ItemsMetadata.get_record(id_=item_id)
         except Exception as ex:
-            current_app.logger.exception('Cannot get item data:', ex)
+            current_app.logger.exception('Cannot get item data:' + str(ex))
             temp = dict()
             return temp
 
@@ -3043,7 +3043,7 @@ def get_activity_display_info(activity_id: str):
         Activity: activity_detail
         Action: cur_action
         ActivityHistory: histories
-        _type_: item {'lang': 'ja', 'owner': '1', 'title': 'ddd', '$schema': '/items/jsonschema/15', 'pubdate': '2022-08-21', 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ddd', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_beb9', 'resourcetype': 'data paper'}}
+        _type_: item {'lang': 'ja', 'owner': 1, 'title': 'ddd', '$schema': '/items/jsonschema/15', 'pubdate': '2022-08-21', 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ddd', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_beb9', 'resourcetype': 'data paper'}}
         _type_: steps
         _type_: temporary_comment [{'ActivityId': 'A-20220821-00003', 'ActionId': 1, 'ActionName': 'Start', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'begin_action', 'Author': 'wekosoftware@nii.ac.jp', 'Status': 'action_done', 'ActionOrder': 1}, {'ActivityId': 'A-20220821-00003', 'ActionId': 3, 'ActionName': 'Item Registration', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_login', 'Author': '', 'Status': ' ', 'ActionOrder': 2}, {'ActivityId': 'A-20220821-00003', 'ActionId': 4, 'ActionName': 'Approval', 'ActionVersion': '2.0.0', 'ActionEndpoint': 'approval', 'Author': '', 'Status': ' ', 'ActionOrder': 3}, {'ActivityId': 'A-20220821-00003', 'ActionId': 5, 'ActionName': 'Item Link', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_link', 'Author': '', 'Status': ' ', 'ActionOrder': 4}, {'ActivityId': 'A-20220821-00003', 'ActionId': 7, 'ActionName': 'Identifier Grant', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'identifier_grant', 'Author': '', 'Status': ' ', 'ActionOrder': 5}, {'ActivityId': 'A-20220821-00003', 'ActionId': 2, 'ActionName': 'End', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'end_action', 'Author': '', 'Status': ' ', 'ActionOrder': 6}]
         Workflow: workflow_detail
@@ -4053,12 +4053,9 @@ def is_terms_of_use_only(workflow_id :int) -> bool:
     """
     
     current_app.logger.info(workflow_id)
-    ids = [workflow_id]
-
-    wf:_WorkFlow = WorkFlow().get_workflow_by_ids(ids)
-    current_app.logger.info(wf)
-    if wf[0].open_restricted :
-        fa :list[FlowAction] =Flow().get_flow_action_list(wf[0].flow_id)
+    wf = WorkFlow().get_workflow_by_id(workflow_id)
+    if wf and wf.open_restricted :
+        fa :list[FlowAction] =Flow().get_flow_action_list(wf.flow_id)
         if len(fa) == 2 :
             #begin action and end action
             return True
