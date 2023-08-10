@@ -3586,8 +3586,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.registerUserPermission = async function () {
         let model = $rootScope.recordsVM.invenioRecordsModel;
         let userSelection = $(".form_share_permission").css('display');
-        let is_validate_owner = false;
-        let is_validate_contributor = false;
         let login_user_id = 0;
         let is_exist_login_user = false;
         // init model
@@ -3652,10 +3650,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 is_exist_login_user = true;
               }
               if (user['owner']) {
-                is_validate_owner = true;
                 owner_info = {'user_id': user['userID'], 'email': user['email']};
               } else {
-                is_validate_contributor = true;
                 contributors_info.push({'user_id':user['userID'], 'email': user['email']});
               }
             }
@@ -3683,10 +3679,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }).then(() => {
           if (!is_exist_login_user) {
             return Promise.reject('Contributer or Owner - the login user is required.');
-          }
-        }).then(() => {
-          if (!(is_validate_owner & is_validate_contributor)) {
-            return Promise.reject('Contributer or Owner - There is an error in your input.');
           }
           return true;
         });

@@ -106,28 +106,12 @@ def get_list_email():
     Query database to get all available email
     return: list of email
     """
-    current_user_id = current_user.get_id()
     result = list()
-    users = User.query.filter(User.id != current_user_id).all()
+    users = User.query.all()
     for user in users:
         email = user.email
         if email:
             result.append(email)
-    # try:
-    #     metadata = MetaData()
-    #     metadata.reflect(bind=db.engine)
-    #     table_name = 'accounts_user'
-
-    #     user_table = Table(table_name, metadata)
-    #     record = db.session.query(user_table)
-
-    #     data = record.all()
-
-    #     for item in data:
-    #         if not int(current_user_id) == item[0]:
-    #             result.append(item[1])
-    # except Exception as e:
-    #     result = str(e)
 
     return result
 
