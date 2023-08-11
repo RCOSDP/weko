@@ -2933,7 +2933,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           $scope.listFileNeedRemoveAfterReplace.forEach(function (f) {
             $rootScope.filesVM.remove(f);
           });
-        }, 1000);
+        }, 0);
       });
 
       $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
@@ -2947,7 +2947,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           setTimeout(function() {
             // Change position of FileName
             $scope.changePositionFileName();
-          }, 1000);
+          }, 0);
         }
       });
 
