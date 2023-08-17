@@ -168,7 +168,7 @@
                         {%- endif %}
                       {%- endfor %}
                     {%- endif %}
-                    <option class="{%- if action.action.action_name == 'Approval' %} {%- else %}hide{%- endif %}" {% if action.action_role.action_item_registrant%} selected {% endif %}  value="-2">{{_('Item registrant')}}</option>                                    
+                    <option class="{%- if action.action.action_name == 'Approval' %} {%- else %}hide{%- endif %}" {% if action.action_role.action_item_registrant%} selected {% endif %}  value="{{workflow_registrant_id}}">{{_('Item registrant')}}</option>                                    
                   </select>
                   <div class="checkbox">
                     <label>

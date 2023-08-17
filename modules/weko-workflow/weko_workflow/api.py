@@ -36,6 +36,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from weko_deposit.api import WekoDeposit
 from weko_records.serializers.utils import get_item_type_name
+from weko_records.models import ItemMetadata as _ItemMetadata
 
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
@@ -1571,6 +1572,10 @@ class WorkActivity(object):
                         _Activity.shared_user_id == self_user_id,
                         _FlowAction.action_id != 4
                     ),
+                    and_(
+                        _FlowActionRole.action_item_registrant == True,
+                        _ItemMetadata.json.op('->>')('owner') == current_user.get_id()
+                    ),
                 )
             )
 
@@ -1634,6 +1639,9 @@ class WorkActivity(object):
                         and_(
                             _Activity.shared_user_id == self_user_id,
                         ),
+                        and_(
+                             _FlowActionRole.action_item_registrant == True,
+                        ),
                     )
                 )\
                 .filter(_FlowAction.action_id == _Activity.action_id) \
@@ -1656,6 +1664,10 @@ class WorkActivity(object):
                         ),
                         and_(
                             _Activity.shared_user_id == self_user_id,
+                        ),
+                        and_(
+                            _FlowActionRole.action_item_registrant == True,
+                            _ItemMetadata.json.op('->>')('owner') == current_user.get_id() 
                         ),
                     )
                 )
@@ -1705,7 +1717,10 @@ class WorkActivity(object):
                 ) \
                 .outerjoin(
                     userrole, and_(User.id == userrole.c.user_id)
-                ).outerjoin(Role, and_(userrole.c.role_id == Role.id))
+                ).outerjoin(Role, and_(userrole.c.role_id == Role.id)
+                ).outerjoin(
+                    _ItemMetadata, and_( _ItemMetadata.id == _Activity.item_id)
+                )
         else:
             common_query = common_query \
                 .outerjoin(
@@ -1713,6 +1728,8 @@ class WorkActivity(object):
                     and_(
                         _Activity.activity_update_user == User.id,
                     )
+                ).outerjoin(
+                    _ItemMetadata, and_( _ItemMetadata.id == _Activity.item_id)
                 )
         return common_query
 
@@ -2049,12 +2066,12 @@ class WorkActivity(object):
                     item_metadata = ItemsMetadata.get_record(activity.item_id)
                     owner_id = item_metadata["owner"]
                     if owner_id:
-                        users['deny'].append(owner_id)
-                elif not action_role.action_user_exclud and action_role.action_item_registrant:
+                        users['deny'].append(int(owner_id))
+                elif not action_role.action_user_exclude and action_role.action_item_registrant:
                     item_metadata = ItemsMetadata.get_record(activity.item_id)
                     owner_id = item_metadata["owner"]
                     if owner_id:
-                        users['allow'].append(owner_id)
+                        users['allow'].append(int(owner_id))
             return roles, users
 
     def del_activity(self, activity_id):
