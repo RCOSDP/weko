@@ -665,3 +665,10 @@ def indexes(app, db):
     db.session.add(index1)
     db.session.commit()
     return index1
+
+@pytest.yield_fixture()
+def i18n_app(app):
+    with app.test_request_context(headers=[("Accept-Language", "ja")]):
+        app.extensions["invenio-oauth2server"] = 1
+        app.extensions["invenio-queues"] = 1
+        yield app

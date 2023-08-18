@@ -142,8 +142,8 @@ require([
         } else {
             sessionStorage.setItem('search_type', '1');
         }
-
-        $('#search-form').submit(function (event) {
+        $('#search-form').off('submit');
+        $('#search-form').on('submit', function (event) {
             var search = '';
             search = insertParam(search, "page", 1);
             $('#search_type :input:checked').each(function () {
@@ -198,6 +198,10 @@ require([
 
                 if(window.invenioSearchFunctions) {
                     window.invenioSearchFunctions.reSearchInvenio(searchParam);
+<<<<<<< HEAD
+=======
+                    $('#search-form').off('submit');
+>>>>>>> ee18dd837 (202309 JDCAT Requirements)
                 }else{
                     window.location.href = "/search?" + searchParam;
                 }
