@@ -1113,14 +1113,12 @@ class WidgetDataLoaderServices:
                 res['error'] = 'Cannot search data'
                 return res
 
-            print('res: {}'.format(res))
             index_json = Indexes.get_browsing_tree_ignore_more()
             index_info = {}
             cls._get_index_info(index_json, index_info)
             has_permission_indexes = list(index_info.keys())
             data = get_permission_record('new_items', res, int(number_result), has_permission_indexes)
 
-            print('data: {}'.format(data))
             for d in data:
                 d['name'] = d['title']
             result['data'] = data

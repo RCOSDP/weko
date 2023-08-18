@@ -690,6 +690,8 @@ WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG = "RUN_MSG_EXPORT_ALL"
 WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
 """Template for the Admin Bulk Export page."""
 
+WEKO_SEARCH_UI_BULK_EXPORT_TASKID_EXPIRED_TIME = 1
+
 WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 1000
 """The number of items exported to tsv/csv file each once."""
 
@@ -704,3 +706,8 @@ WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI = "import_unuse_files_uri_{}"
 
 WEKO_SEARCH_UI_BULK_EXPORT_RETRY_INTERVAL = 1
 """ retry interval(sec) """
+
+CELERY_RESULT_PERSISTENT = True
+""" If set to True, result messages will be persistent. This means the messages will not be lost after a broker restart. The default is for the results to be transient."""
+CELERY_TASK_TRACK_STARTED=True
+""" If True the task will report its status as ‘started’ when the task is executed by a worker. """

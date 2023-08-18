@@ -534,7 +534,6 @@ def copy_value_xml_path(dc, xml_path, iid=None):
             copy_value = root.findall(xpath, ns)[0].text
             return str(copy_value)
     except Exception:
-        print("exception")
         return None
 
 
@@ -1760,9 +1759,9 @@ def selected_value_by_language(
 
     @param lang_array:
     @param value_array:
-    @param lang_selected:
     @param lang_id:
     @param val_id:
+    @param lang_selected:
     @param _item_metadata:
     @return:
     """
@@ -1783,6 +1782,19 @@ def selected_value_by_language(
                 )
                 if value is not None:
                     return value
+            
+            if len(value_array)>len(lang_array): # First title without language code
+                value0 = value_array[0]
+                tmp = copy.copy(value_array)
+                for lang in lang_array:
+                    value = check_info_in_metadata(
+                        lang_id, val_id, lang, _item_metadata
+                    )
+                    if value and value in tmp:
+                        tmp.remove(value)
+                if len(tmp)>0 and tmp[0]==value0:
+                    return tmp[0]
+            
             if "ja-Latn" in lang_array:  # ja_Latn
                 value = check_info_in_metadata(
                     lang_id, val_id, "ja-Latn", _item_metadata
@@ -1960,6 +1972,12 @@ def get_value_by_selected_lang(source_title, current_lang):
             elif key:
                 title_data_langs.append(title)
 
+    if len(title_data_langs_none)>0:
+        source = list(source_title.values())[0]
+        target = list(title_data_langs_none[0].values())[0] 
+        if source==target:
+            return target
+        
     if value_latn:
         return value_latn
 

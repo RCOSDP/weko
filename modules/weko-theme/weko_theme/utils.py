@@ -45,6 +45,7 @@ from weko_items_ui.utils import get_ranking
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_search_ui.api import SearchSetting, get_search_detail_keyword
 from weko_search_ui.utils import check_permission, get_journal_info
+from weko_schema_ui.models import PublishStatus
 
 
 def get_weko_contents(getargs):
@@ -297,7 +298,7 @@ class MainScreenInitDisplaySetting:
 
     @classmethod
     def __get_last_publish_record(cls):
-        query_string = "relation_version_is_last:true AND publish_status:0"
+        query_string = "relation_version_is_last:true AND publish_status: {}".format(PublishStatus.PUBLIC.value)
         query_range = {'publish_date': {'lte': 'now'}}
         result = []
         try:

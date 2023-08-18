@@ -11,12 +11,19 @@ from weko_handle.api import Handle
 # def register_handle(self, location, hdl="", overwrite=False):
 def test_register_handle(app):
     sample = Handle()
-
+    
     # Exception coveraga ~ Line 86 - 89
     try:
         location = 1
         sample.register_handle(
             location=location
+        )
+    except:
+        pass
+    
+    try:
+        sample.register_handle(
+            location=None,hdl=1
         )
     except:
         pass

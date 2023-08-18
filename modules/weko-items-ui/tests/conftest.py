@@ -166,8 +166,9 @@ def base_app(instance_path):
         TESTING=True,
         SERVER_NAME="test_server",
         SQLALCHEMY_DATABASE_URI=os.environ.get(
-            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+             "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
         ),
+        #SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         ACCOUNTS_USERINFO_HEADERS=True,
         WEKO_PERMISSION_SUPER_ROLE_USER=[

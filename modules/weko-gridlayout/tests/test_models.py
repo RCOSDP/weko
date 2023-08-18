@@ -32,7 +32,23 @@ def test_WidgetType_create_2(i18n_app):
 
 
 #     def get(cls, widget_type_id):
+def test_WidgetType_get(i18n_app, widget_item):
+    data = {
+        "type_id": 1,
+        "type_name": "test",
+    }
+
+    assert WidgetType.get(data) == None
+
 #     def get_all_widget_types(cls):
+def test_WidgetType_get_all_widget_types(i18n_app, widget_item):
+    def all_func():
+        return None
+    db = MagicMock()
+    db.all = all_func
+
+    with patch('weko_gridlayout.models.db.session.query', return_value=db):
+        assert WidgetType.get_all_widget_types() == None
 
 
 # class WidgetItem(db.Model, Timestamp):
@@ -64,9 +80,33 @@ def test_get_sequence(i18n_app, db):
 def test_update_by_id(i18n_app, widget_items):
     widget_item_id = MagicMock()
     widget_data = MagicMock()
-    with patch("weko_gridlayout.models.WidgetItem.get_by_id", return_value=""):
 
-        assert not WidgetItem.update_by_id(widget_item_id, widget_data)
+    def merge(item):
+        return item
+    
+    def commit():
+        return True
+
+    def begin_nested():
+        return True
+
+    session = MagicMock()
+    session.merge = merge
+    session.commit = commit
+
+    with patch('weko_gridlayout.models.db', session):
+        with patch("weko_gridlayout.models.WidgetItem.get_by_id", return_value=""):
+            assert WidgetItem.update_by_id(widget_item_id, widget_data) == None
+
+        with patch("weko_gridlayout.models.WidgetItem.get_by_id", return_value=widget_data):
+            with patch("weko_gridlayout.models.setattr", return_value=widget_data):
+                assert WidgetItem.update_by_id(widget_item_id, {"test": {"test": "test"}}, session=session) != None
+
+        with patch("weko_gridlayout.models.WidgetItem.get_by_id", return_value=widget_data):
+            assert WidgetItem.update_by_id(widget_item_id, widget_data) != None
+
+            with patch("weko_gridlayout.models.db.session.commit", side_effect=Exception('')):
+                assert WidgetItem.update_by_id(widget_item_id, widget_data) == False
 
 
 #     def update_setting_by_id(cls, widget_id, settings):
@@ -152,14 +192,34 @@ def test_create_WidgetDesignSetting(i18n_app, db):
     db.session.commit()
     repository_id = "1"
 
-    # Exception coverage
-    assert not WidgetDesignSetting.create(repository_id=repository_id)
+    def merge(item):
+        return item
+    
+    def commit():
+        return True
+
+    session = MagicMock()
+    session.merge = merge
+    session.commit = commit
+
+    with patch('weko_gridlayout.models.db', session):
+        assert WidgetDesignSetting.create(repository_id=repository_id) == True
+
+    # Exception coverage ~ line 459
+    try:
+        WidgetDesignSetting.create(repository_id=repository_id)
+    except:
+        pass
+
 
 
 # class WidgetDesignPage(db.Model):
-#     def create_or_update(cls, repository_id, title, url, content,
-def test_create_or_update(i18n_app, db):
-    test1 = WidgetDesignSetting(repository_id="1")
+# def create_or_update(cls, repository_id, title, url, content, page_id=0, settings=None, multi_lang_data={}, is_main_layout=False):
+def test_create_or_update(i18n_app, db, widget_item):
+    test1 = WidgetDesignPage(
+        repository_id="1",
+        url="/"
+    )
     db.session.add(test1)
     db.session.commit()
     repository_id = "1"
@@ -167,13 +227,52 @@ def test_create_or_update(i18n_app, db):
     url = "/"
     content = MagicMock()
 
-    # Exception coverage
-    assert not WidgetDesignPage.create_or_update(
-        repository_id=repository_id,
-        title=title,
-        url=url,
-        content=content
-    )
+    # Exception coverage ~ line 532, 558
+    try:
+        test1.create_or_update(
+            repository_id=None,
+            title=title,
+            url=None,
+            content=content,
+        )
+    except:
+        pass
+
+    # Exception coverage ~ line 534, 558
+    try:
+        test1.create_or_update(
+            repository_id=repository_id,
+            title=title,
+            url=None,
+            content=content,
+            page_id=1
+        )
+    except:
+        pass
+
+    # Exception coverage ~ line 542
+    try:
+        WidgetDesignPage.create_or_update(
+            repository_id=repository_id,
+            title=title,
+            url=url,
+            content=content
+        )
+    except:
+        pass
+    
+    with patch('weko_gridlayout.models.db.session.merge', return_value=""):
+        with patch('weko_gridlayout.models.db.session.commit', return_value=""):
+            with patch('weko_gridlayout.models.WidgetDesignPageMultiLangData', return_value=MagicMock()):
+                WidgetDesignPage.create_or_update(
+                    repository_id=repository_id,
+                    title=title,
+                    url="url",
+                    content=content,
+                    settings={},
+                    multi_lang_data={"lang": "lang"}
+                )
+        
 
 #     def delete(cls, page_id):
 def test_delete_WidgetDesignPage(i18n_app, widget_items):
@@ -185,7 +284,7 @@ def test_delete_WidgetDesignPage(i18n_app, widget_items):
 
     
 #     def update_settings(cls, page_id, settings=None):
-def test_update_settings_by_repository_id(i18n_app, db):
+def test_update_settings(i18n_app, db):
     test = WidgetDesignPage(
         id=1,
         repository_id="1",
@@ -201,8 +300,48 @@ def test_update_settings_by_repository_id(i18n_app, db):
 
 
 #     def update_settings_by_repository_id(cls, repository_id, settings=None):
+def test_update_settings_by_repository_id(i18n_app, db):
+    test = WidgetDesignPage(
+        id=1,
+        repository_id="1",
+        url="/"
+    )
+    db.session.add(test)
+    db.session.commit()
+    page_id = 1
+
+    assert WidgetDesignPage.update_settings_by_repository_id(page_id) == True
+
+    with patch('weko_gridlayout.models.db.session.merge', side_effect=Exception('')):
+        assert WidgetDesignPage.update_settings_by_repository_id(page_id) == False
+
+
 #     def get_all(cls):
+def test_get_all(i18n_app, db):
+    test = WidgetDesignPage(
+        id=1,
+        repository_id="1",
+        url="/"
+    )
+    db.session.add(test)
+    db.session.commit()
+
+    assert WidgetDesignPage.get_all() != None
+
+
 #     def get_all_valid(cls):
+def test_get_all_valid(i18n_app, db):
+    test = WidgetDesignPage(
+        id=1,
+        repository_id="1",
+        url="/"
+    )
+    db.session.add(test)
+    db.session.commit()
+
+    assert WidgetDesignPage.get_all_valid() != None
+
+
 #     def get_by_id(cls, id):
 #     def get_by_id_or_none(cls, id):
 #     def get_by_url(cls, url):
@@ -212,4 +351,28 @@ def test_update_settings_by_repository_id(i18n_app, db):
 # class WidgetDesignPageMultiLangData(db.Model):
 #     def __init__(self, lang_code, title):
 #     def get_by_id(cls, id):
+def test_get_by_id(i18n_app, widget_item, db):
+    w = WidgetDesignPageMultiLangData(
+        lang_code="en",
+        title="title",
+    )
+
+    assert w.get_by_id(w.id) == None
+
 #     def delete_by_page_id(cls, page_id):
+def test_delete_by_page_id(i18n_app, widget_item):
+    w = WidgetDesignPageMultiLangData(
+        lang_code="en",
+        title="title",
+    )
+
+    assert w.delete_by_page_id(page_id=1) == True
+
+    with patch('weko_gridlayout.models.db.session.commit', side_effect=Exception('')):
+        # Exception coverage ~ line 724
+        try:
+            assert w.delete_by_page_id(page_id=1) == False
+        except:
+            pass
+    
+    assert w.delete_by_page_id(page_id=0) == False

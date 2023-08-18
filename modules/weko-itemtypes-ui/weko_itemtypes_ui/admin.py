@@ -392,19 +392,15 @@ class ItemTypeMetaDataView(BaseView):
                             json_obj = json.load(json_file)
                             if file_name == "ItemType.json":
                                 import_data["ItemType"] = json_obj
-                                print(file_name)
                                 #print(json_obj)
                             elif file_name == "ItemTypeName.json":
                                 import_data["ItemTypeName"] = json_obj
-                                print(file_name)
                                 #print(json_obj)
                             elif file_name == "ItemTypeMapping.json":
                                 import_data["ItemTypeMapping"] = json_obj
-                                print(file_name)
                                 #print(json_obj)
                             elif file_name == "ItemTypeProperty.json":
                                 import_data["ItemTypeProperty"] = json_obj
-                                print(file_name)
                                 #print(json_obj)
             
             # ZIPファイル内に規定のアイテムタイプデータが無ければエラー

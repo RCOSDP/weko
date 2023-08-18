@@ -54,6 +54,7 @@ from invenio_records.api import RecordBase
 from invenio_accounts.models import User
 from invenio_search import RecordsSearch
 from invenio_stats.utils import QueryRankingHelper, QuerySearchReportHelper
+from invenio_stats.views import QueryRecordViewCount
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
@@ -72,6 +73,7 @@ from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
+from weko_schema_ui.models import PublishStatus
 from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
@@ -418,7 +420,7 @@ def get_permission_record(rank_type, es_data, display_rank, has_permission_index
         try:
             record = WekoRecord.get_record_by_pid(pid_value)
             if (record.pid and record.pid.status == PIDStatus.DELETED) or \
-                    ('publish_status' in record and record['publish_status'] == '-1'):
+                    ('publish_status' in record and record['publish_status'] == PublishStatus.DELETE.value):
                 continue
             if roles[0]:
                 add_flag = True
@@ -499,23 +501,26 @@ def parse_ranking_results(rank_type,
     if rank == -1:
         if date:
             res = dict(
+                key=key,
                 date=date,
                 title=title,
                 url=url
             )
         else:
             res = dict(
+                key=key,
                 title=title,
                 url=url
             )
     else:
         res = dict(
+            key=key,
             rank=rank,
             count=count,
             title=title,
             url=url
         )
-    
+
     return res
 
 
@@ -1172,7 +1177,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         )
 
         records.attr_output[recid].append(
-            'public' if record['publish_status'] == '0' else 'private')
+            'public' if record['publish_status'] == PublishStatus.PUBLIC.value else 'private')
         feedback_mail_list = records.attr_data['feedback_mail_list'] \
             .get(recid, [])
         records.attr_output[recid].extend(feedback_mail_list)
@@ -1676,7 +1681,6 @@ def get_new_items_by_date(start_date: str, end_date: str, ranking=False) -> dict
                                                           indexes,
                                                           query_with_publish_status=False,
                                                           ranking=ranking)
-        print(search_instance.to_dict())
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError as e:
@@ -2492,10 +2496,15 @@ def get_ranking(settings):
             group_field='pid_value',
             count_field='count'
         )
-
+        
         current_app.logger.debug("finished getting most_reviewed_items data from ES")
         rankings['most_reviewed_items'] = get_permission_record('most_reviewed_items', result, settings.display_rank, has_permission_indexes)
 
+        q = QueryRecordViewCount() 
+        for item in rankings['most_reviewed_items']:
+            ret = q.get_data_by_pid_value(pid_value=item['key'])
+            item['count'] = int(ret['total'])
+            
     # most_downloaded_items
     current_app.logger.debug("get most_downloaded_items start")
     if settings.rankings['most_downloaded_items']:
@@ -3111,7 +3120,7 @@ def make_stats_file_with_permission(item_type_id, recids,
         )
 
         records.attr_output[recid].append(
-            'public' if record['publish_status'] == '0' else 'private')
+            'public' if record['publish_status'] == PublishStatus.PUBLIC.value else 'private')
         feedback_mail_list = records.attr_data['feedback_mail_list'] \
             .get(recid, [])
         records.attr_output[recid].extend(feedback_mail_list)
@@ -3278,7 +3287,8 @@ def check_item_is_being_edit(
             in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]:
         current_app.logger.debug("post_workflow: {0} status: {1}".format(
             post_workflow, post_workflow.action_status))
-        return True
+        #return True
+        return post_workflow.activity_id
 
     draft_pid = PersistentIdentifier.query.filter_by(
         pid_type='recid',
@@ -3292,7 +3302,8 @@ def check_item_is_being_edit(
                                              ASP.ACTION_DOING]:
             current_app.logger.debug("draft_workflow: {0} status: {1}".format(
                 draft_pid.object_uuid, draft_workflow.action_status))
-            return True
+            #return True
+            return draft_workflow.activity_id
 
         pv = PIDVersioning(child=recid)
         latest_pid = PIDVersioning(parent=pv.parent,child=recid).get_children(
@@ -3306,8 +3317,10 @@ def check_item_is_being_edit(
                                               ASP.ACTION_DOING]:
             current_app.logger.debug("latest_workflow: {0} status: {1}".format(
                 latest_pid.object_uuid, latest_workflow.action_status))
-            return True
-    return False
+            #return True
+            return latest_workflow.activity_id
+    #return False
+    return ""
 
 
 def check_item_is_deleted(recid):

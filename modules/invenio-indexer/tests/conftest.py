@@ -26,6 +26,8 @@ from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 
 from invenio_indexer import InvenioIndexer
+from kombu import Exchange, Queue
+
 
 
 @pytest.fixture()
@@ -34,16 +36,25 @@ def base_app(request):
     instance_path = tempfile.mkdtemp()
     app = Flask('testapp', instance_path=instance_path)
     app.config.update(
-        BROKER_URL=os.environ.get('BROKER_URL',
-                                  'amqp://guest:guest@localhost:5672//'),
+        SEARCH_ELASTIC_HOSTS=os.environ.get(
+                'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
+        BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
+        CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
         CELERY_ALWAYS_EAGER=True,
         CELERY_CACHE_BACKEND='memory',
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
         CELERY_RESULT_BACKEND='cache',
+        JSONSCHEMAS_URL_SCHEME='http',
+        SECRET_KEY='CHANGE_ME',
+        SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
         INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
         INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        INDEXER_MQ_QUEUE = Queue("indexer", 
+                                 exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         TESTING=True,
     )
@@ -51,7 +62,7 @@ def base_app(request):
     InvenioDB(app)
     InvenioRecords(app)
     search = InvenioSearch(app, entry_point_group=None)
-    search.register_mappings('records', 'data')
+    search.register_mappings('records', 'tests.data')
 
     with app.app_context():
         if not database_exists(str(db.engine.url)):
@@ -83,12 +94,11 @@ def script_info(app):
 @pytest.fixture()
 def queue(app):
     """Get queue object for testing bulk operations."""
-    queue = app.config['INDEXER_MQ_QUEUE']
-
+    _queue = (app.config['INDEXER_MQ_QUEUE'])
     with app.app_context():
         with establish_connection() as c:
-            q = queue(c)
+            q = _queue(c)
             q.declare()
             q.purge()
 
-    return queue
+    return _queue

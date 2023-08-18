@@ -56,6 +56,13 @@ require([
         } else {
           $('[role="alert"]').css('display', 'inline-block');
           $('[role="alert"]').text(res.msg);
+          if ("activity_id" in res) {
+            url = "/workflow/activity/detail/"+res.activity_id;
+            if (community) {
+              url = url + "?community=" + community;
+            }
+            $('[role="alert"]').append('<a href=' + url + '>' + res.activity_id + '</a>')
+          }
         }
       },
       error: function (jqXHE, status) {

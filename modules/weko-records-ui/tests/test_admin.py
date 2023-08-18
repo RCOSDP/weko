@@ -16,7 +16,6 @@ class TestItemSettingView():
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_admin.py::TestItemSettingView::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
     def test_index_acl(self,client,db_sessionlifetime,users):
         url = url_for("itemsetting.index", _external=True)
-        print(url)
         res = client.get(url)
         assert res.status == '302 FOUND'
 
