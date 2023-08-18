@@ -174,11 +174,20 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     is_can = True
                 else:
                     try:
-                        contents_open_date = fjson.get('accessdate')
-                        item_open_date = fjson.get('date')
-                        if contents_open_date and item_open_date and isinstance(item_open_date, list) and item_open_date[0]:
-                            contents_open_pdt = to_utc(dt.strptime(contents_open_date, '%Y-%m-%d'))
-                            adt = item_open_date[0].get('dateValue')
+                        #contents_open_date = fjson.get('accessdate')
+                        #item_open_date = fjson.get('date')
+                        date = fjson.get('date')
+                        #if contents_open_date and item_open_date and isinstance(item_open_date, list) and item_open_date[0]:
+                        if date and isinstance(date, list) and date[0]:
+                            #contents_open_pdt = to_utc(dt.strptime(contents_open_date, '%Y-%m-%d'))
+                            #adt = item_open_date[0].get('dateValue')
+                            adt = date[0].get('dateValue')
+                            if adt:
+                                pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
+                                is_can = True if dt.utcnow() >= pdt else False
+                            else:
+                                is_can = True
+                            """
                             if adt:
                                 item_open_pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
                                 if dt.utcnow() >= item_open_pdt and dt.utcnow() >= contents_open_pdt:
@@ -187,7 +196,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                                     is_can = False
                             else:
                                 is_can = True if dt.utcnow() >= contents_open_pdt else False
-                            
+                            """
                             roles = fjson.get('roles')
                             if is_can and roles and isinstance(roles, list):
                                 for lst in list(current_user.roles or []):

@@ -48,7 +48,7 @@ def test_weko_deposit_fetcher(app):
       "_deposit": {
         "id": "1",
         "pid": { "type": "depid", "value": "1", "revision_id": 0 },
-        "owner": 1,
+        "owner": "1",
         "owners": [1],
         "status": "published",
         "created_by": 1,
