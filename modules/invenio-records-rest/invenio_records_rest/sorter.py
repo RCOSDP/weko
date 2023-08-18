@@ -24,6 +24,7 @@ import pickle
 
 import six
 from flask import current_app, request
+from invenio_i18n.ext import current_i18n
 
 from .config import RECORDS_REST_DEFAULT_SORT
 
@@ -107,6 +108,20 @@ def eval_field(field, asc, nested_sorting=None):
 
         sorting = {key: {'order': 'asc' if key_asc else 'desc',
                          'unmapped_type': 'long'}}
+
+
+        if "title" in key:
+            # When sorting by Title, change the sorting rules according to the language setting.
+            if "ja" in current_i18n.language:
+                #If there is more than one data set and the data is displayed in Japanese, the larger value is used.
+                sorting = {key: {'order': 'asc' if key_asc else 'desc',
+                         'unmapped_type': 'long',
+                         'mode': 'max'}}
+            else:
+                #If there are multiple data and they are displayed in English, the smaller value is used.
+                sorting = {key: {'order': 'asc' if key_asc else 'desc',
+                         'unmapped_type': 'long',
+                         'mode': 'min'}}
 
         if "date_range" in key:
             current_app.logger.debug(key)
