@@ -227,8 +227,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
 
         search_result = search.execute()
 
-        print("result.hits.total = {}".format(search_result.hits.total))
-
         # Generate links for prev/next
         urlkwargs.update(
             size=size,
