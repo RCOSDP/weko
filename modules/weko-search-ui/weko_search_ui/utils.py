@@ -3888,12 +3888,12 @@ def handle_check_restricted_access_property(list_record):
                                 # systemに利用規約が存在するかチェック
                                 if items.get('key') == key + '[].terms':
                                     if not check_terms_in_system(key, item):
-                                        error = _("ERROR:The specified terms does not exist in the system")
+                                        error = _("The specified terms does not exist in the system")
 
                                 # systemのworkflow/roleに存在するかチェック
                                 if items.get('key') == key + '[].provide':
                                     if not check_provide_in_system(key, item):
-                                        error = _("ERROR:The specified provinding method does not exist in the system")
+                                        error = _("The specified provinding method does not exist in the system")
 
         if error:
             item["errors"] = item["errors"] + [error] if item.get("errors") else [error]
@@ -3906,9 +3906,16 @@ def check_terms_in_system(key, item):
     for _ in range(metadata_count):
         is_terms_exist.append(False)
     for idx in range(metadata_count):
+        # DBに利用規約を登録していない場合
+        # 未設定
+        if not item.get('metadata').get(key)[idx].get('terms'):
+            is_terms_exist[idx] = True
+        # 自由入力
+        if 'term_free' == item.get('metadata').get(key)[idx].get('terms'):
+            is_terms_exist[idx] = True
+
+        # DBに利用規約を登録済みの場合
         for system_terms in system_terms_list:
-            if not item.get('metadata').get(key)[idx].get('terms'):
-                is_terms_exist[idx] = True
             if str(system_terms.get('key')) == str(item.get('metadata').get(key)[idx].get('terms')):
                 is_terms_exist[idx] = True
     return all(is_terms_exist)
@@ -3930,7 +3937,7 @@ def check_provide_in_system(key, item):
             if not setting_workflow_value and type(setting_workflow_value) != int:
                 break
             workflow_list = [workflow.id for workflow in workflow_list]
-            if not setting_workflow_value in workflow_list:
+            if not int(setting_workflow_value) in workflow_list:
                 is_provide_exist[idx] = False
                 break
             
@@ -3938,7 +3945,7 @@ def check_provide_in_system(key, item):
             if not setting_role_value:
                 break
             role_list = [role['id'] for role in get_roles()]
-            if not setting_role_value in role_list:
+            if not int(setting_role_value) in role_list:
                 is_provide_exist[idx] = False
                 break
     return all(is_provide_exist)
