@@ -134,6 +134,24 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     $rootScope.commInfoIndex = "";
   }
 
+  $rootScope.pageSizes = [20, 50, 75, 100];
+  $rootScope.vm.invenioPageSize = 75;
+  $rootScope.handlePageSizeChange = function handlePageSizeChange() {
+      $rootScope.vm.invenioSearchArgs.size = $rootScope.vm.invenioPageSize;
+      let search = new URLSearchParams(window.location.search);
+      search.set('size', $rootScope.vm.invenioSearchArgs.size);
+      window.history.pushState(null,document.title,window.location.pathname + '?' + search);
+      if($rootScope.vm.invenioSearchHiddenParams.size) {
+        $rootScope.vm.invenioSearchHiddenParams.size = $rootScope.vm.invenioSearchArgs.size;
+      }else {
+        $rootScope.vm.invenioSearchCurrentArgs.params.size = $rootScope.vm.invenioSearchArgs.size;
+      }
+  }
+  function onCurrentPageSizeChange(newValue, oldValue) {
+    if(newValue) $rootScope.vm.invenioPageSize = parseInt(newValue);
+  }
+  $rootScope.$watch('vm.invenioSearchArgs.size', onCurrentPageSizeChange);
+
   $rootScope.getSettingDefault = function () {
     let data = null;
     $.ajax({
