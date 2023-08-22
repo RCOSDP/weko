@@ -3674,9 +3674,14 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               shared_user_ids.push({'user':contributors['user_id']});
             }));
             model['shared_user_ids'] = shared_user_ids;
+          } else {
+            return async_validate_users['error'];
           }
-          return true;
-        }).then(() => {
+          return '';
+        }).then((error_message) => {
+          if (error_message.length > 0) {
+            return Promise.reject(error_message);
+          }
           if (!is_exist_login_user) {
             return Promise.reject('Contributer or Owner - the login user is required.');
           }

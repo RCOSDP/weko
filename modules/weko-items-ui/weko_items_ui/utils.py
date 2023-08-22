@@ -80,6 +80,14 @@ from weko_workflow.models import Activity, FlowAction, FlowActionRole, \
     FlowDefine
 from weko_workflow.utils import IdentifierHandle
 
+def check_display_shared_user(user_id):
+    with current_app.app_context():
+        for role_id in current_app.config['WEKO_ITEMS_UI_SHARED_USER_ROLE_ID_LIST']:
+            recs = db.session.query(userrole).filter_by(role_id=role_id).all()
+            for rec in recs:
+                if user_id == rec.user_id:
+                    return True
+    return False
 
 def get_list_username():
     """Get list username.
@@ -93,6 +101,8 @@ def get_list_username():
     users = UserProfile.query.all()
     result = list()
     for user in users:
+        if not check_display_shared_user(user.user_id):
+            continue
         username = user.username
         if username:
             result.append(username)
@@ -109,6 +119,8 @@ def get_list_email():
     result = list()
     users = User.query.all()
     for user in users:
+        if not check_display_shared_user(user.id):
+            continue
         email = user.email
         if email:
             result.append(email)
@@ -142,7 +154,7 @@ def get_user_info_by_username(username):
         data = record.all()
 
         for item in data:
-            if item[0] == user_id:
+            if item[0] == user_id and check_display_shared_user(user_id):
                 result['username'] = username
                 result['user_id'] = user_id
                 result['email'] = item[1]
@@ -191,7 +203,7 @@ def validate_user(username, email):
                 user_id = item[0]
                 break
 
-        if user.user_id == user_id:
+        if user.user_id == user_id and check_display_shared_user(user_id):
             user_info = dict()
             user_info['username'] = username
             user_info['user_id'] = user_id
@@ -228,12 +240,12 @@ def get_user_info_by_email(email):
 
         data = record.all()
         for item in data:
-            if item[1] == email:
+            if item[1] == email and check_display_shared_user(item[0]):
                 user = UserProfile.get_by_userid(item[0])
                 if user is None:
                     result['username'] = ""
                 else:
-                    result['username'] = user.get_username
+                    result['username'] = user.username
                 result['user_id'] = item[0]
                 result['email'] = email
                 return result
