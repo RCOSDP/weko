@@ -174,30 +174,36 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     is_can = True
                 else:
                     try:
+                        # contents accessdate
+                        c_is_can = True
                         date = fjson.get('date')
                         if date and isinstance(date, list) and date[0]:
                             adt = date[0].get('dateValue')
                             if adt:
-                                pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
-                                is_can = True if dt.utcnow() >= pdt else False
-                            else:
-                                is_can = True
-                            """
-                            if adt:
-                                item_open_pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
-                                if dt.utcnow() >= item_open_pdt and dt.utcnow() >= contents_open_pdt:
-                                    is_can = True
-                                else:
-                                    is_can = False
-                            else:
-                                is_can = True if dt.utcnow() >= contents_open_pdt else False
-                            """
-                            roles = fjson.get('roles')
-                            if is_can and roles and isinstance(roles, list):
+                                adt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
+                                c_is_can = True if dt.utcnow() >= adt else False
+                        # publish date
+                        p_is_can = True
+                        idt = record.get('publish_date')
+                        if idt and isinstance(idt, list):
+                            if idt:
+                                idt = to_utc(dt.strptime(idt, '%Y-%m-%d'))
+                                p_is_can = True if dt.utcnow() >= idt else False
+                        
+                        # roles check
+                        role_is_can = False
+                        roles = fjson.get('roles')
+                        if roles and isinstance(roles, list) and len(roles)>0:
+                            for role in [ int(role.get('role')) for role in roles ]:
                                 for lst in list(current_user.roles or []):
-                                    if lst.role in [ role.get('role') for role in roles ]:
-                                        is_can = True
+                                    if int(lst.role) == int(role.get('role')):
+                                        role_is_can = True
                                         break
+                        else:
+                            role_is_can = True
+                        
+                        is_can = c_is_can and p_is_can and role_is_can
+
                     except BaseException:
                         is_can = False
 
