@@ -172,25 +172,16 @@ def get_jpcoar_mapping(item_type_id, data):
 
 if __name__ == "__main__":
 
-    item_type_id="40001" # target item type id
     field="subitem_description_type" # field to replace
-    target="Abstract" # the value to replace
+    target="isIdenticalTo" # the value to replace
     to="Other" # the value to use for replacement
 
     try:
-        if item_type_id:
-            records = (
-                db.session.query(
-                    RecordMetadata)
-                .filter(RecordMetadata.json['item_type_id']=='"{}"'.format(item_type_id))
-                .all()
-            )
-        else:
-            records = (
-                db.session.query(
-                    RecordMetadata
-                ).all()
-            )
+        records = (
+            db.session.query(
+                RecordMetadata
+            ).all()
+        )
         item_type_props = dict()
         item_type_mapping=dict()
         count=0
