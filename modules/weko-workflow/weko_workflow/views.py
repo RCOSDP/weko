@@ -1180,17 +1180,18 @@ def check_authority_action(activity_id='0', action_id=0,
         # item_registrationが完了していないactivityを再編集する場合、item_metadataテーブルにデータはない
         # その為、workflow_activityテーブルのtemp_dataを参照し、保存されている代理投稿者をチェックする
         im = ItemMetadata.query.filter_by(id=activity.item_id).one_or_none()
-        if not im:
+        if not im and activity.temp_data:
             temp_data = json.loads(activity.temp_data)
-            activity_shared_user_ids = temp_data.get('metainfo').get("shared_user_ids")
-            activity_owner = temp_data.get('metainfo').get("owner")
-            shared_user_ids = [ int(shared_user_ids_dict['user']) for shared_user_ids_dict in activity_shared_user_ids ]
-            # if exist shared_user_ids or owner allow to access
-            if int(cur_user) in shared_user_ids:
-                return 0
-            if int(cur_user) == int(activity_owner):
-                return 0
-        else:
+            if not temp_data:
+                activity_shared_user_ids = temp_data.get('metainfo').get("shared_user_ids")
+                activity_owner = temp_data.get('metainfo').get("owner")
+                shared_user_ids = [ int(shared_user_ids_dict['user']) for shared_user_ids_dict in activity_shared_user_ids ]
+                # if exist shared_user_ids or owner allow to access
+                if int(cur_user) in shared_user_ids:
+                    return 0
+                if int(cur_user) == int(activity_owner):
+                    return 0
+        elif im:
             # Check if this activity has contributor equaling to current user
             metadata_shared_user_ids = im.json['shared_user_ids']
             metadata_owner = int(im.json['owner'])

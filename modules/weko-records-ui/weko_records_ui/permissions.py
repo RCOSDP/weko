@@ -174,13 +174,8 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     is_can = True
                 else:
                     try:
-                        #contents_open_date = fjson.get('accessdate')
-                        #item_open_date = fjson.get('date')
                         date = fjson.get('date')
-                        #if contents_open_date and item_open_date and isinstance(item_open_date, list) and item_open_date[0]:
                         if date and isinstance(date, list) and date[0]:
-                            #contents_open_pdt = to_utc(dt.strptime(contents_open_date, '%Y-%m-%d'))
-                            #adt = item_open_date[0].get('dateValue')
                             adt = date[0].get('dateValue')
                             if adt:
                                 pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
@@ -326,7 +321,7 @@ def check_permission_period(permission : FilePermission) -> bool :
     from weko_items_ui.utils import get_user_information
 
     if permission.status == 1:
-        res = get_valid_onetime_download(permission.file_name ,permission.record_id , get_user_information(permission.user_id)['email'])
+        res = get_valid_onetime_download(permission.file_name ,permission.record_id , get_user_information(permission.user_id)[0]['email'])
         current_app.logger.info(res)
         return res is not None
     else:
