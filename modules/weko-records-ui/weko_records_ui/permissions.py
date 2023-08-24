@@ -194,11 +194,20 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                         role_is_can = False
                         roles = fjson.get('roles')
                         if roles and isinstance(roles, list) and len(roles)>0:
-                            for role in [ role.get('role') for role in roles ]:
-                                for lst in list(current_user.roles or []):
-                                    if lst.role == role.get('role'):
-                                        role_is_can = True
-                                        break
+                            for lst in list(current_user.roles or []):
+                                for role_value in [ role.get('role') for role in roles ]:
+                                    if __isint(role_value):
+                                        if lst.id == int(role_value):
+                                            role_is_can = True
+                                            break
+                                    else:
+                                        if lst.name == role_value:
+                                            role_is_can = True
+                                            break
+                            # ログインユーザーに権限なしの場合でも、コンテンツで「非ログインユーザー」指定した場合OK
+                            if len(list(current_user.roles))==0:
+                                if 'none_loggin' in [ role.get('role') for role in roles ]:
+                                    role_is_can = True
                         else:
                             role_is_can = True
                         
@@ -239,6 +248,10 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                                     if lst.name == role_value:
                                         is_role_can = True
                                         break
+                        # ログインユーザーに権限なしの場合でも、コンテンツで「非ログインユーザー」指定した場合OK
+                        if len(list(current_user.roles))==0:
+                            if 'none_loggin' in [ role.get('role') for role in roles ]:
+                                is_role_can = True
                     else:
                         is_role_can = True
 
