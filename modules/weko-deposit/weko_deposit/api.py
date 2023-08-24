@@ -1353,8 +1353,11 @@ class WekoDeposit(Deposit):
             owner_id = data.get("owner", None)
             dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
             
-            # dataのownerとownersを合わせる(redisのデータ不正)
-            data['owners'] = [int(data.get('owner', current_user.id))]
+            # dataのownerとownersを合わせる
+            if current_user and current_user.is_authenticated:
+                data['owners'] = [int(data.get('owner', current_user.id))]
+            else:
+                data['owners'] = [int(data.get('owner','1'))]
             dc['publish_date'] = data.get('pubdate')
             dc['title'] = [data.get('title')]
             dc['relation_version_is_last'] = True
@@ -1417,7 +1420,7 @@ class WekoDeposit(Deposit):
         self['_deposit']['owner'] = int(dc['owner'])
         self['_deposit']['owners'] = [int(dc['owner'])]
         self['_deposit']['weko_shared_ids'] = dc['weko_shared_ids']
-        self['_deposit']['created_by'] = int(current_user.id)
+        self['_deposit']['created_by'] = int(current_user.id) if current_user and current_user.is_authenticated else 1
 
         if data:
             self.delete_item_metadata(data)
