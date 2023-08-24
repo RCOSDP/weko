@@ -1,7 +1,7 @@
 #!/bin/bash
 
 find . | grep -E "(__pycache__|\.eggs|\.pyc|\.pyo$)" | xargs rm -rf
-docker-compose down -v
+docker-compose -f docker-compose2.yml down -v
 for volume in $(docker volume ls -f name=weko -q); do
   docker volume rm $(volume)
 done
