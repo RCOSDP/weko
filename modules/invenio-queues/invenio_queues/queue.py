@@ -1,30 +1,12 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2016 CERN.
+# Copyright (C) 2016-2022 CERN.
 #
-# Invenio is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#
-# In applying this license, CERN does not
-# waive the privileges and immunities granted to it by virtue of its status
-# as an Intergovernmental Organization or submit itself to any jurisdiction.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """API for logging stats events."""
-
-from __future__ import absolute_import, print_function
 
 from contextlib import contextmanager
 
@@ -38,8 +20,7 @@ from werkzeug.utils import cached_property
 class Queue(object):
     """Simple event queue."""
 
-    def __init__(self, exchange, routing_key, connection_pool,
-                 no_ack=True):
+    def __init__(self, exchange, routing_key, connection_pool, no_ack=True):
         """Initialize indexer."""
         self.exchange = exchange
         self.routing_key = routing_key
@@ -56,9 +37,7 @@ class Queue(object):
         """Message queue queue."""
         with self.connection_pool.acquire(block=True) as conn:
             return Q(
-                self.routing_key,
-                exchange=self.exchange,
-                routing_key=self.routing_key
+                self.routing_key, exchange=self.exchange, routing_key=self.routing_key
             )(conn)
 
     @property
@@ -77,13 +56,13 @@ class Queue(object):
         except NotFound:
             return False
         except ChannelError as e:
-            if e.reply_code == '404':
+            if e.reply_code == "404":
                 return False
             raise e
         return True
 
     def producer(self, conn):
-        """Get a consumer for a connection."""
+        """Get a producer for a connection."""
         return Producer(
             conn,
             exchange=self.exchange,
@@ -128,4 +107,3 @@ class Queue(object):
         with self.create_consumer() as consumer:
             for msg in consumer.iterqueue():
                 yield msg.payload if payload else msg
-            consumer.close()
