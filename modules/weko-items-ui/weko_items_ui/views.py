@@ -1007,8 +1007,8 @@ def prepare_edit_item():
                             object_type='rec',
                             getter=record_class.get_record)
         recid, deposit = resolver.resolve(pid_value)
-        authenticators = [str(deposit.get('owner'))] + deposit.get('weko_shared_ids') if deposit.get('weko_shared_ids') is not None else []
-        user_id = str(get_current_user())
+        authenticators = [int(deposit.get('owner'))] + deposit.get('weko_shared_ids') if deposit.get('weko_shared_ids') is not None else []
+        user_id = int(get_current_user())
         activity = WorkActivity()
         latest_pid = PIDVersioning(child=recid).last_child
 

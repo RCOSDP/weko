@@ -941,6 +941,7 @@ def display_activity(activity_id="0"):
             current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     else:
             # get contributors data
+            # 登録済みアイテムが無い場合は、一時保存データから取得する
             contributors = get_contributors(None, user_id_list_json=shared_user_ids, owner_id=owner_id)
 
     res_check = check_authority_action(str(activity_id), int(action_id),
@@ -1182,7 +1183,7 @@ def check_authority_action(activity_id='0', action_id=0,
         im = ItemMetadata.query.filter_by(id=activity.item_id).one_or_none()
         if not im and activity.temp_data:
             temp_data = json.loads(activity.temp_data)
-            if not temp_data:
+            if temp_data is not None:
                 activity_shared_user_ids = temp_data.get('metainfo').get("shared_user_ids")
                 activity_owner = temp_data.get('metainfo').get("owner")
                 shared_user_ids = [ int(shared_user_ids_dict['user']) for shared_user_ids_dict in activity_shared_user_ids ]
