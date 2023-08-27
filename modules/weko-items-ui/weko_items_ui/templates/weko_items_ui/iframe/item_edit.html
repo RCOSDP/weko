@@ -328,7 +328,7 @@
                         {%- endif %}
                         <button ng-disabled="recordsVM.invenioRecordsLoading"
                                 class="btn btn-primary save-button"
-                                ng-click="saveDataJson('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}', true, false);">
+                                ng-click="saveActivityData('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}', true, false);">
                               <span class="glyphicon glyphicon-saved"></span>&nbsp
                               {{_('Save')}}
                         </button>
