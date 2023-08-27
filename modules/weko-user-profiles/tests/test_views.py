@@ -335,7 +335,9 @@ def test_get_profile_info(client,app,admin_app,register_bp,users,mocker,user_pro
 
     res = client.get(url)
     assert json.loads(res.data) == {"positions":"","results":"","error":"'AnonymousUser' object has no attribute 'id'"}
-    login(app,client,obj=users[0]["obj"])
+    
+    current_app.config['WEKO_USERPROFILES_POSITION_LIST'] = [('', ''), ('Professor', 'Professor')]
+    login(app,client,email=users[0]["email"],password='123456')
     profile_info = {
         "subitem_fullname":"test taro",
         "subitem_displayname":"sysadmin user",
@@ -353,7 +355,7 @@ def test_get_profile_info(client,app,admin_app,register_bp,users,mocker,user_pro
     }
     test = {
         "results":profile_info,
-        "positions":WEKO_USERPROFILES_POSITION_LIST,
+        "positions":current_app.config['WEKO_USERPROFILES_POSITION_LIST'],
         "error":""
     }
     mocker.patch("weko_user_profiles.views.get_user_profile_info",return_value=profile_info)
