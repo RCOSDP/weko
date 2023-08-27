@@ -240,7 +240,7 @@ class Deposit(Record):
 
         data['_deposit'].setdefault('owners', list())
 
-        if current_user.is_authenticated:
+        if current_user and current_user.is_authenticated:
             data['_deposit']['created_by'] = int(current_user.get_id())
             data['owner'] = int(current_user.get_id())
         if 'owner' in data and data['owner']:
@@ -248,7 +248,7 @@ class Deposit(Record):
             data['_deposit']['owner'] = int(data['owner'])
             data['_deposit']['owners'] = [int(data['owner'])]
         else:
-            data['owner'] = '1'
+            data['owner'] = 1
             data['owners'] = [1]
             data['_deposit']['owner'] = 1
             data['_deposit']['owners'] = [1]

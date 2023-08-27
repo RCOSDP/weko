@@ -4503,9 +4503,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         if(is_login_check) {
           //shared_userに現在ログイン中のユーザーIDと一致するかチェック
           shared_user_ids = [];
-          recordModel['shared_user_ids'].forEach(users => {
-            shared_user_ids.push(users['user']);
-          });
+          if (recordModel['shared_user_ids'] != undefined) {
+            recordModel['shared_user_ids'].forEach(users => {
+              shared_user_ids.push(users['user']);
+            });
+          }
           const ids = shared_user_ids.concat(recordModel['owner']);
           if (Number.isInteger(recordModel['owner'])) {
             let is_correct = await $scope.checkLoginUserIds(ids)

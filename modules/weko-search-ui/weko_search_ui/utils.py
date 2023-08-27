@@ -3901,6 +3901,8 @@ def handle_check_restricted_access_property(list_record):
 
 def check_terms_in_system(key, item):
     system_terms_list = get_restricted_access('terms_and_conditions')
+    if item.get('metadata').get(key) is None:
+        return False
     metadata_count = len(item.get('metadata').get(key))
     is_terms_exist = []
     for _ in range(metadata_count):
@@ -3922,6 +3924,8 @@ def check_terms_in_system(key, item):
 
 def check_provide_in_system(key, item):
     from weko_records_ui.utils import get_roles
+    if item.get('metadata').get(key) is None:
+        return False
     metadata_count = len(item.get('metadata').get(key))
     is_provide_exist = []
     for _ in range(metadata_count):
