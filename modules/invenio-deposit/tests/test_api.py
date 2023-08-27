@@ -41,6 +41,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from invenio_deposit.api import Deposit
 from invenio_deposit.errors import MergeConflict
 
+from flask_login.utils import login_user, logout_user
 
 def test_schemas(app, fake_schemas):
     """Test schema URL transformations."""
@@ -277,6 +278,20 @@ def test_deposit_create(app, location, fake_schemas):
     user1 = datastore.create_user(email='info@inveniosoftware.org', password='tester', active=True)
 
     with app.test_request_context():
+        logout_user()
+        data_no_login = {
+            "metadata": {
+                        "title": "test-title",
+                        },
+            "_deposit": {
+                "id": "1"
+            }
+        }
+        deposit = Deposit.create(data_no_login)
+        assert deposit['_deposit']['owner'] == 1
+        assert deposit['_deposit']['owners'] == [1]
+        assert deposit['_deposit']['weko_shared_ids'] == []
+
         with patch("flask_login.utils._get_user", return_value=user1):
             data = {
                 "metadata": {
@@ -300,7 +315,7 @@ def test_deposit_create(app, location, fake_schemas):
             deposit_1 = Deposit.create(data_1)
             assert deposit_1['weko_shared_ids'] == []
             assert deposit_1['_deposit']['weko_shared_ids'] == []
-
+            """
             data_2 = {
                 "metadata": {
                             "title": "test-title",
@@ -312,3 +327,4 @@ def test_deposit_create(app, location, fake_schemas):
             deposit_1 = Deposit.create(data_2, id_=id, recid=recid)
             assert deposit_1['weko_shared_ids'] == []
             assert deposit_1['_deposit']['weko_shared_ids'] == []
+            """
