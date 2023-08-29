@@ -97,6 +97,6 @@ WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX = "lock_index_"
 
 from .rest import GetIndex
 WEKO_INDEX_TREE_GETINDEX_API_VERSION = {
-    "v1.0":GetIndex.get_v1
+    'get-v1': GetIndex.get_v1
 }
 """API version."""
