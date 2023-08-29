@@ -21215,7 +21215,7 @@ def test_get_userinfo_by_emails(
     assert res.json == [{'user_id': 1, 'username' :'wekosoftware', 'email':'wekosoftware@ivis.co.jp'},
                         {'user_id': 2, 'username' :'repoadmin', 'email':'repoadmin@example.org'}]
     
-    # repoadmin
+    # 存在しないメールアドレス
     url = url_for(
         "weko_items_ui_api.get_userinfo_by_emails", emails=['sample@ivis.co.jp'], _external=True
     )

@@ -39,10 +39,10 @@ from weko_items_ui.utils import (
     __sanitize_string,
     _custom_export_metadata,
     _export_item,
-
     _get_max_export_items,
     check_approval_email,
     check_approval_email_in_flow,
+    check_display_shared_user,
     check_item_is_being_edit,
     check_item_is_deleted,
     check_item_type_name,
@@ -122,36 +122,43 @@ from weko_items_ui.utils import (
 )
 from weko_items_ui.config import WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM,WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE
 
+# def check_display_shared_user(user_id):
+#  .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_check_display_shared_user -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_check_display_shared_user(app, client, users, db_userprofile):
+    current_app.config['WEKO_ITEMS_UI_SHARED_USER_ROLE_ID_LIST'] = [1,2,3]    
+    #sysadmin users[2]
+    assert True == check_display_shared_user(users[2]["id"])
+    #generaluser users[4]
+    assert False == check_display_shared_user(users[4]["id"])
+
 # def get_list_username():
 #  .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_list_username -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_list_username(app, client, users, db_userprofile):
-    with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
-        assert get_list_username() == [
-            "user",
-            "contributor",
-            "comadmin",
-            "repoadmin",
-            "sysadmin",
-            "generaluser",
-            "originalroleuser",
-            "originalroleuser2",
-        ]
+    assert get_list_username() == [
+        #"user",
+        "contributor",
+        "comadmin",
+        "repoadmin",
+        "sysadmin",
+        #"generaluser",
+        #"originalroleuser",
+        #"originalroleuser2",
+    ]
 
 
 # def get_list_email():
 #  .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_list_email -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_list_email(app, client, users, db_userprofile):
-    with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
-        assert get_list_email() == [
-            "user@test.org",
-            "contributor@test.org",
-            "comadmin@test.org",
-            "repoadmin@test.org",
-            "sysadmin@test.org",
-            "generaluser@test.org",
-            "originalroleuser@test.org",
-            "originalroleuser2@test.org",
-        ]
+    assert get_list_email() == [
+        #"user@test.org",
+        "contributor@test.org",
+        "comadmin@test.org",
+        "repoadmin@test.org",
+        "sysadmin@test.org",
+        #"generaluser@test.org",
+        #"originalroleuser@test.org",
+        #"originalroleuser2@test.org",
+    ]
 
 
 # def get_user_info_by_username(username):
@@ -213,6 +220,11 @@ def test_get_user_info_by_email(users, db_userprofile):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_user_info_by_email_nodb -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_user_info_by_email_nodb():
     assert get_user_info_by_email("repoadmin@test.org") == None
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_user_info_by_email_exception -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_user_info_by_email_exception():
+    with patch("weko_user_profiles.models.UserProfile.get_by_username", side_effect=Exception()):
+        assert get_user_info_by_email("repoadmin@test.org")==None
 
 
 # def get_user_information(user_ids):
