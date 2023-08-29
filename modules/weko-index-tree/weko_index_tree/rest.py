@@ -44,7 +44,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from .api import Indexes
 from .errors import IndexAddedRESTError, IndexNotFoundRESTError, \
-    IndexUpdatedRESTError, InvalidDataRESTError, VersionNotFoundRESTError, InternalServerError
+    IndexUpdatedRESTError, InvalidDataRESTError, VersionNotFoundRESTError, InternalServerError, \
+    PermissionError, IndexNotFoundRESTErrorForGet
 from .models import Index
 from .scopes import read_index_scope
 from .utils import check_doi_in_index, check_index_permissions, \
@@ -524,8 +525,14 @@ class GetIndex(ContentNegotiatedMethodView):
 
             # Get index tree
             if pid and pid != 0:
+                index = self.record_class.get_index(pid)
+                if not index:
+                    raise IndexNotFoundRESTErrorForGet()
+
                 tree = self.record_class.get_index_tree(pid)
                 reset_tree(tree=tree)
+                if len(tree) == 0:
+                    raise PermissionError()
                 result_tree = dict(
                     index=tree[0]
                 )
@@ -555,7 +562,7 @@ class GetIndex(ContentNegotiatedMethodView):
             res.last_modified = last_modified
             return res
 
-        except SameContentException as e:
+        except (SameContentException, PermissionError, IndexNotFoundRESTErrorForGet) as e:
             raise e
 
         except RedisError:
