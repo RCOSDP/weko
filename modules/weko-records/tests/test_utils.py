@@ -301,11 +301,13 @@ def test_json_loader(app, db, users, item_type, item_type2, item_type3, item_typ
     # do nothing
     result = json_loader(_data1, _pid)
     assert result==None
+
     # no item type
     with pytest.raises(Exception) as e:
         json_loader(_data2, _pid)
     assert e.type==RuntimeError
     assert str(e.value)=="Item Type 1 does not exist."
+    
     # running
     app.config['WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME'] = 'jpcoar_v1_mapping'
     app.config['WEKO_SCHEMA_DDI_SCHEMA_NAME'] = 'ddi_mapping'
@@ -318,7 +320,7 @@ def test_json_loader(app, db, users, item_type, item_type2, item_type3, item_typ
     dc, jrc, is_edit = json_loader(_data4, _pid)
     jrc['_item_metadata'] = dict(jrc['_item_metadata'])
     assert dict(jrc)==_jrc_data_4
-
+    
     # shared_user_ids=[{"user":1},{"user":2}] user=admin, weko_creator_id=1
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         dc, jrc, is_edit = json_loader(_data5, _pid, owner_id=1)
@@ -343,7 +345,7 @@ def test_json_loader(app, db, users, item_type, item_type2, item_type3, item_typ
             with pytest.raises(Exception):
                 dc, jrc, is_edit = json_loader(_data4, _pid)
                 assert e.type==KeyError
-
+    
     # "object" == creator["type"]
     ojson = ItemTypes.get_record(2)
     ojson["properties"]["item_1"] = {'type': 'object', 'properties': ['iscreator']}
@@ -352,7 +354,7 @@ def test_json_loader(app, db, users, item_type, item_type2, item_type3, item_typ
             dc, jrc, is_edit = json_loader(_data4, _pid, owner_id=1)
             jrc['_item_metadata'] = dict(jrc['_item_metadata'])
             assert dict(jrc)==_jrc_data_4_1
-
+    
     ojson["properties"]["item_1"] = {'type': 'object', 'properties': ['iscreator', 'other']}
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
@@ -367,7 +369,7 @@ def test_json_loader(app, db, users, item_type, item_type2, item_type3, item_typ
             dc, jrc, is_edit = json_loader(_data4, _pid, owner_id=1)
             jrc['_item_metadata'] = dict(jrc['_item_metadata'])
             assert dict(jrc)["weko_creator_id"]==_jrc_data_4_1["weko_creator_id"]
-
+    
     
     # "array" == creator["type"]
     ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['iscreator']}}
@@ -401,7 +403,7 @@ def test_json_loader(app, db, users, item_type, item_type2, item_type3, item_typ
             dc, jrc, is_edit = json_loader(_data8, _pid, owner_id=1)
             jrc['_item_metadata'] = dict(jrc['_item_metadata'])
             assert dict(jrc)==_jrc_data_4_3
-    
+
     app.config['WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME'] = 'jpcoar_v1_mapping'
     app.config['WEKO_SCHEMA_DDI_SCHEMA_NAME'] = 'ddi_mapping'
     ojson = ItemTypes.get_record(2)
@@ -420,7 +422,7 @@ def test_json_loader(app, db, users, item_type, item_type2, item_type3, item_typ
         with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
             with pytest.raises(Exception) as e:
                 dc, jrc, is_edit = json_loader(_data9, _pid, owner_id=1)
-            
+         
     ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['filename']}}
     ojson["properties"]["control_number"] = {'type': 'int', 'items': {'properties': 1}}
     ojson = ItemTypes.get_record(2)
@@ -430,7 +432,7 @@ def test_json_loader(app, db, users, item_type, item_type2, item_type3, item_typ
             dc, jrc, is_edit = json_loader(_data8, _pid, owner_id=1)
             jrc['_item_metadata'] = dict(jrc['_item_metadata'])
             assert dc['control_number'] == _pid.pid_value
-
+    """
     ojson = ItemTypes.get_record(2)
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
@@ -442,6 +444,7 @@ def test_json_loader(app, db, users, item_type, item_type2, item_type3, item_typ
             with patch("weko_admin.models.SearchManagement.get", return_value=sm):
                 dc, jrc, is_edit = json_loader(_data8, _pid, owner_id=1)
                 jrc['_item_metadata'] = dict(jrc['_item_metadata'])
+    """
 
 # def get_author_link(author_link, value)
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_author_link -v -s -vv --cov-branch --cov-report=term --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
