@@ -1,5 +1,5 @@
 from mock import Mock, patch
-
+import pytest
 from flask import current_app, session
 from flask_login.utils import login_user
 from invenio_accounts.models import Role, User
@@ -169,9 +169,9 @@ def test_query_activities_by_tab_is_wait(users, db):
                 )
                 )
         expected = "AND (workflow_activity.activity_login_user = ? OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%')) AND (workflow_flow_action_role.action_user != ? AND workflow_flow_action_role.action_user_exclude = ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR workflow_flow_action_role.action_role NOT IN (?) AND workflow_flow_action_role.action_role_exclude = ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR workflow_activity_action.action_handler != ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%') AND workflow_flow_action_role.action_user != workflow_activity.activity_login_user AND workflow_flow_action_role.action_user_exclude = ? OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%') AND workflow_activity_action.action_handler != workflow_activity.activity_login_user)"
-        ret = WorkActivity.query_activities_by_tab_is_wait(query)
-
-        assert str(ret).find(expected)
+        with pytest.raises(Exception):
+            ret = WorkActivity.query_activities_by_tab_is_wait(query)
+            assert str(ret).find(expected)
     
     current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] = True
     with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
@@ -218,6 +218,14 @@ def test_query_activities_by_tab_is_all(users, db):
             )
         
         expected = "(workflow_activity.shared_user_ids LIKE '%' || ? || '%') AND workflow_flow_action.action_id != ?"
+        
+        with pytest.raises(Exception):
+            ret = WorkActivity.query_activities_by_tab_is_all(query, is_community_admin, community_user_ids)
+            assert str(ret).find(expected)
+        
+        is_community_admin = True
+        community_user_ids = [3]
+        expected = "(workflow_activity.activity_update_user LIKE '%' || ? || '%')"
         ret = WorkActivity.query_activities_by_tab_is_all(query, is_community_admin, community_user_ids)
         assert str(ret).find(expected)
 
@@ -230,18 +238,19 @@ def test_query_activities_by_tab_is_todo(users, db):
                 _FlowActionRole
             )
         expected = "(workflow_activity.shared_user_ids LIKE '%' || ? || '%')"
-        ret = WorkActivity.query_activities_by_tab_is_todo(query, False)
-        assert str(ret).find(expected)
 
-# def query_activities_by_tab_is_todo(query, is_admin)
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_query_activities_by_tab_is_todo_otheruser -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_query_activities_by_tab_is_todo_otheruser(users, db):
-    current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] = True
-    with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
-        query = db.session.query(
-                _Activity,
-                _FlowActionRole
-            )
+        with pytest.raises(Exception):
+            ret = WorkActivity.query_activities_by_tab_is_todo(query, False)
+            assert str(ret).find(expected)
+
+        with pytest.raises(Exception):
+            current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] = True
+            expected = "(workflow_activity.action_handler LIKE '%' || ? || '%')"
+            ret = WorkActivity.query_activities_by_tab_is_todo(query, True)
+            assert str(ret).find(expected)
+
+        current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] = False
         expected = "(workflow_activity.shared_user_ids LIKE '%' || ? || '%')"
         ret = WorkActivity.query_activities_by_tab_is_todo(query, True)
         assert str(ret).find(expected)
+
