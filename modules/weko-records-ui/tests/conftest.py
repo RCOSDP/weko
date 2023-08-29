@@ -51,6 +51,7 @@ from invenio_cache import InvenioCache
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_deposit import InvenioDeposit
+from invenio_deposit.scopes import actions_scope
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Bucket, Location, ObjectVersion
 from invenio_files_rest.views import blueprint as invenio_files_rest_blueprint
@@ -60,6 +61,9 @@ from invenio_jsonschemas import InvenioJSONSchemas
 from invenio_oaiserver import InvenioOAIServer
 from invenio_oaiserver.views.server import blueprint as invenio_oaiserver_blueprint
 from invenio_oaiserver.models import Identify
+from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
+from invenio_oauth2server.models import Client, Token
+from invenio_oauth2server.views import settings_blueprint as oauth2server_settings_blueprint
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -71,6 +75,7 @@ from invenio_records import InvenioRecords
 from invenio_records_files.models import RecordsBuckets
 from invenio_records_rest.utils import PIDConverter
 from invenio_records_ui import InvenioRecordsUI
+from invenio_rest import InvenioREST
 from invenio_search import InvenioSearch, current_search_client
 from invenio_search_ui import InvenioSearchUI
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
@@ -105,6 +110,7 @@ from weko_items_ui import WekoItemsUI
 from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
 from weko_records import WekoRecords
 from weko_records.api import ItemsMetadata
+from weko_records_ui.ext import WekoRecordsREST
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList,SiteLicenseIpAddress
 from weko_records.utils import get_options_and_order_list
 from weko_records_ui.config import WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,RECORDS_UI_ENDPOINTS,WEKO_RECORDS_UI_SECRET_KEY,WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN
@@ -152,6 +158,9 @@ from weko_workflow.models import (
     WorkFlow,
 )
 from weko_workflow.config import WEKO_WORKFLOW_DATE_FORMAT
+
+from tests.helpers import fill_oauth2_headers
+
 
 @pytest.yield_fixture()
 def instance_path():
@@ -290,6 +299,9 @@ def base_app(instance_path):
     InvenioPIDRelations(app_)
     InvenioI18N(app_)
     InvenioTheme(app_)
+    InvenioREST(app_)
+    InvenioOAuth2Server(app_)
+    InvenioOAuth2ServerREST(app_)
     WekoRecords(app_)
     WekoItemsUI(app_)
     WekoRecordsUI(app_)
@@ -305,10 +317,12 @@ def base_app(instance_path):
     app_.register_blueprint(weko_records_ui_blueprint)
     app_.register_blueprint(invenio_files_rest_blueprint)  # invenio_files_rest
     app_.register_blueprint(invenio_oaiserver_blueprint)
+    app_.register_blueprint(oauth2server_settings_blueprint)
     # rest_blueprint = create_blueprint(app_, WEKO_DEPOSIT_REST_ENDPOINTS)
     # app_.register_blueprint(rest_blueprint)
     WekoDeposit(app_)
     WekoDepositREST(app_)
+    WekoRecordsREST(app_)
 
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
     current_assets.collect.collect()
@@ -3649,3 +3663,281 @@ def db_community(db , users ,indextree):
         db.session.flush()
 
     return comm
+
+
+@pytest.fixture()
+def make_record_need_restricted_access(app, db, workflows, users):
+    """make open_resirected record."""
+
+    record_data_list = []
+    with open('tests/data/need_restricted_access_records_metadata.json', 'r') as f:
+        record_data_list = json.load(f)
+
+    # 1. Not restricted access.
+    rec_id11 = 11
+    rec_id11_1 = 11.1
+    rec_uuid11 = uuid.uuid4()
+    rec_uuid11_1 = uuid.uuid4()
+    recid11 = PersistentIdentifier.create('recid', str(rec_id11), object_type='rec', object_uuid=rec_uuid11, status=PIDStatus.REGISTERED,)
+    recid11_1 = PersistentIdentifier.create('recid', str(rec_id11_1), object_type='rec', object_uuid=rec_uuid11_1, status=PIDStatus.REGISTERED,)
+    parent11 = PersistentIdentifier.create('parent', f'parent:{rec_id11}', object_type='rec', object_uuid=rec_uuid11, status=PIDStatus.REGISTERED,)
+    rel11 = PIDRelation.create(parent11, recid11, 2, 0)
+    rel11_1 = PIDRelation.create(parent11, recid11_1, 2, 1)
+    record11 = WekoRecord.create(record_data_list[0], id_=rec_uuid11)
+
+    activity11 = Activity(
+        activity_id='11',
+        item_id=rec_uuid11_1,
+        workflow_id=1,
+        flow_id=workflows['flow_define'].id,
+        activity_start=datetime.strptime('2023/07/01 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_end=datetime.strptime('2023/07/01 11:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_status='F',
+        title='test1',
+        action_order=1,
+    )
+
+    # 2. Normal data
+    rec_id12 = 12
+    rec_id12_1 = 12.1
+    rec_uuid12 = uuid.uuid4()
+    rec_uuid12_1 = uuid.uuid4()
+    recid12 = PersistentIdentifier.create('recid', str(rec_id12), object_type='rec', object_uuid=rec_uuid12, status=PIDStatus.REGISTERED,)
+    recid12_1 = PersistentIdentifier.create('recid', str(rec_id12_1), object_type='rec', object_uuid=rec_uuid12_1, status=PIDStatus.REGISTERED,)
+    parent12 = PersistentIdentifier.create('parent', f'parent:{rec_id12}', object_type='rec', object_uuid=rec_uuid12, status=PIDStatus.REGISTERED,)
+    rel12 = PIDRelation.create(parent12, recid12, 2, 0)
+    rel12_1 = PIDRelation.create(parent12, recid12_1, 2, 1)
+    record12 = WekoRecord.create(record_data_list[1], id_=rec_uuid12)
+
+    activity12 = Activity(
+        activity_id='12',
+        item_id=rec_uuid12_1,
+        workflow_id=1,
+        flow_id=workflows['flow_define'].id,
+        activity_start=datetime.strptime('2023/07/01 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_end=datetime.strptime('2023/07/01 11:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_status='F',
+        title='test2',
+        action_order=1,
+    )
+
+    # 3. Restricted Access is approved.
+    rec_id13 = 13
+    rec_id13_1 = 13.1
+    rec_uuid13 = uuid.uuid4()
+    rec_uuid13_1 = uuid.uuid4()
+    recid13 = PersistentIdentifier.create('recid', str(rec_id13), object_type='rec', object_uuid=rec_uuid13, status=PIDStatus.REGISTERED,)
+    recid13_1 = PersistentIdentifier.create('recid', str(rec_id13_1), object_type='rec', object_uuid=rec_uuid13_1, status=PIDStatus.REGISTERED,)
+    parent13 = PersistentIdentifier.create('parent', f'parent:{rec_id13}', object_type='rec', object_uuid=rec_uuid13, status=PIDStatus.REGISTERED,)
+    rel13 = PIDRelation.create(parent13, recid13, 2, 0)
+    rel13_1 = PIDRelation.create(parent13, recid13_1, 2, 1)
+    record13 = WekoRecord.create(record_data_list[2], id_=rec_uuid13)
+
+    activity13 = Activity(
+        activity_id='13',
+        item_id=rec_uuid13_1,
+        workflow_id=1,
+        flow_id=workflows['flow_define'].id,
+        activity_start=datetime.strptime('2023/07/01 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_end=datetime.strptime('2023/07/01 11:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_status='F',
+        title='test3',
+        action_order=1,
+    )
+
+    file_permission13 = FilePermission(
+        user_id=users[0]['id'],
+        record_id=rec_id13,
+        file_name='dummy.txt',
+        usage_application_activity_id='13',
+        usage_report_activity_id=None,
+        status=1,   # Approved
+    )
+    file13_onetime = FileOnetimeDownload(
+        user_mail=users[0]['email'],
+        record_id=rec_id13,
+        file_name='dummy.txt',
+        download_count=1,
+        expiration_date=1,
+    )
+
+    # 4. Restricted Access is not approved.
+    rec_id14 = 14
+    rec_id14_1 = 14.1
+    rec_uuid14 = uuid.uuid4()
+    rec_uuid14_1 = uuid.uuid4()
+    recid14 = PersistentIdentifier.create('recid', str(rec_id14), object_type='rec', object_uuid=rec_uuid14, status=PIDStatus.REGISTERED,)
+    recid14_1 = PersistentIdentifier.create('recid', str(rec_id14_1), object_type='rec', object_uuid=rec_uuid14_1, status=PIDStatus.REGISTERED,)
+    parent14 = PersistentIdentifier.create('parent', f'parent:{rec_id14}', object_type='rec', object_uuid=rec_uuid14, status=PIDStatus.REGISTERED,)
+    rel14 = PIDRelation.create(parent14, recid14, 2, 0)
+    rel14_1 = PIDRelation.create(parent14, recid14_1, 2, 1)
+    record14 = WekoRecord.create(record_data_list[3], id_=rec_uuid14)
+
+    activity14 = Activity(
+        activity_id='14',
+        item_id=rec_uuid14_1,
+        workflow_id=1,
+        flow_id=workflows['flow_define'].id,
+        activity_start=datetime.strptime('2023/07/01 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_end=datetime.strptime('2023/07/01 11:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_status='F',
+        title='test4',
+        action_order=1,
+    )
+
+    file_permission14 = FilePermission(
+        user_id=users[0]['id'],
+        record_id=rec_id14,
+        file_name='dummy.txt',
+        usage_application_activity_id='14',
+        usage_report_activity_id=None,
+        status=0,   # Processing
+    )
+
+    # 5. Restricted Access is not applied.
+    rec_id15 = 15
+    rec_id15_1 = 15.1
+    rec_uuid15 = uuid.uuid4()
+    rec_uuid15_1 = uuid.uuid4()
+    recid15 = PersistentIdentifier.create('recid', str(rec_id15), object_type='rec', object_uuid=rec_uuid15, status=PIDStatus.REGISTERED,)
+    recid15_1 = PersistentIdentifier.create('recid', str(rec_id15_1), object_type='rec', object_uuid=rec_uuid15_1, status=PIDStatus.REGISTERED,)
+    parent15 = PersistentIdentifier.create('parent', f'parent:{rec_id15}', object_type='rec', object_uuid=rec_uuid15, status=PIDStatus.REGISTERED,)
+    rel15 = PIDRelation.create(parent15, recid15, 2, 0)
+    rel15_1 = PIDRelation.create(parent15, recid15_1, 2, 1)
+    record15 = WekoRecord.create(record_data_list[4], id_=rec_uuid15)
+
+    activity15 = Activity(
+        activity_id='15',
+        item_id=rec_uuid15_1,
+        workflow_id=1,
+        flow_id=workflows['flow_define'].id,
+        activity_start=datetime.strptime('2023/07/01 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_end=datetime.strptime('2023/07/01 11:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_status='F',
+        title='test5',
+        action_order=1,
+    )
+
+    # 6. Activity is not completed.
+    rec_id16 = 16
+    rec_id16_1 = 16.1
+    rec_uuid16 = uuid.uuid4()
+    rec_uuid16_1 = uuid.uuid4()
+    recid16 = PersistentIdentifier.create('recid', str(rec_id16), object_type='rec', object_uuid=rec_uuid16, status=PIDStatus.REGISTERED,)
+    recid16_1 = PersistentIdentifier.create('recid', str(rec_id16_1), object_type='rec', object_uuid=rec_uuid16_1, status=PIDStatus.REGISTERED,)
+    parent16 = PersistentIdentifier.create('parent', f'parent:{rec_id16}', object_type='rec', object_uuid=rec_uuid16, status=PIDStatus.REGISTERED,)
+    rel16 = PIDRelation.create(parent16, recid16, 2, 0)
+    rel16_1 = PIDRelation.create(parent16, recid16_1, 2, 1)
+    record16 = WekoRecord.create(record_data_list[5], id_=rec_uuid16)
+
+    activity16 = Activity(
+        activity_id='16',
+        item_id=rec_uuid16_1,
+        workflow_id=1,
+        flow_id=workflows['flow_define'].id,
+        activity_start=datetime.strptime('2023/07/01 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_end=datetime.strptime('2023/07/01 11:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_status='C',
+        title='test6',
+        action_order=1,
+    )
+
+    with db.session.begin_nested():
+        db.session.add(activity11)
+        db.session.add(activity12)
+        db.session.add(activity13)
+        db.session.add(file_permission13)
+        db.session.add(file13_onetime)
+        db.session.add(activity14)
+        db.session.add(file_permission14)
+        db.session.add(activity15)
+        db.session.add(activity16)
+    db.session.commit()
+
+    return {
+        'FileOnetimeDownload': {'13': file13_onetime},
+    }
+
+
+@pytest.fixture()
+def client_oauth(users):
+    """Create client."""
+    # create resource_owner -> client_1
+    client_ = Client(
+        client_id='client_test_u1c1',
+        client_secret='client_test_u1c1',
+        name='client_test_u1c1',
+        description='',
+        is_confidential=False,
+        user=users[2]['obj'],
+        _redirect_uris='',
+        _default_scopes='',
+    )
+    with db_.session.begin_nested():
+        db_.session.add(client_)
+    db_.session.commit()
+    return client_
+
+
+@pytest.fixture()
+def create_oauth_token(client, client_oauth, users):
+    """Create token."""
+    token1_ = Token(
+        client=client_oauth,
+        user=users[2]['obj'],   # sysadmin
+        token_type='u',
+        access_token='dev_access_1',
+        refresh_token='dev_refresh_1',
+        expires=datetime.now() + timedelta(hours=10),
+        is_personal=False,
+        is_internal=True,
+        _scopes=actions_scope.id,
+    )
+    token2_ = Token(
+        client=client_oauth,
+        user=users[0]['obj'],   # contributor
+        token_type='u',
+        access_token='dev_access_2',
+        refresh_token='dev_refresh_2',
+        expires=datetime.now() + timedelta(hours=10),
+        is_personal=False,
+        is_internal=True,
+        _scopes=actions_scope.id,
+    )
+    token3_ = Token(
+        client=client_oauth,
+        user=users[7]['obj'],   # user
+        token_type='u',
+        access_token='dev_access_3',
+        refresh_token='dev_refresh_3',
+        expires=datetime.now() + timedelta(hours=10),
+        is_personal=False,
+        is_internal=True,
+        _scopes=actions_scope.id,
+    )
+    with db_.session.begin_nested():
+        db_.session.add(token1_)
+        db_.session.add(token2_)
+        db_.session.add(token3_)
+    db_.session.commit()
+    return [token1_, token2_, token3_]
+
+
+@pytest.fixture()
+def json_headers():
+    """JSON headers."""
+    return [('Content-Type', 'application/json'), ('Accept', 'application/json')]
+
+
+@pytest.fixture()
+def oauth_headers(client, json_headers, create_oauth_token):
+    """Authentication headers (with a valid oauth2 token).
+
+    It uses the token associated with the first user.
+    """
+    return [
+        fill_oauth2_headers(json_headers, create_oauth_token[0]),   # sysadmin
+        fill_oauth2_headers(json_headers, create_oauth_token[1]),   # contributor
+        fill_oauth2_headers(json_headers, create_oauth_token[2]),   # user
+        json_headers,                                               # not login
+    ]

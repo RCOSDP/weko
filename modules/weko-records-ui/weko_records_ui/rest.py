@@ -24,7 +24,8 @@ from flask import Blueprint, current_app, jsonify, make_response, request, abort
 from invenio_db import db
 from invenio_deposit.scopes import actions_scope
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
-from invenio_pidstore.errors import PIDInvalidAction, PIDDoesNotExistError
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidstore.errors import PIDInvalidAction
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
@@ -184,12 +185,8 @@ class NeedRestrictedAccess(ContentNegotiatedMethodView):
     def get_v1(self, **kwargs):
         # Get record
         pid_value = kwargs.get('pid_value')
-        try:
-            pid = PersistentIdentifier.get('depid', pid_value)
-        except PIDDoesNotExistError:
-            abort(404)
-        record = WekoRecord.get_record(pid.object_uuid)
-        if not record:
+        record = self.__get_record(pid_value)
+        if record is None:
             abort(404)
 
         # Get files
@@ -212,6 +209,30 @@ class NeedRestrictedAccess(ContentNegotiatedMethodView):
 
         response = make_response(jsonify(res_json), 200)
         return response
+
+    def __get_record(self, pid_value):
+        record = None
+        try:
+            pid = PersistentIdentifier.get('recid', pid_value)
+
+            # Get latest PID.
+            from weko_deposit.pidstore import get_record_without_version
+            pid_without_version = get_record_without_version(pid)
+            latest_pid = PIDVersioning(child=pid_without_version).last_child
+
+            # Check if activity is completed.
+            from weko_workflow.api import WorkActivity
+            from weko_workflow.models import ActivityStatusPolicy
+            activity = WorkActivity().get_workflow_activity_by_item_id(latest_pid.object_uuid)
+            if activity.activity_status != ActivityStatusPolicy.ACTIVITY_FINALLY:
+                return None
+
+            # Get record.
+            record = WekoRecord.get_record(pid.object_uuid)
+        except:
+            return None
+
+        return record
 
 
 class WekoRecordsCitesResource(ContentNegotiatedMethodView):
