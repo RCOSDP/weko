@@ -615,7 +615,7 @@ def db_itemtype(app, db):
         db.session.add(item_type_name)
         db.session.add(item_type)
         db.session.add(item_type_mapping)
-
+    db.session.commit()
     return {
         "item_type_name": item_type_name,
         "item_type": item_type,
@@ -931,7 +931,7 @@ def db_activity(app, db,users,location,db_itemtype,db_actions):
         db.session.add(no_location_activity)
         db.session.add(location_activity)
     
-    db.session.ex
+    #db.session.ex
     db.session.commit()
     
     return no_location_activity, location_activity

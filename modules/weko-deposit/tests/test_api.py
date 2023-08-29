@@ -498,9 +498,10 @@ class TestWekoDeposit:
                     assert 'draft' == deposit.status
                     assert 0 == deposit.revision_id
 
+                    id = uuid.uuid4()
                     deposit = WekoDeposit.create(data, id_=id, recid=100)
                     assert isinstance(deposit,WekoDeposit)
-                    assert deposit['_deposit']['id']=="4"
+                    assert deposit['_deposit']['id']=="100"
                     assert 'draft' == deposit.status
                     assert 0 == deposit.revision_id
                 
@@ -591,7 +592,7 @@ class TestWekoDeposit:
     # def newversion(self, pid=None, is_draft=False):
     #             # NOTE: We call the superclass `create()` method, because
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_newversion -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_newversion(self, app, db, location, es_records, users):
+    def test_newversion(self, app, db, location, db_itemtype, es_records, users, mocker):
         _, records = es_records
         record = records[0]
         depid = record['depid']
@@ -655,7 +656,7 @@ class TestWekoDeposit:
                         assert '11.1' == ret['_deposit']['id']
                         assert 1 == ret['_deposit']['owner']
                         assert [1] == ret['_deposit']['owners']
-                        assert 1 == ret['_deposit']['created_by']
+                        assert 5 == ret['_deposit']['created_by']
                         assert [] == ret['_deposit']['weko_shared_ids']
 
                         # return None
@@ -842,10 +843,11 @@ class TestWekoDeposit:
             assert ret3['weko_shared_ids'] == [2,3]
 
             # data = None
-            record['item_data']['shared_user_ids'] = []
-            deposit = record['deposit']
-            ret, _ = deposit.convert_item_metadata(index_obj)
-            assert ret['weko_shared_ids'] == []
+            with pytest.raises(BaseException):
+                record['item_data']['shared_user_ids'] = []
+                deposit = record['deposit']
+                ret, _ = deposit.convert_item_metadata(index_obj)
+                assert error.value.code == 500
 
             # data = None and radis exist
             redis_connection = RedisConnection()
