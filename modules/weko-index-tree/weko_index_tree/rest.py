@@ -148,6 +148,13 @@ def create_blueprint(app, endpoints):
             default_media_type=options.get('default_media_type'),
         )
 
+        itp = GetParentIndex.as_view(
+            GetParentIndex.view_name.format(endpoint),
+            ctx=ctx,
+            record_serializers=record_serializers,
+            default_media_type=options.get('default_media_type'),
+        )
+
         ita = IndexTreeActionResource.as_view(
             IndexTreeActionResource.view_name.format(endpoint),
             ctx=ctx,
@@ -170,6 +177,12 @@ def create_blueprint(app, endpoints):
         blueprint.add_url_rule(
             options.get('get_index_root_tree'),
             view_func=itg,
+            methods=['GET'],
+        )
+
+        blueprint.add_url_rule(
+            options.get('get_parent_index_tree'),
+            view_func=itp,
             methods=['GET'],
         )
 
@@ -464,6 +477,7 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
         return make_response(
             jsonify({'status': status, 'message': msg}), status)
 
+
 class GetIndex(ContentNegotiatedMethodView):
     """Get Index Tree API."""
 
@@ -549,6 +563,135 @@ class GetIndex(ContentNegotiatedMethodView):
                         value='Root-index'
                     )
                 )
+
+            # Check pretty
+            indent = 4 if request.args.get('pretty') == 'true' else None
+
+            # Setting Response
+            res = Response(
+                response=json.dumps(result_tree, indent=indent),
+                status=200,
+                content_type='application/json')
+            res.set_etag(etag)
+            res.last_modified = last_modified
+            return res
+
+        except (SameContentException, PermissionError, IndexNotFoundRESTErrorForGet) as e:
+            raise e
+
+        except RedisError:
+            raise InternalServerError()
+
+        except SQLAlchemyError:
+            raise InternalServerError()
+
+        except Exception:
+            raise InvalidDataRESTError()
+
+
+class GetParentIndex(ContentNegotiatedMethodView):
+    """Get Parent Index Tree API."""
+
+    view_name = '{0}_get_parent_index_tree'
+
+    def __init__(self, ctx, record_serializers=None, default_media_type=None, **kwargs):
+        """Constructor."""
+        super(GetParentIndex, self).__init__(
+            method_serializers={
+                'GET': record_serializers,
+            },
+            default_method_media_type={
+                'GET': default_media_type,
+            },
+            default_media_type=default_media_type,
+            **kwargs
+        )
+        for key, value in ctx.items():
+            setattr(self, key, value)
+
+    def getParents(self, pid):
+        parents = []
+        index = self.record_class.get_index(pid)
+        parents.append(index)
+        if index.parent and index.parent != 0:
+            parents = parents + self.getParents(index.parent)
+        return parents
+
+    @require_api_auth(allow_anonymous=True)
+    @require_oauth_scopes(read_index_scope.id)
+    def get(self, **kwargs):
+        """Get tree json."""
+        from .config import WEKO_INDEX_TREE_GETPARENTINDEX_API_VERSION
+        version = kwargs.get('version')
+        get_parent_index = WEKO_INDEX_TREE_GETPARENTINDEX_API_VERSION.get(f'get-{version}')
+        if get_parent_index:
+            return get_parent_index(self, **kwargs)
+        else:
+            raise VersionNotFoundRESTError()
+
+    def get_v1(self, **kwargs):
+        try:
+            pid = kwargs.get('index_id')
+
+            # Get Redis Last Save Time GMT and Etag String
+            redis_connection = RedisConnection()
+            datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'])
+            lastsave_time = datastore.lastsave().replace(tzinfo=JST).astimezone(tz=timezone.utc)
+            lastsave_time = lastsave_time.strftime("%a, %d %b %Y %H:%M:%S GMT")
+            hash_str = lastsave_time + str(pid)
+
+            # Check Etag
+            etag = generate_etag(hash_str.encode('utf-8'))
+            self.check_etag(etag, weak=True)
+
+            # Check Last-Modified
+            all_indexes = self.record_class.get_all_indexes()
+            all_indexes = sorted(all_indexes, key=lambda x: x.updated, reverse=True)
+            last_modified = all_indexes[0].updated if len(all_indexes) > 0 else datetime.now()
+            if not request.if_none_match:
+                self.check_if_modified_since(dt=last_modified)
+
+            # Language setting
+            language = request.headers.get('Accept-Language')
+            if language == 'ja':
+                get_current_locale().language = language
+
+            index = self.record_class.get_index(pid)
+            if not index:
+                raise IndexNotFoundRESTErrorForGet()
+
+            # Get index tree
+            tree = self.record_class.get_index_tree(pid=0)
+            reset_tree(tree=tree)
+            if len(tree) == 0:
+                raise PermissionError()
+
+            # Get parent
+            parents = self.getParents(pid)
+
+            # Get index from tree
+            parent_nodes = []
+            for parent in reversed(parents):
+                # tmp_tree = tree[0]
+                for child in tree:
+                    if child['cid'] == parent.id:
+                        parent_nodes.append(child)
+                        tree = child['children']
+                        child.pop('children')
+                        break
+
+            # Connect parent node
+            parent_tree = None
+            current_parent = None
+            for parent in reversed(parent_nodes):
+                if parent_tree is None:
+                    parent_tree = parent
+                else:
+                    current_parent['parent'] = parent
+                current_parent = parent
+            result_tree = dict(
+                index=parent_tree
+            )
 
             # Check pretty
             indent = 4 if request.args.get('pretty') == 'true' else None
