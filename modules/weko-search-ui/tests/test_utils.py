@@ -1988,17 +1988,17 @@ def test_handle_check_restricted_access_property_en(app, db, users, record_restr
                 # 利用規約(terms)に存在しない利用規約が設定されている。提供(provide)が設定されていない。
                 list_record = [record_restricted[3]]
                 handle_check_restricted_access_property(list_record)
-                assert list_record[0]["errors"] == ["ERROR:The specified terms does not exist in the system"]
+                assert list_record[0]["errors"] == ["The specified terms does not exist in the system"]
             
                 # 利用規約(terms)が設定されていない。提供(provide)に存在しないワークフローが設定されている。
                 list_record = [record_restricted[4]]
                 handle_check_restricted_access_property(list_record)
-                assert list_record[0]["errors"] == ["ERROR:The specified provinding method does not exist in the system"]
+                assert list_record[0]["errors"] == ["The specified provinding method does not exist in the system"]
 
                 # 利用規約(terms)が設定されていない。提供(provide)に存在しないロールが設定されている。
                 list_record = [record_restricted[5]]
                 handle_check_restricted_access_property(list_record)
-                assert list_record[0]["errors"] == ["ERROR:The specified provinding method does not exist in the system"]
+                assert list_record[0]["errors"] == ["The specified provinding method does not exist in the system"]
 
 # def handle_check_restricted_access_property(list_record)
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_restricted_access_property_ja -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -2026,16 +2026,16 @@ def test_handle_check_restricted_access_property_ja(app, db, users, record_restr
                 # 利用規約(terms)に存在しない利用規約が設定されている。提供(provide)が設定されていない。
                 list_record = [record_restricted[3]]
                 handle_check_restricted_access_property(list_record)
-                assert list_record[0]["errors"] == ["エラー：指定する利用規約はシステムに存在しません。"]
+                assert list_record[0]["errors"] == ["指定する利用規約はシステムに存在しません。"]
                 # 利用規約(terms)が設定されていない。提供(provide)に存在しないワークフローが設定されている。
                 list_record = [record_restricted[4]]
                 handle_check_restricted_access_property(list_record)
-                assert list_record[0]["errors"] == ["エラー：指定する提供方法はシステムに存在しません。"]
+                assert list_record[0]["errors"] == ["指定する提供方法はシステムに存在しません。"]
 
                 # 利用規約(terms)が設定されていない。提供(provide)に存在しないロールが設定されている。
                 list_record = [record_restricted[5]]
                 handle_check_restricted_access_property(list_record)
-                assert list_record[0]["errors"] == ["エラー：指定する提供方法はシステムに存在しません。"]
+                assert list_record[0]["errors"] == ["指定する提供方法はシステムに存在しません。"]
 
 # def check_terms_in_system(key, item_index, item)
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_terms_in_system -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp

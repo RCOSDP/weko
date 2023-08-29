@@ -40,11 +40,13 @@ class MockSearchPerm:
 def test_get_permission_filter(i18n_app, users, client_request_args, indices):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         res = get_permission_filter(33)
-        assert res==([Match(publish_status='0'), Range(publish_date={'lte': 'now/d', 'time_zone': 'UTC'}), Terms(path=['33']), Bool(must=[Match(publish_status='0'), Match(relation_version_is_last='true')])], ['33','33/44'])
+        expected = ([Match(publish_status='0'), Range(publish_date={'lte': 'now/d', 'time_zone': 'UTC'}), Terms(path=['33']), Bool(must=[Match(publish_status='0'), Match(relation_version_is_last='true')])], ['33','33/44'])
+        assert res==expected
         mock_searchperm = MagicMock(side_effect=MockSearchPerm)
         with patch('weko_search_ui.query.search_permission', mock_searchperm):
             res = get_permission_filter()
-            assert res==([Bool(must=[Terms(path=['33','44'])], should=[Match(weko_creator_id='5'), Terms(weko_shared_ids='5'), Bool(must=[Match(publish_status='0'), Range(publish_date={'lte': 'now/d', 'time_zone': 'UTC'})])]), Bool(must=[Match(relation_version_is_last='true')])], ['33','33/44'])
+            expected = ([Bool(must=[Terms(path=['33','44'])], should=[Match(weko_creator_id='5'), Terms(weko_shared_ids=['5']), Bool(must=[Match(publish_status='0'), Range(publish_date={'lte': 'now/d', 'time_zone': 'UTC'})])]), Bool(must=[Match(relation_version_is_last='true')])], ['33','33/44'])
+            assert res==expected
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_query.py::test_get_permission_filter_fulltext -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_get_permission_filter_fulltext(i18n_app, users, client_request_args_FULL_TEXT, indices):
@@ -54,7 +56,7 @@ def test_get_permission_filter_fulltext(i18n_app, users, client_request_args_FUL
         mock_searchperm = MagicMock(side_effect=MockSearchPerm)
         with patch('weko_search_ui.query.search_permission', mock_searchperm):
             res = get_permission_filter()
-            assert res==([Bool(must=[Terms(path=['33','44'])], should=[Match(weko_creator_id='5'), Terms(weko_shared_ids='5'), Bool(must=[Match(publish_status='0'), Range(publish_date={'lte': 'now/d', 'time_zone': 'UTC'})])]), Bool(must=[Match(relation_version_is_last='true')])], ['33','33/44'])
+            assert res==([Bool(must=[Terms(path=['33','44'])], should=[Match(weko_creator_id='5'), Terms(weko_shared_ids=['5']), Bool(must=[Match(publish_status='0'), Range(publish_date={'lte': 'now/d', 'time_zone': 'UTC'})])]), Bool(must=[Match(relation_version_is_last='true')])], ['33','33/44'])
 
 
 # def default_search_factory(self, search, query_parser=None, search_type=None):
