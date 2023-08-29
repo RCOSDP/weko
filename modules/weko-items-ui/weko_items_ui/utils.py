@@ -81,12 +81,11 @@ from weko_workflow.models import Activity, FlowAction, FlowActionRole, \
 from weko_workflow.utils import IdentifierHandle
 
 def check_display_shared_user(user_id):
-    with current_app.app_context():
-        for role_id in current_app.config['WEKO_ITEMS_UI_SHARED_USER_ROLE_ID_LIST']:
-            recs = db.session.query(userrole).filter_by(role_id=role_id).all()
-            for rec in recs:
-                if user_id == rec.user_id:
-                    return True
+    for role_id in current_app.config['WEKO_ITEMS_UI_SHARED_USER_ROLE_ID_LIST']:
+        recs = db.session.query(userrole).filter_by(role_id=role_id).all()
+        for rec in recs:
+            if user_id == rec.user_id:
+                return True
     return False
 
 def get_list_username():
@@ -94,7 +93,6 @@ def get_list_username():
 
     Query database to get all available username
     return: list of username
-    TODO: 
     """
     from weko_user_profiles.models import UserProfile
 
@@ -202,7 +200,9 @@ def validate_user(username, email):
             if item[1] == email:
                 user_id = item[0]
                 break
-
+        if user is None:
+            result['error'] = 'User is not exist UserProfile'
+            return result
         if user.user_id == user_id and check_display_shared_user(user_id):
             user_info = dict()
             user_info['username'] = username

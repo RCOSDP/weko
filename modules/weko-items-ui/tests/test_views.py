@@ -553,7 +553,7 @@ def test_iframe_save_model_1(
     res_1 = client.post(url, json=data_1)
     assert res_1.status_code == 200
     ret = json.loads(res_1.data)
-    assert ret["code"] == 1
+    assert ret["code"] == 0
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_save_model_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_iframe_save_model_2(
@@ -20696,8 +20696,10 @@ def test_validate_user_info_guest(client_api, users):
 
 # def validate_users_info():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_validate_users_info_login -vv --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_validate_users_info_login(client_api, users, db_userprofile):
+def test_validate_users_info_login(client_api, users, db_userprofile, mocker):
     login_user_via_session(client=client_api, email=users[2]["email"])
+
+    mocker.patch("weko_items_ui.utils.check_display_shared_user", return_value=True)
 
     res = client_api.post(
         "/api/items/validate_users_info",
@@ -20731,7 +20733,7 @@ def test_validate_users_info_login(client_api, users, db_userprofile):
             {"error":'', "owner": False, "info":{'email':users[3]["email"],'user_id':users[3]["id"],'username':'comadmin'},"validation": True},
             {"error":"Not Found Email", "info": None, "owner": False,"validation": False},
             {"error":"Not Found Username", "info": None, "owner": False,"validation": False},
-            {"error":'No row was found for one()',"info": '',"owner": False,"validation": False}
+            {"error":'User is not exist UserProfile',"info": '',"owner": False,"validation": False}
             ]}
     
     # headers error 
@@ -21203,10 +21205,12 @@ def test_is_login_user_ids_1(
 # def get_userinfo_by_emails
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_userinfo_by_emails -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_userinfo_by_emails(
-    client_api, users_1, db_userprofile, db_sessionlifetime
+    client_api, users_1, db_userprofile, db_sessionlifetime, mocker
 ):
     # admin
     login_user_via_session(client=client_api, email=users_1[0]["email"])
+
+    mocker.patch("weko_items_ui.utils.check_display_shared_user", return_value=True)
 
     url = url_for(
         "weko_items_ui_api.get_userinfo_by_emails", emails=[users_1[0]["email"],users_1[1]["email"]], _external=True

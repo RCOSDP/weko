@@ -13,6 +13,7 @@ from dictdiffer import diff, patch, swap, revert
 from six import BytesIO
 
 import pytest
+from flask import current_app
 from flask_security.utils import login_user
 from flask_login import current_user
 from weko_redis.redis import RedisConnection
@@ -137,14 +138,14 @@ def test_get_list_username(app, client, users, db_userprofile):
     assert get_list_username() == [
         #"user",
         "contributor",
-        "comadmin",
+        #"comadmin",
         "repoadmin",
         "sysadmin",
         #"generaluser",
         #"originalroleuser",
-        #"originalroleuser2",
+        "originalroleuser2",
     ]
-
+    # 5,4,2
 
 # def get_list_email():
 #  .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_list_email -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -152,12 +153,12 @@ def test_get_list_email(app, client, users, db_userprofile):
     assert get_list_email() == [
         #"user@test.org",
         "contributor@test.org",
-        "comadmin@test.org",
+        #"comadmin@test.org",
         "repoadmin@test.org",
         "sysadmin@test.org",
         #"generaluser@test.org",
         #"originalroleuser@test.org",
-        #"originalroleuser2@test.org",
+        "originalroleuser2@test.org",
     ]
 
 
@@ -201,6 +202,10 @@ def test_validate_user(users, db_userprofile):
         db_userprofile[users[0]["email"]].get_username, users[1]["email"]
     )=={'results': '', 'validation': False, 'error': ''}
 
+    ret = validate_user("sampleuser","repoadmin@test.org")
+    assert ret['error'] == 'User is not exist UserProfile'
+    assert ret['validation'] == False
+
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_validate_user_nodb -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_validate_user_nodb(app):
     with app.test_request_context():
@@ -217,15 +222,10 @@ def test_get_user_info_by_email(users, db_userprofile):
         "email": users[0]["email"],
     }
 
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_user_info_by_email_nodb -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_user_info_by_email_nodb():
-    assert get_user_info_by_email("repoadmin@test.org") == None
+    assert get_user_info_by_email("hogehoge@test.org") == None
 
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_user_info_by_email_exception -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_user_info_by_email_exception():
-    with patch("weko_user_profiles.models.UserProfile.get_by_username", side_effect=Exception()):
-        assert get_user_info_by_email("repoadmin@test.org")==None
-
+    with patch("weko_items_ui.utils.check_display_shared_user", side_effect=Exception('test error')):
+        assert get_user_info_by_email(users[1]["email"]) == None
 
 # def get_user_information(user_ids):
 #  .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_user_information -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
