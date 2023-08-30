@@ -22,9 +22,7 @@
 
 import inspect
 
-from flask import Blueprint, current_app, jsonify, make_response, request, abort, Flask
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from flask import Blueprint, current_app, jsonify, make_response, request, abort
 from invenio_db import db
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -41,11 +39,10 @@ from weko_records.serializers import citeproc_v1
 
 from .errors import VersionNotFoundRESTError
 from .scopes import item_read_scope
+from .utils import create_limmiter
 from .views import escape_str
 
-WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
-
-limiter = Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT)
+limiter = create_limmiter()
 
 
 def create_error_handlers(blueprint):

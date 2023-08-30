@@ -31,7 +31,9 @@ from typing import List, NoReturn, Optional, Tuple, Union
 import redis
 from redis import sentinel
 from celery.task.control import inspect
-from flask import current_app, request, session
+from flask import current_app, request, session, Flask
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_babelex import gettext as _
 from flask_security import current_user
 from invenio_accounts.models import Role, User, userrole
@@ -4164,3 +4166,8 @@ def check_pretty(pretty):
         current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
     else:
         current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+
+
+def create_limmiter():
+    from .config import WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT)

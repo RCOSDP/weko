@@ -22,11 +22,9 @@
 
 import inspect
 
-from flask import Blueprint, current_app, jsonify, request, make_response, Flask
+from flask import Blueprint, current_app, jsonify, request, make_response
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from invenio_db import db
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
@@ -37,12 +35,10 @@ from .api import WorkActivity, Action, WorkActivityHistory
 from .errors import InternalServerError, InvalidParameterValueError, PermissionError, VersionNotFoundRESTError, \
     StatusNotApproveError
 from .scopes import activity_scope
-from .utils import create_conditions_dict, check_role, check_etag, check_pretty, get_activity_display_info
+from .utils import create_conditions_dict, check_role, check_etag, check_pretty, get_activity_display_info, create_limmiter
 from .views import check_authority_action, next_action, previous_action
 
-WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT = ['100 per minute']
-
-limiter = Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT)
+limiter = create_limmiter()
 
 
 def create_blueprint(app, endpoints):

@@ -349,3 +349,5 @@ WEKO_WORKFLOW_REST_ENDPOINTS = dict(
         default_media_type='application/json',
     ),
 )
+
+WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT = ['100 per minute']

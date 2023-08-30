@@ -643,3 +643,5 @@ WEKO_RECORDS_UI_REST_ENDPOINTS = {
         'default_media_type': 'application/json',
     },
 }
+
+WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
