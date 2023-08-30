@@ -444,6 +444,7 @@ class FileApplication(ContentNegotiatedMethodView):
                     if guest_activity:
                         activity_id = guest_activity[0].activity_id
                 if activity_url:
+                    activity_url = activity_url.replace("/api", "", 1)
                     query_str = parse.urlparse(activity_url).query
                     query_dic = parse.parse_qs(query_str)
                     if query_dic and query_dic['token'] and len(query_dic['token']) > 0:
@@ -455,7 +456,7 @@ class FileApplication(ContentNegotiatedMethodView):
                     'flow_id': workflow.flow_id,
                     'activity_confirm_term_of_use': True,
                     'extra_info': {
-                        "guest_mail": mail,
+                        "user_mail": current_user.email,
                         "record_id": record.get('recid'),
                         "related_title": record.get('title'),
                         "file_name": filename,
@@ -467,7 +468,7 @@ class FileApplication(ContentNegotiatedMethodView):
                 if rtn is None:
                     raise Exception()
                 activity_id = rtn.activity_id
-                activity_url = url_for('weko_workflow.display_activity', activity_id=activity_id, _external=True, _method='https')
+                activity_url = url_for('weko_workflow.display_activity', activity_id=activity_id, _external=True, _method='GET').replace("/api", "", 1)
 
             db.session.commit()
         except SQLAlchemyError as ex:

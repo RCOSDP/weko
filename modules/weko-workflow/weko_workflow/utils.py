@@ -1291,8 +1291,6 @@ def is_hidden_pubdate(item_type_name):
     if (item_type_name and isinstance(hidden_pubdate_list, list)
             and item_type_name in hidden_pubdate_list):
         is_hidden = True
-    import inspect
-    current_app.logger.error(inspect.stack()[1].function)
     return is_hidden
 
 
@@ -3092,7 +3090,7 @@ def get_activity_display_info(activity_id: str):
         item, steps, temporary_comment, workflow_detail
 
 
-def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
+def __init_activity_detail_data_for_guest(activity_id: str, community_id: str, called_by_api: bool = False):
     """Init activity data for guest user.
 
     @param activity_id:
@@ -3128,7 +3126,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
         record, json_schema, schema_form, \
         item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
         allow_multi_thumbnail \
-        = item_login(item_type_id=workflow_detail.itemtype_id)
+        = item_login(item_type_id=workflow_detail.itemtype_id, called_by_api=called_by_api)
     if not record and item:
         record = item
 
@@ -3217,7 +3215,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
     )
 
 
-def prepare_data_for_guest_activity(activity_id: str) -> dict:
+def prepare_data_for_guest_activity(activity_id: str, called_by_api: bool = False) -> dict:
     """Prepare for guest activity.
 
     @param activity_id:
@@ -3232,7 +3230,7 @@ def prepare_data_for_guest_activity(activity_id: str) -> dict:
         community_id = comm.id
 
     init_data = __init_activity_detail_data_for_guest(
-        activity_id, community_id)
+        activity_id, community_id, called_by_api=called_by_api)
     ctx.update(init_data)
     action_endpoint = ctx['cur_step']
     activity_detail = ctx['activity']

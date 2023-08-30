@@ -348,9 +348,13 @@ WEKO_WORKFLOW_REST_ENDPOINTS = dict(
         route='/<string:version>/workflow/activities/<string:activity_id>/throw-out',
         default_media_type='application/json',
     ),
+    file_application=dict(
+        route='/<string:version>/workflow/activities/<string:activity_id>/application',
+        default_media_type='application/json',
+    ),
 )
 
-from .rest import GetActivities, ApproveActivity, ThrowOutActivity
+from .rest import FileApplicationActivity, GetActivities, ApproveActivity, ThrowOutActivity
 WEKO_GET_ACTIVITIES_API_VERSION = {
     "v1.0": GetActivities.get_v1
 }
@@ -363,5 +367,10 @@ WEKO_APPROVE_API_VERSION = {
 
 WEKO_THROW_OUT_API_VERSION = {
     'post-v1.0': ThrowOutActivity.post_v1
+}
+"""API version."""
+
+WEKO_FILE_APPLICATION_ACTIVITY_API_VERSION = {
+    'post-v1.0': FileApplicationActivity.post_v1
 }
 """API version."""
