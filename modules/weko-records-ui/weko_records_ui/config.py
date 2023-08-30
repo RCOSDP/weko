@@ -24,7 +24,6 @@ import os
 from flask_babelex import lazy_gettext as _
 from invenio_records_rest.utils import allow_all
 
-from .rest import FileApplication, NeedRestrictedAccess, GetFileTerms
 from .views import blueprint
 
 WEKO_RECORDS_UI_DETAIL_TEMPLATE = 'weko_records_ui/detail.html'
@@ -653,17 +652,4 @@ WEKO_RECORDS_UI_REST_ENDPOINTS = {
     },
 }
 
-WEKO_NEED_RESTRICTED_ACCESS_API_VERSION = {
-    'get-v1.0': NeedRestrictedAccess.get_v1
-}
-"""API version."""
-
-WEKO_GET_FILE_TERMS_API_VERSION = {
-    'get-v1.0': GetFileTerms.get_v1
-}
-"""API version."""
-
-WEKO_FILE_APPLICATION_API_VERSION = {
-    'post-v1.0': FileApplication.post_v1
-}
-"""API version."""
+WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']

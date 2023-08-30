@@ -20,6 +20,8 @@
 
 """Blueprint for schema rest."""
 
+import inspect
+
 from flask import Flask, Blueprint, current_app, jsonify, make_response, request, abort, url_for
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
@@ -28,9 +30,9 @@ from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from urllib import parse
 from invenio_db import db
-from invenio_deposit.scopes import actions_scope
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
-from invenio_pidstore.errors import PIDInvalidAction, PIDDoesNotExistError
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidstore.errors import PIDInvalidAction
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
@@ -49,7 +51,11 @@ from weko_workflow.utils import check_etag, check_pretty, init_activity_for_gues
 from werkzeug.http import generate_etag
 
 from .errors import ContentsNotFoundError, InvalidEmailError, InvalidTokenError, InvalidWorkflowError, VersionNotFoundRESTError
+from .scopes import item_read_scope
+from .utils import create_limmiter
 from .views import escape_str, get_usage_workflow
+
+limiter = create_limmiter()
 
 
 def create_error_handlers(blueprint):
@@ -197,7 +203,8 @@ class NeedRestrictedAccess(ContentNegotiatedMethodView):
         super(NeedRestrictedAccess, self).__init__(*args, **kwargs)
 
     @require_api_auth(True)
-    @require_oauth_scopes(actions_scope.id)
+    @require_oauth_scopes(item_read_scope.id)
+    @limiter.limit('')
     def get(self, **kwargs):
         """
         Check if need restricted access.
@@ -205,24 +212,18 @@ class NeedRestrictedAccess(ContentNegotiatedMethodView):
         Returns:
             Result for each file.
         """
-        from .config import WEKO_NEED_RESTRICTED_ACCESS_API_VERSION
         version = kwargs.get('version')
-        func = WEKO_NEED_RESTRICTED_ACCESS_API_VERSION.get(f'get-{version}')
-
-        if func:
-            return func(self, **kwargs)
+        func_name = f'get_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
         else:
             raise VersionNotFoundRESTError()
 
     def get_v1(self, **kwargs):
         # Get record
         pid_value = kwargs.get('pid_value')
-        try:
-            pid = PersistentIdentifier.get('depid', pid_value)
-        except PIDDoesNotExistError:
-            abort(404)
-        record = WekoRecord.get_record(pid.object_uuid)
-        if not record:
+        record = self.__get_record(pid_value)
+        if record is None:
             abort(404)
 
         # Get files
@@ -245,6 +246,30 @@ class NeedRestrictedAccess(ContentNegotiatedMethodView):
 
         response = make_response(jsonify(res_json), 200)
         return response
+
+    def __get_record(self, pid_value):
+        record = None
+        try:
+            pid = PersistentIdentifier.get('recid', pid_value)
+
+            # Get latest PID.
+            from weko_deposit.pidstore import get_record_without_version
+            pid_without_version = get_record_without_version(pid)
+            latest_pid = PIDVersioning(child=pid_without_version).last_child
+
+            # Check if activity is completed.
+            from weko_workflow.api import WorkActivity
+            from weko_workflow.models import ActivityStatusPolicy
+            activity = WorkActivity().get_workflow_activity_by_item_id(latest_pid.object_uuid)
+            if activity.activity_status != ActivityStatusPolicy.ACTIVITY_FINALLY:
+                return None
+
+            # Get record.
+            record = WekoRecord.get_record(pid.object_uuid)
+        except:
+            return None
+
+        return record
 
 class GetFileTerms(ContentNegotiatedMethodView):
     view_name = 'records_ui_{0}'
