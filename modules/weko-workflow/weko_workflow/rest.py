@@ -365,6 +365,7 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
 
     @require_api_auth(True)
     @require_oauth_scopes(activity_scope.id)
+    @limiter.limit('')
     def post(self, **kwargs):
         """
         Post file application.
@@ -372,12 +373,10 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
         Returns:
             Result json.
         """
-        from .config import WEKO_FILE_APPLICATION_ACTIVITY_API_VERSION
         version = kwargs.get('version')
-        func = WEKO_FILE_APPLICATION_ACTIVITY_API_VERSION.get(f'post-{version}')
-
-        if func:
-            return func(self, **kwargs)
+        func_name = f'post_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
         else:
             raise VersionNotFoundRESTError() # 404 Error
 

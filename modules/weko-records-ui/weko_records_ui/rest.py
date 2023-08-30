@@ -32,7 +32,7 @@ from urllib import parse
 from invenio_db import db
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidrelations.contrib.versioning import PIDVersioning
-from invenio_pidstore.errors import PIDInvalidAction
+from invenio_pidstore.errors import PIDInvalidAction, PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
@@ -46,8 +46,8 @@ from weko_records.api import ItemTypes
 from weko_records.serializers import citeproc_v1
 from weko_workflow.api import WorkActivity, WorkFlow
 from weko_workflow.models import GuestActivity
-from weko_workflow.schema.marshmallow import ActivitySchema
-from weko_workflow.utils import check_etag, check_pretty, init_activity_for_guest_user, is_terms_of_use_only
+from weko_workflow.scopes import activity_scope
+from weko_workflow.utils import check_etag, check_pretty, init_activity_for_guest_user
 from werkzeug.http import generate_etag
 
 from .errors import ContentsNotFoundError, InvalidEmailError, InvalidTokenError, InvalidWorkflowError, VersionNotFoundRESTError
@@ -273,15 +273,14 @@ class NeedRestrictedAccess(ContentNegotiatedMethodView):
 
 class GetFileTerms(ContentNegotiatedMethodView):
     view_name = 'records_ui_{0}'
-    limiter = Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=["1 per minute"])
 
     def __init__(self, *args, **kwargs):
         """Constructor."""
         super(GetFileTerms, self).__init__(*args, **kwargs)
 
     @require_api_auth(True)
-    @require_oauth_scopes(actions_scope.id)
-    @limiter.limit("2 per minute")
+    @require_oauth_scopes(activity_scope.id)
+    @limiter.limit('')
     def get(self, **kwargs):
         """
         Get files tarms.
@@ -289,12 +288,10 @@ class GetFileTerms(ContentNegotiatedMethodView):
         Returns:
             tarms text and etag.
         """
-        from .config import WEKO_GET_FILE_TERMS_API_VERSION
         version = kwargs.get('version')
-        func = WEKO_GET_FILE_TERMS_API_VERSION.get(f'get-{version}')
-
-        if func:
-            return func(self, **kwargs)
+        func_name = f'get_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
         else:
             raise VersionNotFoundRESTError() # 404 Error
 
@@ -360,7 +357,8 @@ class FileApplication(ContentNegotiatedMethodView):
         super(FileApplication, self).__init__(*args, **kwargs)
 
     @require_api_auth(True)
-    @require_oauth_scopes(actions_scope.id)
+    @require_oauth_scopes(activity_scope.id)
+    @limiter.limit('')
     def post(self, **kwargs):
         """
         Post file application.
@@ -368,12 +366,10 @@ class FileApplication(ContentNegotiatedMethodView):
         Returns:
             Result json.
         """
-        from .config import WEKO_FILE_APPLICATION_API_VERSION
         version = kwargs.get('version')
-        func = WEKO_FILE_APPLICATION_API_VERSION.get(f'post-{version}')
-
-        if func:
-            return func(self, **kwargs)
+        func_name = f'post_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
         else:
             raise VersionNotFoundRESTError() # 404 Error
 
