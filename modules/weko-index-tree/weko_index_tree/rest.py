@@ -663,8 +663,6 @@ class GetParentIndex(ContentNegotiatedMethodView):
             # Get index tree
             tree = self.record_class.get_index_tree(pid=0)
             reset_tree(tree=tree)
-            if len(tree) == 0:
-                raise PermissionError()
 
             # Get parent
             parents = self.getParents(pid)
@@ -672,13 +670,11 @@ class GetParentIndex(ContentNegotiatedMethodView):
             # Get index from tree
             parent_nodes = []
             for parent in reversed(parents):
-                # tmp_tree = tree[0]
-                for child in tree:
-                    if child['cid'] == parent.id:
-                        parent_nodes.append(child)
-                        tree = child['children']
-                        child.pop('children')
-                        break
+                child = next(iter(filter(lambda child: child['cid'] == parent.id, tree)), None)
+                if child is None:
+                    raise PermissionError()
+                parent_nodes.append(child)
+                tree = child.pop('children')
 
             # Connect parent node
             parent_tree = None

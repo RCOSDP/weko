@@ -417,9 +417,10 @@ def base_app(instance_path):
             tid=dict(
                 record_class='weko_index_tree.api:Indexes',
                 index_route='/tree/index/<int:index_id>',
-                tree_route='/tree',
                 get_index_tree='/<string:version>/tree/index/<int:index_id>',
                 get_index_root_tree='/<string:version>/tree/index',
+                get_parent_index_tree='/<string:version>/tree/index/<int:index_id>/parent',
+                tree_route='/tree',
                 item_tree_route='/tree/<string:pid_value>',
                 index_move_route='/tree/move/<int:index_id>',
                 default_media_type='application/json',
