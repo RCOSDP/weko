@@ -185,10 +185,9 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                         # publish date
                         p_is_can = True
                         idt = record.get('publish_date')
-                        if idt and isinstance(idt, list):
-                            if idt:
-                                idt = to_utc(dt.strptime(idt, '%Y-%m-%d'))
-                                p_is_can = True if dt.utcnow() >= idt else False
+                        if idt:
+                            idt = to_utc(dt.strptime(idt, '%Y-%m-%d'))
+                            p_is_can = True if dt.utcnow() >= idt else False
                         
                         # roles check
                         role_is_can = False

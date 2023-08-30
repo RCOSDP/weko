@@ -13,6 +13,7 @@ from flask_security.utils import login_user
 from invenio_accounts.models import Role, User
 from invenio_accounts.testutils import create_test_user, login_user_via_session
 from mock import patch
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
 from weko_records_ui.models import FileOnetimeDownload
 
 from weko_records_ui.permissions import (
@@ -31,7 +32,8 @@ from weko_records_ui.permissions import (
     file_permission_factory,
     page_permission_factory,
     is_open_restricted,
-    is_owners_or_superusers
+    is_owners_or_superusers,
+    __isint
 )
 
 
@@ -69,9 +71,9 @@ def test_file_permission_factory(app, records, users,db_file_permission):
 def test_check_file_download_permission(app, records, users):#, db_file_permission
     current_app.extensions['invenio-search'] = MagicMock()
     print("invenio-search current_app")
-    #print(vars(current_app.extensions['invenio-search']['app']))
+    print(vars(current_app.extensions['invenio-search']['app']))
     print("invenio-search app")
-    #print(vars(app.extensions['invenio-search']['app']))
+    print(vars(app.extensions['invenio-search']['app']))
     
     indexer, results = records
     record = results[0]["record"]
@@ -79,7 +81,7 @@ def test_check_file_download_permission(app, records, users):#, db_file_permissi
             'format': 'image/jpeg', 'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessrole': 'open_access', 
             'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False, 
             'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0, 'mimetype': 'image/jpeg', 'file_order': 0}
-    """
+
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         assert check_file_download_permission(record, fjson, True) == True
     
@@ -90,20 +92,28 @@ def test_check_file_download_permission(app, records, users):#, db_file_permissi
         assert check_file_download_permission(record, fjson, True) == True
     
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
-        with patch("weko_records_ui.permissions.to_utc", return_value=datetime.now()):
-            assert check_file_download_permission(record, fjson, False) == False
+        with patch("weko_records_ui.permissions.to_utc", return_value=datetime.utcnow()):
             
-            fjson['date'][0]['dateValue'] = ""
             assert check_file_download_permission(record, fjson, False) == True
-            
-            fjson['accessdate'] = '2022-09-27'
             fjson['accessrole'] = 'open_date'
             assert check_file_download_permission(record, fjson, True) == True
-            assert check_file_download_permission(record, fjson, False) == False
-
-            with patch("weko_records_ui.permissions.to_utc", return_value="test"):
-                assert check_file_download_permission(record, fjson, False) == False
             
+            yesterday = datetime.utcnow() - timedelta(days = 1)
+            with patch("weko_records_ui.permissions.to_utc", return_value=yesterday):
+                assert check_file_download_permission(record, fjson, False) == True
+                
+            tomorrow = datetime.utcnow() + timedelta(days = 1)
+            with patch("weko_records_ui.permissions.to_utc", return_value=tomorrow):
+                assert check_file_download_permission(record, fjson, False) == False
+
+            fjson['date'][0]['dateValue'] = ""
+            assert check_file_download_permission(record, fjson, False) == True
+                 
+            fjson['date'][0]['dateValue'] = "2022-01-01"
+            record['publish_date'] = "2023-01-01"
+            fjson['role'] = [{'role':'none_loggin'},{'role':'1'},{'role':'2'},{'role':'3'},{'role':'4'},{'role':'5'}]
+            assert check_file_download_permission(record, fjson, False) == True
+
             fjson['accessrole'] = 'open_login'
             assert check_file_download_permission(record, fjson, True) == True
 
@@ -122,7 +132,8 @@ def test_check_file_download_permission(app, records, users):#, db_file_permissi
             fjson['accessrole'] = 'open_restricted'
             assert check_file_download_permission(record, fjson, True) == False
 
-    """
+    
+
     record = results[2]["record"]
     fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 
              'date': [{'dateType': 'Available', 'dateValue': '2022-09-27'}], 'format': 'image/jpeg', 
@@ -131,14 +142,11 @@ def test_check_file_download_permission(app, records, users):#, db_file_permissi
              'is_thumbnail': False, 'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0, 
              'mimetype': 'image/jpeg', 'file_order': 0}
 
-    # 'accessrole=open_no',
-    with patch("flask_security.current_user", return_value=users[0]["obj"]):
-        # current_user.is_authenticated = False
-        with patch("flask_security.current_user.is_authenticated", return_value=False):
-            assert check_file_download_permission(record, fjson, True) == False
-        # current_user.is_authenticated = True
-        with patch("flask_security.current_user.is_authenticated", return_value=True):
-            assert check_file_download_permission(record, fjson, True) == True
+    # # 'accessrole=open_no',
+    with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+        with patch("flask_security.current_user", return_value=users[0]["obj"]):
+            with patch("flask_security.current_user.is_authenticated", return_value=True):
+                assert check_file_download_permission(record, fjson, True) == True
 
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         assert check_file_download_permission(record, fjson, True) == True
@@ -154,7 +162,7 @@ def test_check_file_download_permission(app, records, users):#, db_file_permissi
     {'email': 'originalroleuser2@test.org', 'id': 8, 'obj': <User 8>}, 
     {'email': 'user@test.org', 'id': 1, 'obj': <User 1>}]
     """
-    """
+    
     with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
         assert check_file_download_permission(record, fjson, False) == True
     
@@ -163,12 +171,12 @@ def test_check_file_download_permission(app, records, users):#, db_file_permissi
     with patch("flask_login.utils._get_user", return_value=users[4]["obj"]):
         assert check_file_download_permission(record, fjson, False) == False
 
-    fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 'date': [{'dateType': 'Available', 'dateValue': '2023-04-01'}], 'format': 'image/jpeg', 'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessdate': '2050-01-01', 'accessrole': 'open_date', 'roles':[{'role':1},{'role':2}], 'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False, 'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0, 'mimetype': 'image/jpeg', 'file_order': 0}
+    fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 'date': [{'dateType': 'Available', 'dateValue': '2023-04-01'}], 'format': 'image/jpeg', 'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessdate': '2050-01-01', 'accessrole': 'open_date', 'roles':[{'role':'1'},{'role':'2'}], 'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False, 'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0, 'mimetype': 'image/jpeg', 'file_order': 0}
     record = results[1]["record"]
     with patch("flask_login.utils._get_user", return_value=users[4]["obj"]):
         assert check_file_download_permission(record, fjson, False) == False
 
-    fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 'date': [{'dateType': 'Available', 'dateValue': '2023-04-01'}], 'format': 'image/jpeg', 'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessdate': '2023-06-01', 'accessrole': 'open_date', 'roles':[{'role':1},{'role':2}], 'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False, 'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0, 'mimetype': 'image/jpeg', 'file_order': 0}
+    fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 'date': [{'dateType': 'Available', 'dateValue': '2023-04-01'}], 'format': 'image/jpeg', 'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessdate': '2023-06-01', 'accessrole': 'open_date', 'roles':[{'role':'1'},{'role':'2'}], 'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False, 'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0, 'mimetype': 'image/jpeg', 'file_order': 0}
     record = results[1]["record"]
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         assert check_file_download_permission(record, fjson, False) == True
@@ -176,13 +184,14 @@ def test_check_file_download_permission(app, records, users):#, db_file_permissi
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         assert check_file_download_permission(record, fjson, False) == False
 
-    fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 'date': [{'dateType': 'Available', 'dateValue': '2023-04-01'}], 'format': 'image/jpeg', 'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessdate': '2023-06-01', 'accessrole': 'open_login', 'roles':[{'role':1},{'role':2}], 'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False, 'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0, 'mimetype': 'image/jpeg', 'file_order': 0}
+    fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 'date': [{'dateType': 'Available', 'dateValue': '2023-04-01'}], 'format': 'image/jpeg', 'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessdate': '2023-06-01', 'accessrole': 'open_login', 'roles':[{'role':'1'},{'role':'2'}], 'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False, 'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0, 'mimetype': 'image/jpeg', 'file_order': 0}
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         assert check_file_download_permission(record, fjson, False) == True
 
+    # generaluser
     with patch("flask_login.utils._get_user", return_value=users[4]["obj"]):
-        assert check_file_download_permission(record, fjson, False) == True
-    """
+        assert check_file_download_permission(record, fjson, False) == False
+
 # def check_open_restricted_permission(record, fjson):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_open_restricted_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_check_open_restricted_permission(app, records, users,db_file_permission):
@@ -898,3 +907,12 @@ def test_is_owners_or_superusers(app,records,users):
         with  patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
             assert is_owners_or_superusers(testrec)
     
+# def __isint(str): -> bool:
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test___isint -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test___isint():
+
+    assert __isint('a') == False
+    assert __isint('abc') == False
+    assert __isint('a1c') == False
+
+    assert __isint('123') == True
