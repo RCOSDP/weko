@@ -20,9 +20,10 @@
 
 """Blueprint for schema rest."""
 
+import inspect
+
 from flask import Blueprint, current_app, jsonify, make_response, request, abort
 from invenio_db import db
-from invenio_deposit.scopes import actions_scope
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDInvalidAction
@@ -37,7 +38,11 @@ from weko_deposit.api import WekoRecord
 from weko_records.serializers import citeproc_v1
 
 from .errors import VersionNotFoundRESTError
+from .scopes import item_read_scope
+from .utils import create_limmiter
 from .views import escape_str
+
+limiter = create_limmiter()
 
 
 def create_error_handlers(blueprint):
@@ -165,7 +170,8 @@ class NeedRestrictedAccess(ContentNegotiatedMethodView):
         super(NeedRestrictedAccess, self).__init__(*args, **kwargs)
 
     @require_api_auth(True)
-    @require_oauth_scopes(actions_scope.id)
+    @require_oauth_scopes(item_read_scope.id)
+    @limiter.limit('')
     def get(self, **kwargs):
         """
         Check if need restricted access.
@@ -173,12 +179,10 @@ class NeedRestrictedAccess(ContentNegotiatedMethodView):
         Returns:
             Result for each file.
         """
-        from .config import WEKO_NEED_RESTRICTED_ACCESS_API_VERSION
         version = kwargs.get('version')
-        func = WEKO_NEED_RESTRICTED_ACCESS_API_VERSION.get(f'get-{version}')
-
-        if func:
-            return func(self, **kwargs)
+        func_name = f'get_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
         else:
             raise VersionNotFoundRESTError()
 

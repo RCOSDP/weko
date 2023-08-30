@@ -20,6 +20,8 @@
 
 """Blueprint for Weko index tree rest."""
 
+import inspect
+
 from flask import Blueprint, current_app, jsonify, request, make_response
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
@@ -33,8 +35,11 @@ from .api import WorkActivity, Action, WorkActivityHistory
 from .errors import InternalServerError, InvalidParameterValueError, PermissionError, VersionNotFoundRESTError, \
     StatusNotApproveError
 from .scopes import activity_scope
-from .utils import create_conditions_dict, check_role, check_etag, check_pretty, get_activity_display_info
+from .utils import create_conditions_dict, check_role, check_etag, check_pretty, get_activity_display_info, create_limmiter
 from .views import check_authority_action, next_action, previous_action
+
+limiter = create_limmiter()
+
 
 def create_blueprint(app, endpoints):
     """
@@ -47,7 +52,7 @@ def create_blueprint(app, endpoints):
     blueprint = Blueprint(
         'weko_workflow_rest',
         __name__,
-        url_prefix = '',
+        url_prefix='',
     )
 
     @blueprint.teardown_request
@@ -94,6 +99,7 @@ def create_blueprint(app, endpoints):
 
     return blueprint
 
+
 class GetActivities(ContentNegotiatedMethodView):
     """Resource to get workflow activities."""
     view_name = '{0}_activities'
@@ -107,22 +113,21 @@ class GetActivities(ContentNegotiatedMethodView):
 
     @require_api_auth()
     @require_oauth_scopes(activity_scope.id)
+    @limiter.limit('')
     def get(self, **kwargs):
         """
         Get workflow activities.
 
         :returns: Workflow activities filtered by search criteria.
         """
-        from .config import WEKO_GET_ACTIVITIES_API_VERSION
 
         version = kwargs.get('version')
-        get_api_ver = WEKO_GET_ACTIVITIES_API_VERSION.get(version)
-        
-        if get_api_ver:
-            return get_api_ver(self, **kwargs)
+        func_name = f'get_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
         else:
             raise VersionNotFoundRESTError()
-          
+
     def get_v1(self, **kwargs):
         from .config import WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB, WEKO_WORKFLOW_ALL_TAB
 
@@ -147,7 +152,7 @@ class GetActivities(ContentNegotiatedMethodView):
             etag = generate_etag(str(param_status + param_limit + param_page + param_pretty).encode('utf-8'))
             if check_etag(etag):
                 return make_response('304 Not Modified', 304)
-            
+
             # Check pretty
             check_pretty(param_pretty)
 
@@ -179,11 +184,11 @@ class GetActivities(ContentNegotiatedMethodView):
             # Response setting
             json_dict = dict()
             json_dict.update({'total': rst_count})
-            json_dict.update({'condition': dict(status = param_status, limit = rst_size, page = rst_page)})
+            json_dict.update({'condition': dict(status=param_status, limit=rst_size, page=rst_page)})
             json_dict.update({'activities': activity_list})
             response = make_response(jsonify(json_dict), 200)
             response.headers['ETag'] = etag
-            
+
             return response
 
         except InvalidParameterValueError:
@@ -204,6 +209,7 @@ class ApproveActivity(ContentNegotiatedMethodView):
 
     @require_api_auth()
     @require_oauth_scopes(activity_scope.id)
+    @limiter.limit('')
     def post(self, **kwargs):
         """
         Approve workflow activity.
@@ -211,12 +217,10 @@ class ApproveActivity(ContentNegotiatedMethodView):
         Returns:
             Approved result.
         """
-        from .config import WEKO_APPROVE_API_VERSION
         version = kwargs.get('version')
-        func = WEKO_APPROVE_API_VERSION.get(f'post-{version}')
-
-        if func:
-            return func(self, **kwargs)
+        func_name = f'post_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
         else:
             raise VersionNotFoundRESTError()
 
@@ -290,6 +294,7 @@ class ThrowOutActivity(ContentNegotiatedMethodView):
 
     @require_api_auth()
     @require_oauth_scopes(activity_scope.id)
+    @limiter.limit('')
     def post(self, **kwargs):
         """
         Throw out workflow activity.
@@ -297,12 +302,10 @@ class ThrowOutActivity(ContentNegotiatedMethodView):
         Returns:
             Thrown out result.
         """
-        from .config import WEKO_THROW_OUT_API_VERSION
         version = kwargs.get('version')
-        func = WEKO_THROW_OUT_API_VERSION.get(f'post-{version}')
-
-        if func:
-            return func(self, **kwargs)
+        func_name = f'post_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
         else:
             raise VersionNotFoundRESTError()
 

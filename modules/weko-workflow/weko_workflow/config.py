@@ -337,7 +337,7 @@ WEKO_STR_TRUE = ['true', 't', 'yes', '1']
 
 WEKO_WORKFLOW_REST_ENDPOINTS = dict(
     activities=dict(
-        activities_route='/<string:version>/activities',
+        activities_route='/<string:version>/workflow/activities',
         default_media_type='application/json',
     ),
     approve=dict(
@@ -350,18 +350,4 @@ WEKO_WORKFLOW_REST_ENDPOINTS = dict(
     ),
 )
 
-from .rest import GetActivities, ApproveActivity, ThrowOutActivity
-WEKO_GET_ACTIVITIES_API_VERSION = {
-    "v1.0": GetActivities.get_v1
-}
-"""API version."""
-
-WEKO_APPROVE_API_VERSION = {
-    'post-v1.0': ApproveActivity.post_v1
-}
-"""API version."""
-
-WEKO_THROW_OUT_API_VERSION = {
-    'post-v1.0': ThrowOutActivity.post_v1
-}
-"""API version."""
+WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT = ['100 per minute']
