@@ -28,8 +28,8 @@ from mock import patch
 def test_NeedRestrictedAccess_get_v1(app, client, db, make_record_need_restricted_access, oauth_headers, users):
     """Test NeedRestrictedAccess.get_v1 method."""
 
-    version = 'v1.0'
-    invalid_version = 'v0.0'
+    version = 'v1'
+    invalid_version = 'v0'
     headers_sysadmin = oauth_headers[0]     # OAuth token : sysadmin
     headers_contributor = oauth_headers[1]  # OAuth token : contributor
     headers_user = oauth_headers[2]         # OAuth token : user
@@ -39,7 +39,6 @@ def test_NeedRestrictedAccess_get_v1(app, client, db, make_record_need_restricte
     pid_value = 11
     res = client.get(
         f'/{invalid_version}/records/{pid_value}/need-restricted-access',
-        content_type='application/json',
         headers=headers_sysadmin,
     )
     try:
@@ -52,7 +51,6 @@ def test_NeedRestrictedAccess_get_v1(app, client, db, make_record_need_restricte
     pid_value = 100
     res = client.get(
         f'/{version}/records/{pid_value}/need-restricted-access',
-        content_type='application/json',
         headers=headers_sysadmin,
     )
     try:
@@ -65,7 +63,6 @@ def test_NeedRestrictedAccess_get_v1(app, client, db, make_record_need_restricte
     pid_value = 16
     res = client.get(
         f'/{version}/records/{pid_value}/need-restricted-access',
-        content_type='application/json',
         headers=headers_sysadmin,
     )
     assert res.status_code == 404
@@ -78,7 +75,6 @@ def test_NeedRestrictedAccess_get_v1(app, client, db, make_record_need_restricte
     pid_value = 11
     res = client.get(
         f'/{version}/records/{pid_value}/need-restricted-access',
-        content_type='application/json',
         headers=headers_user,
     )
     res_data = json.loads(res.get_data())
@@ -89,7 +85,6 @@ def test_NeedRestrictedAccess_get_v1(app, client, db, make_record_need_restricte
     pid_value = 12
     res = client.get(
         f'/{version}/records/{pid_value}/need-restricted-access',
-        content_type='application/json',
         headers=headers_sysadmin,
     )
     res_data = json.loads(res.get_data())
@@ -100,7 +95,6 @@ def test_NeedRestrictedAccess_get_v1(app, client, db, make_record_need_restricte
     pid_value = 12
     res = client.get(
         f'/{version}/records/{pid_value}/need-restricted-access',
-        content_type='application/json',
         headers=headers_contributor,
     )
     res_data = json.loads(res.get_data())
@@ -114,7 +108,6 @@ def test_NeedRestrictedAccess_get_v1(app, client, db, make_record_need_restricte
     with patch('weko_records_ui.models.FileOnetimeDownload.find_downloadable_only', return_value=[onetime_download]):
         res = client.get(
             f'/{version}/records/{pid_value}/need-restricted-access',
-            content_type='application/json',
             headers=headers_contributor,
         )
     res_data = json.loads(res.get_data())
@@ -125,7 +118,6 @@ def test_NeedRestrictedAccess_get_v1(app, client, db, make_record_need_restricte
     pid_value = 14
     res = client.get(
         f'/{version}/records/{pid_value}/need-restricted-access',
-        content_type='application/json',
         headers=headers_contributor,
     )
     res_data = json.loads(res.get_data())
@@ -136,7 +128,6 @@ def test_NeedRestrictedAccess_get_v1(app, client, db, make_record_need_restricte
     pid_value = 15
     res = client.get(
         f'/{version}/records/{pid_value}/need-restricted-access',
-        content_type='application/json',
         headers=headers_contributor,
     )
     res_data = json.loads(res.get_data())
@@ -147,7 +138,6 @@ def test_NeedRestrictedAccess_get_v1(app, client, db, make_record_need_restricte
     pid_value = 15
     res = client.get(
         f'/{version}/records/{pid_value}/need-restricted-access',
-        content_type='application/json',
         headers=headers_user,
     )
     res_data = json.loads(res.get_data())
@@ -158,7 +148,6 @@ def test_NeedRestrictedAccess_get_v1(app, client, db, make_record_need_restricte
     pid_value = 15
     res = client.get(
         f'/{version}/records/{pid_value}/need-restricted-access',
-        content_type='application/json',
         headers=headers_not_login,
     )
     res_data = json.loads(res.get_data())

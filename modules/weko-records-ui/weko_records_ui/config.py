@@ -24,7 +24,6 @@ import os
 from flask_babelex import lazy_gettext as _
 from invenio_records_rest.utils import allow_all
 
-from .rest import NeedRestrictedAccess
 from .views import blueprint
 
 WEKO_RECORDS_UI_DETAIL_TEMPLATE = 'weko_records_ui/detail.html'
@@ -644,8 +643,3 @@ WEKO_RECORDS_UI_REST_ENDPOINTS = {
         'default_media_type': 'application/json',
     },
 }
-
-WEKO_NEED_RESTRICTED_ACCESS_API_VERSION = {
-    'get-v1.0': NeedRestrictedAccess.get_v1
-}
-"""API version."""

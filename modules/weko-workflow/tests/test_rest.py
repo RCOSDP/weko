@@ -33,8 +33,8 @@ def url(root, kwargs = {}):
 def test_GetActivities_get(app, client, db, db_register_activity, auth_headers, users):
 
     # test preparation
-    path = '/v1.0/activities'
-    invalid_path = '/v0.0/activities'
+    path = '/v1/workflow/activities'
+    invalid_path = '/v0/workflow/activities'
     param = {
         'status': 'todo',
         'limit': '20',
@@ -139,8 +139,8 @@ def test_ApproveActivity_post(app, client, db, db_register_approval, auth_header
 
     activity_id = db_register_approval['activity'][0].activity_id
     activity_id_not_approval = db_register_approval['activity'][1].activity_id
-    version = 'v1.0'
-    invalid_version = 'v0.0'
+    version = 'v1'
+    invalid_version = 'v0'
     headers_sysadmin = auth_headers[0]  # OAuth token : sysadmin
     headers_student = auth_headers[1]   # OAuth token : student
 
@@ -204,8 +204,8 @@ def test_ThrowOutActivity_post(app, client, db, db_register_approval, auth_heade
 
     activity_id = db_register_approval['activity'][0].activity_id
     activity_id_not_approval = db_register_approval['activity'][1].activity_id
-    version = 'v1.0'
-    invalid_version = 'v0.0'
+    version = 'v1'
+    invalid_version = 'v0'
     headers_sysadmin = auth_headers[0]  # OAuth token : sysadmin
     headers_student = auth_headers[1]   # OAuth token : student
 
