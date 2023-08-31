@@ -20,6 +20,8 @@
 
 """Blueprint for Weko accounts rest."""
 
+import inspect
+
 from flask import Blueprint, current_app, jsonify, request, make_response
 from flask_login import login_user, logout_user
 from flask_security import current_user
@@ -30,6 +32,9 @@ from invenio_db import db
 from invenio_rest import ContentNegotiatedMethodView
 
 from .errors import VersionNotFoundRESTError, UserAllreadyLoggedInError, UserNotFoundError, InvalidPasswordError, DisabledUserError
+from .utils import create_limmiter
+
+limiter = create_limmiter()
 
 
 def create_blueprint(app, endpoints):
@@ -91,6 +96,7 @@ class WekoLogin(ContentNegotiatedMethodView):
         """Constructor."""
         super(WekoLogin, self).__init__(*args, **kwargs)
 
+    @limiter.limit('')
     def post(self, **kwargs):
         """
         Login as weko user.
@@ -98,12 +104,11 @@ class WekoLogin(ContentNegotiatedMethodView):
         Returns:
             Login result.
         """
-        from .config import WEKO_ACCOUNTS_LOGIN_API_VERSION
-        version = kwargs.get('version')
-        func = WEKO_ACCOUNTS_LOGIN_API_VERSION.get(f'post-{version}')
 
-        if func:
-            return func(self, **kwargs)
+        version = kwargs.get('version')
+        func_name = f'post_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
         else:
             raise VersionNotFoundRESTError()
 
@@ -149,6 +154,7 @@ class WekoLogout(ContentNegotiatedMethodView):
         """Constructor."""
         super(WekoLogout, self).__init__(*args, **kwargs)
 
+    @limiter.limit('')
     def post(self, **kwargs):
         """
         Logout of weko.
@@ -156,12 +162,11 @@ class WekoLogout(ContentNegotiatedMethodView):
         Returns:
             Logout result.
         """
-        from .config import WEKO_ACCOUNTS_LOGOUT_API_VERSION
-        version = kwargs.get('version')
-        func = WEKO_ACCOUNTS_LOGOUT_API_VERSION.get(f'post-{version}')
 
-        if func:
-            return func(self, **kwargs)
+        version = kwargs.get('version')
+        func_name = f'post_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
         else:
             raise VersionNotFoundRESTError()
 

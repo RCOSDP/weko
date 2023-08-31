@@ -29,8 +29,8 @@ from weko_accounts.errors import VersionNotFoundRESTError, UserAllreadyLoggedInE
 def test_WekoLogin_post(app, client, users_login):
     """Test WekoLogin.post method."""
 
-    version = 'v1.0'
-    invalid_version = 'v0.0'
+    version = 'v1'
+    invalid_version = 'v0'
 
     # Invalid version : 400 error
     req_json = {
@@ -122,8 +122,8 @@ def test_WekoLogin_post(app, client, users_login):
 def test_WekoLogout_post(app, client, users_login):
     """Test WekoLogout.post method."""
 
-    version = 'v1.0'
-    invalid_version = 'v0.0'
+    version = 'v1'
+    invalid_version = 'v0'
 
     # Invalid version : 400 error
     res = client.post(

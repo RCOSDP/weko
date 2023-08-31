@@ -20,6 +20,7 @@
 
 """Blueprint for Weko index tree rest."""
 
+import inspect
 import json
 import os
 from functools import wraps
@@ -49,9 +50,13 @@ from .errors import IndexAddedRESTError, IndexNotFoundRESTError, \
 from .models import Index
 from .scopes import read_index_scope
 from .utils import check_doi_in_index, check_index_permissions, \
-    is_index_locked, perform_delete_index, save_index_trees_to_redis, reset_tree
+    is_index_locked, perform_delete_index, save_index_trees_to_redis, reset_tree, \
+    create_limmiter
 
 JST = timezone(timedelta(hours=+9), 'JST')
+
+limiter = create_limmiter()
+
 
 def need_record_permission(factory_name):
     """Decorator checking that the user has the required permissions on record.
@@ -500,13 +505,13 @@ class GetIndex(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=True)
     @require_oauth_scopes(read_index_scope.id)
+    @limiter.limit('')
     def get(self, **kwargs):
         """Get tree json."""
-        from .config import WEKO_INDEX_TREE_GETINDEX_API_VERSION
         version = kwargs.get('version')
-        get_index = WEKO_INDEX_TREE_GETINDEX_API_VERSION.get(f'get-{version}')
-        if get_index:
-            return get_index(self, **kwargs)
+        func_name = f'get_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
         else:
             raise VersionNotFoundRESTError()
 
@@ -567,7 +572,7 @@ class GetIndex(ContentNegotiatedMethodView):
             # Check pretty
             indent = 4 if request.args.get('pretty') == 'true' else None
 
-            # Setting Response
+            # Create Response
             res = Response(
                 response=json.dumps(result_tree, indent=indent),
                 status=200,
@@ -586,7 +591,7 @@ class GetIndex(ContentNegotiatedMethodView):
             raise InternalServerError()
 
         except Exception:
-            raise InvalidDataRESTError()
+            raise InternalServerError()
 
 
 class GetParentIndex(ContentNegotiatedMethodView):
@@ -619,13 +624,13 @@ class GetParentIndex(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=True)
     @require_oauth_scopes(read_index_scope.id)
+    @limiter.limit('')
     def get(self, **kwargs):
         """Get tree json."""
-        from .config import WEKO_INDEX_TREE_GETPARENTINDEX_API_VERSION
         version = kwargs.get('version')
-        get_parent_index = WEKO_INDEX_TREE_GETPARENTINDEX_API_VERSION.get(f'get-{version}')
-        if get_parent_index:
-            return get_parent_index(self, **kwargs)
+        func_name = f'get_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
         else:
             raise VersionNotFoundRESTError()
 
@@ -711,4 +716,4 @@ class GetParentIndex(ContentNegotiatedMethodView):
             raise InternalServerError()
 
         except Exception:
-            raise InvalidDataRESTError()
+            raise InternalServerError()

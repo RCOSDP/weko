@@ -96,13 +96,4 @@ WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS = 60
 WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX = "lock_index_"
 """Index lock key prefix."""
 
-from .rest import GetIndex, GetParentIndex
-WEKO_INDEX_TREE_GETINDEX_API_VERSION = {
-    'get-v1': GetIndex.get_v1
-}
-"""API version."""
-
-WEKO_INDEX_TREE_GETPARENTINDEX_API_VERSION = {
-    'get-v1': GetParentIndex.get_v1
-}
-"""API version."""
+WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT = ['100 per minute']

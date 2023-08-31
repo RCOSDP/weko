@@ -38,8 +38,10 @@ import redis
 from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, flash, redirect, request, send_file, \
-    url_for,jsonify
+    url_for, Flask
 from flask_babelex import gettext as _
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
@@ -3359,12 +3361,7 @@ def has_permission_edit_item(record, recid):
     can_edit = True if pid == get_record_without_version(pid) else False
     return can_edit and permission
 
-def check_etag(etag):
-    """Check Request Header Etag"""
-    request_Etag = request.headers.get('If-None-Match')
-    return etag and etag == request_Etag
 
-def check_pretty():
-    """Check Request Header pretty"""
-    if request.args.get('pretty') == "true":
-        current_app.debug = True
+def create_limmiter():
+    from .config import WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT)

@@ -121,12 +121,4 @@ WEKO_ACCOUNTS_REST_ENDPOINTS = {
     },
 }
 
-WEKO_ACCOUNTS_LOGIN_API_VERSION = {
-    'post-v1.0': WekoLogin.post_v1
-}
-"""API version."""
-
-WEKO_ACCOUNTS_LOGOUT_API_VERSION = {
-    'post-v1.0': WekoLogout.post_v1
-}
-"""API version."""
+WEKO_ACCOUNTS_API_LIMIT_RATE_DEFAULT = ['100 per minute']

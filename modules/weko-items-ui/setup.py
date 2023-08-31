@@ -114,6 +114,9 @@ setup(
         'invenio_access.actions': [
             'item_access = weko_items_ui.permissions:action_item_access',
         ],
+        'invenio_oauth2server.scopes': [
+            'ranking_read_scope = weko_items_ui.scopes:ranking_read_scope',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,
