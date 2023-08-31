@@ -336,6 +336,7 @@ $(document).ready(function () {
       new_row = new_row.replaceAll('apply_action.action_version', apply_action.version);
       if(!isApproval(apply_action)){
         new_row = new_row.replaceAll('specify-property-option', 'hide');
+        new_row = new_row.replaceAll('item-registrant-option', 'hide');
         new_row = new_row.replaceAll('<span class="approval-order"></span>', '');
         new_row = new_row.replaceAll('mail_setting_for_approval', 'hide');
       }
