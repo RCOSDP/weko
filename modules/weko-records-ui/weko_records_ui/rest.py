@@ -304,7 +304,7 @@ class GetFileTerms(ContentNegotiatedMethodView):
         check_pretty(param_pretty)
 
         # Setting language
-        if language == 'en' or language == 'ja':
+        if language in current_app.config.get('WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES'):
             get_locale().language = language
 
         # Get record
@@ -395,7 +395,7 @@ class FileApplication(ContentNegotiatedMethodView):
         check_pretty(param_pretty)
 
         # Setting language
-        if language == 'en' or language == 'ja':
+        if language in current_app.config.get('WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES'):
             get_locale().language = language
 
         # Get record

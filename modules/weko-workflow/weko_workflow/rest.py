@@ -181,7 +181,7 @@ class GetActivities(ContentNegotiatedMethodView):
 
             # Setting language
             language = request.headers.get('Accept-Language', 'en')
-            if language == 'en' or language == 'ja':
+            if language in current_app.config.get('WEKO_WORKFLOW_API_ACCEPT_LANGUAGES'):
                 get_locale().language = language
 
             # Get activity list
@@ -556,7 +556,7 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
         check_pretty(param_pretty)
 
         # Setting language
-        if language == 'en' or language == 'ja':
+        if language in current_app.config.get('WEKO_WORKFLOW_API_ACCEPT_LANGUAGES'):
             get_locale().language = language
         
         # Get activity data
