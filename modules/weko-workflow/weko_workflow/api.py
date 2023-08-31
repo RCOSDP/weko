@@ -1869,7 +1869,7 @@ class WorkActivity(object):
                     activities, max_page, name_param, page,
                     query_action_activities, size, tab, is_get_all
                 )
-            return activities, max_page, size, page, name_param
+            return activities, max_page, size, page, name_param, count
 
     def __get_activity_list_per_page(
         self, activities, max_page, name_param,
