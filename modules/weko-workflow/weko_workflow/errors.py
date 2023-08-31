@@ -54,6 +54,12 @@ class StatusNotApproveError(RESTException):
     code = 400
     description = _('Activity status is not Approval.')
 
+class StatusNotItemRegistrationError(RESTException):
+    """Status is Not ItemRegistration(item_login) Error."""
+
+    code = 400
+    description = _('Activity status is not Item Registration.')
+
 
 class PermissionError(RESTException):
     """Permission error."""
