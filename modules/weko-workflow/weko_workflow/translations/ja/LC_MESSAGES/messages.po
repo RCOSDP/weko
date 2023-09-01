@@ -659,6 +659,9 @@ msgstr "プロパティを指定する"
 msgid "Specify property"
 msgstr "プロパティを指定"
 
+msgid "Item registrant"
+msgid "アイテム登録者"
+
 msgid "Approval Request Notification Email"
 msgstr "承認依頼通知メール"
 

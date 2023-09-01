@@ -31,7 +31,9 @@ from typing import List, NoReturn, Optional, Tuple, Union
 import redis
 from redis import sentinel
 from celery.task.control import inspect
-from flask import current_app, request, session
+from flask import current_app, request, session, Flask
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_babelex import gettext as _
 from flask_security import current_user
 from invenio_accounts.models import Role, User, userrole
@@ -78,7 +80,8 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow , Flow
 from .config import DOI_VALIDATION_INFO, IDENTIFIER_GRANT_SELECT_DICT, \
-    WEKO_SERVER_CNRI_HOST_LINK
+    WEKO_SERVER_CNRI_HOST_LINK, WEKO_STR_TRUE
+from .errors import InvalidParameterValueError
 from .models import Action as _Action, Activity
 from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity,FlowAction 
 from .models import WorkFlow as _WorkFlow
@@ -1290,8 +1293,6 @@ def is_hidden_pubdate(item_type_name):
     if (item_type_name and isinstance(hidden_pubdate_list, list)
             and item_type_name in hidden_pubdate_list):
         is_hidden = True
-    import inspect
-    current_app.logger.error(inspect.stack()[1].function)
     return is_hidden
 
 
@@ -3101,7 +3102,7 @@ def get_activity_display_info(activity_id: str):
         item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids
 
 
-def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
+def __init_activity_detail_data_for_guest(activity_id: str, community_id: str, called_by_api: bool = False):
     """Init activity data for guest user.
 
     @param activity_id:
@@ -3137,7 +3138,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
         record, json_schema, schema_form, \
         item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
         allow_multi_thumbnail \
-        = item_login(item_type_id=workflow_detail.itemtype_id)
+        = item_login(item_type_id=workflow_detail.itemtype_id, called_by_api=called_by_api)
     if not record and item:
         record = item
 
@@ -3228,7 +3229,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
     )
 
 
-def prepare_data_for_guest_activity(activity_id: str) -> dict:
+def prepare_data_for_guest_activity(activity_id: str, called_by_api: bool = False) -> dict:
     """Prepare for guest activity.
 
     @param activity_id:
@@ -3243,7 +3244,7 @@ def prepare_data_for_guest_activity(activity_id: str) -> dict:
         community_id = comm.id
 
     init_data = __init_activity_detail_data_for_guest(
-        activity_id, community_id)
+        activity_id, community_id, called_by_api=called_by_api)
     ctx.update(init_data)
     action_endpoint = ctx['cur_step']
     activity_detail = ctx['activity']
@@ -4153,3 +4154,72 @@ def get_contributors(pid_value, user_id_list_json=None, owner_id=-1):
         result.append(info)
     
     return result
+
+def create_conditions_dict(status, limit, page):
+    """
+    Create get_activity_list parameter(conditions).
+
+    :param status: tab type.
+    :param limit: number of date to get.
+    :param page: page to get.
+    :return: search condition of dict type.
+    """
+    conditions = dict()
+    conditions.update({'tab': [status]})
+
+    if status == 'todo':
+        conditions.update({'sizetodo' : [limit]})
+        conditions.update({'pagestodo' : [page]})
+    elif status == 'wait':
+        conditions.update({'sizewait' : [limit]})
+        conditions.update({'pageswait' : [page]})
+    elif status == 'all':
+        conditions.update({'sizeall' : [limit]})
+        conditions.update({'pagesall' : [page]})
+    else:
+        raise InvalidParameterValueError()
+
+    return conditions
+
+
+def check_role():
+    """
+    Check if user has role.
+
+    :return: return false if guest user / return true if any other.
+    """        
+    role_list = current_app.config['WEKO_PERMISSION_ROLE_USER']
+
+    for role in list(current_user.roles or []):
+        if role.name in role_list:
+            return True
+
+    return False
+
+
+def check_etag(etag):
+    """
+    Check request header ETag.
+
+    :param etag: content hash.
+    :return: return true if function arguments and request parameters have the same value.
+    """
+    request_Etag = request.headers.get('If-None-Match', '')
+    return etag and etag == request_Etag
+
+
+def check_pretty(pretty):
+    """
+    Check request parameter pretty.
+
+    :param pretty: boolean of string type.
+    """
+    if pretty.lower() in WEKO_STR_TRUE:
+        current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
+    else:
+        current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+
+
+def create_limmiter():
+    from .config import WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT)  

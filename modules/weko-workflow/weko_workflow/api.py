@@ -36,6 +36,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from weko_deposit.api import WekoDeposit
 from weko_records.serializers.utils import get_item_type_name
+from weko_records.models import ItemMetadata as _ItemMetadata
 
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
@@ -245,6 +246,22 @@ class Flow(object):
                             'user_deny') if '0' != action.get(
                                 'user') else False
                     )
+                elif int(action.get('user')) == current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID"):
+                    flowactionrole = _FlowActionRole(
+                        flow_action_id=flowaction.id,
+                        action_role=action.get(
+                            'role') if '0' != action.get('role') else None,
+                        action_role_exclude=action.get(
+                            'role_deny') if '0' != action.get(
+                            'role') else False,
+                        action_user= None,
+                        specify_property=None,
+                        action_user_exclude=action.get(
+                            'user_deny') if '0' != action.get(
+                                'user') else False,
+                        action_item_registrant = True if '0' != action.get(
+                                'user') else False
+                    )
                 else:
                     flowactionrole = _FlowActionRole(
                         flow_action_id=flowaction.id,
@@ -260,7 +277,7 @@ class Flow(object):
                             'user_deny') if '0' != action.get('user') else False
                     )
                 if flowactionrole.action_role or flowactionrole.action_user or \
-                        flowactionrole.specify_property:
+                        flowactionrole.specify_property or flowactionrole.action_item_registrant:
                     db.session.add(flowactionrole)
         db.session.commit()
 
@@ -1557,6 +1574,10 @@ class WorkActivity(object):
                         _Activity.shared_user_ids.contains(self_user_id_json),
                         _FlowAction.action_id != 4
                     ),
+                    and_(
+                        _FlowActionRole.action_item_registrant == True,
+                        _ItemMetadata.json.op('->>')('owner') == current_user.get_id()
+                    ),
                 )
             )
 
@@ -1621,6 +1642,9 @@ class WorkActivity(object):
                         and_(
                             _Activity.shared_user_ids.contains(self_user_id_json),
                         ),
+                        and_(
+                             _FlowActionRole.action_item_registrant == True,
+                        ),
                     )
                 )\
                 .filter(_FlowAction.action_id == _Activity.action_id) \
@@ -1643,6 +1667,10 @@ class WorkActivity(object):
                         ),
                         and_(
                             _Activity.shared_user_ids.contains(self_user_id_json)
+                        ),
+                        and_(
+                            _FlowActionRole.action_item_registrant == True,
+                            _ItemMetadata.json.op('->>')('owner') == current_user.get_id() 
                         ),
                     )
                 )
@@ -1692,7 +1720,10 @@ class WorkActivity(object):
                 ) \
                 .outerjoin(
                     userrole, and_(User.id == userrole.c.user_id)
-                ).outerjoin(Role, and_(userrole.c.role_id == Role.id))
+                ).outerjoin(Role, and_(userrole.c.role_id == Role.id)
+                ).outerjoin(
+                    _ItemMetadata, and_( _ItemMetadata.id == _Activity.item_id)
+                )
         else:
             common_query = common_query \
                 .outerjoin(
@@ -1700,6 +1731,8 @@ class WorkActivity(object):
                     and_(
                         _Activity.activity_update_user == User.id,
                     )
+                ).outerjoin(
+                    _ItemMetadata, and_( _ItemMetadata.id == _Activity.item_id)
                 )
         return common_query
 
@@ -1839,7 +1872,7 @@ class WorkActivity(object):
                     activities, max_page, name_param, page,
                     query_action_activities, size, tab, is_get_all
                 )
-            return activities, max_page, size, page, name_param
+            return activities, max_page, size, page, name_param, count
 
     def __get_activity_list_per_page(
         self, activities, max_page, name_param,
@@ -2005,6 +2038,7 @@ class WorkActivity(object):
 
     def get_activity_action_role(self, activity_id, action_id, action_order):
         """Get activity action."""
+        from weko_records.api import ItemsMetadata
         roles = {
             'allow': [],
             'deny': []
@@ -2031,6 +2065,16 @@ class WorkActivity(object):
                     users['deny'].append(action_role.action_user)
                 elif action_role.action_user:
                     users['allow'].append(action_role.action_user)
+                if action_role.action_user_exclude and action_role.action_item_registrant:
+                    item_metadata = ItemsMetadata.get_record(activity.item_id)
+                    owner_id = item_metadata["owner"]
+                    if owner_id:
+                        users['deny'].append(int(owner_id))
+                elif not action_role.action_user_exclude and action_role.action_item_registrant:
+                    item_metadata = ItemsMetadata.get_record(activity.item_id)
+                    owner_id = item_metadata["owner"]
+                    if owner_id:
+                        users['allow'].append(int(owner_id))
             return roles, users
 
     def del_activity(self, activity_id):

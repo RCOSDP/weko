@@ -28,7 +28,9 @@ from decimal import Decimal
 from typing import List, NoReturn, Optional, Tuple
 from urllib.parse import urlparse,quote
 
-from flask import abort, current_app, json, request, url_for
+from flask import abort, current_app, json, request, url_for, Flask
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
@@ -1745,3 +1747,8 @@ def update_secret_download(**kwargs) -> Optional[List[FileSecretDownload]]:
         updated List[FileSecretDownload] or None
     """
     return FileSecretDownload.update_download(**kwargs)
+
+
+def create_limmiter():
+    from .config import WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT)

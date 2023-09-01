@@ -113,3 +113,12 @@ def create_record(record_data, item_data):
         deposit.commit()
 
     return recid, depid, record, item, parent, doi, deposit
+
+
+def fill_oauth2_headers(json_headers, token):
+    """Create authentication headers (with a valid oauth2 token)."""
+    headers = copy.deepcopy(json_headers)
+    headers.append(
+        ('Authorization', 'Bearer {0}'.format(token.access_token))
+    )
+    return headers

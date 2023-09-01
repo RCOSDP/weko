@@ -78,7 +78,8 @@ class FlowSettingView(BaseView):
                 roles=roles,
                 actions=None,
                 action_list=actions,
-                mail_templates=mail_templates
+                mail_templates=mail_templates,
+                workflow_registrant_id = current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID")
             )
         UUID_PATTERN = re.compile(r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$',
                                   re.IGNORECASE)
@@ -101,7 +102,8 @@ class FlowSettingView(BaseView):
             actions=flow.flow_actions,
             action_list=actions,
             specifed_properties=specified_properties,
-            mail_templates=mail_templates
+            mail_templates=mail_templates,
+            workflow_registrant_id = current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID")
         )
 
     @staticmethod
