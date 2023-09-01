@@ -59,6 +59,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import cast
+from sqlalchemy.dialects import postgresql
 from weko_redis import RedisConnection
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
@@ -108,7 +109,7 @@ from .utils import IdentifierHandle, auto_fill_title, \
     save_activity_data, saving_doi_pidstore, \
     send_usage_application_mail_for_guest_user, set_files_display_type, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
-    validate_guest_activity_token
+    validate_guest_activity_token, get_contributors
 
 workflow_blueprint = Blueprint(
     'weko_workflow',
@@ -786,7 +787,7 @@ def display_activity(activity_id="0"):
         activity_id = activity_id.split("?")[0]
 
     action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-        steps, temporary_comment, workflow_detail = \
+        steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = \
         get_activity_display_info(activity_id)
     if any([s is None for s in [action_endpoint, action_id, activity_detail, cur_action, histories, steps, workflow_detail]]):
         current_app.logger.error("display_activity: can not get activity display info")
@@ -837,6 +838,7 @@ def display_activity(activity_id="0"):
     application_item_type = False
     approval_record = []
     cur_step = action_endpoint
+    contributors = []
     data_type = activity_detail.extra_info.get(
         'related_title') if activity_detail.extra_info else None
     endpoints = {}
@@ -923,6 +925,12 @@ def display_activity(activity_id="0"):
 
             links = base_factory(recid)
 
+            # get contributors data
+            # 一時保存データが無い場合は、登録済みアイテムから取得する
+            if len(shared_user_ids) == 0:
+                contributors = get_contributors(recid.pid_value)
+            else:
+                contributors = get_contributors(None, user_id_list_json=shared_user_ids, owner_id=owner_id)
         except PIDDeletedError:
             current_app.logger.debug("PIDDeletedError: {}".format(sys.exc_info()))
             abort(404)
@@ -931,6 +939,9 @@ def display_activity(activity_id="0"):
             abort(404)
         except Exception:
             current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
+    else:
+            # get contributors data
+            contributors = get_contributors(None, user_id_list_json=shared_user_ids, owner_id=owner_id)
 
     res_check = check_authority_action(str(activity_id), int(action_id),
                                        is_auto_set_index_action,
@@ -1038,6 +1049,7 @@ def display_activity(activity_id="0"):
         auto_fill_title=title,
         community_id=community_id,
         cur_step=cur_step,
+        contributors=contributors,
         enable_contributor=current_app.config[
             'WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'],
         enable_feedback_maillist=current_app.config[
@@ -1168,8 +1180,9 @@ def check_authority_action(activity_id='0', action_id=0,
         # Check if this activity has contributor equaling to current user
         im = ItemMetadata.query.filter_by(id=activity.item_id) \
             .filter(
-            cast(ItemMetadata.json['shared_user_id'], types.INT)
-            == int(cur_user)).one_or_none()
+                #cast(ItemMetadata.json['shared_user_ids'], types.JSON).contains(int(cur_user))) \
+                cast(ItemMetadata.json['shared_user_ids'], postgresql.ARRAY(types.INT)).contains(int(cur_user))) \
+            .one_or_none()
         if im:
             # There is an ItemMetadata with contributor equaling to current
             # user, allow to access
@@ -2647,7 +2660,7 @@ def save_activity():
                 application/json:
                     schema:
                         SaveActivitySchema
-                    example: {"activity_id": "A-20220830-00001", "title": "title", "shared_user_id": -1}
+                    example: {"activity_id": "A-20220830-00001", "title": "title", "shared_user_ids": []}
         responses:
             200:
                 description: "success"
@@ -2662,7 +2675,7 @@ def save_activity():
                     application/json:
                         schema:
                             ResponseMessageSchema
-                        example: {"code": -1,"msg":"{'shared_user_id': ['Missing data for required field.']}"}
+                        example: {"code": -1,"msg":"{'shared_user_ids': ['Missing data for required field.']}"}
     """
     response = {
         "success": True,
