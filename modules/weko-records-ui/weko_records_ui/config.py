@@ -642,6 +642,16 @@ WEKO_RECORDS_UI_REST_ENDPOINTS = {
         'route': '/<string:version>/records/<int:pid_value>/need-restricted-access',
         'default_media_type': 'application/json',
     },
+    'get_file_terms': {
+        'route': '/<string:version>/records/<int:pid_value>/files/<string:file_name>/terms',
+        'default_media_type': 'application/json',
+    },
+    'file_application': {
+        'route': '/<string:version>/records/<int:pid_value>/files/<string:file_name>/application',
+        'default_media_type': 'application/json',
+    },
 }
 
 WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
+
+WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES = ['en', 'ja']

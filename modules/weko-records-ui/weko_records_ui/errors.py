@@ -32,3 +32,27 @@ class VersionNotFoundRESTError(RESTException):
 
     code = 400
     description = _('This API version does not found.')
+
+class InvalidEmailError(RESTException):
+    """Invalid email Error error."""
+
+    code = 400
+    description = _('Invalid mailaddress.')
+
+class InvalidTokenError(RESTException):
+    """Invalid Token Error error."""
+
+    code = 400
+    description = _('Invalid Tokens.')
+    
+class InvalidWorkflowError(RESTException):
+    """Contents not found error."""
+
+    code = 403
+    description =_("This data is not available for this user.")
+
+class ContentsNotFoundError(RESTException):
+    """Contents not found error."""
+
+    code = 404
+    description = _('Contents not found.')

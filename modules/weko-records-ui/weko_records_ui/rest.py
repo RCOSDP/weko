@@ -22,11 +22,17 @@
 
 import inspect
 
-from flask import Blueprint, current_app, jsonify, make_response, request, abort
+from flask import Flask, Blueprint, current_app, jsonify, make_response, request, abort, url_for
+from flask_babelex import get_locale
+from flask_babelex import gettext as _
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_login import current_user
+from urllib import parse
 from invenio_db import db
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidrelations.contrib.versioning import PIDVersioning
-from invenio_pidstore.errors import PIDInvalidAction
+from invenio_pidstore.errors import PIDInvalidAction, PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
@@ -34,13 +40,20 @@ from invenio_records_rest.views import \
     create_error_handlers as records_rest_error_handlers
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
+from sqlalchemy.exc import SQLAlchemyError
 from weko_deposit.api import WekoRecord
+from weko_records.api import ItemTypes
 from weko_records.serializers import citeproc_v1
+from weko_workflow.api import WorkActivity, WorkFlow
+from weko_workflow.models import GuestActivity
+from weko_workflow.scopes import activity_scope
+from weko_workflow.utils import check_etag, check_pretty, init_activity_for_guest_user
+from werkzeug.http import generate_etag
 
-from .errors import VersionNotFoundRESTError
+from .errors import ContentsNotFoundError, InvalidEmailError, InvalidTokenError, InvalidWorkflowError, VersionNotFoundRESTError
 from .scopes import item_read_scope
 from .utils import create_limmiter
-from .views import escape_str
+from .views import escape_str, get_usage_workflow
 
 limiter = create_limmiter()
 
@@ -87,6 +100,26 @@ def create_blueprint(endpoints):
                 options.get('route'),
                 view_func=view_func,
                 methods=['GET'],
+            )
+        if endpoint == 'get_file_terms':
+            view_func = GetFileTerms.as_view(
+                GetFileTerms.view_name.format(endpoint),
+                default_media_type=options.get('default_media_type'),
+            )
+            blueprint.add_url_rule(
+                options.get('route'),
+                view_func=view_func,
+                methods=['GET'],
+            )
+        if endpoint == 'file_application':
+            view_func = FileApplication.as_view(
+                FileApplication.view_name.format(endpoint),
+                default_media_type=options.get('default_media_type'),
+            )
+            blueprint.add_url_rule(
+                options.get('route'),
+                view_func=view_func,
+                methods=['POST'],
             )
 
     return blueprint
@@ -237,6 +270,251 @@ class NeedRestrictedAccess(ContentNegotiatedMethodView):
             return None
 
         return record
+
+class GetFileTerms(ContentNegotiatedMethodView):
+    view_name = 'records_ui_{0}'
+
+    def __init__(self, *args, **kwargs):
+        """Constructor."""
+        super(GetFileTerms, self).__init__(*args, **kwargs)
+
+    @require_api_auth(True)
+    @require_oauth_scopes(activity_scope.id)
+    @limiter.limit('')
+    def get(self, **kwargs):
+        """
+        Get files tarms.
+
+        Returns:
+            tarms text and etag.
+        """
+        version = kwargs.get('version')
+        func_name = f'get_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError() # 404 Error
+
+    def get_v1(self, **kwargs):
+        # Get parameter
+        param_pretty = str(request.values.get('pretty', 'false'))
+        language = str(request.headers.get('Accept-Language', 'en'))
+        
+        # Check pretty
+        check_pretty(param_pretty)
+
+        # Setting language
+        if language in current_app.config.get('WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES'):
+            get_locale().language = language
+
+        # Get record
+        pid_value = kwargs.get('pid_value')
+        try:
+            pid = PersistentIdentifier.get('depid', pid_value)
+        except PIDDoesNotExistError:
+            raise ContentsNotFoundError() # 404 Error
+        record = WekoRecord.get_record(pid.object_uuid)
+        if not record:
+            raise ContentsNotFoundError() # 404 Error
+
+        # Get files
+        from .utils import get_file_info_list
+        __, files = get_file_info_list(record)
+
+        filename = ''
+        terms_content = ''
+        for file in files:
+            if kwargs.get('file_name') == file.get('filename', ''):
+                filename = file.get('filename', '')
+                terms_content = file.get('terms_content', '')
+                break
+        if filename == '':
+            raise ContentsNotFoundError() # 404 Error
+
+        # Check ETag
+        etag = _generate_terms_token(filename, terms_content)
+        if check_etag(etag):
+            return make_response('304 Not Modified', 304)
+
+        # Create response
+        res_json = {
+            'text': terms_content,
+            'Etag': etag
+        }
+
+        response = make_response(jsonify(res_json), 200)
+        response.headers["Etag"] = etag
+        return response
+
+def _generate_terms_token(filename, terms_content):
+    return generate_etag('{}_{}'.format(filename, terms_content).encode("utf-8"))
+
+class FileApplication(ContentNegotiatedMethodView):
+    view_name = 'records_ui_{0}'
+
+    def __init__(self, *args, **kwargs):
+        """Constructor."""
+        super(FileApplication, self).__init__(*args, **kwargs)
+
+    @require_api_auth(True)
+    @require_oauth_scopes(activity_scope.id)
+    @limiter.limit('')
+    def post(self, **kwargs):
+        """
+        Post file application.
+
+        Returns:
+            Result json.
+        """
+        version = kwargs.get('version')
+        func_name = f'post_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
+        else:
+            raise VersionNotFoundRESTError() # 404 Error
+
+    def post_v1(self, **kwargs):
+        # Get parameter
+        language = str(request.headers.get('Accept-Language', 'en'))
+        param_pretty = str(request.values.get('pretty', 'false'))
+        request_terms_token = request.values.get('terms_token', None)
+        mail = request.values.get('mail', None)
+
+        # In case guest user
+        is_guest = False
+        if not current_user.is_authenticated:
+            try :
+                from email_validator import validate_email
+                validate_email(mail, check_deliverability=False)
+                is_guest = True
+            except Exception:
+                # invalid email
+                raise InvalidEmailError() # 400 Error
+
+        # Check pretty
+        check_pretty(param_pretty)
+
+        # Setting language
+        if language in current_app.config.get('WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES'):
+            get_locale().language = language
+
+        # Get record
+        pid_value = kwargs.get('pid_value')
+        try:
+            pid = PersistentIdentifier.get('depid', pid_value)
+        except PIDDoesNotExistError:
+            raise ContentsNotFoundError() # 404 Error
+        record = WekoRecord.get_record(pid.object_uuid)
+        if not record:
+            raise ContentsNotFoundError() # 404 Error
+
+        # Get files info
+        from .utils import get_file_info_list
+        __, files = get_file_info_list(record)
+
+        # Get target file info
+        filename = ''
+        terms_content = ''
+        workflow_id = None
+        for file in files:
+            if kwargs.get('file_name') == file.get('filename', ''):
+                filename = file.get('filename', '')
+                terms_content = file.get('terms_content', '')
+                workflow_id = int(get_usage_workflow(file) or 0)
+                break
+        if filename == '':
+            raise ContentsNotFoundError() # 404 Error
+
+        # Get workflow
+        if not workflow_id:
+            # Available workflow not found
+            raise InvalidWorkflowError() # 403 Error
+        workflow =  WorkFlow().get_workflow_by_id(workflow_id)
+        if not workflow:
+            # Workflow not found
+            raise ContentsNotFoundError() # 404 Error
+
+        # Check terms
+        if not terms_content:
+            if request_terms_token != _generate_terms_token(filename, terms_content):
+                raise InvalidTokenError()
+
+        # Create workflow activity
+        activity_id = ''
+        activity_url = ''
+        token = ''
+        try:
+            if is_guest:
+                # Prepare activity data.
+                data = {
+                    'itemtype_id': workflow.itemtype_id,
+                    'workflow_id': workflow_id,
+                    'flow_id': workflow.flow_id,
+                    'activity_confirm_term_of_use': True,
+                    'extra_info': {
+                        "guest_mail": mail,
+                        "record_id": record.get('recid'),
+                        "related_title": record.get('title'),
+                        "file_name": filename,
+                        "is_restricted_access": True,
+                    }
+                }
+                activity, activity_url = init_activity_for_guest_user(data)
+                if not activity:
+                    guest_activity = GuestActivity.find(**data['extra_info'])
+                    if guest_activity:
+                        activity_id = guest_activity[0].activity_id
+                if activity_url:
+                    activity_url = activity_url.replace("/api", "", 1)
+                    query_str = parse.urlparse(activity_url).query
+                    query_dic = parse.parse_qs(query_str)
+                    if query_dic and query_dic['token'] and len(query_dic['token']) > 0:
+                        token = query_dic['token'][0]
+            else:
+                data = {
+                    'itemtype_id': workflow.itemtype_id,
+                    'workflow_id': workflow_id,
+                    'flow_id': workflow.flow_id,
+                    'activity_confirm_term_of_use': True,
+                    'extra_info': {
+                        "user_mail": current_user.email,
+                        "record_id": record.get('recid'),
+                        "related_title": record.get('title'),
+                        "file_name": filename,
+                        "is_restricted_access": True,
+                    }
+                }
+                activity = WorkActivity()
+                rtn = activity.init_activity(data)
+                if rtn is None:
+                    raise Exception()
+                activity_id = rtn.activity_id
+                activity_url = url_for('weko_workflow.display_activity', activity_id=activity_id, _external=True, _method='GET').replace("/api", "", 1)
+
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error("sqlalchemy error: {}".format(ex))
+            db.session.rollback()
+            raise
+        except BaseException as ex:
+            current_app.logger.error('Unexpected error: {}'.format(ex))
+            db.session.rollback()
+            raise
+
+        # Get item_type schema
+        item_type = ItemTypes.get_by_id(workflow.itemtype_id)
+        
+        # Create response
+        res_json = {
+            "activity_id": activity_id,
+            "activity_url": activity_url,
+            "item_type_schema": item_type.schema
+        }
+        if token:
+            res_json['token'] = token
+
+        response = make_response(jsonify(res_json), 200)
+        return response
 
 
 class WekoRecordsCitesResource(ContentNegotiatedMethodView):
