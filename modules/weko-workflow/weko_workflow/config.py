@@ -331,5 +331,32 @@ WEKO_WORKFLOW_GAKUNINRDM_DATA = [
 WEKO_WORKFLOW_GAKUNINRDM_PREFIX = 'GakuninRDM'
 """GekuninRDM prefix for logging."""
 
+WEKO_ITEMS_UI_MULTIPLE_APPROVALS = True
+
+WEKO_STR_TRUE = ['true', 't', 'yes', '1']
+
+WEKO_WORKFLOW_REST_ENDPOINTS = dict(
+    activities=dict(
+        activities_route='/<string:version>/workflow/activities',
+        default_media_type='application/json',
+    ),
+    approve=dict(
+        route='/<string:version>/workflow/activities/<string:activity_id>/approve',
+        default_media_type='application/json',
+    ),
+    throw_out=dict(
+        route='/<string:version>/workflow/activities/<string:activity_id>/throw-out',
+        default_media_type='application/json',
+    ),
+    file_application=dict(
+        route='/<string:version>/workflow/activities/<string:activity_id>/application',
+        default_media_type='application/json',
+    ),
+)
+
+WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT = ['100 per minute']
+
+WEKO_WORKFLOW_API_ACCEPT_LANGUAGES = ['en', 'ja']
+
 WEKO_WORKFLOW_ITEM_REGISTRANT_ID = -2
 """Item registrant id."""
