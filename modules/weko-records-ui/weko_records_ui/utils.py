@@ -28,10 +28,12 @@ from decimal import Decimal
 from typing import NoReturn, Tuple
 from urllib.parse import urlparse,quote
 
-from flask import abort, current_app, json, request, url_for, make_response
+from flask import abort, current_app, json, request, url_for, make_response, Flask
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from invenio_accounts.models import Role
 from invenio_cache import current_cache
@@ -1508,12 +1510,7 @@ def get_google_detaset_meta(record,record_tree=None):
 
     return json.dumps(res_data, ensure_ascii=False)
 
-def check_etag(etag):
-    """Check Request Header Etag"""
-    request_Etag = request.headers.get('If-None-Match')
-    return etag and etag == request_Etag
 
-def check_pretty():
-    """Check Request Header pretty"""
-    if request.args.get('pretty') == "true":
-        current_app.debug = True
+def create_limmiter():
+    from .config import WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT)

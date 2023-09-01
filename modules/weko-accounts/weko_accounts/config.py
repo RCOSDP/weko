@@ -20,8 +20,6 @@
 
 """Base configuration for weko-accounts."""
 
-from .rest import WekoLogin, WekoLogout
-
 WEKO_ACCOUNTS_LOGGER_ENABLED = True
 """Enable logger login activity tracking."""
 

@@ -30,17 +30,9 @@ from flask_babelex import lazy_gettext as _
 from invenio_oauth2server.models import Scope
 
 
-item_read_scope = Scope(
-    id_='item:read',
-    group='item',
-    help_text=_('Allow read item.'),
+file_read_scope = Scope(
+    id_='file:read',
+    group='file',
+    help_text=_('Allow read file.'),
 )
-"""Scope to protect item."""
-
-
-ranking_read_scope = Scope(
-    id_='ranking:read',
-    group='ranking',
-    help_text=_('Allow read ranking.'),
-)
-"""Scope to protect ranking."""
+"""Scope to protect file."""

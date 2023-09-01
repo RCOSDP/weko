@@ -226,10 +226,10 @@ WEKO_RECORDS_UI_CITES_REST_ENDPOINTS = {
                                     ':citeproc_v1_response'),
         },
         'cites_route': '/record/cites/<int:pid_value>',
-        'item_route': '/<string:version>/records/<int:pid_value>/detail',
+        'item_route': '/<string:version>/records/<int:pid_value>',
         'records_stats_route': '/<string:version>/records/<int:pid_value>/stats',
-        'files_stats_route': '/<string:version>/records/<int:pid_value>/files/<string:file_key>/stats',
-        'files_get_route': '/<string:version>/records/<int:pid_value>/files/<string:file_key>',
+        'files_stats_route': '/<string:version>/records/<int:pid_value>/files/<string:filename>/stats',
+        'files_get_route': '/<string:version>/records/<int:pid_value>/files/<string:filename>',
         'default_media_type': 'application/json',
         'max_result_window': 10000,
     },
@@ -622,26 +622,4 @@ WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False
 WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
 """ Display item type name on item detail. """
 
-from .rest import WekoRecordsResource
-WEKO_RECORDS_RESOURCE_API_VERSION = {
-    "v1.0":WekoRecordsResource.get_v1
-}
-"""API version."""
-
-from .rest import WekoRecordsStats
-WEKO_RECORDS_STATS_API_VERSION = {
-    "v1.0":WekoRecordsStats.get_v1
-}
-"""API version."""
-
-from .rest import WekoFilesStats
-WEKO_FILES_STATS_API_VERSION = {
-    "v1.0":WekoFilesStats.get_v1
-}
-"""API version."""
-
-from .rest import WekoFilesGet
-WEKO_FILES_GET_API_VERSION = {
-    "v1.0":WekoFilesGet.get_v1
-}
-"""API version."""
+WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
