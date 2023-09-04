@@ -47,6 +47,47 @@ class InvalidParameterValueError(RESTException):
     code = 400
     description = _('Invalid request parameter value.')
 
+class InvalidTokenError(RESTException):
+    """Invalid token."""
+
+    code = 400
+    description = _('Invalid token.')
+
+class ExpiredActivityError(RESTException):
+    """Expired activity."""
+
+    code = 400
+    description = _('Expired token.')
+
+class IndexNotFoundError(RESTException):
+    """Index not found."""
+
+    code = 404
+    description = _('Index not found."')
+
+class ItemUneditableError(RESTException):
+    """Item uneditable."""
+
+    code = 403
+    description = _('Item uneditable."')
+
+class MetadataFormatError(RESTException):
+    """Metadata format Error."""
+
+    code = 400
+    _description = _('Metadata format Error.')
+    cause = []
+
+    def __init__(self, cause, **kwargs):
+        self.cause = [cause] if isinstance(cause, str) else cause
+        super().__init__(**kwargs)
+    
+    @property
+    def description(self):
+        res = self._description
+        for val in self.cause:
+            res = f"{res}\n  - {val}"
+        return res
 
 class StatusNotApproveError(RESTException):
     """Status is Not Approve Error."""

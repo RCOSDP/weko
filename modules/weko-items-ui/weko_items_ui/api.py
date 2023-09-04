@@ -24,7 +24,7 @@ from weko_workflow.api import WorkActivity
 from .utils import is_schema_include_key
 
 
-def item_login(item_type_id: int = 0, called_by_api = False):
+def item_login(item_type_id: int = 0):
     """Return information that item register need.
 
     Args:
@@ -32,13 +32,17 @@ def item_login(item_type_id: int = 0, called_by_api = False):
 
     Returns:
         _type_: _description_
-    """    
+    """
     activity_id = None
     allow_multi_thumbnail = False
     endpoints = {}
     files = []
     files_thumbnail = []
-    item_save_uri = url_for("weko_items_ui.iframe_save_model") if not called_by_api else ""
+    item_save_uri = ""
+    try:
+        item_save_uri = url_for("weko_items_ui.iframe_save_model")
+    except:
+        pass
     json_schema = ""
     need_billing_file = False
     need_file = False

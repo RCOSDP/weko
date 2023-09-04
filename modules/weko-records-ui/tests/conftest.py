@@ -51,7 +51,6 @@ from invenio_cache import InvenioCache
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_deposit import InvenioDeposit
-from invenio_deposit.scopes import actions_scope
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Bucket, Location, ObjectVersion
 from invenio_files_rest.views import blueprint as invenio_files_rest_blueprint
@@ -115,6 +114,7 @@ from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLic
 from weko_records.utils import get_options_and_order_list
 from weko_records_ui.config import WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,RECORDS_UI_ENDPOINTS,WEKO_RECORDS_UI_SECRET_KEY,WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN
 from weko_records_ui.models import FileSecretDownload, PDFCoverPageSettings,FileOnetimeDownload, FilePermission
+from weko_records_ui.scopes import item_read_scope
 from weko_records_ui.utils import _create_secret_download_url, _generate_secret_download_url
 from weko_schema_ui.config import (
     WEKO_SCHEMA_DDI_SCHEMA_NAME,
@@ -158,6 +158,8 @@ from weko_workflow.models import (
     WorkFlow,
 )
 from weko_workflow.config import WEKO_WORKFLOW_DATE_FORMAT
+from weko_workflow.scopes import activity_scope
+from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
 
 from tests.helpers import fill_oauth2_headers
 
@@ -315,6 +317,7 @@ def base_app(instance_path):
     WekoSchemaUI(app_)
     #Menu(app_)
     app_.register_blueprint(weko_records_ui_blueprint)
+    app_.register_blueprint(weko_workflow_blueprint)
     app_.register_blueprint(invenio_files_rest_blueprint)  # invenio_files_rest
     app_.register_blueprint(invenio_oaiserver_blueprint)
     app_.register_blueprint(oauth2server_settings_blueprint)
@@ -3044,8 +3047,10 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
         "obj": obj,
     }
 
+
 @pytest.fixture()
-def workflows(app, db, itemtypes, users, records):
+def workflow_actions(app, db):
+    # workflow_action
     action_datas = dict()
     with open("tests/data/actions.json", "r") as f:
         action_datas = json.load(f)
@@ -3055,6 +3060,7 @@ def workflows(app, db, itemtypes, users, records):
             actions_db.append(Action(**data))
         db.session.add_all(actions_db)
 
+    #workflow_action_status
     actionstatus_datas = dict()
     with open("tests/data/action_status.json") as f:
         actionstatus_datas = json.load(f)
@@ -3064,6 +3070,9 @@ def workflows(app, db, itemtypes, users, records):
             actionstatus_db.append(ActionStatus(**data))
         db.session.add_all(actionstatus_db)
 
+
+@pytest.fixture()
+def workflows(app, db, workflow_actions, itemtypes, users, records):
     flow_id = uuid.uuid4()
     flow_define = FlowDefine(
         flow_id=flow_id, flow_name="Registration Flow", flow_user=1, flow_status="A"
@@ -3198,28 +3207,8 @@ def workflows(app, db, itemtypes, users, records):
     }
 
 @pytest.fixture()
-def workflows_restricted(db ,itemtypes,users, records):
+def workflows_restricted(db ,workflow_actions, itemtypes,users, records):
     workflows = {}
-
-    # workflow_action
-    action_datas = dict()
-    with open("tests/data/actions.json", "r") as f:
-        action_datas = json.load(f)
-    actions_db = list()
-    with db.session.begin_nested():
-        for data in action_datas:
-            actions_db.append(Action(**data))
-        db.session.add_all(actions_db)
-
-    #workflow_action_status
-    actionstatus_datas = dict()
-    with open("tests/data/action_status.json") as f:
-        actionstatus_datas = json.load(f)
-    actionstatus_db = list()
-    with db.session.begin_nested():
-        for data in actionstatus_datas:
-            actionstatus_db.append(ActionStatus(**data))
-        db.session.add_all(actionstatus_db)
 
     flow_id1 = uuid.uuid4()
     flow_id2 = uuid.uuid4()
@@ -3680,9 +3669,13 @@ def make_record_need_restricted_access(app, db, workflows, users):
     rec_uuid11_1 = uuid.uuid4()
     recid11 = PersistentIdentifier.create('recid', str(rec_id11), object_type='rec', object_uuid=rec_uuid11, status=PIDStatus.REGISTERED,)
     recid11_1 = PersistentIdentifier.create('recid', str(rec_id11_1), object_type='rec', object_uuid=rec_uuid11_1, status=PIDStatus.REGISTERED,)
+    depid11 = PersistentIdentifier.create('depid', str(rec_id11), object_type='rec', object_uuid=rec_uuid11, status=PIDStatus.REGISTERED,)
+    depid11_1 = PersistentIdentifier.create('depid', str(rec_id11_1), object_type='rec', object_uuid=rec_uuid11_1, status=PIDStatus.REGISTERED,)
     parent11 = PersistentIdentifier.create('parent', f'parent:{rec_id11}', object_type='rec', object_uuid=rec_uuid11, status=PIDStatus.REGISTERED,)
     rel11 = PIDRelation.create(parent11, recid11, 2, 0)
     rel11_1 = PIDRelation.create(parent11, recid11_1, 2, 1)
+    dep_rel11 = PIDRelation.create(recid11, depid11, 3)
+    dep_rel11_1 = PIDRelation.create(recid11_1, depid11_1, 3)
     record11 = WekoRecord.create(record_data_list[0], id_=rec_uuid11)
 
     activity11 = Activity(
@@ -3704,9 +3697,13 @@ def make_record_need_restricted_access(app, db, workflows, users):
     rec_uuid12_1 = uuid.uuid4()
     recid12 = PersistentIdentifier.create('recid', str(rec_id12), object_type='rec', object_uuid=rec_uuid12, status=PIDStatus.REGISTERED,)
     recid12_1 = PersistentIdentifier.create('recid', str(rec_id12_1), object_type='rec', object_uuid=rec_uuid12_1, status=PIDStatus.REGISTERED,)
+    depid12 = PersistentIdentifier.create('depid', str(rec_id12), object_type='rec', object_uuid=rec_uuid12, status=PIDStatus.REGISTERED,)
+    depid12_1 = PersistentIdentifier.create('depid', str(rec_id12_1), object_type='rec', object_uuid=rec_uuid12_1, status=PIDStatus.REGISTERED,)
     parent12 = PersistentIdentifier.create('parent', f'parent:{rec_id12}', object_type='rec', object_uuid=rec_uuid12, status=PIDStatus.REGISTERED,)
     rel12 = PIDRelation.create(parent12, recid12, 2, 0)
     rel12_1 = PIDRelation.create(parent12, recid12_1, 2, 1)
+    dep_rel12 = PIDRelation.create(recid12, depid12, 3)
+    dep_rel12_1 = PIDRelation.create(recid12_1, depid12_1, 3)
     record12 = WekoRecord.create(record_data_list[1], id_=rec_uuid12)
 
     activity12 = Activity(
@@ -3728,9 +3725,13 @@ def make_record_need_restricted_access(app, db, workflows, users):
     rec_uuid13_1 = uuid.uuid4()
     recid13 = PersistentIdentifier.create('recid', str(rec_id13), object_type='rec', object_uuid=rec_uuid13, status=PIDStatus.REGISTERED,)
     recid13_1 = PersistentIdentifier.create('recid', str(rec_id13_1), object_type='rec', object_uuid=rec_uuid13_1, status=PIDStatus.REGISTERED,)
+    depid13 = PersistentIdentifier.create('depid', str(rec_id13), object_type='rec', object_uuid=rec_uuid13, status=PIDStatus.REGISTERED,)
+    depid13_1 = PersistentIdentifier.create('depid', str(rec_id13_1), object_type='rec', object_uuid=rec_uuid13_1, status=PIDStatus.REGISTERED,)
     parent13 = PersistentIdentifier.create('parent', f'parent:{rec_id13}', object_type='rec', object_uuid=rec_uuid13, status=PIDStatus.REGISTERED,)
     rel13 = PIDRelation.create(parent13, recid13, 2, 0)
     rel13_1 = PIDRelation.create(parent13, recid13_1, 2, 1)
+    dep_rel13 = PIDRelation.create(recid13, depid13, 3)
+    dep_rel13_1 = PIDRelation.create(recid13_1, depid13_1, 3)
     record13 = WekoRecord.create(record_data_list[2], id_=rec_uuid13)
 
     activity13 = Activity(
@@ -3768,9 +3769,13 @@ def make_record_need_restricted_access(app, db, workflows, users):
     rec_uuid14_1 = uuid.uuid4()
     recid14 = PersistentIdentifier.create('recid', str(rec_id14), object_type='rec', object_uuid=rec_uuid14, status=PIDStatus.REGISTERED,)
     recid14_1 = PersistentIdentifier.create('recid', str(rec_id14_1), object_type='rec', object_uuid=rec_uuid14_1, status=PIDStatus.REGISTERED,)
+    depid14 = PersistentIdentifier.create('depid', str(rec_id14), object_type='rec', object_uuid=rec_uuid14, status=PIDStatus.REGISTERED,)
+    depid14_1 = PersistentIdentifier.create('depid', str(rec_id14_1), object_type='rec', object_uuid=rec_uuid14_1, status=PIDStatus.REGISTERED,)
     parent14 = PersistentIdentifier.create('parent', f'parent:{rec_id14}', object_type='rec', object_uuid=rec_uuid14, status=PIDStatus.REGISTERED,)
     rel14 = PIDRelation.create(parent14, recid14, 2, 0)
     rel14_1 = PIDRelation.create(parent14, recid14_1, 2, 1)
+    dep_rel14 = PIDRelation.create(recid14, depid14, 3)
+    dep_rel14_1 = PIDRelation.create(recid14_1, depid14_1, 3)
     record14 = WekoRecord.create(record_data_list[3], id_=rec_uuid14)
 
     activity14 = Activity(
@@ -3802,8 +3807,12 @@ def make_record_need_restricted_access(app, db, workflows, users):
     recid15 = PersistentIdentifier.create('recid', str(rec_id15), object_type='rec', object_uuid=rec_uuid15, status=PIDStatus.REGISTERED,)
     recid15_1 = PersistentIdentifier.create('recid', str(rec_id15_1), object_type='rec', object_uuid=rec_uuid15_1, status=PIDStatus.REGISTERED,)
     parent15 = PersistentIdentifier.create('parent', f'parent:{rec_id15}', object_type='rec', object_uuid=rec_uuid15, status=PIDStatus.REGISTERED,)
+    depid15 = PersistentIdentifier.create('depid', str(rec_id15), object_type='rec', object_uuid=rec_uuid15, status=PIDStatus.REGISTERED,)
+    depid15_1 = PersistentIdentifier.create('depid', str(rec_id15_1), object_type='rec', object_uuid=rec_uuid15_1, status=PIDStatus.REGISTERED,)
     rel15 = PIDRelation.create(parent15, recid15, 2, 0)
     rel15_1 = PIDRelation.create(parent15, recid15_1, 2, 1)
+    dep_rel15 = PIDRelation.create(recid15, depid15, 3)
+    dep_rel15_1 = PIDRelation.create(recid15_1, depid15_1, 3)
     record15 = WekoRecord.create(record_data_list[4], id_=rec_uuid15)
 
     activity15 = Activity(
@@ -3825,9 +3834,13 @@ def make_record_need_restricted_access(app, db, workflows, users):
     rec_uuid16_1 = uuid.uuid4()
     recid16 = PersistentIdentifier.create('recid', str(rec_id16), object_type='rec', object_uuid=rec_uuid16, status=PIDStatus.REGISTERED,)
     recid16_1 = PersistentIdentifier.create('recid', str(rec_id16_1), object_type='rec', object_uuid=rec_uuid16_1, status=PIDStatus.REGISTERED,)
+    depid16 = PersistentIdentifier.create('depid', str(rec_id16), object_type='rec', object_uuid=rec_uuid16, status=PIDStatus.REGISTERED,)
+    depid16_1 = PersistentIdentifier.create('depid', str(rec_id16_1), object_type='rec', object_uuid=rec_uuid16_1, status=PIDStatus.REGISTERED,)
     parent16 = PersistentIdentifier.create('parent', f'parent:{rec_id16}', object_type='rec', object_uuid=rec_uuid16, status=PIDStatus.REGISTERED,)
     rel16 = PIDRelation.create(parent16, recid16, 2, 0)
     rel16_1 = PIDRelation.create(parent16, recid16_1, 2, 1)
+    dep_rel16 = PIDRelation.create(recid15, depid16, 3)
+    dep_rel16_1 = PIDRelation.create(recid15_1, depid16_1, 3)
     record16 = WekoRecord.create(record_data_list[5], id_=rec_uuid16)
 
     activity16 = Activity(
@@ -3841,6 +3854,15 @@ def make_record_need_restricted_access(app, db, workflows, users):
         title='test6',
         action_order=1,
     )
+    
+    guest_activity_12 = GuestActivity(
+        user_mail="guest@example.org",
+        record_id=12,
+        file_name="dummy.txt",
+        activity_id="A-00000000-1234",
+        token='',
+        expiration_date=datetime.now()
+    )
 
     with db.session.begin_nested():
         db.session.add(activity11)
@@ -3852,6 +3874,7 @@ def make_record_need_restricted_access(app, db, workflows, users):
         db.session.add(file_permission14)
         db.session.add(activity15)
         db.session.add(activity16)
+        db.session.add(guest_activity_12)
     db.session.commit()
 
     return {
@@ -3891,7 +3914,7 @@ def create_oauth_token(client, client_oauth, users):
         expires=datetime.now() + timedelta(hours=10),
         is_personal=False,
         is_internal=True,
-        _scopes=actions_scope.id,
+        _scopes=item_read_scope.id,
     )
     token2_ = Token(
         client=client_oauth,
@@ -3902,7 +3925,7 @@ def create_oauth_token(client, client_oauth, users):
         expires=datetime.now() + timedelta(hours=10),
         is_personal=False,
         is_internal=True,
-        _scopes=actions_scope.id,
+        _scopes=item_read_scope.id,
     )
     token3_ = Token(
         client=client_oauth,
@@ -3913,7 +3936,50 @@ def create_oauth_token(client, client_oauth, users):
         expires=datetime.now() + timedelta(hours=10),
         is_personal=False,
         is_internal=True,
-        _scopes=actions_scope.id,
+        _scopes=item_read_scope.id,
+    )
+    with db_.session.begin_nested():
+        db_.session.add(token1_)
+        db_.session.add(token2_)
+        db_.session.add(token3_)
+    db_.session.commit()
+    return [token1_, token2_, token3_]
+
+@pytest.fixture()
+def create_oauth_token_activity_scope(client, client_oauth, users):
+    """Create token."""
+    token1_ = Token(
+        client=client_oauth,
+        user=users[2]['obj'],   # sysadmin
+        token_type='u',
+        access_token='dev_access_activity_scope_1',
+        refresh_token='dev_refresh_activity_scope_1',
+        expires=datetime.now() + timedelta(hours=10),
+        is_personal=False,
+        is_internal=True,
+        _scopes=activity_scope.id,
+    )
+    token2_ = Token(
+        client=client_oauth,
+        user=users[0]['obj'],   # contributor
+        token_type='u',
+        access_token='dev_access_activity_scope_2',
+        refresh_token='dev_refresh_activity_scope_2',
+        expires=datetime.now() + timedelta(hours=10),
+        is_personal=False,
+        is_internal=True,
+        _scopes=activity_scope.id,
+    )
+    token3_ = Token(
+        client=client_oauth,
+        user=users[7]['obj'],   # user
+        token_type='u',
+        access_token='dev_access_activity_scope_3',
+        refresh_token='dev_refresh_activity_scope_3',
+        expires=datetime.now() + timedelta(hours=10),
+        is_personal=False,
+        is_internal=True,
+        _scopes=activity_scope.id,
     )
     with db_.session.begin_nested():
         db_.session.add(token1_)
@@ -3930,14 +3996,18 @@ def json_headers():
 
 
 @pytest.fixture()
-def oauth_headers(client, json_headers, create_oauth_token):
+def oauth_headers(client, json_headers, create_oauth_token, create_oauth_token_activity_scope):
     """Authentication headers (with a valid oauth2 token).
 
     It uses the token associated with the first user.
     """
     return [
-        fill_oauth2_headers(json_headers, create_oauth_token[0]),   # sysadmin
-        fill_oauth2_headers(json_headers, create_oauth_token[1]),   # contributor
-        fill_oauth2_headers(json_headers, create_oauth_token[2]),   # user
+        fill_oauth2_headers(json_headers, create_oauth_token[0]),   # sysadmin (item_read_scope)
+        fill_oauth2_headers(json_headers, create_oauth_token[1]),   # contributor (item_read_scope)
+        fill_oauth2_headers(json_headers, create_oauth_token[2]),   # user (item_read_scope)
         json_headers,                                               # not login
+        fill_oauth2_headers(json_headers, create_oauth_token_activity_scope[0]),    # sysadmin (activity_scope)
+        fill_oauth2_headers(json_headers, create_oauth_token_activity_scope[1]),    # contributor (activity_scope)
+        fill_oauth2_headers(json_headers, create_oauth_token_activity_scope[2]),    # user (activity_scope)
     ]
+

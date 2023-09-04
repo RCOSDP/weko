@@ -56,3 +56,9 @@ class ContentsNotFoundError(RESTException):
 
     code = 404
     description = _('Contents not found.')
+    
+class InternalServerError(RESTException):
+    """Internal Server Error."""
+    
+    code = 500
+    description = _('Internal Server Error.')
