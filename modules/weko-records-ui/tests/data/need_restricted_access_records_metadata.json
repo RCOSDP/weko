@@ -170,8 +170,23 @@
                         {
                             "role": "2",
                             "workflow": "3"
+                        },
+                        {
+                            "role": "none_loggin",
+                            "workflow": "3"
+                        },
+                        {
+                            "role": "1",
+                            "workflow": "99"
+                        },
+                        {
+                            "role": "3",
+                            "workflow": "3"
                         }
                     ],
+                    "terms"	:"term_free",
+                    "termsDescription":"利用規約本文",
+                    "terms_content":"利用規約本文",
                     "filename": "dummy.txt",
                     "filesize": [
                         {
@@ -268,6 +283,9 @@
                             "workflow": "3"
                         }
                     ],
+                    "terms"	:"term_free",
+                    "termsDescription":"利用規約本文",
+                    "terms_content":"利用規約本文",
                     "filename": "dummy.txt",
                     "filesize": [
                         {
@@ -364,6 +382,9 @@
                             "workflow": "3"
                         }
                     ],
+                    "terms"	:"term_free",
+                    "termsDescription":"利用規約本文",
+                    "terms_content":"利用規約本文",
                     "filename": "dummy.txt",
                     "filesize": [
                         {
@@ -460,6 +481,9 @@
                             "workflow": "3"
                         }
                     ],
+                    "terms"	:"term_free",
+                    "termsDescription":"利用規約本文",
+                    "terms_content":"利用規約本文",
                     "filename": "dummy.txt",
                     "filesize": [
                         {
@@ -556,6 +580,9 @@
                             "workflow": "3"
                         }
                     ],
+                    "terms"	:"term_free",
+                    "termsDescription":"利用規約本文",
+                    "terms_content":"利用規約本文",
                     "filename": "dummy.txt",
                     "filesize": [
                         {

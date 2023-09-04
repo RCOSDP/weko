@@ -50,7 +50,7 @@ from weko_workflow.scopes import activity_scope
 from weko_workflow.utils import check_etag, check_pretty, init_activity_for_guest_user
 from werkzeug.http import generate_etag
 
-from .errors import ContentsNotFoundError, InvalidEmailError, InvalidTokenError, InvalidWorkflowError, VersionNotFoundRESTError
+from .errors import ContentsNotFoundError, InternalServerError, InvalidEmailError, InvalidTokenError, InvalidWorkflowError, VersionNotFoundRESTError
 from .scopes import item_read_scope
 from .utils import create_limmiter
 from .views import escape_str, get_usage_workflow
@@ -311,10 +311,8 @@ class GetFileTerms(ContentNegotiatedMethodView):
         pid_value = kwargs.get('pid_value')
         try:
             pid = PersistentIdentifier.get('depid', pid_value)
-        except PIDDoesNotExistError:
-            raise ContentsNotFoundError() # 404 Error
-        record = WekoRecord.get_record(pid.object_uuid)
-        if not record:
+            record = WekoRecord.get_record(pid.object_uuid)
+        except BaseException:
             raise ContentsNotFoundError() # 404 Error
 
         # Get files
@@ -435,9 +433,8 @@ class FileApplication(ContentNegotiatedMethodView):
             raise ContentsNotFoundError() # 404 Error
 
         # Check terms
-        if not terms_content:
-            if request_terms_token != _generate_terms_token(filename, terms_content):
-                raise InvalidTokenError()
+        if request_terms_token != _generate_terms_token(filename, terms_content):
+            raise InvalidTokenError() # 400 Error
 
         # Create workflow activity
         activity_id = ''
@@ -464,12 +461,14 @@ class FileApplication(ContentNegotiatedMethodView):
                     guest_activity = GuestActivity.find(**data['extra_info'])
                     if guest_activity:
                         activity_id = guest_activity[0].activity_id
-                if activity_url:
-                    activity_url = activity_url.replace("/api", "", 1)
-                    query_str = parse.urlparse(activity_url).query
-                    query_dic = parse.parse_qs(query_str)
-                    if query_dic and query_dic['token'] and len(query_dic['token']) > 0:
-                        token = query_dic['token'][0]
+                else:
+                    activity_id = activity.activity_id
+                
+                activity_url = activity_url.replace("/api", "", 1)
+                query_str = parse.urlparse(activity_url).query
+                query_dic = parse.parse_qs(query_str)
+                if query_dic and query_dic['token'] and len(query_dic['token']) > 0:
+                    token = query_dic['token'][0]
             else:
                 data = {
                     'itemtype_id': workflow.itemtype_id,
@@ -487,7 +486,7 @@ class FileApplication(ContentNegotiatedMethodView):
                 activity = WorkActivity()
                 rtn = activity.init_activity(data)
                 if rtn is None:
-                    raise Exception()
+                    raise
                 activity_id = rtn.activity_id
                 activity_url = url_for('weko_workflow.display_activity', activity_id=activity_id, _external=True, _method='GET').replace("/api", "", 1)
 
@@ -495,11 +494,11 @@ class FileApplication(ContentNegotiatedMethodView):
         except SQLAlchemyError as ex:
             current_app.logger.error("sqlalchemy error: {}".format(ex))
             db.session.rollback()
-            raise
+            raise InternalServerError()
         except BaseException as ex:
             current_app.logger.error('Unexpected error: {}'.format(ex))
             db.session.rollback()
-            raise
+            raise InternalServerError()
 
         # Get item_type schema
         item_type = ItemTypes.get_by_id(workflow.itemtype_id)

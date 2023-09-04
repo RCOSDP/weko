@@ -34,6 +34,7 @@ from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_rest import ContentNegotiatedMethodView
 from werkzeug.http import generate_etag
 from weko_deposit.api import WekoDeposit
+from weko_index_tree.api import Indexes
 from weko_index_tree.utils import get_index_id
 from weko_items_ui.api import item_login
 from weko_records.api import ItemTypes, Mapping
@@ -43,7 +44,7 @@ from weko_search_ui.utils import get_thumbnail_key, handle_check_item_is_locked
 from weko_workflow.models import ActionStatusPolicy
 
 from .api import WorkActivity, Action, WorkActivityHistory, WorkFlow
-from .errors import InternalServerError, InvalidParameterValueError, PermissionError, StatusNotItemRegistrationError, VersionNotFoundRESTError, \
+from .errors import ExpiredActivityError, IndexNotFoundError, InternalServerError, InvalidParameterValueError, InvalidTokenError, ItemUneditableError, MetadataFormatError, PermissionError, StatusNotItemRegistrationError, VersionNotFoundRESTError, \
     StatusNotApproveError
 from .scopes import activity_scope
 from .utils import auto_fill_title, create_conditions_dict, check_role, check_etag, check_pretty, get_activity_display_info, create_limmiter, \
@@ -384,7 +385,6 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
         def _fit_item_data_to_schema(schema, item_data, activity,
                                      current_key="", errors:list=[], _title_fill_data:dict={}):
             ret = None
-            required_keys = schema.get('required', [])
             if schema.get('type') == 'object':
                 ret = {}
                 properties = schema.get('properties')
@@ -500,24 +500,25 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
                 fullname_value = title_fill_data.get('subitem_fullname_value')
                 if restricted_access_item_title_key:
                     title_val = f"{item_title}{fullname_value}"
-                    item_data = _recursive_search_and_set_item_data(item_data, restricted_access_item_title_key, title_val)
+                    item_data, is_finished = _recursive_search_and_set_item_data(item_data, restricted_access_item_title_key, title_val)
             return item_data
 
-        def _recursive_search_and_set_item_data(data, target_key, val, is_finished=False):
+        def _recursive_search_and_set_item_data(data, target_key, val):
+            is_finished=False
             keys = target_key.split('.')
             target = keys.pop(0)
             for k, v in data.items():
                 if k != target:
                     continue
                 if keys:
-                    data[k] = _recursive_search_and_set_item_data(v, ".".join(keys), val, is_finished)
+                    data[k], is_finished = _recursive_search_and_set_item_data(v, ".".join(keys), val)
                     if is_finished:
                         break
                 else:
                     data[k] = val
                     is_finished = True
                     break
-            return data
+            return data, is_finished
         
         def _remove_empty_data(data):
             if isinstance(data, str) and not data:
@@ -538,6 +539,65 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
                 if not data:
                     return True
             return False
+        
+        def _get_required_keys(schema, current_key=""):
+            required_keys = []
+
+            for rkey in schema.get('required', []):
+                required_keys.append(f"{current_key}.{rkey}" if current_key else rkey)
+
+            if schema.get('type') == 'object':
+                properties = schema.get('properties', {})
+                for sub_key, sub_schema in properties.items():
+                    full_key = f"{current_key}.{sub_key}" if current_key else sub_key
+                    required_keys += _get_required_keys(sub_schema, full_key)
+
+            elif schema.get('type') == 'array' and schema.get('items'):
+                full_key = f"{current_key}.[]" if current_key else "[]"
+                required_keys += _get_required_keys(schema.get('items'), full_key)
+
+            if required_keys:
+                required_keys = list(set(required_keys))
+                required_keys.sort()
+
+            return required_keys
+
+        def _check_required(data, schema, excepted_keys, err_keys:list=[]):
+            def __exists_data(d, paths):
+                if isinstance(d, str) and d:
+                    return True
+                elif isinstance(d, dict):
+                    if len(paths) == 0:
+                        return len(d) > 0
+                    target = paths.pop(0)
+                    if target in d:
+                        return __exists_data(d[target], paths)
+                elif isinstance(d, list):
+                    if len(paths) == 0:
+                        return len(d) > 0
+                    target = paths.pop(0)
+                    if target == "[]":
+                        for v in d:
+                            if __exists_data(v, list(paths)):
+                                return True
+                return False
+
+            req_keys = _get_required_keys(schema)
+            req_keys = [i for i in req_keys if i not in excepted_keys]
+
+            for rkey in req_keys:
+                need_to_check = True
+
+                # if parents exists at err_keys, do not need to check this key.
+                paths = rkey.split(".")
+                for i in range(len(paths)):
+                    if ".".join(paths[:i+1]) in err_keys:
+                        need_to_check = False
+                        break
+                
+                if need_to_check and not __exists_data(data, paths):
+                    err_keys.append(rkey)
+
 
         # Get parameter
         activity_id = kwargs.get('activity_id')
@@ -545,11 +605,12 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
         param_pretty = str(request.values.get('pretty', 'false'))
         token = request.values.get('token', None)
         index_ids = request.values.get('index_ids', "")
-        index_ids = index_ids.split(',')
+        index_ids = index_ids.split(',') if index_ids else []
         input_item_data = ""
         if request.data:
             input_item_data = json.loads(request.data.decode("utf-8"))
         if not len(input_item_data):
+            current_app.logger.error(f"[{activity_id}] request body is empty.")
             raise InvalidParameterValueError() # 400 Error
         
         # Check pretty
@@ -567,6 +628,10 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
         else:
             activity = FileApplicationActivity.get_activity(activity_id)
 
+        # Check if you can execute action
+        if activity.get("res_check", 1) != 0:
+            raise PermissionError
+
         # Fit input_item_data to item_type_schema
         item_type_schema = ItemTypes.get_by_id(activity['id']).schema
         errors = []
@@ -574,20 +639,43 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
         reg_data = _fit_item_data_to_schema(item_type_schema, input_item_data, activity,
                                             errors=errors, _title_fill_data=title_fill_data)
         if errors:
-            raise Exception() # 400エラー
+            current_app.logger.error(f"[{activity_id}] metadata format error: {errors}")
+            raise MetadataFormatError(errors) # 400エラー
         
         # auto fill title
         reg_data = _title_auto_fill(reg_data, activity, title_fill_data)
         _remove_empty_data(reg_data)
 
+        # check required metadata
+        required_errors = []
+        excepted_keys = []
+        if activity.get('is_hidden_pubdate', False):
+            excepted_keys.append("pubdate")
+        _check_required(reg_data, item_type_schema, excepted_keys, err_keys=required_errors)
+        if required_errors:
+            required_errors = f"missing requied metadata: {', '.join(required_errors)}"
+            current_app.logger.error(f"[{activity_id}] missing requied metadata: {required_errors}")
+            raise MetadataFormatError(required_errors) # 400エラー
+
         # Set path
         workflow = WorkFlow()
         workflow_detail = workflow.get_workflow_by_id(activity['activity'].workflow_id)
-        if workflow_detail and workflow_detail.index_tree_id:
-            index_id = get_index_id(activity_id)
-            reg_data["path"] = [index_id]
-        else:
-            reg_data["path"] = index_ids
+        try:
+            if workflow_detail and workflow_detail.index_tree_id:
+                index_id = get_index_id(activity_id)
+                reg_data["path"] = [f"{index_id}"]
+            else:
+                reg_data["path"] = index_ids
+
+            if not reg_data["path"]:
+                current_app.logger.error(f"[{activity_id}] index not specified.")
+                raise
+            for p in reg_data["path"]:
+                if not Indexes.get_index(p):
+                    current_app.logger.error(f"[{activity_id}] index not found. (index_id: {p})")
+                    raise
+        except Exception:
+            raise IndexNotFoundError()
 
         # item registration
         item = {
@@ -606,18 +694,27 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
                                                      object_type='rec',
                                                      object_uuid=item_id)
             item["id"] = pid.pid_value
-            handle_check_item_is_locked(item)
-        FileApplicationActivity.register_item_metadata(item)
-
-        # Update activity
-        save_activity_data(dict(
-            activity_id = activity_id,
-            title = activity.get('item_title'),
-            shared_user_id = -1
-        ))
+            try:
+                handle_check_item_is_locked(item)
+            except:
+                current_app.logger.error(f"[{activity_id}] this item uneditable. (item_id: {item_id})")
+                raise ItemUneditableError()
         
-        # Do ItemRegistration action
-        next_action(activity_id=activity_id, action_id=activity['activity'].action_id)
+        try:
+            FileApplicationActivity.register_item_metadata(item)
+
+            # Update activity
+            save_activity_data(dict(
+                activity_id = activity_id,
+                title = activity.get('item_title'),
+                shared_user_id = -1
+            ))
+            
+            # Do ItemRegistration action
+            next_action(activity_id=activity_id, action_id=activity['activity'].action_id)
+        except Exception as ex:
+            current_app.logger.error(f"[{activity_id}] error in item save. (item_id: {item['id']}): {ex}")
+            raise InternalServerError()
 
         # get latest approve history
         from .config import WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID
@@ -647,6 +744,7 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
         action_endpoint, action_id, activity_detail, cur_action, histories, item, \
             steps, temporary_comment, workflow_detail = get_activity_display_info(activity_id)
         if action_endpoint != 'item_login':
+            current_app.logger.error(f"[{activity_id}] action_endpoint is not 'item_login':{action_endpoint}")
             raise StatusNotItemRegistrationError() # 400 Error
 
         allow_multi_thumbnail = False
@@ -668,9 +766,8 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
         step_item_login_url = None
         title = ""
 
-        if not activity.get_activity_by_id(activity_id):
-            pass
-        if activity.get_activity_by_id(activity_id).action_status != ActionStatusPolicy.ACTION_CANCELED:
+        _activity = activity.get_activity_by_id(activity_id)
+        if _activity and _activity.action_status != ActionStatusPolicy.ACTION_CANCELED:
             activity_session = dict(
                 activity_id=activity_id,
                 action_id=activity_detail.action_id,
@@ -685,9 +782,7 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
             record, json_schema, schema_form,\
             item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
             allow_multi_thumbnail \
-            = item_login(item_type_id=workflow_detail.itemtype_id, called_by_api=True)
-        if not step_item_login_url:
-            raise Exception() # いらないかも
+            = item_login(item_type_id=workflow_detail.itemtype_id)
 
         application_item_type = is_usage_application_item_type(activity_detail)
 
@@ -696,10 +791,6 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
 
         redis_connection = RedisConnection()
         sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
-
-        if not (json_schema and schema_form):
-            raise Exception() # いらないかも
-
         if sessionstore.redis.exists(
             'updated_json_schema_{}'.format(activity_id)) \
             and sessionstore.get(
@@ -743,9 +834,6 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
         record_detail_alt = get_main_record_detail(
             activity_id, activity_detail, action_endpoint, item,
             approval_record, files, files_thumbnail)
-        if not record_detail_alt:
-            raise Exception()
-
         ctx.update(
             dict(
                 record_org=record_detail_alt.get('record'),
@@ -807,6 +895,7 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
         action_endpoint, action_id, activity_detail, cur_action, histories, item, \
             steps, temporary_comment, workflow_detail = get_activity_display_info(activity_id)
         if action_endpoint != 'item_login':
+            current_app.logger.error(f"[{activity_id}] action_endpoint is not 'item_login':{action_endpoint}")
             raise StatusNotItemRegistrationError() # 400 Error
         
         # Get file_name
@@ -814,19 +903,22 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
         file_name = extra_info.get('file_name', '')
 
         # Validate token
+        current_app.logger.debug(f"[{activity_id}] token: {token}, file_name: {file_name}")
         is_valid, activity_id, guest_email = validate_guest_activity_token(token, file_name)
         if not is_valid:
-            raise Exception() # TODO: raise 404 Error
+            current_app.logger.error(f"[{activity_id}] guest activity token is invalid.")
+            raise InvalidTokenError() # 400 Error
 
         error_msg = validate_guest_activity_expired(activity_id)
         if error_msg:
-            return Exception() # TODO: raise 400? Error
+            current_app.logger.error(f"[{activity_id}] guest activity expired:{error_msg}")
+            raise ExpiredActivityError() # 400 Error
 
         session['guest_token'] = token
         session['guest_email'] = guest_email
         session['guest_url'] = request.full_path
 
-        guest_activity = prepare_data_for_guest_activity(activity_id, called_by_api=True)
+        guest_activity = prepare_data_for_guest_activity(activity_id)
 
         # Get Auto fill data for Restricted Access Item Type.
         usage_data = get_usage_data(
@@ -860,54 +952,10 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
         return dep["recid"]
 
     def register_item_metadata(item):
-        def _clean_file_metadata(item_type_id, data):
-            # clear metadata of file information
-            is_cleaned = True
-            item_map = get_mapping(Mapping.get_record(item_type_id), "jpcoar_mapping")
-            key = item_map.get("file.URI.@value")
-            if key:
-                key = key.split(".")[0]
-                if not data.get(key):
-                    deleted_items = data.get("deleted_items") or []
-                    deleted_items.append(key)
-                    data["deleted_items"] = deleted_items
-                else:
-                    is_cleaned = False
-            return data, is_cleaned
-        
-        def _autofill_thumbnail_metadata(item_type_id, data):
-            key = get_thumbnail_key(item_type_id)
-            if key:
-                thumbnail_item = {}
-                subitem_thumbnail = []
-                for file in deposit.files:
-                    if file.is_thumbnail is True:
-                        subitem_thumbnail.append(
-                            {
-                                "thumbnail_label": file.key,
-                                "thumbnail_url": current_app.config["DEPOSIT_FILES_API"]
-                                + "/{bucket}/{key}?versionId={version_id}".format(
-                                    bucket=file.bucket_id,
-                                    key=file.key,
-                                    version_id=file.version_id,
-                                ),
-                            }
-                        )
-                if subitem_thumbnail:
-                    thumbnail_item["subitem_thumbnail"] = subitem_thumbnail
-                if thumbnail_item:
-                    data[key] = thumbnail_item
-                else:
-                    deleted_items = data.get("deleted_items") or []
-                    deleted_items.append(key)
-                    data["deleted_items"] = deleted_items
-            return data
-        
         # Get recid
         pid = PersistentIdentifier.query.filter_by(
             pid_type="recid", pid_value=item["id"]
         ).first()
-
         record = WekoDeposit.get_record(pid.object_uuid)
 
         # Set publish_status to private
@@ -935,8 +983,51 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
             )
 
         # set delete flag for file metadata if is empty.
-        new_data, is_cleaned = _clean_file_metadata(item["item_type_id"], new_data)
-        new_data = _autofill_thumbnail_metadata(item["item_type_id"], new_data)
+        new_data, is_cleaned = FileApplicationActivity._clean_file_metadata(item["item_type_id"], new_data)
+        new_data = FileApplicationActivity._autofill_thumbnail_metadata(item["item_type_id"], new_data, deposit.files)
 
         deposit.update(item_status, new_data)
         deposit.commit()
+
+    def _clean_file_metadata(item_type_id, data):
+        # clear metadata of file information
+        is_cleaned = True
+        item_map = get_mapping(Mapping.get_record(item_type_id), "jpcoar_mapping")
+        key = item_map.get("file.URI.@value")
+        if key:
+            key = key.split(".")[0]
+            if not data.get(key):
+                deleted_items = data.get("deleted_items") or []
+                deleted_items.append(key)
+                data["deleted_items"] = deleted_items
+            else:
+                is_cleaned = False
+        return data, is_cleaned
+    
+    def _autofill_thumbnail_metadata(item_type_id, data, files):
+        key = get_thumbnail_key(item_type_id)
+        if key:
+            thumbnail_item = {}
+            subitem_thumbnail = []
+            for file in files:
+                if file.is_thumbnail is True:
+                    subitem_thumbnail.append(
+                        {
+                            "thumbnail_label": file.key,
+                            "thumbnail_url": current_app.config["DEPOSIT_FILES_API"]
+                            + "/{bucket}/{key}?versionId={version_id}".format(
+                                bucket=file.bucket_id,
+                                key=file.key,
+                                version_id=file.version_id,
+                            ),
+                        }
+                    )
+            if subitem_thumbnail:
+                thumbnail_item["subitem_thumbnail"] = subitem_thumbnail
+            if thumbnail_item:
+                data[key] = thumbnail_item
+            else:
+                deleted_items = data.get("deleted_items") or []
+                deleted_items.append(key)
+                data["deleted_items"] = deleted_items
+        return data

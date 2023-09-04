@@ -3092,7 +3092,7 @@ def get_activity_display_info(activity_id: str):
         item, steps, temporary_comment, workflow_detail
 
 
-def __init_activity_detail_data_for_guest(activity_id: str, community_id: str, called_by_api: bool = False):
+def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
     """Init activity data for guest user.
 
     @param activity_id:
@@ -3128,7 +3128,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str, c
         record, json_schema, schema_form, \
         item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
         allow_multi_thumbnail \
-        = item_login(item_type_id=workflow_detail.itemtype_id, called_by_api=called_by_api)
+        = item_login(item_type_id=workflow_detail.itemtype_id)
     if not record and item:
         record = item
 
@@ -3217,7 +3217,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str, c
     )
 
 
-def prepare_data_for_guest_activity(activity_id: str, called_by_api: bool = False) -> dict:
+def prepare_data_for_guest_activity(activity_id: str) -> dict:
     """Prepare for guest activity.
 
     @param activity_id:
@@ -3232,7 +3232,7 @@ def prepare_data_for_guest_activity(activity_id: str, called_by_api: bool = Fals
         community_id = comm.id
 
     init_data = __init_activity_detail_data_for_guest(
-        activity_id, community_id, called_by_api=called_by_api)
+        activity_id, community_id)
     ctx.update(init_data)
     action_endpoint = ctx['cur_step']
     activity_detail = ctx['activity']

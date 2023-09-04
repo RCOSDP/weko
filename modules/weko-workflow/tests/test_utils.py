@@ -112,6 +112,7 @@ from weko_workflow.utils import (
     create_onetime_download_url_to_guest,
     delete_guest_activity,
     get_activity_display_info,
+    __init_activity_detail_data_for_guest,
     recursive_get_specified_properties,
     get_approval_keys,
     process_send_mail,
@@ -2054,15 +2055,15 @@ def test___init_activity_detail_data_for_guest(app,db,users,db_register,mocker):
         session["guest_email"] = "guest@test.org"
         user_profile = {
             "results":{
-                'subitem_user_name': "guest",
-                'subitem_fullname': "guest",
+                'subitem_user_name': "",
+                'subitem_fullname': "",
                 'subitem_mail_address': "guest@test.org",
-                'subitem_displayname': "guest",
+                'subitem_displayname': "",
                 'subitem_university/institution': '',
                 'subitem_affiliated_division/department': '',
                 'subitem_position': '',
                 'subitem_phone_number': '',
-                'subitem_position(other)': '',
+                'subitem_position(others)': '',
                 'subitem_affiliated_institution': [],
             }
         }
@@ -2100,7 +2101,7 @@ def test___init_activity_detail_data_for_guest(app,db,users,db_register,mocker):
             temporary_comment=temporary_comment,
             workflow_detail=workflow_detail,
             user_profile=user_profile,
-            list_license=[{'value': 'license_free', 'name': 'write your own license'}, {'value': 'license_12', 'name': 'Creative Commons CC0 1.0 Universal Public Domain Designation'}, {'value': 'license_6', 'name': 'Creative Commons Attribution 3.0 Unported (CC BY 3.0)'}, {'value': 'license_7', 'name': 'Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)'}, {'value': 'license_8', 'name': 'Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)'}, {'value': 'license_9', 'name': 'Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)'}, {'value': 'license_10', 'name': 'Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0)'}, {'value': 'license_11', 'name': 'Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-NC-ND 3.0)'}, {'value': 'license_0', 'name': 'Creative Commons Attribution 4.0 International (CC BY 4.0)'}, {'value': 'license_1', 'name': 'Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)'}, {'value': 'license_2', 'name': 'Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND 4.0)'}, {'value': 'license_3', 'name': 'Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)'}, {'value': 'license_4', 'name': 'Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)'}, {'value': 'license_5', 'name': 'Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)'}],
+            list_license=[{'value': 'license_free', 'name': _('write your own license')}, {'value': 'license_12', 'name': _('Creative Commons CC0 1.0 Universal Public Domain Designation')}, {'value': 'license_6', 'name': _('Creative Commons Attribution 3.0 Unported (CC BY 3.0)')}, {'value': 'license_7', 'name': _('Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)')}, {'value': 'license_8', 'name': _('Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)')}, {'value': 'license_9', 'name': _('Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)')}, {'value': 'license_10', 'name': _('Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0)')}, {'value': 'license_11', 'name': _('Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-NC-ND 3.0)')}, {'value': 'license_0', 'name': _('Creative Commons Attribution 4.0 International (CC BY 4.0)')}, {'value': 'license_1', 'name': _('Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)')}, {'value': 'license_2', 'name': _('Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND 4.0)')}, {'value': 'license_3', 'name': _('Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)')}, {'value': 'license_4', 'name': _('Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)')}, {'value': 'license_5', 'name': _('Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)')}],
             cur_action=cur_action,
             activity_id=activity_detail.activity_id,
             is_enable_item_name_link=True,
