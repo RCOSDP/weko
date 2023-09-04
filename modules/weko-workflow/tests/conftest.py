@@ -74,7 +74,7 @@ from weko_search_ui.config import WEKO_SYS_USER
 from weko_records_ui import WekoRecordsUI
 from weko_theme import WekoTheme
 from weko_admin import WekoAdmin
-from weko_admin.models import SessionLifetime,Identifier 
+from weko_admin.models import SessionLifetime,Identifier
 from weko_admin.views import blueprint as weko_admin_blueprint
 from weko_records.models import ItemTypeName, ItemType,FeedbackMailList,ItemTypeMapping,ItemTypeProperty
 from weko_records.api import ItemsMetadata, Mapping
@@ -84,7 +84,7 @@ from weko_index_tree.models import Index
 
 from weko_workflow import WekoWorkflow
 from weko_search_ui import WekoSearchUI
-from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory,GuestActivity, WorkflowRole
+from weko_workflow.models import ActionStatusPolicy, Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory,GuestActivity, WorkflowRole
 from weko_workflow.utils import MappingData
 from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
 from weko_workflow.config import WEKO_WORKFLOW_GAKUNINRDM_DATA,WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR,WEKO_WORKFLOW_REST_ENDPOINTS
@@ -2743,6 +2743,103 @@ def auth_headers(client, json_headers, create_oauth_token):
         fill_oauth2_headers(json_headers, create_oauth_token[2]),   # generaluser
         fill_oauth2_headers(json_headers, create_oauth_token[3]),   # generaluser(no scope)
     ]
+
+
+@pytest.fixture()
+def activity_with_roles(app, workflow, db, item_type, users):
+    # flow action role
+    flow_actions = workflow['flow_action']
+    flow_action_roles = [
+        FlowActionRole(id = 1,
+                    flow_action_id = flow_actions[2].id,
+                    action_user_exclude = False,
+                    action_item_registrant = False),
+        FlowActionRole(id = 2,
+                    flow_action_id = flow_actions[3].id,
+                    action_user_exclude = False,
+                    action_item_registrant = True),
+        FlowActionRole(id = 3,
+                    flow_action_id = flow_actions[4].id,
+                    action_user_exclude = True,
+                    action_item_registrant = False),
+        FlowActionRole(id = 4,
+                    flow_action_id = flow_actions[5].id,
+                    action_user_exclude = True,
+                    action_item_registrant = True),
+    ]
+    with db.session.begin_nested():
+        db.session.add_all(flow_action_roles)
+    db.session.commit()
+
+    item_metdata = ItemsMetadata.create(
+        data = {
+            "id": "1",
+            "pid": {
+                "type": "depid",
+                "value": "1",
+                "revision_id": 0
+            },
+            "lang": "ja",
+            "owner": str(users[0]['obj'].id),
+            "title": "sample01",
+            "owners": [
+                users[0]['obj'].id
+            ],
+            "status": "published",
+            "$schema": "/items/jsonschema/" + str(item_type.id),
+            "pubdate": "2020-08-29",
+            "created_by": users[0]['obj'].id,
+            "owners_ext": {
+                "email": "sample@nii.ac.jp",
+                "username": "sample",
+                "displayname": "sample"
+            },
+            "shared_user_id": -1,
+            "item_1617186331708": [
+                {
+                "subitem_1551255647225": "sample01",
+                "subitem_1551255648112": "ja"
+                }
+            ],
+            "item_1617258105262": {
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+                "resourcetype": "conference paper"
+            }
+        },
+        item_type_id = item_type.id,
+    )
+
+    # set activity
+    activity = Activity(
+        activity_id='1', workflow_id=workflow["workflow"].id,
+        flow_id=workflow["flow"].id,
+        action_id=4,
+        activity_login_user=users[0]['obj'].id,
+        activity_update_user=1,
+        activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+        activity_community_id=3,
+        activity_confirm_term_of_use=True,
+        title='test', shared_user_id=-1, extra_info={},
+        action_order=6, item_id=item_metdata.model.id,
+        action_status=ActionStatusPolicy.ACTION_BEGIN
+    )
+    with db.session.begin_nested():
+        db.session.add(activity)
+    db.session.commit()
+
+    activity_action = ActivityAction(activity_id=activity.activity_id,
+                                    action_id=4,action_status="M",
+                                    action_handler=1, action_order=6)
+
+    with db.session.begin_nested():
+        db.session.add(activity_action)
+    db.session.commit()
+
+    return {
+        "activity": activity,
+        "itemMetadata": item_metdata
+    }
+
 
 
 @pytest.fixture()

@@ -260,27 +260,19 @@ def get_user_info_by_email(email):
         result['error'] = str(e)
 
 
-def get_user_information(user_id):
+def get_user_information(user_ids):
     """
-    Get user information user_id.
+    Get user information user_id list.
 
     Query database to get email by using user_id
     Get username from database using user id
-    Pack response data: user id, user name, email
+    Pack response data list: [ user id, user name, email ]
 
     parameter:
-        user_id: The user_id
+        user_ids: The user_id list
     return: response
     """
-    result = {
-        'username': '',
-        'email': '',
-        'fullname': '',
-    }
-    user_info = UserProfile.get_by_userid(user_id)
-    if user_info is not None:
-        result['username'] = user_info.get_username
-        result['fullname'] = user_info.fullname
+    result = []
 
     metadata = MetaData()
     metadata.reflect(bind=db.engine)
@@ -291,15 +283,62 @@ def get_user_information(user_id):
 
     data = record.all()
 
-    for item in data:
-        if item[0] == user_id:
-            result['email'] = item[1]
-            return result
+    if type(user_ids) is int:
+        user_ids = [user_ids]
+    for user_id in user_ids:
+        info = {
+            'userid':'',
+            'username': '',
+            'email': '',
+            'fullname': '',
+            'error': ''
+        }
+        user_info = UserProfile.get_by_userid(user_id)
+        if user_info is not None:
+            info['userid'] = user_id
+            info['username'] = user_info.get_username
+            info['fullname'] = user_info.fullname
+        else:
+            info['userid'] = user_id
+        
+        temp = list(map(lambda x : x[0], data))
+        if not user_id in temp:
+            info['error'] = "The specified user ID is incorrect"
+        
+        result.append(info)
 
+        for item in data:
+            if int(item[0]) == int(user_id):
+                is_merge = False
+                for exist_info in result:
+                    if int(exist_info['userid']) == int(user_id):
+                        # update list
+                        exist_info['email'] = item[1]
+                        is_merge = True
+                if not is_merge:
+                    info['userid'] = user_id
+                    info['email'] = item[1]
+                    result.append(info)
     return result
 
-
 def get_user_permission(user_id):
+    """
+    Get user permission user_id.
+
+    Compare current id with id of current user
+    parameter:
+        user_id: The user_id
+    return: true if current id is the same with id of current user.
+    If not return false
+    """
+    current_id = current_user.get_id()
+    if current_id is None:
+        return False
+    if str(user_id) == current_id:
+        return True
+    return False
+
+def is_current_user(user_id):
     """
     Get user permission user_id.
 
@@ -1587,7 +1626,7 @@ def _export_item(record_id,
                                         False, False)
                 record_role_ids = {
                     'weko_creator_id': meta_data.get('weko_creator_id'),
-                    'weko_shared_id': meta_data.get('weko_shared_id')
+                    'weko_shared_ids': meta_data.get('weko_shared_ids')
                 }
                 list_item_role.update(
                     {exported_item['item_type_id']: record_role_ids})
@@ -2100,7 +2139,7 @@ def hide_meta_data_for_role(record):
     # Item Register users and Sharing users
     if record and current_user.get_id() in [
         record.get('weko_creator_id'),
-            str(record.get('weko_shared_id'))]:
+            str(record.get('weko_shared_ids'))]:
         is_hidden = False
 
     return is_hidden
@@ -2628,14 +2667,15 @@ def save_title(activity_id, request_data):
     """
     activity = WorkActivity()
     db_activity = activity.get_activity_detail(activity_id)
-    item_type_id = db_activity.workflow.itemtype.id
-    if item_type_id:
-        item_type_mapping = Mapping.get_record(item_type_id)
-        # current_app.logger.debug("item_type_mapping:{}".format(item_type_mapping))
-        key, key_child = get_key_title_in_item_type_mapping(item_type_mapping)
-    if key and key_child:
-        title = get_title_in_request(request_data, key, key_child)
-        activity.update_title(activity_id, title)
+    if db_activity and db_activity.workflow:
+        item_type_id = db_activity.workflow.itemtype.id
+        if item_type_id:
+            item_type_mapping = Mapping.get_record(item_type_id)
+            # current_app.logger.debug("item_type_mapping:{}".format(item_type_mapping))
+            key, key_child = get_key_title_in_item_type_mapping(item_type_mapping)
+        if key and key_child:
+            title = get_title_in_request(request_data, key, key_child)
+            activity.update_title(activity_id, title)
 
 
 def get_key_title_in_item_type_mapping(item_type_mapping):

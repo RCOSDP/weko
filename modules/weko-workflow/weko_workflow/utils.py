@@ -1373,10 +1373,13 @@ def convert_record_to_item_metadata(record_metadata):
     """Convert record_metadata to item_metadata."""
     item_metadata = {
         'id': record_metadata['recid'],
+        'pid': record_metadata['_deposit']['pid'],
         '$schema': record_metadata['item_type_id'],
         'pubdate': record_metadata['publish_date'],
         'title': record_metadata['item_title'],
-        'weko_shared_id': record_metadata['weko_shared_id']
+        'owner': record_metadata['owner'],
+        'owners': record_metadata['owners'],
+        'shared_user_ids': record_metadata['weko_shared_ids']
     }
     item_type = ItemTypes.get_by_id(record_metadata['item_type_id']).render
 
@@ -1418,7 +1421,6 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         pid_type='recid',
         pid_value="{}.0".format(recid.pid_value)
     ).one_or_none()
-
     if not draft_pid:
         draft_record = deposit.prepare_draft_item(recid)
         rtn = activity.init_activity(post_activity,
@@ -1473,7 +1475,6 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         rtn = activity.init_activity(post_activity,
                                      community,
                                      draft_pid.object_uuid)
-
     if rtn:
         # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
         identifier_actionid = get_actionid('identifier_grant')
@@ -2275,7 +2276,7 @@ def process_send_reminder_mail(activity_detail, mail_id):
     mail_info = set_mail_info(item_info, activity_detail)
 
     from weko_items_ui.utils import get_user_information
-    update_user = get_user_information(activity_detail.activity_login_user)
+    update_user = get_user_information(activity_detail.activity_login_user)[0]
     if update_user.get('email') != '':
         mail_info['mail_address'] = update_user.get('email')
     else:
@@ -2776,7 +2777,7 @@ def save_activity_data(data: dict) -> NoReturn:
     activity_id = data.get("activity_id")
     activity_data = {
         "title": data.get("title"),
-        "shared_user_id": data.get("shared_user_id"),
+        "shared_user_ids": data.get("shared_user_ids"),
         "approval1": data.get("approval1"),
         "approval2": data.get("approval2"),
     }
@@ -3040,7 +3041,7 @@ def get_activity_display_info(activity_id: str):
         Activity: activity_detail
         Action: cur_action
         ActivityHistory: histories
-        _type_: item {'lang': 'ja', 'owner': '1', 'title': 'ddd', '$schema': '/items/jsonschema/15', 'pubdate': '2022-08-21', 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'ddd', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_beb9', 'resourcetype': 'data paper'}}
+        _type_: item {'lang': 'ja', 'owner': '1', 'title': 'ddd', '$schema': '/items/jsonschema/15', 'pubdate': '2022-08-21', 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ddd', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_beb9', 'resourcetype': 'data paper'}}
         _type_: steps
         _type_: temporary_comment [{'ActivityId': 'A-20220821-00003', 'ActionId': 1, 'ActionName': 'Start', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'begin_action', 'Author': 'wekosoftware@nii.ac.jp', 'Status': 'action_done', 'ActionOrder': 1}, {'ActivityId': 'A-20220821-00003', 'ActionId': 3, 'ActionName': 'Item Registration', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_login', 'Author': '', 'Status': ' ', 'ActionOrder': 2}, {'ActivityId': 'A-20220821-00003', 'ActionId': 4, 'ActionName': 'Approval', 'ActionVersion': '2.0.0', 'ActionEndpoint': 'approval', 'Author': '', 'Status': ' ', 'ActionOrder': 3}, {'ActivityId': 'A-20220821-00003', 'ActionId': 5, 'ActionName': 'Item Link', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_link', 'Author': '', 'Status': ' ', 'ActionOrder': 4}, {'ActivityId': 'A-20220821-00003', 'ActionId': 7, 'ActionName': 'Identifier Grant', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'identifier_grant', 'Author': '', 'Status': ' ', 'ActionOrder': 5}, {'ActivityId': 'A-20220821-00003', 'ActionId': 2, 'ActionName': 'End', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'end_action', 'Author': '', 'Status': ' ', 'ActionOrder': 6}]
         Workflow: workflow_detail
@@ -3052,7 +3053,6 @@ def get_activity_display_info(activity_id: str):
         try:
             item = ItemsMetadata.get_record(id_=activity_detail.item_id)
         except NoResultFound as ex:
-            current_app.logger.exception(str(ex))
             item = None
     steps = activity.get_activity_steps(activity_id)
     history = WorkActivityHistory()
@@ -3077,6 +3077,14 @@ def get_activity_display_info(activity_id: str):
         action_order=activity_detail.action_order)
     if action_data:
         temporary_comment = action_data.action_comment
+    metadata = activity.get_activity_metadata(activity_id)
+    if metadata:
+        item_json = json.loads(metadata).get('metainfo')
+        owner_id = item_json.get('owner')
+        shared_user_ids = item_json.get('shared_user_ids')
+    else:
+        owner_id = -1
+        shared_user_ids = []
 
     current_app.logger.debug("action_endpoint:{}".format(action_endpoint))
     current_app.logger.debug("action_id:{}".format(action_id))
@@ -3087,9 +3095,11 @@ def get_activity_display_info(activity_id: str):
     current_app.logger.debug("steps:{}".format(steps))
     current_app.logger.debug("temporary_comment:{}".format(temporary_comment))
     current_app.logger.debug("workflow_detail:{}".format(workflow_detail))
+    current_app.logger.debug("owner_id:{}".format(owner_id))
+    current_app.logger.debug("shared_user_ids:{}".format(shared_user_ids))
 
     return action_endpoint, action_id, activity_detail, cur_action, histories, \
-        item, steps, temporary_comment, workflow_detail
+        item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids
 
 
 def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
@@ -3101,7 +3111,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
     """
     from weko_records_ui.utils import get_list_licence
     action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-        steps, temporary_comment, workflow_detail = \
+        steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = \
         get_activity_display_info(activity_id)
     item_type_name = get_item_type_name(workflow_detail.itemtype_id)
     # Check auto set index
@@ -3214,6 +3224,8 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
         files_thumbnail=files_thumbnail,
         allow_multi_thumbnail=allow_multi_thumbnail,
         id=workflow_detail.itemtype_id,
+        owner_id = owner_id,
+        shared_user_ids=shared_user_ids,
     )
 
 
@@ -4100,6 +4112,48 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
     #url_and_expired_date of a applyed content.
     return url_and_expired_date
 
+def get_contributors(pid_value, user_id_list_json=None, owner_id=-1):
+    from weko_items_ui.utils import get_user_information
+    
+    userid_list = []
+    # item登録済みユーザーデータ
+    if pid_value:
+        pid_value = pid_value.split('.')[0]
+        # Get Record by pid_value
+        record = WekoRecord.get_record_by_pid(pid_value)
+        owner_id = record['_deposit']['owner']
+        userid_list.append(int(owner_id))
+        userid_list.extend(record['weko_shared_ids'])
+    # 一時保存ユーザーデータ
+    elif user_id_list_json and owner_id != -1:
+        if type(user_id_list_json) == list:
+            for rec in user_id_list_json:
+                if type(rec) == dict:
+                     userid_list.append(int(rec['user']))
+                elif type(rec) == int:
+                    userid_list.append(rec)
+        userid_list.append(int(owner_id))
+
+    result = []
+
+    user_infos = get_user_information(userid_list)
+    for user_info in user_infos:
+        info = {
+        'userid': '',
+        'username': '',
+        'email': '',
+        'owner': False,
+        'error': ''
+        }
+        info['userid'] = int(user_info['userid'])
+        info['username'] = user_info['username'] if not user_info['username'] == None else ''
+        info['email'] = user_info['email']
+        info['error'] = user_info['error']
+        if int(owner_id) != -1 and int(owner_id) == int(user_info['userid']):
+            info['owner'] = True
+        result.append(info)
+    
+    return result
 
 def create_conditions_dict(status, limit, page):
     """
@@ -4168,4 +4222,4 @@ def check_pretty(pretty):
 
 def create_limmiter():
     from .config import WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT
-    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT)
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT)  

@@ -252,7 +252,7 @@ class ApproveActivity(ContentNegotiatedMethodView):
         activity_id = kwargs.get('activity_id')
 
         # Check if activity status is approval
-        action_endpoint, action_id, activity_detail, _cur_action, _histories, _item, _steps, _temporary_comment, _workflow_detail = \
+        action_endpoint, action_id, activity_detail, _cur_action, _histories, _item, _steps, _temporary_comment, _workflow_detail, _owner_id, _shared_user_ids = \
             get_activity_display_info(activity_id)
         if action_endpoint != 'approval':
             raise StatusNotApproveError
@@ -263,7 +263,7 @@ class ApproveActivity(ContentNegotiatedMethodView):
             raise PermissionError
 
         # Do approval action
-        next_action(activity_id, action_id)
+        next_action(activity_id=activity_id, action_id=action_id)
 
         # Response setting
         res_json = ApproveActivity.create_approve_response(activity_id)
@@ -337,7 +337,7 @@ class ThrowOutActivity(ContentNegotiatedMethodView):
         activity_id = kwargs.get('activity_id')
 
         # Check if activity status is approval
-        action_endpoint, action_id, activity_detail, _cur_action, _histories, _item, _steps, _temporary_comment, _workflow_detail = \
+        action_endpoint, action_id, activity_detail, _cur_action, _histories, _item, _steps, _temporary_comment, _workflow_detail, _owner_id, _shared_user_ids = \
             get_activity_display_info(activity_id)
         if action_endpoint != 'approval':
             raise StatusNotApproveError
@@ -349,7 +349,7 @@ class ThrowOutActivity(ContentNegotiatedMethodView):
 
         # Do throw out action
         req = 0  # Return to previous action
-        previous_action(activity_id, action_id, req)
+        previous_action(activity_id=activity_id, action_id=action_id, req=req)
 
         # Response setting
         res_json = ApproveActivity.create_approve_response(activity_id)
@@ -742,7 +742,7 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
     def get_activity(activity_id):
         activity = WorkActivity()
         action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-            steps, temporary_comment, workflow_detail = get_activity_display_info(activity_id)
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
         if action_endpoint != 'item_login':
             current_app.logger.error(f"[{activity_id}] action_endpoint is not 'item_login':{action_endpoint}")
             raise StatusNotItemRegistrationError() # 400 Error
@@ -893,7 +893,7 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
     
     def get_guest_activity(activity_id, token):
         action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-            steps, temporary_comment, workflow_detail = get_activity_display_info(activity_id)
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
         if action_endpoint != 'item_login':
             current_app.logger.error(f"[{activity_id}] action_endpoint is not 'item_login':{action_endpoint}")
             raise StatusNotItemRegistrationError() # 400 Error

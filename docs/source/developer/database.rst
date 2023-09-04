@@ -7980,9 +7980,9 @@ workflow_activity
      - False
      - None
      - 
-   * - shared_user_id
-     - shared_user_id
-     - INTEGER
+   * - shared_user_ids
+     - shared_user_ids
+     - JSONB
      - False
      - False
      - None
