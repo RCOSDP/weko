@@ -21,8 +21,6 @@
 """Flask extension for weko-search-ui."""
 
 from . import config
-from .rest import create_blueprint
-from .views import blueprint
 
 
 class WekoSearchUI(object):
@@ -41,6 +39,7 @@ class WekoSearchUI(object):
 
         :param app: The Flask application.
         """
+        from .views import blueprint
         self.init_config(app)
         app.register_blueprint(blueprint)
         app.extensions["weko-search-ui"] = self
@@ -107,6 +106,7 @@ class WekoSearchREST(object):
 
         :param app: An instance of :class:`flask.Flask`.
         """
+        from .rest import create_blueprint
         blueprint = create_blueprint(app, app.config["WEKO_SEARCH_REST_ENDPOINTS"])
         app.register_blueprint(blueprint)
         app.extensions["weko-search-rest"] = self

@@ -327,9 +327,9 @@ def test_get_heading_info(i18n_app):
 class DummySearchResult:
     def __init__(self, result):
         self.result = result
+
     def to_dict(self):
         return self.result
-
 
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResourceAPI -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp

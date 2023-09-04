@@ -150,7 +150,6 @@ from weko_redis.redis import RedisConnection
 from weko_schema_ui.models import OAIServerSchema
 from weko_theme import WekoTheme
 from weko_theme.config import THEME_BODY_TEMPLATE, WEKO_THEME_ADMIN_ITEM_MANAGEMENT_INIT_TEMPLATE
-from weko_theme.views import blueprint as weko_theme_blueprint
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Action, ActionStatus, ActionStatusPolicy, Activity, FlowAction, FlowDefine, WorkFlow
 from weko_search_ui import WekoSearchREST, WekoSearchUI
@@ -715,6 +714,7 @@ def base_app(instance_path, search_class, request):
     # search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
     InvenioRecordsREST(app_)
     app_.register_blueprint(create_blueprint_from_app(app_))
+    from weko_theme.views import blueprint as weko_theme_blueprint
     app_.register_blueprint(weko_theme_blueprint)
     from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
     app_.register_blueprint(invenio_communities_blueprint)

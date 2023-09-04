@@ -44,7 +44,6 @@ from invenio_rest.views import create_api_errorhandler
 from invenio_stats.views import QueryRecordViewCount, QueryFileStatsCount
 from weko_deposit.api import WekoRecord
 from weko_records.serializers import citeproc_v1
-from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE, WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
 from weko_items_ui.scopes import item_read_scope
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -398,6 +397,8 @@ class WekoFilesStats(ContentNegotiatedMethodView):
 
     def get_v1(self, **kwargs):
         try:
+            from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE, WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
+
             # Get object_uuid by pid_value
             pid = PersistentIdentifier.get('recid', kwargs.get('pid_value'))
             record = WekoRecord.get_record(pid.object_uuid)
@@ -489,6 +490,8 @@ class WekoFilesGet(ContentNegotiatedMethodView):
 
     def get_v1(self, **kwargs):
         try:
+            from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE, WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
+
             # Get record
             pid = PersistentIdentifier.get('recid', kwargs.get('pid_value'))
             record = WekoRecord.get_record(pid.object_uuid)

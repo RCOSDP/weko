@@ -37,14 +37,15 @@ from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import count_items, recorrect_private_items_count
+from weko_items_ui.scopes import item_read_scope
 from weko_records.models import ItemType
 
 from .error import VersionNotFoundRESTError, InternalServerError, UnhandledElasticsearchError
 from .api import SearchSetting
 from .query import default_search_factory
-# from .utils import create_limmiter
+from .utils import create_limmiter
 
-# limiter = create_limmiter()
+limiter = create_limmiter()
 
 
 def create_blueprint(app, endpoints):
@@ -515,8 +516,8 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
         self.search_factory = default_search_factory
 
     @require_api_auth(allow_anonymous=True)
-    @require_oauth_scopes('item:read')
-    # @limiter.limit('')
+    @require_oauth_scopes(item_read_scope.id)
+    @limiter.limit('')
     def get(self, **kwargs):
         """Search records.
 

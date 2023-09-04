@@ -165,7 +165,8 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
 
         return oa_policy
 
-    file_path = current_app.config['PDF_COVERPAGE_LANG_FILEPATH']
+    from .views import blueprint
+    file_path = blueprint.root_path + current_app.config['PDF_COVERPAGE_LANG_FILEPATH']
     file_name = current_app.config['PDF_COVERPAGE_LANG_FILENAME']
     cur_lang = current_i18n.language
     lang_file_path = file_path + cur_lang + file_name
@@ -188,12 +189,12 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     pdf.add_font(
         'IPAexg',
         '',
-        current_app.config["JPAEXG_TTF_FILEPATH"],
+        blueprint.root_path + current_app.config["JPAEXG_TTF_FILEPATH"],
         uni=True)
     pdf.add_font(
         'IPAexm',
         '',
-        current_app.config["JPAEXM_TTF_FILEPATH"],
+        blueprint.root_path + current_app.config["JPAEXM_TTF_FILEPATH"],
         uni=True)
 
     # Parameters such as width and height of rows/columns

@@ -21,8 +21,6 @@
 """Flask extension for weko-records-ui."""
 
 from . import config
-from .rest import create_blueprint
-from .views import blueprint
 
 
 class WekoRecordsUI(object):
@@ -41,6 +39,7 @@ class WekoRecordsUI(object):
 
         :param app: The Flask application.
         """
+        from .views import blueprint
         self.init_config(app)
         app.register_blueprint(blueprint)
         app.extensions['weko-records-ui'] = self
@@ -84,6 +83,7 @@ class WekoRecordsCitesREST(object):
 
         :param app: An instance of :class:`flask.Flask`.
         """
+        from .rest import create_blueprint
         self.init_config(app)
         blueprint = create_blueprint(
             app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']
