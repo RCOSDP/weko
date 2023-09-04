@@ -46,8 +46,10 @@ from celery.result import AsyncResult
 from celery.task.control import revoke
 from elasticsearch import ElasticsearchException
 from elasticsearch.exceptions import NotFoundError
-from flask import abort, current_app, has_request_context, request
+from flask import abort, current_app, has_request_context, request, Flask
 from flask_babelex import gettext as _
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from invenio_db import db
 from invenio_files_rest.models import FileInstance, Location, ObjectVersion
@@ -3953,3 +3955,8 @@ def handle_check_filename_consistence(file_paths, meta_filenames):
             errors.append(msg.format("file_path[{}]".format(idx), meta_filename["id"]))
 
     return errors
+
+
+def create_limmiter():
+    from .config import WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT)

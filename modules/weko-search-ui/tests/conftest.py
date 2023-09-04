@@ -59,7 +59,6 @@ from invenio_assets import InvenioAssets
 from invenio_cache import InvenioCache
 from invenio_communities import InvenioCommunities
 from invenio_communities.models import Community
-from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_db.utils import drop_alembic_version_table
@@ -623,7 +622,7 @@ def base_app(instance_path, search_class, request):
                     "application/json": ("weko_records.serializers" ":json_v1_search"),
                 },
                 index_route="/index/",
-                search_api_route="/<string:version>/search",
+                search_api_route="/<string:version>/records",
                 tree_route="/index",
                 item_tree_route="/index/<string:pid_value>",
                 index_move_route="/index/move/<int:index_id>",
@@ -708,7 +707,7 @@ def base_app(instance_path, search_class, request):
     WekoGroups(app_)
     WekoAdmin(app_)
     WekoIndexTree(app_)
-    WekoIndexTreeREST(app_)
+    # WekoIndexTreeREST(app_)
     # WekoTheme(app_)
     # InvenioCommunities(app_)
 
@@ -717,6 +716,7 @@ def base_app(instance_path, search_class, request):
     InvenioRecordsREST(app_)
     app_.register_blueprint(create_blueprint_from_app(app_))
     app_.register_blueprint(weko_theme_blueprint)
+    from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
     app_.register_blueprint(invenio_communities_blueprint)
 
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
