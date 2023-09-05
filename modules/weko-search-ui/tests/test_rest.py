@@ -335,26 +335,42 @@ class DummySearchResult:
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResourceAPI -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_IndexSearchResourceAPI(client_rest, db_register2):
     with patch('invenio_search.api.RecordsSearch.execute', return_value=DummySearchResult({'Test': 'API'})):
-        param = {'size': 2, 'page': 1, 'sort': 'controlnumber'}
-        res = client_rest.get(url('/v1/records', param))
-
+        res = client_rest.get(url('/v1/records'))
         assert res.status_code == 200
         assert res.headers['Cache-Control'] == 'no-store'
         assert res.headers['Pragma'] == 'no-cache'
         assert res.headers['Expires'] == '0'
 
+        param = {'size': 2, 'page': 1}
+        res = client_rest.get(url('/v1/records', param))
+        assert res.status_code == 200
+
+        param = {'cursor': '1234567890123'}
+        res = client_rest.get(url('/v1/records', param))
+        assert res.status_code == 200
+
+        param = {'sort': 'controlnumber'}
+        res = client_rest.get(url('/v1/records', param))
+        assert res.status_code == 200
+        param = {'sort': '-controlnumber'}
+        res = client_rest.get(url('/v1/records', param))
+        assert res.status_code == 200
+
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResourceAPI_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_IndexSearchResourceAPI_error(client_rest, db_register2):
+
+    res = client_rest.get(url('/v0/records'))
+    assert res.status_code == 400
 
     param = {'size': 1000, 'page': 1000}
     res = client_rest.get(url('/v1/records', param))
     assert res.status_code == 400
 
-    param = {'size': 1, 'page': 1000}
-    res = client_rest.get(url('/v0/records', param))
-    assert res.status_code == 400
+    with patch('invenio_search.api.RecordsSearch.execute', side_effect=ElasticsearchException()):
+        res = client_rest.get(url('/v1/records'))
+        assert res.status_code == 500
 
-    with patch('weko_search_ui.query.default_search_factory', MagicMock(side_effect=ElasticsearchException())):
+    with patch('invenio_search.api.RecordsSearch.execute', side_effect=Exception()):
         res = client_rest.get(url('/v1/records'))
         assert res.status_code == 500

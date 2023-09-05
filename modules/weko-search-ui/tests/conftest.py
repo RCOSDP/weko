@@ -349,7 +349,10 @@ def base_app(instance_path, search_class, request):
                     fields=["year"],
                 )
             ),
-            "test-weko": {"test-weko": {"fields": [1,2,3], "nested": 1}}
+            "test-weko": {
+                "test-weko": {"fields": [1,2,3], "nested": 1},
+                'controlnumber': {'title': 'ID', 'fields': ['control_number'], 'default_order': 'asc', 'order': 2,}
+            },
         },
         FILES_REST_DEFAULT_MAX_FILE_SIZE=None,
         WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS=False,
