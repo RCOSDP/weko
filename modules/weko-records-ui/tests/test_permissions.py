@@ -271,7 +271,7 @@ def test_check_publish_status(app):
             "item_type_id": "15",
             "publish_date": "2022-07-18",
             "publish_status": "0",
-            "weko_shared_id": -1,
+            "weko_shared_ids": [],
             "item_1617186331708": {
                 "attribute_name": "Title",
                 "attribute_value_mlt": [
@@ -441,7 +441,7 @@ def test_check_publish_status2(app,publish_status,pubdate,expect_result):
             "item_type_id": "15",
             "publish_date": "2022-07-18",
             "publish_status": "0",
-            "weko_shared_id": -1,
+            "weko_shared_ids": [],
             "item_1617186331708": {
                 "attribute_name": "Title",
                 "attribute_value_mlt": [
@@ -578,7 +578,7 @@ def test_check_created_id(app, users):
         "item_type_id": "15",
         "publish_date": "2022-07-12",
         "publish_status": "0",
-        "weko_shared_id": -1,
+        "weko_shared_ids": [],
         "item_1617186331708": {
             "attribute_name": "Title",
             "attribute_value_mlt": [
@@ -598,7 +598,7 @@ def test_check_created_id(app, users):
     }
     assert record.get("_deposit", {}).get("created_by") == 1
     assert record.get("item_type_id") == "15"
-    assert record.get("weko_shared_id") == -1
+    assert record.get("weko_shared_ids") == []
 
     supers = app.config["WEKO_PERMISSION_SUPER_ROLE_USER"]
     user_roles = app.config["WEKO_PERMISSION_ROLE_USER"]
@@ -609,13 +609,13 @@ def test_check_created_id(app, users):
             assert current_user.is_authenticated == False
             assert record.get("_deposit", {}).get("created_by") == 1
             assert record.get("item_type_id") == "15"
-            assert record.get("weko_shared_id") == -1
+            assert record.get("weko_shared_ids") == []
             assert check_created_id(record) == False
             ## no item type
             record["item_type_id"] = ""
             assert record.get("_deposit", {}).get("created_by") == 1
             assert record.get("item_type_id") == ""
-            assert record.get("weko_shared_id") == -1
+            assert record.get("weko_shared_ids") == []
             assert check_created_id(record) == False
             record["item_type_id"] = "15"
 
@@ -647,21 +647,21 @@ def test_check_created_id(app, users):
                 record["item_type_id"] = ""
                 assert record.get("item_type_id") == ""
                 record["_deposit"]["created_by"] = obj.id
-                record["weko_shared_id"] = -1
+                record["weko_shared_ids"] = []
                 assert record.get("_deposit", {}).get("created_by") == obj.id
-                assert record.get("weko_shared_id") == -1
+                assert record.get("weko_shared_ids") == []
                 assert check_created_id(record) == True
 
                 record["_deposit"]["created_by"] = -1
-                record["weko_shared_id"] = obj.id
+                record["weko_shared_ids"] = [obj.id]
                 assert record.get("_deposit", {}).get("created_by") == -1
-                assert record.get("weko_shared_id") == obj.id
+                assert record.get("weko_shared_ids") == [obj.id]
                 assert check_created_id(record) == True
 
                 record["_deposit"]["created_by"] = -1
-                record["weko_shared_id"] = -1
+                record["weko_shared_ids"] = []
                 assert record.get("_deposit", {}).get("created_by") == -1
-                assert record.get("weko_shared_id") == -1
+                assert record.get("weko_shared_ids") == []
                 if super_flg:
                     assert check_created_id(record) == True
                 else:
@@ -672,30 +672,30 @@ def test_check_created_id(app, users):
 
                 # created_by
                 record["_deposit"]["created_by"] = obj.id
-                record["weko_shared_id"] = -1
+                record["weko_shared_ids"] = []
                 assert record.get("_deposit", {}).get("created_by") == obj.id
-                assert record.get("weko_shared_id") == -1
+                assert record.get("weko_shared_ids") == []
                 assert check_created_id(record) == True
 
-                # weko_shared_id
+                # weko_shared_ids
                 record["_deposit"]["created_by"] = -1
-                record["weko_shared_id"] = obj.id
+                record["weko_shared_ids"] = [obj.id]
                 assert record.get("_deposit", {}).get("created_by") == -1
-                assert record.get("weko_shared_id") == obj.id
+                assert record.get("weko_shared_ids") == [obj.id]
                 assert check_created_id(record) == True
 
-                # created_id and weko_shared_id
+                # created_id and weko_shared_ids
                 record["_deposit"]["created_by"] = obj.id
-                record["weko_shared_id"] = obj.id
+                record["weko_shared_ids"] = [obj.id]
                 assert record.get("_deposit", {}).get("created_by") == obj.id
-                assert record.get("weko_shared_id") == obj.id
+                assert record.get("weko_shared_ids") == [obj.id]
                 assert check_created_id(record) == True
 
-                # no created_id and weko_shared_id
+                # no created_id and weko_shared_ids
                 record["_deposit"]["created_by"] = -1
-                record["weko_shared_id"] = -1
+                record["weko_shared_ids"] = []
                 assert record.get("_deposit", {}).get("created_by") == -1
-                assert record.get("weko_shared_id") == -1
+                assert record.get("weko_shared_ids") == []
                 if super_flg:
                     assert check_created_id(record) == True
                 else:
@@ -756,14 +756,14 @@ def test_is_owners_or_superusers(app,records,users):
             assert is_owners_or_superusers(testrec) 
 
             testrec['owner'] = -1
-            testrec['weko_shared_id'] = userId
+            testrec['weko_shared_ids'] = [userId]
             assert is_owners_or_superusers(testrec)
 
             testrec['owner'] = -1
-            testrec['weko_shared_id'] = None
+            testrec['weko_shared_ids'] = None
             assert not is_owners_or_superusers(testrec)
 
-            testrec['weko_shared_id'] = -1
+            testrec['weko_shared_ids'] = []
         # repoadmin
         with  patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
             assert is_owners_or_superusers(testrec)

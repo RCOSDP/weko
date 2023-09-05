@@ -238,7 +238,7 @@ def json_loader(data, pid, owner_id=None):
         jrc.update(dict(author_link=author_link))
 
         # save items's creator to check permission
-        if current_user:
+        if current_user and current_user.get_id():
             current_user_id = current_user.get_id()
         else:
             current_user_id = "1"

@@ -817,7 +817,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
         "item_type_id": "1",
         "publish_date": "2021-08-06",
         "publish_status": "0",
-        "weko_shared_id": -1,
+        "weko_shared_ids": [],
         "item_1617186331708": {
             "attribute_name": "Title",
             "attribute_value_mlt": [
@@ -1951,7 +1951,7 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
         "item_type_id": "1",
         "publish_date": "2021-08-06",
         "publish_status": "0",
-        "weko_shared_id": -1,
+        "weko_shared_ids": [],
         "item_1617186331708": {
             "attribute_name": "Title",
             "attribute_value_mlt": [
@@ -3146,7 +3146,7 @@ def workflows(app, db, workflow_actions, itemtypes, users, records):
         activity_community_id=3,
         activity_confirm_term_of_use=True,
         title="test",
-        shared_user_id=-1,
+        shared_user_ids=[],
         extra_info={},
         action_order=6,
     )
@@ -3164,7 +3164,7 @@ def workflows(app, db, workflow_actions, itemtypes, users, records):
         activity_community_id=3,
         activity_confirm_term_of_use=True,
         title="Data Usage Report",
-        shared_user_id=-1,
+        shared_user_ids=[],
         extra_info={
             "related_title": "Data Usage Report",
             "record_id": 1,

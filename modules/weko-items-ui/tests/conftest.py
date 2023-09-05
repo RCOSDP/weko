@@ -915,7 +915,7 @@ def db_workflow(app, db, db_itemtype, users):
         activity_community_id=3,
         activity_confirm_term_of_use=True,
         title="test",
-        shared_user_id=-1,
+        shared_user_ids=[],
         extra_info={},
         action_order=6,
     )
@@ -974,7 +974,7 @@ def db_activity(db, db_records, db_itemtype, db_workflow, users):
         ),
         activity_confirm_term_of_use=True,
         title="test",
-        shared_user_id=-1,
+        shared_user_ids=[],
         extra_info={},
         action_order=6,
     )

@@ -1245,7 +1245,7 @@ def db_register(app, db):
         activity_community_id=3,
         activity_confirm_term_of_use=True,
         title="test",
-        shared_user_id=-1,
+        shared_user_ids=[],
         extra_info={},
         action_order=6,
     )
@@ -1842,7 +1842,7 @@ def db_activity(db, db_records2, db_itemtype, db_workflow, users):
         ),
         activity_confirm_term_of_use=True,
         title="test",
-        shared_user_id=-1,
+        shared_user_ids=[],
         extra_info={},
         action_order=6,
     )
@@ -1948,7 +1948,7 @@ def db_workflow(app, db, db_itemtype, users):
         activity_community_id=3,
         activity_confirm_term_of_use=True,
         title="test",
-        shared_user_id=-1,
+        shared_user_ids=[],
         extra_info={},
         action_order=6,
     )
@@ -2309,7 +2309,7 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
                 "item_type_id": "1",
                 "publish_date": "2022-08-20",
                 "publish_status": "1",
-                "weko_shared_id": -1,
+                "weko_shared_ids": [],
                 "item_1617186331708": {
                     "attribute_name": "Title",
                     "attribute_value_mlt": [
@@ -2381,7 +2381,7 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
                     "username": "",
                     "displayname": "",
                 },
-                "shared_user_id": -1,
+                "shared_user_ids": [],
                 "item_1617186331708": [
                     {"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},
                     {"subitem_1551255647225": "title", "subitem_1551255648112": "en"},
@@ -2743,7 +2743,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype, doi_prefix=None):
         "item_type_id": "1",
         "publish_date": "2021-08-06",
         "publish_status": "0",
-        "weko_shared_id": -1,
+        "weko_shared_ids": [],
         "item_1617186331708": {
             "attribute_name": "Title",
             "attribute_value_mlt": [

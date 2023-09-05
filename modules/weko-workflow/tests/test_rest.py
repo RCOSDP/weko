@@ -637,12 +637,13 @@ def test_FileApplicationActivity_post(app, client, db, db_register_for_applicati
     body = application_api_request_body[0]
     res_check = 0   # OK
     with patch('weko_workflow.rest.check_authority_action', return_value=res_check):
-        res = client.post(
-            url(f'/{version}/workflow/activities/{activity_id}/application', params),
-            data=json.dumps(body),
-            content_type='application/json',
-            headers=headers_student,
-        )
+        with patch("weko_handle.api.Handle.register_handle",return_value="handle:00.000.12345/0000000001"):
+            res = client.post(
+                url(f'/{version}/workflow/activities/{activity_id}/application', params),
+                data=json.dumps(body),
+                content_type='application/json',
+                headers=headers_student,
+            )
     assert res.status_code == 200
     try:
         res_json = json.loads(res.get_data())
@@ -674,12 +675,13 @@ def test_FileApplicationActivity_post(app, client, db, db_register_for_applicati
     body = application_api_request_body[0]
     token_valid = True
     with patch('weko_workflow.rest.validate_guest_activity_token', return_value=(token_valid, with_index_guest_activity_id, "guest@example.org")):
-        res = client.post(
-            url(f'/{version}/workflow/activities/{with_index_guest_activity_id}/application', params),
-            data=json.dumps(body),
-            content_type='application/json',
-            headers=headers_not_login,
-        )
+        with patch("weko_handle.api.Handle.register_handle",return_value="handle:00.000.12345/0000000002"):
+            res = client.post(
+                url(f'/{version}/workflow/activities/{with_index_guest_activity_id}/application', params),
+                data=json.dumps(body),
+                content_type='application/json',
+                headers=headers_not_login,
+            )
     assert res.status_code == 200
     try:
         res_json = json.loads(res.get_data())

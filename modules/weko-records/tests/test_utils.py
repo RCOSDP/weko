@@ -82,7 +82,7 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, records
         'item_title': ['Back to the Future'],
         'item_type_id': '2',
         'owner': '1',
-        'weko_shared_id': -1
+        'weko_shared_ids': []
     }
     _jrc_data = {
         '_item_metadata': {
@@ -97,7 +97,7 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, records
             'control_number': '1',
             'author_link': [],
             '_oai': {'id': '1'},
-            'weko_shared_id': -1,
+            'weko_shared_ids': [],
             'owner': '1'
         },
         '_oai': {'id': '1'},
@@ -106,7 +106,7 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, records
         'itemtype': 'test2',
         'publish_date': None,
         'weko_creator_id': '1',
-        'weko_shared_id': -1
+        'weko_shared_ids': []
     }
 
     # do nothing

@@ -810,7 +810,7 @@ def activities(db,flows,records,users):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item1', shared_user_id=-1, extra_info={},
+                    title='test item1', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
     db.session.add(activity_item1)
@@ -820,7 +820,7 @@ def activities(db,flows,records,users):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item31001', shared_user_id=-1, extra_info={},
+                    title='test item31001', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
     db.session.add(activity_31001)
@@ -830,7 +830,7 @@ def activities(db,flows,records,users):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item1', shared_user_id=-1, extra_info={"is_guest":True,"guest_mail":"test.guest@test.org","file_name":"test_file"},
+                    title='test item1', shared_user_ids=[], extra_info={"is_guest":True,"guest_mail":"test.guest@test.org","file_name":"test_file"},
                     action_order=1,
                     )
     
@@ -841,7 +841,7 @@ def activities(db,flows,records,users):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item1', shared_user_id=-1, 
+                    title='test item1', shared_user_ids=[], 
                     extra_info={"usage_activity_id":"3","usage_application_record_data":{"subitem_restricted_access_name":"test_access_name",}},
                     action_order=1,
                     )

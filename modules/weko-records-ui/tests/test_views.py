@@ -951,7 +951,7 @@ def test__get_show_secret_url_button(users,records ,db_restricted_access_secret,
     role = ["open_access" , "open_no" ,"open_date"]
     for record in results:
         record["record"]['owner'] = users[5]["id"]
-        record["record"]['weko_shared_id'] = users[7]["id"]
+        record["record"]['weko_shared_ids'] = [users[7]["id"]]
         record["record"].get_file_data()[0].update({'accessrole':role[i]})
         record["record"].get_file_data()[0].update({'date':[{"dateValue" :'2999-12-31'}]})
         i = i + 1
@@ -981,7 +981,7 @@ def test__get_show_secret_url_button2(users,records ,id,is_show):
     role = ["open_access" , "open_no" ,"open_date"]
     for record in results:
         record["record"]['owner'] = users[5]["id"]
-        record["record"]['weko_shared_id'] = users[7]["id"]
+        record["record"]['weko_shared_ids'] = [users[7]["id"]]
         record["record"].get_file_data()[0].update({'accessrole':role[i]})
         record["record"].get_file_data()[0].update({'date':[{"dateValue" :'2999-12-31'}]})
         i = i + 1
@@ -1009,7 +1009,7 @@ def test__get_show_secret_url_button3(users,records ,db_restricted_access_secret
     role = ["open_access" , "open_no" ,"open_date"]
     for record in results:
         record["record"]['owner'] = users[5]["id"]
-        record["record"]['weko_shared_id'] = users[7]["id"]
+        record["record"]['weko_shared_ids'] = [users[7]["id"]]
         record["record"].get_file_data()[0].update({'accessrole':role[i]})
         record["record"].get_file_data()[0].update({'date':[{"dateValue" :'1999-12-31'}]})
         i = i + 1

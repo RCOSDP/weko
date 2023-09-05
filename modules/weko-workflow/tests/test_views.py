@@ -492,7 +492,7 @@ def test_find_doi_users(client, users, users_index, status_code):
 def test_save_activity_acl_nologin(client):
     """Test of save activity."""
     url = url_for('weko_workflow.save_activity')
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
 
     res = client.post(url, json=input)
     assert res.status_code == 302
@@ -512,13 +512,13 @@ def test_save_activity_acl_users(client, users, users_index, status_code):
     """Test of save activity."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.save_activity')
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
     with patch('weko_workflow.views.save_activity_data'):
         res = client.post(url, json=input)
         assert res.status_code != 302 
 
 def test_save_activity_acl_guestlogin(guest):
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
     url = url_for('weko_workflow.save_activity')
 
     res = guest.post(url, json=input)
@@ -541,9 +541,9 @@ def test_save_activity(client, users, db_register, users_index, status_code):
     data = response_data(res)
     assert res.status_code== 400
     assert data["code"] == -1
-    assert data["msg"] == "{'shared_user_id': ['Missing data for required field.']}"
+    assert data["msg"] == "{'shared_user_ids': ['Missing data for required field.']}"
     
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
     with patch('weko_workflow.views.save_activity_data'):
         res = client.post(url, json=input)
         data = response_data(res)
@@ -567,9 +567,9 @@ def test_save_activity_guestlogin(guest):
     data = response_data(res)
     assert res.status_code== 400
     assert data["code"] == -1
-    assert data["msg"] == "{'shared_user_id': ['Missing data for required field.']}"
+    assert data["msg"] == "{'shared_user_ids': ['Missing data for required field.']}"
 
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
     with patch('weko_workflow.views.save_activity_data'):
         res = guest.post(url, json=input)
         data = response_data(res)
@@ -2329,7 +2329,7 @@ def test_get_feedback_maillist(client, users, db_register, users_index, status_c
 def test_save_activity_acl_nologin(client,db_register2):
     """Test of save activity."""
     url = url_for('weko_workflow.save_activity')
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
 
     res = client.post(url, json=input)
     assert res.status_code == 302
@@ -2348,7 +2348,7 @@ def test_save_activity_acl_users(client, users, users_index, status_code):
     """Test of save activity."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.save_activity')
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
     with patch('weko_workflow.views.save_activity_data'):
         res = client.post(url, json=input)
         assert res.status_code != 302
@@ -2356,7 +2356,7 @@ def test_save_activity_acl_users(client, users, users_index, status_code):
 
 #save_activityは@login_required_customizeなのでguestuserloginのテストも必要
 def test_save_activity_acl_guestlogin(guest,db_register2):
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
     url = url_for('weko_workflow.save_activity')
 
     res = guest.post(url, json=input)
@@ -2381,9 +2381,9 @@ def test_save_activity(client, users, db_register, users_index, status_code):
     data = response_data(res)
     assert res.status_code== 400
     assert data["code"] == -1
-    assert data["msg"] == "{'shared_user_id': ['Missing data for required field.']}"
+    assert data["msg"] == "{'shared_user_ids': ['Missing data for required field.']}"
 
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
     with patch('weko_workflow.views.save_activity_data'):
         res = client.post(url, json=input)
         data = response_data(res)
@@ -2408,9 +2408,9 @@ def test_save_activity_guestlogin(guest,db_register2):
     data = response_data(res)
     assert res.status_code== 400
     assert data["code"] == -1
-    assert data["msg"] == "{'shared_user_id': ['Missing data for required field.']}"
+    assert data["msg"] == "{'shared_user_ids': ['Missing data for required field.']}"
 
-    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_id":-1}
+    input = {"activity_id":"A-20220921-00001","title":"test","shared_user_ids":[]}
     with patch('weko_workflow.views.save_activity_data'):
         res = guest.post(url, json=input)
         data = response_data(res)
@@ -2547,7 +2547,7 @@ def test_display_activity(client, users, db_register, users_index, status_code,m
     item_metadata = ItemMetadata()
     item_metadata.id = '37075580-8442-4402-beee-05f62e6e1dc2'
     # item_metadata = {'created':datetime.strptime("2022-09-22 05:09:54.677307", "%Y-%m-%d %H:%M:%S.%f"),'updated':datetime.strptime("2022-09-22 05:09:54.677307", "%Y-%m-%d %H:%M:%S.%f"),
-    #                 'id':'37075580-8442-4402-beee-05f62e6e1dc2','item_type_id':15,'json': {"id": "1", "pid": {"type": "depid", "value": "1", "revision_id": 0}, "lang": "ja", "owner": "1", "title": "title", "owners": [1], "status": "published", "$schema": "/items/jsonschema/15", "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_id": -1, "item_1617186331708": [{"subitem_1551255647225": "ff", "subitem_1551255648112": "ja"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}}
+    #                 'id':'37075580-8442-4402-beee-05f62e6e1dc2','item_type_id':15,'json': {"id": "1", "pid": {"type": "depid", "value": "1", "revision_id": 0}, "lang": "ja", "owner": "1", "title": "title", "owners": [1], "status": "published", "$schema": "/items/jsonschema/15", "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_ids": [], "item_1617186331708": [{"subitem_1551255647225": "ff", "subitem_1551255648112": "ja"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}}
     #                 ,'version_id':3}
     item = None
     steps = 1

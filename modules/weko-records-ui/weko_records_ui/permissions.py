@@ -449,10 +449,10 @@ def check_publish_status(record):
 #                 break
 #             if lst.name == users[2]:
 #                 is_himself = False
-#                 shared_id = record.get('weko_shared_id')
+#                 shared_ids = record.get('weko_shared_ids')
 #                 if user_id and created_id and user_id == str(created_id):
 #                     is_himself = True
-#                 elif user_id and shared_id and user_id == str(shared_id):
+#                 elif user_id and shared_ids and str(user_id) in shared_ids:
 #                     is_himself = True
 #             elif lst.name == users[3]:
 #                 is_himself = False

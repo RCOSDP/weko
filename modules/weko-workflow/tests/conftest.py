@@ -989,7 +989,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test', shared_user_id=-1, extra_info={},
+                    title='test', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
     activity2 = Activity(activity_id='A-00000001-10001',workflow_id=1, flow_id=flow_define.id,
@@ -999,7 +999,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test', shared_user_id=-1, extra_info={},
+                    title='test', shared_user_ids=[], extra_info={},
                     action_order=6)
 
     activity3 = Activity(activity_id='A-00000001-10002',workflow_id=1, flow_id=flow_define.id,
@@ -1009,7 +1009,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test', shared_user_id=-1, extra_info={},
+                    title='test', shared_user_ids=[], extra_info={},
                     action_order=6)
     activity_item1 = Activity(activity_id='2',item_id=db_records[2][2].id,workflow_id=1, flow_id=flow_define.id,
                     action_id=1, activity_login_user=users[3]["id"],
@@ -1017,7 +1017,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item1', shared_user_id=-1, extra_info={},
+                    title='test item1', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
     activity_item2 = Activity(activity_id='3', workflow_id=1, flow_id=flow_define.id,
@@ -1026,7 +1026,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item2', shared_user_id=-1, extra_info={},
+                    title='test item2', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
     activity_item3 = Activity(activity_id='4', workflow_id=1, flow_id=flow_define.id,
@@ -1035,7 +1035,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item3', shared_user_id=-1, extra_info={},
+                    title='test item3', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
     activity_item4 = Activity(activity_id='5', workflow_id=1, flow_id=flow_define.id,
@@ -1044,7 +1044,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item4', shared_user_id=-1, extra_info={},
+                    title='test item4', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
     activity_item5 = Activity(activity_id='6', workflow_id=1, flow_id=flow_define.id,
@@ -1053,7 +1053,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item5', shared_user_id=-1, extra_info={},
+                    title='test item5', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
     activity_item6 = Activity(activity_id='7', workflow_id=1, flow_id=flow_define.id,
@@ -1062,7 +1062,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item5', shared_user_id=-1, extra_info={},
+                    title='test item5', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
     activity_item7 = Activity(activity_id='8', item_id=db_records[0][2].id,workflow_id=1, flow_id=flow_define.id,
@@ -1071,7 +1071,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item8', shared_user_id=-1, extra_info={},
+                    title='test item8', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
     activity_item8 = Activity(activity_id='9', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
@@ -1080,7 +1080,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item8', shared_user_id=-1, extra_info={},
+                    title='test item8', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
     activity_guest = Activity(activity_id='guest', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
@@ -1089,7 +1089,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item8', shared_user_id=-1,
+                    title='test item8', shared_user_ids=[],
                     action_order=1,
                     extra_info={"guest_mail":"guest@test.org","related_title":"related_guest_activity","usage_record_id":str(db_records[1][2].id),"usage_activity_id":str(uuid.uuid4())}
                     )
@@ -1170,7 +1170,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item5', shared_user_id=-1, extra_info={},
+                    title='test item5', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
     with db.session.begin_nested():
@@ -1612,7 +1612,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                 activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                 activity_community_id=3,
                 activity_confirm_term_of_use=True,
-                title='test', shared_user_id=-1, extra_info={},
+                title='test', shared_user_ids=[], extra_info={},
                 action_order=1,
                 )
     activity2 = Activity(activity_id='A-00000001-10001',workflow_id=1, flow_id=flow_define.id,
@@ -1622,7 +1622,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test', shared_user_id=-1, extra_info={},
+                    title='test', shared_user_ids=[], extra_info={},
                     action_order=6)
 
     activity3 = Activity(activity_id='A-00000001-10002',workflow_id=1, flow_id=flow_define.id,
@@ -1632,7 +1632,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test', shared_user_id=-1, extra_info={},
+                    title='test', shared_user_ids=[], extra_info={},
                     action_order=6)
     # identifier登録あり
     activity_item1 = Activity(activity_id='2',item_id=db_records[2][2].id,workflow_id=1, flow_id=flow_define.id,
@@ -1641,7 +1641,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item1', shared_user_id=-1, extra_info={},
+                    title='test item1', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
     # identifier登録なし
@@ -1651,7 +1651,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item1', shared_user_id=-1, extra_info={},
+                    title='test item1', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
     # ゲスト作成アクティビティ
@@ -1661,7 +1661,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item1', shared_user_id=-1, extra_info={"guest_mail":"guest@test.org"},
+                    title='test item1', shared_user_ids=[], extra_info={"guest_mail":"guest@test.org"},
                     action_order=1,
                     )
     # item_idが"."を含まない
@@ -1671,7 +1671,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item1', shared_user_id=-1, extra_info={"guest_mail":"guest@test.org"},
+                    title='test item1', shared_user_ids=[], extra_info={"guest_mail":"guest@test.org"},
                     action_order=1,
                     )
     # not identifier value in without_ver
@@ -1681,7 +1681,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                 activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                 activity_community_id=3,
                 activity_confirm_term_of_use=True,
-                title='test item1', shared_user_id=-1, extra_info={"guest_mail":"guest@test.org"},
+                title='test item1', shared_user_ids=[], extra_info={"guest_mail":"guest@test.org"},
                 action_order=1,
                 )
     # same identifier with without_ver
@@ -1691,7 +1691,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                 activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                 activity_community_id=3,
                 activity_confirm_term_of_use=True,
-                title='test item1', shared_user_id=-1, extra_info={"guest_mail":"guest@test.org"},
+                title='test item1', shared_user_ids=[], extra_info={"guest_mail":"guest@test.org"},
                 action_order=1,
                 )
     with db.session.begin_nested():
@@ -2049,7 +2049,7 @@ def db_register_usage_application(app, db, db_records, users, action_data, item_
                     activity_community_id=None,
                     activity_confirm_term_of_use=True,
                     title='test'
-                    , shared_user_id=-1
+                    , shared_user_ids=[]
                     , extra_info={},
                     action_order=2)
     activity1_pre_action = ActivityAction(
@@ -2079,7 +2079,7 @@ def db_register_usage_application(app, db, db_records, users, action_data, item_
                     , activity_community_id=3
                     , activity_confirm_term_of_use=True
                     , title='test'
-                    , shared_user_id=-1
+                    , shared_user_ids=[]
                     , extra_info={}
                     , action_order=3)
     activity2_pre_action = ActivityAction(
@@ -2117,7 +2117,7 @@ def db_register_usage_application(app, db, db_records, users, action_data, item_
                         ,activity_community_id=3
                         ,activity_confirm_term_of_use=True
                         ,title='test'
-                        ,shared_user_id=-1
+                        ,shared_user_ids=[]
                         ,extra_info={"file_name": "aaa.txt", "record_id": "1", "user_mail": "aaa@test.org", "related_title": "test", "is_restricted_access": True}
                         ,action_order=3)
     activity3_pre_action = ActivityAction(
@@ -2147,7 +2147,7 @@ def db_register_usage_application(app, db, db_records, users, action_data, item_
                         ,activity_community_id=3
                         ,activity_confirm_term_of_use=True
                         ,title='test'
-                        ,shared_user_id=-1
+                        ,shared_user_ids=[]
                         ,extra_info={"file_name": "aaa.txt", "record_id": "1", "user_mail": "aaa@test.org", "related_title": "test", "is_restricted_access": True}
                         ,action_order=4)
     activity4_pre_action = ActivityAction(
@@ -2384,7 +2384,7 @@ def db_register_approval(app, db, db_records, workflow_approval, users):
             activity_start=datetime.strptime('2023/07/10 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
             activity_community_id=3,
             activity_confirm_term_of_use=True,
-            title='test', shared_user_id=-1, extra_info={}, action_order=5,
+            title='test', shared_user_ids=[], extra_info={}, action_order=5,
         )
     )
     # Next action is item register
@@ -2395,7 +2395,7 @@ def db_register_approval(app, db, db_records, workflow_approval, users):
             activity_start=datetime.strptime('2023/07/10 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
             activity_community_id=3,
             activity_confirm_term_of_use=True,
-            title='test', shared_user_id=-1, extra_info={}, action_order=2,
+            title='test', shared_user_ids=[], extra_info={}, action_order=2,
         )
     )
     with db.session.begin_nested():
@@ -2519,7 +2519,7 @@ def db_register_activity(app, db, db_records, workflow_approval, users):
             activity_community_id=3,
             activity_confirm_term_of_use=True,
             title='contributor-todo',
-            shared_user_id=users[0]['id'],
+            shared_user_ids=[users[0]['id']],
             extra_info={},
             action_order=5
         )
@@ -2538,7 +2538,7 @@ def db_register_activity(app, db, db_records, workflow_approval, users):
             activity_community_id=3,
             activity_confirm_term_of_use=True,
             title='sysadmin-todo',
-            shared_user_id=users[2]['id'],
+            shared_user_ids=[users[2]['id']],
             extra_info={},
             action_order=7
         )
@@ -2557,7 +2557,7 @@ def db_register_activity(app, db, db_records, workflow_approval, users):
             activity_community_id=3,
             activity_confirm_term_of_use=True,
             title='contributor-wait',
-            shared_user_id=users[2]['id'],
+            shared_user_ids=[users[2]['id']],
             extra_info={},
             action_order=5
         )
@@ -2794,7 +2794,7 @@ def activity_with_roles(app, workflow, db, item_type, users):
                 "username": "sample",
                 "displayname": "sample"
             },
-            "shared_user_id": -1,
+            "shared_user_ids": [],
             "item_1617186331708": [
                 {
                 "subitem_1551255647225": "sample01",
@@ -2819,7 +2819,7 @@ def activity_with_roles(app, workflow, db, item_type, users):
         activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
         activity_community_id=3,
         activity_confirm_term_of_use=True,
-        title='test', shared_user_id=-1, extra_info={},
+        title='test', shared_user_ids=[], extra_info={},
         action_order=6, item_id=item_metdata.model.id,
         action_status=ActionStatusPolicy.ACTION_BEGIN
     )
@@ -3026,7 +3026,7 @@ def db_register_for_application_api(app, db, users, db_register_for_application_
                         ,activity_community_id=None
                         ,activity_confirm_term_of_use=True
                         ,title=None
-                        ,shared_user_id=-1
+                        ,shared_user_ids=[]
                         ,extra_info={"file_name": "test.txt", "record_id": "1", "user_mail": users[8]["email"], "related_title": "test", "is_restricted_access": True}
                         ,action_order=2)
     activity1_pre_action = ActivityAction(
@@ -3065,7 +3065,7 @@ def db_register_for_application_api(app, db, users, db_register_for_application_
                         ,activity_community_id=None
                         ,activity_confirm_term_of_use=True
                         ,title=None
-                        ,shared_user_id=-1
+                        ,shared_user_ids=[]
                         ,extra_info={"file_name": "test.txt", "record_id": "1", "guest_mail": "guest@example.org", "related_title": "test", "is_restricted_access": True}
                         ,action_order=2)
     activity2_pre_action = ActivityAction(
@@ -3105,7 +3105,7 @@ def db_register_for_application_api(app, db, users, db_register_for_application_
                         ,activity_community_id=None
                         ,activity_confirm_term_of_use=True
                         ,title=None
-                        ,shared_user_id=1
+                        ,shared_user_ids=[1]
                         ,extra_info={"file_name": "test.txt", "record_id": "1", "user_mail": users[8]["email"], "related_title": "test", "is_restricted_access": True}
                         ,action_order=4)
     activity3_action1 = ActivityAction(
@@ -3150,7 +3150,7 @@ def db_register_for_application_api(app, db, users, db_register_for_application_
                         ,activity_community_id=None
                         ,activity_confirm_term_of_use=True
                         ,title=None
-                        ,shared_user_id=-1
+                        ,shared_user_ids=[]
                         ,extra_info={"file_name": "test.txt", "record_id": "1", "guest_mail": "guest@example.org", "related_title": "test", "is_restricted_access": True}
                         ,action_order=3)
     activity4_action1 = ActivityAction(
@@ -3204,7 +3204,7 @@ def db_register_for_application_api(app, db, users, db_register_for_application_
                         ,activity_community_id=None
                         ,activity_confirm_term_of_use=True
                         ,title=None
-                        ,shared_user_id=-1
+                        ,shared_user_ids=[]
                         ,extra_info={"file_name": "test.txt", "record_id": "1", "guest_mail": "guest@example.org", "related_title": "test", "is_restricted_access": True}
                         ,action_order=2)
     activity5_pre_action = ActivityAction(
@@ -3244,7 +3244,7 @@ def db_register_for_application_api(app, db, users, db_register_for_application_
                         ,activity_community_id=None
                         ,activity_confirm_term_of_use=True
                         ,title=None
-                        ,shared_user_id=-1
+                        ,shared_user_ids=[]
                         ,extra_info={"file_name": "test.txt", "record_id": "1", "user_mail": users[8]["email"], "related_title": "test", "is_restricted_access": True}
                         ,action_order=2)
     activity6_pre_action = ActivityAction(
@@ -3574,7 +3574,7 @@ def make_record_restricted(db, indexer, id, index_id, item_type_id, userId):
         "item_type_id": f"{item_type_id}",
         "publish_date": "2021-08-06",
         "publish_status": "1",
-        "weko_shared_id": -1,
+        "weko_shared_ids": [],
         "item_1616221831877": {
             "subitem_restricted_access_dataset_usage": "edit_item"
         },

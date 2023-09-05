@@ -44,7 +44,7 @@ def test_get_permission_filter(i18n_app, users, client_request_args, indices):
         mock_searchperm = MagicMock(side_effect=MockSearchPerm)
         with patch('weko_search_ui.query.search_permission', mock_searchperm):
             res = get_permission_filter()
-            assert res==([Bool(must=[Terms(path=['1'])], should=[Match(weko_creator_id='5'), Match(weko_shared_id='5'), Bool(must=[Match(publish_status='0'), Range(publish_date={'lte': 'now/d'})])]), Bool(must=[Match(relation_version_is_last='true')])], ['1'])
+            assert res==([Bool(must=[Terms(path=['1'])], should=[Match(weko_creator_id='5'), Match(weko_shared_ids=['5']), Bool(must=[Match(publish_status='0'), Range(publish_date={'lte': 'now/d'})])]), Bool(must=[Match(relation_version_is_last='true')])], ['1'])
 
 
 # def default_search_factory(self, search, query_parser=None, search_type=None):
@@ -124,7 +124,7 @@ def test_item_path_search_factory(i18n_app, users, indices):
             with patch('weko_search_ui.query.search_permission', mock_searchperm):
                 res = item_path_search_factory(self=None, search=search, index_id=33)
                 assert res
-                _rv = ([Bool(must=[Terms(path=[])], should=[Match(weko_creator_id='5'), Match(weko_shared_id='5'), Bool(must=[Match(publish_status='0'), Range(publish_date={'lte': 'now/d'})])]), Bool(must=[Match(relation_version_is_last='true')])], ['3', '4', '5'])
+                _rv = ([Bool(must=[Terms(path=[])], should=[Match(weko_creator_id='5'), Match(weko_shared_ids=['5']), Bool(must=[Match(publish_status='0'), Range(publish_date={'lte': 'now/d'})])]), Bool(must=[Match(relation_version_is_last='true')])], ['3', '4', '5'])
                 with patch('weko_search_ui.query.get_permission_filter', return_value=_rv):
                     res = item_path_search_factory(self=None, search=search, index_id=None)
                     assert res

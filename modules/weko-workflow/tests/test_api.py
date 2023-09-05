@@ -378,7 +378,7 @@ def test_WorkActivity_query_activities_by_tab_is_todo(app, workflow, db, users, 
                     "username": "sample",
                     "displayname": "sample"
                 },
-                "shared_user_id": -1,
+                "shared_user_ids": [],
                 "item_1617186331708": [
                     {
                     "subitem_1551255647225": "sample01",
@@ -404,7 +404,7 @@ def test_WorkActivity_query_activities_by_tab_is_todo(app, workflow, db, users, 
             activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
             activity_community_id=3,
             activity_confirm_term_of_use=True,
-            title='test', shared_user_id=-1, extra_info={},
+            title='test', shared_user_ids=[], extra_info={},
             action_order=6, item_id=item_metdata.model.id,
         )
         with db.session.begin_nested():
