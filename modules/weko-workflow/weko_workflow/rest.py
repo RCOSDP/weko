@@ -707,7 +707,7 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
             save_activity_data(dict(
                 activity_id = activity_id,
                 title = activity.get('item_title'),
-                shared_user_id = -1
+                shared_user_ids = []
             ))
             
             # Do ItemRegistration action
