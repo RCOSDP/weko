@@ -738,7 +738,9 @@ def test_check_created_id(app, users):
                 
                 record["_deposit"]["created_by"] = -1
                 record["weko_shared_ids"] = []
+                record["weko_shared_ids"] = []
                 assert record.get("_deposit", {}).get("created_by") == -1
+                assert record.get("weko_shared_ids") == []
                 assert record.get("weko_shared_ids") == []
                 if super_flg:
                     assert check_created_id(record) == True

@@ -137,3 +137,20 @@ def test_item_login(app,client,db_itemtype,db_itemtype2,db_itemtype3,db_itemtype
                         session['activity_info'] = None    
                     res =client.get("/test_itemlogin/1")
                     assert res.status_code==200
+                    assert json.loads(res.data.decode('utf-8'))[6] != ""    # item_save_uri
+
+    # if url_for() raise Exception.
+    with open('tests/data/temp_data.json', 'r') as f:
+        tmp = json.load(f)
+        temp_data = json.dumps(tmp)
+        
+    with app.test_request_context():
+        with patch('weko_items_ui.api.url_for',side_effect=Exception()):
+            with patch('weko_workflow.api.WorkActivity.get_activity_metadata',return_value=temp_data):
+                with patch('flask.templating._render', return_value=''):
+                    with app.test_client() as client:
+                        with client.session_transaction() as session:
+                            session['activity_info'] = None    
+                        res =client.get("/test_itemlogin/1")
+                        assert res.status_code==200
+                        assert json.loads(res.data.decode('utf-8'))[6] == ""    # item_save_uri

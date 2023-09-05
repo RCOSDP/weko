@@ -20752,7 +20752,7 @@ def test_validate_users_info_login(client_api, users, db_userprofile, mocker):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_user_info_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_user_info_acl_nologin(client_api, db_sessionlifetime):
     url = url_for(
-        "weko_items_ui_api.get_user_info", owner=1, shared_user_ids=[{"user":1}], _external=True
+        "weko_items_ui_api.get_user_info", owner=1, shared_user_ids=[1], _external=True
     )
     res = client_api.get(url)
     assert res.status_code == 200

@@ -30,6 +30,7 @@ from weko_records.api import ItemTypes, ItemsMetadata
 from weko_user_profiles.config import WEKO_USERPROFILES_POSITION_LIST,WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
 from weko_workflow.models import ActivityHistory,GuestActivity
 from weko_workflow.config import WEKO_WORKFLOW_FILTER_PARAMS,IDENTIFIER_GRANT_LIST
+from weko_workflow.errors import InvalidParameterValueError
 from weko_workflow.utils import (
     filter_all_condition,
     filter_condition,
@@ -113,9 +114,9 @@ from weko_workflow.utils import (
     create_onetime_download_url_to_guest,
     delete_guest_activity,
     get_activity_display_info,
+    __init_activity_detail_data_for_guest,
     recursive_get_specified_properties,
     get_approval_keys,
-    __init_activity_detail_data_for_guest,
     process_send_mail,
     cancel_expired_usage_reports,
     process_send_approval_mails,
@@ -129,7 +130,11 @@ from weko_workflow.utils import (
     update_approval_date_for_deposit,
     update_system_data_for_activity,
     is_terms_of_use_only,
-    grant_access_rights_to_all_open_restricted_files
+    grant_access_rights_to_all_open_restricted_files,
+    create_conditions_dict,
+    check_role,
+    check_etag,
+    check_pretty
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
 from weko_workflow.models import Activity
@@ -2985,3 +2990,79 @@ def test_get_contributors(db, users_1, db_records_1):
     actual = get_contributors(None, user_id_list_json, owner_id=1)
     assert sorted(actual, key=lambda x: x["userid"]) == sorted(expected, key=lambda x: x["userid"])
 
+status_list = [
+    ('todo', '1', '2'),
+    ('wait', '3', '4'),
+    ('all', '5', '6'),
+    ('test', '7', '8')
+]
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_create_conditions_dict -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('status, limit, page', status_list)
+def test_create_conditions_dict(status, limit, page):
+    if status == 'todo':
+        condition = create_conditions_dict(status, limit, page)
+        assert condition.get('tab')[0] == status
+        assert condition.get('sizetodo')[0] == limit
+        assert condition.get('pagestodo')[0] == page
+    elif status == 'wait':
+        condition = create_conditions_dict(status, limit, page)
+        assert condition.get('tab')[0] == status
+        assert condition.get('sizewait')[0] == limit
+        assert condition.get('pageswait')[0] == page
+    elif status == 'all':
+        condition = create_conditions_dict(status, limit, page)
+        assert condition.get('tab')[0] == status
+        assert condition.get('sizeall')[0] == limit
+        assert condition.get('pagesall')[0] == page
+    elif status == 'test':
+        with pytest.raises(InvalidParameterValueError) as e:
+            create_conditions_dict(status, limit, page)
+        assert str(e.value) == '400 Bad Request: Invalid request parameter value.'
+    else:
+        assert False
+
+role_list = [
+    (0, True),  # contributor
+    (1, True),  # repoadmin
+    (2, True),  # sysadmin
+    (3, True),  # comadmin
+    (4, False), # general
+    (7, False)  # anonymous
+]
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_check_role -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('index, expect', role_list)
+def test_check_role(app, users, index, expect):
+    if index != 5:
+        with app.test_request_context():
+            login_user(users[index]['obj'])
+            assert check_role() == expect
+    else:
+        assert check_role() == expect
+
+etag_list = [
+    ('match', True),
+    ('not match', False),
+    ('', False)
+]
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_check_etag -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('etag, expect', etag_list)
+def test_check_etag(i18n_app, etag, expect):
+    assert bool(check_etag(etag)) == expect
+
+pretty_list = [
+    ('true', True),
+    ('t', True),
+    ('yes', True),
+    ('1', True),
+    ('aaa', False)
+]
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_check_pretty -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('pretty, expect', pretty_list)
+def test_check_pretty(app, pretty, expect):
+    with app.test_request_context():
+        check_pretty(pretty)
+        assert current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] == expect
