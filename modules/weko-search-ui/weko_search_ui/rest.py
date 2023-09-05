@@ -599,19 +599,49 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             #     search = search.post_filter({'terms': {query_key: params[param]}})
 
             # Execute search
-            search_result = search.execute()
+            search_results = search.execute()
+            search_results = search_results.to_dict()
+
+            # Convert RO-Crate format
+            from .utils import RoCrateConverter
+            from .models import RocrateMapping
+            converter = RoCrateConverter()
+            rocrate_list = []
+            for search_result in search_results['hits']['hits']:
+                metadata = search_result['_source']['_item_metadata']
+                item_type_id = metadata['item_type_id']
+                mapping = RocrateMapping.query.filter_by(item_type_id=item_type_id).one_or_none()
+                if mapping is None:
+                    continue
+                rocrate_list.append(converter.convert(metadata, mapping.mapping))
 
             # Check pretty
             indent = 4 if request.args.get('pretty') == 'true' else None
 
-            # Response header setting
+            cursor = None
+            if len(search_results['hits']['hits']) > 0:
+                sort_key = search_results['hits']['hits'][-1].get('sort')
+                if sort_key:
+                    cursor = sort_key[0]
+
+            # Create result
+            result = {
+                'total_results': search_results['hits']['total'],
+                'count_results': len(rocrate_list),
+                'cursor': cursor,
+                'page': page,
+                'search_results': rocrate_list,
+            }
             res = Response(
-                response=json.dumps(search_result.to_dict(), indent=indent),
+                response=json.dumps(result, indent=indent),
                 status=200,
                 content_type='application/json')
+
+            # Response header setting
             res.headers['Cache-Control'] = 'no-store'
             res.headers['Pragma'] = 'no-cache'
             res.headers['Expires'] = 0
+
             return res
 
         except MaxResultWindowRESTError:

@@ -254,8 +254,18 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
             if not page_permission_factory(record).can():
                 raise PermissionError()
 
+            # Convert RO-Crate format
+            from weko_search_ui.utils import RoCrateConverter
+            from weko_search_ui.models import RocrateMapping
+            item_type_id = record['item_type_id']
+            mapping = RocrateMapping.query.filter_by(item_type_id=item_type_id).one_or_none()
+            if mapping is None:
+                raise InternalServerError
+            converter = RoCrateConverter()
+            rocrate = converter.convert(record, mapping.mapping)
+
             # Check Etag
-            etag = generate_etag(str(record).encode('utf-8'))
+            etag = generate_etag(str(rocrate).encode('utf-8'))
             self.check_etag(etag, weak=True)
 
             # Check Last-Modified
@@ -268,7 +278,7 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
 
             # Create Response
             res = Response(
-                response=json.dumps(record, indent=indent),
+                response=json.dumps(rocrate, indent=indent),
                 status=200,
                 content_type='application/json')
             res.set_etag(etag)
