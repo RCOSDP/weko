@@ -482,8 +482,9 @@ def users(app, db):
         ds.add_role_to_user(originalroleuser, originalrole)
         ds.add_role_to_user(originalroleuser2, originalrole)
         ds.add_role_to_user(originalroleuser2, repoadmin_role)
+        ds.add_role_to_user(user, general_role)
 
-    return [
+    ret = [
         {"email": contributor.email, "id": contributor.id, "obj": contributor},
         {"email": repoadmin.email, "id": repoadmin.id, "obj": repoadmin},
         {"email": sysadmin.email, "id": sysadmin.id, "obj": sysadmin},
@@ -501,6 +502,11 @@ def users(app, db):
         },
         {"email": user.email, "id": user.id, "obj": user},
     ]
+    db.session.expunge_all()
+
+
+    yield ret
+    #return ret
 
 
 @pytest.fixture()
@@ -776,7 +782,8 @@ def records(app, db, esindex, indextree, location, itemtypes, oaischema):
     filename = "helloworld.pdf"
     mimetype = "application/pdf"
     filepath = "tests/data/helloworld.pdf"
-    results.append(make_record(db, indexer, i, filepath, filename, mimetype))
+    shared_ids = []
+    results.append(make_record(db, indexer, i, filepath, filename, mimetype, shared_ids))
 
     i = 2
     filename = "helloworld.docx"
@@ -784,22 +791,24 @@ def records(app, db, esindex, indextree, location, itemtypes, oaischema):
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
     filepath = "tests/data/helloworld.docx"
-    results.append(make_record(db, indexer, i, filepath, filename, mimetype))
+    shared_ids = [1]
+    results.append(make_record(db, indexer, i, filepath, filename, mimetype, shared_ids))
 
     i = 3
     filename = "helloworld.zip"
     mimetype = "application/zip"
     filepath = "tests/data/helloworld.zip"
-    results.append(make_record(db, indexer, i, filepath, filename, mimetype))
+    shared_ids = [1,2]
+    results.append(make_record(db, indexer, i, filepath, filename, mimetype, shared_ids))
 
     return indexer, results
 
 
-def make_record(db, indexer, i, filepath, filename, mimetype):
+def make_record(db, indexer, i, filepath, filename, mimetype, shared_ids):
     record_data = {
         "_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]},
         "path": ["{}".format((i % 2) + 1)],
-        "owner": "1",
+        "owner": 1,
         "recid": "{}".format(i),
         "title": [
             "ja_conference paperITEM00000009(public_open_access_open_access_simple)"
@@ -817,7 +826,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
         "item_type_id": "1",
         "publish_date": "2021-08-06",
         "publish_status": "0",
-        "weko_shared_ids": [],
+        "weko_shared_ids": shared_ids,
         "item_1617186331708": {
             "attribute_name": "Title",
             "attribute_value_mlt": [
@@ -1342,7 +1351,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
         "id": "{}".format(i),
         "pid": {"type": "recid", "value": "{}".format(i), "revision_id": 0},
         "path": ["{}".format((i % 2) + 1)],
-        "owner": "1",
+        "owner": 1,
         "title": "ja_conference paperITEM00000009(public_open_access_open_access_simple)",
         "owners": [1],
         "status": "draft",
@@ -1925,6 +1934,18 @@ def records_restricted(app, db, workflows_restricted,records ,users):
     results.append(make_record_restricted(db, indexer, i, filepath, filename, mimetype 
                                         ,str(users[0]["id"]) #contributer
                                         ,wf1.id))
+    i = i + 1
+    roles = [{"role":1},{"role":2}]
+    results.append(make_record_restricted_open_login(db, indexer, i, filepath, filename, mimetype
+                                                     ,str(users[0]["id"])
+                                                     ,wf1.id
+                                                     ,roles))
+    i = i + 1
+    roles = []
+    results.append(make_record_restricted_open_login(db, indexer, i, filepath, filename, mimetype
+                                                     ,str(users[0]["id"])
+                                                     ,wf1.id
+                                                     ,roles))
 
     return indexer, results
 
@@ -1933,7 +1954,7 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
     record_data = {
         "_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]},
         "path": ["{}".format((i % 2) + 1)],
-        "owner": "1",
+        "owner": 1,
         "recid": "{}".format(i),
         "title": [
             "ja_conference paperITEM00000009(public_open_access_open_access_simple)"
@@ -2476,7 +2497,7 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
         "id": "{}".format(i),
         "pid": {"type": "recid", "value": "{}".format(i), "revision_id": 0},
         "path": ["{}".format((i % 2) + 1)],
-        "owner": "1",
+        "owner": 1,
         "title": "ja_conference paperITEM00000009(public_open_access_open_access_simple)",
         "owners": [1],
         "status": "draft",
@@ -3046,7 +3067,6 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
         "mimetype": mimetype,
         "obj": obj,
     }
-
 
 @pytest.fixture()
 def workflow_actions(app, db):

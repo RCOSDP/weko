@@ -174,17 +174,44 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     is_can = True
                 else:
                     try:
-                        date = fjson.get('accessdate')
-                        if date:
-                            pdt = to_utc(dt.strptime(date, '%Y-%m-%d'))
-                            is_can = True if dt.utcnow() >= pdt else False
-                            
-                            roles = fjson.get('roles')
-                            if is_can and roles and isinstance(roles, list):
-                                for lst in list(current_user.roles or []):
-                                    if lst.role in [ role.get('role') for role in roles ]:
-                                        is_can = True
-                                        break
+                        # contents accessdate
+                        c_is_can = True
+                        date = fjson.get('date')
+                        if date and isinstance(date, list) and date[0]:
+                            adt = date[0].get('dateValue')
+                            if adt:
+                                adt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
+                                c_is_can = True if dt.utcnow() >= adt else False
+                        # publish date
+                        p_is_can = True
+                        idt = record.get('publish_date')
+                        if idt:
+                            idt = to_utc(dt.strptime(idt, '%Y-%m-%d'))
+                            p_is_can = True if dt.utcnow() >= idt else False
+                        
+                        # roles check
+                        role_is_can = False
+                        roles = fjson.get('roles')
+                        if roles and isinstance(roles, list) and len(roles)>0:
+                            for lst in list(current_user.roles or []):
+                                for role_value in [ role.get('role') for role in roles ]:
+                                    if __isint(role_value):
+                                        if lst.id == int(role_value):
+                                            role_is_can = True
+                                            break
+                                    else:
+                                        if lst.name == role_value:
+                                            role_is_can = True
+                                            break
+                            # ログインユーザーに権限なしの場合でも、コンテンツで「非ログインユーザー」指定した場合OK
+                            if len(list(current_user.roles))==0:
+                                if 'none_loggin' in [ role.get('role') for role in roles ]:
+                                    role_is_can = True
+                        else:
+                            role_is_can = True
+                        
+                        is_can = c_is_can and p_is_can and role_is_can
+
                     except BaseException:
                         is_can = False
 
@@ -198,41 +225,57 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     # Always display the file info area in 'Detail' screen.
                     is_can = True
                 else:
-                    is_can = False
+                    # ログインユーザーか
+                    is_login_user = False
                     users = current_app.config['WEKO_PERMISSION_ROLE_USER']
                     for lst in list(current_user.roles or []):
                         if lst.name in users:
-                            is_can = True
+                            is_login_user = True
                             break
 
+                    # rolesで指定されたユーザーロールか
+                    is_role_can = False
                     roles = fjson.get('roles')
-                    if roles and isinstance(roles, list):
+                    if roles and isinstance(roles, list) and len(roles)>0:
                         for lst in list(current_user.roles or []):
-                            if lst.id in [ role.get('role') for role in roles ]:
-                                is_can = True
-                                break
+                            for role_value in [ role.get('role') for role in roles ]:
+                                if __isint(role_value):
+                                    if lst.id == int(role_value):
+                                        is_role_can = True
+                                        break
+                                else:
+                                    if lst.name == role_value:
+                                        is_role_can = True
+                                        break
+                        # ログインユーザーに権限なしの場合でも、コンテンツで「非ログインユーザー」指定した場合OK
+                        if len(list(current_user.roles))==0:
+                            if 'none_loggin' in [ role.get('role') for role in roles ]:
+                                is_role_can = True
+                    else:
+                        is_role_can = True
 
                     # Billing file permission check
+                    is_billing_can = False
                     if fjson.get('groupsprice'):
                         is_user_group_permission = False
                         groups = fjson.get('groupsprice')
                         for group in list(groups or []):
                             group_id = group.get('group')
                             if check_user_group_permission(group_id):
-                                is_user_group_permission = \
-                                    check_user_group_permission(group_id)
+                                is_user_group_permission = check_user_group_permission(group_id)
                                 break
-                        is_can = is_can & is_user_group_permission
+                        is_billing_can = is_user_group_permission
                     else:
                         if current_user.is_authenticated:
                             if fjson.get('groups'):
-                                is_can = check_user_group_permission(
-                                    fjson.get('groups'))
+                                is_billing_can = check_user_group_permission(fjson.get('groups'))
                             else:
-                                is_can = True
-                        if not is_can:
+                                is_billing_can = True
+                        if not is_billing_can:
                             # site license permission check
-                            is_can = site_license_check()
+                            is_billing_can = site_license_check()
+
+                    is_can = is_login_user and is_role_can and is_billing_can
 
             #  can not access
             elif 'open_no' in acsrole:
@@ -308,7 +351,7 @@ def check_permission_period(permission : FilePermission) -> bool :
     from weko_items_ui.utils import get_user_information
 
     if permission.status == 1:
-        res = get_valid_onetime_download(permission.file_name ,permission.record_id , get_user_information(permission.user_id)['email'])
+        res = get_valid_onetime_download(permission.file_name ,permission.record_id , get_user_information(permission.user_id)[0]['email'])
         current_app.logger.info(res)
         return res is not None
     else:
@@ -553,3 +596,11 @@ def __get_file_permission(record_id:str, file_name:str ,user_id = None) -> List[
     list_permission = FilePermission.find_list_permission_approved(
         user_id, record_id, file_name)
     return list_permission
+
+def __isint(str):
+    try:
+        int(str, 10)
+    except ValueError:
+        return False
+    else:
+        return True

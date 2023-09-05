@@ -747,7 +747,7 @@ class WekoDeposit(Deposit):
             data.pop('$schema')
         
         # shared_user_ids -> [数値,数値,…]に変更
-        cls.convert_type_shared_user_ids(data)
+        data = cls.convert_type_shared_user_ids(data)
 
         # Get workflow storage location
         location_name = None
@@ -1050,7 +1050,7 @@ class WekoDeposit(Deposit):
             data = record.dumps()
             owner = data['_deposit']['owner']
             owners = data['_deposit']['owners']
-            weko_shared_ids = data['_deposit']['weko_shared_ids']
+            weko_shared_ids = data['weko_shared_ids']
             
             keys_to_remove = ('_deposit', 'doi', '_oai',
                               '_files', '_buckets', '$schema')
@@ -1073,6 +1073,9 @@ class WekoDeposit(Deposit):
             deposit['_deposit']['owner'] = owner
             deposit['_deposit']['owners'] = owners
             deposit['_deposit']['weko_shared_ids'] = weko_shared_ids
+            deposit['owner'] = owner
+            deposit['owners'] = owners
+            deposit['weko_shared_ids'] = weko_shared_ids
 
             recid = PersistentIdentifier.get(
                 'recid', str(data['_deposit']['id']))
@@ -1222,8 +1225,6 @@ class WekoDeposit(Deposit):
         elif len(deposit_owners)>0 and owner_id:
             self.data.update(dict(owner=owner_id))
             self.data.update(dict(owners=[owner_id]))
-        else:
-            pass
 
         if ItemMetadata.query.filter_by(id=self.id).first():
             obj = ItemsMetadata.get_record(self.id)
@@ -1338,19 +1339,25 @@ class WekoDeposit(Deposit):
             index_lst = index_id_lst
 
         plst = Indexes.get_path_list(index_lst)
-
         if not plst or len(index_lst) != len(plst):
             raise PIDResolveRESTError(
                 description='Any tree index has been deleted')
 
         # Convert item meta data
         try:
-            self.convert_type_shared_user_ids(data)
+            data = self.convert_type_shared_user_ids(data)
+
+            # 更新パラメータが指定されない場合は、selfの内容を更新内容とする
+            if not data:
+                data = self.data
             owner_id = data.get("owner", None)
             dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
-            # dataのownerとownersを合わせる(redisのデータ不正)
-            data['owners'] = [int(owner_id)] if owner_id else []
-
+            
+            # dataのownerとownersを合わせる
+            if current_user and current_user.is_authenticated:
+                data['owners'] = [int(data.get('owner', current_user.id))]
+            else:
+                data['owners'] = [int(data.get('owner','1'))]
             dc['publish_date'] = data.get('pubdate')
             dc['title'] = [data.get('title')]
             dc['relation_version_is_last'] = True
@@ -1413,7 +1420,7 @@ class WekoDeposit(Deposit):
         self['_deposit']['owner'] = int(dc['owner'])
         self['_deposit']['owners'] = [int(dc['owner'])]
         self['_deposit']['weko_shared_ids'] = dc['weko_shared_ids']
-        self['_deposit']['created_by'] = int(self.data.get('created_by', 1))
+        self['_deposit']['created_by'] = int(current_user.id) if current_user and current_user.is_authenticated else 1
 
         if data:
             self.delete_item_metadata(data)
@@ -1848,15 +1855,19 @@ class WekoDeposit(Deposit):
     @classmethod
     def convert_type_shared_user_ids(cls, data):
         shared_user_ids = []
-        if 'shared_user_ids' in data:
-            tmp = data['shared_user_ids'] if data['shared_user_ids'] else []
-            for rec in tmp:
-                if type(rec) == int:
-                    shared_user_ids.append(rec)
-                    continue
-                if 'user' in rec:
-                    shared_user_ids.append(int(rec['user']))
+        if data:
+            if 'shared_user_ids' in data:
+                tmp = data['shared_user_ids'] if data['shared_user_ids'] else []
+                for rec in tmp:
+                    if type(rec) == int:
+                        shared_user_ids.append(rec)
+                        continue
+                    if 'user' in rec:
+                        shared_user_ids.append(int(rec['user']))
+        else:
+            data = {}
         data['shared_user_ids'] = shared_user_ids
+        return data
 
 class WekoRecord(Record):
     """Extend Record obj for record ui."""

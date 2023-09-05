@@ -255,12 +255,12 @@ msgid "The file name specified in {} and {} do not match."
 msgstr "{}に指定されたファイル名と{}が一致しません。"
 
 #: weko_search_ui/utils.py:3900
-msgid "ERROR:The specified provinding method does not exist in the system"
-msgstr "エラー：指定する提供方法はシステムに存在しません。"
+msgid "The specified provinding method does not exist in the system"
+msgstr "指定する提供方法はシステムに存在しません。"
 
 #: weko_search_ui/utils.py:3910
-msgid "ERROR:The specified terms does not exist in the system"
-msgstr "エラー：指定する利用規約はシステムに存在しません。"
+msgid "The specified terms does not exist in the system"
+msgstr "指定する利用規約はシステムに存在しません。"
 
 #: weko_search_ui/static/js/weko_search_ui/moment.min.js:1
 msgid ": , "

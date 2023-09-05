@@ -781,6 +781,56 @@ def users(app, db):
         {'email': student.email,'id': student.id, 'obj': student}
     ]
 
+@pytest.fixture()
+def users_1(app, db):
+    """Create users."""
+    ds = app.extensions['invenio-accounts'].datastore
+    user_count = User.query.filter_by(email='user1@sample.com').count()
+    if user_count != 1:
+        user_1 = create_test_user(email='user1@sample.com')
+        user_2 = create_test_user(email='user2@sample.com')
+        sysadmin = create_test_user(email='sysadmin@test.org')
+    else:
+        user_1 = User.query.filter_by(email='user1@sample.com').first()
+        user_2 = User.query.filter_by(email='user2@sample.com').first()
+        sysadmin = User.query.filter_by(email='sysadmin@test.org').first()
+        
+    role_count = Role.query.filter_by(name='System Administrator').count()
+    if role_count != 1:
+        sysadmin_role = ds.create_role(name='System Administrator')
+        general_role = ds.create_role(name='General')
+    else:
+        sysadmin_role = Role.query.filter_by(name='System Administrator').first()
+        general_role = Role.query.filter_by(name='General').first()
+
+    ds.add_role_to_user(sysadmin, sysadmin_role)
+    ds.add_role_to_user(user_1, general_role)
+    ds.add_role_to_user(user_2, general_role)
+
+    # Assign access authorization
+    with db.session.begin_nested():
+        action_users = [
+            ActionUsers(action='superuser-access', user=sysadmin),
+        ]
+        db.session.add_all(action_users)
+        action_roles = [
+            ActionRoles(action='superuser-access', role=sysadmin_role),
+        ]
+        db.session.add_all(action_roles)
+    db.session.commit()
+    index = Index()
+    db.session.add(index)
+    db.session.commit()
+    comm = Community.create(community_id="comm01", role_id=sysadmin_role.id,
+                            id_user=sysadmin.id, title="test community",
+                            description=("this is test community"),
+                            root_node_id=index.id)
+    db.session.commit()
+    return [
+        {'email': user_1.email, 'id': user_1.id, 'obj': user_1},
+        {'email': user_2.email, 'id': user_2.id, 'obj': user_2},
+        {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
+    ]
 
 @pytest.fixture()
 def action_data(db):
@@ -969,11 +1019,75 @@ def db_register(app, db, db_records, users, action_data, item_type):
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={})
+    flow_action4 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=3,
+                     action_version='1.0.0',
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
     with db.session.begin_nested():
         db.session.add(flow_action1)
         db.session.add(flow_action2)
         db.session.add(flow_action3)
+        db.session.add(flow_action4)
     db.session.commit()
+
+    action_role_1 = FlowActionRole(flow_action_id=flow_action1.id,
+                                   action_role=1,
+                                   action_user=1)
+    action_role_2_1 = FlowActionRole(flow_action_id=flow_action2.id,
+                                   action_role=1,
+                                   action_user=2)
+    action_role_2_2 = FlowActionRole(flow_action_id=flow_action2.id,
+                                   action_role=2,
+                                   action_user=1)
+    action_role_2_3 = FlowActionRole(flow_action_id=flow_action2.id,
+                                   action_role=2,
+                                   action_user=2)
+    action_role_2_4 = FlowActionRole(flow_action_id=flow_action2.id,
+                                   action_role=2,
+                                   action_user=3)
+    action_role_3 = FlowActionRole(flow_action_id=flow_action3.id,
+                                   action_role=1,
+                                   action_user=3)
+    action_role_4_1 = FlowActionRole(flow_action_id=flow_action4.id,
+                                   action_role=1,
+                                   action_user=1,
+                                   action_role_exclude=True,
+                                   action_user_exclude=True
+                                   )
+    action_role_4_2 = FlowActionRole(flow_action_id=flow_action4.id,
+                                   action_role=1,
+                                   action_user=2,
+                                   action_role_exclude=True,
+                                   action_user_exclude=True
+                                   )
+    action_role_4_3 = FlowActionRole(flow_action_id=flow_action4.id,
+                                   action_role=1,
+                                   action_user=3,
+                                   action_role_exclude=False,
+                                   action_user_exclude=False
+                                   )
+    action_role_4_4 = FlowActionRole(flow_action_id=flow_action4.id,
+                                   action_role=2,
+                                   action_user=1
+                                   )
+    with db.session.begin_nested():
+        db.session.add(action_role_1)
+        db.session.add(action_role_2_1)
+        db.session.add(action_role_2_2)
+        db.session.add(action_role_2_3)
+        db.session.add(action_role_2_4)
+        db.session.add(action_role_3)
+        db.session.add(action_role_4_1)
+        db.session.add(action_role_4_2)
+        db.session.add(action_role_4_3)
+        db.session.add(action_role_4_4)
+    db.session.commit()
+
     workflow = WorkFlow(flows_id=uuid.uuid4(),
                         flows_name='test workflow1',
                         itemtype_id=1,
@@ -989,7 +1103,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test', shared_user_ids=[], extra_info={},
+                    title='test', shared_user_ids='[]', extra_info={},
                     action_order=1,
                     )
     activity2 = Activity(activity_id='A-00000001-10001',workflow_id=1, flow_id=flow_define.id,
@@ -999,7 +1113,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test', shared_user_ids=[], extra_info={},
+                    title='test', shared_user_ids='[]', extra_info={},
                     action_order=6)
 
     activity3 = Activity(activity_id='A-00000001-10002',workflow_id=1, flow_id=flow_define.id,
@@ -1080,7 +1194,25 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item8', shared_user_ids=[], extra_info={},
+                    title='test item8', shared_user_ids='[]', extra_info={},
+                    action_order=1,
+                    )
+    activity_item9 = Activity(activity_id='10', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[5]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2023/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item9', shared_user_ids=[6], extra_info={},
+                    action_order=1,
+                    )
+    activity_item10 = Activity(activity_id='11', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[0]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2023/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='制限公開', shared_user_ids=[2,4], extra_info={},
                     action_order=1,
                     )
     activity_guest = Activity(activity_id='guest', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
@@ -1106,6 +1238,8 @@ def db_register(app, db, db_records, users, action_data, item_type):
         db.session.add(activity_item6)
         db.session.add(activity_item7)
         db.session.add(activity_item8)
+        db.session.add(activity_item9)
+        db.session.add(activity_item10)
         db.session.add(activity_guest)
     db.session.commit()
 
@@ -1170,7 +1304,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item5', shared_user_ids=[], extra_info={},
+                    title='test item5', shared_user_ids='[]', extra_info={},
                     action_order=1,
                     )
     with db.session.begin_nested():
@@ -1209,6 +1343,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
         db.session.add(doi_identifier)
         db.session.add(doi_identifier2)
     db.session.commit()
+
     return {'flow_define':flow_define,
             'item_type':item_type[0]["obj"],
             'workflow':workflow, 
@@ -1216,7 +1351,107 @@ def db_register(app, db, db_records, users, action_data, item_type):
             'action_feedback_mail1':activity_item4_feedbackmail,
             'action_feedback_mail2':activity_item5_feedbackmail,
             'action_feedback_mail3':activity_item6_feedbackmail,
-            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_guest]}
+            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_item9,activity_item10,activity_guest]}
+
+@pytest.fixture()
+def db_register_1(app, db, db_records, users_1, action_data, item_type):
+    flow_define = FlowDefine(flow_id=uuid.uuid4(),
+                             flow_name='Registration Flow',
+                             flow_user=1)
+    with db.session.begin_nested():
+        db.session.add(flow_define)
+    db.session.commit()
+    flow_action1 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=1,
+                     action_version='1.0.0',
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    flow_action2 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=3,
+                     action_version='1.0.0',
+                     action_order=2,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    flow_action3 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=5,
+                     action_version='1.0.0',
+                     action_order=3,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    with db.session.begin_nested():
+        db.session.add(flow_action1)
+        db.session.add(flow_action2)
+        db.session.add(flow_action3)
+    db.session.commit()
+    workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test workflow1',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=1,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    activity = Activity(activity_id='A-00000001-00005',item_id=db_records[2][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=users_1[0]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2023/09/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='テスト タイトル5', shared_user_ids=[{"user":2}], extra_info={},
+                    action_order=1,
+                    )
+
+    with db.session.begin_nested():
+        db.session.add(workflow)
+        db.session.add(activity)
+    db.session.commit()
+
+    activity_action = ActivityAction(activity_id=activity.activity_id,
+                                     action_id=1,action_status="M",
+                                     action_handler=1, action_order=1)
+
+    with db.session.begin_nested():
+        db.session.add(activity_action)
+    db.session.commit()
+
+    history = ActivityHistory(
+        activity_id=activity.activity_id,
+        action_id=activity.action_id,
+        action_order=activity.action_order,
+    )
+    with db.session.begin_nested():
+        db.session.add(history)
+    db.session.commit()
+    doi_identifier = Identifier(id=1, repository='Root Index',jalc_flag= True,jalc_crossref_flag= True,jalc_datacite_flag=True,ndl_jalc_flag=True,
+        jalc_doi='123',jalc_crossref_doi='1234',jalc_datacite_doi='12345',ndl_jalc_doi='123456',suffix='def',
+        created_userId='1',created_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S'),
+        updated_userId='1',updated_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S')
+    )
+    doi_identifier2 = Identifier(id=2, repository='test',jalc_flag= True,jalc_crossref_flag= True,jalc_datacite_flag=True,ndl_jalc_flag=True,
+        jalc_doi=None,jalc_crossref_doi=None,jalc_datacite_doi=None,ndl_jalc_doi=None,suffix=None,
+        created_userId='1',created_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S'),
+        updated_userId='1',updated_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S')
+        )
+    with db.session.begin_nested():
+        db.session.add(doi_identifier)
+        db.session.add(doi_identifier2)
+    db.session.commit()
+    return {'flow_define':flow_define,
+            'item_type':item_type,
+            'workflow':workflow, 
+            "activities":[activity]}
+
 
 @pytest.fixture()
 def workflow(app, db, item_type, action_data, users):
@@ -1481,6 +1716,18 @@ def location(app, db, instance_path):
 def db_records(db, location):
     record_data = json_data("data/test_records.json")
     item_data = json_data("data/test_items.json")
+    record_num = len(record_data)
+    result = []
+    for d in range(record_num):
+        result.append(create_record(record_data[d], item_data[d]))
+        db.session.commit()
+
+    yield result
+
+@pytest.fixture()
+def db_records_1(db, location):
+    record_data = json_data("data/test_records_1.json")
+    item_data = json_data("data/test_items_1.json")
     record_num = len(record_data)
     result = []
     for d in range(record_num):

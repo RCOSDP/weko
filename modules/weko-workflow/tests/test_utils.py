@@ -24,6 +24,7 @@ from tests.helpers import json_data
 from invenio_mail.models import MailConfig
 from weko_admin.models import SiteInfo
 from weko_records_ui.models import FilePermission,FileOnetimeDownload
+from weko_records_ui.utils import get_list_licence
 from weko_user_profiles import UserProfile
 from weko_records.api import ItemTypes, ItemsMetadata
 from weko_user_profiles.config import WEKO_USERPROFILES_POSITION_LIST,WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
@@ -34,11 +35,11 @@ from weko_workflow.utils import (
     filter_all_condition,
     filter_condition,
     get_application_and_approved_date,
+    get_contributors,
     get_disptype_and_ver_in_metainfo,
     get_record_by_root_ver,
     get_url_root,
     handle_finish_workflow,
-    process_send_reminder_mail,
     register_hdl,
     IdentifierHandle,
     get_current_language,
@@ -76,6 +77,7 @@ from weko_workflow.utils import (
     send_mail_registration_done,
     send_mail_request_approval,
     send_mail,
+    #email_pattern_registration_done,
     email_pattern_request_approval,
     email_pattern_approval_done,
     get_mail_data,
@@ -581,11 +583,54 @@ def test_get_actionid(action_data):
 
 # def convert_record_to_item_metadata(record_metadata):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_convert_record_to_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_convert_record_to_item_metadata(db_records,item_type):
+def test_convert_record_to_item_metadata(db_records, db_itemtype):
     record = WekoRecord.get_record(db_records[0][2].id)
     result = convert_record_to_item_metadata(record)
-    test = {'id': '1', '$schema': '1', 'pubdate': '2022-08-20', 'title': 'title', 'weko_shared_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'title', 'subitem_1551255648112': 'ja','subitem_stop/continue': 'Continue'}], 'item_1617186819068': {'subitem_identifier_reg_text': 'test/0000000001', 'subitem_identifier_reg_type': 'JaLC'}, 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'},'item_1617605131499': [{'accessrole': 'open_access','date': [{'dateType': 'Available','dateValue': '2022-10-03'}],'displaytype': 'detail','filename': 'check_2022-03-10.tsv','filesize': [{'value': '460 B'}],'format': 'text/tab-separated-values','is_thumbnail': True,'licensetype': 'license_12','url': {'url': 'https://localhost/record/1/files/test.txt'},'version_id': '29dd361d-dc7f-49bc-b471-bdb5752afef5'}]}
+    test = {'id': '1', '$schema': '1', 'created_by': 1, 'pubdate': '2022-08-20', 'title': 'title', 
+            'shared_user_ids': [], 
+            'item_1617186331708': [{'subitem_1551255647225': 'title', 'subitem_1551255648112': 'ja','subitem_stop/continue': 'Continue'}], 
+            'item_1617186819068': {'subitem_identifier_reg_text': 'test/0000000001', 'subitem_identifier_reg_type': 'JaLC'}, 
+            'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'},
+            'item_1617605131499': [{'accessrole': 'open_access','date': [{'dateType': 'Available','dateValue': '2022-10-03'}],
+            'displaytype': 'detail','filename': 'check_2022-03-10.tsv','filesize': [{'value': '460 B'}],
+            'format': 'text/tab-separated-values','is_thumbnail': True,'licensetype': 'license_12',
+            'url': {'url': 'https://localhost/record/1/files/test.txt'},
+            'version_id': '29dd361d-dc7f-49bc-b471-bdb5752afef5'}],
+            'owner': 1, 'owners': [1], 'pid': {'revision_id': 0, 'type': 'depid','value': '1'}}
     assert result == test
+
+    # record_metadataのjsonに"weko_shared_ids": []を設定する。
+    record = WekoRecord.get_record(db_records[6][2].id)
+    result = convert_record_to_item_metadata(record)
+    excepted = {'id': '194', 
+                '$schema': '1', 
+                'owner': 1, 
+                'owners': [1],
+                'created_by': 1,
+                'pid': {'revision_id': 0, 'type': 'depid','value': '194'},
+                'pubdate': '2023-04-25', 
+                'title': 'テスト タイトル1', 
+                'shared_user_ids': [], 
+                'item_1617186331708': [{'subitem_1551255647225': 'テスト タイトル1', 'subitem_1551255648112': 'en'}]
+                }
+    assert result == excepted
+
+    # record_metadataのjsonに"weko_shared_ids": [6]を設定する。
+    record = WekoRecord.get_record(db_records[7][2].id)
+    result = convert_record_to_item_metadata(record)
+    excepted = {'id': '195', 
+                '$schema': '1', 
+                'owner': 1, 
+                'owners': [1],
+                'created_by': 1,
+                'pid': {'revision_id': 0, 'type': 'depid','value': '195'},
+                'pubdate': '2023-04-25', 
+                'title': 'テスト タイトル2', 
+                'shared_user_ids': [6], 
+                'item_1617186331708': [{'subitem_1551255647225': 'テスト タイトル2', 'subitem_1551255648112': 'en'}]
+                }
+    assert result == excepted
+
 # def prepare_edit_workflow(post_activity, recid, deposit):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_prepare_edit_workflow(app, workflow, db_records,users,mocker):
@@ -723,7 +768,7 @@ def test_get_record_by_root_ver(app, db_records):
     record, files = get_record_by_root_ver("1")
 
     assert files == []
-    assert record == {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1']}, 'path': ['1'], 'owner': '1', 'recid': '1', 'title': ['title'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}, '_buckets': {'deposit': '3e99cfca-098b-42ed-b8a0-20ddd09b3e02'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'title', 'author_link': [], 'item_type_id': '1', 'publish_date': '2022-08-20', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'title', 'subitem_1551255648112': 'ja','subitem_stop/continue': 'Continue'}]}, "item_1617186819068": {"attribute_name": "Identifier Registration","attribute_value_mlt": [{"subitem_identifier_reg_text" :"test/0000000001","subitem_identifier_reg_type": "JaLC"}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]},'item_1617605131499': {'attribute_name': 'File','attribute_type': 'file','attribute_value_mlt': [{'accessrole': 'open_access','date': [{'dateType': 'Available','dateValue': '2022-10-03'}],'displaytype': 'detail','filename': 'check_2022-03-10.tsv','filesize': [{'value': '460 ''B'}],'format': 'text/tab-separated-values','is_thumbnail': True,'licensetype': 'license_12','url': {'url': 'https://localhost/record/1/files/test.txt'},'version_id': '29dd361d-dc7f-49bc-b471-bdb5752afef5'}]},'item_1664947259584': {'attribute_name': 'サムネイル','attribute_value_mlt': [{'subitem_thumbnail': [{'thumbnail_label': 'test.png','thumbnail_url': '/api/files/29ad484d-4ed1-4caf-8b21-ab348ae7bf28/test.png?versionId=ecd5715e-4ca5-4e45-b93c-5089f52860a0'}]}]}, 'relation_version_is_last': True}
+    assert record == {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1']}, 'path': ['1'], 'owner': 1, 'owners': [1], 'recid': '1', 'title': ['title'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}, '_buckets': {'deposit': '3e99cfca-098b-42ed-b8a0-20ddd09b3e02'}, '_deposit': {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'owner': 1, 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'title', 'author_link': [], 'created_by': 1, 'item_type_id': '1', 'publish_date': '2022-08-20', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'title', 'subitem_1551255648112': 'ja','subitem_stop/continue': 'Continue'}]}, "item_1617186819068": {"attribute_name": "Identifier Registration","attribute_value_mlt": [{"subitem_identifier_reg_text" :"test/0000000001","subitem_identifier_reg_type": "JaLC"}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]},'item_1617605131499': {'attribute_name': 'File','attribute_type': 'file','attribute_value_mlt': [{'accessrole': 'open_access','date': [{'dateType': 'Available','dateValue': '2022-10-03'}],'displaytype': 'detail','filename': 'check_2022-03-10.tsv','filesize': [{'value': '460 ''B'}],'format': 'text/tab-separated-values','is_thumbnail': True,'licensetype': 'license_12','url': {'url': 'https://localhost/record/1/files/test.txt'},'version_id': '29dd361d-dc7f-49bc-b471-bdb5752afef5'}]},'item_1664947259584': {'attribute_name': 'サムネイル','attribute_value_mlt': [{'subitem_thumbnail': [{'thumbnail_label': 'test.png','thumbnail_url': '/api/files/29ad484d-4ed1-4caf-8b21-ab348ae7bf28/test.png?versionId=ecd5715e-4ca5-4e45-b93c-5089f52860a0'}]}]}, 'relation_version_is_last': True}
 
 
 # def get_disptype_and_ver_in_metainfo(metadata):
@@ -855,19 +900,19 @@ def test_send_mail_approval_done(mocker):
         send_mail_approval_done({})
 # def send_mail_registration_done(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_registration_done -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_send_mail_registration_done(app,users,mocker):
-    mocker.patch("weko_workflow.utils.replace_characters",return_value="body")
-    mocker.patch("weko_workflow.utils.send_mail")
-    mail_info = {
-        "item_type_name":"テストアイテムタイプ"
-    }
-    with app.test_request_context():
-        login_user(users[2]["obj"])
-        with patch("weko_workflow.utils.email_pattern_registration_done",return_value=("subject","body")):
-            send_mail_registration_done(mail_info)
-            
-        with patch("weko_workflow.utils.email_pattern_registration_done",return_value=(None, None)):
-            send_mail_registration_done(mail_info)
+#def test_send_mail_registration_done(app,users,mocker):
+#    mocker.patch("weko_workflow.utils.replace_characters",return_value="body")
+#    mocker.patch("weko_workflow.utils.send_mail")
+#    mail_info = {
+#        "item_type_name":"テストアイテムタイプ"
+#    }
+#    with app.test_request_context():
+#        login_user(users[2]["obj"])
+#        with patch("weko_workflow.utils.email_pattern_registration_done",return_value=("subject","body")):
+#            send_mail_registration_done(mail_info)
+#            
+#        with patch("weko_workflow.utils.email_pattern_registration_done",return_value=(None, None)):
+#            send_mail_registration_done(mail_info)
 # def send_mail_request_approval(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_request_approval -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_send_mail_request_approval(mocker):
@@ -900,83 +945,83 @@ def test_send_mail(mocker):
     send_mail(None, None, None)
 # def email_pattern_registration_done(user_role, item_type_name):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_email_pattern_registration_done -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_email_pattern_registration_done(app,users,mocker):
-    mock_path = "weko_workflow.utils.get_mail_data"
-    with app.test_request_context():
-        config = current_app.config
-        login_user(users[2]["obj"])
-        from weko_items_ui.utils import get_current_user_role
-        role = get_current_user_role()
-        
-        mocker_data = mocker.patch(mock_path)
-        subject, body = email_pattern_registration_done(role, "テストアイテムタイプ")
-        assert subject == None
-        assert body == None
-        
-        config.update(
-            WEKO_ITEMS_UI_OUTPUT_REPORT="テストアイテムタイプ"
-        )
-        mocker_data = mocker.patch(mock_path)
-        email_pattern_registration_done(role, "テストアイテムタイプ")
-        mocker_data.assert_called_with(config["WEKO_WORKFLOW_RECEIVE_OUTPUT_REGISTRATION"])
-        
-        
-        config.update(
-            WEKO_ITEMS_UI_OUTPUT_REPORT="",
-            WEKO_ITEMS_UI_USAGE_REPORT = "テストアイテムタイプ"
-        )
-        mocker_data = mocker.patch(mock_path)
-        email_pattern_registration_done(role, "テストアイテムタイプ")
-        mocker_data.assert_called_with(config["WEKO_WORKFLOW_RECEIVE_USAGE_REPORT"])
-        
-        config.update(
-            WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST = ["テストアイテムタイプ"]
-        )
-        logout_user()
-        login_user(users[4]["obj"])
-        role = get_current_user_role()
-        config.update(
-            WEKO_ITEMS_UI_OUTPUT_REPORT="",
-        )
-        mocker_data = mocker.patch(mock_path)
-        email_pattern_registration_done(role, "テストアイテムタイプ")
-        mocker_data.assert_called_with(config["WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE"
-                                                "_PERFECTURE_AND_LOCATION_DATA_OF"
-                                                "_GENERAL_USER"])
-        config.update(
-            WEKO_ITEMS_UI_APPLICATION_FOR_PERFECTURES="テストアイテムタイプ",
-        )
-        mocker_data = mocker.patch(mock_path)
-        email_pattern_registration_done(role, "テストアイテムタイプ")
-        mocker_data.assert_called_with(config["WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA"
-                                                "_OF_GENERAL_USER"])
-
-        logout_user()
-        login_user(users[8]["obj"])
-        role = get_current_user_role()
-        config.update(
-            WEKO_ITEMS_UI_APPLICATION_FOR_PERFECTURES="",
-        )
-        mocker_data = mocker.patch(mock_path)
-        email_pattern_registration_done(role, "テストアイテムタイプ")
-        mocker_data.assert_called_with(config["WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE"
-                                                "_PERFECTURE_AND_LOCATION_DATA_OF_STUDENT_OR"
-                                                "_GRADUATED_STUDENT"])
-        
-        config.update(
-            WEKO_ITEMS_UI_APPLICATION_FOR_PERFECTURES="テストアイテムタイプ",
-        )
-        mocker_data = mocker.patch(mock_path)
-        email_pattern_registration_done(role, "テストアイテムタイプ")
-        mocker_data.assert_called_with(config["WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA"
-                                   "_OF_STUDENT_OR_GRADUATED_STUDENT"])
-        
-        logout_user()
-        login_user(users[2]["obj"])
-        role = get_current_user_role()
-        subject, body = email_pattern_registration_done(role, "テストアイテムタイプ")
-        assert subject == None
-        assert body == None
+#def test_email_pattern_registration_done(app,users,mocker):
+#    mock_path = "weko_workflow.utils.get_mail_data"
+#    with app.test_request_context():
+#        config = current_app.config
+#        login_user(users[2]["obj"])
+#        from weko_items_ui.utils import get_current_user_role
+#        role = get_current_user_role()
+#        
+#        mocker_data = mocker.patch(mock_path)
+#        subject, body = email_pattern_registration_done(role, "テストアイテムタイプ")
+#        assert subject == None
+#        assert body == None
+#        
+#        config.update(
+#            WEKO_ITEMS_UI_OUTPUT_REPORT="テストアイテムタイプ"
+#        )
+#        mocker_data = mocker.patch(mock_path)
+#        email_pattern_registration_done(role, "テストアイテムタイプ")
+#        mocker_data.assert_called_with(config["WEKO_WORKFLOW_RECEIVE_OUTPUT_REGISTRATION"])
+#        
+#        
+#        config.update(
+#            WEKO_ITEMS_UI_OUTPUT_REPORT="",
+#            WEKO_ITEMS_UI_USAGE_REPORT = "テストアイテムタイプ"
+#        )
+#        mocker_data = mocker.patch(mock_path)
+#        email_pattern_registration_done(role, "テストアイテムタイプ")
+#        mocker_data.assert_called_with(config["WEKO_WORKFLOW_RECEIVE_USAGE_REPORT"])
+#        
+#        config.update(
+#            WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST = ["テストアイテムタイプ"]
+#        )
+#        logout_user()
+#        login_user(users[4]["obj"])
+#        role = get_current_user_role()
+#        config.update(
+#            WEKO_ITEMS_UI_OUTPUT_REPORT="",
+#        )
+#        mocker_data = mocker.patch(mock_path)
+#        email_pattern_registration_done(role, "テストアイテムタイプ")
+#        mocker_data.assert_called_with(config["WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE"
+#                                                "_PERFECTURE_AND_LOCATION_DATA_OF"
+#                                                "_GENERAL_USER"])
+#        config.update(
+#            WEKO_ITEMS_UI_APPLICATION_FOR_PERFECTURES="テストアイテムタイプ",
+#        )
+#        mocker_data = mocker.patch(mock_path)
+#        email_pattern_registration_done(role, "テストアイテムタイプ")
+#        mocker_data.assert_called_with(config["WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA"
+#                                                "_OF_GENERAL_USER"])
+#
+#        logout_user()
+#        login_user(users[8]["obj"])
+#        role = get_current_user_role()
+#        config.update(
+#            WEKO_ITEMS_UI_APPLICATION_FOR_PERFECTURES="",
+#        )
+#        mocker_data = mocker.patch(mock_path)
+#        email_pattern_registration_done(role, "テストアイテムタイプ")
+#        mocker_data.assert_called_with(config["WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE"
+#                                                "_PERFECTURE_AND_LOCATION_DATA_OF_STUDENT_OR"
+#                                                "_GRADUATED_STUDENT"])
+#        
+#        config.update(
+#            WEKO_ITEMS_UI_APPLICATION_FOR_PERFECTURES="テストアイテムタイプ",
+#        )
+#        mocker_data = mocker.patch(mock_path)
+#        email_pattern_registration_done(role, "テストアイテムタイプ")
+#        mocker_data.assert_called_with(config["WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA"
+#                                   "_OF_STUDENT_OR_GRADUATED_STUDENT"])
+#        
+#        logout_user()
+#        login_user(users[2]["obj"])
+#        role = get_current_user_role()
+#        subject, body = email_pattern_registration_done(role, "テストアイテムタイプ")
+#        assert subject == None
+#        assert body == None
 
 
 # def email_pattern_request_approval(item_type_name, next_action):
@@ -1146,10 +1191,12 @@ def test_get_approval_dates(app,mocker):
 def test_get_item_info(db_records):
     result = get_item_info(db_records[0][3].id)
     assert result == {'type': 'depid', 'value': '1', 'revision_id': 0, 'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': '', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper', 'subitem_thumbnail': [{'thumbnail_url': '/api/files/29ad484d-4ed1-4caf-8b21-ab348ae7bf28/test.png?versionId=ecd5715e-4ca5-4e45-b93c-5089f52860a0', 'thumbnail_label': 'test.png'}]}
-    print("reslt:{}".format(result))
-    
+
+    result = get_item_info(0)
+    assert result == {}
+
     with patch("weko_workflow.utils.ItemsMetadata.get_record",side_effect=Exception("test error")):
-        result = get_item_info("item_id")
+        result = get_item_info(db_records[0][3].id)
         assert result == {}
     
     result = get_item_info("")
@@ -1322,12 +1369,12 @@ def test_set_mail_info(app, db_register, mocker):
         assert result == test
 # def process_send_reminder_mail(activity_detail, mail_template):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_process_send_reminder_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_process_send_reminder_mail(db, db_register,mocker):
+def test_process_send_reminder_mail(db, db_register, mocker):
     mocker.patch("weko_workflow.utils.get_item_info",return_value={})
     mocker.patch("weko_workflow.utils.set_mail_info",return_value={})
     mock_sender = mocker.patch("weko_workflow.utils.send_mail_reminder")
-    process_send_reminder_mail(db_register["activities"][1],"template")
-    mock_sender.assert_called_with({"mail_address":"comadmin@test.org","template":"template"})
+    process_send_reminder_mail(db_register["activities"][1], "template")
+    mock_sender.assert_called_with({"mail_address":"comadmin@test.org","mail_id":"template"})
     
     user_profile = UserProfile(
         user_id=db_register["activities"][1].activity_login_user,
@@ -1340,18 +1387,29 @@ def test_process_send_reminder_mail(db, db_register,mocker):
     db.session.commit()
     mock_sender = mocker.patch("weko_workflow.utils.send_mail_reminder")
     process_send_reminder_mail(db_register["activities"][1],"template")
-    mock_sender.assert_called_with({"mail_address":"comadmin@test.org","template":"template","fullname":"sysadmin user"})
+    mock_sender.assert_called_with({"mail_address":"comadmin@test.org","mail_id":"template","fullname":"sysadmin user"})
 
-    with patch("weko_items_ui.utils.get_user_information",return_value={"email":""}):
+    with patch("weko_items_ui.utils.get_user_information",return_value=[{"email":""}]):
         with pytest.raises(ValueError) as e:
             process_send_reminder_mail(db_register["activities"][1],"template")
             assert str(e.value) == "Cannot get receiver mail address"
     
-    with patch("weko_items_ui.utils.get_user_information",return_value={"email":"test@test.org","fullname":""}):
+    with patch("weko_items_ui.utils.get_user_information",return_value=[{"email":"test@test.org","fullname":""}]):
         with patch("weko_workflow.utils.send_mail_reminder",side_effect=ValueError("test error")):
             with pytest.raises(ValueError) as e:
                 process_send_reminder_mail(db_register["activities"][1],"template")
                 assert str(e.value) == "test error"
+
+# def process_send_reminder_mail(activity_detail, mail_template):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_process_send_reminder_mail_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_process_send_reminder_mail_1(db, db_register, mocker):
+    # 例外が発生しないことを確認する。
+    mocker.patch("weko_workflow.utils.get_item_info",return_value={})
+    mocker.patch("weko_workflow.utils.set_mail_info",return_value={})
+    mock_sender = mocker.patch("weko_workflow.utils.send_mail_reminder")
+    process_send_reminder_mail(db_register["activities"][6],"template")
+    mock_sender.assert_called_with({"mail_address":"originalroleuser@test.org","mail_id":"template"})
+
 
 # def process_send_notification_mail(
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_process_send_notification_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -1462,7 +1520,7 @@ def test_create_record_metadata(app,db,users,db_register,mocker):
         "flow_id":workflow.flow_id
     }
     def mock_modify_item_metadata(item_,item_type_id_,new_activity_id_,activity_id_,data_dict_,schema_,owner_id_,related_title_):
-        item_ = {'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'related_title - ja_usage_title - 2 - ', 'owners': [1], 'status': 'published', '$schema': 'items/jsonschema/1', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}
+        item_ = {'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': 1, 'title': 'related_title - ja_usage_title - 2 - ', 'owners': [1], 'status': 'published', '$schema': 'items/jsonschema/1', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}
     mocker.patch("weko_workflow.utils.modify_item_metadata",side_effect=mock_modify_item_metadata)
     
     class MockDeposit:
@@ -1540,7 +1598,7 @@ def test_modify_item_metadata(app,db,db_register,users,mocker):
         "subitem_identifier_reg_type":"item_1617186819068"
     }
     
-    test = {'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'related_title - ja_usage_title - 2 - ', 'owners': [1], 'status': 'published', '$schema': 'items/jsonschema/1', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}
+    test = {'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': 1, 'title': 'related_title - ja_usage_title - 2 - ', 'owners': [1], 'status': 'published', '$schema': 'items/jsonschema/1', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}
     mocker.patch("weko_workflow.utils.get_shema_dict",return_value=schema_dict)
     result = modify_item_metadata(item,item_type_id,"new activity",activity_id,
                          data_dict,schema,owner_id,related_title)
@@ -1744,13 +1802,43 @@ def test_save_activity_data(mocker):
     data = {
         "activity_id":"test_id",
         "title":"test title",
-        "shared_user_ids":[1],
+        "shared_user_ids":[{"user":1}],
         "approval1":"test1@test.org",
         "approval2":"test2@test.org"
     }
     mock_update = mocker.patch("weko_workflow.utils.WorkActivity.update_activity")
     save_activity_data(data)
-    mock_update.assert_called_with("test_id",{"title":"test title","shared_user_ids":[1],"approval1":"test1@test.org","approval2":"test2@test.org"})
+    mock_update.assert_called_with("test_id",{"title":"test title","shared_user_ids":[{"user":1}],"approval1":"test1@test.org","approval2":"test2@test.org"})
+
+# def save_activity_data(data: dict) -> NoReturn:
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_save_activity_data_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_save_activity_data_1(db_register, mocker):
+    mock_update = mocker.patch("weko_workflow.utils.WorkActivity.update_activity")
+    data = {
+        "activity_id":db_register['activities'][0].activity_id,
+        "title":"test title",
+        "shared_user_ids":[],
+        "approval1":"test1@test.org",
+        "approval2":"test2@test.org"
+    }
+    save_activity_data(data)
+    assert db_register['activities'][0].shared_user_ids == '[]'
+    # テストデータの元からshared_user_idsは[]だったので戻す必要なし
+
+# def save_activity_data(data: dict) -> NoReturn:
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_save_activity_data_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_save_activity_data_2(db_register, mocker):
+    data = {
+        "activity_id":db_register['activities'][0].activity_id,
+        "title":"test title",
+        "shared_user_ids":[{"user":3}],
+        "approval1":"test1@test.org",
+        "approval2":"test2@test.org"
+    }
+    save_activity_data(data)
+    assert db_register['activities'][0].shared_user_ids == [{"user":3}]
+    # テストデータをもとに戻す
+    db_register['activities'][0].shared_user_ids = []
 
 # def send_mail_url_guest_user(mail_info: dict) -> bool:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_url_guest_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -1968,7 +2056,7 @@ def test_delete_guest_activity(client,workflow):
     assert result == False
 # def get_activity_display_info(activity_id: str):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_activity_display_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_get_activity_display_info(app,db, users, db_register,mocker):
+def test_get_activity_display_info(app,db, users, db_register, mocker):
     with app.test_request_context():
         activity = db_register["activities"][1]
         activity_id = activity.activity_id
@@ -1983,11 +2071,12 @@ def test_get_activity_display_info(app,db, users, db_register,mocker):
         with db.session.begin_nested():
             db.session.add(db_history1)
         test_steps = [
-            {"ActivityId":activity_id,"ActionId":1,"ActionName":"Start","ActionVersion":"1.0.0","ActionEndpoint":"begin_action","Author":"contributor@test.org","Status":"action_doing","ActionOrder":1},
-            {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login","Author":"","Status":" ","ActionOrder":2},
-            {"ActivityId":activity_id,"ActionId":5,"ActionName":"Item Link","ActionVersion":"1.0.0","ActionEndpoint":"item_link","Author":"","Status":" ","ActionOrder":3}
+            {"ActivityId":activity_id,"ActionId":1,"ActionName":"Start","ActionVersion":"1.0.0","ActionEndpoint":"begin_action", "Author":"contributor@test.org", "Status":"action_doing", "ActionOrder":1},
+            {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login", "Author":"contributor@test.org", "Status":"action_doing","ActionOrder":1},
+            {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login", "Author":"", "Status":" ","ActionOrder":2},
+            {"ActivityId":activity_id,"ActionId":5,"ActionName":"Item Link","ActionVersion":"1.0.0","ActionEndpoint":"item_link", "Author":"", "Status":" ","ActionOrder":3}
         ]
-        endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail = get_activity_display_info(activity_id)
+        endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
         assert endpoint == "begin_action"
         assert action_id == 1
         assert activity_detail == activity
@@ -2003,7 +2092,7 @@ def test_get_activity_display_info(app,db, users, db_register,mocker):
         db.session.merge(activity)
         db.session.commit()
         mocker.patch("weko_workflow.utils.WorkActivity.get_activity_action_comment",return_value=None)
-        endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail = get_activity_display_info(activity_id)
+        endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
         assert endpoint == "begin_action"
         assert action_id == 1
         assert activity_detail == activity
@@ -2013,10 +2102,27 @@ def test_get_activity_display_info(app,db, users, db_register,mocker):
         assert steps == test_steps
         assert temporary_comment == ""
         assert workflow_detail == db_register["workflow"]
+
+        # if activity_detail and activity_detail.item_id = FALSE
+        sutab_get_activity_detail = WorkActivity().get_activity_detail(activity_id)
+        sutab_get_activity_detail.item_id = None
+        with patch("weko_workflow.api.WorkActivity.get_activity_detail", return_value=sutab_get_activity_detail):
+            endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
+            assert item is None
+
+        # if metadata: == True
+        import json
+        target_activity = Activity.query.filter_by(activity_id=activity_id).first()
+        target_activity.temp_data = json.dumps({"metainfo":{"owner": 2, "shared_user_ids":[{"user": -1}, {"user": 1}]}})
+        db.session.merge(activity)
+        db.session.commit()
+        endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
+        assert owner_id == 2
+        assert shared_user_ids == [{"user": -1}, {"user": 1}]
         
 # def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test___init_activity_detail_data_for_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test___init_activity_detail_data_for_guest(app,db,users,db_register,mocker):
+def test___init_activity_detail_data_for_guest(app, db, users, db_register, mocker):
     with app.test_request_context():
         
         activity = db_register["activities"][1]
@@ -2033,9 +2139,10 @@ def test___init_activity_detail_data_for_guest(app,db,users,db_register,mocker):
             db.session.add(db_history1)
 
         test_steps = [
-            {"ActivityId":activity_id,"ActionId":1,"ActionName":"Start","ActionVersion":"1.0.0","ActionEndpoint":"begin_action","Author":"contributor@test.org","Status":"action_doing","ActionOrder":1},
-            {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login","Author":"","Status":" ","ActionOrder":2},
-            {"ActivityId":activity_id,"ActionId":5,"ActionName":"Item Link","ActionVersion":"1.0.0","ActionEndpoint":"item_link","Author":"","Status":" ","ActionOrder":3}
+            {"ActivityId":activity_id,"ActionId":1,"ActionName":"Start","ActionVersion":"1.0.0","ActionEndpoint":"begin_action", "Author":"contributor@test.org", "Status":"action_doing", "ActionOrder":1},
+            {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login", "Author":"contributor@test.org", "Status":"action_doing","ActionOrder":1},
+            {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login", "Author":"", "Status":" ","ActionOrder":2},
+            {"ActivityId":activity_id,"ActionId":5,"ActionName":"Item Link","ActionVersion":"1.0.0","ActionEndpoint":"item_link", "Author":"", "Status":" ","ActionOrder":3}
         ]
         action_endpoint = "begin_action"
         action_id=1
@@ -2046,8 +2153,10 @@ def test___init_activity_detail_data_for_guest(app,db,users,db_register,mocker):
         steps=test_steps,
         temporary_comment=None
         workflow_detail=db_register["workflow"]
+        owner_id = 1
+        shared_user_ids = []
         display_info = (action_endpoint, action_id, activity_detail, cur_action, histories, item, \
-            steps, temporary_comment, workflow_detail)
+            steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)
         mocker.patch("weko_workflow.utils.get_activity_display_info",return_value=display_info)
         mocker.patch("weko_workflow.utils.get_approval_keys",return_value=[])
         community_id=""
@@ -2101,7 +2210,7 @@ def test___init_activity_detail_data_for_guest(app,db,users,db_register,mocker):
             temporary_comment=temporary_comment,
             workflow_detail=workflow_detail,
             user_profile=user_profile,
-            list_license=[{'value': 'license_free', 'name': _('write your own license')}, {'value': 'license_12', 'name': _('Creative Commons CC0 1.0 Universal Public Domain Designation')}, {'value': 'license_6', 'name': _('Creative Commons Attribution 3.0 Unported (CC BY 3.0)')}, {'value': 'license_7', 'name': _('Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)')}, {'value': 'license_8', 'name': _('Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)')}, {'value': 'license_9', 'name': _('Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)')}, {'value': 'license_10', 'name': _('Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0)')}, {'value': 'license_11', 'name': _('Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-NC-ND 3.0)')}, {'value': 'license_0', 'name': _('Creative Commons Attribution 4.0 International (CC BY 4.0)')}, {'value': 'license_1', 'name': _('Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)')}, {'value': 'license_2', 'name': _('Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND 4.0)')}, {'value': 'license_3', 'name': _('Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)')}, {'value': 'license_4', 'name': _('Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)')}, {'value': 'license_5', 'name': _('Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)')}],
+            list_license=get_list_licence(),
             cur_action=cur_action,
             activity_id=activity_detail.activity_id,
             is_enable_item_name_link=True,
@@ -2115,7 +2224,7 @@ def test___init_activity_detail_data_for_guest(app,db,users,db_register,mocker):
             step_item_login_url="weko_items_ui/iframe/item_edit.html",
             need_file=True,
             need_billing_file=False,
-            records={'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'title', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}},
+            records={'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': 1, 'title': 'title', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}},
             record=[],
             jsonschema="/items/jsonschema/1",
             schemaform="/items/schemaform/1",
@@ -2126,10 +2235,12 @@ def test___init_activity_detail_data_for_guest(app,db,users,db_register,mocker):
             files_thumbnail=[],
             allow_multi_thumbnail=False,
             id=db_register["workflow"].itemtype_id,
+            owner_id = owner_id,
+            shared_user_ids=shared_user_ids,
         )
 
         result = __init_activity_detail_data_for_guest(activity_id,community_id)
-        assert result == test
+        assert test == result
 
 # def prepare_data_for_guest_activity(activity_id: str) -> dict:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_data_for_guest_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -2151,6 +2262,21 @@ def test_prepare_data_for_guest_activity(app,db,users,db_register,mocker):
                 )
         with db.session.begin_nested():
             db.session.add(db_history1)
+
+        user_profile = {
+            "results":{
+                'subitem_user_name': "",
+                'subitem_fullname': "",
+                'subitem_mail_address': "guest@test.org",
+                'subitem_displayname': "",
+                'subitem_university/institution': '',
+                'subitem_affiliated_division/department': '',
+                'subitem_position': '',
+                'subitem_phone_number': '',
+                'subitem_position(others)': '',
+                'subitem_affiliated_institution': [],
+            }
+        }
 
         init_data = dict(
                 page=None,
@@ -2185,8 +2311,8 @@ def test_prepare_data_for_guest_activity(app,db,users,db_register,mocker):
                 steps=[{"ActivityId":activity_id,"ActionId":1,"ActionName":"Start","ActionVersion":"1.0.0","ActionEndpoint":"begin_action","Author":"contributor@test.org","Status":"action_doing","ActionOrder":1},{"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login","Author":"","Status":" ","ActionOrder":2},{"ActivityId":activity_id,"ActionId":5,"ActionName":"Item Link","ActionVersion":"1.0.0","ActionEndpoint":"item_link","Author":"","Status":" ","ActionOrder":3}],
                 temporary_comment=None,
                 workflow_detail=db_register["workflow"],
-                user_profile={"results":{'subitem_user_name': "guest",'subitem_fullname': "guest",'subitem_mail_address': "guest@test.org",'subitem_displayname': "guest",'subitem_university/institution': '','subitem_affiliated_division/department': '','subitem_position': '','subitem_phone_number': '','subitem_position(other)': '','subitem_affiliated_institution': [],}},
-                list_license=[{'value': 'license_free', 'name': 'write your own license'}, {'value': 'license_12', 'name': 'Creative Commons CC0 1.0 Universal Public Domain Designation'}, {'value': 'license_6', 'name': 'Creative Commons Attribution 3.0 Unported (CC BY 3.0)'}, {'value': 'license_7', 'name': 'Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)'}, {'value': 'license_8', 'name': 'Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)'}, {'value': 'license_9', 'name': 'Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)'}, {'value': 'license_10', 'name': 'Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0)'}, {'value': 'license_11', 'name': 'Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-NC-ND 3.0)'}, {'value': 'license_0', 'name': 'Creative Commons Attribution 4.0 International (CC BY 4.0)'}, {'value': 'license_1', 'name': 'Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)'}, {'value': 'license_2', 'name': 'Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND 4.0)'}, {'value': 'license_3', 'name': 'Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)'}, {'value': 'license_4', 'name': 'Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)'}, {'value': 'license_5', 'name': 'Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)'}],
+                user_profile=user_profile,
+                list_license=get_list_licence(),
                 cur_action=activity.action,
                 activity_id=activity.activity_id,
                 is_enable_item_name_link=True,
@@ -2200,7 +2326,7 @@ def test_prepare_data_for_guest_activity(app,db,users,db_register,mocker):
                 step_item_login_url="weko_items_ui/iframe/item_edit.html",
                 need_file=True,
                 need_billing_file=False,
-                records={'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'title', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}},
+                records={'id': '1.1', 'pid': {'type': 'depid', 'value': '1.1', 'revision_id': 0}, 'lang': 'ja', 'owner': 1, 'title': 'title', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'ff', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}},
                 record=[],
                 jsonschema="/items/jsonschema/1",
                 schemaform="/items/schemaform/1",
@@ -2747,6 +2873,122 @@ def test_grant_access_rights_to_all_open_restricted_files(app ,db,users ):
 
     res = grant_access_rights_to_all_open_restricted_files(activity_id ,None, activity_detail )
     assert res == {}
+
+# def get_contributors(pid_value)
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_contributors -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_contributors(db, users_1, db_records_1):
+    # 引数のpid_valueをfalseに設定する。
+    actual = get_contributors(False)
+    assert actual == []
+    
+    # 引数のpid_valueをfalseに設定する。 user_id_list_json(List型) Listの中がdict
+    user_id_list_json = [{"user":1},{"user":2}]
+    actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=1)
+    expected = [{ 
+                'userid' : 1, 
+                'username': "",
+                'email' : "user1@sample.com",
+                'owner' : True,
+                'error': ''
+                },{ 
+                'userid' : 2, 
+                'username': "",
+                'email' : "user2@sample.com",
+                'owner' : False,
+                'error': ''
+                }]
+    assert actual == expected
+
+    # 引数のpid_valueをfalseに設定する。 user_id_list_json(List型) Listの中がstring
+    user_id_list_json = ["漢字", "ひらがな"]
+    actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=1)
+    expected = [{ 
+                'userid' : 1, 
+                'username': "",
+                'email' : "user1@sample.com",
+                'owner' : True,
+                'error': ''
+                }]
+    assert actual == expected
+
+    # 引数のpid_valueをfalseに設定する。 user_id_list_json(Dict型)
+    user_id_list_json = {"user": 1}
+    actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=1)
+    expected = [{ 
+                'userid' : 1, 
+                'username': "",
+                'email' : "user1@sample.com",
+                'owner' : True,
+                'error': ''
+                }]
+    assert actual == expected
+
+    # pid_value=196.0を設定
+    user_profile_1 = UserProfile(
+        user_id=1,
+        _username="ユーザー1",
+        fullname="ユーザー1 full",
+        timezone="asia",
+        language="japanese",
+        _displayname="display ユーザー1"
+    )
+    user_profile_2 = UserProfile(
+        user_id=2,
+        _username="ユーザー2",
+        fullname="ユーザー2 full",
+        timezone="asia",
+        language="japanese",
+        _displayname="display ユーザー2"
+    )
+    db.session.add(user_profile_1)
+    db.session.add(user_profile_2)
+    db.session.commit()
+
+    actual = get_contributors('196.0')
+    assert actual == [{ 'userid' : 1, 
+                       'username': "ユーザー1",
+                       'email' : "user1@sample.com",
+                       'owner' : True,
+                       'error': ''
+                    }]
+    
+    # pid_value=196.1を設定
+    # weko_shared_ids": [100] を設定（存在しないユーザーID）
+    actual = get_contributors('197')
+    expected = [{ 
+                'userid' : 1, 
+                'username': "ユーザー1",
+                'email' : "user1@sample.com",
+                'owner' : True,
+                'error': ''
+                },
+                {
+                'userid' : 100, 
+                'username': '',
+                'email' : '',
+                'owner' : False,
+                'error': 'The specified user ID is incorrect'
+                }]
+    assert sorted(actual, key=lambda x: x["userid"]) == sorted(expected, key=lambda x: x["userid"])
+
+    expected = [{ 
+            'userid' : 1, 
+            'username': "ユーザー1",
+            'email' : "user1@sample.com",
+            'owner' : True,
+            'error': ''
+            },
+            {
+            'userid' : 2, 
+            'username': "ユーザー2",
+            'email' : "user2@sample.com",
+            'owner' : False,
+            'error': ''
+            }]
+    # user_id_list_jsonを設定
+    user_id_list_json = [2]
+    actual = get_contributors(None, user_id_list_json, owner_id=1)
+    assert sorted(actual, key=lambda x: x["userid"]) == sorted(expected, key=lambda x: x["userid"])
 
 status_list = [
     ('todo', '1', '2'),

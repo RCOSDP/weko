@@ -80,22 +80,28 @@ from weko_workflow.models import Activity, FlowAction, FlowActionRole, \
     FlowDefine
 from weko_workflow.utils import IdentifierHandle
 
+def check_display_shared_user(user_id):
+    for role_id in current_app.config['WEKO_ITEMS_UI_SHARED_USER_ROLE_ID_LIST']:
+        recs = db.session.query(userrole).filter_by(role_id=role_id).all()
+        for rec in recs:
+            if user_id == rec.user_id:
+                return True
+    return False
 
 def get_list_username():
     """Get list username.
 
     Query database to get all available username
     return: list of username
-    TODO: 
     """
-    current_user_id = current_user.get_id()
-    current_app.logger.debug("current_user:{}".format(current_user))
     from weko_user_profiles.models import UserProfile
 
-    users = UserProfile.query.filter(UserProfile.user_id != current_user_id).all()
+    users = UserProfile.query.all()
     result = list()
     for user in users:
-        username = user.get_username
+        if not check_display_shared_user(user.user_id):
+            continue
+        username = user.username
         if username:
             result.append(username)
     
@@ -108,28 +114,14 @@ def get_list_email():
     Query database to get all available email
     return: list of email
     """
-    current_user_id = current_user.get_id()
     result = list()
-    users = User.query.filter(User.id != current_user_id).all()
+    users = User.query.all()
     for user in users:
+        if not check_display_shared_user(user.id):
+            continue
         email = user.email
         if email:
             result.append(email)
-    # try:
-    #     metadata = MetaData()
-    #     metadata.reflect(bind=db.engine)
-    #     table_name = 'accounts_user'
-
-    #     user_table = Table(table_name, metadata)
-    #     record = db.session.query(user_table)
-
-    #     data = record.all()
-
-    #     for item in data:
-    #         if not int(current_user_id) == item[0]:
-    #             result.append(item[1])
-    # except Exception as e:
-    #     result = str(e)
 
     return result
 
@@ -137,7 +129,7 @@ def get_list_email():
 def get_user_info_by_username(username):
     """Get user information by username.
 
-    Query database to get user id by using username
+    Query database to get user id by using displayname
     Get email from database using user id
     Pack response data: user id, user name, email
 
@@ -147,7 +139,7 @@ def get_user_info_by_username(username):
     """
     result = dict()
     try:
-        user = UserProfile.get_by_username(username)
+        user = UserProfile.get_by_displayname(username)
         user_id = user.user_id
 
         metadata = MetaData()
@@ -160,7 +152,7 @@ def get_user_info_by_username(username):
         data = record.all()
 
         for item in data:
-            if item[0] == user_id:
+            if item[0] == user_id and check_display_shared_user(user_id):
                 result['username'] = username
                 result['user_id'] = user_id
                 result['email'] = item[1]
@@ -192,7 +184,7 @@ def validate_user(username, email):
         'error': ''
     }
     try:
-        user = UserProfile.get_by_username(username)
+        user = UserProfile.get_by_displayname(username)
         user_id = 0
 
         metadata = MetaData()
@@ -208,8 +200,10 @@ def validate_user(username, email):
             if item[1] == email:
                 user_id = item[0]
                 break
-
-        if user.user_id == user_id:
+        if user is None:
+            result['error'] = 'User is not exist UserProfile'
+            return result
+        if user.user_id == user_id and check_display_shared_user(user_id):
             user_info = dict()
             user_info['username'] = username
             user_info['user_id'] = user_id
@@ -246,12 +240,12 @@ def get_user_info_by_email(email):
 
         data = record.all()
         for item in data:
-            if item[1] == email:
+            if item[1] == email and check_display_shared_user(item[0]):
                 user = UserProfile.get_by_userid(item[0])
                 if user is None:
                     result['username'] = ""
                 else:
-                    result['username'] = user.get_username
+                    result['username'] = user.username
                 result['user_id'] = item[0]
                 result['email'] = email
                 return result
@@ -305,20 +299,11 @@ def get_user_information(user_ids):
         if not user_id in temp:
             info['error'] = "The specified user ID is incorrect"
         
-        result.append(info)
-
         for item in data:
             if int(item[0]) == int(user_id):
-                is_merge = False
-                for exist_info in result:
-                    if int(exist_info['userid']) == int(user_id):
-                        # update list
-                        exist_info['email'] = item[1]
-                        is_merge = True
-                if not is_merge:
-                    info['userid'] = user_id
-                    info['email'] = item[1]
-                    result.append(info)
+                info['email'] = item[1]
+        result.append(info)
+
     return result
 
 def get_user_permission(user_id):
@@ -337,24 +322,6 @@ def get_user_permission(user_id):
     if str(user_id) == current_id:
         return True
     return False
-
-def is_current_user(user_id):
-    """
-    Get user permission user_id.
-
-    Compare current id with id of current user
-    parameter:
-        user_id: The user_id
-    return: true if current id is the same with id of current user.
-    If not return false
-    """
-    current_id = current_user.get_id()
-    if current_id is None:
-        return False
-    if str(user_id) == current_id:
-        return True
-    return False
-
 
 def get_current_user():
     """
@@ -1614,7 +1581,7 @@ def _export_item(record_id,
         exported_item['name'] = 'recid_{}'.format(record_id)
         exported_item['files'] = []
         exported_item['path'] = 'recid_' + str(record_id)
-        exported_item['item_type_id'] = record.get('item_type_id')
+        exported_item['item_type_id'] = str(record.get('item_type_id')) if record.get('item_type_id') else None
         if not records_data:
             records_data = record
         if exported_item['item_type_id']:
@@ -1629,7 +1596,7 @@ def _export_item(record_id,
                     'weko_shared_ids': meta_data.get('weko_shared_ids')
                 }
                 list_item_role.update(
-                    {exported_item['item_type_id']: record_role_ids})
+                    {str(exported_item['item_type_id']): record_role_ids})
                 if hide_meta_data_for_role(record_role_ids):
                     for hide_key in list_hidden:
                         if isinstance(hide_key, str) \

@@ -25,13 +25,15 @@ from typing import List
 import urllib.parse
 import uuid
 from datetime import datetime, timedelta
+import json
 
 from flask import abort, current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from sqlalchemy import and_, asc, desc, func, or_, not_
+from sqlalchemy import and_, asc, desc, func, or_, not_, cast, String, Integer
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from weko_deposit.api import WekoDeposit
@@ -1455,7 +1457,7 @@ class WorkActivity(object):
         :return:
         """
         self_user_id = int(current_user.get_id())
-        self_user_id_json = {"id" : self_user_id}
+        self_user_id_json = json.dumps({"user" : self_user_id})
         self_group_ids = [role.id for role in current_user.roles]
         query = query \
             .filter(_FlowAction.action_id == _Activity.action_id) \
@@ -1491,7 +1493,9 @@ class WorkActivity(object):
                 .filter(
                     or_(
                         _Activity.activity_login_user == self_user_id,
-                        _Activity.shared_user_ids.contains(self_user_id_json)
+                        cast(_Activity.shared_user_ids, String).contains(self_user_id_json),
+                        cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('shared_user_ids'), String).contains(self_user_id_json),
+                        cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('owner'), Integer) == self_user_id,
                     )
                 ) \
                 .filter(
@@ -1499,25 +1503,40 @@ class WorkActivity(object):
                         and_(
                             _FlowActionRole.action_user != self_user_id,
                             _FlowActionRole.action_user_exclude == '0',
-                            not_(_Activity.shared_user_ids.contains(self_user_id_json)),
+                            not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
+                            not_(cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('shared_user_ids'), String).contains(self_user_id_json)),
+                            not_(cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('owner'), Integer) == self_user_id),
                         ),
                         and_(
                             _FlowActionRole.action_role.notin_(self_group_ids),
                             _FlowActionRole.action_role_exclude == '0',
-                            not_(_Activity.shared_user_ids.contains(self_user_id_json)),
+                            not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
+                            not_(cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('shared_user_ids'), String).contains(self_user_id_json)),
+                            not_(cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('owner'), Integer) == self_user_id),
                         ),
                         and_(
                             ActivityAction.action_handler != self_user_id,
-                            not_(_Activity.shared_user_ids.contains(self_user_id_json)),
+                            not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
+                            not_(cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('shared_user_ids'), String).contains(self_user_id_json)),
+                            not_(cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('owner'), Integer) == self_user_id),
                         ),
                         and_(
-                            _Activity.shared_user_ids.contains(self_user_id_json),
+                            or_(
+                                cast(_Activity.shared_user_ids, String).contains(self_user_id_json),
+                                cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('shared_user_ids'), String).contains(self_user_id_json),
+                                cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('owner'), Integer) == self_user_id,
+
+                            ),
                             _FlowActionRole.action_user 
                             != _Activity.activity_login_user,
                             _FlowActionRole.action_user_exclude == '0'
                         ),
                         and_(
-                            _Activity.shared_user_ids.contains(self_user_id_json),
+                            or_(
+                                cast(_Activity.shared_user_ids, String).contains(self_user_id_json),
+                                cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('shared_user_ids'), String).contains(self_user_id_json),
+                                cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('owner'), Integer) == self_user_id,
+                            ),
                             ActivityAction.action_handler 
                             != _Activity.activity_login_user
                         ),
@@ -1540,7 +1559,7 @@ class WorkActivity(object):
         :return:
         """
         self_user_id = int(current_user.get_id())
-        self_user_id_json = {"id" : self_user_id}
+        self_user_id_json = json.dumps({"user" : self_user_id})
         self_group_ids = [role.id for role in current_user.roles]
         if is_community_admin:
             query = query \
@@ -1571,7 +1590,11 @@ class WorkActivity(object):
                         _FlowActionRole.action_role_exclude == '0'
                     ),
                     and_(
-                        _Activity.shared_user_ids.contains(self_user_id_json),
+                        or_(
+                            cast(_Activity.shared_user_ids, String).contains(self_user_id_json),
+                            cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('shared_user_ids'), String).contains(self_user_id_json),
+                            cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('owner'), Integer) == self_user_id,
+                        ),
                         _FlowAction.action_id != 4
                     ),
                     and_(
@@ -1623,7 +1646,7 @@ class WorkActivity(object):
         if not is_admin or current_app.config[
                 'WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
             self_user_id = int(current_user.get_id())
-            self_user_id_json = {"id" : self_user_id}
+            self_user_id_json = json.dumps({"user" : self_user_id})
             self_group_ids = [role.id for role in current_user.roles]
             query = query \
                 .filter(
@@ -1640,7 +1663,11 @@ class WorkActivity(object):
                             _FlowActionRole.id.is_(None)
                         ),
                         and_(
-                            _Activity.shared_user_ids.contains(self_user_id_json),
+                            or_(
+                                cast(_Activity.shared_user_ids, String).contains(self_user_id_json),
+                                cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('shared_user_ids'), String).contains(self_user_id_json),
+                                cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('owner'), Integer) == self_user_id,
+                            )
                         ),
                         and_(
                              _FlowActionRole.action_item_registrant == True,
@@ -1666,7 +1693,11 @@ class WorkActivity(object):
                             _FlowActionRole.action_role_exclude == '0'
                         ),
                         and_(
-                            _Activity.shared_user_ids.contains(self_user_id_json)
+                            or_(
+                                cast(_Activity.shared_user_ids, String).contains(self_user_id_json),
+                                cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('shared_user_ids'), String).contains(self_user_id_json),
+                                cast(cast(_Activity.temp_data.op("#>>")({}), JSONB).op("->")('metainfo').op("->")('owner'), Integer) == self_user_id,
+                            )
                         ),
                         and_(
                             _FlowActionRole.action_item_registrant == True,

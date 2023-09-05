@@ -1443,13 +1443,12 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 }
               }
             }
-            /*Add data for 'Role' in File.*/
+            /*Add data for 'Roles' in File.*/
             var roles_schema = filemeta_schema.items.properties['roles'];
             if (roles_schema) {
               if (!dataInit) {
                 dataInit = $scope.getDataInit();
               }
-              /*Add data for 'Role' in File.*/
               var role_schema_child = roles_schema.items.properties['role'];
               if (role_schema_child) {
                 // Add enum in schema.
@@ -3587,8 +3586,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.registerUserPermission = async function () {
         let model = $rootScope.recordsVM.invenioRecordsModel;
         let userSelection = $(".form_share_permission").css('display');
-        let is_validate_owner = false;
-        let is_validate_contributor = false;
         let login_user_id = 0;
         let is_exist_login_user = false;
         // init model
@@ -3653,10 +3650,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 is_exist_login_user = true;
               }
               if (user['owner']) {
-                is_validate_owner = true;
                 owner_info = {'user_id': user['userID'], 'email': user['email']};
               } else {
-                is_validate_contributor = true;
                 contributors_info.push({'user_id':user['userID'], 'email': user['email']});
               }
             }
@@ -3679,15 +3674,16 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               shared_user_ids.push({'user':contributors['user_id']});
             }));
             model['shared_user_ids'] = shared_user_ids;
+          } else {
+            return async_validate_users['error'];
           }
-          return true;
-        }).then(() => {
+          return '';
+        }).then((error_message) => {
+          if (error_message.length > 0) {
+            return Promise.reject(error_message);
+          }
           if (!is_exist_login_user) {
             return Promise.reject('Contributer or Owner - the login user is required.');
-          }
-        }).then(() => {
-          if (!(is_validate_owner & is_validate_contributor)) {
-            return Promise.reject('Contributer or Owner - There is an error in your input.');
           }
           return true;
         });
@@ -4507,9 +4503,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         if(is_login_check) {
           //shared_userに現在ログイン中のユーザーIDと一致するかチェック
           shared_user_ids = [];
-          recordModel['shared_user_ids'].forEach(users => {
-            shared_user_ids.push(users['user']);
-          });
+          if (recordModel['shared_user_ids'] != undefined) {
+            recordModel['shared_user_ids'].forEach(users => {
+              shared_user_ids.push(users['user']);
+            });
+          }
           const ids = shared_user_ids.concat(recordModel['owner']);
           if (Number.isInteger(recordModel['owner'])) {
             let is_correct = await $scope.checkLoginUserIds(ids)
@@ -4767,6 +4765,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
           var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
           let permission = false;
+          let error_message = 'An error ocurred while processing the user data!<br><br>';
           $scope.$broadcast('schemaFormValidate');
           if (enableFeedbackMail === 'True' && enableContributor === 'True') {
             if (!invalidFlg && $scope.is_item_owner) {
@@ -4775,10 +4774,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   permission = true;
                 }
               }).catch((msg) => {
-                $("#inputModal").html(msg);
-                $("#allModal").modal("show");
-                $scope.endLoading();
-                return false;
+                error_message = msg;
               });
             } else {
               permission = true;
@@ -4793,8 +4789,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               this.saveDataJsonCallback(item_save_uri, startLoading);
               this.saveFeedbackMailListCallback(currentActionId);
             } else {
-              var msg = 'An error ocurred while processing the user data!<br><br>'
-              $("#inputModal").html(msg);
+              $("#inputModal").html(error_message);
               $("#allModal").modal("show");
               $scope.endLoading();
               return false;

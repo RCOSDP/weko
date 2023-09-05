@@ -819,7 +819,7 @@ def validate_users_info():
         info = {
             'owner': False,
             'info': '',
-            'validation': '',
+            'validation': False,
             'error': ''
         }
         username = data.get('username', '')
@@ -830,15 +830,21 @@ def validate_users_info():
             if username != "":
                 if email == "":
                     info['info'] = get_user_info_by_username(username)
+                    if not info['info']:
+                        raise Exception('Not Found Username')
                     info['validation'] = True
                 else:
                     validate_data = validate_user(username, email)
                     info['info'] = validate_data['results']
                     info['validation'] = validate_data['validation']
+                    if validate_data['error'] != "":
+                        raise Exception(validate_data['error'])
                 result['results'].append(info)
 
             if email != "" and username == "":
                 info['info'] = get_user_info_by_email(email)
+                if not info['info']:
+                    raise Exception('Not Found Email')
                 info['validation'] = True
                 result['results'].append(info)
 
@@ -983,6 +989,7 @@ def prepare_edit_item():
     err_code = current_app.config.get('WEKO_ITEMS_UI_API_RETURN_CODE_ERROR',
                                       -1)
     if request.headers['Content-Type'] != 'application/json':
+        print(jsonify(code=err_code, msg=_('Header Error')))
         """Check header of request"""
         return jsonify(
             code=err_code,
@@ -1000,8 +1007,8 @@ def prepare_edit_item():
                             object_type='rec',
                             getter=record_class.get_record)
         recid, deposit = resolver.resolve(pid_value)
-        authenticators = [str(deposit.get('owner'))] + deposit.get('weko_shared_ids') if deposit.get('weko_shared_ids') is not None else []
-        user_id = str(get_current_user())
+        authenticators = [int(deposit.get('owner'))] + deposit.get('weko_shared_ids') if deposit.get('weko_shared_ids') is not None else []
+        user_id = int(get_current_user())
         activity = WorkActivity()
         latest_pid = PIDVersioning(child=recid).last_child
 
