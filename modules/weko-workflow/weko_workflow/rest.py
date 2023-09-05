@@ -904,8 +904,8 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
 
         # Validate token
         current_app.logger.debug(f"[{activity_id}] token: {token}, file_name: {file_name}")
-        is_valid, activity_id, guest_email = validate_guest_activity_token(token, file_name)
-        if not is_valid:
+        is_valid, token_activity_id, guest_email = validate_guest_activity_token(token, file_name)
+        if not is_valid or activity_id != token_activity_id:
             current_app.logger.error(f"[{activity_id}] guest activity token is invalid.")
             raise InvalidTokenError() # 400 Error
 
