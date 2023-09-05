@@ -1035,7 +1035,8 @@ class WidgetBucket:
             "file_name": file_name,
         }
         file_bucket = Bucket.query.get(self.bucket_id)
-        community_id = community_id.split("@")[0]
+        #community_id = community_id.split("@")[0]
+        community_id = community_id.split("@")[0] if community_id.split("@")[0] else "0"
         key = "{0}_{1}".format(community_id, file_name)
         root_url = request.host_url
         try:
@@ -1049,8 +1050,8 @@ class WidgetBucket:
                         mimetype=mimetype
                     )
                 db.session.commit()
-                rtn["url"] = "{}widget/uploaded/{}/{}".format(
-                    root_url, file_name, community_id
+                rtn["url"] = "/widget/uploaded/{}/{}".format(
+                    file_name,community_id
                 )
                 return rtn
         except UnexpectedFileSizeError as error:
@@ -1063,8 +1064,8 @@ class WidgetBucket:
             rtn['status'] = False
             rtn['duplicated'] = True
             rtn['msg'] = str(error.errors)
-            rtn["url"] = "{}widget/uploaded/{}/{}".format(
-                root_url, file_name, community_id
+            rtn["url"] = "/widget/uploaded/{}/{}".format(
+                file_name, community_id
             )
             return rtn
 
