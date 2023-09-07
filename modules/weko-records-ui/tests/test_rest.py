@@ -88,17 +88,17 @@ def test_WekoRecordsCitesResource(app, records):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoRecordsResource -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_WekoRecordsResource(app, records):
-
+def test_WekoRecordsResource(app, records_rest, db_rocrate_mapping):
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
     with app.test_client() as client:
         res = client.get('/v1/records/1')
         assert res.status_code == 200
+        data = json.loads(res.get_data())
+        assert data['@graph'][0]['title'][0] == 'メタボリックシンドロームモデルマウスの多臓器遺伝子発現量データ'
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoRecordsResource_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_WekoRecordsResource_error(app, records):
-
+def test_WekoRecordsResource_error(app, records_rest, db_rocrate_mapping):
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
     with app.test_client() as client:
         url = '/v1/records/1'
@@ -142,8 +142,7 @@ def test_WekoRecordsResource_error(app, records):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoRecordsStats -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_WekoRecordsStats(app, records):
-
+def test_WekoRecordsStats(app, records_rest, db_rocrate_mapping):
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
     with app.test_client() as client:
         res = client.get('/v1/records/1/stats')
@@ -154,8 +153,7 @@ def test_WekoRecordsStats(app, records):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoRecordsStats_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_WekoRecordsStats_error(app, records):
-
+def test_WekoRecordsStats_error(app, records_rest, db_rocrate_mapping):
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
     with app.test_client() as client:
         url = '/v1/records/1/stats'
@@ -198,7 +196,6 @@ def test_WekoRecordsStats_error(app, records):
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoFilesStats -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_WekoFilesStats(app, records):
-
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
     with app.test_client() as client:
         res = client.get('/v1/records/1/files/helloworld.pdf/stats')
@@ -210,8 +207,6 @@ def test_WekoFilesStats(app, records):
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoFilesStats_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_WekoFilesStats_error(app, records):
-    url = '/v1/records/1/files/helloworld.pdf/stats'
-
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
     with app.test_client() as client:
         url = '/v1/records/1/files/helloworld.pdf/stats'
@@ -263,7 +258,6 @@ def test_WekoFilesStats_error(app, records):
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoFilesGet -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_WekoFilesGet(app, records):
-
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
     with app.test_client() as client:
         res = client.get('/v1/records/1/files/helloworld.pdf')

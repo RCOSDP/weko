@@ -145,7 +145,7 @@ from weko_records_ui.config import (
     WEKO_PERMISSION_SUPER_ROLE_USER,
     WEKO_RECORDS_UI_BULK_UPDATE_FIELDS,
 )
-from weko_records_ui.models import PDFCoverPageSettings
+from weko_records_ui.models import PDFCoverPageSettings, RocrateMapping
 from weko_redis.redis import RedisConnection
 from weko_schema_ui.models import OAIServerSchema
 from weko_theme import WekoTheme
@@ -249,7 +249,6 @@ def base_app(instance_path, search_class, request):
         instance_path=instance_path,
         static_folder=join(instance_path, "static"),
     )
-    WEKO_INDEX_TREE_REST_ENDPOINTS = copy.deepcopy(_WEKO_INDEX_TREE_REST_ENDPOINTS)
     os.environ["INVENIO_WEB_HOST_NAME"] = "127.0.0.1"
     app_.config.update(
         ACCOUNTS_JWT_ENABLE=True,
@@ -633,22 +632,7 @@ def base_app(instance_path, search_class, request):
                 max_result_window=10000,
             ),
         ),
-        WEKO_INDEX_TREE_REST_ENDPOINTS=dict(
-            tid=dict(
-                record_class="weko_index_tree.api:Indexes",
-                index_route="/tree/index/<int:index_id>",
-                get_index_tree='/<string:version>/tree/index/<int:index_id>',
-                get_index_root_tree='/<string:version>/tree/index',
-                tree_route="/tree",
-                item_tree_route="/tree/<string:pid_value>",
-                index_move_route="/tree/move/<int:index_id>",
-                default_media_type="application/json",
-                create_permission_factory_imp="weko_index_tree.permissions:index_tree_permission",
-                read_permission_factory_imp="weko_index_tree.permissions:index_tree_permission",
-                update_permission_factory_imp="weko_index_tree.permissions:index_tree_permission",
-                delete_permission_factory_imp="weko_index_tree.permissions:index_tree_permission",
-            )
-        ),
+        WEKO_INDEX_TREE_REST_ENDPOINTS=copy.deepcopy(_WEKO_INDEX_TREE_REST_ENDPOINTS),
         WEKO_INDEX_TREE_STYLE_OPTIONS={
             "id": "weko",
             "widths": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"],
@@ -709,7 +693,7 @@ def base_app(instance_path, search_class, request):
     WekoGroups(app_)
     WekoAdmin(app_)
     WekoIndexTree(app_)
-    # WekoIndexTreeREST(app_)
+    WekoIndexTreeREST(app_)
     # WekoTheme(app_)
     # InvenioCommunities(app_)
 
@@ -3891,3 +3875,35 @@ def make_itemtype(app,db):
         
         return result
     return factory
+
+
+@pytest.fixture()
+def db_rocrate_mapping(db):
+    item_type_name = ItemTypeName(id=40001, name='test item type', has_site_license=True, is_active=True)
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
+    db.session.commit()
+
+    item_type = ItemType(
+        id=40001,
+        name_id=40001,
+        harvesting_type=True,
+        schema={'type': 'test schema'},
+        form={'type': 'test form'},
+        render={'type': 'test render'},
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    with db.session.begin_nested():
+        db.session.add(item_type)
+    db.session.commit()
+
+    with open('tests/data/rocrate/rocrate_mapping.json', 'r') as f:
+        mapping = json.load(f)
+    rocrate_mapping = RocrateMapping(item_type_id=40001, mapping=mapping)
+
+    with db.session.begin_nested():
+        db.session.add(rocrate_mapping)
+    db.session.commit()

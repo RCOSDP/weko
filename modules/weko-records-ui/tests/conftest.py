@@ -108,7 +108,7 @@ from weko_records.api import ItemsMetadata
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList,SiteLicenseIpAddress
 from weko_records.utils import get_options_and_order_list
 from weko_records_ui.config import WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,RECORDS_UI_ENDPOINTS,WEKO_RECORDS_UI_SECRET_KEY,WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN
-from weko_records_ui.models import PDFCoverPageSettings,FileOnetimeDownload, FilePermission
+from weko_records_ui.models import PDFCoverPageSettings,FileOnetimeDownload, FilePermission, RocrateMapping
 from weko_schema_ui.config import (
     WEKO_SCHEMA_DDI_SCHEMA_NAME,
     WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
@@ -263,6 +263,7 @@ def base_app(instance_path):
         WEKO_RECORDS_UI_SECRET_KEY=WEKO_RECORDS_UI_SECRET_KEY,
         WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN=WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN,
         WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE=WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,
+        SEARCH_UI_SEARCH_INDEX="test-weko",
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
@@ -2051,4 +2052,58 @@ def db_admin_settings(db):
         db.session.add(AdminSettings(id=3,name='site_license_mail_settings',settings={"auto_send_flag": False}))
         db.session.add(AdminSettings(id=4,name='default_properties_settings',settings={"show_flag": True}))
         db.session.add(AdminSettings(id=5,name='item_export_settings',settings={"allow_item_exporting": True, "enable_contents_exporting": True}))
+    db.session.commit()
+
+
+@pytest.fixture()
+def records_rest(app, db):
+    rec_uuid = uuid.uuid4()
+
+    depid = PersistentIdentifier.create(
+        'depid',
+        '1',
+        object_type='rec',
+        object_uuid=rec_uuid,
+        status=PIDStatus.REGISTERED
+    )
+
+    with open('tests/data/rocrate/records_metadata.json', 'r') as f:
+        record_data = json.load(f)
+    record = WekoRecord.create(record_data, id_=rec_uuid)
+
+    return {
+        'depid': depid,
+        'record': record,
+    }
+
+
+@pytest.fixture()
+def db_rocrate_mapping(db):
+    item_type_name = ItemTypeName(id=40001, name='test item type', has_site_license=True, is_active=True)
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
+    db.session.commit()
+
+    item_type = ItemType(
+        id=40001,
+        name_id=40001,
+        harvesting_type=True,
+        schema={'type': 'test schema'},
+        form={'type': 'test form'},
+        render={'type': 'test render'},
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    with db.session.begin_nested():
+        db.session.add(item_type)
+    db.session.commit()
+
+    with open('tests/data/rocrate/rocrate_mapping.json', 'r') as f:
+        mapping = json.load(f)
+    rocrate_mapping = RocrateMapping(item_type_id=40001, mapping=mapping)
+
+    with db.session.begin_nested():
+        db.session.add(rocrate_mapping)
     db.session.commit()

@@ -333,10 +333,15 @@ class DummySearchResult:
 
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResourceAPI -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_IndexSearchResourceAPI(client_rest, db_register2):
-    with patch('invenio_search.api.RecordsSearch.execute', return_value=DummySearchResult({'Test': 'API'})):
+def test_IndexSearchResourceAPI(client_rest, db_register2, db_rocrate_mapping):
+    with open('tests/data/rocrate/search_result.json', 'r') as f:
+        search_result = json.load(f)
+
+    with patch('invenio_search.api.RecordsSearch.execute', return_value=DummySearchResult(search_result)):
         res = client_rest.get(url('/v1/records'))
         assert res.status_code == 200
+        data = json.loads(res.get_data())
+        assert data['search_results'][0]['@graph'][0]['title'][0] == 'メタボリックシンドロームモデルマウスの多臓器遺伝子発現量データ'
         assert res.headers['Cache-Control'] == 'no-store'
         assert res.headers['Pragma'] == 'no-cache'
         assert res.headers['Expires'] == '0'
@@ -358,7 +363,7 @@ def test_IndexSearchResourceAPI(client_rest, db_register2):
 
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResourceAPI_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_IndexSearchResourceAPI_error(client_rest, db_register2):
+def test_IndexSearchResourceAPI_error(client_rest, db_register2, db_rocrate_mapping):
 
     res = client_rest.get(url('/v0/records'))
     assert res.status_code == 400
