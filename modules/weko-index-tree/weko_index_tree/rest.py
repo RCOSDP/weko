@@ -24,7 +24,6 @@ import inspect
 import json
 import os
 from functools import wraps
-from wsgiref.util import request_uri
 from datetime import datetime, timezone, timedelta
 
 from flask import Blueprint, abort, current_app, jsonify, make_response, \
@@ -38,14 +37,12 @@ from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.errors import SameContentException
 from invenio_db import db
-from weko_redis.redis import RedisConnection
-from redis.exceptions import RedisError
 from sqlalchemy.exc import SQLAlchemyError
 
 from .api import Indexes
 from .errors import IndexAddedRESTError, IndexNotFoundRESTError, \
     IndexUpdatedRESTError, InvalidDataRESTError, VersionNotFoundRESTError, InternalServerError, \
-    PermissionError, IndexNotFoundRESTErrorForGet
+    PermissionError, IndexNotFound404Error
 from .models import Index
 from .scopes import read_index_scope
 from .utils import check_doi_in_index, check_index_permissions, \
@@ -518,23 +515,25 @@ class GetIndex(ContentNegotiatedMethodView):
         try:
             pid = kwargs.get('index_id')
 
-            # Get Redis Last Save Time GMT and Etag String
-            redis_connection = RedisConnection()
-            datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'])
-            lastsave_time = datastore.lastsave().replace(tzinfo=JST).astimezone(tz=timezone.utc)
-            lastsave_time = lastsave_time.strftime("%a, %d %b %Y %H:%M:%S GMT")
-            hash_str = lastsave_time + str(pid)
+            # Get update time
+            if pid and pid != 0:
+                index = self.record_class.get_index(pid)
+                if not index:
+                    raise IndexNotFound404Error()
+                updated = index.updated
+            else:
+                all_indexes = self.record_class.get_all_indexes()
+                all_indexes = sorted(all_indexes, key=lambda x: x.updated, reverse=True)
+                updated = all_indexes[0].updated if len(all_indexes) > 0 else datetime.now()
 
             # Check Etag
+            hash_str = str(pid) + updated.strftime("%a, %d %b %Y %H:%M:%S GMT")
             etag = generate_etag(hash_str.encode('utf-8'))
             self.check_etag(etag, weak=True)
 
             # Check Last-Modified
-            all_indexes = self.record_class.get_all_indexes()
-            all_indexes = sorted(all_indexes, key=lambda x: x.updated, reverse=True)
-            last_modified = all_indexes[0].updated if len(all_indexes) > 0 else datetime.now()
             if not request.if_none_match:
-                self.check_if_modified_since(dt=last_modified)
+                self.check_if_modified_since(dt=updated)
 
             # Language setting
             language = request.headers.get('Accept-Language')
@@ -543,10 +542,6 @@ class GetIndex(ContentNegotiatedMethodView):
 
             # Get index tree
             if pid and pid != 0:
-                index = self.record_class.get_index(pid)
-                if not index:
-                    raise IndexNotFoundRESTErrorForGet()
-
                 tree = self.record_class.get_index_tree(pid)
                 reset_tree(tree=tree)
                 if len(tree) == 0:
@@ -577,14 +572,11 @@ class GetIndex(ContentNegotiatedMethodView):
                 status=200,
                 content_type='application/json')
             res.set_etag(etag)
-            res.last_modified = last_modified
+            res.last_modified = updated
             return res
 
-        except (SameContentException, PermissionError, IndexNotFoundRESTErrorForGet) as e:
+        except (SameContentException, PermissionError, IndexNotFound404Error) as e:
             raise e
-
-        except RedisError:
-            raise InternalServerError()
 
         except SQLAlchemyError:
             raise InternalServerError()
@@ -637,32 +629,26 @@ class GetParentIndex(ContentNegotiatedMethodView):
         try:
             pid = kwargs.get('index_id')
 
-            # Get Redis Last Save Time GMT and Etag String
-            redis_connection = RedisConnection()
-            datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'])
-            lastsave_time = datastore.lastsave().replace(tzinfo=JST).astimezone(tz=timezone.utc)
-            lastsave_time = lastsave_time.strftime("%a, %d %b %Y %H:%M:%S GMT")
-            hash_str = lastsave_time + str(pid)
+            index = self.record_class.get_index(pid)
+            if not index:
+                raise IndexNotFound404Error()
+
+            # Get update time
+            updated = index.updated
 
             # Check Etag
+            hash_str = str(pid) + updated.strftime("%a, %d %b %Y %H:%M:%S GMT")
             etag = generate_etag(hash_str.encode('utf-8'))
             self.check_etag(etag, weak=True)
 
             # Check Last-Modified
-            all_indexes = self.record_class.get_all_indexes()
-            all_indexes = sorted(all_indexes, key=lambda x: x.updated, reverse=True)
-            last_modified = all_indexes[0].updated if len(all_indexes) > 0 else datetime.now()
             if not request.if_none_match:
-                self.check_if_modified_since(dt=last_modified)
+                self.check_if_modified_since(dt=updated)
 
             # Language setting
             language = request.headers.get('Accept-Language')
             if language == 'ja':
                 get_current_locale().language = language
-
-            index = self.record_class.get_index(pid)
-            if not index:
-                raise IndexNotFoundRESTErrorForGet()
 
             # Get index tree
             tree = self.record_class.get_index_tree(pid=0)
@@ -702,14 +688,11 @@ class GetParentIndex(ContentNegotiatedMethodView):
                 status=200,
                 content_type='application/json')
             res.set_etag(etag)
-            res.last_modified = last_modified
+            res.last_modified = updated
             return res
 
-        except (SameContentException, PermissionError, IndexNotFoundRESTErrorForGet) as e:
+        except (SameContentException, PermissionError, IndexNotFound404Error) as e:
             raise e
-
-        except RedisError:
-            raise InternalServerError()
 
         except SQLAlchemyError:
             raise InternalServerError()

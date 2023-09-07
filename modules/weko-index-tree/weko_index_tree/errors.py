@@ -94,7 +94,7 @@ class PermissionError(RESTException):
     description = 'Permission denied'
 
 
-class IndexNotFoundRESTErrorForGet(RESTException):
+class IndexNotFound404Error(RESTException):
     """Index not found."""
 
     code = 404

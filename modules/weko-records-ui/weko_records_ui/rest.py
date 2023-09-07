@@ -23,14 +23,11 @@ import inspect
 import json
 import re
 from flask import Blueprint, current_app, jsonify, make_response, request, Response
-from flask_login import current_user
+from flask_babelex import get_locale as get_current_locale
 from werkzeug.http import generate_etag
-from werkzeug.exceptions import Forbidden, NotFound
-from elasticsearch.exceptions import ElasticsearchException
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidstore.errors import PIDInvalidAction, PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
-from invenio_pidstore.resolver import Resolver
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import pass_record
@@ -45,7 +42,6 @@ from invenio_stats.views import QueryRecordViewCount, QueryFileStatsCount
 from weko_deposit.api import WekoRecord
 from weko_records.serializers import citeproc_v1
 from weko_items_ui.scopes import item_read_scope
-from sqlalchemy.exc import SQLAlchemyError
 
 from .views import escape_str
 from .permissions import page_permission_factory, file_permission_factory
@@ -246,6 +242,11 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
 
     def get_v1(self, **kwargs):
         try:
+            # Language setting
+            language = request.headers.get('Accept-Language')
+            if language == 'ja':
+                get_current_locale().language = language
+
             # Get Record
             pid = PersistentIdentifier.get('depid', kwargs.get('pid_value'))
             record = WekoRecord.get_record(pid.object_uuid)
@@ -262,10 +263,10 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
             if mapping is None:
                 raise InternalServerError
             converter = RoCrateConverter()
-            rocrate = converter.convert(record, mapping.mapping)
+            rocrate = converter.convert(record, mapping.mapping, language)
 
             # Check Etag
-            etag = generate_etag(str(rocrate).encode('utf-8'))
+            etag = generate_etag(str(record).encode('utf-8'))
             self.check_etag(etag, weak=True)
 
             # Check Last-Modified

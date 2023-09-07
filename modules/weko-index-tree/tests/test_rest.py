@@ -1,17 +1,14 @@
 import json
 import pytest
 import os
-from flask import current_app
 from mock import patch, MagicMock
 
 from invenio_accounts.testutils import login_user_via_session
-from invenio_records_rest.config import RECORDS_REST_ENDPOINTS
-from redis.exceptions import RedisError
 from sqlalchemy.exc import SQLAlchemyError
 
 from weko_index_tree.rest import (
     need_record_permission,
-    create_blueprint  
+    create_blueprint
 )
 
 user_tree_action = [
@@ -390,10 +387,6 @@ def test_get_index_tree_error(client_rest, users, communities, test_indices):
     res = client_rest.get('/v1/tree/index/100')
     assert res.status_code == 404
 
-    with patch('weko_index_tree.api.Indexes.get_index_tree', MagicMock(side_effect=RedisError())):
-        res = client_rest.get('/v1/tree/index/11')
-        assert res.status_code == 500
-
     with patch('weko_index_tree.api.Indexes.get_index_tree', MagicMock(side_effect=SQLAlchemyError())):
         res = client_rest.get('/v1/tree/index/11')
         assert res.status_code == 500
@@ -454,10 +447,6 @@ def test_get_parent_index_tree_error(client_rest, users, communities, test_indic
     # Index not found
     res = client_rest.get('/v1/tree/index/100/parent')
     assert res.status_code == 404
-
-    with patch('weko_index_tree.api.Indexes.get_index_tree', MagicMock(side_effect=RedisError())):
-        res = client_rest.get('/v1/tree/index/11/parent')
-        assert res.status_code == 500
 
     with patch('weko_index_tree.api.Indexes.get_index_tree', MagicMock(side_effect=SQLAlchemyError())):
         res = client_rest.get('/v1/tree/index/11/parent')

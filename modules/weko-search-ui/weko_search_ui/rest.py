@@ -24,7 +24,8 @@ import inspect
 import json
 from functools import partial
 
-from flask import Blueprint, abort, current_app, jsonify, redirect, request, url_for, make_response, Response
+from flask import Blueprint, current_app, request, url_for, Response
+from flask_babelex import get_locale as get_current_locale
 from elasticsearch.exceptions import ElasticsearchException
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -40,7 +41,7 @@ from weko_index_tree.utils import count_items, recorrect_private_items_count
 from weko_items_ui.scopes import item_read_scope
 from weko_records.models import ItemType
 
-from .error import VersionNotFoundRESTError, InternalServerError, UnhandledElasticsearchError
+from .error import VersionNotFoundRESTError, InternalServerError
 from .api import SearchSetting
 from .query import default_search_factory
 from .utils import create_limmiter
@@ -532,6 +533,11 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
 
     def get_v1(self, **kwargs):
         try:
+            # Language setting
+            language = request.headers.get('Accept-Language')
+            if language == 'ja':
+                get_current_locale().language = language
+
             # Generate Search Query Class
             search_obj = self.search_class()
             search = search_obj.with_preference_param().params(version=True)
@@ -613,7 +619,7 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
                 mapping = RocrateMapping.query.filter_by(item_type_id=item_type_id).one_or_none()
                 if mapping is None:
                     continue
-                rocrate_list.append(converter.convert(metadata, mapping.mapping))
+                rocrate_list.append(converter.convert(metadata, mapping.mapping, language))
 
             # Check pretty
             indent = 4 if request.args.get('pretty') == 'true' else None
