@@ -55,11 +55,7 @@ from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError,PIDDeletedError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_rest import ContentNegotiatedMethodView
-from simplekv.memory.redisstore import RedisStore
-from sqlalchemy import types
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.sql.expression import cast
-from sqlalchemy.dialects import postgresql
 from weko_redis import RedisConnection
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
@@ -1178,14 +1174,17 @@ def check_authority_action(activity_id='0', action_id=0,
         return 0
 
     if current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR']:
+        # Check if current action is approval action.
+        if action_id == 4:
+            return 1
         # item_registrationが完了していないactivityを再編集する場合、item_metadataテーブルにデータはない
         # その為、workflow_activityテーブルのtemp_dataを参照し、保存されている代理投稿者をチェックする
         im = ItemMetadata.query.filter_by(id=activity.item_id).one_or_none()
         if not im and activity.temp_data:
             temp_data = json.loads(activity.temp_data)
             if temp_data is not None:
-                activity_shared_user_ids = temp_data.get('metainfo').get("shared_user_ids")
-                activity_owner = temp_data.get('metainfo').get("owner")
+                activity_shared_user_ids = temp_data.get('metainfo').get("shared_user_ids", [])
+                activity_owner = temp_data.get('metainfo').get("owner", '-1')
                 shared_user_ids = [ int(shared_user_ids_dict['user']) for shared_user_ids_dict in activity_shared_user_ids ]
                 # if exist shared_user_ids or owner allow to access
                 if int(cur_user) in shared_user_ids:
@@ -1194,10 +1193,10 @@ def check_authority_action(activity_id='0', action_id=0,
                     return 0
         elif im:
             # Check if this activity has contributor equaling to current user
-            metadata_shared_user_ids = im.json['shared_user_ids']
-            metadata_owner = int(im.json['owner'])
+            metadata_shared_user_ids = im.json.get('shared_user_ids', [])
+            metadata_owner = int(im.json.get('owner', '-1'))
             if int(cur_user) in metadata_shared_user_ids:
-               return 0
+                return 0
             if int(cur_user) == int(metadata_owner):
                 return 0
     # Check current user is action handler of activity
