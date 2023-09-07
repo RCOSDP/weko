@@ -255,8 +255,8 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
                 raise PermissionError()
 
             # Convert RO-Crate format
-            from weko_search_ui.utils import RoCrateConverter
-            from weko_search_ui.models import RocrateMapping
+            from .utils import RoCrateConverter
+            from .models import RocrateMapping
             item_type_id = record['item_type_id']
             mapping = RocrateMapping.query.filter_by(item_type_id=item_type_id).one_or_none()
             if mapping is None:

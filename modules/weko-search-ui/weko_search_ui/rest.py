@@ -603,8 +603,8 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             search_results = search_results.to_dict()
 
             # Convert RO-Crate format
-            from .utils import RoCrateConverter
-            from .models import RocrateMapping
+            from weko_records_ui.utils import RoCrateConverter
+            from weko_records_ui.models import RocrateMapping
             converter = RoCrateConverter()
             rocrate_list = []
             for search_result in search_results['hits']['hits']:

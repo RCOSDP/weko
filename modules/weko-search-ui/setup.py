@@ -132,9 +132,6 @@ setup(
             "weko_facet_search_css = " "weko_search_ui.bundles:weko_facet_search_css",
             "weko_facet_search_js = " "weko_search_ui.bundles:weko_facet_search_js",
         ],
-        'invenio_db.models': [
-            'weko_search_ui = weko_search_ui.models',
-        ],
         "invenio_i18n.translations": [
             "messages = weko_search_ui",
         ],
