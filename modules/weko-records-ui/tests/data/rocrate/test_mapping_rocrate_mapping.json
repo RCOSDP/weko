@@ -1,0 +1,56 @@
+{
+    "item_type_id": 1,
+    "entity_types": [
+        "root",
+        "tab"
+    ],
+    "tree_structure": {
+        "depth": 0,
+        "name": "root",
+        "map": {
+            "prop1": "key1.subkey1.subkey1_1",
+            "prop2": "key2.subkey2.subkey2_1",
+            "prop3": "key3.subkey3.subkey3_1",
+            "prop4_1": "key4.subkey4[0].subkey4_1",
+            "prop4_2": "key4.subkey4[1].subkey4_1",
+            "prop4_3": "key4.subkey4[2].subkey4_1",
+            "prop5": [
+                "key5_1.subkey5_1.subkey5_1_1",
+                "key5_2.subkey5_2.subkey5_2_1"
+            ],
+            "prop6": {
+                "value": "key6.subkey6.subkey6_value",
+                "lang": "key6.subkey6.subkey6_lang"
+            },
+            "prop7": {
+                "value": "key7.subkey7.subkey7_value",
+                "lang": "key7.subkey7.subkey7_lang"
+            },
+            "prop8": {
+                "value": "key8_1.subkey8_1.subkey8_1_1",
+                "lang": "key8_2.subkey8_2.subkey8_2_1"
+            },
+            "prop9": "key9",
+            "prop_none": "key_none.subkey_none"
+        },
+        "children": [
+            {
+                "depth": 1,
+                "name": "additionalType確認"
+            },
+            {
+                "depth": 10,
+                "name": "存在しない階層のケース(additionalTypeなし)"
+            },
+            {
+                "_name": "name、depthなし"
+            }
+        ]
+    },
+    "file": {
+        "map": {
+            "fileprop1": "filekey1",
+            "fileprop2": "filekey2.filekey2_1"
+        }
+    }
+}

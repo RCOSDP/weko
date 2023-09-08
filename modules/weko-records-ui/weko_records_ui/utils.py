@@ -1725,7 +1725,9 @@ class RoCrateConverter:
             # Create entity
             entity = self.crate.add(Dataset(self.crate, id, id))
             if 'depth' in child:
-                entity['additionalType'] = entity_types[child.get('depth')]
+                depth = child.get('depth')
+                if len(entity_types) > depth:
+                    entity['additionalType'] = entity_types[depth]
             if 'name' in child:
                 entity['title'] = child.get('name')
             self.__add_properties(entity, child.get('map', {}), metadata)
