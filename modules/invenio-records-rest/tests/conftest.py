@@ -395,3 +395,10 @@ def item_type_mapping(db):
     with db.session.begin_nested():
         item=ItemTypeMapping(**data)
         db.session.add(item)
+
+@pytest.yield_fixture()
+def i18n_app(app):
+    with app.test_request_context(headers=[("Accept-Language", "ja")]):
+        app.extensions["invenio-oauth2server"] = 1
+        app.extensions["invenio-queues"] = 1
+        yield app
