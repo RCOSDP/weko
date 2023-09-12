@@ -84,6 +84,7 @@ from .errors import ActivityBaseRESTError, ActivityNotFoundRESTError, \
     RegisteredActivityNotFoundRESTError
 from .models import ActionStatusPolicy, Activity, ActivityAction, \
     ActivityStatusPolicy, FlowAction, GuestActivity
+from .models import Action as _Action
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .scopes import activity_scope
 from .utils import IdentifierHandle, auto_fill_title, \
@@ -1173,10 +1174,8 @@ def check_authority_action(activity_id='0', action_id=0,
             not contain_login_item_application:
         return 0
 
-    if current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR']:
-        # Check if current action is approval action.
-        if action_id == 4:
-            return 1
+    if current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'] and \
+        action_id != _Action.query.filter_by(action_endpoint='approval').one().id:
         # item_registrationが完了していないactivityを再編集する場合、item_metadataテーブルにデータはない
         # その為、workflow_activityテーブルのtemp_dataを参照し、保存されている代理投稿者をチェックする
         im = ItemMetadata.query.filter_by(id=activity.item_id).one_or_none()
