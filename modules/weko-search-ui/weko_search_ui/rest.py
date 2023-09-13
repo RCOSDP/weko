@@ -613,11 +613,17 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             from weko_records_ui.models import RocrateMapping
             converter = RoCrateConverter()
             rocrate_list = []
+            failure_list = []
             for search_result in search_results['hits']['hits']:
                 metadata = search_result['_source']['_item_metadata']
                 item_type_id = metadata['item_type_id']
                 mapping = RocrateMapping.query.filter_by(item_type_id=item_type_id).one_or_none()
                 if mapping is None:
+                    failure_list.append({
+                        'id': search_result['_source']['control_number'],
+                        'title': search_result['_source']['title'],
+                        'item_type': search_result['_source']['itemtype'],
+                    })
                     continue
                 rocrate_list.append(converter.convert(metadata, mapping.mapping, language))
 
@@ -637,6 +643,7 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
                 'cursor': cursor,
                 'page': page,
                 'search_results': rocrate_list,
+                'failures': failure_list,
             }
             res = Response(
                 response=json.dumps(result, indent=indent),
