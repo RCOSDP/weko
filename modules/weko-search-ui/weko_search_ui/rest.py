@@ -625,7 +625,11 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
                         'item_type': search_result['_source']['itemtype'],
                     })
                     continue
-                rocrate_list.append(converter.convert(metadata, mapping.mapping, language))
+                rocrate = converter.convert(metadata, mapping.mapping, language)
+                rocrate_list.append({
+                    'id': search_result['_source']['control_number'],
+                    'metadata': rocrate,
+                })
 
             # Check pretty
             indent = 4 if request.args.get('pretty') == 'true' else None
