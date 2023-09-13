@@ -205,8 +205,14 @@ def save_lang_list():
     if request.headers['Content-Type'] != 'application/json':
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg='Header Error')
+    result = 'success'
     data = request.get_json()
-    result = update_admin_lang_setting(data)
+    try:
+        result = update_admin_lang_setting(data)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        result = str(e)
 
     return jsonify(msg=result)
 

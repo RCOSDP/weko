@@ -751,34 +751,37 @@ def set_pdfcoverpage_header():
 
     # Save PDF Cover Page Header settings
     if request.method == 'POST':
-        record = PDFCoverPageSettings.find(1)
-        avail = request.form.get('availability')
-        header_display_type = request.form.get('header-display')
-        header_output_string = request.form.get('header-output-string')
-        header_output_image_file = request.files.get('header-output-image')
-        header_output_image_filename = header_output_image_file.filename
-        header_output_image = record.header_output_image
-        if not header_output_image_filename == '':
-            upload_dir = current_app.instance_path + current_app.config.get(
-                'WEKO_RECORDS_UI_PDF_HEADER_IMAGE_DIR')
-            if not os.path.isdir(upload_dir):
-                os.makedirs(upload_dir)
-            header_output_image = upload_dir + header_output_image_filename
-            header_output_image_file.save(header_output_image)
-        header_display_position = request.form.get('header-display-position')
+        try:
+            record = PDFCoverPageSettings.find(1)
+            avail = request.form.get('availability')
+            header_display_type = request.form.get('header-display')
+            header_output_string = request.form.get('header-output-string')
+            header_output_image_file = request.files.get('header-output-image')
+            header_output_image_filename = header_output_image_file.filename
+            header_output_image = record.header_output_image
+            if not header_output_image_filename == '':
+                upload_dir = current_app.instance_path + current_app.config.get(
+                    'WEKO_RECORDS_UI_PDF_HEADER_IMAGE_DIR')
+                if not os.path.isdir(upload_dir):
+                    os.makedirs(upload_dir)
+                header_output_image = upload_dir + header_output_image_filename
+                header_output_image_file.save(header_output_image)
+            header_display_position = request.form.get('header-display-position')
 
-        # update PDF cover page settings
-        PDFCoverPageSettings.update(1,
-                                    avail,
-                                    header_display_type,
-                                    header_output_string,
-                                    header_output_image,
-                                    header_display_position
-                                    )
-
-        flash(_('PDF cover page settings have been updated.'),
-              category='success')
-        return redirect('/admin/pdfcoverpage')
+            # update PDF cover page settings
+            PDFCoverPageSettings.update(1,
+                                        avail,
+                                        header_display_type,
+                                        header_output_string,
+                                        header_output_image,
+                                        header_display_position
+                                        )
+            flash(_('PDF cover page settings have been updated.'),
+                  category='success')
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
     
     return redirect('/admin/pdfcoverpage')
 
@@ -800,7 +803,11 @@ def file_version_update():
             if object_version:
                 # Do update the path on record
                 object_version.is_show = True if is_show == '1' else False
-                db.session.commit()
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    current_app.logger.error(e)
 
                 return jsonify({'status': 1})
             else:
@@ -834,8 +841,10 @@ def soft_delete(recid):
         if not has_update_version_role(current_user):
             abort(403)
         soft_delete_imp(recid)
+        db.seesion.commit()
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
     except Exception as ex:
+        db.session.rollback()
         current_app.logger.error(ex)
         if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
                 and ex.args[0].get('is_locked'):
@@ -873,11 +882,13 @@ def init_permission(recid):
         permission = FilePermission.init_file_permission(user_id, recid,
                                                          file_name,
                                                          activity_id)
+        db.session.commit()
         if permission:
             return make_response(
                 'File permission: ' + file_name + 'of record: ' + recid
                 + ' CREATED', 200)
     except Exception as ex:
+        db.sesison.rollback()
         current_app.logger.debug(ex)
         abort(500)
 

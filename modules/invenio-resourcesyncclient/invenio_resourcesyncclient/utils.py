@@ -335,8 +335,6 @@ def process_item(record, resync, counter):
                     first_ver.publish()
             event = ItemEvents.UPDATE
 
-    db.session.commit()
-
     if event == ItemEvents.CREATE:
         event_counter('created_items', counter)
     elif event == ItemEvents.UPDATE:

@@ -34,9 +34,13 @@ def bucket():
 def touch():
     """Create new bucket."""
     from .models import Bucket
-    bucket = Bucket.create()
-    db.session.commit()
-    click.secho(str(bucket), fg='green')
+    try:
+        bucket = Bucket.create()
+        db.session.commit()
+        click.secho(str(bucket), fg='green')
+    except Exception as e:
+        db.session.rollback()
+        click.secho(e.errors, fg='red')
 
 
 @bucket.command()
@@ -49,11 +53,15 @@ def cp(source, bucket, checksum, key_prefix):
     """Create new bucket from all files in directory."""
     from .models import Bucket
     from .helpers import populate_from_path
-    for object_version in populate_from_path(
-            Bucket.get(bucket), source, checksum=checksum,
-            key_prefix=key_prefix):
-        click.secho(str(object_version))
-    db.session.commit()
+    try:
+        for object_version in populate_from_path(
+                Bucket.get(bucket), source, checksum=checksum,
+                key_prefix=key_prefix):
+            click.secho(str(object_version))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        click.secho(e.errors, fg='red')
 
 
 @files.command()
@@ -64,7 +72,11 @@ def cp(source, bucket, checksum, key_prefix):
 def location(name, uri, default):
     """Create new location."""
     from .models import Location
-    location = Location(name=name, uri=uri, default=default)
-    db.session.add(location)
-    db.session.commit()
-    click.secho(str(location), fg='green')
+    try:
+        location = Location(name=name, uri=uri, default=default)
+        db.session.add(location)
+        db.session.commit()
+        click.secho(str(location), fg='green')
+    except Exception as e:
+        db.session.rollback()
+        click.secho(e.errors, fg='red')

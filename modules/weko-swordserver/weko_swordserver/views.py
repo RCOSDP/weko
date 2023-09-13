@@ -361,10 +361,14 @@ def delete_item(recid):
         * If the server does not allow this method in this context at this time, MAY respond with a 405 (MethodNotAllowed)
         * If the server does not support On-Behalf-Of deposit and the On-Behalf-Of header has been provided, MAY respond with a 412 (OnBehalfOfNotAllowed)
     """
-    
-    # delete item 
-    soft_delete(recid)
-    current_app.logger.debug("item deleted by sword (recid={})".format(recid))
+    try:
+        # delete item 
+        soft_delete(recid)
+        current_app.logger.debug("item deleted by sword (recid={})".format(recid))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
     return ('', 204)
 
 def _create_error_document(type, error):

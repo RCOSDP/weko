@@ -190,30 +190,25 @@ def saving_doi_pidstore(item_id,
         current_app.logger.error(_('Identifier datas are empty!'))
         return False
 
-    try:
-        if not flag_del_pidstore and identifier_val and doi_register_val:
-            if temporal_saving:
+    if not flag_del_pidstore and identifier_val and doi_register_val:
+        if temporal_saving:
+            identifier = IdentifierHandle(item_id)
+            identifier.update_idt_registration_metadata(
+                doi_register_val,
+                doi_register_typ)
+            current_app.logger.info(_('DOI temporary registered!'))
+        else:
+            identifier = IdentifierHandle(record_without_version)
+            reg = identifier.register_pidstore('doi', identifier_val)
+            identifier.update_idt_registration_metadata(
+                doi_register_val,
+                doi_register_typ)
+            if reg:
                 identifier = IdentifierHandle(item_id)
                 identifier.update_idt_registration_metadata(
                     doi_register_val,
                     doi_register_typ)
-                current_app.logger.info(_('DOI temporary registered!'))
-            else:
-                identifier = IdentifierHandle(record_without_version)
-                reg = identifier.register_pidstore('doi', identifier_val)
-                identifier.update_idt_registration_metadata(
-                    doi_register_val,
-                    doi_register_typ)
-                if reg:
-                    identifier = IdentifierHandle(item_id)
-                    identifier.update_idt_registration_metadata(
-                        doi_register_val,
-                        doi_register_typ)
-                current_app.logger.info(_('DOI successfully registered!'))
-        return True
-    except Exception as ex:
-        current_app.logger.exception(str(ex))
-        return False
+            current_app.logger.info(_('DOI successfully registered!'))
 
 
 def register_hdl(activity_id):
@@ -1172,17 +1167,13 @@ class IdentifierHandle(object):
                 key_typ: atr_typ
             }
         self.item_metadata[key_id] = metadata_data
-        try:
-            with db.session.begin_nested():
-                rec = RecordMetadata.query.filter_by(id=self.item_uuid).first()
-                deposit = WekoDeposit(rec.json, rec)
-                index = {'index': deposit.get('path', []),
-                         'actions': deposit.get('publish_status')}
-                deposit.update(index, self.item_metadata)
-                deposit.commit()
-        except SQLAlchemyError as ex:
-            current_app.logger.debug(ex)
-            db.session.rollback()
+        with db.session.begin_nested():
+            rec = RecordMetadata.query.filter_by(id=self.item_uuid).first()
+            deposit = WekoDeposit(rec.json, rec)
+            index = {'index': deposit.get('path', []),
+                        'actions': deposit.get('publish_status')}
+            deposit.update(index, self.item_metadata)
+            deposit.commit()
 
 
 def delete_bucket(bucket_id):
@@ -1565,100 +1556,95 @@ def handle_finish_workflow(deposit, current_pid, recid):
         return None
 
     item_id = None
-    try:
-        pid_without_ver = get_record_without_version(current_pid)
-        if ".0" in current_pid.pid_value:
-            deposit.commit()
-        deposit.publish()
-        updated_item = UpdateItem()
-        # publish record without version ID when registering newly
-        if recid:
-            # new record attached version ID
-            new_deposit = deposit.newversion(current_pid)
-            item_id = new_deposit.model.id
-            ver_attaching_deposit = WekoDeposit(
-                new_deposit,
-                new_deposit.model)
-            feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(
-                pid_without_ver.object_uuid)
-            if feedback_mail_list:
-                FeedbackMailList.update(
-                    item_id=item_id,
-                    feedback_maillist=feedback_mail_list
-                )
-                ver_attaching_deposit.update_feedback_mail()
-            ver_attaching_deposit.publish()
+    pid_without_ver = get_record_without_version(current_pid)
+    if ".0" in current_pid.pid_value:
+        deposit.commit()
+    deposit.publish()
+    updated_item = UpdateItem()
+    # publish record without version ID when registering newly
+    if recid:
+        # new record attached version ID
+        new_deposit = deposit.newversion(current_pid)
+        item_id = new_deposit.model.id
+        ver_attaching_deposit = WekoDeposit(
+            new_deposit,
+            new_deposit.model)
+        feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(
+            pid_without_ver.object_uuid)
+        if feedback_mail_list:
+            FeedbackMailList.update(
+                item_id=item_id,
+                feedback_maillist=feedback_mail_list
+            )
+            ver_attaching_deposit.update_feedback_mail()
+        ver_attaching_deposit.publish()
 
-            weko_record = WekoRecord.get_record_by_pid(current_pid.pid_value)
+        weko_record = WekoRecord.get_record_by_pid(current_pid.pid_value)
+        if weko_record:
+            weko_record.update_item_link(current_pid.pid_value)
+        updated_item.publish(deposit)
+        updated_item.publish(ver_attaching_deposit)
+    else:
+        # update to record without version ID when editing
+        if pid_without_ver:
+            _record = WekoDeposit.get_record(
+                pid_without_ver.object_uuid)
+            _deposit = WekoDeposit(_record, _record.model)
+            _deposit['path'] = deposit.get('path', [])
+
+            parent_record = _deposit. \
+                merge_data_to_record_without_version(current_pid)
+            _deposit.publish()
+
+            pv = PIDVersioning(child=pid_without_ver)
+            last_ver = PIDVersioning(parent=pv.parent,child=pid_without_ver).get_children(
+                pid_status=PIDStatus.REGISTERED
+            ).filter(PIDRelation.relation_type == 2).order_by(
+                PIDRelation.index.desc()).first()
+            # Handle Edit workflow
+            if ".0" in current_pid.pid_value:
+                maintain_record = WekoDeposit.get_record(
+                    last_ver.object_uuid)
+                maintain_deposit = WekoDeposit(
+                    maintain_record,
+                    maintain_record.model)
+                maintain_deposit['path'] = deposit.get('path', [])
+                new_parent_record = maintain_deposit. \
+                    merge_data_to_record_without_version(current_pid, True)
+                maintain_deposit.publish()
+                new_parent_record.update_feedback_mail()
+                new_parent_record.commit()
+                updated_item.publish(new_parent_record)
+            else:  # Handle Upgrade workflow
+                draft_pid = PersistentIdentifier.get(
+                    'recid',
+                    '{}.0'.format(pid_without_ver.pid_value)
+                )
+                draft_deposit = WekoDeposit.get_record(
+                    draft_pid.object_uuid)
+                draft_deposit['path'] = deposit.get('path', [])
+                new_draft_record = draft_deposit. \
+                    merge_data_to_record_without_version(current_pid)
+                draft_deposit.publish()
+                new_draft_record.update_feedback_mail()
+                new_draft_record.commit()
+                updated_item.publish(new_draft_record)
+
+            weko_record = WekoRecord.get_record_by_pid(
+                pid_without_ver.pid_value)
             if weko_record:
                 weko_record.update_item_link(current_pid.pid_value)
-            updated_item.publish(deposit)
-            updated_item.publish(ver_attaching_deposit)
-        else:
-            # update to record without version ID when editing
-            if pid_without_ver:
-                _record = WekoDeposit.get_record(
-                    pid_without_ver.object_uuid)
-                _deposit = WekoDeposit(_record, _record.model)
-                _deposit['path'] = deposit.get('path', [])
+            parent_record.update_feedback_mail()
+            parent_record.commit()
+            updated_item.publish(parent_record)
+            if ".0" in current_pid.pid_value and last_ver:
+                item_id = last_ver.object_uuid
+            else:
+                item_id = current_pid.object_uuid
 
-                parent_record = _deposit. \
-                    merge_data_to_record_without_version(current_pid)
-                _deposit.publish()
+    from invenio_oaiserver.tasks import update_records_sets
+    update_records_sets.delay([str(pid_without_ver.object_uuid)])
 
-                pv = PIDVersioning(child=pid_without_ver)
-                last_ver = PIDVersioning(parent=pv.parent,child=pid_without_ver).get_children(
-                    pid_status=PIDStatus.REGISTERED
-                ).filter(PIDRelation.relation_type == 2).order_by(
-                    PIDRelation.index.desc()).first()
-                # Handle Edit workflow
-                if ".0" in current_pid.pid_value:
-                    maintain_record = WekoDeposit.get_record(
-                        last_ver.object_uuid)
-                    maintain_deposit = WekoDeposit(
-                        maintain_record,
-                        maintain_record.model)
-                    maintain_deposit['path'] = deposit.get('path', [])
-                    new_parent_record = maintain_deposit. \
-                        merge_data_to_record_without_version(current_pid, True)
-                    maintain_deposit.publish()
-                    new_parent_record.update_feedback_mail()
-                    new_parent_record.commit()
-                    updated_item.publish(new_parent_record)
-                else:  # Handle Upgrade workflow
-                    draft_pid = PersistentIdentifier.get(
-                        'recid',
-                        '{}.0'.format(pid_without_ver.pid_value)
-                    )
-                    draft_deposit = WekoDeposit.get_record(
-                        draft_pid.object_uuid)
-                    draft_deposit['path'] = deposit.get('path', [])
-                    new_draft_record = draft_deposit. \
-                        merge_data_to_record_without_version(current_pid)
-                    draft_deposit.publish()
-                    new_draft_record.update_feedback_mail()
-                    new_draft_record.commit()
-                    updated_item.publish(new_draft_record)
-
-                weko_record = WekoRecord.get_record_by_pid(
-                    pid_without_ver.pid_value)
-                if weko_record:
-                    weko_record.update_item_link(current_pid.pid_value)
-                parent_record.update_feedback_mail()
-                parent_record.commit()
-                updated_item.publish(parent_record)
-                if ".0" in current_pid.pid_value and last_ver:
-                    item_id = last_ver.object_uuid
-                else:
-                    item_id = current_pid.object_uuid
-                db.session.commit()
-
-        from invenio_oaiserver.tasks import update_records_sets
-        update_records_sets.delay([str(pid_without_ver.object_uuid)])
-    except Exception as ex:
-        db.session.rollback()
-        current_app.logger.exception(str(ex))
-        return item_id
     return item_id
 
 
@@ -3018,6 +3004,7 @@ def create_onetime_download_url_to_guest(activity_id: str,
     @param extra_info:
     @return:
     """
+    res = False
     file_name = extra_info.get('file_name')
     record_id = extra_info.get('record_id')
     user_mail = extra_info.get('user_mail')
@@ -3026,38 +3013,44 @@ def create_onetime_download_url_to_guest(activity_id: str,
         user_mail = extra_info.get('guest_mail')
         is_guest_user = True
     if file_name and record_id and user_mail:
-        from weko_records_ui.utils import generate_one_time_download_url
-        onetime_file_url = generate_one_time_download_url(
-            file_name, record_id, user_mail)
+        try:
+            from weko_records_ui.utils import generate_one_time_download_url
+            onetime_file_url = generate_one_time_download_url(
+                file_name, record_id, user_mail)
 
-        # Delete guest activity.
-        delete_guest_activity(activity_id)
+            # Delete guest activity.
+            delete_guest_activity(activity_id)
 
-        # Save onetime to Database.
-        from weko_records_ui.utils import create_onetime_download_url
-        one_time_obj = create_onetime_download_url(
-            activity_id, file_name, record_id, user_mail, is_guest_user)
-        expiration_tmp = {
-            "expiration_date": "",
-            "expiration_date_ja": "",
-            "expiration_date_en": "",
-        }
-        if one_time_obj:
-            try:
-                expiration_date = timedelta(days=one_time_obj.expiration_date)
-                expiration_date = datetime.today() + expiration_date
-                expiration_date = expiration_date.strftime("%Y-%m-%d")
-                expiration_tmp['expiration_date'] = expiration_date
-            except OverflowError:
-                expiration_tmp["expiration_date_ja"] = "無制限"
-                expiration_tmp["expiration_date_en"] = "Unlimited"
-            return {
-                "file_url": onetime_file_url,
-                **expiration_tmp,
+            # Save onetime to Database.
+            from weko_records_ui.utils import create_onetime_download_url
+            one_time_obj = create_onetime_download_url(
+                activity_id, file_name, record_id, user_mail, is_guest_user)
+            expiration_tmp = {
+                "expiration_date": "",
+                "expiration_date_ja": "",
+                "expiration_date_en": "",
             }
-        else:
-            current_app.logger.error("Can not create onetime download.")
-            return False
+            if one_time_obj:
+                try:
+                    expiration_date = timedelta(days=one_time_obj.expiration_date)
+                    expiration_date = datetime.today() + expiration_date
+                    expiration_date = expiration_date.strftime("%Y-%m-%d")
+                    expiration_tmp['expiration_date'] = expiration_date
+                except OverflowError:
+                    expiration_tmp["expiration_date_ja"] = "無制限"
+                    expiration_tmp["expiration_date_en"] = "Unlimited"
+                res = {
+                    "file_url": onetime_file_url,
+                    **expiration_tmp,
+                }
+            else:
+                current_app.logger.error("Can not create onetime download.")
+                res = False
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+    return res
 
 
 def delete_guest_activity(activity_id: str) -> bool:
@@ -3654,7 +3647,6 @@ def update_system_data_for_item_metadata(item_id, sub_system_data_key,
     item_meta = ItemsMetadata.get_record(id_=item_id)
     item_meta[sub_system_data_key] = dict_system_data
     item_meta.commit()
-    db.session.commit()
 
 
 def update_approval_date_for_deposit(deposit, sub_approval_date_key,
@@ -3672,7 +3664,6 @@ def update_approval_date_for_deposit(deposit, sub_approval_date_key,
     deposit[sub_approval_date_key] = approval_date_data
     deposit.item_metadata[sub_approval_date_key] = dict_approval_date
     deposit.commit()
-    db.session.commit()
 
 
 def update_system_data_for_activity(activity, sub_system_data_key,
@@ -3692,7 +3683,6 @@ def update_system_data_for_activity(activity, sub_system_data_key,
         temp['metainfo'][sub_system_data_key] = dict_system_data
         activity.temp_data = json.dumps(temp)
         db.session.merge(activity)
-        db.session.commit()
 
 
 def check_authority_by_admin(activity):

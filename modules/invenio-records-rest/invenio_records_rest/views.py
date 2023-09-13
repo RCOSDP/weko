@@ -840,14 +840,18 @@ class RecordsListResource(ContentNegotiatedMethodView):
         if permission_factory:
             verify_record_permission(permission_factory, data)
 
-        # Create uuid for record
-        record_uuid = uuid.uuid4()
-        # Create persistent identifier
-        pid = self.minter(record_uuid, data=data)
-        # Create record
-        record = self.record_class.create(data, id_=record_uuid)
+        try:
+            # Create uuid for record
+            record_uuid = uuid.uuid4()
+            # Create persistent identifier
+            pid = self.minter(record_uuid, data=data)
+            # Create record
+            record = self.record_class.create(data, id_=record_uuid)
 
-        db.session.commit()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
 
         # Index the record
         if self.indexer_class:
@@ -918,16 +922,21 @@ class RecordResource(ContentNegotiatedMethodView):
         """
         self.check_etag(str(record.model.version_id))
 
-        record.delete()
-        # mark all PIDs as DELETED
-        all_pids = PersistentIdentifier.query.filter(
-            PersistentIdentifier.object_type == pid.object_type,
-            PersistentIdentifier.object_uuid == pid.object_uuid,
-        ).all()
-        for rec_pid in all_pids:
-            if not rec_pid.is_deleted():
-                rec_pid.delete()
-        db.session.commit()
+        try:
+            record.delete()
+            # mark all PIDs as DELETED
+            all_pids = PersistentIdentifier.query.filter(
+                PersistentIdentifier.object_type == pid.object_type,
+                PersistentIdentifier.object_uuid == pid.object_uuid,
+            ).all()
+            for rec_pid in all_pids:
+                if not rec_pid.is_deleted():
+                    rec_pid.delete()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+
         if self.indexer_class:
             self.indexer_class().delete(record)
 
@@ -1042,6 +1051,7 @@ class RecordResource(ContentNegotiatedMethodView):
             record.commit()
             db.session.commit()
         except BaseException as e:
+            db.session.rollback()
             current_app.logger.error(traceback.format_exc())
 
         if self.indexer_class:

@@ -40,8 +40,11 @@ class MailConfig(db.Model):
     def get_config(cls):
         """Get mail Config."""
         if len(cls.query.all()) < 1:
-            db.session.add(cls())
-            db.session.commit()
+            try:
+                db.session.add(cls())
+                db.session.commit()
+            except:
+                db.session.rollback()
         cfg = pickle.loads(pickle.dumps(cls.query.get(1).__dict__))
         cfg.pop('id')
         cfg.pop('_sa_instance_state')
@@ -50,12 +53,15 @@ class MailConfig(db.Model):
     @classmethod
     def set_config(cls, new_config):
         """Set mail Config."""
-        cfg = cls.query.get(1)
-        cfg.mail_server = new_config['mail_server']
-        cfg.mail_port = int(new_config['mail_port'])
-        cfg.mail_use_tls = new_config['mail_use_tls']
-        cfg.mail_use_ssl = new_config['mail_use_ssl']
-        cfg.mail_username = new_config['mail_username']
-        cfg.mail_password = new_config['mail_password']
-        cfg.mail_default_sender = new_config['mail_default_sender']
-        db.session.commit()
+        try:
+            cfg = cls.query.get(1)
+            cfg.mail_server = new_config['mail_server']
+            cfg.mail_port = int(new_config['mail_port'])
+            cfg.mail_use_tls = new_config['mail_use_tls']
+            cfg.mail_use_ssl = new_config['mail_use_ssl']
+            cfg.mail_username = new_config['mail_username']
+            cfg.mail_password = new_config['mail_password']
+            cfg.mail_default_sender = new_config['mail_default_sender']
+            db.session.commit()
+        except:
+            db.session.rollback()

@@ -92,7 +92,6 @@ class ShibbolethUser(db.Model):
                 **kwargs
             )
             db.session.add(obj)
-        db.session.commit()
 
         return obj
 

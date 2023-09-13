@@ -149,8 +149,10 @@ def shib_auto_login():
             shib_user.shib_user_login()
 
         datastore.delete(cache_key)
+        db.session.commit()
         return redirect(session['next'] if 'next' in session else '/')
     except BaseException:
+        db.session.rollback()
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return abort(400)
 

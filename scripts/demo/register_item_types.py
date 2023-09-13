@@ -44,12 +44,17 @@ def main():
             print('List of valid parameters [{}].'.format(','.join(type_list)))
             sys.exit(0) 
     except Exception as ex:
+        db.session.rollback()
         print(ex)
 
 
 def truncate_table():
-    db.session.execute('TRUNCATE item_type, item_type_name, item_type_mapping CASCADE;')
-    db.session.commit()
+    try:
+        db.session.execute('TRUNCATE item_type, item_type_name, item_type_mapping CASCADE;')
+        db.session.commit()
+    except Exception as ex:
+        db.session.rollback()
+        print(ex)
 
 
 def get_item_type_id():

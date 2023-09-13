@@ -85,10 +85,13 @@ def create():
     author_data["id"] = new_id
     author_data["json"] = json.dumps(data)
 
-    with session.begin_nested():
+    try:
         author = Authors(**author_data)
         session.add(author)
-    session.commit()
+        session.commit()
+    except Exception as ex:
+        session.rollback()
+        current_app.logger.error(ex)
     return jsonify(msg=_('Success'))
 
 
@@ -112,16 +115,19 @@ def update_author():
         body=body
     )
 
-    with db.session.begin_nested():
+    try:
         author_data = Authors.query.filter_by(
             id=json.loads(json.dumps(data))["pk_id"]).one()
         author_data.json = json.dumps(data)
         db.session.merge(author_data)
-    db.session.commit()
+        db.session.commit()
 
-    from weko_deposit.tasks import update_items_by_authorInfo
-    update_items_by_authorInfo.delay(
-        [json.loads(json.dumps(data))["pk_id"]], data)
+        from weko_deposit.tasks import update_items_by_authorInfo
+        update_items_by_authorInfo.delay(
+            [json.loads(json.dumps(data))["pk_id"]], data)
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.error(ex)
 
     return jsonify(msg=_('Success'))
 
@@ -142,26 +148,25 @@ def delete_author():
             500)
 
     try:
-        with db.session.begin_nested():
-            author_data = Authors.query.filter_by(
-                id=json.loads(json.dumps(data))["pk_id"]).one()
-            author_data.is_deleted = True
-            json_data = json.loads(author_data.json)
-            json_data['is_deleted'] = 'true'
-            author_data.json = json.dumps(json_data)
-            db.session.merge(author_data)
+        author_data = Authors.query.filter_by(
+            id=json.loads(json.dumps(data))["pk_id"]).one()
+        author_data.is_deleted = True
+        json_data = json.loads(author_data.json)
+        json_data['is_deleted'] = 'true'
+        author_data.json = json.dumps(json_data)
+        db.session.merge(author_data)
+        db.session.commit()
 
-            RecordIndexer().client.update(
-                id=json.loads(json.dumps(data))["Id"],
-                index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-                doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
-                body={'doc': {'is_deleted': 'true'}}
-            )
+        RecordIndexer().client.update(
+            id=json.loads(json.dumps(data))["Id"],
+            index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+            doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+            body={'doc': {'is_deleted': 'true'}}
+        )
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error(ex)
 
-    db.session.commit()
     return jsonify(msg=_('Success'))
 
 # add by ryuu. at 20180820 end

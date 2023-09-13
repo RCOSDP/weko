@@ -121,14 +121,18 @@ class PdfCoverPageSettingView(BaseView):
                 header_display_position=record.header_display_position
             )
         except AttributeError:
-            makeshift = PDFCoverPageSettings(
-                avail='disable',
-                header_display_type=None,
-                header_output_string=None,
-                header_output_image=None,
-                header_display_position=None)
-            db.session.add(makeshift)
-            db.session.commit()
+            try:
+                makeshift = PDFCoverPageSettings(
+                    avail='disable',
+                    header_display_type=None,
+                    header_output_string=None,
+                    header_output_image=None,
+                    header_display_position=None)
+                db.session.add(makeshift)
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                current_app.logger.error(e)
             record = PDFCoverPageSettings.find(1)
             return self.render(
                 current_app.config["WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE"],

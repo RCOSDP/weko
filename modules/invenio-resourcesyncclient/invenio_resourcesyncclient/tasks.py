@@ -104,8 +104,8 @@ def run_sync_import(id):
                 current_app.logger.debug(
                     "len(records):{0}".format(len(records)))
                 successful = []
-                try:
-                    for i in records:
+                for i in records:
+                    try:
                         current_app.logger.debug('{0} {1} {2}: {3}'.format(
                             __file__, 'run_sync_import()', 'resource', i))
                         if INVENIO_RESYNC_MODE:
@@ -123,28 +123,27 @@ def run_sync_import(id):
                         if len(record) == 1:
                             process_item(record[0], resync, counter)
                             successful.append(i)
+                        db.session.commit()
+                    except Exception as ex:
+                        db.session.rollback()
+                        current_app.logger.exception(
+                            'Error occurred while importing item')
+                        current_app.logger.error(ex)
+                        event_counter('error_items', counter)
+                        continue
 
-                    for item in successful:
-                        records.remove(item)
+                for item in successful:
+                    records.remove(item)
 
-                    resync_index.update({
-                        'result': json.dumps(records)
-                    })
-
-                except Exception as ex:
-                    current_app.logger.exception(
-                        'Error occurred while importing item')
-                    continue
+                resync_index.update({
+                    'result': json.dumps(records)
+                })
 
             except Exception as ex:
                 current_app.logger.error(traceback.format_exc())
                 current_app.logger.error(
                     'Error occurred while processing harvesting item\n' + str(
                         ex))
-                db.session.rollback()
-                event_counter('error_items', counter)
-
-            db.session.commit()
 
             resync_log.status = current_app.config.get(
                 "INVENIO_RESYNC_LOGS_STATUS",
@@ -153,6 +152,8 @@ def run_sync_import(id):
 
             break
 
+        current_app.logger.debug('{0} {1} {2}: {3}'.format(
+            __file__, 'end run_sync_import()', 'id', id))
     except Exception as ex:
         current_app.logger.error(traceback.format_exc())
         resync_log.status = current_app.config.get(
@@ -161,17 +162,35 @@ def run_sync_import(id):
         ).get('failed')
         current_app.logger.error(str(ex))
         resync_log.errmsg = str(ex)[:255]
+    finally:
+        try:
+            res = finish(
+                resync,
+                resync_log,
+                counter,
+                start_time,
+                run_sync_import.request.id,
+                log_type='import'
+            )
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+            end_time = datetime.now()
+            res = (
+                {
+                    'task_state': 'FAILED',
+                    'start_time': start_time.strftime('%Y-%m-%dT%H:%M:%S'),
+                    'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%S'),
+                    'execution_time': str(end_time - start_time),
+                    'task_name': 'import',
+                    'task_type': 'import',
+                    'repository_name': 'weko',
+                    'task_id': resync_sync.request.id
+                },
+            )
 
-    current_app.logger.debug('{0} {1} {2}: {3}'.format(
-        __file__, 'end run_sync_import()', 'id', id))
-    return finish(
-        resync,
-        resync_log,
-        counter,
-        start_time,
-        run_sync_import.request.id,
-        log_type='import'
-    )
+    return res
 
 
 def get_record_from_file(rc):
@@ -280,14 +299,33 @@ def resync_sync(id):
         current_app.logger.error(str(ex))
         resync_log.errmsg = str(ex)[:255]
     finally:
-        return finish(
-            resync,
-            resync_log,
-            counter,
-            start_time,
-            resync_sync.request.id,
-            log_type='sync'
-        )
+        try:
+            res = finish(
+                resync,
+                resync_log,
+                counter,
+                start_time,
+                resync_sync.request.id,
+                log_type='sync'
+            )
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+            end_time = datetime.now()
+            res = (
+                {
+                    'task_state': 'FAILED',
+                    'start_time': start_time.strftime('%Y-%m-%dT%H:%M:%S'),
+                    'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%S'),
+                    'execution_time': str(end_time - start_time),
+                    'task_name': 'sync',
+                    'task_type': 'sync',
+                    'repository_name': 'weko',
+                    'task_id': resync_sync.request.id
+                },
+            )
+        return res
 
 
 def prepare_log(resync, id, counter, task_id, log_type):
@@ -297,19 +335,23 @@ def prepare_log(resync, id, counter, task_id, log_type):
     # For registering runtime stats
 
     resync.task_id = task_id
-    resync_log = ResyncLogs(
-        resync_indexes_id=id,
-        status=current_app.config.get(
-            "INVENIO_RESYNC_LOGS_STATUS",
-            INVENIO_RESYNC_LOGS_STATUS
-        ).get('running'),
-        log_type=log_type,
-        start_time=datetime.utcnow(),
-        counter=counter,
-        task_id=task_id
-    )
-    db.session.add(resync_log)
-    db.session.commit()
+    try:
+        resync_log = ResyncLogs(
+            resync_indexes_id=id,
+            status=current_app.config.get(
+                "INVENIO_RESYNC_LOGS_STATUS",
+                INVENIO_RESYNC_LOGS_STATUS
+            ).get('running'),
+            log_type=log_type,
+            start_time=datetime.utcnow(),
+            counter=counter,
+            task_id=task_id
+        )
+        db.session.add(resync_log)
+        db.session.commit()
+    except Exception as e:
+        db.sesison.rollback()
+        current_app.logger.error(e)
     return resync_log
 
 
@@ -320,7 +362,6 @@ def finish(resync, resync_log, counter, start_time, request_id, log_type):
     resync_log.end_time = end_time
     resync_log.counter = counter
     current_app.logger.info('[{0}] [{1}] END'.format(0, 'Resync ' + log_type))
-    db.session.commit()
     if resync.status == current_app.config.get(
         "INVENIO_RESYNC_INDEXES_STATUS",
         INVENIO_RESYNC_INDEXES_STATUS

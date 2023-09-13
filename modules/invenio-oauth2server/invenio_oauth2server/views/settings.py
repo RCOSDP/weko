@@ -139,11 +139,15 @@ def client_new():
     form = ClientForm(request.form)
 
     if form.validate_on_submit():
-        c = Client(user_id=current_user.get_id())
-        c.gen_salt()
-        form.populate_obj(c)
-        db.session.add(c)
-        db.session.commit()
+        try:
+            c = Client(user_id=current_user.get_id())
+            c.gen_salt()
+            form.populate_obj(c)
+            db.session.add(c)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
         return redirect(url_for('.client_view', client_id=c.client_id))
 
     return render_template(
@@ -161,8 +165,12 @@ def client_new():
 def client_view(client):
     """Show client's detail."""
     if request.method == 'POST' and 'delete' in request.form:
-        db.session.delete(client)
-        db.session.commit()
+        try:
+            db.session.delete(client)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
         return redirect(url_for('.index'))
 
     form = ClientForm(request.form, obj=client)
@@ -183,8 +191,12 @@ def client_view(client):
 def client_reset(client):
     """Reset client's secret."""
     if request.form.get('reset') == 'yes':
-        client.reset_client_secret()
-        db.session.commit()
+        try:
+            client.reset_client_secret()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
     return redirect(url_for('.client_view', client_id=client.client_id))
 
 
@@ -202,10 +214,14 @@ def token_new():
     form.scopes.choices = current_oauth2server.scope_choices()
 
     if form.validate_on_submit():
-        t = Token.create_personal(
-            form.data['name'], current_user.get_id(), scopes=form.scopes.data
-        )
-        db.session.commit()
+        try:
+            t = Token.create_personal(
+                form.data['name'], current_user.get_id(), scopes=form.scopes.data
+            )
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
         flash('Please copy the personal access token now. You won\'t see it'
               ' again!', category='info')
         session['show_personal_access_token'] = True
@@ -229,8 +245,12 @@ def token_new():
 def token_view(token):
     """Show token details."""
     if request.method == "POST" and 'delete' in request.form:
-        db.session.delete(token)
-        db.session.commit()
+        try:
+            db.session.delete(token)
+            db.session.commit()
+        except Exception as e:
+            db.sesison.rollback()
+            current_app.logger.error(e)
         return redirect(url_for('.index'))
 
     show_token = session.pop('show_personal_access_token', False)
@@ -239,9 +259,13 @@ def token_view(token):
     form.scopes.choices = current_oauth2server.scope_choices()
 
     if form.validate_on_submit():
-        token.client.name = form.data['name']
-        token.scopes = form.data['scopes']
-        db.session.commit()
+        try:
+            token.client.name = form.data['name']
+            token.scopes = form.data['scopes']
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
 
     if len(current_oauth2server.scope_choices()) == 0:
         del(form.scopes)
@@ -259,8 +283,12 @@ def token_view(token):
 @token_getter(is_personal=False, is_internal=False)
 def token_revoke(token):
     """Revoke Authorized Application token."""
-    db.session.delete(token)
-    db.session.commit()
+    try:
+        db.session.delete(token)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
     return redirect(url_for('.index'))
 
 

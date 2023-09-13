@@ -1895,7 +1895,6 @@ def update_index_tree_for_record(pid_value, index_tree_id):
     # deposit.clear()
     deposit.update(data)
     deposit.commit()
-    db.session.commit()
 
 
 def validate_user_mail(users, activity_id, request_data, keys, result):
@@ -1910,29 +1909,25 @@ def validate_user_mail(users, activity_id, request_data, keys, result):
     """
     result['validate_required_email'] = []
     result['validate_register_in_system'] = []
-    try:
-        for index, user in enumerate(users):
-            email = request_data.get(user)
-            user_info = get_user_info_by_email(email)
-            action_order = check_approval_email(activity_id, user)
-            if action_order:
-                if not email:
-                    result['validate_required_email'].append(keys[index])
-                elif not (user_info and user_info.get('user_id') is not None):
-                    result['validate_register_in_system'].append(keys[index])
-                if email and user_info and \
-                        user_info.get('user_id') is not None:
-                    update_action_handler(activity_id,
-                                          action_order,
-                                          user_info.get('user_id'))
-                    keys = True
-                    continue
-        result[
-            'validate_map_flow_and_item_type'] = check_approval_email_in_flow(
-            activity_id, users)
-
-    except Exception:
-        result['validation'] = False
+    for index, user in enumerate(users):
+        email = request_data.get(user)
+        user_info = get_user_info_by_email(email)
+        action_order = check_approval_email(activity_id, user)
+        if action_order:
+            if not email:
+                result['validate_required_email'].append(keys[index])
+            elif not (user_info and user_info.get('user_id') is not None):
+                result['validate_register_in_system'].append(keys[index])
+            if email and user_info and \
+                    user_info.get('user_id') is not None:
+                update_action_handler(activity_id,
+                                        action_order,
+                                        user_info.get('user_id'))
+                keys = True
+                continue
+    result[
+        'validate_map_flow_and_item_type'] = check_approval_email_in_flow(
+        activity_id, users)
 
     return result
 
@@ -1988,7 +1983,6 @@ def update_action_handler(activity_id, action_order, user_id):
         if activity_action:
             activity_action.action_handler = user_id
             db.session.merge(activity_action)
-    db.session.commit()
 
 
 def validate_user_mail_and_index(request_data):
@@ -2012,7 +2006,10 @@ def validate_user_mail_and_index(request_data):
             is_existed_valid_index_tree_id = True if \
                 get_index_id(activity_id) else False
             result['index'] = is_existed_valid_index_tree_id
+        db.session.commit()
     except Exception as ex:
+        result['validation'] = False
+        db.session.rollback()
         import traceback
         traceback.print_exc()
         result['error'] = str(ex)

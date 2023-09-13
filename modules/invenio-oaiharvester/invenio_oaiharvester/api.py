@@ -121,7 +121,6 @@ def list_records(metadata_prefix=None, from_date=None, until_date=None,
         oai_source = get_oaiharvest_object(name)
         oai_source.update_lastrun(lastrun_date)
         oai_source.save()
-        db.session.commit()
     return request, records.values()
 
 

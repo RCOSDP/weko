@@ -673,12 +673,7 @@ class WekoDeposit(Deposit):
 
         """
         deposit = None
-        try:
-            deposit = self.publish_without_commit(pid, id_)
-            db.session.commit()
-        except SQLAlchemyError as ex:
-            current_app.logger.debug(ex)
-            db.session.rollback()
+        deposit = self.publish_without_commit(pid, id_)
         return deposit
 
     def publish_without_commit(self, pid=None, id_=None):
@@ -766,29 +761,25 @@ class WekoDeposit(Deposit):
                     'email': current_user.email
                 }
 
-        try:
-            if recid:
-                deposit = super(WekoDeposit, cls).create(
-                    data,
-                    id_=id_,
-                    recid=recid
-                )
-            else:
-                deposit = super(WekoDeposit, cls).create(data, id_=id_)
-
-            record_id = 0
-            if data.get('_deposit'):
-                record_id = str(data['_deposit']['id'])
-            parent_pid = PersistentIdentifier.create(
-                'parent',
-                'parent:{0}'.format(record_id),
-                object_type='rec',
-                object_uuid=deposit.id,
-                status=PIDStatus.REGISTERED
+        if recid:
+            deposit = super(WekoDeposit, cls).create(
+                data,
+                id_=id_,
+                recid=recid
             )
-            db.session.commit()
-        except BaseException as ex:
-            raise ex
+        else:
+            deposit = super(WekoDeposit, cls).create(data, id_=id_)
+
+        record_id = 0
+        if data.get('_deposit'):
+            record_id = str(data['_deposit']['id'])
+        parent_pid = PersistentIdentifier.create(
+            'parent',
+            'parent:{0}'.format(record_id),
+            object_type='rec',
+            object_uuid=deposit.id,
+            status=PIDStatus.REGISTERED
+        )
 
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
@@ -1025,85 +1016,81 @@ class WekoDeposit(Deposit):
            AttributeError: 
         """
         deposit = None
-        try:
-            if not self.is_published():
-                raise PIDInvalidAction()
+        if not self.is_published():
+            raise PIDInvalidAction()
 
-            # Check that there is not a newer draft version for this record
-            # and this is the latest version
-            versioning = PIDVersioning(child=pid)
-            record = WekoDeposit.get_record(pid.object_uuid)
+        # Check that there is not a newer draft version for this record
+        # and this is the latest version
+        versioning = PIDVersioning(child=pid)
+        record = WekoDeposit.get_record(pid.object_uuid)
 
-            assert PIDStatus.REGISTERED == pid.status
-            if not record or not versioning.exists or versioning.draft_child:
-                return None
+        assert PIDStatus.REGISTERED == pid.status
+        if not record or not versioning.exists or versioning.draft_child:
+            return None
 
-            data = record.dumps()
-            owners = data['_deposit']['owners']
-            keys_to_remove = ('_deposit', 'doi', '_oai',
-                              '_files', '_buckets', '$schema')
-            for k in keys_to_remove:
-                data.pop(k, None)
+        data = record.dumps()
+        owners = data['_deposit']['owners']
+        keys_to_remove = ('_deposit', 'doi', '_oai',
+                        '_files', '_buckets', '$schema')
+        for k in keys_to_remove:
+            data.pop(k, None)
 
-            draft_id = '{0}.{1}'.format(
-                pid.pid_value,
-                0 if is_draft else get_latest_version_id(pid.pid_value))
+        draft_id = '{0}.{1}'.format(
+            pid.pid_value,
+            0 if is_draft else get_latest_version_id(pid.pid_value))
 
-            # NOTE: We call the superclass `create()` method, because
-            # we don't want a new empty bucket, but
-            # an unlocked snapshot of the old record's bucket.
-            deposit = super(
-                WekoDeposit,
-                self).create(data, recid=draft_id)
-            # Injecting owners is required in case of creating new
-            # version this outside of request context
+        # NOTE: We call the superclass `create()` method, because
+        # we don't want a new empty bucket, but
+        # an unlocked snapshot of the old record's bucket.
+        deposit = super(
+            WekoDeposit,
+            self).create(data, recid=draft_id)
+        # Injecting owners is required in case of creating new
+        # version this outside of request context
 
-            deposit['_deposit']['owners'] = owners
+        deposit['_deposit']['owners'] = owners
 
-            recid = PersistentIdentifier.get(
-                'recid', str(data['_deposit']['id']))
-            depid = PersistentIdentifier.get(
-                'depid', str(data['_deposit']['id']))
+        recid = PersistentIdentifier.get(
+            'recid', str(data['_deposit']['id']))
+        depid = PersistentIdentifier.get(
+            'depid', str(data['_deposit']['id']))
 
-            PIDVersioning(
-                parent=versioning.parent).insert_draft_child(
-                child=recid)
-            RecordDraft.link(recid, depid)
+        PIDVersioning(
+            parent=versioning.parent).insert_draft_child(
+            child=recid)
+        RecordDraft.link(recid, depid)
 
-            if is_draft:
-                with db.session.begin_nested():
-                    # Set relation type of draft record is 3: Draft
-                    parent_pid = PIDVersioning(child=recid).parent
-                    relation = PIDRelation.query. \
-                        filter_by(parent=parent_pid,
-                                  child=recid).one_or_none()
-                    relation.relation_type = 3
-                db.session.merge(relation)
+        if is_draft:
+            with db.session.begin_nested():
+                # Set relation type of draft record is 3: Draft
+                parent_pid = PIDVersioning(child=recid).parent
+                relation = PIDRelation.query. \
+                    filter_by(parent=parent_pid,
+                            child=recid).one_or_none()
+                relation.relation_type = 3
+            db.session.merge(relation)
 
-            snapshot = record.files.bucket. \
-                snapshot(lock=False)
-            snapshot.locked = False
-            deposit['_buckets'] = {'deposit': str(snapshot.id)}
-            RecordsBuckets.create(record=deposit.model,
-                                  bucket=snapshot)
+        snapshot = record.files.bucket. \
+            snapshot(lock=False)
+        snapshot.locked = False
+        deposit['_buckets'] = {'deposit': str(snapshot.id)}
+        RecordsBuckets.create(record=deposit.model,
+                            bucket=snapshot)
 
-            index = {'index': self.get('path', []),
-                     'actions': self.get('publish_status')}
-            if 'activity_info' in session:
-                del session['activity_info']
-            if is_draft:
-                from weko_workflow.utils import convert_record_to_item_metadata
-                item_metadata = convert_record_to_item_metadata(record)
-            else:
-                item_metadata = ItemsMetadata.get_record(
-                    pid.object_uuid).dumps()
-            item_metadata.pop('id', None)
-            args = [index, item_metadata]
-            deposit.update(*args)
-            deposit.commit()
-        except SQLAlchemyError as ex:
-            current_app.logger.debug(ex)
-            db.session.rollback()
+        index = {'index': self.get('path', []),
+                'actions': self.get('publish_status')}
+        if 'activity_info' in session:
+            del session['activity_info']
+        if is_draft:
+            from weko_workflow.utils import convert_record_to_item_metadata
+            item_metadata = convert_record_to_item_metadata(record)
+        else:
+            item_metadata = ItemsMetadata.get_record(
+                pid.object_uuid).dumps()
+        item_metadata.pop('id', None)
+        args = [index, item_metadata]
+        deposit.update(*args)
+        deposit.commit()
         return deposit
 
     def get_content_files(self):
@@ -1501,27 +1488,18 @@ class WekoDeposit(Deposit):
         if index_id:
             index_id = str(index_id)
         obj_ids = next((cls.indexer.get_pid_by_es_scroll(index_id)), [])
-        try:
-            for obj_uuid in obj_ids:
-                r = RecordMetadata.query.filter_by(id=obj_uuid).first()
-                if r.json['recid'].split('.')[0] in ignore_items:
-                    continue
-                try:
-                    r.json['path'].remove(index_id)
-                    flag_modified(r, 'json')
-                except BaseException as bex:
-                    current_app.logger.error(bex)
-                if r.json and not r.json['path']:
-                    from weko_records_ui.utils import soft_delete
-                    soft_delete(obj_uuid)
-                else:
-                    dep = WekoDeposit(r.json, r)
-                    dep.indexer.update_es_data(dep, update_revision=False)
-            db.session.commit()
-        except Exception as ex:
-            current_app.logger.error(ex)
-            db.session.rollback()
-            raise ex
+        for obj_uuid in obj_ids:
+            r = RecordMetadata.query.filter_by(id=obj_uuid).first()
+            if r.json['recid'].split('.')[0] in ignore_items:
+                continue
+            r.json['path'].remove(index_id)
+            flag_modified(r, 'json')
+            if r.json and not r.json['path']:
+                from weko_records_ui.utils import soft_delete
+                soft_delete(obj_uuid)
+            else:
+                dep = WekoDeposit(r.json, r)
+                dep.indexer.update_es_data(dep, update_revision=False)
 
     def update_pid_by_index_tree_id(self, path):
         """ 

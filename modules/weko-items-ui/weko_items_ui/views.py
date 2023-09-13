@@ -239,7 +239,9 @@ def iframe_save_model():
             save_title(activity_id, data)
             activity = WorkActivity()
             activity.upt_activity_metadata(activity_id, json.dumps(data))
+            db.session.commit()
     except Exception as ex:
+        db.session.rollback()
         current_app.logger.exception("{}".format(ex))
         return jsonify(code=1, msg='Model save error')
     return jsonify(code=0, msg='Model save success at {} (utc)'.format(
@@ -468,11 +470,12 @@ def iframe_items_index(pid_value='0'):
 
             workflow = WorkFlow()
             workflow_detail = workflow.get_workflow_by_id(
-            cur_activity.workflow_id)
+                cur_activity.workflow_id)
             
             if workflow_detail and workflow_detail.index_tree_id:
                 index_id = get_index_id(cur_activity.activity_id)
                 update_index_tree_for_record(pid_value, index_id)
+                db.session.commit()
                 return redirect(url_for('weko_workflow.iframe_success'))
 
             # Get the design for widget rendering
@@ -568,16 +571,21 @@ def iframe_items_index(pid_value='0'):
                 ttl_secs=300)
         return jsonify(data)
     except KeyError as ex:
+        db.session.rollback()
         current_app.logger.error('KeyError: {}'.format(ex))
     except AttributeError as ex:
+        db.session.rollback()
         current_app.logger.error('AttributeError: {}'.format(ex))
         import traceback
         current_app.logger.error(traceback.format_exc())
     except BadRequest as ex:
+        db.session.rollback()
         current_app.logger.error('BadRequest: {}'.format(ex))
     except StatementError as ex:
+        db.session.rollback()
         current_app.logger.error('BadRequest: {}'.format(ex))
     except BaseException:
+        db.session.rollback()
         current_app.logger.error(
             'Unexpected error: {}'.format(sys.exc_info()[0]))
     return abort(400)

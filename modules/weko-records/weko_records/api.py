@@ -1903,7 +1903,6 @@ class SiteLicense(RecordBase):
                     sif.append(slif)
                 # add new rows
                 db.session.add_all(sif)
-        db.session.commit()
 
 
 class RevisionsIterator(object):
@@ -2000,24 +1999,18 @@ class FeedbackMailList(object):
         :param feedback_maillist: list mail feedback
         :return boolean: True if success
         """
-        try:
-            with db.session.begin_nested():
-                query_object = _FeedbackMailList.query.filter_by(
-                    item_id=item_id).one_or_none()
-                if not query_object:
-                    query_object = _FeedbackMailList(
-                        item_id=item_id,
-                        mail_list=feedback_maillist
-                    )
-                    db.session.add(query_object)
-                else:
-                    query_object.mail_list = feedback_maillist
-                    db.session.merge(query_object)
-            db.session.commit()
-        except SQLAlchemyError:
-            db.session.rollback()
-            return False
-        return True
+        with db.session.begin_nested():
+            query_object = _FeedbackMailList.query.filter_by(
+                item_id=item_id).one_or_none()
+            if not query_object:
+                query_object = _FeedbackMailList(
+                    item_id=item_id,
+                    mail_list=feedback_maillist
+                )
+                db.session.add(query_object)
+            else:
+                query_object.mail_list = feedback_maillist
+                db.session.merge(query_object)
 
     @classmethod
     def update_by_list_item_id(cls, item_ids, feedback_maillist):

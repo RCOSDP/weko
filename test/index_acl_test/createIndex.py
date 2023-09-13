@@ -100,7 +100,11 @@ def clearTable():
     db.session.commit()
 
 if __name__ == '__main__':
-    clearTable()
-    idx = 0
-    idx = createIndex(0,0,0)
+    try:
+        clearTable()
+        idx = 0
+        idx = createIndex(0,0,0)
+    except Exception as e:
+        db.session.rollback()
+        print(e)
     

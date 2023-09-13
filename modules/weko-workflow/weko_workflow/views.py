@@ -513,6 +513,7 @@ def init_activity():
             rtn = activity.init_activity(post_activity.data)
         if rtn is None:
             res = ResponseMessageSchema().load({'code':-1,'msg':'can not make activity_id'})
+            db.session.rollback()
             return jsonify(res.data), 500
 
         url = url_for('weko_workflow.display_activity',
@@ -638,31 +639,38 @@ def display_guest_activity(file_name=""):
     session['guest_token'] = token
     session['guest_email'] = guest_email
     session['guest_url'] = request.full_path
+    guest_activity = {}
 
-    guest_activity = prepare_data_for_guest_activity(activity_id)
+    try:
+        guest_activity = prepare_data_for_guest_activity(activity_id)
 
-    # Get Auto fill data for Restricted Access Item Type.
-    usage_data = get_usage_data(
-        guest_activity.get('id'), guest_activity.get('activity'))
-    guest_activity.update(usage_data)
+        # Get Auto fill data for Restricted Access Item Type.
+        usage_data = get_usage_data(
+            guest_activity.get('id'), guest_activity.get('activity'))
+        guest_activity.update(usage_data)
 
-    # Get item link info.
-    record_detail_alt = get_main_record_detail(activity_id,
-                                               guest_activity.get('activity'))
-    if record_detail_alt.get('record'):
-        record_detail_alt['record']['is_guest'] = True
+        # Get item link info.
+        record_detail_alt = get_main_record_detail(activity_id,
+                                                   guest_activity.get('activity'))
 
-    guest_activity.update(
-        dict(
-            record_org=record_detail_alt.get('record'),
-            files_org=record_detail_alt.get('files'),
-            thumbnails_org=record_detail_alt.get('files_thumbnail'),
-            record=record_detail_alt.get('record'),
-            files=record_detail_alt.get('files'),
-            files_thumbnail=record_detail_alt.get('files_thumbnail'),
-            pid=record_detail_alt.get('pid', None),
+        if record_detail_alt.get('record'):
+            record_detail_alt['record']['is_guest'] = True
+
+        guest_activity.update(
+            dict(
+                record_org=record_detail_alt.get('record'),
+                files_org=record_detail_alt.get('files'),
+                thumbnails_org=record_detail_alt.get('files_thumbnail'),
+                record=record_detail_alt.get('record'),
+                files=record_detail_alt.get('files'),
+                files_thumbnail=record_detail_alt.get('files_thumbnail'),
+                pid=record_detail_alt.get('pid', None),
+            )
         )
-    )
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
 
     form = FlaskForm(request.form)
     
@@ -1218,7 +1226,6 @@ def next_action(activity_id='0', action_id=0):
         return jsonify(res.data), 500
 
     work_activity = WorkActivity()
-    history = WorkActivityHistory()
     activity_detail = work_activity.get_activity_detail(activity_id)
     if activity_detail is None:
         current_app.logger.error("next_action: can not get activity_detail")
@@ -1270,11 +1277,27 @@ def next_action(activity_id='0', action_id=0):
         return jsonify(res.data), 200
 
     if action_endpoint == 'end_action':
-        work_activity.end_activity(activity)
-        res = ResponseMessageSchema().load({"code":0,"msg":_("success")})
-        return jsonify(res.data), 200
-    if 'approval' == action_endpoint:
-        update_approval_date(activity_detail)
+        try:
+            work_activity.end_activity(activity)
+            db.session.commit()
+            res = ResponseMessageSchema().load({"code":0,"msg":_("success")})
+            return jsonify(res.data), 200
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+            res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
+            return jsonify(res.data), 500
+
+    try:
+        history = WorkActivityHistory()
+        history.create_activity_history(activity, action_order)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
+        res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
+        return jsonify(res.data), 500
+
     item_id = None
     recid = None
     deposit = None
@@ -1308,334 +1331,343 @@ def next_action(activity_id='0', action_id=0):
         return jsonify(res.data), 500
     current_app.logger.debug("record: {0}".format(record.pid_cnri))
 
-    if action_endpoint in ['item_login', 'item_login_application'] and (record.pid_cnri is None) and current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CNRI'):
-        register_hdl(activity_id)
+    try:
+        if 'approval' == action_endpoint:
+            update_approval_date(activity_detail)
 
-    flow = Flow()
-    next_flow_action = flow.get_next_flow_action(
-        activity_detail.flow_define.flow_id, action_id, action_order)
-    if not isinstance(next_flow_action, list) or len(next_flow_action) <= 0:
-        current_app.logger.error("next_action: can not get next_flow_action")
-        res = ResponseMessageSchema().load({"code":-2,"msg":"can not get next_flow_action"})
-        return jsonify(res.data), 500
-    next_action_endpoint = next_flow_action[0].action.action_endpoint
-    next_action_id = next_flow_action[0].action_id
-    next_action_order = next_flow_action[
-        0].action_order if action_order else None
-    # Start to send mail
-    if 'approval' in [action_endpoint, next_action_endpoint]:
-        current_flow_action = flow.get_flow_action_detail(
+        if action_endpoint in ['item_login', 'item_login_application'] \
+                and (record.pid_cnri is None) \
+                and current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CNRI'):
+            register_hdl(activity_id)
+
+        flow = Flow()
+        next_flow_action = flow.get_next_flow_action(
             activity_detail.flow_define.flow_id, action_id, action_order)
-        if current_flow_action is None:
-            current_app.logger.error("next_action: can not get current_flow_action")
-            res = ResponseMessageSchema().load({"code":-1, "msg":"can not get curretn_flow_action"})
+        if not isinstance(next_flow_action, list) or len(next_flow_action) <= 0:
+            current_app.logger.error("next_action: can not get next_flow_action")
+            res = ResponseMessageSchema().load({"code":-2,"msg":"can not get next_flow_action"})
             return jsonify(res.data), 500
-        next_action_detail = work_activity.get_activity_action_comment(
-            activity_id, next_action_id,
-            next_action_order)
+        next_action_endpoint = next_flow_action[0].action.action_endpoint
+        next_action_id = next_flow_action[0].action_id
+        next_action_order = next_flow_action[
+            0].action_order if action_order else None
+        # Start to send mail
+        if 'approval' in [action_endpoint, next_action_endpoint]:
+            current_flow_action = flow.get_flow_action_detail(
+                activity_detail.flow_define.flow_id, action_id, action_order)
+            if current_flow_action is None:
+                current_app.logger.error("next_action: can not get current_flow_action")
+                res = ResponseMessageSchema().load({"code":-1, "msg":"can not get curretn_flow_action"})
+                return jsonify(res.data), 500
+            next_action_detail = work_activity.get_activity_action_comment(
+                activity_id, next_action_id,
+                next_action_order)
 
-        if next_action_detail is None:
-            current_app.logger.error("next_action: can not get next_action_detail")
-            res = ResponseMessageSchema().load({"code":-2, "msg":"can not get next_action_detail"})
-            return jsonify(res.data), 500
+            if next_action_detail is None:
+                current_app.logger.error("next_action: can not get next_action_detail")
+                res = ResponseMessageSchema().load({"code":-2, "msg":"can not get next_action_detail"})
+                return jsonify(res.data), 500
 
-        is_last_approval_step = work_activity \
-            .is_last_approval_step(activity_id, action_id, action_order) \
-            if action_endpoint == "approval" else False
-        # Only gen url file link at last approval step
-        url_and_expired_date = {}
-        if is_last_approval_step:
-            url_and_expired_date = create_onetime_download_url_to_guest(
-                activity_detail.activity_id,
-                activity_detail.extra_info)
-            if not url_and_expired_date:
-                url_and_expired_date = {}
-        action_mails_setting = {"previous":
-                                current_flow_action.send_mail_setting
-                                if current_flow_action.send_mail_setting
-                                else {},
-                                "next": next_flow_action[0].send_mail_setting
-                                if next_flow_action[0].send_mail_setting
-                                else {},
-                                "approval": True,
-                                "reject": False}
+            is_last_approval_step = work_activity \
+                .is_last_approval_step(activity_id, action_id, action_order) \
+                if action_endpoint == "approval" else False
+            # Only gen url file link at last approval step
+            url_and_expired_date = {}
+            if is_last_approval_step:
+                url_and_expired_date = create_onetime_download_url_to_guest(
+                    activity_detail.activity_id,
+                    activity_detail.extra_info)
+                if not url_and_expired_date:
+                    url_and_expired_date = {}
+            action_mails_setting = {"previous":
+                                    current_flow_action.send_mail_setting
+                                    if current_flow_action.send_mail_setting
+                                    else {},
+                                    "next": next_flow_action[0].send_mail_setting
+                                    if next_flow_action[0].send_mail_setting
+                                    else {},
+                                    "approval": True,
+                                    "reject": False}
 
-        next_action_handler = next_action_detail.action_handler
-        # in case of current action has action user
-        if next_action_handler == -1:
-            current_flow_action = FlowAction.query.filter_by(
-                flow_id=activity_detail.flow_define.flow_id,
-                action_id=next_action_id,
-                action_order=next_action_order).one_or_none()
-            if current_flow_action and current_flow_action.action_roles and \
-                    current_flow_action.action_roles[0].action_user:
-                next_action_handler = current_flow_action.action_roles[
-                    0].action_user
-        if next_action_handler is None:
-            current_app.logger.error("next_action: can not get next_action_handler")
-            res = ResponseMessageSchema().load({"code":-2, "msg":"can not get next_action_handler"})
-            return jsonify(res.data), 500
-        process_send_approval_mails(activity_detail, action_mails_setting,
-                                    next_action_handler,
-                                    url_and_expired_date)
-    if current_app.config.get(
-        'WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL') and \
-        current_user.is_authenticated and \
-        (not activity_detail.extra_info or not
-            activity_detail.extra_info.get('guest_mail')):
-        process_send_notification_mail(activity_detail,
-                                       action_endpoint, next_action_endpoint)
+            next_action_handler = next_action_detail.action_handler
+            # in case of current action has action user
+            if next_action_handler == -1:
+                current_flow_action = FlowAction.query.filter_by(
+                    flow_id=activity_detail.flow_define.flow_id,
+                    action_id=next_action_id,
+                    action_order=next_action_order).one_or_none()
+                if current_flow_action and current_flow_action.action_roles and \
+                        current_flow_action.action_roles[0].action_user:
+                    next_action_handler = current_flow_action.action_roles[
+                        0].action_user
+            if next_action_handler is None:
+                current_app.logger.error("next_action: can not get next_action_handler")
+                res = ResponseMessageSchema().load({"code":-2, "msg":"can not get next_action_handler"})
+                return jsonify(res.data), 500
+            process_send_approval_mails(activity_detail, action_mails_setting,
+                                        next_action_handler,
+                                        url_and_expired_date)
+        if current_app.config.get(
+            'WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL') and \
+            current_user.is_authenticated and \
+            (not activity_detail.extra_info or not
+                activity_detail.extra_info.get('guest_mail')):
+            process_send_notification_mail(activity_detail,
+                                        action_endpoint, next_action_endpoint)
 
-    if post_json.get('temporary_save') == 1 \
-            and action_endpoint not in ['identifier_grant', 'item_link']:
-        if 'journal' in post_json:
+        if post_json.get('temporary_save') == 1 \
+                and action_endpoint not in ['identifier_grant', 'item_link']:
+            if 'journal' in post_json:
+                work_activity.create_or_update_action_journal(
+                    activity_id=activity_id,
+                    action_id=action_id,
+                    journal=post_json.get('journal'))
+            else:
+                work_activity.upt_activity_action_comment(
+                    activity_id=activity_id,
+                    action_id=action_id,
+                    comment=post_json.get('commond'),
+                    action_order=action_order
+                )
+            db.session.commit()
+            res = ResponseMessageSchema().load({"code":0, "msg":_("success")})
+            return jsonify(res.data), 200
+        elif post_json.get('journal'):
             work_activity.create_or_update_action_journal(
                 activity_id=activity_id,
                 action_id=action_id,
-                journal=post_json.get('journal'))
-        else:
-            work_activity.upt_activity_action_comment(
-                activity_id=activity_id,
-                action_id=action_id,
-                comment=post_json.get('commond'),
-                action_order=action_order
+                journal=post_json.get('journal')
             )
-        res = ResponseMessageSchema().load({"code":0, "msg":_("success")})
-        return jsonify(res.data), 200
-    elif post_json.get('journal'):
-        work_activity.create_or_update_action_journal(
-            activity_id=activity_id,
-            action_id=action_id,
-            journal=post_json.get('journal')
-        )
 
-    if action_endpoint == 'approval' and item_id:
-        last_idt_setting = work_activity.get_action_identifier_grant(
-            activity_id=activity_id,
-            action_id=get_actionid('identifier_grant'))
-        if not post_json.get('temporary_save') and last_idt_setting \
-                and last_idt_setting.get('action_identifier_select') \
-                and last_idt_setting.get('action_identifier_select') > 0:
+        if action_endpoint == 'approval' and item_id:
+            last_idt_setting = work_activity.get_action_identifier_grant(
+                activity_id=activity_id,
+                action_id=get_actionid('identifier_grant'))
+            if not post_json.get('temporary_save') and last_idt_setting \
+                    and last_idt_setting.get('action_identifier_select') \
+                    and last_idt_setting.get('action_identifier_select') > 0:
 
-            _pid = pid_without_ver.pid_value
-            record_without_version = item_id
-            if not recid:
-                record_without_version = pid_without_ver.object_uuid
+                _pid = pid_without_ver.pid_value
+                record_without_version = item_id
+                if not recid:
+                    record_without_version = pid_without_ver.object_uuid
 
-            current_app.logger.debug(
-                'last_idt_setting: {0}'.format(last_idt_setting))
-            saving_doi_pidstore(
-                item_id,
-                record_without_version,
-                prepare_doi_link_workflow(_pid, last_idt_setting),
-                int(last_idt_setting['action_identifier_select']))
-        elif last_idt_setting \
-                and last_idt_setting.get('action_identifier_select'):
-            without_ver_identifier_handle = IdentifierHandle(item_id)
-            if last_idt_setting.get('action_identifier_select') == -2:
-                del_doi = without_ver_identifier_handle.delete_pidstore_doi()
                 current_app.logger.debug(
-                    'delete_pidstore_doi: {0}'.format(del_doi))
-            elif last_idt_setting.get('action_identifier_select') == -3:
-                without_ver_identifier_handle.remove_idt_registration_metadata()
+                    'last_idt_setting: {0}'.format(last_idt_setting))
+                saving_doi_pidstore(
+                    item_id,
+                    record_without_version,
+                    prepare_doi_link_workflow(_pid, last_idt_setting),
+                    int(last_idt_setting['action_identifier_select']))
+            elif last_idt_setting \
+                    and last_idt_setting.get('action_identifier_select'):
+                without_ver_identifier_handle = IdentifierHandle(item_id)
+                if last_idt_setting.get('action_identifier_select') == -2:
+                    del_doi = without_ver_identifier_handle.delete_pidstore_doi()
+                    current_app.logger.debug(
+                        'delete_pidstore_doi: {0}'.format(del_doi))
+                elif last_idt_setting.get('action_identifier_select') == -3:
+                    without_ver_identifier_handle.remove_idt_registration_metadata()
 
-        action_feedbackmail = work_activity.get_action_feedbackmail(
-            activity_id=activity_id,
-            action_id=current_app.config.get(
-                "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3))
-        if action_feedbackmail:
-            item_ids = [item_id]
-            if not recid:
-                if ".0" in current_pid.pid_value:
-                    pv = PIDVersioning(child=pid_without_ver)
-                    last_ver = PIDVersioning(parent=pv.parent,child=pid_without_ver).get_children(
-                        pid_status=PIDStatus.REGISTERED
-                    ).filter(PIDRelation.relation_type == 2).order_by(
-                        PIDRelation.index.desc()).first()
-                    if last_ver is None:
-                        res = ResponseMessageSchema().load({"code":-1, "msg":"can not get last_ver"})
-                        return jsonify(res.data), 500
-                    item_ids.append(last_ver.object_uuid)
-                else:
-                    draft_pid = PersistentIdentifier.get(
-                        'recid',
-                        '{}.0'.format(pid_without_ver.pid_value)
+            action_feedbackmail = work_activity.get_action_feedbackmail(
+                activity_id=activity_id,
+                action_id=current_app.config.get(
+                    "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3))
+            if action_feedbackmail:
+                item_ids = [item_id]
+                if not recid:
+                    if ".0" in current_pid.pid_value:
+                        pv = PIDVersioning(child=pid_without_ver)
+                        last_ver = PIDVersioning(parent=pv.parent,child=pid_without_ver).get_children(
+                            pid_status=PIDStatus.REGISTERED
+                        ).filter(PIDRelation.relation_type == 2).order_by(
+                            PIDRelation.index.desc()).first()
+                        if last_ver is None:
+                            res = ResponseMessageSchema().load({"code":-1, "msg":"can not get last_ver"})
+                            db.session.rollback()
+                            return jsonify(res.data), 500
+                        item_ids.append(last_ver.object_uuid)
+                    else:
+                        draft_pid = PersistentIdentifier.get(
+                            'recid',
+                            '{}.0'.format(pid_without_ver.pid_value)
+                        )
+                        item_ids.append(draft_pid.object_uuid)
+                    item_ids.append(pid_without_ver.object_uuid)
+
+                if action_feedbackmail.feedback_maillist:
+                    FeedbackMailList.update_by_list_item_id(
+                        item_ids=item_ids,
+                        feedback_maillist=action_feedbackmail.feedback_maillist
                     )
-                    item_ids.append(draft_pid.object_uuid)
-                item_ids.append(pid_without_ver.object_uuid)
+                else:
+                    FeedbackMailList.delete_by_list_item_id(item_ids)
 
-            if action_feedbackmail.feedback_maillist:
-                FeedbackMailList.update_by_list_item_id(
-                    item_ids=item_ids,
-                    feedback_maillist=action_feedbackmail.feedback_maillist
+            deposit.update_feedback_mail()
+
+        if action_endpoint == 'item_link' and item_id:
+
+            item_link = ItemLink(current_pid.pid_value)
+            relation_data = post_json.get('link_data')
+            if relation_data:
+                err = item_link.update(relation_data)
+                if err:
+                    res = ResponseMessageSchema().load({"code":-1, "msg":_(err)})
+                    db.session.rollback()
+                    return jsonify(res.data), 500
+            if post_json.get('temporary_save') == 1:
+                work_activity.upt_activity_action_comment(
+                    activity_id=activity_id,
+                    action_id=action_id,
+                    comment=post_json.get('commond'),
+                    action_order=action_order
                 )
-            else:
-                FeedbackMailList.delete_by_list_item_id(item_ids)
+                res = ResponseMessageSchema().load({"code":0,"msg":_("success")})
+                db.session.commit()
+                return jsonify(res.data), 200
 
-        deposit.update_feedback_mail()
-
-    if action_endpoint == 'item_link' and item_id:
-
-        item_link = ItemLink(current_pid.pid_value)
-        relation_data = post_json.get('link_data')
-        if relation_data:
-            err = item_link.update(relation_data)
-            if err:
-                res = ResponseMessageSchema().load({"code":-1, "msg":_(err)})
-                return jsonify(res.data), 500
-        if post_json.get('temporary_save') == 1:
-            work_activity.upt_activity_action_comment(
+        # save pidstore_identifier to ItemsMetadata
+        identifier_select = post_json.get('identifier_grant')
+        if 'identifier_grant' == action_endpoint \
+                and identifier_select is not None:
+            # If is action identifier_grant, then save to to database
+            identifier_grant = {
+                'action_identifier_select': identifier_select,
+                'action_identifier_jalc_doi': post_json.get(
+                    'identifier_grant_jalc_doi_suffix'),
+                'action_identifier_jalc_cr_doi': post_json.get(
+                    'identifier_grant_jalc_cr_doi_suffix'),
+                'action_identifier_jalc_dc_doi': post_json.get(
+                    'identifier_grant_jalc_dc_doi_suffix'),
+                'action_identifier_ndl_jalc_doi': post_json.get(
+                    'identifier_grant_ndl_jalc_doi_suffix')
+            }
+            work_activity.create_or_update_action_identifier(
                 activity_id=activity_id,
                 action_id=action_id,
-                comment=post_json.get('commond'),
-                action_order=action_order
+                identifier=identifier_grant
             )
-            res = ResponseMessageSchema().load({"code":0,"msg":_("success")})
-            return jsonify(res.data), 200
+            if post_json.get('temporary_save') == 1:
+                res = ResponseMessageSchema().load({"code":0, "msg":_("success")})
+                db.session.commit()
+                return jsonify(res.data), 200
 
-    # save pidstore_identifier to ItemsMetadata
-    identifier_select = post_json.get('identifier_grant')
-    if 'identifier_grant' == action_endpoint \
-            and identifier_select is not None:
-        # If is action identifier_grant, then save to to database
-        identifier_grant = {
-            'action_identifier_select': identifier_select,
-            'action_identifier_jalc_doi': post_json.get(
-                'identifier_grant_jalc_doi_suffix'),
-            'action_identifier_jalc_cr_doi': post_json.get(
-                'identifier_grant_jalc_cr_doi_suffix'),
-            'action_identifier_jalc_dc_doi': post_json.get(
-                'identifier_grant_jalc_dc_doi_suffix'),
-            'action_identifier_ndl_jalc_doi': post_json.get(
-                'identifier_grant_ndl_jalc_doi_suffix')
-        }
-        work_activity.create_or_update_action_identifier(
+            if identifier_select == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
+                if item_id != pid_without_ver.object_uuid:
+                    _old_idt = IdentifierHandle(pid_without_ver.object_uuid)
+                    _new_idt = IdentifierHandle(item_id)
+                    _old_v, _old_t = _old_idt.get_idt_registration_data()
+                    _new_v, _new_t = _new_idt.get_idt_registration_data()
+                    if not _old_v:
+                        _new_idt.remove_idt_registration_metadata()
+                    elif _old_v != _new_v:
+                        _new_idt.update_idt_registration_metadata(
+                            _old_v,
+                            _old_t)
+                else:
+                    _identifier = IdentifierHandle(item_id)
+                    _value, _type = _identifier.get_idt_registration_data()
+
+                    if _value:
+                        _identifier.remove_idt_registration_metadata()
+            else:
+                # If is action identifier_grant, then save to to database
+                error_list = check_doi_validation_not_pass(
+                    item_id, activity_id, identifier_select)
+                if isinstance(error_list, str):
+                    res = ResponseMessageSchema().load({"code":-1, "msg":_(error_list)})
+                    db.session.rollback()
+                    return jsonify(res.data), 500
+                elif error_list:
+                    return previous_action(
+                        activity_id=activity_id,
+                        action_id=action_id,
+                        req=-1)
+
+                record_without_version = item_id
+                if not recid:
+                    record_without_version = pid_without_ver.object_uuid
+                saving_doi_pidstore(item_id, record_without_version, post_json,
+                                    int(identifier_select), False, True)
+        elif 'identifier_grant' == action_endpoint \
+                and not post_json.get('temporary_save'):
+            _value, _type = IdentifierHandle(item_id).get_idt_registration_data()
+            if _value and _type:
+                error_list = check_doi_validation_not_pass(
+                    item_id, activity_id, IDENTIFIER_GRANT_SELECT_DICT[_type[0]],
+                    pid_without_ver.object_uuid)
+                if isinstance(error_list, str):
+                    res = ResponseMessageSchema().load({"code":-1, "msg":_(error_list)})
+                    db.session.rollback()
+                    return jsonify(res.data), 500
+                elif error_list:
+                    return previous_action(
+                        activity_id=activity_id,
+                        action_id=action_id,
+                        req=-1)
+
+        # next action
+        work_activity.upt_activity_action_status(
+            activity_id=activity_id, action_id=action_id,
+            action_status=ActionStatusPolicy.ACTION_DONE,
+            action_order=action_order
+        )
+        work_activity.upt_activity_action_comment(
             activity_id=activity_id,
             action_id=action_id,
-            identifier=identifier_grant
+            comment='',
+            action_order=action_order
         )
-        if post_json.get('temporary_save') == 1:
-            res = ResponseMessageSchema().load({"code":0, "msg":_("success")})
-            return jsonify(res.data), 200
 
-        if identifier_select == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
-            if item_id != pid_without_ver.object_uuid:
-                _old_idt = IdentifierHandle(pid_without_ver.object_uuid)
-                _new_idt = IdentifierHandle(item_id)
-                _old_v, _old_t = _old_idt.get_idt_registration_data()
-                _new_v, _new_t = _new_idt.get_idt_registration_data()
-                if not _old_v:
-                    _new_idt.remove_idt_registration_metadata()
-                elif _old_v != _new_v:
-                    _new_idt.update_idt_registration_metadata(
-                        _old_v,
-                        _old_t)
-            else:
-                _identifier = IdentifierHandle(item_id)
-                _value, _type = _identifier.get_idt_registration_data()
+        if 'end_action' == next_action_endpoint:
+            new_activity_id = None
+            new_activity_id = handle_finish_workflow(deposit,
+                                                    current_pid,
+                                                    recid)
+            if new_activity_id is None:
+                res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
+                db.session.rollback()
+                return jsonify(res.data), 500
 
-                if _value:
-                    _identifier.remove_idt_registration_metadata()
+            # Remove to file permission
+            permission = FilePermission.find_by_activity(activity_id)
+            if permission:
+                FilePermission.delete_object(permission)
+
+            activity.update(
+                action_id=next_action_id,
+                action_version=next_flow_action[0].action_version,
+                item_id=new_activity_id,
+                action_order=next_action_order
+            )
+            work_activity.end_activity(activity)
+            # Call signal to push item data to ES.
+            try:
+                if '.' not in current_pid.pid_value and has_request_context():
+                    user_id = activity_detail.activity_login_user if \
+                        activity and activity_detail.activity_login_user else -1
+                    item_created.send(
+                        current_app._get_current_object(),
+                        user_id=user_id,
+                        item_id=current_pid,
+                        item_title=activity_detail.title
+                    )
+            except BaseException:
+                abort(500, 'MAPPING_ERROR')
         else:
-            # If is action identifier_grant, then save to to database
-            error_list = check_doi_validation_not_pass(
-                item_id, activity_id, identifier_select)
-            if isinstance(error_list, str):
-                res = ResponseMessageSchema().load({"code":-1, "msg":_(error_list)})
-                return jsonify(res.data), 500
-            elif error_list:
-                return previous_action(
-                    activity_id=activity_id,
-                    action_id=action_id,
-                    req=-1)
+            work_activity.upt_activity_action(
+                activity_id=activity_id, action_id=next_action_id,
+                action_status=ActionStatusPolicy.ACTION_DOING,
+                action_order=next_action_order)
+            work_activity.upt_activity_action_status(
+                activity_id=activity_id, action_id=next_action_id,
+                action_status=ActionStatusPolicy.ACTION_DOING,
+                action_order=next_action_order)
 
-            record_without_version = item_id
-            if not recid:
-                record_without_version = pid_without_ver.object_uuid
-            saving_doi_pidstore(item_id, record_without_version, post_json,
-                                int(identifier_select), False, True)
-    elif 'identifier_grant' == action_endpoint \
-            and not post_json.get('temporary_save'):
-        _value, _type = IdentifierHandle(item_id).get_idt_registration_data()
-        if _value and _type:
-            error_list = check_doi_validation_not_pass(
-                item_id, activity_id, IDENTIFIER_GRANT_SELECT_DICT[_type[0]],
-                pid_without_ver.object_uuid)
-            if isinstance(error_list, str):
-                res = ResponseMessageSchema().load({"code":-1, "msg":_(error_list)})
-                return jsonify(res.data), 500
-            elif error_list:
-                return previous_action(
-                    activity_id=activity_id,
-                    action_id=action_id,
-                    req=-1)
-
-    rtn = history.create_activity_history(activity, action_order)
-    if not rtn:
-        res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
-        return jsonify(res.data), 500
-    # next action
-    flag = work_activity.upt_activity_action_status(
-        activity_id=activity_id, action_id=action_id,
-        action_status=ActionStatusPolicy.ACTION_DONE,
-        action_order=action_order
-    )
-    if not flag:
-        res = ResponseMessageSchema().load({"code":-2, "msg":""})
-        return jsonify(res.data), 500
-    work_activity.upt_activity_action_comment(
-        activity_id=activity_id,
-        action_id=action_id,
-        comment='',
-        action_order=action_order
-    )
-
-    if 'end_action' == next_action_endpoint:
-        new_activity_id = None
-        new_activity_id = handle_finish_workflow(deposit,
-                                                 current_pid,
-                                                 recid)
-        if new_activity_id is None:
-            res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
-            return jsonify(res.data), 500
-
-        # Remove to file permission
-        permission = FilePermission.find_by_activity(activity_id)
-        if permission:
-            FilePermission.delete_object(permission)
-
-        activity.update(
-            action_id=next_action_id,
-            action_version=next_flow_action[0].action_version,
-            item_id=new_activity_id,
-            action_order=next_action_order
-        )
-        work_activity.end_activity(activity)
-        # Call signal to push item data to ES.
-        try:
-            if '.' not in current_pid.pid_value and has_request_context():
-                user_id = activity_detail.activity_login_user if \
-                    activity and activity_detail.activity_login_user else -1
-                item_created.send(
-                    current_app._get_current_object(),
-                    user_id=user_id,
-                    item_id=current_pid,
-                    item_title=activity_detail.title
-                )
-        except BaseException:
-            abort(500, 'MAPPING_ERROR')
-    else:
-        flag = work_activity.upt_activity_action(
-            activity_id=activity_id, action_id=next_action_id,
-            action_status=ActionStatusPolicy.ACTION_DOING,
-            action_order=next_action_order)
-        flag &= work_activity.upt_activity_action_status(
-            activity_id=activity_id, action_id=next_action_id,
-            action_status=ActionStatusPolicy.ACTION_DOING,
-            action_order=next_action_order)
-        if not flag:
-            res = ResponseMessageSchema().load({"code":-2, "msg":""})
-            return jsonify(res.data), 500
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
 
     # delete session value
     if session.get('itemlogin_id'):
@@ -1766,27 +1798,40 @@ def previous_action(activity_id='0', action_id=0, req=0):
         ActionStatusPolicy.ACTION_RETRY,
         commond=post_data.get('commond')
     )
-    work_activity = WorkActivity()
-    history = WorkActivityHistory()
+
     # next action
+    work_activity = WorkActivity()
     activity_detail = work_activity.get_activity_by_id(activity_id)
     if activity_detail is None:
         current_app.logger.error("previous_action: can not get activity_detail")
         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get activity detail"})
         return jsonify(res.data), 500
     action_order = activity_detail.action_order
-    flow = Flow()
-    rtn = history.create_activity_history(activity, action_order)
-    if rtn is None:
+    
+    try:
+        history = WorkActivityHistory()
+        history.create_activity_history(activity, action_order)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
         res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
         return jsonify(res.data), 500
-    current_flow_action = flow.\
-        get_flow_action_detail(
-            activity_detail.flow_define.flow_id, action_id, action_order)
-    if current_flow_action is None:
-        current_app.logger.error("previous_action: can not get current_flow_action")
+
+    try:
+        flow = Flow()
+        current_flow_action = flow.\
+            get_flow_action_detail(
+                activity_detail.flow_define.flow_id, action_id, action_order)
+        if current_flow_action is None:
+            current_app.logger.error("previous_action: can not get current_flow_action")
+            res = ResponseMessageSchema().load({"code":-1, "msg":"can not get flow action detail"})
+            return jsonify(res.data), 500
+    except Exception as e:
+        current_app.logger.error(e)
         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get flow action detail"})
         return jsonify(res.data), 500
+
     action_mails_setting = {
         "previous": current_flow_action.send_mail_setting
         if current_flow_action.send_mail_setting else {},
@@ -1803,58 +1848,70 @@ def previous_action(activity_id='0', action_id=0, req=0):
             db.session.delete(pid_identifier)
         db.session.commit()
     except PIDDoesNotExistError as pidNotEx:
+        db.session.rollback()
         current_app.logger.info(pidNotEx)
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
+        res = ResponseMessageSchema().load({"code":-1, "msg":"can not delete doi data"})
+        return jsonify(res.data), 500
 
-    if req == -1:
-        pre_action = flow.get_item_registration_flow_action(
-            activity_detail.flow_define.flow_id)
-    elif req == 0:
-        pre_action = flow.get_previous_flow_action(
-            activity_detail.flow_define.flow_id, action_id,
-            action_order)
-        # update action_identifier_select
-        identifier_actionid = get_actionid('identifier_grant')
-        identifier = work_activity.get_action_identifier_grant(
-            activity_id,
-            identifier_actionid)
-        if identifier and identifier['action_identifier_select'] == -2:
-            identifier['action_identifier_select'] = \
-                current_app.config.get(
-                    "WEKO_WORKFLOW_IDENTIFIER_GRANT_CAN_WITHDRAW", -1)
-            work_activity.create_or_update_action_identifier(
+    try:
+        if req == -1:
+            pre_action = flow.get_item_registration_flow_action(
+                activity_detail.flow_define.flow_id)
+        elif req == 0:
+            pre_action = flow.get_previous_flow_action(
+                activity_detail.flow_define.flow_id, action_id,
+                action_order)
+            # update action_identifier_select
+            identifier_actionid = get_actionid('identifier_grant')
+            identifier = work_activity.get_action_identifier_grant(
                 activity_id,
-                identifier_actionid,
-                identifier)
-    else:
-        pre_action = flow.get_next_flow_action(
-            activity_detail.flow_define.flow_id, 1, 1)
-
-    if pre_action and len(pre_action) > 0:
-        previous_action_id = pre_action[0].action_id
-        previous_action_order = pre_action[
-            0].action_order if action_order else None
-        if req == 0:
-            flag = work_activity.upt_activity_action_status(
-                activity_id=activity_id,
-                action_id=action_id,
-                action_status=ActionStatusPolicy.ACTION_THROWN_OUT,
-                action_order=action_order)
+                identifier_actionid)
+            if identifier and identifier['action_identifier_select'] == -2:
+                identifier['action_identifier_select'] = \
+                    current_app.config.get(
+                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_CAN_WITHDRAW", -1)
+                work_activity.create_or_update_action_identifier(
+                    activity_id,
+                    identifier_actionid,
+                    identifier)
         else:
-            flag = work_activity.upt_activity_action_status(
-                activity_id=activity_id, action_id=action_id,
-                action_status=ActionStatusPolicy.ACTION_RETRY,
-                action_order=action_order)
-        flag &= work_activity.upt_activity_action_status(
-            activity_id=activity_id, action_id=previous_action_id,
-            action_status=ActionStatusPolicy.ACTION_DOING,
-            action_order=previous_action_order)
-        flag &= work_activity.upt_activity_action(
-            activity_id=activity_id, action_id=previous_action_id,
-            action_status=ActionStatusPolicy.ACTION_DOING,
-            action_order=previous_action_order)
-        if not flag:
-            res = ResponseMessageSchema().load({'code':-2,'msg':""})
-            return jsonify(res.data), 500
+            pre_action = flow.get_next_flow_action(
+                activity_detail.flow_define.flow_id, 1, 1)
+
+        if pre_action and len(pre_action) > 0:
+            previous_action_id = pre_action[0].action_id
+            previous_action_order = pre_action[
+                0].action_order if action_order else None
+            if req == 0:
+                work_activity.upt_activity_action_status(
+                    activity_id=activity_id,
+                    action_id=action_id,
+                    action_status=ActionStatusPolicy.ACTION_THROWN_OUT,
+                    action_order=action_order)
+            else:
+                work_activity.upt_activity_action_status(
+                    activity_id=activity_id, action_id=action_id,
+                    action_status=ActionStatusPolicy.ACTION_RETRY,
+                    action_order=action_order)
+            work_activity.upt_activity_action_status(
+                activity_id=activity_id, action_id=previous_action_id,
+                action_status=ActionStatusPolicy.ACTION_DOING,
+                action_order=previous_action_order)
+            work_activity.upt_activity_action(
+                activity_id=activity_id, action_id=previous_action_id,
+                action_status=ActionStatusPolicy.ACTION_DOING,
+                action_order=previous_action_order)
+
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
+        res = ResponseMessageSchema().load({'code':-2,'msg':""})
+        return jsonify(res.data), 500
+
     res = ResponseMessageSchema().load({'code':0,'msg':_('success')})
     return jsonify(res.data), 200
 
@@ -2096,6 +2153,7 @@ def cancel_action(activity_id='0', action_id=0):
     if permission:
         FilePermission.delete_object(permission)
 
+    db.session.commit()
     res = ResponseMessageSchema().load(
         {"code":0, "msg":_("success"),"data":{"redirect":url}}
         )
@@ -2195,6 +2253,7 @@ def withdraw_confirm(activity_id='0', action_id=0):
                 activity_id,
                 identifier_actionid,
                 identifier)
+            db.session.commit()
 
             if session.get("guest_url"):
                 url = session.get("guest_url")
@@ -2207,7 +2266,11 @@ def withdraw_confirm(activity_id='0', action_id=0):
             res = ResponseMessageSchema().load({"code":-1, "msg":_('Invalid password')})
             return jsonify(res.data), 500
     except ValueError:
+        db.session.rollback()
         current_app.logger.error("withdraw_confirm: Unexpected error: {}".format(sys.exc_info()))
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
     res = ResponseMessageSchema().load({"code":-1, "msg":_('Error!')})
     return jsonify(res.data), 500
 
@@ -2983,7 +3046,9 @@ class ActivityActionResource(ContentNegotiatedMethodView):
             self.activity.update_title(
                 activity.activity_id,
                 item.get('item_title'))
+            db.session.commit()
         except Exception as ex:
+            db.session.rollback()
             self.logging_error('init_activity', str(ex))
             raise InvalidInputRESTError()
         finally:
@@ -3065,16 +3130,22 @@ class ActivityActionResource(ContentNegotiatedMethodView):
             action_order=activity.action_order
         )
 
-        result = self.activity.quit_activity(_activity)
-        if not result:
-            self.logging_error('quit_activity', 'action_not_doing')
-            raise DeleteActivityFailedRESTError()
-        else:
-            self.activity.upt_activity_action_status(
-                activity_id=activity.activity_id,
-                action_id=activity.action_id,
-                action_status=ActionStatusPolicy.ACTION_CANCELED,
-                action_order=activity.action_order)
+        try:
+            result = self.activity.quit_activity(_activity)
+            if not result:
+                self.logging_error('quit_activity', 'action_not_doing')
+                raise DeleteActivityFailedRESTError()
+            else:
+                self.activity.upt_activity_action_status(
+                    activity_id=activity.activity_id,
+                    action_id=activity.action_id,
+                    action_status=ActionStatusPolicy.ACTION_CANCELED,
+                    action_order=activity.action_order)
+
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
 
         status = 200
         message = '登録アクティビティを削除'

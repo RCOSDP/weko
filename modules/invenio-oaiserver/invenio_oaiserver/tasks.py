@@ -56,6 +56,7 @@ def update_records_sets(record_ids):
     RecordIndexer().bulk_index(query)
     RecordIndexer().process_bulk_queue(
         es_bulk_kwargs={'raise_on_error': True})
+    db.session.commit()
 
 
 @shared_task(base=RequestContextTask)

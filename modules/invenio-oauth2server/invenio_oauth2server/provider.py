@@ -116,25 +116,33 @@ def save_token(token, request, *args, **kwargs):
         is_personal=False,
     )
 
-    # make sure that every client has only one token connected to a user
-    if tokens:
-        for tk in tokens:
-            db.session.delete(tk)
+    try:
+        # make sure that every client has only one token connected to a user
+        if tokens:
+            for tk in tokens:
+                db.session.delete(tk)
         db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
 
     expires_in = token.get('expires_in')
     expires = datetime.utcnow() + timedelta(seconds=int(expires_in))
 
-    tok = Token(
-        access_token=token['access_token'],
-        refresh_token=token.get('refresh_token'),
-        token_type=token['token_type'],
-        _scopes=token['scope'],
-        expires=expires,
-        client_id=request.client.client_id,
-        user_id=user.id,
-        is_personal=False,
-    )
-    db.session.add(tok)
-    db.session.commit()
+    try:
+        tok = Token(
+            access_token=token['access_token'],
+            refresh_token=token.get('refresh_token'),
+            token_type=token['token_type'],
+            _scopes=token['scope'],
+            expires=expires,
+            client_id=request.client.client_id,
+            user_id=user.id,
+            is_personal=False,
+        )
+        db.session.add(tok)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
     return tok

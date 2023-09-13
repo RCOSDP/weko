@@ -124,10 +124,10 @@ def update_location_size():
     """Update location size by total FileInstances size."""
     try:
         find_and_update_location_size()
+        db.session.commit()
     except SQLAlchemyError:
         db.session.rollback()
     finally:
-        db.session.commit()
         db.session.close()
 
 
