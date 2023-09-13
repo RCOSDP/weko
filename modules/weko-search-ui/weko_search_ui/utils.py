@@ -1741,10 +1741,7 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
         """
         temp_res = []
         index_info = None
-        try:
-            index_info = Indexes.get_path_list([index_id])
-        except Exception:
-            current_app.logger.warning("Specified IndexID is invalid!")
+        index_info = Indexes.get_path_list([index_id])
 
         msg_not_exist = _("The specified {} does not exist in system.")
         if index_info and len(index_info) == 1:     # index exists by index id
@@ -1816,7 +1813,7 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
             errors = [_("Both of IndexID and POS_INDEX are not being set.")]
         else:
             if not index_ids:
-                index_ids = ["" for _ in range(len(pos_index))]
+                index_ids = [None for _ in range(len(pos_index))]
             for x, index_id in enumerate(index_ids):
                 index_name_path = ""
                 if pos_index and x <= len(pos_index) - 1:
