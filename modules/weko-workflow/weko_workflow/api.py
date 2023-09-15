@@ -1221,6 +1221,7 @@ class WorkActivity(object):
                     action_order=last_action_order
                 )
                 db.session.add(db_history)
+        return True
 
     def validate_date_to_filter(self, created):
         """

@@ -2123,37 +2123,44 @@ def cancel_action(activity_id='0', action_id=0):
             res = ResponseMessageSchema().load({"code":-1, "msg":str(sys.exc_info()[0])})
             return jsonify(res.data), 500
 
-    work_activity.upt_activity_action_status(
-        activity_id=activity_id, action_id=action_id,
-        action_status=ActionStatusPolicy.ACTION_CANCELED,
-        action_order=activity_detail.action_order)
-
-    rtn = work_activity.quit_activity(activity)
-
-    if not rtn:
+    try:
         work_activity.upt_activity_action_status(
             activity_id=activity_id, action_id=action_id,
-            action_status=ActionStatusPolicy.ACTION_DOING,
+            action_status=ActionStatusPolicy.ACTION_CANCELED,
             action_order=activity_detail.action_order)
+
+        rtn = work_activity.quit_activity(activity)
+
+        if not rtn:
+            work_activity.upt_activity_action_status(
+                activity_id=activity_id, action_id=action_id,
+                action_status=ActionStatusPolicy.ACTION_DOING,
+                action_order=activity_detail.action_order)
+            res = ResponseMessageSchema().load({"code":-1, "msg":'Error! Cannot process quit activity!'})
+            return jsonify(res.data), 500
+
+        if session.get("guest_url"):
+            url = session.get("guest_url")
+        else:
+            url = url_for('weko_workflow.display_activity',
+                        activity_id=activity_id)
+
+        if activity_detail.extra_info and \
+                activity_detail.extra_info.get('guest_mail'):
+            delete_guest_activity(activity_id)
+
+        # Remove to file permission
+        permission = FilePermission.find_by_activity(activity_id)
+        if permission:
+            FilePermission.delete_object(permission)
+
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.errror(e)
         res = ResponseMessageSchema().load({"code":-1, "msg":'Error! Cannot process quit activity!'})
         return jsonify(res.data), 500
 
-    if session.get("guest_url"):
-        url = session.get("guest_url")
-    else:
-        url = url_for('weko_workflow.display_activity',
-                      activity_id=activity_id)
-
-    if activity_detail.extra_info and \
-            activity_detail.extra_info.get('guest_mail'):
-        delete_guest_activity(activity_id)
-
-    # Remove to file permission
-    permission = FilePermission.find_by_activity(activity_id)
-    if permission:
-        FilePermission.delete_object(permission)
-
-    db.session.commit()
     res = ResponseMessageSchema().load(
         {"code":0, "msg":_("success"),"data":{"redirect":url}}
         )
