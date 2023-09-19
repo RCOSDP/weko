@@ -2045,9 +2045,20 @@ def test_check_terms_in_system(terms, record_restricted):
     item = record_restricted[1]
     assert check_terms_in_system(key, item) == True
 
+    # metadataにkeyが存在しない
+    key = "item_111111111111"
+    item = record_restricted[1]
+    assert check_terms_in_system(key, item) == False
+
     # metadataにtermsが存在しない
     key = "item_1685583796047"
     item = record_restricted[8]
+    assert check_terms_in_system(key, item) == True
+
+    # metadataにtermsが自由入力の場合
+    key = "item_1685583796047"
+    item = record_restricted[1]
+    item['metadata'][key][0]['terms'] = 'term_free'
     assert check_terms_in_system(key, item) == True
 
     # "terms": システムに存在しない適当な値
@@ -2081,6 +2092,11 @@ def test_check_provide_in_system(users, db_workflow, record_restricted):
     # 数のprovides= itemに設定したprovideを設定する。
     key = "item_1685583796047"
     item = record_restricted[5]
+    assert check_provide_in_system(key, item) == False
+
+    # "key"存在せず
+    key = "item_111111111111"
+    item = record_restricted[1]
     assert check_provide_in_system(key, item) == False
 
     # "provide"存在せず

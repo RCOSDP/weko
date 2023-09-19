@@ -22,6 +22,7 @@
 
 import base64
 import os
+import datetime
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
@@ -696,8 +697,8 @@ def get_file_info_list(record):
             if date and isinstance(date, list) and date[0]:
                 adt = date[0].get('dateValue')
                 if adt is None:
-                    adt = dt.date.max
-                pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
+                    adt = datetime.date.max
+                pdt = to_utc(dt.strptime(str(adt), '%Y-%m-%d'))
                 if pdt > dt.utcnow():
                     message = "Download is available from {}/{}/{}."
                     p_file['future_date_message'] = _(message).format(
@@ -772,7 +773,7 @@ def get_file_info_list(record):
                                 p['role'] = get_data_by_key_array_json(
                                     role, roles, 'name')
                     # add role
-                    role_list = f.get("role")
+                    role_list = f.get("roles")
                     if role_list:
                         for r in role_list:
                             role = r.get('role')

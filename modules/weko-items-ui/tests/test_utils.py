@@ -172,17 +172,14 @@ def test_get_user_info_by_username(users, db_userprofile):
         "user_id": users[0]["id"],
         "email": users[0]["email"],
     }
+    
+    with patch("weko_items_ui.utils.check_display_shared_user", return_value=False):
+        username = db_userprofile[users[0]["email"]].get_username
+        assert get_user_info_by_username(username)==None
 
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_user_info_by_username_nouser -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_user_info_by_username_nouser():
-    assert get_user_info_by_username("repoadmin@test.org")==None
-
-
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_user_info_by_username_exception -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_user_info_by_username_exception():
-    with patch("weko_user_profiles.models.UserProfile.get_by_username", side_effect=Exception()):
-        assert get_user_info_by_username("repoadmin@test.org")==None
-
+    with patch("weko_items_ui.utils.check_display_shared_user", side_effect=Exception('test error')):
+        username = db_userprofile[users[1]["email"]].get_username
+        assert get_user_info_by_username(username) == None
 
 # def validate_user(username, email):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_validate_user -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp

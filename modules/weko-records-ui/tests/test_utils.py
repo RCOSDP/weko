@@ -10,6 +10,7 @@ from fpdf import FPDF
 from invenio_records_files.utils import record_file_factory
 from flask import Flask, json, jsonify, session, url_for,current_app
 from flask_security.utils import login_user
+from flask_babelex import to_utc 
 from invenio_accounts.testutils import login_user_via_session
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
@@ -21,7 +22,8 @@ from weko_admin.models import AdminSettings
 from weko_records.serializers.utils import get_mapping
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from flask_babelex import gettext as _
-from datetime import datetime ,timedelta
+import datetime
+from datetime import datetime as dt ,timedelta
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 
@@ -392,23 +394,81 @@ def test_get_file_info_list(app,records):
         ret =  get_file_info_list(record)
         assert len(ret)==2
 
+    # 異常系
+    # 不正な数値を指定する
+    record['item_1617605131499']['attribute_value_mlt'][0]['filesize'][0]['value'] = '1.7976931348623157e+308/0 kb'
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        ret =  get_file_info_list(record)
+        assert ret[1][0]['size'] == -1
+    record['item_1617605131499']['attribute_value_mlt'][0]['filesize'][0]['value'] = '5 kb'
+
+    # access == "open_login"
+    record['item_1617605131499']['attribute_value_mlt'][0]['accessrole'] = 'open_login'
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        ret =  get_file_info_list(record)
+        assert ret[1][0]['future_date_message'] == 'Restricted Access'
+
+    # access == "open_date"
+    record['item_1617605131499']['attribute_value_mlt'][0]['accessrole'] = 'open_date'
+    # dateValue == None
+    record['item_1617605131499']['attribute_value_mlt'][0]['date'] = [{'dateType':'Available'}]
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        ret =  get_file_info_list(record)
+        adt = str(datetime.date.max)
+        pdt = to_utc(dt.strptime(adt, '%Y-%m-%d')) 
+        assert ret[1][0]['future_date_message'] == "Download is available from {}/{}/{}.".format(pdt.year, pdt.month, pdt.day)
+        assert ret[1][0]['download_preview_message'] == "Download / Preview is available from {}/{}/{}.".format(pdt.year, pdt.month, pdt.day)
+    
+    # dateValue == 過去
+    past_time = dt.now() - timedelta(days=3)
+    past_time_str = str(past_time).split(' ')[0]
+    past_time_str = str(dt.strptime(past_time_str, '%Y-%m-%d')).split(' ')[0]
+    record['item_1617605131499']['attribute_value_mlt'][0]['date'][0]['dateValue'] = past_time_str
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        ret =  get_file_info_list(record)
+        pdt = to_utc(past_time) 
+        assert ret[1][0]['future_date_message'] == ""
+        assert ret[1][0]['download_preview_message'] == ""
+
+    # dateValue == 未来
+    future_time = dt.now() + timedelta(days=3)
+    future_time_str = str(future_time).split(' ')[0]
+    future_time_str = str(dt.strptime(future_time_str, '%Y-%m-%d')).split(' ')[0]
+    record['item_1617605131499']['attribute_value_mlt'][0]['date'][0]['dateValue'] = future_time_str
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        ret =  get_file_info_list(record)
+        pdt = to_utc(future_time) 
+        assert ret[1][0]['future_date_message'] == "Download is available from {}/{}/{}.".format(pdt.year, pdt.month, pdt.day)
+        assert ret[1][0]['download_preview_message'] == "Download / Preview is available from {}/{}/{}.".format(pdt.year, pdt.month, pdt.day)
+
 # def get_file_info_list(record):
 #     def get_file_size(p_file):
 #     def set_message_for_file(p_file):
 #     def get_data_by_key_array_json(key, array_json, get_key):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_file_info_list_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_file_info_list_1(app, records_restricted):
-    indexer, results = records_restricted
-    record = results[-2]["record"]
+def test_get_file_info_list_1(app, make_record_need_restricted_access):
+    # roles = [{"role":1},{"role":2}]
+    record_1 = WekoRecord.get_record_by_pid(11)
+    record_1['item_1689228169922']['attribute_value_mlt'][0]['roles'] = [{"role":1},{"role":2}]
     with app.test_request_context(headers=[("Accept-Language", "en")]):
-        ret =  get_file_info_list(record)
-        assert len(ret)==2
-
-    record = results[-1]["record"]
+        is_display_file_preview, files =  get_file_info_list(record_1)
+        assert is_display_file_preview == True
+        assert len(files) == 1
+    
+    # 'provide': [{'role': '2', 'workflow': '3'}, {'role': 'none_loggin', 'workflow': '3'}, {'role': '1', 'workflow': '99'}, {'role': '3', 'workflow': '3'}]
+    # terms='term_free' termsDescription='利用規約本文'
+    record_2 = WekoRecord.get_record_by_pid(12)
     with app.test_request_context(headers=[("Accept-Language", "en")]):
-        ret =  get_file_info_list(record)
-        assert len(ret)==2
+        is_display_file_preview, files =  get_file_info_list(record_2)
+        assert is_display_file_preview == True
+        assert len(files) == 1
 
+    record_2['item_1689228169922']['attribute_value_mlt'][0]['terms'] = '100'
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        is_display_file_preview, files =  get_file_info_list(record_2)
+        assert is_display_file_preview == True
+        assert len(files) == 1
+    
 # def get_data_by_key_array_json(record):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_data_by_key_array_json -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_get_data_by_key_array_json(app):

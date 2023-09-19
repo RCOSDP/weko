@@ -2218,7 +2218,7 @@ def test___init_activity_detail_data_for_guest(app, db, users, db_register, mock
                 'WEKO_WORKFLOW_ENABLE_FEEDBACK_MAIL'],
             enable_contributor=current_app.config[
                 'WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'],
-            out_put_report_title="",
+            out_put_report_title={'en': 'Output Registration', 'ja': '成果物'},
             action_endpoint_key={},
             approval_email_key=[],
             step_item_login_url="weko_items_ui/iframe/item_edit.html",

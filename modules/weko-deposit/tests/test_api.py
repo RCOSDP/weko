@@ -34,7 +34,7 @@ from werkzeug.exceptions import HTTPException
 import time
 from flask import session, current_app
 from flask_login import login_user
-from flask_security import current_user
+from flask_security import current_user, url_for_security
 import json
 
 from elasticsearch.exceptions import NotFoundError
@@ -782,7 +782,7 @@ class TestWekoDeposit:
 
     # def convert_item_metadata(self, index_obj, data=None):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_convert_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_convert_item_metadata(self, app, db, db_itemtype, es_records):
+    def test_convert_item_metadata(self, app, db, db_itemtype, es_records, users):
         _, records = es_records
         record = records[0]
         deposit = record['deposit']
@@ -830,6 +830,24 @@ class TestWekoDeposit:
                     assert httperror.value.code == 500
                     assert httperror.value.data == "MAPPING_ERROR"
             
+            with patch("weko_deposit.api.WekoDeposit.convert_type_shared_user_ids",return_value={}):
+                record['item_data']['shared_user_ids'] = []
+                deposit = record['deposit']
+                record_data = record['item_data']
+                ret3, _ = deposit.convert_item_metadata(index_obj, record_data)
+                assert ret3['weko_shared_ids'] == []
+            with app.test_client() as client:
+                # ログインする
+                response = client.post(url_for_security('login'),
+                                   data={'email': users[0]["email"], 'password': '123456'},
+                                   environ_base={'REMOTE_ADDR': '127.0.0.1'})
+                assert response.status_code == 302
+                record['item_data']['shared_user_ids'] = []
+                deposit = record['deposit']
+                record_data = record['item_data']
+                ret3, _ = deposit.convert_item_metadata(index_obj, record_data)
+                assert ret3['weko_shared_ids'] == []
+
             record['item_data']['shared_user_ids'] = []
             deposit = record['deposit']
             record_data = record['item_data']

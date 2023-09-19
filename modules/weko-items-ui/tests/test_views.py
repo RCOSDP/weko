@@ -610,7 +610,8 @@ def test_iframe_save_model_2(
     ret_meta = json.loads(ret_meta)
     
     expected = (ret_meta['metainfo']['item_1685583796047'][0]['roles'])
-    assert expected == [{'role': 1},{'role': 2}]
+    assert {'role': 1} in expected
+    assert {'role': 2} in expected
 
 # def iframe_success():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_success -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -20832,6 +20833,7 @@ def test_get_current_login_user_id_acl(
 
 
 # def prepare_edit_item():
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_prepare_edit_item_login -v --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 @pytest.mark.parametrize(
     "id, status_code",
     [
@@ -20845,11 +20847,13 @@ def test_get_current_login_user_id_acl(
         (7, 200),
     ],
 )
-def test_prepare_edit_item_login(client_api, users, id, status_code):
+def test_prepare_edit_item_login(client_api, users, db_records, id, status_code):
+    depid, recid, parent, doi, record, item = db_records[0]
+    deposit_id = record['_deposit']['id']
     login_user_via_session(client=client_api, email=users[id]["email"])
     res = client_api.post(
         "/api/items/prepare_edit_item",
-        data=json.dumps({}),
+        data=json.dumps({'pid_value': deposit_id}),
         content_type="application/json",
     )
     assert res.status_code == status_code

@@ -20,7 +20,6 @@ def test_append_file_content(app, db, db_itemtype, users, db_userprofile, es_rec
     depid = es_records[1][0]['depid']
     deposit = es_records[1][0]['deposit']
     indexer = es_records[0]
-    print("indexer = {}".format(indexer))
 
     user = User.query.filter_by(email="sysadmin@test.org").first()
     mocker.patch("flask_login.utils._get_user", return_value=user)
@@ -48,9 +47,8 @@ def test_append_file_content(app, db, db_itemtype, users, db_userprofile, es_rec
         b = Bucket.create()
         r = RecordsBuckets.create(record=record.model, bucket=b)
         stream = BytesIO(b'Hello, World')
-        obj=ObjectVersion.create(b, 'hello.txt')
         record.files['hello.txt'] = stream
-        record.files.dumps()
+        obj=ObjectVersion.create(bucket=b.id, key='hello.txt', stream=stream)
 
         record['item_1617605131499']['attribute_value_mlt'][0]['file'] = (base64.b64encode(stream.getvalue())).decode('utf-8')
         record['item_1617605131499']['attribute_value_mlt'][0]['version_id'] = str(obj.version_id)
@@ -84,6 +82,22 @@ def test_append_file_content(app, db, db_itemtype, users, db_userprofile, es_rec
         sender={}
         res = append_file_content(sender, json, es_records[1][0]['record'])
         assert res==None
+
+        # RecordMetadataのstatusを変更する
+        assert PersistentIdentifier.sync_status(recid, PIDStatus.RESERVED)
+        assert PersistentIdentifier.sync_status(depid, PIDStatus.RESERVED)
+        # WekoRecordデータベース登録
+        res = append_file_content(sender, json, es_records[1][0]['record'])
+        assert res==None
+
+        with patch("weko_deposit.receivers.FeedbackMailList.get_mail_list_by_item_id", side_effect=Exception("test_error")):
+            res = append_file_content(sender, json, es_records[1][0]['record'])
+            assert res==None
+        
+        with patch("weko_records.api.FeedbackMailList.get_mail_list_by_item_id", return_value=["xxxxxx@ivis.co.jp"]):
+            ret = append_file_content(sender, json, es_records[1][0]['record'])
+            assert ret == None
+            assert json['weko_shared_ids'] == []
         """
         obj = es_records[1][0]["recid"]
         mail = FeedbackMailList(
