@@ -417,9 +417,10 @@ def base_app(instance_path):
             tid=dict(
                 record_class='weko_index_tree.api:Indexes',
                 index_route='/tree/index/<int:index_id>',
-                tree_route='/tree',
                 get_index_tree='/<string:version>/tree/index/<int:index_id>',
                 get_index_root_tree='/<string:version>/tree/index',
+                get_parent_index_tree='/<string:version>/tree/index/<int:index_id>/parent',
+                tree_route='/tree',
                 item_tree_route='/tree/<string:pid_value>',
                 index_move_route='/tree/move/<int:index_id>',
                 default_media_type='application/json',
@@ -756,7 +757,7 @@ def indices(app, db):
 
 @pytest.fixture
 def test_indices(app, db):
-    def base_index(id, parent, position, public_date=None, coverpage_state=False, recursive_browsing_role=False,
+    def base_index(id, parent, position, public_state=True, public_date=None, coverpage_state=False, recursive_browsing_role=False,
                    recursive_contribute_role=False, recursive_browsing_group=False,
                    recursive_contribute_group=False, online_issn=''):
         _browsing_role = "3,-99"
@@ -766,7 +767,7 @@ def test_indices(app, db):
             id=id,
             parent=parent,
             position=position,
-            index_name="Test index {}".format(id),
+            index_name="テストインデックス {}".format(id),
             index_name_english="Test index {}".format(id),
             index_link_name="Test index link {}".format(id),
             index_link_name_english="Test index link {}".format(id),
@@ -774,7 +775,7 @@ def test_indices(app, db):
             more_check=False,
             display_no=position,
             harvest_public_state=True,
-            public_state=True,
+            public_state=public_state,
             public_date=public_date,
             recursive_public_state=True if not public_date else False,
             coverpage_state=coverpage_state,
@@ -792,12 +793,13 @@ def test_indices(app, db):
         )
     
     with db.session.begin_nested():
-        db.session.add(base_index(1, 0, 0, datetime(2022, 1, 1), True, True, True, True, True, '1234-5678'))
+        db.session.add(base_index(1, 0, 0, True, datetime(2022, 1, 1), True, True, True, True, True, '1234-5678'))
         db.session.add(base_index(2, 0, 1))
         db.session.add(base_index(3, 0, 2))
         db.session.add(base_index(11, 1, 0))
         db.session.add(base_index(21, 2, 0))
         db.session.add(base_index(22, 2, 1))
+        db.session.add(base_index(31, 0, 3, public_state=False))
     db.session.commit()
 
 

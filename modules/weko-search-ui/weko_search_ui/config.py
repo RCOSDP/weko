@@ -23,8 +23,6 @@
 import pickle
 
 from invenio_records_rest.config import RECORDS_REST_ENDPOINTS
-from invenio_records_rest.facets import terms_filter
-from invenio_records_rest.utils import allow_all
 from invenio_search import RecordsSearch
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 
@@ -236,7 +234,7 @@ WEKO_SEARCH_REST_ENDPOINTS = dict(
             "application/json": ("weko_records.serializers" ":json_v1_search"),
         },
         index_route="/index/",
-        search_api_route="/<string:version>/search",
+        search_api_route="/<string:version>/records",
         links_factory_imp="weko_search_ui.links:default_links_factory",
         default_media_type="application/json",
         max_result_window=10000,
@@ -706,9 +704,4 @@ WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI = "import_unuse_files_uri_{}"
 WEKO_SEARCH_UI_BULK_EXPORT_RETRY_INTERVAL = 1
 """ retry interval(sec) """
 
-from .rest import IndexSearchResourceAPI
-WEKO_SEARCH_UI_API_VERSION = {
-    "v1.0":IndexSearchResourceAPI.get_v1
-}
-"""API version."""
-
+WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']

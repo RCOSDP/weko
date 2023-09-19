@@ -124,6 +124,9 @@ setup(
         'invenio_db.models': [
             'weko_records_ui = weko_records_ui.models',
         ],
+        'invenio_oauth2server.scopes': [
+            'file_read_scope = weko_records_ui.scopes:file_read_scope',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

@@ -21,9 +21,6 @@
 """Flask extension for weko-items-ui."""
 
 from . import config
-from .permissions import item_permission
-from .views import blueprint, check_ranking_show
-from .rest import create_blueprint
 
 
 class _WekoItemsUIState(object):
@@ -55,6 +52,8 @@ class WekoItemsUI(object):
 
         :param app: The Flask application.
         """
+        from .permissions import item_permission
+        from .views import blueprint, check_ranking_show
         self.init_config(app)
         app.register_blueprint(blueprint)
         state = _WekoItemsUIState(app, item_permission)
@@ -95,6 +94,7 @@ class WekoItemsREST(object):
 
         :param app: An instance of :class:`flask.Flask`.
         """
+        from .rest import create_blueprint
         self.init_config(app)
         blueprint_restapi = create_blueprint(
             app.config['WEKO_ITEMS_UI_REST_ENDPOINTS']

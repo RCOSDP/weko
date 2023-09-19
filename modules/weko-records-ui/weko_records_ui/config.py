@@ -22,11 +22,6 @@
 import os
 
 from flask_babelex import lazy_gettext as _
-from invenio_records_rest.utils import allow_all
-from invenio_indexer.api import RecordIndexer
-from invenio_search import RecordsSearch
-
-from .views import blueprint
 
 WEKO_RECORDS_UI_DETAIL_TEMPLATE = 'weko_records_ui/detail.html'
 WEKO_RECORDS_UI_BASE_TEMPLATE = 'weko_theme/page.html'
@@ -226,10 +221,10 @@ WEKO_RECORDS_UI_CITES_REST_ENDPOINTS = {
                                     ':citeproc_v1_response'),
         },
         'cites_route': '/record/cites/<int:pid_value>',
-        'item_route': '/<string:version>/records/<int:pid_value>/detail',
+        'item_route': '/<string:version>/records/<int:pid_value>',
         'records_stats_route': '/<string:version>/records/<int:pid_value>/stats',
-        'files_stats_route': '/<string:version>/records/<int:pid_value>/files/<string:file_key>/stats',
-        'files_get_route': '/<string:version>/records/<int:pid_value>/files/<string:file_key>',
+        'files_stats_route': '/<string:version>/records/<int:pid_value>/files/<string:filename>/stats',
+        'files_get_route': '/<string:version>/records/<int:pid_value>/files/<string:filename>',
         'default_media_type': 'application/json',
         'max_result_window': 10000,
     },
@@ -304,12 +299,12 @@ FOOTER_HEIGHT = 4  # height of the footer cell
 METADATA_HEIGHT = 9
 
 # Path to the JPAexg font file
-JPAEXG_TTF_FILEPATH = blueprint.root_path + "/fonts/ipaexg00201/ipaexg.ttf"
+JPAEXG_TTF_FILEPATH = "/fonts/ipaexg00201/ipaexg.ttf"
 
 # Path to the JPAexm font file
-JPAEXM_TTF_FILEPATH = blueprint.root_path + "/fonts/ipaexm00201/ipaexm.ttf"
+JPAEXM_TTF_FILEPATH = "/fonts/ipaexm00201/ipaexm.ttf"
 
-PDF_COVERPAGE_LANG_FILEPATH = blueprint.root_path + "/translations/"
+PDF_COVERPAGE_LANG_FILEPATH = "/translations/"
 
 PDF_COVERPAGE_LANG_FILENAME = "/pdf_coverpage.json"
 
@@ -622,26 +617,4 @@ WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False
 WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
 """ Display item type name on item detail. """
 
-from .rest import WekoRecordsResource
-WEKO_RECORDS_RESOURCE_API_VERSION = {
-    "v1.0":WekoRecordsResource.get_v1
-}
-"""API version."""
-
-from .rest import WekoRecordsStats
-WEKO_RECORDS_STATS_API_VERSION = {
-    "v1.0":WekoRecordsStats.get_v1
-}
-"""API version."""
-
-from .rest import WekoFilesStats
-WEKO_FILES_STATS_API_VERSION = {
-    "v1.0":WekoFilesStats.get_v1
-}
-"""API version."""
-
-from .rest import WekoFilesGet
-WEKO_FILES_GET_API_VERSION = {
-    "v1.0":WekoFilesGet.get_v1
-}
-"""API version."""
+WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']

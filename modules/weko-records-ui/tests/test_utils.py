@@ -1,5 +1,5 @@
 import pytest
-from weko_records_ui.utils import create_usage_report_for_user,get_data_usage_application_data,send_usage_report_mail_for_user,check_and_send_usage_report,check_and_create_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,is_show_email_of_creator,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings
+from weko_records_ui.utils import create_usage_report_for_user,get_data_usage_application_data,send_usage_report_mail_for_user,check_and_send_usage_report,check_and_create_usage_report,update_onetime_download,create_onetime_download_url,get_onetime_download,validate_onetime_download_token,get_license_pdf,hide_item_metadata,get_pair_value,get_min_price_billing_file_download,parse_one_time_download_token,generate_one_time_download_url,validate_download_record,is_private_index,get_file_info_list,replace_license_free,is_show_email_of_creator,hide_by_itemtype,hide_by_email,hide_by_file,hide_item_metadata_email_only,get_workflows,get_billing_file_download_permission,get_list_licence,restore,soft_delete,is_billing_item,get_groups_price,get_record_permalink,get_google_detaset_meta,get_google_scholar_meta,display_oaiset_path,get_terms,get_roles,check_items_settings,RoCrateConverter
 import base64
 from unittest.mock import MagicMock
 import copy
@@ -1338,3 +1338,49 @@ def test_get_google_detaset_meta(app, records, itemtypes, oaischema, oaiidentify
 
         with patch("lxml.etree", return_value=data1):
             assert get_google_detaset_meta(record) == None
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_RoCrateConverter_convert -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_RoCrateConverter_convert():
+    with open('tests/data/rocrate/rocrate_mapping.json', 'r') as f:
+        mapping = json.load(f)
+    with open('tests/data/rocrate/records_metadata.json', 'r') as f:
+        record_data = json.load(f)
+    converter = RoCrateConverter()
+    rocrate = converter.convert(record_data, mapping)
+    assert rocrate
+    assert type(rocrate) == dict
+
+    with open('tests/data/rocrate/test_mapping_rocrate_mapping.json', 'r') as f:
+        mapping = json.load(f)
+    with open('tests/data/rocrate/test_mapping_records_metadata.json', 'r') as f:
+        record_data = json.load(f)
+    rocrate = converter.convert(record_data, mapping)
+    assert rocrate['@graph'][0]['prop1'] == 'value1'
+    assert rocrate['@graph'][0]['prop2'] == ['value2']
+    assert rocrate['@graph'][0]['prop3'] == ['value3_1', 'value3_2']
+    assert rocrate['@graph'][0]['prop4_1'] == 'value4_1'
+    assert rocrate['@graph'][0]['prop4_2'] == 'value4_2'
+    assert 'prop4_3' not in rocrate['@graph'][0]
+    assert rocrate['@graph'][0]['prop5'] == ['value5_1', 'value5_2', 'value5_3']
+    assert rocrate['@graph'][0]['prop6'] == ['value6_2']
+    assert rocrate['@graph'][0]['prop7'] == ['value7_1']
+    assert 'prop8' not in rocrate['@graph'][0]
+    assert 'prop9' not in rocrate['@graph'][0]
+    assert 'prop_none' not in rocrate['@graph'][0]
+
+    assert rocrate['@graph'][5]['additionalType'] == 'tab'
+    assert rocrate['@graph'][2]['fileprop1'] == 'filevalue1_1'
+    assert rocrate['@graph'][2]['fileprop2'] == 'filevalue2_1'
+    assert rocrate['@graph'][3]['fileprop1'] == 'filevalue1_2'
+    assert rocrate['@graph'][3]['fileprop2'] == 'filevalue2_2'
+    assert rocrate['@graph'][4]['fileprop1'] == 'filevalue1_3'
+    assert rocrate['@graph'][4]['fileprop2'] == 'filevalue2_3'
+
+    rocrate = converter.convert(record_data, mapping, 'ja')
+    assert rocrate['@graph'][0]['prop6'] == ['value6_3']
+    assert rocrate['@graph'][0]['prop7'] == ['value7_2']
+
+    rocrate = converter.convert(record_data, mapping, 'other')
+    assert rocrate['@graph'][0]['prop6'] == ['value6_2']
+    assert rocrate['@graph'][0]['prop7'] == ['value7_1']

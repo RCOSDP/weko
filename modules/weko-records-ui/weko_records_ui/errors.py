@@ -25,46 +25,51 @@
 """Records Error"""
 from invenio_rest.errors import RESTException, RESTValidationError
 
+
 class VersionNotFoundRESTError(RESTException):
     """API Version error."""
-    
+
     code = 400
     description = 'This API version does not found'
 
+
 class DateFormatRESTError(RESTException):
     """Date Format error."""
-    
+
     code = 400
     description = 'Date formatting(YYYY-MM) is incorrect.'
 
+
 class ModeNotFoundRESTError(RESTException):
     """Date Format error."""
-    
+
     code = 400
     description = 'Mode not specified.'
-    
+
+
 class PermissionError(RESTException):
     """Permission error"""
 
     code = 403
     description = 'Permission denied'
 
+
 class RecordsNotFoundRESTError(RESTException):
     """Records Not Found error."""
-    
+
     code = 404
     description = 'This Item does not found'
 
+
 class FilesNotFoundRESTError(RESTException):
     """Files Not Found error."""
-    
+
     code = 404
     description = 'This File does not found'
 
+
 class InternalServerError(RESTException):
     """Internal Server Error."""
-    
+
     code = 500
     description = 'Internal Server Error'
-    
-    
