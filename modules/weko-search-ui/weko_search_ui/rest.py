@@ -39,6 +39,7 @@ from invenio_rest import ContentNegotiatedMethodView
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import count_items, recorrect_private_items_count
 from weko_items_ui.scopes import item_read_scope
+from weko_records.api import ItemTypes
 from weko_records.models import ItemType
 
 from .error import VersionNotFoundRESTError, InternalServerError
@@ -557,8 +558,17 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
                     raise MaxResultWindowRESTError()
                 search = search[(page - 1) * size: page * size]
 
+            # filter by registered item type in RocrateMapping
+            from weko_records_ui.models import RocrateMapping
+            mapping = RocrateMapping.query.all()
+            item_type_ids = [x.item_type_id for x in mapping]
+            item_types = ItemTypes.get_records(item_type_ids)
+            additional_params = {
+                'itemtype': ','.join([x.model.item_type_name.name for x in item_types])
+            }
+
             # Query Generate
-            search, qs_kwargs = self.search_factory(self, search)
+            search, qs_kwargs = self.search_factory(self, search, additional_params=additional_params)
 
             # Sort Setting
             sort = request.values.get('sort')
@@ -610,21 +620,12 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
 
             # Convert RO-Crate format
             from weko_records_ui.utils import RoCrateConverter
-            from weko_records_ui.models import RocrateMapping
             converter = RoCrateConverter()
             rocrate_list = []
-            failure_list = []
             for search_result in search_results['hits']['hits']:
                 metadata = search_result['_source']['_item_metadata']
                 item_type_id = metadata['item_type_id']
                 mapping = RocrateMapping.query.filter_by(item_type_id=item_type_id).one_or_none()
-                if mapping is None:
-                    failure_list.append({
-                        'id': search_result['_source']['control_number'],
-                        'title': search_result['_source']['title'],
-                        'item_type': search_result['_source']['itemtype'],
-                    })
-                    continue
                 rocrate = converter.convert(metadata, mapping.mapping, language)
                 rocrate_list.append({
                     'id': search_result['_source']['control_number'],
@@ -647,7 +648,6 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
                 'cursor': cursor,
                 'page': page,
                 'search_results': rocrate_list,
-                'failures': failure_list,
             }
             res = Response(
                 response=json.dumps(result, indent=indent),

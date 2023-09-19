@@ -125,7 +125,7 @@ def get_permission_filter(index_id: str = None):
     return mut, is_perm_paths
 
 
-def default_search_factory(self, search, query_parser=None, search_type=None):
+def default_search_factory(self, search, query_parser=None, search_type=None, additional_params=None):
     """Parse query using Weko-Query-Parser. MetaData Search.
 
     :param self: REST view.
@@ -163,7 +163,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         def _get_keywords_query(k, v):
             qry = None
             kv = (
-                request.values.get("lang") if k == "language" else request.values.get(k)
+                params.get("lang") if k == "language" else params.get(k)
             )
 
             if not kv:
@@ -224,12 +224,12 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
         def _get_object_query(k, v):
             # text value
-            kv = request.values.get(k)
+            kv = params.get(k)
             if not kv:
                 return
             if isinstance(v, tuple) and len(v) > 1 and isinstance(v[1], dict):
                 # attr keyword in request url
-                attrs = map(lambda x: (x, request.values.get(x)), list(v[1].keys()))
+                attrs = map(lambda x: (x, params.get(x)), list(v[1].keys()))
                 for attr_key, attr_val_str in attrs:
                     attr_obj = v[1].get(attr_key)
                     if isinstance(attr_obj, dict) and attr_val_str:
@@ -258,7 +258,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
         def _get_nested_query(k, v):
             # text value
-            kv = request.values.get(k)
+            kv = params.get(k)
 
             if not kv:
                 return
@@ -268,7 +268,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             if isinstance(v, tuple) and len(v) > 1 and isinstance(v[1], dict):
                 # attr keyword in request url
                 for attr_key, attr_val_str in map(
-                    lambda x: (x, request.values.get(x)), list(v[1].keys())
+                    lambda x: (x, params.get(x)), list(v[1].keys())
                 ):
                     attr_obj = v[1].get(attr_key)
 
@@ -371,8 +371,8 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             qry = None
 
             if isinstance(v, list) and len(v) >= 2:
-                date_from = request.values.get(k + "_" + v[0][0])
-                date_to = request.values.get(k + "_" + v[0][1])
+                date_from = params.get(k + "_" + v[0][0])
+                date_to = params.get(k + "_" + v[0][1])
 
                 if not date_from or not date_to:
                     return
@@ -410,7 +410,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                     if isinstance(dt, dict):
 
                         for attr_key, attr_val_str in map(
-                            lambda x: (x, request.values.get(x)), list(dt.keys())
+                            lambda x: (x, params.get(x)), list(dt.keys())
                         ):
                             attr_obj = dt.get(attr_key)
 
@@ -441,7 +441,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         def _get_text_query(k, v):
             qry = None
             kv = (
-                request.values.get("lang") if k == "language" else request.values.get(k)
+                params.get("lang") if k == "language" else params.get(k)
             )
 
             if not kv:
@@ -458,8 +458,8 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             qry = None
 
             if isinstance(v, list) and len(v) >= 2:
-                value_from = request.values.get(k + "_" + v[0][0])
-                value_to = request.values.get(k + "_" + v[0][1])
+                value_from = params.get(k + "_" + v[0][0])
+                value_to = params.get(k + "_" + v[0][1])
 
                 if not value_from or not value_to:
                     return
@@ -478,9 +478,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             qry = None
 
             if isinstance(v, list) and len(v) >= 2:
-                value_lat = request.values.get(k + "_" + v[0][0])
-                value_lon = request.values.get(k + "_" + v[0][1])
-                value_distance = request.values.get(k + "_" + v[0][2])
+                value_lat = params.get(k + "_" + v[0][0])
+                value_lon = params.get(k + "_" + v[0][1])
+                value_distance = params.get(k + "_" + v[0][2])
 
                 if not value_lat or not value_lon or not value_distance:
                     return
@@ -498,9 +498,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             qry = None
 
             if isinstance(v, list) and len(v) >= 2:
-                value_lat = request.values.get(k + "_" + v[0][0])
-                value_lon = request.values.get(k + "_" + v[0][1])
-                value_distance = request.values.get(k + "_" + v[0][2])
+                value_lat = params.get(k + "_" + v[0][0])
+                value_lon = params.get(k + "_" + v[0][1])
+                value_distance = params.get(k + "_" + v[0][2])
 
                 if not value_lat or not value_lon or not value_distance:
                     return
@@ -524,6 +524,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
             return qry
 
+        params = request.values.to_dict()
+        if additional_params:
+            params.update(additional_params)
         kwd = current_app.config["WEKO_SEARCH_KEYWORDS_DICT"]
         ks = kwd.get("string")
         kd = kwd.get("date")
