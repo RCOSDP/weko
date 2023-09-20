@@ -547,9 +547,16 @@ class WekoFilesGet(ContentNegotiatedMethodView):
             if not request.if_none_match:
                 self.check_if_modified_since(dt=last_modified)
 
+            content_type = fileObj.mimetype
+            if is_preview:
+                if 'msword' in fileObj.mimetype or 'vnd.ms' in fileObj.mimetype or 'vnd.openxmlformats' in fileObj.mimetype:
+                    if fileObj.data.get('displaytype') == 'preview':
+                        content_type = 'application/pdf'
+
             # Response Header Setting
             dl_response.set_etag(etag)
             dl_response.last_modified = last_modified
+            dl_response.content_type = content_type
 
             return dl_response
 
