@@ -26,6 +26,9 @@ from datetime import datetime
 import pytz
 from flask import request
 from invenio_db import db
+from invenio_records.models import RecordMetadata
+from invenio_records_rest.views import RecordsListResource
+from invenio_stats.views import QueryRecordViewCount, QueryFileStatsCount
 from weko_index_tree.api import Index
 
 from weko_records.api import Mapping
@@ -35,6 +38,7 @@ from .dc import DcWekoBaseExtension, DcWekoEntryExtension
 from .feed import WekoFeedGenerator
 from .opensearch import OpensearchEntryExtension, OpensearchExtension
 from .prism import PrismEntryExtension, PrismExtension
+from .wekolog import WekologEntryExtension, WekologExtension
 
 
 def get_mapping(item_type_mapping, mapping_type):
@@ -150,19 +154,22 @@ def get_metadata_from_map(item_data, item_id):
 
         if isinstance(props, list):
             for prop in props:
-                for k, v in prop.items():
-                    if isinstance(v, list) or isinstance(v, dict):
-                        value.update(get_sub_item_data(v, key + '.' + k))
-                    else:
-                        sub_key = key + '.' + k if key else k
-                        if sub_key in value:
-                            if isinstance(value[sub_key], list):
-                                value[sub_key].append(v)
-                            else:
-                                _value = value[sub_key]
-                                value[sub_key] = [_value, v]
+                if type(prop) is str:
+                    value[key] = prop
+                else:
+                    for k, v in prop.items():
+                        if isinstance(v, list) or isinstance(v, dict):
+                            value.update(get_sub_item_data(v, key + '.' + k))
                         else:
-                            value[sub_key] = v
+                            sub_key = key + '.' + k if key else k
+                            if sub_key in value:
+                                if isinstance(value[sub_key], list):
+                                    value[sub_key].append(v)
+                                else:
+                                    _value = value[sub_key]
+                                    value[sub_key] = [_value, v]
+                            else:
+                                value[sub_key] = v
         else:
             for k, v in props.items():
                 if isinstance(v, list) or isinstance(v, dict):
@@ -233,6 +240,44 @@ def get_item_type_name(item_type_id):
     return None
 
 
+def get_wekolog(hit, log_term):
+    """Get wekolog property.
+
+    :param
+        log_term    : Aggregation date
+    :return dict
+        log_term    : Aggregation date
+        view        : Number of item views
+        download    : Number of item downloads
+    """
+
+    # get record id
+    record_id = hit['_id']
+
+    # get bucket id
+    meta_data = RecordMetadata.query.filter_by(id=record_id).first()
+    bucket_id = meta_data.json['_buckets']['deposit']
+
+    # get view count
+    cls_view_count = QueryRecordViewCount()
+    view_count_data = cls_view_count.get_data(record_id, log_term)
+    view_count = int(view_count_data.get('total', 0))
+
+    # get download count
+    download_total = 0
+    query_file_download = QueryFileStatsCount()
+    for k, v in meta_data.json.items():
+        if isinstance(v, dict) and v.get('attribute_type') == 'file':
+            for v2 in v.get('attribute_value_mlt'):
+                file_name = v2.get('filename')
+                if file_name:
+                    stats_count_data = query_file_download.get_data(bucket_id, file_name, log_term)
+                    download_count = int(stats_count_data.get('download_total', 0))
+                    download_total += download_count
+
+    return {'terms': log_term, 'view': str(view_count), 'download': str(download_total)}
+
+
 class OpenSearchDetailData:
     """OpenSearch detail data."""
 
@@ -273,6 +318,9 @@ class OpenSearchDetailData:
         fg.register_extension('prism',
                               extension_class_feed=PrismExtension,
                               extension_class_entry=PrismEntryExtension)
+        fg.register_extension('wekolog',
+                              extension_class_feed=WekologExtension,
+                              extension_class_entry=WekologEntryExtension)
 
         # Set title
         index_meta = {}
@@ -319,6 +367,7 @@ class OpenSearchDetailData:
 
         size = request.args.get('list_view_num', type=str)
         size = 20 if size is None or not size.isnumeric() else int(size)
+        size = RecordsListResource.adjust_list_view_num(size)
 
         # Set startIndex
         _start_index = (start_page - 1) * size + 1
@@ -334,6 +383,9 @@ class OpenSearchDetailData:
             fg.language(request_lang)
         else:
             fg.language('en')
+
+        # Aggregate parameter
+        log_term = request.args.get('log_term', '')
 
         rss_items = []
         jpcoar_map = {}
@@ -607,6 +659,13 @@ class OpenSearchDetailData:
             _modification_date = hit['_source']['_updated']
             if _modification_date:
                 fe.prism.modificationDate(_modification_date)
+
+            # Set Wekolog
+            if log_term:
+                wekolog = get_wekolog(hit, log_term)
+                fe.wekolog.terms(wekolog['terms'])
+                fe.wekolog.view(wekolog['view'])
+                fe.wekolog.download(wekolog['download'])
 
         if self.output_type == self.OUTPUT_ATOM:
             return fg.atom_str(pretty=True)

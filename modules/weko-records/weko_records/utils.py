@@ -28,6 +28,7 @@ from collections import OrderedDict
 
 import pytz
 from flask import current_app
+from flask_babelex import gettext as _
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore import current_pidstore
@@ -38,8 +39,9 @@ from jsonpath_ng import jsonpath
 from jsonpath_ng.ext import parse
 from lxml import etree
 from weko_admin import config as ad_config
-from weko_admin.models import SearchManagement as sm
+from weko_admin.models import SearchManagement as sm, AdminSettings
 from weko_schema_ui.schema import SchemaTree
+from invenio_accounts.models import Role
 
 from .api import ItemTypes, Mapping
 from .config import COPY_NEW_FIELD, WEKO_TEST_FIELD
@@ -711,6 +713,21 @@ def get_all_items(nlst, klst, is_get_name=False):
 
             return item_name
 
+    def get_role_name(role_id):
+        role = Role.query.filter_by(id=role_id).first()
+        if role:
+            return role.name
+
+    def set_currency_unit(nlst):
+        billing_settings = AdminSettings.get('billing_settings')
+        if billing_settings:
+            currency_unit = billing_settings.currency_unit
+
+        if isinstance(nlst, list):
+            for lst in nlst:
+                if isinstance(lst, dict) and 'billing' in lst:
+                    lst['currency_unit'] = currency_unit
+
     def get_items(nlst):
         _list = []
 
@@ -726,11 +743,23 @@ def get_all_items(nlst, klst, is_get_name=False):
                         item_name = get_name(k)
                         if item_name:
                             d[k + ".name"] = item_name
+                    if k.endswith("priceinfo[].billingrole") and v.isdecimal():
+                        role_name = get_role_name(int(v))
+                        if role_name:
+                            d[k] = role_name
                 else:
-                    _list.append(get_items(v))
+                    checkbox = []
+                    if isinstance(v, list):
+                        checkbox = [x for x in v if isinstance(x, str)]
+                    if len(checkbox) > 0:
+                        d[k] = ",".join(checkbox)
+                    else:
+                        _list.append(get_items(v))
             _list.append(d)
 
         return _list
+
+    set_currency_unit(nlst)
 
     to_orderdict(nlst, klst)
     alst = get_items(nlst)
@@ -1045,11 +1074,20 @@ async def sort_meta_data_by_options(
             return _label, _extension
 
         result = []
+        file_num = 0
         for f in files:
             label, extension = __get_label_extension()
             if "open_restricted" == f.get("accessrole", ""):
                 if label:
                     result.append({"label": label, "extention": extension, "url": ""})
+                    file_num += 1
+            elif 'billing' in f:
+                file_url = f.get("url", {}).get("url", "")
+                if extension and file_url:
+                    file_url = replace_fqdn(file_url)
+                result.append({"label": label, "extention": extension, "url": file_url})
+                if check_file_download_permission(record, f, check_billing_file=True):
+                    file_num += 1
             elif label and (
                 not extension or check_file_download_permission(record, f, False)
             ):
@@ -1057,7 +1095,8 @@ async def sort_meta_data_by_options(
                 if extension and file_url:
                     file_url = replace_fqdn(file_url)
                 result.append({"label": label, "extention": extension, "url": file_url})
-        return result
+                file_num += 1
+        return result, file_num
 
     def get_file_thumbnail(thumbnails):
         """Get file thumbnail."""
@@ -1212,6 +1251,7 @@ async def sort_meta_data_by_options(
         solst, meta_options = get_options_and_order_list(item_type_id, item_type_data)
         solst_dict_array = convert_data_to_dict(solst)
         files_info = []
+        file_num = 0
         thumbnail = None
         hide_item_metadata(src, settings, item_type_mapping, item_type_data)
         # Set value and parent option
@@ -1228,7 +1268,7 @@ async def sort_meta_data_by_options(
                     and not option.get("hidden")
                     and option.get("showlist")
                 ):
-                    files_info = get_file_comments(src, mlt)
+                    files_info, file_num = get_file_comments(src, mlt)
                     continue
                 is_thumbnail = any("subitem_thumbnail" in data for data in mlt)
                 if is_thumbnail and not option.get("hidden") and option.get("showlist"):
@@ -1281,6 +1321,7 @@ async def sort_meta_data_by_options(
                 record_hit["_source"]["_comment"] = items
         if files_info:
             record_hit["_source"]["_files_info"] = files_info
+            record_hit["_source"]["_file_num"] = file_num
         if thumbnail:
             record_hit["_source"]["_thumbnail"] = thumbnail
     except Exception:
@@ -1590,7 +1631,10 @@ def get_attribute_value_all_items(
                             and isinstance(val[0], str)
                         ):
                             if not hide:
-                                temp.append({key: val})
+                                if key == 'billing':
+                                    temp.append({'priceinfo': [' ']})
+                                else:
+                                    temp.append({key: val})
                         else:
                             if check_has_attribute_value(val):
                                 if not hide:
@@ -1617,7 +1661,10 @@ def get_attribute_value_all_items(
                     item_name = get_name(key) or ""
                     if val and (isinstance(val, str) or (key == "nameIdentifier")):
                         # the last children level
-                        d[item_name] = val
+                        if key == 'tax':
+                            d[item_name] = _(val)
+                        else:
+                            d[item_name] = val
                     elif (
                         isinstance(val, list)
                         and len(val) > 0

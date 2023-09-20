@@ -8,6 +8,7 @@ import copy
 import datetime
 import base64
 import flask
+import json
 from werkzeug.datastructures import MultiDict
 from flask import current_app,session
 from flask_babelex import gettext as _
@@ -24,6 +25,7 @@ from invenio_mail.models import MailConfig
 from weko_admin.models import SiteInfo
 from weko_user_profiles import UserProfile
 from weko_records.api import ItemTypes, ItemsMetadata
+from weko_records.models import ItemBilling
 from weko_user_profiles.config import WEKO_USERPROFILES_POSITION_LIST,WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
 from weko_workflow.models import ActivityHistory,GuestActivity
 from weko_workflow.config import WEKO_WORKFLOW_FILTER_PARAMS,IDENTIFIER_GRANT_LIST
@@ -125,6 +127,7 @@ from weko_workflow.utils import (
     update_system_data_for_item_metadata,
     update_approval_date_for_deposit,
     update_system_data_for_activity,
+    create_or_update_item_billing,
     make_activitylog_tsv
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
@@ -2703,6 +2706,28 @@ def test_get_index_id():
     # else:
     #     index_tree_id = None
     raise BaseException
+
+
+# def create_or_update_item_billing(deposit):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_create_or_update_item_billing -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
+def test_create_or_update_item_billing(db_register_item_billing):
+    deposit = dict()
+    with open('tests/data/records_metadata.json', 'r') as f:
+        deposit = json.load(f)
+
+    create_or_update_item_billing(deposit)
+
+    created = ItemBilling.query.filter_by(item_id=10, role_id=1).one_or_none()
+    assert created is not None
+
+    updated = ItemBilling.query.filter_by(item_id=10, role_id=2).one_or_none()
+    assert updated is not None
+    assert updated.include_tax == False
+    assert updated.price == 200
+
+    deleted = ItemBilling.query.filter_by(item_id=10, role_id=3).one_or_none()
+    assert deleted is None
+
 
 def test_make_activitylog_tsv(db_register,db_records):
     """test make_activitylog_tsv"""

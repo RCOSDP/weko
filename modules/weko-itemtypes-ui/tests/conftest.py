@@ -104,8 +104,6 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.config import WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER, WEKO_INDEX_TREE_REST_ENDPOINTS
 from weko_index_tree.models import Index
 from weko_items_ui import WekoItemsUI
-from weko_items_ui.views import blueprint as weko_items_ui_blueprint
-from weko_items_ui.views import blueprint_api as weko_items_ui_blueprint_api
 from weko_records import WekoRecords
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName,ItemTypeProperty
 from weko_records_ui import WekoRecordsUI
@@ -268,7 +266,7 @@ def base_app(instance_path):
     # WekoSchemaUI(app_)
     InvenioStats(app_)
 
-    # InvenioAdmin(app_)
+    InvenioAdmin(app_)
     Menu(app_)
     WekoRecords(app_)
     WekoDeposit(app_)
@@ -294,12 +292,6 @@ def base_app(instance_path):
     # app_.register_blueprint(invenio_communities_blueprint)
     # app_.register_blueprint(weko_workflow_blueprint)
 
-    # runner = CliRunner()
-    # result = runner.invoke(collect, [],obj=weko_items_ui_blueprint)
-    # Run build
-    # result = runner.invoke(assets, ['build'],obj=weko_items_ui_blueprint)
-    # result = runner.invoke(npm,obj=weko_items_ui_blueprint)
-
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
     current_assets.collect.collect()
 
@@ -313,15 +305,6 @@ def app(base_app):
         yield base_app
 
 
-
-@pytest.yield_fixture()
-def client_api(app):
-    app.register_blueprint(weko_items_ui_blueprint_api, url_prefix="/api/items")
-    with app.test_client() as client:
-        yield client
-
-
-
 @pytest.yield_fixture()
 def client(app):
     """make a test client.
@@ -332,7 +315,6 @@ def client(app):
     Yields:
         FlaskClient: test client
     """
-    app.register_blueprint(weko_items_ui_blueprint, url_prefix="/items")
     with app.test_client() as client:
         yield client
 
@@ -865,6 +847,98 @@ def db_itemtype6(app, db):
     )
 
     item_type_mapping = ItemTypeMapping(id=6, item_type_id=6, mapping=item_type_mapping)
+
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
+        db.session.add(item_type)
+        db.session.add(item_type_mapping)
+
+    return {
+        "item_type_name": item_type_name,
+        "item_type": item_type,
+        "item_type_mapping": item_type_mapping,
+    }
+
+
+@pytest.fixture()
+def db_itemtype7(app, db):
+    item_type_name = ItemTypeName(id=7, name="テストアイテムタイプ7", has_site_license=True, is_active=True)
+
+    item_type_schema = dict()
+    with open("tests/data/itemtype6_schema.json", "r") as f:
+        item_type_schema = json.load(f)
+
+    item_type_form = dict()
+    with open("tests/data/itemtype6_form.json", "r") as f:
+        item_type_form = json.load(f)
+
+    item_type_render = dict()
+    with open("tests/data/itemtype6_render.json", "r") as f:
+        item_type_render = json.load(f)
+
+    item_type_mapping = dict()
+    with open("tests/data/itemtype6_mapping.json", "r") as f:
+        item_type_mapping = json.load(f)
+
+    item_type = ItemType(
+        id=7,
+        name_id=7,
+        harvesting_type=True,
+        schema=item_type_schema,
+        form=item_type_form,
+        render=item_type_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_mapping = ItemTypeMapping(id=7, item_type_id=7, mapping=item_type_mapping)
+
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
+        db.session.add(item_type)
+        db.session.add(item_type_mapping)
+
+    return {
+        "item_type_name": item_type_name,
+        "item_type": item_type,
+        "item_type_mapping": item_type_mapping,
+    }
+
+
+@pytest.fixture()
+def db_itemtype8(app, db):
+    item_type_name = ItemTypeName(id=8, name="テストアイテムタイプ8", has_site_license=True, is_active=True)
+
+    item_type_schema = dict()
+    with open("tests/data/itemtype7_schema.json", "r") as f:
+        item_type_schema = json.load(f)
+
+    item_type_form = dict()
+    with open("tests/data/itemtype7_form.json", "r") as f:
+        item_type_form = json.load(f)
+
+    item_type_render = dict()
+    with open("tests/data/itemtype7_render.json", "r") as f:
+        item_type_render = json.load(f)
+
+    item_type_mapping = dict()
+    with open("tests/data/itemtype7_mapping.json", "r") as f:
+        item_type_mapping = json.load(f)
+
+    item_type = ItemType(
+        id=8,
+        name_id=8,
+        harvesting_type=True,
+        schema=item_type_schema,
+        form=item_type_form,
+        render=item_type_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_mapping = ItemTypeMapping(id=8, item_type_id=8, mapping=item_type_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)

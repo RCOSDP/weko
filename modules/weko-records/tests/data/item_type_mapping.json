@@ -1,208 +1,210 @@
 {
-    "pubdate": {
-      "lom_mapping": "",
-      "lido_mapping": "",
-      "spase_mapping": "",
-      "jpcoar_mapping": { "date": "" },
-      "junii2_mapping": "",
-      "oai_dc_mapping": "",
-      "display_lang_type": ""
+  "pubdate": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": { "date": "" },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "system_file": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "system_file": {
+        "URI": {
+          "@value": "subitem_systemfile_filename_uri",
+          "@attributes": {
+            "label": "subitem_systemfile_filename_label",
+            "objectType": "subitem_systemfile_filename_type"
+          }
+        },
+        "date": {
+          "@value": "subitem_systemfile_datetime_date",
+          "@attributes": { "dateType": "subitem_systemfile_datetime_type" }
+        },
+        "extent": { "@value": "subitem_systemfile_size" },
+        "version": { "@value": "subitem_systemfile_version" },
+        "mimeType": { "@value": "subitem_systemfile_mimetype" }
+      }
     },
-    "system_file": {
-      "lom_mapping": "",
-      "lido_mapping": "",
-      "spase_mapping": "",
-      "jpcoar_mapping": {
-        "system_file": {
-          "URI": {
-            "@value": "subitem_systemfile_filename_uri",
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551264308487": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "title": {
+        "@value": "subitem_1551255647225",
+        "@attributes": { "xml:lang": "subitem_1551255648112" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_15512643084872":{
+    "jpcoar_mapping":{
+      "title":{
+        "@value":"subitem_15512556472252",
+        "@attributes":{"xml:lang":"subitem_1551255648112"}
+      }
+    }
+  },
+  "item_1551264326373": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "alternative": {
+        "@value": "subitem_1551255720400",
+        "@attributes": { "xml:lang": "subitem_1551255721061" }
+      }
+    },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551264340087": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "creator": {
+        "givenName": {
+          "@value": "subitem_1551255991424.subitem_1551256006332",
+          "@attributes": {
+            "xml:lang": "subitem_1551255991424.subitem_1551256007414"
+          }
+        },
+        "familyName": {
+          "@value": "subitem_1551255929209.subitem_1551255938498",
+          "@attributes": {
+            "xml:lang": "subitem_1551255929209.subitem_1551255964991"
+          }
+        },
+        "affiliation": {
+          "nameIdentifier": {
+            "@value": "subitem_1551256087090.subitem_1551256089084.subitem_1551256097891",
             "@attributes": {
-              "label": "subitem_systemfile_filename_label",
-              "objectType": "subitem_systemfile_filename_type"
+              "nameIdentifierURI": "subitem_1551256087090.subitem_1551256089084.subitem_1551256147368",
+              "nameIdentifierScheme": "subitem_1551256087090.subitem_1551256089084.subitem_1551256145018"
             }
           },
-          "date": {
-            "@value": "subitem_systemfile_datetime_date",
-            "@attributes": { "dateType": "subitem_systemfile_datetime_type" }
-          },
-          "extent": { "@value": "subitem_systemfile_size" },
-          "version": { "@value": "subitem_systemfile_version" },
-          "mimeType": { "@value": "subitem_systemfile_mimetype" }
-        }
-      },
-      "junii2_mapping": "",
-      "oai_dc_mapping": "",
-      "display_lang_type": ""
-    },
-    "item_1551264308487": {
-      "lom_mapping": "",
-      "lido_mapping": "",
-      "spase_mapping": "",
-      "jpcoar_mapping": {
-        "title": {
-          "@value": "subitem_1551255647225",
-          "@attributes": { "xml:lang": "subitem_1551255648112" }
-        }
-      },
-      "junii2_mapping": "",
-      "oai_dc_mapping": "",
-      "display_lang_type": ""
-    },
-    "item_15512643084872":{
-      "jpcoar_mapping":{
-        "title":{
-          "@value":"subitem_15512556472252",
-          "@attributes":{"xml:lang":"subitem_1551255648112"}
+          "affiliationName": {
+            "@value": "subitem_1551256087090.subitem_1551256229037.subitem_1551256259183",
+            "@attributes": {
+              "xml:lang": "subitem_1551256087090.subitem_1551256229037.subitem_1551256259899"
+            }
+          }
+        },
+        "creatorName": {
+          "@value": "subitem_1551255898956.subitem_1551255905565",
+          "@attributes": {
+            "xml:lang": "subitem_1551255898956.subitem_1551255907416"
+          }
+        },
+        "nameIdentifier": {
+          "@value": "subitem_1551255789000.subitem_1551255793478",
+          "@attributes": {
+            "nameIdentifierURI": "subitem_1551255789000.subitem_1551255795486",
+            "nameIdentifierScheme": "subitem_1551255789000.subitem_1551255794292"
+          }
+        },
+        "creatorAlternative": {
+          "@value": "subitem_1551256025394.subitem_1551256035730",
+          "@attributes": {
+            "xml:lang": "subitem_1551256025394.subitem_1551256055588"
+          }
         }
       }
     },
-    "item_1551264326373": {
-      "lom_mapping": "",
-      "lido_mapping": "",
-      "spase_mapping": "",
-      "jpcoar_mapping": {
-        "alternative": {
-          "@value": "subitem_1551255720400",
-          "@attributes": { "xml:lang": "subitem_1551255721061" }
-        }
-      },
-      "junii2_mapping": "",
-      "oai_dc_mapping": "",
-      "display_lang_type": ""
-    },
-    "item_1551264340087": {
-      "lom_mapping": "",
-      "lido_mapping": "",
-      "spase_mapping": "",
-      "jpcoar_mapping": {
-        "creator": {
-          "givenName": {
-            "@value": "subitem_1551255991424.subitem_1551256006332",
-            "@attributes": {
-              "xml:lang": "subitem_1551255991424.subitem_1551256007414"
-            }
-          },
-          "familyName": {
-            "@value": "subitem_1551255929209.subitem_1551255938498",
-            "@attributes": {
-              "xml:lang": "subitem_1551255929209.subitem_1551255964991"
-            }
-          },
-          "affiliation": {
-            "nameIdentifier": {
-              "@value": "subitem_1551256087090.subitem_1551256089084.subitem_1551256097891",
-              "@attributes": {
-                "nameIdentifierURI": "subitem_1551256087090.subitem_1551256089084.subitem_1551256147368",
-                "nameIdentifierScheme": "subitem_1551256087090.subitem_1551256089084.subitem_1551256145018"
-              }
-            },
-            "affiliationName": {
-              "@value": "subitem_1551256087090.subitem_1551256229037.subitem_1551256259183",
-              "@attributes": {
-                "xml:lang": "subitem_1551256087090.subitem_1551256229037.subitem_1551256259899"
-              }
-            }
-          },
-          "creatorName": {
-            "@value": "subitem_1551255898956.subitem_1551255905565",
-            "@attributes": {
-              "xml:lang": "subitem_1551255898956.subitem_1551255907416"
-            }
-          },
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551264418667": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "contributor": {
+        "givenName": {
+          "@value": "subitem_1551257339190.subitem_1551257342360",
+          "@attributes": {
+            "xml:lang": "subitem_1551257339190.subitem_1551257343979"
+          }
+        },
+        "familyName": {
+          "@value": "subitem_1551257272214.subitem_1551257314588",
+          "@attributes": {
+            "xml:lang": "subitem_1551257272214.subitem_1551257316910"
+          }
+        },
+        "@attributes": { "contributorType": "subitem_1551257036415" },
+        "affiliation": {
           "nameIdentifier": {
-            "@value": "subitem_1551255789000.subitem_1551255793478",
+            "@value": "subitem_1551257419251.subitem_1551257421633.subitem_1551261472867",
             "@attributes": {
-              "nameIdentifierURI": "subitem_1551255789000.subitem_1551255795486",
-              "nameIdentifierScheme": "subitem_1551255789000.subitem_1551255794292"
+              "nameIdentifierURI": "subitem_1551257419251.subitem_1551257421633.subitem_1551261493409",
+              "nameIdentifierScheme": "subitem_1551257419251.subitem_1551257421633.subitem_1551261485670"
             }
           },
-          "creatorAlternative": {
-            "@value": "subitem_1551256025394.subitem_1551256035730",
+          "affiliationName": {
+            "@value": "subitem_1551257419251.subitem_1551261534334.subitem_1551261542403",
             "@attributes": {
-              "xml:lang": "subitem_1551256025394.subitem_1551256055588"
+              "xml:lang": "subitem_1551257419251.subitem_1551261534334.subitem_1551261546333"
             }
           }
-        }
-      },
-      "junii2_mapping": "",
-      "oai_dc_mapping": "",
-      "display_lang_type": ""
-    },
-    "item_1551264418667": {
-      "lom_mapping": "",
-      "lido_mapping": "",
-      "spase_mapping": "",
-      "jpcoar_mapping": {
-        "contributor": {
-          "givenName": {
-            "@value": "subitem_1551257339190.subitem_1551257342360",
-            "@attributes": {
-              "xml:lang": "subitem_1551257339190.subitem_1551257343979"
-            }
-          },
-          "familyName": {
-            "@value": "subitem_1551257272214.subitem_1551257314588",
-            "@attributes": {
-              "xml:lang": "subitem_1551257272214.subitem_1551257316910"
-            }
-          },
-          "@attributes": { "contributorType": "subitem_1551257036415" },
-          "affiliation": {
-            "nameIdentifier": {
-              "@value": "subitem_1551257419251.subitem_1551257421633.subitem_1551261472867",
-              "@attributes": {
-                "nameIdentifierURI": "subitem_1551257419251.subitem_1551257421633.subitem_1551261493409",
-                "nameIdentifierScheme": "subitem_1551257419251.subitem_1551257421633.subitem_1551261485670"
-              }
-            },
-            "affiliationName": {
-              "@value": "subitem_1551257419251.subitem_1551261534334.subitem_1551261542403",
-              "@attributes": {
-                "xml:lang": "subitem_1551257419251.subitem_1551261534334.subitem_1551261546333"
-              }
-            }
-          },
-          "nameIdentifier": {
-            "@value": "subitem_1551257150927.subitem_1551257152742",
-            "@attributes": {
-              "nameIdentifierURI": "subitem_1551257150927.subitem_1551257228080",
-              "nameIdentifierScheme": "subitem_1551257150927.subitem_1551257172531"
-            }
-          },
-          "contributorName": {
-            "@value": "subitem_1551257245638.subitem_1551257276108",
-            "@attributes": {
-              "xml:lang": "subitem_1551257245638.subitem_1551257279831"
-            }
-          },
-          "contributorAlternative": {
-            "@value": "subitem_1551257372442.subitem_1551257374288",
-            "@attributes": {
-              "xml:lang": "subitem_1551257372442.subitem_1551257375939"
-            }
+        },
+        "nameIdentifier": {
+          "@value": "subitem_1551257150927.subitem_1551257152742",
+          "@attributes": {
+            "nameIdentifierURI": "subitem_1551257150927.subitem_1551257228080",
+            "nameIdentifierScheme": "subitem_1551257150927.subitem_1551257172531"
+          }
+        },
+        "contributorName": {
+          "@value": "subitem_1551257245638.subitem_1551257276108",
+          "@attributes": {
+            "xml:lang": "subitem_1551257245638.subitem_1551257279831"
+          }
+        },
+        "contributorAlternative": {
+          "@value": "subitem_1551257372442.subitem_1551257374288",
+          "@attributes": {
+            "xml:lang": "subitem_1551257372442.subitem_1551257375939"
           }
         }
-      },
-      "junii2_mapping": "",
-      "oai_dc_mapping": "",
-      "display_lang_type": ""
+      }
     },
-    "item_1551264447183": {
-      "lom_mapping": "",
-      "lido_mapping": "",
-      "spase_mapping": "",
-      "jpcoar_mapping": {
-        "accessRights": {
-          "@value": "subitem_1551257553743",
-          "@attributes": { "rdf:resource": "subitem_1551257578398" }
-        }
-      },
-      "junii2_mapping": "",
-      "oai_dc_mapping": "",
-      "display_lang_type": ""
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "item_1551264447183": {
+    "lom_mapping": "",
+    "lido_mapping": "",
+    "spase_mapping": "",
+    "jpcoar_mapping": {
+      "accessRights": {
+        "@value": "subitem_1551257553743",
+        "@attributes": { "rdf:resource": "subitem_1551257578398" }
+      }
     },
-    "not_jpcoar_mapping":{
-      "lom_mapping":""
-    }
+    "junii2_mapping": "",
+    "oai_dc_mapping": "",
+    "display_lang_type": ""
+  },
+  "not_jpcoar_mapping":{
+    "lom_mapping":""
+  },
+  "item_1551264447184": {
+    "display_lang_type": "en"
   }
-  
+}

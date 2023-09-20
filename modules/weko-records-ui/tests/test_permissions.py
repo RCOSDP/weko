@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import mock  # python2, after pip install mock
 import pytest
-from flask import Flask, json, jsonify, session, url_for
+from flask import Flask, json, jsonify, session, url_for, Response
 from flask_babelex import get_locale, to_user_timezone, to_utc
 from flask_login import current_user
 from flask_security import login_user
@@ -14,6 +14,8 @@ from invenio_accounts.models import Role, User
 from invenio_accounts.testutils import create_test_user, login_user_via_session
 from mock import patch
 
+from weko_records.models import ItemType, ItemTypeName
+from weko_admin.models import AdminSettings
 from weko_records_ui.permissions import (
     check_created_id,
     check_publish_status,
@@ -26,10 +28,15 @@ from weko_records_ui.permissions import (
     check_content_clickable,
     check_create_usage_report,
     __get_file_permission,
+    check_billing_file_permission,
+    get_file_price,
     check_original_pdf_download_permission,
     file_permission_factory,
     page_permission_factory,
-    is_open_restricted
+    is_open_restricted,
+    check_charge,
+    create_charge,
+    close_charge
 )
 
 
@@ -110,6 +117,75 @@ def test_check_file_download_permission(app, records, users,db_file_permission):
             fjson['accessrole'] = 'open_restricted'
             assert check_file_download_permission(record, fjson, True) == False
             
+
+    itn = ItemTypeName(
+        id=1, name="テストアイテムタイプ", has_site_license=False, is_active=True
+    )
+    obj = ItemType(
+        item_type_name=itn
+        )
+    future_date = datetime(2023,12,31,15,0,0)
+    past_date = datetime(2022,11,30,15,0,0)
+
+    with open("tests/data/record_a.json","r") as fa:
+        record_a = json.load(fa)
+
+    with open("tests/data/fjson_a.json","r") as ra:
+        fjson_a = json.load(ra)
+
+    with open("tests/data/record_b.json","r") as fb:
+        record_b = json.load(fb)
+
+    with open("tests/data/fjson_b.json","r") as rb:
+        fjson_b = json.load(rb)
+
+    with open("tests/data/record_c.json","r") as fc:
+        record_c = json.load(fc)
+
+    with open("tests/data/fjson_c.json","r") as rc:
+        fjson_c = json.load(rc)
+
+    with patch("flask_login.utils._get_user", return_value=users[5]["obj"]):
+
+        with patch("weko_records.api.ItemTypes.get_by_id", return_value=obj):
+
+            # 課金ファイルアクセス権あり
+            with patch("weko_records_ui.permissions.check_billing_file_permission", return_value=True):
+                # 8
+                with patch("weko_records_ui.permissions.to_utc", return_value=future_date):
+                    assert check_file_download_permission(record_a, fjson_a, check_billing_file=True) == True
+                # 10
+                with patch("weko_records_ui.permissions.to_utc", return_value=past_date):
+                    assert check_file_download_permission(record_b, fjson_b, check_billing_file=True) == True
+                # 12
+                assert check_file_download_permission(record_c, fjson_c, check_billing_file=True) == True
+                # 14
+                with patch("weko_records_ui.permissions.to_utc", return_value=future_date):
+                    assert check_file_download_permission(record_a, fjson_a, check_billing_file=False) == False
+                # 16
+                with patch("weko_records_ui.permissions.to_utc", return_value=past_date):
+                    assert check_file_download_permission(record_b, fjson_b, check_billing_file=False) == True
+                # 18
+                assert check_file_download_permission(record_c, fjson_c, check_billing_file=False) == True
+
+            # 課金ファイルアクセス権なし
+            with patch("weko_records_ui.permissions.check_billing_file_permission", return_value=False):
+                # 9
+                with patch("weko_records_ui.permissions.to_utc", return_value=future_date):
+                    assert check_file_download_permission(record_a, fjson_a, check_billing_file=True) == False
+                # 11
+                with patch("weko_records_ui.permissions.to_utc", return_value=past_date):
+                    assert check_file_download_permission(record_b, fjson_b, check_billing_file=True) == True
+                # 13
+                assert check_file_download_permission(record_c, fjson_c, check_billing_file=True) == False
+                # 15
+                with patch("weko_records_ui.permissions.to_utc", return_value=future_date):
+                    assert check_file_download_permission(record_a, fjson_a, check_billing_file=False) == False
+                # 17
+                with patch("weko_records_ui.permissions.to_utc", return_value=past_date):
+                    assert check_file_download_permission(record_b, fjson_b, check_billing_file=False) == True
+                # 19
+                assert check_file_download_permission(record_c, fjson_c, check_billing_file=False) == True
 
 # def check_open_restricted_permission(record, fjson):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_open_restricted_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -725,3 +801,189 @@ def test___get_file_permission(app, records, users,db_file_permission):
     filename =results[0]["filename"]
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         assert __get_file_permission(recid.pid_value, filename) == []
+
+# def check_billing_file_permission(item_id, file_name):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_billing_file_permission -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
+def test_check_billing_file_permission(users, db_item_billing):
+    # 20
+    assert check_billing_file_permission('1', '課金ファイル.txt') == False
+
+    with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
+        # 21
+        with patch("weko_records_ui.permissions.check_charge", return_value='already'):
+            assert check_billing_file_permission('1', '課金ファイル.txt') == True
+        # 22
+        with patch("weko_records_ui.permissions.check_charge", return_value='not_billed'):
+            assert check_billing_file_permission('99', '課金ファイル.txt') == False
+        # 23
+        with patch("weko_records_ui.permissions.check_charge", return_value='not_billed'):
+            assert check_billing_file_permission('1', '課金ファイル.txt') == False
+    # 24
+    with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+        with patch("weko_records_ui.permissions.check_charge", return_value='not_billed'):
+            assert check_billing_file_permission('1', '課金ファイル.txt') == True
+    # 25 
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        with patch("weko_records_ui.permissions.check_charge", return_value='not_billed'):
+            assert check_billing_file_permission('1', '課金ファイル.txt') == False
+
+# def get_file_price(item_id):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_get_file_price -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
+def test_get_file_price(users, db_item_billing, db_admin_settings):
+    # 26
+    assert get_file_price('99') == (None, None)
+    # 27
+    with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
+        assert get_file_price('2') == (None, None)
+    # 28
+    with patch("flask_login.utils._get_user", return_value=users[8]["obj"]):
+        result = get_file_price('2')
+        assert result[0] == 110
+
+# def check_charge(user_id, item_id, file_name):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_charge -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, result",
+    [
+        (0, True),
+        (1, True),
+        (2, True),
+        (3, True),
+        (4, True),
+        (5, True),
+        (6, True),
+        (7, True),
+        (8, True),
+    ],
+)
+def test_check_charge(db_admin_settings, users, id, result):
+
+    res = mock.Mock(spec=Response)
+    settings = {"host": "host", "port": "port", "user": "user", "password": "pass", "use_proxy": True}
+
+    with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+        # 29
+        with patch('weko_records_ui.permissions.requests.get') as requests_get:
+            requests_get.side_effect = Exception
+            assert check_charge('1','1','課金ファイル.txt') == 'api_error'
+        # 30
+        res.json.return_value = {'message':'unknown_user_id'}
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            assert check_charge('1','1','課金ファイル.txt') == 'unknown_user'
+        # 31
+        res.json.return_value = {'message':'this_user_is_not_permit_to_use_credit_card'}
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            assert check_charge('1','1','課金ファイル.txt') == 'shared'
+        # 32
+        res.json.return_value = {'location':'location'}
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            assert check_charge('1','1','課金ファイル.txt') == 'credit_error'
+        # 33
+        res.json.return_value = ['element1','element2']
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            assert check_charge('1','1','課金ファイル.txt') == "already"
+        # 34
+        res.json.return_value = ['']
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            assert check_charge('1','1','課金ファイル.txt') == 'not_billed'
+        # 35
+        res.json.return_value = ['']
+        AdminSettings.update('proxy_settings', settings)
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            assert check_charge('1','1','課金ファイル.txt') == 'not_billed'
+
+# def create_charge(user_id, item_id, file_name, price, title, file_url):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_create_charge -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, result",
+    [
+        (0, True),
+        (1, True),
+        (2, True),
+        (3, True),
+        (4, True),
+        (5, True),
+        (6, True),
+        (7, True),
+        (8, True),
+    ],
+)
+def test_create_charge(db_admin_settings, users, id, result):
+
+    trade_id = 1
+    res = mock.Mock(spec=Response)
+    res.json.return_value = {'trade_id':1}
+    settings = {"host": "host", "port": "port", "user": "user", "password": "pass", "use_proxy": True}
+
+    with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+        # 36
+        with patch('weko_records_ui.permissions.requests.get') as requests_get:
+            requests_get.side_effect = Exception
+            assert create_charge(1, 1, 'filename', 110, 'title', 'fileurl') == 'api_error'
+        # 37
+        res.headers = {'WEKO_CHARGE_STATUS':-128}
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            assert create_charge(1, 1, 'filename', 110, 'title', 'fileurl') == 'credit_error'
+        # 38
+        res.headers = {'WEKO_CHARGE_STATUS':-64}
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            assert create_charge(1, 1, 'filename', 110, 'title', 'fileurl') == 'connection_error'
+        # 39
+        res.headers = {'WEKO_CHARGE_STATUS':0}
+        res.json.return_value = {'trade_id':1, 'charge_status':'1'}
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            assert create_charge(1, 1, 'filename', 110, 'title', 'fileurl') == 'already'
+        # 40
+        res.json.return_value = {'trade_id':trade_id, 'charge_status':'0'}
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            assert create_charge(1, 1, 'filename', 110, 'title', 'fileurl') == str(trade_id)
+        # 41
+        res.json.return_value = 'str'
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            assert create_charge(1, 1, 'filename', 110, 'title', 'fileurl') == 'api_error'
+        # 42
+        res.json.return_value = {'trade_id':trade_id, 'charge_status':'0'}
+        AdminSettings.update('proxy_settings', settings)
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            assert create_charge(1, 1, 'filename', 110, 'title', 'fileurl') == str(trade_id)
+
+# def close_charge(user_id: int, trade_id: int):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_close_charge -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, result",
+    [
+        (0, True),
+        (1, True),
+        (2, True),
+        (3, True),
+        (4, True),
+        (5, True),
+        (6, True),
+        (7, True),
+        (8, True),
+    ],
+)
+def test_close_charge(db_admin_settings, users, id, result):
+
+    res = mock.Mock(spec=Response)
+    res.json.return_value = {'json':'json'}
+    settings = {"host": "host", "port": "port", "user": "user", "password": "pass", "use_proxy": True}
+
+    with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+        # 43
+        with patch('weko_records_ui.permissions.requests.get') as requests_get:
+            requests_get.side_effect = Exception
+            assert close_charge(1, 1) == False
+        # 44
+        res.json.return_value = {'charge_status':'1'}
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            close_charge(1, 1) == True
+        # 45
+        res.json.return_value = {'charge_status':'2'}
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            close_charge(1, 1) == False
+        # 46
+        AdminSettings.update('proxy_settings', settings)
+        res.json.return_value = {'charge_status':'1'}
+        with patch('weko_records_ui.permissions.requests.get', return_value=res):
+            close_charge(1, 1) == True

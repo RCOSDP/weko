@@ -66,7 +66,7 @@ WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
     # "SHIB_ATTR_LOGIN_ID": (False, 'shib_uid'),
     # "SHIB_ATTR_HANDLE": (False, 'shib_handle'),
     'SHIB_ATTR_ROLE_AUTHORITY_NAME': (False, 'shib_role_authority_name'),
-    # "SHIB_ATTR_PAGE_NAME": (False, 'shib_page_name'),
+    'SHIB_ATTR_PAGE_NAME': (False, 'shib_page_name'),
     # "SHIB_ATTR_ACTIVE_FLAG": (False, 'shib_active_flag'),
     'SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG': (False, 'shib_ip_range_flag'),
     'SHIB_ATTR_MAIL': (False, 'shib_mail'),
@@ -78,11 +78,21 @@ WEKO_ACCOUNTS_SHIB_ROLE_RELATION = {
     '管理者': 'System Administrator',
     '図書館員': 'Repository Administrator',
     '教員': 'Contributor',
-    '教官': 'Contributor'
+    '教官': 'Contributor',
+    '事務局': 'Repository Administrator',
+    '事務局２': '',
+    '学会員': '',
+    '会誌購読員': '',
+    '準登録個人': '',
+    '準登録（団体）': '',
+    '論文誌購読員': '',
+    '賛助会員': '',
+    '購読員': '',
+    '非会員': '',
 }
 """Role relation."""
 
-WEKO_ACCOUNTS_GENERAL_ROLE = 'Contributor'
+WEKO_ACCOUNTS_GENERAL_ROLE = ''
 """Default role."""
 
 WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED = True

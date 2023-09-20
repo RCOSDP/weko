@@ -1,9 +1,14 @@
 import pytest
+import uuid
+import json
+import base64
 import copy
-from mock import patch, MagicMock
 from tests.helpers import json_data
-
+from mock import patch, MagicMock
+from werkzeug import ImmutableMultiDict
+from werkzeug.datastructures import MultiDict, CombinedMultiDict
 from invenio_pidstore.models import PersistentIdentifier
+from invenio_accounts.testutils import login_user_via_session
 from weko_records.api import ItemTypeProps, ItemTypes, Mapping
 from weko_records.models import ItemTypeName
 from weko_records.serializers.utils import (
@@ -14,6 +19,7 @@ from weko_records.serializers.utils import (
     get_attribute_schema,
     get_item_type_name_id,
     get_item_type_name,
+    get_wekolog,
     OpenSearchDetailData)
 
 # def get_mapping(item_type_mapping, mapping_type):
@@ -49,6 +55,18 @@ def test_get_metadata_from_map(meta):
     _item_id = 'item_1551264308487'
     result = get_metadata_from_map(meta[0]['item_1551264308487'], _item_id)
     assert result == {'item_1551264308487.subitem_1551255647225': ['タイトル日本語', 'Title'], 'item_1551264308487.subitem_1551255648112': ['ja', 'en']}
+    _item_id = 'item_1551265302121'
+    result = get_metadata_from_map(meta[0]['item_1551265302121'], _item_id)
+    assert result == {'item_1551265302121' : 'testtest'}
+    _item_id = 'pubdate'
+    result = get_metadata_from_map(meta[0]['item_1551265302122'], _item_id)
+    assert result == {'pubdate.key' : 'test1'}
+    result = get_metadata_from_map(meta[0]['item_15512653021233'], _item_id)
+    assert result == {'pubdate.mlt' : 'test'}
+    result = get_metadata_from_map(meta[0]['item_15512653021234'], _item_id)
+    assert result == {'pubdate.key' : ['test1', 'test2', 'test3']}
+    result = get_metadata_from_map(meta[0]['item_15512653021235'], _item_id)
+    assert result == {'pubdate.key.subkey' : 'abcd'}
 
     item_data_1 = {
         "attribute_name": "Title",
@@ -116,6 +134,20 @@ def test_get_item_type_name(db, item_type):
     result = get_item_type_name(2)
     assert result == None
 
+# def get_wekolog(hit, log_term):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_get_wekolog -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_wekolog(db, record1):
+    hit = {'_id': record1[0].object_uuid }
+    result = get_wekolog(hit, '2022-01')
+    assert result == {'terms': '2022-01', 'view': '0', 'download': '0'}
+
+# def get_wekolog(hit, log_term):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_get_wekolog_2 -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_get_wekolog_2(db, record2):
+    hit = {'_id': record2[0].object_uuid }
+    result = get_wekolog(hit, '2022-01')
+    assert result == {'terms': '2022-01', 'view': '0', 'download': '0'}
+
 # class OpenSearchDetailData:
 #     def output_open_search_detail_data(self):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_open_search_detail_data -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -126,11 +158,10 @@ params=[
      "data/record_hit/record_hit1.json",
      True)]
 @pytest.mark.parametrize("render, form, mapping, hit, licence", params)
-def test_open_search_detail_data(app, db, db_index, render, form, mapping, hit, licence):
+def test_open_search_detail_data(app, db, db_index, record1, render, form, mapping, hit, licence):
     def fetcher(obj_uuid, data):
-        assert obj_uuid in ['a', 'b']
+        assert obj_uuid=="1"
         return PersistentIdentifier(pid_type='recid', pid_value=data['pid'])
-
     _item_type_name=ItemTypeName(name="test")
     _item_type = ItemTypes.create(
         name="test",
@@ -140,10 +171,39 @@ def test_open_search_detail_data(app, db, db_index, render, form, mapping, hit, 
         form=json_data(form),
         tag=1
     )
-    _item_type_mapping = Mapping.create(
+    Mapping.create(
         item_type_id=_item_type.id,
         mapping=json_data(mapping)
     )
+    _data = {
+        'lang': 'en',
+        'log_term': '2021-01'
+    }
+    hit_data = json_data(hit)
+    hit_data['_id'] = record1[0].object_uuid
+    _search_result = {'hits': {'total': 1, 'hits': [hit_data]}}
+    detail = OpenSearchDetailData(fetcher, _search_result, 'rss')
+    with app.test_request_context(headers=[('Accept-Language','en')], query_string=_data):
+        res = detail.output_open_search_detail_data()
+        res = res.decode('utf-8')
+        cnt = 1 if res.find('wekolog:terms') else 0
+        cnt += 1 if res.find('wekolog:view') else 0
+        cnt += 1 if res.find('wekolog:download') else 0
+        assert True if cnt == 3 else False
+
+    _data = {
+        'lang': 'en'
+    }
+    _search_result = {'hits': {'total': 1, 'hits': [hit_data]}}
+    detail = OpenSearchDetailData(fetcher, _search_result, 'rss')
+    with app.test_request_context(headers=[('Accept-Language','en')], query_string=_data):
+        res = detail.output_open_search_detail_data()
+        res = res.decode('utf-8')
+        cnt = 1 if res.find('wekolog:terms') == -1 else 0
+        cnt += 1 if res.find('wekolog:view') == -1 else 0
+        cnt += 1 if res.find('wekolog:download') == -1 else 0
+        assert True if cnt == 3 else False
+
     _search_result = {'hits': {'total': 1, 'hits': [json_data(hit)]}}
     data = OpenSearchDetailData(fetcher, _search_result, 'rss')
     with app.test_request_context():

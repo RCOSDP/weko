@@ -1,0 +1,28 @@
+{
+    "date": [
+        {
+            "dateValue": "2024-01-01"
+        }
+    ],
+    "billing": [
+        "billing_file"
+    ],
+    "priceinfo": [
+        {
+            "tax": "include_tax",
+            "price": "110",
+            "billingrole": "System Administrator",
+            "has_role": true
+        }
+    ],
+    "accessrole": "open_date",
+    "version_id": "",
+    "is_thumbnail": false,
+    "future_date_message": "Download is available from 2023/12/31.",
+    "download_preview_message": "Download / Preview is available from 2023/12/31.",
+    "size": 0,
+    "mimetype": "",
+    "filename": "",
+    "file_order": 0,
+    "billing_file_permission": true
+}

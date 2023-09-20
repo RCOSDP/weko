@@ -15,9 +15,8 @@ import json
 from invenio_stats.models import StatsEvents, StatsAggregation, StatsBookmark
 
 from sqlalchemy.exc import UnsupportedCompilationError
-from mock import patch
+from mock import MagicMock, patch
 import datetime
-from invenio_stats.errors import UnknownQueryError
 from invenio_stats.utils import (
     get_anonymization_salt,
     get_geoip,
@@ -25,7 +24,6 @@ from invenio_stats.utils import (
     obj_or_import_string,
     load_or_import_from_config,
     default_permission_factory,
-    weko_permission_factory,
     get_aggregations,
     get_start_end_date,
     agg_bucket_sort,
@@ -40,7 +38,8 @@ from invenio_stats.utils import (
     QueryItemRegReportHelper,
     QueryRankingHelper,
     StatsCliUtil,
-    )
+)
+
 
 # def get_anonymization_salt(ts):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_get_anonymization_salt -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
@@ -166,19 +165,14 @@ def test_is_valid_access(app):
 # class QueryFileReportsHelper(object):
 #     def calc_per_group_counts(cls, group_names, current_stats, current_count):
 #     def calc_file_stats_reports(cls, res, data_list, all_groups):
+#     def calc_billing_file_stats_reports(cls, res, data_list, all_groups):
 #     def calc_file_per_using_report(cls, res, data_list):
 #     def Calculation(cls, res, data_list, all_groups=set()):
 #     def get_file_stats_report(cls, is_billing_item=False, **kwargs):
 #     def get_file_per_using_report(cls, **kwargs):
 #     def get(cls, **kwargs):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_file_reports_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-@pytest.mark.parametrize('aggregated_file_download_events',
-                         [dict(file_number=1,
-                               event_number=1,
-                               start_date=datetime.date(2022, 10, 3),
-                               end_date=datetime.date(2022, 10, 3))],
-                         indirect=['aggregated_file_download_events'])
-def test_query_file_reports_helper(app, event_queues, aggregated_file_download_events):
+def test_query_file_reports_helper(i18n_app, roles, mock_es_execute):
     # calc_per_group_counts
     res = QueryFileReportsHelper.calc_per_group_counts('test1, test1, test2', {}, 1)
     assert res=={'test1': 2, 'test2': 1}
@@ -221,12 +215,63 @@ def test_query_file_reports_helper(app, event_queues, aggregated_file_download_e
     }
     _data_list = []
     _all_group = set()
-    QueryFileReportsHelper.Calculation(_res, _data_list, _all_group)
+    QueryFileReportsHelper.Calculation(_res, _data_list, all_groups=_all_group)
     assert _data_list==[
-        {'group_counts': {'test1': 1, 'test2': 1}, 'file_key': 'test1.pdf', 'index_list': 'index1', 'total': 1, 'admin': 0, 'reg': 0, 'login': 0, 'no_login': 1, 'site_license': 1},
-        {'group_counts': {'test2': 2, 'test3': 2}, 'file_key': 'test2.pdf', 'index_list': 'index2', 'total': 2, 'admin': 0, 'reg': 2, 'login': 2, 'no_login': 0, 'site_license': 0},
-        {'group_counts': {'test3': 3}, 'file_key': 'test3.pdf', 'index_list': 'index3', 'total': 7, 'admin': 3, 'reg': 0, 'login': 7, 'no_login': 0, 'site_license': 0}]
-    assert _all_group=={'test3', 'test1', 'test2'}
+        {'admin': 0, 'file_key': 'test1.pdf', 'group_counts': {'test1': 1, 'test2': 1}, 'index_list': 'index1', 'login': 0, 'no_login': 1, 'reg': 0, 'site_license': 1, 'total': 1},
+        {'admin': 0, 'file_key': 'test2.pdf', 'group_counts': {'test2': 2, 'test3': 2}, 'index_list': 'index2', 'login': 2, 'no_login': 0, 'reg': 2, 'site_license': 0, 'total': 2},
+        {'admin': 3, 'file_key': 'test3.pdf', 'group_counts': {'test3': 3}, 'index_list': 'index3', 'login': 3, 'no_login': 0, 'reg': 0, 'site_license': 0, 'total': 3}]
+    assert _all_group=={'test1', 'test2', 'test3'}
+
+    # Calculation(check billing file download stats)
+    _data_list = []
+    _all_group = set()
+    _res = {
+        'buckets': [
+            {
+                'file_key': 'test1.pdf',
+                'index_list': 'index1',
+                'count': 1,
+                'site_license_flag': 1,
+                'userrole': 'guest',
+                'cur_user_id': '1',
+                'user_group_names': 'test1, test2'
+            },
+            {
+                'file_key': 'test2.pdf',
+                'index_list': 'index2',
+                'count': 2,
+                'site_license_flag': 0,
+                'userrole': 'Contributor',
+                'cur_user_id': '2',
+                'user_group_names': 'test2, test3'
+            },
+            {
+                'file_key': 'test3.pdf',
+                'index_list': 'index3',
+                'count': 3,
+                'site_license_flag': 0,
+                'userrole': 'System Administrator',
+                'cur_user_id': '3',
+                'user_group_names': 'test3'
+            },
+            {
+                'file_key': 'test1.pdf',
+                'index_list': 'index1',
+                'count': 1,
+                'site_license_flag': 0,
+                'cur_user_id': '4',
+                'userrole': 'System Administrator'
+            }
+        ]
+    }
+    with patch('flask_principal.Permission.can', MagicMock(return_value=True)):
+        with patch('elasticsearch_dsl.Search.execute', return_value=mock_es_execute('tests/data/execute_result1.json')):
+            QueryFileReportsHelper.Calculation(_res, _data_list, all_groups=_all_group, event='billing_file_download')
+            assert _data_list==[
+                {'admin': 1, 'file_key': 'test1.pdf', 'group_counts': {'test1': 1, 'test2': 1}, 'index_list': 'index1', 'login': 1, 'no_login': 1, 'reg': 1, 'site_license': 1, 'guest': 1, 'System Administrator': 1, 'Repository Administrator': 0, 'Contributor': 0, 'Community Administrator': 0, 'total': 2},
+                {'admin': 0, 'file_key': 'test2.pdf', 'group_counts': {'test2': 2, 'test3': 2}, 'index_list': 'index2', 'login': 2, 'no_login': 0, 'reg': 0, 'site_license': 0, 'guest': 0, 'System Administrator': 0, 'Repository Administrator': 0, 'Contributor': 2, 'Community Administrator': 0, 'total': 2},
+                {'admin': 3, 'file_key': 'test3.pdf', 'group_counts': {'test3': 3}, 'index_list': 'index3', 'login': 3, 'no_login': 0, 'reg': 0, 'site_license': 0, 'guest': 0, 'System Administrator': 3, 'Repository Administrator': 0, 'Contributor': 0, 'Community Administrator': 0, 'total': 3}]
+            assert _all_group=={'test1', 'test2', 'test3'}
 
     _res = {
         'get-file-download-per-user-report': {

@@ -58,7 +58,7 @@ from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
-from weko_records.models import ItemType
+from weko_records.models import ItemType, ItemBilling
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
 from weko_redis import RedisConnection
 from weko_user_profiles.config import \
@@ -4042,6 +4042,67 @@ def check_doi_validation_not_pass(item_id, activity_id,
             sessionstore.delete(
                 'updated_json_schema_{}'.format(activity_id))
         return False
+
+
+def create_or_update_item_billing(deposit):
+    '''item_billingレコードの作成/更新/削除
+
+    Args:
+        deposit : record metadata
+    '''
+    try:
+        with db.session.begin_nested():
+            item_id = int(float(deposit.get('_deposit').get('pid').get('value')))
+
+            itemBillings = ItemBilling.query.filter_by(item_id=item_id).all()
+            roles = [itemBilling.role_id for itemBilling in itemBillings]
+
+            for k, v in deposit.items():
+                if not isinstance(v, dict):
+                    continue
+                if not v.get('attribute_type') or v.get('attribute_type') != 'file':
+                    continue
+                if not v.get('attribute_value_mlt'):
+                    continue
+                for file in v.get('attribute_value_mlt'):
+                    if file.get('billing') and len(file.get('billing')) > 0 and file.get('billing')[0] == 'billing_file':
+                        if not file.get('priceinfo'):
+                            continue
+                        for priceinfo in file.get('priceinfo'):
+                            role = int(priceinfo.get('billingrole'))
+                            include_tax = 'tax' in priceinfo
+                            price = priceinfo.get('price')
+
+                            if role not in roles:
+                                # レコード作成
+                                itemBillingData = dict(
+                                    item_id=item_id,
+                                    role_id=role,
+                                    include_tax=include_tax,
+                                    price=price,
+                                )
+                                itemBilling = ItemBilling(**itemBillingData)
+                                db.session.add(itemBilling)
+                            else:
+                                # レコード更新
+                                itemBilling = ItemBilling.query.filter_by(item_id=item_id, role_id=role).first()
+                                if not itemBilling:
+                                    continue
+                                itemBilling.include_tax = include_tax
+                                itemBilling.price = price
+                                itemBilling.updated = datetime.utcnow
+                                roles.remove(role)
+
+            # レコード削除
+            for deleteRole in roles:
+                itemBilling = ItemBilling.query.filter_by(item_id=item_id, role_id=deleteRole).first()
+                db.session.delete(itemBilling)
+
+        db.session.commit()
+    except SQLAlchemyError as ex:
+        current_app.logger.debug(ex)
+        db.session.rollback()
+
 
 def make_activitylog_tsv(activities):
     """make tsv for activitiy_log

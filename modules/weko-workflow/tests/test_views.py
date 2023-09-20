@@ -3237,6 +3237,60 @@ def test_withdraw_confirm_passwd_delete_guestlogin(guest, client, users, db_regi
                             assert data["msg"] == msg
                             assert data["data"] == {"redirect": "guest_url"}
 
+
+    if case == "recid is None and record_without_ver_activity_id is not None":
+        with patch('weko_workflow.views.get_activity_id_of_record_without_version', return_value="activity_first_ver.activity_id"):
+            with patch('weko_workflow.views.get_record_without_version'):
+                with patch('weko_workflow.views.get_record_identifier', return_value=None):
+                    with patch('invenio_pidstore.models.PersistentIdentifier.get_by_object'):
+                        with patch('weko_workflow.views.WorkActivity.get_action_identifier_grant', return_value={}):
+                            with patch('weko_workflow.views.IdentifierHandle'):
+                                with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+                                return_value=(roles, action_users)):
+                                    res = guest.post(url, json=input)
+                                    data = response_data(res)
+                                    assert res.status_code == status_code
+                                    assert data["code"] == code
+                                    assert data["msg"] == msg
+
+    if case == "recid is None and record_without_ver_activity_id is None":
+        with patch('weko_workflow.views.get_activity_id_of_record_without_version', return_value=None):
+            with patch('weko_workflow.views.get_record_without_version'):
+                with patch('weko_workflow.views.get_record_identifier', return_value=None):
+                    with patch('invenio_pidstore.models.PersistentIdentifier.get_by_object'):
+                        with patch('weko_workflow.views.WorkActivity.get_action_identifier_grant', return_value={}):
+                            with patch('weko_workflow.views.IdentifierHandle'):
+                                with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+                                return_value=(roles, action_users)):
+                                    res = guest.post(url, json=input)
+                                    data = response_data(res)
+                                    assert res.status_code == status_code
+                                    assert data["code"] == code
+                                    assert data["msg"] == msg
+
+    if case == "DOI Persistent is not exist.":
+        with patch('weko_workflow.views.IdentifierHandle.delete_pidstore_doi', return_value=False):
+            with patch('weko_workflow.views.WorkActivity.get_action_identifier_grant', return_value={}):
+                with patch('weko_workflow.views.IdentifierHandle.__init__', return_value=None):
+                    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+                    return_value=(roles, action_users)):
+                        res = guest.post(url, json=input)
+                        data = response_data(res)
+                        assert res.status_code == status_code
+                        assert data["code"] == code
+                        assert data["msg"] == msg
+
+
+# def get_roles():
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_get_roles -vv -s --cov-branch --cov-report=term --basetemp=.tox/c1/tmp
+def test_get_roles(client, db_register_roles):
+    url = url_for('weko_workflow.get_roles')
+    res = client.get(url)
+    res_json = json.loads(res.data.decode('utf-8'))
+    assert res.status_code == 200
+    assert len(res_json['roles']) == 3
+
+
 def test_download_activitylog_nologin(client,db_register2):
     """_summary_
 

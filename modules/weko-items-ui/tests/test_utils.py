@@ -7528,12 +7528,18 @@ def test_recursive_form(db_itemtype):
 
 # def set_multi_language_name(item, cur_lang):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_set_multi_language_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_set_multi_language_name(db_itemtype):
+def test_set_multi_language_name(db_itemtype, db_itemtype6):
     item_type = db_itemtype['item_type']
     item = item_type.form[1]['items'][1]
     item_pre = copy.deepcopy(item)
-    set_multi_language_name(item,"ja")
+    set_multi_language_name(item, "ja")
     assert item_pre == item
+
+    item_type6 = db_itemtype6['item_type']
+    item6 = item_type6.form[0]
+    set_multi_language_name(item6, "en")
+    assert item6['items'][0]['titleMap'][0]['name'] == "Billing file"
+    assert item6['items'][1]['items'][1]['titleMap'][0]['name'] == "Include tax"
 
 
 # def get_data_authors_prefix_settings():

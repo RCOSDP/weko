@@ -53,6 +53,7 @@ from weko_user_profiles.config import USERPROFILES_LANGUAGE_DEFAULT, \
     USERPROFILES_TIMEZONE_DEFAULT
 from weko_user_profiles.admin import user_profile_adminview
 
+from weko_admin.models import AdminSettings
 
 @pytest.yield_fixture()
 def instance_path():
@@ -354,3 +355,12 @@ def user_profiles(db,users):
     db.session.add(not_validate_language)
     db.session.commit()
     return [all_data,repo_profile,not_validate_language]
+
+
+@pytest.fixture()
+def admin_settings(db):
+    settings = list()
+    settings.append(AdminSettings(id=1, name='ums_management_url', settings={"url": "http://dummy.co.jp/dummy"}))
+    db.session.add_all(settings)
+    db.session.commit()
+    return settings

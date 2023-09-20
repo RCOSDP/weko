@@ -497,6 +497,7 @@ def manual_send_site_license_mail(start_month, end_month):
             if not send_flag:
                 data = {'file_download': 0,
                         'file_preview': 0,
+                        'name': s.organization_name,
                         'record_view': 0,
                         'search': 0,
                         'top_view': 0}
