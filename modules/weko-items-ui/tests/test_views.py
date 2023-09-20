@@ -20645,7 +20645,7 @@ def test_prepare_edit_item_login(client_api, users, id, status_code, db_sessionl
         )
         assert res.status_code == status_code
         assert json.loads(res.data)['msg'] == 'This Item is being edited.'
-    sleep(3)    
+    sleep(3)
 
 
 def test_prepare_edit_item_guest(client_api, users):
