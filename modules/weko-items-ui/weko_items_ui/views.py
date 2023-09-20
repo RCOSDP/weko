@@ -860,6 +860,20 @@ def prepare_edit_item():
     pid_value = post_activity.get('pid_value')
     community = getargs.get('community', None)
 
+    # Cache Storage
+    redis_connection = RedisConnection()
+    sessionstorage = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    if sessionstorage.redis.exists("pid_{}_will_be_edit".format(pid_value)):
+        return jsonify(
+            code=err_code,
+            msg=_('This Item is being edited.')
+        )
+    else:
+        sessionstorage.put(
+            "pid_{}_will_be_edit".format(pid_value),
+            str(current_user.get_id()).encode('utf-8'),
+            ttl_secs=3)
+
     if pid_value:
         record_class = import_string('weko_deposit.api:WekoDeposit')
         resolver = Resolver(pid_type='recid',
