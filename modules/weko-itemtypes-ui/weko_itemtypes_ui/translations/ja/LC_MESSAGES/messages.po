@@ -112,6 +112,10 @@ msgstr "プロパティ"
 msgid "Mapping"
 msgstr "マッピング"
 
+#: weko_itemtypes_ui/admin.py:793
+msgid "RO-Crate Mapping"
+msgstr "RO-Crate マッピング"
+
 #: weko_itemtypes_ui/config.py:48
 msgid "Text Field"
 msgstr "テキストフィールド"

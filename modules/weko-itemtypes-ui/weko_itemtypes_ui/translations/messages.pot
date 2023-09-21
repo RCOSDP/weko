@@ -101,6 +101,10 @@ msgstr ""
 msgid "Mapping"
 msgstr ""
 
+#: weko_itemtypes_ui/admin.py:793
+msgid "RO-Crate Mapping"
+msgstr ""
+
 #: weko_itemtypes_ui/config.py:48
 msgid "Text Field"
 msgstr ""

@@ -22,6 +22,7 @@
 
 import sys
 import io
+import re
 
 from flask import abort, current_app, flash, json, jsonify, redirect, \
     request, session, url_for, make_response, send_file
@@ -721,6 +722,141 @@ class ItemTypeMappingView(BaseView):
         return jsonify(remove_xsd_prefix(jpcoar_lists))
 
 
+class ItemTypeRocrateMappingView(BaseView):
+    REGEX = re.compile(r'(.+)\[[0-9]*\]$')
+
+    @expose('/', methods=['GET'])
+    @expose('/<int:item_type_id>', methods=['GET'])
+    @item_type_permission.require(http_exception=403)
+    def index(self, item_type_id=0):
+        """Renders an item type mapping view.
+
+        :param item_type_id: Item type ID. (Default: 0)
+        :return: The rendered template.
+        """
+        current_app.logger.error('ItemTypeID:{}'.format(item_type_id))
+        try:
+            lists = ItemTypes.get_latest()  # ItemTypes.get_all()
+            if lists is None or len(lists) == 0:
+                return self.render(
+                    current_app.config['WEKO_ITEMTYPES_UI_ADMIN_ERROR_TEMPLATE']
+                )
+            item_type = ItemTypes.get_by_id(item_type_id)
+            if item_type is None:
+                current_app.logger.info(lists[0].item_type[0])
+                return redirect(url_for('itemtypesrocratemapping.index', item_type_id=lists[0].item_type[0].id))
+
+            is_system_admin = False
+            sys_admin = current_app.config['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
+            with db.session.no_autoflush:
+                for role in list(current_user.roles or []):
+                    if role.name == sys_admin:
+                        is_system_admin = True
+                        break
+
+            lang_code = session.get('selected_language', 'en')
+            item_properties = self._get_item_properties(item_type)
+
+            return self.render(
+                current_app.config['WEKO_ITEMTYPES_UI_ADMIN_ROCRATE_MAPPING_TEMPLATE'],
+                lists=lists,
+                item_type_id=item_type_id,
+                item_properties=item_properties,
+                is_system_admin=is_system_admin,
+                lang_code=lang_code
+            )
+        except BaseException:
+            current_app.logger.error('Unexpected error: {}'.format(sys.exc_info()))
+        return abort(400)
+
+    def _get_item_properties(self, item_type):
+        schema_props = item_type.schema.get('properties')
+        cur_lang = current_i18n.language
+
+        keys = ['pubdate']
+        render_table_row = item_type.render.get('table_row')
+        if isinstance(render_table_row, list):
+            keys.extend(render_table_row)
+
+        item_properties = {}
+        for key in keys:
+            schema_prop = schema_props.get(key)
+            form_key = [key]
+            form_prop = self._get_child_form_prop(item_type.form, form_key)
+
+            item_properties[key] = self._get_item_property(schema_prop, form_key, form_prop, cur_lang)
+
+        return item_properties
+
+    def _get_item_property(self, schema_prop, form_key, form_prop, cur_lang):
+        item_property = {}
+        title = self._get_title(schema_prop, form_prop, cur_lang)
+        item_property['title'] = title
+        type = schema_prop.get('type')
+        if type == 'string' or type == ["null", "string"]:
+            item_property['type'] = 'string'
+
+        elif type == 'object':
+            item_property['type'] = 'object'
+            item_property['properties'] = {}
+
+            for child_key, child_schema_prop in schema_prop.get('properties').items():
+                child_form_key = form_key + [child_key]
+                child_form_prop = self._get_child_form_prop(form_prop.get('items', []), child_form_key)
+
+                item_property['properties'][child_key] = self._get_item_property(child_schema_prop, child_form_key, child_form_prop, cur_lang)
+
+        elif type == 'array':
+            item_property['type'] = 'array'
+            item_property['items'] = {}
+            item_property['items']['properties'] = {}
+
+            for child_key, child_schema_prop in schema_prop.get('items').get('properties').items():
+                child_form_key = form_key + [child_key]
+                child_form_prop = self._get_child_form_prop(form_prop.get('items', []), child_form_key)
+
+                item_property['items']['properties'][child_key] = self._get_item_property(child_schema_prop, child_form_key, child_form_prop, cur_lang)
+
+        return item_property
+
+    def _get_title(self, schema_prop, form_prop, cur_lang):
+        title = ''
+        if 'default' != cur_lang:
+            if 'title_i18n' in schema_prop:
+                if cur_lang in schema_prop['title_i18n']:
+                    title = schema_prop['title_i18n'][cur_lang]
+            else:
+                if form_prop:
+                    if 'title_i18n' in form_prop:
+                        if cur_lang in form_prop['title_i18n']:
+                            title = form_prop['title_i18n'][cur_lang]
+
+        if title == '':
+            title = schema_prop.get('title')
+
+        return title
+
+    def _get_child_form_prop(self, forms, form_key):
+        target = {}
+        for form in forms:
+            if 'key' not in form:
+                continue
+            if self._check_form_key(form['key'], form_key):
+                target = form
+                break
+        return target
+
+    def _check_form_key(self, form_key, schema_keys):
+        form_keys = form_key.split('.')
+        if len(form_keys) != len(schema_keys):
+            return False
+        for index, key_name in enumerate(form_keys):
+            key_name = key_name.split('[')[0]
+            if schema_keys[index] != key_name:
+                return False
+        return True
+
+
 itemtype_meta_data_adminview = {
     'view_class': ItemTypeMetaDataView,
     'kwargs': {
@@ -750,8 +886,20 @@ itemtype_mapping_adminview = {
         'endpoint': 'itemtypesmapping'
     }
 }
+
+itemtype_rocrate_mapping_adminview = {
+    'view_class': ItemTypeRocrateMappingView,
+    'kwargs': {
+        'category': _('Item Types'),
+        'name': _('RO-Crate Mapping'),
+        'url': '/admin/itemtypes/rocrate_mapping',
+        'endpoint': 'itemtypesrocratemapping'
+    }
+}
+
 __all__ = (
     'itemtype_meta_data_adminview',
     'itemtype_properties_adminview',
     'itemtype_mapping_adminview',
+    'itemtype_rocrate_mapping_adminview',
 )
