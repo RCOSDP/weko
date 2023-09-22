@@ -519,3 +519,26 @@ msgstr "アイテムタイプ"
 #~ msgid "Input fixed Value"
 #~ msgstr "固定値を入力してください"
 
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Layer"
+msgstr "階層"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Number of layers"
+msgstr "階層数"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Tree structure"
+msgstr "ツリー構造"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Specify language"
+msgstr "言語を指定する"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Specify list index"
+msgstr "リストの番号を指定する"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Value"
+msgstr "値"

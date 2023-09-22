@@ -411,3 +411,27 @@ msgstr ""
 
 msgid "Element"
 msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Layer"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Number of layers"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Tree structure"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Specify language"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Specify list index"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Value"
+msgstr ""

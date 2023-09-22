@@ -1,22 +1,22 @@
 {#
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
-#
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#}
+ # This file is part of WEKO3.
+ # Copyright (C) 2017 National Institute of Informatics.
+ #
+ # WEKO3 is free software; you can redistribute it
+ # and/or modify it under the terms of the GNU General Public License as
+ # published by the Free Software Foundation; either version 2 of the
+ # License, or (at your option) any later version.
+ #
+ # WEKO3 is distributed in the hope that it will be
+ # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ # General Public License for more details.
+ #
+ # You should have received a copy of the GNU General Public License
+ # along with WEKO3; if not, write to the
+ # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ # MA 02111-1307, USA.
+ #}
 
 {%- extends admin_base_template %}
 
@@ -53,7 +53,7 @@
       <div class="form-inline">
         <select id="item-type-lists" class="form-control">
           {%- for list in lists -%}
-          <option value="{{list.item_type.0.id}}" {% if list.item_type.0.id==item_type_id %}{{" selected"}}{% endif %}>
+          <option value="{{list.item_type.0.id}}" {% if list.item_type.0.id == item_type_id %}{{"selected"}}{% endif %}>
             {{list.name}}({{list.item_type.0.tag}})
           </option>
           {%- endfor -%}
@@ -108,7 +108,7 @@
                 </div>
                 <input type="text" class="form-control" name="node-name">
                 <div class="pull-right ten-pixel-left-margin">
-                  <button type="button" class="btn btn-danger" data-action="del_node">
+                  <button type="button" class="btn btn-danger" data-action="del-node">
                     <span class="glyphicon glyphicon-remove"></span>
                   </button>
                 </div>
@@ -117,7 +117,7 @@
               <ul name="node" class="nested active">
                 <li>
                   <div class="list-group-item inline-block button-node ten-pixel-left-margin">
-                    <button type="button" class="btn btn-success" data-action="add_node">
+                    <button type="button" class="btn btn-success" data-action="add-node">
                       <span class="glyphicon glyphicon-plus"></span>&nbsp; {{_('Add')}}
                     </button>
                   </div>
@@ -152,7 +152,7 @@
 
               <li>
                 <div class="list-group-item inline-block button-node ten-pixel-left-margin">
-                  <button type="button" class="btn btn-success" data-action="add_node">
+                  <button type="button" class="btn btn-success" data-action="add-node">
                     <span class="glyphicon glyphicon-plus"></span>&nbsp; {{_('Add')}}
                   </button>
                 </div>
@@ -167,54 +167,160 @@
     <div class="panel panel-info panel-body">
       <label>{{_('Mapping')}}</label>
 
+      <div class="template">
+        <div id="template-mapping-row">
+          <div name="mapping-table-row" class="row margin-h-none">
+            <!-- RO-Crate property -->
+            <div class="col-sm-3 padding-h-none">
+              <div class="col-sm-9 padding-h-none">
+                <div class="form-group">
+                  <select class="form-control" name="rocrate-property-list">
+                    <option value=""></option>
+                    {%- for value in rocrate_properties -%}
+                    <option value="{{value}}">{{value}}</option>
+                    {%- endfor -%}
+                  </select>
+                  <div class="alert alert-danger sub_itemtype_text_warning hide" role="alert">
+                    <strong>{{_(Warning)}}:</strong>{{_('Item type name is blank.')}}
+                  </div>
+                </div>
+              </div>
+              <div class="pull-right ten-pixel-right-margin">
+                <button type="button" class="btn btn-danger" data-action="del-mapping">
+                  <span class="glyphicon glyphicon-remove"></span>
+                </button>
+              </div>
+            </div>
+            <!-- Record metadata property -->
+            <div class="col-sm-9 padding-h-none">
+              <div name="button-row" class="row margin-h-none">
+                <div class="col-sm-12">
+                  <button type="button" class="btn btn-success" data-action="add-metadata-property">
+                    <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add')}}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="template-metadata-property-column">
+          <div name="metadata-property-column" class="row margin-h-none">
+            <div class="row col-sm-12 margin-h-none">
+              <label><input type="checkbox" name="check-language">{{_('Specify language')}}</label>
+            </div>
+            <div name="metadata-property" class="row margin-h-none">
+              <div class="col-sm-11 metadata-property">
+                <div name="metadata-property-item" class="form-group ten-pixel-right-margin">
+                  <select class="form-control inline-block" name="metadata-select">
+                    <option value=""></option>
+                    {%- for key, value in item_properties.items() -%}
+                    <option value="{{key}}">{{value['title']}}</option>
+                    {%- endfor -%}
+                  </select>
+                  <input type="number" class="form-control inline-block invisible" min="0">
+                  <label class="check block invisible"><input type="checkbox" name="check-list-index">{{_('Specify list index')}}</label>
+                </div>
+              </div>
+              <div class="col-sm-1">
+                <div class="pull-right">
+                  <button type="button" class="btn btn-danger" data-action="del-metadata-property">
+                    <span class="glyphicon glyphicon-remove"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div name="metadata-property-with-lang" class="row margin-h-none hide">
+              <div class="col-sm-11 metadata-property">
+                <div>
+                  <label class="lang-label padding-h-none block">{{_('Value')}}</label>
+                  <label class="lang-label padding-h-none block">{{_('Language')}}</label>
+                </div>
+                <div name="metadata-property-item-with-lang">
+                  <div class="form-group block ten-pixel-right-margin">
+                    <select name="metadata-value-select" class="form-control">
+                      <option value=""></option>
+                      {%- for key, value in item_properties.items() -%}
+                      <option value="{{key}}">{{value['title']}}</option>
+                      {%- endfor -%}
+                    </select>
+                  </div>
+                  <div class="form-group block ten-pixel-right-margin">
+                    <select name="metadata-lang-select" class="form-control">
+                      <option value=""></option>
+                      {%- for key, value in item_properties.items() -%}
+                      <option value="{{key}}">{{value['title']}}</option>
+                      {%- endfor -%}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-1">
+                <div class="pull-right">
+                  <button type="button" class="btn btn-danger" data-action="del-metadata-property">
+                    <span class="glyphicon glyphicon-remove"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="template-metadata-property-item">
+          <div name="metadata-property-item" class="form-group ten-pixel-right-margin">
+            <select class="form-control inline-block" name="metadata-select">
+              <option value=""></option>
+            </select>
+            <input type="number" class="form-control inline-block invisible" min="0">
+            <label class="check block invisible"><input type="checkbox" name="check-list-index">{{_('Specify list index')}}</label>
+          </div>
+        </div>
+
+        <div id="template-metadata-property-item-with-lang">
+          <div name="metadata-property-item-with-lang">
+            <div class="form-group block ten-pixel-right-margin">
+              <select name="metadata-value-select" class="form-control invisible">
+                <option value=""></option>
+              </select>
+            </div>
+            <div class="form-group block ten-pixel-right-margin">
+              <select name="metadata-lang-select" class="form-control invisible">
+                <option value=""></option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Table header -->
-      <div class="panel-body header-child-list">
+      <div class="panel-body header-mapping-list">
         <!-- RO-Crate property -->
         <div class="col-sm-3 padding-h-none">
-          <label id="sub-item-type-lists-label">{{_('Element')}}&nbsp;({{_('Child')}})</label>
+          <label id="rocrate-property-label"></label>
         </div>
         <!-- Record metadata property -->
         <div class="col-sm-9 padding-h-none">
-          <label id="sub-jpcoar-lists-label">{{_('Schema')}}&nbsp;({{_('Child')}})</label>
+          <label id="metadata-property-label"></label>
           <div class="pull-right ten-pixel-left-margin">
-            <button type="button" id="add-mapping" class="btn btn-success">
+            <button type="button" class="btn btn-success" data-action="add-mapping">
               <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add')}}
             </button>
           </div>
         </div>
       </div>
 
-      <div class="template">
-        <div name="metadata-property-item" class="form-group ten-pixel-right-margin">
-          <select class="form-control inline-block" name="metadata-select">
-            <option value=""></option>
-          </select>
-          <input type="number" class="form-control inline-block invisible" min="0">
-          <label class="check block invisible"><input type="checkbox" name="check-list-index">リストの番号を指定する</label>
-        </div>
-        <div name="metadata-property-item-with-lang">
-          <div class="form-group block ten-pixel-right-margin">
-            <select class="form-control" name="metadata-value-select">
-              <option value=""></option>
-            </select>
-          </div>
-          <div class="form-group block ten-pixel-right-margin">
-            <select class="form-control" name="metadata-lang-select">
-              <option value=""></option>
-            </select>
-          </div>
-        </div>
-      </div>
-
       <!-- Table row -->
-      <div class="panel-body body-child-list">
-        <div class="row margin-h-none">
+      <div id="mapping-table" class="panel-body body-mapping-list">
+        <div name="mapping-table-row" class="row margin-h-none">
           <!-- RO-Crate property -->
           <div class="col-sm-3 padding-h-none">
             <div class="col-sm-9 padding-h-none">
               <div class="form-group">
                 <select class="form-control" name="rocrate-property-list">
                   <option value=""></option>
+                  {%- for value in rocrate_properties -%}
+                  <option value="{{value}}">{{value}}</option>
+                  {%- endfor -%}
                 </select>
                 <div class="alert alert-danger sub_itemtype_text_warning hide" role="alert">
                   <strong>{{_(Warning)}}:</strong>{{_('Item type name is blank.')}}
@@ -222,7 +328,7 @@
               </div>
             </div>
             <div class="pull-right ten-pixel-right-margin">
-              <button type="button" class="btn btn-danger" data-action="del_mapping">
+              <button type="button" class="btn btn-danger" data-action="del-mapping">
                 <span class="glyphicon glyphicon-remove"></span>
               </button>
             </div>
@@ -231,7 +337,7 @@
           <div class="col-sm-9 padding-h-none">
             <div name="metadata-property-column" class="row margin-h-none">
               <div class="row col-sm-12 margin-h-none">
-                <label><input type="checkbox" name="check-language">言語を指定する</label>
+                <label><input type="checkbox" name="check-language">{{_('Specify language')}}</label>
               </div>
               <div name="metadata-property" class="row margin-h-none">
                 <div class="col-sm-11 metadata-property">
@@ -243,12 +349,12 @@
                       {%- endfor -%}
                     </select>
                     <input type="number" class="form-control inline-block invisible" min="0">
-                    <label class="check block invisible"><input type="checkbox" name="check-list-index">リストの番号を指定する</label>
+                    <label class="check block invisible"><input type="checkbox" name="check-list-index">{{_('Specify list index')}}</label>
                   </div>
                 </div>
                 <div class="col-sm-1">
                   <div class="pull-right">
-                    <button type="button" class="btn btn-danger" data-action="del_record_property">
+                    <button type="button" class="btn btn-danger" data-action="del-metadata-property">
                       <span class="glyphicon glyphicon-remove"></span>
                     </button>
                   </div>
@@ -257,12 +363,12 @@
               <div name="metadata-property-with-lang" class="row margin-h-none hide">
                 <div class="col-sm-11 metadata-property">
                   <div>
-                    <label class="lang-label padding-h-none block">値</label>
+                    <label class="lang-label padding-h-none block">{{_('Value')}}</label>
                     <label class="lang-label padding-h-none block">{{_('Language')}}</label>
                   </div>
                   <div name="metadata-property-item-with-lang">
                     <div class="form-group block ten-pixel-right-margin">
-                      <select class="form-control" name="metadata-value-select">
+                      <select name="metadata-value-select" class="form-control">
                         <option value=""></option>
                         {%- for key, value in item_properties.items() -%}
                         <option value="{{key}}">{{value['title']}}</option>
@@ -270,7 +376,7 @@
                       </select>
                     </div>
                     <div class="form-group block ten-pixel-right-margin">
-                      <select class="form-control" name="metadata-lang-select">
+                      <select name="metadata-lang-select" class="form-control">
                         <option value=""></option>
                         {%- for key, value in item_properties.items() -%}
                         <option value="{{key}}">{{value['title']}}</option>
@@ -281,16 +387,16 @@
                 </div>
                 <div class="col-sm-1">
                   <div class="pull-right">
-                    <button type="button" class="btn btn-danger" data-action="del_record_property">
+                    <button type="button" class="btn btn-danger" data-action="del-metadata-property">
                       <span class="glyphicon glyphicon-remove"></span>
                     </button>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="row margin-h-none">
+            <div name="button-row" class="row margin-h-none">
               <div class="col-sm-12">
-                <button type="button" class="btn btn-success" data-action="add_metadata_property">
+                <button type="button" class="btn btn-success" data-action="add-metadata-property">
                   <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add')}}
                 </button>
               </div>
