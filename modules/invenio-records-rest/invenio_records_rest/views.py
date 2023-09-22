@@ -849,22 +849,24 @@ class RecordsListResource(ContentNegotiatedMethodView):
             record = self.record_class.create(data, id_=record_uuid)
 
             db.session.commit()
+
+            # Index the record
+            if self.indexer_class:
+                self.indexer_class().index(record)
+
+            response = self.make_response(
+                pid, record, 201, links_factory=self.item_links_factory)
+
+            # Add location headers
+            endpoint = '.{0}_item'.format(
+                current_records_rest.default_endpoint_prefixes[pid.pid_type])
+            location = url_for(endpoint, pid_value=pid.pid_value, _external=True)
+            response.headers.extend(dict(location=location))
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(e)
-
-        # Index the record
-        if self.indexer_class:
-            self.indexer_class().index(record)
-
-        response = self.make_response(
-            pid, record, 201, links_factory=self.item_links_factory)
-
-        # Add location headers
-        endpoint = '.{0}_item'.format(
-            current_records_rest.default_endpoint_prefixes[pid.pid_type])
-        location = url_for(endpoint, pid_value=pid.pid_value, _external=True)
-        response.headers.extend(dict(location=location))
+            response = self.make_response(None, None, 500)
+        
         return response
 
 
@@ -933,12 +935,12 @@ class RecordResource(ContentNegotiatedMethodView):
                 if not rec_pid.is_deleted():
                     rec_pid.delete()
             db.session.commit()
+
+            if self.indexer_class:
+                self.indexer_class().delete(record)
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(e)
-
-        if self.indexer_class:
-            self.indexer_class().delete(record)
 
         return '', 204
 
@@ -1000,14 +1002,19 @@ class RecordResource(ContentNegotiatedMethodView):
 
         self.check_etag(str(record.revision_id))
         try:
-            record = record.patch(data)
-        except (JsonPatchException, JsonPointerException):
-            raise PatchJSONFailureRESTError()
+            try:
+                record = record.patch(data)
+            except (JsonPatchException, JsonPointerException):
+                raise PatchJSONFailureRESTError()
 
-        record.commit()
-        db.session.commit()
-        if self.indexer_class:
-            self.indexer_class().index(record)
+            record.commit()
+            db.session.commit()
+
+            if self.indexer_class:
+                self.indexer_class().index(record)
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
 
         return self.make_response(
             pid, record, links_factory=self.links_factory)
@@ -1050,12 +1057,13 @@ class RecordResource(ContentNegotiatedMethodView):
             record.update(data)
             record.commit()
             db.session.commit()
+
+            if self.indexer_class:
+                self.indexer_class().index(record)
         except BaseException as e:
             db.session.rollback()
             current_app.logger.error(traceback.format_exc())
 
-        if self.indexer_class:
-            self.indexer_class().index(record)
         return self.make_response(
             pid, record, links_factory=self.links_factory)
 

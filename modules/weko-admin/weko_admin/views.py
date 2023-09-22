@@ -208,7 +208,7 @@ def save_lang_list():
     result = 'success'
     data = request.get_json()
     try:
-        result = update_admin_lang_setting(data)
+        update_admin_lang_setting(data)
         db.session.commit()
     except Exception as e:
         db.session.rollback()

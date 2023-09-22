@@ -175,8 +175,12 @@ def client_view(client):
 
     form = ClientForm(request.form, obj=client)
     if form.validate_on_submit():
-        form.populate_obj(client)
-        db.session.commit()
+        try:
+            form.populate_obj(client)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
 
     return render_template(
         'invenio_oauth2server/settings/client_view.html',

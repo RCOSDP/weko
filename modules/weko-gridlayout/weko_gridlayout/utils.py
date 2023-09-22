@@ -1076,7 +1076,7 @@ class WidgetBucket:
             db.session.rollback()
             current_app.logger.error(ex)
             rtn['status'] = False
-            rtn['msg'] = str(ex.errors)
+            rtn['msg'] = str(ex)
             return rtn
 
     def get_file(self, file_name, community_id=0):

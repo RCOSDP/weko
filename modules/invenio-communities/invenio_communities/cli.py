@@ -74,7 +74,7 @@ def addlogo(community_id, logo):
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        click.secho(e.errors, fg='red')
+        click.secho(e, fg='red')
 
 
 @communities.command()
@@ -95,10 +95,11 @@ def request(community_id, record_id, accept):
             InclusionRequest.create(community=c, record=record,
                                     notify=False)
         db.session.commit()
-        RecordIndexer().index_by_id(record.id)
+        RecordIndexer().index_by_id(record_id)
     except Exception as e:
         db.session.rollback()
-        click.secho(e.errors, fg='red')
+        RecordIndexer().delete_by_id(record_id)
+        click.secho(e, fg='red')
 
 
 @communities.command()
@@ -113,7 +114,8 @@ def remove(community_id, record_id):
         record = Record.get_record(record_id)
         c.remove_record(record)
         db.session.commit()
-        RecordIndexer().index_by_id(record_id)
+        RecordIndexer().delete_by_id(record_id)
     except Exception as e:
         db.session.rollback()
-        click.secho(e.errors, fg='red')
+        RecordIndexer().index_by_id(record_id)
+        click.secho(e, fg='red')

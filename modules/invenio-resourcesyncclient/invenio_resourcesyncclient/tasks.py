@@ -122,8 +122,8 @@ def run_sync_import(id):
 
                         if len(record) == 1:
                             process_item(record[0], resync, counter)
+                            db.session.commit()
                             successful.append(i)
-                        db.session.commit()
                     except Exception as ex:
                         db.session.rollback()
                         current_app.logger.exception(

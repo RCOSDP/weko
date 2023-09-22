@@ -92,6 +92,8 @@ def create():
     except Exception as ex:
         session.rollback()
         current_app.logger.error(ex)
+        return jsonify(msg=_('Failed')), 500
+
     return jsonify(msg=_('Success'))
 
 
@@ -128,6 +130,7 @@ def update_author():
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error(ex)
+        return jsonify(msg=_('Failed')), 500
 
     return jsonify(msg=_('Success'))
 
@@ -166,6 +169,7 @@ def delete_author():
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error(ex)
+        return jsonify(msg=_('Failed')), 500
 
     return jsonify(msg=_('Success'))
 

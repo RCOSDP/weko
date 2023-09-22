@@ -45,9 +45,13 @@ class MailConfig(db.Model):
                 db.session.commit()
             except:
                 db.session.rollback()
-        cfg = pickle.loads(pickle.dumps(cls.query.get(1).__dict__))
-        cfg.pop('id')
-        cfg.pop('_sa_instance_state')
+        data = cls.query.get(1)
+        if data:
+            cfg = pickle.loads(pickle.dumps(data.__dict__))
+            cfg.pop('id')
+            cfg.pop('_sa_instance_state')
+        else:
+            cfg = {}
         return cfg
 
     @classmethod

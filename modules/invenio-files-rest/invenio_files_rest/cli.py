@@ -40,7 +40,7 @@ def touch():
         click.secho(str(bucket), fg='green')
     except Exception as e:
         db.session.rollback()
-        click.secho(e.errors, fg='red')
+        click.secho(e, fg='red')
 
 
 @bucket.command()
@@ -61,7 +61,7 @@ def cp(source, bucket, checksum, key_prefix):
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        click.secho(e.errors, fg='red')
+        click.secho(e, fg='red')
 
 
 @files.command()
@@ -79,4 +79,4 @@ def location(name, uri, default):
         click.secho(str(location), fg='green')
     except Exception as e:
         db.session.rollback()
-        click.secho(e.errors, fg='red')
+        click.secho(e, fg='red')

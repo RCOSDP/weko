@@ -1344,6 +1344,7 @@ def next_action(activity_id='0', action_id=0):
         next_flow_action = flow.get_next_flow_action(
             activity_detail.flow_define.flow_id, action_id, action_order)
         if not isinstance(next_flow_action, list) or len(next_flow_action) <= 0:
+            db.session.rollback()
             current_app.logger.error("next_action: can not get next_flow_action")
             res = ResponseMessageSchema().load({"code":-2,"msg":"can not get next_flow_action"})
             return jsonify(res.data), 500
@@ -1356,6 +1357,7 @@ def next_action(activity_id='0', action_id=0):
             current_flow_action = flow.get_flow_action_detail(
                 activity_detail.flow_define.flow_id, action_id, action_order)
             if current_flow_action is None:
+                db.session.rollback()
                 current_app.logger.error("next_action: can not get current_flow_action")
                 res = ResponseMessageSchema().load({"code":-1, "msg":"can not get curretn_flow_action"})
                 return jsonify(res.data), 500
@@ -1364,6 +1366,7 @@ def next_action(activity_id='0', action_id=0):
                 next_action_order)
 
             if next_action_detail is None:
+                db.session.rollback()
                 current_app.logger.error("next_action: can not get next_action_detail")
                 res = ResponseMessageSchema().load({"code":-2, "msg":"can not get next_action_detail"})
                 return jsonify(res.data), 500
@@ -1401,6 +1404,7 @@ def next_action(activity_id='0', action_id=0):
                     next_action_handler = current_flow_action.action_roles[
                         0].action_user
             if next_action_handler is None:
+                db.session.rollback()
                 current_app.logger.error("next_action: can not get next_action_handler")
                 res = ResponseMessageSchema().load({"code":-2, "msg":"can not get next_action_handler"})
                 return jsonify(res.data), 500
@@ -1653,6 +1657,7 @@ def next_action(activity_id='0', action_id=0):
                         item_title=activity_detail.title
                     )
             except BaseException:
+                db.session.rollback()
                 abort(500, 'MAPPING_ERROR')
         else:
             work_activity.upt_activity_action(
@@ -1668,6 +1673,8 @@ def next_action(activity_id='0', action_id=0):
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(e)
+        res = ResponseMessageSchema().load({"code":-2, "msg":""})
+        return jsonify(res.data), 500
 
     # delete session value
     if session.get('itemlogin_id'):
@@ -2137,6 +2144,7 @@ def cancel_action(activity_id='0', action_id=0):
                 action_status=ActionStatusPolicy.ACTION_DOING,
                 action_order=activity_detail.action_order)
             res = ResponseMessageSchema().load({"code":-1, "msg":'Error! Cannot process quit activity!'})
+            db.session.rollback()
             return jsonify(res.data), 500
 
         if session.get("guest_url"):
@@ -2881,11 +2889,13 @@ def clear_activitylog():
         del_activity = activity.get_activity_by_id(activity_id=request.args.get('activity_id'))
         if del_activity == None:
             return jsonify(code=-1, msg='no activity error') ,400
-        if del_activity.activity_status in [ActivityStatusPolicy.ACTIVITY_MAKING, ActivityStatusPolicy.ACTIVITY_BEGIN]:
-            result = _quit_activity(del_activity)
-            if not result:
-                return jsonify(code=-1, msg=str(DeleteActivityFailedRESTError())) ,400         
         try:
+            if del_activity.activity_status in [ActivityStatusPolicy.ACTIVITY_MAKING, ActivityStatusPolicy.ACTIVITY_BEGIN]:
+                result = _quit_activity(del_activity)
+                if not result:
+                    db.session.rollback()
+                    return jsonify(code=-1, msg=str(DeleteActivityFailedRESTError())) ,400
+
             with db.session.begin_nested():
                 workflow_activity_action.query.filter_by(activity_id=del_activity.activity_id).delete()                
                 db.session.delete(del_activity)
@@ -2903,13 +2913,14 @@ def clear_activitylog():
         if not activities:
             return jsonify(code=-1, msg='no activity error') ,400
 
-        for del_activity in activities:
-            if del_activity.activity_status in [ActivityStatusPolicy.ACTIVITY_MAKING, ActivityStatusPolicy.ACTIVITY_BEGIN]:
-                result = _quit_activity(del_activity)
-                if not result:
-                   return jsonify(code=-1, msg=str(DeleteActivityFailedRESTError())) ,400 
+        try:
+            for del_activity in activities:
+                if del_activity.activity_status in [ActivityStatusPolicy.ACTIVITY_MAKING, ActivityStatusPolicy.ACTIVITY_BEGIN]:
+                    result = _quit_activity(del_activity)
+                    if not result:
+                        db.session.rollback()
+                        return jsonify(code=-1, msg=str(DeleteActivityFailedRESTError())) ,400 
 
-        try:   
             with db.session.begin_nested():
                 for activty in activities:
                     workflow_activity_action.query.filter_by(activity_id=activty.activity_id).delete()                
