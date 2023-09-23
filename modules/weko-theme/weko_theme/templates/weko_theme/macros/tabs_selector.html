@@ -30,7 +30,7 @@
     <li role="presentation" {% if tab_value=='flow' %}class="active"{% endif %}><a href="{{url_for('weko_workflow.index')}}">{{ _('WorkFlow') }}</a></li>
     {%- endif %}
     {% if display_community %}
-    <li role="presentation" {% if tab_value=='community' %}class="active"{% endif %}><a href="{{url_for('invenio_communities.community_list')}}">{{ _('Communities') }}</a></li>
+    <li role="presentation" {% if tab_value=='community' %}class="active"{% endif %}><a href="{{url_for('invenio_communities.community_list')}}">{{ _('Universties') }}</a></li>
     {% endif %}
   {%- endif %}
   <li role="presentation" class="{{ check_ranking_show() }} {% if tab_value=='rank' %}active{% endif %}"><a href="{{url_for('weko_items_ui.ranking')}}">{{ _('Ranking') }}</a></li>
