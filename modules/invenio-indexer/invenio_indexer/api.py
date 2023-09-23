@@ -14,7 +14,7 @@ import copy
 import traceback
 from contextlib import contextmanager
 import click
-
+import json
 import pytz
 from celery import current_app as current_celery_app
 from elasticsearch.helpers import bulk
@@ -380,7 +380,11 @@ class RecordIndexer(object):
 
         arguments = {}
         body = self._prepare_record(record, index, doc_type, arguments)
-        if deleteFile:
+        body_size = len(json.dumps(body))
+        max_body_size = current_app.config['INDEXER_MAX_BODY_SIZE']
+
+        
+        if deleteFile or (body_size>max_body_size):
             if 'content' in body:
                 for i in range(len(body['content'])):
                     body['content'][i]['file'] = ""
