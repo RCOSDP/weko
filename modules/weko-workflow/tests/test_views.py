@@ -33,6 +33,7 @@ from mock import patch
 from flask import Flask, json, jsonify, url_for, session, make_response, current_app
 from flask_babelex import gettext as _
 from flask_security import current_user
+from flask_login import logout_user
 from invenio_db import db
 from sqlalchemy import func
 from datetime import datetime
@@ -58,6 +59,7 @@ from marshmallow.exceptions import ValidationError
 from weko_records_ui.models import FilePermission
 from weko_records.models import ItemMetadata
 from weko_workflow.schema.marshmallow import SaveActivitySchema
+from weko_items_ui.utils import update_action_handler
 
 
 def response_data(response):
@@ -3515,41 +3517,14 @@ def test_withdraw_confirm_passwd_delete_guestlogin(guest, client, users, db_regi
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_check_authority_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_check_authority_action(app, client, users, db_register, mocker):
     current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'] = False
-    """
-    Check authority.のケースを追加する
-    from flask_login import LoginManager, AnonymousUserMixin, current_user
+    # ログアウトしている場合、1
+    with app.test_request_context():
+        logout_user()
+        assert 1 == check_authority_action(activity_id='11', 
+                            action_id=0, 
+                            contain_login_item_application=False, 
+                            action_order=0)
 
-    # current_user.is_authenticated = False
-    class CustomAnonymousUser(AnonymousUserMixin):
-        @property
-        def id(self):
-            return 0
-        @property
-        def username(self):
-            return "sample"
-        @property
-        def email(self):
-            return "sample@test.co.jp"
-        @property
-        def is_authenticated(self):
-            return False
-        
-    app.config["SECRET_KEY"] = "sample1202"
-    login_manager = LoginManager()
-    login_manager.init_app(app)
-    login_manager.anonymous_user = CustomAnonymousUser
-
-    print(f'flask_login.current_user = {current_user}')
-    ret = check_authority_action(activity_id='11', 
-                        action_id=0, 
-                        contain_login_item_application=False, 
-                        action_order=0)
-    print(f'ret = {ret}')
-    assert 1 == check_authority_action(activity_id='11', 
-                        action_id=0, 
-                        contain_login_item_application=False, 
-                        action_order=0)
-    """
     # ログインユーザーが、登録ユーザーでない場合 admin
     with patch("flask_login.utils._get_user",return_value=users[2]["obj"]):
         assert 0 == check_authority_action(activity_id='11', 
@@ -3592,8 +3567,6 @@ def test_check_authority_action(app, client, users, db_register, mocker):
                             contain_login_item_application=False, 
                             action_order=1)
     
-    #TODO postgresql.JSONを使用している為テスト実施不可(テストのエンジンはsqLiteの為)
-    """
     # ログインユーザーが、登録ユーザーでない場合 current user_id=6 shared_user_ids=[2,4]
     with patch("flask_login.utils._get_user",return_value=users[4]["obj"]):
         mocker.patch("weko_workflow.api.WorkActivity.get_activity_action_role",return_value=({'allow':[],'deny':[]}, {'allow':[],'deny':[]}))
@@ -3606,15 +3579,72 @@ def test_check_authority_action(app, client, users, db_register, mocker):
                             action_id=3, 
                             contain_login_item_application=False, 
                             action_order=2)
+        
+        mocker.patch("weko_workflow.api.WorkActivity.get_activity_action_role",return_value=({'allow':[],'deny':[5]}, {'allow':[],'deny':[]}))
+        assert 1 == check_authority_action(activity_id='11', 
+                            action_id=3, 
+                            contain_login_item_application=False, 
+                            action_order=1)
     
     # ログインユーザーが、登録ユーザーでない場合 repoadmin shared_user_ids=[2,4]
-    with patch("flask_login.utils._get_user",return_value=users[1]["obj"]):
+    with patch("flask_login.utils._get_user",return_value=users[1]["obj"]): # cur_user=6
         mocker.patch("weko_workflow.api.WorkActivity.get_activity_action_role",return_value=({'allow':[],'deny':[]}, {'allow':[],'deny':[]}))
         assert 0 == check_authority_action(activity_id='11', 
                             action_id=3, 
                             contain_login_item_application=False, 
                             action_order=1)
-    """
+
+    with patch("flask_login.utils._get_user",return_value=users[0]["obj"]): # cur_user=2  activity.activity_login_user=2
+        mocker.patch("weko_workflow.api.WorkActivity.get_activity_action_role",return_value=({'allow':[],'deny':[]}, {'allow':[],'deny':[]}))
+        assert 0 == check_authority_action(activity_id='11', 
+                            action_id=3, 
+                            contain_login_item_application=False, 
+                            action_order=1)
+
+    with patch("flask_login.utils._get_user",return_value=users[4]["obj"]): # cur_user=2  activity.activity_login_user=2
+        mocker.patch("weko_workflow.api.WorkActivity.get_activity_action_role",return_value=({'allow':[],'deny':[]}, {'allow':[],'deny':[]}))
+        current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'] = True
+        assert 1 == check_authority_action(activity_id='11', 
+                            action_id=3, 
+                            contain_login_item_application=False, 
+                            action_order=1)
+        # ItemMetadataあり
+        activity = Activity.query.filter_by(activity_id='11').first()
+        im = ItemMetadata.query.filter_by(id=activity.item_id).one_or_none()
+        im.json['shared_user_ids'] = [1,2,3,4,5,6]
+        assert 0 == check_authority_action(activity_id='11', 
+                            action_id=3, 
+                            contain_login_item_application=False, 
+                            action_order=1)
+        im.json['shared_user_ids'] = []
+        im.json['owner'] = users[4]['id']
+        assert 0 == check_authority_action(activity_id='11', 
+                            action_id=3, 
+                            contain_login_item_application=False, 
+                            action_order=1)
+        im.json['shared_user_ids'] = []
+        im.json['owner'] = -1
+        update_action_handler('2', 1, users[4]["id"])
+        assert 0 == check_authority_action(activity_id='2', 
+                            action_id=1, 
+                            contain_login_item_application=True, 
+                            action_order=1)
+        
+        # ItemMetadataなし
+        activity = Activity.query.filter_by(activity_id='11').first()
+        activity.temp_data = json.dumps({'metainfo':{'shared_user_ids':[{'user': 1},{'user': users[4]['id']}], 'owner': 1}})
+        activity.item_id=str(uuid.uuid4())
+        assert 0 == check_authority_action(activity_id='11', 
+                            action_id=3, 
+                            contain_login_item_application=False, 
+                            action_order=1)
+        activity.temp_data = json.dumps({'metainfo':{'shared_user_ids':[{'user': 1}], 'owner': users[4]['id']}})
+        activity.item_id=str(uuid.uuid4())
+        assert 0 == check_authority_action(activity_id='11', 
+                            action_id=3, 
+                            contain_login_item_application=False, 
+                            action_order=1)
+    
 # def weko_workflow.schema.marshmallow.SaveActivitySchema(json):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_SaveActivitySchema -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_SaveActivitySchema():
