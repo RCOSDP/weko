@@ -22,7 +22,6 @@
 
 import sys
 import io
-import re
 
 from flask import abort, current_app, flash, json, jsonify, redirect, \
     request, session, url_for, make_response, send_file
@@ -36,6 +35,7 @@ from weko_admin.models import AdminSettings, BillingPermission
 from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
     ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping_inactive_show_list
+from weko_records_ui.models import RocrateMapping
 from weko_schema_ui.api import WekoSchema
 from weko_search_ui.utils import get_key_by_property
 from weko_workflow.api import WorkFlow
@@ -723,8 +723,6 @@ class ItemTypeMappingView(BaseView):
 
 
 class ItemTypeRocrateMappingView(BaseView):
-    REGEX = re.compile(r'(.+)\[[0-9]*\]$')
-
     @expose('/', methods=['GET'])
     @expose('/<int:item_type_id>', methods=['GET'])
     @item_type_permission.require(http_exception=403)
@@ -757,18 +755,52 @@ class ItemTypeRocrateMappingView(BaseView):
             lang_code = session.get('selected_language', 'en')
             item_properties = self._get_item_properties(item_type)
 
+            record = RocrateMapping.query.filter_by(item_type_id=item_type_id).one_or_none()
+            rocrate_mapping = record.mapping if record is not None else ''
+
             return self.render(
                 current_app.config['WEKO_ITEMTYPES_UI_ADMIN_ROCRATE_MAPPING_TEMPLATE'],
                 lists=lists,
                 item_type_id=item_type_id,
                 item_properties=item_properties,
                 rocrate_properties=current_app.config['WEKO_ITEMTYPES_UI_DATASET_PROPERTIES'],
+                rocrate_mapping=rocrate_mapping,
                 is_system_admin=is_system_admin,
                 lang_code=lang_code
             )
         except BaseException:
             current_app.logger.error('Unexpected error: {}'.format(sys.exc_info()))
         return abort(400)
+
+    @expose('', methods=['POST'])
+    @item_type_permission.require(http_exception=403)
+    def register(self):
+        """Register an item type mapping."""
+        if request.headers['Content-Type'] != 'application/json':
+            current_app.logger.debug(request.headers['Content-Type'])
+            return jsonify(msg=_('Header Error'))
+
+        try:
+            data = request.get_json()
+            item_type_id = data.get('item_type_id')
+            mapping = data.get('mapping')
+
+            with db.session.begin_nested():
+                record = RocrateMapping.query.filter_by(item_type_id=item_type_id).one_or_none()
+                if record is None:
+                    # Create data
+                    record = RocrateMapping(item_type_id, mapping)
+                    db.session.add(record)
+                else:
+                    # Update data
+                    record.mapping = mapping
+            db.session.commit()
+
+        except BaseException:
+            db.session.rollback()
+            current_app.logger.error('Unexpected error: {}'.format(sys.exc_info()))
+            return jsonify(msg=_('Unexpected error occurred.'))
+        return jsonify(msg=_('Successfully saved new mapping.'))
 
     def _get_item_properties(self, item_type):
         schema_props = item_type.schema.get('properties')
@@ -809,14 +841,13 @@ class ItemTypeRocrateMappingView(BaseView):
 
         elif type == 'array':
             item_property['type'] = 'array'
-            item_property['items'] = {}
-            item_property['items']['properties'] = {}
+            item_property['properties'] = {}
 
             for child_key, child_schema_prop in schema_prop.get('items').get('properties').items():
                 child_form_key = form_key + [child_key]
                 child_form_prop = self._get_child_form_prop(form_prop.get('items', []), child_form_key)
 
-                item_property['items']['properties'][child_key] = self._get_item_property(child_schema_prop, child_form_key, child_form_prop, cur_lang)
+                item_property['properties'][child_key] = self._get_item_property(child_schema_prop, child_form_key, child_form_prop, cur_lang)
 
         return item_property
 
