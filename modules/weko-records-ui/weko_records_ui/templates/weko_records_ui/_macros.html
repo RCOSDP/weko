@@ -37,6 +37,8 @@
         {% set item_type_id = workflow_detail.itemtype_id %}
         {% set flow_id = workflow_detail.flow_id %}
       {% endif %}
+      <input type="hidden" id="is_terms_only" name="is_terms_only"
+        value='{{ workflow_detail.is_terms_only }}'>
       {% if file.terms and start_guest_wf %}
         <a class="action-anchor" href="">
           <button class="img-rounded action-button button-sm term-condtion-modal"

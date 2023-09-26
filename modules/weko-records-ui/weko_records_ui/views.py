@@ -64,7 +64,7 @@ from weko_workflow.api import WorkFlow
 
 from weko_records_ui.fd import add_signals_info
 from weko_records_ui.utils import check_items_settings, get_file_info_list
-from weko_workflow.utils import get_item_info, process_send_mail_tpl, set_mail_info 
+from weko_workflow.utils import get_item_info, process_send_mail_tpl, set_mail_info ,is_terms_of_use_only
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
@@ -349,6 +349,8 @@ def get_workflow_detail(workflow_id):
     """
     workflow_detail = WorkFlow().get_workflow_by_id(workflow_id)
     if workflow_detail:
+        workflow_detail=vars(workflow_detail)
+        workflow_detail["is_terms_only"]=is_terms_of_use_only(workflow_id)
         return workflow_detail
     else:
         abort(404)
@@ -636,7 +638,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     file_url = ''
     if file_order >= 0 and files and files[file_order].get('url') and files[file_order]['url'].get('url'):
         file_url = files[file_order]['url']['url']
-
+    
     return render_template(
         template,
         pid=pid,

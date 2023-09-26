@@ -74,6 +74,45 @@ require([
     );
   });
 
+  function terms_only_guest_download(fileName,dataType,recordId,itemTypeId,workflowId,flowId){
+    const post_uri = '/workflow/activity/init-guest';
+    example='guest@example.com'
+    let post_data = {
+      guest_mail:example,
+      file_name: fileName,
+      guest_item_title: dataType,
+      record_id: recordId,
+      item_type_id: itemTypeId,
+      workflow_id: workflowId,
+      flow_id: flowId,
+    }
+    var deferred = new $.Deferred();
+    $.ajax({
+      url: post_uri,
+      method: 'POST',
+      async: true,
+      contentType: 'application/json',
+      data: JSON.stringify(post_data),
+      }).done(function (data) {
+        if (0 === data.code) {
+          let activity_url = data.data.redirect.split('/').slice(-1)[0];
+          let activity_id = activity_url.split('?')[0];
+          init_permission(recordId, fileName, activity_id);
+          document.location.href = data.data.redirect;
+        } else if(1 === data.code && data.data.is_download){
+          const url = new URL(data.data.redirect , document.location.origin);
+          url.searchParams.append('terms_of_use_only',true);
+          document.location.href = url;
+        } else {
+          alert(data.msg);
+        }
+      }).fail(function (jqXHE, status) {
+        console.log('fail:{}', jqXHE.message);
+      }).always(function() {
+        deferred.resolve();
+      })
+      return deferred;
+  }
 
   function startWorkflow(workflowId, communityId, recordId, fileName, itemTitle) {
     let post_uri = $('#post_uri').text();
@@ -176,20 +215,48 @@ require([
   });
 
   $('.btn-start-guest-wf').on('click', function () {
-    let $confirmEmailBtn = $("#confirm_email_btn");
-    $confirmEmailBtn.data("guest_filename_data", $(this).data("guest_filename_data"));
-    $confirmEmailBtn.data("guest_data_type_title", $(this).data("guest_data_type_title"));
-    $confirmEmailBtn.data("guest_record_id", $(this).data("guest_record_id"));
-    $confirmEmailBtn.data("guest_itemtype_id", $(this).data("guest_itemtype_id"));
-    $confirmEmailBtn.data("guest_workflow_id", $(this).data("guest_workflow_id"));
-    $confirmEmailBtn.data("guest_flow_id", $(this).data("guest_flow_id"));
-    $("#email_modal").modal("show");
+    let isTermsOnly = $("#is_terms_only").val();
+    if(isTermsOnly==="True"){
+      var file_version_id = $("#" + this.id).data('file-version-id')
+      let fileName = $(this).data("guest_filename_data");
+      let dataType = $(this).data("guest_data_type_title");
+      let recordId = $(this).data("guest_record_id");
+      let itemTypeId = $(this).data("guest_itemtype_id");
+      let workflowId = $(this).data("guest_workflow_id");
+      let flowId = $(this).data("guest_flow_id");
+      var deferred = terms_only_guest_download(fileName,dataType,recordId,itemTypeId,workflowId,flowId);
+      deferred.done(function(){
+        $("#term_and_condtion_modal_" + file_version_id).modal("hide");
+      });
+    }else{
+      let $confirmEmailBtn = $("#confirm_email_btn");
+      $confirmEmailBtn.data("guest_filename_data", $(this).data("guest_filename_data"));
+      $confirmEmailBtn.data("guest_data_type_title", $(this).data("guest_data_type_title"));
+      $confirmEmailBtn.data("guest_record_id", $(this).data("guest_record_id"));
+      $confirmEmailBtn.data("guest_itemtype_id", $(this).data("guest_itemtype_id"));
+      $confirmEmailBtn.data("guest_workflow_id", $(this).data("guest_workflow_id"));
+      $confirmEmailBtn.data("guest_flow_id", $(this).data("guest_flow_id"));
+      $("#email_modal").modal("show");
+    }
   });
 
   $('.term_next').on('click', function () {
     var file_version_id = $("#" + this.id).data('file-version-id')
     let isGuest = $("#term_next_" + file_version_id).data("guest");
-    if (isGuest == "True") {
+    let isTermsOnly = $("#is_terms_only").val();
+    if (isGuest == "True" && isTermsOnly == "True") {
+      let $btnStartGuestTermOnly=$("#btn-start-guest-wf-" + file_version_id);
+      let fileName = $btnStartGuestTermOnly.data('guest_filename_data');
+      let dataType = $btnStartGuestTermOnly.data('guest_data_type_title');
+      let recordId = $btnStartGuestTermOnly.data('guest_record_id');
+      let itemTypeId = $btnStartGuestTermOnly.data('guest_itemtype_id');
+      let workflowId = $btnStartGuestTermOnly.data('guest_workflow_id');
+      let flowId = $btnStartGuestTermOnly.data('guest_flow_id');
+      var deferred = terms_only_guest_download(fileName,dataType,recordId,itemTypeId,workflowId,flowId);
+      deferred.done(function(){
+        $("#term_and_condtion_modal_" + file_version_id).modal("hide");
+      });
+    } else if(isGuest=="True"){
       let $confirmEmailBtn = $("#confirm_email_btn");
       let btnSender = $("#btn-start-guest-wf-" + file_version_id)
       $confirmEmailBtn.attr("data-guest_filename_data", btnSender.data("guest_filename_data"));
