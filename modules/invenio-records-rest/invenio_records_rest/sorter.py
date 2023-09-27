@@ -24,6 +24,7 @@ import pickle
 
 import six
 from flask import current_app, request
+from invenio_i18n.ext import current_i18n
 
 from .config import RECORDS_REST_DEFAULT_SORT
 
@@ -108,10 +109,30 @@ def eval_field(field, asc, nested_sorting=None):
         sorting = {key: {'order': 'asc' if key_asc else 'desc',
                          'unmapped_type': 'long'}}
 
+
+        if "title" in key:
+            # When sorting by Title, change the sorting rules according to the language setting.
+            if "ja" in current_i18n.language:
+                #If there is more than one data set and the data is displayed in Japanese, the larger value is used.
+                sorting = {key: {'order': 'asc' if key_asc else 'desc',
+                         'unmapped_type': 'long',
+                         'mode': 'max'}}
+            else:
+                #If there are multiple data and they are displayed in English, the smaller value is used.
+                sorting = {key: {'order': 'asc' if key_asc else 'desc',
+                         'unmapped_type': 'long',
+                         'mode': 'min'}}
+
         if "date_range" in key:
-            current_app.logger.debug(key)
-            sorting = {"_script":{"type":"number",
-            "script":{"lang":"painless","source":"def x = params._source.date_range1;Date dt = new Date();if (x != null && x instanceof Map) { def st = x.getOrDefault(\"gte\",\"\");SimpleDateFormat format = new SimpleDateFormat();if (st.length()>7) {format.applyPattern(\"yyyy-MM-dd\");}else if (st.length()>4){format.applyPattern(\"yyyy-MM\");}else if (st.length()==4){format.applyPattern(\"yyyy\");} try { dt = format.parse(st);} catch (Exception e){}} return dt.getTime()"},"order": 'asc' if key_asc else 'desc'}}
+            if asc:
+                #Sort by "gte" in ascending order.
+                sorting = {"_script":{"type":"number",
+                    "script":{"lang":"painless","source":"def x = params._source.date_range1;SimpleDateFormat format = new SimpleDateFormat(); if (x != null && !x.isEmpty() ) { def value = x.get(0).get(\"gte\"); if(value != null && !value.equals(\"\")) { if(value.length() > 7) { format.applyPattern(\"yyyy-MM-dd\"); } else if(value.length() > 4) { format.applyPattern(\"yyyy-MM\");  } else { format.applyPattern(\"yyyy\"); } try { return format.parse(value).getTime(); } catch(Exception e) {} } } format.applyPattern(\"yyyy\"); return format.parse(\"9999\").getTime();"},"order": 'asc'}}
+
+            else:
+                #Sort by "lte" in ascending order.
+                sorting = {"_script":{"type":"number",
+                    "script":{"lang":"painless","source":"def x = params._source.date_range1;SimpleDateFormat format = new SimpleDateFormat(); if (x != null && !x.isEmpty() ) { def value = x.get(0).get(\"lte\"); if(value != null && !value.equals(\"\")) { if(value.length() > 7) { format.applyPattern(\"yyyy-MM-dd\"); } else if(value.length() > 4) { format.applyPattern(\"yyyy-MM\");  } else { format.applyPattern(\"yyyy\"); } try { return format.parse(value).getTime(); } catch(Exception e) {} } } format.applyPattern(\"yyyy\"); return format.parse(\"0\").getTime();"},"order": 'desc'}}
 
         if nested_sorting:
             sorting[key].update({'nested': nested_sorting})

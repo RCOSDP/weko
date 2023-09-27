@@ -76,8 +76,13 @@ blueprint_api = Blueprint(
 
 def _has_admin_access():
     """Use to check if a user has any admin access."""
-    return current_user.is_authenticated and current_admin \
-        .permission_factory(current_admin.admin.index_view).can()
+    from invenio_access.utils import get_identity
+    id = get_identity(current_user)
+    permission = current_admin.permission_factory(current_admin.admin.index_view)
+    # return (current_user.is_authenticated and current_admin \
+    #     .permission_factory(current_admin.admin.index_view).can())
+    return (current_user.is_authenticated and permission.allows(id))
+
 
 
 @blueprint.route('/session/lifetime/<int:minutes>', methods=['GET'])

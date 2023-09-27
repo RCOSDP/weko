@@ -137,10 +137,11 @@ services:
     # pscap apt-get install libcap-ng-utils
     #cap_add:
     #  - SYS_ADMIN
+    oom_kill_disable: true
     deploy:
       resources:
         limits:
-          memory: 2000m
+          memory: 8000m
 
   postgresql:
     restart: "always"
@@ -190,6 +191,8 @@ services:
     ports:
       - "24301:4369"
       - "45601:25672"
+    environment:
+      - "RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit consumer_timeout 10800000"
 
   nginx:
     restart: "always"

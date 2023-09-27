@@ -27,6 +27,7 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
+from weko_schema_ui.models import PublishStatus
 
 from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsAffiliationSettings, AuthorsPrefixSettings
@@ -214,7 +215,7 @@ def get():
                 "must": [
                     {
                         "match": {
-                            "publish_status": 0
+                            "publish_status": PublishStatus.PUBLIC.value
                         }
                     },
                     {

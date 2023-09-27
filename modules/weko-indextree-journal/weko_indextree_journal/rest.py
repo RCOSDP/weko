@@ -47,7 +47,7 @@ def need_record_permission(factory_name):
                                              **kwargs):
             permission_factory = (getattr(self, factory_name))
 
-            if permission_factory:
+            if permission_factory is not None:
                 if not permission_factory.can():
                     from flask_login import current_user
                     if not current_user.is_authenticated:
@@ -192,6 +192,7 @@ class JournalActionResource(ContentNegotiatedMethodView):
     def get(self, journal_id, **kwargs):
         """Get a journal record."""
         try:
+            journal = None
             if journal_id != 0:
                 journal = self.record_class.get_journal(journal_id)
 
@@ -240,19 +241,23 @@ class JournalActionResource(ContentNegotiatedMethodView):
         if not journal_id or journal_id <= 0:
             raise JournalNotFoundRESTError()
 
-        action = request.values.get('action', 'all')
-        res = self.record_class.get_self_path(journal_id)
-        if not res:
-            raise JournalDeletedRESTError()
+        if not self.record_class.delete(journal_id):
 
-        if action in ('move', 'all'):
-            result = self.record_class.\
-                delete_by_action(action, journal_id)
-            if not result:
-                raise JournalBaseRESTError(
-                    description='Could not delete data.')
-        else:
-            raise JournalInvalidDataRESTError()
+            raise JournalDeletedRESTError()
+        
+        #action = request.values.get('action', 'all')
+        #res = self.record_class.get_self_path(journal_id)
+        #if not res:
+        #    raise JournalDeletedRESTError()
+#
+        #if action in ('move', 'all'):
+        #    result = self.record_class.\
+        #        delete_by_action(action, journal_id)
+        #    if not result:
+        #        raise JournalBaseRESTError(
+        #            description='Could not delete data.')
+        #else:
+        #    raise JournalInvalidDataRESTError()
 
         status = 200
         msg = 'Journal deleted successfully.'

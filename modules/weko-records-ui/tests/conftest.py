@@ -33,6 +33,7 @@ from datetime import datetime
 from collections import OrderedDict
 from unittest.mock import patch
 from datetime import timedelta
+from kombu import Exchange, Queue
 
 import pytest
 from elasticsearch import Elasticsearch
@@ -192,9 +193,11 @@ def base_app(instance_path):
         JSONSCHEMAS_URL_SCHEME="http",
         SECRET_KEY="CHANGE_ME",
         SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
-        ),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+        # ),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SQLALCHEMY_ECHO=False,
         TESTING=True,
@@ -221,7 +224,7 @@ def base_app(instance_path):
         },
         WEKO_INDEX_TREE_UPATED=True,
         WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
-        I18N_LANGUAGE=[("ja", "Japanese"), ("en", "English")],
+        I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
         SERVER_NAME="TEST_SERVER",
         SEARCH_ELASTIC_HOSTS="elasticsearch",
         SEARCH_INDEX_PREFIX="test-",
@@ -263,6 +266,7 @@ def base_app(instance_path):
         WEKO_RECORDS_UI_SECRET_KEY=WEKO_RECORDS_UI_SECRET_KEY,
         WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN=WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN,
         WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE=WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,
+        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"})
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)

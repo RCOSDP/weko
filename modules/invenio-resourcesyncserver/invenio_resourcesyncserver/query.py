@@ -26,6 +26,7 @@ from flask import current_app
 from invenio_records_rest.errors import InvalidQueryRESTError
 from invenio_search import RecordsSearch
 from weko_index_tree.api import Indexes
+from weko_schema_ui.models import PublishStatus
 
 from .config import WEKO_ROOT_INDEX
 
@@ -101,7 +102,7 @@ def item_path_search_factory(search, index_id="0"):
                     "must": [
                         {
                             "match": {
-                                "publish_status": "0"
+                                "publish_status": PublishStatus.PUBLIC.value
                             }
                         },
                         {

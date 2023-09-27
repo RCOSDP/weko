@@ -131,7 +131,9 @@ def base_app(instance_path, cache_config,request ,search_class):
         ACCOUNTS_USE_CELERY=False,
         SECRET_KEY='SECRET_KEY',
         SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        #SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+        #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         SEARCH_ELASTIC_HOSTS=os.environ.get(
             'SEARCH_ELASTIC_HOSTS', None),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -480,6 +482,7 @@ def site_license(db):
     db.session.add(result)
     addr1 = SiteLicenseIpAddress(
         organization_id=0,
+        organization_no=0,
         start_ip_address="123.456.789.012",
         finish_ip_address="987.654.321.098"
     )
@@ -751,7 +754,7 @@ def admin_settings(db):
     settings.append(AdminSettings(id=6,name="restricted_access",settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": []}))
     settings.append(AdminSettings(id=7,name="display_stats_settings",settings={"display_stats":False}))
     settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
-    settings.append(AdminSettings(id=8,name="elastic_reindex_settings",settings={"has_errored": False}))
+    settings.append(AdminSettings(id=9,name="elastic_reindex_settings",settings={"has_errored": False}))
     db.session.add_all(settings)
     db.session.commit()
     return settings
@@ -910,7 +913,6 @@ def facet_search_settings(db):
         display_number="1",
         is_open=True,
         search_condition='OR'
-
     )
     access = FacetSearchSetting(
         name_en="Access",
@@ -935,19 +937,6 @@ def facet_search_settings(db):
         search_condition='AND'
     )
     
-    fields_raw = FacetSearchSetting(
-        name_en="raw_test",
-        name_jp="raw_test",
-        mapping="test.fields.raw",
-        aggregations=[],
-        active=True,
-        ui_type='CheckboxList',
-        display_number="1",
-        is_open=True,
-        search_condition='AND'
-    )
-
-        
     fields_raw = FacetSearchSetting(
         name_en="Time Period(s)",
         name_jp="対象時期",

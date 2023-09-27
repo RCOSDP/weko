@@ -377,7 +377,8 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                     else:
                         tree = self.record_class.get_more_browsing_tree(
                             pid=int(comm.root_node_id), more_ids=more_ids)
-
+                else:
+                    tree = []
             else:
                 tree = []
                 role_ids = []

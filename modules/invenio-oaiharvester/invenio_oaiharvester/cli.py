@@ -80,7 +80,7 @@ def harvest(metadata_prefix, name, setspecs, identifiers, from_date,
                   name, setspecs, signals)
         if enqueue:
             job = list_records_from_dates.delay(*params, **arguments)
-            print("Scheduled job {0}".format(job.id))
+            click.echo("Scheduled job {0}".format(job.id))
         else:
             request, records = list_records(
                 metadata_prefix,
@@ -102,7 +102,7 @@ def harvest(metadata_prefix, name, setspecs, identifiers, from_date,
                   name, signals)
         if enqueue:
             job = get_specific_records.delay(*params, **arguments)
-            print("Scheduled job {0}".format(job.id))
+            click.echo("Scheduled job {0}".format(job.id))
         else:
             identifiers = get_identifier_names(identifiers)
             request, records = get_records(
