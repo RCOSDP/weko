@@ -141,7 +141,7 @@ def initialize_communities_bucket():
             db.session.add(bucket)
             db.session.commit()
         except Exception as ex:
-            db.sesison.rollback()
+            db.session.rollback()
 
 
 def format_request_email_templ(increq, template, **ctx):

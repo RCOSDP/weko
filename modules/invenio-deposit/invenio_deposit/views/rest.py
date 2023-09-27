@@ -301,6 +301,8 @@ class DepositFilesResource(ContentNegotiatedMethodView):
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(e)
+            raise WrongFile()
+
         return self.make_response(
             obj=record.files[key].obj, pid=pid, record=record, status=201)
 
@@ -344,6 +346,8 @@ class DepositFilesResource(ContentNegotiatedMethodView):
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(e)
+            raise WrongFile()
+
         return self.make_response(obj=record.files, pid=pid, record=record)
 
 
@@ -423,6 +427,8 @@ class DepositFileResource(ContentNegotiatedMethodView):
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(e)
+            raise WrongFile()
+
         return self.make_response(obj=obj, pid=pid, record=record)
 
     @require_api_auth()
