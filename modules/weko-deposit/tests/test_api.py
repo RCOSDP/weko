@@ -985,8 +985,8 @@ class TestWekoRecord:
         indexer, results = es_records
         result = results[0]
         record = result['record']
-        with app.test_request_context():
-            assert record.display_file_info==[{'attribute_name': 'PubDate', 'attribute_value': '2022-08-20', 'attribute_name_i18n': 'PubDate', 'attribute_value_mlt': [[[[{'PubDate': '2022-08-20'}]]]]}, {'attribute_name': 'File', 'attribute_name_i18n': 'File', 'attribute_type': 'file', 'attribute_value_mlt': []}]
+        with app.test_request_context("/test?filename=hello.txt"):
+            assert record.display_file_info==[{'attribute_name': 'File', 'attribute_name_i18n': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [[[[{'Opendate': '2022-09-07'}],[{'FileName': 'hello.txt'}],[{'Text URL': [[[{'Text URL': 'https://weko3.example.org/record/1/files/hello.txt'}]]]}],[{'Format': 'plain/text'}],[{'Size': [[[[{'Size': '146 KB'}]]]]}]]]]}]
 
     #     def __remove_special_character_of_weko2(self, metadata):
     #     def _get_creator(meta_data, hide_email_flag):

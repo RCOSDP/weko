@@ -64,7 +64,7 @@ from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
 from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, remove_weko2_special_character, \
-    set_timestamp
+    set_timestamp,set_file_date
 from weko_schema_ui.models import PublishStatus
 from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
@@ -2082,8 +2082,9 @@ class WekoRecord(Record):
             option = meta_options.get(key, {}).get('option')
             if not val or not option:
                 continue
-            # Just get data of 'File' and 'Pubdate'.
-            if val.get('attribute_type') != "file" and key != 'pubdate':
+            
+            # Just get data of 'File'
+            if val.get('attribute_type') != "file":
                 continue
             # Check option hide.
             if option.get("hidden"):
@@ -2113,9 +2114,11 @@ class WekoRecord(Record):
                     'attribute_name')
                 nval['attribute_type'] = val.get('attribute_type')
                 # Format structure to display.
-                nval['attribute_value_mlt'] = \
-                    get_attribute_value_all_items(key, file_metadata,
+                attr_mlt = get_attribute_value_all_items(key, file_metadata,
                                                   copy.deepcopy(solst))
+                set_file_date(key, copy.deepcopy(solst), file_metadata, attr_mlt)
+                
+                nval['attribute_value_mlt'] = attr_mlt
                 items.append(nval)
             else:
                 # Processing get pubdate.
