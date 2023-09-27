@@ -21,7 +21,7 @@
 """Views for weko-authors."""
 
 import re
-
+import uuid
 from flask import Blueprint, current_app, json, jsonify, make_response, request
 from flask_babelex import gettext as _
 from flask_login import login_required
@@ -72,25 +72,32 @@ def create():
                                     "authorId": str(new_id),
                                     "authorIdShowFlg": "true"
                                 })
-    indexer = RecordIndexer()
-    es_id = indexer.client.index(
-        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
-        body=data,
-    )
+    es_data = json.loads(json.dumps(data))
+    es_id = str(uuid.uuid4())
     data['id'] = es_id
 
     author_data = dict()
 
     author_data["id"] = new_id
-    author_data["json"] = json.dumps(data)
-
-    with session.begin_nested():
-        author = Authors(**author_data)
-        session.add(author)
-    session.commit()
+    author_data["json"] = data
+    try:
+        with session.begin_nested():
+            author = Authors(**author_data)
+            session.add(author)
+        indexer = RecordIndexer()
+        
+        session.commit()
+        indexer.client.index(
+            index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+            doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+            id=es_id,
+            body=es_data,
+        )
+    except Exception as ex:
+        session.rollback()
+        current_app.logger.error(ex)
+        return jsonify(msg=_('Failed')), 500
     return jsonify(msg=_('Success'))
-
 
 # add by ryuu. at 20180820 start
 @blueprint_api.route("/edit", methods=['POST'])
@@ -103,28 +110,34 @@ def update_author():
         return jsonify(msg=_('Header Error'))
 
     data = request.get_json()
-    indexer = RecordIndexer()
-    body = {'doc': data}
-    indexer.client.update(
-        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
-        id=json.loads(json.dumps(data))["id"],
-        body=body
-    )
+    try:
+        with db.session.begin_nested():
+            author_data = Authors.query.filter_by(
+                id=json.loads(json.dumps(data))["pk_id"]).one()
+            author_data.json = data
+            db.session.merge(author_data)
+        
+        
+        db.session.commit()
+        indexer = RecordIndexer()
+        body = {'doc': data}
+        indexer.client.update(
+            index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+            doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+            id=json.loads(json.dumps(data))["id"],
+            body=body
+        )
+        from weko_deposit.tasks import update_items_by_authorInfo
+        update_items_by_authorInfo.delay(
+            [json.loads(json.dumps(data))["pk_id"]], data)
 
-    with db.session.begin_nested():
-        author_data = Authors.query.filter_by(
-            id=json.loads(json.dumps(data))["pk_id"]).one()
-        author_data.json = json.dumps(data)
-        db.session.merge(author_data)
-    db.session.commit()
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.error(ex)
+        return jsonify(msg=_('Failed')), 500
 
-    from weko_deposit.tasks import update_items_by_authorInfo
-    update_items_by_authorInfo.delay(
-        [json.loads(json.dumps(data))["pk_id"]], data)
 
     return jsonify(msg=_('Success'))
-
 
 @blueprint_api.route("/delete", methods=['POST'])
 @login_required
@@ -142,26 +155,26 @@ def delete_author():
             500)
 
     try:
-        with db.session.begin_nested():
-            author_data = Authors.query.filter_by(
-                id=json.loads(json.dumps(data))["pk_id"]).one()
-            author_data.is_deleted = True
-            json_data = json.loads(author_data.json)
-            json_data['is_deleted'] = 'true'
-            author_data.json = json.dumps(json_data)
-            db.session.merge(author_data)
-
-            RecordIndexer().client.update(
-                id=json.loads(json.dumps(data))["Id"],
-                index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-                doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
-                body={'doc': {'is_deleted': 'true'}}
-            )
+        author_data = Authors.query.filter_by(
+            id=json.loads(json.dumps(data))["pk_id"]).one()
+        author_data.is_deleted = True
+        json_data = author_data.json
+        json_data['is_deleted'] = 'true'
+        author_data.json = json_data
+        db.session.merge(author_data)
+        db.session.commit()
+        RecordIndexer().client.update(
+            id=json.loads(json.dumps(data))["Id"],
+            index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+            doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+            body={'doc': {'is_deleted': 'true'}}
+        )
+        
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error(ex)
+        return jsonify(msg=_('Failed')), 500
 
-    db.session.commit()
     return jsonify(msg=_('Success'))
 
 # add by ryuu. at 20180820 end
