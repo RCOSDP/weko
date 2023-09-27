@@ -902,7 +902,7 @@ class SiteLicenseSendMailSettingsView(BaseView):
                     try:
                         db.session.commit()
                     except Exception as e:
-                        db.sesison.rollback()
+                        db.session.rollback()
                         current_app.logger.error(e)
 
         sitelicenses = SiteLicenseInfo.query.order_by(

@@ -253,7 +253,7 @@ def token_view(token):
             db.session.delete(token)
             db.session.commit()
         except Exception as e:
-            db.sesison.rollback()
+            db.session.rollback()
             current_app.logger.error(e)
         return redirect(url_for('.index'))
 

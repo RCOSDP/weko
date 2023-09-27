@@ -350,7 +350,7 @@ def prepare_log(resync, id, counter, task_id, log_type):
         db.session.add(resync_log)
         db.session.commit()
     except Exception as e:
-        db.sesison.rollback()
+        db.session.rollback()
         current_app.logger.error(e)
     return resync_log
 

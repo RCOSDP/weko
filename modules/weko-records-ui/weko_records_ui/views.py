@@ -888,7 +888,7 @@ def init_permission(recid):
                 'File permission: ' + file_name + 'of record: ' + recid
                 + ' CREATED', 200)
     except Exception as ex:
-        db.sesison.rollback()
+        db.session.rollback()
         current_app.logger.debug(ex)
         abort(500)
 
