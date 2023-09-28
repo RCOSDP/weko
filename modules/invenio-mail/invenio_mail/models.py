@@ -22,6 +22,8 @@
 
 from flask import current_app
 from invenio_db import db
+from sqlalchemy import or_
+from weko_admin.models import AdminSettings
 
 
 class MailConfig(db.Model):
@@ -95,8 +97,19 @@ class MailTemplates(db.Model):
     def get_templates(cls):
         """Get mail templates."""
         result = []
+        # get secret mail enabled
+        restricted_access = AdminSettings.get('restricted_access', False)
+        if not restricted_access:
+            restricted_access = current_app.config['WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']         
+        secret_enabled:bool = restricted_access.get('secret_URL_file_download',{}).get('secret_enable',False)
+
         try:
-            result = [m.toDict() for m in cls.query.order_by(cls.id).all()]
+            if not secret_enabled:
+                secret_genre_id = current_app.config.get('WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID', -1)
+                result = [m.toDict() for m in \
+                    cls.query.filter(or_(cls.mail_genre_id != secret_genre_id, cls.mail_genre_id == None)).order_by(cls.id).all()]
+            else:
+                result = [m.toDict() for m in cls.query.order_by(cls.id).all()]
         except Exception as ex:
             current_app.logger.error(ex)
         return result
