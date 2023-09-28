@@ -1,7 +1,19 @@
-Subject：シークレットURL提供のお知らせ／Notice of providing secret URL
-
-[restricted_university_institution]
-[restricted_fullname]
+CREATE TABLE public.mail_template_genres (
+	id serial NOT NULL,
+	name varchar(255) NOT NULL,
+	CONSTRAINT pk_mail_template_genres PRIMARY KEY (id)
+);
+ALTER TABLE public.mail_templates ADD genre_id int NULL;
+ALTER TABLE public.mail_templates ADD CONSTRAINT mail_templates_fk FOREIGN KEY (genre_id) REFERENCES public.mail_template_genres(id) ON DELETE SET NULL ON UPDATE CASCADE;
+INSERT INTO public.mail_template_genres
+	(name)
+	VALUES
+		('Notification of secret URL provision'),
+		('Guidance to the application form');
+INSERT INTO public.mail_templates
+	(mail_subject, mail_body, default_mail, genre_id)
+	VALUES('シークレットURL提供のお知らせ／Notice of providing secret URL','[restricted_university_institution]
+[restricted_fullname]様
 
 [restricted_site_name_ja]です。
 
@@ -39,4 +51,5 @@ Please do not reply to this email as it has been sent automatically.
 If you received this message in error, please notify the [restricted_site_name_en].
 
 [restricted_site_name_en]：[restricted_site_url]
-E-mail：[restricted_site_mail]
+E-mail：[restricted_site_mail]', true, 1);
+UPDATE public.mail_templates SET genre_id=2 WHERE mail_subject='利用申請登録のご案内／Register Application for Use';

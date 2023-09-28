@@ -37,6 +37,7 @@ from invenio_db import db
 from invenio_files_rest.models import ObjectVersion, FileInstance
 from invenio_files_rest.permissions import has_update_version_role
 from invenio_i18n.ext import current_i18n
+from invenio_mail.models import MailTemplateGenres
 from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -64,7 +65,7 @@ from weko_workflow.api import WorkFlow
 
 from weko_records_ui.fd import add_signals_info
 from weko_records_ui.utils import check_items_settings, get_file_info_list
-from weko_workflow.utils import get_item_info, process_send_mail_tpl, set_mail_info 
+from weko_workflow.utils import get_item_info, process_send_mail, process_send_mail_tpl, set_mail_info 
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
@@ -713,14 +714,23 @@ def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord,
     #generate url and regist db(FileSecretDownload)
     result = create_secret_url(pid.pid_value,filename,current_user.email , restricted_fullname , restricted_data_name)
     
-    #send mail
-    mail_pattern_name:str = current_app.config.get('WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL')
+    # set mail infomation
     mail_info = set_mail_info(get_item_info(pid.object_uuid), type("" ,(object,),dict(activity_id = '')))
     mail_info.update(result)
-    if process_send_mail_tpl( mail_info = mail_info, mail_pattern_name = mail_pattern_name) :
-        return _('Success Secret URL Generate')
-    else:
-        abort(500)
+    
+    # query secret mail template record
+    secret_genre = MailTemplateGenres.query.get(1)
+    secret_mail_template = next(iter(secret_genre.templates or []), None)
+    
+    print('secret mail')
+    print(secret_mail_template)
+    #send mail
+    if secret_mail_template:
+        send_result = process_send_mail(mail_info, secret_mail_template.id)
+        if send_result:
+            return _('Success Secret URL Generate')
+        else:
+            abort(500)
 
 def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
     """ 

@@ -67,6 +67,7 @@ class FlowSettingView(BaseView):
         roles = Role.query.all()
         actions = self.get_actions()
         mail_templates = MailTemplates.get_templates()
+        use_restricted_item = current_app.config.get('WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT', False)
         if '0' == flow_id:
             flow = None
             return self.render(
@@ -79,6 +80,7 @@ class FlowSettingView(BaseView):
                 actions=None,
                 action_list=actions,
                 mail_templates=mail_templates,
+                use_restricted_item=use_restricted_item,
                 workflow_registrant_id = current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID")
             )
         UUID_PATTERN = re.compile(r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$',
@@ -103,6 +105,7 @@ class FlowSettingView(BaseView):
             action_list=actions,
             specifed_properties=specified_properties,
             mail_templates=mail_templates,
+            use_restricted_item=use_restricted_item,
             workflow_registrant_id = current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID")
         )
 

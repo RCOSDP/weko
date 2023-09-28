@@ -176,7 +176,7 @@
                     </label>
                   </div>
                   <br>
-                  {% if action.action.action_name == 'Approval'%}
+                  {% if action.action.action_name == 'Approval' and use_restricted_item %}
                     <div class="mail_setting_for_approval">
                       <div class="form-inline">
                         <label style="font-weight: unset;">
@@ -212,7 +212,7 @@
                         {%- endfor %}
                       </select>
                     </div>
-                  {% elif action.action.action_name == 'Item Registration' %}
+                  {% elif action.action.action_name == 'Item Registration' and use_restricted_item %}
                     <div class="mail_setting_for_itemReg">
                       <div class="form-inline">
                         <label style="font-weight: unset;">
@@ -297,6 +297,7 @@
           <input type="checkbox" class="td_action_user_deny" id="td_action_user_deny_apply_action.id" data-action-id="apply_action.id">
           {{_("Deny")}}
         </div>
+        {% if use_restricted_item %}
         <div class="mail_setting_for_approval">
           <div class="form-inline">
             <label style="font-weight: unset;">
@@ -349,6 +350,7 @@
             {%- endfor %}
           </select>
         </div>
+        {% endif %}
       </div>
     </td>
     <td class="hide">{{_("Usable")}}</td>
