@@ -2122,10 +2122,10 @@ def replace_characters(data, content):
         '[data_download_date]': 'data_download_date',
         '[usage_report_url]': 'usage_report_url',
         '[restricted_usage_activity_id]': 'restricted_usage_activity_id',
-        '[file_name]' : 'file_name',
-        '[restricted_download_count]':'restricted_download_count',
-        '[restricted_download_count_ja]':'restricted_download_count_ja',
-        '[restricted_download_count_en]':'restricted_download_count_en',
+        #'[file_name]' : 'file_name',
+        #'[restricted_download_count]':'restricted_download_count',
+        #'[restricted_download_count_ja]':'restricted_download_count_ja',
+        #'[restricted_download_count_en]':'restricted_download_count_en',
     }
     for key in replace_list:
         value = replace_list.get(key)
@@ -2231,7 +2231,7 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         register_user, register_date = get_register_info(
             activity_detail.activity_id)
     
-    institution_name = InstitutionName.get_institution_name()
+    #institution_name = InstitutionName.get_institution_name()
 
     mail_info = dict(
         university_institution=item_info.get('subitem_university/institution'),
@@ -2265,8 +2265,8 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
             'subitem_restricted_access_application_date'),
         restricted_mail_address=item_info.get(
             'subitem_restricted_access_mail_address'),
-        restricted_institution_name_ja = institution_name,
-        restricted_institution_name_en = institution_name,
+        #restricted_institution_name_ja = institution_name,
+        #restricted_institution_name_en = institution_name,
         restricted_download_link='',
         restricted_expiration_date='',
         restricted_approver_name='',
