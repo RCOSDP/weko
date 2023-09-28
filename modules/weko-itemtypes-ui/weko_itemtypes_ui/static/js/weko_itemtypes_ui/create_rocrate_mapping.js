@@ -112,12 +112,23 @@ $(() => {
     // Set editing node
     const node_id = $(ev.target).parents('li').get(0).dataset.id;
     $('#editing-node').val(node_id);
+    if (node_id != '') {
+      $('button[data-action="add-mapping"]').prop('disabled', false);
+    }
+    else {
+      $('button[data-action="add-mapping"]').prop('disabled', true);
+    }
 
     // Set mapping
     setCurrentMapping(node_id);
   });
 
   function saveCurrentMapping() {
+    const editing_node = $('#editing-node').val();
+    if (editing_node == '') {
+      return;
+    }
+
     const mapping = {};
     const table_rows = $('#mapping-table').find('div[name="mapping-row"]');
     table_rows.each((_, table_row) => {
@@ -140,15 +151,27 @@ $(() => {
       mapping[rocrate_property] = metadata_property;
     });
 
-    const editing_node = $('#editing-node').val();
     page_global.node_mapping[editing_node] = mapping;
   };
 
   function getMetadataProperty(metadata_property_column) {
-    let metadata_property = null;
+    const editing_node = $('#editing-node').val();
+    if (editing_node == 'file') {
+      let metadata_property = '';
+      const items = metadata_property_column.find('div[name="metadata-file-property-item"]');
+      items.each((_, item) => {
+        const item_key = $(item).find('select').val();
+        metadata_property = metadata_property + '.' + item_key;
+      });
+      if (metadata_property != '') {
+        metadata_property = metadata_property.slice(1);
+      }
+      return metadata_property;
+    }
+
     const lang_check = metadata_property_column.find('input[name="check-language"]');
     if (!lang_check.is(':checked')) {
-      metadata_property = '';
+      let metadata_property = '';
       const items = metadata_property_column.find('div[name="metadata-property-item"]');
       items.each((_, item) => {
         let item_key = $(item).find('select').val();
@@ -156,45 +179,38 @@ $(() => {
         if (index_check.is(':checked')) {
           item_key = item_key + '[' + $(item).find('input[type=number]').val() + ']';
         }
-
-        if (metadata_property == '') {
-          metadata_property = item_key;
-        }
-        else {
-          metadata_property = metadata_property + '.' + item_key;
-        }
+        metadata_property = metadata_property + '.' + item_key;
       });
+      if (metadata_property != '') {
+        metadata_property = metadata_property.slice(1);
+      }
+      return metadata_property;
     }
     else {
-      metadata_property = {
-        value: '',
-        lang: '',
-      };
+      let metadata_property_value = '';
+      let metadata_property_lang = '';
       const items = metadata_property_column.find('div[name="metadata-property-item-with-lang"]');
       items.each((_, item) => {
         const item_value_key = $(item).find('select[name="select-metadata-property-value"]').val();
         if (item_value_key != '') {
-          if (metadata_property['value'] == '') {
-            metadata_property['value'] = item_value_key;
-          }
-          else {
-            metadata_property['value'] = metadata_property['value'] + '.' + item_value_key;
-          }
+          metadata_property_value = metadata_property_value + '.' + item_value_key;
         }
-
         const item_lang_key = $(item).find('select[name="select-metadata-property-lang"]').val();
         if (item_lang_key != '') {
-          if (metadata_property['lang'] == '') {
-            metadata_property['lang'] = item_lang_key;
-          }
-          else {
-            metadata_property['lang'] = metadata_property['lang'] + '.' + item_lang_key;
-          }
+          metadata_property_lang = metadata_property_lang + '.' + item_lang_key;
         }
       });
+      if (metadata_property_value != '') {
+        metadata_property_value = metadata_property_value.slice(1);
+      }
+      if (metadata_property_lang != '') {
+        metadata_property_lang = metadata_property_lang.slice(1);
+      }
+      return {
+        value: metadata_property_value,
+        lang: metadata_property_lang,
+      };
     }
-
-    return metadata_property;
   };
 
   function initCurrentMapping() {
@@ -211,9 +227,14 @@ $(() => {
     }
 
     for (let [key, value] of Object.entries(node_mapping)) {
+      // Add table row
       const added_row = addMapping();
+
+      // Set RO-Crate property
       const rocrate_property_select = added_row.find('select[name="select-rocrate-property"]');
       rocrate_property_select.val(key);
+
+      // Set Metadata property
       const metadata_property_column = added_row.find('div[name="metadata-property-column"]');
       if (value instanceof Array) {
         value.forEach((elem) => {
@@ -227,24 +248,25 @@ $(() => {
   };
 
   function setMetadataProperty(metadata_property_column, property_key) {
-    // Add metadata property
+    // Add metadata property input area
     const add_button = metadata_property_column.find('button[data-action="add-metadata-property"]');
-    const added_property = addMappingProperty(add_button);
+    const added_property = addMetadataProperty(add_button);
 
-    if (typeof property_key == 'string') {
+    const editing_node = $('#editing-node').val();
+    if (editing_node == 'file') {
       const keys = splitPropertyKey(property_key);
       const length = keys.length;
       let item_properties = page_global.item_properties;
-      let input_area = null;
       for (let ii = 0; ii < length; ii++) {
+        let input_area = null;
         if (ii == 0) {
-          input_area = metadata_property_column.find('div[name="metadata-property-item"]').last();
+          input_area = metadata_property_column.find('div[name="metadata-file-property-item"]').last();
           item_properties = item_properties[keys[ii].key];
         }
         else {
           // Add input area
-          input_area = $('#template-metadata-property-item :first').clone(true);
-          const tmp_area = metadata_property_column.find('div[name="metadata-property-item"]').last();
+          input_area = $('#template-metadata-file-property-item :first').clone(true);
+          const tmp_area = metadata_property_column.find('div[name="metadata-file-property-item"]').last();
           tmp_area.after(input_area);
 
           const sub_items = item_properties['properties'];
@@ -254,69 +276,97 @@ $(() => {
           }
           item_properties = sub_items[keys[ii].key];
         }
-
         input_area.find('select').val(keys[ii].key);
-        if (item_properties['type'] == 'array') {
-          input_area.find('label').removeClass('invisible');
-        }
-        if (keys[ii].index != null) {
-          input_area.find('input[type="checkbox"]').prop('checked', true);
-          const index_text = input_area.find('input[type="number"]');
-          index_text.removeClass('invisible');
-          index_text.val(keys[ii].index);
-        }
       }
     }
     else {
-      added_property.find('input[name="check-language"]').prop('checked', true);
-      added_property.find('div[name="metadata-property"]').addClass('hide');
-      added_property.find('div[name="metadata-property-with-lang"]').removeClass('hide');
+      if (typeof property_key == 'string') {
+        const keys = splitPropertyKey(property_key);
+        const length = keys.length;
+        let item_properties = page_global.item_properties;
+        for (let ii = 0; ii < length; ii++) {
+          let input_area = null;
+          if (ii == 0) {
+            input_area = metadata_property_column.find('div[name="metadata-property-item"]').last();
+            item_properties = item_properties[keys[ii].key];
+          }
+          else {
+            // Add input area
+            input_area = $('#template-metadata-property-item :first').clone(true);
+            const tmp_area = metadata_property_column.find('div[name="metadata-property-item"]').last();
+            tmp_area.after(input_area);
 
-      const value_keys = splitPropertyKey(property_key['value'])
-      const lang_keys = splitPropertyKey(property_key['lang'])
-      const length = Math.max(value_keys.length, lang_keys.length);
-      let item_properties_value = page_global.item_properties;
-      let item_properties_lang = page_global.item_properties;
-      let input_area = null;
-      for (let ii = 0; ii < length; ii++) {
-        if (ii == 0) {
-          input_area = metadata_property_column.find('div[name="metadata-property-item-with-lang"]').last();
-          item_properties_value = item_properties_value[value_keys[ii].key];
-          item_properties_lang = item_properties_lang[lang_keys[ii].key];
+            const sub_items = item_properties['properties'];
+            const select = input_area.find('select');
+            for (let [key, value] of Object.entries(sub_items)) {
+              select.append($('<option>').html(value['title']).val(key));
+            }
+            item_properties = sub_items[keys[ii].key];
+          }
+
+          input_area.find('select').val(keys[ii].key);
+          if (item_properties['type'] == 'array') {
+            input_area.find('label').removeClass('invisible');
+          }
+          if (keys[ii].index != null) {
+            input_area.find('input[type="checkbox"]').prop('checked', true);
+            const index_text = input_area.find('input[type="number"]');
+            index_text.removeClass('invisible');
+            index_text.val(keys[ii].index);
+          }
         }
-        else {
-          // Add input area
-          input_area = $('#template-metadata-property-item-with-lang :first').clone(true);
-          const tmp_area = metadata_property_column.find('div[name="metadata-property-item-with-lang"]');
-          tmp_area.after(input_area);
+      }
+      else {
+        added_property.find('input[name="check-language"]').prop('checked', true);
+        added_property.find('div[name="metadata-property"]').addClass('hide');
+        added_property.find('div[name="metadata-property-with-lang"]').removeClass('hide');
+
+        const value_keys = splitPropertyKey(property_key['value'])
+        const lang_keys = splitPropertyKey(property_key['lang'])
+        const length = Math.max(value_keys.length, lang_keys.length);
+        let item_properties_value = page_global.item_properties;
+        let item_properties_lang = page_global.item_properties;
+        for (let ii = 0; ii < length; ii++) {
+          let input_area = null;
+          if (ii == 0) {
+            input_area = metadata_property_column.find('div[name="metadata-property-item-with-lang"]').last();
+            item_properties_value = item_properties_value[value_keys[ii].key];
+            item_properties_lang = item_properties_lang[lang_keys[ii].key];
+          }
+          else {
+            // Add input area
+            input_area = $('#template-metadata-property-item-with-lang :first').clone(true);
+            const tmp_area = metadata_property_column.find('div[name="metadata-property-item-with-lang"]');
+            tmp_area.after(input_area);
+
+            if (value_keys.length > ii) {
+              const sub_items = item_properties_value['properties'];
+              const select = input_area.find('select[name="select-metadata-property-value"]');
+              for (let [key, value] of Object.entries(sub_items)) {
+                select.append($('<option>').html(value['title']).val(key));
+              }
+              item_properties_value = sub_items[value_keys[ii].key];
+            }
+            if (lang_keys.length > ii) {
+              const sub_items = item_properties_lang['properties'];
+              const select = input_area.find('select[name="select-metadata-property-lang"]');
+              for (let [key, value] of Object.entries(sub_items)) {
+                select.append($('<option>').html(value['title']).val(key));
+              }
+              item_properties_lang = sub_items[lang_keys[ii].key];
+            }
+          }
 
           if (value_keys.length > ii) {
-            const sub_items = item_properties_value['properties'];
             const select = input_area.find('select[name="select-metadata-property-value"]');
-            for (let [key, value] of Object.entries(sub_items)) {
-              select.append($('<option>').html(value['title']).val(key));
-            }
-            item_properties_value = sub_items[value_keys[ii].key];
+            select.val(value_keys[ii].key);
+            select.removeClass('invisible');
           }
           if (lang_keys.length > ii) {
-            const sub_items = item_properties_lang['properties'];
             const select = input_area.find('select[name="select-metadata-property-lang"]');
-            for (let [key, value] of Object.entries(sub_items)) {
-              select.append($('<option>').html(value['title']).val(key));
-            }
-            item_properties_lang = sub_items[lang_keys[ii].key];
+            select.val(lang_keys[ii].key);
+            select.removeClass('invisible');
           }
-        }
-
-        if (value_keys.length > ii) {
-          const select = input_area.find('select[name="select-metadata-property-value"]');
-          select.val(value_keys[ii].key);
-          select.removeClass('invisible');
-        }
-        if (lang_keys.length > ii) {
-          const select = input_area.find('select[name="select-metadata-property-lang"]');
-          select.val(lang_keys[ii].key);
-          select.removeClass('invisible');
         }
       }
     }
@@ -353,20 +403,26 @@ $(() => {
       delNode(target);
     }
     else if (action == 'add-mapping') {
+      const editing_node = $('#editing-node').val();
+      if (editing_node == '') {
+        return;
+      }
+
+      // Add mapping
       const added_row = addMapping();
 
       // Add metadata property
       const add_button = added_row.find('button[data-action="add-metadata-property"]');
-      addMappingProperty(add_button);
+      addMetadataProperty(add_button);
     }
     else if (action == 'del-mapping') {
       delMapping(target);
     }
     else if (action == 'add-metadata-property') {
-      addMappingProperty(target);
+      addMetadataProperty(target);
     }
     else if (action == 'del-metadata-property') {
-      delMappingProperty(target);
+      delMetadataProperty(target);
     }
   });
 
@@ -389,8 +445,16 @@ $(() => {
   }
 
   function addMapping() {
+    let template = null;
+    const editing_node = $('#editing-node').val();
+    if (editing_node == 'file') {
+      template = $('#template-mapping-file-row :first').clone(true);
+    }
+    else {
+      template = $('#template-mapping-row :first').clone(true);
+    }
+
     // Add mapping table row
-    const template = $('#template-mapping-row :first').clone(true);
     $('#mapping-table').append(template);
     $('#mapping-table').append('<hr>');
 
@@ -404,15 +468,23 @@ $(() => {
     table_row.remove();
   }
 
-  function addMappingProperty(target) {
+  function addMetadataProperty(target) {
+    let template = null;
+    const editing_node = $('#editing-node').val();
+    if (editing_node == 'file') {
+      template = $('#template-metadata-file-property-row :first').clone(true);
+    }
+    else {
+      template = $('#template-metadata-property-row :first').clone(true);
+    }
+
     // Add metadata property
-    const template = $('#template-metadata-property-row :first').clone(true);
     $(target).closest('div[name="button-row"]').before(template);
 
     return template;
   }
 
-  function delMappingProperty(target) {
+  function delMetadataProperty(target) {
     // Remove metadata property
     $(target).closest('div[name="metadata-property-row"]').remove();
   }
@@ -523,6 +595,36 @@ $(() => {
     }
   });
 
+  $('select[name="select-metadata-file-property"]').change((ev) => {
+    page_global.hasEdit = true;
+
+    // Init input area
+    const input_area = $(ev.target).closest('div[name="metadata-file-property-item"]');
+    input_area.nextAll().remove();
+
+    if ($(ev.target).val() == '') {
+      return;
+    }
+
+    // Get selected property
+    const selected_prop_key = getSelectedKeys(ev.target);
+    const selected_prop = getSelectedProp(selected_prop_key);
+
+    // Add child property select box
+    if ('properties' in selected_prop) {
+      // Create child select box
+      const template = $('#template-metadata-file-property-item :first').clone(true);
+      input_area.after(template);
+
+      // Set child property
+      const child_select = template.find('select');
+      const child_props = selected_prop['properties'];
+      for (let [key, value] of Object.entries(child_props)) {
+        child_select.append($('<option>').html(value['title']).val(key));
+      }
+    }
+  });
+
   function getSelectedKeys(select_box, select_name) {
     let select_list = null;
     if (select_name == null) {
@@ -592,6 +694,7 @@ $(() => {
   }
 
   $('#mapping-submit').on('click', (ev) => {
+    saveCurrentMapping();
     const rocrate_mapping = buildMappingData();
     const data = {
       item_type_id: parseInt(page_global.src_mapping_name),
@@ -614,9 +717,13 @@ $(() => {
     });
 
     // tree_structure
-    rocrate_mapping['tree_structure'] = {};
     const root_node_li = $('#tree-base :first');
     rocrate_mapping['tree_structure'] = buildMappingNode(root_node_li, 0);
+
+    // file
+    rocrate_mapping['file'] = {
+      map: page_global.node_mapping['file'],
+    };
 
     return rocrate_mapping;
   };
@@ -694,15 +801,16 @@ $(() => {
     // Create layer
     const entity_types = page_global.rocrate_mapping.entity_types;
     $('#layer-num').val(entity_types.length - 1);
-    for (let entity_type of entity_types) {
+    for (let ii = 1; ii < entity_types.length; ii++) {
       addLayer();
       const layer_text = $('#layer-base').find('input[name="layer-name"]').eq(-1);
-      layer_text.val(entity_type);
+      layer_text.val(entity_types[ii]);
     }
 
     // Create tree structure
     const tree_structure = page_global.rocrate_mapping.tree_structure;
     const root_node_li = $('#tree-base :first');
     createNode(tree_structure, root_node_li);
+    page_global.node_mapping['file'] = page_global.rocrate_mapping.file.map;
   }
 });

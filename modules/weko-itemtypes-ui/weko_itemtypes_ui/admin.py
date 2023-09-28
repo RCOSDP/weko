@@ -763,7 +763,8 @@ class ItemTypeRocrateMappingView(BaseView):
                 lists=lists,
                 item_type_id=item_type_id,
                 item_properties=item_properties,
-                rocrate_properties=current_app.config['WEKO_ITEMTYPES_UI_DATASET_PROPERTIES'],
+                rocrate_dataset_properties=current_app.config['WEKO_ITEMTYPES_UI_DATASET_PROPERTIES'],
+                rocrate_file_properties=current_app.config['WEKO_ITEMTYPES_UI_FILE_PROPERTIES'],
                 rocrate_mapping=rocrate_mapping,
                 is_system_admin=is_system_admin,
                 lang_code=lang_code

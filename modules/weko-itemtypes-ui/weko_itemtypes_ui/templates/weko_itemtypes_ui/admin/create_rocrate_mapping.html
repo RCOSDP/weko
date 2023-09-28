@@ -23,17 +23,21 @@
 {%- block css %}
 {{ super() }}
 {% assets "weko_rocrate_mapping_ui_css" %}
-<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+<link href="{{ ASSET_URL }}" rel="stylesheet">
+{% endassets %}
 {% assets "weko_theme_css_buttons" %}
-<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+<link href="{{ ASSET_URL }}" rel="stylesheet">
+{% endassets %}
 {% assets "weko_admin_css" %}
-<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+<link href="{{ ASSET_URL }}" rel="stylesheet">
+{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
 {{ super() }}
 {% assets "weko_itemtypes_rocrate_mapping_ui_js" %}
-<script src="{{ ASSET_URL }}"></script>{% endassets %}
+<script src="{{ ASSET_URL }}"></script>
+{% endassets %}
 {%- endblock javascript %}
 
 {%- block body %}
@@ -179,7 +183,7 @@
                 <div class="form-group">
                   <select name="select-rocrate-property" class="form-control">
                     <option value=""></option>
-                    {%- for value in rocrate_properties -%}
+                    {%- for value in rocrate_dataset_properties -%}
                     <option value="{{value}}">{{value}}</option>
                     {%- endfor -%}
                   </select>
@@ -293,6 +297,74 @@
             </div>
           </div>
         </div>
+
+        <div id="template-mapping-file-row">
+          <div name="mapping-row" class="row margin-h-none">
+            <!-- RO-Crate property -->
+            <div name="rocrate-property-column" class="col-sm-3 padding-h-none">
+              <div class="col-sm-9 padding-h-none">
+                <div class="form-group">
+                  <select name="select-rocrate-property" class="form-control">
+                    <option value=""></option>
+                    {%- for value in rocrate_file_properties -%}
+                    <option value="{{value}}">{{value}}</option>
+                    {%- endfor -%}
+                  </select>
+                  <div class="alert alert-danger sub_itemtype_text_warning hide" role="alert">
+                    <strong>{{_(Warning)}}:</strong>{{_('Item type name is blank.')}}
+                  </div>
+                </div>
+              </div>
+              <div class="pull-right ten-pixel-right-margin">
+                <button type="button" class="btn btn-danger" data-action="del-mapping">
+                  <span class="glyphicon glyphicon-remove"></span>
+                </button>
+              </div>
+            </div>
+            <!-- Record metadata property -->
+            <div name="metadata-property-column" class="col-sm-9 padding-h-none">
+              <div name="button-row" class="row margin-h-none">
+                <div class="col-sm-12">
+                  <button type="button" class="btn btn-success" data-action="add-metadata-property">
+                    <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add')}}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="template-metadata-file-property-row">
+          <div name="metadata-property-row" class="row margin-h-none">
+            <div name="metadata-property" class="row margin-h-none">
+              <div class="col-sm-11 metadata-property">
+                <div name="metadata-file-property-item" class="form-group ten-pixel-right-margin">
+                  <select name="select-metadata-file-property" class="form-control inline-block">
+                    <option value=""></option>
+                    {%- for key, value in item_properties.items() -%}
+                    <option value="{{key}}">{{value['title']}}</option>
+                    {%- endfor -%}
+                  </select>
+                </div>
+              </div>
+              <div class="col-sm-1">
+                <div class="pull-right">
+                  <button type="button" class="btn btn-danger" data-action="del-metadata-property">
+                    <span class="glyphicon glyphicon-remove"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="template-metadata-file-property-item">
+          <div name="metadata-file-property-item" class="form-group ten-pixel-right-margin">
+            <select name="select-metadata-file-property" class="form-control inline-block">
+              <option value=""></option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <!-- Table header -->
@@ -305,7 +377,7 @@
         <div class="col-sm-9 padding-h-none">
           <label id="metadata-property-label"></label>
           <div class="pull-right ten-pixel-left-margin">
-            <button type="button" class="btn btn-success" data-action="add-mapping">
+            <button type="button" class="btn btn-success" data-action="add-mapping" disabled>
               <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add')}}
             </button>
           </div>
