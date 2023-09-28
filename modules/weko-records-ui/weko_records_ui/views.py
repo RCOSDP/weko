@@ -638,7 +638,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     file_url = ''
     if file_order >= 0 and files and files[file_order].get('url') and files[file_order]['url'].get('url'):
         file_url = files[file_order]['url']['url']
-    
+
     return render_template(
         template,
         pid=pid,
