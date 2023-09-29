@@ -105,7 +105,7 @@ $(() => {
 
     // Get item type name
     const item_type_name = $('#select-item-type option:selected').text();
-    $('label#metadata-property-label').text(item_type_name);
+    $('label#item-property-label').text(item_type_name);
 
     // Set editing node
     const node_id = $(ev.target).parents('li').get(0).dataset.id;
@@ -133,103 +133,102 @@ $(() => {
       // rocrate property
       const rocrate_property = $(table_row).find('select[name="select-rocrate-property"]').val();
 
-      // metadata property
-      let metadata_property = null;
-      const metadata_property_row = $(table_row).find('div[name="metadata-property-row"]');
-      if (metadata_property_row.length == 1) {
-        metadata_property = getMetadataPropertyMapping(metadata_property_row);
+      // item property
+      let item_property = null;
+      const item_property_row = $(table_row).find('div[name="item-property-row"]');
+      if (item_property_row.length == 1) {
+        item_property = getItemProperty(item_property_row);
       }
-      else if (metadata_property_row.length > 1) {
-        metadata_property = [];
-        metadata_property_row.each((_, elem) => {
-          metadata_property.push(getMetadataPropertyMapping($(elem)));
+      else if (item_property_row.length > 1) {
+        item_property = [];
+        item_property_row.each((_, elem) => {
+          item_property.push(getItemProperty($(elem)));
         });
       }
-      mapping[rocrate_property] = metadata_property;
+      mapping[rocrate_property] = item_property;
     });
 
     page_global.node_mapping[editing_node] = mapping;
   };
 
-  function getMetadataPropertyMapping(metadata_property_row) {
+  function getItemProperty(item_property_row) {
+    if (item_property_row.find('div[name="static-value"]').length > 0) {
+      return getItemPropertyValueStatic(item_property_row);
+    }
+
     const editing_node = $('#editing-node').val();
     if (editing_node == 'file') {
-      return getMetadataPropertyFile(metadata_property_row);
+      return getItemPropertyValueFile(item_property_row);
     }
 
-    if (metadata_property_row.find('div[name="static-value"]').length > 0) {
-      return getMetadataPropertyStatic(metadata_property_row);
+    const lang_check = item_property_row.find('input[name="check-language"]');
+    if (lang_check.is(':checked')) {
+      return getItemPropertyValueLang(item_property_row);
     }
 
-    const lang_check = metadata_property_row.find('input[name="check-language"]');
-    if (!lang_check.is(':checked')) {
-      return getMetadataProperty(metadata_property_row);
-    }
-    else {
-      return getMetadataPropertyLang(metadata_property_row);
-    }
+    return getItemPropertyValue(item_property_row);
   };
 
-  function getMetadataProperty(metadata_property_row) {
-    let metadata_property = '';
-    const items = metadata_property_row.find('div[name="metadata-property-item"]');
-    items.each((_, item) => {
-      let item_key = $(item).find('select').val();
-      const index_check = $(item).find('input[name="check-list-index"]');
+  function getItemPropertyValue(item_property_row) {
+    let item_property = '';
+    const fields = item_property_row.find('div[name="item-property-field"]');
+    fields.each((_, field) => {
+      let field_key = $(field).find('select').val();
+      const index_check = $(field).find('input[name="check-list-index"]');
       if (index_check.is(':checked')) {
-        item_key = item_key + '[' + $(item).find('input[type=number]').val() + ']';
+        field_key = field_key + '[' + $(field).find('input[type=number]').val() + ']';
       }
-      metadata_property = metadata_property + '.' + item_key;
+      item_property = item_property + '.' + field_key;
     });
-    if (metadata_property != '') {
-      metadata_property = metadata_property.slice(1);
+    if (item_property != '') {
+      item_property = item_property.slice(1);
     }
-    return metadata_property;
+    return item_property;
   }
 
-  function getMetadataPropertyLang(metadata_property_row) {
-    let metadata_property_value = '';
-    let metadata_property_lang = '';
-    const items = metadata_property_row.find('div[name="metadata-property-item-with-lang"]');
-    items.each((_, item) => {
-      const item_value_key = $(item).find('select[name="select-metadata-property-value"]').val();
-      if (item_value_key != '') {
-        metadata_property_value = metadata_property_value + '.' + item_value_key;
+  function getItemPropertyValueLang(item_property_row) {
+    let item_property_value = '';
+    let item_property_lang = '';
+    const fields = item_property_row.find('div[name="item-property-field-with-lang"]');
+    fields.each((_, field) => {
+      const field_key_value = $(field).find('select[name="select-item-property-value"]').val();
+      if (field_key_value != '') {
+        item_property_value = item_property_value + '.' + field_key_value;
       }
-      const item_lang_key = $(item).find('select[name="select-metadata-property-lang"]').val();
-      if (item_lang_key != '') {
-        metadata_property_lang = metadata_property_lang + '.' + item_lang_key;
+      const field_key_lang = $(field).find('select[name="select-item-property-lang"]').val();
+      if (field_key_lang != '') {
+        item_property_lang = item_property_lang + '.' + field_key_lang;
       }
     });
-    if (metadata_property_value != '') {
-      metadata_property_value = metadata_property_value.slice(1);
+    if (item_property_value != '') {
+      item_property_value = item_property_value.slice(1);
     }
-    if (metadata_property_lang != '') {
-      metadata_property_lang = metadata_property_lang.slice(1);
+    if (item_property_lang != '') {
+      item_property_lang = item_property_lang.slice(1);
     }
     return {
-      value: metadata_property_value,
-      lang: metadata_property_lang,
+      value: item_property_value,
+      lang: item_property_lang,
     };
   }
 
-  function getMetadataPropertyFile(metadata_property_row) {
-    let metadata_property = '';
-    const items = metadata_property_row.find('div[name="metadata-property-item"]');
-    items.each((_, item) => {
-      const item_key = $(item).find('select').val();
-      metadata_property = metadata_property + '.' + item_key;
+  function getItemPropertyValueFile(item_property_row) {
+    let item_property = '';
+    const fields = item_property_row.find('div[name="item-property-field"]');
+    fields.each((_, field) => {
+      const field_key = $(field).find('select').val();
+      item_property = item_property + '.' + field_key;
     });
-    if (metadata_property != '') {
-      metadata_property = metadata_property.slice(1);
+    if (item_property != '') {
+      item_property = item_property.slice(1);
     }
-    return metadata_property;
+    return item_property;
   }
 
-  function getMetadataPropertyStatic(metadata_property_row) {
-    const metadata_property = metadata_property_row.find('input[type="text"]').val();
+  function getItemPropertyValueStatic(item_property_row) {
+    const item_property = item_property_row.find('input[type="text"]').val();
     return {
-      static_value: metadata_property,
+      static_value: item_property,
     }
   }
 
@@ -246,18 +245,18 @@ $(() => {
       return;
     }
 
-    for (let [key, value] of Object.entries(node_mapping)) {
-      if (value instanceof Object && !(value instanceof Array)) {
-        if ('static_value' in value) {
+    for (let [rocrate_property, item_property] of Object.entries(node_mapping)) {
+      if (item_property instanceof Object && !(item_property instanceof Array)) {
+        if ('static_value' in item_property) {
           const added_row = addMappingStatic();
 
           // Set RO-Crate property
           const rocrate_property_select = added_row.find('select[name="select-rocrate-property"]');
-          rocrate_property_select.val(key);
+          rocrate_property_select.val(rocrate_property);
 
-          // Set Metadata property
-          const metadata_property_column = added_row.find('div[name="metadata-property-column"]');
-          setMetadataPropertyStatic(metadata_property_column, value);
+          // Set item property
+          const item_property_cell = added_row.find('div[name="item-property-cell"]');
+          setItemPropertyValueStatic(item_property_cell, item_property);
           continue;
         }
       }
@@ -267,81 +266,83 @@ $(() => {
 
       // Set RO-Crate property
       const rocrate_property_select = added_row.find('select[name="select-rocrate-property"]');
-      rocrate_property_select.val(key);
+      rocrate_property_select.val(rocrate_property);
 
-      // Set Metadata property
-      const metadata_property_column = added_row.find('div[name="metadata-property-column"]');
-      if (value instanceof Array) {
-        value.forEach((elem) => {
-          setMetadataPropertyMapping(metadata_property_column, elem);
+      // Set item property
+      const item_property_cell = added_row.find('div[name="item-property-cell"]');
+      if (item_property instanceof Array) {
+        item_property.forEach((elem) => {
+          setItemProperty(item_property_cell, elem);
         });
       }
       else {
-        setMetadataPropertyMapping(metadata_property_column, value);
+        setItemProperty(item_property_cell, item_property);
       }
     }
   };
 
-  function setMetadataPropertyMapping(metadata_property_column, property_key) {
-    // Add metadata property input area
-    const add_button = metadata_property_column.find('button[data-action="add-metadata-property"]');
-    const added_property = addMetadataProperty(add_button);
+  function setItemProperty(item_property_cell, property_key) {
+    // Add item property input area
+    const add_button = item_property_cell.find('button[data-action="add-item-property"]');
+    const added_property = addItemProperty(add_button);
 
     const editing_node = $('#editing-node').val();
     if (editing_node == 'file') {
-      setMetadataPropertyFile(metadata_property_column, property_key);
+      setItemPropertyValueFile(item_property_cell, property_key);
+      return;
     }
 
     if (typeof property_key == 'string') {
-      setMetadataProperty(metadata_property_column, property_key);
+      setItemPropertyValue(item_property_cell, property_key);
       return;
     }
     else {
-      setMetadataPropertyLang(metadata_property_column, property_key, added_property);
+      setItemPropertyValueLang(item_property_cell, property_key, added_property);
+      return;
     }
   }
 
-  function setMetadataProperty(metadata_property_column, property_key) {
+  function setItemPropertyValue(item_property_cell, property_key) {
     const keys = splitPropertyKey(property_key);
     const length = keys.length;
     let item_properties = page_global.item_properties;
     for (let ii = 0; ii < length; ii++) {
-      let input_area = null;
+      let field = null;
       if (ii == 0) {
-        input_area = metadata_property_column.find('div[name="metadata-property-item"]').last();
+        field = item_property_cell.find('div[name="item-property-field"]').last();
         item_properties = item_properties[keys[ii].key];
       }
       else {
-        // Add input area
-        input_area = $('#template-metadata-property-item :first').clone(true);
-        const tmp_area = metadata_property_column.find('div[name="metadata-property-item"]').last();
-        tmp_area.after(input_area);
+        // Add input field
+        field = $('#template-item-property-field :first').clone(true);
+        const last_field = item_property_cell.find('div[name="item-property-field"]').last();
+        last_field.after(field);
 
         const sub_items = item_properties['properties'];
-        const select = input_area.find('select');
+        const select = field.find('select');
         for (let [key, value] of Object.entries(sub_items)) {
           select.append($('<option>').html(value['title']).val(key));
         }
         item_properties = sub_items[keys[ii].key];
       }
 
-      input_area.find('select').val(keys[ii].key);
+      field.find('select').val(keys[ii].key);
       if (item_properties['type'] == 'array') {
-        input_area.find('label').removeClass('invisible');
+        field.find('label').removeClass('invisible');
       }
       if (keys[ii].index != null) {
-        input_area.find('input[type="checkbox"]').prop('checked', true);
-        const index_text = input_area.find('input[type="number"]');
+        field.find('input[type="checkbox"]').prop('checked', true);
+        const index_text = field.find('input[type="number"]');
         index_text.removeClass('invisible');
         index_text.val(keys[ii].index);
       }
     }
   }
 
-  function setMetadataPropertyLang(metadata_property_column, property_key, added_property) {
+  function setItemPropertyValueLang(item_property_cell, property_key, added_property) {
     added_property.find('input[name="check-language"]').prop('checked', true);
-    added_property.find('div[name="metadata-property"]').addClass('hide');
-    added_property.find('div[name="metadata-property-with-lang"]').removeClass('hide');
+    added_property.find('div[name="item-property"]').addClass('hide');
+    added_property.find('div[name="item-property-with-lang"]').removeClass('hide');
 
     const value_keys = splitPropertyKey(property_key['value'])
     const lang_keys = splitPropertyKey(property_key['lang'])
@@ -349,21 +350,21 @@ $(() => {
     let item_properties_value = page_global.item_properties;
     let item_properties_lang = page_global.item_properties;
     for (let ii = 0; ii < length; ii++) {
-      let input_area = null;
+      let field = null;
       if (ii == 0) {
-        input_area = metadata_property_column.find('div[name="metadata-property-item-with-lang"]').last();
+        field = item_property_cell.find('div[name="item-property-field-with-lang"]').last();
         item_properties_value = item_properties_value[value_keys[ii].key];
         item_properties_lang = item_properties_lang[lang_keys[ii].key];
       }
       else {
-        // Add input area
-        input_area = $('#template-metadata-property-item-with-lang :first').clone(true);
-        const tmp_area = metadata_property_column.find('div[name="metadata-property-item-with-lang"]');
-        tmp_area.after(input_area);
+        // Add input field
+        field = $('#template-item-property-field-with-lang :first').clone(true);
+        const last_field = item_property_cell.find('div[name="item-property-field-with-lang"]').last();
+        last_field.after(field);
 
         if (value_keys.length > ii) {
           const sub_items = item_properties_value['properties'];
-          const select = input_area.find('select[name="select-metadata-property-value"]');
+          const select = field.find('select[name="select-item-property-value"]');
           for (let [key, value] of Object.entries(sub_items)) {
             select.append($('<option>').html(value['title']).val(key));
           }
@@ -371,7 +372,7 @@ $(() => {
         }
         if (lang_keys.length > ii) {
           const sub_items = item_properties_lang['properties'];
-          const select = input_area.find('select[name="select-metadata-property-lang"]');
+          const select = field.find('select[name="select-item-property-lang"]');
           for (let [key, value] of Object.entries(sub_items)) {
             select.append($('<option>').html(value['title']).val(key));
           }
@@ -380,47 +381,47 @@ $(() => {
       }
 
       if (value_keys.length > ii) {
-        const select = input_area.find('select[name="select-metadata-property-value"]');
+        const select = field.find('select[name="select-item-property-value"]');
         select.val(value_keys[ii].key);
         select.removeClass('invisible');
       }
       if (lang_keys.length > ii) {
-        const select = input_area.find('select[name="select-metadata-property-lang"]');
+        const select = field.find('select[name="select-item-property-lang"]');
         select.val(lang_keys[ii].key);
         select.removeClass('invisible');
       }
     }
   }
 
-  function setMetadataPropertyFile(metadata_property_column, property_key) {
+  function setItemPropertyValueFile(item_property_cell, property_key) {
     const keys = splitPropertyKey(property_key);
     const length = keys.length;
     let item_properties = page_global.item_properties;
     for (let ii = 0; ii < length; ii++) {
-      let input_area = null;
+      let field = null;
       if (ii == 0) {
-        input_area = metadata_property_column.find('div[name="metadata-property-item"]').last();
+        field = item_property_cell.find('div[name="item-property-field"]').last();
         item_properties = item_properties[keys[ii].key];
       }
       else {
-        // Add input area
-        input_area = $('#template-metadata-file-property-item :first').clone(true);
-        const tmp_area = metadata_property_column.find('div[name="metadata-property-item"]').last();
-        tmp_area.after(input_area);
+        // Add input field
+        field = $('#template-item-file-property-field :first').clone(true);
+        const last_field = item_property_cell.find('div[name="item-property-field"]').last();
+        last_field.after(field);
 
         const sub_items = item_properties['properties'];
-        const select = input_area.find('select');
+        const select = field.find('select');
         for (let [key, value] of Object.entries(sub_items)) {
           select.append($('<option>').html(value['title']).val(key));
         }
         item_properties = sub_items[keys[ii].key];
       }
-      input_area.find('select').val(keys[ii].key);
+      field.find('select').val(keys[ii].key);
     }
   }
 
-  function setMetadataPropertyStatic(metadata_property_column, property_key){
-    metadata_property_column.find('input[type="text"]').val(property_key['static_value']);
+  function setItemPropertyValueStatic(item_property_cell, property_key) {
+    item_property_cell.find('input[type="text"]').val(property_key['static_value']);
   }
 
   function splitPropertyKey(property_key) {
@@ -463,9 +464,9 @@ $(() => {
         // Add mapping
         const added_row = addMapping();
 
-        // Add metadata property
-        const add_button = added_row.find('button[data-action="add-metadata-property"]');
-        addMetadataProperty(add_button);
+        // Add item property
+        const add_button = added_row.find('button[data-action="add-item-property"]');
+        addItemProperty(add_button);
       }
       else if (target.dataset.type == 'static') {
         addMappingStatic();
@@ -474,11 +475,11 @@ $(() => {
     else if (action == 'del-mapping') {
       delMapping(target);
     }
-    else if (action == 'add-metadata-property') {
-      addMetadataProperty(target);
+    else if (action == 'add-item-property') {
+      addItemProperty(target);
     }
-    else if (action == 'del-metadata-property') {
-      delMetadataProperty(target);
+    else if (action == 'del-item-property') {
+      delItemProperty(target);
     }
   });
 
@@ -545,39 +546,39 @@ $(() => {
     table_row.remove();
   }
 
-  function addMetadataProperty(target) {
+  function addItemProperty(target) {
     let template = null;
     const editing_node = $('#editing-node').val();
     if (editing_node == 'file') {
-      template = $('#template-metadata-file-property-row :first').clone(true);
+      template = $('#template-item-file-property-row :first').clone(true);
     }
     else {
-      template = $('#template-metadata-property-row :first').clone(true);
+      template = $('#template-item-property-row :first').clone(true);
     }
 
-    // Add metadata property
+    // Add item property
     $(target).closest('div[name="button-row"]').before(template);
 
     return template;
   }
 
-  function delMetadataProperty(target) {
-    // Remove metadata property
-    $(target).closest('div[name="metadata-property-row"]').remove();
+  function delItemProperty(target) {
+    // Remove item property
+    $(target).closest('div[name="item-property-row"]').remove();
   }
 
   $('input[name="check-language"]').on('click', (ev) => {
     const check_value = $(ev.target).is(':checked');
-    const column = $(ev.target).parents('div[name="metadata-property-row"]');
-    const property = column.find('div[name="metadata-property"]');
-    const property_with_lang = column.find('div[name="metadata-property-with-lang"]');
+    const item_property_row = $(ev.target).parents('div[name="item-property-row"]');
+    const item_property = item_property_row.find('div[name="item-property"]');
+    const item_property_lang = item_property_row.find('div[name="item-property-with-lang"]');
     if (check_value) {
-      property.addClass('hide');
-      property_with_lang.removeClass('hide');
+      item_property.addClass('hide');
+      item_property_lang.removeClass('hide');
     }
     else {
-      property.removeClass('hide');
-      property_with_lang.addClass('hide');
+      item_property.removeClass('hide');
+      item_property_lang.addClass('hide');
     }
   });
 
@@ -586,15 +587,15 @@ $(() => {
     index_text.toggleClass('invisible');
   });
 
-  $('select[name="select-metadata-property"]').change((ev) => {
+  $('select[name="select-item-property"]').change((ev) => {
     page_global.hasEdit = true;
 
-    // Init input area
-    const input_area = $(ev.target).closest('div[name="metadata-property-item"]');
-    input_area.nextAll().remove();
-    input_area.find('input[type="number"]').addClass('invisible');
-    input_area.find('label').addClass('invisible');
-    input_area.find('input[name="check-list-index"]').prop('checked', false);
+    // Init field
+    const field = $(ev.target).closest('div[name="item-property-field"]');
+    field.nextAll().remove();
+    field.find('input[type="number"]').addClass('invisible');
+    field.find('label').addClass('invisible');
+    field.find('input[name="check-list-index"]').prop('checked', false);
 
     if ($(ev.target).val() == '') {
       return;
@@ -606,14 +607,14 @@ $(() => {
 
     // Show specify index checkbox if selected property is list.
     if (selected_prop['type'] == 'array') {
-      input_area.find('label').removeClass('invisible');
+      field.find('label').removeClass('invisible');
     }
 
     // Add child property select box
     if ('properties' in selected_prop) {
       // Create child select box
-      const template = $('#template-metadata-property-item :first').clone(true);
-      input_area.after(template);
+      const template = $('#template-item-property-field :first').clone(true);
+      field.after(template);
 
       // Set child property
       const child_select = template.find('select');
@@ -624,12 +625,12 @@ $(() => {
     }
   });
 
-  $('select[name="select-metadata-property-value"], select[name="select-metadata-property-lang"]').change((ev) => {
+  $('select[name="select-item-property-value"], select[name="select-item-property-lang"]').change((ev) => {
     page_global.hasEdit = true;
     const select_name = $(ev.target).prop('name');
 
-    // Init input area
-    const select_list = $(ev.target).closest('div[name="metadata-property-with-lang"]').find(`select[name="${select_name}"]`);
+    // Init fields
+    const select_list = $(ev.target).closest('div[name="item-property-with-lang"]').find(`select[name="${select_name}"]`);
     const target_index = select_list.index(ev.target);
     select_list.each((index, elem) => {
       if (index <= target_index) {
@@ -640,8 +641,8 @@ $(() => {
       $(elem).append($('<option>').html('').val(''));
     });
 
-    // Delete waste area
-    removeWasteArea(ev.target);
+    // Delete waste field
+    removeWasteField(ev.target);
 
     if ($(ev.target).val() == '') {
       return;
@@ -652,16 +653,16 @@ $(() => {
     const selected_prop = getSelectedProp(selected_prop_key);
 
     if ('properties' in selected_prop) {
-      const input_area = $(ev.target).closest('div[name="metadata-property-item-with-lang"]');
-      if (input_area.next().length == 0) {
+      const field = $(ev.target).closest('div[name="item-property-field-with-lang"]');
+      if (field.next().length == 0) {
         // Add child property select box
-        const template = $('#template-metadata-property-item-with-lang :first').clone(true);
-        input_area.after(template);
+        const template = $('#template-item-property-field-with-lang :first').clone(true);
+        field.after(template);
       }
 
       // Set child property
       const child_select = $(ev.target)
-        .closest('div[name="metadata-property-with-lang"]')
+        .closest('div[name="item-property-with-lang"]')
         .find(`select[name="${select_name}"]`)
         .eq(selected_prop_key.length);
       const child_props = selected_prop['properties'];
@@ -672,12 +673,12 @@ $(() => {
     }
   });
 
-  $('select[name="select-metadata-file-property"]').change((ev) => {
+  $('select[name="select-item-file-property"]').change((ev) => {
     page_global.hasEdit = true;
 
-    // Init input area
-    const input_area = $(ev.target).closest('div[name="metadata-property-item"]');
-    input_area.nextAll().remove();
+    // Init field
+    const field = $(ev.target).closest('div[name="item-property-field"]');
+    field.nextAll().remove();
 
     if ($(ev.target).val() == '') {
       return;
@@ -690,8 +691,8 @@ $(() => {
     // Add child property select box
     if ('properties' in selected_prop) {
       // Create child select box
-      const template = $('#template-metadata-file-property-item :first').clone(true);
-      input_area.after(template);
+      const template = $('#template-item-file-property-field :first').clone(true);
+      field.after(template);
 
       // Set child property
       const child_select = template.find('select');
@@ -705,10 +706,10 @@ $(() => {
   function getSelectedKeys(select_box, select_name) {
     let select_list = null;
     if (select_name == null) {
-      select_list = $(select_box).closest('div[name="metadata-property"]').find('select');
+      select_list = $(select_box).closest('div[name="item-property"]').find('select');
     }
     else {
-      select_list = $(select_box).closest('div[name="metadata-property-with-lang"]').find(`select[name="${select_name}"]`);
+      select_list = $(select_box).closest('div[name="item-property-with-lang"]').find(`select[name="${select_name}"]`);
     }
 
     const keys = [];
@@ -736,17 +737,17 @@ $(() => {
     return selected_prop;
   };
 
-  function removeWasteArea(select_box) {
+  function removeWasteField(select_box) {
     let find = false;
-    const select_value_list = $(select_box)
-      .closest('div[name="metadata-property-with-lang"]')
-      .find('select[name="select-metadata-property-value"]');
-    let valid_value_num = select_value_list.length;
-    for (let ii = 0; ii < select_value_list.length; ii++) {
-      const select = select_value_list.eq(ii);
+    const selects_value = $(select_box)
+      .closest('div[name="item-property-with-lang"]')
+      .find('select[name="select-item-property-value"]');
+    let valid_num_value = selects_value.length;
+    for (let ii = 0; ii < selects_value.length; ii++) {
+      const select = selects_value.eq(ii);
       if (select.find('option').length == 1) {
         if (!find) {
-          valid_value_num = ii;
+          valid_num_value = ii;
           find = true;
         }
         select.addClass('invisible')
@@ -754,27 +755,27 @@ $(() => {
     }
 
     find = false;
-    const select_lang_list = $(select_box)
-      .closest('div[name="metadata-property-with-lang"]')
-      .find('select[name="select-metadata-property-lang"]');
-    let valid_lang_num = select_lang_list.length;
-    for (let ii = 0; ii < select_lang_list.length; ii++) {
-      const select = select_lang_list.eq(ii);
+    const selects_lang = $(select_box)
+      .closest('div[name="item-property-with-lang"]')
+      .find('select[name="select-item-property-lang"]');
+    let valid_num_lang = selects_lang.length;
+    for (let ii = 0; ii < selects_lang.length; ii++) {
+      const select = selects_lang.eq(ii);
       if (select.find('option').length == 1) {
         if (!find) {
-          valid_lang_num = ii;
+          valid_num_lang = ii;
           find = true;
         }
         select.addClass('invisible')
       }
     }
 
-    const valid_num = Math.max(valid_value_num, valid_lang_num);
-    const input_areas = $(select_box)
-      .closest('div[name="metadata-property-item-with-lang"]')
+    const valid_num = Math.max(valid_num_value, valid_num_lang);
+    const input_fields = $(select_box)
+      .closest('div[name="item-property-field-with-lang"]')
       .parent()
-      .find('div[name="metadata-property-item-with-lang"]');
-    input_areas.eq(valid_num - 1).nextAll().remove();
+      .find('div[name="item-property-field-with-lang"]');
+    input_fields.eq(valid_num - 1).nextAll().remove();
   }
 
   $('#mapping-submit').on('click', (ev) => {

@@ -179,7 +179,7 @@
         <div id="template-mapping-row">
           <div name="mapping-row" class="row margin-h-none">
             <!-- RO-Crate property -->
-            <div name="rocrate-property-column" class="col-sm-3 padding-h-none">
+            <div name="rocrate-property-cell" class="col-sm-3 padding-h-none">
               <div name="rocrate-property" class="col-sm-9 padding-h-none">
                 <div class="form-group">
                   <select name="select-rocrate-property" class="form-control">
@@ -199,11 +199,11 @@
                 </button>
               </div>
             </div>
-            <!-- Record metadata property -->
-            <div name="metadata-property-column" class="col-sm-9 padding-h-none">
+            <!-- Item property -->
+            <div name="item-property-cell" class="col-sm-9 padding-h-none">
               <div name="button-row" class="row margin-h-none">
                 <div class="col-sm-12">
-                  <button type="button" class="btn btn-success" data-action="add-metadata-property">
+                  <button type="button" class="btn btn-success" data-action="add-item-property">
                     <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add')}}
                   </button>
                 </div>
@@ -212,16 +212,16 @@
           </div>
         </div>
 
-        <!-- Template: Metadata property input area -->
-        <div id="template-metadata-property-row">
-          <div name="metadata-property-row" class="row margin-h-none">
+        <!-- Template: item property input area -->
+        <div id="template-item-property-row">
+          <div name="item-property-row" class="row margin-h-none">
             <div class="row col-sm-12 margin-h-none">
               <label><input type="checkbox" name="check-language">{{_('Specify language')}}</label>
             </div>
-            <div name="metadata-property" class="row margin-h-none">
-              <div class="col-sm-11 metadata-property">
-                <div name="metadata-property-item" class="form-group ten-pixel-right-margin">
-                  <select name="select-metadata-property" class="form-control inline-block">
+            <div name="item-property" class="row margin-h-none">
+              <div class="col-sm-11 item-property">
+                <div name="item-property-field" class="form-group ten-pixel-right-margin">
+                  <select name="select-item-property" class="form-control inline-block">
                     <option value=""></option>
                     {%- for key, value in item_properties.items() -%}
                     <option value="{{key}}">{{value['title']}}</option>
@@ -233,21 +233,21 @@
               </div>
               <div class="col-sm-1">
                 <div class="pull-right">
-                  <button type="button" class="btn btn-danger" data-action="del-metadata-property">
+                  <button type="button" class="btn btn-danger" data-action="del-item-property">
                     <span class="glyphicon glyphicon-remove"></span>
                   </button>
                 </div>
               </div>
             </div>
-            <div name="metadata-property-with-lang" class="row margin-h-none hide">
-              <div class="col-sm-11 metadata-property">
+            <div name="item-property-with-lang" class="row margin-h-none hide">
+              <div class="col-sm-11 item-property">
                 <div>
                   <label class="lang-label padding-h-none block">{{_('Value')}}</label>
                   <label class="lang-label padding-h-none block">{{_('Language')}}</label>
                 </div>
-                <div name="metadata-property-item-with-lang">
+                <div name="item-property-field-with-lang">
                   <div class="form-group block ten-pixel-right-margin">
-                    <select name="select-metadata-property-value" class="form-control">
+                    <select name="select-item-property-value" class="form-control">
                       <option value=""></option>
                       {%- for key, value in item_properties.items() -%}
                       <option value="{{key}}">{{value['title']}}</option>
@@ -255,7 +255,7 @@
                     </select>
                   </div>
                   <div class="form-group block ten-pixel-right-margin">
-                    <select name="select-metadata-property-lang" class="form-control">
+                    <select name="select-item-property-lang" class="form-control">
                       <option value=""></option>
                       {%- for key, value in item_properties.items() -%}
                       <option value="{{key}}">{{value['title']}}</option>
@@ -266,7 +266,7 @@
               </div>
               <div class="col-sm-1">
                 <div class="pull-right">
-                  <button type="button" class="btn btn-danger" data-action="del-metadata-property">
+                  <button type="button" class="btn btn-danger" data-action="del-item-property">
                     <span class="glyphicon glyphicon-remove"></span>
                   </button>
                 </div>
@@ -276,9 +276,9 @@
         </div>
 
         <!-- Template: Sub item area -->
-        <div id="template-metadata-property-item">
-          <div name="metadata-property-item" class="form-group ten-pixel-right-margin">
-            <select name="select-metadata-property" class="form-control inline-block">
+        <div id="template-item-property-field">
+          <div name="item-property-field" class="form-group ten-pixel-right-margin">
+            <select name="select-item-property" class="form-control inline-block">
               <option value=""></option>
             </select>
             <input type="number" class="form-control inline-block invisible" min="0">
@@ -287,15 +287,15 @@
         </div>
 
         <!-- Template: Sub item area (specify language) -->
-        <div id="template-metadata-property-item-with-lang">
-          <div name="metadata-property-item-with-lang">
+        <div id="template-item-property-field-with-lang">
+          <div name="item-property-field-with-lang">
             <div class="form-group block ten-pixel-right-margin">
-              <select name="select-metadata-property-value" class="form-control invisible">
+              <select name="select-item-property-value" class="form-control invisible">
                 <option value=""></option>
               </select>
             </div>
             <div class="form-group block ten-pixel-right-margin">
-              <select name="select-metadata-property-lang" class="form-control invisible">
+              <select name="select-item-property-lang" class="form-control invisible">
                 <option value=""></option>
               </select>
             </div>
@@ -306,7 +306,7 @@
         <div id="template-mapping-file-row">
           <div name="mapping-row" class="row margin-h-none">
             <!-- RO-Crate property -->
-            <div name="rocrate-property-column" class="col-sm-3 padding-h-none">
+            <div name="rocrate-property-cell" class="col-sm-3 padding-h-none">
               <div name="rocrate-property" class="col-sm-9 padding-h-none">
                 <div class="form-group">
                   <select name="select-rocrate-property" class="form-control">
@@ -326,11 +326,11 @@
                 </button>
               </div>
             </div>
-            <!-- Record metadata property -->
-            <div name="metadata-property-column" class="col-sm-9 padding-h-none">
+            <!-- Item property -->
+            <div name="item-property-cell" class="col-sm-9 padding-h-none">
               <div name="button-row" class="row margin-h-none">
                 <div class="col-sm-12">
-                  <button type="button" class="btn btn-success" data-action="add-metadata-property">
+                  <button type="button" class="btn btn-success" data-action="add-item-property">
                     <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add')}}
                   </button>
                 </div>
@@ -339,13 +339,13 @@
           </div>
         </div>
 
-        <!-- Template: Metadata property input area (for file property) -->
-        <div id="template-metadata-file-property-row">
-          <div name="metadata-property-row" class="row margin-h-none">
-            <div name="metadata-property" class="row margin-h-none">
-              <div class="col-sm-11 metadata-property">
-                <div name="metadata-property-item" class="form-group ten-pixel-right-margin">
-                  <select name="select-metadata-file-property" class="form-control inline-block">
+        <!-- Template: Item property input area (for file property) -->
+        <div id="template-item-file-property-row">
+          <div name="item-property-row" class="row margin-h-none">
+            <div name="item-property" class="row margin-h-none">
+              <div class="col-sm-11 item-property">
+                <div name="item-property-field" class="form-group ten-pixel-right-margin">
+                  <select name="select-item-file-property" class="form-control inline-block">
                     <option value=""></option>
                     {%- for key, value in item_properties.items() -%}
                     <option value="{{key}}">{{value['title']}}</option>
@@ -355,7 +355,7 @@
               </div>
               <div class="col-sm-1">
                 <div class="pull-right">
-                  <button type="button" class="btn btn-danger" data-action="del-metadata-property">
+                  <button type="button" class="btn btn-danger" data-action="del-item-property">
                     <span class="glyphicon glyphicon-remove"></span>
                   </button>
                 </div>
@@ -365,9 +365,9 @@
         </div>
 
         <!-- Template: Sub item area (for file property) -->
-        <div id="template-metadata-file-property-item">
-          <div name="metadata-property-item" class="form-group ten-pixel-right-margin">
-            <select name="select-metadata-file-property" class="form-control inline-block">
+        <div id="template-item-file-property-field">
+          <div name="item-property-field" class="form-group ten-pixel-right-margin">
+            <select name="select-item-file-property" class="form-control inline-block">
               <option value=""></option>
             </select>
           </div>
@@ -377,7 +377,7 @@
         <div id="template-mapping-static-row">
           <div name="mapping-row" class="row margin-h-none">
             <!-- RO-Crate property -->
-            <div name="rocrate-property-column" class="col-sm-3 padding-h-none">
+            <div name="rocrate-property-cell" class="col-sm-3 padding-h-none">
               <div name="rocrate-property" class="col-sm-9 padding-h-none">
               </div>
               <div class="pull-right ten-pixel-right-margin">
@@ -387,8 +387,8 @@
               </div>
             </div>
             <!-- Static value -->
-            <div name="metadata-property-column" class="col-sm-9 padding-h-none">
-              <div name="metadata-property-row" class="row margin-h-none">
+            <div name="item-property-cell" class="col-sm-9 padding-h-none">
+              <div name="item-property-row" class="row margin-h-none">
                 <div class="row col-sm-12 margin-h-none">
                   <div name="static-value" class="form-group">
                     <input type="text" class="form-control">
@@ -406,9 +406,9 @@
         <div class="col-sm-3 padding-h-none">
           <label id="rocrate-property-label"></label>
         </div>
-        <!-- Record metadata property -->
+        <!-- Item property -->
         <div class="col-sm-9 padding-h-none">
-          <label id="metadata-property-label"></label>
+          <label id="item-property-label"></label>
           <div class="pull-right ten-pixel-left-margin">
             <button type="button" class="btn btn-success" data-action="add-mapping" data-type="static" disabled>
               <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add static value')}}
