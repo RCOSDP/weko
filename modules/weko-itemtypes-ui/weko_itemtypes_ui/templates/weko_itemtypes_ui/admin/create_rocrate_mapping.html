@@ -175,11 +175,12 @@
       <label>{{_('Mapping')}}</label>
 
       <div class="template">
+        <!-- Template: Mapping table row -->
         <div id="template-mapping-row">
           <div name="mapping-row" class="row margin-h-none">
             <!-- RO-Crate property -->
             <div name="rocrate-property-column" class="col-sm-3 padding-h-none">
-              <div class="col-sm-9 padding-h-none">
+              <div name="rocrate-property" class="col-sm-9 padding-h-none">
                 <div class="form-group">
                   <select name="select-rocrate-property" class="form-control">
                     <option value=""></option>
@@ -211,6 +212,7 @@
           </div>
         </div>
 
+        <!-- Template: Metadata property input area -->
         <div id="template-metadata-property-row">
           <div name="metadata-property-row" class="row margin-h-none">
             <div class="row col-sm-12 margin-h-none">
@@ -273,6 +275,7 @@
           </div>
         </div>
 
+        <!-- Template: Sub item area -->
         <div id="template-metadata-property-item">
           <div name="metadata-property-item" class="form-group ten-pixel-right-margin">
             <select name="select-metadata-property" class="form-control inline-block">
@@ -283,6 +286,7 @@
           </div>
         </div>
 
+        <!-- Template: Sub item area (specify language) -->
         <div id="template-metadata-property-item-with-lang">
           <div name="metadata-property-item-with-lang">
             <div class="form-group block ten-pixel-right-margin">
@@ -298,11 +302,12 @@
           </div>
         </div>
 
+        <!-- Template: Mapping table row (for file property) -->
         <div id="template-mapping-file-row">
           <div name="mapping-row" class="row margin-h-none">
             <!-- RO-Crate property -->
             <div name="rocrate-property-column" class="col-sm-3 padding-h-none">
-              <div class="col-sm-9 padding-h-none">
+              <div name="rocrate-property" class="col-sm-9 padding-h-none">
                 <div class="form-group">
                   <select name="select-rocrate-property" class="form-control">
                     <option value=""></option>
@@ -334,11 +339,12 @@
           </div>
         </div>
 
+        <!-- Template: Metadata property input area (for file property) -->
         <div id="template-metadata-file-property-row">
           <div name="metadata-property-row" class="row margin-h-none">
             <div name="metadata-property" class="row margin-h-none">
               <div class="col-sm-11 metadata-property">
-                <div name="metadata-file-property-item" class="form-group ten-pixel-right-margin">
+                <div name="metadata-property-item" class="form-group ten-pixel-right-margin">
                   <select name="select-metadata-file-property" class="form-control inline-block">
                     <option value=""></option>
                     {%- for key, value in item_properties.items() -%}
@@ -358,17 +364,44 @@
           </div>
         </div>
 
+        <!-- Template: Sub item area (for file property) -->
         <div id="template-metadata-file-property-item">
-          <div name="metadata-file-property-item" class="form-group ten-pixel-right-margin">
+          <div name="metadata-property-item" class="form-group ten-pixel-right-margin">
             <select name="select-metadata-file-property" class="form-control inline-block">
               <option value=""></option>
             </select>
           </div>
         </div>
+
+        <!-- Template: Mapping table row (for static value) -->
+        <div id="template-mapping-static-row">
+          <div name="mapping-row" class="row margin-h-none">
+            <!-- RO-Crate property -->
+            <div name="rocrate-property-column" class="col-sm-3 padding-h-none">
+              <div name="rocrate-property" class="col-sm-9 padding-h-none">
+              </div>
+              <div class="pull-right ten-pixel-right-margin">
+                <button type="button" class="btn btn-danger" data-action="del-mapping">
+                  <span class="glyphicon glyphicon-remove"></span>
+                </button>
+              </div>
+            </div>
+            <!-- Static value -->
+            <div name="metadata-property-column" class="col-sm-9 padding-h-none">
+              <div name="metadata-property-row" class="row margin-h-none">
+                <div class="row col-sm-12 margin-h-none">
+                  <div name="static-value" class="form-group">
+                    <input type="text" class="form-control">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Table header -->
-      <div class="panel-body header-mapping-list">
+      <div id="mapping-table-header" class="panel-body header-mapping-list">
         <!-- RO-Crate property -->
         <div class="col-sm-3 padding-h-none">
           <label id="rocrate-property-label"></label>
@@ -377,16 +410,19 @@
         <div class="col-sm-9 padding-h-none">
           <label id="metadata-property-label"></label>
           <div class="pull-right ten-pixel-left-margin">
-            <button type="button" class="btn btn-success" data-action="add-mapping" disabled>
+            <button type="button" class="btn btn-success" data-action="add-mapping" data-type="static" disabled>
+              <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add static value')}}
+            </button>
+            <button type="button" class="btn btn-success ten-pixel-left-margin" data-action="add-mapping" data-type="metadata" disabled>
               <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add')}}
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Table row -->
+      <!-- Table body -->
       <input type="hidden" id="editing-node" value="">
-      <div id="mapping-table" class="panel-body body-mapping-list">
+      <div id="mapping-table-body" class="panel-body body-mapping-list">
       </div>
     </div>
 

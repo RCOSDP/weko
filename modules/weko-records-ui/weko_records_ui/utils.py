@@ -1611,16 +1611,19 @@ class RoCrateConverter:
                     else:
                         property_value.append(value)
             elif isinstance(item_type_key, dict):
-                values = self.__get_property(item_type_key.get('value'), metadata)
-                languages = self.__get_property(item_type_key.get('lang'), metadata)
-                if len(values) != len(languages):
-                    continue
-                indices = [i for i, x in enumerate(languages) if x == self.lang]
-                if not indices:
-                    indices = [i for i, x in enumerate(languages) if x == self.DEFAULT_LANG]
-                if not indices:
-                    indices = [0]
-                property_value = [x for i, x in enumerate(values) if i in indices]
+                if 'static_value' in item_type_key:
+                    property_value = item_type_key.get('static_value')
+                else:
+                    values = self.__get_property(item_type_key.get('value'), metadata)
+                    languages = self.__get_property(item_type_key.get('lang'), metadata)
+                    if len(values) != len(languages):
+                        continue
+                    indices = [i for i, x in enumerate(languages) if x == self.lang]
+                    if not indices:
+                        indices = [i for i, x in enumerate(languages) if x == self.DEFAULT_LANG]
+                    if not indices:
+                        indices = [0]
+                    property_value = [x for i, x in enumerate(values) if i in indices]
             else:
                 property_value = self.__get_property(item_type_key, metadata)
 

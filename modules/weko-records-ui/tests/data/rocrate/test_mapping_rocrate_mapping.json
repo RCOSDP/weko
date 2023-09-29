@@ -31,6 +31,9 @@
                 "lang": "key8_2.subkey8_2.subkey8_2_1"
             },
             "prop9": "key9",
+            "prop10": {
+                "static_value": "value10"
+            },
             "prop_none": "key_none.subkey_none"
         },
         "children": [
