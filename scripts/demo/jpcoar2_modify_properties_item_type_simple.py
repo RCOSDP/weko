@@ -58,8 +58,6 @@ def update_simple_item_type(
         for mapping in item_type_mapping:
             if mapping.mapping.get(item_key) is not None:
                 mapping.mapping[item_key][mapping_key] = add_to_mapping[mapping_key]
-            else:
-                print(mapping)
 
         #* Update target item type using update() method from ItemTypes
         ItemTypes.update(
@@ -201,7 +199,7 @@ if creator_item_key:
         item_type = item_type_simple[0],
         item_type_mapping = item_type_simple_mapping,
         item_type_target_form = creator_form_list,
-        item_type_target_render_form = creator_form_list,
+        item_type_target_render_form = creator_render_form_list,
         item_type_property = creator_property,
         item_key = creator_item_key[0],
         add_to_schema = add_to_schema_creator_type,
@@ -1048,16 +1046,16 @@ if funding_reference_key:
 (9) In accordance with the JPCOAR2.0 specifications, add and modify vocabularies for the following attribute vocabularies.
 ◦ jpcoar:subject@subjectScheme
 ◦ jpcoar:creator > jpcoar:affiliation > jpoar:nameIdentifier@nameIdentifierScheme
-kakenhi（非推奨）
+kakenhi【非推奨】
 ISNI
 Ringgold
-GRID（非推奨）
+GRID【非推奨】
 ROR
 ◦ jpcoar:contributor > jpcoar:affiliation > jpoar:nameIdentifier@nameIdentifierScheme
-kakenhi（非推奨）
+kakenhi【非推奨】
 ISNI
 Ringgold
-GRID（非推奨）
+GRID【非推奨】
 ROR
 ◦ jpcoar:relation@relationType
 ◦ jpcoar:relation > jpcoar:relatedIdentifier@identifierType
@@ -1922,13 +1920,11 @@ relation_type_new_values_title_map = [
 if relation_item_key:
     #* Modify ITEM TYPE Simple for Relation Type
     if relation_type_schema.get("currentEnum"):
-        for sub_sch in relation_type_new_values:
-            relation_type_schema["currentEnum"].append(sub_sch)
-            relation_type_schema["enum"].append(sub_sch)
+        for rel_type in relation_type_new_values:
+            relation_type_schema["currentEnum"].append(rel_type)
     if relation_type_schema.get("enum"):
-        for sub_sch in relation_type_new_values:
-            relation_type_schema["currentEnum"].append(sub_sch)
-            relation_type_schema["enum"].append(sub_sch)
+        for rel_type in relation_type_new_values:
+            relation_type_schema["enum"].append(rel_type)
 
     if relation_form_list:
         if relation_form_list[0].get("items") \
@@ -2110,8 +2106,15 @@ if relation_item_key:
                                     ["properties"] \
                                     [rel_id_key] \
                                     .get("title"):
-                                relation_identifier_type_schema = item_type_simple[0].schema["properties"] \
-                                    [relation_item_key]["items"]["properties"][rel_type_schema_key]["properties"]
+                                if isinstance(item_type_simple[0].schema["properties"] \
+                                        [relation_item_key]["items"]["properties"][rel_type_schema_key]["properties"], dict):
+                                    for rel_id_type_schema_bottom_level in item_type_simple[0].schema["properties"] \
+                                            [relation_item_key]["items"]["properties"][rel_type_schema_key]["properties"]:
+                                        if item_type_simple[0].schema["properties"] \
+                                                [relation_item_key]["items"]["properties"][rel_type_schema_key]["properties"][rel_id_type_schema_bottom_level].get("enum"):
+                                            relation_identifier_type_schema = item_type_simple[0].schema["properties"] \
+                                                [relation_item_key]["items"]["properties"][rel_type_schema_key]["properties"][rel_id_type_schema_bottom_level]
+                                
                             
 #? Element of Relation from itemtype.form
 relation_form_list: list = [
