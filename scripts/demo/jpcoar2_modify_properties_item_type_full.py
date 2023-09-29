@@ -109,6 +109,12 @@ item_type_full: [ItemType or None] = [
     in ItemTypes.get_all(True)
     if itemtype.item_type_name.name == "デフォルトアイテムタイプ（フル）"
 ]
+item_type_full: [ItemType or None] = [
+    itemtype
+    for itemtype
+    in ItemTypes.get_all(True)
+    if itemtype.item_type_name.name == "test_full_09"
+]
 
 #* デフォルトアイテムタイプ（フル）Item Type Mapping
 item_type_full_mapping: [ItemTypeMapping or None] = [
@@ -194,7 +200,7 @@ add_to_mapping_creator_type = {
     }
 }
 
-###! UPDATE CHANGES IN ITEM TYPE FULL FOR CREATOR TYPE ~ START
+###! UPDATE CHANGES IN ITEM TYPE Full FOR CREATOR TYPE ~ START
 if creator_item_key:
     #* ITEM TYPE FULL
     update_full_item_type(
@@ -209,7 +215,7 @@ if creator_item_key:
         add_to_form_singular = add_to_form_singular_creator_type,
         add_to_mapping = add_to_mapping_creator_type,
     )
-###! UPDATE CHANGES IN ITEM TYPE FULL FOR CREATOR TYPE ~ END
+###! UPDATE CHANGES IN ITEM TYPE Full FOR CREATOR TYPE ~ END
 
 
 #* ========================================== CREATOR NAME TYPE
@@ -333,9 +339,9 @@ add_to_form_singular_creator_name_type = {
     "title_i18n": {"en": "Creator Name Type", "ja": "作成者名タイプ"}
 }
 
-###! UPDATE CHANGES IN ITEM TYPE FULL FOR CREATOR NAME TYPE ~ START
+###! UPDATE CHANGES IN ITEM TYPE Full FOR CREATOR NAME TYPE ~ START
 if creator_item_key:
-    #* Modify ITEM TYPE FULL for Creator Name Type
+    #* Modify ITEM TYPE Full for Creator Name Type
     item_type_full[0].schema["properties"][creator_item_key[0]]["creatorNameType"] = add_to_schema_creator_name_type["creatorNameType"]
     creator_name_form.append(add_to_form_creator_name_type)
     item_type_full[0].render["schemaeditor"]["schema"][creator_item_key[0]] = add_to_schema_creator_name_type["creatorNameType"]
@@ -352,7 +358,7 @@ if creator_item_key:
         creator_name_property_form.append(add_to_form_singular_creator_name_type)
         creator_name_property_forms.append(add_to_form_creator_name_type)
 
-    #* Modify ITEM TYPE FULL MAPPING for Creator Name Type
+    #* Modify ITEM TYPE Full MAPPING for Creator Name Type
     creator_item_type_mapping = None
     for itm in item_type_full_mapping:
         for key in item_type_full_mapping_keys:
@@ -401,7 +407,7 @@ if creator_item_key:
             err,
             f'Failed to modify {item_type_full[0].item_type_name.name} for CREATOR NAME TYPE'
         )
-###! UPDATE CHANGES IN ITEM TYPE FULL FOR CREATOR NAME TYPE ~ END
+###! UPDATE CHANGES IN ITEM TYPE Full FOR CREATOR NAME TYPE ~ END
 
 
 #* ========================================== CONTRIBUTOR NAME TYPE
@@ -507,9 +513,9 @@ add_to_form_singular_contributor_name_type = {
     "title_i18n": {"en": "Contributor Name Type", "ja": "寄与者名タイプ"}
 }
 
-###! UPDATE ITEM TYPE FULL FOR CONTRIBUTOR NAME TYPE ~ START
+###! UPDATE ITEM TYPE Full FOR CONTRIBUTOR NAME TYPE ~ START
 if contributor_item_key:
-    #* Modify ITEM TYPE FULL for Contributor Name Type
+    #* Modify ITEM TYPE Full for Contributor Name Type
     item_type_full[0].schema["properties"][contributor_item_key[0]]["contributorNameType"] = add_to_schema_contributor_name_type["contributorNameType"]
     contributor_name_form.append(add_to_form_contributor_name_type)
     item_type_full[0].render["schemaeditor"]["schema"][contributor_item_key[0]] = add_to_schema_contributor_name_type["contributorNameType"]
@@ -558,7 +564,7 @@ if contributor_item_key:
                 contributor_name_property_forms.append(add_to_form_contributor_name_type)
 
 
-    #* Modify ITEM TYPE FULL MAPPING for Contributor Name Type
+    #* Modify ITEM TYPE Full MAPPING for Contributor Name Type
     contributor_item_type_mapping = None
     for itm in item_type_full_mapping:
         for key in item_type_full_mapping_keys:
@@ -608,7 +614,7 @@ if contributor_item_key:
             err,
             f'Failed to modify {item_type_full[0].item_type_name.name} for CONTRIBUTOR NAME TYPE'
         )
-###! UPDATE ITEM TYPE FULL FOR CONTRIBUTOR NAME TYPE ~ END
+###! UPDATE ITEM TYPE Full FOR CONTRIBUTOR NAME TYPE ~ END
 
 
 #* ========================================== FUNDING IDENTIFIER TYPE URI
@@ -711,9 +717,9 @@ add_to_form_singular_funder_identifier_type_uri = {
     "title_i18n": {"en": "Funder Identifier Type URI", "ja": "助成機関識別子タイプURI"}
 }
 
-###! UPDATE ITEM TYPE FULL FOR FUNDING IDENTIFIER TYPE URI ~ START
+###! UPDATE ITEM TYPE Full FOR FUNDING IDENTIFIER TYPE URI ~ START
 if funding_reference_key:
-    #* Modify ITEM TYPE FULL for FUNDING IDENTIFIER TYPE URI
+    #* Modify ITEM TYPE Full for FUNDING IDENTIFIER TYPE URI
     item_type_full[0].schema["properties"][funding_reference_key]["funderIdentifierTypeURI"] = add_to_schema_funder_identifier_type_uri["funderIdentifierTypeURI"]
     funding_reference_funder_identifier_form_list.append(add_to_form_funder_identifier_type_uri)
     item_type_full[0].render["schemaeditor"]["schema"][funding_reference_key] = add_to_schema_funder_identifier_type_uri["funderIdentifierTypeURI"]
@@ -768,7 +774,7 @@ if funding_reference_key:
                 funder_identifier_property_form.append(add_to_form_singular_funder_identifier_type_uri)
                 funder_identifier_property_forms.append(add_to_form_funder_identifier_type_uri)
 
-    #* Modify ITEM TYPE FULL MAPPING for FUNDING IDENTIFIER TYPE URI
+    #* Modify ITEM TYPE Full MAPPING for FUNDING IDENTIFIER TYPE URI
     for itm in item_type_full_mapping:
         for key in item_type_full_mapping_keys:
             try:
@@ -817,7 +823,7 @@ if funding_reference_key:
             err,
             f'Failed to modify {item_type_full[0].item_type_name.name} for FUNDING IDENTIFIER TYPE URI'
         )
-###! UPDATE ITEM TYPE FULL FOR FUNDING IDENTIFIER TYPE URI ~ END
+###! UPDATE ITEM TYPE Full FOR FUNDING IDENTIFIER TYPE URI ~ END
 
 
 #* ========================================== AWARD NUMBER TYPE
@@ -934,9 +940,9 @@ add_to_form_singular_award_number_type = {
     ]
 }
 
-###! UPDATE ITEM TYPE FULL FOR AWARD NUMBER TYPE ~ START
+###! UPDATE ITEM TYPE Full FOR AWARD NUMBER TYPE ~ START
 if funding_reference_key:
-    #* Modify ITEM TYPE FULL for AWARD NUMBER TYPE
+    #* Modify ITEM TYPE Full for AWARD NUMBER TYPE
     item_type_full[0].schema["properties"][funding_reference_key]["awardNumberType"] = add_to_schema_award_number_type["awardNumberType"]
     funding_reference_award_number_form_list.append(add_to_form_award_number_type)
     item_type_full[0].render["schemaeditor"]["schema"][funding_reference_key] = add_to_schema_award_number_type["awardNumberType"]
@@ -991,7 +997,7 @@ if funding_reference_key:
                 award_number_property_form.append(add_to_form_singular_award_number_type)
                 award_number_property_forms.append(add_to_form_award_number_type)
 
-    #* Modify ITEM TYPE FULL MAPPING for AWARD NUMBER TYPE
+    #* Modify ITEM TYPE Full MAPPING for AWARD NUMBER TYPE
     for itm in item_type_full_mapping:
         for key in item_type_full_mapping_keys:
             try:
@@ -1041,7 +1047,7 @@ if funding_reference_key:
             err,
             f'Failed to modify {item_type_full[0].item_type_name.name} for AWARD NUMBER TYPE'
         )
-###! UPDATE ITEM TYPE FULL FOR AWARD NUMBER TYPE  ~ END
+###! UPDATE ITEM TYPE Full FOR AWARD NUMBER TYPE  ~ END
 
 
 """
@@ -1142,9 +1148,9 @@ subject_scheme_new_values_title_map = [
     },
 ]
 
-###! UPDATE CHANGES IN ITEM TYPE FULL FOR SUBJECT SCHEME ~ START
+###! UPDATE CHANGES IN ITEM TYPE Full FOR SUBJECT SCHEME ~ START
 if subject_item_key:
-    #* Modify ITEM TYPE FULL for Subject Scheme
+    #* Modify ITEM TYPE Full for Subject Scheme
     if subject_scheme_schema.get("currentEnum") \
             and subject_scheme_schema.get("enum"):
         for sub_sch in subject_scheme_new_values:
@@ -1251,7 +1257,7 @@ if subject_item_key:
             err,
             f'Failed to modify {item_type_full[0].item_type_name.name} for SUBJECT SCHEME'
         )
-###! UPDATE CHANGES IN ITEM TYPE FULL FOR SUBJECT SCHEME ~ END
+###! UPDATE CHANGES IN ITEM TYPE Full FOR SUBJECT SCHEME ~ END
 
 
 #* ========================================== CREATOR AFFILIATION NAME IDENTIFIER TYPE
@@ -1366,20 +1372,26 @@ if len(creator_property.forms.get("items")) > 0:
                 if "affiliationNames" in creator_prop_form_sublevel["key"]:
                     creator_affiliation_property_forms = creator_prop_form["items"]
 
-#? Value to be added in creator_affiliation_name_identifier_schema
+#? Value to be added in Creator Affiliation Name Identifier Scheme
 ror = "ROR"
 ror_title_map = {
     'name': 'ROR',
     'value': 'ROR'
 }
 
-###! UPDATE CHANGES IN ITEM TYPE FULL FOR CREATOR AFFILIATION NAME IDENTIFIER SCHEME ~ START
+###! UPDATE CHANGES IN ITEM TYPE Full FOR CREATOR AFFILIATION NAME IDENTIFIER SCHEME ~ START
 if creator_item_key:
-    #* Modify ITEM TYPE FULL for Creator Affilication Name Identifier Scheme
+    #* Modify ITEM TYPE Full for Creator Affilication Name Identifier Scheme
     if creator_affiliation_name_identifier_schema.get("currentEnum") \
             and creator_affiliation_name_identifier_schema.get("enum"):
         creator_affiliation_name_identifier_schema["currentEnum"].append(ror)
         creator_affiliation_name_identifier_schema["enum"].append(ror)
+        if "kakenhi" in creator_affiliation_name_identifier_schema["enum"]:
+            creator_affiliation_name_identifier_schema["enum"].remove("kakenhi")
+            creator_affiliation_name_identifier_schema["enum"].append("kakenhi【非推奨】")
+        if "GRID" in creator_affiliation_name_identifier_schema["enum"]:
+            creator_affiliation_name_identifier_schema["enum"].remove("GRID")
+            creator_affiliation_name_identifier_schema["enum"].append("GRID【非推奨】")
 
     if creator_affiliation_form:
         if creator_affiliation_form[0].get("items") \
@@ -1393,6 +1405,13 @@ if creator_item_key:
                                     if cr_aff_item_lv1.get("titleMap"):
                                         if isinstance(cr_aff_item_lv1.get("titleMap"), list):
                                             cr_aff_item_lv1["titleMap"].append(ror_title_map)
+                                            for not_recommended_change in cr_aff_item_lv1["titleMap"]:
+                                                if not_recommended_change["name"] == "kakenhi":
+                                                    not_recommended_change["name"] = "kakenhi【非推奨】"
+                                                    not_recommended_change["value"] = "kakenhi【非推奨】"
+                                                if not_recommended_change["name"] == "GRID":
+                                                    not_recommended_change["name"] = "GRID【非推奨】"
+                                                    not_recommended_change["value"] = "GRID【非推奨】"
     
     if creator_render_form_list:
         if creator_render_form_list[0].get("items") \
@@ -1409,10 +1428,23 @@ if creator_item_key:
                                                 if cr_aff_item_lv2.get("titleMap"):
                                                     if isinstance(cr_aff_item_lv2.get("titleMap"), list):
                                                         cr_aff_item_lv2["titleMap"].append(ror_title_map)
+                                                        for not_recommended_change in cr_aff_item_lv2["titleMap"]:
+                                                            if not_recommended_change["name"] == "kakenhi":
+                                                                not_recommended_change["name"] = "kakenhi【非推奨】"
+                                                                not_recommended_change["value"] = "kakenhi【非推奨】"
+                                                            if not_recommended_change["name"] == "GRID":
+                                                                not_recommended_change["name"] = "GRID【非推奨】"
+                                                                not_recommended_change["value"] = "GRID【非推奨】"
 
     if creator_affiliation_identifier_scheme_property_schema_property:
         if creator_affiliation_identifier_scheme_property_schema_property.get("enum"):
             creator_affiliation_identifier_scheme_property_schema_property["enum"].append(ror)
+        if "kakenhi" in creator_affiliation_name_identifier_schema["enum"]:
+            creator_affiliation_name_identifier_schema["enum"].remove("kakenhi")
+            creator_affiliation_name_identifier_schema["enum"].append("kakenhi【非推奨】")
+        if "GRID" in creator_affiliation_name_identifier_schema["enum"]:
+            creator_affiliation_name_identifier_schema["enum"].remove("GRID")
+            creator_affiliation_name_identifier_schema["enum"].append("GRID【非推奨】")
 
     if creator_affiliation_property_form:
         for cr_aff_prop_form in creator_affiliation_property_form:
@@ -1422,6 +1454,13 @@ if creator_item_key:
                             and "affiliationNameIdentifierScheme" in cr_aff_prop_form_lv1["key"]:
                         if cr_aff_prop_form_lv1.get("titleMap"):
                             cr_aff_prop_form_lv1["titleMap"].append(ror_title_map)
+                        for not_recommended_change in cr_aff_prop_form_lv1["titleMap"]:
+                            if not_recommended_change["name"] == "kakenhi":
+                                not_recommended_change["name"] = "kakenhi【非推奨】"
+                                not_recommended_change["value"] = "kakenhi【非推奨】"
+                            if not_recommended_change["name"] == "GRID":
+                                not_recommended_change["name"] = "GRID【非推奨】"
+                                not_recommended_change["value"] = "GRID【非推奨】"
     
     if creator_affiliation_property_forms:
         for cr_aff_prop_forms in creator_affiliation_property_forms:
@@ -1431,6 +1470,13 @@ if creator_item_key:
                             and "affiliationNameIdentifierScheme" in cr_aff_prop_forms_lv1["key"]:
                         if cr_aff_prop_forms_lv1.get("titleMap"):
                             cr_aff_prop_forms_lv1["titleMap"].append(ror_title_map)
+                        for not_recommended_change in cr_aff_prop_forms_lv1["titleMap"]:
+                            if not_recommended_change["name"] == "kakenhi":
+                                not_recommended_change["name"] = "kakenhi【非推奨】"
+                                not_recommended_change["value"] = "kakenhi【非推奨】"
+                            if not_recommended_change["name"] == "GRID":
+                                not_recommended_change["name"] = "GRID【非推奨】"
+                                not_recommended_change["value"] = "GRID【非推奨】"
 
     #* Update target item type using update() method from ItemTypes
     ItemTypes.update(
@@ -1465,10 +1511,10 @@ if creator_item_key:
             err,
             f'Failed to modify {item_type_full[0].item_type_name.name} for CREATOR AFFILIATION NAME IDENTIFIER SCHEME'
         )
-###! UPDATE CHANGES IN ITEM TYPE FULL FOR CREATORAFFILIATION NAME IDENTIFIER SCHEME ~ END
+###! UPDATE CHANGES IN ITEM TYPE Full FOR CREATORAFFILIATION NAME IDENTIFIER SCHEME ~ END
 
 
-#* ========================================== CONTRIBUTOR AFFILIATION NAME IDENTIFIER TYPE
+#* ========================================== CONTRIBUTOR AFFILIATION NAME IDENTIFIER SCHEME
 #? Parent key for Contributor Item
 contributor_item_key: [str] = [
     contributor
@@ -1530,7 +1576,7 @@ contributor_render_form_list: list = [
 #? Get Contributor Affiliation form from itemtype.render["table_row_map"]["form"]
 contributor_affiliation_render_form: list = [a for a in contributor_render_form_list[0]["items"] if "contributorAffiliation" in a["key"]]
 
-#? Contributor Property for Contributor Affiliation Type
+#? Contributor Property for Contributor Affiliation Scheme
 contributor_property: [ItemTypeProperty] or None = []
 for prop in all_item_type_properties:
      schema = prop.schema.get("properties", {})
@@ -1541,49 +1587,69 @@ for prop in all_item_type_properties:
                     or "Contributor" in schema.get(contributor_schema_key, {}).get('title'):
                 contributor_property.append(prop)
 
-#? Value to be added in creator_affiliation_name_identifier_schema
+#? Value to be added in Contributor Affiliation Name Identifier Scheme
 ror = "ROR"
 ror_title_map = {
     'name': 'ROR',
     'value': 'ROR'
 }
 
-###! UPDATE CHANGES IN ITEM TYPE FULL FOR CONTRIBUTOR AFFILIATION NAME IDENTIFIER SCHEME ~ START
+###! UPDATE CHANGES IN ITEM TYPE Full FOR CONTRIBUTOR AFFILIATION NAME IDENTIFIER SCHEME ~ START
 if contributor_item_key:
-    #* Modify ITEM TYPE FULL for Contributor Affilication Name Identifier Scheme
+    #* Modify ITEM TYPE Full for Contributor Affilication Name Identifier Scheme
     if contributor_affiliation_name_identifier_schema.get("currentEnum") \
             and contributor_affiliation_name_identifier_schema.get("enum"):
         contributor_affiliation_name_identifier_schema["currentEnum"].append(ror)
         contributor_affiliation_name_identifier_schema["enum"].append(ror)
+        if "kakenhi" in contributor_affiliation_name_identifier_schema["enum"]:
+            contributor_affiliation_name_identifier_schema["enum"].remove("kakenhi")
+            contributor_affiliation_name_identifier_schema["enum"].append("kakenhi【非推奨】")
+        if "GRID" in contributor_affiliation_name_identifier_schema["enum"]:
+            contributor_affiliation_name_identifier_schema["enum"].remove("GRID")
+            contributor_affiliation_name_identifier_schema["enum"].append("GRID【非推奨】")
 
     if contributor_affiliation_form:
         if contributor_affiliation_form[0].get("items") \
                 and isinstance(contributor_affiliation_form[0].get("items"), list):
-            for cr_aff_item in contributor_affiliation_form[0]["items"]:
-                if isinstance(cr_aff_item, dict):
-                    if cr_aff_item.get("items"):
-                        if isinstance(cr_aff_item["items"], list):
-                            for cr_aff_item_lv1 in cr_aff_item["items"]:
-                                if "contributorAffiliationScheme" in cr_aff_item_lv1.get("key"):
-                                    if cr_aff_item_lv1.get("titleMap"):
-                                        if isinstance(cr_aff_item_lv1.get("titleMap"), list):
-                                            cr_aff_item_lv1["titleMap"].append(ror_title_map)
+            for contrib_aff_item in contributor_affiliation_form[0]["items"]:
+                if isinstance(contrib_aff_item, dict):
+                    if contrib_aff_item.get("items"):
+                        if isinstance(contrib_aff_item["items"], list):
+                            for contrib_aff_item_lv1 in contrib_aff_item["items"]:
+                                if "contributorAffiliationScheme" in contrib_aff_item_lv1.get("key"):
+                                    if contrib_aff_item_lv1.get("titleMap"):
+                                        if isinstance(contrib_aff_item_lv1.get("titleMap"), list):
+                                            contrib_aff_item_lv1["titleMap"].append(ror_title_map)
+                                            for not_recommended_change in contrib_aff_item_lv1["titleMap"]:
+                                                if not_recommended_change["name"] == "kakenhi":
+                                                    not_recommended_change["name"] = "kakenhi【非推奨】"
+                                                    not_recommended_change["value"] = "kakenhi【非推奨】"
+                                                if not_recommended_change["name"] == "GRID":
+                                                    not_recommended_change["name"] = "GRID【非推奨】"
+                                                    not_recommended_change["value"] = "GRID【非推奨】"
     
     if contributor_render_form_list:
         if contributor_render_form_list[0].get("items") \
                 and isinstance(contributor_render_form_list[0].get("items"), list):
-            for cr_aff_item in contributor_render_form_list[0]["items"]:
-                if isinstance(cr_aff_item, dict):
-                    if cr_aff_item.get("items"):
-                        if isinstance(cr_aff_item["items"], list):
-                            for cr_aff_item_lv1 in cr_aff_item["items"]:
-                                if "contributorAffiliationNameIdentifiers" in cr_aff_item_lv1.get("key"):
-                                    if cr_aff_item_lv1.get("items"):
-                                        for cr_aff_item_lv2 in cr_aff_item_lv1["items"]:
-                                            if "contributorAffiliationScheme" in cr_aff_item_lv2.get("key"):
-                                                if cr_aff_item_lv2.get("titleMap"):
-                                                    if isinstance(cr_aff_item_lv2.get("titleMap"), list):
-                                                        cr_aff_item_lv2["titleMap"].append(ror_title_map)
+            for contrib_aff_item in contributor_render_form_list[0]["items"]:
+                if isinstance(contrib_aff_item, dict):
+                    if contrib_aff_item.get("items"):
+                        if isinstance(contrib_aff_item["items"], list):
+                            for contrib_aff_item_lv1 in contrib_aff_item["items"]:
+                                if "contributorAffiliationNameIdentifiers" in contrib_aff_item_lv1.get("key"):
+                                    if contrib_aff_item_lv1.get("items"):
+                                        for contrib_aff_item_lv2 in contrib_aff_item_lv1["items"]:
+                                            if "contributorAffiliationScheme" in contrib_aff_item_lv2.get("key"):
+                                                if contrib_aff_item_lv2.get("titleMap"):
+                                                    if isinstance(contrib_aff_item_lv2.get("titleMap"), list):
+                                                        contrib_aff_item_lv2["titleMap"].append(ror_title_map)
+                                                        for not_recommended_change in contrib_aff_item_lv2["titleMap"]:
+                                                            if not_recommended_change["name"] == "kakenhi":
+                                                                not_recommended_change["name"] = "kakenhi【非推奨】"
+                                                                not_recommended_change["value"] = "kakenhi【非推奨】"
+                                                            if not_recommended_change["name"] == "GRID":
+                                                                not_recommended_change["name"] = "GRID【非推奨】"
+                                                                not_recommended_change["value"] = "GRID【非推奨】"
 
     if contributor_property:
         for contributor_prop in contributor_property:
@@ -1630,6 +1696,12 @@ if contributor_item_key:
             if contributor_affiliation_identifier_scheme_property_schema_property:
                 if contributor_affiliation_identifier_scheme_property_schema_property.get("enum"):
                     contributor_affiliation_identifier_scheme_property_schema_property["enum"].append(ror)
+                    if "kakenhi" in contributor_affiliation_identifier_scheme_property_schema_property["enum"]:
+                        contributor_affiliation_identifier_scheme_property_schema_property["enum"].remove("kakenhi")
+                        contributor_affiliation_identifier_scheme_property_schema_property["enum"].append("kakenhi【非推奨】")
+                    if "GRID" in contributor_affiliation_identifier_scheme_property_schema_property["enum"]:
+                        contributor_affiliation_identifier_scheme_property_schema_property["enum"].remove("GRID")
+                        contributor_affiliation_identifier_scheme_property_schema_property["enum"].append("GRID【非推奨】")
 
             if contributor_affiliation_property_form:
                 for cr_aff_prop_form in contributor_affiliation_property_form:
@@ -1639,6 +1711,13 @@ if contributor_item_key:
                                     and "contributorAffiliationScheme" in cr_aff_prop_form_lv1["key"]:
                                 if cr_aff_prop_form_lv1.get("titleMap"):
                                     cr_aff_prop_form_lv1["titleMap"].append(ror_title_map)
+                                for not_recommended_change in cr_aff_prop_forms_lv1["titleMap"]:
+                                    if not_recommended_change["name"] == "kakenhi":
+                                        not_recommended_change["name"] = "kakenhi【非推奨】"
+                                        not_recommended_change["value"] = "kakenhi【非推奨】"
+                                    if not_recommended_change["name"] == "GRID":
+                                        not_recommended_change["name"] = "GRID【非推奨】"
+                                        not_recommended_change["value"] = "GRID【非推奨】"
             
             if contributor_affiliation_property_forms:
                 for cr_aff_prop_forms in contributor_affiliation_property_forms:
@@ -1648,6 +1727,13 @@ if contributor_item_key:
                                     and "contributorAffiliationScheme" in cr_aff_prop_forms_lv1["key"]:
                                 if cr_aff_prop_forms_lv1.get("titleMap"):
                                     cr_aff_prop_forms_lv1["titleMap"].append(ror_title_map)
+                                for not_recommended_change in cr_aff_prop_forms_lv1["titleMap"]:
+                                    if not_recommended_change["name"] == "kakenhi":
+                                        not_recommended_change["name"] = "kakenhi【非推奨】"
+                                        not_recommended_change["value"] = "kakenhi【非推奨】"
+                                    if not_recommended_change["name"] == "GRID":
+                                        not_recommended_change["name"] = "GRID【非推奨】"
+                                        not_recommended_change["value"] = "GRID【非推奨】"
 
     #* Update target item type using update() method from ItemTypes
     ItemTypes.update(
@@ -1684,7 +1770,7 @@ if contributor_item_key:
             err,
             f'Failed to modify {item_type_full[0].item_type_name.name} for CONTRIBUTOR AFFILIATION NAME IDENTIFIER SCHEME'
         )
-###! UPDATE CHANGES IN ITEM TYPE FULL FOR CONTRIBUTOR AFFILIATION NAME IDENTIFIER SCHEME ~ END
+###! UPDATE CHANGES IN ITEM TYPE Full FOR CONTRIBUTOR AFFILIATION NAME IDENTIFIER SCHEME ~ END
 
 
 #* ========================================== RELATION TYPE
@@ -1838,9 +1924,9 @@ relation_type_new_values_title_map = [
     # },
 ]
 
-###! UPDATE CHANGES IN ITEM TYPE FULL FOR RELATION TYPE ~ START
+###! UPDATE CHANGES IN ITEM TYPE Full FOR RELATION TYPE ~ START
 if relation_item_key:
-    #* Modify ITEM TYPE FULL for Relation Type
+    #* Modify ITEM TYPE Full for Relation Type
     if relation_type_schema.get("currentEnum"):
         for sub_sch in relation_type_new_values:
             relation_type_schema["currentEnum"].append(sub_sch)
@@ -1933,7 +2019,7 @@ if relation_item_key:
             err,
             f'Failed to modify {item_type_full[0].item_type_name.name} for RELATION TYPE'
         )
-###! UPDATE CHANGES IN ITEM TYPE FULL FOR RELATION TYPE ~ END
+###! UPDATE CHANGES IN ITEM TYPE Full FOR RELATION TYPE ~ END
 
 
 #* ========================================== RELATION RELATED INDETIFIER TYPE
@@ -2103,15 +2189,27 @@ relation_identifer_type_new_values_title_map = [
     },
 ]
 
-###! UPDATE CHANGES IN ITEM TYPE FULL FOR RELATION IDENTIFIER TYPE ~ START
+###! UPDATE CHANGES IN ITEM TYPE Full FOR RELATION IDENTIFIER TYPE ~ START
 if relation_item_key:
-    #* Modify ITEM TYPE FULL for Relation Type
+    #* Modify ITEM TYPE Full for Relation Type
     if relation_identifier_type_schema.get("currentEnum"):
         for rel_id_type in relation_identifer_type_new_values:
             relation_identifier_type_schema["currentEnum"].append(rel_id_type)
+        if "NAID" in relation_identifier_type_schema["currentEnum"]:
+            relation_identifier_type_schema["currentEnum"].remove("NAID")
+            relation_identifier_type_schema["currentEnum"].append("NAID【非推奨】")
+        if "PMID" in relation_identifier_type_schema["currentEnum"]:
+            relation_identifier_type_schema["currentEnum"].remove("PMID")
+            relation_identifier_type_schema["currentEnum"].append("PMID【非推奨】")
     if relation_identifier_type_schema.get("enum"):
         for rel_id_type in relation_identifer_type_new_values:
             relation_identifier_type_schema["enum"].append(rel_id_type)
+        if "NAID" in relation_identifier_type_schema["enum"]:
+            relation_identifier_type_schema["enum"].remove("NAID")
+            relation_identifier_type_schema["enum"].append("NAID【非推奨】")
+        if "PMID" in relation_identifier_type_schema["enum"]:
+            relation_identifier_type_schema["enum"].remove("PMID")
+            relation_identifier_type_schema["enum"].append("PMID【非推奨】")
 
     if relation_form_list:
         if relation_form_list[0].get("items") \
@@ -2126,13 +2224,13 @@ if relation_item_key:
                                 if rel_id_type_item_sub_lv1.get("titleMap"):
                                     for new_rel_id_type in relation_identifer_type_new_values_title_map:
                                         rel_id_type_item_sub_lv1["titleMap"].append(new_rel_id_type)
-                                    for rel_id_type_title_map in rel_id_type_item_sub_lv1["titleMap"]:
-                                        if rel_id_type_title_map["name"] == "NAID":
-                                            rel_id_type_title_map["name"] = "NAID【非推奨】"
-                                            rel_id_type_title_map["value"] = "NAID【非推奨】"
-                                        if rel_id_type_title_map["name"] == "PMID":
-                                            rel_id_type_title_map["name"] = "PMID【非推奨】"
-                                            rel_id_type_title_map["value"] = "PMID【非推奨】"
+                                    for not_recommended_change in rel_id_type_item_sub_lv1["titleMap"]:
+                                        if not_recommended_change["name"] == "NAID":
+                                            not_recommended_change["name"] = "NAID【非推奨】"
+                                            not_recommended_change["value"] = "NAID【非推奨】"
+                                        if not_recommended_change["name"] == "PMID":
+                                            not_recommended_change["name"] = "PMID【非推奨】"
+                                            not_recommended_change["value"] = "PMID【非推奨】"
     
     if relation_render_form_list:
         if relation_render_form_list[0].get("items") \
@@ -2147,6 +2245,13 @@ if relation_item_key:
                                 if rel_id_type_item_sub_lv1.get("titleMap"):
                                     for new_rel_id_type in relation_identifer_type_new_values_title_map:
                                         rel_id_type_item_sub_lv1["titleMap"].append(new_rel_id_type)
+                                    for not_recommended_change in rel_id_type_item_sub_lv1["titleMap"]:
+                                        if not_recommended_change["name"] == "NAID":
+                                            not_recommended_change["name"] = "NAID【非推奨】"
+                                            not_recommended_change["value"] = "NAID【非推奨】"
+                                        if not_recommended_change["name"] == "PMID":
+                                            not_recommended_change["name"] = "PMID【非推奨】"
+                                            not_recommended_change["value"] = "PMID【非推奨】"
 
     if relation_property:
         for rel_prop in relation_property:
@@ -2158,6 +2263,13 @@ if relation_item_key:
                                 or "isVersionOf" in rel_prop.schema["properties"][schema_prop_key]["enum"]:
                             for rel_type_new_values in relation_type_new_values:
                                 rel_prop.schema["properties"][schema_prop_key]["enum"].append(rel_type_new_values)
+                            if "NAID" in rel_prop.schema["properties"][schema_prop_key]["enum"]:
+                                rel_prop.schema["properties"][schema_prop_key]["enum"].remove("NAID")
+                                rel_prop.schema["properties"][schema_prop_key]["enum"].append("NAID【非推奨】")
+                            if "PMID" in rel_prop.schema["properties"][schema_prop_key]["enum"]:
+                                rel_prop.schema["properties"][schema_prop_key]["enum"].remove("PMID")
+                                rel_prop.schema["properties"][schema_prop_key]["enum"].append("PMID【非推奨】")
+                            
 
             #? Relation Relation type form from Relation Property
             if len(rel_prop.form.get("items")) > 0:
@@ -2165,6 +2277,13 @@ if relation_item_key:
                     if rel_type_form.get("titleMap"):
                         for rel_type_new_title_map in relation_type_new_values_title_map:
                             rel_type_form["titleMap"].append(rel_type_new_title_map)
+                        for not_recommended_change in rel_type_form["titleMap"]:
+                            if not_recommended_change["name"] == "NAID":
+                                not_recommended_change["name"] = "NAID【非推奨】"
+                                not_recommended_change["value"] = "NAID【非推奨】"
+                            if not_recommended_change["name"] == "PMID":
+                                not_recommended_change["name"] = "PMID【非推奨】"
+                                not_recommended_change["value"] = "PMID【非推奨】"
 
             #? Update Subject scheme forms from Subject Property
             if len(rel_prop.forms.get("items")) > 0:
@@ -2172,6 +2291,13 @@ if relation_item_key:
                     if rel_type_forms.get("titleMap"):
                         for rel_type_new_title_map in relation_type_new_values_title_map:
                             rel_type_forms["titleMap"].append(rel_type_new_title_map)
+                        for not_recommended_change in rel_type_forms["titleMap"]:
+                            if not_recommended_change["name"] == "NAID":
+                                not_recommended_change["name"] = "NAID【非推奨】"
+                                not_recommended_change["value"] = "NAID【非推奨】"
+                            if not_recommended_change["name"] == "PMID":
+                                not_recommended_change["name"] = "PMID【非推奨】"
+                                not_recommended_change["value"] = "PMID【非推奨】"
 
     #* Update target item type using update() method from ItemTypes
     ItemTypes.update(
@@ -2207,7 +2333,7 @@ if relation_item_key:
             err,
             f'Failed to modify {item_type_full[0].item_type_name.name} for RELATION IDENTIFIER TYPE'
         )
-###! UPDATE CHANGES IN ITEM TYPE FULL FOR RELATION IDENTIFIER TYPE ~ END
+###! UPDATE CHANGES IN ITEM TYPE Full FOR RELATION IDENTIFIER TYPE ~ END
 
 
 #* ========================================== FUNDING REFERENCE FUNDER IDENTIFIER TYPE
@@ -2311,9 +2437,9 @@ new_funder_identifier_type_title_map = [
     },
 ]
 
-###! UPDATE CHANGES IN ITEM TYPE FULL FOR FUNDER IDENTIFIER TYPE ~ START
+###! UPDATE CHANGES IN ITEM TYPE Full FOR FUNDER IDENTIFIER TYPE ~ START
 if funding_reference_key:
-    #* Modify ITEM TYPE FULL for Relation Type
+    #* Modify ITEM TYPE Full for Relation Type
     if funder_identifier_type_schema.get("currentEnum"):
         for fund_id_type in new_funder_identifier_type_values:
             funder_identifier_type_schema["currentEnum"].append(fund_id_type)
@@ -2443,4 +2569,4 @@ if funding_reference_key:
             err,
             f'Failed to modify {item_type_full[0].item_type_name.name} for FUNDER IDENTIFIER TYPE'
         )
-###! UPDATE CHANGES IN ITEM TYPE FULL FOR FUNDER IDENTIFIER TYPE ~ END
+###! UPDATE CHANGES IN ITEM TYPE Full FOR FUNDER IDENTIFIER TYPE ~ END
