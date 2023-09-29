@@ -9,9 +9,8 @@ const CHECK_INPUT_EXPIRATION_DATE = document.getElementById('check_input_expirat
 const EMPTY_DOWNLOAD = document.getElementById('empty_download').value;
 const EMPTY_EXPIRATION_DATE = document.getElementById('empty_expiration_date').value;
 const USAGE_REPORT_WORKFLOW_ACCESS_LABEL = document.getElementById('usage_report_workflow_access_label').value
-const MAXINT = Number(document.getElementById('maxint').value)
-const MAX_DOWNLOAD_LIMIT = MAXINT;
-const MAX_EXPIRATION_DATE = MAXINT;
+const MAX_DOWNLOAD_LIMIT = 2147483647;
+const MAX_EXPIRATION_DATE = 999999999;
 
 const MESSAGE_MISSING_DATA = document.getElementById('message_miss_data').value;
 const LABEL_ENGLISH = document.getElementById("english").value;
@@ -32,8 +31,6 @@ const LABEL_USAGE_REPORT_REMINDER_MAIL = document.getElementById("label_usage_re
 const LABEL_ACTION_DOING = document.getElementById("label_action_doing").value;
 const MSG_SEND_MAIL_SUCCESSFUL = document.getElementById("msg_sent_success").value;
 const MSG_SEND_MAIL_FAILED = document.getElementById("msg_sent_failed").value;
-const LABEL_SECRET_URL_DOWNLOAD = document.getElementById("label_secret_url_download").value;
-const LABEL_SECRET_URL_ENABLED = document.getElementById("label_secret_url_enabled").value;
 
 const EMPTY_TERM = {
   key: '',
@@ -67,8 +64,7 @@ function InputComponent({
                           value,
                           setValue,
                           inputId,
-                          checkboxId,
-                          disabledAll=false
+                          checkboxId
                         }) {
   const style = {marginRight: "5px", marginLeft: "15px"}
 
@@ -100,8 +96,8 @@ function InputComponent({
              value={currentValue}
              onChange={handleChange}
              pattern="[0-9]*"
-             maxLength={String(MAXINT).length}
-             disabled={checkboxValue || disabledAll}
+             maxLength={10}
+             disabled={checkboxValue}
       />
       <label htmlFor={checkboxId}
              className="text-left">
@@ -110,82 +106,9 @@ function InputComponent({
                id={checkboxId}
                key={Math.random()}
                checked={checkboxValue}
-               onChange={handleChange}
-               disabled={disabledAll}/>
+               onChange={handleChange}/>
         {UNLIMITED_LABEL}
       </label>
-    </div>
-  )
-}
-
-function SecretURLFileDownloadLayout({value, setValue}) {
-  const {
-    secret_download_limit,
-    secret_download_limit_unlimited_chk,
-    secret_expiration_date,
-    secret_expiration_date_unlimited_chk,
-    secret_enable
-  } = value;
-
-  const style = {marginRight: "5px", marginLeft: "15px"}
-  let checkboxValue = secret_enable;
-  let disabledAll = !checkboxValue;
-
-  function handleChange(event) {
-    event.preventDefault();
-    let target = event.target;
-    let key = target.id;
-    checkboxValue = target.checked
-    disabledAll = !checkboxValue;
-    setValue({...value, ...{[key]: checkboxValue}});
-  }
-
-  return (
-    <div>
-      <div className="row">
-        <div className="col-sm-12 col-md-12 col-md-12">
-          <div className="panel panel-default">
-            <div className="panel-heading">
-              <h5><strong>{LABEL_SECRET_URL_DOWNLOAD}</strong></h5>
-            </div>
-            <div className="panel-body">
-              {/* start enabled checkbox */}
-              <div className="form-inline">
-                <label htmlFor="secret_enable" className="text-left">
-                  <input type="checkbox"
-                    style={style}
-                    id="secret_enable"
-                    key={Math.random()}
-                    checked={checkboxValue}
-                    onChange={handleChange}/>
-                    {LABEL_SECRET_URL_ENABLED}
-                </label>
-              </div>
-              {/* end enabled checkbox */}
-              <InputComponent
-                label={EXPIRATION_DATE_LABEL}
-                currentValue={secret_expiration_date}
-                checkboxValue={secret_expiration_date_unlimited_chk}
-                inputId="secret_expiration_date"
-                checkboxId="secret_expiration_date_unlimited_chk"
-                value={value}
-                setValue={setValue}
-                disabledAll={disabledAll}
-              />
-              <InputComponent
-                label={DOWNLOAD_LIMIT_LABEL}
-                currentValue={secret_download_limit}
-                checkboxValue={secret_download_limit_unlimited_chk}
-                inputId="secret_download_limit"
-                checkboxId="secret_download_limit_unlimited_chk"
-                value={value}
-                setValue={setValue}
-                disabledAll={disabledAll}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
@@ -405,12 +328,10 @@ function TermsConditions({termList, setTermList, currentTerm, setCurrentTerm}) {
 
 
 function RestrictedAccessLayout({
-                                  secret_URL_file_download,
                                   content_file_download,
                                   terms_and_conditions,
                                   usage_report_workflow_access
                                 }) {
-  const [secretURLFileDownload , setSecretURLFileDownload] = useState(secret_URL_file_download)
   const [contentFileDownload, setContentFileDownload] = useState(content_file_download);
   const [usageReportWorkflowAccess, setUsageReportWorkflowAccess] = useState(usage_report_workflow_access);
   const [termList, setTermList] = useState(terms_and_conditions);
@@ -455,14 +376,8 @@ function RestrictedAccessLayout({
 
   function handleSave() {
     const URL = "/api/admin/restricted_access/save";
-    // Validate Secret URL file download.
-    let errorMessage = validateSecretURLFileDownload()
-    if (errorMessage) {
-      showErrorMessage(errorMessage);
-      return false;
-    }
     // Validate Content file download.
-    errorMessage = validateContentFileDownload();
+    let errorMessage = validateContentFileDownload();
     if (errorMessage) {
       showErrorMessage(errorMessage);
       return false;
@@ -481,7 +396,6 @@ function RestrictedAccessLayout({
     }
 
     let data = {
-      secret_URL_file_download:secretURLFileDownload,
       content_file_download: contentFileDownload,
       usage_report_workflow_access: usageReportWorkflowAccess,
       terms_and_conditions: terms_data["data"]
@@ -504,31 +418,6 @@ function RestrictedAccessLayout({
         console.log(error);
       }
     });
-  }
-
-  function validateSecretURLFileDownload() {
-    const {
-      secret_download_limit,
-      secret_download_limit_unlimited_chk,
-      secret_expiration_date,
-      secret_expiration_date_unlimited_chk
-    } = secretURLFileDownload;
-
-    let errorMessage;
-
-    if (secret_expiration_date === "" && !secret_expiration_date_unlimited_chk) {
-      errorMessage = EMPTY_EXPIRATION_DATE;
-    } else if (secret_download_limit === "" && !secret_download_limit_unlimited_chk) {
-      errorMessage = EMPTY_DOWNLOAD;
-    } else if ((secret_expiration_date < 1 && !secret_expiration_date_unlimited_chk)
-      || secret_expiration_date > MAX_EXPIRATION_DATE) {
-      errorMessage = CHECK_INPUT_EXPIRATION_DATE;
-    } else if ((secret_download_limit < 1 && !secret_download_limit_unlimited_chk)
-      || secret_download_limit > MAX_DOWNLOAD_LIMIT) {
-      errorMessage = CHECK_INPUT_DOWNLOAD;
-    }
-
-    return errorMessage;
   }
 
   function validateContentFileDownload() {
@@ -576,8 +465,6 @@ function RestrictedAccessLayout({
 
   return (
     <div>
-      <SecretURLFileDownloadLayout value={secretURLFileDownload}
-                                 setValue={setSecretURLFileDownload}/>
       <ContentFileDownloadLayout value={contentFileDownload}
                                  setValue={setContentFileDownload}/>
       <UsageReportWorkflowAccessLayout value={usageReportWorkflowAccess}

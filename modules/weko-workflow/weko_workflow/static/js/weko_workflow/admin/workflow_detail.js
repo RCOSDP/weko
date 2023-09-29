@@ -69,7 +69,7 @@ $("#btn_create").on("click", function () {
     itemtype_id: $("#txt_itemtype").val(),
     flow_id: $("#txt_flow_name").val(),
     list_hide: list_hide,
-    open_restricted: $('#restricted_access_flag')?.is(":checked"),
+    open_restricted: $('#restricted_access_flag').is(":checked"),
     is_gakuninrdm: $('#chkboxGakuNinRDMFlag').is(":checked")
   };
   let index_id = $('#txt_index').val()

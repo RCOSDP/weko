@@ -112,8 +112,6 @@ require([
           let activity_id = activity_url.split('?')[0];
           init_permission(recordId, fileName, activity_id);
           document.location.href = data.data.redirect;
-        } else if(1 === data.code && data.data.is_download){
-          document.location.href = data.data.redirect;
         } else {
           alert(data.msg);
         }
@@ -242,28 +240,6 @@ require([
     if (cite !== '' && cite !== current_cite) {
       current_cite = cite;
       $('#citationResult').html(current_cite);
-    }
-  });
-
-  $('#secret_url')?.on('click', function(){
-    const webelement = $('#secret_url');
-    if (webelement){
-      const url = webelement.attr('url');
-      webelement.prop('disabled' ,true);
-      $.ajax({
-        url: url,
-        method: 'POST',
-        contentType: 'application/json',
-        data: null,
-        success: function (responce) {
-          webelement.prop('disabled',false);
-          alert(responce);
-        },
-        error: function (jqXHE, status ,msg) {
-          webelement.prop('disabled',false);
-          alert(msg.message);
-        }
-      });
     }
   });
 });

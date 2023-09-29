@@ -22,16 +22,11 @@
 """Database models for weko-admin."""
 
 from datetime import datetime
-from datetime import timedelta
-import traceback
-from typing import List
 
 from flask import current_app
 from invenio_db import db
-from sqlalchemy import desc, or_ ,func
+from sqlalchemy import desc, or_
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.dialects.postgresql import INTERVAL
-from sqlalchemy.sql.functions import concat ,now
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import JSONType
 
@@ -221,23 +216,19 @@ class FilePermission(db.Model):
         return permission
 
     @classmethod
-    def find_list_permission_approved(cls, user_id:int, record_id:str, file_name:str):
-        """Find user 's approved permission
-            Args
-                int:user_id
-                str:record_id
-                str:file_name
-            Returns
-                List[FilePermission]
-        
-        """
-        list_permission:List[FilePermission] = db.session.query(cls) \
+    def find_list_permission_by_date(cls, user_id, record_id, file_name,
+                                     duration):
+        """Find user 's permission by date."""
+        list_permission = db.session.query(cls) \
             .filter(
-            cls.status == 1 # Approval
+            or_(
+                cls.open_date >= duration,
+                cls.open_date.is_(None),
+            )
         ) \
             .filter_by(user_id=user_id,
-                        record_id=record_id,
-                        file_name=file_name).order_by(
+                       record_id=record_id,
+                       file_name=file_name).order_by(
             desc(cls.id)).all()
         return list_permission
 
@@ -254,7 +245,7 @@ class FilePermission(db.Model):
         return cls
 
     @classmethod
-    def update_status(cls, permission , status):
+    def update_status(cls, permission, status):
         """Update a permission 's status."""
         permission.status = status
         db.session.merge(permission)
@@ -272,9 +263,10 @@ class FilePermission(db.Model):
     @classmethod
     def find_by_activity(cls, activity_id):
         """Find user 's permission activity id."""
-        permissions = db.session.query(cls).filter_by(
-            usage_application_activity_id=activity_id).order_by(desc(cls.id)).all() 
-        return permissions
+        permission = db.session.query(cls).filter_by(
+            usage_application_activity_id=activity_id) \
+            .first()
+        return permission
 
     @classmethod
     def update_usage_report_activity_id(cls, permission, activity_id):
@@ -316,8 +308,6 @@ class FileOnetimeDownload(db.Model, Timestamp):
 
     expiration_date = db.Column(db.Integer, nullable=False, default=0)
     """Expiration Date"""
-
-    created = db.Column(db.Date, nullable=False, default=datetime.now)
 
     extra_info = db.Column(
         db.JSON().with_variant(
@@ -409,138 +399,6 @@ class FileOnetimeDownload(db.Model, Timestamp):
             cls.user_mail == obj.get("user_mail"),
         )
         return query.order_by(desc(cls.id)).all()
-    
-    @classmethod
-    def find_downloadable_only(cls, **obj) -> list:
-        """If the user can download ,find file onetime download.
 
-        :param obj:
-        :return:
-        """
-        query = db.session.query(cls).filter(
-            cls.file_name == obj.get("file_name"),
-            cls.record_id == obj.get("record_id"),
-            cls.user_mail == obj.get("user_mail"),
-            cls.download_count > 0 ,
-            now() < cls.created  + func.cast( concat( cls.expiration_date , ' days' ) , INTERVAL)
-        )
-        return query.order_by(desc(cls.id)).all()
-        
-
-class FileSecretDownload(db.Model, Timestamp):
-    """File secret download."""
-
-    __tablename__ = 'file_secret_download'
-
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    """Identifier"""
-
-    file_name = db.Column(db.String(255), nullable=False)
-    """File name"""
-
-    user_mail = db.Column(db.String(255), nullable=False)
-    """User mail"""
-
-    record_id = db.Column(db.String(255), nullable=False)
-    """Record identifier."""
-
-    download_count = db.Column(db.Integer, nullable=False, default=0)
-    """Download count"""
-
-    expiration_date = db.Column(db.Integer, nullable=False, default=0)
-    """Expiration Date"""
-
-    created = db.Column(db.Date, nullable=False, default=datetime.now)
-    updated = db.Column(db.Date, nullable=False, default=datetime.now)
-
-    extra_info = db.Column(
-        db.JSON().with_variant(
-            postgresql.JSONB(none_as_null=True),
-            'postgresql',
-        ).with_variant(
-            JSONType(),
-            'sqlite',
-        ).with_variant(
-            JSONType(),
-            'mysql',
-        ),
-        default=lambda: dict(),
-        nullable=True
-    )
-    """Extra info."""
-
-    def __init__(self, file_name, user_mail, record_id, download_count=0,
-                 expiration_date=0):
-        """Init.
-
-        :param file_name: File name
-        :param user_mail: User mail
-        :param record_id: Record identifier
-        :param download_count: Download count
-        :param expiration_date: Expiration date
-        """
-        self.file_name = file_name
-        self.user_mail = user_mail
-        self.record_id = record_id
-        self.download_count = download_count
-        self.expiration_date = expiration_date
-
-    @classmethod
-    def create(cls, **data):
-        """Create data."""
-        try:
-            file_download = cls(**data)
-            db.session.add(file_download)
-            db.session.commit()
-            db.session.flush()
-            return file_download
-        except Exception as ex:
-            db.session.rollback()
-            current_app.logger.error(ex)
-            raise ex
-
-    @classmethod
-    def update_download(cls, **data):
-        """Update download count.
-
-        :param data:
-        :return:
-        """
-        try:
-            file_name = data.get("file_name")
-            id = data.get("id")
-            record_id = data.get("record_id")
-            file_permission = cls.find(file_name=file_name, id=id,
-                                        record_id=record_id)
-            if len(file_permission) == 1:
-                file = file_permission[0]
-                if data.get("download_count") is not None:
-                    file.download_count = data.get("download_count")
-                if data.get("expiration_date") is not None:
-                    file.expiration_date = data.get("expiration_date")
-                db.session.merge(file)
-                db.session.commit()
-                return file_permission
-            else:
-                return None
-        except Exception as ex:
-            db.session.rollback()
-            current_app.logger.error(traceback.format_exc())
-            raise ex
-
-    @classmethod
-    def find(cls, **obj) -> list:
-        """Find file onetime download.
-
-        :param obj:
-        :return:
-        """
-        query = db.session.query(cls).filter(
-            cls.id == obj.get("id"),
-            cls.file_name == obj.get("file_name"),
-            cls.record_id == obj.get("record_id"),
-            cls.created == obj.get("created")
-        )
-        return query.order_by(desc(cls.id)).all()
 
 __all__ = ('PDFCoverPageSettings', 'FilePermission', 'FileOnetimeDownload')

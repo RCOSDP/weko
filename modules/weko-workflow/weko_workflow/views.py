@@ -29,7 +29,6 @@ from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime
 from functools import wraps
-from typing import List
 
 import redis
 from redis import sentinel
@@ -91,7 +90,7 @@ from .romeo import search_romeo_issn, search_romeo_jtitles
 from .scopes import activity_scope
 from .utils import IdentifierHandle, auto_fill_title, \
     check_authority_by_admin, check_continue, check_doi_validation_not_pass, \
-    check_existed_doi, is_terms_of_use_only, \
+    check_existed_doi, create_onetime_download_url_to_guest, \
     delete_cache_data, delete_guest_activity, filter_all_condition, \
     get_account_info, get_actionid, get_activity_display_info, \
     get_activity_id_of_record_without_version, \
@@ -99,7 +98,7 @@ from .utils import IdentifierHandle, auto_fill_title, \
     get_files_and_thumbnail, get_identifier_setting, get_main_record_detail, \
     get_pid_and_record, get_pid_value_by_activity_detail, \
     get_record_by_root_ver, get_thumbnails, get_usage_data, \
-    get_workflow_item_type_names, grant_access_rights_to_all_open_restricted_files, handle_finish_workflow, \
+    get_workflow_item_type_names, handle_finish_workflow, \
     init_activity_for_guest_user, is_enable_item_name_link, \
     is_hidden_pubdate, is_show_autofill_metadata, \
     is_usage_application_item_type, prepare_data_for_guest_activity, \
@@ -505,15 +504,6 @@ def init_activity():
         res = ResponseMessageSchema().load({'code':-1,'msg':str(err)})
         return jsonify(res.data), 400
 
-    if is_terms_of_use_only(post_activity.data["workflow_id"]):
-        # if the workflow is terms_of_use_only(利用規約のみ) ,
-        # do not create activity. redirect file download.
-        file_name = post_activity.data["extra_info"]["file_name"]
-        record_id = post_activity.data["extra_info"]["record_id"]
-        url = _generate_download_url(record_id=record_id,file_name=file_name)
-        res = ResponseMessageSchema().load({'code':1,'msg':'success','data':{'is_download':True, 'redirect': url}})
-        return jsonify(res.data), 200
-
     activity = WorkActivity()
     try:
         if 'community' in request.args:
@@ -550,23 +540,6 @@ def init_activity():
     return jsonify(res.data),200
 
 
-def _generate_download_url(record_id :str ,file_name :str) -> str:
-    """ generate file download url 
-
-    Args:
-        str: record_id :recid
-        str: file_name
-    Returns:
-        str: url
-    """
-    
-    url:str = url_for(
-            'invenio_records_ui.recid_files'
-            ,pid_value=record_id, filename=file_name
-        )
-    current_app.logger.info('generated redirect url is ' + url)
-    return url
-
 @workflow_blueprint.route('/activity/list', methods=['GET'])
 @login_required
 def list_activity():
@@ -600,22 +573,11 @@ def list_activity():
 
 @workflow_blueprint.route('/activity/init-guest', methods=['POST'])
 def init_activity_guest():
-    """Init workflow activity for guest user.
-        Return URL of workflow activity made from the request body.
-    Returns:
-        dict: json data validated by ResponseMessageSchema.
-        
+    """Init activity for guest user.
+
+    @return:
     """
     post_data = request.get_json()
-    
-    if is_terms_of_use_only(post_data["workflow_id"]):
-        # if the workflow is terms_of_use_only(利用規約のみ) ,
-        # do not create activity. redirect file download.
-        file_name = post_data["file_name"]
-        record_id = post_data["record_id"]
-        url = _generate_download_url(record_id=record_id,file_name=file_name)
-        res = ResponseMessageSchema().load({'code':1,'msg':'success','data':{'is_download':True, 'redirect': url}})
-        return jsonify(res.data), 200
 
     if post_data.get('guest_mail'):
         try:
@@ -1361,7 +1323,7 @@ def next_action(activity_id='0', action_id=0):
     next_action_order = next_flow_action[
         0].action_order if action_order else None
     # Start to send mail
-    if next_action_endpoint in ['approval' , 'end_action']:
+    if 'approval' in [action_endpoint, next_action_endpoint]:
         current_flow_action = flow.get_flow_action_detail(
             activity_detail.flow_define.flow_id, action_id, action_order)
         if current_flow_action is None:
@@ -1377,16 +1339,15 @@ def next_action(activity_id='0', action_id=0):
             res = ResponseMessageSchema().load({"code":-2, "msg":"can not get next_action_detail"})
             return jsonify(res.data), 500
 
-        is_last_step = next_action_endpoint == 'end_action'
+        is_last_approval_step = work_activity \
+            .is_last_approval_step(activity_id, action_id, action_order) \
+            if action_endpoint == "approval" else False
         # Only gen url file link at last approval step
         url_and_expired_date = {}
-        if is_last_step:
-            # Approve to file permission
-            # 利用申請のWF時、申請されたファイルと、そのアイテム内の制限公開ファイルすべてにアクセス権を付与する
-            permissions :List[FilePermission] = FilePermission.find_by_activity(activity_id)
-            if permissions and len(permissions) == 1:
-                # 利用申請なら、WF作成時にFilePermissionが1レコードだけ作られている。
-                url_and_expired_date = grant_access_rights_to_all_open_restricted_files(activity_id,permissions[0] ,activity_detail)
+        if is_last_approval_step:
+            url_and_expired_date = create_onetime_download_url_to_guest(
+                activity_detail.activity_id,
+                activity_detail.extra_info)
             if not url_and_expired_date:
                 url_and_expired_date = {}
         action_mails_setting = {"previous":
@@ -1628,6 +1589,7 @@ def next_action(activity_id='0', action_id=0):
         comment='',
         action_order=action_order
     )
+
     if 'end_action' == next_action_endpoint:
         new_activity_id = None
         new_activity_id = handle_finish_workflow(deposit,
@@ -1636,6 +1598,11 @@ def next_action(activity_id='0', action_id=0):
         if new_activity_id is None:
             res = ResponseMessageSchema().load({"code":-1, "msg":_("error")})
             return jsonify(res.data), 500
+
+        # Remove to file permission
+        permission = FilePermission.find_by_activity(activity_id)
+        if permission:
+            FilePermission.delete_object(permission)
 
         activity.update(
             action_id=next_action_id,
@@ -2125,10 +2092,9 @@ def cancel_action(activity_id='0', action_id=0):
         delete_guest_activity(activity_id)
 
     # Remove to file permission
-    permissions = FilePermission.find_by_activity(activity_id)
-    if permissions:
-        for permission in permissions:
-            FilePermission.delete_object(permission)
+    permission = FilePermission.find_by_activity(activity_id)
+    if permission:
+        FilePermission.delete_object(permission)
 
     res = ResponseMessageSchema().load(
         {"code":0, "msg":_("success"),"data":{"redirect":url}}

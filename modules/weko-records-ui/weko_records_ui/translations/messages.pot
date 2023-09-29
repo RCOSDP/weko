@@ -264,14 +264,6 @@ msgstr ""
 msgid "Plays"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:67
-msgid "Action"
-msgstr ""
-
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:142
-msgid "Secret URL"
-msgstr ""
-
 #: weko_records_ui/templates/weko_records_ui/box/stats.html:29
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:208
 msgid "See details"
@@ -1257,6 +1249,3 @@ msgstr ""
 
 msgid "This data is not available for this user."
 msgstr ""
-
-msgid "Success Secret URL Generate"
-msgstr "succeess:secret url generate is succeed. send to your mail adress."

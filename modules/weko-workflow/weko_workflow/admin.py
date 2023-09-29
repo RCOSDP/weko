@@ -25,7 +25,6 @@ import uuid
 
 from flask import abort, current_app, jsonify, request, url_for
 from flask_admin import BaseView, expose
-from flask_login import current_user
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
 from invenio_db import db
@@ -300,15 +299,6 @@ class WorkFlowSettingView(BaseView):
         else:
             display = role
             hide = []
-        
-        # the workflow that open_restricted is true can update by system administrator only
-        is_sysadmin = False
-        for role in current_user.roles:
-            if role.name in current_app.config['WEKO_SYS_USER']:
-                is_sysadmin =True
-                break
-        if workflows.open_restricted and not is_sysadmin:
-            abort(403)
 
         return self.render(
             'weko_workflow/admin/workflow_detail.html',
@@ -321,8 +311,7 @@ class WorkFlowSettingView(BaseView):
             display_list=display,
             display_label=display_label,
             hide_label=hide_label,
-            display_hide_label=display_hide,
-            is_sysadmin=is_sysadmin
+            display_hide_label=display_hide
         )
 
     @expose('/<string:workflow_id>', methods=['POST', 'PUT'])
@@ -339,7 +328,7 @@ class WorkFlowSettingView(BaseView):
             flow_id=json_data.get('flow_id', 0),
             index_tree_id=json_data.get('index_id'),
             location_id=json_data.get('location_id'),
-            open_restricted=json_data.get('open_restricted', False),
+            open_restricted=json_data.get('open_restricted'),
             is_gakuninrdm=json_data.get('is_gakuninrdm')
         )
         workflow = WorkFlow()
