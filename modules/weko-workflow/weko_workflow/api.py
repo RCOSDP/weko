@@ -21,6 +21,7 @@
 """WEKO3 module docstring."""
 
 import math
+from typing import List
 import urllib.parse
 import uuid
 from datetime import date,datetime, timedelta
@@ -352,6 +353,19 @@ class Flow(object):
             flow_action = _FlowAction.query.filter_by(
                 flow_id=flow_id,
                 action_id=action_id).all()
+            return flow_action
+    
+    def get_flow_action_list(self, flow_define_id :int) -> List[_FlowAction]:
+        """ get workflow_flow_action from workflow_workflow.flow_id 
+            Args:
+                flow_define_id : int  workflow_workflow.flow_id 
+            Eeturns:
+                record list of workflow_flow_action
+        """
+        with db.session.no_autoflush:
+            flow_def = _Flow.query.filter_by(id=flow_define_id).first()
+            flow_action = _FlowAction.query.filter_by(
+                flow_id=flow_def.flow_id).order_by(asc(_FlowAction.action_order)).all()
             return flow_action
 
 
