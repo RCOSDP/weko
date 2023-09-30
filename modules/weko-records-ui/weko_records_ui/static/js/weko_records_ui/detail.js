@@ -114,7 +114,7 @@ require([
           document.location.href = data.data.redirect;
         } else if(1 === data.code && data.data.is_download){
           const url = new URL(data.data.redirect , document.location.origin);
-          url.searchParams.append('consent',true);
+          url.searchParams.append('terms_of_use_only',true);
           document.location.href = url;
         } else {
           alert(data.msg);
