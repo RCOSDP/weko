@@ -261,7 +261,7 @@ require([
         },
         error: function (jqXHE, status ,msg) {
           webelement.prop('disabled',false);
-          alert(msg.message);
+          alert(msg);
         }
       });
     }
