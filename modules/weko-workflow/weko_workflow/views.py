@@ -86,7 +86,7 @@ from .errors import ActivityBaseRESTError, ActivityNotFoundRESTError, \
     DeleteActivityFailedRESTError, InvalidInputRESTError, \
     RegisteredActivityNotFoundRESTError
 from .models import ActionStatusPolicy, Activity, ActivityAction, \
-    ActivityStatusPolicy, FlowAction
+    ActivityStatusPolicy, FlowAction, GuestActivity
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .scopes import activity_scope
 from .utils import IdentifierHandle, auto_fill_title, \
@@ -713,7 +713,7 @@ def display_guest_activity(file_name=""):
 
 @workflow_blueprint.route('/activity/detail/<string:activity_id>',
                  methods=['GET', 'POST'])
-@login_required
+@login_required_customize
 def display_activity(activity_id="0"):
     """各アクティビティのビューをレンダリングする
 
@@ -962,10 +962,11 @@ def display_activity(activity_id="0"):
         session['itemlogin_pid'] = recid
         session['itemlogin_community_id'] = community_id
 
-    user_id = current_user.id
-    user_profile = {}
+    user_id = current_user.id if hasattr(current_user , 'id') else None
+    user_profile = None
     if user_id:
         from weko_user_profiles.views import get_user_profile_info
+        user_profile={}
         user_profile['results'] = get_user_profile_info(int(user_id))
     from weko_records_ui.utils import get_list_licence
     from weko_theme.utils import get_design_layout
@@ -1384,9 +1385,15 @@ def next_action(activity_id='0', action_id=0):
             # Approve to file permission
             # 利用申請のWF時、申請されたファイルと、そのアイテム内の制限公開ファイルすべてにアクセス権を付与する
             permissions :List[FilePermission] = FilePermission.find_by_activity(activity_id)
+            guest_activity :GuestActivity = GuestActivity.find_by_activity_id(activity_id)
             if permissions and len(permissions) == 1:
-                # 利用申請なら、WF作成時にFilePermissionが1レコードだけ作られている。
+                # 利用申請(ログイン済)なら、WF作成時にFilePermissionが1レコードだけ作られている。
                 url_and_expired_date = grant_access_rights_to_all_open_restricted_files(activity_id,permissions[0] ,activity_detail)
+            elif guest_activity and len(guest_activity) == 1:
+                # 利用申請(ゲスト)なら、WF作成時にFilePermissionが作られていないが、GuestActivityが作られている。
+                url_and_expired_date = grant_access_rights_to_all_open_restricted_files(activity_id,guest_activity[0] ,activity_detail)
+
+            
             if not url_and_expired_date:
                 url_and_expired_date = {}
         action_mails_setting = {"previous":
@@ -1410,10 +1417,6 @@ def next_action(activity_id='0', action_id=0):
                     current_flow_action.action_roles[0].action_user:
                 next_action_handler = current_flow_action.action_roles[
                     0].action_user
-        if next_action_handler is None:
-            current_app.logger.error("next_action: can not get next_action_handler")
-            res = ResponseMessageSchema().load({"code":-2, "msg":"can not get next_action_handler"})
-            return jsonify(res.data), 500
         process_send_approval_mails(activity_detail, action_mails_setting,
                                     next_action_handler,
                                     url_and_expired_date)

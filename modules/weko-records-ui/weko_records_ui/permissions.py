@@ -240,7 +240,6 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
             elif 'open_restricted' in acsrole:
                 is_can = check_open_restricted_permission(record, fjson)
         except BaseException:
-            current_app.logger.error(traceback.print_exc())
             abort(500)
         return is_can
 
