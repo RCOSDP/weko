@@ -1536,14 +1536,14 @@ def create_secret_url(record_id:str ,file_name:str ,user_mail:str ,restricted_fu
         dict: created info 
     """
     # Save to Database.
-    one_time_obj:FileSecretDownload = _create_secret_download_url(
+    secret_obj:FileSecretDownload = _create_secret_download_url(
         file_name, record_id, user_mail)
     
     # generate url
     secret_file_url = _generate_secret_download_url(
-        file_name, record_id, one_time_obj.id , one_time_obj.created)
+        file_name, record_id, secret_obj.id , secret_obj.created)
 
-    retrun_dict:dict = {
+    return_dict:dict = {
         "restricted_download_link":"",
         "mail_recipient":"",
         "file_name":file_name,
@@ -1556,27 +1556,27 @@ def create_secret_url(record_id:str ,file_name:str ,user_mail:str ,restricted_fu
         "restricted_fullname" :restricted_fullname,
         "restricted_data_name" :restricted_data_name,
     }
-    retrun_dict["mail_recipient"] = one_time_obj.user_mail
-    retrun_dict["restricted_download_link"] = secret_file_url
+    return_dict["mail_recipient"] = secret_obj.user_mail
+    return_dict["restricted_download_link"] = secret_file_url
 
     max_int :int = current_app.config["WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER"]
-    if one_time_obj.expiration_date < max_int:
-        expiration_date = timedelta(days=one_time_obj.expiration_date)
+    if secret_obj.expiration_date < max_int:
+        expiration_date = timedelta(days=secret_obj.expiration_date)
         expiration_date = dt.today() + expiration_date
         expiration_date = expiration_date.strftime("%Y-%m-%d")
-        retrun_dict['restricted_expiration_date'] = expiration_date
+        return_dict['restricted_expiration_date'] = expiration_date
     else:
-        retrun_dict["restricted_expiration_date_ja"] = "無制限"
-        retrun_dict["restricted_expiration_date_en"] = "Unlimited"
+        return_dict["restricted_expiration_date_ja"] = "無制限"
+        return_dict["restricted_expiration_date_en"] = "Unlimited"
             
 
-    if one_time_obj.download_count < max_int :
-        retrun_dict["restricted_download_count"] = str(one_time_obj.download_count)
+    if secret_obj.download_count < max_int :
+        return_dict["restricted_download_count"] = str(secret_obj.download_count)
     else:
-        retrun_dict["restricted_download_count_ja"] = "無制限"
-        retrun_dict["restricted_download_count_en"] = "Unlimited"
+        return_dict["restricted_download_count_ja"] = "無制限"
+        return_dict["restricted_download_count_en"] = "Unlimited"
             
-    return retrun_dict
+    return return_dict
 
 
 def _generate_secret_download_url(file_name: str, record_id: str, id: str ,created :dt) -> str:
