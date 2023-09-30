@@ -1004,7 +1004,6 @@ def test_get_file_info_list(app,records):
         record["item_1617605131499"]["attribute_value_mlt"][0]['provide'] = [{"workflow": "workflow", "role": 1}]
         get_file_info_list(record)
 
-<<<<<<< HEAD
 
 # def check_and_create_usage_report(record, file_object):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_check_and_create_usage_report -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -1025,8 +1024,6 @@ def test_check_and_create_usage_report(app,records):
                 assert check_and_create_usage_report(record,fileobj)==None
 
 
-=======
->>>>>>> 5ab2a8513 (PG #35018,#35021,#35022 #35023)
 # def create_usage_report_for_user(onetime_download_extra_info: dict):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_create_usage_report_for_user(app):

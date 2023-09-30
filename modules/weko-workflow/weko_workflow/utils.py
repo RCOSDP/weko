@@ -4047,7 +4047,6 @@ def check_doi_validation_not_pass(item_id, activity_id,
             sessionstore.delete(
                 'updated_json_schema_{}'.format(activity_id))
         return False
-<<<<<<< HEAD
 
 def make_activitylog_tsv(activities):
     """make tsv for activitiy_log
@@ -4071,7 +4070,6 @@ def make_activitylog_tsv(activities):
 
     return file_output.getvalue()
     
-=======
     
 def is_terms_of_use_only(workflow_id :int) -> bool:
     """
@@ -4135,4 +4133,3 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
 
     #url_and_expired_date of a applyed content.
     return url_and_expired_date
->>>>>>> 5ab2a8513 (PG #35018,#35021,#35022 #35023)

@@ -830,7 +830,6 @@ msgstr "Failed to delete due to server error."
 msgid "The item name/mapping is already exists. Please input other faceted item/mapping."
 msgstr "The item name/mapping is already exists. Please input other faceted item/mapping."
 
-<<<<<<< HEAD
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "reindex item_index"
 msgstr "reindex item Types"
@@ -902,8 +901,6 @@ msgstr "Display Number must be an integer value from 1 to 99."
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
 msgid "DisplayNumber Validation2"
 msgstr "If CheckboxList is selected, Display Number must be entered."
-=======
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:81
 msgid "SecretURL Enabled"
 msgstr "Enable"
->>>>>>> 5ab2a8513 (PG #35018,#35021,#35022 #35023)

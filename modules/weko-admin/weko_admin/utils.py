@@ -26,14 +26,11 @@ import os
 import zipfile
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
-<<<<<<< HEAD
-from typing import Dict, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 from invenio_search.api import RecordsSearch
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import QueryString
-=======
-from typing import Dict, Optional, Tuple, Union
->>>>>>> 5ab2a8513 (PG #35018,#35021,#35022 #35023)
+
 
 import redis
 from redis import sentinel
