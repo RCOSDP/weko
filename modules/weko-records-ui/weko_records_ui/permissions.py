@@ -493,12 +493,10 @@ def check_create_usage_report(record, file_json):
     record_id = record.get('recid')
     file_name = file_json.get('filename')
     list_permission = __get_file_permission(record_id, file_name)
-    if list_permission:
-        permission = list_permission[0]
+    for permission in list_permission:
         if check_usage_report_in_permission(permission):
             return permission
-        else:
-            return None
+    return None
 
 def is_owners_or_superusers(record) -> bool:
     """ 
