@@ -272,6 +272,13 @@ class WorkFlowSettingView(BaseView):
         hide_label = self.get_language_workflows("hide")
         display_hide = self.get_language_workflows("display_hide")
 
+        # the workflow that open_restricted is true can update by system administrator only
+        is_sysadmin = False
+        for r in current_user.roles:
+            if r.name in current_app.config['WEKO_SYS_USER']:
+                is_sysadmin =True
+                break
+
         if '0' == workflow_id:
             """Create new workflow"""
             return self.render(
@@ -286,6 +293,7 @@ class WorkFlowSettingView(BaseView):
                 display_label=display_label,
                 hide_label=hide_label,
                 display_hide_label=display_hide,
+                is_sysadmin=is_sysadmin,
             )
 
         """Update the workflow info"""
@@ -301,12 +309,6 @@ class WorkFlowSettingView(BaseView):
             display = role
             hide = []
         
-        # the workflow that open_restricted is true can update by system administrator only
-        is_sysadmin = False
-        for role in current_user.roles:
-            if role.name in current_app.config['WEKO_SYS_USER']:
-                is_sysadmin =True
-                break
         if workflows.open_restricted and not is_sysadmin:
             abort(403)
 

@@ -4113,18 +4113,20 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
     files = WekoRecord.get_record_by_pid(permission.record_id).get_file_data()
     for file in files:
         #{'url': {'url': 'https://weko3.example.org/record/1/files/aaa (1).txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2023-02-03'}], 'terms': 'term_free', 'format': 'text/plain', 'provide': [{'role': 'none_loggin', 'workflow': '2'}, {'role': '3', 'workflow': '1'}], 'version': '1', 'dataType': 'perfectures', 'filename': 'aaa (1).txt', 'filesize': [{'value': '5 B'}], 'mimetype': 'text/plain', 'accessrole': 'open_restricted', 'version_id': '2a0aa15b-d3e2-4846-9e3a-e1e734a1a620', 'displaytype': 'simple', 'licensefree': 'licence text', 'licensetype': 'license_free', 'termsDescription': '利用規約のフリーインプット本文です'}
-        if file['filename'] != permission.file_name and file['accessrole'] in 'open_restricted':
-            # create open_restricted content records of not applyed
-            FilePermission.init_file_permission(permission.user_id, permission.record_id, file['filename'], activity_id)
-            
-        #insert file_onetime_download
-        extra_info:dict = deepcopy(activity_detail.extra_info)
-        extra_info.update({'file_name' : file['filename']})
-        tmp:dict = create_onetime_download_url_to_guest(activity_detail.activity_id,extra_info)
+        if file['accessrole'] in 'open_restricted':
         
-        if file['filename'] == permission.file_name:
-            # a applyed content.
-            url_and_expired_date = tmp
+            if file['filename'] != permission.file_name:
+                # create open_restricted content records of not applyed
+                FilePermission.init_file_permission(permission.user_id, permission.record_id, file['filename'], activity_id)
+            
+            #insert file_onetime_download
+            extra_info:dict = deepcopy(activity_detail.extra_info)
+            extra_info.update({'file_name' : file['filename']})
+            tmp:dict = create_onetime_download_url_to_guest(activity_detail.activity_id,extra_info)
+        
+            if file['filename'] == permission.file_name:
+                # a applyed content.
+                url_and_expired_date = tmp
 
     # approve all open_restricted contents.
     permissions = FilePermission.find_by_activity(activity_id)
