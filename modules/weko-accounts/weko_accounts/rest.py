@@ -97,7 +97,7 @@ class WekoLogin(ContentNegotiatedMethodView):
         super(WekoLogin, self).__init__(*args, **kwargs)
 
     @limiter.limit('')
-    def post(self, **kwargs):
+    def post(self, *args, **kwargs):
         """
         Login as weko user.
 
@@ -112,7 +112,7 @@ class WekoLogin(ContentNegotiatedMethodView):
         else:
             raise VersionNotFoundRESTError()
 
-    def post_v1(self, **kwargs):
+    def post_v1(self, *args, **kwargs):
 
         data = request.get_json()
         email = data['email']
@@ -142,7 +142,9 @@ class WekoLogin(ContentNegotiatedMethodView):
             'id': user.id,
             'email': user.email,
         }
-        return make_response(jsonify(res_json), 200)
+        resp = make_response(jsonify(res_json), 200)
+        resp.headers.add('Set-Cookie', 'SameSite=None; Secure')
+        return resp
 
 
 class WekoLogout(ContentNegotiatedMethodView):
