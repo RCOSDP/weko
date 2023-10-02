@@ -1,7 +1,7 @@
 GLOB sdist-make: /code/modules/weko-workflow/setup.py
 c1 inst-nodeps: /code/modules/weko-workflow/.tox/.tmp/package/1/weko-workflow-0.1.0.dev20170000.zip
-c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@83148ee01e9da37a8a1134febe83bc32b95bac6e#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-flask==0.15.1,pytest-invenio==1.3.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_records&subdirectory=modules/weko-records,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,weko-workflow @ file:///code/modules/weko-workflow/.tox/.tmp/package/1/weko-workflow-0.1.0.dev20170000.zip,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
-c1 run-test-pre: PYTHONHASHSEED='2824828910'
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@d47fafb1558e261f98ca916355346a9ca7b4a68e#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-flask==0.15.1,pytest-invenio==1.3.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_records&subdirectory=modules/weko-records,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,weko-workflow @ file:///code/modules/weko-workflow/.tox/.tmp/package/1/weko-workflow-0.1.0.dev20170000.zip,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='1908507524'
 c1 run-test: commands[0] | pytest --cov=weko_workflow tests -v -s -vv --cov-branch --cov-report=term --cov-report=xml --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 ============================= test session starts ==============================
 platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/weko-workflow/.tox/c1/bin/python
@@ -50,7 +50,7 @@ tests/test_utils.py::test_get_term_and_condition_content PASSED
 tests/test_utils.py::test_get_identifier_setting PASSED
 tests/test_utils.py::test_saving_doi_pidstore ERROR
 tests/test_utils.py::test_register_hdl PASSED
-tests/test_utils.py::test_item_metadata_validation tts:<PersistentIdentifier recid:1 / rec:4520efa9-e449-469e-85a3-78f8c08baff6 (R)>
+tests/test_utils.py::test_item_metadata_validation tts:<PersistentIdentifier recid:1 / rec:50e21d10-e2c9-48bf-bfaf-1c075d074d24 (R)>
 tt4.1
 PASSED
 tests/test_utils.py::test_merge_doi_error_list PASSED
@@ -464,14 +464,14 @@ tests/test_views.py::test_clear_activitylog_9[6-200] PASSED
 ==================================== ERRORS ====================================
 ________ ERROR at setup of test_cancel_expired_usage_report_activities _________
 
-self = <sqlalchemy.engine.base.Connection object at 0x7f9daa0b6128>
-dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f9daa19ccc0>
+self = <sqlalchemy.engine.base.Connection object at 0x7f3f31c61b70>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3f31d3b4e0>
 constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
 statement = 'INSERT INTO guest_activity (created, updated, user_mail, record_id, file_name, activity_id, token, expiration_date, i...id)s, %(file_name)s, %(activity_id)s, %(token)s, %(expiration_date)s, %(is_usage_report)s) RETURNING guest_activity.id'
-parameters = {'activity_id': 'activity_id', 'created': datetime.datetime(2023, 7, 25, 17, 29, 36, 693112), 'expiration_date': datetime.datetime(2023, 7, 25, 17, 29, 36, 681988), 'file_name': 'file_name', ...}
-args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7f9daa0b6048>, [{'activity_id': 'activity_id...n_date': datetime.datetime(2023, 7, 25, 17, 29, 36, 681988), 'file_name': 'file_name', 'is_usage_report': False, ...}])
-conn = <sqlalchemy.pool._ConnectionFairy object at 0x7f9daa0cbe48>
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f9daa132358>
+parameters = {'activity_id': 'activity_id', 'created': datetime.datetime(2023, 10, 1, 18, 14, 28, 889178), 'expiration_date': datetime.datetime(2023, 10, 1, 18, 14, 28, 880282), 'file_name': 'file_name', ...}
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7f3f31c61be0>, [{'activity_id': 'activity_id...n_date': datetime.datetime(2023, 10, 1, 18, 14, 28, 880282), 'file_name': 'file_name', 'is_usage_report': False, ...}])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7f3f31c4e668>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f3f31c61c18>
 
     def _execute_context(
         self, dialect, constructor, statement, parameters, *args
@@ -560,16 +560,16 @@ context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 o
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f9daa19ccc0>
-cursor = <cursor object at 0x7f9dacdf8140; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3f31d3b4e0>
+cursor = <cursor object at 0x7f3f381aa900; closed: -1>
 statement = 'INSERT INTO guest_activity (created, updated, user_mail, record_id, file_name, activity_id, token, expiration_date, i...id)s, %(file_name)s, %(activity_id)s, %(token)s, %(expiration_date)s, %(is_usage_report)s) RETURNING guest_activity.id'
-parameters = {'activity_id': 'activity_id', 'created': datetime.datetime(2023, 7, 25, 17, 29, 36, 693112), 'expiration_date': datetime.datetime(2023, 7, 25, 17, 29, 36, 681988), 'file_name': 'file_name', ...}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f9daa132358>
+parameters = {'activity_id': 'activity_id', 'created': datetime.datetime(2023, 10, 1, 18, 14, 28, 889178), 'expiration_date': datetime.datetime(2023, 10, 1, 18, 14, 28, 880282), 'file_name': 'file_name', ...}
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f3f31c61c18>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
 E       psycopg2.ProgrammingError: column "expiration_date" is of type integer but expression is of type timestamp without time zone
-E       LINE 1: ...'record_id', 'file_name', 'activity_id', 'token', '2023-07-2...
+E       LINE 1: ...'record_id', 'file_name', 'activity_id', 'token', '2023-10-0...
 E                                                                    ^
 E       HINT:  You will need to rewrite or cast the expression.
 
@@ -635,19 +635,19 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     cursor, statement, parameters, context
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f9daa19ccc0>
-cursor = <cursor object at 0x7f9dacdf8140; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3f31d3b4e0>
+cursor = <cursor object at 0x7f3f381aa900; closed: -1>
 statement = 'INSERT INTO guest_activity (created, updated, user_mail, record_id, file_name, activity_id, token, expiration_date, i...id)s, %(file_name)s, %(activity_id)s, %(token)s, %(expiration_date)s, %(is_usage_report)s) RETURNING guest_activity.id'
-parameters = {'activity_id': 'activity_id', 'created': datetime.datetime(2023, 7, 25, 17, 29, 36, 693112), 'expiration_date': datetime.datetime(2023, 7, 25, 17, 29, 36, 681988), 'file_name': 'file_name', ...}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f9daa132358>
+parameters = {'activity_id': 'activity_id', 'created': datetime.datetime(2023, 10, 1, 18, 14, 28, 889178), 'expiration_date': datetime.datetime(2023, 10, 1, 18, 14, 28, 880282), 'file_name': 'file_name', ...}
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f3f31c61c18>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
 E       sqlalchemy.exc.ProgrammingError: (psycopg2.ProgrammingError) column "expiration_date" is of type integer but expression is of type timestamp without time zone
-E       LINE 1: ...'record_id', 'file_name', 'activity_id', 'token', '2023-07-2...
+E       LINE 1: ...'record_id', 'file_name', 'activity_id', 'token', '2023-10-0...
 E                                                                    ^
 E       HINT:  You will need to rewrite or cast the expression.
-E        [SQL: 'INSERT INTO guest_activity (created, updated, user_mail, record_id, file_name, activity_id, token, expiration_date, is_usage_report) VALUES (%(created)s, %(updated)s, %(user_mail)s, %(record_id)s, %(file_name)s, %(activity_id)s, %(token)s, %(expiration_date)s, %(is_usage_report)s) RETURNING guest_activity.id'] [parameters: {'created': datetime.datetime(2023, 7, 25, 17, 29, 36, 693112), 'updated': datetime.datetime(2023, 7, 25, 17, 29, 36, 693126), 'user_mail': 'user_mail', 'record_id': 'record_id', 'file_name': 'file_name', 'activity_id': 'activity_id', 'token': 'token', 'expiration_date': datetime.datetime(2023, 7, 25, 17, 29, 36, 681988), 'is_usage_report': False}] (Background on this error at: http://sqlalche.me/e/f405)
+E        [SQL: 'INSERT INTO guest_activity (created, updated, user_mail, record_id, file_name, activity_id, token, expiration_date, is_usage_report) VALUES (%(created)s, %(updated)s, %(user_mail)s, %(record_id)s, %(file_name)s, %(activity_id)s, %(token)s, %(expiration_date)s, %(is_usage_report)s) RETURNING guest_activity.id'] [parameters: {'created': datetime.datetime(2023, 10, 1, 18, 14, 28, 889178), 'updated': datetime.datetime(2023, 10, 1, 18, 14, 28, 889191), 'user_mail': 'user_mail', 'record_id': 'record_id', 'file_name': 'file_name', 'activity_id': 'activity_id', 'token': 'token', 'expiration_date': datetime.datetime(2023, 10, 1, 18, 14, 28, 880282), 'is_usage_report': False}] (Background on this error at: http://sqlalche.me/e/f405)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: ProgrammingError
 ------------------------------ Captured log setup ------------------------------
@@ -1345,7 +1345,7 @@ WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 =================================== FAILURES ===================================
 _______________ TestFlowSettingView.test_flow_detail_acl[1-200] ________________
 
-self = <tests.test_admin.TestFlowSettingView object at 0x7f9db13720b8>
+self = <tests.test_admin.TestFlowSettingView object at 0x7f3f38f46e10>
 client = <FlaskClient <Flask 'testapp'>>
 workflow = {'flow': <FlowDefine 1>, 'flow_action': [<FlowAction 1>, <FlowAction 2>, <FlowAction 3>, <FlowAction 4>, <FlowAction 5>, <FlowAction 6>, ...], 'workflow': <WorkFlow 1>}
 db_register2 = None
@@ -1412,8 +1412,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     return fn(self, *args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <invenio_admin.views.protected_adminview_factory.<locals>.ProtectedAdminView object at 0x7f9db123a2b0>
-workflow_id = 'fa2ec370-1466-47a6-8594-9531b052f694'
+self = <invenio_admin.views.protected_adminview_factory.<locals>.ProtectedAdminView object at 0x7f3f38eab550>
+workflow_id = '9a5e1e28-b83c-48c9-8502-3ccc92ad0e77'
 
     @expose('/<string:workflow_id>', methods=['GET'])
     def workflow_detail(self, workflow_id='0'):
@@ -1465,7 +1465,7 @@ weko_workflow/admin.py:294: AttributeError
 WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 _____________________ TestFlowSettingView.test_update_flow _____________________
 
-self = <tests.test_admin.TestFlowSettingView object at 0x7f9db0bde9e8>
+self = <tests.test_admin.TestFlowSettingView object at 0x7f3f38751748>
 app = <Flask 'testapp'>
 workflow = {'flow': <FlowDefine 1>, 'flow_action': [<FlowAction 1>, <FlowAction 2>, <FlowAction 3>, <FlowAction 4>, <FlowAction 5>, <FlowAction 6>, ...], 'workflow': <WorkFlow 1>}
 
@@ -1479,7 +1479,7 @@ weko_workflow/admin.py:122: in update_flow
     workflow.upt_flow(flow_id, post_data)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <weko_workflow.api.Flow object at 0x7f9db2a66278>, flow_id = 0
+self = <weko_workflow.api.Flow object at 0x7f3f3a766208>, flow_id = 0
 flow = None
 
     def upt_flow(self, flow_id, flow):
@@ -1504,7 +1504,7 @@ Traceback (most recent call last):
 AttributeError: 'NoneType' object has no attribute 'get'
 ______________________ TestFlowSettingView.test_new_flow _______________________
 
-self = <tests.test_admin.TestFlowSettingView object at 0x7f9db125d4a8>
+self = <tests.test_admin.TestFlowSettingView object at 0x7f3f38db76a0>
 app = <Flask 'testapp'>
 workflow = {'flow': <FlowDefine 1>, 'flow_action': [<FlowAction 1>, <FlowAction 2>, <FlowAction 3>, <FlowAction 4>, <FlowAction 5>, <FlowAction 6>, ...], 'workflow': <WorkFlow 1>}
 
@@ -1531,7 +1531,7 @@ E       AttributeError: 'int' object has no attribute '_handle_view'
 WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 ______________________ TestFlowSettingView.test_del_flow _______________________
 
-self = <tests.test_admin.TestFlowSettingView object at 0x7f9db0447160>
+self = <tests.test_admin.TestFlowSettingView object at 0x7f3f37f9ada0>
 app = <Flask 'testapp'>
 workflow = {'flow': <FlowDefine 1>, 'flow_action': [<FlowAction 1>, <FlowAction 2>, <FlowAction 3>, <FlowAction 4>, <FlowAction 5>, <FlowAction 6>, ...], 'workflow': <WorkFlow 1>}
 
@@ -1558,7 +1558,7 @@ E       AttributeError: 'int' object has no attribute '_handle_view'
 WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 _____________________ TestFlowSettingView.test_get_actions _____________________
 
-self = <tests.test_admin.TestFlowSettingView object at 0x7f9db0fbe978>
+self = <tests.test_admin.TestFlowSettingView object at 0x7f3f3a4ee780>
 app = <Flask 'testapp'>
 workflow = {'flow': <FlowDefine 1>, 'flow_action': [<FlowAction 1>, <FlowAction 2>, <FlowAction 3>, <FlowAction 4>, <FlowAction 5>, <FlowAction 6>, ...], 'workflow': <WorkFlow 1>}
 
@@ -1574,7 +1574,7 @@ tests/test_admin.py:96: AssertionError
 WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 ___________________ TestFlowSettingView.test_upt_flow_action ___________________
 
-self = <tests.test_admin.TestFlowSettingView object at 0x7f9dafd7b278>
+self = <tests.test_admin.TestFlowSettingView object at 0x7f3f37a11208>
 app = <Flask 'testapp'>
 workflow = {'flow': <FlowDefine 1>, 'flow_action': [<FlowAction 1>, <FlowAction 2>, <FlowAction 3>, <FlowAction 4>, <FlowAction 5>, <FlowAction 6>, ...], 'workflow': <WorkFlow 1>}
 
@@ -1601,7 +1601,7 @@ E       AttributeError: 'int' object has no attribute '_handle_view'
 WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 ___________ TestWorkFlowSettingView.test_update_workflow_acl[1-200] ____________
 
-self = <tests.test_admin.TestWorkFlowSettingView object at 0x7f9db08658d0>
+self = <tests.test_admin.TestWorkFlowSettingView object at 0x7f3f36796f60>
 client = <FlaskClient <Flask 'testapp'>>, db_register2 = None
 users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
 users_index = 1, status_code = 200
@@ -1659,7 +1659,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     return fn(self, *args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <invenio_admin.views.protected_adminview_factory.<locals>.ProtectedAdminView object at 0x7f9db0054358>
+self = <invenio_admin.views.protected_adminview_factory.<locals>.ProtectedAdminView object at 0x7f3f380937f0>
 workflow_id = '0'
 
     @expose('/<string:workflow_id>', methods=['POST', 'PUT'])
@@ -1677,7 +1677,7 @@ weko_workflow/admin.py:324: AttributeError
 WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 _______________ TestWorkFlowSettingView.test_save_workflow_role ________________
 
-self = <tests.test_admin.TestWorkFlowSettingView object at 0x7f9dad8e6a20>
+self = <tests.test_admin.TestWorkFlowSettingView object at 0x7f3f355899e8>
 app = <Flask 'testapp'>
 users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
 workflow = {'flow': <FlowDefine 1>, 'flow_action': [<FlowAction 1>, <FlowAction 2>, <FlowAction 3>, <FlowAction 4>, <FlowAction 5>, <FlowAction 6>, ...], 'workflow': <WorkFlow 1>}
@@ -1706,7 +1706,7 @@ ERROR    testapp:admin.py:433 wf_id:1
 ERROR    testapp:admin.py:435 list_hide:[3, 2, 1, 4, 5]
 _____________ TestWorkFlowSettingView.test_get_language_workflows ______________
 
-self = <tests.test_admin.TestWorkFlowSettingView object at 0x7f9dad2a0240>
+self = <tests.test_admin.TestWorkFlowSettingView object at 0x7f3f34db6ef0>
 users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 'repoadmin@test.org', 'id': 4, 'obj': <User 4>...eneraluser@test.org', 'id': 6, 'obj': <User 6>}, {'email': 'originalroleuser@test.org', 'id': 7, 'obj': <User 7>}, ...]
 
     def test_get_language_workflows(self,users):
@@ -1718,14 +1718,14 @@ tests/test_admin.py:253: AttributeError
 WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 _________________ test_WorkActivity_get_activity_index_search __________________
 
-self = <sqlalchemy.engine.base.Connection object at 0x7f9dabe41f60>
-dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f9dabf99550>
+self = <sqlalchemy.engine.base.Connection object at 0x7f3f33a7d710>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3f33b7eb00>
 constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
 statement = 'SELECT workflow_activity.status AS workflow_activity_status, workflow_activity.created AS workflow_activity_created, ...r AS workflow_activity_action_order \nFROM workflow_activity \nWHERE workflow_activity.activity_id = %(activity_id_1)s'
 parameters = {'activity_id_1': 1}
-args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7f9dabe419e8>, [immutabledict({})])
-conn = <sqlalchemy.pool._ConnectionFairy object at 0x7f9dabe21470>
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f9dabe46b70>
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7f3f33a7d6d8>, [immutabledict({})])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7f3f33a7d7f0>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f3f33a8b1d0>
 
     def _execute_context(
         self, dialect, constructor, statement, parameters, *args
@@ -1814,11 +1814,11 @@ context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 o
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f9dabf99550>
-cursor = <cursor object at 0x7f9db272fbe8; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3f33b7eb00>
+cursor = <cursor object at 0x7f3f381aabe8; closed: -1>
 statement = 'SELECT workflow_activity.status AS workflow_activity_status, workflow_activity.created AS workflow_activity_created, ...r AS workflow_activity_action_order \nFROM workflow_activity \nWHERE workflow_activity.activity_id = %(activity_id_1)s'
 parameters = {'activity_id_1': 1}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f9dabe46b70>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f3f33a8b1d0>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -1873,11 +1873,11 @@ weko_workflow/api.py:2242: in get_activity_by_id
     cursor, statement, parameters, context
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f9dabf99550>
-cursor = <cursor object at 0x7f9db272fbe8; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3f33b7eb00>
+cursor = <cursor object at 0x7f3f381aabe8; closed: -1>
 statement = 'SELECT workflow_activity.status AS workflow_activity_status, workflow_activity.created AS workflow_activity_created, ...r AS workflow_activity_action_order \nFROM workflow_activity \nWHERE workflow_activity.activity_id = %(activity_id_1)s'
 parameters = {'activity_id_1': 1}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f9dabe46b70>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f3f33a8b1d0>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -1894,7 +1894,7 @@ ____________________ test_WorkActivity_upt_activity_detail _____________________
 
 app = <Flask 'testapp'>
 db_register = {'action_feedback_mail': <ActionFeedbackMail 2>, 'action_feedback_mail1': <ActionFeedbackMail 3>, 'action_feedback_mail2': <ActionFeedbackMail 4>, 'action_feedback_mail3': <ActionFeedbackMail 5>, ...}
-db_records = [(<PersistentIdentifier recid:1 / rec:53002ad5-d8d8-42c2-9dd5-d683ebffe951 (R)>, <PersistentIdentifier depid:1 / rec:5...type': 'conference paper'}}, <PersistentIdentifier recid:2 / rec:22395b46-ceb2-4702-a06e-4639bb3d84a6 (R)>, None, ...)]
+db_records = [(<PersistentIdentifier recid:1 / rec:bf5a8098-b457-40ce-954f-33b90a473bc9 (R)>, <PersistentIdentifier depid:1 / rec:b...type': 'conference paper'}}, <PersistentIdentifier recid:2 / rec:b3be1eb3-623e-447c-9e4b-2f99ab5dbcbc (R)>, None, ...)]
 
     def test_WorkActivity_upt_activity_detail(app, db_register, db_records):
         activity = WorkActivity()
@@ -1921,10 +1921,10 @@ users = [{'email': 'contributor@test.org', 'id': 2, 'obj': <User 2>}, {'email': 
     
         result = runner.invoke(init_workflow_tables,["gakuninrdm_data"])
 >       assert result.output == ""
-E       assert ('(psycopg2.IntegrityError) insert or update on table "workflow_workflow" '\n 'violates foreign key constraint '\n '"fk_workflow_workflow_itemtype_id_item_type"\n'\n 'DETAIL:  Key (itemtype_id)=(15) is not present in table "item_type".\n'\n " [SQL: 'INSERT INTO workflow_workflow (status, created, updated, id, "\n 'flows_id, flows_name, itemtype_id, flow_id, is_deleted, open_restricted, '\n 'is_gakuninrdm) VALUES (%(status)s, %(created)s, %(updated)s, %(id)s, '\n '%(flows_id)s, %(flows_name)s, %(itemtype_id)s, %(flow_id)s, %(is_deleted)s, '\n "%(open_restricted)s, %(is_gakuninrdm)s)'] [parameters: {'status': 'N', "\n "'created': datetime.datetime(2023, 7, 25, 17, 29, 8, 780429), 'updated': "\n "datetime.datetime(2023, 7, 25, 17, 29, 8, 780440), 'id': -1, 'flows_id': "\n "UUID('c6e16cc4-f7d7-4b0a-8842-652c7c39ac16'), 'flows_name': "\n "'GRDM_デフォルトワークフロー', 'itemtype_id': 15, 'flow_id': -1, 'is_deleted': False, "\n "'open_restricted': False, 'is_gakuninrdm': True}] (Background on this error "\n 'at: http://sqlalche.me/e/gkpj)\n'\n 'workflow db init failed.\n') == ''
+E       assert ('(psycopg2.IntegrityError) insert or update on table "workflow_workflow" '\n 'violates foreign key constraint '\n '"fk_workflow_workflow_itemtype_id_item_type"\n'\n 'DETAIL:  Key (itemtype_id)=(15) is not present in table "item_type".\n'\n " [SQL: 'INSERT INTO workflow_workflow (status, created, updated, id, "\n 'flows_id, flows_name, itemtype_id, flow_id, is_deleted, open_restricted, '\n 'is_gakuninrdm) VALUES (%(status)s, %(created)s, %(updated)s, %(id)s, '\n '%(flows_id)s, %(flows_name)s, %(itemtype_id)s, %(flow_id)s, %(is_deleted)s, '\n "%(open_restricted)s, %(is_gakuninrdm)s)'] [parameters: {'status': 'N', "\n "'created': datetime.datetime(2023, 10, 1, 18, 14, 0, 113320), 'updated': "\n "datetime.datetime(2023, 10, 1, 18, 14, 0, 113332), 'id': -1, 'flows_id': "\n "UUID('ab2078a2-17d5-47e3-987a-4479dd9575dd'), 'flows_name': "\n "'GRDM_デフォルトワークフロー', 'itemtype_id': 15, 'flow_id': -1, 'is_deleted': False, "\n "'open_restricted': False, 'is_gakuninrdm': True}] (Background on this error "\n 'at: http://sqlalche.me/e/gkpj)\n'\n 'workflow db init failed.\n') == ''
 E         + (psycopg2.IntegrityError) insert or update on table "workflow_workflow" violates foreign key constraint "fk_workflow_workflow_itemtype_id_item_type"
 E         + DETAIL:  Key (itemtype_id)=(15) is not present in table "item_type".
-E         +  [SQL: 'INSERT INTO workflow_workflow (status, created, updated, id, flows_id, flows_name, itemtype_id, flow_id, is_deleted, open_restricted, is_gakuninrdm) VALUES (%(status)s, %(created)s, %(updated)s, %(id)s, %(flows_id)s, %(flows_name)s, %(itemtype_id)s, %(flow_id)s, %(is_deleted)s, %(open_restricted)s, %(is_gakuninrdm)s)'] [parameters: {'status': 'N', 'created': datetime.datetime(2023, 7, 25, 17, 29, 8, 780429), 'updated': datetime.datetime(2023, 7, 25, 17, 29, 8, 780440), 'id': -1, 'flows_id': UUID('c6e16cc4-f7d7-4b0a-8842-652c7c39ac16'), 'flows_name': 'GRDM_デフォルトワークフロー', 'itemtype_id': 15, 'flow_id': -1, 'is_deleted': False, 'open_restricted': False, 'is_gakuninrdm': True}] (Background on this error at: http://sqlalche.me/e/gkpj)
+E         +  [SQL: 'INSERT INTO workflow_workflow (status, created, updated, id, flows_id, flows_name, itemtype_id, flow_id, is_deleted, open_restricted, is_gakuninrdm) VALUES (%(status)s, %(created)s, %(updated)s, %(id)s, %(flows_id)s, %(flows_name)s, %(itemtype_id)s, %(flow_id)s, %(is_deleted)s, %(open_restricted)s, %(is_gakuninrdm)s)'] [parameters: {'status': 'N', 'created': datetime.datetime(2023, 10, 1, 18, 14, 0, 113320), 'updated': datetime.datetime(2023, 10, 1, 18, 14, 0, 113332), 'id': -1, 'flows_id': UUID('ab2078a2-17d5-47e3-987a-4479dd9575dd'), 'flows_name': 'GRDM_デフォルトワークフロー', 'itemtype_id': 15, 'flow_id': -1, 'is_deleted': False, 'open_restricted': False, 'is_gakuninrdm': True}] (Background on this error at: http://sqlalche.me/e/gkpj)
 E         + workflow db init failed.
 
 tests/test_cli.py:27: AssertionError
@@ -1955,7 +1955,7 @@ item_type = <ItemType 1>
 tests/test_utils.py:417: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapping_data = <weko_workflow.utils.MappingData object at 0x7f9da7dbe588>
+mapping_data = <weko_workflow.utils.MappingData object at 0x7f3f2ffbfdd8>
 mapping_keys = ['dc:title'], error_list = '1', is_either = False
 
     def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
@@ -1998,14 +1998,14 @@ weko_workflow/utils.py:610: TypeError
 WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 ______________________________ test_delete_bucket ______________________________
 
-self = <sqlalchemy.engine.base.Connection object at 0x7f9da8f39dd8>
-dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f9da9259c50>
+self = <sqlalchemy.engine.base.Connection object at 0x7f3f323bd1d0>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3f336f5cf8>
 constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
 statement = 'DELETE FROM files_bucket WHERE files_bucket.id = %(id_1)s'
-parameters = {'id_1': UUID('9d02dbab-0c3d-42d9-a54b-c197800b5179')}
-args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7f9da753ec18>, [{}])
-conn = <sqlalchemy.pool._ConnectionFairy object at 0x7f9da8f36320>
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f9da753e4a8>
+parameters = {'id_1': UUID('f3bd97ed-08d3-4f80-b1f6-444c343f29a7')}
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7f3f34a96d30>, [{}])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7f3f33eb4470>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f3f30817828>
 
     def _execute_context(
         self, dialect, constructor, statement, parameters, *args
@@ -2094,23 +2094,23 @@ context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 o
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f9da9259c50>
-cursor = <cursor object at 0x7f9db1c169f8; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3f336f5cf8>
+cursor = <cursor object at 0x7f3f3a260900; closed: -1>
 statement = 'DELETE FROM files_bucket WHERE files_bucket.id = %(id_1)s'
-parameters = {'id_1': UUID('9d02dbab-0c3d-42d9-a54b-c197800b5179')}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f9da753e4a8>
+parameters = {'id_1': UUID('f3bd97ed-08d3-4f80-b1f6-444c343f29a7')}
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f3f30817828>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
 E       psycopg2.IntegrityError: update or delete on table "files_bucket" violates foreign key constraint "fk_records_buckets_bucket_id_files_bucket" on table "records_buckets"
-E       DETAIL:  Key (id)=(9d02dbab-0c3d-42d9-a54b-c197800b5179) is still referenced from table "records_buckets".
+E       DETAIL:  Key (id)=(f3bd97ed-08d3-4f80-b1f6-444c343f29a7) is still referenced from table "records_buckets".
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: IntegrityError
 
 The above exception was the direct cause of the following exception:
 
-db_records = [(<PersistentIdentifier recid:1 / rec:f51293c8-b4f3-4112-8984-ba940152ce02 (R)>, <PersistentIdentifier depid:1 / rec:f...type': 'conference paper'}}, <PersistentIdentifier recid:2 / rec:74e9c22e-e4b3-4b36-9e8b-01a6a039e045 (R)>, None, ...)]
-add_file = <function add_file.<locals>.factory at 0x7f9da92f8ae8>
+db_records = [(<PersistentIdentifier recid:1 / rec:2b835311-4bb4-4386-93b1-b2196c3a4472 (R)>, <PersistentIdentifier depid:1 / rec:2...type': 'conference paper'}}, <PersistentIdentifier recid:2 / rec:1cb9020f-f954-41fc-9419-145505547025 (R)>, None, ...)]
+add_file = <function add_file.<locals>.factory at 0x7f3f317842f0>
 
     def test_delete_bucket(db_records, add_file):
         bucket,_ = add_file(db_records[2][2])
@@ -2153,25 +2153,25 @@ weko_workflow/utils.py:1200: in delete_bucket
     cursor, statement, parameters, context
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f9da9259c50>
-cursor = <cursor object at 0x7f9db1c169f8; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7f3f336f5cf8>
+cursor = <cursor object at 0x7f3f3a260900; closed: -1>
 statement = 'DELETE FROM files_bucket WHERE files_bucket.id = %(id_1)s'
-parameters = {'id_1': UUID('9d02dbab-0c3d-42d9-a54b-c197800b5179')}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f9da753e4a8>
+parameters = {'id_1': UUID('f3bd97ed-08d3-4f80-b1f6-444c343f29a7')}
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7f3f30817828>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
 E       sqlalchemy.exc.IntegrityError: (psycopg2.IntegrityError) update or delete on table "files_bucket" violates foreign key constraint "fk_records_buckets_bucket_id_files_bucket" on table "records_buckets"
-E       DETAIL:  Key (id)=(9d02dbab-0c3d-42d9-a54b-c197800b5179) is still referenced from table "records_buckets".
-E        [SQL: 'DELETE FROM files_bucket WHERE files_bucket.id = %(id_1)s'] [parameters: {'id_1': UUID('9d02dbab-0c3d-42d9-a54b-c197800b5179')}] (Background on this error at: http://sqlalche.me/e/gkpj)
+E       DETAIL:  Key (id)=(f3bd97ed-08d3-4f80-b1f6-444c343f29a7) is still referenced from table "records_buckets".
+E        [SQL: 'DELETE FROM files_bucket WHERE files_bucket.id = %(id_1)s'] [parameters: {'id_1': UUID('f3bd97ed-08d3-4f80-b1f6-444c343f29a7')}] (Background on this error at: http://sqlalche.me/e/gkpj)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: IntegrityError
 ------------------------------ Captured log setup ------------------------------
 WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 _________________________ test_set_bucket_default_size _________________________
 
-db_records = [(<PersistentIdentifier recid:1 / rec:097d1d92-de11-4cc2-9678-5ff1f6d67383 (R)>, <PersistentIdentifier depid:1 / rec:0...type': 'conference paper'}}, <PersistentIdentifier recid:2 / rec:88fcd715-9bdb-4569-a341-016349a5ec46 (R)>, None, ...)]
-add_file = <function add_file.<locals>.factory at 0x7f9da7009ae8>
+db_records = [(<PersistentIdentifier recid:1 / rec:ad020c78-b7aa-418a-9bd0-9ceacfffcc8d (R)>, <PersistentIdentifier depid:1 / rec:a...type': 'conference paper'}}, <PersistentIdentifier recid:2 / rec:85307082-d70f-4b50-8430-83c42aca16cc (R)>, None, ...)]
+add_file = <function add_file.<locals>.factory at 0x7f3f2ed7c840>
 
     def test_set_bucket_default_size(db_records, add_file):
         bucket_10, rbucket_10 = add_file(db_records[2][2])
@@ -2183,7 +2183,7 @@ tests/test_utils.py:610: AttributeError
 WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 ________________________ test_get_parent_pid_with_type _________________________
 
-db_records = [(<PersistentIdentifier recid:1 / rec:421701c8-0fc2-41a8-a5c1-46aca8681473 (R)>, <PersistentIdentifier depid:1 / rec:4...type': 'conference paper'}}, <PersistentIdentifier recid:2 / rec:fa136f2c-4597-425e-ad08-4ccd9b2eed7a (R)>, None, ...)]
+db_records = [(<PersistentIdentifier recid:1 / rec:4b621936-c375-43b9-b408-51d36b7191a2 (R)>, <PersistentIdentifier depid:1 / rec:4...type': 'conference paper'}}, <PersistentIdentifier recid:2 / rec:cd7a1474-0ac3-4c83-8029-500eeadd6869 (R)>, None, ...)]
 
     def test_get_parent_pid_with_type(db_records):
         result = get_parent_pid_with_type("doi",db_records[0][2].id)
@@ -2194,7 +2194,7 @@ db_records = [(<PersistentIdentifier recid:1 / rec:421701c8-0fc2-41a8-a5c1-46aca
 tests/test_utils.py:648: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-pid_type = 'hdl', object_uuid = UUID('b0169e6e-5783-49aa-abbc-3664d818f392')
+pid_type = 'hdl', object_uuid = UUID('eba63aa2-ea57-4074-a93a-329fcf059051')
 
     def get_parent_pid_with_type(pid_type, object_uuid):
         """Get Persistent Identifier Object by pid_value or item_uuid.
@@ -2252,7 +2252,7 @@ item_id = 'item_id'
 weko_workflow/utils.py:2225: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-_mock_self = <MagicMock name='get_record' id='140314967846696'>, args = ()
+_mock_self = <MagicMock name='get_record' id='139909223284072'>, args = ()
 kwargs = {'id_': 'item_id'}
 
     def __call__(_mock_self, *args, **kwargs):
@@ -2265,7 +2265,7 @@ kwargs = {'id_': 'item_id'}
 .tox/c1/lib/python3.6/site-packages/mock/mock.py:1149: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-_mock_self = <MagicMock name='get_record' id='140314967846696'>, args = ()
+_mock_self = <MagicMock name='get_record' id='139909223284072'>, args = ()
 kwargs = {'id_': 'item_id'}
 
     def _mock_call(_mock_self, *args, **kwargs):
@@ -2274,9 +2274,9 @@ kwargs = {'id_': 'item_id'}
 .tox/c1/lib/python3.6/site-packages/mock/mock.py:1153: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-_mock_self = <MagicMock name='get_record' id='140314967846696'>, args = ()
+_mock_self = <MagicMock name='get_record' id='139909223284072'>, args = ()
 kwargs = {'id_': 'item_id'}
-self = <MagicMock name='get_record' id='140314967846696'>
+self = <MagicMock name='get_record' id='139909223284072'>
 effect = Exception('test error',)
 
     def _execute_mock_call(_mock_self, *args, **kwargs):
@@ -2294,7 +2294,7 @@ E               Exception: test error
 
 During handling of the above exception, another exception occurred:
 
-db_records = [(<PersistentIdentifier recid:1 / rec:d67a96b2-fb78-4f99-b202-820b894c818e (R)>, <PersistentIdentifier depid:1 / rec:d...type': 'conference paper'}}, <PersistentIdentifier recid:2 / rec:e02d63e1-6009-4037-a1ba-4a4b87a8871c (R)>, None, ...)]
+db_records = [(<PersistentIdentifier recid:1 / rec:27fcd3c4-4634-4e5a-92c0-d58206680630 (R)>, <PersistentIdentifier depid:1 / rec:2...type': 'conference paper'}}, <PersistentIdentifier recid:2 / rec:0573c577-ccdb-4c69-92c6-842aeb1426b9 (R)>, None, ...)]
 
     def test_get_item_info(db_records):
         result = get_item_info(db_records[0][3].id)
@@ -2398,7 +2398,7 @@ tests/test_utils.py:2778: BaseException
 __________________________ test_make_activitylog_tsv ___________________________
 
 db_register = {'action_feedback_mail': <ActionFeedbackMail 2>, 'action_feedback_mail1': <ActionFeedbackMail 3>, 'action_feedback_mail2': <ActionFeedbackMail 4>, 'action_feedback_mail3': <ActionFeedbackMail 5>, ...}
-db_records = [(<PersistentIdentifier recid:1 / rec:c02a2ebe-b080-4328-a077-dc88a0790d5e (R)>, <PersistentIdentifier depid:1 / rec:c...type': 'conference paper'}}, <PersistentIdentifier recid:2 / rec:c5cfbfd0-3cb3-448f-9986-c6d8d06a30c4 (R)>, None, ...)]
+db_records = [(<PersistentIdentifier recid:1 / rec:f368303d-629f-4ffc-b5b7-c286c792fc6b (R)>, <PersistentIdentifier depid:1 / rec:f...type': 'conference paper'}}, <PersistentIdentifier recid:2 / rec:2d8b3572-d670-4514-88c3-a3b97b2004f0 (R)>, None, ...)]
 
     def test_make_activitylog_tsv(db_register,db_records):
         """test make_activitylog_tsv"""
@@ -2413,7 +2413,7 @@ db_records = [(<PersistentIdentifier recid:1 / rec:c02a2ebe-b080-4328-a077-dc88a
 tests/test_utils.py:2788: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-activities = [<flask_sqlalchemy.BaseQuery object at 0x7f9d97f42c18>, <flask_sqlalchemy.BaseQuery object at 0x7f9d97fc9b38>]
+activities = [<flask_sqlalchemy.BaseQuery object at 0x7f3f1fc5b390>, <flask_sqlalchemy.BaseQuery object at 0x7f3f1fc5bba8>]
 
     def make_activitylog_tsv(activities):
         """make tsv for activitiy_log
@@ -2526,8 +2526,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4f65d68; WorkFlow>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d96243e10>
+mapper = <Mapper at 0x7f3f3cb13d68; WorkFlow>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3f1c6f75c0>
 attribute_names = {'created', 'flow_id', 'flows_id', 'flows_name', 'id', 'index_tree_id', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -2540,7 +2540,7 @@ attribute_names = {'created', 'flow_id', 'flows_id', 'flows_name', 'id', 'index_
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <WorkFlow at 0x7f9d954f29b0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <WorkFlow at 0x7f3f1acdf8d0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -2548,7 +2548,7 @@ WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 ------------------------------ Captured log call -------------------------------
 ERROR    testapp:views.py:528 sqlalchemy error: (psycopg2.IntegrityError) insert or update on table "workflow_activity" violates foreign key constraint "fk_workflow_activity_workflow_id_workflow_workflow"
 DETAIL:  Key (workflow_id)=(-99) is not present in table "workflow_workflow".
- [SQL: 'INSERT INTO workflow_activity (status, created, updated, activity_id, activity_name, item_id, workflow_id, workflow_status, flow_id, action_id, action_status, activity_login_user, activity_update_user, activity_status, activity_start, activity_end, activity_community_id, activity_confirm_term_of_use, title, shared_user_id, temp_data, approval1, approval2, extra_info, action_order) VALUES (%(status)s, %(created)s, %(updated)s, %(activity_id)s, %(activity_name)s, %(item_id)s, %(workflow_id)s, %(workflow_status)s, %(flow_id)s, %(action_id)s, %(action_status)s, %(activity_login_user)s, %(activity_update_user)s, %(activity_status)s, %(activity_start)s, %(activity_end)s, %(activity_community_id)s, %(activity_confirm_term_of_use)s, %(title)s, %(shared_user_id)s, %(temp_data)s, %(approval1)s, %(approval2)s, %(extra_info)s, %(action_order)s) RETURNING workflow_activity.id'] [parameters: {'status': 'N', 'created': datetime.datetime(2023, 7, 25, 17, 48, 41, 451891), 'updated': datetime.datetime(2023, 7, 25, 17, 48, 41, 451899), 'activity_id': 'A-20230725-00002', 'activity_name': None, 'item_id': None, 'workflow_id': -99, 'workflow_status': None, 'flow_id': 1, 'action_id': 3, 'action_status': 'B', 'activity_login_user': '2', 'activity_update_user': '2', 'activity_status': 'M', 'activity_start': datetime.datetime(2023, 7, 25, 17, 48, 41, 446179), 'activity_end': None, 'activity_community_id': None, 'activity_confirm_term_of_use': True, 'title': None, 'shared_user_id': None, 'temp_data': '{}', 'approval1': None, 'approval2': None, 'extra_info': '{}', 'action_order': 2}] (Background on this error at: http://sqlalche.me/e/gkpj)
+ [SQL: 'INSERT INTO workflow_activity (status, created, updated, activity_id, activity_name, item_id, workflow_id, workflow_status, flow_id, action_id, action_status, activity_login_user, activity_update_user, activity_status, activity_start, activity_end, activity_community_id, activity_confirm_term_of_use, title, shared_user_id, temp_data, approval1, approval2, extra_info, action_order) VALUES (%(status)s, %(created)s, %(updated)s, %(activity_id)s, %(activity_name)s, %(item_id)s, %(workflow_id)s, %(workflow_status)s, %(flow_id)s, %(action_id)s, %(action_status)s, %(activity_login_user)s, %(activity_update_user)s, %(activity_status)s, %(activity_start)s, %(activity_end)s, %(activity_community_id)s, %(activity_confirm_term_of_use)s, %(title)s, %(shared_user_id)s, %(temp_data)s, %(approval1)s, %(approval2)s, %(extra_info)s, %(action_order)s) RETURNING workflow_activity.id'] [parameters: {'status': 'N', 'created': datetime.datetime(2023, 10, 1, 18, 33, 14, 516515), 'updated': datetime.datetime(2023, 10, 1, 18, 33, 14, 516525), 'activity_id': 'A-20231001-00002', 'activity_name': None, 'item_id': None, 'workflow_id': -99, 'workflow_status': None, 'flow_id': 1, 'action_id': 3, 'action_status': 'B', 'activity_login_user': '2', 'activity_update_user': '2', 'activity_status': 'M', 'activity_start': datetime.datetime(2023, 10, 1, 18, 33, 14, 509719), 'activity_end': None, 'activity_community_id': None, 'activity_confirm_term_of_use': True, 'title': None, 'shared_user_id': None, 'temp_data': '{}', 'approval1': None, 'approval2': None, 'extra_info': '{}', 'action_order': 2}] (Background on this error at: http://sqlalche.me/e/gkpj)
 __________________________ test_init_activity[1-200] ___________________________
 
 client = <FlaskClient <Flask 'testapp'>>
@@ -2588,8 +2588,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4f65d68; WorkFlow>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d98f1bbe0>
+mapper = <Mapper at 0x7f3f3cb13d68; WorkFlow>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3f1b839c88>
 attribute_names = {'created', 'flow_id', 'flows_id', 'flows_name', 'id', 'index_tree_id', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -2602,7 +2602,7 @@ attribute_names = {'created', 'flow_id', 'flows_id', 'flows_name', 'id', 'index_
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <WorkFlow at 0x7f9d98f1b0f0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <WorkFlow at 0x7f3f1b839128> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -2610,7 +2610,7 @@ WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 ------------------------------ Captured log call -------------------------------
 ERROR    testapp:views.py:528 sqlalchemy error: (psycopg2.IntegrityError) insert or update on table "workflow_activity" violates foreign key constraint "fk_workflow_activity_workflow_id_workflow_workflow"
 DETAIL:  Key (workflow_id)=(-99) is not present in table "workflow_workflow".
- [SQL: 'INSERT INTO workflow_activity (status, created, updated, activity_id, activity_name, item_id, workflow_id, workflow_status, flow_id, action_id, action_status, activity_login_user, activity_update_user, activity_status, activity_start, activity_end, activity_community_id, activity_confirm_term_of_use, title, shared_user_id, temp_data, approval1, approval2, extra_info, action_order) VALUES (%(status)s, %(created)s, %(updated)s, %(activity_id)s, %(activity_name)s, %(item_id)s, %(workflow_id)s, %(workflow_status)s, %(flow_id)s, %(action_id)s, %(action_status)s, %(activity_login_user)s, %(activity_update_user)s, %(activity_status)s, %(activity_start)s, %(activity_end)s, %(activity_community_id)s, %(activity_confirm_term_of_use)s, %(title)s, %(shared_user_id)s, %(temp_data)s, %(approval1)s, %(approval2)s, %(extra_info)s, %(action_order)s) RETURNING workflow_activity.id'] [parameters: {'status': 'N', 'created': datetime.datetime(2023, 7, 25, 17, 49, 0, 10297), 'updated': datetime.datetime(2023, 7, 25, 17, 49, 0, 10306), 'activity_id': 'A-20230725-00002', 'activity_name': None, 'item_id': None, 'workflow_id': -99, 'workflow_status': None, 'flow_id': 1, 'action_id': 3, 'action_status': 'B', 'activity_login_user': '4', 'activity_update_user': '4', 'activity_status': 'M', 'activity_start': datetime.datetime(2023, 7, 25, 17, 49, 0, 6496), 'activity_end': None, 'activity_community_id': None, 'activity_confirm_term_of_use': True, 'title': None, 'shared_user_id': None, 'temp_data': '{}', 'approval1': None, 'approval2': None, 'extra_info': '{}', 'action_order': 2}] (Background on this error at: http://sqlalche.me/e/gkpj)
+ [SQL: 'INSERT INTO workflow_activity (status, created, updated, activity_id, activity_name, item_id, workflow_id, workflow_status, flow_id, action_id, action_status, activity_login_user, activity_update_user, activity_status, activity_start, activity_end, activity_community_id, activity_confirm_term_of_use, title, shared_user_id, temp_data, approval1, approval2, extra_info, action_order) VALUES (%(status)s, %(created)s, %(updated)s, %(activity_id)s, %(activity_name)s, %(item_id)s, %(workflow_id)s, %(workflow_status)s, %(flow_id)s, %(action_id)s, %(action_status)s, %(activity_login_user)s, %(activity_update_user)s, %(activity_status)s, %(activity_start)s, %(activity_end)s, %(activity_community_id)s, %(activity_confirm_term_of_use)s, %(title)s, %(shared_user_id)s, %(temp_data)s, %(approval1)s, %(approval2)s, %(extra_info)s, %(action_order)s) RETURNING workflow_activity.id'] [parameters: {'status': 'N', 'created': datetime.datetime(2023, 10, 1, 18, 33, 33, 300025), 'updated': datetime.datetime(2023, 10, 1, 18, 33, 33, 300036), 'activity_id': 'A-20231001-00002', 'activity_name': None, 'item_id': None, 'workflow_id': -99, 'workflow_status': None, 'flow_id': 1, 'action_id': 3, 'action_status': 'B', 'activity_login_user': '4', 'activity_update_user': '4', 'activity_status': 'M', 'activity_start': datetime.datetime(2023, 10, 1, 18, 33, 33, 295401), 'activity_end': None, 'activity_community_id': None, 'activity_confirm_term_of_use': True, 'title': None, 'shared_user_id': None, 'temp_data': '{}', 'approval1': None, 'approval2': None, 'extra_info': '{}', 'action_order': 2}] (Background on this error at: http://sqlalche.me/e/gkpj)
 __________________________ test_init_activity[2-200] ___________________________
 
 client = <FlaskClient <Flask 'testapp'>>
@@ -2650,8 +2650,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4f65d68; WorkFlow>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d9ed436d8>
+mapper = <Mapper at 0x7f3f3cb13d68; WorkFlow>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3f1caf7f60>
 attribute_names = {'created', 'flow_id', 'flows_id', 'flows_name', 'id', 'index_tree_id', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -2664,7 +2664,7 @@ attribute_names = {'created', 'flow_id', 'flows_id', 'flows_name', 'id', 'index_
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <WorkFlow at 0x7f9d95a364a8> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <WorkFlow at 0x7f3f1c2caeb8> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -2672,7 +2672,7 @@ WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 ------------------------------ Captured log call -------------------------------
 ERROR    testapp:views.py:528 sqlalchemy error: (psycopg2.IntegrityError) insert or update on table "workflow_activity" violates foreign key constraint "fk_workflow_activity_workflow_id_workflow_workflow"
 DETAIL:  Key (workflow_id)=(-99) is not present in table "workflow_workflow".
- [SQL: 'INSERT INTO workflow_activity (status, created, updated, activity_id, activity_name, item_id, workflow_id, workflow_status, flow_id, action_id, action_status, activity_login_user, activity_update_user, activity_status, activity_start, activity_end, activity_community_id, activity_confirm_term_of_use, title, shared_user_id, temp_data, approval1, approval2, extra_info, action_order) VALUES (%(status)s, %(created)s, %(updated)s, %(activity_id)s, %(activity_name)s, %(item_id)s, %(workflow_id)s, %(workflow_status)s, %(flow_id)s, %(action_id)s, %(action_status)s, %(activity_login_user)s, %(activity_update_user)s, %(activity_status)s, %(activity_start)s, %(activity_end)s, %(activity_community_id)s, %(activity_confirm_term_of_use)s, %(title)s, %(shared_user_id)s, %(temp_data)s, %(approval1)s, %(approval2)s, %(extra_info)s, %(action_order)s) RETURNING workflow_activity.id'] [parameters: {'status': 'N', 'created': datetime.datetime(2023, 7, 25, 17, 49, 18, 475738), 'updated': datetime.datetime(2023, 7, 25, 17, 49, 18, 475750), 'activity_id': 'A-20230725-00002', 'activity_name': None, 'item_id': None, 'workflow_id': -99, 'workflow_status': None, 'flow_id': 1, 'action_id': 3, 'action_status': 'B', 'activity_login_user': '5', 'activity_update_user': '5', 'activity_status': 'M', 'activity_start': datetime.datetime(2023, 7, 25, 17, 49, 18, 470836), 'activity_end': None, 'activity_community_id': None, 'activity_confirm_term_of_use': True, 'title': None, 'shared_user_id': None, 'temp_data': '{}', 'approval1': None, 'approval2': None, 'extra_info': '{}', 'action_order': 2}] (Background on this error at: http://sqlalche.me/e/gkpj)
+ [SQL: 'INSERT INTO workflow_activity (status, created, updated, activity_id, activity_name, item_id, workflow_id, workflow_status, flow_id, action_id, action_status, activity_login_user, activity_update_user, activity_status, activity_start, activity_end, activity_community_id, activity_confirm_term_of_use, title, shared_user_id, temp_data, approval1, approval2, extra_info, action_order) VALUES (%(status)s, %(created)s, %(updated)s, %(activity_id)s, %(activity_name)s, %(item_id)s, %(workflow_id)s, %(workflow_status)s, %(flow_id)s, %(action_id)s, %(action_status)s, %(activity_login_user)s, %(activity_update_user)s, %(activity_status)s, %(activity_start)s, %(activity_end)s, %(activity_community_id)s, %(activity_confirm_term_of_use)s, %(title)s, %(shared_user_id)s, %(temp_data)s, %(approval1)s, %(approval2)s, %(extra_info)s, %(action_order)s) RETURNING workflow_activity.id'] [parameters: {'status': 'N', 'created': datetime.datetime(2023, 10, 1, 18, 33, 51, 708239), 'updated': datetime.datetime(2023, 10, 1, 18, 33, 51, 708249), 'activity_id': 'A-20231001-00002', 'activity_name': None, 'item_id': None, 'workflow_id': -99, 'workflow_status': None, 'flow_id': 1, 'action_id': 3, 'action_status': 'B', 'activity_login_user': '5', 'activity_update_user': '5', 'activity_status': 'M', 'activity_start': datetime.datetime(2023, 10, 1, 18, 33, 51, 700992), 'activity_end': None, 'activity_community_id': None, 'activity_confirm_term_of_use': True, 'title': None, 'shared_user_id': None, 'temp_data': '{}', 'approval1': None, 'approval2': None, 'extra_info': '{}', 'action_order': 2}] (Background on this error at: http://sqlalche.me/e/gkpj)
 __________________________ test_init_activity[3-200] ___________________________
 
 client = <FlaskClient <Flask 'testapp'>>
@@ -2712,8 +2712,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4f65d68; WorkFlow>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d93d79dd8>
+mapper = <Mapper at 0x7f3f3cb13d68; WorkFlow>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3f300f9128>
 attribute_names = {'created', 'flow_id', 'flows_id', 'flows_name', 'id', 'index_tree_id', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -2726,7 +2726,7 @@ attribute_names = {'created', 'flow_id', 'flows_id', 'flows_name', 'id', 'index_
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <WorkFlow at 0x7f9d9631fd30> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <WorkFlow at 0x7f3f22062f98> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -2734,7 +2734,7 @@ WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 ------------------------------ Captured log call -------------------------------
 ERROR    testapp:views.py:528 sqlalchemy error: (psycopg2.IntegrityError) insert or update on table "workflow_activity" violates foreign key constraint "fk_workflow_activity_workflow_id_workflow_workflow"
 DETAIL:  Key (workflow_id)=(-99) is not present in table "workflow_workflow".
- [SQL: 'INSERT INTO workflow_activity (status, created, updated, activity_id, activity_name, item_id, workflow_id, workflow_status, flow_id, action_id, action_status, activity_login_user, activity_update_user, activity_status, activity_start, activity_end, activity_community_id, activity_confirm_term_of_use, title, shared_user_id, temp_data, approval1, approval2, extra_info, action_order) VALUES (%(status)s, %(created)s, %(updated)s, %(activity_id)s, %(activity_name)s, %(item_id)s, %(workflow_id)s, %(workflow_status)s, %(flow_id)s, %(action_id)s, %(action_status)s, %(activity_login_user)s, %(activity_update_user)s, %(activity_status)s, %(activity_start)s, %(activity_end)s, %(activity_community_id)s, %(activity_confirm_term_of_use)s, %(title)s, %(shared_user_id)s, %(temp_data)s, %(approval1)s, %(approval2)s, %(extra_info)s, %(action_order)s) RETURNING workflow_activity.id'] [parameters: {'status': 'N', 'created': datetime.datetime(2023, 7, 25, 17, 49, 38, 460434), 'updated': datetime.datetime(2023, 7, 25, 17, 49, 38, 460444), 'activity_id': 'A-20230725-00002', 'activity_name': None, 'item_id': None, 'workflow_id': -99, 'workflow_status': None, 'flow_id': 1, 'action_id': 3, 'action_status': 'B', 'activity_login_user': '3', 'activity_update_user': '3', 'activity_status': 'M', 'activity_start': datetime.datetime(2023, 7, 25, 17, 49, 38, 453262), 'activity_end': None, 'activity_community_id': None, 'activity_confirm_term_of_use': True, 'title': None, 'shared_user_id': None, 'temp_data': '{}', 'approval1': None, 'approval2': None, 'extra_info': '{}', 'action_order': 2}] (Background on this error at: http://sqlalche.me/e/gkpj)
+ [SQL: 'INSERT INTO workflow_activity (status, created, updated, activity_id, activity_name, item_id, workflow_id, workflow_status, flow_id, action_id, action_status, activity_login_user, activity_update_user, activity_status, activity_start, activity_end, activity_community_id, activity_confirm_term_of_use, title, shared_user_id, temp_data, approval1, approval2, extra_info, action_order) VALUES (%(status)s, %(created)s, %(updated)s, %(activity_id)s, %(activity_name)s, %(item_id)s, %(workflow_id)s, %(workflow_status)s, %(flow_id)s, %(action_id)s, %(action_status)s, %(activity_login_user)s, %(activity_update_user)s, %(activity_status)s, %(activity_start)s, %(activity_end)s, %(activity_community_id)s, %(activity_confirm_term_of_use)s, %(title)s, %(shared_user_id)s, %(temp_data)s, %(approval1)s, %(approval2)s, %(extra_info)s, %(action_order)s) RETURNING workflow_activity.id'] [parameters: {'status': 'N', 'created': datetime.datetime(2023, 10, 1, 18, 34, 10, 667674), 'updated': datetime.datetime(2023, 10, 1, 18, 34, 10, 667685), 'activity_id': 'A-20231001-00002', 'activity_name': None, 'item_id': None, 'workflow_id': -99, 'workflow_status': None, 'flow_id': 1, 'action_id': 3, 'action_status': 'B', 'activity_login_user': '3', 'activity_update_user': '3', 'activity_status': 'M', 'activity_start': datetime.datetime(2023, 10, 1, 18, 34, 10, 663005), 'activity_end': None, 'activity_community_id': None, 'activity_confirm_term_of_use': True, 'title': None, 'shared_user_id': None, 'temp_data': '{}', 'approval1': None, 'approval2': None, 'extra_info': '{}', 'action_order': 2}] (Background on this error at: http://sqlalche.me/e/gkpj)
 __________________________ test_init_activity[4-200] ___________________________
 
 client = <FlaskClient <Flask 'testapp'>>
@@ -2774,8 +2774,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4f65d68; WorkFlow>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d9455fb38>
+mapper = <Mapper at 0x7f3f3cb13d68; WorkFlow>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3f239c5fd0>
 attribute_names = {'created', 'flow_id', 'flows_id', 'flows_name', 'id', 'index_tree_id', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -2788,7 +2788,7 @@ attribute_names = {'created', 'flow_id', 'flows_id', 'flows_name', 'id', 'index_
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <WorkFlow at 0x7f9d968950b8> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <WorkFlow at 0x7f3f1c512470> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -2796,7 +2796,7 @@ WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 ------------------------------ Captured log call -------------------------------
 ERROR    testapp:views.py:528 sqlalchemy error: (psycopg2.IntegrityError) insert or update on table "workflow_activity" violates foreign key constraint "fk_workflow_activity_workflow_id_workflow_workflow"
 DETAIL:  Key (workflow_id)=(-99) is not present in table "workflow_workflow".
- [SQL: 'INSERT INTO workflow_activity (status, created, updated, activity_id, activity_name, item_id, workflow_id, workflow_status, flow_id, action_id, action_status, activity_login_user, activity_update_user, activity_status, activity_start, activity_end, activity_community_id, activity_confirm_term_of_use, title, shared_user_id, temp_data, approval1, approval2, extra_info, action_order) VALUES (%(status)s, %(created)s, %(updated)s, %(activity_id)s, %(activity_name)s, %(item_id)s, %(workflow_id)s, %(workflow_status)s, %(flow_id)s, %(action_id)s, %(action_status)s, %(activity_login_user)s, %(activity_update_user)s, %(activity_status)s, %(activity_start)s, %(activity_end)s, %(activity_community_id)s, %(activity_confirm_term_of_use)s, %(title)s, %(shared_user_id)s, %(temp_data)s, %(approval1)s, %(approval2)s, %(extra_info)s, %(action_order)s) RETURNING workflow_activity.id'] [parameters: {'status': 'N', 'created': datetime.datetime(2023, 7, 25, 17, 49, 57, 786753), 'updated': datetime.datetime(2023, 7, 25, 17, 49, 57, 786763), 'activity_id': 'A-20230725-00002', 'activity_name': None, 'item_id': None, 'workflow_id': -99, 'workflow_status': None, 'flow_id': 1, 'action_id': 3, 'action_status': 'B', 'activity_login_user': '6', 'activity_update_user': '6', 'activity_status': 'M', 'activity_start': datetime.datetime(2023, 7, 25, 17, 49, 57, 779364), 'activity_end': None, 'activity_community_id': None, 'activity_confirm_term_of_use': True, 'title': None, 'shared_user_id': None, 'temp_data': '{}', 'approval1': None, 'approval2': None, 'extra_info': '{}', 'action_order': 2}] (Background on this error at: http://sqlalche.me/e/gkpj)
+ [SQL: 'INSERT INTO workflow_activity (status, created, updated, activity_id, activity_name, item_id, workflow_id, workflow_status, flow_id, action_id, action_status, activity_login_user, activity_update_user, activity_status, activity_start, activity_end, activity_community_id, activity_confirm_term_of_use, title, shared_user_id, temp_data, approval1, approval2, extra_info, action_order) VALUES (%(status)s, %(created)s, %(updated)s, %(activity_id)s, %(activity_name)s, %(item_id)s, %(workflow_id)s, %(workflow_status)s, %(flow_id)s, %(action_id)s, %(action_status)s, %(activity_login_user)s, %(activity_update_user)s, %(activity_status)s, %(activity_start)s, %(activity_end)s, %(activity_community_id)s, %(activity_confirm_term_of_use)s, %(title)s, %(shared_user_id)s, %(temp_data)s, %(approval1)s, %(approval2)s, %(extra_info)s, %(action_order)s) RETURNING workflow_activity.id'] [parameters: {'status': 'N', 'created': datetime.datetime(2023, 10, 1, 18, 34, 29, 737764), 'updated': datetime.datetime(2023, 10, 1, 18, 34, 29, 737774), 'activity_id': 'A-20231001-00002', 'activity_name': None, 'item_id': None, 'workflow_id': -99, 'workflow_status': None, 'flow_id': 1, 'action_id': 3, 'action_status': 'B', 'activity_login_user': '6', 'activity_update_user': '6', 'activity_status': 'M', 'activity_start': datetime.datetime(2023, 10, 1, 18, 34, 29, 733047), 'activity_end': None, 'activity_community_id': None, 'activity_confirm_term_of_use': True, 'title': None, 'shared_user_id': None, 'temp_data': '{}', 'approval1': None, 'approval2': None, 'extra_info': '{}', 'action_order': 2}] (Background on this error at: http://sqlalche.me/e/gkpj)
 __________________________ test_init_activity[5-200] ___________________________
 
 client = <FlaskClient <Flask 'testapp'>>
@@ -2836,8 +2836,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4f65d68; WorkFlow>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d929558d0>
+mapper = <Mapper at 0x7f3f3cb13d68; WorkFlow>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3f1bf1bc88>
 attribute_names = {'created', 'flow_id', 'flows_id', 'flows_name', 'id', 'index_tree_id', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -2850,7 +2850,7 @@ attribute_names = {'created', 'flow_id', 'flows_id', 'flows_name', 'id', 'index_
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <WorkFlow at 0x7f9d92c90e80> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <WorkFlow at 0x7f3f1cf01278> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -2858,7 +2858,7 @@ WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 ------------------------------ Captured log call -------------------------------
 ERROR    testapp:views.py:528 sqlalchemy error: (psycopg2.IntegrityError) insert or update on table "workflow_activity" violates foreign key constraint "fk_workflow_activity_workflow_id_workflow_workflow"
 DETAIL:  Key (workflow_id)=(-99) is not present in table "workflow_workflow".
- [SQL: 'INSERT INTO workflow_activity (status, created, updated, activity_id, activity_name, item_id, workflow_id, workflow_status, flow_id, action_id, action_status, activity_login_user, activity_update_user, activity_status, activity_start, activity_end, activity_community_id, activity_confirm_term_of_use, title, shared_user_id, temp_data, approval1, approval2, extra_info, action_order) VALUES (%(status)s, %(created)s, %(updated)s, %(activity_id)s, %(activity_name)s, %(item_id)s, %(workflow_id)s, %(workflow_status)s, %(flow_id)s, %(action_id)s, %(action_status)s, %(activity_login_user)s, %(activity_update_user)s, %(activity_status)s, %(activity_start)s, %(activity_end)s, %(activity_community_id)s, %(activity_confirm_term_of_use)s, %(title)s, %(shared_user_id)s, %(temp_data)s, %(approval1)s, %(approval2)s, %(extra_info)s, %(action_order)s) RETURNING workflow_activity.id'] [parameters: {'status': 'N', 'created': datetime.datetime(2023, 7, 25, 17, 50, 18, 12944), 'updated': datetime.datetime(2023, 7, 25, 17, 50, 18, 12955), 'activity_id': 'A-20230725-00002', 'activity_name': None, 'item_id': None, 'workflow_id': -99, 'workflow_status': None, 'flow_id': 1, 'action_id': 3, 'action_status': 'B', 'activity_login_user': '7', 'activity_update_user': '7', 'activity_status': 'M', 'activity_start': datetime.datetime(2023, 7, 25, 17, 50, 18, 4403), 'activity_end': None, 'activity_community_id': None, 'activity_confirm_term_of_use': True, 'title': None, 'shared_user_id': None, 'temp_data': '{}', 'approval1': None, 'approval2': None, 'extra_info': '{}', 'action_order': 2}] (Background on this error at: http://sqlalche.me/e/gkpj)
+ [SQL: 'INSERT INTO workflow_activity (status, created, updated, activity_id, activity_name, item_id, workflow_id, workflow_status, flow_id, action_id, action_status, activity_login_user, activity_update_user, activity_status, activity_start, activity_end, activity_community_id, activity_confirm_term_of_use, title, shared_user_id, temp_data, approval1, approval2, extra_info, action_order) VALUES (%(status)s, %(created)s, %(updated)s, %(activity_id)s, %(activity_name)s, %(item_id)s, %(workflow_id)s, %(workflow_status)s, %(flow_id)s, %(action_id)s, %(action_status)s, %(activity_login_user)s, %(activity_update_user)s, %(activity_status)s, %(activity_start)s, %(activity_end)s, %(activity_community_id)s, %(activity_confirm_term_of_use)s, %(title)s, %(shared_user_id)s, %(temp_data)s, %(approval1)s, %(approval2)s, %(extra_info)s, %(action_order)s) RETURNING workflow_activity.id'] [parameters: {'status': 'N', 'created': datetime.datetime(2023, 10, 1, 18, 34, 48, 106927), 'updated': datetime.datetime(2023, 10, 1, 18, 34, 48, 106934), 'activity_id': 'A-20231001-00002', 'activity_name': None, 'item_id': None, 'workflow_id': -99, 'workflow_status': None, 'flow_id': 1, 'action_id': 3, 'action_status': 'B', 'activity_login_user': '7', 'activity_update_user': '7', 'activity_status': 'M', 'activity_start': datetime.datetime(2023, 10, 1, 18, 34, 48, 100259), 'activity_end': None, 'activity_community_id': None, 'activity_confirm_term_of_use': True, 'title': None, 'shared_user_id': None, 'temp_data': '{}', 'approval1': None, 'approval2': None, 'extra_info': '{}', 'action_order': 2}] (Background on this error at: http://sqlalche.me/e/gkpj)
 __________________________ test_init_activity[6-200] ___________________________
 
 client = <FlaskClient <Flask 'testapp'>>
@@ -2898,8 +2898,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4f65d68; WorkFlow>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d9d76d1d0>
+mapper = <Mapper at 0x7f3f3cb13d68; WorkFlow>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3f1a606278>
 attribute_names = {'created', 'flow_id', 'flows_id', 'flows_name', 'id', 'index_tree_id', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -2912,7 +2912,7 @@ attribute_names = {'created', 'flow_id', 'flows_id', 'flows_name', 'id', 'index_
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <WorkFlow at 0x7f9d96c7b080> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <WorkFlow at 0x7f3f1a5d3d68> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -2920,7 +2920,7 @@ WARNING  testapp:ext.py:255 JSONSCHEMAS_HOST is set to localhost
 ------------------------------ Captured log call -------------------------------
 ERROR    testapp:views.py:528 sqlalchemy error: (psycopg2.IntegrityError) insert or update on table "workflow_activity" violates foreign key constraint "fk_workflow_activity_workflow_id_workflow_workflow"
 DETAIL:  Key (workflow_id)=(-99) is not present in table "workflow_workflow".
- [SQL: 'INSERT INTO workflow_activity (status, created, updated, activity_id, activity_name, item_id, workflow_id, workflow_status, flow_id, action_id, action_status, activity_login_user, activity_update_user, activity_status, activity_start, activity_end, activity_community_id, activity_confirm_term_of_use, title, shared_user_id, temp_data, approval1, approval2, extra_info, action_order) VALUES (%(status)s, %(created)s, %(updated)s, %(activity_id)s, %(activity_name)s, %(item_id)s, %(workflow_id)s, %(workflow_status)s, %(flow_id)s, %(action_id)s, %(action_status)s, %(activity_login_user)s, %(activity_update_user)s, %(activity_status)s, %(activity_start)s, %(activity_end)s, %(activity_community_id)s, %(activity_confirm_term_of_use)s, %(title)s, %(shared_user_id)s, %(temp_data)s, %(approval1)s, %(approval2)s, %(extra_info)s, %(action_order)s) RETURNING workflow_activity.id'] [parameters: {'status': 'N', 'created': datetime.datetime(2023, 7, 25, 17, 50, 40, 39145), 'updated': datetime.datetime(2023, 7, 25, 17, 50, 40, 39156), 'activity_id': 'A-20230725-00002', 'activity_name': None, 'item_id': None, 'workflow_id': -99, 'workflow_status': None, 'flow_id': 1, 'action_id': 3, 'action_status': 'B', 'activity_login_user': '8', 'activity_update_user': '8', 'activity_status': 'M', 'activity_start': datetime.datetime(2023, 7, 25, 17, 50, 40, 31263), 'activity_end': None, 'activity_community_id': None, 'activity_confirm_term_of_use': True, 'title': None, 'shared_user_id': None, 'temp_data': '{}', 'approval1': None, 'approval2': None, 'extra_info': '{}', 'action_order': 2}] (Background on this error at: http://sqlalche.me/e/gkpj)
+ [SQL: 'INSERT INTO workflow_activity (status, created, updated, activity_id, activity_name, item_id, workflow_id, workflow_status, flow_id, action_id, action_status, activity_login_user, activity_update_user, activity_status, activity_start, activity_end, activity_community_id, activity_confirm_term_of_use, title, shared_user_id, temp_data, approval1, approval2, extra_info, action_order) VALUES (%(status)s, %(created)s, %(updated)s, %(activity_id)s, %(activity_name)s, %(item_id)s, %(workflow_id)s, %(workflow_status)s, %(flow_id)s, %(action_id)s, %(action_status)s, %(activity_login_user)s, %(activity_update_user)s, %(activity_status)s, %(activity_start)s, %(activity_end)s, %(activity_community_id)s, %(activity_confirm_term_of_use)s, %(title)s, %(shared_user_id)s, %(temp_data)s, %(approval1)s, %(approval2)s, %(extra_info)s, %(action_order)s) RETURNING workflow_activity.id'] [parameters: {'status': 'N', 'created': datetime.datetime(2023, 10, 1, 18, 35, 5, 702986), 'updated': datetime.datetime(2023, 10, 1, 18, 35, 5, 702996), 'activity_id': 'A-20231001-00002', 'activity_name': None, 'item_id': None, 'workflow_id': -99, 'workflow_status': None, 'flow_id': 1, 'action_id': 3, 'action_status': 'B', 'activity_login_user': '8', 'activity_update_user': '8', 'activity_status': 'M', 'activity_start': datetime.datetime(2023, 10, 1, 18, 35, 5, 695716), 'activity_end': None, 'activity_community_id': None, 'activity_confirm_term_of_use': True, 'title': None, 'shared_user_id': None, 'temp_data': '{}', 'approval1': None, 'approval2': None, 'extra_info': '{}', 'action_order': 2}] (Background on this error at: http://sqlalche.me/e/gkpj)
 _______________________ test_previous_action_acl_nologin _______________________
 
 client = <FlaskClient <Flask 'testapp'>>, db_register2 = None
@@ -3066,8 +3066,8 @@ weko_workflow/views.py:1069: in decorated_function
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4f04b70; Activity>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d89bee358>
+mapper = <Mapper at 0x7f3f3cab1b70; Activity>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3f11d7d320>
 attribute_names = {'action_id', 'action_order', 'action_status', 'activity_community_id', 'activity_confirm_term_of_use', 'activity_end', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -3080,7 +3080,7 @@ attribute_names = {'action_id', 'action_order', 'action_status', 'activity_commu
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <Activity at 0x7f9d89bee2b0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <Activity at 0x7f3f11d7d278> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -3213,8 +3213,8 @@ weko_workflow/utils.py:3725: in check_authority_by_admin
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4f04b70; Activity>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d9b677ef0>
+mapper = <Mapper at 0x7f3f3cab1b70; Activity>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3f1b913cf8>
 attribute_names = {'action_id', 'action_order', 'action_status', 'activity_community_id', 'activity_confirm_term_of_use', 'activity_end', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -3227,7 +3227,7 @@ attribute_names = {'action_id', 'action_order', 'action_status', 'activity_commu
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <Activity at 0x7f9d9b677dd8> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <Activity at 0x7f3f1b9136d8> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -3358,8 +3358,8 @@ weko_workflow/views.py:1069: in decorated_function
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4f04b70; Activity>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d90a2cef0>
+mapper = <Mapper at 0x7f3f3cab1b70; Activity>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3f168122b0>
 attribute_names = {'action_id', 'action_order', 'action_status', 'activity_community_id', 'activity_confirm_term_of_use', 'activity_end', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -3372,7 +3372,7 @@ attribute_names = {'action_id', 'action_order', 'action_status', 'activity_commu
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <Activity at 0x7f9d90a2c550> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <Activity at 0x7f3f16812588> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -3503,8 +3503,8 @@ weko_workflow/views.py:1069: in decorated_function
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4f04b70; Activity>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d8fb30dd8>
+mapper = <Mapper at 0x7f3f3cab1b70; Activity>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3f15ea0ac8>
 attribute_names = {'action_id', 'action_order', 'action_status', 'activity_community_id', 'activity_confirm_term_of_use', 'activity_end', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -3517,7 +3517,7 @@ attribute_names = {'action_id', 'action_order', 'action_status', 'activity_commu
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <Activity at 0x7f9d8fb300f0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <Activity at 0x7f3f15ea0320> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -3589,7 +3589,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     endpoint, values, method=method, force_external=external
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.routing.MapAdapter object at 0x7f9d7ec5abe0>
+self = <werkzeug.routing.MapAdapter object at 0x7f3f06f49ef0>
 endpoint = 'weko_workflow.user_lock_activity', values = {'activity_id': '1'}
 method = None, force_external = False, append_unknown = True
 
@@ -3720,7 +3720,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     endpoint, values, method=method, force_external=external
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.routing.MapAdapter object at 0x7f9d7fc36630>
+self = <werkzeug.routing.MapAdapter object at 0x7f3f069bb5c0>
 endpoint = 'weko_workflow.user_lock_activity', values = {'activity_id': '1'}
 method = None, force_external = False, append_unknown = True
 
@@ -3851,7 +3851,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     endpoint, values, method=method, force_external=external
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.routing.MapAdapter object at 0x7f9d81679e48>
+self = <werkzeug.routing.MapAdapter object at 0x7f3f06385da0>
 endpoint = 'weko_workflow.user_lock_activity', values = {'activity_id': '1'}
 method = None, force_external = False, append_unknown = True
 
@@ -3982,7 +3982,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     endpoint, values, method=method, force_external=external
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.routing.MapAdapter object at 0x7f9d82d6d6d8>
+self = <werkzeug.routing.MapAdapter object at 0x7f3f08b16f98>
 endpoint = 'weko_workflow.user_lock_activity', values = {'activity_id': '1'}
 method = None, force_external = False, append_unknown = True
 
@@ -4113,7 +4113,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     endpoint, values, method=method, force_external=external
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.routing.MapAdapter object at 0x7f9d87525080>
+self = <werkzeug.routing.MapAdapter object at 0x7f3f09c8feb8>
 endpoint = 'weko_workflow.user_lock_activity', values = {'activity_id': '1'}
 method = None, force_external = False, append_unknown = True
 
@@ -4244,7 +4244,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     endpoint, values, method=method, force_external=external
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.routing.MapAdapter object at 0x7f9d8ef64a90>
+self = <werkzeug.routing.MapAdapter object at 0x7f3f0f255390>
 endpoint = 'weko_workflow.user_lock_activity', values = {'activity_id': '1'}
 method = None, force_external = False, append_unknown = True
 
@@ -4375,7 +4375,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     endpoint, values, method=method, force_external=external
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.routing.MapAdapter object at 0x7f9d88ac3f98>
+self = <werkzeug.routing.MapAdapter object at 0x7f3f10c5db70>
 endpoint = 'weko_workflow.user_lock_activity', values = {'activity_id': '1'}
 method = None, force_external = False, append_unknown = True
 
@@ -4506,7 +4506,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     endpoint, values, method=method, force_external=external
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.routing.MapAdapter object at 0x7f9d860826a0>
+self = <werkzeug.routing.MapAdapter object at 0x7f3f100f86a0>
 endpoint = 'weko_workflow.user_lock_activity', values = {'activity_id': '1'}
 method = None, force_external = False, append_unknown = True
 
@@ -4633,7 +4633,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     endpoint, values, method=method, force_external=external
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.routing.MapAdapter object at 0x7f9d81078320>
+self = <werkzeug.routing.MapAdapter object at 0x7f3f0885acc0>
 endpoint = 'weko_workflow.user_unlock_activity', values = {'activity_id': '1'}
 method = None, force_external = False, append_unknown = True
 
@@ -4764,7 +4764,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     endpoint, values, method=method, force_external=external
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.routing.MapAdapter object at 0x7f9daf631438>
+self = <werkzeug.routing.MapAdapter object at 0x7f3f0b805e10>
 endpoint = 'weko_workflow.user_unlock_activity', values = {'activity_id': '1'}
 method = None, force_external = False, append_unknown = True
 
@@ -4895,7 +4895,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     endpoint, values, method=method, force_external=external
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.routing.MapAdapter object at 0x7f9d7fb7a860>
+self = <werkzeug.routing.MapAdapter object at 0x7f3f0bb70550>
 endpoint = 'weko_workflow.user_unlock_activity', values = {'activity_id': '1'}
 method = None, force_external = False, append_unknown = True
 
@@ -5026,7 +5026,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     endpoint, values, method=method, force_external=external
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.routing.MapAdapter object at 0x7f9d811d18d0>
+self = <werkzeug.routing.MapAdapter object at 0x7f3f061937f0>
 endpoint = 'weko_workflow.user_unlock_activity', values = {'activity_id': '1'}
 method = None, force_external = False, append_unknown = True
 
@@ -5157,7 +5157,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     endpoint, values, method=method, force_external=external
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.routing.MapAdapter object at 0x7f9d87765160>
+self = <werkzeug.routing.MapAdapter object at 0x7f3f05ccfb38>
 endpoint = 'weko_workflow.user_unlock_activity', values = {'activity_id': '1'}
 method = None, force_external = False, append_unknown = True
 
@@ -5288,7 +5288,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     endpoint, values, method=method, force_external=external
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.routing.MapAdapter object at 0x7f9d8d26cda0>
+self = <werkzeug.routing.MapAdapter object at 0x7f3f0b684c88>
 endpoint = 'weko_workflow.user_unlock_activity', values = {'activity_id': '1'}
 method = None, force_external = False, append_unknown = True
 
@@ -5419,7 +5419,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     endpoint, values, method=method, force_external=external
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.routing.MapAdapter object at 0x7f9d842686a0>
+self = <werkzeug.routing.MapAdapter object at 0x7f3f0e4fd438>
 endpoint = 'weko_workflow.user_unlock_activity', values = {'activity_id': '1'}
 method = None, force_external = False, append_unknown = True
 
@@ -5550,7 +5550,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     endpoint, values, method=method, force_external=external
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <werkzeug.routing.MapAdapter object at 0x7f9d87242470>
+self = <werkzeug.routing.MapAdapter object at 0x7f3f09c08710>
 endpoint = 'weko_workflow.user_unlock_activity', values = {'activity_id': '1'}
 method = None, force_external = False, append_unknown = True
 
@@ -6148,8 +6148,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4ebfc88; ActionFeedbackMail>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d97994da0>
+mapper = <Mapper at 0x7f3f3ca6cc88; ActionFeedbackMail>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3f1825c630>
 attribute_names = {'action_id', 'activity_id', 'created', 'feedback_maillist', 'id', 'status', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -6162,7 +6162,7 @@ attribute_names = {'action_id', 'activity_id', 'created', 'feedback_maillist', '
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <ActionFeedbackMail at 0x7f9d97994dd8> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <ActionFeedbackMail at 0x7f3f1825cf28> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -6220,8 +6220,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4ebfc88; ActionFeedbackMail>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d73563ef0>
+mapper = <Mapper at 0x7f3f3ca6cc88; ActionFeedbackMail>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3f169cfb70>
 attribute_names = {'action_id', 'activity_id', 'created', 'feedback_maillist', 'id', 'status', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -6234,7 +6234,7 @@ attribute_names = {'action_id', 'activity_id', 'created', 'feedback_maillist', '
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <ActionFeedbackMail at 0x7f9d73563e48> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <ActionFeedbackMail at 0x7f3f169cf358> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -6292,8 +6292,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4ebfc88; ActionFeedbackMail>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d72e4a7b8>
+mapper = <Mapper at 0x7f3f3ca6cc88; ActionFeedbackMail>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3f396d8208>
 attribute_names = {'action_id', 'activity_id', 'created', 'feedback_maillist', 'id', 'status', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -6306,7 +6306,7 @@ attribute_names = {'action_id', 'activity_id', 'created', 'feedback_maillist', '
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <ActionFeedbackMail at 0x7f9d72e4a2b0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <ActionFeedbackMail at 0x7f3f396d8a90> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -6364,8 +6364,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4ebfc88; ActionFeedbackMail>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d7277fe48>
+mapper = <Mapper at 0x7f3f3ca6cc88; ActionFeedbackMail>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3efce4c470>
 attribute_names = {'action_id', 'activity_id', 'created', 'feedback_maillist', 'id', 'status', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -6378,7 +6378,7 @@ attribute_names = {'action_id', 'activity_id', 'created', 'feedback_maillist', '
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <ActionFeedbackMail at 0x7f9d7277fda0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <ActionFeedbackMail at 0x7f3f1e3bfac8> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -6436,8 +6436,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4ebfc88; ActionFeedbackMail>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d721179e8>
+mapper = <Mapper at 0x7f3f3ca6cc88; ActionFeedbackMail>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3efa7da780>
 attribute_names = {'action_id', 'activity_id', 'created', 'feedback_maillist', 'id', 'status', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -6450,7 +6450,7 @@ attribute_names = {'action_id', 'activity_id', 'created', 'feedback_maillist', '
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <ActionFeedbackMail at 0x7f9d72117ef0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <ActionFeedbackMail at 0x7f3efa7da828> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -6508,8 +6508,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4ebfc88; ActionFeedbackMail>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d71a6d2b0>
+mapper = <Mapper at 0x7f3f3ca6cc88; ActionFeedbackMail>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3efa154e48>
 attribute_names = {'action_id', 'activity_id', 'created', 'feedback_maillist', 'id', 'status', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -6522,7 +6522,7 @@ attribute_names = {'action_id', 'activity_id', 'created', 'feedback_maillist', '
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <ActionFeedbackMail at 0x7f9d71a6d860> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <ActionFeedbackMail at 0x7f3efa154898> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -6580,8 +6580,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f9db4ebfc88; ActionFeedbackMail>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f9d710d8128>
+mapper = <Mapper at 0x7f3f3ca6cc88; ActionFeedbackMail>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7f3ef985c6d8>
 attribute_names = {'action_id', 'activity_id', 'created', 'feedback_maillist', 'id', 'status', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -6594,7 +6594,7 @@ attribute_names = {'action_id', 'activity_id', 'created', 'feedback_maillist', '
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <ActionFeedbackMail at 0x7f9d710d80f0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <ActionFeedbackMail at 0x7f3ef985cbe0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log setup ------------------------------
@@ -8698,7 +8698,7 @@ ERROR tests/test_views.py::test_user_lock_activity
 ERROR tests/test_views.py::test_user_unlock_activity
 ERROR tests/test_views.py::test_lock_activity
 ERROR tests/test_views.py::test_display_activity
-=== 86 failed, 303 passed, 232834 warnings, 59 errors in 7974.63s (2:12:54) ====
+=== 86 failed, 303 passed, 232834 warnings, 59 errors in 7713.15s (2:08:33) ====
 ERROR: InvocationError for command /code/modules/weko-workflow/.tox/c1/bin/pytest --cov=weko_workflow tests -v -s -vv --cov-branch --cov-report=term --cov-report=xml --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-workflow/.tox/c1/tmp (exited with code 1)
 ___________________________________ summary ____________________________________
 ERROR:   c1: commands failed

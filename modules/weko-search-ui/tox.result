@@ -1,7 +1,9 @@
 GLOB sdist-make: /code/modules/weko-search-ui/setup.py
-c1 inst-nodeps: /code/modules/weko-search-ui/.tox/.tmp/package/1/weko-search-ui-0.1.0.dev20170000.zip
-c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_records&subdirectory=modules/weko-records,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,weko-search-ui @ file:///code/modules/weko-search-ui/.tox/.tmp/package/1/weko-search-ui-0.1.0.dev20170000.zip,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@1ea2ab266aece30a5e18ebcb3c03bc86ad2c2d60#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
-c1 run-test-pre: PYTHONHASHSEED='2763082693'
+c1 create: /code/modules/weko-search-ui/.tox/c1
+c1 installdeps: pytest>=3, pytest-cov, coverage, -rrequirements.txt
+c1 inst: /code/modules/weko-search-ui/.tox/.tmp/package/1/weko-search-ui-0.1.0.dev20170000.zip
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.1,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.7,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==8.0.4,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,Flask==1.0.4,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.3.3,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.11.0,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,Flask-OAuthlib==0.9.5,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.1.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,iniconfig==1.1.1,intervals==0.8.0,invenio-access==1.1.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest,invenio-records-ui==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_s3&subdirectory=modules/invenio-s3,invenio-search==1.1.0,invenio-search-ui==1.0.0a9,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==3.0.5,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.1,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==6.1.2,pytest-cov==4.0.0,pytest-mock==3.6.1,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.12.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,testpath==0.3.1,toml==0.10.2,tomli==1.2.3,tornado==4.5.3,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,validators==0.12.0,vine==1.3.0,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_records&subdirectory=modules/weko-records,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,weko-search-ui @ file:///code/modules/weko-search-ui/.tox/.tmp/package/1/weko-search-ui-0.1.0.dev20170000.zip,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@58e85fec7e4ac32f2ea6ef5e5cc001064a8cdd43#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='3152656966'
 c1 run-test: commands[0] | pytest --cov=weko_search_ui tests -v --cov-branch --cov-report=term --cov-report=xml --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 ============================= test session starts ==============================
 platform linux -- Python 3.6.15, pytest-6.1.2, py-1.11.0, pluggy-0.13.1 -- /code/modules/weko-search-ui/.tox/c1/bin/python
@@ -390,14 +392,14 @@ tests/test_weko_search_ui.py::test_init PASSED                           [100%]
 ==================================== ERRORS ====================================
 _______________ ERROR at setup of test_handle_doi_required_check _______________
 
-self = <sqlalchemy.engine.base.Connection object at 0x7ff2f3d35978>
-dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7ff2f41a3160>
+self = <sqlalchemy.engine.base.Connection object at 0x7fd125a8eb70>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd125f9b198>
 constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
 statement = 'INSERT INTO item_type_name (created, updated, name, has_site_license, is_active) VALUES (%(created)s, %(updated)s, %(name)s, %(has_site_license)s, %(is_active)s) RETURNING item_type_name.id'
-parameters = {'created': datetime.datetime(2023, 7, 25, 8, 29, 31, 430363), 'has_site_license': True, 'is_active': True, 'name': 'test', ...}
-args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7ff2f3d359b0>, [{'name': 'test'}])
-conn = <sqlalchemy.pool._ConnectionFairy object at 0x7ff2f417d860>
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7ff2f3d3e1d0>
+parameters = {'created': datetime.datetime(2023, 10, 1, 9, 49, 38, 169519), 'has_site_license': True, 'is_active': True, 'name': 'test', ...}
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7fd125a8eba8>, [{'name': 'test'}])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fd125e3fb70>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fd125a993c8>
 
     def _execute_context(
         self, dialect, constructor, statement, parameters, *args
@@ -486,11 +488,11 @@ context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 o
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7ff2f41a3160>
-cursor = <cursor object at 0x7ff2fe3b6710; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd125f9b198>
+cursor = <cursor object at 0x7fd127c57ed0; closed: -1>
 statement = 'INSERT INTO item_type_name (created, updated, name, has_site_license, is_active) VALUES (%(created)s, %(updated)s, %(name)s, %(has_site_license)s, %(is_active)s) RETURNING item_type_name.id'
-parameters = {'created': datetime.datetime(2023, 7, 25, 8, 29, 31, 430363), 'has_site_license': True, 'is_active': True, 'name': 'test', ...}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7ff2f3d3e1d0>
+parameters = {'created': datetime.datetime(2023, 10, 1, 9, 49, 38, 169519), 'has_site_license': True, 'is_active': True, 'name': 'test', ...}
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fd125a993c8>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -685,31 +687,31 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     cursor, statement, parameters, context
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7ff2f41a3160>
-cursor = <cursor object at 0x7ff2fe3b6710; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd125f9b198>
+cursor = <cursor object at 0x7fd127c57ed0; closed: -1>
 statement = 'INSERT INTO item_type_name (created, updated, name, has_site_license, is_active) VALUES (%(created)s, %(updated)s, %(name)s, %(has_site_license)s, %(is_active)s) RETURNING item_type_name.id'
-parameters = {'created': datetime.datetime(2023, 7, 25, 8, 29, 31, 430363), 'has_site_license': True, 'is_active': True, 'name': 'test', ...}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7ff2f3d3e1d0>
+parameters = {'created': datetime.datetime(2023, 10, 1, 9, 49, 38, 169519), 'has_site_license': True, 'is_active': True, 'name': 'test', ...}
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fd125a993c8>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
 E       sqlalchemy.exc.IntegrityError: (psycopg2.IntegrityError) duplicate key value violates unique constraint "pk_item_type_name"
 E       DETAIL:  Key (id)=(1) already exists.
-E        [SQL: 'INSERT INTO item_type_name (created, updated, name, has_site_license, is_active) VALUES (%(created)s, %(updated)s, %(name)s, %(has_site_license)s, %(is_active)s) RETURNING item_type_name.id'] [parameters: {'created': datetime.datetime(2023, 7, 25, 8, 29, 31, 430363), 'updated': datetime.datetime(2023, 7, 25, 8, 29, 31, 430377), 'name': 'test', 'has_site_license': True, 'is_active': True}] (Background on this error at: http://sqlalche.me/e/gkpj)
+E        [SQL: 'INSERT INTO item_type_name (created, updated, name, has_site_license, is_active) VALUES (%(created)s, %(updated)s, %(name)s, %(has_site_license)s, %(is_active)s) RETURNING item_type_name.id'] [parameters: {'created': datetime.datetime(2023, 10, 1, 9, 49, 38, 169519), 'updated': datetime.datetime(2023, 10, 1, 9, 49, 38, 169535), 'name': 'test', 'has_site_license': True, 'is_active': True}] (Background on this error at: http://sqlalche.me/e/gkpj)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: IntegrityError
 ------------------------------ Captured log setup ------------------------------
-WARNING  elasticsearch:base.py:97 PUT http://elasticsearch:9200/test-weko-item-v1.0.0/_alias/test-weko [status:400 request:0.006s]
+WARNING  elasticsearch:base.py:97 PUT http://elasticsearch:9200/test-weko-item-v1.0.0/_alias/test-weko [status:400 request:0.005s]
 ______________________ ERROR at setup of test_export_all _______________________
 
-self = <sqlalchemy.engine.base.Connection object at 0x7ff2785a7630>
-dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7ff27942ae10>
+self = <sqlalchemy.engine.base.Connection object at 0x7fd0a8ec1940>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd0a9d3cf98>
 constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
 statement = 'INSERT INTO item_type_name (created, updated, name, has_site_license, is_active) VALUES (%(created)s, %(updated)s, %(name)s, %(has_site_license)s, %(is_active)s) RETURNING item_type_name.id'
-parameters = {'created': datetime.datetime(2023, 7, 25, 16, 32, 43, 436628), 'has_site_license': True, 'is_active': True, 'name': 'test', ...}
-args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7ff2785a7550>, [{'name': 'test'}])
-conn = <sqlalchemy.pool._ConnectionFairy object at 0x7ff278bc1470>
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7ff2785a7668>
+parameters = {'created': datetime.datetime(2023, 10, 1, 17, 4, 55, 509441), 'has_site_license': True, 'is_active': True, 'name': 'test', ...}
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7fd0a8ec1860>, [{'name': 'test'}])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fd0a9173b38>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fd0a8ec1978>
 
     def _execute_context(
         self, dialect, constructor, statement, parameters, *args
@@ -798,11 +800,11 @@ context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 o
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7ff27942ae10>
-cursor = <cursor object at 0x7ff279b57808; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd0a9d3cf98>
+cursor = <cursor object at 0x7fd0aa080618; closed: -1>
 statement = 'INSERT INTO item_type_name (created, updated, name, has_site_license, is_active) VALUES (%(created)s, %(updated)s, %(name)s, %(has_site_license)s, %(is_active)s) RETURNING item_type_name.id'
-parameters = {'created': datetime.datetime(2023, 7, 25, 16, 32, 43, 436628), 'has_site_license': True, 'is_active': True, 'name': 'test', ...}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7ff2785a7668>
+parameters = {'created': datetime.datetime(2023, 10, 1, 17, 4, 55, 509441), 'has_site_license': True, 'is_active': True, 'name': 'test', ...}
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fd0a8ec1978>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -997,26 +999,26 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     cursor, statement, parameters, context
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7ff27942ae10>
-cursor = <cursor object at 0x7ff279b57808; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd0a9d3cf98>
+cursor = <cursor object at 0x7fd0aa080618; closed: -1>
 statement = 'INSERT INTO item_type_name (created, updated, name, has_site_license, is_active) VALUES (%(created)s, %(updated)s, %(name)s, %(has_site_license)s, %(is_active)s) RETURNING item_type_name.id'
-parameters = {'created': datetime.datetime(2023, 7, 25, 16, 32, 43, 436628), 'has_site_license': True, 'is_active': True, 'name': 'test', ...}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7ff2785a7668>
+parameters = {'created': datetime.datetime(2023, 10, 1, 17, 4, 55, 509441), 'has_site_license': True, 'is_active': True, 'name': 'test', ...}
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fd0a8ec1978>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
 E       sqlalchemy.exc.IntegrityError: (psycopg2.IntegrityError) duplicate key value violates unique constraint "pk_item_type_name"
 E       DETAIL:  Key (id)=(1) already exists.
-E        [SQL: 'INSERT INTO item_type_name (created, updated, name, has_site_license, is_active) VALUES (%(created)s, %(updated)s, %(name)s, %(has_site_license)s, %(is_active)s) RETURNING item_type_name.id'] [parameters: {'created': datetime.datetime(2023, 7, 25, 16, 32, 43, 436628), 'updated': datetime.datetime(2023, 7, 25, 16, 32, 43, 436637), 'name': 'test', 'has_site_license': True, 'is_active': True}] (Background on this error at: http://sqlalche.me/e/gkpj)
+E        [SQL: 'INSERT INTO item_type_name (created, updated, name, has_site_license, is_active) VALUES (%(created)s, %(updated)s, %(name)s, %(has_site_license)s, %(is_active)s) RETURNING item_type_name.id'] [parameters: {'created': datetime.datetime(2023, 10, 1, 17, 4, 55, 509441), 'updated': datetime.datetime(2023, 10, 1, 17, 4, 55, 509446), 'name': 'test', 'has_site_license': True, 'is_active': True}] (Background on this error at: http://sqlalche.me/e/gkpj)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: IntegrityError
 =================================== FAILURES ===================================
 _________________ TestItemManagementBulkSearch.test_index_acl __________________
 
-self = <tests.test_admin.TestItemManagementBulkSearch object at 0x7ff30a9603c8>
+self = <tests.test_admin.TestItemManagementBulkSearch object at 0x7fd13ce056d8>
 client = <FlaskClient <Flask 'testapp'>>
 users = [{'email': 'noroleuser@test.org', 'id': 9, 'obj': <User 9>}, {'email': 'contributor@test.org', 'id': 2, 'obj': <User 2...ail': 'comadmin@test.org', 'id': 3, 'obj': <User 3>}, {'email': 'generaluser@test.org', 'id': 6, 'obj': <User 5>}, ...]
-db_records2 = [(<PersistentIdentifier depid:1 / rec:e3ce8ad1-ffeb-4a8e-ba96-4d3f00d74417 (R)>, <PersistentIdentifier recid:1 / rec:e...617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}), ...]
+db_records2 = [(<PersistentIdentifier depid:1 / rec:ff142687-dcf3-4a88-9b3e-033f2a627a9c (R)>, <PersistentIdentifier recid:1 / rec:f...617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}), ...]
 
     def test_index_acl(self,client, users, db_records2):
         user = users[3]['obj']
@@ -1196,11 +1198,11 @@ Traceback (most recent call last):
 AttributeError: 'int' object has no attribute 'queues'
 _________________ TestItemBulkExport.test_check_export_status __________________
 
-self = <tests.test_admin.TestItemBulkExport object at 0x7ff30936ea90>
+self = <tests.test_admin.TestItemBulkExport object at 0x7fd13a76d2e8>
 app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
 users = [{'email': 'noroleuser@test.org', 'id': 9, 'obj': <User 9>}, {'email': 'contributor@test.org', 'id': 2, 'obj': <User 2...ail': 'comadmin@test.org', 'id': 3, 'obj': <User 3>}, {'email': 'generaluser@test.org', 'id': 6, 'obj': <User 5>}, ...]
-redis_connect = <simplekv.memory.redisstore.RedisStore object at 0x7ff308135b38>
-mocker = <pytest_mock.plugin.MockerFixture object at 0x7ff308135ac8>
+redis_connect = <simplekv.memory.redisstore.RedisStore object at 0x7fd13a265160>
+mocker = <pytest_mock.plugin.MockerFixture object at 0x7fd13a265198>
 
     def test_check_export_status(self,app,client,users, redis_connect,mocker):
     
@@ -1277,7 +1279,7 @@ ___________________________ test_function_issue35902 ___________________________
 app = <Flask 'testapp'>
 users = [{'email': 'noroleuser@test.org', 'id': 9, 'obj': <User 9>}, {'email': 'contributor@test.org', 'id': 2, 'obj': <User 2...ail': 'comadmin@test.org', 'id': 3, 'obj': <User 3>}, {'email': 'generaluser@test.org', 'id': 6, 'obj': <User 5>}, ...]
 communities = <Community, ID: comm1>
-mocker = <pytest_mock.plugin.MockerFixture object at 0x7ff30420f0b8>
+mocker = <pytest_mock.plugin.MockerFixture object at 0x7fd1364fd5c0>
 
     def test_function_issue35902(app, users, communities, mocker):
         with app.test_client() as client:
@@ -1328,7 +1330,7 @@ client_rest = <FlaskClient <Flask 'testapp'>>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 users = [{'email': 'noroleuser@test.org', 'id': 9, 'obj': <User 9>}, {'email': 'contributor@test.org', 'id': 2, 'obj': <User 2...ail': 'comadmin@test.org', 'id': 3, 'obj': <User 3>}, {'email': 'generaluser@test.org', 'id': 6, 'obj': <User 5>}, ...]
 item_type = [{'type': 'object', '$schema': 'http://json-schema.org/draft-04/schema#', 'required': ['pubdate', 'item_1617186331708'...type': 'string', 'title': 'SYSTEMIDT Identifier Type', 'format': 'select'}}, 'system_prop': True}}, 'description': ''}]
-db_records = [(<PersistentIdentifier depid:1 / rec:bc90e01d-f0dd-4c4f-89f3-4be899d6e1e2 (R)>, <PersistentIdentifier recid:1 / rec:b...617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}), ...]
+db_records = [(<PersistentIdentifier depid:1 / rec:b6dba174-06c1-422e-a633-5f7579d9d7b0 (R)>, <PersistentIdentifier recid:1 / rec:b...617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}), ...]
 facet_search_setting = None
 
     def test_IndexSearchResource_get_Exception(client_rest, db, users, item_type, db_records, facet_search_setting):
@@ -1397,9 +1399,9 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     return meth(*args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <weko_search_ui.rest.IndexSearchResource object at 0x7ff30396e7b8>
+self = <weko_search_ui.rest.IndexSearchResource object at 0x7fd136f3c4a8>
 kwargs = {}, FacetSearchSetting = <class 'weko_admin.models.FacetSearchSetting'>
-get_facet_search_query = <MagicMock name='get_facet_search_query' id='140681714535392'>
+get_facet_search_query = <MagicMock name='get_facet_search_query' id='140536530211616'>
 page = 1, size = 20, is_search = 0, community_id = None, params = {}
 
     def get(self, **kwargs):
@@ -1473,7 +1475,7 @@ weko_search_ui/utils.py:257: in delete_records
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 self = <RequestsHttpConnection: http://elasticsearch:9200>, status_code = 404
-raw_data = '{"error":{"root_cause":[{"type":"document_missing_exception","reason":"[item-v1.0.0][e296a25b-e919-41c3-b01c-9d8137b3...-9d8137b3560b]: document missing","index_uuid":"WNrREJpUQj2d2lk3QtnTfg","shard":"4","index":"test-weko"},"status":404}'
+raw_data = '{"error":{"root_cause":[{"type":"document_missing_exception","reason":"[item-v1.0.0][ab233b19-648d-4076-9c0f-01c9239a...-01c9239ad43d]: document missing","index_uuid":"SvEwraBVQxO1cpKXtTs8Vw","shard":"4","index":"test-weko"},"status":404}'
 
     def _raise_error(self, status_code, raw_data):
         """ Locate appropriate exception and raise it. """
@@ -1489,15 +1491,15 @@ raw_data = '{"error":{"root_cause":[{"type":"document_missing_exception","reason
             logger.warning('Undecodable raw error response from server: %s', err)
     
 >       raise HTTP_EXCEPTIONS.get(status_code, TransportError)(status_code, error_message, additional_info)
-E       elasticsearch.exceptions.NotFoundError: TransportError(404, 'document_missing_exception', '[item-v1.0.0][e296a25b-e919-41c3-b01c-9d8137b3560b]: document missing')
+E       elasticsearch.exceptions.NotFoundError: TransportError(404, 'document_missing_exception', '[item-v1.0.0][ab233b19-648d-4076-9c0f-01c9239ad43d]: document missing')
 
 .tox/c1/lib/python3.6/site-packages/elasticsearch/connection/base.py:125: NotFoundError
 ------------------------------ Captured log call -------------------------------
-WARNING  elasticsearch:base.py:97 POST http://elasticsearch:9200/test-weko/item-v1.0.0/e296a25b-e919-41c3-b01c-9d8137b3560b/_update [status:404 request:0.124s]
+WARNING  elasticsearch:base.py:97 POST http://elasticsearch:9200/test-weko/item-v1.0.0/ab233b19-648d-4076-9c0f-01c9239ad43d/_update [status:404 request:0.131s]
 _________________________ test_get_feedback_mail_list __________________________
 
 i18n_app = <Flask 'testapp'>
-db_records2 = [(<PersistentIdentifier depid:1 / rec:ab59f21e-9ada-44f5-a949-9ecb23373bdf (R)>, <PersistentIdentifier recid:1 / rec:a...617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}), ...]
+db_records2 = [(<PersistentIdentifier depid:1 / rec:f8c473d5-8dd8-4e6f-b14a-532ce5388c34 (R)>, <PersistentIdentifier recid:1 / rec:f...617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}), ...]
 es = <Elasticsearch([{'host': 'elasticsearch'}])>
 
     def test_get_feedback_mail_list(i18n_app, db_records2, es):
@@ -1555,12 +1557,12 @@ E       elasticsearch.exceptions.RequestError: TransportError(400, 'search_phase
 ------------------------------ Captured log setup ------------------------------
 WARNING  elasticsearch:base.py:97 PUT http://elasticsearch:9200/test-weko-item-v1.0.0/_alias/test-weko [status:400 request:0.006s]
 ------------------------------ Captured log call -------------------------------
-WARNING  elasticsearch:base.py:97 GET http://elasticsearch:9200/test-weko/_search?preference=4a4d20d732cd9f789541e54dd9eb6af8&version=false [status:400 request:0.011s]
+WARNING  elasticsearch:base.py:97 GET http://elasticsearch:9200/test-weko/_search?preference=4a4d20d732cd9f789541e54dd9eb6af8&version=false [status:400 request:0.012s]
 __________________________ test_unpackage_import_file __________________________
 
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
-mocker = <pytest_mock.plugin.MockerFixture object at 0x7ff2ffe467f0>
+mocker = <pytest_mock.plugin.MockerFixture object at 0x7fd13241da58>
 mocker_itemtype = None
 
     def test_unpackage_import_file(app, db,mocker, mocker_itemtype):
@@ -1607,14 +1609,14 @@ E                 ...Full output truncated (569 lines hidden), use '-vv' to show
 tests/test_utils.py:379: AssertionError
 _____________________________ test_read_stats_file _____________________________
 
-self = <sqlalchemy.engine.base.Connection object at 0x7ff2ff5e66a0>
-dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7ff2ff756278>
+self = <sqlalchemy.engine.base.Connection object at 0x7fd131d52748>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd131ddc470>
 constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
 statement = 'SELECT item_type.created AS item_type_created, item_type.updated AS item_type_updated, item_type.id AS item_type_id, ...AS item_type_version_id, item_type.is_deleted AS item_type_is_deleted \nFROM item_type \nWHERE item_type.id = %(id_1)s'
 parameters = {'id_1': 'test'}
-args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7ff2ff705630>, [immutabledict({})])
-conn = <sqlalchemy.pool._ConnectionFairy object at 0x7ff2ff5e67f0>
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7ff2ff7052b0>
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7fd131a4f5c0>, [immutabledict({})])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fd131d52898>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fd131a4f198>
 
     def _execute_context(
         self, dialect, constructor, statement, parameters, *args
@@ -1703,11 +1705,11 @@ context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 o
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7ff2ff756278>
-cursor = <cursor object at 0x7ff302abd710; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd131ddc470>
+cursor = <cursor object at 0x7fd132c3edd8; closed: -1>
 statement = 'SELECT item_type.created AS item_type_created, item_type.updated AS item_type_updated, item_type.id AS item_type_id, ...AS item_type_version_id, item_type.is_deleted AS item_type_is_deleted \nFROM item_type \nWHERE item_type.id = %(id_1)s'
 parameters = {'id_1': 'test'}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7ff2ff7052b0>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fd131a4f198>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -1779,11 +1781,11 @@ weko_search_ui/utils.py:3171: in handle_get_all_id_in_item_type
     cursor, statement, parameters, context
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7ff2ff756278>
-cursor = <cursor object at 0x7ff302abd710; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd131ddc470>
+cursor = <cursor object at 0x7fd132c3edd8; closed: -1>
 statement = 'SELECT item_type.created AS item_type_created, item_type.updated AS item_type_updated, item_type.id AS item_type_id, ...AS item_type_version_id, item_type.is_deleted AS item_type_is_deleted \nFROM item_type \nWHERE item_type.id = %(id_1)s'
 parameters = {'id_1': 'test'}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7ff2ff7052b0>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fd131a4f198>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -1796,8 +1798,8 @@ E        [SQL: 'SELECT item_type.created AS item_type_created, item_type.updated
 _________________________ test_register_item_metadata __________________________
 
 i18n_app = <Flask 'testapp'>, es_item_file_pipeline = None
-deposit = {'title': 'fuu', '$schema': 'https://inveniosoftware.org/schemas/deposits/deposit-v1.0.0.json', '_deposit': {'id': '696e456fe8784420890658df66bc1f28', 'status': 'draft', 'owners': [9], 'created_by': 9}}
-es_records = {'indexer': <weko_deposit.api.WekoIndexer object at 0x7ff3030c0550>, 'results': [{'depid': <PersistentIdentifier depid...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:ba2d01dd-9337-4f12-a578-08ffe3e3af06 (R)>, ...}, ...]}
+deposit = {'title': 'fuu', '$schema': 'https://inveniosoftware.org/schemas/deposits/deposit-v1.0.0.json', '_deposit': {'id': '5459086b30644a98b39d32e27bf99aa3', 'status': 'draft', 'owners': [9], 'created_by': 9}}
+es_records = {'indexer': <weko_deposit.api.WekoIndexer object at 0x7fd130a8a710>, 'results': [{'depid': <PersistentIdentifier depid...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:20c849aa-d945-4d34-9e6e-994246810905 (R)>, ...}, ...]}
 
     def test_register_item_metadata(i18n_app, es_item_file_pipeline, deposit, es_records):
         item = es_records["results"][0]["item"]
@@ -1809,11 +1811,11 @@ E           TypeError: register_item_metadata() missing 1 required positional ar
 
 tests/test_utils.py:684: TypeError
 ------------------------------ Captured log setup ------------------------------
-WARNING  elasticsearch:base.py:97 PUT http://elasticsearch:9200/test-weko-item-v1.0.0/_alias/test-weko [status:400 request:0.006s]
+WARNING  elasticsearch:base.py:97 PUT http://elasticsearch:9200/test-weko-item-v1.0.0/_alias/test-weko [status:400 request:0.004s]
 ______________________ test_send_item_created_event_to_es ______________________
 
 i18n_app = <Flask 'testapp'>, es_item_file_pipeline = None
-es_records = {'indexer': <weko_deposit.api.WekoIndexer object at 0x7ff300fc1780>, 'results': [{'depid': <PersistentIdentifier depid...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:0269f103-0bef-4b9c-be5c-d7ed4fb207e0 (R)>, ...}, ...]}
+es_records = {'indexer': <weko_deposit.api.WekoIndexer object at 0x7fd12ef011d0>, 'results': [{'depid': <PersistentIdentifier depid...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:1a5dcb74-4849-4009-b5df-6759a8a48e14 (R)>, ...}, ...]}
 client_request_args = <Response streamed [200 OK]>
 users = [{'email': 'noroleuser@test.org', 'id': 9, 'obj': <User 9>}, {'email': 'contributor@test.org', 'id': 2, 'obj': <User 2...ail': 'comadmin@test.org', 'id': 3, 'obj': <User 3>}, {'email': 'generaluser@test.org', 'id': 6, 'obj': <User 5>}, ...]
 es = <Elasticsearch([{'host': 'elasticsearch'}])>
@@ -1870,7 +1872,7 @@ E       elasticsearch.exceptions.RequestError: TransportError(400, 'invalid_inde
 
 .tox/c1/lib/python3.6/site-packages/elasticsearch/connection/base.py:125: RequestError
 ------------------------------ Captured log setup ------------------------------
-WARNING  elasticsearch:base.py:97 PUT http://elasticsearch:9200/test-weko-item-v1.0.0/_alias/test-weko [status:400 request:0.006s]
+WARNING  elasticsearch:base.py:97 PUT http://elasticsearch:9200/test-weko-item-v1.0.0/_alias/test-weko [status:400 request:0.004s]
 ERROR    flask.app:receivers.py:39 Error building event
 Traceback (most recent call last):
   File "/code/modules/invenio-stats/invenio_stats/receivers.py", line 31, in __call__
@@ -1885,7 +1887,7 @@ Traceback (most recent call last):
     return getattr(self._get_current_object(), name)
 AttributeError: 'int' object has no attribute 'queues'
 ------------------------------ Captured log call -------------------------------
-WARNING  elasticsearch:base.py:97 PUT http://elasticsearch:9200/-events-stats-item-create/stats-item-create/2023-07-25+08%3A12%3A14-552e9043c7efd979f1b28d90f33c2bc4478c14cf [status:400 request:0.004s]
+WARNING  elasticsearch:base.py:97 PUT http://elasticsearch:9200/-events-stats-item-create/stats-item-create/2023-10-01+09%3A32%3A33-7d9e7feb928f3a41492030bebd514123f0b74746 [status:400 request:0.006s]
 _________________________ test_import_items_to_system __________________________
 
 item = {'id': '1', 'cnri': 'cnricnricnri', 'cnri_suffix_not_existed': 'cnri_suffix_not_existed', 'is_change_identifier': 'is_...'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}
@@ -2007,7 +2009,7 @@ request_info = {'hostname': 'TEST_SERVER', 'referrer': None, 'remote_addr': None
 weko_search_ui/utils.py:1500: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-id = '2023-07-25 08:14:09-552e9043c7efd979f1b28d90f33c2bc4478c14cf'
+id = '2023-10-01 09:34:32-7d9e7feb928f3a41492030bebd514123f0b74746'
 index = '-events-stats-item-create', doc_type = 'stats-item-create'
 data = {'country': None, 'cur_user_id': 1, 'hostname': 'TEST_SERVER', 'is_restricted': False, ...}
 
@@ -2020,7 +2022,7 @@ weko_search_ui/utils.py:1491:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 args = (<Elasticsearch([{'host': 'elasticsearch'}])>,)
-kwargs = {'body': {'country': None, 'cur_user_id': 1, 'hostname': 'TEST_SERVER', 'is_restricted': False, ...}, 'doc_type': 'sta...em-create', 'id': '2023-07-25 08:14:09-552e9043c7efd979f1b28d90f33c2bc4478c14cf', 'index': '-events-stats-item-create'}
+kwargs = {'body': {'country': None, 'cur_user_id': 1, 'hostname': 'TEST_SERVER', 'is_restricted': False, ...}, 'doc_type': 'sta...em-create', 'id': '2023-10-01 09:34:32-7d9e7feb928f3a41492030bebd514123f0b74746', 'index': '-events-stats-item-create'}
 params = {}, p = 'request_timeout'
 
     @wraps(func)
@@ -2046,7 +2048,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 self = <Elasticsearch([{'host': 'elasticsearch'}])>
 index = '-events-stats-item-create', doc_type = 'stats-item-create'
 body = {'country': None, 'cur_user_id': 1, 'hostname': 'TEST_SERVER', 'is_restricted': False, ...}
-id = '2023-07-25 08:14:09-552e9043c7efd979f1b28d90f33c2bc4478c14cf', params = {}
+id = '2023-10-01 09:34:32-7d9e7feb928f3a41492030bebd514123f0b74746', params = {}
 
     @query_params('op_type', 'parent', 'pipeline', 'refresh', 'routing',
         'timeout', 'timestamp', 'ttl', 'version', 'version_type',
@@ -2091,11 +2093,11 @@ id = '2023-07-25 08:14:09-552e9043c7efd979f1b28d90f33c2bc4478c14cf', params = {}
 .tox/c1/lib/python3.6/site-packages/elasticsearch/client/__init__.py:300: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <elasticsearch.transport.Transport object at 0x7ff2fcc6bb70>
+self = <elasticsearch.transport.Transport object at 0x7fd12b3ae668>
 method = 'PUT'
-url = '/-events-stats-item-create/stats-item-create/2023-07-25+08%3A14%3A09-552e9043c7efd979f1b28d90f33c2bc4478c14cf'
+url = '/-events-stats-item-create/stats-item-create/2023-10-01+09%3A34%3A32-7d9e7feb928f3a41492030bebd514123f0b74746'
 headers = None, params = {}
-body = b'{"remote_addr":null,"country":null,"record_name":"item_title","referrer":null,"is_robot":false,"cur_user_id":1,"is_r...pe":"depid","timestamp":"2023-07-25T08:14:09","visitor_id":"8f870350ab4f36757e351abeff18afd4d0e319eb62ee9eb01a0f3b77"}'
+body = b'{"remote_addr":null,"country":null,"record_name":"item_title","referrer":null,"is_robot":false,"cur_user_id":1,"is_r...pe":"depid","timestamp":"2023-10-01T09:34:32","visitor_id":"666d14ccbda78abc011bdfc78f78e2829fc0c0896fe49e6e72ead269"}'
 
     def perform_request(self, method, url, headers=None, params=None, body=None):
         """
@@ -2159,9 +2161,9 @@ body = b'{"remote_addr":null,"country":null,"record_name":"item_title","referrer
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 self = <RequestsHttpConnection: http://elasticsearch:9200>, method = 'PUT'
-url = 'http://elasticsearch:9200/-events-stats-item-create/stats-item-create/2023-07-25+08%3A14%3A09-552e9043c7efd979f1b28d90f33c2bc4478c14cf'
+url = 'http://elasticsearch:9200/-events-stats-item-create/stats-item-create/2023-10-01+09%3A34%3A32-7d9e7feb928f3a41492030bebd514123f0b74746'
 params = {}
-body = b'{"remote_addr":null,"country":null,"record_name":"item_title","referrer":null,"is_robot":false,"cur_user_id":1,"is_r...pe":"depid","timestamp":"2023-07-25T08:14:09","visitor_id":"8f870350ab4f36757e351abeff18afd4d0e319eb62ee9eb01a0f3b77"}'
+body = b'{"remote_addr":null,"country":null,"record_name":"item_title","referrer":null,"is_robot":false,"cur_user_id":1,"is_r...pe":"depid","timestamp":"2023-10-01T09:34:32","visitor_id":"666d14ccbda78abc011bdfc78f78e2829fc0c0896fe49e6e72ead269"}'
 timeout = None, ignore = (), headers = None
 
     def perform_request(self, method, url, params=None, body=None, timeout=None, ignore=(), headers=None):
@@ -2219,7 +2221,7 @@ E       elasticsearch.exceptions.RequestError: TransportError(400, 'invalid_inde
 During handling of the above exception, another exception occurred:
 
 i18n_app = <Flask 'testapp'>, es_item_file_pipeline = None
-es_records = {'indexer': <weko_deposit.api.WekoIndexer object at 0x7ff2feb7c0f0>, 'results': [{'depid': <PersistentIdentifier depid...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:cd05cf22-3ad3-48f7-8eef-c423251d5c11 (R)>, ...}, ...]}
+es_records = {'indexer': <weko_deposit.api.WekoIndexer object at 0x7fd12b375550>, 'results': [{'depid': <PersistentIdentifier depid...stentIdentifier hdl:https://hdl.handle.net/0000/0000000005 / rec:cdf873d2-54ac-4f83-a831-9d3df3494c63 (R)>, ...}, ...]}
 
     def test_import_items_to_system(i18n_app, es_item_file_pipeline, es_records):
         # item = dict(db_activity['item'])
@@ -2293,7 +2295,7 @@ E           TypeError: not all arguments converted during string formatting
 
 /usr/local/lib/python3.6/logging/__init__.py:338: TypeError
 ------------------------------ Captured log setup ------------------------------
-WARNING  elasticsearch:base.py:97 PUT http://elasticsearch:9200/test-weko-item-v1.0.0/_alias/test-weko [status:400 request:0.004s]
+WARNING  elasticsearch:base.py:97 PUT http://elasticsearch:9200/test-weko-item-v1.0.0/_alias/test-weko [status:400 request:0.006s]
 ------------------------------ Captured log call -------------------------------
 ERROR    flask.app:api.py:91 Traceback (most recent call last):
   File "/code/modules/weko-handle/weko_handle/api.py", line 62, in register_handle
@@ -2319,7 +2321,7 @@ ERROR    flask.app:api.py:91 Traceback (most recent call last):
 TypeError: expected str, bytes or os.PathLike object, not NoneType
 
 ERROR    flask.app:api.py:92 expected str, bytes or os.PathLike object, not NoneType
-WARNING  elasticsearch:base.py:97 PUT http://elasticsearch:9200/-events-stats-item-create/stats-item-create/2023-07-25+08%3A14%3A09-552e9043c7efd979f1b28d90f33c2bc4478c14cf [status:400 request:0.007s]
+WARNING  elasticsearch:base.py:97 PUT http://elasticsearch:9200/-events-stats-item-create/stats-item-create/2023-10-01+09%3A34%3A32-7d9e7feb928f3a41492030bebd514123f0b74746 [status:400 request:0.005s]
 ___________________ test_handle_check_and_prepare_index_tree ___________________
 
 i18n_app = <Flask 'testapp'>
@@ -2488,7 +2490,7 @@ E           TypeError: expected str, bytes or os.PathLike object, not NoneType
 .tox/c1/lib/python3.6/site-packages/b2handle/clientcredentials.py:54: TypeError
 ____________________________ test_handle_check_doi _____________________________
 
-value = <MagicMock name='mock.pid_recid.object_uuid' id='140681526843656'>
+value = <MagicMock name='mock.pid_recid.object_uuid' id='140536314506936'>
 
     @staticmethod
     def _coerce(value):
@@ -2499,8 +2501,8 @@ value = <MagicMock name='mock.pid_recid.object_uuid' id='140681526843656'>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy_utils/types/uuid.py:56: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <[AttributeError("'UUID' object has no attribute 'int'",) raised in repr()] UUID object at 0x7ff2f86ea2e8>
-hex = <MagicMock name='mock.pid_recid.object_uuid.replace().replace().strip().replace()' id='140681529542528'>
+self = <[AttributeError("'UUID' object has no attribute 'int'",) raised in repr()] UUID object at 0x7fd128fca438>
+hex = <MagicMock name='mock.pid_recid.object_uuid.replace().replace().strip().replace()' id='140536312658744'>
 bytes = None, bytes_le = None, fields = None, int = None, version = None
 
     def __init__(self, hex=None, bytes=None, bytes_le=None, fields=None,
@@ -2544,13 +2546,13 @@ E               ValueError: badly formed hexadecimal UUID string
 
 During handling of the above exception, another exception occurred:
 
-self = <sqlalchemy.engine.base.Connection object at 0x7ff2f8b55400>
-dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7ff2f8bc1da0>
+self = <sqlalchemy.engine.base.Connection object at 0x7fd128fca2b0>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd1291517b8>
 constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
-statement = <sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7ff2f8b55198>
+statement = <sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7fd128fca240>
 parameters = [immutabledict({})]
-args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7ff2f8b55198>, [immutabledict({})])
-conn = <sqlalchemy.pool._ConnectionFairy object at 0x7ff2f86ce860>
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7fd128fca240>, [immutabledict({})])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fd128fc2ac8>
 
     def _execute_context(
         self, dialect, constructor, statement, parameters, *args
@@ -2574,10 +2576,10 @@ conn = <sqlalchemy.pool._ConnectionFairy object at 0x7ff2f86ce860>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 cls = <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>
-dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7ff2f8bc1da0>
-connection = <sqlalchemy.engine.base.Connection object at 0x7ff2f8b55400>
-dbapi_connection = <sqlalchemy.pool._ConnectionFairy object at 0x7ff2f86ce860>
-compiled = <sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7ff2f8b55198>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd1291517b8>
+connection = <sqlalchemy.engine.base.Connection object at 0x7fd128fca2b0>
+dbapi_connection = <sqlalchemy.pool._ConnectionFairy object at 0x7fd128fc2ac8>
+compiled = <sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7fd128fca240>
 parameters = []
 
     @classmethod
@@ -2693,7 +2695,7 @@ parameters = []
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:729: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-.0 = <dict_keyiterator object at 0x7ff2f80b5d68>
+.0 = <dict_keyiterator object at 0x7fd128fc0ae8>
 
         (
             key,
@@ -2707,7 +2709,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/default.py:729: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-value = <MagicMock name='mock.pid_recid.object_uuid' id='140681526843656'>
+value = <MagicMock name='mock.pid_recid.object_uuid' id='140536314506936'>
 
     def process(value):
 >       return impl_processor(process_param(value, dialect))
@@ -2716,8 +2718,8 @@ value = <MagicMock name='mock.pid_recid.object_uuid' id='140681526843656'>
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 self = UUIDType()
-value = <MagicMock name='mock.pid_recid.object_uuid' id='140681526843656'>
-dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7ff2f8bc1da0>
+value = <MagicMock name='mock.pid_recid.object_uuid' id='140536314506936'>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd1291517b8>
 
     def process_bind_param(self, value, dialect):
         if value is None:
@@ -2729,7 +2731,7 @@ dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy_utils/types/uuid.py:68: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-value = <MagicMock name='mock.pid_recid.object_uuid' id='140681526843656'>
+value = <MagicMock name='mock.pid_recid.object_uuid' id='140536314506936'>
 
     @staticmethod
     def _coerce(value):
@@ -2743,9 +2745,9 @@ value = <MagicMock name='mock.pid_recid.object_uuid' id='140681526843656'>
 .tox/c1/lib/python3.6/site-packages/sqlalchemy_utils/types/uuid.py:59: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <[AttributeError("'UUID' object has no attribute 'int'",) raised in repr()] UUID object at 0x7ff2f8441828>
+self = <[AttributeError("'UUID' object has no attribute 'int'",) raised in repr()] UUID object at 0x7fd128fec3c8>
 hex = None
-bytes = <MagicMock name='mock.pid_recid.object_uuid' id='140681526843656'>
+bytes = <MagicMock name='mock.pid_recid.object_uuid' id='140536314506936'>
 bytes_le = None, fields = None, int = None, version = None
 
     def __init__(self, hex=None, bytes=None, bytes_le=None, fields=None,
@@ -2892,9 +2894,9 @@ weko_search_ui/utils.py:2132: in handle_check_doi
     value = uuid.UUID(bytes=value)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <[AttributeError("'UUID' object has no attribute 'int'",) raised in repr()] UUID object at 0x7ff2f8441828>
+self = <[AttributeError("'UUID' object has no attribute 'int'",) raised in repr()] UUID object at 0x7fd128fec3c8>
 hex = None
-bytes = <MagicMock name='mock.pid_recid.object_uuid' id='140681526843656'>
+bytes = <MagicMock name='mock.pid_recid.object_uuid' id='140536314506936'>
 bytes_le = None, fields = None, int = None, version = None
 
     def __init__(self, hex=None, bytes=None, bytes_le=None, fields=None,
@@ -2946,14 +2948,14 @@ E               sqlalchemy.exc.StatementError: (builtins.ValueError) bytes is no
 /usr/local/lib/python3.6/uuid.py:149: StatementError
 _________________________ test_handle_fill_system_item _________________________
 
-self = <sqlalchemy.engine.base.Connection object at 0x7ff2f14afa20>
-dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7ff2f19c9940>
+self = <sqlalchemy.engine.base.Connection object at 0x7fd123b71f98>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd1242fb908>
 constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
 statement = 'SELECT doi_identifier.id AS doi_identifier_id, doi_identifier.repository AS doi_identifier_repository, doi_identifier...updated_date AS doi_identifier_updated_date \nFROM doi_identifier \nWHERE doi_identifier.repository = %(repository_1)s'
 parameters = {'repository_1': 'Root Index'}
-args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7ff2f14af9b0>, [immutabledict({})])
-conn = <sqlalchemy.pool._ConnectionFairy object at 0x7ff2f19b3588>
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7ff2f14afbe0>
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7fd1240d38d0>, [immutabledict({})])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7fd123b71828>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fd123b7f1d0>
 
     def _execute_context(
         self, dialect, constructor, statement, parameters, *args
@@ -3042,11 +3044,11 @@ context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 o
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7ff2f19c9940>
-cursor = <cursor object at 0x7ff2f28f5900; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd1242fb908>
+cursor = <cursor object at 0x7fd125a3c520; closed: -1>
 statement = 'SELECT doi_identifier.id AS doi_identifier_id, doi_identifier.repository AS doi_identifier_repository, doi_identifier...updated_date AS doi_identifier_updated_date \nFROM doi_identifier \nWHERE doi_identifier.repository = %(repository_1)s'
 parameters = {'repository_1': 'Root Index'}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7ff2f14afbe0>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fd123b7f1d0>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -3060,7 +3062,7 @@ The above exception was the direct cause of the following exception:
 
 app = <Flask 'testapp'>
 test_list_records = [{'input': [{'$schema': 'https://localhost:8443/items/jsonschema/15', 'edit_mode': 'Keep', 'errors': None, 'feedback_m...e': 'Keep', 'errors': ['Please specify PubDate with YYYY-MM-DD.'], 'feedback_mail': ['wekosoftware@nii.ac.jp'], ...}]}]
-mocker = <pytest_mock.plugin.MockerFixture object at 0x7ff2f19fe080>
+mocker = <pytest_mock.plugin.MockerFixture object at 0x7fd1240c1630>
 
     def test_handle_fill_system_item(app, test_list_records, mocker):
     
@@ -3203,11 +3205,11 @@ weko_search_ui/utils.py:2212: in prepare_doi_setting
     cursor, statement, parameters, context
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7ff2f19c9940>
-cursor = <cursor object at 0x7ff2f28f5900; closed: -1>
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7fd1242fb908>
+cursor = <cursor object at 0x7fd125a3c520; closed: -1>
 statement = 'SELECT doi_identifier.id AS doi_identifier_id, doi_identifier.repository AS doi_identifier_repository, doi_identifier...updated_date AS doi_identifier_updated_date \nFROM doi_identifier \nWHERE doi_identifier.repository = %(repository_1)s'
 parameters = {'repository_1': 'Root Index'}
-context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7ff2f14afbe0>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7fd123b7f1d0>
 
     def do_execute(self, cursor, statement, parameters, context=None):
 >       cursor.execute(statement, parameters)
@@ -3222,8 +3224,8 @@ ___________________________ test_function_issue34535 ___________________________
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
 db_index = None
 db_itemtype = {'item_type': <ItemType 1>, 'item_type_mapping': <ItemTypeMapping 1>, 'item_type_name': <ItemTypeName 1>}
-location = <function location at 0x7ff30d0319d8>, db_oaischema = None
-mocker = <pytest_mock.plugin.MockerFixture object at 0x7ff271647160>
+location = <function location at 0x7fd13f724840>, db_oaischema = None
+mocker = <pytest_mock.plugin.MockerFixture object at 0x7fd0b5c2d080>
 
     def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,mocker):
         mocker.patch("weko_search_ui.utils.find_and_update_location_size")
@@ -3308,7 +3310,7 @@ ____________________________ test_search_acl[3-200] ____________________________
 app = <Flask 'testapp'>, client = <FlaskClient <Flask 'testapp'>>
 db_register2 = None, index_style = None
 users = [{'email': 'noroleuser@test.org', 'id': 9, 'obj': <User 9>}, {'email': 'contributor@test.org', 'id': 2, 'obj': <User 2...ail': 'comadmin@test.org', 'id': 3, 'obj': <User 3>}, {'email': 'generaluser@test.org', 'id': 6, 'obj': <User 5>}, ...]
-db_register = {'activity': <Activity 1>, 'flow_define': <FlowDefine 1>, 'indices': {'index': <Index 1>, 'index_private': <Index (transient 140679261490088)>}, 'item_type': <ItemType 1>, ...}
+db_register = {'activity': <Activity 1>, 'flow_define': <FlowDefine 1>, 'indices': {'index': <Index 1>, 'index_private': <Index (transient 140534014934264)>}, 'item_type': <ItemType 1>, ...}
 id = 3, status_code = 200
 
     @pytest.mark.parametrize(
@@ -3382,8 +3384,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7ff33944dc50; User>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7ff2717726d8>
+mapper = <Mapper at 0x7fd16ba776a0; User>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7fd0a00a7d30>
 attribute_names = {'active', 'confirmed_at', 'current_login_at', 'current_login_ip', 'email', 'id', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -3396,7 +3398,7 @@ attribute_names = {'active', 'confirmed_at', 'current_login_at', 'current_login_
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <User at 0x7ff2718945c0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <User at 0x7fd0a00a7fd0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 .tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ________________________ test_search_feedback_mail_list ________________________
@@ -3449,7 +3451,7 @@ E       elasticsearch.exceptions.RequestError: TransportError(400, 'search_phase
 
 .tox/c1/lib/python3.6/site-packages/elasticsearch/connection/base.py:125: RequestError
 ------------------------------ Captured log call -------------------------------
-WARNING  elasticsearch:base.py:97 GET http://elasticsearch:9200/test-weko/_search?preference=4a4d20d732cd9f789541e54dd9eb6af8&version=false [status:400 request:0.012s]
+WARNING  elasticsearch:base.py:97 GET http://elasticsearch:9200/test-weko/_search?preference=4a4d20d732cd9f789541e54dd9eb6af8&version=false [status:400 request:0.009s]
 =============================== warnings summary ===============================
 ../invenio-indexer/invenio_indexer/cli.py:162
   /code/modules/invenio-indexer/invenio_indexer/cli.py:162: DeprecationWarning: 'resultcallback' has been renamed to 'result_callback'. The old name will be removed in Click 8.1.
@@ -3462,6 +3464,14 @@ WARNING  elasticsearch:base.py:97 GET http://elasticsearch:9200/test-weko/_searc
 .tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35
   /code/modules/weko-search-ui/.tox/c1/lib/python3.6/site-packages/past/translation/__init__.py:35: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
     import imp
+
+.tox/c1/src/pypdf2/PyPDF2/generic.py:348
+  /code/modules/weko-search-ui/.tox/c1/src/pypdf2/PyPDF2/generic.py:348: DeprecationWarning: invalid escape sequence \c
+    b_("c") : b_("\c"),
+
+tests/test_api.py:158
+  /code/modules/weko-search-ui/tests/test_api.py:158: DeprecationWarning: invalid escape sequence \s
+    s = "\str"
 
 tests/test_admin.py: 494 warnings
 tests/test_api.py: 208 warnings
@@ -3561,7 +3571,7 @@ FAILED tests/test_views.py::test_search_acl[3-200] - sqlalchemy.orm.exc.Detac...
 FAILED tests/test_views.py::test_search_feedback_mail_list - elasticsearch.ex...
 ERROR tests/test_utils.py::test_handle_doi_required_check - sqlalchemy.exc.In...
 ERROR tests/test_utils.py::test_export_all - sqlalchemy.exc.IntegrityError: (...
-=== 21 failed, 353 passed, 987344 warnings, 2 errors in 33751.23s (9:22:31) ====
+=== 21 failed, 353 passed, 987346 warnings, 2 errors in 30625.94s (8:30:25) ====
 ERROR: InvocationError for command /code/modules/weko-search-ui/.tox/c1/bin/pytest --cov=weko_search_ui tests -v --cov-branch --cov-report=term --cov-report=xml --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp (exited with code 1)
 ___________________________________ summary ____________________________________
 ERROR:   c1: commands failed
