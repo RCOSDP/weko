@@ -349,9 +349,7 @@ def get_workflow_detail(workflow_id):
     """
     workflow_detail = WorkFlow().get_workflow_by_id(workflow_id)
     if workflow_detail:
-        workflow_detail=vars(workflow_detail)
-        workflow_detail["is_terms_only"]=is_terms_of_use_only(workflow_id)
-        return workflow_detail
+        return workflow_detail,is_terms_of_use_only(workflow_id)
     else:
         abort(404)
 
