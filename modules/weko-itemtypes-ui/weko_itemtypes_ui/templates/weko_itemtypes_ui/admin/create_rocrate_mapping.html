@@ -82,6 +82,9 @@
             <li name="layer-li">
               <div class="list-group-item inline-block">
                 <input type="text" name="layer-name" class="form-control">
+                <div name="layer-name-message" class="alert alert-danger error-message inline-block hide">
+                  <strong>{{_('Error')}} : </strong>{{_('Layer name is blank.')}}
+                </div>
               </div>
             </li>
           </ul>
@@ -113,6 +116,9 @@
                 <input type="radio" name="select-node">
               </div>
               <input type="text" name="node-name" class="form-control">
+              <div name="node-name-message" class="alert alert-danger error-message inline-block hide">
+                <strong>{{_('Error')}} : </strong>{{_('Node name is blank.')}}
+              </div>
               <div class="pull-right ten-pixel-left-margin">
                 <button type="button" class="btn btn-danger" data-action="del-node">
                   <span class="glyphicon glyphicon-remove"></span>
@@ -188,8 +194,8 @@
                     <option value="{{value}}">{{value}}</option>
                     {%- endfor -%}
                   </select>
-                  <div class="alert alert-danger sub_itemtype_text_warning hide" role="alert">
-                    <strong>{{_(Warning)}}:</strong>{{_('Item type name is blank.')}}
+                  <div name="rocrate-property-name-message" class="alert alert-danger error-message hide">
+                    <strong>{{_('Error')}} : </strong>{{_('RO-Crate property is blank.')}}
                   </div>
                 </div>
               </div>
@@ -228,6 +234,12 @@
                     {%- endfor -%}
                   </select>
                   <input type="number" class="form-control inline-block invisible" min="0">
+                  <div name="item-property-name-message" class="alert alert-danger error-message hide">
+                    <strong>{{_('Error')}} : </strong>{{_('Item property is blank.')}}
+                  </div>
+                  <div name="item-property-index-message" class="alert alert-danger error-message hide">
+                    <strong>{{_('Error')}} : </strong>{{_('Item property index is blank.')}}
+                  </div>
                   <label class="check block invisible"><input type="checkbox" name="check-list-index">{{_('Specify list index')}}</label>
                 </div>
               </div>
@@ -253,6 +265,9 @@
                       <option value="{{key}}">{{value['title']}}</option>
                       {%- endfor -%}
                     </select>
+                    <div name="item-property-name-message" class="alert alert-danger error-message hide">
+                      <strong>{{_('Error')}} : </strong>{{_('Item property is blank.')}}
+                    </div>
                   </div>
                   <div class="form-group block ten-pixel-right-margin">
                     <select name="select-item-property-lang" class="form-control">
@@ -261,6 +276,9 @@
                       <option value="{{key}}">{{value['title']}}</option>
                       {%- endfor -%}
                     </select>
+                    <div name="item-property-name-message" class="alert alert-danger error-message hide">
+                      <strong>{{_('Error')}} : </strong>{{_('Item property is blank.')}}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -282,6 +300,12 @@
               <option value=""></option>
             </select>
             <input type="number" class="form-control inline-block invisible" min="0">
+            <div name="item-property-name-message" class="alert alert-danger error-message hide">
+              <strong>{{_('Error')}} : </strong>{{_('Item property is blank.')}}
+            </div>
+            <div name="item-property-index-message" class="alert alert-danger error-message hide">
+              <strong>{{_('Error')}} : </strong>{{_('Item property index is blank.')}}
+            </div>
             <label class="check block invisible"><input type="checkbox" name="check-list-index">{{_('Specify list index')}}</label>
           </div>
         </div>
@@ -293,17 +317,23 @@
               <select name="select-item-property-value" class="form-control invisible">
                 <option value=""></option>
               </select>
+              <div name="item-property-name-message" class="alert alert-danger error-message hide">
+                <strong>{{_('Error')}} : </strong>{{_('Item property is blank.')}}
+              </div>
             </div>
             <div class="form-group block ten-pixel-right-margin">
               <select name="select-item-property-lang" class="form-control invisible">
                 <option value=""></option>
               </select>
+              <div name="item-property-name-message" class="alert alert-danger error-message hide">
+                <strong>{{_('Error')}} : </strong>{{_('Item property is blank.')}}
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Template: Mapping table row (for file property) -->
-        <div id="template-mapping-file-row">
+        <div id="template-mapping-row-file">
           <div name="mapping-row" class="row margin-h-none">
             <!-- RO-Crate property -->
             <div name="rocrate-property-cell" class="col-sm-3 padding-h-none">
@@ -315,8 +345,8 @@
                     <option value="{{value}}">{{value}}</option>
                     {%- endfor -%}
                   </select>
-                  <div class="alert alert-danger sub_itemtype_text_warning hide" role="alert">
-                    <strong>{{_(Warning)}}:</strong>{{_('Item type name is blank.')}}
+                  <div name="rocrate-property-name-message" class="alert alert-danger error-message hide">
+                    <strong>{{_('Error')}} : </strong>{{_('RO-Crate property is blank.')}}
                   </div>
                 </div>
               </div>
@@ -340,17 +370,20 @@
         </div>
 
         <!-- Template: Item property input area (for file property) -->
-        <div id="template-item-file-property-row">
+        <div id="template-item-property-row-file">
           <div name="item-property-row" class="row margin-h-none">
             <div name="item-property" class="row margin-h-none">
               <div class="col-sm-11 item-property">
                 <div name="item-property-field" class="form-group ten-pixel-right-margin">
-                  <select name="select-item-file-property" class="form-control inline-block">
+                  <select name="select-item-property-file" class="form-control inline-block">
                     <option value=""></option>
                     {%- for key, value in item_properties.items() -%}
                     <option value="{{key}}">{{value['title']}}</option>
                     {%- endfor -%}
                   </select>
+                  <div name="item-property-name-message" class="alert alert-danger error-message hide">
+                    <strong>{{_('Error')}} : </strong>{{_('Item property is blank.')}}
+                  </div>
                 </div>
               </div>
               <div class="col-sm-1">
@@ -365,11 +398,14 @@
         </div>
 
         <!-- Template: Sub item area (for file property) -->
-        <div id="template-item-file-property-field">
+        <div id="template-item-property-field-file">
           <div name="item-property-field" class="form-group ten-pixel-right-margin">
-            <select name="select-item-file-property" class="form-control inline-block">
+            <select name="select-item-property-file" class="form-control inline-block">
               <option value=""></option>
             </select>
+            <div name="item-property-name-message" class="alert alert-danger error-message hide">
+              <strong>{{_('Error')}} : </strong>{{_('Item property is blank.')}}
+            </div>
           </div>
         </div>
 
@@ -392,6 +428,9 @@
                 <div class="row col-sm-12 margin-h-none">
                   <div name="static-value" class="form-group">
                     <input type="text" class="form-control">
+                    <div name="static-value-message" class="alert alert-danger error-message hide">
+                      <strong>{{_('Error')}} : </strong>{{_('Static value is blank.')}}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -413,7 +452,7 @@
             <button type="button" class="btn btn-success" data-action="add-mapping" data-type="static" disabled>
               <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add static value')}}
             </button>
-            <button type="button" class="btn btn-success ten-pixel-left-margin" data-action="add-mapping" data-type="metadata" disabled>
+            <button type="button" class="btn btn-success ten-pixel-left-margin" data-action="add-mapping" data-type="item" disabled>
               <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add')}}
             </button>
           </div>

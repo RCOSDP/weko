@@ -10,7 +10,7 @@ $(() => {
     rocrate_mapping: null,
     node_mapping: {},
     node_index_counter: 0,
-  }
+  };
   const item_properties_str = $('#item-properties').text();
   page_global.item_properties = JSON.parse(item_properties_str);
   const rocrate_mapping_str = $('#rocrate-mapping').text();
@@ -52,7 +52,7 @@ $(() => {
 
   $('#message-modal').on('hide.bs.modal', (ev) => {
     $('#select-item-type').val(page_global.src_mapping_name);
-  })
+  });
 
   $('#btn-confirm').on('click', (ev) => {
     window.location.href = page_global.url + '/' + page_global.dst_mapping_name;
@@ -82,7 +82,7 @@ $(() => {
   function addLayer() {
     const template = $('#template-layer-name :first').clone(true);
     $('li[name="layer-li"]').last().append(template);
-  }
+  };
 
   $('.arrow').on('click', (ev) => {
     $(ev.target).nextAll('.nested').toggleClass('active');
@@ -90,6 +90,13 @@ $(() => {
   });
 
   $('input[name="select-node"]').change((ev) => {
+    if (!checkMapping()) {
+      const editing_node_id = $('#editing-node').val();
+      const editing_node_li = $('#tree-base').find(`li[data-id="${editing_node_id}"]`);
+      editing_node_li.find('input[type="radio"]').first().prop('checked', true);
+      return;
+    }
+
     // Save mapping
     saveCurrentMapping();
     initCurrentMapping();
@@ -184,7 +191,7 @@ $(() => {
       item_property = item_property.slice(1);
     }
     return item_property;
-  }
+  };
 
   function getItemPropertyValueLang(item_property_row) {
     let item_property_value = '';
@@ -210,7 +217,7 @@ $(() => {
       value: item_property_value,
       lang: item_property_lang,
     };
-  }
+  };
 
   function getItemPropertyValueFile(item_property_row) {
     let item_property = '';
@@ -223,14 +230,14 @@ $(() => {
       item_property = item_property.slice(1);
     }
     return item_property;
-  }
+  };
 
   function getItemPropertyValueStatic(item_property_row) {
     const item_property = item_property_row.find('input[type="text"]').val();
     return {
       static_value: item_property,
     }
-  }
+  };
 
   function initCurrentMapping() {
     $('#mapping-table-body').empty();
@@ -281,39 +288,45 @@ $(() => {
     }
   };
 
-  function setItemProperty(item_property_cell, property_key) {
+  function setItemProperty(item_property_cell, item_property) {
     // Add item property input area
     const add_button = item_property_cell.find('button[data-action="add-item-property"]');
     const added_property = addItemProperty(add_button);
 
     const editing_node = $('#editing-node').val();
     if (editing_node == 'file') {
-      setItemPropertyValueFile(item_property_cell, property_key);
+      setItemPropertyValueFile(item_property_cell, item_property);
       return;
     }
 
-    if (typeof property_key == 'string') {
-      setItemPropertyValue(item_property_cell, property_key);
+    if (typeof item_property == 'string') {
+      setItemPropertyValue(item_property_cell, item_property);
       return;
     }
     else {
-      setItemPropertyValueLang(item_property_cell, property_key, added_property);
+      added_property.find('input[name="check-language"]').prop('checked', true);
+      added_property.find('div[name="item-property"]').addClass('hide');
+      added_property.find('div[name="item-property-with-lang"]').removeClass('hide');
+      setItemPropertyValueLang(item_property_cell, item_property);
       return;
     }
-  }
+  };
 
-  function setItemPropertyValue(item_property_cell, property_key) {
-    const keys = splitPropertyKey(property_key);
-    const length = keys.length;
+  function setItemPropertyValue(item_property_cell, item_property) {
+    if (item_property == '') {
+      return;
+    }
+
+    const field_keys = splitPropertyKey(item_property);
     let item_properties = page_global.item_properties;
-    for (let ii = 0; ii < length; ii++) {
+    for (let ii = 0; ii < field_keys.length; ii++) {
       let field = null;
       if (ii == 0) {
         field = item_property_cell.find('div[name="item-property-field"]').last();
-        item_properties = item_properties[keys[ii].key];
+        item_properties = item_properties[field_keys[ii].key];
       }
       else {
-        // Add input field
+        // Add field
         field = $('#template-item-property-field :first').clone(true);
         const last_field = item_property_cell.find('div[name="item-property-field"]').last();
         last_field.after(field);
@@ -323,89 +336,92 @@ $(() => {
         for (let [key, value] of Object.entries(sub_items)) {
           select.append($('<option>').html(value['title']).val(key));
         }
-        item_properties = sub_items[keys[ii].key];
+        item_properties = sub_items[field_keys[ii].key];
       }
 
-      field.find('select').val(keys[ii].key);
+      field.find('select').val(field_keys[ii].key);
       if (item_properties['type'] == 'array') {
         field.find('label').removeClass('invisible');
       }
-      if (keys[ii].index != null) {
+      if (field_keys[ii].index != null) {
         field.find('input[type="checkbox"]').prop('checked', true);
         const index_text = field.find('input[type="number"]');
         index_text.removeClass('invisible');
-        index_text.val(keys[ii].index);
+        index_text.val(field_keys[ii].index);
       }
     }
-  }
+  };
 
-  function setItemPropertyValueLang(item_property_cell, property_key, added_property) {
-    added_property.find('input[name="check-language"]').prop('checked', true);
-    added_property.find('div[name="item-property"]').addClass('hide');
-    added_property.find('div[name="item-property-with-lang"]').removeClass('hide');
+  function setItemPropertyValueLang(item_property_cell, item_property) {
+    if (item_property == '') {
+      return;
+    }
 
-    const value_keys = splitPropertyKey(property_key['value'])
-    const lang_keys = splitPropertyKey(property_key['lang'])
-    const length = Math.max(value_keys.length, lang_keys.length);
+    const field_keys_value = splitPropertyKey(item_property['value'])
+    const field_keys_lang = splitPropertyKey(item_property['lang'])
+    const length = Math.max(field_keys_value.length, field_keys_lang.length);
     let item_properties_value = page_global.item_properties;
     let item_properties_lang = page_global.item_properties;
     for (let ii = 0; ii < length; ii++) {
       let field = null;
       if (ii == 0) {
         field = item_property_cell.find('div[name="item-property-field-with-lang"]').last();
-        item_properties_value = item_properties_value[value_keys[ii].key];
-        item_properties_lang = item_properties_lang[lang_keys[ii].key];
+        item_properties_value = item_properties_value[field_keys_value[ii].key];
+        item_properties_lang = item_properties_lang[field_keys_lang[ii].key];
       }
       else {
-        // Add input field
+        // Add field
         field = $('#template-item-property-field-with-lang :first').clone(true);
         const last_field = item_property_cell.find('div[name="item-property-field-with-lang"]').last();
         last_field.after(field);
 
-        if (value_keys.length > ii) {
+        if (field_keys_value.length > ii) {
           const sub_items = item_properties_value['properties'];
           const select = field.find('select[name="select-item-property-value"]');
           for (let [key, value] of Object.entries(sub_items)) {
             select.append($('<option>').html(value['title']).val(key));
           }
-          item_properties_value = sub_items[value_keys[ii].key];
+          item_properties_value = sub_items[field_keys_value[ii].key];
         }
-        if (lang_keys.length > ii) {
+        if (field_keys_lang.length > ii) {
           const sub_items = item_properties_lang['properties'];
           const select = field.find('select[name="select-item-property-lang"]');
           for (let [key, value] of Object.entries(sub_items)) {
             select.append($('<option>').html(value['title']).val(key));
           }
-          item_properties_lang = sub_items[lang_keys[ii].key];
+          item_properties_lang = sub_items[field_keys_lang[ii].key];
         }
       }
 
-      if (value_keys.length > ii) {
+      if (field_keys_value.length > ii) {
         const select = field.find('select[name="select-item-property-value"]');
-        select.val(value_keys[ii].key);
+        select.val(field_keys_value[ii].key);
         select.removeClass('invisible');
       }
-      if (lang_keys.length > ii) {
+      if (field_keys_lang.length > ii) {
         const select = field.find('select[name="select-item-property-lang"]');
-        select.val(lang_keys[ii].key);
+        select.val(field_keys_lang[ii].key);
         select.removeClass('invisible');
       }
     }
-  }
+  };
 
-  function setItemPropertyValueFile(item_property_cell, property_key) {
-    const keys = splitPropertyKey(property_key);
-    const length = keys.length;
+  function setItemPropertyValueFile(item_property_cell, item_property) {
+    if (item_property == '') {
+      return;
+    }
+
+    const field_keys = splitPropertyKey(item_property);
     let item_properties = page_global.item_properties;
-    for (let ii = 0; ii < length; ii++) {
+    for (let ii = 0; ii < field_keys.length; ii++) {
       let field = null;
       if (ii == 0) {
         field = item_property_cell.find('div[name="item-property-field"]').last();
-        item_properties = item_properties[keys[ii].key];
+        item_properties = item_properties[field_keys[ii].key];
       }
       else {
         // Add input field
-        field = $('#template-item-file-property-field :first').clone(true);
+        field = $('#template-item-property-field-file :first').clone(true);
         const last_field = item_property_cell.find('div[name="item-property-field"]').last();
         last_field.after(field);
 
@@ -414,15 +430,19 @@ $(() => {
         for (let [key, value] of Object.entries(sub_items)) {
           select.append($('<option>').html(value['title']).val(key));
         }
-        item_properties = sub_items[keys[ii].key];
+        item_properties = sub_items[field_keys[ii].key];
       }
-      field.find('select').val(keys[ii].key);
+      field.find('select').val(field_keys[ii].key);
     }
-  }
+  };
 
-  function setItemPropertyValueStatic(item_property_cell, property_key) {
-    item_property_cell.find('input[type="text"]').val(property_key['static_value']);
-  }
+  function setItemPropertyValueStatic(item_property_cell, item_property) {
+    if (item_property == '') {
+      return;
+    }
+
+    item_property_cell.find('input[type="text"]').val(item_property['static_value']);
+  };
 
   function splitPropertyKey(property_key) {
     return property_key.split('.').map((value) => {
@@ -442,7 +462,7 @@ $(() => {
         index: index,
       };
     });
-  }
+  };
 
   $('button[type="button"]').on('click', (ev) => {
     page_global.hasEdit = true;
@@ -460,7 +480,7 @@ $(() => {
         return;
       }
 
-      if (target.dataset.type == 'metadata') {
+      if (target.dataset.type == 'item') {
         // Add mapping
         const added_row = addMapping();
 
@@ -494,18 +514,18 @@ $(() => {
     page_global.node_index_counter = page_global.node_index_counter + 1;
 
     return template;
-  }
+  };
 
   function delNode(target) {
     // Delete node
     $(target).closest('li').remove();
-  }
+  };
 
   function addMapping() {
     let template = null;
     const editing_node = $('#editing-node').val();
     if (editing_node == 'file') {
-      template = $('#template-mapping-file-row :first').clone(true);
+      template = $('#template-mapping-row-file :first').clone(true);
     }
     else {
       template = $('#template-mapping-row :first').clone(true);
@@ -516,7 +536,7 @@ $(() => {
     $('#mapping-table-body').append('<hr>');
 
     return template;
-  }
+  };
 
   function addMappingStatic() {
     const template = $('#template-mapping-static-row :first').clone(true);
@@ -528,8 +548,8 @@ $(() => {
     // add property selectbox
     const editing_node = $('#editing-node').val();
     if (editing_node == 'file') {
-      const select = $('#template-mapping-file-row').find('.form-group').clone(true);
-      $('div[name="rocrate-property"]').append(select);
+      const select = $('#template-mapping-row-file').find('.form-group').clone(true);
+      template.find('div[name="rocrate-property"]').append(select);
     }
     else {
       const select = $('#template-mapping-row').find('.form-group').clone(true);
@@ -544,13 +564,13 @@ $(() => {
     const table_row = $(target).closest('div[name="mapping-row"]');
     table_row.next().remove();  // remove hr
     table_row.remove();
-  }
+  };
 
   function addItemProperty(target) {
     let template = null;
     const editing_node = $('#editing-node').val();
     if (editing_node == 'file') {
-      template = $('#template-item-file-property-row :first').clone(true);
+      template = $('#template-item-property-row-file :first').clone(true);
     }
     else {
       template = $('#template-item-property-row :first').clone(true);
@@ -559,13 +579,33 @@ $(() => {
     // Add item property
     $(target).closest('div[name="button-row"]').before(template);
 
+    // Disable delete button if number of properties is 1
+    const item_property_rows = $(target).closest('div[name="item-property-cell"]').find('div[name="item-property-row"]');
+    if (item_property_rows.length > 1) {
+      item_property_rows.find('button[data-action="del-item-property"]').each((_, v) => $(v).prop('disabled', false));
+    }
+    else {
+      item_property_rows.find('button[data-action="del-item-property"]').each((_, v) => $(v).prop('disabled', true));
+    }
+
     return template;
-  }
+  };
 
   function delItemProperty(target) {
+    const item_property_cell = $(target).closest('div[name="item-property-cell"]');
+
     // Remove item property
     $(target).closest('div[name="item-property-row"]').remove();
-  }
+
+    // Disable delete button if number of properties is 1
+    const item_property_rows = item_property_cell.find('div[name="item-property-row"]');
+    if (item_property_rows.length > 1) {
+      item_property_rows.find('button[data-action="del-item-property"]').each((_, v) => $(v).prop('disabled', false));
+    }
+    else {
+      item_property_rows.find('button[data-action="del-item-property"]').each((_, v) => $(v).prop('disabled', true));
+    }
+  };
 
   $('input[name="check-language"]').on('click', (ev) => {
     const check_value = $(ev.target).is(':checked');
@@ -583,7 +623,7 @@ $(() => {
   });
 
   $('input[name="check-list-index"]').on('click', (ev) => {
-    const index_text = $(ev.target).parent().prev();
+    const index_text = $(ev.target).closest('div[name="item-property-field"]').find('input[type="number"]');
     index_text.toggleClass('invisible');
   });
 
@@ -673,7 +713,7 @@ $(() => {
     }
   });
 
-  $('select[name="select-item-file-property"]').change((ev) => {
+  $('select[name="select-item-property-file"]').change((ev) => {
     page_global.hasEdit = true;
 
     // Init field
@@ -691,7 +731,7 @@ $(() => {
     // Add child property select box
     if ('properties' in selected_prop) {
       // Create child select box
-      const template = $('#template-item-file-property-field :first').clone(true);
+      const template = $('#template-item-property-field-file :first').clone(true);
       field.after(template);
 
       // Set child property
@@ -750,7 +790,7 @@ $(() => {
           valid_num_value = ii;
           find = true;
         }
-        select.addClass('invisible')
+        select.addClass('invisible');
       }
     }
 
@@ -766,7 +806,7 @@ $(() => {
           valid_num_lang = ii;
           find = true;
         }
-        select.addClass('invisible')
+        select.addClass('invisible');
       }
     }
 
@@ -776,9 +816,13 @@ $(() => {
       .parent()
       .find('div[name="item-property-field-with-lang"]');
     input_fields.eq(valid_num - 1).nextAll().remove();
-  }
+  };
 
   $('#mapping-submit').on('click', (ev) => {
+    if (!checkInput()) {
+      return;
+    }
+
     saveCurrentMapping();
     const rocrate_mapping = buildMappingData();
     const data = {
@@ -787,6 +831,114 @@ $(() => {
     };
     send(page_global.url, data);
   });
+
+  function checkInput() {
+    let check_result = true;
+    const l_check = checkLayer();
+    if (!l_check) {
+      check_result = false;
+    }
+
+    const ts_check = checkTreeStructure();
+    if (!ts_check) {
+      check_result = false;
+    }
+
+    const m_check = checkMapping();
+    if (!m_check) {
+      check_result = false;
+    }
+
+    return check_result;
+  };
+
+  function checkLayer() {
+    // Init error message
+    $('#layer-base').find('div[name="layer-name-message"]').addClass('hide');
+
+    let check_result = true;
+    $('#layer-base').find('input[name="layer-name"]').each((_, value) => {
+      if ($(value).val() == '') {
+        $(value).next().removeClass('hide');
+        check_result = false;
+      }
+    });
+    return check_result;
+  };
+
+  function checkTreeStructure() {
+    // Init error message
+    $('#tree-base').find('div[name="node-name-message"]').addClass('hide');
+
+    let check_result = true;
+    $('#tree-base').find('input[name="node-name"]').each((_, value) => {
+      if ($(value).val() == '') {
+        $(value).next().removeClass('hide');
+        check_result = false;
+      }
+    });
+    return check_result;
+  };
+
+  function checkMapping() {
+    // Init error message
+    $('#mapping-table-body').find('div[name="rocrate-property-name-message"]').addClass('hide');
+    $('#mapping-table-body').find('div[name="item-property-name-message"]').addClass('hide');
+    $('#mapping-table-body').find('div[name="item-property-index-message"]').addClass('hide');
+    $('#mapping-table-body').find('div[name="static-value-message"]').addClass('hide');
+
+    let check_result = true;
+    $('#mapping-table-body').find('select[name="select-rocrate-property"]').each((_, value) => {
+      if ($(value).val() == '') {
+        $(value).next().removeClass('hide');
+        check_result = false;
+      }
+    });
+
+    $('#mapping-table-body').find('div[name="item-property"]').each((_, item_property) => {
+      if ($(item_property).hasClass('hide')) {
+        return;
+      }
+      $(item_property).find('div[name="item-property-field"]').each((_, item_property_field) => {
+        const select = $(item_property_field).find('select');
+        if ($(select).val() == '') {
+          $(item_property_field).find('div[name="item-property-name-message"]').removeClass('hide');
+          check_result = false;
+        }
+        const check = $(item_property_field).find('input[type="checkbox"]');
+        if (check.is(':checked')) {
+          const input = $(item_property_field).find('input[type="number"]');
+          if (input.val() == '') {
+            $(item_property_field).find('div[name="item-property-index-message"]').removeClass('hide');
+            check_result = false;
+          }
+        }
+      });
+    });
+
+    $('#mapping-table-body').find('div[name="item-property-with-lang"]').each((_, item_property) => {
+      if ($(item_property).hasClass('hide')) {
+        return;
+      }
+      $(item_property).find('select').each((_, select) => {
+        if ($(select).hasClass('invisible')) {
+          return;
+        }
+        if ($(select).val() == '') {
+          $(select).next().removeClass('hide');
+          check_result = false;
+        }
+      });
+    });
+
+    $('#mapping-table-body').find('div[name="static-value"]').each((_, static_value) => {
+      if ($(static_value).find('input').val() == '') {
+        $(static_value).find('div[name="static-value-message"]').removeClass('hide');
+      }
+    });
+
+    return check_result;
+  };
 
   function buildMappingData() {
     const rocrate_mapping = {};
@@ -857,7 +1009,7 @@ $(() => {
         $('#message-modal').modal('show');
       }
     });
-  }
+  };
 
   function createNode(node_mapping, node_li) {
     // Set node name

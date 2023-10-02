@@ -542,3 +542,27 @@ msgstr "リストの番号を指定する"
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
 msgid "Value"
 msgstr "値"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Layer name is blank."
+msgstr "階層名が空白です"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Node name is blank."
+msgstr "ノード名が空白です"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "RO-Crate property is blank."
+msgstr "RO-Crateプロパティ名が空白です"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Item property is blank."
+msgstr "アイテムプロパティ名が空白です"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Item property index is blank."
+msgstr "アイテムプロパティのインデックスが空白です"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Static value is blank."
+msgstr "固定値が空白です"

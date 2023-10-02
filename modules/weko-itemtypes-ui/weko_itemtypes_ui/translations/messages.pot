@@ -435,3 +435,27 @@ msgstr ""
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
 msgid "Value"
 msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Layer name is blank."
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Node name is blank."
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "RO-Crate property is blank."
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Item property is blank."
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Item property index is blank."
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Static value is blank."
+msgstr ""
