@@ -744,17 +744,7 @@ class ItemTypeRocrateMappingView(BaseView):
                 current_app.logger.info(item_type_names[0].item_type[0])
                 return redirect(url_for('itemtypesrocratemapping.index', item_type_id=item_type_names[0].item_type[0].id))
 
-            is_system_admin = False
-            sys_admin = current_app.config['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
-            with db.session.no_autoflush:
-                for role in list(current_user.roles or []):
-                    if role.name == sys_admin:
-                        is_system_admin = True
-                        break
-
-            lang_code = session.get('selected_language', 'en')
             item_properties = self._get_item_properties(item_type)
-
             record = RocrateMapping.query.filter_by(item_type_id=item_type_id).one_or_none()
             rocrate_mapping = record.mapping if record is not None else ''
 
@@ -764,14 +754,12 @@ class ItemTypeRocrateMappingView(BaseView):
 
         return self.render(
             current_app.config['WEKO_ITEMTYPES_UI_ADMIN_ROCRATE_MAPPING_TEMPLATE'],
-            item_type_names=item_type_names,
             item_type_id=item_type_id,
+            item_type_names=item_type_names,
             item_properties=item_properties,
+            rocrate_mapping=rocrate_mapping,
             rocrate_dataset_properties=current_app.config['WEKO_ITEMTYPES_UI_DATASET_PROPERTIES'],
             rocrate_file_properties=current_app.config['WEKO_ITEMTYPES_UI_FILE_PROPERTIES'],
-            rocrate_mapping=rocrate_mapping,
-            is_system_admin=is_system_admin,
-            lang_code=lang_code
         )
 
     @expose('', methods=['POST'])

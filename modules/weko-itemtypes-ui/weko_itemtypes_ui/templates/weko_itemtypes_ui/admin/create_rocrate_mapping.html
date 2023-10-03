@@ -41,10 +41,10 @@
 {%- endblock javascript %}
 
 {%- block body %}
-<input id="lang-code" type="hidden" value="{{lang_code}}" />
-<input id="is-system-admin" type="hidden" value="{{is_system_admin}}" />
 <pre class="hide" id="item-properties">{{item_properties|tojson}}</pre>
 <pre class="hide" id="rocrate-mapping">{{rocrate_mapping|tojson}}</pre>
+<pre class="hide" id="confirm-title">{{_('Confirmation')}}</pre>
+<pre class="hide" id="confirm-body">{{_('Would you like to cancel your changes?')}}</pre>
 
 <div id="alerts"></div>
 <div id="errors"></div>

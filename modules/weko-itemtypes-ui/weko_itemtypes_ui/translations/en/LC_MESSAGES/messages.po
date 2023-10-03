@@ -517,3 +517,7 @@ msgstr ""
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
 msgid "Static value is blank."
 msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Would you like to cancel your changes?"
+msgstr ""

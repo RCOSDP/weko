@@ -19,8 +19,10 @@ $(() => {
   $('#select-item-type').change((ev) => {
     page_global.dst_mapping_name = $(ev.target).val();
     if (page_global.hasEdit) {
-      $('.modal-title').text('Present');
-      $('.modal-body').text('Would you like to cancel your changes?');
+      const title = $('#confirm-title').text();
+      const body = $('#confirm-body').text();
+      $('.modal-title').text(title);
+      $('.modal-body').text(body);
       $('#btn-submit').addClass('hide');
       $('#btn-confirm').removeClass('hide');
       $('#message-modal').modal('show');
@@ -914,6 +916,7 @@ $(() => {
     $('#mapping-table-body').find('div[name="static-value"]').each((_, static_value) => {
       if ($(static_value).find('input').val() == '') {
         $(static_value).find('div[name="static-value-message"]').removeClass('hide');
+        check_result = false;
       }
     });
 

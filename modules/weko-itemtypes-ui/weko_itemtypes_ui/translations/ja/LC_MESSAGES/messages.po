@@ -566,3 +566,7 @@ msgstr "アイテムプロパティのインデックスが空白です"
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
 msgid "Static value is blank."
 msgstr "固定値が空白です"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Would you like to cancel your changes?"
+msgstr "変更を破棄しますか？"
