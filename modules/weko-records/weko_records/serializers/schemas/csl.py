@@ -93,16 +93,10 @@ def get_data_from_mapping(key, obj):
             if cur_lang in lang_list:
                 return data_list[cur_lang]
             elif 'en' in lang_list:
-                if cur_lang == 'ja':
-                    return ''
-                else:
-                    return data_list['en']
+                return data_list['en']
             elif len(lang_list) > 0:
-                if cur_lang != 'en' or \
-                        (len(lang_list) == 1 and lang_list[0] == 'None Language'):
-                    return data_list[lang_list[0]]
-                else:
-                    return ''
+                return data_list[lang_list[0]]
+            return ''
         if isinstance(data_list, list):
             return_list = []
             for v in data_list:
