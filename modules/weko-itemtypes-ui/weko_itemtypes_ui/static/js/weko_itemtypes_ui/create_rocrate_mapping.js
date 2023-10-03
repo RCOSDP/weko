@@ -16,26 +16,6 @@ $(() => {
   const rocrate_mapping_str = $('#rocrate-mapping').text();
   page_global.rocrate_mapping = JSON.parse(rocrate_mapping_str);
 
-  function addAlert(message) {
-    $('#alerts').append(
-      '<div id="alert-style" class="alert alert-light">' +
-      '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
-      message +
-      '</div>');
-  };
-
-  function addError(message, err_items) {
-    message += '<br/>'
-    err_items.forEach((items) => {
-      message += '[' + items[0] + ' && ' + items[1] + ']' + '<br/>';
-    })
-    $('#errors').append(
-      '<div class="alert alert-danger alert-dismissable">' +
-      '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>' +
-      message +
-      '</div>');
-  };
-
   $('#select-item-type').change((ev) => {
     page_global.dst_mapping_name = $(ev.target).val();
     if (page_global.hasEdit) {
@@ -1005,10 +985,26 @@ $(() => {
         addAlert(data.msg);
       },
       error: (textStatus, errorThrown) => {
-        $('.modal-body').text('Error: ' + JSON.stringify(textStatus));
-        $('#message-modal').modal('show');
+        $('html,body').scrollTop(0);
+        addError('Error: ' + textStatus.statusText);
       }
     });
+  };
+
+  function addAlert(message) {
+    $('#alerts').append(
+      '<div id="alert-style" class="alert">' +
+      '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+      message +
+      '</div>');
+  };
+
+  function addError(message) {
+    $('#errors').append(
+      '<div class="alert alert-danger">' +
+      '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+      message +
+      '</div>');
   };
 
   function createNode(node_mapping, node_li) {

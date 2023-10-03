@@ -57,9 +57,9 @@
 
       <div class="form-inline">
         <select id="select-item-type" class="form-control">
-          {%- for list in lists -%}
-          <option value="{{list.item_type.0.id}}" {% if list.item_type.0.id==item_type_id %}{{"selected"}}{% endif %}>
-            {{list.name}}({{list.item_type.0.tag}})
+          {%- for item_type_name in item_type_names -%}
+          <option value="{{item_type_name.item_type.0.id}}" {% if item_type_name.item_type.0.id==item_type_id %}{{"selected"}}{% endif %}>
+            {{item_type_name.name}}({{item_type_name.item_type.0.tag}})
           </option>
           {%- endfor -%}
         </select>

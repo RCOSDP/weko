@@ -97,7 +97,7 @@ class WekoLogin(ContentNegotiatedMethodView):
         super(WekoLogin, self).__init__(*args, **kwargs)
 
     @limiter.limit('')
-    def post(self, *args, **kwargs):
+    def post(self, **kwargs):
         """
         Login as weko user.
 
@@ -112,7 +112,7 @@ class WekoLogin(ContentNegotiatedMethodView):
         else:
             raise VersionNotFoundRESTError()
 
-    def post_v1(self, *args, **kwargs):
+    def post_v1(self, **kwargs):
 
         data = request.get_json()
         email = data['email']

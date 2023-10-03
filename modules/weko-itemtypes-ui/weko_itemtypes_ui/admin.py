@@ -734,15 +734,15 @@ class ItemTypeRocrateMappingView(BaseView):
         """
         current_app.logger.error('ItemTypeID:{}'.format(item_type_id))
         try:
-            lists = ItemTypes.get_latest()  # ItemTypes.get_all()
-            if lists is None or len(lists) == 0:
+            item_type_names = ItemTypes.get_latest()  # ItemTypes.get_all()
+            if item_type_names is None or len(item_type_names) == 0:
                 return self.render(
                     current_app.config['WEKO_ITEMTYPES_UI_ADMIN_ERROR_TEMPLATE']
                 )
             item_type = ItemTypes.get_by_id(item_type_id)
             if item_type is None:
-                current_app.logger.info(lists[0].item_type[0])
-                return redirect(url_for('itemtypesrocratemapping.index', item_type_id=lists[0].item_type[0].id))
+                current_app.logger.info(item_type_names[0].item_type[0])
+                return redirect(url_for('itemtypesrocratemapping.index', item_type_id=item_type_names[0].item_type[0].id))
 
             is_system_admin = False
             sys_admin = current_app.config['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
@@ -758,20 +758,21 @@ class ItemTypeRocrateMappingView(BaseView):
             record = RocrateMapping.query.filter_by(item_type_id=item_type_id).one_or_none()
             rocrate_mapping = record.mapping if record is not None else ''
 
-            return self.render(
-                current_app.config['WEKO_ITEMTYPES_UI_ADMIN_ROCRATE_MAPPING_TEMPLATE'],
-                lists=lists,
-                item_type_id=item_type_id,
-                item_properties=item_properties,
-                rocrate_dataset_properties=current_app.config['WEKO_ITEMTYPES_UI_DATASET_PROPERTIES'],
-                rocrate_file_properties=current_app.config['WEKO_ITEMTYPES_UI_FILE_PROPERTIES'],
-                rocrate_mapping=rocrate_mapping,
-                is_system_admin=is_system_admin,
-                lang_code=lang_code
-            )
         except BaseException:
             current_app.logger.error('Unexpected error: {}'.format(sys.exc_info()))
-        return abort(400)
+            abort(500)
+
+        return self.render(
+            current_app.config['WEKO_ITEMTYPES_UI_ADMIN_ROCRATE_MAPPING_TEMPLATE'],
+            item_type_names=item_type_names,
+            item_type_id=item_type_id,
+            item_properties=item_properties,
+            rocrate_dataset_properties=current_app.config['WEKO_ITEMTYPES_UI_DATASET_PROPERTIES'],
+            rocrate_file_properties=current_app.config['WEKO_ITEMTYPES_UI_FILE_PROPERTIES'],
+            rocrate_mapping=rocrate_mapping,
+            is_system_admin=is_system_admin,
+            lang_code=lang_code
+        )
 
     @expose('', methods=['POST'])
     @item_type_permission.require(http_exception=403)
@@ -779,7 +780,7 @@ class ItemTypeRocrateMappingView(BaseView):
         """Register an item type mapping."""
         if request.headers['Content-Type'] != 'application/json':
             current_app.logger.debug(request.headers['Content-Type'])
-            return jsonify(msg=_('Header Error'))
+            abort(400)
 
         try:
             data = request.get_json()
@@ -800,7 +801,8 @@ class ItemTypeRocrateMappingView(BaseView):
         except BaseException:
             db.session.rollback()
             current_app.logger.error('Unexpected error: {}'.format(sys.exc_info()))
-            return jsonify(msg=_('Unexpected error occurred.'))
+            abort(500)
+
         return jsonify(msg=_('Successfully saved new mapping.'))
 
     def _get_item_properties(self, item_type):
