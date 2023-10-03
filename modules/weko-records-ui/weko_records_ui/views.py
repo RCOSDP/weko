@@ -841,7 +841,7 @@ def soft_delete(recid):
         if not has_update_version_role(current_user):
             abort(403)
         soft_delete_imp(recid)
-        db.seesion.commit()
+        db.session.commit()
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
     except Exception as ex:
         db.session.rollback()

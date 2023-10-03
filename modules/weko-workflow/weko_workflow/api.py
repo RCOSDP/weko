@@ -2147,7 +2147,7 @@ class WorkActivity(object):
             db.session.commit()
             return db_activity
         except NoResultFound as ex:
-            db.seesion.rollback()
+            db.session.rollback()
             current_app.logger.exception(str(ex))
             return None
         except Exception as ex:

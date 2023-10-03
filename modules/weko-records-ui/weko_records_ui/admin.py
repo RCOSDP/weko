@@ -133,6 +133,14 @@ class PdfCoverPageSettingView(BaseView):
             except Exception as e:
                 db.session.rollback()
                 current_app.logger.error(e)
+                return self.render(
+                    current_app.config["WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE"],
+                    avail='',
+                    header_display_type='',
+                    header_output_string='',
+                    header_output_image='',
+                    header_display_position=''
+                )
             record = PDFCoverPageSettings.find(1)
             return self.render(
                 current_app.config["WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE"],
