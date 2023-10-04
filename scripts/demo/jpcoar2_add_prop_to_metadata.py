@@ -62,80 +62,83 @@ def update_full_or_simple_item_type(
         prop_option: dict = None,
         ) -> None:
     
-    if metadata_title \
-    and prop_schema_properties \
-    and prop_schema_type \
-    and prop_form \
-    and prop_mapping \
-    and item_key:
-        property_schema = {
-            "items": prop_schema_properties,
-            "maxItems": prop_max_items,
-            "minItems": 0,
-            "title": metadata_title,
-            "type": prop_schema_type,
-        }
+    if item_type.schema["properties"].get(item_key):
+        print(f"{metadata_title} already added to {item_type.item_type_name.name}.")
+    else:
+        if metadata_title \
+        and prop_schema_properties \
+        and prop_schema_type \
+        and prop_form \
+        and prop_mapping \
+        and item_key:
+            property_schema = {
+                "items": prop_schema_properties,
+                "maxItems": prop_max_items,
+                "minItems": 0,
+                "title": metadata_title,
+                "type": prop_schema_type,
+            }
 
-        property_form = {
-            "add": "New",
-            "items": prop_form,
-            "key": item_key,
-            "style": {"add": "btn-success"},
-            "title": metadata_title,
-            "title_i18n": {"en": prop_title_i18n_en, "ja": prop_title_i18n_ja},
-        }
+            property_form = {
+                "add": "New",
+                "items": prop_form,
+                "key": item_key,
+                "style": {"add": "btn-success"},
+                "title": metadata_title,
+                "title_i18n": {"en": prop_title_i18n_en, "ja": prop_title_i18n_ja},
+            }
 
-        property_render_meta_list = {
-            "input_maxItems": str(prop_max_items),
-            "input_minItems": "1",
-            "input_type": f'cus_{str(prop_id_input_type)}',
-            "input_value": "",
-            "option": prop_option,
-            "title": metadata_title,
-            "title_i18n": {"en": prop_title_i18n_en, "ja": prop_title_i18n_ja},
-        }
+            property_render_meta_list = {
+                "input_maxItems": str(prop_max_items),
+                "input_minItems": "1",
+                "input_type": f'cus_{str(prop_id_input_type)}',
+                "input_value": "",
+                "option": prop_option,
+                "title": metadata_title,
+                "title_i18n": {"en": prop_title_i18n_en, "ja": prop_title_i18n_ja},
+            }
 
-        #* Modify target item type
-        item_type.schema["properties"][item_key] = property_schema
-        item_type.form.append(property_form)
-        item_type.render["schemaeditor"]["schema"][item_key] = property_schema
-        item_type.render["table_row_map"]["schema"]["properties"][item_key] = property_schema
-        item_type.render["table_row_map"]["form"].append(property_form)
-        item_type.render["meta_list"][item_key] = property_render_meta_list
-        item_type.render["table_row"].append(item_key)
-        item_type.render["table_row_map"]["mapping"][item_key] = prop_mapping
-        item_type_mapping.mapping[item_key] = prop_mapping
+            #* Modify target item type
+            item_type.schema["properties"][item_key] = property_schema
+            item_type.form.append(property_form)
+            item_type.render["schemaeditor"]["schema"][item_key] = property_schema
+            item_type.render["table_row_map"]["schema"]["properties"][item_key] = property_schema
+            item_type.render["table_row_map"]["form"].append(property_form)
+            item_type.render["meta_list"][item_key] = property_render_meta_list
+            item_type.render["table_row"].append(item_key)
+            item_type.render["table_row_map"]["mapping"][item_key] = prop_mapping
+            item_type_mapping.mapping[item_key] = prop_mapping
 
-        #* Update target item type using update() method from ItemTypes
-        ItemTypes.update(
-            id_=item_type.id,
-            name=item_type.item_type_name.name,
-            schema=item_type.schema,
-            form=item_type.form,
-            render=item_type.render,
-        )
-
-        try:
-            #* Save changes to DB
-            with db.session.begin_nested():
-                flag_modified(item_type, "schema")
-                flag_modified(item_type, "form")
-                flag_modified(item_type, "render")
-                flag_modified(item_type_mapping, "mapping")
-                db.session.merge(item_type)
-                db.session.merge(item_type_mapping)
-            db.session.commit()
-            print(
-                datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
-                f'Successfully added {metadata_title} to {item_type.item_type_name.name}'
+            #* Update target item type using update() method from ItemTypes
+            ItemTypes.update(
+                id_=item_type.id,
+                name=item_type.item_type_name.name,
+                schema=item_type.schema,
+                form=item_type.form,
+                render=item_type.render,
             )
 
-        except Exception as e:
-            db.session.rollback()
-            print(
-                datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
-                f'Failed to add {metadata_title} to {item_type.item_type_name.name}'
-            )
+            try:
+                #* Save changes to DB
+                with db.session.begin_nested():
+                    flag_modified(item_type, "schema")
+                    flag_modified(item_type, "form")
+                    flag_modified(item_type, "render")
+                    flag_modified(item_type_mapping, "mapping")
+                    db.session.merge(item_type)
+                    db.session.merge(item_type_mapping)
+                db.session.commit()
+                print(
+                    datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                    f'Successfully added {metadata_title} to {item_type.item_type_name.name}'
+                )
+
+            except Exception as e:
+                db.session.rollback()
+                print(
+                    datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                    f'Failed to add {metadata_title} to {item_type.item_type_name.name}'
+                )
 
     return
 
