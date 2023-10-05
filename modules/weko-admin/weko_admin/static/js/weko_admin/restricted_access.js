@@ -18,7 +18,6 @@ const LABEL_ENGLISH = document.getElementById("english").value;
 const LABEL_JAPANESE = document.getElementById("japanese").value;
 const LABEL_NEW = document.getElementById("new").value;
 const LABEL_TERMS_AND_CONDITIONS = document.getElementById("terms_and_conditions").value;
-const LABEL_ERROR_MESSAGE = document.getElementById("error_message").value;
 
 const CONST_DEFAULT_ITEMS_PER_PAGE =parseInt(document.getElementById('const_items_per_page').value);
 const LABEL_ACTIVITY = document.getElementById('label_activity').value;
@@ -404,78 +403,18 @@ function TermsConditions({termList, setTermList, currentTerm, setCurrentTerm}) {
   )
 }
 
-function ErrorMsgDetail({errorMsg, setErrorMsg}) {
-  const {en, ja} = errorMsg.content;
-
-  function InputChanged(event, key) {
-    let oldContent;
-    let content;
-
-    oldContent = errorMsg.content[key];
-    oldContent[event.target.name] = event.target.value;
-    content = {...errorMsg.content};
-    setErrorMsg({...errorMsg, content})
-  }
-
-  return (
-    <div>
-      <div className="form-group row margin-top">
-        <label className="col-sm-2 col-form-label"
-               style={{textAlign: 'right'}}>{LABEL_JAPANESE}</label>
-        <div className="col-sm-9">
-          <textarea className="form-control textarea"
-                    name="content"
-                    value={ja.content}
-                    onChange={e => InputChanged(e, "ja")}/>
-        </div>
-      </div>
-      <div className="form-group row margin-top">
-        <label htmlFor="staticEmail"
-               className="col-sm-2 col-form-label"
-               style={{textAlign: 'right'}}>{LABEL_ENGLISH}</label>
-        <div className="col-sm-9">
-          <textarea className="form-control textarea"
-                    name="content"
-                    value={en.content}
-                    onChange={e => InputChanged(e, "en")}/>
-        </div>
-      </div>
-    </div>  
-  )
-}
-
-function ErrorMsgConditions({errorMsg, setErrorMsg}) {
-  return (
-    <div>
-      <div className="panel panel-default">
-        <div className="panel-heading">
-          <h5>
-            <strong>
-              <p>{LABEL_ERROR_MESSAGE}</p>
-            </strong>
-          </h5>
-        </div>
-        <div className="row">
-            <ErrorMsgDetail errorMsg={errorMsg} setErrorMsg={setErrorMsg}/>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function RestrictedAccessLayout({
                                   secret_URL_file_download,
                                   content_file_download,
                                   terms_and_conditions,
-                                  usage_report_workflow_access,
-                                  error_msg
+                                  usage_report_workflow_access
                                 }) {
   const [secretURLFileDownload , setSecretURLFileDownload] = useState(secret_URL_file_download)
   const [contentFileDownload, setContentFileDownload] = useState(content_file_download);
   const [usageReportWorkflowAccess, setUsageReportWorkflowAccess] = useState(usage_report_workflow_access);
   const [termList, setTermList] = useState(terms_and_conditions);
   const [currentTerm, setCurrentTerm] = useState(EMPTY_TERM);
-  const [errorMsg, setErrorMsg] = useState(error_msg);
 
   function handleApply() {
     let termListClone = [...termList];
@@ -546,7 +485,6 @@ function RestrictedAccessLayout({
       content_file_download: contentFileDownload,
       usage_report_workflow_access: usageReportWorkflowAccess,
       terms_and_conditions: terms_data["data"],
-      error_msg:errorMsg
     }
 
     $.ajax({
@@ -647,7 +585,6 @@ function RestrictedAccessLayout({
       <TermsConditions termList={termList} setTermList={setTermList}
                        currentTerm={currentTerm}
                        setCurrentTerm={setCurrentTerm}/>
-      <ErrorMsgConditions errorMsg={errorMsg} setErrorMsg={setErrorMsg}/>
       <div className="form-group">
         <button id="save-btn" className="btn btn-primary pull-right" style={{marginBottom: "15px"}}
                 onClick={handleSave}>
