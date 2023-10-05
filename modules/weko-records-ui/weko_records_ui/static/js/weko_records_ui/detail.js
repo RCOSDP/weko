@@ -267,14 +267,4 @@ require([
       });
     }
   });
-  
-  document.getElementById('print-btn').addEventListener('click', () => {
-    const iframe = document.createElement('iframe');
-    iframe.srcdoc = "<!DOCTYPE html>"
-    document.body.appendChild(iframe);
-    iframe.onload = () => {
-      iframe.contentDocument.body.appendChild(document.getElementById('terms').cloneNode(true));
-      iframe.contentWindow.print();
-      }
-  })
 });
