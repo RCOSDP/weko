@@ -217,7 +217,7 @@
             <div class="panel panel-default panel-body"
                  style="overflow-y: auto; max-height:400px;">
               <div class="form-check">
-                <span class="action-name" id="terms"
+                <span class="action-name"
                       style="white-space: pre-wrap;">{{ file.terms_content }}</span>
 
                 <div style="position: relative;">
@@ -236,7 +236,6 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button id="print-btn" type="button" class="btn btn-primary">{{ _('Print Terms and Conditions') }}</button>
             <button id="term_next_{{ file.version_id }}"
                     data-guest={{ is_guest }} data-file-version-id="{{ file.version_id }}"
                     type="button" class="term_next btn btn-primary disabled"
