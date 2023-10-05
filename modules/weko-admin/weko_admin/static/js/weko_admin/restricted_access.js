@@ -484,7 +484,7 @@ function RestrictedAccessLayout({
       secret_URL_file_download:secretURLFileDownload,
       content_file_download: contentFileDownload,
       usage_report_workflow_access: usageReportWorkflowAccess,
-      terms_and_conditions: terms_data["data"],
+      terms_and_conditions: terms_data["data"]
     }
 
     $.ajax({
