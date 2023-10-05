@@ -65,7 +65,6 @@ from weko_workflow.api import WorkFlow
 from weko_records_ui.fd import add_signals_info
 from weko_records_ui.utils import check_items_settings, get_file_info_list
 from weko_workflow.utils import get_item_info, process_send_mail_tpl, set_mail_info 
-from weko_admin.models import AdminSettings
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
@@ -638,16 +637,6 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     if file_order >= 0 and files and files[file_order].get('url') and files[file_order]['url'].get('url'):
         file_url = files[file_order]['url']['url']
 
-    restricted_errorMsg = ''
-    eMsg = AdminSettings.get('restricted_access').error_msg['content'].get(current_lang, None)['content']
-    if eMsg == "" or eMsg == None:
-        if current_lang == 'ja':
-            restricted_errorMsg = current_app.config.get('WEKO_RECORDS_UI_DEFAULT_ERROR_MESSAGE_JA')
-        else:
-            restricted_errorMsg = current_app.config.get('WEKO_RECORDS_UI_DEFAULT_ERROR_MESSAGE_EN')
-    else:
-        restricted_errorMsg = AdminSettings.get('restricted_access').error_msg['content'].get(current_lang, None)['content']
-
     return render_template(
         template,
         pid=pid,
@@ -690,7 +679,6 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
         show_secret_URL=_get_show_secret_url_button(record,filename),
-        restricted_errorMsg = restricted_errorMsg,
         **ctx,
         **kwargs
     )

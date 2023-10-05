@@ -1242,18 +1242,6 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
 }
 """Default restricted access settings."""
 
-WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE = {
-    "key" : "",
-    "content" : {
-        "ja" : {
-            "content" : ""
-        },
-        "en":{
-            "content" : ""
-        }
-    }
-}
-
 WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER = 9999999
 """max value of expiration_date and download_limit. 
     Any more than this and the datetime may overflow. """

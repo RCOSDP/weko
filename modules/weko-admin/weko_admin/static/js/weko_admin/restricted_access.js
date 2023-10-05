@@ -18,7 +18,6 @@ const LABEL_ENGLISH = document.getElementById("english").value;
 const LABEL_JAPANESE = document.getElementById("japanese").value;
 const LABEL_NEW = document.getElementById("new").value;
 const LABEL_TERMS_AND_CONDITIONS = document.getElementById("terms_and_conditions").value;
-const LABEL_ERROR_MESSAGE = document.getElementById("error_message").value;
 
 const CONST_DEFAULT_ITEMS_PER_PAGE =parseInt(document.getElementById('const_items_per_page').value);
 const LABEL_ACTIVITY = document.getElementById('label_activity').value;
