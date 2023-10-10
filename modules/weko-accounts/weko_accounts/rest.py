@@ -142,9 +142,7 @@ class WekoLogin(ContentNegotiatedMethodView):
             'id': user.id,
             'email': user.email,
         }
-        resp = make_response(jsonify(res_json), 200)
-        resp.headers.add('Set-Cookie', 'SameSite=None; Secure')
-        return resp
+        return make_response(jsonify(res_json), 200)
 
 
 class WekoLogout(ContentNegotiatedMethodView):

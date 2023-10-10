@@ -8,6 +8,7 @@ $(() => {
     hasEdit: false,
     item_properties: null,
     rocrate_mapping: null,
+    node_name: {},
     node_mapping: {},
     node_index_counter: 0,
   };
@@ -40,7 +41,7 @@ $(() => {
     window.location.href = page_global.url + '/' + page_global.dst_mapping_name;
   });
 
-  $('input[type="text"]').change((ev) => {
+  $('input#layer-num, input[name="layer-name"], input[name="node-name-ja"], input[name="node-name-en"]').change((ev) => {
     page_global.hasEdit = true;
   });
 
@@ -72,47 +73,52 @@ $(() => {
   });
 
   $('input[name="select-node"]').change((ev) => {
-    if (!checkMapping()) {
+    if (!checkNode()) {
       const editing_node_id = $('#editing-node').val();
       const editing_node_li = $('#tree-base').find(`li[data-id="${editing_node_id}"]`);
       editing_node_li.find('input[type="radio"]').first().prop('checked', true);
       return;
     }
 
-    // Save mapping
-    saveCurrentMapping();
-    initCurrentMapping();
-
-    // Get node name
-    let node_name = '';
-    $(ev.target).parents('li').each((_, elem) => {
-      const node_text = $(elem).children().eq(1).find('input[type="text"]').val();
-      node_name = node_text + '/' + node_name;
-    });
-    node_name = node_name.slice(0, -1);
-    $('label#rocrate-property-label').text(node_name);
-
-    // Get item type name
-    const item_type_name = $('#select-item-type option:selected').text();
-    $('label#item-property-label').text(item_type_name);
+    saveCurrentNode();
+    initCurrentNode();
 
     // Set editing node
-    const node_id = $(ev.target).parents('li').get(0).dataset.id;
+    const node_id = $(ev.target).closest('li').get(0).dataset.id;
     $('#editing-node').val(node_id);
-    if (node_id != '') {
-      $('button[data-action="add-mapping"]').prop('disabled', false);
-    }
-    else {
-      $('button[data-action="add-mapping"]').prop('disabled', true);
-    }
 
-    // Set mapping
-    setCurrentMapping(node_id);
+    setCurrentNode();
+
+    $(window).scrollTop($('#area-node').position().top);
   });
 
+  function saveCurrentNode() {
+    saveCurrentNodeName();
+    saveCurrentMapping();
+  };
+
+  function saveCurrentNodeName() {
+    const node_id = $('#editing-node').val();
+    if (node_id == '') {
+      return;
+    }
+
+    // save node name
+    const node_name = $('#node-name').val();
+    const node_name_ja = $('#node-name-ja').val();
+    const node_name_en = $('#node-name-en').val();
+    page_global.node_name[node_id] = {
+      name: node_name,
+      name_i18n: {
+        ja: node_name_ja,
+        en: node_name_en,
+      }
+    };
+  };
+
   function saveCurrentMapping() {
-    const editing_node = $('#editing-node').val();
-    if (editing_node == '') {
+    const node_id = $('#editing-node').val();
+    if (node_id == '') {
       return;
     }
 
@@ -137,7 +143,7 @@ $(() => {
       mapping[rocrate_property] = item_property;
     });
 
-    page_global.node_mapping[editing_node] = mapping;
+    page_global.node_mapping[node_id] = mapping;
   };
 
   function getItemProperty(item_property_row) {
@@ -221,14 +227,73 @@ $(() => {
     }
   };
 
-  function initCurrentMapping() {
-    $('#mapping-table-body').empty();
+  function initCurrentNode() {
+    initCurrentNodeName();
+    initCurrentMapping();
   };
 
-  function setCurrentMapping(node_id) {
-    if (!(node_id in page_global.node_mapping)) {
+  function initCurrentNodeName() {
+    $('#node-name').val('');
+    $('#node-name-ja').val('');
+    $('#node-name-en').val('');
+
+    $('#node-name').prop('disabled', true);
+    $('#node-name-ja').prop('disabled', true);
+    $('#node-name-en').prop('disabled', true);
+  };
+
+  function initCurrentMapping() {
+    $('#mapping-table-body').empty();
+
+    $('label#rocrate-property-label').text('');
+    $('label#item-property-label').text('');
+    $('button[data-action="add-mapping"]').prop('disabled', true);
+  };
+
+  function setCurrentNode() {
+    setCurrentNodeName();
+    setCurrentMapping();
+  };
+
+  function setCurrentNodeName() {
+    const node_id = $('#editing-node').val();
+    if (node_id == '') {
       return;
     }
+
+    // Activate add button
+    if (node_id != 'root' && node_id != 'file') {
+      $('#node-name').prop('disabled', false);
+      $('#node-name-ja').prop('disabled', false);
+      $('#node-name-en').prop('disabled', false);
+    }
+
+    const node_name = page_global.node_name[node_id];
+    $('#node-name').val(node_name['name']);
+
+    const name_i18n = node_name['name_i18n'];
+    if (name_i18n != null) {
+      $('#node-name-ja').val(name_i18n['ja']);
+      $('#node-name-en').val(name_i18n['en']);
+    }
+  };
+
+  function setCurrentMapping() {
+    const node_id = $('#editing-node').val();
+    if (node_id == '') {
+      return;
+    }
+
+    // Set node path
+    setNodePath(node_id);
+
+    // Set item type name
+    const item_type_name = $('#select-item-type option:selected').text();
+    $('label#item-property-label').text(item_type_name);
+
+    // Activate add button
+    $('button[data-action="add-mapping"]').prop('disabled', false);
+
     const node_mapping = page_global.node_mapping[node_id];
     if (Object.keys(node_mapping).length == 0) {
       return;
@@ -268,6 +333,22 @@ $(() => {
         setItemProperty(item_property_cell, item_property);
       }
     }
+  };
+
+  function setNodePath() {
+    const node_id = $('#editing-node').val();
+    if (node_id == '') {
+      return;
+    }
+
+    let node_path = '';
+    const selected_radio = $('#tree-base').find(`li[data-id="${node_id}"]`).find('input[type="radio"]');
+    selected_radio.parents('li').each((_, elem) => {
+      const node_text = $(elem).children().eq(1).find('input[type="text"]').val();
+      node_path = node_text + '/' + node_path;
+    });
+    node_path = node_path.slice(0, -1);
+    $('label#rocrate-property-label').text(node_path);
   };
 
   function setItemProperty(item_property_cell, item_property) {
@@ -495,12 +576,23 @@ $(() => {
     template.get(0).dataset.id = node_id;
     page_global.node_index_counter = page_global.node_index_counter + 1;
 
+    page_global.node_name[node_id] = {
+      name: '',
+      name_i18n: { ja: '', en: '', },
+    };
+    page_global.node_mapping[node_id] = {};
+
     return template;
   };
 
   function delNode(target) {
     // Delete node
     $(target).closest('li').remove();
+
+    if ($('#tree-base').find('input[name="select-node"]:checked').length == 0) {
+      $('#editing-node').val('');
+      initCurrentNode();
+    }
   };
 
   function addMapping() {
@@ -588,6 +680,33 @@ $(() => {
       item_property_rows.find('button[data-action="del-item-property"]').each((_, v) => $(v).prop('disabled', true));
     }
   };
+
+  $('input[name="node-name"]').change((ev) => {
+    page_global.hasEdit = true;
+
+    const node_id = $(ev.target).closest('li').get(0).dataset.id;
+    const node_name = $(ev.target).val();
+    page_global.node_name[node_id]['name'] = node_name;
+    setNodePath();
+
+    const editing_node_id = $('#editing-node').val();
+    if (node_id == editing_node_id) {
+      $('#node-name').val(node_name);
+    }
+  });
+
+  $('input#node-name').change((ev) => {
+    page_global.hasEdit = true;
+
+    const node_name = $(ev.target).val();
+
+    const editing_node_id = $('#editing-node').val();
+    const editing_node_li = $('#tree-base').find(`li[data-id="${editing_node_id}"]`);
+    const editing_node_text = editing_node_li.find('input[name="node-name"]');
+    editing_node_text.val(node_name);
+
+    setNodePath();
+  });
 
   $('input[name="check-language"]').on('click', (ev) => {
     const check_value = $(ev.target).is(':checked');
@@ -816,18 +935,16 @@ $(() => {
 
   function checkInput() {
     let check_result = true;
-    const l_check = checkLayer();
-    if (!l_check) {
+
+    if (!checkLayer()) {
       check_result = false;
     }
 
-    const ts_check = checkTreeStructure();
-    if (!ts_check) {
+    if (!checkTreeStructure()) {
       check_result = false;
     }
 
-    const m_check = checkMapping();
-    if (!m_check) {
+    if (!checkNode()) {
       check_result = false;
     }
 
@@ -859,6 +976,36 @@ $(() => {
         check_result = false;
       }
     });
+    return check_result;
+  };
+
+  function checkNode() {
+    let check_result = true;
+
+    if (!checkNodeName()) {
+      check_result = false;
+    }
+
+    if (!checkMapping()) {
+      check_result = false;
+    }
+
+    return check_result;
+  };
+
+  function checkNodeName() {
+    // Init error message
+    $('#node-name-setting').find('div[name="node-name-message"]').addClass('hide');
+
+    let check_result = true;
+    const node_name_text = $('#node-name');
+    if (!node_name_text.is(':disabled')) {
+      if (node_name_text.val() == '') {
+        node_name_text.next().removeClass('hide');
+        check_result = false;
+      }
+    }
+
     return check_result;
   };
 
@@ -950,11 +1097,14 @@ $(() => {
 
   function buildMappingNode(node_li, depth) {
     const node = {};
+    const node_id = node_li.get(0).dataset.id;
+
     node['depth'] = depth;
-    node['name'] = node_li.find('input[type="text"]').eq(0).val();
+
+    node['name'] = page_global.node_name[node_id]['name'];
+    node['name_i18n'] = page_global.node_name[node_id]['name_i18n'];
 
     // map
-    const node_id = node_li.get(0).dataset.id;
     if (node_id in page_global.node_mapping) {
       node['map'] = page_global.node_mapping[node_id];
     }
@@ -1011,13 +1161,22 @@ $(() => {
   };
 
   function createNode(node_mapping, node_li) {
+    const node_id = node_li.get(0).dataset.id;
+
     // Set node name
     const node_name = node_mapping['name'];
+    let node_name_i18n = node_mapping['name_i18n'];
+    if (node_id != 'root' && node_name_i18n == null) {
+      node_name_i18n = { ja: '', en: '', };
+    }
     const node_name_text = node_li.find('input[name="node-name"]').eq(0);
     node_name_text.val(node_name);
+    page_global.node_name[node_id] = {
+      name: node_name,
+      name_i18n: node_name_i18n,
+    };
 
     // Set node mapping
-    const node_id = node_li.get(0).dataset.id;
     page_global.node_mapping[node_id] = node_mapping['map'];
 
     // Create child node
@@ -1048,5 +1207,16 @@ $(() => {
     const root_node_li = $('#tree-base :first');
     createNode(tree_structure, root_node_li);
     page_global.node_mapping['file'] = page_global.rocrate_mapping['file']['map'];
+  }
+  else {
+    page_global.node_name['root'] = {
+      name: 'root'
+    };
+    page_global.node_name['file'] = {
+      name: 'file'
+    };
+
+    page_global.node_mapping['root'] = {};
+    page_global.node_mapping['file'] = {};
   }
 });
