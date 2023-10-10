@@ -216,6 +216,9 @@ class FlowSettingView(BaseView):
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(e)
+            return jsonify(
+                code=400,
+                actions=actions), 400
         return jsonify(
             code=0,
             msg=_('Updated flow action successfully'),
