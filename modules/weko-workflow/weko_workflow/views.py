@@ -2165,7 +2165,7 @@ def cancel_action(activity_id='0', action_id=0):
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        current_app.logger.errror(e)
+        current_app.logger.error(e)
         res = ResponseMessageSchema().load({"code":-1, "msg":'Error! Cannot process quit activity!'})
         return jsonify(res.data), 500
 
