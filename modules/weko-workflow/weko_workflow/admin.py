@@ -376,6 +376,7 @@ class WorkFlowSettingView(BaseView):
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(e)
+            return jsonify(code=400, msg='Error'), 400
         return jsonify(code=0, msg='',
                        data={'redirect': url_for('workflowsetting.index')})
 
