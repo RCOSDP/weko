@@ -34,7 +34,7 @@ from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
 from flask_login import current_user
 from sqlalchemy import desc
-from invenio_accounts.models import Role
+from invenio_accounts.models import Role, User
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -914,7 +914,8 @@ def check_and_send_usage_report(extra_info:dict, user_mail:str ,record:dict, fil
     extra_info['send_usage_report'] = False
 
     activity_id = activity.activity_id
-    permission = check_create_usage_report(record, file_object)
+    user =  User.query.filter_by(email=user_mail).one_or_none()
+    permission = check_create_usage_report(record, file_object , user.id if user else None)
     if permission is not None and activity_id is not None:
         FilePermission.update_usage_report_activity_id(permission,activity_id)
 
