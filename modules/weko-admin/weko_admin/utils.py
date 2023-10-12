@@ -31,7 +31,6 @@ from invenio_search.api import RecordsSearch
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import QueryString
 
-
 import redis
 from redis import sentinel
 import requests
@@ -2511,4 +2510,3 @@ def _elasticsearch_remake_item_index(index_name):
     current_app.logger.info(' END elasticsearch import from records_metadata')
     
     return returnlist
-

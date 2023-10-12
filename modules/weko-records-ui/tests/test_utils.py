@@ -3,7 +3,6 @@ from weko_records_ui.utils import create_usage_report_for_user,get_data_usage_ap
 import base64
 from unittest.mock import MagicMock
 import copy
-import pytest
 import io
 from datetime import datetime as dt
 from datetime import timedelta
