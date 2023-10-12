@@ -582,12 +582,12 @@ msgid "From author DB"
 msgstr "Input from author DB"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:46
-#: msgid "Delete"
-#: msgstr ""
+msgid "Delete"
+msgstr ""
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:47
-#: msgid "Save"
-#: msgstr ""
+msgid "Save"
+msgstr ""
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:48
 msgid "Manual Send"
@@ -622,8 +622,8 @@ msgid "Success"
 msgstr ""
 
 #: weko_admin/utils.py:50
-#: msgid "Error"
-#: msgstr ""
+msgid "Error"
+msgstr ""
 
 #: weko_admin/utils.py:50
 msgid "List of authors who failed to send"
