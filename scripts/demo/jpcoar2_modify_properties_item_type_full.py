@@ -27,12 +27,6 @@ item_type_full: [ItemType or None] = [
     in ItemTypes.get_all(True)
     if itemtype.item_type_name.name == "デフォルトアイテムタイプ（フル）"
 ]
-item_type_full: [ItemType or None] = [
-    itemtype
-    for itemtype
-    in ItemTypes.get_all(True)
-    if itemtype.item_type_name.name == "test_full_27"
-]
 
 #* デフォルトアイテムタイプ（フル）Item Type Mapping
 item_type_full_mapping: [ItemTypeMapping or None] = [
@@ -77,23 +71,51 @@ def update_creator_for_creator_type_only(
             #* Modify target ITEM TYPE
             if item_type.schema["properties"][item_key].get("items", {}).get("properties"):
                 item_type.schema["properties"][item_key]["items"]["properties"][schema_key] = add_to_schema[schema_key]
+
             item_type_target_form[0]["items"].append(add_to_form)
+
             if item_type.render["schemaeditor"]["schema"][item_key].get("properties"):
                 item_type.render["schemaeditor"]["schema"][item_key]["properties"][schema_key] = add_to_schema[schema_key]
+
             if item_type.render["table_row_map"]["schema"]["properties"][item_key].get("items", {}).get("properties"):
                 item_type.render["table_row_map"]["schema"]["properties"][item_key]["items"]["properties"][schema_key] = add_to_schema[schema_key]
+
             item_type_target_render_form[0]["items"].append(add_to_form)
-            item_type.render["table_row_map"]["mapping"][item_key][mapping_key] = add_to_mapping[mapping_key]
+
             if item_type.render["table_row_map"]["mapping"].get(item_key) is not None:
                 if item_type.render["table_row_map"]["mapping"][item_key].get("jpcoar_mapping"):
                     if item_type.render["table_row_map"]["mapping"][item_key]["jpcoar_mapping"].get("creator"):
-                        item_type.render["table_row_map"]["mapping"][item_key]["jpcoar_mapping"]["creator"][mapping_key] = add_to_mapping[mapping_key]
+                        item_type.render["table_row_map"]["mapping"][item_key]["jpcoar_mapping"]["creator"]["@attributes"] = {mapping_key: mapping_key}
 
             #* Modify target ITEM TYPE PROPERTY
-            item_type_property.schema["properties"][schema_key] = add_to_schema[schema_key]
-            item_type_property.form["items"].append(add_to_form_singular)
-            item_type_property.forms["items"].append(add_to_form)
+            if not item_type_property.schema["properties"].get(schema_key):
+                item_type_property.schema["properties"][schema_key] = add_to_schema[schema_key]
 
+            prop_check: bool = False
+            prop_key_singular: str = add_to_form_singular["key"]
+            prop_key_plural: str = add_to_form["key"]
+            prop_key_singular: list = prop_key_singular.split(".")
+            prop_key_plural: list = prop_key_plural.split(".")
+            prop_key_singular[0] = "parentkey"
+            prop_key_plural[0] = "parentkey[]"
+            prop_key_singular: str = (".").join(prop_key_singular)
+            prop_key_plural: str = (".").join(prop_key_plural)
+
+            add_to_form_singular["key"] = prop_key_singular
+            add_to_form["key"] = prop_key_plural
+
+            for form_value in item_type_property.form["items"]:
+                if form_value.get("key") == prop_key_singular:
+                    prop_check = True
+            
+            for form_value in item_type_property.forms["items"]:
+                if form_value.get("key") == prop_key_plural:
+                    prop_check = True
+
+            if not prop_check:
+                item_type_property.form["items"].append(add_to_form_singular)
+                item_type_property.forms["items"].append(add_to_form)
+            
             #* Modify target ITEM TYPE MAPPING
             for mapping in item_type_mapping:
                 if mapping.mapping.get(item_key) is not None:
@@ -181,13 +203,13 @@ add_to_schema_creator_type = {
     "creatorType": {
         "type": "string",
         "format": "text",
-        "title": "作成者タイプ"
+        "title": "作成者タイプ",
     }
 }
 
 #? Creator Type form data
 add_to_form_creator_type = {
-    "key": f"{creator_item_key}[].creatorType",
+    "key": f"{creator_item_key[0]}[].creatorType",
     "type": "text",
     "title": "作成者タイプ",
     "title_i18n": {"en": "Creator Type", "ja": "作成者タイプ"}
@@ -195,7 +217,7 @@ add_to_form_creator_type = {
 
 #? Creator Type form data for singular form use
 add_to_form_singular_creator_type = {
-    "key": f"{creator_item_key}.creatorType",
+    "key": f"{creator_item_key[0]}.creatorType",
     "type": "text",
     "title": "作成者タイプ",
     "title_i18n": {"en": "Creator Type", "ja": "作成者タイプ"}
@@ -204,7 +226,8 @@ add_to_form_singular_creator_type = {
 #? Creator Type mapping data
 add_to_mapping_creator_type = {
     "creatorType": {
-        "@value": "creatorType",
+        # "@value": "creatorType",
+        # "@value": f"{creator_item_key[0]}.creatorType",
     }
 }
 
@@ -1005,13 +1028,18 @@ add_to_form_singular_award_number_type = {
 }
 
 ###! UPDATE ITEM TYPE Full FOR AWARD NUMBER TYPE ~ START
+award_number_type = False
 if item_type_full[0].schema["properties"][funding_reference_key].get("items", {}).get("properties"):
     if isinstance(item_type_full[0].schema["properties"][funding_reference_key].get("items", {}).get("properties"), dict):
         for fund_id_type_uri_keys in item_type_full[0].schema["properties"][funding_reference_key]["items"]["properties"].keys():
             if "研究課題番号" in item_type_full[0].schema["properties"][funding_reference_key]["items"]["properties"].get(fund_id_type_uri_keys, {}).get("title"):
                 if item_type_full[0].schema["properties"][funding_reference_key]["items"]["properties"] \
                         [fund_id_type_uri_keys]["properties"].get("awardNumberType"):
-                    print("AWARD NUMBER TYPE already updated for デフォルトアイテムタイプ（フル）.")
+                    award_number_type = True
+
+if award_number_type:
+    print("AWARD NUMBER TYPE already updated for デフォルトアイテムタイプ（フル）.")
+    
 else:
     if funding_reference_key:
         #* Modify ITEM TYPE Full for AWARD NUMBER TYPE

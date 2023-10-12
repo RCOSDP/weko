@@ -58,7 +58,7 @@ all_existing_item_type_properties_ids: list = sorted([prop.id for prop in ItemTy
 latest_existing_property_id: int = all_existing_item_type_properties_ids[-1]
 
 #* Language selection value for all properties to be created
-property_language: list = [
+property_language_current_enum: list = [
     None,
     'ja',
     'ja-Kana',
@@ -78,6 +78,7 @@ property_language: list = [
     'el',
     'ko',
 ]
+property_language_enum: list = property_language_current_enum[1::]
 
 #* JPCOAR - PUBLISHER
 jpcoar_publisher_property_id: int = latest_existing_property_id + 1
@@ -102,8 +103,8 @@ jpcoar_publisher_schema: dict = {
                 "subitem_publisher_name_language": {
                     "type": "string",
                     "format": "select",
-                    "enum": property_language,
-                    "currentEnum": property_language,
+                    "enum": property_language_enum,
+                    "currentEnum": property_language_current_enum,
                     "title": "Language"
                 }
             },
@@ -125,8 +126,8 @@ jpcoar_publisher_schema: dict = {
                 "subitem_publisher_description_language": {
                     "type": "string",
                     "format": "select",
-                    "enum": property_language,
-                    "currentEnum": property_language,
+                    "enum": property_language_enum,
+                    "currentEnum": property_language_current_enum,
                     "title": "Language"
                 }
             },
@@ -160,7 +161,7 @@ jpcoar_publisher_form: dict = {
                     "key": "parentkey.subitem_publisher_name.subitem_publisher_name_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 }
             ]
         },
@@ -178,7 +179,7 @@ jpcoar_publisher_form: dict = {
                     "key": "parentkey.subitem_publisher_description.subitem_publisher_description_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 }
             ]
         },
@@ -212,7 +213,7 @@ jpcoar_publisher_forms: dict = {
                     "key": "parentkey[].subitem_publisher_name.subitem_publisher_name_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 }
             ]
         },
@@ -230,7 +231,7 @@ jpcoar_publisher_forms: dict = {
                     "key": "parentkey[].subitem_publisher_description.subitem_publisher_description_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 }
             ]
         },
@@ -331,8 +332,8 @@ dcndl_edition_schema: dict = {
                 "subitem_edition_language": {
                     "type": "string",
                     "format": "select",
-                    "enum": property_language,
-                    "currentEnum": property_language,
+                    "enum": property_language_enum,
+                    "currentEnum": property_language_current_enum,
                     "title": "Language"
                 }
             },
@@ -356,7 +357,7 @@ dcndl_edition_form: dict = {
                     "key": "parentkey.subitem_edition.subitem_edition_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 }
             ]
         },
@@ -380,7 +381,7 @@ dcndl_edition_forms: dict = {
                     "key": "parentkey[].subitem_edition.subitem_edition_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 }
             ]
         },
@@ -423,8 +424,8 @@ dcndl_volume_title_schema: dict = {
                 "subitem_volume_title_language": {
                     "type": "string",
                     "format": "select",
-                    "enum": property_language,
-                    "currentEnum": property_language,
+                    "enum": property_language_enum,
+                    "currentEnum": property_language_current_enum,
                     "title": "Language"
                 }
             },
@@ -448,7 +449,7 @@ dcndl_volume_title_form: dict = {
                     "key": "parentkey.subitem_volume_title.subitem_volume_title_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 }
             ]
         },
@@ -472,7 +473,7 @@ dcndl_volume_title_forms: dict = {
                     "key": "parentkey[].subitem_volume_title.subitem_volume_title_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 }
             ]
         },
@@ -563,8 +564,8 @@ dcterms_extent_schema: dict = {
                 "subitem_extent_language": {
                     "type": "string",
                     "format": "select",
-                    "enum": property_language,
-                    "currentEnum": property_language,
+                    "enum": property_language_enum,
+                    "currentEnum": property_language_current_enum,
                     "title": "Language"
                 }
             },
@@ -588,7 +589,7 @@ dcterms_extent_form: dict = {
                     "key": "parentkey.subitem_extent.subitem_extent_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 }
             ]
         },
@@ -612,7 +613,7 @@ dcterms_extent_forms: dict = {
                     "key": "parentkey[].subitem_extent.subitem_extent_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 }
             ]
         },
@@ -655,8 +656,8 @@ jpcoar_format_schema: dict = {
                 "subitem_format_language": {
                     "type": "string",
                     "format": "select",
-                    "enum": property_language,
-                    "currentEnum": property_language,
+                    "enum": property_language_enum,
+                    "currentEnum": property_language_current_enum,
                     "title": "Language"
                 }
             },
@@ -680,7 +681,7 @@ jpcoar_format_form: dict = {
                     "key": "parentkey.subitem_format.subitem_format_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 }
             ]
         },
@@ -704,7 +705,7 @@ jpcoar_format_forms: dict = {
                     "key": "parentkey[].subitem_format.subitem_format_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 }
             ]
         },
@@ -758,8 +759,8 @@ jpcoar_holding_agent_schema: dict = {
                 "subitem_holding_agent_name_language": {
                     "type": "string",
                     "format": "select",
-                    "enum": property_language,
-                    "currentEnum": property_language,
+                    "enum": property_language_enum,
+                    "currentEnum": property_language_current_enum,
                     "title": "Language"
                 }
             },
@@ -815,7 +816,7 @@ jpcoar_holding_agent_form: dict = {
                     "key": "parentkey.subitem_holding_agent_name.subitem_holding_agent_name_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 }
             ]
         },
@@ -851,7 +852,7 @@ jpcoar_holding_agent_forms: dict = {
         {
             "key": "parentkey[].subitem_holding_agent_name",
             "type": "fieldset",
-            "title": "holding_agent Name",
+            "title": "Holding Agent Name",
             "items": [
                 {
                     "key": "parentkey[].subitem_holding_agent_name.subitem_holding_agent_name_name",
@@ -862,14 +863,14 @@ jpcoar_holding_agent_forms: dict = {
                     "key": "parentkey[].subitem_holding_agent_name.subitem_holding_agent_name_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 }
             ]
         },
         {
-            "key": "parentkey[].subitem_holding_agent_description",
+            "key": "parentkey[].subitem_holding_agent_name_identifier",
             "type": "fieldset",
-            "title": "holding_agent Description",
+            "title": "Holding Agent Name Identifier",
             "items": [
                 {
                     "key": "parentkey[].subitem_holding_agent_name_identifier.subitem_holding_agent_name_idenfitier_holding_agent_name_idenfitier",
@@ -919,6 +920,11 @@ jpcoar_dataset_series_schema: dict = {
                 "True",
                 "False"
             ],
+            "currentEnum": [
+                None,
+                "True",
+                "False"
+            ],
             "title": "Dataset Series"
         }
     }
@@ -927,7 +933,7 @@ jpcoar_dataset_series_form: dict = {
     "items": [
         {
             "key": "parentkey.subitem_jpcoar_dataset_series",
-            "type": "text",
+            "type": "select",
             "title": "Dataset Series",
             "titleMap": [
                 {
@@ -948,7 +954,7 @@ jpcoar_dataset_series_forms: dict = {
     "items": [
         {
             "key": "parentkey[].subitem_jpcoar_dataset_series",
-            "type": "text",
+            "type": "select",
             "title": "Dataset Series",
             "titleMap": [
                 {
@@ -1015,8 +1021,8 @@ jpcoar_catalog_schema: dict = {
                         "subitem_contributor_name_language": {
                             "type": "string",
                             "format": "select",
-                            "enum": property_language,
-                            "currentEnum": property_language,
+                            "enum": property_language_enum,
+                            "currentEnum": property_language_current_enum,
                             "title": "Language"
                         }
                     },
@@ -1072,8 +1078,8 @@ jpcoar_catalog_schema: dict = {
                 "subitem_catalog_title_language": {
                     "type": "string",
                     "format": "select",
-                    "enum": property_language,
-                    "currentEnum": property_language,
+                    "enum": property_language_enum,
+                    "currentEnum": property_language_current_enum,
                     "title": "Language"
                 }
             },
@@ -1095,8 +1101,8 @@ jpcoar_catalog_schema: dict = {
                 "subitem_catalog_description_language": {
                     "type": "string",
                     "format": "select",
-                    "enum": property_language,
-                    "currentEnum": property_language,
+                    "enum": property_language_enum,
+                    "currentEnum": property_language_current_enum,
                     "title": "Language"
                 },
                 "subitem_catalog_description_type": {
@@ -1137,8 +1143,8 @@ jpcoar_catalog_schema: dict = {
                 "subitem_catalog_subject_language": {
                     "type": "string",
                     "format": "select",
-                    "enum": property_language,
-                    "currentEnum": property_language,
+                    "enum": property_language_enum,
+                    "currentEnum": property_language_current_enum,
                     "title": "Language"
                 },
                 "subitem_catalog_subject_uri": {
@@ -1202,8 +1208,8 @@ jpcoar_catalog_schema: dict = {
                 "subitem_catalog_license_language": {
                     "type": "string",
                     "format": "select",
-                    "enum": property_language,
-                    "currentEnum": property_language,
+                    "enum": property_language_enum,
+                    "currentEnum": property_language_current_enum,
                     "title": "Language"
                 },
                 "subitem_catalog_license_type": {
@@ -1249,8 +1255,8 @@ jpcoar_catalog_schema: dict = {
                 "subitem_catalog_rights_language": {
                     "type": "string",
                     "format": "select",
-                    "enum": property_language,
-                    "currentEnum": property_language,
+                    "enum": property_language_enum,
+                    "currentEnum": property_language_current_enum,
                     "title": "Language"
                 },
                 "subitem_catalog_rights_rdf_resource": {
@@ -1357,8 +1363,9 @@ jpcoar_catalog_form: dict = {
                         },
                         {
                             "key": "parentkey.subitem_catalog_contributor.subitem_contributor_name.subitem_contributor_name_language",
-                            "type": "text",
-                            "title": "Language"
+                            "type": "select",
+                            "title": "Language",
+                            "titleMap": list_to_list_of_dict(property_language_enum)
                         }
                     ]
                 }
@@ -1407,8 +1414,9 @@ jpcoar_catalog_form: dict = {
                 },
                 {
                     "key": "parentkey.subitem_catalog_title.subitem_catalog_title_language",
-                    "type": "text",
-                    "title": "Language"
+                    "type": "select",
+                    "title": "Language",
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 }
             ]
         },
@@ -1426,7 +1434,7 @@ jpcoar_catalog_form: dict = {
                     "key": "parentkey.subitem_catalog_description.subitem_catalog_description_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 },
                 {
                     "key": "parentkey.subitem_catalog_description.subitem_catalog_description_type",
@@ -1471,7 +1479,7 @@ jpcoar_catalog_form: dict = {
                     "key": "parentkey.subitem_catalog_subject.subitem_catalog_subject_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 },
                 {
                     "key": "parentkey.subitem_catalog_subject.subitem_catalog_subject_uri",
@@ -1553,7 +1561,7 @@ jpcoar_catalog_form: dict = {
                     "key": "parentkey.subitem_catalog_license.subitem_catalog_license_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 },
                 {
                     "key": "parentkey.subitem_catalog_license.subitem_catalog_license_type",
@@ -1595,7 +1603,7 @@ jpcoar_catalog_form: dict = {
                     "key": "parentkey.subitem_catalog_rights.subitem_catalog_rights_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 },
                 {
                     "key": "parentkey.subitem_catalog_rights.subitem_catalog_rights_rdf_resource",
@@ -1696,8 +1704,9 @@ jpcoar_catalog_forms: dict = {
                         },
                         {
                             "key": "parentkey[].subitem_catalog_contributor.subitem_contributor_name.subitem_contributor_name_language",
-                            "type": "text",
-                            "title": "Language"
+                            "type": "select",
+                            "title": "Language",
+                            "titleMap": list_to_list_of_dict(property_language_enum)
                         }
                     ]
                 }
@@ -1746,8 +1755,9 @@ jpcoar_catalog_forms: dict = {
                 },
                 {
                     "key": "parentkey[].subitem_catalog_title.subitem_catalog_title_language",
-                    "type": "text",
-                    "title": "Language"
+                    "type": "select",
+                    "title": "Language",
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 }
             ]
         },
@@ -1765,7 +1775,7 @@ jpcoar_catalog_forms: dict = {
                     "key": "parentkey[].subitem_catalog_description.subitem_catalog_description_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 },
                 {
                     "key": "parentkey[].subitem_catalog_description.subitem_catalog_description_type",
@@ -1810,7 +1820,7 @@ jpcoar_catalog_forms: dict = {
                     "key": "parentkey[].subitem_catalog_subject.subitem_catalog_subject_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 },
                 {
                     "key": "parentkey[].subitem_catalog_subject.subitem_catalog_subject_uri",
@@ -1841,10 +1851,6 @@ jpcoar_catalog_forms: dict = {
                         {
                             "value": "LCSH",
                             "name": "LCSH"
-                        },
-                        {
-                            "value": "",
-                            "name": ""
                         },
                         {
                             "value": "MeSH",
@@ -1892,7 +1898,7 @@ jpcoar_catalog_forms: dict = {
                     "key": "parentkey[].subitem_catalog_license.subitem_catalog_license_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 },
                 {
                     "key": "parentkey[].subitem_catalog_license.subitem_catalog_license_type",
@@ -1934,7 +1940,7 @@ jpcoar_catalog_forms: dict = {
                     "key": "parentkey[].subitem_catalog_rights.subitem_catalog_rights_language",
                     "type": "select",
                     "title": "Language",
-                    "titleMap": list_to_list_of_dict(property_language)
+                    "titleMap": list_to_list_of_dict(property_language_enum)
                 },
                 {
                     "key": "parentkey[].subitem_catalog_rights.subitem_catalog_rights_rdf_resource",

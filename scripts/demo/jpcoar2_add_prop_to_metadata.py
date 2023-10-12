@@ -45,23 +45,34 @@ from sqlalchemy.orm.attributes import flag_modified
 #* sudo docker compose exec web invenio shell scripts/demo/jpcoar2_add_prop_to_metadata.py
 
 
+#* Form key update function
+def update_form_key(form_key: str, item_key: str, opt: dict) -> str:
+    form_key = form_key.split(".")
+    if opt.get("multiple") == True:
+        form_key[0] = f'{item_key}[]'
+    else:
+        form_key[0] = f'{item_key}'
+    form_key = (".").join(form_key)
+    return form_key
+
 #* Function for updating the target item type
 def update_full_or_simple_item_type(
         item_type: ItemType = None,
-        item_type_mapping: ItemTypeMapping = None,
+        item_type_mapping: [ItemTypeMapping] = None,
         item_key: str = None,
         metadata_title: str = None,
         prop_title_i18n_en: str = None,
         prop_title_i18n_ja: str = None,
         prop_schema_properties: dict = None,
         prop_schema_type: str = None,
-        prop_form: [dict] = None,
+        prop_form: dict = None,
         prop_mapping: dict = None,
-        prop_max_items: int = 0,
+        prop_max_items: int = 1,
         prop_id_input_type: int = None,
         prop_option: dict = None,
         ) -> None:
     
+
     if item_type.schema["properties"].get(item_key):
         print(f"{metadata_title} already added to {item_type.item_type_name.name}.")
     else:
@@ -71,17 +82,35 @@ def update_full_or_simple_item_type(
         and prop_form \
         and prop_mapping \
         and item_key:
+            if isinstance(prop_form, dict):
+                if prop_form.get("items") and isinstance(prop_form.get("items"), list):
+                    for pr_form in prop_form["items"]:
+                        if pr_form.get("key"):
+                            pr_form["key"] = update_form_key(pr_form["key"], item_key, prop_option)
+                        if pr_form.get("items") and isinstance(prop_form.get("items"), list):
+                            for pr_form_sub_lvl_1 in prop_form["items"]:
+                                if pr_form_sub_lvl_1.get("key"):
+                                    pr_form_sub_lvl_1["key"] = update_form_key(pr_form_sub_lvl_1["key"], item_key, prop_option)
+                                if pr_form_sub_lvl_1.get("items") and isinstance(pr_form_sub_lvl_1.get("items"), list):
+                                    for pr_form_sub_lvl_2 in pr_form_sub_lvl_1["items"]:
+                                        if pr_form_sub_lvl_2.get("key"):
+                                            pr_form_sub_lvl_2["key"] = update_form_key(pr_form_sub_lvl_2["key"], item_key, prop_option)
+                                        if pr_form_sub_lvl_2.get("items") and isinstance(pr_form_sub_lvl_2.get("items"), list):
+                                            for pr_form_sub_lvl_3 in pr_form_sub_lvl_2["items"]:
+                                                if pr_form_sub_lvl_3.get("key"):
+                                                    pr_form_sub_lvl_3["key"] = update_form_key(pr_form_sub_lvl_3["key"], item_key, prop_option)
+
             property_schema = {
                 "items": prop_schema_properties,
                 "maxItems": prop_max_items,
-                "minItems": 0,
+                "minItems": 1,
                 "title": metadata_title,
                 "type": prop_schema_type,
             }
 
             property_form = {
                 "add": "New",
-                "items": prop_form,
+                "items": prop_form.get("items"),
                 "key": item_key,
                 "style": {"add": "btn-success"},
                 "title": metadata_title,
@@ -107,7 +136,8 @@ def update_full_or_simple_item_type(
             item_type.render["meta_list"][item_key] = property_render_meta_list
             item_type.render["table_row"].append(item_key)
             item_type.render["table_row_map"]["mapping"][item_key] = prop_mapping
-            item_type_mapping.mapping[item_key] = prop_mapping
+            for itm in item_type_mapping:
+                itm.mapping[item_key] = prop_mapping
 
             #* Update target item type using update() method from ItemTypes
             ItemTypes.update(
@@ -124,9 +154,10 @@ def update_full_or_simple_item_type(
                     flag_modified(item_type, "schema")
                     flag_modified(item_type, "form")
                     flag_modified(item_type, "render")
-                    flag_modified(item_type_mapping, "mapping")
+                    for itm in item_type_mapping:
+                        flag_modified(itm, "mapping")
+                        db.session.merge(itm)
                     db.session.merge(item_type)
-                    db.session.merge(item_type_mapping)
                 db.session.commit()
                 print(
                     datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
@@ -137,7 +168,7 @@ def update_full_or_simple_item_type(
                 db.session.rollback()
                 print(
                     datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
-                    f'Failed to add {metadata_title} to {item_type.item_type_name.name}'
+                    f'Failed to add {metadata_title} to {item_type.item_type_name.name}\n{e}'
                 )
 
     return
@@ -151,6 +182,12 @@ item_type_full: [ItemType or None] = [
     in ItemTypes.get_all(True)
     if itemtype.item_type_name.name == "デフォルトアイテムタイプ（フル）"
 ]
+item_type_full: [ItemType or None] = [
+    itemtype
+    for itemtype
+    in ItemTypes.get_all(True)
+    if itemtype.item_type_name.name == "test_full_01"
+]
 
 #* デフォルトアイテムタイプ（シンプル）Item Type
 item_type_simple: [ItemType or None] = [
@@ -159,6 +196,12 @@ item_type_simple: [ItemType or None] = [
     in ItemTypes.get_all(True)
     if itemtype.item_type_name.name == "デフォルトアイテムタイプ（シンプル）"
 ]
+# item_type_simple: [ItemType or None] = [
+#     itemtype
+#     for itemtype
+#     in ItemTypes.get_all(True)
+#     if itemtype.item_type_name.name == "test_full_06"
+# ]
 
 #* デフォルトアイテムタイプ（フル）Item Type Mapping
 item_type_full_mapping: [ItemTypeMapping or None] = [
@@ -189,13 +232,13 @@ jpcoar_publisher_property_id = [
 #? デフォルトアイテムタイプ（フル）
 update_full_or_simple_item_type(
     item_type = item_type_full[0],
-    item_type_mapping = item_type_full_mapping[0],
+    item_type_mapping = item_type_full_mapping,
     item_key = list(jpcoar_publisher_mapping.keys())[0],
     metadata_title = "JPCOAR PUBLISHER",
     prop_title_i18n_en = "JPCOAR PUBLISHER",
     prop_title_i18n_ja = "JPCOAR PUBLISHER",
     prop_schema_properties = jpcoar_publisher_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = jpcoar_publisher_form,
     prop_mapping = jpcoar_publisher_mapping,
     prop_max_items = 9999,
@@ -212,13 +255,13 @@ update_full_or_simple_item_type(
 #? デフォルトアイテムタイプ（シンプル）
 update_full_or_simple_item_type(
     item_type = item_type_simple[0],
-    item_type_mapping = item_type_simple_mapping[0],
+    item_type_mapping = item_type_simple_mapping,
     item_key = list(jpcoar_publisher_mapping.keys())[0],
     metadata_title = "JPCOAR PUBLISHER",
     prop_title_i18n_en = "JPCOAR PUBLISHER",
     prop_title_i18n_ja = "JPCOAR PUBLISHER",
     prop_schema_properties = jpcoar_publisher_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = jpcoar_publisher_form,
     prop_mapping = jpcoar_publisher_mapping,
     prop_max_items = 9999,
@@ -243,13 +286,13 @@ dcterms_date_property_id = [
 #? デフォルトアイテムタイプ（フル）
 update_full_or_simple_item_type(
     item_type = item_type_full[0],
-    item_type_mapping = item_type_full_mapping[0],
+    item_type_mapping = item_type_full_mapping,
     item_key = list(dcterms_date_mapping.keys())[0],
     metadata_title = "DCTERMS DATE",
     prop_title_i18n_en = "DCTERMS DATE",
     prop_title_i18n_ja = "DCTERMS DATE",
     prop_schema_properties = dcterms_date_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = dcterms_date_form,
     prop_mapping = dcterms_date_mapping,
     prop_max_items = 9999,
@@ -266,13 +309,13 @@ update_full_or_simple_item_type(
 #? デフォルトアイテムタイプ（シンプル）
 update_full_or_simple_item_type(
     item_type = item_type_simple[0],
-    item_type_mapping = item_type_simple_mapping[0],
+    item_type_mapping = item_type_simple_mapping,
     item_key = list(dcterms_date_mapping.keys())[0],
     metadata_title = "DCTERMS DATE",
     prop_title_i18n_en = "DCTERMS DATE",
     prop_title_i18n_ja = "DCTERMS DATE",
     prop_schema_properties = dcterms_date_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = dcterms_date_form,
     prop_mapping = dcterms_date_mapping,
     prop_max_items = 9999,
@@ -297,13 +340,13 @@ dcndl_edition_property_id = [
 #? デフォルトアイテムタイプ（フル）
 update_full_or_simple_item_type(
     item_type = item_type_full[0],
-    item_type_mapping = item_type_full_mapping[0],
+    item_type_mapping = item_type_full_mapping,
     item_key = list(dcndl_edition_mapping.keys())[0],
     metadata_title = "DCNDL EDITION",
     prop_title_i18n_en = "DCNDL EDITION",
     prop_title_i18n_ja = "DCNDL EDITION",
     prop_schema_properties = dcndl_edition_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = dcndl_edition_form,
     prop_mapping = dcndl_edition_mapping,
     prop_max_items = 9999,
@@ -320,13 +363,13 @@ update_full_or_simple_item_type(
 #? デフォルトアイテムタイプ（シンプル）
 update_full_or_simple_item_type(
     item_type = item_type_simple[0],
-    item_type_mapping = item_type_simple_mapping[0],
+    item_type_mapping = item_type_simple_mapping,
     item_key = list(dcndl_edition_mapping.keys())[0],
     metadata_title = "DCNDL EDITION",
     prop_title_i18n_en = "DCNDL EDITION",
     prop_title_i18n_ja = "DCNDL EDITION",
     prop_schema_properties = dcndl_edition_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = dcndl_edition_form,
     prop_mapping = dcndl_edition_mapping,
     prop_max_items = 9999,
@@ -351,13 +394,13 @@ dcndl_volume_title_property_id = [
 #? デフォルトアイテムタイプ（フル）
 update_full_or_simple_item_type(
     item_type = item_type_full[0],
-    item_type_mapping = item_type_full_mapping[0],
+    item_type_mapping = item_type_full_mapping,
     item_key = list(dcndl_volume_title_mapping.keys())[0],
     metadata_title = "DCNDL VOLUME TITLE",
     prop_title_i18n_en = "DCNDL VOLUME TITLE",
     prop_title_i18n_ja = "DCNDL VOLUME TITLE",
     prop_schema_properties = dcndl_volume_title_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = dcndl_volume_title_form,
     prop_mapping = dcndl_volume_title_mapping,
     prop_max_items = 9999,
@@ -374,13 +417,13 @@ update_full_or_simple_item_type(
 #? デフォルトアイテムタイプ（シンプル）
 update_full_or_simple_item_type(
     item_type = item_type_simple[0],
-    item_type_mapping = item_type_simple_mapping[0],
+    item_type_mapping = item_type_simple_mapping,
     item_key = list(dcndl_volume_title_mapping.keys())[0],
     metadata_title = "DCNDL VOLUME TITLE",
     prop_title_i18n_en = "DCNDL VOLUME TITLE",
     prop_title_i18n_ja = "DCNDL VOLUME TITLE",
     prop_schema_properties = dcndl_volume_title_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = dcndl_volume_title_form,
     prop_mapping = dcndl_volume_title_mapping,
     prop_max_items = 9999,
@@ -405,13 +448,13 @@ dcndl_original_language_property_id = [
 #? デフォルトアイテムタイプ（フル）
 update_full_or_simple_item_type(
     item_type = item_type_full[0],
-    item_type_mapping = item_type_full_mapping[0],
+    item_type_mapping = item_type_full_mapping,
     item_key = list(dcndl_original_language_mapping.keys())[0],
     metadata_title = "DCNDL ORIGINAL LANGUAGE",
     prop_title_i18n_en = "DCNDL ORIGINAL LANGUAGE",
     prop_title_i18n_ja = "DCNDL ORIGINAL LANGUAGE",
     prop_schema_properties = dcndl_original_language_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = dcndl_original_language_form,
     prop_mapping = dcndl_original_language_mapping,
     prop_max_items = 9999,
@@ -428,13 +471,13 @@ update_full_or_simple_item_type(
 #? デフォルトアイテムタイプ（シンプル）
 update_full_or_simple_item_type(
     item_type = item_type_simple[0],
-    item_type_mapping = item_type_simple_mapping[0],
+    item_type_mapping = item_type_simple_mapping,
     item_key = list(dcndl_original_language_mapping.keys())[0],
     metadata_title = "DCNDL ORIGINAL LANGUAGE",
     prop_title_i18n_en = "DCNDL ORIGINAL LANGUAGE",
     prop_title_i18n_ja = "DCNDL ORIGINAL LANGUAGE",
     prop_schema_properties = dcndl_original_language_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = dcndl_original_language_form,
     prop_mapping = dcndl_original_language_mapping,
     prop_max_items = 9999,
@@ -459,13 +502,13 @@ dcterms_extent_property_id = [
 #? デフォルトアイテムタイプ（フル）
 update_full_or_simple_item_type(
     item_type = item_type_full[0],
-    item_type_mapping = item_type_full_mapping[0],
+    item_type_mapping = item_type_full_mapping,
     item_key = list(dcterms_extent_mapping.keys())[0],
     metadata_title = "DCTERMS EXTENT",
     prop_title_i18n_en = "DCTERMS EXTENT",
     prop_title_i18n_ja = "DCTERMS EXTENT",
     prop_schema_properties = dcterms_extent_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = dcterms_extent_form,
     prop_mapping = dcterms_extent_mapping,
     prop_max_items = 9999,
@@ -482,13 +525,13 @@ update_full_or_simple_item_type(
 #? デフォルトアイテムタイプ（シンプル）
 update_full_or_simple_item_type(
     item_type = item_type_simple[0],
-    item_type_mapping = item_type_simple_mapping[0],
+    item_type_mapping = item_type_simple_mapping,
     item_key = list(dcterms_extent_mapping.keys())[0],
     metadata_title = "DCTERMS EXTENT",
     prop_title_i18n_en = "DCTERMS EXTENT",
     prop_title_i18n_ja = "DCTERMS EXTENT",
     prop_schema_properties = dcterms_extent_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = dcterms_extent_form,
     prop_mapping = dcterms_extent_mapping,
     prop_max_items = 9999,
@@ -513,13 +556,13 @@ jpcoar_format_property_id = [
 #? デフォルトアイテムタイプ（フル）
 update_full_or_simple_item_type(
     item_type = item_type_full[0],
-    item_type_mapping = item_type_full_mapping[0],
+    item_type_mapping = item_type_full_mapping,
     item_key = list(jpcoar_format_mapping.keys())[0],
     metadata_title = "JPCOAR FORMAT",
     prop_title_i18n_en = "JPCOAR FORMAT",
     prop_title_i18n_ja = "JPCOAR FORMAT",
     prop_schema_properties = jpcoar_format_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = jpcoar_format_form,
     prop_mapping = jpcoar_format_mapping,
     prop_max_items = 9999,
@@ -536,13 +579,13 @@ update_full_or_simple_item_type(
 #? デフォルトアイテムタイプ（シンプル）
 update_full_or_simple_item_type(
     item_type = item_type_simple[0],
-    item_type_mapping = item_type_simple_mapping[0],
+    item_type_mapping = item_type_simple_mapping,
     item_key = list(jpcoar_format_mapping.keys())[0],
     metadata_title = "JPCOAR FORMAT",
     prop_title_i18n_en = "JPCOAR FORMAT",
     prop_title_i18n_ja = "JPCOAR FORMAT",
     prop_schema_properties = jpcoar_format_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = jpcoar_format_form,
     prop_mapping = jpcoar_format_mapping,
     prop_max_items = 9999,
@@ -567,21 +610,21 @@ jpcoar_holding_agent_property_id = [
 #? デフォルトアイテムタイプ（フル）
 update_full_or_simple_item_type(
     item_type = item_type_full[0],
-    item_type_mapping = item_type_full_mapping[0],
+    item_type_mapping = item_type_full_mapping,
     item_key = list(jpcoar_holding_agent_mapping.keys())[0],
     metadata_title = "JPCOAR HOLDING AGENT",
     prop_title_i18n_en = "JPCOAR HOLDING AGENT",
     prop_title_i18n_ja = "JPCOAR HOLDING AGENT",
     prop_schema_properties = jpcoar_holding_agent_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = jpcoar_holding_agent_form,
     prop_mapping = jpcoar_holding_agent_mapping,
-    prop_max_items = 1,
+    # prop_max_items = 1,
     prop_id_input_type = jpcoar_holding_agent_property_id[0],
     prop_option = {
         # "crtf": True,
         # "hidden": False,
-        "multiple": False,
+        "multiple": True,
         # "oneline": False,
         # "required": False,
         # "showlist": True,
@@ -590,21 +633,21 @@ update_full_or_simple_item_type(
 #? デフォルトアイテムタイプ（シンプル）
 update_full_or_simple_item_type(
     item_type = item_type_simple[0],
-    item_type_mapping = item_type_simple_mapping[0],
+    item_type_mapping = item_type_simple_mapping,
     item_key = list(jpcoar_holding_agent_mapping.keys())[0],
     metadata_title = "JPCOAR HOLDING AGENT",
     prop_title_i18n_en = "JPCOAR HOLDING AGENT",
     prop_title_i18n_ja = "JPCOAR HOLDING AGENT",
     prop_schema_properties = jpcoar_holding_agent_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = jpcoar_holding_agent_form,
     prop_mapping = jpcoar_holding_agent_mapping,
-    prop_max_items = 1,
+    # prop_max_items = 1,
     prop_id_input_type = jpcoar_holding_agent_property_id[0],
     prop_option = {
         # "crtf": True,
         # "hidden": False,
-        "multiple": False,
+        "multiple": True,
         # "oneline": False,
         # "required": False,
         # "showlist": True,
@@ -621,13 +664,13 @@ jpcoar_dataset_series_property_id = [
 #? デフォルトアイテムタイプ（フル）
 update_full_or_simple_item_type(
     item_type = item_type_full[0],
-    item_type_mapping = item_type_full_mapping[0],
+    item_type_mapping = item_type_full_mapping,
     item_key = list(jpcoar_dataset_series_mapping.keys())[0],
     metadata_title = "JPCOAR DATASET SERIES",
     prop_title_i18n_en = "JPCOAR DATASET SERIES",
     prop_title_i18n_ja = "JPCOAR DATASET SERIES",
     prop_schema_properties = jpcoar_dataset_series_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = jpcoar_dataset_series_form,
     prop_mapping = jpcoar_dataset_series_mapping,
     prop_max_items = 1,
@@ -635,7 +678,7 @@ update_full_or_simple_item_type(
     prop_option = {
         # "crtf": True,
         # "hidden": False,
-        "multiple": False,
+        "multiple": True,
         # "oneline": False,
         # "required": False,
         # "showlist": True,
@@ -644,13 +687,13 @@ update_full_or_simple_item_type(
 #? デフォルトアイテムタイプ（シンプル）
 update_full_or_simple_item_type(
     item_type = item_type_simple[0],
-    item_type_mapping = item_type_simple_mapping[0],
+    item_type_mapping = item_type_simple_mapping,
     item_key = list(jpcoar_dataset_series_mapping.keys())[0],
     metadata_title = "JPCOAR DATASET SERIES",
     prop_title_i18n_en = "JPCOAR DATASET SERIES",
     prop_title_i18n_ja = "JPCOAR DATASET SERIES",
     prop_schema_properties = jpcoar_dataset_series_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = jpcoar_dataset_series_form,
     prop_mapping = jpcoar_dataset_series_mapping,
     prop_max_items = 1,
@@ -658,7 +701,7 @@ update_full_or_simple_item_type(
     prop_option = {
         # "crtf": True,
         # "hidden": False,
-        "multiple": False,
+        "multiple": True,
         # "oneline": False,
         # "required": False,
         # "showlist": True,
@@ -675,13 +718,13 @@ jpcoar_catalog_property_id = [
 #? デフォルトアイテムタイプ（フル）
 update_full_or_simple_item_type(
     item_type = item_type_full[0],
-    item_type_mapping = item_type_full_mapping[0],
+    item_type_mapping = item_type_full_mapping,
     item_key = list(jpcoar_catalog_mapping.keys())[0],
     metadata_title = "JPCOAR CATALOG",
     prop_title_i18n_en = "JPCOAR CATALOG",
     prop_title_i18n_ja = "JPCOAR CATALOG",
     prop_schema_properties = jpcoar_catalog_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = jpcoar_catalog_form,
     prop_mapping = jpcoar_catalog_mapping,
     prop_max_items = 9999,
@@ -698,13 +741,13 @@ update_full_or_simple_item_type(
 #? デフォルトアイテムタイプ（シンプル）
 update_full_or_simple_item_type(
     item_type = item_type_simple[0],
-    item_type_mapping = item_type_simple_mapping[0],
+    item_type_mapping = item_type_simple_mapping,
     item_key = list(jpcoar_catalog_mapping.keys())[0],
     metadata_title = "JPCOAR CATALOG",
     prop_title_i18n_en = "JPCOAR CATALOG",
     prop_title_i18n_ja = "JPCOAR CATALOG",
     prop_schema_properties = jpcoar_catalog_schema,
-    prop_schema_type = "object",
+    prop_schema_type = "array",
     prop_form = jpcoar_catalog_form,
     prop_mapping = jpcoar_catalog_mapping,
     prop_max_items = 9999,
