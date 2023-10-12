@@ -1121,7 +1121,9 @@ $(() => {
     node['depth'] = depth;
 
     node['name'] = page_global.node_name[node_id]['name'];
-    node['name_i18n'] = page_global.node_name[node_id]['name_i18n'];
+    if (node_id != 'root') {
+      node['name_i18n'] = page_global.node_name[node_id]['name_i18n'];
+    }
 
     // map
     if (node_id in page_global.node_mapping) {
