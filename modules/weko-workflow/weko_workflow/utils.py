@@ -4094,7 +4094,7 @@ def make_activitylog_tsv(activities):
         writer.writerow(term)
 
     return file_output.getvalue()
-
+    
 def is_terms_of_use_only(workflow_id :int) -> bool:
     """
     return true if the workflow is [terms_of_use_only(利用規約のみ)]
