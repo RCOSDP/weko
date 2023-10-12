@@ -71,6 +71,17 @@ def test_Flow_action(app, client, users, db, action_data):
         res = _flow.del_flow(flow_id)
         assert res['code'] == 500
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_get_flow_action_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_Flow_get_flow_action_list(db,workflow):
+    res = Flow().get_flow_action_list(workflow["flow"].id)
+    assert len(res) == 7
+    assert res[0].action_order == 1
+    assert res[1].action_order == 2
+    assert res[2].action_order == 3
+    assert res[3].action_order == 4
+    assert res[4].action_order == 5
+    assert res[5].action_order == 6
+    assert res[6].action_order == 7
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_filter_by_date -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_WorkActivity_filter_by_date(app, db):
