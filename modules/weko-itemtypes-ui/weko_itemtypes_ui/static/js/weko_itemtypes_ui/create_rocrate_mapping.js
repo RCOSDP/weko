@@ -41,7 +41,16 @@ $(() => {
     window.location.href = page_global.url + '/' + page_global.dst_mapping_name;
   });
 
-  $('input#layer-num, input[name="layer-name"], input[name="node-name-ja"], input[name="node-name-en"]').change((ev) => {
+  const selectors = [
+    'input#layer-num',
+    'input[name="layer-name"]',
+    'input#node-name-ja',
+    'input#node-name-en',
+    'select[name="select-rocrate-property"]',
+    'input[name="list-index"]',
+    'input[name="text-static-value"]',
+  ];
+  $(selectors.join(',')).change((ev) => {
     page_global.hasEdit = true;
   });
 
@@ -76,7 +85,7 @@ $(() => {
     if (!checkNode()) {
       const editing_node_id = $('#editing-node').val();
       const editing_node_li = $('#tree-base').find(`li[data-id="${editing_node_id}"]`);
-      editing_node_li.find('input[type="radio"]').first().prop('checked', true);
+      editing_node_li.find('input[name="select-node"]').first().prop('checked', true);
       return;
     }
 
@@ -100,6 +109,9 @@ $(() => {
   function saveCurrentNodeName() {
     const node_id = $('#editing-node').val();
     if (node_id == '') {
+      return;
+    }
+    if (node_id == 'root' || node_id == 'file') {
       return;
     }
 
@@ -151,8 +163,8 @@ $(() => {
       return getItemPropertyValueStatic(item_property_row);
     }
 
-    const editing_node = $('#editing-node').val();
-    if (editing_node == 'file') {
+    const editing_node_id = $('#editing-node').val();
+    if (editing_node_id == 'file') {
       return getItemPropertyValueFile(item_property_row);
     }
 
@@ -171,7 +183,7 @@ $(() => {
       let field_key = $(field).find('select').val();
       const index_check = $(field).find('input[name="check-list-index"]');
       if (index_check.is(':checked')) {
-        field_key = field_key + '[' + $(field).find('input[type=number]').val() + ']';
+        field_key = field_key + '[' + $(field).find('input[name="list-index"]').val() + ']';
       }
       item_property = item_property + '.' + field_key;
     });
@@ -221,7 +233,7 @@ $(() => {
   };
 
   function getItemPropertyValueStatic(item_property_row) {
-    const item_property = item_property_row.find('input[type="text"]').val();
+    const item_property = item_property_row.find('input[name="text-static-value"]').val();
     return {
       static_value: item_property,
     }
@@ -234,12 +246,14 @@ $(() => {
 
   function initCurrentNodeName() {
     $('#node-name').val('');
-    $('#node-name-ja').val('');
-    $('#node-name-en').val('');
-
     $('#node-name').prop('disabled', true);
+    $('#node-name-ja').val('');
     $('#node-name-ja').prop('disabled', true);
+    $('#node-name-en').val('');
     $('#node-name-en').prop('disabled', true);
+
+    // Init error message
+    $('#node-name-setting').find('div[name="node-name-message"]').addClass('hide');
   };
 
   function initCurrentMapping() {
@@ -248,6 +262,7 @@ $(() => {
     $('label#rocrate-property-label').text('');
     $('label#item-property-label').text('');
     $('button[data-action="add-mapping"]').prop('disabled', true);
+    $('button[data-action="add-mapping-static"]').prop('disabled', true);
   };
 
   function setCurrentNode() {
@@ -293,6 +308,7 @@ $(() => {
 
     // Activate add button
     $('button[data-action="add-mapping"]').prop('disabled', false);
+    $('button[data-action="add-mapping-static"]').prop('disabled', false);
 
     const node_mapping = page_global.node_mapping[node_id];
     if (Object.keys(node_mapping).length == 0) {
@@ -342,9 +358,9 @@ $(() => {
     }
 
     let node_path = '';
-    const selected_radio = $('#tree-base').find(`li[data-id="${node_id}"]`).find('input[type="radio"]');
+    const selected_radio = $('#tree-base').find(`li[data-id="${node_id}"]`).children('div[name="node"]').find('input[name="select-node"]');
     selected_radio.parents('li').each((_, elem) => {
-      const node_text = $(elem).children().eq(1).find('input[type="text"]').val();
+      const node_text = $(elem).children().eq(1).find('input[name="node-name"]').val();
       node_path = node_text + '/' + node_path;
     });
     node_path = node_path.slice(0, -1);
@@ -407,8 +423,8 @@ $(() => {
         field.find('label').removeClass('invisible');
       }
       if (field_keys[ii].index != null) {
-        field.find('input[type="checkbox"]').prop('checked', true);
-        const index_text = field.find('input[type="number"]');
+        field.find('input[name="check-list-index"]').prop('checked', true);
+        const index_text = field.find('input[name="list-index"]');
         index_text.removeClass('invisible');
         index_text.val(field_keys[ii].index);
       }
@@ -504,7 +520,7 @@ $(() => {
       return;
     }
 
-    item_property_cell.find('input[type="text"]').val(item_property['static_value']);
+    item_property_cell.find('input[name="text-static-value"]').val(item_property['static_value']);
   };
 
   function splitPropertyKey(property_key) {
@@ -543,17 +559,19 @@ $(() => {
         return;
       }
 
-      if (target.dataset.type == 'item') {
-        // Add mapping
-        const added_row = addMapping();
+      // Add mapping
+      const added_row = addMapping();
 
-        // Add item property
-        const add_button = added_row.find('button[data-action="add-item-property"]');
-        addItemProperty(add_button);
+      // Add item property
+      const add_button = added_row.find('button[data-action="add-item-property"]');
+      addItemProperty(add_button);
+    }
+    else if (action == 'add-mapping-static') {
+      const editing_node = $('#editing-node').val();
+      if (editing_node == '') {
+        return;
       }
-      else if (target.dataset.type == 'static') {
-        addMappingStatic();
-      }
+      addMappingStatic();
     }
     else if (action == 'del-mapping') {
       delMapping(target);
@@ -709,6 +727,8 @@ $(() => {
   });
 
   $('input[name="check-language"]').on('click', (ev) => {
+    page_global.hasEdit = true;
+
     const check_value = $(ev.target).is(':checked');
     const item_property_row = $(ev.target).parents('div[name="item-property-row"]');
     const item_property = item_property_row.find('div[name="item-property"]');
@@ -724,7 +744,9 @@ $(() => {
   });
 
   $('input[name="check-list-index"]').on('click', (ev) => {
-    const index_text = $(ev.target).closest('div[name="item-property-field"]').find('input[type="number"]');
+    page_global.hasEdit = true;
+
+    const index_text = $(ev.target).closest('div[name="item-property-field"]').find('input[name="list-index"]');
     index_text.toggleClass('invisible');
   });
 
@@ -734,7 +756,7 @@ $(() => {
     // Init field
     const field = $(ev.target).closest('div[name="item-property-field"]');
     field.nextAll().remove();
-    field.find('input[type="number"]').addClass('invisible');
+    field.find('input[name="list-index"]').addClass('invisible');
     field.find('label').addClass('invisible');
     field.find('input[name="check-list-index"]').prop('checked', false);
 
@@ -859,9 +881,6 @@ $(() => {
         break;
       }
       keys.push(elem.value);
-      if ($(select_box).val() == elem.value) {
-        break;
-      }
     }
 
     return keys;
@@ -924,7 +943,7 @@ $(() => {
       return;
     }
 
-    saveCurrentMapping();
+    saveCurrentNode();
     const rocrate_mapping = buildMappingData();
     const data = {
       item_type_id: parseInt(page_global.src_mapping_name),
@@ -1034,9 +1053,9 @@ $(() => {
           $(item_property_field).find('div[name="item-property-name-message"]').removeClass('hide');
           check_result = false;
         }
-        const check = $(item_property_field).find('input[type="checkbox"]');
+        const check = $(item_property_field).find('input[name="check-list-index"]');
         if (check.is(':checked')) {
-          const input = $(item_property_field).find('input[type="number"]');
+          const input = $(item_property_field).find('input[name="list-index"]');
           if (input.val() == '') {
             $(item_property_field).find('div[name="item-property-index-message"]').removeClass('hide');
             check_result = false;
@@ -1078,7 +1097,7 @@ $(() => {
 
     // entity_types
     rocrate_mapping['entity_types'] = [];
-    const layer_names = $('#layer-base').find('input[type="text"]');
+    const layer_names = $('#layer-base').find('input[name="layer-name"]');
     layer_names.each((_, layer_name) => {
       rocrate_mapping['entity_types'].push($(layer_name).val());
     });
@@ -1132,14 +1151,14 @@ $(() => {
       contentType: 'application/json',
       dataType: 'json',
       data: JSON.stringify(data),
-      success: (data, textStatus) => {
+      success: (data, textStatus, jqXHR) => {
         page_global.hasEdit = false;
         $('html,body').scrollTop(0);
         addAlert(data.msg);
       },
-      error: (textStatus, errorThrown) => {
+      error: (jqXHR, textStatus, errorThrown) => {
         $('html,body').scrollTop(0);
-        addError('Error: ' + textStatus.statusText);
+        addError('Error: ' + jqXHR.statusText);
       }
     });
   };
@@ -1165,10 +1184,7 @@ $(() => {
 
     // Set node name
     const node_name = node_mapping['name'];
-    let node_name_i18n = node_mapping['name_i18n'];
-    if (node_id != 'root' && node_name_i18n == null) {
-      node_name_i18n = { ja: '', en: '', };
-    }
+    const node_name_i18n = node_mapping['name_i18n'];
     const node_name_text = node_li.find('input[name="node-name"]').eq(0);
     node_name_text.val(node_name);
     page_global.node_name[node_id] = {
@@ -1206,16 +1222,13 @@ $(() => {
     const tree_structure = page_global.rocrate_mapping['tree_structure'];
     const root_node_li = $('#tree-base :first');
     createNode(tree_structure, root_node_li);
+    page_global.node_name['root'] = { name: 'root' };
+    page_global.node_name['file'] = { name: 'file' };
     page_global.node_mapping['file'] = page_global.rocrate_mapping['file']['map'];
   }
   else {
-    page_global.node_name['root'] = {
-      name: 'root'
-    };
-    page_global.node_name['file'] = {
-      name: 'file'
-    };
-
+    page_global.node_name['root'] = { name: 'root' };
+    page_global.node_name['file'] = { name: 'file' };
     page_global.node_mapping['root'] = {};
     page_global.node_mapping['file'] = {};
   }

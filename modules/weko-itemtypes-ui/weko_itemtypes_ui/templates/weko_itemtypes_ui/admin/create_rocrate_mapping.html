@@ -111,7 +111,7 @@
         <ul id="template-node-ul" class="nested active">
           <li name="node-li">
             <span class="arrow arrow-down"></span>
-            <div class="list-group-item inline-block">
+            <div name="node" class="list-group-item inline-block">
               <div class="radio">
                 <input type="radio" name="select-node">
               </div>
@@ -126,7 +126,7 @@
               </div>
             </div>
 
-            <ul name="node" class="nested active">
+            <ul class="nested active">
               <li name="button-li">
                 <div class="list-group-item inline-block button-node ten-pixel-left-margin">
                   <button type="button" class="btn btn-success" data-action="add-node">
@@ -140,22 +140,22 @@
       </div>
 
       <div class="form-inline">
-        <ul id="tree-base" name="node" class="nested active">
+        <ul id="tree-base" class="nested active">
           <li name="root-node-li" data-id="root">
             <!-- root node -->
             <span class="arrow arrow-down"></span>
-            <div class="list-group-item inline-block">
+            <div name="node" class="list-group-item inline-block">
               <div class="radio">
                 <input type="radio" name="select-node">
               </div>
               <input type="text" name="node-name" class="form-control" value="root" disabled>
             </div>
 
-            <ul name="node" class="nested active">
+            <ul class="nested active">
               <li name="file-node-li" data-id="file">
                 <!-- file node -->
                 <span class="arrow arrow-down invisible"></span>
-                <div class="list-group-item inline-block">
+                <div name="node" class="list-group-item inline-block">
                   <div class="radio">
                     <input type="radio" name="select-node">
                   </div>
@@ -181,7 +181,7 @@
       <!-- Node name -->
       <div id="node-name-setting">
         <div class="form-inline">
-          <label>Node name</label>
+          <label>{{_('Node name')}}</label>
         </div>
         <div class="form-inline ten-pixel-bottom-margin">
           <input type="text" id="node-name" class="form-control" disabled>
@@ -199,6 +199,8 @@
           <input type="text" id="node-name-en" class="form-control" disabled>
         </div>
       </div>
+
+      <hr>
 
       <!-- Mapping -->
       <div id="mapping-setting">
@@ -258,7 +260,7 @@
                       <option value="{{key}}">{{value['title']}}</option>
                       {%- endfor -%}
                     </select>
-                    <input type="number" class="form-control inline-block invisible" min="0">
+                    <input type="number" name="list-index" class="form-control inline-block invisible" min="0">
                     <div name="item-property-name-message" class="alert alert-danger error-message hide">
                       <strong>{{_('Error')}} : </strong>{{_('Item property is blank.')}}
                     </div>
@@ -324,7 +326,7 @@
               <select name="select-item-property" class="form-control inline-block">
                 <option value=""></option>
               </select>
-              <input type="number" class="form-control inline-block invisible" min="0">
+              <input type="number" name="list-index" class="form-control inline-block invisible" min="0">
               <div name="item-property-name-message" class="alert alert-danger error-message hide">
                 <strong>{{_('Error')}} : </strong>{{_('Item property is blank.')}}
               </div>
@@ -452,7 +454,7 @@
                 <div name="item-property-row" class="row margin-h-none">
                   <div class="row col-sm-12 margin-h-none">
                     <div name="static-value" class="form-group">
-                      <input type="text" class="form-control">
+                      <input type="text" name="text-static-value" class="form-control">
                       <div name="static-value-message" class="alert alert-danger error-message hide">
                         <strong>{{_('Error')}} : </strong>{{_('Static value is blank.')}}
                       </div>
@@ -474,10 +476,10 @@
           <div class="col-sm-9 padding-h-none">
             <label id="item-property-label"></label>
             <div class="pull-right ten-pixel-left-margin">
-              <button type="button" class="btn btn-success" data-action="add-mapping" data-type="static" disabled>
+              <button type="button" class="btn btn-success" data-action="add-mapping-static" disabled>
                 <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add static value')}}
               </button>
-              <button type="button" class="btn btn-success ten-pixel-left-margin" data-action="add-mapping" data-type="item" disabled>
+              <button type="button" class="btn btn-success ten-pixel-left-margin" data-action="add-mapping" disabled>
                 <span class="glyphicon glyphicon-plus"></span>&nbsp;{{_('Add')}}
               </button>
             </div>

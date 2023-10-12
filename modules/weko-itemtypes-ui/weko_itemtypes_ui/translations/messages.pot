@@ -437,6 +437,10 @@ msgid "Value"
 msgstr ""
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
+msgid "Node name"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html
 msgid "Layer name is blank."
 msgstr ""
 
