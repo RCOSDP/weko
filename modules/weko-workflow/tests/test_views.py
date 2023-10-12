@@ -404,16 +404,22 @@ def test_init_activity(client, users,users_index, status_code,db_register,mocker
     res = client.post(url, json=input)
     assert res.status_code == 200
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_init_activity_is_terms_of_use_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_init_activity_is_terms_of_use_only(app, client,db_register,users):
+    login(client=client, email=users[0]['email'])
+    url = url_for('weko_workflow.init_activity')
+    # 94
     with patch("weko_workflow.views.is_terms_of_use_only",return_value=True):
-        with patch("weko_workflow.views._generate_download_url",return_value='record/1/files/test_file'):
-            input = {'workflow_id': db_register['workflow'].id, 'flow_id': db_register['flow_define'].id, 'unknown':'unknown'}
+        # with patch("weko_workflow.views._generate_download_url",return_value='record/1/files/test_file'):
+            input = {'workflow_id': db_register['workflow'].id, 'flow_id': db_register['flow_define'].id, 'unknown':'unknown'
+                    ,'extra_info':{'file_name' : 'test_file' , "record_id" : "1"}}
             res = client.post(url, json=input)
             assert res.status_code == 200
             data = json.loads(res.data)
             assert data['code'] == 1
             assert data['msg'] == 'success'
             assert data['data']['is_download'] == True
-            assert data['data']['redirect'] == 'record/1/files/test_file'
+            assert data['data']['redirect'] == '/record/1/files/test_file'
 
 # def init_activity_guest():
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_init_activity_guest_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -427,21 +433,16 @@ def test_init_activity_guest_nologin(app, client,db_register2):
         res = client.post(url, json=input)
         assert res.status_code == 200
 
+    # 95
     with patch("weko_workflow.views.is_terms_of_use_only",return_value=True):
-        with patch("weko_workflow.views._generate_download_url",return_value='record/1/files/test_file'):
+        # with patch("weko_workflow.views._generate_download_url",return_value='record/1/files/test_file'):
             res = client.post(url, json=input)
             assert res.status_code == 200
             data = json.loads(res.data)
             assert data['code'] == 1
             assert data['msg'] == 'success'
             assert data['data']['is_download'] == True
-            assert data['data']['redirect'] == 'record/1/files/test_file'
-
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test__generate_download_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test__generate_download_url(app):
-    
-    res = _generate_download_url(record_id="1",file_name="test_file")
-    assert res in 'record/1/files/test_file'
+            assert data['data']['redirect'] == '/record/1/files/test_file'
 
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
@@ -1758,6 +1759,17 @@ def test_cancel_action(client, users,db, db_register, db_records, add_file, user
         assert data["code"] == -1
         assert data["msg"] == "test error"
 
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+])
+def test_cancel_action2(client, users,db, db_register, db_records, add_file, users_index, status_code, mocker):
+    login(client=client, email=users[users_index]['email'])
     # can not get activity_detail
     input = {
         "action_version":"1.0.0",
@@ -2499,7 +2511,7 @@ def test_display_activity_nologin(client,db_register2):
     # assert res.url == url_for('security.login')
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_guestlogin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_workflow/.tox/c1/tmp
-def test_display_activity_guestlogin(app,client,db_register ,guest):
+def test_display_activity_guestlogin(app,db_register ,guest):
     """Test of display activity."""
     url = url_for('weko_workflow.display_activity', activity_id='1')
     input = {}
@@ -2521,10 +2533,7 @@ def test_display_activity_guestlogin(app,client,db_register ,guest):
         'allow': [],
         'deny': []
     }
-    # with app.test_request_context():
-        # session['guest_token'] = "token"
-        # session['guest_email'] = "aaa@example.com"
-        # # session['guest_url'] = "request.full_path"
+
     workflow_detail = WorkFlow.query.filter_by(id=1).one_or_none()
     mock_render_template = MagicMock(return_value=jsonify({}))
     with patch('weko_workflow.views.get_activity_display_info',
@@ -2534,7 +2543,7 @@ def test_display_activity_guestlogin(app,client,db_register ,guest):
             with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
                     return_value=(roles, action_users)):
                 with patch('weko_workflow.views.render_template', mock_render_template):
-                    res = client.post(url, json=input)
+                    res = guest.post(url, json=input)
                     assert res.status_code == 200
                     mock_render_template.assert_called()
 

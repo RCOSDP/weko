@@ -57,6 +57,7 @@ from invenio_communities import InvenioCommunities
 from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_communities.models import Community
 from invenio_jsonschemas import InvenioJSONSchemas
+from invenio_records_ui import InvenioRecordsUI
 from weko_search_ui.config import WEKO_SYS_USER
 from weko_records_ui import WekoRecordsUI
 from weko_theme import WekoTheme
@@ -491,6 +492,25 @@ def base_app(instance_path, search_class, cache_config):
         DELETE_ACTIVITY_LOG_ENABLE=True,
         WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS=WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS,
         WEKO_SYS_USER=WEKO_SYS_USER,
+        RECORDS_UI_ENDPOINTS=dict(
+            # recid=dict(
+            #     pid_type='recid',
+            #     route='/records/<pid_value>',
+            #     template='invenio_records_ui/detail.html',
+            # ),
+            # recid_previewer=dict(
+            #     pid_type='recid',
+            #     route='/records/<pid_value>/preview/<filename>',
+            #     view_imp='invenio_previewer.views:preview',
+            #     record_class='invenio_records_files.api:Record',
+            # ),
+            recid_files=dict(
+                pid_type='recid',
+                route='/record/<pid_value>/files/<filename>',
+                view_imp='invenio_records_files.utils.file_download_ui',
+                record_class='invenio_records_files.api:Record',
+            ),
+        ),
     )
     
     app_.testing = True
@@ -510,6 +530,7 @@ def base_app(instance_path, search_class, cache_config):
     InvenioJSONSchemas(app_)
     InvenioPIDStore(app_)
     InvenioRecords
+    InvenioRecordsUI(app_)
     WekoRecordsUI(app_)
     search = InvenioSearch(app_, client=MockEs())
     search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
