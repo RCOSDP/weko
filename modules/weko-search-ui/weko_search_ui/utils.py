@@ -253,6 +253,7 @@ def delete_records(index_tree_id, ignore_items):
                     record.commit()
                     db.session.commit()
                 elif del_flag and removed_path is not None:
+                    from weko_records_ui.utils import soft_delete
                     soft_delete(pid)
                 else:
                     pass
@@ -591,7 +592,7 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
             handle_check_cnri(list_record)
             handle_check_doi_indexes(list_record)
             handle_check_doi_ra(list_record)
-            current_app.logger.error(list_record)
+            #current_app.logger.error(list_record)
             handle_check_doi(list_record)
         result["list_record"] = list_record
     except Exception as ex:
@@ -1755,14 +1756,13 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
             current_app.logger.warning("Specified IndexID is invalid!")
 
         msg_not_exist = _("The specified {} does not exist in system.")
-        if index_info and len(index_info) == 1:
-            check_list = []
-            check_list.append(index_info[0].name_en.replace(
-                '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
-            if index_info[0].name:
-                check_list.append(index_info[0].name.replace(
-                    '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
-            if index_name_path and index_name_path not in check_list:
+        if index_info and len(index_info) == 1:     # index exists by index id
+            if index_name_path and index_name_path not in [
+                index_info[0].name.replace(
+                    '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']),
+                index_info[0].name_en.replace(
+                    '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']),
+            ]:
                 warnings.append(
                     _("Specified {} does not match with existing index.").format(
                         "POS_INDEX"
@@ -1793,9 +1793,7 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
                             errors.append(msg_not_exist.format("IndexID"))
                         else:
                             temp_res.append(index_info.cid)
-                if temp_res:
-                    errors.clear()
-            else:
+            else:      # index does not exist by index name
                 if index_id:
                     errors.append(msg_not_exist.format("IndexID, POS_INDEX"))
                 else:
