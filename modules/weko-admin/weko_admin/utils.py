@@ -27,9 +27,6 @@ import zipfile
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 from typing import Dict, Optional, Tuple, Union
-from invenio_search.api import RecordsSearch
-from elasticsearch.exceptions import NotFoundError
-from elasticsearch_dsl.query import QueryString
 
 import redis
 from redis import sentinel
@@ -55,9 +52,8 @@ from weko_schema_ui.models import PublishStatus
 
 from weko_records.api import ItemsMetadata
 from weko_redis.redis import RedisConnection
-from elasticsearch import Elasticsearch
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-import weko_schema_ui
+
+
 from . import config
 from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
     FacetSearchSetting, FeedbackMailFailed, FeedbackMailHistory, \
@@ -2231,17 +2227,11 @@ def get_title_facets():
     lang = current_i18n.language
     titles = {}
     order = {}
-    uiTypes = {}
-    isOpens = {}
-    displayNumbers = {}
     activated_facets = FacetSearchSetting.get_activated_facets()
     for item in activated_facets:
         titles[item.name_en] = item.name_jp if lang == 'ja' else item.name_en
         order[item.id] = item.name_en
-        uiTypes[item.name_en] = item.ui_type
-        isOpens[item.name_en] = item.is_open
-        displayNumbers[item.name_en] = item.display_number
-    return titles, order, uiTypes, isOpens, displayNumbers
+    return titles, order
 
 
 def is_exits_facet(data, id):
