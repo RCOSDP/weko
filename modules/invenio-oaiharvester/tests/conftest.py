@@ -98,9 +98,11 @@ def base_app(instance_path):
         CELERY_RESULT_BACKEND="cache",
         SECRET_KEY="CHANGE_ME",
         SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI',
-            'sqlite:///test.db'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI',
+        #     'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         TESTING=True,
         INDEX_IMG='indextree/36466818-image.jpg',
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),

@@ -55,8 +55,10 @@ def app(request):
         CELERY_RESULT_BACKEND="cache",
         SECRET_KEY="CHANGE_ME",
         SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         TESTING=True,
     )

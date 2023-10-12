@@ -148,12 +148,12 @@ def base_app(instance_path):
         JSONSCHEMAS_URL_SCHEME="http",
         SECRET_KEY="CHANGE_ME",
         SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #     'SQLALCHEMY_DATABASE_URI',
-        #     'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
         SQLALCHEMY_DATABASE_URI=os.environ.get(
-            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
-        ),
+            'SQLALCHEMY_DATABASE_URI',
+            'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+        # ),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SQLALCHEMY_ECHO=False,
         TESTING=True,
@@ -182,7 +182,7 @@ def base_app(instance_path):
         },
         WEKO_INDEX_TREE_UPATED=True,
         WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
-        I18N_LANGUAGE=[("ja", "Japanese"), ("en", "English"),("da", "Danish")],
+        I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English"),("da", "Danish")],
         SERVER_NAME="TEST_SERVER",
         SEARCH_ELASTIC_HOSTS="elasticsearch",
         SEARCH_INDEX_PREFIX="test-",

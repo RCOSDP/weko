@@ -53,6 +53,7 @@ from invenio_records.models import RecordMetadata
 from invenio_records_files.api import FileObject, Record
 from invenio_records_files.models import RecordsBuckets
 from invenio_records_rest.errors import PIDResolveRESTError
+from invenio_files_rest.errors import StorageError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
@@ -1150,15 +1151,21 @@ class WekoDeposit(Deposit):
                                 if file.obj.file.size <= file_size_max and \
                                         file.obj.mimetype in mimetypes:
                                     ## invenio_files_rest.errors.StorageError
-                                    file_content = file.obj.file.read_file(lst)
+                                    file_content = ""
+                                    try:
+                                        file_content = file.obj.file.read_file(lst)
+                                    except StorageError as se:
+                                        import traceback
+                                        current_app.logger.critical("StorageError: {}".format(se))
+                                        current_app.logger.critical(traceback.format_exc())
                                 content.update({"file": file_content})
                                 contents.append(content)
-
-                            except Exception as e:
+                            except Exception as e2:
                                 import traceback
+                                current_app.logger.error(e2)
                                 current_app.logger.error(
                                     traceback.format_exc())
-                                abort(500, '{}'.format(str(e)))
+                                abort(500, '{}'.format(str(e2)))
                             break
             self.jrc.update({'content': contents})
 
@@ -1893,17 +1900,22 @@ class WekoRecord(Record):
         for value in data:
             if value.get('language', '') == current_lang:
                 return value.get('title', '')
-        else:
-            for value in data:
-                if value.get('language', '') == 'en':
-                    return value.get('title', '')
-            else:
-                for value in data:
-                    if value.get('language', ''):
-                        return value.get('title', '')
-                else:
-                    if len(data) > 0:
-                        return data[0].get('title', '')
+        
+        if len(data) > 0:
+            if data[0].get('language',None) == None:
+                return data[0].get('title', '')
+
+        for value in data:
+            if value.get('language', '') == 'en':
+                return value.get('title', '')
+                
+        for value in data:
+            if value.get('language', ''):
+                return value.get('title', '')
+                
+        if len(data) > 0:
+            return data[0].get('title', '')
+        
         return ''
 
     @staticmethod
@@ -2934,6 +2946,10 @@ class _FormatSysBibliographicInformation:
                 else:
                     title_data_none_lang.append(value)
 
+        if len(title_data_none_lang) > 0:
+            if source_titles[0].get('bibliographic_title')==title_data_none_lang[0]:
+                return title_data_none_lang[0],''
+            
         if value_latn:
             return value_latn, 'ja-Latn'
 

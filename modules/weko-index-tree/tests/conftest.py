@@ -26,6 +26,7 @@ import tempfile
 import json
 import uuid
 from datetime import date, datetime, timedelta
+from kombu import Exchange, Queue
 
 import pytest
 from mock import Mock, patch
@@ -143,6 +144,7 @@ def base_app(instance_path):
             'A': 'Archive',
         },
         CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_TYPE="redis",
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
         WEKO_INDEX_TREE_STATE_PREFIX="index_tree_expand_state",
@@ -156,10 +158,11 @@ def base_app(instance_path):
             'test'
         ),
         INDEX_IMG='indextree/36466818-image.jpg',
-        # SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-        #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SEARCH_ELASTIC_HOSTS=os.environ.get(
             'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,

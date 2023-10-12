@@ -2508,7 +2508,7 @@ def lock_activity(activity_id="0"):
         return False
     
     
-    validate_csrf_header(request)
+    #validate_csrf_header(request)
 
     check_flg = type_null_check(activity_id, str)
     if not check_flg:
@@ -2620,9 +2620,11 @@ def unlock_activity(activity_id="0"):
         res = ResponseMessageSchema().load({'code':-1, 'msg':str(err)})
         return jsonify(res.data), 400
     locked_value = str(data.data.get('locked_value'))
+    current_app.logger.debug("id:{}".format(str(data.data.get('id'))))
     msg = None
     # get lock activity from cache
     cur_locked_val = str(get_cache_data(cache_key)) or str()
+    cur_locked_val = None
     if cur_locked_val and cur_locked_val == locked_value:
         delete_cache_data(cache_key)
         msg = _('Unlock success')

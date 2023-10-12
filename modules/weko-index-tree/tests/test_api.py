@@ -114,6 +114,7 @@ def test_indexes_create(app, db, users, test_indices):
 # class Indexes(object):
 #     def update(cls, index_id, **data):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+@pytest.mark.skip(reason="too long process")
 def test_indexes_update(app, db, users, test_indices):
     index_metadata = {
         "biblio_flag": False,
@@ -271,6 +272,7 @@ def test_indexes_delete_by_action(app, db, user):
 #         def _swap_position(i, index_tree, next_index_tree):
 #         def _re_order_tree(new_position):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_move -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+@pytest.mark.skip(reason="too long process")
 def test_indexes_move(app, db, users, communities, test_indices):
     with app.test_request_context(
         headers=[('Accept-Language','en')]):

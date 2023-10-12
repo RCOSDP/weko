@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<config>
+    <source_groups>
+        <source_group_cc135298-744e-4cd1-aae8-6763ea386bf2>
+            <exclude_filters>
+                <exclude_filter>./test</exclude_filter>
+                <exclude_filter>./tools</exclude_filter>
+                <exclude_filter>./scripts</exclude_filter>
+                <exclude_filter>./modules/invenio-accounts/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-communities/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-db/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-deposit/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-files-rest/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-iiif/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-indexer/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-mail/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-oaiharvester/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-oaiserver/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-oauth2server/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-previewer/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-queues/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-records/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-records-rest/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-resourcesyncclient/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-resourcesyncserver/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-s3/tests</exclude_filter>
+                <exclude_filter>./modules/invenio-stats/tests</exclude_filter>
+                <exclude_filter>./modules/weko-accounts/tests</exclude_filter>
+                <exclude_filter>./modules/weko-admin/tests</exclude_filter>
+                <exclude_filter>./modules/weko-authors/tests</exclude_filter>
+                <exclude_filter>./modules/weko-bulkupdate/tests</exclude_filter>
+                <exclude_filter>./modules/weko-deposit/tests</exclude_filter>
+                <exclude_filter>./modules/weko-gridlayout/tests</exclude_filter>
+                <exclude_filter>./modules/weko-groups/tests</exclude_filter>
+                <exclude_filter>./modules/weko-handle/tests</exclude_filter>
+                <exclude_filter>./modules/weko-index-tree/tests</exclude_filter>
+                <exclude_filter>./modules/weko-indextree-journal/tests</exclude_filter>
+                <exclude_filter>./modules/weko-items-autofill/tests</exclude_filter>
+                <exclude_filter>./modules/weko-items-ui/tests</exclude_filter>
+                <exclude_filter>./modules/weko-logging/tests</exclude_filter>
+                <exclude_filter>./modules/weko-plugins/tests</exclude_filter>
+                <exclude_filter>./modules/weko-records/tests</exclude_filter>
+                <exclude_filter>./modules/weko-records-ui/tests</exclude_filter>
+                <exclude_filter>./modules/weko-schema-ui/tests</exclude_filter>
+                <exclude_filter>./modules/weko-search-ui/tests</exclude_filter>
+                <exclude_filter>./modules/weko-sitemap/tests</exclude_filter>
+                <exclude_filter>./modules/weko-swordserver/tests</exclude_filter>
+                <exclude_filter>./modules/weko-theme/tests</exclude_filter>
+                <exclude_filter>./modules/weko-user-profiles/tests</exclude_filter>
+                <exclude_filter>./modules/weko-workflow/tests</exclude_filter>
+            </exclude_filters>
+            <name>Python Source Group</name>
+            <source_extensions>
+                <source_extension>.py</source_extension>
+            </source_extensions>
+            <source_paths>
+                <source_path>.</source_path>
+            </source_paths>
+            <status>enabled</status>
+            <type>Python Source Group</type>
+        </source_group_cc135298-744e-4cd1-aae8-6763ea386bf2>
+    </source_groups>
+    <version>8</version>
+</config>

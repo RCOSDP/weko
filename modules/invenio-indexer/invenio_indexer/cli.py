@@ -11,11 +11,18 @@
 from __future__ import absolute_import, print_function
 
 import click
+import copy
+import uuid
+import itertools
 from celery.messaging import establish_connection
 from flask import current_app
 from flask.cli import with_appcontext
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_records.models import RecordMetadata
+from invenio_search import current_search_client
 from invenio_search.cli import index
+from sqlalchemy.dialects import postgresql
+
 
 from .api import RecordIndexer
 from .tasks import process_bulk_queue
@@ -39,17 +46,23 @@ def abort_if_false(ctx, param, value):
 @click.option(
     '--raise-on-error/--skip-errors', default=True,
     help='Controls if Elasticsearch bulk indexing errors raise an exception.')
+@click.option('--chunk-size',type=int,default=500,help='number of docs in one chunk sent to es (default: 500)')
+@click.option('--max-chunk-bytes',type=int,default=104857600,help='the maximum size of the request in bytes (default: 100MB)')
+@click.option('--max-retries',type=int,default=0,help='maximum number of times a document will be retired when 429 is received, set to 0 (default) for no retries on 429')
+@click.option('--initial_backoff',type=int,default=2,help='number of secconds we should wait before the first retry.')
+@click.option('--max-backoff',type=int,default=600,help='maximim number of seconds a retry will wait')
 @with_appcontext
 def run(delayed, concurrency, version_type=None, queue=None,
-        raise_on_error=True):
+        raise_on_error=True,chunk_size=500,max_chunk_bytes=104857600,max_retries=0,initial_backoff=2,max_backoff=600):
     """Run bulk record indexing."""
     if delayed:
         celery_kwargs = {
             'kwargs': {
                 'version_type': version_type,
-                'es_bulk_kwargs': {'raise_on_error': raise_on_error},
+                'es_bulk_kwargs': {'raise_on_error': raise_on_error,'chunk_size':chunk_size,'max_chunk_bytes':max_chunk_bytes,'max_retries': max_retries,'initial_backoff': initial_backoff,'max_backoff': max_backoff},
             }
         }
+        
         click.secho(
             'Starting {0} tasks for indexing records...'.format(concurrency),
             fg='green')
@@ -60,7 +73,14 @@ def run(delayed, concurrency, version_type=None, queue=None,
     else:
         click.secho('Indexing records...', fg='green')
         RecordIndexer(version_type=version_type).process_bulk_queue(
-            es_bulk_kwargs={'raise_on_error': raise_on_error})
+            es_bulk_kwargs={'raise_on_error': raise_on_error,
+                            'chunk_size':chunk_size,
+                            'max_chunk_bytes':max_chunk_bytes,
+                            'max_retries': max_retries,
+                            'initial_backoff': initial_backoff,
+                            'max_backoff': max_backoff})
+
+
 
 
 @index.command()
@@ -69,8 +89,10 @@ def run(delayed, concurrency, version_type=None, queue=None,
               prompt='Do you really want to reindex all records?')
 @click.option('-t', '--pid-type', multiple=True, required=True)
 @click.option('--include-delete', is_flag=True, default=False)
+@click.option('--skip-exists', is_flag=True, default=False)
+@click.option('--size',type=int,default=6000)
 @with_appcontext
-def reindex(pid_type, include_delete):
+def reindex(pid_type, include_delete,skip_exists,size):
     """Reindex all records.
 
     :param pid_type: Pid type.
@@ -89,13 +111,45 @@ def reindex(pid_type, include_delete):
         query = PersistentIdentifier.query.filter_by(
             object_type='rec', status=PIDStatus.REGISTERED
         )
+    query = query.filter(RecordMetadata.id==PersistentIdentifier.object_uuid)
     query = query.filter(
         PersistentIdentifier.pid_type.in_(pid_type)
-    ).values(
+    )
+    current_app.logger.debug(query.statement.compile(dialect=postgresql.dialect(),compile_kwargs={"literal_binds": True}))
+    values = query.values(
         PersistentIdentifier.object_uuid
     )
-    query = (x[0] for x in query)
-    RecordIndexer().bulk_index(query)
+    _values = (str(x[0]) for x in values)
+    # cnt = sum(1 for _ in list(_values))
+    if skip_exists:
+        index=current_app.config["SEARCH_INDEX_PREFIX"]+"weko-item-v1.0.0"
+        query = {"query": {"bool": {"must":{"exists":{"field":"itemtype"}}}},"_source":["itemtype"],"sort" : [{"_id":"asc"}],"size":size}
+        res = current_search_client.search(index=index,
+                                           body=query)
+        total = res['hits']['total']
+        hits = res['hits']['hits']
+        ids = [x["_id"] for x in hits]
+        while len(hits) == size:
+            last_sort_key = hits[-1]['sort']
+            query['search_after'] = last_sort_key
+            _res = current_search_client.search(
+                index=index,
+                body=query
+            )
+            hits = _res['hits']['hits']
+            _ids = [x["_id"] for x in hits]
+            ids.extend(_ids)
+        
+        _tmp = set(_values)
+        _ids = set(ids)
+        diff = list(_tmp - _ids) 
+        _values = (x for x in diff)
+        # cnt = sum(1 for _ in diff)
+
+    _values, _values2 = itertools.tee(_values)
+    cnt = sum(1 for _ in _values2)
+    click.secho('Queueing {} records..'.format(cnt),fg='green')
+    RecordIndexer().bulk_index(_values)
     click.secho('Execute "run" command to process the queue!',
                 fg='yellow')
 
