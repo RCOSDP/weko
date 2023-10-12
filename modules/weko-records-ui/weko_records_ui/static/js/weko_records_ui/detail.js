@@ -101,29 +101,32 @@ require([
     if (typeof communityId !== 'undefined' && communityId !== "") {
       post_uri = post_uri + "?community=" + communityId;
     }
+    var deferred = new $.Deferred();
     $.ajax({
       url: post_uri,
       method: 'POST',
       contentType: 'application/json',
       data: JSON.stringify(post_data),
-      success: function (data) {
-        if (0 === data.code) {
-          let activity_url = data.data.redirect.split('/').slice(-1)[0];
-          let activity_id = activity_url.split('?')[0];
-          init_permission(recordId, fileName, activity_id);
-          document.location.href = data.data.redirect;
-        } else if(1 === data.code && data.data.is_download){
-          const url = new URL(data.data.redirect , document.location.origin);
-          url.searchParams.append('terms_of_use_only',true);
-          document.location.href = url;
-        } else {
-          alert(data.msg);
-        }
-      },
-      error: function (jqXHE, status) {
+    }).done(function (data) {
+      if (0 === data.code) {
+        let activity_url = data.data.redirect.split('/').slice(-1)[0];
+        let activity_id = activity_url.split('?')[0];
+        init_permission(recordId, fileName, activity_id);
+        document.location.href = data.data.redirect;
+      } else if(1 === data.code && data.data.is_download){
+        const url = new URL(data.data.redirect , document.location.origin);
+        url.searchParams.append('terms_of_use_only',true);
+        document.location.href = url;
+      } else {
+        alert(data.msg);
       }
-    });
-  }
+    }).fail(function (jqXHE, status) {
+      console.log('fail:{}', jqXHE.message);
+    }).always(function() {
+      deferred.resolve();
+    })
+    return deferred;
+  };
 
   function init_permission(record_id, file_name, activity_id) {
     let init_permission_uri = '/records/permission/';
@@ -214,7 +217,10 @@ require([
       let recordId = $btnStartWorkflow.data('record-id');
       let fileName = $btnStartWorkflow.data('filename');
       let itemTitle =$btnStartWorkflow.data('itemtitle');
-      startWorkflow(workflowId, communityId, recordId, fileName, itemTitle);
+      var deferred = startWorkflow(workflowId, communityId, recordId, fileName, itemTitle);
+      deferred.done(function(){
+        $("#term_and_condtion_modal_" + file_version_id).modal("hide");
+      });
     }
   });
 
