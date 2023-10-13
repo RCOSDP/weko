@@ -1032,18 +1032,15 @@ class IdentifierHandle(object):
             return       -- PID object if exist
 
         """
-        try:
-            prev_pidstore = self.check_pidstore_exist(pid_type, reg_value)
-            if not prev_pidstore:
-                return PersistentIdentifier.create(
-                    pid_type,
-                    str(reg_value),
-                    object_type='rec',
-                    object_uuid=self.item_uuid,
-                    status=PIDStatus.REGISTERED
-                )
-        except Exception as ex:
-            current_app.logger.error(ex)
+        prev_pidstore = self.check_pidstore_exist(pid_type, reg_value)
+        if not prev_pidstore:
+            return PersistentIdentifier.create(
+                pid_type,
+                str(reg_value),
+                object_type='rec',
+                object_uuid=self.item_uuid,
+                status=PIDStatus.REGISTERED
+            )
         return False
 
     def delete_pidstore_doi(self, pid_value=None):
