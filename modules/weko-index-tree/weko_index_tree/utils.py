@@ -26,10 +26,12 @@ from operator import itemgetter
 
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import Bool, Exists, Q, QueryString
-from flask import Markup, current_app, session, json, request
+from flask import Markup, current_app, session, json, request, Flask
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_i18n.ext import current_i18n
@@ -1020,8 +1022,7 @@ def str_to_datetime(str_dt, format):
     except ValueError:
         return None
 
-def check_etag(etag):
-    """Check Request Header Etag"""
-  
-    request_etag = request.headers.get('If-None-Match')
-    return etag and etag == request_etag
+
+def create_limmiter():
+    from .config import WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT)

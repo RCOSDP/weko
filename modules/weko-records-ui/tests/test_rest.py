@@ -1,4 +1,3 @@
-import pytest
 import json
 from mock import patch, MagicMock
 from flask import Blueprint
@@ -7,13 +6,10 @@ from invenio_deposit.utils import check_oauth2_scope_write, \
     check_oauth2_scope_write_elasticsearch
 from invenio_records_rest.utils import check_elasticsearch
 from sqlalchemy.exc import SQLAlchemyError
-from weko_records_ui.errors import VersionNotFoundRESTError, InternalServerError \
-  ,RecordsNotFoundRESTError ,PermissionError
 from weko_records_ui.rest import (
     create_error_handlers,
     create_blueprint,
     WekoRecordsCitesResource,
-    WekoRecordsResource
 )
 
 
@@ -90,174 +86,235 @@ def test_WekoRecordsCitesResource(app, records):
             with patch("weko_records_ui.rest.citeproc_v1.serialize", return_value=data2):
                 assert WekoRecordsCitesResource.get(pid_value, pid_value)
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoRecordsResource -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_WekoRecordsResource(app, records):
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoRecordsResource -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_WekoRecordsResource(app, records_rest, db_rocrate_mapping):
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
     with app.test_client() as client:
-        res = client.get('/v1.0/records/1/detail',content_type='application/json')
+        res = client.get('/v1/records/1')
         assert res.status_code == 200
-        try:
-            json.loads(res.get_data())
-            assert True
-        except:
-            assert False
+        data = json.loads(res.get_data())
+        assert data['@graph'][0]['title'][0] == 'メタボリックシンドロームモデルマウスの多臓器遺伝子発現量データ'
+
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoRecordsResource_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_WekoRecordsResource_error(app, records):
-
-    def dammy_permission():
-        return False
-    
-    url = '/v1.0/records/1/detail'
-    
+def test_WekoRecordsResource_error(app, records_rest, db_rocrate_mapping):
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
     with app.test_client() as client:
-        res = client.get('/v1.0/records/1/detail',content_type='application/json')
+        url = '/v1/records/1'
+        res = client.get(url)
+        etag = res.headers['Etag']
+        last_modified = res.headers['Last-Modified']
+
+        # Check Etag
         headers = {}
-        headers['If-None-Match'] = res.headers['Etag'].strip('"')
-        res = client.get('/v1.0/records/1/detail',content_type='application/json', headers=headers)
+        headers['If-None-Match'] = etag
+        res = client.get(url, headers=headers)
         assert res.status_code == 304
-        
-        res = client.get('/ver1/records/1/detail',content_type='application/json')
+
+        # Check Last-Modified
+        headers = {}
+        headers['If-Modified-Since'] = last_modified
+        res = client.get(url, headers=headers)
+        assert res.status_code == 304
+
+        # Invalid version
+        url = '/v0/records/1'
+        res = client.get(url)
         assert res.status_code == 400
-        
-        with patch('weko_index_tree.utils.get_user_roles', 
-                   MagicMock(side_effect=PermissionError())):
-            res = client.get('/v1.0/records/1/detail',content_type='application/json')
-            assert res.status_code == 403
-        
-        res = client.get('/v1.0/records/100/detail',content_type='application/json')
+
+        # Record not found
+        url = '/v1/records/100'
+        res = client.get(url)
         assert res.status_code == 404
-        
+
+        # Access denied
+        with patch('weko_records_ui.permissions.check_publish_status', MagicMock(return_value=False)):
+            url = '/v1/records/1'
+            res = client.get(url)
+            assert res.status_code == 403
+
+        # Failed to execute SQL
         with patch('weko_deposit.api.WekoRecord.get_record', MagicMock(side_effect=SQLAlchemyError())):
-            res = client.get('/v1.0/records/1/detail',content_type='application/json')
+            url = '/v1/records/1'
+            res = client.get(url)
             assert res.status_code == 500
+
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoRecordsStats -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_WekoRecordsStats(app, records):
-
+def test_WekoRecordsStats(app, records_rest, db_rocrate_mapping):
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
     with app.test_client() as client:
-        res = client.get('/v1.0/records/1/stats',content_type='application/json')
+        res = client.get('/v1/records/1/stats')
         assert res.status_code == 200
-        try:
-            json.loads(res.get_data())
-            assert True
-        except:
-            assert False
+
+        res = client.get('/v1/records/1/stats?date=2023-09')
+        assert res.status_code == 200
+
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoRecordsStats_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_WekoRecordsStats_error(app, records):
-    
-    url = '/v1.0/records/1/stats'
-    
+def test_WekoRecordsStats_error(app, records_rest, db_rocrate_mapping):
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
     with app.test_client() as client:
-        res = client.get(url,content_type='application/json')
+        url = '/v1/records/1/stats'
+        res = client.get(url)
+        etag = res.headers['Etag']
+
+        # Check Etag
         headers = {}
-        headers['If-None-Match'] = res.headers['Etag'].strip('"')
-        res = client.get(url,content_type='application/json', headers=headers)
+        headers['If-None-Match'] = etag
+        res = client.get(url, headers=headers)
         assert res.status_code == 304
-        
-        res = client.get('/ver1/records/1/detail',content_type='application/json')
+
+        # Invalid version
+        url = '/v0/records/1/stats'
+        res = client.get(url)
         assert res.status_code == 400
-        
-        with patch('weko_index_tree.utils.get_user_roles', 
-                   MagicMock(side_effect=PermissionError())):
-            res = client.get(url,content_type='application/json')
+
+        # Record not found
+        url = '/v1/records/100/stats'
+        res = client.get(url)
+        assert res.status_code == 404
+
+        # Invalid date
+        url = '/v1/records/1/stats?date=dummydate'
+        res = client.get(url)
+        assert res.status_code == 400
+
+        # Access denied
+        with patch('weko_records_ui.permissions.check_publish_status', MagicMock(return_value=False)):
+            url = '/v1/records/1/stats'
+            res = client.get(url)
             assert res.status_code == 403
-        
-        err_query_date = '?date=2023-15'
-        res = client.get(url,content_type='application/json')
-        assert res.status_code == 404
-        
-        res = client.get('/v1.0/records/100/stats',content_type='application/json')
-        assert res.status_code == 404
-        
+
+        # Failed to execute SQL
         with patch('weko_deposit.api.WekoRecord.get_record', MagicMock(side_effect=SQLAlchemyError())):
-            res = client.get(url,content_type='application/json')
+            url = '/v1/records/1/stats'
+            res = client.get(url)
             assert res.status_code == 500
+
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoFilesStats -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_WekoFilesStats(app, records):
-
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
     with app.test_client() as client:
-        res = client.get('/v1.0/records/1/files/helloworld.pdf/stats',content_type='application/json')
+        res = client.get('/v1/records/1/files/helloworld.pdf/stats')
         assert res.status_code == 200
-        try:
-            json.loads(res.get_data())
-            assert True
-        except:
-            assert False
+
+        res = client.get('/v1/records/1/files/helloworld.pdf/stats?date=2023-09')
+        assert res.status_code == 200
+
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoFilesStats_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_WekoFilesStats_error(app, records):
-      
-    url = '/v1.0/records/1/files/helloworld.pdf/stats'
-    
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
     with app.test_client() as client:
-        res = client.get(url,content_type='application/json')
+        url = '/v1/records/1/files/helloworld.pdf/stats'
+        res = client.get(url)
+        etag = res.headers['Etag']
+
+        # Check Etag
         headers = {}
-        headers['If-None-Match'] = res.headers['Etag'].strip('"')
-        res = client.get(url,content_type='application/json', headers=headers)
+        headers['If-None-Match'] = etag
+        res = client.get(url, headers=headers)
         assert res.status_code == 304
-        
-        res = client.get('/ver1/records/1/detail',content_type='application/json')
+
+        # Invalid version
+        url = '/v0/records/1/files/helloworld.pdf/stats'
+        res = client.get(url)
         assert res.status_code == 400
-        
-        with patch('weko_index_tree.utils.get_user_roles', 
-                   MagicMock(side_effect=PermissionError())):
-            res = client.get(url,content_type='application/json')
-            assert res.status_code == 403
-        
-        res = client.get('/v1.0/records/100/detail',content_type='application/json')
+
+        # Record not found
+        url = '/v1/records/100/files/helloworld.pdf/stats'
+        res = client.get(url)
         assert res.status_code == 404
-        
+
+        # File not found
+        url = '/v1/records/1/files/nofile.pdf/stats'
+        res = client.get(url)
+        assert res.status_code == 404
+
+        # Invalid date
+        url = '/v0/records/1/files/helloworld.pdf/stats?date=dummydate'
+        res = client.get(url)
+        assert res.status_code == 400
+
+        # Access denied
+        with patch('weko_records_ui.permissions.check_publish_status', MagicMock(return_value=False)):
+            url = '/v1/records/1/files/helloworld.pdf/stats'
+            res = client.get(url)
+            assert res.status_code == 403
+        with patch('weko_records_ui.permissions.check_file_download_permission', MagicMock(return_value=False)):
+            url = '/v1/records/1/files/helloworld.pdf/stats'
+            res = client.get(url)
+            assert res.status_code == 403
+
+        # Failed to execute SQL
         with patch('weko_deposit.api.WekoRecord.get_record', MagicMock(side_effect=SQLAlchemyError())):
-            res = client.get(url,content_type='application/json')
+            url = '/v1/records/1/files/helloworld.pdf/stats'
+            res = client.get(url)
             assert res.status_code == 500
+
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoFilesGet -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_WekoFilesGet(app, records):
-
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
     with app.test_client() as client:
-        res = client.get('/v1.0/records/1/files/helloworld.pdf?mode=preview',content_type='application/json')
+        res = client.get('/v1/records/1/files/helloworld.pdf')
         assert res.status_code == 200
+
+        res = client.get('/v1/records/1/files/helloworld.pdf?mode=preview')
+        assert res.status_code == 200
+
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoFilesGet_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_WekoFilesGet_error(app, records):
-      
-    url = '/v1.0/records/1/files/helloworld.pdf?mode=preview'
-    
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_UI_CITES_REST_ENDPOINTS']))
     with app.test_client() as client:
-        res = client.get(url,content_type='application/json')
+        url = '/v1/records/1/files/helloworld.pdf'
+        res = client.get(url)
+        etag = res.headers['Etag']
+        last_modified = res.headers['Last-Modified']
+
+        # Check Etag
         headers = {}
-        headers['If-None-Match'] = res.headers['Etag'].strip('"')
-        res = client.get(url,content_type='application/json', headers=headers)
+        headers['If-None-Match'] = etag
+        res = client.get(url, headers=headers)
         assert res.status_code == 304
-        
-        res = client.get('/ver1.0/records/1/files/helloworld.pdf?mode=preview',content_type='application/json')
+
+        # Check Last-Modified
+        headers = {}
+        headers['If-Modified-Since'] = last_modified
+        res = client.get(url, headers=headers)
+        assert res.status_code == 304
+
+        # Invalid version
+        url = '/v0/records/1/files/helloworld.pdf'
+        res = client.get(url)
         assert res.status_code == 400
 
-        res = client.get('/v1.0/records/1/files/helloworld.pdf',content_type='application/json')
-        assert res.status_code == 400
-        
-        with patch('weko_index_tree.utils.get_user_roles', 
-                   MagicMock(side_effect=PermissionError())):
-            res = client.get(url,content_type='application/json')
+        # Record not found
+        url = '/v1/records/100/files/helloworld.pdf'
+        res = client.get(url)
+        assert res.status_code == 404
+
+        # File not found
+        url = '/v1/records/1/files/nofile.pdf'
+        res = client.get(url)
+        assert res.status_code == 404
+
+        # Access denied
+        with patch('weko_records_ui.permissions.check_publish_status', MagicMock(return_value=False)):
+            url = '/v1/records/1/files/helloworld.pdf'
+            res = client.get(url)
             assert res.status_code == 403
-        
-        res = client.get('/v1.0/records/100/files/helloworld.pdf?mode=preview',content_type='application/json')
-        assert res.status_code == 404
-        
-        res = client.get('/v1.0/records/1/files/nofile.pdf?mode=preview',content_type='application/json')
-        assert res.status_code == 404
-        
+        with patch('weko_records_ui.permissions.check_file_download_permission', MagicMock(return_value=False)):
+            url = '/v1/records/1/files/helloworld.pdf'
+            res = client.get(url)
+            assert res.status_code == 403
+
+        # Failed to execute SQL
         with patch('weko_deposit.api.WekoRecord.get_record', MagicMock(side_effect=SQLAlchemyError())):
-            res = client.get(url,content_type='application/json')
+            url = '/v1/records/1/files/helloworld.pdf'
+            res = client.get(url)
             assert res.status_code == 500

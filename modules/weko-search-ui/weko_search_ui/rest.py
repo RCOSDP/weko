@@ -20,47 +20,35 @@
 
 """Blueprint for Index Search rest."""
 
-import pickle
+import inspect
+import json
 from functools import partial
 
-from flask import Blueprint, abort, current_app, jsonify, redirect, request, url_for, make_response
-from flask_limiter import Limiter
+from flask import Blueprint, current_app, request, url_for, Response
+from flask_babelex import get_locale as get_current_locale
 from elasticsearch.exceptions import ElasticsearchException
 from invenio_db import db
-from invenio_files_rest.storage import PyFSFileStorage
 from invenio_i18n.ext import current_i18n
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidstore import current_pidstore
-from invenio_pidstore.errors import PIDInvalidAction
 from invenio_records.api import Record
-from invenio_records_rest.errors import (
-    InvalidDataRESTError,
-    MaxResultWindowRESTError,
-    UnsupportedMediaRESTError,
-)
+from invenio_records_rest.errors import MaxResultWindowRESTError
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
-from invenio_records_rest.views import (
-    create_error_handlers as records_rest_error_handlers,
-)
-from invenio_records_rest.views import (
-    create_url_rules,
-    need_record_permission,
-    pass_record,
-)
 from invenio_rest import ContentNegotiatedMethodView
-from invenio_rest.views import create_api_errorhandler
-from webargs import fields
-from webargs.flaskparser import use_kwargs
-from weko_admin.models import SearchManagement as sm
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import count_items, recorrect_private_items_count
+from weko_items_ui.scopes import item_read_scope
+from weko_records.api import ItemTypes
 from weko_records.models import ItemType
-from werkzeug.utils import secure_filename
 
-from .error import VersionNotFoundRESTError, InternalServerError, UnhandledElasticsearchError
+from .error import VersionNotFoundRESTError, InternalServerError
 from .api import SearchSetting
 from .query import default_search_factory
+from .utils import create_limmiter
+
+limiter = create_limmiter()
+
 
 def create_blueprint(app, endpoints):
     """Create Invenio-Deposit-REST blueprint.
@@ -160,13 +148,13 @@ def create_blueprint(app, endpoints):
         )
 
         blueprint.add_url_rule(
-            options.pop("index_route"),
+            options.get("index_route"),
             view_func=isr,
             methods=['GET'],
         )
-  
+
         blueprint.add_url_rule(
-            options.pop("search_api_route"),
+            options.get("search_api_route"),
             view_func=isr_api,
             methods=['GET'],
         )
@@ -503,6 +491,7 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
     """Resource for records searching."""
 
     view_name = '{0}_searchapi'
+
     def __init__(
         self,
         ctx,
@@ -514,10 +503,10 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
         """Constructor."""
         super(IndexSearchResourceAPI, self).__init__(
             method_serializers={
-                "GET": search_serializers,
+                'GET': search_serializers,
             },
             default_method_media_type={
-                "GET": default_media_type,
+                'GET': default_media_type,
             },
             default_media_type=default_media_type,
             **kwargs
@@ -528,84 +517,94 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
         self.pid_fetcher = current_pidstore.fetchers[self.pid_fetcher]
         self.search_factory = default_search_factory
 
-    # @require_api_auth()
-    # @require_oauth_scopes(get_index_scope.id)
+    @require_api_auth(allow_anonymous=True)
+    @require_oauth_scopes(item_read_scope.id)
+    @limiter.limit('')
     def get(self, **kwargs):
         """Search records.
 
-        :returns: Search result containing hits and aggregations as
-                  returned by invenio-search.
+        :returns: Search result containing hits and aggregations as returned by invenio-search.
         """
-        from .config import WEKO_SEARCH_UI_API_VERSION
         version = kwargs.get('version')
-        get_api_ver = WEKO_SEARCH_UI_API_VERSION.get(version)
-        if get_api_ver:
-            return get_api_ver(self,**kwargs)
+        func_name = f'get_{version}'
+        if func_name in [func[0] for func in inspect.getmembers(self, inspect.ismethod)]:
+            return getattr(self, func_name)(**kwargs)
         else:
             raise VersionNotFoundRESTError()
-          
+
     def get_v1(self, **kwargs):
-        from weko_admin.models import FacetSearchSetting
-        from weko_admin.utils import get_facet_search_query
         try:
-            params = {}
+            # Language setting
+            language = request.headers.get('Accept-Language')
+            if language == 'ja':
+                get_current_locale().language = language
+
             # Generate Search Query Class
             search_obj = self.search_class()
             search = search_obj.with_preference_param().params(version=True)
-            
+
             # Pagenation Setting
-            page = request.values.get("page", type=int)
-            cursor = request.values.get("cursor")
-            size = request.values.get("size", 20, type=int)
+            page = request.values.get('page', type=int)
+            cursor = request.values.get('cursor')
+            size = request.values.get('size', 20, type=int)
             if not page and cursor:
-                cursor = cursor.split(",")
+                cursor = cursor.split(',')
                 search._extra.update(dict(search_after=cursor))
                 search._extra.update(dict(size=size))
-                
             else:
                 if not page:
                     page = 1
                 if page * size >= self.max_result_window:
                     raise MaxResultWindowRESTError()
-                search = search[(page - 1) * size : page * size]
-            print("==cp1==")
+                search = search[(page - 1) * size: page * size]
+
+            # filter by registered item type in RocrateMapping
+            from weko_records_ui.models import RocrateMapping
+            mapping = RocrateMapping.query.all()
+            item_type_ids = [x.item_type_id for x in mapping]
+            item_types = ItemTypes.get_records(item_type_ids)
+            additional_params = {
+                'itemtype': ','.join([x.model.item_type_name.name for x in item_types])
+            }
+
             # Query Generate
-            search, qs_kwargs = self.search_factory(self, search)
-            
+            search, qs_kwargs = self.search_factory(self, search, additional_params=additional_params)
+
             # Sort Setting
-            sort = request.values.get("sort")
-            
+            sort = request.values.get('sort')
             sort_query = []
             is_id_sort = False
             if sort:
-                sort = sort.split(",")
+                sort = sort.split(',')
                 for sort_key_element in sort:
-                    order = "asc"
-                    if sort_key_element.startswith("-"):
-                        sort_key_element = sort_key_element.lstrip("-")
-                        order = "desc"
-                    
+                    order = 'asc'
+                    if sort_key_element.startswith('-'):
+                        sort_key_element = sort_key_element.lstrip('-')
+                        order = 'desc'
+
                     key_filed = SearchSetting.get_sort_key(sort_key_element)
-                    
-                    if  key_filed:
-                        sort_element ={}
-                        sort_element[key_filed] = {"order":order, "unmapped_type":"long"}
+                    if key_filed:
+                        sort_element = {}
+                        sort_element[key_filed] = {'order': order, 'unmapped_type': 'long'}
                         sort_query.append(sort_element)
                         if sort_key_element == 'controlnumber':
                             is_id_sort = True
-                
+
             if not is_id_sort:
-                sort_element ={}
-                sort_element['controlnumber'] = {"order":"asc", "unmapped_type":"long"}
+                sort_element = {}
+                sort_element['controlnumber'] = {'order': 'asc', 'unmapped_type': 'long'}
                 sort_query.append(sort_element)
 
             search._sort = sort_query
-            
+
             # Facet Setting
+            # from weko_admin.models import FacetSearchSetting
+            # from weko_admin.utils import get_facet_search_query
+            # params = {}
             # facets = get_facet_search_query()
-            # search_index = current_app.config["SEARCH_UI_SEARCH_INDEX"]
-            # if facets and search_index and "post_filters" in facets[search_index]:
-            #     post_filters = facets[search_index]["post_filters"]
+            # search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
+            # if facets and search_index and 'post_filters' in facets[search_index]:
+            #     post_filters = facets[search_index]['post_filters']
             #     for param in post_filters:
             #         value = request.args.getlist(param)
             #         if value:
@@ -613,19 +612,53 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             # weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
             # for param in params:
             #     query_key = weko_faceted_search_mapping[param]
-            #     search = search.post_filter({"terms": {query_key: params[param]}})
-            
+            #     search = search.post_filter({'terms': {query_key: params[param]}})
+
             # Execute search
-            search_result = search.execute()
+            search_results = search.execute()
+            search_results = search_results.to_dict()
+
+            # Convert RO-Crate format
+            from weko_records_ui.utils import RoCrateConverter
+            converter = RoCrateConverter()
+            rocrate_list = []
+            for search_result in search_results['hits']['hits']:
+                metadata = search_result['_source']['_item_metadata']
+                item_type_id = metadata['item_type_id']
+                mapping = RocrateMapping.query.filter_by(item_type_id=item_type_id).one_or_none()
+                rocrate = converter.convert(metadata, mapping.mapping, language)
+                rocrate_list.append({
+                    'id': search_result['_source']['control_number'],
+                    'metadata': rocrate,
+                })
+
             # Check pretty
-            if request.args.get('pretty') == "true":
-                current_app.debug = True
-            
+            indent = 4 if request.args.get('pretty') == 'true' else None
+
+            cursor = None
+            if len(search_results['hits']['hits']) > 0:
+                sort_key = search_results['hits']['hits'][-1].get('sort')
+                if sort_key:
+                    cursor = sort_key[0]
+
+            # Create result
+            result = {
+                'total_results': search_results['hits']['total'],
+                'count_results': len(rocrate_list),
+                'cursor': cursor,
+                'page': page,
+                'search_results': rocrate_list,
+            }
+            res = Response(
+                response=json.dumps(result, indent=indent),
+                status=200,
+                content_type='application/json')
+
             # Response header setting
-            res = make_response(jsonify(search_result.to_dict()),200)
             res.headers['Cache-Control'] = 'no-store'
             res.headers['Pragma'] = 'no-cache'
             res.headers['Expires'] = 0
+
             return res
 
         except MaxResultWindowRESTError:
@@ -633,6 +666,6 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
 
         except ElasticsearchException:
             raise InternalServerError()
-          
+
         except Exception:
             raise InternalServerError()

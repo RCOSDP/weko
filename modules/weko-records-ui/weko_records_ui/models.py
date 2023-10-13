@@ -30,6 +30,8 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import JSONType
 
+from weko_records.models import ItemType
+
 """ PDF cover page model"""
 
 
@@ -401,4 +403,43 @@ class FileOnetimeDownload(db.Model, Timestamp):
         return query.order_by(desc(cls.id)).all()
 
 
-__all__ = ('PDFCoverPageSettings', 'FilePermission', 'FileOnetimeDownload')
+class RocrateMapping(db.Model, Timestamp):
+    """Represent a mapping from metadata to ro-crate.
+    The RocrateMapping object contains a ``created`` and  a ``updated`` properties that are automatically updated.
+    """
+
+    __tablename__ = 'rocrate_mapping'
+
+    id = db.Column(
+        db.Integer(),
+        primary_key=True,
+        autoincrement=True
+    )
+    """Record identifier."""
+
+    item_type_id = db.Column(
+        db.Integer,
+        db.ForeignKey(ItemType.id),
+        unique=True,
+        nullable=False,
+    )
+    """ID of item type."""
+
+    mapping = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """Store mapping in JSON format."""
+
+
+__all__ = ('PDFCoverPageSettings', 'FilePermission', 'FileOnetimeDownload', 'RocrateMapping')

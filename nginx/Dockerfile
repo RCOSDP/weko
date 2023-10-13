@@ -85,12 +85,15 @@ RUN apt-get update && apt-get install -y nodejs
 ADD ./ams/weko-frontend /usr/local/weko-frontend
 WORKDIR /usr/local/weko-frontend
 RUN npm install
+RUN export NODE_OPTIONS=--max_old_space_size=4096
 RUN npm run build
 RUN npm install -g pm2
-EXPOSE 8080
+EXPOSE 3000
 
 ADD ./startup.sh /usr/local
+ADD ./ecosystem.config.js /usr/local
 RUN chmod +x /usr/local/startup.sh
+RUN chmod +x /usr/local/ecosystem.config.js
 
 CMD ["/usr/local/startup.sh"]
 #CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
