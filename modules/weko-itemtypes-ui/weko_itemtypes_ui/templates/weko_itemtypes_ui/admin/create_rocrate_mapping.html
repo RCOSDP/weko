@@ -192,11 +192,19 @@
         <div class="form-inline">
           <label>Localization Settings</label>
         </div>
-        <div class="form-inline ten-pixel-bottom-margin">
-          <label>Japanese：</label>
-          <input type="text" id="node-name-ja" class="form-control ten-pixel-right-margin" disabled>
-          <label>English：</label>
-          <input type="text" id="node-name-en" class="form-control" disabled>
+        <div class="form-inline">
+          <table class="lang-table">
+            {%- for language in registered_languages -%}
+              <tr>
+                <td>
+                  <label>{{language.lang_name}}</label>
+                </td>
+                <td>
+                  <input type="text" name="node-name-i18n" class="form-control" data-lang="{{language.lang_code}}" disabled>
+                </td>
+              </tr>
+            {%- endfor -%}
+          </table>
         </div>
       </div>
 

@@ -31,7 +31,7 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
-from weko_admin.models import AdminSettings, BillingPermission
+from weko_admin.models import AdminSettings, BillingPermission, AdminLangSettings
 from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
     ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping_inactive_show_list
@@ -748,6 +748,8 @@ class ItemTypeRocrateMappingView(BaseView):
             record = RocrateMapping.query.filter_by(item_type_id=item_type_id).one_or_none()
             rocrate_mapping = record.mapping if record is not None else ''
 
+            registered_languages = AdminLangSettings.get_registered_language()
+
         except BaseException:
             current_app.logger.error('Unexpected error: {}'.format(sys.exc_info()))
             abort(500)
@@ -760,6 +762,7 @@ class ItemTypeRocrateMappingView(BaseView):
             rocrate_mapping=rocrate_mapping,
             rocrate_dataset_properties=current_app.config['WEKO_ITEMTYPES_UI_DATASET_PROPERTIES'],
             rocrate_file_properties=current_app.config['WEKO_ITEMTYPES_UI_FILE_PROPERTIES'],
+            registered_languages=registered_languages,
         )
 
     @expose('', methods=['POST'])

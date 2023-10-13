@@ -44,8 +44,7 @@ $(() => {
   const selectors = [
     'input#layer-num',
     'input[name="layer-name"]',
-    'input#node-name-ja',
-    'input#node-name-en',
+    'input[name="node-name-i18n"]',
     'select[name="select-rocrate-property"]',
     'input[name="list-index"]',
     'input[name="text-static-value"]',
@@ -117,14 +116,11 @@ $(() => {
 
     // save node name
     const node_name = $('#node-name').val();
-    const node_name_ja = $('#node-name-ja').val();
-    const node_name_en = $('#node-name-en').val();
+    const name_i18n = {};
+    $('input[name="node-name-i18n"]').each((_, textbox) => name_i18n[textbox.dataset.lang] = $(textbox).val());
     page_global.node_name[node_id] = {
       name: node_name,
-      name_i18n: {
-        ja: node_name_ja,
-        en: node_name_en,
-      }
+      name_i18n: name_i18n,
     };
   };
 
@@ -247,10 +243,8 @@ $(() => {
   function initCurrentNodeName() {
     $('#node-name').val('');
     $('#node-name').prop('disabled', true);
-    $('#node-name-ja').val('');
-    $('#node-name-ja').prop('disabled', true);
-    $('#node-name-en').val('');
-    $('#node-name-en').prop('disabled', true);
+    $('input[name="node-name-i18n"]').val('');
+    $('input[name="node-name-i18n"]').prop('disabled', true);
 
     // Init error message
     $('#node-name-setting').find('div[name="node-name-message"]').addClass('hide');
@@ -279,8 +273,7 @@ $(() => {
     // Activate add button
     if (node_id != 'root' && node_id != 'file') {
       $('#node-name').prop('disabled', false);
-      $('#node-name-ja').prop('disabled', false);
-      $('#node-name-en').prop('disabled', false);
+      $('input[name="node-name-i18n"]').prop('disabled', false);
     }
 
     const node_name = page_global.node_name[node_id];
@@ -288,8 +281,7 @@ $(() => {
 
     const name_i18n = node_name['name_i18n'];
     if (name_i18n != null) {
-      $('#node-name-ja').val(name_i18n['ja']);
-      $('#node-name-en').val(name_i18n['en']);
+      $('input[name="node-name-i18n"]').each((_, textbox) => $(textbox).val(name_i18n[textbox.dataset.lang]));
     }
   };
 
