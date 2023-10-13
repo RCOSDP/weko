@@ -1238,7 +1238,18 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
         "expiration_date_access": 500,
         "expiration_date_access_unlimited_chk": False,
     },
-    "terms_and_conditions": []
+    "terms_and_conditions": [],
+    "error_msg":{
+        "key" : "",
+        "content" : {
+            "ja" : {
+                "content" : "このデータは利用できません（権限がないため）。"
+            },
+            "en":{
+                "content" : "This data is not available for this user"
+            }
+        }
+    }
 }
 """Default restricted access settings."""
 
@@ -1246,10 +1257,10 @@ WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE = {
     "key" : "",
     "content" : {
         "ja" : {
-            "content" : ""
+            "content" : "このデータは利用できません（権限がないため）。"
         },
         "en":{
-            "content" : ""
+            "content" : "This data is not available for this user"
         }
     }
 }

@@ -638,15 +638,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         file_url = files[file_order]['url']['url']
 
     restricted_errorMsg = ''
-    eMsg = get_restricted_access('error_msg')
-    restricted_errorMsg = eMsg['content'].get(current_lang, None)['content']
-    if restricted_errorMsg == "" or restricted_errorMsg == None:
-        if current_lang == 'ja':
-            restricted_errorMsg = current_app.config.get('WEKO_RECORDS_UI_DEFAULT_ERROR_MESSAGE_JA')
-        else:
-            restricted_errorMsg = current_app.config.get('WEKO_RECORDS_UI_DEFAULT_ERROR_MESSAGE_EN')
-    else:
-        restricted_errorMsg
+    restricted_access = get_restricted_access()
+    restricted_errorMsg = restricted_access['error_msg']['content'].get(current_lang, None)['content']
 
 
     return render_template(

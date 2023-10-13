@@ -8,6 +8,7 @@ const CHECK_INPUT_DOWNLOAD = document.getElementById('check_input_download').val
 const CHECK_INPUT_EXPIRATION_DATE = document.getElementById('check_input_expiration_date').value;
 const EMPTY_DOWNLOAD = document.getElementById('empty_download').value;
 const EMPTY_EXPIRATION_DATE = document.getElementById('empty_expiration_date').value;
+const EMPTY_ERROR_MESSAGE = document.getElementById('empty_error_message').value;
 const USAGE_REPORT_WORKFLOW_ACCESS_LABEL = document.getElementById('usage_report_workflow_access_label').value
 const MAXINT = Number(document.getElementById('maxint').value)
 const MAX_DOWNLOAD_LIMIT = MAXINT;
@@ -540,6 +541,12 @@ function RestrictedAccessLayout({
       showErrorMessage(MESSAGE_MISSING_DATA);
       return false;
     }
+     //Validate ErrorMsgConditions
+     errorMessage = validErrorMsgConditions();
+     if(errorMessage){
+       showErrorMessage(errorMessage);
+       return false;
+     } 
 
     let data = {
       secret_URL_file_download:secretURLFileDownload,
@@ -633,6 +640,15 @@ function RestrictedAccessLayout({
       errorMessage = CHECK_INPUT_EXPIRATION_DATE;
     }
 
+    return errorMessage;
+  }
+
+  function validErrorMsgConditions() {
+    let errorMessage;
+
+    if (error_msg.content.en.content == '' || error_msg.content.ja.content == '') {
+      errorMessage = EMPTY_ERROR_MESSAGE;
+    }
     return errorMessage;
   }
 

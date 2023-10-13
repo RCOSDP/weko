@@ -655,7 +655,3 @@ WEKO_RECORDS_UI_REST_ENDPOINTS = {
 WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 
 WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES = ['en', 'ja']
-
-WEKO_RECORDS_UI_DEFAULT_ERROR_MESSAGE_EN = "This data is not available for this user."
-     
-WEKO_RECORDS_UI_DEFAULT_ERROR_MESSAGE_JA = "このデータは利用できません（権限がないため）。"
