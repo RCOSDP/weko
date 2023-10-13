@@ -1711,6 +1711,3 @@ msgstr "既に存在しています。"
 
 msgid "restricted_error_message"
 msgstr "エラーメッセージ"
-
-msgid "Please set Error Message."
-msgstr "エラーメッセージを設定してください。"
