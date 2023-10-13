@@ -1,0 +1,56 @@
+const weko = 'ams-dev.ir.rcos.nii.ac.jp';
+
+export default defineAppConfig({
+  wekoOrigin: 'https://' + weko,
+  wekoApi: 'https://' + weko + '/api/v1',
+  export: {
+    jpcoar:
+      'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=jpcoar_1.0&identifier=oai:ams-dev.ir.rcos.nii.ac.jp:',
+    dublincore:
+      'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:ams-dev.ir.rcos.nii.ac.jp:',
+    ddi: 'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=ddi&identifier=oai:ams-dev.ir.rcos.nii.ac.jp:'
+  },
+  cc: {
+    zero: 'license_12',
+    by_3: 'license_6',
+    by_4: 'license_0',
+    by_sa_3: 'license_7',
+    by_sa_4: 'license_1',
+    by_nd_3: 'license_8',
+    by_nd_4: 'license_2',
+    by_nc_3: 'license_9',
+    by_nc_4: 'license_3',
+    by_nc_sa_3: 'license_10',
+    by_nc_sa_4: 'license_4',
+    by_nc_nd_3: 'license_11',
+    by_nc_nd_4: 'license_5',
+    link: {
+      zero: 'https://creativecommons.org/publicdomain/zero/1.0/',
+      zero_ja: 'https://creativecommons.org/publicdomain/zero/1.0/deed.ja',
+      by_3: 'https://creativecommons.org/licenses/by/3.0/',
+      by_3_ja: 'https://creativecommons.org/licenses/by/3.0/deed.ja',
+      by_4: 'https://creativecommons.org/licenses/by/4.0/',
+      by_4_ja: 'https://creativecommons.org/licenses/by/4.0/deed.ja',
+      by_sa_3: 'https://creativecommons.org/licenses/by-sa/3.0/',
+      by_sa_3_ja: 'https://creativecommons.org/licenses/by-sa/3.0/deed.ja',
+      by_sa_4: 'https://creativecommons.org/licenses/by-sa/4.0/',
+      by_sa_4_ja: 'https://creativecommons.org/licenses/by-sa/4.0/deed.ja',
+      by_nd_3: 'https://creativecommons.org/licenses/by-nd/3.0/',
+      by_nd_3_ja: 'https://creativecommons.org/licenses/by-nd/3.0/deed.ja',
+      by_nd_4: 'https://creativecommons.org/licenses/by-nd/4.0/',
+      by_nd_4_ja: 'https://creativecommons.org/licenses/by-nd/4.0/deed.ja',
+      by_nc_3: 'https://creativecommons.org/licenses/by-nc/3.0/',
+      by_nc_3_ja: 'https://creativecommons.org/licenses/by-nc/3.0/deed.ja',
+      by_nc_4: 'https://creativecommons.org/licenses/by-nc/4.0/',
+      by_nc_4_ja: 'https://creativecommons.org/licenses/by-nc/4.0/deed.ja',
+      by_nc_sa_3: 'https://creativecommons.org/licenses/by-nc-sa/3.0/',
+      by_nc_sa_3_ja: 'https://creativecommons.org/licenses/by-nc-sa/3.0/deed.ja',
+      by_nc_sa_4: 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
+      by_nc_sa_4_ja: 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ja',
+      by_nc_nd_3: 'https://creativecommons.org/licenses/by-nc-nd/3.0/',
+      by_nc_nd_3_ja: 'https://creativecommons.org/licenses/by-nc-nd/3.0/deed.ja',
+      by_nc_nd_4: 'https://creativecommons.org/licenses/by-nc-nd/4.0/',
+      by_nc_nd_4_ja: 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja'
+    }
+  }
+});

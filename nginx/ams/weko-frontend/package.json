@@ -1,33 +1,37 @@
 {
-  "name": "ams",
-  "type": "module",
-  "version": "0.0.1",
+  "name": "ams-alpha",
+  "private": true,
   "scripts": {
-    "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro"
+    "dev": "nuxt dev",
+    "dev:ssl": "nuxt dev --https --ssl-cert localhost.pem --ssl-key localhost-key.pem",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint:js": "eslint --ext \".js,.ts,.vue\" --ignore-path .gitignore .",
+    "lint:prettier": "prettier --check .",
+    "lint": "npm run lint:js && npm run lint:prettier",
+    "lintfix": "prettier --write --list-different . && npm run lint:js -- --fix"
   },
   "dependencies": {
-    "@astrojs/node": "^5.2.0",
-    "@astrojs/tailwind": "^3.1.1",
-    "@astrojs/vue": "^2.1.1",
-    "@vuepic/vue-datepicker": "^5.2.0",
-    "@vueuse/core": "^10.1.2",
-    "astro": "^2.6.4",
-    "flowbite": "^1.6.5",
-    "lodash.debounce": "^4.0.8",
-    "lodash.throttle": "^4.1.1",
-    "tailwindcss": "^3.3.1",
-    "vue": "^3.2.47",
-    "vuejs-dialog": "^1.4.2"
+    "@nuxtjs/tailwindcss": "6.8.0",
+    "@types/node": "18.17.3",
+    "daisyui": "3.5.1",
+    "flowbite": "1.8.1",
+    "nuxt": "3.6.5",
+    "nuxt-lodash": "2.5.0",
+    "sass": "1.65.1",
+    "vue-i18n": "9.2.2"
   },
   "devDependencies": {
-    "sass": "^1.62.1",
-    "stylelint": "^15.6.0",
-    "stylelint-config-prettier-scss": "^0.0.1",
-    "stylelint-config-recess-order": "^4.0.0",
-    "stylelint-config-standard-scss": "^9.0.0"
+    "@nuxtjs/eslint-config-typescript": "12.0.0",
+    "@typescript-eslint/eslint-plugin": "5.62.0",
+    "@typescript-eslint/parser": "5.62.0",
+    "@vue/eslint-config-prettier": "8.0.0",
+    "eslint": "8.47.0",
+    "eslint-plugin-prettier": "5.0.0",
+    "eslint-plugin-vue": "9.17.0",
+    "prettier": "3.0.2",
+    "typescript": "5.1.6"
   }
 }
