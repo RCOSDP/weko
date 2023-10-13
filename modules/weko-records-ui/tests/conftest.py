@@ -2084,13 +2084,32 @@ def db_rocrate_mapping(db):
         db.session.add(item_type_name)
     db.session.commit()
 
+    item_type_schema = dict()
+    with open('tests/data/itemtype_schema.json', 'r') as f:
+        item_type_schema = json.load(f)
+
+    item_type_form = dict()
+    with open('tests/data/itemtype_form.json', 'r') as f:
+        item_type_form = json.load(f)
+        item_type_form[10].pop('items')
+        item_type_form[11]['items'][1]['isHide'] = True
+        item_type_form[15]['items'][0].pop('title_i18n')
+        item_type_form[15]['items'][0]['title'] = ''
+        item_type_form[17]['items'][0].pop('title_i18n')
+
+    item_type_render = dict()
+    with open('tests/data/itemtype_render.json', 'r') as f:
+        item_type_render = json.load(f)
+        item_type_render['meta_list']['item_1617186385884']['option']['hidden'] = True
+
+
     item_type = ItemType(
         id=40001,
         name_id=40001,
         harvesting_type=True,
-        schema={'type': 'test schema'},
-        form={'type': 'test form'},
-        render={'type': 'test render'},
+        schema=item_type_schema,
+        form=item_type_form,
+        render=item_type_render,
         tag=1,
         version_id=1,
         is_deleted=False,

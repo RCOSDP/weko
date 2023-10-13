@@ -52,8 +52,8 @@
     },
     "file": {
         "map": {
-            "fileprop1": "filekey1",
-            "fileprop2": "filekey2.filekey2_1"
+            "fileprop1": "file.filekey1",
+            "fileprop2": "file.filekey2.filekey2_1"
         }
     }
 }
