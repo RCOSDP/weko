@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime
 
 from weko_records.api import ItemTypes, ItemTypeProps
@@ -66,6 +67,7 @@ def update_creator_for_creator_type_only(
             and add_to_mapping is not None :
 
         if item_type.schema["properties"][item_key]["items"]["properties"].get(schema_key):
+        # if False:
             print("CREATOR TYPE already updated for デフォルトアイテムタイプ（フル）.")
         else:
             #* Modify target ITEM TYPE
@@ -87,6 +89,7 @@ def update_creator_for_creator_type_only(
                     if item_type.render["table_row_map"]["mapping"][item_key]["jpcoar_mapping"].get("creator"):
                         item_type.render["table_row_map"]["mapping"][item_key]["jpcoar_mapping"]["creator"]["@attributes"] = {mapping_key: mapping_key}
 
+
             #* Modify target ITEM TYPE PROPERTY
             if not item_type_property.schema["properties"].get(schema_key):
                 item_type_property.schema["properties"][schema_key] = add_to_schema[schema_key]
@@ -101,8 +104,11 @@ def update_creator_for_creator_type_only(
             prop_key_singular: str = (".").join(prop_key_singular)
             prop_key_plural: str = (".").join(prop_key_plural)
 
-            add_to_form_singular["key"] = prop_key_singular
-            add_to_form["key"] = prop_key_plural
+            add_to_form_singular_2 = copy.deepcopy(add_to_form_singular)
+            add_to_form_plural_2 = copy.deepcopy(add_to_form)
+
+            add_to_form_singular_2["key"] = prop_key_singular
+            add_to_form_plural_2["key"] = prop_key_plural
 
             for form_value in item_type_property.form["items"]:
                 if form_value.get("key") == prop_key_singular:
@@ -113,9 +119,11 @@ def update_creator_for_creator_type_only(
                     prop_check = True
 
             if not prop_check:
-                item_type_property.form["items"].append(add_to_form_singular)
-                item_type_property.forms["items"].append(add_to_form)
-            
+                del add_to_form_singular_2["title_i18n"]
+                del add_to_form_plural_2["title_i18n"]
+                item_type_property.form["items"].append(add_to_form_singular_2)
+                item_type_property.forms["items"].append(add_to_form_plural_2)
+
             #* Modify target ITEM TYPE MAPPING
             for mapping in item_type_mapping:
                 if mapping.mapping.get(item_key) is not None:
@@ -204,23 +212,31 @@ add_to_schema_creator_type = {
         "type": "string",
         "format": "text",
         "title": "作成者タイプ",
+        "title_i18n": {"en": "Creator Type", "ja": "作成者タイプ"},
+        # "title_i18n_temp": {"en": "Creator Type", "ja": "作成者タイプ"},
     }
 }
 
 #? Creator Type form data
 add_to_form_creator_type = {
+    # "add": "New",
     "key": f"{creator_item_key[0]}[].creatorType",
     "type": "text",
     "title": "作成者タイプ",
-    "title_i18n": {"en": "Creator Type", "ja": "作成者タイプ"}
+    "title_i18n": {"en": "Creator Type", "ja": "作成者タイプ"},
+    # "title_i18n_temp": {"en": "Creator Type", "ja": "作成者タイプ"},
+    # "style": {"add": "btn-success"}
 }
 
 #? Creator Type form data for singular form use
 add_to_form_singular_creator_type = {
+    # "add": "New",
     "key": f"{creator_item_key[0]}.creatorType",
     "type": "text",
     "title": "作成者タイプ",
-    "title_i18n": {"en": "Creator Type", "ja": "作成者タイプ"}
+    "title_i18n": {"en": "Creator Type", "ja": "作成者タイプ"},
+    # "title_i18n_temp": {"en": "Creator Type", "ja": "作成者タイプ"},
+    # "style": {"add": "btn-success"}
 }
 
 #? Creator Type mapping data
@@ -1269,7 +1285,8 @@ subject_scheme_new_values_title_map = [
 ]
 
 ###! UPDATE CHANGES IN ITEM TYPE Full FOR SUBJECT SCHEME ~ START
-if "JEL" in subject_scheme_schema.get("currentEnum"):
+if "JEL" in subject_scheme_schema.get("currentEnum") \
+        or "JEL" in subject_scheme_schema.get("enum"):
     print("SUBJECT SCHEME already updated for デフォルトアイテムタイプ（フル）.")
 else:
     if subject_item_key:
@@ -1519,6 +1536,12 @@ else:
             if "GRID" in creator_affiliation_name_identifier_schema["enum"]:
                 creator_affiliation_name_identifier_schema["enum"].remove("GRID")
                 creator_affiliation_name_identifier_schema["enum"].append("GRID【非推奨】")
+            if "kakenhi" in creator_affiliation_name_identifier_schema["currentEnum"]:
+                creator_affiliation_name_identifier_schema["currentEnum"].remove("kakenhi")
+                creator_affiliation_name_identifier_schema["currentEnum"].append("kakenhi【非推奨】")
+            if "GRID" in creator_affiliation_name_identifier_schema["currentEnum"]:
+                creator_affiliation_name_identifier_schema["currentEnum"].remove("GRID")
+                creator_affiliation_name_identifier_schema["currentEnum"].append("GRID【非推奨】")
 
         if creator_affiliation_form:
             if creator_affiliation_form[0].get("items") \
@@ -1738,6 +1761,12 @@ else:
             if "GRID" in contributor_affiliation_name_identifier_schema["enum"]:
                 contributor_affiliation_name_identifier_schema["enum"].remove("GRID")
                 contributor_affiliation_name_identifier_schema["enum"].append("GRID【非推奨】")
+            if "kakenhi" in contributor_affiliation_name_identifier_schema["currentEnum"]:
+                contributor_affiliation_name_identifier_schema["currentEnum"].remove("kakenhi")
+                contributor_affiliation_name_identifier_schema["currentEnum"].append("kakenhi【非推奨】")
+            if "GRID" in contributor_affiliation_name_identifier_schema["currentEnum"]:
+                contributor_affiliation_name_identifier_schema["currentEnum"].remove("GRID")
+                contributor_affiliation_name_identifier_schema["currentEnum"].append("GRID【非推奨】")
 
         if contributor_affiliation_form:
             if contributor_affiliation_form[0].get("items") \
@@ -2056,7 +2085,8 @@ relation_type_new_values_title_map = [
 ]
 
 ###! UPDATE CHANGES IN ITEM TYPE Full FOR RELATION TYPE ~ START
-if "inSeries" in relation_type_schema.get("currentEnum"):
+if "inSeries" in relation_type_schema.get("currentEnum") \
+        or "inSeries" in relation_type_schema.get("enum"):
     print("RELATION TYPE already updated for デフォルトアイテムタイプ（フル）.")
 else:
     if relation_item_key:
@@ -2329,7 +2359,8 @@ relation_identifer_type_new_values_title_map = [
 ]
 
 ###! UPDATE CHANGES IN ITEM TYPE Full FOR RELATION IDENTIFIER TYPE ~ START
-if "CRID" in relation_identifier_type_schema.get("currentEnum"):
+if "CRID" in relation_identifier_type_schema.get("currentEnum") \
+        or "CRID" in relation_identifier_type_schema.get("enum"):
     print("RELATION IDENTIFIER TYPE already updated for デフォルトアイテムタイプ（フル）.")
 else:
     if relation_item_key:
@@ -2582,7 +2613,8 @@ new_funder_identifier_type_title_map = [
 ]
 
 ###! UPDATE CHANGES IN ITEM TYPE Full FOR FUNDER IDENTIFIER TYPE ~ START
-if "ROR" in funder_identifier_type_schema.get("currentEnum"):
+if "ROR" in funder_identifier_type_schema.get("currentEnum") \
+        or "ROR" in funder_identifier_type_schema.get("enum"):
     print("FUNDER IDENTIFIER TYPE already updated for デフォルトアイテムタイプ（フル）.")
 else:
     if funding_reference_key:

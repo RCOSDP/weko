@@ -2416,6 +2416,8 @@ class _FormatSysCreator:
         elif parent_key == WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_names']:
             name_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_name']
             lang_key = WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_lang']
+        elif parent_key == WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_type']: #? ADDED 20231017 CREATOR TYPE BUG FIX
+            return
         if parent_key in self.creator:
             lst_value = self.creator[parent_key]
             if len(lst_value) > 0:
@@ -2492,8 +2494,9 @@ class _FormatSysCreator:
         if isinstance(creators, dict):
             creator_list_temp = []
             for key, value in creators.items():
-                if (key in [WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers'],
-                            WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails']]):
+                if (key in [WEKO_DEPOSIT_SYS_CREATOR_KEY['identifiers'], 
+                            WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_mails'],
+                            WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_type']]): #? ADDED 20231017 CREATOR TYPE BUG FIX
                     continue
                 if key == WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations']:
                     format_affiliation(value)
@@ -2540,12 +2543,18 @@ class _FormatSysCreator:
         """
         creator_lst = []
         rtn_value = {}
+        creator_type = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_type'] #? ADDED 20231017 CREATOR TYPE BUG FIX
         creator_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['creator_names']
         family_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['family_names']
         given_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['given_names']
         alternative_names = WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_names']
-        list_parent_key = [creator_names, family_names, given_names,
-                           alternative_names]
+        list_parent_key = [
+            creator_type, #? ADDED 20231017 CREATOR TYPE BUG FIX
+            creator_names,
+            family_names,
+            given_names,
+            alternative_names
+        ]
 
         # Get default creator name to show on detail screen.
         self._get_default_creator_name(list_parent_key,
