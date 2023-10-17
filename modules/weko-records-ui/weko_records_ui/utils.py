@@ -1568,9 +1568,9 @@ class RoCrateConverter:
         metadata_files = self.__get_metadata_files(metadata)
         map_file = format.get('file', {}).get('map', {})
         file_entities = []
-        for metadata_file in metadata_files:
+        for index, metadata_file in enumerate(metadata_files):
             file_entity = self.crate.add_file(metadata_file.get('filename', ''))
-            self.__add_properties(file_entity, map_file, metadata_file)
+            self.__add_file_properties(file_entity, map_file, metadata, index)
             file_entities.append(file_entity)
         self.crate.root_dataset['mainEntity'] = file_entities
 
@@ -1589,6 +1589,42 @@ class RoCrateConverter:
                 break
 
         return files
+
+    def __add_file_properties(self, entity, map, metadata, index):
+        """
+        Add properties to entity.
+
+        Args:
+            entity          : RO-Crate entity
+            map (dict)      : mapping information
+            metadata (dict) : metadata
+            index (int)     : file index
+        """
+
+        for property_name, item_type_key in map.items():
+            property_value = None
+            if isinstance(item_type_key, list):
+                property_value = []
+                for key in item_type_key:
+                    key_list = key.split('.')
+                    key_list[0] = f'{key_list[0]}[{index}]'
+                    key = '.'.join(key_list)
+                    value = self.__get_property(key, metadata)
+                    if isinstance(value, list):
+                        property_value = property_value + value
+                    else:
+                        property_value.append(value)
+            elif isinstance(item_type_key, dict):
+                if 'static_value' in item_type_key:
+                    property_value = item_type_key.get('static_value')
+            else:
+                key_list = item_type_key.split('.')
+                key_list[0] = f'{key_list[0]}[{index}]'
+                item_type_key = '.'.join(key_list)
+                property_value = self.__get_property(item_type_key, metadata)
+
+            if property_value:
+                entity[property_name] = property_value
 
     def __add_properties(self, entity, map, metadata):
         """
@@ -1611,16 +1647,21 @@ class RoCrateConverter:
                     else:
                         property_value.append(value)
             elif isinstance(item_type_key, dict):
-                values = self.__get_property(item_type_key.get('value'), metadata)
-                languages = self.__get_property(item_type_key.get('lang'), metadata)
-                if len(values) != len(languages):
-                    continue
-                indices = [i for i, x in enumerate(languages) if x == self.lang]
-                if not indices:
-                    indices = [i for i, x in enumerate(languages) if x == self.DEFAULT_LANG]
-                if not indices:
-                    indices = [0]
-                property_value = [x for i, x in enumerate(values) if i in indices]
+                if 'static_value' in item_type_key:
+                    property_value = item_type_key.get('static_value')
+                else:
+                    values = self.__get_property(item_type_key.get('value'), metadata)
+                    languages = self.__get_property(item_type_key.get('lang'), metadata)
+                    if not values or not languages:
+                        continue
+                    if len(values) != len(languages):
+                        continue
+                    indices = [i for i, x in enumerate(languages) if x == self.lang]
+                    if not indices:
+                        indices = [i for i, x in enumerate(languages) if x == self.DEFAULT_LANG]
+                    if not indices:
+                        indices = [0]
+                    property_value = [x for i, x in enumerate(values) if i in indices]
             else:
                 property_value = self.__get_property(item_type_key, metadata)
 
@@ -1728,8 +1769,9 @@ class RoCrateConverter:
                 depth = child.get('depth')
                 if len(entity_types) > depth:
                     entity['additionalType'] = entity_types[depth]
-            if 'name' in child:
-                entity['title'] = child.get('name')
+            name = self.__get_name(child)
+            if name:
+                entity['name'] = name
             self.__add_properties(entity, child.get('map', {}), metadata)
             entities.append(entity)
 
@@ -1739,6 +1781,17 @@ class RoCrateConverter:
                 entity['hasPart'] = child_entities
 
         return entities
+
+    def __get_name(self, node):
+        name = ''
+        if 'name_i18n' in node:
+            name_i18n = node.get('name_i18n')
+            if self.lang in name_i18n:
+                name = name_i18n.get(self.lang)
+        if not name:
+            if 'name' in node:
+                name = node.get('name')
+        return name
 
     def __get_json(self):
         """Get RO-Crate metadata."""
