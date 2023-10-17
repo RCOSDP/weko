@@ -76,18 +76,21 @@ function TermsList({termList, setTermList, currentTerm, setCurrentTerm}) {
     });
   }
 
-  function groupTemlatesByGenre(templates) {
-    let groupingTemplates = templates.filter((tmpl) => tmpl["genre_name"] != null)
+  function groupTemplatesByGenre(templates) {
+    let groupingTemplates = templates.filter((tmpl) => tmpl["genre_key"] != null)
       .sort((tmpl1, tmpl2) => tmpl1.genre_order - tmpl2.genre_order)
       .reduce(function (newDict, tmpl) {
-        (newDict[tmpl["genre_name"]] = newDict[tmpl["genre_name"]] || []).push(tmpl);
+        newDict[tmpl["genre_key"]] = newDict[tmpl["genre_key"]] || {
+          name: tmpl["genre_name"],
+          items: []
+        }
+        newDict[tmpl["genre_key"]].items.push(tmpl);
         return newDict;
       }, {});
-    groupingTemplates['Others'] = templates.filter((tmpl) => tmpl["genre_name"] == null)
     return groupingTemplates
   }
 
-  let groupTemplates = groupTemlatesByGenre(termList)
+  let groupTemplates = groupTemplatesByGenre(termList)
 
   return (
     <div className='row'>
@@ -96,10 +99,10 @@ function TermsList({termList, setTermList, currentTerm, setCurrentTerm}) {
           {
             Object.keys(groupTemplates).map((key) => (
               <div>
-                <div>{key}</div>
+                <div>{groupTemplates[key].name}</div>
                 <div className={`col col-md-12 padding-top ${key == "Others" ? " margin-top both scrollbar" : "margin-bottom"}`} id="sltBoxListEmail">
                   {
-                    groupTemplates[key].map((term) => (
+                    groupTemplates[key].items.map((term) => (
                       <li className="tree-list" key={term.key}>
                         <a
                           className={`list-group-item list-group-item-action ${currentTerm !== undefined && currentTerm.key === term.key ? 'active' : ''}`}

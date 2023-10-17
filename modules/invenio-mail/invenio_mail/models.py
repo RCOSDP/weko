@@ -24,6 +24,7 @@ from flask import current_app
 from invenio_db import db
 from sqlalchemy import or_
 from weko_admin.models import AdminSettings
+from flask_babelex import gettext as _
 
 
 class MailConfig(db.Model):
@@ -78,7 +79,7 @@ class MailTemplates(db.Model):
     mail_body = db.Column(db.Text, nullable=True)
     default_mail = db.Column(db.Boolean, default=False)
     mail_genre_id = db.Column('genre_id', db.Integer,
-                              db.ForeignKey('mail_template_genres.id', onupdate='CASCADE', ondelete='SET NULL'))
+                              db.ForeignKey('mail_template_genres.id', onupdate='CASCADE', ondelete='RESTRICT'), nullable=False)
 
     def toDict(self):
         """model object to dict"""
@@ -90,7 +91,8 @@ class MailTemplates(db.Model):
                 "body": self.mail_body
             },
             'genre_order': self.genre.id if self.genre else None,
-            'genre_name': self.genre.name if self.genre else None,
+            'genre_key': self.genre.name if self.genre else None,
+            'genre_name': _(self.genre.name) if self.genre else None,
         }
 
     @classmethod
