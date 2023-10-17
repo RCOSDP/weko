@@ -732,7 +732,7 @@ class ItemTypeRocrateMappingView(BaseView):
         :param item_type_id: Item type ID. (Default: 0)
         :return: The rendered template.
         """
-        current_app.logger.error('ItemTypeID:{}'.format(item_type_id))
+        current_app.logger.info('ItemTypeID:{}'.format(item_type_id))
         try:
             item_type_names = ItemTypes.get_latest()  # ItemTypes.get_all()
             if item_type_names is None or len(item_type_names) == 0:
