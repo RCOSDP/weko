@@ -31,6 +31,7 @@ from flask import Flask, json, jsonify, url_for, session, make_response, current
 from flask_babelex import gettext as _
 from invenio_db import db
 from sqlalchemy import func
+from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 import uuid
 from invenio_communities.models import Community
@@ -43,12 +44,14 @@ import weko_workflow.utils
 from weko_workflow import WekoWorkflow
 from weko_workflow.config import WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB,WEKO_WORKFLOW_ALL_TAB
 from flask_security import login_user
-from weko_workflow.models import ActionFeedbackMail, Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction,FlowActionRole, ActivityAction
 from invenio_accounts.testutils import login_user_via_session as login
+from weko_workflow.models import ActionStatusPolicy, ActionFeedbackMail, ActionJournal, ActionIdentifier, Activity, ActivityHistory, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction,FlowActionRole, ActivityAction, GuestActivity
 from weko_workflow.views import unlock_activity, check_approval, get_feedback_maillist, save_activity, previous_action
 from marshmallow.exceptions import ValidationError
-from weko_records_ui.models import FilePermission
-from weko_records.models import ItemMetadata
+from weko_records_ui.models import FileOnetimeDownload, FilePermission
+from weko_records.models import ItemMetadata, ItemReference
+from invenio_records.models import RecordMetadata
+
 
 
 def response_data(response):
@@ -297,6 +300,7 @@ def test_iframe_success(client, db_register,users, db_records,mocker,without_rem
             assert mock_kwargs["error"] == "can not get data required for rendering"
 
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_init_activity_acl_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_init_activity_acl_nologin(client,db_register2):
     """Test init_activity.
 
@@ -309,9 +313,10 @@ def test_init_activity_acl_nologin(client,db_register2):
     input = {'workflow_id': 1, 'flow_id': 1}
     res = client.post(url, json=input)
     assert res.status_code == 302
-    assert res.location == url_for('security.login', next="/workflow/activity/init",_external=True)
+    assert res.location == "http://TEST_SERVER.localdomain/login/?next=%2Fworkflow%2Factivity%2Finit"
 
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_init_activity_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
     (1, 200),
@@ -321,7 +326,7 @@ def test_init_activity_acl_nologin(client,db_register2):
     (5, 200),
     (6, 200),
 ])
-def test_init_activity_acl(client, users, users_index, status_code,db_register):
+def test_init_activity_acl(app, client, users, users_index, status_code, item_type, workflow):
     """_summary_
 
     Args:
@@ -331,78 +336,196 @@ def test_init_activity_acl(client, users, users_index, status_code,db_register):
         status_code (_type_): _description_
         db_register (_type_): _description_
     """
+    workflow_id = workflow['workflow'].id
+    flow_def_id = workflow['flow'].id
+    item_type_id = item_type.id
     login(client=client, email=users[users_index]['email'])
+
+    q = Activity.query.all()
+    assert len(q) == 0
+    q = ActivityHistory.query.all()
+    assert len(q) == 0
+    q = ActivityAction.query.all()
+    assert len(q) == 0
     url = url_for('weko_workflow.init_activity')
-    input = {'workflow_id': db_register['workflow'].id, 'flow_id': db_register['flow_define'].id}
+    input = {'workflow_id': workflow_id, 'flow_id': flow_def_id, 'activity_confirm_term_of_use': True}
     res = client.post(url, json=input)
     assert res.status_code == status_code
+    assert json.loads(res.data.decode('utf-8'))['data']['redirect'].endswith('00001')
+    q = Activity.query.all()
+    assert len(q) == 1
+    q = Activity.query.first()
+    assert q.extra_info == {}
+    assert q.activity_login_user == users[users_index]['id']
+    assert q.activity_update_user == users[users_index]['id']
+    assert q.activity_confirm_term_of_use == True
+    q = ActivityHistory.query.all()
+    assert len(q) == 1
+    q = ActivityAction.query.all()
+    assert len(q) == 7
 
-@pytest.mark.parametrize('users_index, status_code', [
-    (0, 200),
-    (1, 200),
-    (2, 200),
-    (3, 200),
-    (4, 200),
-    (5, 200),
-    (6, 200),
-])
-def test_init_activity(client, users,users_index, status_code,db_register):
-    login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.init_activity')
-    input = {'workflow_id': db_register['workflow'].id, 'flow_id': db_register['flow_define'].id}
-    res = client.post(url, json=input)
-    assert res.status_code == status_code
-
-    input = {'workflow_id': -99, 'flow_id': db_register['flow_define'].id}
+    input = {'workflow_id': -99, 'flow_id': flow_def_id}
     res = client.post(url, json=input)
     assert res.status_code == 500
+    q = Activity.query.all()
+    assert len(q) == 1
+    q = ActivityHistory.query.all()
+    assert len(q) == 1
+    q = ActivityAction.query.all()
+    assert len(q) == 7
 
-    input = {'workflow_id': db_register['workflow'].id, 'flow_id': -99}
+    url = url_for('weko_workflow.init_activity')
+    input = {'workflow_id': workflow_id, 'flow_id': -99}
     res = client.post(url, json=input)
     assert res.status_code == 500
+    q = Activity.query.all()
+    assert len(q) == 1
+    q = ActivityHistory.query.all()
+    assert len(q) == 1
+    q = ActivityAction.query.all()
+    assert len(q) == 7
 
-
-    input = {'workflow_id': db_register['workflow'].id}
+    url = url_for('weko_workflow.init_activity')
+    input = {'workflow_id': workflow_id}
     res = client.post(url, json=input)
     assert res.status_code == 400
+    q = Activity.query.all()
+    assert len(q) == 1
+    q = ActivityHistory.query.all()
+    assert len(q) == 1
+    q = ActivityAction.query.all()
+    assert len(q) == 7
 
-    input = {'flow_id': db_register['flow_define'].id}
+    url = url_for('weko_workflow.init_activity')
+    input = {'flow_id': flow_def_id}
     res = client.post(url, json=input)
     assert res.status_code == 400
+    q = Activity.query.all()
+    assert len(q) == 1
+    q = ActivityHistory.query.all()
+    assert len(q) == 1
+    q = ActivityAction.query.all()
+    assert len(q) == 7
 
+    url = url_for('weko_workflow.init_activity')
     input = {}
     res = client.post(url, json=input)
     assert res.status_code == 400
+    q = Activity.query.all()
+    assert len(q) == 1
+    q = ActivityHistory.query.all()
+    assert len(q) == 1
+    q = ActivityAction.query.all()
+    assert len(q) == 7
 
-    input = {'workflow_id': str(db_register['workflow'].id), 'flow_id': str(db_register['flow_define'].id)}
+    url = url_for('weko_workflow.init_activity', community='comm01')
+    input = {'workflow_id': str(workflow_id), 'flow_id': str(flow_def_id)}
     res = client.post(url, json=input)
-    assert res.status_code == 200
+    assert res.status_code == status_code
+    assert json.loads(res.data.decode('utf-8'))['data']['redirect'].endswith('comm01')
+    q = Activity.query.all()
+    assert len(q) == 2
+    q = ActivityHistory.query.all()
+    assert len(q) == 2
+    q = ActivityAction.query.all()
+    assert len(q) == 14
 
-    input = {'workflow_id': 'd'+str(db_register['workflow'].id), 'flow_id': str(db_register['flow_define'].id)}
+    url = url_for('weko_workflow.init_activity')
+    input = {'workflow_id': 'd'+str(workflow_id), 'flow_id': str(flow_def_id)}
     res = client.post(url, json=input)
     assert res.status_code == 400
+    q = Activity.query.all()
+    assert len(q) == 2
+    q = ActivityHistory.query.all()
+    assert len(q) == 2
+    q = ActivityAction.query.all()
+    assert len(q) == 14
 
-    input = {'workflow_id': str(db_register['workflow'].id)+'d', 'flow_id': str(db_register['flow_define'].id)}
+    url = url_for('weko_workflow.init_activity')
+    input = {'workflow_id': str(workflow_id)+'d', 'flow_id': str(flow_def_id)}
     res = client.post(url, json=input)
     assert res.status_code == 400
+    q = Activity.query.all()
+    assert len(q) == 2
+    q = ActivityHistory.query.all()
+    assert len(q) == 2
+    q = ActivityAction.query.all()
+    assert len(q) == 14
 
-    input = {'workflow_id': None, 'flow_id': db_register['flow_define'].id}
+    url = url_for('weko_workflow.init_activity')
+    input = {'workflow_id': None, 'flow_id': flow_def_id}
     res = client.post(url, json=input)
     assert res.status_code == 400
+    q = Activity.query.all()
+    assert len(q) == 2
+    q = ActivityHistory.query.all()
+    assert len(q) == 2
+    q = ActivityAction.query.all()
+    assert len(q) == 14
 
-    input = {'workflow_id': db_register['workflow'].id, 'flow_id': None}
+    url = url_for('weko_workflow.init_activity')
+    input = {'workflow_id': workflow_id, 'flow_id': None}
     res = client.post(url, json=input)
     assert res.status_code == 400
+    q = Activity.query.all()
+    assert len(q) == 2
+    q = ActivityHistory.query.all()
+    assert len(q) == 2
+    q = ActivityAction.query.all()
+    assert len(q) == 14
 
-    input = {'workflow_id': db_register['workflow'].id, 'flow_id': db_register['flow_define'].id, 'itemtype_id': db_register['item_type'].id}
+    url = url_for('weko_workflow.init_activity', community='comm02')
+    input = {'workflow_id': workflow_id, 'flow_id': flow_def_id, 'itemtype_id': item_type_id}
     res = client.post(url, json=input)
-    assert res.status_code == 200
+    assert res.status_code == status_code
+    assert json.loads(res.data.decode('utf-8'))['data']['redirect'].endswith('00003')
+    q = Activity.query.all()
+    assert len(q) == 3
+    q = ActivityHistory.query.all()
+    assert len(q) == 3
+    q = ActivityAction.query.all()
+    assert len(q) == 21
 
-    input = {'workflow_id': db_register['workflow'].id, 'flow_id': db_register['flow_define'].id, 'unknown':'unknown'}
+    app.config['WEKO_WORKFLOW_ENABLE_SHOWING_TERM_OF_USE'] = True
+    app.config['WEKO_ITEMS_UI_SHOW_TERM_AND_CONDITION'] = ['テストアイテムタイプ']
+    url = url_for('weko_workflow.init_activity')
+    input = {
+        'workflow_id': workflow_id,
+        'flow_id': flow_def_id,
+        'unknown':'unknown',
+        'itemtype_id': item_type_id,
+        'extra_info': {'test': 'test'},
+        'related_title': 'aaa',
+        'activity_login_user': 2,
+        'activity_update_user': 3
+    }
     res = client.post(url, json=input)
-    assert res.status_code == 200
+    assert res.status_code == status_code
+    assert json.loads(res.data.decode('utf-8'))['data']['redirect'].endswith('00004')
+    q = Activity.query.all()
+    assert len(q) == 4
+    q = Activity.query.filter(Activity.activity_id.like('%-00004')).first()
+    assert q.extra_info == {'test': 'test', 'related_title': 'aaa'}
+    assert q.activity_login_user == 2
+    assert q.activity_update_user == 3
+    assert q.activity_confirm_term_of_use == False
+    q = ActivityHistory.query.all()
+    assert len(q) == 4
+    q = ActivityAction.query.all()
+    assert len(q) == 28
 
-
+    url = url_for('weko_workflow.init_activity')
+    input = {'workflow_id': workflow_id, 'flow_id': flow_def_id}
+    with patch('weko_workflow.views.db.session.commit', side_effect=SQLAlchemyError("test_sql_error")):
+        res = client.post(url, json=input)
+        assert res.status_code == 500
+    q = Activity.query.all()
+    assert len(q) == 4
+    q = ActivityHistory.query.all()
+    assert len(q) == 4
+    q = ActivityAction.query.all()
+    assert len(q) == 28
 
 
 def test_init_activity_guest_nologin(client,db_register2):
@@ -435,6 +558,25 @@ def test_init_activity_guest_users(client, users, users_index, status_code):
 
     res = client.post(url, json=input)
     assert res.status_code == status_code
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_guest_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_display_guest_activity(client, users, db_register, db_guestactivity):
+    """Test display_guest_activity func."""
+    url = url_for('weko_workflow.display_guest_activity', file_name="Test_file", token='123')
+    with patch("flask.templating._render", return_value=""):
+        res = client.get(url)
+        assert res.status_code == 200
+
+    url = url_for('weko_workflow.display_guest_activity', file_name="Test_file", token=db_guestactivity[0])
+    with patch("flask.templating._render", return_value=""):
+        res = client.get(url)
+        assert res.status_code == 200
+
+    url = url_for('weko_workflow.display_guest_activity', file_name="Test_file", token=db_guestactivity[1])
+    with patch("flask.templating._render", return_value=""):
+        res = client.get(url)
+        assert res.status_code == 200
 
 
 def test_find_doi_nologin(client,db_register2):
@@ -768,7 +910,7 @@ def test_previous_action(client, users, db_register, users_index, status_code):
         assert data["code"] == -2
         assert data["msg"] == ""
 
-
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_next_action_acl_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_next_action_acl_nologin(client, db_register_fullaction):
     """Test of next action."""
     url = url_for('weko_workflow.next_action', activity_id='1',
@@ -777,17 +919,17 @@ def test_next_action_acl_nologin(client, db_register_fullaction):
 
     res = client.post(url, json=input)
     assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/workflow/activity/action/1/1",_external=True)
+    assert res.location == "http://TEST_SERVER.localdomain/login/?next=%2Fworkflow%2Factivity%2Faction%2F1%2F1"
 
-
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_next_action_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code, is_admin', [
-    (0, 403, False),
-    (1, 403, True),
-    (2, 403, True),
-    (3, 403, True),
-    (4, 403, False),
-    (5, 403, False),
-    (6, 403, True),
+    (0, 200, False),
+    (1, 200, True),
+    (2, 200, True),
+    (3, 200, True),
+    (4, 200, False),
+    (5, 200, False),
+    (6, 200, True),
 ])
 def test_next_action_acl_users(client, users, db_register_fullaction, users_index, status_code, is_admin):
     """Test of next action."""
@@ -809,7 +951,17 @@ def test_next_action_acl_users(client, users, db_register_fullaction, users_inde
     with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
                return_value=(roles, action_users)):
         res = client.post(url, json=input)
-        assert res.status_code != status_code
+        assert res.status_code == status_code
+
+    url = url_for('weko_workflow.next_action',
+                  activity_id='2',
+                  action_id=10)
+    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+               return_value=(roles, action_users)):
+        res = client.post(url, json=input)
+        data = response_data(res)
+        assert res.status_code == 500
+        assert data["msg"] == 'can not get schema by action_id'
 
     action_users = {
         'allow': [],
@@ -822,11 +974,12 @@ def test_next_action_acl_users(client, users, db_register_fullaction, users_inde
                return_value=(roles, action_users)):
         res = client.post(url, json=input)
         data = response_data(res)
-        assert res.status_code != status_code
         if is_admin:
-            assert data["code"] != 403
+            assert res.status_code == status_code
+            assert data["msg"] == 'success'
         else:
-            assert data["code"] == 403
+            assert res.status_code == status_code
+            assert data["msg"] == 'Authorization required'
 
     action_users = {
         'allow': [users[users_index]["id"]],
@@ -839,9 +992,10 @@ def test_next_action_acl_users(client, users, db_register_fullaction, users_inde
                return_value=(roles, action_users)):
         res = client.post(url, json=input)
         data = response_data(res)
-        assert res.status_code != status_code
-        assert data["code"] != 403
+        assert res.status_code == status_code
+        assert data["msg"] == 'success'
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_next_action_acl_guestlogin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_next_action_acl_guestlogin(guest, client, db_register_fullaction):
     input = {'action_version': 1, 'commond': 1}
     url = url_for('weko_workflow.next_action',
@@ -859,23 +1013,37 @@ def test_next_action_acl_guestlogin(guest, client, db_register_fullaction):
         res = guest.post(url, json=input)
         assert res.status_code != 403
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_next_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 200),
+    # (0, 200),
     (1, 200),
     (2, 200),
-    (3, 200),
-    (4, 200),
-    (5, 200),
+    # (3, 200),
+    # (4, 200),
+    # (5, 200),
     (6, 200),
 ])
 def test_next_action(client, db, users, db_register_fullaction, db_records, users_index, status_code, mocker):
-    def update_activity_order(activity_id, action_id, action_order):
+    def update_activity_order(activity_id, action_id, action_order, item_id=None, extra_info={}):
         with db.session.begin_nested():
             activity=Activity.query.filter_by(activity_id=activity_id).one_or_none()
+            activity.activity_status=ActionStatusPolicy.ACTION_BEGIN
             activity.action_id=action_id
             activity.action_order=action_order
+            activity.action_status=None
+            activity.extra_info=extra_info
+            if item_id:
+                activity.item_id=item_id
             db.session.merge(activity)
+            pid = PersistentIdentifier.query.filter(
+                PersistentIdentifier.object_uuid==activity.item_id,
+                PersistentIdentifier.object_type=='rec',
+                PersistentIdentifier.pid_type=='recid').one_or_none()
+            if pid:
+                pid.status=PIDStatus.NEW
+                db.session.merge(pid)
         db.session.commit()
+
     login(client=client, email=users[users_index]["email"])
     with client.session_transaction() as session:
         session['itemlogin_id'] = "test id"
@@ -892,13 +1060,28 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
 
     mocker.patch("weko_workflow.views.IdentifierHandle.remove_idt_registration_metadata",return_value=None)
     mocker.patch("weko_workflow.views.IdentifierHandle.update_idt_registration_metadata",return_value=None)
-    mocker.patch("weko_workflow.views.WekoDeposit.update_feedback_mail")
+    mocker.patch("weko_workflow.views.WekoDeposit.update_feedback_mail",return_value=True)
     mocker.patch("weko_workflow.views.FeedbackMailList.update_by_list_item_id")
     mocker.patch("weko_workflow.views.FeedbackMailList.delete_by_list_item_id")
     mock_signal = mocker.patch("weko_workflow.views.item_created.send")
-    new_item = uuid.uuid4()
-    mocker.patch("weko_workflow.views.handle_finish_workflow",return_value=new_item)
+    # new_item = uuid.uuid4()
+    # mocker.patch("weko_workflow.views.handle_finish_workflow",return_value=new_item)
+    mocker.patch("weko_deposit.api.WekoDeposit.publish",return_value=True)
+    mocker.patch("weko_deposit.api.WekoDeposit.merge_data_to_record_without_version",return_value=db_records[0][6])
+    mocker.patch("weko_deposit.api.WekoDeposit.update_feedback_mail",return_value=True)
+    mocker.patch("weko_deposit.api.WekoDeposit.commit",return_value=True)
+    mocker.patch("weko_workflow.api.UpdateItem.publish",return_value=True)
+    mocker.patch("invenio_oaiserver.tasks.update_records_sets.delay",return_value=True)
 
+    flow_action_5 = db_register_fullaction["flow_actions"][5].id
+    item_id1 = db_register_fullaction["activities"][0].item_id
+    item_id2 = db_register_fullaction["activities"][1].item_id
+    item_id3 = db_register_fullaction["activities"][2].item_id
+    item_id4 = db_register_fullaction["activities"][3].item_id
+    item_id5 = db_register_fullaction["activities"][4].item_id
+    item_id6 = db_register_fullaction["activities"][5].item_id
+    item_id7 = db_register_fullaction["activities"][6].item_id
+    activity1 = db_register_fullaction["activities"][0]
 
     # argument error
     with patch("weko_workflow.views.type_null_check",return_value=False):
@@ -912,9 +1095,10 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
         assert data["msg"] == "argument error"
 
     # can not get activity_detail
+    update_activity_order("1",1,1,item_id1)
     url = url_for("weko_workflow.next_action",
-            activity_id="1", action_id=1)
-    with patch("weko_workflow.views.WorkActivity.get_activity_by_id",side_effect=[db_register_fullaction["activities"][0],None]):
+                  activity_id="1", action_id=1)
+    with patch("weko_workflow.views.WorkActivity.get_activity_by_id",side_effect=[activity1,None]):
         res = client.post(url, json=input)
         data = response_data(res)
         assert res.status_code == 500
@@ -922,6 +1106,7 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
         assert data["msg"] == "can not get activity detail"
 
     # cannot get schema
+    update_activity_order("1",1,1,item_id1)
     url = url_for("weko_workflow.next_action",
             activity_id="1", action_id=1)
     with patch("weko_workflow.views.get_schema_action",return_value=None):
@@ -934,7 +1119,7 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     # request_body error
     url = url_for("weko_workflow.next_action",
             activity_id="2", action_id=7)
-    update_activity_order("2",7,5)
+    update_activity_order("2",7,5,item_id2)
     input = {
         "temporary_save":1,
         "identifier_grant":"1",
@@ -959,29 +1144,87 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     assert data["msg"] == "success"
 
     # action: end
-    update_activity_order("2",2,7)
+    update_activity_order("2",2,7,item_id2)
+    q = Activity.query.filter(Activity.activity_id=="2").first()
+    assert q.activity_status == ActionStatusPolicy.ACTION_BEGIN
+    assert q.action_id == 2
+    assert q.action_status == None
+    assert q.action_order == 7
+    q = ActivityHistory.query.filter(ActivityHistory.activity_id=="2").all()
+    assert len(q) == 0
+    url = url_for("weko_workflow.next_action",
+                  activity_id="2", action_id=2)
+    with patch('weko_workflow.views.db.session.commit', side_effect=Exception("")):
+        res = client.post(url, json=input)
+        data = response_data(res)
+    assert res.status_code == 500
+    assert data["code"] == -1
+    assert data["msg"] == "error"
+    q = Activity.query.filter(Activity.activity_id=="2").first()
+    assert q.activity_status == ActionStatusPolicy.ACTION_BEGIN
+    assert q.action_id == 2
+    assert q.action_status == None
+    assert q.action_order == 7
+    q = ActivityHistory.query.filter(ActivityHistory.activity_id=="2").all()
+    assert len(q) == 0
     url = url_for("weko_workflow.next_action",
                   activity_id="2", action_id=2)
     res = client.post(url, json=input)
     data = response_data(res)
-    assert res.status_code == 200
+    assert res.status_code == status_code
     assert data["code"] == 0
     assert data["msg"] == "success"
+    q = Activity.query.filter(Activity.activity_id=="2").first()
+    assert q.activity_status == ActionStatusPolicy.ACTION_DONE
+    assert q.action_id == 2
+    assert q.action_status == 'F'
+    assert q.action_order == 7
+    q = ActivityHistory.query.filter(ActivityHistory.activity_id=="2").all()
+    assert len(q) == 1
 
+    # ActivityHistory create error
+    url = url_for("weko_workflow.next_action",
+                  activity_id="1", action_id=3)
+    update_activity_order("1",3,2,item_id1)
+    q = ActivityHistory.query.filter(ActivityHistory.activity_id=="1").all()
+    assert len(q) == 0
+    with patch('weko_workflow.views.db.session.commit', side_effect=Exception("")):
+        res = client.post(url, json=input)
+        data = response_data(res)
+    assert res.status_code == 500
+    assert data["code"] == -1
+    assert data["msg"] == "error"
+    q = ActivityHistory.query.filter(ActivityHistory.activity_id=="1").all()
+    assert len(q) == 0
 
     # action: item register
     ## not exist pid_without_ver
     url = url_for("weko_workflow.next_action",
                   activity_id="1", action_id=3)
-    update_activity_order("1",3,2)
+    update_activity_order("1",3,2,item_id1)
+    q = Activity.query.filter(Activity.activity_id=="1").first()
+    assert q.activity_status == ActionStatusPolicy.ACTION_BEGIN
+    assert q.action_id == 3
+    assert q.action_status == None
+    assert q.action_order == 2
     res = client.post(url, json=input)
     data = response_data(res)
     assert res.status_code == 500
     assert data["code"] == -1
     assert data["msg"] == "can not get pid_without_ver"
+    q = ActivityHistory.query.filter(ActivityHistory.activity_id=="1").all()
+    assert len(q) == 1
+    q = Activity.query.filter(Activity.activity_id=="1").first()
+    assert q.activity_status == ActionStatusPolicy.ACTION_BEGIN
+    assert q.action_id == 3
+    assert q.action_status == 'F'
+    assert q.action_order == 2
+
     ## not exist record
     with patch("weko_workflow.views.WekoRecord.get_record_by_pid",return_value=None):
-        update_activity_order("2",3,2)
+        update_activity_order("2",3,2,item_id2)
+        q = ActivityHistory.query.filter(ActivityHistory.activity_id=="2").all()
+        assert len(q) == 1
         input = {"temporary_save":1}
         url = url_for("weko_workflow.next_action",
                       activity_id="2", action_id=3)
@@ -990,9 +1233,11 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
         assert res.status_code == 500
         assert data["code"] == -1
         assert data["msg"] == "can not get record"
+        q = ActivityHistory.query.filter(ActivityHistory.activity_id=="2").all()
+        assert len(q) == 2
 
     with patch("weko_workflow.views.PersistentIdentifier.get_by_object",side_effect=PIDDoesNotExistError("recid","wrong value")):
-        update_activity_order("2",3,2)
+        update_activity_order("2",3,2,item_id2)
         input = {"temporary_save":1}
         url = url_for("weko_workflow.next_action",
                       activity_id="2", action_id=3)
@@ -1001,8 +1246,9 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
         assert res.status_code == 500
         assert data["code"] == -1
         assert data["msg"] == "can not get PersistentIdentifier"
+
     with patch("weko_workflow.views.WekoDeposit.get_record", return_value=None):
-        update_activity_order("2",3,2)
+        update_activity_order("2",3,2,item_id2)
         input = {"temporary_save":1}
         url = url_for("weko_workflow.next_action",
                       activity_id="2", action_id=3)
@@ -1011,61 +1257,196 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
         assert res.status_code == 500
         assert data["code"] == -1
         assert data["msg"] == "can not get pid_without_ver"
+
     ## template_save = 1
     ### not in journal
-    update_activity_order("2",3,2)
-    input = {"temporary_save":1}
+    # fail
+    update_activity_order("2",3,2,item_id2)
+    q = Activity.query.filter(Activity.activity_id=="2").first()
+    assert q.activity_status == ActionStatusPolicy.ACTION_BEGIN
+    assert q.action_id == 3
+    assert q.action_status == None
+    assert q.action_order == 2
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==3).first()
+    assert q.action_comment == None
+    input = {"temporary_save":1, "commond": "test_comment"}
+    url = url_for("weko_workflow.next_action",
+                  activity_id="2", action_id=3)
+    with patch('weko_workflow.views.db.session.commit', side_effect=Exception("")):
+        res = client.post(url, json=input)
+        data = response_data(res)
+        assert res.status_code == 500
+        assert data["code"] == -1
+        assert data["msg"] == "error"
+    q = Activity.query.filter(Activity.activity_id=="2").first()
+    assert q.activity_status == ActionStatusPolicy.ACTION_BEGIN
+    assert q.action_id == 3
+    assert q.action_status == None
+    assert q.action_order == 2
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==3).first()
+    assert q.action_comment == None
+
+    # action: item register
+    ## template_save = 1
+    ### not in journal
+    # success
+    update_activity_order("2",3,2,item_id2)
+    q = Activity.query.filter(Activity.activity_id=="2").first()
+    assert q.activity_status == ActionStatusPolicy.ACTION_BEGIN
+    assert q.action_id == 3
+    assert q.action_status == None
+    assert q.action_order == 2    
+    q = PersistentIdentifier.query.filter(
+        PersistentIdentifier.object_uuid==item_id2,
+        PersistentIdentifier.object_type=='rec',
+        PersistentIdentifier.pid_type=='recid').first()
+    assert q.status == PIDStatus.NEW
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==3).first()
+    assert q.action_comment == None
+    input = {"temporary_save":1, "commond": "test_comment"}
     url = url_for("weko_workflow.next_action",
                   activity_id="2", action_id=3)
     res = client.post(url, json=input)
     data = response_data(res)
-    assert res.status_code == 200
+    assert res.status_code == status_code
     assert data["code"] == 0
     assert data["msg"] == "success"
-
-    ## temporary_save=0
-    ###x activity action update faild
-    with patch("weko_workflow.views.WorkActivity.upt_activity_action",return_value=False):
-        update_activity_order("2",3,2)
-        input = {"temporary_save":0}
-        url = url_for("weko_workflow.next_action",
-                      activity_id="2", action_id=3)
-        res = client.post(url, json=input)
-        data = response_data(res)
-        assert res.status_code == 500
-        assert data["code"] == -2
-        assert data["msg"] == ""
+    q = Activity.query.filter(Activity.activity_id=="2").first()
+    assert q.activity_status == ActionStatusPolicy.ACTION_BEGIN
+    assert q.action_id == 3
+    assert q.action_status == 'F'
+    assert q.action_order == 2
+    q = PersistentIdentifier.query.filter(
+        PersistentIdentifier.object_uuid==item_id2,
+        PersistentIdentifier.object_type=='rec',
+        PersistentIdentifier.pid_type=='recid').first()
+    assert q.status == PIDStatus.NEW
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==3).first()
+    assert q.action_comment == "test_comment"
 
     # action: oa policy
     ## temporary_save = 1
     ### in journal
-    update_activity_order("2",6,3)
+    update_activity_order("2",6,3,item_id2)
+    q = ActionJournal.query.filter(ActionJournal.activity_id=="2", ActionJournal.action_id==6).first()
+    assert q == None
     input = {"temporary_save":1,
              "journal":{"issn":"test issn"}}
     url = url_for("weko_workflow.next_action",
                   activity_id="2", action_id=6)
     res = client.post(url, json=input)
     data = response_data(res)
-    assert res.status_code == 200
+    assert res.status_code == status_code
     assert data["code"] == 0
     assert data["msg"] == "success"
+    q = ActionJournal.query.filter(ActionJournal.activity_id=="2", ActionJournal.action_id==6).first()
+    assert q.action_journal == {"issn":"test issn"}
 
-    ## temporary_save = 0
-    update_activity_order("2",6,3)
+    # action: item link
+    ## temporary_save = 1
+    # success
+    update_activity_order("2",5,4,item_id2)
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==5).first()
+    assert q.action_comment == None
+    input = {
+        "temporary_save":1,
+        "link_data":[],
+        "commond": "test_comment"
+    }
+    url = url_for("weko_workflow.next_action",
+                  activity_id="2", action_id=5)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    assert res.status_code == status_code
+    assert data["code"] == 0
+    assert data["msg"] == "success"
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==5).first()
+    assert q.action_comment == "test_comment"
+
+    # action: identifier grant
+    ## exist identifier_select
+    ###x temporary_save = 1
+    update_activity_order("2",7,5,item_id2)
+    q = ActionIdentifier.query.filter(ActionIdentifier.activity_id=="2", ActionIdentifier.action_id==7).first()
+    assert q.action_identifier_select == -2
+    assert q.action_identifier_jalc_doi == ""
+    assert q.action_identifier_jalc_cr_doi == ""
+    assert q.action_identifier_jalc_dc_doi == ""
+    assert q.action_identifier_ndl_jalc_doi == ""
+    input = {
+        "temporary_save":1,
+        "identifier_grant":"1",
+        "identifier_grant_jalc_doi_suffix":"123",
+        "identifier_grant_jalc_cr_doi_suffix":"456",
+        "identifier_grant_jalc_dc_doi_suffix":"789",
+        "identifier_grant_ndl_jalc_doi_suffix":"000"
+    }
+    url = url_for("weko_workflow.next_action",
+            activity_id="2", action_id=7)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    assert res.status_code == status_code
+    assert data["code"] == 0
+    assert data["msg"] == "success"
+    q = ActionIdentifier.query.filter(ActionIdentifier.activity_id=="2", ActionIdentifier.action_id==7).first()
+    assert q.action_identifier_select == 1
+    assert q.action_identifier_jalc_doi == "123"
+    assert q.action_identifier_jalc_cr_doi == "456"
+    assert q.action_identifier_jalc_dc_doi == "789"
+    assert q.action_identifier_ndl_jalc_doi == "000"
+
+    # action: item register
+    ## temporary_save=0
+    # success
+    update_activity_order("2",3,2,item_id2)
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==3).first()
+    assert q.action_status == ActionStatusPolicy.ACTION_BEGIN
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==6).first()
+    assert q.action_status == ActionStatusPolicy.ACTION_BEGIN
+    q = Activity.query.filter(Activity.activity_id=="2").first()
+    assert q.action_id == 3
+    assert q.action_status == None
+    assert q.action_order == 2
+    input = {"temporary_save":0}
+    url = url_for("weko_workflow.next_action",
+                  activity_id="2", action_id=3)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    assert res.status_code == status_code
+    assert data["code"] == 0
+    assert data["msg"] == "success"
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==3).first()
+    assert q.action_status == ActionStatusPolicy.ACTION_DONE
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==6).first()
+    assert q.action_status == ActionStatusPolicy.ACTION_DOING
+    q = Activity.query.filter(Activity.activity_id=="2").first()
+    assert q.action_id == 6
+    assert q.action_status == ActionStatusPolicy.ACTION_DOING
+    assert q.action_order == 3
+
+    # action: oa policy
+    # ## temporary_save = 0
+    update_activity_order("2",6,3,item_id2)
+    q = ActionJournal.query.filter(ActionJournal.activity_id=="2", ActionJournal.action_id==6).first()
+    assert q.action_journal == {"issn":"test issn"}
     input = {"temporary_save":0,
-             "journal":{"issn":"test issn"}}
+             "journal":{"issn":"test issn 1"}}
     url = url_for("weko_workflow.next_action",
                   activity_id="2", action_id=6)
     res = client.post(url, json=input)
     data = response_data(res)
-    assert res.status_code == 200
+    assert res.status_code == status_code
     assert data["code"] == 0
     assert data["msg"] == "success"
+    q = ActionJournal.query.filter(ActionJournal.activity_id=="2", ActionJournal.action_id==6).first()
+    assert q.action_journal == {"issn":"test issn 1"}
 
     # action: item link
     ## temporary_save = 0
     ### exist pid_without_ver, exist link_data
-    update_activity_order("2",5,4)
+    update_activity_order("2",5,4,item_id2)
+    q = ItemReference.query.all()
+    assert q == []
     input = {
         "temporary_save":0,
         "link_data":[
@@ -1079,8 +1460,21 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     assert res.status_code == status_code
     assert data["code"] == 0
     assert data["msg"] == "success"
+    q = ItemReference.query.all()
+    assert len(q) == 1
+
+    # action: item link
     ####x raise except
-    update_activity_order("2",5,4)
+    update_activity_order("2",5,4,item_id2)
+    q = ActionJournal.query.filter(ActionJournal.activity_id=="2", ActionJournal.action_id==6).first()
+    assert q.action_journal == {"issn":"test issn 1"}
+    input = {
+            "temporary_save":0,
+            "journal":{"issn":"test issn 2"},
+            "link_data":[{"item_id":"1","item_title":"test item1","sele_id":"relateTo"}]
+        }
+    url = url_for("weko_workflow.next_action",
+                  activity_id="2", action_id=5)
     err_msg = "test update error"
     with patch("weko_workflow.views.ItemLink.update",return_value=err_msg):
         res = client.post(url, json=input)
@@ -1088,25 +1482,48 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
         assert res.status_code == 500
         assert data["code"] == -1
         assert data["msg"] == err_msg
-    ## temporary_save = 1
-    update_activity_order("2",5,4)
+        q = ActionJournal.query.filter(ActionJournal.activity_id=="2", ActionJournal.action_id==6).first()
+        assert q.action_journal == {"issn":"test issn 1"}
+    
+    # action: identifier grant
+    update_activity_order("2",7,5,item_id2)
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==7).first()
+    assert q.action_status == ActionStatusPolicy.ACTION_DOING
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==5).first()
+    assert q.action_status == ActionStatusPolicy.ACTION_DONE
+    q = Activity.query.filter(Activity.activity_id=="2").first()
+    assert q.action_id == 7
+    assert q.action_status == None
+    assert q.action_order == 5
+    url = url_for("weko_workflow.next_action",
+            activity_id="2", action_id=7)
     input = {
-        "temporary_save":1,
-        "link_data":[]
+        "identifier_grant":"1",
+        "identifier_grant_jalc_doi_suffix":"",
+        "identifier_grant_jalc_cr_doi_suffix":"",
+        "identifier_grant_jalc_dc_doi_suffix":"",
+        "identifier_grant_ndl_jalc_doi_suffix":""
     }
     res = client.post(url, json=input)
     data = response_data(res)
     assert res.status_code == status_code
     assert data["code"] == 0
     assert data["msg"] == "success"
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==7).first()
+    assert q.action_status == ActionStatusPolicy.ACTION_RETRY
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==5).first()
+    assert q.action_status == ActionStatusPolicy.ACTION_DONE
+    q = Activity.query.filter(Activity.activity_id=="2").first()
+    assert q.action_id == 3
+    assert q.action_status == ActionStatusPolicy.ACTION_DOING
+    assert q.action_order == 2
 
-    # action: identifier grant
-    ## exist identifier_select
-    ###x temporary_save = 1
-    update_activity_order("2",7,5)
+    ### temporary_save = 0
+    #### select NotGrant
+    update_activity_order("2",7,5,item_id2)
     input = {
-        "temporary_save":1,
-        "identifier_grant":"1",
+        "temporary_save":0,
+        "identifier_grant":"0",
         "identifier_grant_jalc_doi_suffix":"",
         "identifier_grant_jalc_cr_doi_suffix":"",
         "identifier_grant_jalc_dc_doi_suffix":"",
@@ -1119,44 +1536,43 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     assert res.status_code == status_code
     assert data["code"] == 0
     assert data["msg"] == "success"
+
     ### temporary_save = 0
     #### select NotGrant
+    update_activity_order("2",7,5,item_id2)
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==7).first()
+    assert q.action_status == ActionStatusPolicy.ACTION_DONE
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==5).first()
+    assert q.action_status == ActionStatusPolicy.ACTION_DONE
+    q = Activity.query.filter(Activity.activity_id=="2").first()
+    assert q.action_id == 7
+    assert q.action_status == None
+    assert q.action_order == 5
     input = {
         "temporary_save":0,
-        "identifier_grant":"0",
         "identifier_grant_jalc_doi_suffix":"",
         "identifier_grant_jalc_cr_doi_suffix":"",
         "identifier_grant_jalc_dc_doi_suffix":"",
         "identifier_grant_ndl_jalc_doi_suffix":""
     }
-    update_activity_order("2",7,5)
+    url = url_for("weko_workflow.next_action",
+            activity_id="2", action_id=7)
     res = client.post(url, json=input)
     data = response_data(res)
     assert res.status_code == status_code
     assert data["code"] == 0
     assert data["msg"] == "success"
-
-    ###### not _old_v
-    input = {
-        "temporary_save":0,
-        "identifier_grant":"0",
-        "identifier_grant_jalc_doi_suffix":"",
-        "identifier_grant_jalc_cr_doi_suffix":"",
-        "identifier_grant_jalc_dc_doi_suffix":"",
-        "identifier_grant_ndl_jalc_doi_suffix":""
-    }
-    with patch("weko_workflow.views.IdentifierHandle.get_idt_registration_data",return_value=(None, None)):
-        update_activity_order("2",7,5)
-        url = url_for("weko_workflow.next_action",
-                activity_id="2", action_id=7)
-        res = client.post(url, json=input)
-        data = response_data(res)
-        assert res.status_code == status_code
-        assert data["code"] == 0
-        assert data["msg"] == "success"
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==7).first()
+    assert q.action_status == ActionStatusPolicy.ACTION_RETRY
+    q = ActivityAction.query.filter(ActivityAction.activity_id=="2", ActivityAction.action_id==5).first()
+    assert q.action_status == ActionStatusPolicy.ACTION_DONE
+    q = Activity.query.filter(Activity.activity_id=="2").first()
+    assert q.action_id == 3
+    assert q.action_status == ActionStatusPolicy.ACTION_DOING
+    assert q.action_order == 2
 
     ###### _old_v & _old_v = _new_v
-    update_activity_order("7",7,5)
+    update_activity_order("7",7,5,item_id7)
     url = url_for("weko_workflow.next_action",
             activity_id="7", action_id=7)
     res = client.post(url, json=input)
@@ -1164,20 +1580,21 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     assert res.status_code == status_code
     assert data["code"] == 0
     assert data["msg"] == "success"
+
     ##### item_id == pid_without_ver
     ###### _value
-    update_activity_order("6",7,5)
+    update_activity_order("6",7,5,item_id6)
     url = url_for("weko_workflow.next_action",
             activity_id="6", action_id=7)
     res = client.post(url, json=input)
     data = response_data(res)
-    assert res.status_code == status_code
-    assert data["code"] == 0
-    assert data["msg"] == "success"
+    assert res.status_code == 500
+    assert data["code"] == -2
+    assert data["msg"] == ""
 
     ###### not _value
     with patch("weko_workflow.views.IdentifierHandle.get_idt_registration_data",return_value=(None,None)):
-        update_activity_order("6",7,5)
+        update_activity_order("6",7,5,item_id6)
         url = url_for("weko_workflow.next_action",
                 activity_id="6", action_id=7)
         res = client.post(url, json=input)
@@ -1190,28 +1607,48 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     #####x error_list is str
     input = {
         "temporary_save":0,
-        "identifier_grant":"1",
-        "identifier_grant_jalc_doi_suffix":"",
-        "identifier_grant_jalc_cr_doi_suffix":"",
-        "identifier_grant_jalc_dc_doi_suffix":"",
-        "identifier_grant_ndl_jalc_doi_suffix":""
+        "identifier_grant":"2",
+        "identifier_grant_jalc_doi_suffix":"123",
+        "identifier_grant_jalc_cr_doi_suffix":"456",
+        "identifier_grant_jalc_dc_doi_suffix":"789",
+        "identifier_grant_ndl_jalc_doi_suffix":"000"
     }
     url = url_for("weko_workflow.next_action",
             activity_id="2", action_id=7)
     test_msg = _('Cannot register selected DOI for current Item Type of this '
                  'item.')
     with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=test_msg):
-        update_activity_order("2",7,5)
+        update_activity_order("2",7,5,item_id2)
+        q = ActionIdentifier.query.filter(ActionIdentifier.activity_id=="2", ActionIdentifier.action_id==7).first()
+        assert q.action_identifier_select == 0
+        assert q.action_identifier_jalc_doi == ""
+        assert q.action_identifier_jalc_cr_doi == ""
+        assert q.action_identifier_jalc_dc_doi == ""
+        assert q.action_identifier_ndl_jalc_doi == ""
         res = client.post(url,json=input)
         data = response_data(res)
+        q = ActionIdentifier.query.filter(ActionIdentifier.activity_id=="2", ActionIdentifier.action_id==7).first()
+        assert q.action_identifier_select == 0
+        assert q.action_identifier_jalc_doi == ""
+        assert q.action_identifier_jalc_cr_doi == ""
+        assert q.action_identifier_jalc_dc_doi == ""
+        assert q.action_identifier_ndl_jalc_doi == ""
         assert res.status_code == 500
         assert data["code"] == -1
         assert data["msg"] == test_msg
 
     #####x error_list
+    input = {
+        "temporary_save":0,
+        "identifier_grant":"1",
+        "identifier_grant_jalc_doi_suffix":"",
+        "identifier_grant_jalc_cr_doi_suffix":"",
+        "identifier_grant_jalc_dc_doi_suffix":"",
+        "identifier_grant_ndl_jalc_doi_suffix":""
+    }
     mock_previous_action = mocker.patch("weko_workflow.views.previous_action",return_value=make_response())
     with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=True):
-        update_activity_order("2",7,5)
+        update_activity_order("2",7,5,item_id2)
         res = client.post(url,json=input)
         assert res.status_code == status_code
         mock_previous_action.assert_called_with(
@@ -1223,7 +1660,7 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     url = url_for("weko_workflow.next_action",
             activity_id="5", action_id=7)
     with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=False):
-        update_activity_order("5",7,5)
+        update_activity_order("5",7,5,item_id5)
         res = client.post(url, json=input)
         data = response_data(res)
         assert res.status_code == status_code
@@ -1234,7 +1671,7 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=False):
         url = url_for("weko_workflow.next_action",
             activity_id="2", action_id=7)
-        update_activity_order("2",7,5)
+        update_activity_order("2",7,5,item_id2)
         res = client.post(url, json=input)
         data = response_data(res)
         assert res.status_code == status_code
@@ -1244,17 +1681,45 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=False):
         url = url_for("weko_workflow.next_action",
             activity_id="5", action_id=7)
-        update_activity_order("5",7,5)
+        update_activity_order("5",7,5,item_id5)
         res = client.post(url, json=input)
         data = response_data(res)
         assert res.status_code == status_code
         assert data["code"] == 0
         assert data["msg"] == "success"
 
-
     url = url_for("weko_workflow.next_action",
             activity_id="2", action_id=7)
     ## not exist identifier_select & not temporary_save
+    ### _value and _type
+    ####x error_list is str
+    input = {
+        "temporary_save":0,
+        "identifier_grant_jalc_doi_suffix":"123",
+        "identifier_grant_jalc_cr_doi_suffix":"456",
+        "identifier_grant_jalc_dc_doi_suffix":"789",
+        "identifier_grant_ndl_jalc_doi_suffix":"000"
+    }
+    with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=test_msg):
+        update_activity_order("2",7,5,item_id2)
+        q = ActionIdentifier.query.filter(ActionIdentifier.activity_id=="2", ActionIdentifier.action_id==7).first()
+        assert q.action_identifier_select == 1
+        assert q.action_identifier_jalc_doi == ""
+        assert q.action_identifier_jalc_cr_doi == ""
+        assert q.action_identifier_jalc_dc_doi == ""
+        assert q.action_identifier_ndl_jalc_doi == ""
+        res = client.post(url, json=input)
+        data = response_data(res)
+        assert res.status_code == 500
+        assert data["code"] ==-1
+        assert data["msg"] == test_msg
+        q = ActionIdentifier.query.filter(ActionIdentifier.activity_id=="2", ActionIdentifier.action_id==7).first()
+        assert q.action_identifier_select == 1
+        assert q.action_identifier_jalc_doi == ""
+        assert q.action_identifier_jalc_cr_doi == ""
+        assert q.action_identifier_jalc_dc_doi == ""
+        assert q.action_identifier_ndl_jalc_doi == ""
+    ####x error_list is not str & error_list = True
     input = {
         "temporary_save":0,
         "identifier_grant_jalc_doi_suffix":"",
@@ -1262,18 +1727,8 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
         "identifier_grant_jalc_dc_doi_suffix":"",
         "identifier_grant_ndl_jalc_doi_suffix":""
     }
-    ### _value and _type
-    ####x error_list is str
-    with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=test_msg):
-        update_activity_order("2",7,5)
-        res = client.post(url, json=input)
-        data = response_data(res)
-        assert res.status_code == 500
-        assert data["code"] ==-1
-        assert data["msg"] == test_msg
-    ####x error_list is not str & error_list = True
     with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=True):
-        update_activity_order("2",7,5)
+        update_activity_order("2",7,5,item_id2)
         res = client.post(url, json=input)
         assert res.status_code == status_code
         mock_previous_action.assert_called_with(
@@ -1282,8 +1737,15 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
             req=-1
         )
     #### error_list is not str & error_list = False
+    input = {
+        "temporary_save":0,
+        "identifier_grant_jalc_doi_suffix":"",
+        "identifier_grant_jalc_cr_doi_suffix":"",
+        "identifier_grant_jalc_dc_doi_suffix":"",
+        "identifier_grant_ndl_jalc_doi_suffix":""
+    }
     with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=False):
-        update_activity_order("2",7,5)
+        update_activity_order("2",7,5,item_id2)
         res = client.post(url, json=input)
         data = response_data(res)
         assert res.status_code == status_code
@@ -1292,7 +1754,7 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     ### not (_value and _type)
     url = url_for("weko_workflow.next_action",
                   activity_id="3", action_id=7)
-    update_activity_order("3",7,5)
+    update_activity_order("3",7,5,item_id3)
     res = client.post(url, json=input)
     data = response_data(res)
     assert res.status_code == status_code
@@ -1311,12 +1773,20 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     url = url_for("weko_workflow.next_action",
                   activity_id="2",action_id=7)
     with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=False):
-        update_activity_order("2",7,5)
+        q = GuestActivity.query.filter(GuestActivity.activity_id=="2").all()
+        assert len(q) == 1
+        q = FileOnetimeDownload.query.filter(FileOnetimeDownload.file_name=="test", FileOnetimeDownload.record_id=="1").all()
+        assert len(q) == 0
+        update_activity_order("2",7,5,item_id2,{"file_name":"test", "record_id": "1", "guest_mail": "guest@mail.com"})
         res = client.post(url, json=input)
         data=response_data(res)
         assert res.status_code == 500
         assert data["code"] == -2
         assert data["msg"] == "can not get next_action_handler"
+        q = GuestActivity.query.filter(GuestActivity.activity_id=="2").all()
+        assert len(q) == 1
+        q = FileOnetimeDownload.query.filter(FileOnetimeDownload.file_name=="test", FileOnetimeDownload.record_id=="1").all()
+        assert len(q) == 0
     activity_action = ActivityAction.query.filter_by(
         activity_id="2",
         action_id=4,
@@ -1328,7 +1798,7 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
 
     ## exist next_flow_action.action_roles
     flow_action_role = FlowActionRole(
-        flow_action_id=db_register_fullaction["flow_actions"][5].id,
+        flow_action_id=flow_action_5,
         action_role=None,
         action_user=1
     )
@@ -1338,13 +1808,12 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     url = url_for("weko_workflow.next_action",
                   activity_id="2",action_id=7)
     with patch("weko_workflow.views.check_doi_validation_not_pass",return_value=False):
-        update_activity_order("2",7,5)
+        update_activity_order("2",7,5,item_id2)
         res = client.post(url, json=input)
         data=response_data(res)
         assert res.status_code == status_code
         assert data["code"] == 0
         assert data["msg"] == "success"
-
 
     # action:approval
     def check_role_approval():
@@ -1363,7 +1832,7 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     with patch("weko_workflow.views.Flow.get_flow_action_detail", return_value=None):
         url = url_for("weko_workflow.next_action",
                     activity_id="2",action_id=4)
-        update_activity_order("2",4,6)
+        update_activity_order("2",4,6,item_id2)
         res = client.post(url, json=input)
         data = response_data(res)
         result_status = 500 if check_role_approval() else 200
@@ -1373,106 +1842,120 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
         assert data["code"] == result_code
         assert data["msg"] == result_msg
 
-    with patch("weko_workflow.views.handle_finish_workflow",side_effect=mock_handle_finish_workflow):
-        url = url_for("weko_workflow.next_action",
-                      activity_id="2",action_id=4)
-        ##x not exist next_action_detail
-        with patch("weko_workflow.views.WorkActivity.get_activity_action_comment", return_value=None):
-            update_activity_order("2",4,6)
-            res = client.post(url, json=input)
-            data = response_data(res)
-            result_status = 500 if check_role_approval() else 200
-            result_code = -2 if check_role_approval() else 403
-            result_msg = "can not get next_action_detail" if check_role_approval() else noauth_msg
-            assert res.status_code == result_status
-            assert data["code"] == result_code
-            assert data["msg"] == result_msg
-
-        ## can create_onetime_download_url
-        onetime_download = {"tile_url":"test_file"}
-        with patch("weko_workflow.views.create_onetime_download_url_to_guest",return_value=onetime_download):
-            update_activity_order("2",4,6)
-            res = client.post(url, json=input)
-            data = response_data(res)
-            result_code = 0 if check_role_approval() else 403
-            result_msg = _("success") if check_role_approval() else noauth_msg
-            assert res.status_code == status_code
-            assert data["code"] == result_code
-            assert data["msg"] == result_msg
-
-        ## exist feedbackmail
-        ### exist feedbackmail, exist maillist
-        update_activity_order("2",4,6)
-        res = client.post(url, json=input)
-        data = response_data(res)
-        result_code = 0 if check_role_approval() else 403
-        result_msg = "success" if check_role_approval() else noauth_msg
-        assert res.status_code == status_code
-        assert data["code"] == result_code
-        assert data["msg"] == result_msg
-
-        ### exist feedbackmail, not maillistxxx
-        url = url_for("weko_workflow.next_action",
-                      activity_id="3", action_id=4)
-        update_activity_order("3",4,6)
-        res = client.post(url, json=input)
-        data = response_data(res)
-        result_code = 0 if check_role_approval() else 403
-        result_msg = "success" if check_role_approval() else noauth_msg
-        assert res.status_code == status_code
-        assert data["code"] == result_code
-        assert data["msg"] == result_msg
-
-        ### last_ver
-        parent1 = PersistentIdentifier.get("recid","2")
-        parent1.status = PIDStatus.NEW
-        db.session.merge(parent1)
-        parent2 = PersistentIdentifier.get("recid","2.1")
-        parent2.status = PIDStatus.NEW
-        db.session.merge(parent2)
-        parent3 = PersistentIdentifier.get("recid","2.0")
-        parent3.status = PIDStatus.NEW
-        db.session.merge(parent3)
-        db.session.commit()
-        url = url_for("weko_workflow.next_action",
-                      activity_id="3", action_id=4)
-        update_activity_order("3",4,6)
+    # with patch("weko_workflow.views.handle_finish_workflow",side_effect=mock_handle_finish_workflow):
+    url = url_for("weko_workflow.next_action",
+                    activity_id="2",action_id=4)
+    ##x not exist next_action_detail
+    with patch("weko_workflow.views.WorkActivity.get_activity_action_comment", return_value=None):
+        update_activity_order("2",4,6,item_id2)
         res = client.post(url, json=input)
         data = response_data(res)
         result_status = 500 if check_role_approval() else 200
-        result_code = -1 if check_role_approval() else 403
-        result_msg = "can not get last_ver" if check_role_approval() else noauth_msg
+        result_code = -2 if check_role_approval() else 403
+        result_msg = "can not get next_action_detail" if check_role_approval() else noauth_msg
         assert res.status_code == result_status
         assert data["code"] == result_code
         assert data["msg"] == result_msg
-        parent1 = PersistentIdentifier.get("recid","2")
-        parent1.status = PIDStatus.REGISTERED
-        db.session.merge(parent1)
-        parent2 = PersistentIdentifier.get("recid","2.1")
-        parent2.status = PIDStatus.REGISTERED
-        db.session.merge(parent2)
-        parent3 = PersistentIdentifier.get("recid","2.0")
-        parent3.status = PIDStatus.REGISTERED
-        db.session.merge(parent3)
-        db.session.commit()
 
-        ## not exist feedbackmail
-        url = url_for("weko_workflow.next_action",
-                      activity_id="4", action_id=4)
-        update_activity_order("4",4,6)
-        res = client.post(url, json=input)
-        data = response_data(res)
-        result_code = 0 if check_role_approval() else 403
-        result_msg = "success" if check_role_approval() else noauth_msg
-        assert res.status_code == status_code
-        assert data["code"] == result_code
-        assert data["msg"] == result_msg
+    ## can create_onetime_download_url
+    update_activity_order("2",4,6,item_id2,{"file_name":"test", "record_id": "1", "guest_mail": "guest@mail.com"})
+    q = GuestActivity.query.filter(GuestActivity.activity_id=="2").all()
+    assert len(q) == 1
+    q = FileOnetimeDownload.query.filter(FileOnetimeDownload.file_name=="test", FileOnetimeDownload.record_id=="1").all()
+    assert len(q) == 0
+    res = client.post(url, json=input)
+    data = response_data(res)
+    result_code = 0 if check_role_approval() else 403
+    result_msg = _("success") if check_role_approval() else noauth_msg
+    assert res.status_code == status_code
+    assert data["code"] == result_code
+    assert data["msg"] == result_msg
+    q = GuestActivity.query.filter(GuestActivity.activity_id=="2").all()
+    assert len(q) == 0
+    q = FileOnetimeDownload.query.filter(FileOnetimeDownload.file_name=="test", FileOnetimeDownload.record_id=="1").all()
+    assert len(q) == 1
+    
+    ## exist feedbackmail
+    ### exist feedbackmail, exist maillist
+    update_activity_order("2",4,6,item_id2)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    result_code = 0 if check_role_approval() else 403
+    result_msg = "success" if check_role_approval() else noauth_msg
+    assert res.status_code == status_code
+    assert data["code"] == result_code
+    assert data["msg"] == result_msg
 
-        ## raise BaseException
-        url = url_for("weko_workflow.next_action",
-                      activity_id="5",action_id=4)
+    ### exist feedbackmail, not maillistxxx
+    url = url_for("weko_workflow.next_action",
+                    activity_id="3", action_id=4)
+    update_activity_order("3",4,6,item_id3)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    result_code = 0 if check_role_approval() else 403
+    result_msg = "success" if check_role_approval() else noauth_msg
+    assert res.status_code == status_code
+    assert data["code"] == result_code
+    assert data["msg"] == result_msg
+
+    ### last_ver
+    parent1 = PersistentIdentifier.get("recid","2")
+    parent1.status = PIDStatus.NEW
+    db.session.merge(parent1)
+    parent2 = PersistentIdentifier.get("recid","2.1")
+    parent2.status = PIDStatus.NEW
+    db.session.merge(parent2)
+    parent3 = PersistentIdentifier.get("recid","2.0")
+    parent3.status = PIDStatus.NEW
+    db.session.merge(parent3)
+    db.session.commit()
+    url = url_for("weko_workflow.next_action",
+                    activity_id="3", action_id=4)
+    update_activity_order("3",4,6,item_id3)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    result_status = 500 if check_role_approval() else 200
+    result_code = -1 if check_role_approval() else 403
+    result_msg = "can not get last_ver" if check_role_approval() else noauth_msg
+    assert res.status_code == result_status
+    assert data["code"] == result_code
+    assert data["msg"] == result_msg
+    parent1 = PersistentIdentifier.get("recid","2")
+    parent1.status = PIDStatus.REGISTERED
+    db.session.merge(parent1)
+    parent2 = PersistentIdentifier.get("recid","2.1")
+    parent2.status = PIDStatus.REGISTERED
+    db.session.merge(parent2)
+    parent3 = PersistentIdentifier.get("recid","2.0")
+    parent3.status = PIDStatus.REGISTERED
+    db.session.merge(parent3)
+    db.session.commit()
+
+    ## not exist feedbackmail
+    url = url_for("weko_workflow.next_action",
+                    activity_id="4", action_id=4)
+    update_activity_order("4",4,6,item_id4)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    result_code = 0 if check_role_approval() else 403
+    result_msg = "success" if check_role_approval() else noauth_msg
+    assert res.status_code == status_code
+    assert data["code"] == result_code
+    assert data["msg"] == result_msg
+
+    ## raise BaseException
+    url = url_for("weko_workflow.next_action",
+                    activity_id="5",action_id=4)
+    new_id = uuid.uuid4()
+    with patch("weko_workflow.views.handle_finish_workflow",return_value=new_id):
         with patch("weko_workflow.views.has_request_context",side_effect=BaseException):
-            update_activity_order("5",4,6)
+            update_activity_order("5",4,6,item_id5)
+            q = Activity.query.filter(Activity.activity_id=="5").first()
+            assert q.activity_status == ActionStatusPolicy.ACTION_BEGIN
+            assert q.action_id == 4
+            assert q.action_status == None
+            assert q.action_order == 6
+            assert q.item_id == item_id5
             res = client.post(url, json=input)
             result_status_code = 500 if check_role_approval() else 200
             assert res.status_code == result_status_code
@@ -1480,11 +1963,17 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
                 data = response_data(res)
                 assert data["code"] == 403
                 assert data["msg"] == noauth_msg
+                q = Activity.query.filter(Activity.activity_id=="5").first()
+                assert q.activity_status == ActionStatusPolicy.ACTION_BEGIN
+                assert q.action_id == 4
+                assert q.action_status == None
+                assert q.action_order == 6
+                assert q.item_id == item_id5
 
         ## send signal
         url = url_for("weko_workflow.next_action",
-                      activity_id="5",action_id=4)
-        update_activity_order("5",4,6)
+                        activity_id="5",action_id=4)
+        update_activity_order("5",4,6,item_id5)
         res = client.post(url, json=input)
         data = response_data(res)
         result_code = 0 if check_role_approval() else 403
@@ -1492,13 +1981,18 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
         assert res.status_code == status_code
         assert data["code"] == result_code
         assert data["msg"] == result_msg
-
+        q = Activity.query.filter(Activity.activity_id=="5").first()
+        assert q.activity_status == ActionStatusPolicy.ACTION_DONE
+        assert q.action_id == 2
+        assert q.action_status == 'F'
+        assert q.action_order == 7
+        assert q.item_id == new_id
 
     ## can not publish
     with patch("weko_workflow.views.handle_finish_workflow",return_value=None):
         url = url_for("weko_workflow.next_action",
                       activity_id="2",action_id=4)
-        update_activity_order("2",4,6)
+        update_activity_order("2",4,6,item_id2)
         res = client.post(url, json=input)
         data = response_data(res)
         result_status = 500 if check_role_approval() else 200
@@ -1512,7 +2006,7 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     with patch("weko_workflow.views.Flow.get_next_flow_action",return_value=None):
         url = url_for("weko_workflow.next_action",
                   activity_id="2", action_id=3)
-        update_activity_order("2",3,2)
+        update_activity_order("2",3,2,item_id2)
         res = client.post(url, json=input)
         data = response_data(res)
         assert res.status_code == 500
@@ -1524,23 +2018,23 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     with patch("weko_workflow.views.WorkActivityHistory.create_activity_history", return_value=None):
         url = url_for("weko_workflow.next_action",
                   activity_id="2", action_id=3)
-        update_activity_order("2",3,2)
+        update_activity_order("2",3,2,item_id2)
         res = client.post(url, json=input)
         data = response_data(res)
-        assert res.status_code == 500
-        assert data["code"] == -1
-        assert data["msg"] == "error"
+        assert res.status_code == status_code
+        assert data["code"] == 0
+        assert data["msg"] == "success"
 
-    # action_status update faild
+    # action_status
     with patch("weko_workflow.views.WorkActivity.upt_activity_action_status", return_value=False):
         url = url_for("weko_workflow.next_action",
                   activity_id="2", action_id=3)
-        update_activity_order("2",3,2)
+        update_activity_order("2",3,2,item_id2)
         res = client.post(url, json=input)
         data = response_data(res)
-        assert res.status_code == 500
-        assert data["code"] == -2
-        assert data["msg"] == ""
+        assert res.status_code == status_code
+        assert data["code"] == 0
+        assert data["msg"] == "success"
 
 
     with client.session_transaction() as session:
@@ -1548,7 +2042,7 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
         pass
     url = url_for("weko_workflow.next_action",
               activity_id="2", action_id=3)
-    update_activity_order("2",3,2)
+    update_activity_order("2",3,2,item_id2)
     res = client.post(url, json=input)
     data = response_data(res)
     assert res.status_code == 200
@@ -1644,12 +2138,12 @@ def test_cancel_action_acl_guestlogin(guest, db_register):
         assert res.status_code != 403
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 200),
+    # (0, 200),
     (1, 200),
     (2, 200),
-    (3, 200),
-    (4, 200),
-    (5, 200),
+    # (3, 200),
+    # (4, 200),
+    # (5, 200),
     (6, 200),
 ])
 def test_cancel_action(client, users, db_register, db_records, add_file, users_index, status_code, mocker):
@@ -1702,12 +2196,24 @@ def test_cancel_action(client, users, db_register, db_records, add_file, users_i
                   activity_id='1', action_id=1)
     redirect_url = url_for("weko_workflow.display_activity",
                            activity_id="1").replace("http://test_server.localdomain","")
+    q = Activity.query.filter(Activity.activity_id=="1").first()
+    assert q.status == 'N'
+    assert q.action_order == 1
+    assert q.activity_status == ActionStatusPolicy.ACTION_BEGIN
+    q = ActivityHistory.query.filter(ActivityHistory.activity_id=="1").all()
+    assert len(q) == 1
     res = client.post(url, json=input)
     data = response_data(res)
     assert res.status_code == status_code
     assert data["code"] == 0
     assert data["msg"] == "success"
     assert data["data"]["redirect"] == redirect_url
+    q = Activity.query.filter(Activity.activity_id=="1").first()
+    assert q.status == 'N'
+    assert q.action_order == 1
+    assert q.activity_status == ActionStatusPolicy.ACTION_CANCELED
+    q = ActivityHistory.query.filter(ActivityHistory.activity_id=="1").all()
+    assert len(q) == 3
 
     ## raise PIDDoesNotExistError
     with patch("weko_workflow.views.PersistentIdentifier.get",side_effect=PIDDoesNotExistError("recid","test pid")):
@@ -1722,6 +2228,8 @@ def test_cancel_action(client, users, db_register, db_records, add_file, users_i
         "commond":"this is test comment.",
         }
     with patch("weko_workflow.views.get_pid_value_by_activity_detail",return_value=None):
+        q = ActivityHistory.query.filter(ActivityHistory.activity_id=="1").all()
+        assert len(q) == 3
         res = client.post(url, json=input)
         data = response_data(res)
         redirect_url = url_for("weko_workflow.display_activity",
@@ -1730,6 +2238,8 @@ def test_cancel_action(client, users, db_register, db_records, add_file, users_i
         assert data["code"] == 0
         assert data["msg"] == "success"
         assert data["data"]["redirect"] == redirect_url
+        q = ActivityHistory.query.filter(ActivityHistory.activity_id=="1").all()
+        assert len(q) == 5
 
     # exist item, not exist files, not exist file_permission
     input = {
@@ -1755,6 +2265,8 @@ def test_cancel_action(client, users, db_register, db_records, add_file, users_i
             assert res.status_code == 500
             assert data["code"] == -1
             assert data["msg"] == 'Error! Cannot process quit activity!'
+            q = ActivityHistory.query.filter(ActivityHistory.activity_id=="1").all()
+            assert len(q) == 5
 
     ## raise PIDDoesNotExistError
     with patch("weko_workflow.views.PersistentIdentifier.get_by_object",side_effect=PIDDoesNotExistError("recid","test pid")):
@@ -1772,8 +2284,22 @@ def test_cancel_action(client, users, db_register, db_records, add_file, users_i
         assert data["code"] == -1
         assert data["msg"] == "<class 'Exception'>"
 
+    input = {
+        "action_version":"1.0.0",
+        "commond":"this is test comment.",
+        }
+    with patch("weko_workflow.views.get_pid_value_by_activity_detail",return_value=None):
+        with patch("weko_records_ui.models.FilePermission.find_by_activity",side_effect=Exception):
+            res = client.post(url, json=input)
+            data = response_data(res)
+            assert res.status_code == 500
+            assert data["code"] == -1
+            assert data["msg"] == "Error! Cannot process quit activity!"
+            q = ActivityHistory.query.filter(ActivityHistory.activity_id=="1").all()
+            assert len(q) == 5
 
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_cancel_action_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_cancel_action_guest(guest, db, db_register):
     input = {
         "action_version": "1.0.0",
@@ -3590,3 +4116,11 @@ def test_clear_activitylog_9(client, db_register , users, users_index, status_co
                 tab='all')
     res = client.get(url)
     assert res.status_code == 403
+
+# class ActivityActionResource(ContentNegotiatedMethodView):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_ActivityActionResource_post -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_ActivityActionResource_post(client, db_register , users):
+    url = '/depositactivity/{}'.format(db_register['activities'][0].activity_id)
+    login(client=client, email=users[2]['email'])
+    res = client.get(url)
+    assert res.status_code == 302

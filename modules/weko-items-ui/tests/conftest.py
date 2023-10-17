@@ -118,6 +118,7 @@ from weko_workflow.models import (
     ActionStatusPolicy,
     Activity,
     FlowAction,
+    FlowActionRole,
     FlowDefine,
     WorkFlow,
 )
@@ -232,6 +233,8 @@ def base_app(instance_path):
         DEPOSIT_DEFAULT_JSONSCHEMA=DEPOSIT_DEFAULT_JSONSCHEMA,
         DEPOSIT_JSONSCHEMAS_PREFIX=DEPOSIT_JSONSCHEMAS_PREFIX,
         WEKO_SEARCH_REST_ENDPOINTS=WEKO_SEARCH_REST_ENDPOINTS,
+        WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME='jpcoar_v1_mapping',
+        WEKO_SCHEMA_DDI_SCHEMA_NAME='ddi_mapping',
         INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
     )
     
@@ -250,7 +253,7 @@ def base_app(instance_path):
     # InvenioCache(app_)
 
     # InvenioDeposit(app_)
-    # InvenioPIDStore(app_)
+    InvenioPIDStore(app_)
     # InvenioPIDRelations(app_)
     InvenioRecords(app_)
     # InvenioRecordsREST(app_)
@@ -917,8 +920,24 @@ def db_workflow(app, db, db_itemtype, users):
         action_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
         send_mail_setting={},
     )
+    flow_action_role1 = FlowActionRole(
+        flow_action_id=1,
+        action_role=1,
+        action_role_exclude=False,
+        action_user=1,
+        action_user_exclude=False,
+        specify_property='user_a'
+    )
+    flow_action_role2 = FlowActionRole(
+        flow_action_id=1,
+        action_role=1,
+        action_role_exclude=False,
+        action_user=1,
+        action_user_exclude=False,
+        specify_property='user_b'
+    )
 
-    workflow = WorkFlow(
+    workflow1 = WorkFlow(
         flows_id=uuid.uuid4(),
         flows_name="test workflow1",
         itemtype_id=1,
@@ -929,10 +948,21 @@ def db_workflow(app, db, db_itemtype, users):
         location_id=None,
         is_gakuninrdm=False,
     )
+    workflow2 = WorkFlow(
+        flows_id=uuid.uuid4(),
+        flows_name="test workflow2",
+        itemtype_id=1,
+        index_tree_id=2,
+        flow_id=1,
+        is_deleted=False,
+        open_restricted=False,
+        location_id=None,
+        is_gakuninrdm=False,
+    )
     activity = Activity(
         activity_id="A-00000000-00000",
         workflow_id=1,
-        flow_id=flow_define.id,
+        flow_id=1,
         action_id=1,
         activity_login_user=1,
         activity_update_user=1,
@@ -952,12 +982,16 @@ def db_workflow(app, db, db_itemtype, users):
         db.session.add(flow_action1)
         db.session.add(flow_action2)
         db.session.add(flow_action3)
-        db.session.add(workflow)
+        db.session.add(flow_action_role1)
+        db.session.add(flow_action_role2)
+        db.session.add(workflow1)
+        db.session.add(workflow2)
         db.session.add(activity)
+    db.session.commit()
 
     return {
         "flow_define": flow_define,
-        "workflow": workflow,
+        "workflow": workflow1,
         "activity": activity,
         "flow_action1": flow_action1,
         "flow_action2": flow_action2,
