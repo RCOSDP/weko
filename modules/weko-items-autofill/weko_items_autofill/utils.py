@@ -1018,10 +1018,9 @@ def build_record_model(item_autofill_key, api_data):
             record_model = {}
             for key, value in data_model.items():
                 merge_dict(record_model, value)
-            is_multiple_data = is_multiple(record_model, api_autofill_data)
-            fill_data(record_model, api_autofill_data, is_multiple_data)
-            if record_model:
-                _record_model_lst.append(record_model)
+            new_record_model = fill_data(record_model, api_autofill_data)
+            if new_record_model:
+                _record_model_lst.append(new_record_model)
                 _filled_key.append(k)
 
     record_model_lst = list()
@@ -1129,39 +1128,43 @@ def deepcopy(original_object, new_object):
         return
 
 
-def fill_data(form_model, autofill_data, is_multiple_data=False):
+def fill_data(form_model, autofill_data):
     """Fill data to form model.
 
     @param form_model: the form model.
     @param autofill_data: the autofill data
     @param is_multiple_data: multiple flag.
     """
+    result = {} if isinstance(form_model, dict) else []
+    is_multiple_data = is_multiple(form_model, autofill_data)
     if isinstance(autofill_data, list):
-        if is_multiple_data:
-            key = list(form_model.keys())[0]
+        key = list(form_model.keys())[0] if len(form_model) != 0 else None
+        if is_multiple_data or (not is_multiple_data and isinstance(form_model.get(key),list)):
             model_clone = {}
             deepcopy(form_model[key][0], model_clone)
-            form_model[key] = []
+            result[key]=[]
             for data in autofill_data:
                 model = {}
                 deepcopy(model_clone, model)
-                fill_data(model, data)
-                form_model[key].append(model.copy())
+                new_model = fill_data(model, data)
+                result[key].append(new_model.copy())
         else:
-            fill_data(form_model, autofill_data[0])
+            result = fill_data(form_model, autofill_data[0])
     elif isinstance(autofill_data, dict):
         if isinstance(form_model, dict):
             for k, v in form_model.items():
                 if isinstance(v, str):
-                    form_model[k] = autofill_data.get(v, '')
+                    result[k] = autofill_data.get(v,'')
                 else:
-                    fill_data(v, autofill_data)
+                    new_v = fill_data(v, autofill_data)
+                    result[k] = new_v
         elif isinstance(form_model, list):
             for v in form_model:
-                fill_data(v, autofill_data)
+                new_v = fill_data(v, autofill_data)
+                result.append(new_v)
     else:
         return
-
+    return result
 
 def is_multiple(form_model, autofill_data):
     """Check form model.
@@ -1477,3 +1480,4 @@ def remove_sub_record_model_no_value(item, condition):
         item = [] if item in condition else item
         for sub_item in item:
             remove_sub_record_model_no_value(sub_item, condition)
+

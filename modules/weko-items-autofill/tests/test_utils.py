@@ -1590,14 +1590,15 @@ def test_deepcopy():
 
 
 # def fill_data(form_model, autofill_data, is_multiple_data=False):
-# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_fill_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_fill_data -vv -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_fill_data():
     # autofill_data is not dict, list
     form_model = ""
     autofill_data = ""
     result = fill_data(form_model, autofill_data)
     assert result == None
-
+    
+    # not multiple_data, form.get(key) is not list
     autofill_data = [{"@value": "A.Test1", "@language": "en"}]
     form_model = {
         "@value": {"test_item6": {"creatorNames": {"creatorName": "@value"}}},
@@ -1607,17 +1608,51 @@ def test_fill_data():
         "@value": {"test_item6": {"creatorNames": {"creatorName": "A.Test1"}}},
         "@language": {"test_item6": {"creatorNames": {"creatorNameLang": "en"}}},
     }
-    fill_data(form_model, autofill_data)
-    assert form_model == test
-
+    result = fill_data(form_model, autofill_data)
+    #assert form_model == test
+    assert result == test
+    
+    # not multiple_data, form.get(key) is list
     autofill_data = [{"@value": "A.Test1"}]
     form_model = {
         "@value": [{"test_item6": {"creatorNames": {"creatorName": "@value"}}}],
     }
     test = {"@value": [{"test_item6": {"creatorNames": {"creatorName": "A.Test1"}}}]}
-    fill_data(form_model, autofill_data, True)
-    assert form_model == test
+    result = fill_data(form_model, autofill_data)
+    assert result == test
 
+    # multiple_data, form.get(key) is list
+    autofill_data = [
+        [{"@value": "TEST Taro", "@language": "en"},{"@value": "テスト 太郎", "@language": "ja"}],
+        [{"@value": "TEST Ziro", "@language": "en"},{"@value": "テスト 次郎", "@language": "ja"}]
+    ]
+    form_model = {"item_xxx": [{"creatorNames":[{"creatorName": "@value", "creatorNameLang": "@language"}]}]}
+    test = {"item_xxx": [
+            {
+                "creatorNames": [
+                    {"creatorName": "TEST Taro", "creatorNameLang": "en"},
+                    {"creatorName": "テスト 太郎", "creatorNameLang": "ja"}
+                ]
+            },
+            {
+                "creatorNames": [
+                    {"creatorName": "TEST Ziro", "creatorNameLang": "en"},
+                    {"creatorName": "テスト 次郎", "creatorNameLang": "ja"}
+                ]
+            }
+        ]
+    }
+    result = fill_data(form_model, autofill_data)
+    assert result == test
+
+    # autofill_data is dict, form_model is {}
+    autofill_data = {"@value": "47"}
+    form_model = {}
+    test = {}
+    result = fill_data(form_model,autofill_data)
+    assert result == test
+
+    # 
     autofill_data = {"@value": "47"}
     form_model = [
         {"@value": {"test_item16": {"test16_subitem1": "@value"}}},
@@ -1627,9 +1662,10 @@ def test_fill_data():
         {"@value": {"test_item16": {"test16_subitem1": "47"}}},
         {"@value": {"test_item17": {"test17_subitem1": "47"}}},
     ]
-    fill_data(form_model, autofill_data)
-    assert form_model == test
+    result = fill_data(form_model, autofill_data)
+    assert result == test
 
+    # form_model is not list, dict
     autofill_data = {"@value": "47"}
     form_model = "test"
     fill_data(form_model, autofill_data)
