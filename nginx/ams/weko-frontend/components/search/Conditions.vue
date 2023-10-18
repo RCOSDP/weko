@@ -96,7 +96,6 @@
               <option value="150">150</option>
               <option value="200">200</option>
             </select>
-            <span class="ml-1">/{{ total }}</span>
           </div>
           <!-- 表示形式 -->
           <div class="text-miby-black text-sm font-medium">
@@ -220,11 +219,6 @@ const props = defineProps({
   detailConditions: {
     type: Object,
     default: () => {}
-  },
-  // 検索結果総数
-  total: {
-    type: Number,
-    default: 0
   }
 });
 

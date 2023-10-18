@@ -9,9 +9,9 @@
           class="tab-btn__radio hidden"
           type="radio"
           name="tab"
-          :checked="tab.title === tabList[0].title" />
+          :checked="tab.name === tabList[0].name" />
         <label class="tab-btn__label" :for="tab.id">
-          {{ tab.title }}
+          {{ tab.name }}
         </label>
       </li>
     </ul>
@@ -35,13 +35,14 @@ import Section from '~/components/detail/Section.vue';
 
 interface IDivision {
   id: string;
-  title: string;
+  name: string;
   hasPart: object[];
 }
 interface ISubSection {
   id: string;
-  title: string;
+  name: string;
   text: string;
+  material: object;
 }
 
 /* ///////////////////////////////////
@@ -60,6 +61,7 @@ const props = defineProps({
 // const and let
 /////////////////////////////////// */
 
+const appConf = useAppConfig();
 const selectedTab = ref();
 const tabList = ref<IDivision[]>([]);
 const sectionList = ref<IDivision[]>([]);
@@ -77,20 +79,27 @@ function setContentsList() {
   sectionList.value = [];
   subSectionList.value = [];
 
-  props.item['@graph'].forEach((obj: any) => {
+  props.item.rocrate['@graph'].forEach((obj: any) => {
     if (obj['@type'] === 'Dataset') {
       if (!Object.prototype.hasOwnProperty.call(obj, 'additionalType')) {
         return;
       }
 
-      if (obj.additionalType === 'tab') {
-        const tab: IDivision = { id: obj['@id'], title: obj.title, hasPart: obj.hasPart };
+      if (obj.additionalType === appConf.roCrate.contents.tab) {
+        const tab: IDivision = { id: obj['@id'], name: obj.name, hasPart: obj.hasPart };
         tabList.value.push(tab);
-      } else if (obj.additionalType === 'section') {
-        const section: IDivision = { id: obj['@id'], title: obj.title, hasPart: obj.hasPart };
+      } else if (obj.additionalType === appConf.roCrate.contents.section) {
+        const section: IDivision = { id: obj['@id'], name: obj.name, hasPart: obj.hasPart };
         sectionList.value.push(section);
-      } else if (obj.additionalType === 'subsection') {
-        const subSection: ISubSection = { id: obj['@id'], title: obj.title, text: obj.text };
+      } else if (obj.additionalType === appConf.roCrate.contents.subsection) {
+        const subSection: ISubSection = {
+          id: obj['@id'],
+          name: obj.name,
+          text: obj.text,
+          material: Object.prototype.hasOwnProperty.call(obj, 'material')
+            ? { type: obj.material, data: props.item[obj.material] }
+            : {}
+        };
         subSectionList.value.push(subSection);
       }
     }
@@ -112,7 +121,7 @@ function getSectionsTitle(tab: IDivision) {
   const titleList: string[] = [];
   sectionList.value.forEach((section: IDivision) => {
     if (sectionTitleList.includes(section.id)) {
-      titleList.push(section.title);
+      titleList.push(section.name);
     }
   });
 

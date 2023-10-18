@@ -18,7 +18,11 @@
   "detailViews": "閲覧数",
   "detailDLRank": "DLランキング",
   "detailExport": "エクスポート",
+  "detailSection": "セクション",
   "filesDownloadAll": "一括ダウンロード",
+  "fotterRequestUsePermission": "利用許可申請",
+  "fotterOrganization": "運営機関",
+  "fotterPrivacyPolicy": "プライバシーポリシー",
   "item": "アイテム",
   "title": "タイトル",
   "publicRange": "公開区分",
@@ -61,9 +65,11 @@
   "preview": "プレビュー",
   "information": "インフォメーション",
   "requestUsePermission": "利用許可申請",
+  "detail": "詳細",
   "login": "ログイン",
   "logout": "ログアウト",
   "cancel": "キャンセル",
+  "send": "送信",
   "resetPassword": "パスワード再設定",
   "mailAddress": "メールアドレス",
   "password": "パスワード",
@@ -75,5 +81,7 @@
   "returnToTop": "Topページへ戻る",
   "createAccount": "アカウント作成はこちら",
   "forgetPassword": "パスワードを忘れた方はこちら",
-  "sendEmailResetPassword": "入力されたメールアドレスに、パスワード再設定用のリンクを送信します。"
+  "sendEmailResetPassword": "入力されたメールアドレスに、パスワード再設定用のリンクを送信します。",
+  "requiredField": "必須入力",
+  "requiredEmail": "メールアドレスの形式にしてください"
 }

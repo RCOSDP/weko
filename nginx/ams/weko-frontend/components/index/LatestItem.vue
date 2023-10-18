@@ -6,29 +6,29 @@
           <div class="flex flex-wrap mb-1.5 gap-5 items-center">
             <!-- 公開区分 -->
             <p
-              v-if="item.metadata['@graph'][0].hasOwnProperty('accessMode')"
+              v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.releaseRange)"
               :class="[
-                item.metadata['@graph'][0].accessMode[0] === 'Public'
+                itemInfo[appConf.roCrate.info.releaseRange][0] === 'Public'
                   ? 'icons-type icon-published'
-                  : item.metadata['@graph'][0].accessMode[0] === 'Shared'
+                  : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Shared'
                   ? 'icons-type icon-group'
-                  : item.metadata['@graph'][0].accessMode[0] === 'Private'
+                  : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Private'
                   ? 'icons-type icon-private'
-                  : item.metadata['@graph'][0].accessMode[0] === 'Unshared'
+                  : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Unshared'
                   ? 'icons-type icon-limited'
                   : ''
               ]">
               <span>
                 {{
-                  item.metadata['@graph'][0].accessMode[0] === 'Public'
+                  itemInfo[appConf.roCrate.info.releaseRange][0] === 'Public'
                     ? $t('openPublic')
-                    : item.metadata['@graph'][0].accessMode[0] === 'Shared'
+                    : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Shared'
                     ? $t('openGroup')
-                    : item.metadata['@graph'][0].accessMode[0] === 'Private'
+                    : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Private'
                     ? $t('openPrivate')
-                    : item.metadata['@graph'][0].accessMode[0] === 'Unshared'
+                    : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Unshared'
                     ? $t('openRestricted')
-                    : item.metadata['@graph'][0].accessMode[0]
+                    : itemInfo[appConf.roCrate.info.releaseRange][0]
                 }}
               </span>
             </p>
@@ -37,48 +37,49 @@
             </p>
             <!-- 公開日 -->
             <p class="date-upload icons icon-publish">
-              <span v-if="item.metadata['@graph'][0].hasOwnProperty('dateCreated')">
-                {{ item.metadata['@graph'][0].dateCreated[0] }}
+              <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.reelaseDate)">
+                {{ itemInfo[appConf.roCrate.info.reelaseDate][0] }}
               </span>
               <span v-else>undefined</span>
             </p>
             <!-- 更新日 -->
             <p class="date-update icons icon-update">
-              <span v-if="item.metadata['@graph'][0].hasOwnProperty('datePublished')">
+              <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.updateDate)">
                 {{
-                  typeof item.metadata['@graph'][0].datePublished == 'object'
-                    ? item.metadata['@graph'][0].datePublished[0]
+                  typeof itemInfo[appConf.roCrate.info.updateDate] == 'object'
+                    ? itemInfo[appConf.roCrate.info.updateDate][0]
                     : 'undefined'
                 }}
               </span>
+              <span v-else>undefined</span>
             </p>
           </div>
           <!-- タイトル -->
           <NuxtLink class="data-title" :to="`/detail?sess=top&number=${item.id}`">
-            {{ item.metadata['@graph'][0].title[0] }}
+            {{ itemInfo[appConf.roCrate.info.title][0] }}
           </NuxtLink>
           <div class="flex mb-1">
             <!-- 分野 -->
             <p class="data-note">
               {{ $t('field') + '：' }}
-              <span v-if="item.metadata['@graph'][0].hasOwnProperty('genre')">
-                {{ item.metadata['@graph'][0].genre[0] }}
+              <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.field)">
+                {{ itemInfo[appConf.roCrate.info.field][0] }}
               </span>
               <span v-else>undefined</span>
             </p>
             <!-- 作成者 -->
             <p class="data-note author">
               {{ $t('creater') + '：' }}
-              <span v-if="item.metadata['@graph'][0].hasOwnProperty('creator')">
+              <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.author)">
                 <a>
                   {{
-                    item.metadata['@graph'][0].creator[1]
-                      ? `[${item.metadata['@graph'][0].creator[1] ?? 'undefined'}] `
+                    itemInfo[appConf.roCrate.info.author][1]
+                      ? `[${itemInfo[appConf.roCrate.info.author][1] ?? 'undefined'}] `
                       : 'undefined'
                   }}
                 </a>
                 <a class="text-miby-link-blue underline cursor-pointer" @click="emits('clickCreater')">
-                  {{ item.metadata['@graph'][0].creator[0] ?? '' }}
+                  {{ itemInfo[appConf.roCrate.info.author][0] ?? '' }}
                 </a>
               </span>
             </p>
@@ -87,16 +88,16 @@
             <!-- ヒト/動物/その他 -->
             <p class="data-note">
               {{ $t('classification') + '：' }}
-              <span v-if="item.metadata['@graph'][0].hasOwnProperty('target')" class="font-medium">
-                {{ item.metadata['@graph'][0].target[0] }}
+              <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.target)" class="font-medium">
+                {{ itemInfo[appConf.roCrate.info.target][0] }}
               </span>
               <span v-else>undefined</span>
             </p>
             <!-- アクセス権 -->
             <p class="data-note access-type">
               {{ $t('authority') + '：' }}
-              <span v-if="item.metadata['@graph'][0].hasOwnProperty('accessMode')">
-                {{ item.metadata['@graph'][0].accessMode[0] }}
+              <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.accessMode)">
+                {{ itemInfo[appConf.roCrate.info.accessMode][0] }}
               </span>
               <span v-else>undefined</span>
             </p>
@@ -104,11 +105,11 @@
             <p class="data-note">
               {{ $t('file') + '：' }}
               <span class="font-medium">
-                <NuxtLink v-if="item.metadata['@graph'][0].mainEntity.length < 1">
+                <NuxtLink v-if="itemInfo.mainEntity.length < 1">
                   {{ $t('unexist') }}
                 </NuxtLink>
                 <NuxtLink v-else class="underline text-miby-link-blue" :to="`/files?number=${item.id}`">
-                  {{ $t('exist') + `（${item.metadata['@graph'][0].mainEntity.length}）` }}
+                  {{ $t('exist') + `（${itemInfo.mainEntity.length}）` }}
                 </NuxtLink>
               </span>
             </p>
@@ -124,7 +125,7 @@
 // props
 /////////////////////////////////// */
 
-defineProps({
+const props = defineProps({
   // API Response(JSON)
   item: {
     type: Object,
@@ -137,6 +138,13 @@ defineProps({
 /////////////////////////////////// */
 
 const emits = defineEmits(['clickCreater']);
+
+/* ///////////////////////////////////
+// const and let
+/////////////////////////////////// */
+
+const appConf = useAppConfig();
+const itemInfo = getContentById(props.item.metadata, './');
 </script>
 
 <style scoped lang="scss">
