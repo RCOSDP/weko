@@ -182,12 +182,6 @@ item_type_full: [ItemType or None] = [
     in ItemTypes.get_all(True)
     if itemtype.item_type_name.name == "デフォルトアイテムタイプ（フル）"
 ]
-item_type_full: [ItemType or None] = [
-    itemtype
-    for itemtype
-    in ItemTypes.get_all(True)
-    if itemtype.item_type_name.name == "test_full_01"
-]
 
 #* デフォルトアイテムタイプ（シンプル）Item Type
 item_type_simple: [ItemType or None] = [
@@ -196,12 +190,6 @@ item_type_simple: [ItemType or None] = [
     in ItemTypes.get_all(True)
     if itemtype.item_type_name.name == "デフォルトアイテムタイプ（シンプル）"
 ]
-# item_type_simple: [ItemType or None] = [
-#     itemtype
-#     for itemtype
-#     in ItemTypes.get_all(True)
-#     if itemtype.item_type_name.name == "test_full_06"
-# ]
 
 #* デフォルトアイテムタイプ（フル）Item Type Mapping
 item_type_full_mapping: [ItemTypeMapping or None] = [
