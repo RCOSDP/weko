@@ -120,6 +120,7 @@ interface indexInfo {
 // const and let
 /////////////////////////////////// */
 
+const appConf = useAppConfig();
 const query = useRoute().query;
 const switcherFlag = ref(false);
 const renderFlag = ref(true);
@@ -158,7 +159,7 @@ const alertMessage = ref('');
  * @param number アイテムID
  */
 async function getDetail(number: string) {
-  await $fetch(useAppConfig().wekoApi + '/records/' + number, {
+  await $fetch(appConf.wekoApi + '/records/' + number, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {
@@ -168,7 +169,7 @@ async function getDetail(number: string) {
     onResponse({ response }) {
       if (response.status === 200) {
         itemDetail = response._data;
-        indexId = response._data['@graph'][0].index ?? '';
+        indexId = getContentById(response._data.rocrate, './')[appConf.roCrate.info.index] ?? '';
       }
     },
     onResponseError({ response }) {
@@ -195,7 +196,7 @@ async function search(searchPage: string) {
     return;
   }
 
-  await $fetch(useAppConfig().wekoApi + '/records', {
+  await $fetch(appConf.wekoApi + '/records', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {
@@ -244,7 +245,7 @@ async function search(searchPage: string) {
  * インデクス階層取得
  */
 async function getParentIndex() {
-  await $fetch(useAppConfig().wekoApi + '/tree/index/' + indexId + '/parent', {
+  await $fetch(appConf.wekoApi + '/tree/index/' + indexId + '/parent', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {

@@ -10,6 +10,26 @@ export default defineAppConfig({
       'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:ams-dev.ir.rcos.nii.ac.jp:',
     ddi: 'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=ddi&identifier=oai:ams-dev.ir.rcos.nii.ac.jp:'
   },
+  roCrate: {
+    info: {
+      thumbnail: 'thumbnail', // サムネイル
+      index: 'index', // インデックスID
+      releaseRange: 'accessMode', // 公開区分
+      reelaseDate: 'dateCreated', // 公開日
+      updateDate: 'datePublished', // 更新日
+      title: 'title', // タイトル
+      field: 'genre', // 分野
+      author: 'creator', // 作成者（[氏名, 所属]）
+      target: 'target', // ヒト/動物/その他
+      accessMode: 'accessMode', // アクセス権
+      keywords: 'keywords' // キーワード
+    },
+    contents: {
+      tab: 'tab',
+      section: 'section',
+      subsection: 'subsection'
+    }
+  },
   cc: {
     zero: 'license_12',
     by_3: 'license_6',

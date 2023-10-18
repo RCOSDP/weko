@@ -24,6 +24,7 @@ import json
 import re
 from flask import Blueprint, current_app, jsonify, make_response, request, Response
 from flask_babelex import get_locale as get_current_locale
+from flask_babelex import gettext as _
 from werkzeug.http import generate_etag
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidstore.errors import PIDInvalidAction, PIDDoesNotExistError
@@ -246,6 +247,8 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
             language = request.headers.get('Accept-Language')
             if language == 'ja':
                 get_current_locale().language = language
+            elif language is None:
+                language = 'en'
 
             # Get Record
             pid = PersistentIdentifier.get('depid', kwargs.get('pid_value'))
@@ -278,8 +281,12 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
             indent = 4 if request.args.get('pretty') == 'true' else None
 
             # Create Response
+            res_json = {
+                'rocrate': rocrate,
+                'metadata': self._convert_metadata(record, language),
+            }
             res = Response(
-                response=json.dumps(rocrate, indent=indent),
+                response=json.dumps(res_json, indent=indent),
                 status=200,
                 content_type='application/json')
             res.set_etag(etag)
@@ -294,7 +301,106 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
             raise RecordsNotFoundRESTError()
 
         except Exception:
+            import traceback
+            print(traceback.format_exc())
+
             raise InternalServerError()
+
+    def _convert_metadata(self, metadata, language):
+        output = {}
+        from weko_records.api import ItemTypes
+        from .config import WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE
+
+        item_type = ItemTypes.get_by_id(metadata['item_type_id'])
+
+        # Item type
+        if WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE:
+            output[_('Item Type')] = item_type.item_type_name.name
+
+        item_type_form = item_type.form
+        target_keys = item_type.render.get('table_row')
+        meta_list = item_type.render.get('meta_list')
+
+        for property_key, property in metadata.items():
+            if property_key not in target_keys:
+                continue
+            hidden = meta_list.get(property_key, {}).get('option', {}).get('hidden', False)
+            if hidden:
+                continue
+
+            form_key = [property_key]
+            form_prop = self._get_child_form(item_type_form, form_key)
+            prop_value = self._get_property(property, form_prop, form_key, language)
+            if not prop_value:
+                continue
+
+            title = self._get_title(form_prop, language)
+            output[title] = prop_value
+
+        return output
+
+    def _get_property(self, record_prop, form_prop, form_key, language):
+        if isinstance(record_prop, dict) and 'attribute_value_mlt' in record_prop:
+            record_prop = record_prop.get('attribute_value_mlt')
+
+        if isinstance(record_prop, str):
+            return record_prop
+
+        elif isinstance(record_prop, dict):
+            output = {}
+            for child_key, child_prop in record_prop.items():
+                if 'items' not in form_prop:
+                    continue
+                child_form_key = form_key + [child_key]
+                child_form_prop = self._get_child_form(form_prop.get('items'), child_form_key)
+                if 'isHide' in child_form_prop and child_form_prop.get('isHide'):
+                    continue
+                if not child_form_prop:
+                    continue
+                title = self._get_title(child_form_prop, language)
+                if not title:
+                    continue
+                child_prop_value = self._get_property(child_prop, child_form_prop, child_form_key, language)
+                if not child_prop_value:
+                    continue
+                output[title] = child_prop_value
+            return output
+
+        elif isinstance(record_prop, list):
+            output = []
+            for child_record_prop in record_prop:
+                child_prop_value = self._get_property(child_record_prop, form_prop, form_key, language)
+                if not child_prop_value:
+                    continue
+                output.append(child_prop_value)
+            return output
+
+    def _get_title(self, form_prop, language):
+        if 'title_i18n' in form_prop:
+            title_i18n = form_prop.get('title_i18n')
+            if language in title_i18n:
+                return title_i18n.get(language)
+        return form_prop.get('title', '')
+
+    def _get_child_form(self, child_forms, child_key):
+        target = {}
+        for child_form in child_forms:
+            if 'key' not in child_form:
+                continue
+            if self._check_form_key(child_form['key'], child_key):
+                target = child_form
+                break
+        return target
+
+    def _check_form_key(self, form_key, child_key):
+        form_keys = form_key.split('.')
+        if len(form_keys) != len(child_key):
+            return False
+        for index, key_name in enumerate(form_keys):
+            key_name = key_name.split('[')[0]
+            if child_key[index] != key_name:
+                return False
+        return True
 
 
 class WekoRecordsStats(ContentNegotiatedMethodView):
@@ -547,9 +653,16 @@ class WekoFilesGet(ContentNegotiatedMethodView):
             if not request.if_none_match:
                 self.check_if_modified_since(dt=last_modified)
 
+            content_type = fileObj.mimetype
+            if is_preview:
+                if 'msword' in fileObj.mimetype or 'vnd.ms' in fileObj.mimetype or 'vnd.openxmlformats' in fileObj.mimetype:
+                    if fileObj.data.get('displaytype') == 'preview':
+                        content_type = 'application/pdf'
+
             # Response Header Setting
             dl_response.set_etag(etag)
             dl_response.last_modified = last_modified
+            dl_response.content_type = content_type
 
             return dl_response
 

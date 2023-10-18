@@ -2,10 +2,12 @@
   <div class="">
     <div class="flex flex-wrap justify-between items-center">
       <h3 :id="targetId" class="text-miby-black text-xl font-bold">
-        {{ section.title }}
+        {{ section.name }}
       </h3>
       <div class="inline-block">
-        <label class="text-sm text-miby-black" for="section-outline">セクション：</label>
+        <label class="text-sm text-miby-black" for="section-outline">
+          {{ $t('detailSection') + '：' }}
+        </label>
         <select
           v-model="sectionName"
           class="border border-miby-dark-gray text-sm text-left pl-2 p-1"
@@ -29,7 +31,7 @@ import SubSection from '~/components/detail/SubSection.vue';
 
 interface ISubSection {
   id: string;
-  title: string;
+  name: string;
   text: string;
 }
 
@@ -59,8 +61,8 @@ const props = defineProps({
 // const and let
 /////////////////////////////////// */
 
-const targetId = ref(props.section.title);
-const sectionName = ref(props.section.title);
+const targetId = ref(props.section.name);
+const sectionName = ref(props.section.name);
 
 /* ///////////////////////////////////
 // function
@@ -75,7 +77,7 @@ function scrollToSection(selectedSection: string) {
   if (element) {
     element.scrollIntoView({ block: 'start', behavior: 'instant' });
     scrollTo(0, window.scrollY - 65);
-    sectionName.value = props.section.title;
+    sectionName.value = props.section.name;
   }
 }
 </script>

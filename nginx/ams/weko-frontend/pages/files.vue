@@ -5,8 +5,22 @@
     <main class="max-w-[1024px] mx-auto px-2.5">
       <div class="w-full">
         <div class="w-full">
-          <div class="bg-miby-light-blue w-full">
+          <div class="bg-miby-light-blue w-full flex">
             <p class="text-white leading-[43px] pl-5 icons icon-list font-bold">{{ itemTitle }}</p>
+            <p class="text-white leading-[43px] pr-5 ml-auto">
+              {{
+                String((Number(currentPage) - 1) * Number(perPage) + 1) +
+                ' - ' +
+                String(
+                  (Number(currentPage) - 1) * Number(perPage) + Number(perPage) > Number(fileList.length)
+                    ? Number(fileList.length)
+                    : (Number(currentPage) - 1) * Number(perPage) + Number(perPage)
+                ) +
+                ' of ' +
+                fileList.length +
+                ' results.'
+              }}
+            </p>
           </div>
           <div class="w-full bg-miby-searchtags-blue p-5">
             <div class="flex flex-wrap justify-between items-center">
@@ -28,7 +42,6 @@
                     <option value="150">150</option>
                     <option value="200">200</option>
                   </select>
-                  <span class="ml-1">/{{ fileList.length }}</span>
                 </div>
                 <!-- DL回数統計対象期間 -->
                 <div class="text-miby-black text-sm font-medium flex items-center">
@@ -128,6 +141,7 @@ import TableStyle from '~/components/files/TableStyle.vue';
 // const and let
 /////////////////////////////////// */
 
+const appConf = useAppConfig();
 const query = useRoute().query;
 const renderFlag = ref(true);
 const currentPage = ref('1');
@@ -148,15 +162,16 @@ let divideFileList: any[] = [];
  * @param number アイテムID
  */
 async function getFiles(number: string) {
-  await $fetch(useAppConfig().wekoApi + '/records/' + number, {
+  await $fetch(appConf.wekoApi + '/records/' + number, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     onResponse({ response }) {
       if (response.status === 200) {
-        itemTitle.value = response._data['@graph'][0].title[0];
-        for (let i = 0; i < response._data['@graph'][0].mainEntity.length; i++) {
+        const itemInfo = getContentById(response._data.rocrate, './');
+        itemTitle.value = itemInfo[appConf.roCrate.info.title][0];
+        for (const element of itemInfo.mainEntity) {
           // @ts-ignore
-          fileList.value.push(response._data['@graph'][i + 2]);
+          fileList.value.push(getContentById(response._data.rocrate, element['@id']));
         }
       }
     },

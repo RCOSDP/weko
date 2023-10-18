@@ -21,9 +21,24 @@
       <!-- 検索結果 -->
       <div class="w-full">
         <div class="w-full">
-          <div class="bg-miby-light-blue w-full">
+          <div class="bg-miby-light-blue w-full flex">
             <p class="text-white leading-[43px] pl-5 icons icon-list font-bold">
               {{ $t('searchResult') }}
+            </p>
+            <p class="text-white leading-[43px] pr-5 ml-auto">
+              {{
+                String((Number(conditions.currentPage) - 1) * Number(conditions.perPage) + 1) +
+                ' - ' +
+                String(
+                  (Number(conditions.currentPage) - 1) * Number(conditions.perPage) + Number(conditions.perPage) >
+                    Number(total)
+                    ? Number(total)
+                    : (Number(conditions.currentPage) - 1) * Number(conditions.perPage) + Number(conditions.perPage)
+                ) +
+                ' of ' +
+                total +
+                ' results.'
+              }}
             </p>
           </div>
           <!-- 検索条件 -->
@@ -31,7 +46,6 @@
             :displayType="displayType"
             :conditions="conditions"
             :detailConditions="detailConditions"
-            :total="Number(total)"
             @click-per-page="setPerPage"
             @click-display-type="setDisplayType"
             @click-sort="setSort"

@@ -76,8 +76,8 @@ const emits = defineEmits(['clickCeckbox', 'error']);
 // const and let
 /////////////////////////////////// */
 
-const local = String(localStorage.getItem('locale'));
-const config = useAppConfig();
+const local = String(localStorage.getItem('locale') ?? 'ja');
+const appConfig = useAppConfig();
 const isCeck = ref(false);
 const licenseImg = ref('');
 let licenseLink = '';
@@ -90,7 +90,7 @@ let licenseLink = '';
  * ファイルダウンロード
  */
 function download() {
-  $fetch(config.wekoApi + '/records/' + useRoute().query.number + '/files/' + props.file['@id'], {
+  $fetch(appConfig.wekoApi + '/records/' + useRoute().query.number + '/files/' + props.file['@id'], {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {
@@ -119,7 +119,7 @@ function download() {
  * ファイルプレビュー
  */
 function preview() {
-  $fetch(config.wekoApi + '/records/' + useRoute().query.number + '/files/' + props.file['@id'], {
+  $fetch(appConfig.wekoApi + '/records/' + useRoute().query.number + '/files/' + props.file['@id'], {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {
@@ -155,52 +155,61 @@ function clickLicense() {
 /////////////////////////////////// */
 
 try {
-  if (props.file.license === config.cc.zero) {
+  if (props.file.license === appConfig.cc.zero) {
     licenseImg.value = '/img/license/cc-zero.svg';
-    licenseLink = local === 'ja' ? config.cc.link.zero_ja : config.cc.link.zero;
-  } else if (props.file.license === config.cc.by_3 || props.file.license === config.cc.by_4) {
+    licenseLink = local === 'ja' ? appConfig.cc.link.zero_ja : appConfig.cc.link.zero;
+  } else if (props.file.license === appConfig.cc.by_3 || props.file.license === appConfig.cc.by_4) {
     licenseImg.value = '/img/license/by.svg';
     if (local === 'ja') {
-      licenseLink = props.file.license === config.cc.by_3 ? config.cc.link.by_3_ja : config.cc.link.by_4_ja;
+      licenseLink = props.file.license === appConfig.cc.by_3 ? appConfig.cc.link.by_3_ja : appConfig.cc.link.by_4_ja;
     } else {
-      licenseLink = props.file.license === config.cc.by_3 ? config.cc.link.by_3 : config.cc.link.by_4;
+      licenseLink = props.file.license === appConfig.cc.by_3 ? appConfig.cc.link.by_3 : appConfig.cc.link.by_4;
     }
-  } else if (props.file.license === config.cc.by_sa_3 || props.file.license === config.cc.by_sa_4) {
+  } else if (props.file.license === appConfig.cc.by_sa_3 || props.file.license === appConfig.cc.by_sa_4) {
     licenseImg.value = '/img/license/by-sa.svg';
     if (local === 'ja') {
-      licenseLink = props.file.license === config.cc.by_sa_3 ? config.cc.link.by_sa_3_ja : config.cc.link.by_sa_4_ja;
+      licenseLink =
+        props.file.license === appConfig.cc.by_sa_3 ? appConfig.cc.link.by_sa_3_ja : appConfig.cc.link.by_sa_4_ja;
     } else {
-      licenseLink = props.file.license === config.cc.by_sa_3 ? config.cc.link.by_sa_3 : config.cc.link.by_sa_4;
+      licenseLink = props.file.license === appConfig.cc.by_sa_3 ? appConfig.cc.link.by_sa_3 : appConfig.cc.link.by_sa_4;
     }
-  } else if (props.file.license === config.cc.by_nd_3 || props.file.license === config.cc.by_nd_4) {
+  } else if (props.file.license === appConfig.cc.by_nd_3 || props.file.license === appConfig.cc.by_nd_4) {
     licenseImg.value = '/img/license/by-nd.svg';
     if (local === 'ja') {
-      licenseLink = props.file.license === config.cc.by_nd_3 ? config.cc.link.by_nd_3_ja : config.cc.link.by_nd_4_ja;
+      licenseLink =
+        props.file.license === appConfig.cc.by_nd_3 ? appConfig.cc.link.by_nd_3_ja : appConfig.cc.link.by_nd_4_ja;
     } else {
-      licenseLink = props.file.license === config.cc.by_nd_3 ? config.cc.link.by_nd_3 : config.cc.link.by_nd_4;
+      licenseLink = props.file.license === appConfig.cc.by_nd_3 ? appConfig.cc.link.by_nd_3 : appConfig.cc.link.by_nd_4;
     }
-  } else if (props.file.license === config.cc.by_nc_3 || props.file.license === config.cc.by_nc_4) {
+  } else if (props.file.license === appConfig.cc.by_nc_3 || props.file.license === appConfig.cc.by_nc_4) {
     licenseImg.value = '/img/license/by-nc.svg';
     if (local === 'ja') {
-      licenseLink = props.file.license === config.cc.by_nc_3 ? config.cc.link.by_nc_3_ja : config.cc.link.by_nc_4_ja;
+      licenseLink =
+        props.file.license === appConfig.cc.by_nc_3 ? appConfig.cc.link.by_nc_3_ja : appConfig.cc.link.by_nc_4_ja;
     } else {
-      licenseLink = props.file.license === config.cc.by_nc_3 ? config.cc.link.by_nc_3 : config.cc.link.by_nc_4;
+      licenseLink = props.file.license === appConfig.cc.by_nc_3 ? appConfig.cc.link.by_nc_3 : appConfig.cc.link.by_nc_4;
     }
-  } else if (props.file.license === config.cc.by_nc_sa_3 || props.file.license === config.cc.by_nc_sa_4) {
+  } else if (props.file.license === appConfig.cc.by_nc_sa_3 || props.file.license === appConfig.cc.by_nc_sa_4) {
     licenseImg.value = '/img/license/by-nc-sa.svg';
     if (local === 'ja') {
       licenseLink =
-        props.file.license === config.cc.by_nc_sa_3 ? config.cc.link.by_nc_sa_3_ja : config.cc.link.by_nc_sa_4_ja;
+        props.file.license === appConfig.cc.by_nc_sa_3
+          ? appConfig.cc.link.by_nc_sa_3_ja
+          : appConfig.cc.link.by_nc_sa_4_ja;
     } else {
-      licenseLink = props.file.license === config.cc.by_nc_sa_3 ? config.cc.link.by_nc_sa_3 : config.cc.link.by_nc_sa_4;
+      licenseLink =
+        props.file.license === appConfig.cc.by_nc_sa_3 ? appConfig.cc.link.by_nc_sa_3 : appConfig.cc.link.by_nc_sa_4;
     }
-  } else if (props.file.license === config.cc.by_nc_nd_3 || props.file.license === config.cc.by_nc_nd_4) {
+  } else if (props.file.license === appConfig.cc.by_nc_nd_3 || props.file.license === appConfig.cc.by_nc_nd_4) {
     licenseImg.value = '/img/license/by-nc-nd.svg';
     if (local === 'ja') {
       licenseLink =
-        props.file.license === config.cc.by_nc_nd_3 ? config.cc.link.by_nc_nd_3_ja : config.cc.link.by_nc_nd_4_ja;
+        props.file.license === appConfig.cc.by_nc_nd_3
+          ? appConfig.cc.link.by_nc_nd_3_ja
+          : appConfig.cc.link.by_nc_nd_4_ja;
     } else {
-      licenseLink = props.file.license === config.cc.by_nc_nd_3 ? config.cc.link.by_nc_nd_3 : config.cc.link.by_nc_nd_4;
+      licenseLink =
+        props.file.license === appConfig.cc.by_nc_nd_3 ? appConfig.cc.link.by_nc_nd_3 : appConfig.cc.link.by_nc_nd_4;
     }
   }
 } catch (error) {

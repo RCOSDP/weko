@@ -32,17 +32,23 @@
         <ul class="text-white text-sm">
           <li class="mb-1.5">
             <NuxtLink class="underline" to="#">
-              <span>利用許可申請</span>
+              <span>
+                {{ $t('fotterRequestUsePermission') }}
+              </span>
             </NuxtLink>
           </li>
           <li class="mb-1.5">
             <NuxtLink class="underline" to="#">
-              <span>運営機関</span>
+              <span>
+                {{ $t('fotterOrganization') }}
+              </span>
             </NuxtLink>
           </li>
           <li>
             <NuxtLink class="underline" to="#">
-              <span>プライバシーポリシー</span>
+              <span>
+                {{ $t('fotterPrivacyPolicy') }}
+              </span>
             </NuxtLink>
           </li>
         </ul>

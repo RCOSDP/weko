@@ -11,36 +11,47 @@
       <h1 class="text-3xl text-center font-medium">
         {{ $t('login') }}
       </h1>
-      <form class="space-y-4 mt-2" @submit.prevent="login">
+      <Form class="space-y-4 mt-2" @submit="login">
         <!-- メールアドレス -->
-        <div>
-          <label class="label">
-            <span class="font-medium text-base label-text">
-              {{ $t('mailAddress') }}
-            </span>
-          </label>
-          <input
+        <label class="label flex-col">
+          <span class="font-medium text-base label-text mr-auto">
+            {{ $t('mailAddress') }}
+          </span>
+          <Field
             v-model="email"
-            type="text"
+            name="email"
+            type="email"
+            :rules="checkEmail"
             :placeholder="$t('enterMailAddress')"
-            class="w-full input input-bordered hover:border-sky-700 focus:border-sky-700" />
-        </div>
+            :class="{ 'border-red-600': dirtyEmail && checkEmail(email) !== true }"
+            class="w-full input input-bordered mt-2 hover:[&:focus]:border-sky-700"
+            @click="dirtyEmail = true" />
+          <ErrorMessage name="email" class="mr-auto text-red-600" />
+        </label>
         <!-- パスワード -->
-        <div>
-          <label class="label">
-            <span class="font-medium text-base label-text">
-              {{ $t('password') }}
-            </span>
-          </label>
-          <input
+        <label class="label flex-col">
+          <span class="font-medium text-base label-text mr-auto">
+            {{ $t('password') }}
+          </span>
+          <Field
             v-model="password"
+            name="password"
             type="password"
+            :rules="checkPassword"
             :placeholder="$t('enterPassword')"
-            class="w-full input input-bordered hover:border-sky-700 focus:border-sky-700" />
-        </div>
+            :class="{ 'border-red-600': dirtyPassword && checkPassword(password) !== true }"
+            class="w-full input input-bordered mt-2 hover:[&:focus]:border-sky-700"
+            @click="dirtyPassword = true" />
+          <ErrorMessage name="password" class="mr-auto text-red-600" />
+        </label>
         <!-- ログイン -->
-        <div class="pt-2">
-          <button class="btn btn-block font-medium text-lg text-white bg-miby-light-blue hover:bg-sky-700">
+        <div class="pt-3">
+          <button
+            class="btn btn-block font-medium text-lg text-white bg-miby-light-blue hover:bg-sky-700"
+            @click="
+              dirtyEmail = true;
+              dirtyPassword = true;
+            ">
             <img src="/img/icon/icon_login.svg" alt="Login" />
             {{ $t('login') }}
           </button>
@@ -56,45 +67,62 @@
           <div class="flex justify-end flex-1">
             <a
               class="text-sm text-gray-600 hover:underline hover:text-sky-700 cursor-pointer"
-              @click="forgetPassFlag = true">
+              @click="
+                forgetPassFlag = true;
+                dirtyReset = false;
+              ">
               {{ $t('forgetPassword') }}
             </a>
           </div>
         </div>
-      </form>
+      </Form>
     </div>
     <div v-else class="w-full mt-5 p-6 m-auto bg-white rounded-md shadow-md ring-2 ring-gray-800/50 lg:max-w-lg">
       <h1 class="text-3xl text-center font-medium">
         {{ $t('resetPassword') }}
       </h1>
-      <form class="space-y-4" @submit.prevent="login">
+      <Form class="space-y-4">
         <!-- メールアドレス -->
         <div>
           <div class="text-base label-text mt-5 mb-5">
             {{ $t('sendEmailResetPassword') }}
           </div>
-          <label class="label">
-            <span class="font-medium text-base label-text">
+          <label class="label flex-col">
+            <span class="font-medium text-base label-text mr-auto">
               {{ $t('mailAddress') }}
             </span>
+            <Field
+              v-model="reset"
+              name="reset"
+              type="text"
+              :rules="checkEmail"
+              :placeholder="$t('enterMailAddress')"
+              :class="{ 'border-red-600': dirtyReset && checkEmail(reset) !== true }"
+              class="w-full input input-bordered mt-2 hover:[&:focus]:border-sky-700"
+              @click="dirtyReset = true" />
+            <ErrorMessage name="reset" class="mr-auto text-red-600" />
           </label>
-          <input
-            type="text"
-            :placeholder="$t('enterMailAddress')"
-            class="w-full input input-bordered hover:border-sky-700 focus:border-sky-700" />
         </div>
         <!-- 送信 -->
         <div class="pt-2">
-          <button class="btn btn-block font-medium text-lg text-white bg-miby-light-blue hover:bg-sky-700">送信</button>
+          <button
+            class="btn btn-block font-medium text-lg text-white bg-miby-light-blue hover:bg-sky-700"
+            @click="dirtyReset = true">
+            {{ $t('send') }}
+          </button>
         </div>
         <div>
           <a
             class="text-sm text-gray-600 hover:underline hover:text-sky-700 flex justify-center cursor-pointer"
-            @click="forgetPassFlag = false">
+            @click="
+              forgetPassFlag = false;
+              dirtyEmail = false;
+              dirtyPassword = false;
+            ">
             {{ $t('returnToLogin') }}
           </a>
         </div>
-      </form>
+      </Form>
     </div>
     <!-- アラート -->
     <Alert v-if="visibleAlert" :type="alertType" :message="alertMessage" @click-close="visibleAlert = !visibleAlert" />
@@ -102,18 +130,27 @@
 </template>
 
 <script lang="ts" setup>
+import { Form, Field, ErrorMessage } from 'vee-validate';
+import { useI18n } from 'vue-i18n';
+
 import Alert from '~/components/common/Alert.vue';
 
 /* ///////////////////////////////////
 // const and let
 /////////////////////////////////// */
 
+const mRequiredField = useI18n().t('requiredField');
+const mRequiredEmail = useI18n().t('requiredEmail');
 const email = ref('');
 const password = ref('');
+const reset = ref('');
 const forgetPassFlag = ref(false);
 const visibleAlert = ref(false);
 const alertType = ref('info');
 const alertMessage = ref('');
+const dirtyEmail = ref(false);
+const dirtyPassword = ref(false);
+const dirtyReset = ref(false);
 
 /* ///////////////////////////////////
 // function
@@ -164,6 +201,33 @@ function login() {
       visibleAlert.value = true;
     }
   });
+}
+
+/**
+ * メールアドレスのバリデーション
+ * @param value 入力されたメールアドレス
+ */
+function checkEmail(value: any) {
+  if (!value) {
+    return mRequiredField;
+  }
+  // RFC5322準拠
+  const regex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+  if (!regex.test(value)) {
+    return mRequiredEmail;
+  }
+  return true;
+}
+
+/**
+ * パスワードのバリデーション
+ * @param value 入力されたパスワード
+ */
+function checkPassword(value: any) {
+  if (!value) {
+    return mRequiredField;
+  }
+  return true;
 }
 
 /* ///////////////////////////////////

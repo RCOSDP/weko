@@ -1367,6 +1367,7 @@ def test_RoCrateConverter_convert():
     assert rocrate['@graph'][0]['prop7'] == ['value7_1']
     assert 'prop8' not in rocrate['@graph'][0]
     assert 'prop9' not in rocrate['@graph'][0]
+    assert rocrate['@graph'][0]['prop10'] == 'value10'
     assert 'prop_none' not in rocrate['@graph'][0]
 
     assert rocrate['@graph'][5]['additionalType'] == 'tab'

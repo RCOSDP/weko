@@ -10,19 +10,12 @@
         "depth": 0,
         "name": "root",
         "map": {
-            "title": {
-                "value": "item_1617186331708.subitem_1551255647225",
-                "lang": "item_1617186331708.subitem_1551255648112"
-            },
-            "dateCreated": "item_1685585050910.subitem_1685583626611.subitem_1685583628794",
-            "datePublished": "item_1685585050910.subitem_1685583626611.subitem_1685583633388",
-            "accessMode": "item_1685585170888.subitem_1685583776261.subitem_1685583784534",
-            "genre": "item_1685585121449.subitem_1685583691205",
-            "creator": [
-                "item_1685585204873.subitem_1685584180890.subitem_1685584185026",
-                "item_1685585204873.subitem_1685584180890.subitem_1685584186042"
-            ],
-            "keywords": "item_1685585100256.subitem_1685583657917.subitem_1685583664589"
+            "name": "item_1617186331708.subitem_1551255647225",
+            "about": "item_1617186385884.subitem_1551255720400",
+            "abstract": "item_1617186626617.subitem_description",
+            "accessMode" : "item_1617186643794.subitem_1522300316516",
+            "accessModeSufficient": "item_1617349808926.subitem_1523263171732",
+            "accessibilityAPI" : "item_1617186783814.subitem_identifier_uri"
         },
         "children": [
             {
@@ -38,9 +31,7 @@
                             {
                                 "depth": 3,
                                 "name": "実験の説明",
-                                "map": {
-                                    "text": "item_1685585100256.subitem_1685583657917.subitem_1685583662235"
-                                }
+                                "map": {}
                             }
                         ]
                     },
@@ -52,9 +43,7 @@
                             {
                                 "depth": 3,
                                 "name": "追加情報の説明",
-                                "map": {
-                                    "text": "item_1685585100256.subitem_1685583657917.subitem_1685583663389"
-                                }
+                                "map": {}
                             }
                         ]
                     },
@@ -66,16 +55,12 @@
                             {
                                 "depth": 3,
                                 "name": "リポジトリ",
-                                "map": {
-                                    "text": "item_1685585189225.subitem_1685584149443.subitem_1685584151682"
-                                }
+                                "map": {}
                             },
                             {
                                 "depth": 3,
                                 "name": "利益相反の有無",
-                                "map": {
-                                    "text": "item_1685585292154.subitem_1685584593021.subitem_1685584596756"
-                                }
+                                "map": {}
                             }
                         ]
                     }
@@ -94,10 +79,7 @@
                             {
                                 "depth": 3,
                                 "name": "実験の説明",
-                                "map": {
-                                    "title": "",
-                                    "text": ""
-                                }
+                                "map": {}
                             }
                         ]
                     }
@@ -106,9 +88,6 @@
         ]
     },
     "file": {
-        "map":{
-            "encodingFormat": "format",
-            "url": "url.url"
-        }
+        "map": {}
     }
 }

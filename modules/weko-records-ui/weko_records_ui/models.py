@@ -441,5 +441,14 @@ class RocrateMapping(db.Model, Timestamp):
     )
     """Store mapping in JSON format."""
 
+    def __init__(self, item_type_id, mapping):
+        """Init.
+
+        :param item_type_id: item type id
+        :param mapping: mapping from metadata to RO-Crate
+        """
+        self.item_type_id = item_type_id
+        self.mapping = mapping
+
 
 __all__ = ('PDFCoverPageSettings', 'FilePermission', 'FileOnetimeDownload', 'RocrateMapping')

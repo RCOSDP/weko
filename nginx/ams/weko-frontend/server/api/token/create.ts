@@ -1,5 +1,5 @@
 export default defineEventHandler(async (event) => {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // TODO: 削除
+  // process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // NOTE: オレオレ証明書を使用している場合は有効にする
   let tokenType = '';
   let accessToken = '';
   let refreshToken = '';

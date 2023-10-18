@@ -94,7 +94,7 @@ def test_WekoRecordsResource(app, records_rest, db_rocrate_mapping):
         res = client.get('/v1/records/1')
         assert res.status_code == 200
         data = json.loads(res.get_data())
-        assert data['@graph'][0]['title'][0] == 'メタボリックシンドロームモデルマウスの多臓器遺伝子発現量データ'
+        assert data['rocrate']['@graph'][0]['name'][0] == 'test data'
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_WekoRecordsResource_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
