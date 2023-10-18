@@ -86,7 +86,7 @@ def test_cached_api_json(app):
 
 # def get_item_id(item_type_id):
 #     def _get_jpcoar_mapping(rtn_results, jpcoar_data):
-# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_item_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_item_id -vv -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_get_item_id(app, itemtypes, mocker):
     data = json_data("data/itemtypes/mapping.json")
 
@@ -135,12 +135,12 @@ def test_get_item_id(app, itemtypes, mocker):
             "model_id": "test_item6",
         },
         "date": {
-            "@attributes": {"dateType": "test13_subitem2"},
-            "@value": "test13_subitem1",
-            "model_id": "test_item13",
+            "@attributes": {"dateType": "test12_subitem2"},
+            "@value": "test12_subitem1",
+            "model_id": "test_item12",
         },
         "description": {
-            "@attributes": {"descriptionType": "subitem_description_type"},
+            "@attributes": {"xml:lang": "subitem10_lang", "descriptionType": "description_descriptionType"},
             "@value": "subitem_description",
             "model_id": "test_item10",
         },
@@ -152,11 +152,11 @@ def test_get_item_id(app, itemtypes, mocker):
         "others": [
             {
                 "others": {
-                    "@attributes": {"xxx": "test14_subitem1"},
-                    "model_id": "test_item14",
+                    "@attributes": {"xxx": "test13_subitem1"},
+                    "model_id": "test_item13",
                 }
             },
-            {"others": {"@value": "test15_subitem1", "model_id": "test_item15"}},
+            {"others": {"@value": "test14_subitem1", "model_id": "test_item14"}},
         ],
         "relation": {
             "model_id": "test_item8",
@@ -165,23 +165,12 @@ def test_get_item_id(app, itemtypes, mocker):
                 "@value": "test8_subitem1.test8_subitem2",
             },
         },
-        "subject": [
-            {
-                "subject": {
-                    "@attributes": {"subjectScheme": "test11_subitem1"},
-                    "@value": "test11_subitem1",
-                    "model_id": "test_item11",
-                }
-            },
-            {
-                "subject": {
-                    "@attributes": {"subjectURI": "test12_subitem1"},
-                    "@value": "test12_subitem1",
-                    "model_id": "test_item12",
-                }
-            },
-        ],
-        "volume": {"@value": "test16_subitem1", "model_id": "test_item16"},
+        "subject": {
+            "@attributes": {"xml:lang":"subject_lang", "subjectScheme": "subject_subjectScheme","subjectURI":"subject_subjectURI"},
+            "@value": "test11_subitem1",
+            "model_id": "test_item11",
+        },
+        "volume": {"@value": "test15_subitem1", "model_id": "test_item15"},
     }
     result = get_item_id(1)
     assert result == test
@@ -1117,7 +1106,7 @@ def test_sort_by_item_type_order():
 
 
 # def get_key_value(schema_form, val, parent_key):
-# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_key_value -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_key_value -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_get_key_value():
     # item is not dict
     data = json_data("data/itemtypes/mapping.json")
@@ -1125,85 +1114,75 @@ def test_get_key_value():
     # not exist @value
     with patch(
         "weko_items_autofill.utils.get_autofill_key_path",
+        side_effect=[{"key": "test_item13.test13_subitem1"}],
+    ):
+        result = get_key_value(
+            schema_form, data["test_item13"]["jpcoar_mapping"]["others"], "others"
+        )
+        assert result == {}
+    # not exist @attributes
+    with patch(
+        "weko_items_autofill.utils.get_autofill_key_path",
         side_effect=[{"key": "test_item14.test14_subitem1"}],
     ):
         result = get_key_value(
             schema_form, data["test_item14"]["jpcoar_mapping"]["others"], "others"
         )
-        assert result == {}
+        assert result == {"@value": "test_item14.test14_subitem1"}
 
-    # not exist @attributes
-    with patch(
-        "weko_items_autofill.utils.get_autofill_key_path",
-        side_effect=[{"key": "test_item15.test15_subitem1"}],
-    ):
-        result = get_key_value(
-            schema_form, data["test_item15"]["jpcoar_mapping"]["others"], "others"
-        )
-        assert result == {"@value": "test_item15.test15_subitem1"}
-
-    def assert_test(item_name, parent_key, attribute, value_key, attributes_key):
+    def assert_test(item_name, parent_key, value_key, attributes_keys):
+        mock_effect = [{"key": value_key}]
+        mock_effect += [{"key": attributes_key} for attributes_key in attributes_keys.values()]
         with patch(
             "weko_items_autofill.utils.get_autofill_key_path",
-            side_effect=[{"key": value_key}, {"key": attributes_key}],
+            side_effect=mock_effect,
         ):
             result = get_key_value(
                 schema_form, data[item_name]["jpcoar_mapping"][parent_key], parent_key
             )
-            assert result == {"@value": value_key, attribute: attributes_key}
+            test = {"@value":value_key}
+            test.update(attributes_keys)
+            assert result == test
 
+    
     # exist @attributes.xml:lang
     assert_test(
-        "test_item2",
-        "title",
-        "@language",
-        "test_item2.test2_subitem1",
-        "test_item2.test2_subitem2",
+        item_name="test_item2",
+        parent_key="title",
+        value_key="test2_subitem1",
+        attributes_keys={"@language":"test2_subitems"}
     )
 
     # exist @attributes.identifierType
     assert_test(
-        "test_item9",
-        "identifier",
-        "@type",
-        "test_item9.subitem_identifier_uri",
-        "test_item9.subitem_identifier_type",
+        item_name="test_item9",
+        parent_key="identifier",
+        value_key="subitem_identifier_uri",
+        attributes_keys={"@type":"subitem_identifier_type"}
     )
 
     # exist @attributes.descriptionType
     assert_test(
-        "test_item10",
-        "description",
-        "@type",
-        "test_item10.subitem_description",
-        "test_item10.subitem_description_type",
+        item_name="test_item10",
+        parent_key="description",
+        value_key="subitem_description",
+        attributes_keys={"@language":"subitem10_lang","@type":"description_descriptionType"}
     )
 
     # exist @attributes.subjectSchema
     assert_test(
-        "test_item11",
-        "subject",
-        "@scheme",
-        "test_item11.test11_subitem1",
-        "test_item11.test11_subitem1",
+        item_name="test_item11",
+        parent_key="subject",
+        value_key="test11_subitem1",
+        attributes_keys={"@language":"subject_lang","@scheme":"subject_subjectScheme","@URI":"subject_subjectURI"}
     )
-
-    # exist @attributes.subjectURI
-    assert_test(
-        "test_item12",
-        "subject",
-        "@URI",
-        "test_item12.test12_subitem1",
-        "test_item12.test12_subitem1",
-    )
-
+    
     # exist @attributes.dateType
     assert_test(
-        "test_item13",
-        "date",
-        "@type",
-        "test_item13.test13_subitem1",
-        "test_item13.test13_subitem1",
+        item_name="test_item12",
+        parent_key="date",
+        value_key="test12_subitem1",
+        attributes_keys={"@type":"test12_subitem2"}
     )
 
 

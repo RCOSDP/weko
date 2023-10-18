@@ -897,31 +897,31 @@ def get_key_value(schema_form, val, parent_key):
                 parent_key,
                 value_key.get("xml:lang")
             ).get('key')
-        elif value_key.get("identifierType") is not None:
+        if value_key.get("identifierType") is not None:
             key_data['@type'] = get_autofill_key_path(
                 schema_form,
                 parent_key,
                 value_key.get("identifierType")
             ).get('key')
-        elif value_key.get("descriptionType") is not None:
+        if value_key.get("descriptionType") is not None:
             key_data['@type'] = get_autofill_key_path(
                 schema_form,
                 parent_key,
                 value_key.get("descriptionType")
             ).get('key')
-        elif value_key.get("subjectScheme") is not None:
+        if value_key.get("subjectScheme") is not None:
             key_data['@scheme'] = get_autofill_key_path(
                 schema_form,
                 parent_key,
                 value_key.get("subjectScheme")
             ).get('key')
-        elif value_key.get("subjectURI") is not None:
+        if value_key.get("subjectURI") is not None:
             key_data['@URI'] = get_autofill_key_path(
                 schema_form,
                 parent_key,
                 value_key.get("subjectURI")
             ).get('key')
-        elif value_key.get("dateType") is not None:
+        if value_key.get("dateType") is not None:
             key_data['@type'] = get_autofill_key_path(
                 schema_form,
                 parent_key,
