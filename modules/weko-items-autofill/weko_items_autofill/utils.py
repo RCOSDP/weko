@@ -232,10 +232,7 @@ def get_basic_cinii_data(data):
     for item in data:
         new_data = dict()
         new_data['@value'] = item.get('@value')
-        if item.get('@language'):
-            new_data['@language'] = item.get('@language')
-        else:
-            new_data['@language'] = default_language
+        new_data['@language'] = item['@language'] if item.get('@language') else default_language
         result.append(new_data)
     return result
 
@@ -256,7 +253,7 @@ def pack_single_value_as_dict(data):
     return new_data
 
 
-def pack_data_with_multiple_type_cinii(data1, type1, data2, type2):
+def pack_data_with_multiple_type_cinii(data, type1, type2):
     """Map CiNii multi data with type.
 
     Arguments:
@@ -270,14 +267,15 @@ def pack_data_with_multiple_type_cinii(data1, type1, data2, type2):
 
     """
     result = list()
-    if data1:
+    _data = {item["@type"]:item["@value"] for item in data}
+    if type1 in _data:
         new_data = dict()
-        new_data['@value'] = data1
+        new_data['@value'] = _data[type1]
         new_data['@type'] = type1
         result.append(new_data)
-    if data2:
+    if type2 in _data:
         new_data = dict()
-        new_data['@value'] = data2
+        new_data['@value'] = _data[type2]
         new_data['@type'] = type2
         result.append(new_data)
     return result
@@ -296,16 +294,10 @@ def get_cinii_creator_data(data):
     :return: list of creator name
     """
     result = list()
-    default_language = 'ja'
     for item in data:
-        for i in range(0, len(item)):
-            new_data = dict()
-            new_data['@value'] = item[i].get('@value')
-            if item[i].get('@language'):
-                new_data['@language'] = item[i].get('@language')
-            else:
-                new_data['@language'] = default_language
-            result.append(new_data)
+        name_data = item.get('foaf:name')
+        if name_data:
+            result.append(get_basic_cinii_data(name_data))
     return result
 
 
@@ -322,22 +314,10 @@ def get_cinii_contributor_data(data):
     :return:packed data
     """
     result = list()
-    default_language = 'ja'
     for item in data:
-        if item.get('con:organization') is None:
-            continue
-        organization = item['con:organization'][0]
-        if organization.get('foaf:name') is None:
-            continue
-        for i in range(0, len(organization.get('foaf:name'))):
-            new_data = dict()
-            new_data['@value'] = organization['foaf:name'][i].get('@value')
-            if organization['foaf:name'][i].get('@language'):
-                language = organization['foaf:name'][i].get('@language')
-                new_data['@language'] = language
-            else:
-                new_data['@language'] = default_language
-            result.append(new_data)
+        name_data = item.get("foaf:name")
+        if name_data:
+            result.append(get_basic_cinii_data(name_data))
     return result
 
 
@@ -356,15 +336,17 @@ def get_cinii_description_data(data):
     """
     result = list()
     default_language = 'ja'
+    default_type = 'Abstract'
     for item in data:
-        new_data = dict()
-        new_data['@value'] = item.get('@value')
-        new_data['@type'] = 'Abstract'
-        if item.get('@language'):
-            new_data['@language'] = item.get('@language')
-        else:
-            new_data['@language'] = default_language
-        result.append(new_data)
+        notations = item.get("notation")
+        if notations is None:
+            continue
+        for notation in notations:
+            new_data = dict()
+            new_data['@value'] = notation.get('@value')
+            new_data['@type'] = item["type"] if item.get("type") else default_type
+            new_data["@language"] = notation["@language"] if notation.get("@language") else default_language
+            result.append(new_data)
     return result
 
 
@@ -386,15 +368,10 @@ def get_cinii_subject_data(data):
     default_language = 'ja'
     for sub in data:
         new_data = dict()
-        new_data['@scheme'] = 'Other'
-        new_data['@URI'] = sub.get('@id')
-        title = sub.get('dc:title')
-        if title[0] is not None:
-            new_data['@value'] = title[0].get('@value')
-            if title[0].get('@language'):
-                new_data['@language'] = title[0].get('@language')
-            else:
-                new_data['@language'] = default_language
+        new_data["@scheme"] = "Other"
+        new_data["@URI"] = sub.get("@id")
+        new_data["@value"] = sub.get("dc:title")
+        new_data["@language"] = default_language
         result.append(new_data)
     return result
 
@@ -427,9 +404,9 @@ def get_cinii_numpage(data):
     :param: data: CiNii data
     :return: number of page is packed
     """
-    if data.get('prism:pageRange'):
-        return get_cinii_page_data(data.get('prism:pageRange'))
-    else:
+    if data.get('jpcoar:numPages'):
+        return get_cinii_page_data(data.get('jpcoar:numPages'))
+    if data.get('prism:startingPage') and data.get('prism:endingPage'):
         try:
             end = int(data.get('prism:endingPage'))
             start = int(data.get('prism:startingPage'))
@@ -438,6 +415,7 @@ def get_cinii_numpage(data):
         except Exception as e:
             current_app.logger.debug(e)
             return pack_single_value_as_dict(None)
+    return {"@value": None}
 
 
 def get_cinii_date_data(data):
@@ -462,7 +440,11 @@ def get_cinii_date_data(data):
         result['@type'] = 'Issued'
     return result
 
-
+def get_cinii_product_identifier(data, type1, type2):
+    _data = [item.get('identifier') for item in data]
+    result = pack_data_with_multiple_type_cinii(_data, type1, type2)
+    return result
+    
 def get_cinii_data_by_key(api, keyword):
     """Get data from CiNii based on keyword.
 
@@ -470,55 +452,62 @@ def get_cinii_data_by_key(api, keyword):
     :param: keyword: keyword for search
     :return: data for keyword
     """
-    data_response = api['response'].get('@graph')
+    data_response = api['response']
     result = dict()
     if data_response is None:
         return result
-    data = data_response[0]
-    if (keyword == 'title' or keyword == 'alternative') \
-            and data.get('dc:title'):
+    data = data_response
+    if keyword == 'title' and data.get('dc:title'):
         result[keyword] = get_basic_cinii_data(data.get('dc:title'))
-    elif keyword == 'creator' and data.get('dc:creator'):
-        result[keyword] = get_cinii_creator_data(data.get('dc:creator'))
-    elif keyword == 'contributor' and data.get('foaf:maker'):
-        result[keyword] = get_cinii_contributor_data(data.get('foaf:maker'))
-    elif keyword == 'description' and data.get('dc:description'):
+    elif keyword == 'alternative' and data.get('dcterms:alternative'):
+        result[keyword] = get_basic_cinii_data(data.get('dcterms:alternative'))
+    elif keyword == 'creator' and data.get('creator'):
+        result[keyword] = get_cinii_creator_data(data.get('creator'))
+    elif keyword == 'contributor' and data.get('contributor'):
+        result[keyword] = get_cinii_contributor_data(data.get('contributor'))
+    elif keyword == 'description' and data.get('description'):
         result[keyword] = get_cinii_description_data(
-            data.get('dc:description')
+            data.get('description')
         )
     elif keyword == 'subject' and data.get('foaf:topic'):
         result[keyword] = get_cinii_subject_data(data.get('foaf:topic'))
-    elif keyword == 'sourceTitle' and data.get('prism:publicationName'):
+    elif keyword == 'sourceTitle' and data.get('publication') \
+        and data.get('publication').get('prism:publicationName'):
         result[keyword] = get_basic_cinii_data(
-            data.get('prism:publicationName')
+            data.get('publication').get('prism:publicationName')
         )
-    elif keyword == 'volume' and data.get('prism:volume'):
-        result[keyword] = pack_single_value_as_dict(data.get('prism:volume'))
-    elif keyword == 'issue' and data.get('prism:number'):
-        result[keyword] = pack_single_value_as_dict(data.get('prism:number'))
-    elif keyword == 'pageStart' and data.get('prism:startingPage'):
-        result[keyword] = get_cinii_page_data(data.get('prism:startingPage'))
-    elif keyword == 'pageEnd' and data.get('prism:endingPage'):
-        result[keyword] = get_cinii_page_data(data.get('prism:endingPage'))
-    elif keyword == 'numPages':
-        result[keyword] = get_cinii_numpage(data)
-    elif keyword == 'date' and data.get('prism:publicationDate'):
+    elif keyword == 'volume' and data.get('publication') \
+        and data.get("publication").get('prism:volume'):
+        result[keyword] = pack_single_value_as_dict(data.get("publication").get('prism:volume'))
+    elif keyword == 'issue' and data.get('publication') \
+        and data.get("publication").get('prism:number'):
+        result[keyword] = pack_single_value_as_dict(data.get("publication").get('prism:number'))
+    elif keyword == 'pageStart' and data.get('publication') \
+        and data.get("publication").get('prism:startingPage'):
+        result[keyword] = get_cinii_page_data(data.get("publication").get('prism:startingPage'))
+    elif keyword == 'pageEnd' and data.get('publication') \
+        and data.get('publication').get('prism:endingPage'):
+        result[keyword] = get_cinii_page_data(data.get("publication").get('prism:endingPage'))
+    elif keyword == 'numPages' and data.get('publication'):
+        result[keyword] = get_cinii_numpage(data.get('publication'))
+    elif keyword == 'date' and data.get('publication') \
+        and data.get('publication').get('prism:publicationDate'):
         result[keyword] = get_cinii_date_data(
-            data.get('prism:publicationDate'))
-    elif keyword == 'publisher' and data.get('dc:publisher'):
-        result[keyword] = get_basic_cinii_data(data.get('dc:publisher'))
-    elif keyword == 'sourceIdentifier':
+            data.get('publication').get('prism:publicationDate'))
+    elif keyword == 'publisher' and data.get('publication') \
+        and data.get('publication').get('dc:publisher'):
+        result[keyword] = get_basic_cinii_data(data.get('publication').get('dc:publisher'))
+    elif keyword == 'sourceIdentifier' and data.get('publication') \
+        and data.get('publication').get('publicationIdentifier'):
         result[keyword] = pack_data_with_multiple_type_cinii(
-            data.get('prism:issn'),
+            data.get('publication').get('publicationIdentifier'),
             'ISSN',
-            data.get('cinii:ncid'),
             'NCID'
         )
-    elif keyword == 'relation':
-        result[keyword] = pack_data_with_multiple_type_cinii(
-            data.get('cinii:naid'),
+    elif keyword == "relation" and data.get('productIdentifier'):
+        result[keyword] = get_cinii_product_identifier(
+            data.get('productIdentifier'),
             'NAID',
-            data.get('prism:doi'),
             'DOI'
         )
     elif keyword == 'all':

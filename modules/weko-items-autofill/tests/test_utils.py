@@ -25,6 +25,7 @@ from weko_items_autofill.utils import (
     get_cinii_numpage,
     get_cinii_date_data,
     get_cinii_data_by_key,
+    get_cinii_product_identifier,
     get_crossref_title_data,
     _build_name_data,
     get_crossref_creator_data,
@@ -473,74 +474,80 @@ def test_pack_single_value_as_dict():
 # def pack_data_with_multiple_type_cinii(data1, type1, data2, type2):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_pack_data_with_multiple_type_cinii -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_pack_data_with_multiple_type_cinii():
-    data1 = "value1"
-    type1 = "test_type1"
-    data2 = "value2"
-    type2 = "test_type2"
-    result = pack_data_with_multiple_type_cinii(data1, type1, data2, type2)
-    assert result == [
-        {"@value": "value1", "@type": "test_type1"},
-        {"@value": "value2", "@type": "test_type2"},
+    data = [
+      {
+        "@type": "PISSN",
+        "@value": "13402625"
+      },
+      {
+        "@type": "EISSN",
+        "@value": "18845843"
+      }
     ]
-
-    result = pack_data_with_multiple_type_cinii("", "", "", "")
-    assert result == []
+    type1 = "PISSN"
+    type2 = "ISSN"
+    result = pack_data_with_multiple_type_cinii(data, type1, type2)
+    assert result == [
+        {"@value": "13402625", "@type": "PISSN"},
+    ]
 
 
 # def get_cinii_creator_data(data):
-# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_creator_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_creator_data -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_get_cinii_creator_data():
-    data = json_data("data/cinii_response_example.json")["@graph"][0]["dc:creator"]
-    test = [
-        {"@value": "テスト 太郎", "@language": "ja"},
-        {"@value": "test taro", "@language": "en"},
-    ]
+    data = json_data("data/cinii_response_sample1.json")['response']['creator']
     result = get_cinii_creator_data(data)
+    test = [
+        {"@value":"テスト 太郎", "@language":"ja"},
+        {"@value":"TEST Taro", "@language":"en"},
+        {"@value":"テスト 三郎", "@language":"ja"},
+        {"@value":"TEST Saburo", "@language":"en"},
+    ]
     assert result == test
 
 
-# def get_cinii_contributor_data(data):
-# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_contributor_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_contributor_data -vv -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_get_cinii_contributor_data():
-    data = json_data("data/cinii_response_example.json")["@graph"][0]["foaf:maker"]
+    data = json_data("data/cinii_response_sample1.json")['response']["contributor"]
     test = [
-        {"@value": "テスト組織", "@language": "ja"},
-        {"@value": "test organization", "@language": "en"},
+        {"@value": "テスト 次郎", "@language": "ja"},
+        {"@value": "TEST Ziro", "@language": "en"},
+        {"@value": "テスト 花子", "@language": "ja"},
+        {"@value": "TEST Hanako", "@language": "en"},
     ]
     result = get_cinii_contributor_data(data)
     assert result == test
 
-
 # def get_cinii_description_data(data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_description_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_get_cinii_description_data():
-    data = json_data("data/cinii_response_example.json")["@graph"][0]["dc:description"]
+    data = json_data("data/cinii_response_sample1.json")['response']["description"]
     test = [
-        {"@value": "これはテストの説明です", "@language": "ja", "@type": "Abstract"},
-        {"@value": "this is test description.", "@language": "en", "@type": "Abstract"},
+        {"@value": "this is test abstract.", "@language": "en", "@type": "Abstract"},
+        {"@value": "これはテストの抄録です。", "@language": "ja", "@type": "Abstract"},
+        {"@value": "this is other abstract.", "@language": "en", "@type": "Other"},
+        {"@value": "これはその他の抄録です。", "@language": "ja", "@type": "Other"}
     ]
     result = get_cinii_description_data(data)
     assert result == test
 
-
 # def get_cinii_subject_data(data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_subject_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_get_cinii_subject_data():
-    data = json_data("data/cinii_response_example.json")["@graph"][0]["foaf:topic"]
+    data = json_data("data/cinii_response_sample1.json")['response']["foaf:topic"]
     test = [
         {
             "@scheme": "Other",
-            "@URI": "https://ci.nii.ac.jp/d/search?q=p53",
-            "@value": "p53",
+            "@URI": "https://cir.nii.ac.jp/all?q=%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E3%83%87%E3%82%B6%E3%82%A4%E3%83%B3",
+            "@value": "システムデザイン",
             "@language": "ja",
         },
         {
             "@scheme": "Other",
-            "@URI": "https://ci.nii.ac.jp/d/search?q=Myc",
-            "@value": "Myc",
-            "@language": "en",
+            "@URI": "https://cir.nii.ac.jp/all?q=%E6%A4%9C%E7%B4%A2%E3%82%A8%E3%83%B3%E3%82%B8%E3%83%B3",
+            "@value": "検索エンジン",
+            "@language": "ja",
         },
-        {"@scheme": "Other", "@URI": "https://ci.nii.ac.jp/d/search?q=Runx1"},
     ]
     result = get_cinii_subject_data(data)
     assert result == test
@@ -565,28 +572,38 @@ def test_get_cinii_page_data(app, mocker):
 def test_get_cinii_numpage(app, mocker):
     mocker.patch(
         "weko_items_autofill.utils.pack_single_value_as_dict",
-        side_effect=lambda x: {"@value": x},
+        side_effect=lambda x: {"@value": int(x)} if x != None else {"@value":None},
     )
     mocker.patch(
         "weko_items_autofill.utils.get_cinii_page_data",
-        side_effect=lambda x: {"@value": x},
+        side_effect=lambda x: {"@value": int(x)} if x != None else {"@value":None},
     )
 
+    # exist numPages
     data = {
-        "prism:pageRange": "6",
+        "jpcoar:numPages": "6",
         "prism:startingPage": "10",
         "prism:endingPage": "15",
     }
     result = get_cinii_numpage(data)
-    assert result == {"@value": "6"}
+    assert result == {"@value": 6}
+    
+    # not exist numPage, exist startingPage, endingPage
     data = {"prism:startingPage": "10", "prism:endingPage": "15"}
     result = get_cinii_numpage(data)
-    assert result == {"@value": "6"}
+    assert result == {"@value": 6}
 
+    # not exist numPage, startingPage, endingPage
+    data = {}
+    result = get_cinii_numpage(data)
+    assert result == {"@value": None}
+    
+    # raise exception
     data = {"prism:startingPage": "a", "prism:endingPage": "b"}
     result = get_cinii_numpage(data)
     assert result == {"@value": None}
-
+    
+    
 
 # def get_cinii_date_data(data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_date_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
@@ -599,65 +616,91 @@ def test_get_cinii_date_data():
     result = get_cinii_date_data(data)
     assert result == {"@value": None, "@type": None}
 
+# def get_cinii_product_identifier(data, type1, type2):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_product_identifier -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_get_cinii_product_identifier():
+    data = json_data("data/cinii_response_sample1.json")['response']["productIdentifier"]
+    result = get_cinii_product_identifier(data, "NAID", "DOI")
+    test = [
+        {"@value": "001122334455", "@type":"NAID"},
+        {"@value": "10.12334/jkg.12.11_222", "@type":"DOI"},
+    ]
+    assert result == test
 
 # def get_cinii_data_by_key(api, keyword):
-# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_data_by_key -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_cinii_data_by_key(app, mocker):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_data_by_key -vv -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_get_cinii_data_by_key(app):
     api = {"response": {}}
     result = get_cinii_data_by_key(api, "key")
     assert result == {}
 
-    api = {"response": json_data("data/cinii_response_example.json")}
+    api = json_data("data/cinii_response_sample1.json")
     test = {
-        "title": [{"@value": "this is test Dissertation", "@language": "ja"}],
-        "alternative": [{"@value": "this is test Dissertation", "@language": "ja"}],
+        "title": [
+            {"@value": "テストタイトル", "@language": "ja"},
+            {"@value": "test title", "@language": "en"},
+            {"@value": "テストのタイトル", "@language": "ja"},
+        ],
+        "alternative": [
+            {"@value": "other title", "@language": "en"},
+            {"@value": "別タイトル", "@language": "ja"},
+        ],
         "creator": [
             {"@value": "テスト 太郎", "@language": "ja"},
-            {"@value": "test taro", "@language": "en"},
+            {"@value": "TEST Taro", "@language": "en"},
+            {"@value": "テスト 三郎", "@language": "ja"},
+            {"@value": "TEST Saburo", "@language": "en"},
         ],
         "contributor": [
-            {"@value": "テスト組織", "@language": "ja"},
-            {"@value": "test organization", "@language": "en"},
+            {"@value": "テスト 次郎", "@language": "ja"},
+            {"@value": "TEST Ziro", "@language": "en"},
+            {"@value": "テスト 花子", "@language": "ja"},
+            {"@value": "TEST Hanako", "@language": "en"}
         ],
         "description": [
-            {"@value": "これはテストの説明です", "@type": "Abstract", "@language": "ja"},
-            {
-                "@value": "this is test description.",
-                "@type": "Abstract",
-                "@language": "en",
-            },
+            {"@value": "this is test abstract.", "@type": "Abstract", "@language": "en"},
+            {"@value": "これはテストの抄録です。", "@type": "Abstract", "@language": "ja"},
+            {"@value": "this is other abstract.", "@type": "Other", "@language": "en"},
+            {"@value": "これはその他の抄録です。", "@type": "Other", "@language": "ja"},
         ],
         "subject": [
             {
                 "@scheme": "Other",
-                "@URI": "https://ci.nii.ac.jp/d/search?q=p53",
-                "@value": "p53",
+                "@URI": "https://cir.nii.ac.jp/all?q=%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E3%83%87%E3%82%B6%E3%82%A4%E3%83%B3",
+                "@value": "システムデザイン",
                 "@language": "ja",
             },
             {
                 "@scheme": "Other",
-                "@URI": "https://ci.nii.ac.jp/d/search?q=Myc",
-                "@value": "Myc",
-                "@language": "en",
-            },
-            {"@scheme": "Other", "@URI": "https://ci.nii.ac.jp/d/search?q=Runx1"},
+                "@URI": "https://cir.nii.ac.jp/all?q=%E6%A4%9C%E7%B4%A2%E3%82%A8%E3%83%B3%E3%82%B8%E3%83%B3",
+                "@value": "検索エンジン",
+                "@language": "ja",
+            }
         ],
-        "sourceTitle": [{"@value": "test_publication", "@language": "ja"}],
-        "volume": {"@value": "10"},
-        "issue": {"@value": "5"},
-        "pageStart": {"@value": "10"},
-        "pageEnd": {"@value": "15"},
-        "numPages": {"@value": "6"},
-        "date": {"@value": "2022-10-01", "@type": "Issued"},
-        "publisher": [{"@value": "Test University (試験大学)", "@language": "ja"}],
-        "sourceIdentifier": [],
+        "sourceTitle": [
+            {"@value": "テスト雑誌", "@language": "ja"},
+            {"@value": "test journal", "@language": "en"}
+        ],
+        "volume": {"@value": "62"},
+        "issue": {"@value": "11"},
+        "pageStart": {"@value": "473"},
+        "pageEnd": {"@value": "477"},
+        "numPages": {"@value": "5"},
+        "date": {"@value": "2012-11-02", "@type": "Issued"},
+        "publisher": [
+            {"@value": "test publisher", "@language": "en"},
+            {"@value": "テスト公開", "@language": "ja"}
+        ],
+        "sourceIdentifier": [
+            {"@value": "87654321", "@type": "ISSN"},
+            {"@value": "AN34567890", "@type": "NCID"}
+        ],
         "relation": [
-            {"@value": "123456789101", "@type": "NAID"},
-            {"@value": [{"@value": "10.1016/j.test.2022.146234"}], "@type": "DOI"},
+            {"@value": "001122334455", "@type": "NAID"},
+            {"@value": "10.12334/jkg.12.11_222", "@type": "DOI"},
         ],
     }
     result = get_cinii_data_by_key(api, "all")
-
     assert result == test
 
     result = get_cinii_data_by_key(api, "other_key")
