@@ -719,18 +719,19 @@ def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord,
     mail_info.update(result)
     
     # query secret mail template record
-    secret_genre = MailTemplateGenres.query.get(1)
-    secret_mail_template = next(iter(secret_genre.templates or []), None)
-    
-    print('secret mail')
-    print(secret_mail_template)
+    secret_genre_id = current_app.config.get('WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID', -1)
+    secret_genre = MailTemplateGenres.query.get(secret_genre_id)
+    secret_mail_template = None
+    if secret_genre:
+        secret_mail_template = next(iter(secret_genre.templates or []), None)
+
     #send mail
     if secret_mail_template:
         send_result = process_send_mail(mail_info, secret_mail_template.id)
         if send_result:
             return _('Success Secret URL Generate')
-        else:
-            abort(500)
+
+    abort(500)
 
 def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
     """ 

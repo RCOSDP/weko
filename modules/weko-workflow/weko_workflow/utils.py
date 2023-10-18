@@ -2204,25 +2204,6 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
             result = item_info.get('subitem_research_title', '')
         return result
 
-    def _extract_term_description(file_info):
-        terms = file_info.get('terms')
-        if terms == 'term_free':
-            terms_description = file_info.get('termsDescription', '')
-            return terms_description, terms_description
-        elif not terms:
-            return '', ''
-
-        restricted_access_settings = AdminSettings.get('restricted_access')
-        if not restricted_access_settings:
-            return '', ''
-
-        terms_and_conditions = restricted_access_settings.terms_and_conditions
-        target_term = next(term.get('content', {'en': {}, 'ja': {}}) for term in terms_and_conditions
-                           if term.get('key') == file_info.get('terms') and term.get('existed', False))
-        if target_term:
-            return target_term.get('ja').get('content'), target_term.get('en').get('content')
-        return '', ''
-
     mail_address = item_info.get('subitem_mail_address')
     site_en, site_ja = get_site_info_name()
     site_mail = get_default_mail_sender()
@@ -2287,17 +2268,43 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         applying_record_id = activity_detail.extra_info.get('record_id', -1)
         applying_filename = activity_detail.extra_info.get('file_name', '')
         record = WekoRecord.get_record_by_pid(applying_record_id)
-        mail_info['landing_url'] = urljoin(request.url_root, url_for(
-            'invenio_records_ui.recid', pid_value=record.pid.pid_value))
-        file_info = next((file_data for file_data in record.get_file_data()
-                         if file_data.get('filename') == applying_filename))
+        file_info = None
+        if record:
+            mail_info['landing_url'] = urljoin(request.url_root, url_for(
+                'invenio_records_ui.recid', pid_value=record.pid.pid_value))
+            file_info = next((file_data for file_data in record.get_file_data()
+                            if file_data.get('filename') == applying_filename))
         if file_info:
-            term_description_ja, term_description_en = _extract_term_description(file_info)
+            term_description_ja, term_description_en = extract_term_description(file_info)
             mail_info['terms_of_use_jp'] = term_description_ja
             mail_info['terms_of_use_en'] = term_description_en
 
-    print(mail_info)
     return mail_info
+
+
+def extract_term_description(file_info):
+    """Extract term of use description from record file info.
+
+    :param file_info: file infomation
+    :return: tuple of Terms of Use (ja, en)
+    """
+    terms = file_info.get('terms')
+    if terms == 'term_free':
+        terms_description = file_info.get('termsDescription', '')
+        return terms_description, terms_description
+    elif not terms:
+        return '', ''
+
+    restricted_access_settings = AdminSettings.get('restricted_access')
+    if not restricted_access_settings:
+        return '', ''
+
+    terms_and_conditions = restricted_access_settings.terms_and_conditions
+    target_term = next(term.get('content', {'en': {}, 'ja': {}}) for term in terms_and_conditions
+                        if term.get('key') == file_info.get('terms') and term.get('existed', False))
+    if target_term:
+        return target_term.get('ja').get('content'), target_term.get('en').get('content')
+    return '', ''
 
 
 def process_send_reminder_mail(activity_detail, mail_id):
