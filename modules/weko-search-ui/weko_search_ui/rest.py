@@ -22,6 +22,7 @@
 
 import inspect
 import json
+import traceback
 from functools import partial
 
 from flask import Blueprint, current_app, request, url_for, Response
@@ -668,4 +669,5 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             raise InternalServerError()
 
         except Exception:
+            current_app.logger.error(traceback.print_exc())
             raise InternalServerError()

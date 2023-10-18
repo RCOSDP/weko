@@ -22,6 +22,7 @@
 import inspect
 import json
 import re
+import traceback
 from flask import Blueprint, current_app, jsonify, make_response, request, Response
 from flask_babelex import get_locale as get_current_locale
 from flask_babelex import gettext as _
@@ -301,9 +302,7 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
             raise RecordsNotFoundRESTError()
 
         except Exception:
-            import traceback
-            print(traceback.format_exc())
-
+            current_app.logger.error(traceback.print_exc())
             raise InternalServerError()
 
     def _convert_metadata(self, metadata, language):
@@ -482,6 +481,7 @@ class WekoRecordsStats(ContentNegotiatedMethodView):
             raise RecordsNotFoundRESTError()
 
         except Exception:
+            current_app.logger.error(traceback.print_exc())
             raise InternalServerError()
 
 
@@ -575,6 +575,7 @@ class WekoFilesStats(ContentNegotiatedMethodView):
             raise RecordsNotFoundRESTError()
 
         except Exception:
+            current_app.logger.error(traceback.print_exc())
             raise InternalServerError()
 
 
@@ -673,4 +674,5 @@ class WekoFilesGet(ContentNegotiatedMethodView):
             raise RecordsNotFoundRESTError()
 
         except Exception:
+            current_app.logger.error(traceback.print_exc())
             raise InternalServerError()

@@ -23,6 +23,7 @@
 import inspect
 import json
 import os
+import traceback
 from functools import wraps
 from datetime import datetime, timezone, timedelta
 
@@ -582,6 +583,7 @@ class GetIndex(ContentNegotiatedMethodView):
             raise InternalServerError()
 
         except Exception:
+            current_app.logger.error(traceback.print_exc())
             raise InternalServerError()
 
 
@@ -698,4 +700,5 @@ class GetParentIndex(ContentNegotiatedMethodView):
             raise InternalServerError()
 
         except Exception:
+            current_app.logger.error(traceback.print_exc())
             raise InternalServerError()
