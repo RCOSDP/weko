@@ -638,8 +638,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         file_url = files[file_order]['url']['url']
 
     restricted_errorMsg = ''
-    restricted_access = get_restricted_access()
-    restricted_errorMsg = restricted_access['error_msg']['content'].get(current_lang, None)['content']
+    restricted_access = get_restricted_access('error_msg')
+    restricted_errorMsg = restricted_access['content'].get(current_lang, None)['content']
 
 
     return render_template(

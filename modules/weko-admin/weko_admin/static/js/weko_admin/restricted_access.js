@@ -421,8 +421,7 @@ function ErrorMsgDetail({errorMsg, setErrorMsg}) {
   return (
     <div>
       <div className="form-group row margin-top">
-        <label className="col-sm-2 col-form-label"
-               style={{textAlign: 'right'}}>{LABEL_JAPANESE}</label>
+        <label className="col-sm-2 col-form-label text-right">{LABEL_JAPANESE}</label>
         <div className="col-sm-9">
           <textarea className="form-control textarea"
                     name="content"
@@ -432,8 +431,7 @@ function ErrorMsgDetail({errorMsg, setErrorMsg}) {
       </div>
       <div className="form-group row margin-top">
         <label htmlFor="staticEmail"
-               className="col-sm-2 col-form-label"
-               style={{textAlign: 'right'}}>{LABEL_ENGLISH}</label>
+               className="col-sm-2 col-form-label text-right">{LABEL_ENGLISH}</label>
         <div className="col-sm-9">
           <textarea className="form-control textarea"
                     name="content"
