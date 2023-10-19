@@ -715,9 +715,11 @@ def admin_settings(db):
     settings.append(AdminSettings(id=3,name='site_license_mail_settings',settings={"auto_send_flag": False}))
     settings.append(AdminSettings(id=4,name='default_properties_settings',settings={"show_flag": True}))
     settings.append(AdminSettings(id=5,name='item_export_settings',settings={"allow_item_exporting": True, "enable_contents_exporting": True}))
-    settings.append(AdminSettings(id=6,name="restricted_access",settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": []}))
+    settings.append(AdminSettings(id=6,name="restricted_access",settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": [], "error_msg":{"key" : "","content" : {"ja" : {"content" : "このデータは利用できません（権限がないため）。"},"en":{"content" : "This data is not available for this user"}}}}))
     settings.append(AdminSettings(id=7,name="display_stats_settings",settings={"display_stats":False}))
     settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
+    settings.append(AdminSettings(id=9,name='restricted_access_not_exist_errormsg', settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": []}))
+    settings.append(AdminSettings(id=10,name='error_msg',settings={"key" : "","content" : {"ja" : {"content" : "このデータは利用できません（権限がないため）。"},"en":{"content" : "This data is not available for this user"}}}))
     db.session.add_all(settings)
     db.session.commit()
     return settings
