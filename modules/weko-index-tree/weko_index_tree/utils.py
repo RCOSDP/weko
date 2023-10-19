@@ -669,6 +669,20 @@ def check_has_any_item_in_index_is_locked(index_id):
             return True
     return False
 
+def check_has_any_harvest_settings_in_index_is_locked(index_id):
+    """Check if any harvest settings in the index is locked.
+
+    @param index_id:
+    @return:
+    """
+    from invenio_oaiharvester.models import HarvestSettings
+
+    res = HarvestSettings.query.all()
+    indexes = [str(s.index_id) for s in res]
+    if str(index_id) in indexes:
+        return True
+    return False
+
 
 def check_index_permissions(record=None, index_id=None, index_path_list=None,
                             is_check_doi=False) -> bool:
@@ -905,6 +919,9 @@ def validate_before_delete_index(index_id):
             errors.append(_('This index cannot be deleted because '
                             'the item belonging to this index is '
                             'being edited by the import function.'))
+        elif check_has_any_harvest_settings_in_index_is_locked(index_id):
+            errors.append(_('The index cannot be deleted becase '
+                            'the index in harvester settings.'))
 
     return is_unlock, errors, locked_key
 
