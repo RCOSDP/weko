@@ -80,7 +80,7 @@ ADD ./login.php /usr/share/nginx/html/secure/login.php
 ADD ./shib_clear_headers /etc/nginx/shib_clear_headers
 ADD ./shib_fastcgi_params /etc/nginx/shib_fastcgi_params
 
-RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get update && apt-get install -y nodejs
 ADD ./ams/weko-frontend /usr/local/weko-frontend
 WORKDIR /usr/local/weko-frontend
