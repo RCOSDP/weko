@@ -23,9 +23,7 @@
   <!-- Preview Carousel -->
   {% set list_preview_carousel = [] %}
   {%- for file in files -%}
-    {%- if approval_preview %}
-      <div style="display: none;">{{ list_preview_carousel.append( file ) }}</div>
-    {%- elif 'preview' == file.displaytype -%}
+    {%- if approval_preview or 'preview' == file.displaytype %}
       <div style="display: none;">{{ list_preview_carousel.append( file ) }}</div>
     {% endif %}
   {%- endfor -%}

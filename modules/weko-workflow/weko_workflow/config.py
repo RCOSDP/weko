@@ -362,4 +362,4 @@ WEKO_WORKFLOW_ITEM_REGISTRANT_ID = -2
 """Item registrant id."""
 
 WEKO_WORKFLOW_APPROVAL_PREVIEW = True
-"""True or False"""
+"""Setting preview function during approval"""
