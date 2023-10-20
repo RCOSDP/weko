@@ -968,6 +968,11 @@ class WekoDeposit(Deposit):
                     self.indexer.upload_metadata(self.jrc,
                                                  self.pid.object_uuid,
                                                  self.revision_id)
+                    feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(self.id)
+                    if feedback_mail_list:
+                        self.update_feedback_mail()
+                    else:
+                        self.remove_feedback_mail()
                 except TransportError as err:
                     err_passing_config = current_app.config.get(
                         'WEKO_DEPOSIT_ES_PARSING_ERROR_PROCESS_ENABLE')
