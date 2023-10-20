@@ -253,6 +253,13 @@ class ShibUser(object):
             groups = [x.strip() for x in groups.split(';')]
             _roles.extend(groups)
 
+        # Set roles for all login user
+        shib_roles = current_app.config['WEKO_ACCOUNTS_SHIB_ROLE_ALL_USERS']
+        if isinstance(shib_roles, list):
+            _roles.extend(shib_roles)
+        elif isinstance(shib_roles, str):
+            _roles.append(shib_roles)
+
         if _roles:
             ret = self._set_weko_user_role(_roles)
 

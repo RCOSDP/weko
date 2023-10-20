@@ -95,6 +95,9 @@ WEKO_ACCOUNTS_SHIB_ROLE_RELATION = {
 WEKO_ACCOUNTS_GENERAL_ROLE = ''
 """Default role."""
 
+WEKO_ACCOUNTS_SHIB_ROLE_ALL_USERS = ['非会員']
+"""Roles given to all login users."""
+
 WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED = True
 """Shibboleth login pattern."""
 
