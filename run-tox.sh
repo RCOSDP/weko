@@ -5,6 +5,7 @@
 # Copyright (C) 2017 National Institute of Informatics.
 # :license: BSD, see LICENSE for details.
 
+date --iso-8601="minutes"
 for module_path in modules/*/; do
   if [[ ${module_path} =~ ^modules/(invenio-|weko-).+$ ]] && [[ -d ${module_path}tests ]]; then
     echo "### Running tests for ${module_path%?} ###"
@@ -12,3 +13,4 @@ for module_path in modules/*/; do
     echo
   fi
 done
+date --iso-8601="minutes"

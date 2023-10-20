@@ -2624,6 +2624,7 @@ def unlock_activity(activity_id="0"):
     msg = None
     # get lock activity from cache
     cur_locked_val = str(get_cache_data(cache_key)) or str()
+    cur_locked_val = None
     if cur_locked_val and cur_locked_val == locked_value:
         delete_cache_data(cache_key)
         msg = _('Unlock success')

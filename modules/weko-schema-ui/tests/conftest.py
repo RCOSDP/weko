@@ -219,9 +219,11 @@ def base_app(instance_path):
         SECRET_KEY="SECRET_KEY",
         SERVER_NAME="test_server",
         TESTING=True,
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
-        ),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+        # ),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         CACHE_REDIS_URL="redis://redis:6379/0",
         CACHE_TYPE="redis",
         CACHE_REDIS_DB=0,
