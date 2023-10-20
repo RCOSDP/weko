@@ -1404,6 +1404,12 @@ msgstr "Without tax"
 msgid "price"
 msgstr "Price"
 
+msgid "site_license_member"
+msgstr "Site License Member"
+
+msgid "open_access"
+msgstr "Open Access"
+
 msgid "charge_confirmation"
 msgstr "will be charged. Do you really want to purchase?"
 

@@ -85,7 +85,7 @@ def file_permission_factory(record, *args, **kwargs):
     return type('FileDownLoadPermissionChecker', (), {'can': can})()
 
 
-def check_file_download_permission(record, fjson, is_display_file_info=False, check_billing_file=False):
+def check_file_download_permission(record, fjson, is_display_file_info=False, check_billing_file=False, download_status={}):
     """Check file download."""
     def site_license_check():
         # site license permission check
@@ -130,6 +130,9 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
 
     if fjson:
         is_can = True
+        download_status["is_sitelicense_member"] = False
+        download_status["is_open_access"] = False
+        download_status["charge_status"] = None
         acsrole = fjson.get('accessrole', '')
         # Get email of login user.
         is_has_email = hasattr(current_user, "email")
@@ -169,6 +172,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
                             is_can = True if dt.utcnow() >= pdt else False
                         else:
                             is_can = True
+                    download_status["is_open_access"] = is_can
             # access with open date
             elif 'open_date' in acsrole:
                 if is_display_file_info:
@@ -181,6 +185,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
                             adt = date[0].get('dateValue')
                             pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
                             is_can = True if dt.utcnow() >= pdt else False
+                            download_status["is_open_access"] = is_can
                     except BaseException:
                         is_can = False
 
@@ -192,11 +197,12 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
                         filename = fjson.get('filename')
                         if filename is not None:
                             # 課金ファイルのアクセス権限がある場合、日付にかかわらずアクセス可能とする
-                            is_can = check_billing_file_permission(item_id, filename)
+                            is_can = check_billing_file_permission(item_id, filename, download_status=download_status)
 
                     if not is_can:
                         # site license permission check
                         is_can = site_license_check()
+                        download_status["is_sitelicense_member"] = is_can
 
             # access with login user
             elif 'open_login' in acsrole:
@@ -240,6 +246,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
                         if not is_can:
                             # site license permission check
                             is_can = site_license_check()
+                            download_status["is_sitelicense_member"] = is_can
 
             #  can not access
             elif 'open_no' in acsrole:
@@ -522,7 +529,7 @@ def __get_file_permission(record_id, file_name):
     return list_permission
 
 
-def check_billing_file_permission(item_id, file_name):
+def check_billing_file_permission(item_id, file_name, download_status={}):
     '''課金ファイルのアクセス権限チェック
 
     Args:
@@ -540,6 +547,7 @@ def check_billing_file_permission(item_id, file_name):
 
     # 課金済みチェック
     charge_result = check_charge(current_user.id, item_id, file_name)
+    download_status["charge_status"] = charge_result
     if charge_result == 'already':
         # 課金済みの場合はアクセス権限あり
         return True

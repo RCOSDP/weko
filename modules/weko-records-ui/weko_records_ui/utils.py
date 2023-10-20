@@ -712,7 +712,9 @@ def get_file_info_list(record):
         '''ファイル情報に課金ファイルに関する情報を追加する'''
 
         # 課金ファイルのアクセス権限
-        p_file['billing_file_permission'] = check_file_download_permission(record, p_file, check_billing_file=True)
+        download_status = {}
+        p_file['billing_file_permission'] = check_file_download_permission(record, p_file, check_billing_file=True, download_status=download_status)
+        p_file['download_status'] = download_status
         if not p_file['billing_file_permission']:
             # 課金額
             p_file['file_price'], p_file['currency_unit'] = get_file_price(record['_deposit']['id'])

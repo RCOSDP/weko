@@ -1271,6 +1271,12 @@ msgstr ""
 msgid "price"
 msgstr ""
 
+msgid "site_license_member"
+msgstr ""
+
+msgid "open_access"
+msgstr ""
+
 msgid "charge_confirmation"
 msgstr ""
 

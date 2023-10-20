@@ -668,6 +668,12 @@ msgstr "税抜"
 msgid "price"
 msgstr "価格"
 
+msgid "site_license_member"
+msgstr "サイトライセンス会員"
+
+msgid "open_access"
+msgstr "オープンアクセス"
+
 msgid "charge_confirmation"
 msgstr "かかります。 購入しますか？"
 

@@ -348,20 +348,32 @@
                     {%- if 'billing' in file and 'priceinfo' in file -%}
                       <tr>
                         <td colspan="3">
-                          {%- for priceinfo in file.priceinfo -%}
-                            {%- if priceinfo.has_role and file.billing_file_permission -%}
-                              {%- set price = 0 -%}
-                            {%- elif 'tax' in priceinfo and priceinfo.tax == 'include_tax' -%}
-                              {%- set price = priceinfo.price|int -%}
-                            {%- else -%}
-                              {%- set price = priceinfo.price|int + ((priceinfo.price|int) * billing_settings['tax_rate'])|int -%}
-                            {%- endif -%}
+                          {%- if file.download_status.is_sitelicense_member -%}
+                            <!-- Site License Member -->
+                            {%- set price = 0 -%}
+                            <span class="price-bold">{{_('site_license_member')}}：{{billing_settings['currency_unit']|safe}}{{price}}</span>
+                          {%- elif file.download_status.is_open_access -%}
+                            <!-- Open access -->
+                            {%- set price = 0 -%}
+                            <span class="price-bold">{{_('open_access')}}</span>
+                          {%- else -%}
+                            {%- for priceinfo in file.priceinfo -%}
+                              {%- if priceinfo.has_role and file.billing_file_permission -%}
+                                {%- set price = 0 -%}
+                              {%- elif 'tax' in priceinfo and priceinfo.tax == 'include_tax' -%}
+                                {%- set price = priceinfo.price|int -%}
+                              {%- else -%}
+                                {%- set price = priceinfo.price|int + ((priceinfo.price|int) * billing_settings['tax_rate'])|int -%}
+                              {%- endif -%}
 
-                            {%- if loop.index != 1 -%}
-                              {{', '}}
-                            {%- endif -%}
-                            {{priceinfo.billingrole}}：{{billing_settings['currency_unit']|safe}}{{price}}
-                          {%- endfor -%}
+                              {%- if loop.index != 1 -%}
+                                {{', '}}
+                              {%- endif -%}
+                              <span class="price-default">
+                                {{priceinfo.billingrole}}：{{billing_settings['currency_unit']|safe}}{{price}}
+                              </span>
+                            {%- endfor -%}
+                          {%- endif -%}
                         </td>
                       </tr>
                     {%- endif -%}
