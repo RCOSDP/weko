@@ -1,6 +1,5 @@
 import traceback
 
-from flask import current_app
 
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -24,8 +23,7 @@ def get_record_list(dois):
         targets.append(parent_item)
         
         pv=PIDVersioning(child=parent_item)
-        children = PIDVersioning(parent=pv.parent,child=parent_item).get_children(
-            pid_status=PIDStatus.REGISTERED).filter(
+        children = PIDVersioning(parent=pv.parent,child=parent_item).get_children().filter(
                 PIDRelation.relation_type==2).order_by(
                     PIDRelation.index.desc()).all()
                 
@@ -56,10 +54,15 @@ def get_exist_idt_field(record_list):
     return delete_target
 
 def delete_doi_info(delete_target):
-    deleted_list = list()
+    success = list()
     errors = list()
+    deleted = list()
     for record in delete_target:
         try:
+            if record.status == PIDStatus.DELETED:
+                print("{} is deleted record".format(record.object_uuid))
+                deleted.append(record)
+                continue
             ih = IdentifierHandle(record.object_uuid)
             ih.remove_idt_registration_metadata()
             relations = serialize_relations(record)
@@ -69,21 +72,30 @@ def delete_doi_info(delete_target):
                 relations_ver['is_last'] = relations_ver.get('index') == 0
                 WekoIndexer().update_relation_version_is_last(relations_ver)
             db.session.commit()
-            deleted_list.append(record)
+            success.append(record)
         except:
-            current_app.logger.error(traceback.format_exc())
+            print("raise error on {}".format(record.object_uuid))
+            # print(traceback.format_exc())
             db.session.rollback()
             errors.append(record)
 
-    return deleted_list, errors
+    return success, errors, deleted
 
 if __name__=="__main__":
+    # get deleted DOI
     dois = get_deleted_doi()
     print("deleted dois:{}".format([doi.pid_value for doi in dois]))
+    
+    # get records tied to deleted DOI
     record_list = get_record_list(dois)
-    print("target record list: {}".format([record.pid_value for records in record_list for record in records]))
+    print("target record list: {}".format([str(record.object_uuid) for records in record_list for record in records]))
+    
+    # get record where identifier field exists
     delete_target = get_exist_idt_field(record_list)
-    print("delete target list: {}".format([record.pid_value for record in delete_target]))
-    deleted_list, errors = delete_doi_info(delete_target)
-    print("{} deleted success:{}".format(len(deleted_list), [item.pid_value for item in deleted_list]))
-    print("{} delete failed: {}".format(len(errors), [item.pid_value for item in errors]))
+    print("delete target list: {}".format([str(record.object_uuid) for record in delete_target]))
+    
+    # fix
+    success, errors, deleted = delete_doi_info(delete_target)
+    print("{} delete success:{}".format(len(success), [str(item.object_uuid) for item in success]))
+    print("{} delete failed: {}".format(len(errors), [str(item.object_uuid) for item in errors]))
+    print("{} deleted record: {}".format(len(deleted), [str(item.object_uuid) for item in deleted]))
