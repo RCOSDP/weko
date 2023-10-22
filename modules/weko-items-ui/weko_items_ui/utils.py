@@ -1102,11 +1102,10 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                             str(idx)))
                         key_label.insert(0, '.ファイルパス[{}]'.format(
                             str(idx)))
-                        output_path = ""
+                        file_path = ""
                         if key_data[key_index]:
                             file_path = "recid_{}/{}".format(str(self.cur_recid), key_data[key_index])
-                            output_path = file_path if os.path.exists(os.path.join(export_path,file_path)) else ""
-                        key_data.insert(0,output_path)
+                        key_data.insert(0,file_path)
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
                             and len(item_key_split) == 2:
@@ -3049,11 +3048,10 @@ def make_stats_file_with_permission(item_type_id, recids,
                             str(idx)))
                         key_label.insert(0, '.ファイルパス[{}]'.format(
                             str(idx)))
-                        output_path = ""
+                        file_path = ""
                         if key_data[key_index]:
                             file_path = "recid_{}/{}".format(str(self.cur_recid), key_data[key_index])
-                            output_path = file_path if os.path.exists(os.path.join(export_path,file_path)) else ""
-                        key_data.insert(0,output_path)
+                        key_data.insert(0,file_path)
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
                             and len(item_key_split) == 2:
