@@ -366,6 +366,9 @@ def iframe_success():
             thumbnails_org=record_detail_alt.get('files_thumbnail')
         )
     )
+    
+    form = FlaskForm(request.form)
+    
     return render_template('weko_workflow/item_login_success.html',
                            page=page,
                            render_widgets=render_widgets,
@@ -384,6 +387,7 @@ def iframe_success():
                            files_thumbnail=files_thumbnail,
                            is_enable_item_name_link=is_enable_item_name_link(
                                action_endpoint, item_type_name),
+                           form=form,
                            **ctx)
 
 
@@ -824,21 +828,23 @@ def display_activity(activity_id="0"):
     step_item_login_url = None
     term_and_condition_content = ''
     title = ""
-
+    user_lock_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
     if action_endpoint in ['item_login',
                            'item_login_application',
                            'file_upload']:
         if not activity.get_activity_by_id(activity_id):
             pass
         if activity.get_activity_by_id(activity_id).action_status != ActionStatusPolicy.ACTION_CANCELED:
-            activity_session = dict(
-                activity_id=activity_id,
-                action_id=activity_detail.action_id,
-                action_version=cur_action.action_version,
-                action_status=ActionStatusPolicy.ACTION_DOING,
-                commond=''
-            )
-            session['activity_info'] = activity_session
+            cur_locked_val = str(get_cache_data(user_lock_key)) or str()
+            if not cur_locked_val:
+                activity_session = dict(
+                    activity_id=activity_id,
+                    action_id=activity_detail.action_id,
+                    action_version=cur_action.action_version,
+                    action_status=ActionStatusPolicy.ACTION_DOING,
+                    commond=''
+                )
+                session['activity_info'] = activity_session
         # get item edit page info.
 
         step_item_login_url, need_file, need_billing_file, \
@@ -879,11 +885,14 @@ def display_activity(activity_id="0"):
 
 
     # if 'approval' == action_endpoint:
-    if item:
+    if activity_detail and \
+            activity_detail.item_id and \
+            activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
         try:
+            item_id = str(activity_detail.item_id)
             # get record data for the first time access to editing item screen
-            recid, approval_record = get_pid_and_record(item.id)
-            files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
+            recid, approval_record = get_pid_and_record(item_id)
+            files, files_thumbnail = get_files_and_thumbnail(activity_id, item_id)
 
             links = base_factory(recid)
 
@@ -912,17 +921,19 @@ def display_activity(activity_id="0"):
     if 'item_login' == action_endpoint or \
             'item_login_application' == action_endpoint or \
             'file_upload' == action_endpoint:
-        session['itemlogin_id'] = activity_id
-        session['itemlogin_activity'] = activity_detail
-        session['itemlogin_item'] = item
-        session['itemlogin_steps'] = steps
-        session['itemlogin_action_id'] = action_id
-        session['itemlogin_cur_step'] = cur_step
-        session['itemlogin_record'] = approval_record
-        session['itemlogin_histories'] = histories
-        session['itemlogin_res_check'] = res_check
-        session['itemlogin_pid'] = recid
-        session['itemlogin_community_id'] = community_id
+        cur_locked_val = str(get_cache_data(user_lock_key)) or str()
+        if not cur_locked_val:
+            session['itemlogin_id'] = activity_id
+            session['itemlogin_activity'] = activity_detail
+            session['itemlogin_item'] = item
+            session['itemlogin_steps'] = steps
+            session['itemlogin_action_id'] = action_id
+            session['itemlogin_cur_step'] = cur_step
+            session['itemlogin_record'] = approval_record
+            session['itemlogin_histories'] = histories
+            session['itemlogin_res_check'] = res_check
+            session['itemlogin_pid'] = recid
+            session['itemlogin_community_id'] = community_id
 
     user_id = current_user.id
     user_profile = {}
@@ -948,21 +959,22 @@ def display_activity(activity_id="0"):
         ctx['item_link'] = item_link
 
     # Get item link info.
-    record_detail_alt = get_main_record_detail(
-        activity_id, activity_detail, action_endpoint, item,
-        approval_record, files, files_thumbnail)
-    if not record_detail_alt:
-        current_app.logger.error("display_activity: bad value for record_detail_alt")
-        return render_template("weko_theme/error.html",
-                    error="can not get data required for rendering")
+    if activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
+        record_detail_alt = get_main_record_detail(
+            activity_id, activity_detail, action_endpoint, item,
+            approval_record, files, files_thumbnail)
+        if not record_detail_alt:
+            current_app.logger.error("display_activity: bad value for record_detail_alt")
+            return render_template("weko_theme/error.html",
+                        error="can not get data required for rendering")
 
-    ctx.update(
-        dict(
-            record_org=record_detail_alt.get('record'),
-            files_org=record_detail_alt.get('files'),
-            thumbnails_org=record_detail_alt.get('files_thumbnail')
+        ctx.update(
+            dict(
+                record_org=record_detail_alt.get('record'),
+                files_org=record_detail_alt.get('files'),
+                thumbnails_org=record_detail_alt.get('files_thumbnail')
+            )
         )
-    )
 
     # Get email approval key
     approval_email_key = get_approval_keys()
@@ -1478,11 +1490,10 @@ def next_action(activity_id='0', action_id=0):
 
         item_link = ItemLink(current_pid.pid_value)
         relation_data = post_json.get('link_data')
-        if relation_data:
-            err = item_link.update(relation_data)
-            if err:
-                res = ResponseMessageSchema().load({"code":-1, "msg":_(err)})
-                return jsonify(res.data), 500
+        err = item_link.update(relation_data)
+        if err:
+            res = ResponseMessageSchema().load({"code":-1, "msg":_(err)})
+            return jsonify(res.data), 500
         if post_json.get('temporary_save') == 1:
             work_activity.upt_activity_action_comment(
                 activity_id=activity_id,
@@ -2058,7 +2069,22 @@ def cancel_action(activity_id='0', action_id=0):
                             parent_pid.object_type
                         cancel_pv.parent.object_uuid = \
                             parent_pid.object_uuid
+
+                pids = PersistentIdentifier.query.filter_by(
+                    object_uuid=cancel_item_id)
+                for p in pids:
+                    if not p.pid_value.endswith('.0'):
+                        p.status = PIDStatus.DELETED
             db.session.commit()
+            # update item link info
+            if cancel_record:
+                if cancel_record.pid.pid_value.endswith('.0'):
+                    weko_record = WekoRecord.get_record_by_pid(cancel_record.pid.pid_value)
+                    if weko_record:
+                        weko_record.update_item_link(cancel_record.pid.pid_value.split('.')[0])
+                else:
+                    item_link = ItemLink(cancel_record.pid.pid_value)
+                    item_link.update([])
         except Exception:
             db.session.rollback()
             current_app.logger.error(
@@ -2320,6 +2346,100 @@ def get_feedback_maillist(activity_id='0'):
     res = ResponseMessageSchema().load({'code':-1,'msg':_('Error')})
     return jsonify(res.data), 400
 
+@workflow_blueprint.route('/activity/user_lock/<string:activity_id>', methods=["POST"])
+@login_required
+def user_lock_activity(activity_id="0"):
+    """アクティビティの操作者を確認し、そのユーザーが他にアクティビティを開いている場合ロックする
+    
+    Args:
+        activity_id (str, optional): 対象アクティビティID.パスパラメータから取得. Defaults to '0'.
+        
+    Result:
+        object: アクティビティの状態を示すjson data
+    
+    ---
+    post:
+        description: "user lock activity"
+        security:
+            - login_required: []
+        parameters:
+            - in: path
+                name: activity_id
+                description: 対象のアクティビティID
+                schema:
+                    type: string
+        responses:
+            200:
+                description: "success or locked"
+                content:
+                    application/json:
+                        example:
+                            {"code":200, "msg":"Success", "err": "","locked_by_email": "example@example.org"}
+    """
+    validate_csrf_header(request)
+    cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
+    timeout = current_app.permanent_session_lifetime.seconds
+    
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    
+    err = ""
+    if cur_locked_val:
+        err = _("Opened")
+    else:
+        update_cache_data(
+            cache_key,
+            activity_id,
+            timeout
+        )
+    locked_by_email, locked_by_username = get_account_info(str(current_user.get_id()))
+    res = {"code":200,"msg": "" if err else _("Success"),"err": err or "", "locked_by_username":locked_by_username}
+    return jsonify(res), 200
+
+@workflow_blueprint.route('/activity/user_unlock/<string:activity_id>', methods=["POST"])
+@login_required
+def user_unlock_activity(activity_id="0"):
+    """キャッシュデータを削除することによりロックを解除する
+    そのアクティビティがユーザーロックを受けていない場合のみ解除
+    Args:
+        activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得.. Defaults to "0".
+
+    Returns:
+        object: ロック解除が出来たかを示すResponse
+    
+    ---
+    post:
+        description: "user unlock activity"
+        security:
+            - login_required: []
+        requestBody:
+            required: false
+            content:
+                text/plain:
+                    example: '{"is_opened": true}'
+        parameters:
+            - in: path
+              name: activity_id
+              description: 対象のアクティビティID
+              schema:
+                type: string
+        responses:
+            200:
+                description: "success"
+                content:
+                    application/json:
+                        schema:
+                            ResponseMessageSchema
+                        example: {"code":200,"msg":"Unlock success"}
+    """
+    cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    data = json.loads(request.data.decode("utf-8"))
+    msg = None
+    if cur_locked_val and not data["is_opened"]:
+        delete_cache_data(cache_key)
+        msg = "User Unlock Success"
+    res = {"code":200, "msg":msg or _("Not unlock")}
+    return jsonify(res), 200
 
 @workflow_blueprint.route('/activity/lock/<string:activity_id>', methods=['POST'])
 @login_required
@@ -2570,11 +2690,20 @@ def check_approval(activity_id='0'):
                  methods=['POST'])
 @login_required
 def send_mail(activity_id='0', mail_template=''):
-    """Send mail.
+    """
+    Sends an email for the specified activity using the given mail template.
 
-    :param activity_id:
-    :param mail_template:
-    :return:
+    This route is accessed via a POST request and requires the user to be logged in.
+
+    Args:
+        activity_id (str): The ID of the activity.
+        mail_template (str): The name of the mail template.
+
+    Returns:
+        Response: JSON response indicating the success or failure of sending the mail.
+
+    Raises:
+        None
     """
     try:
         work_activity = WorkActivity()
@@ -2645,9 +2774,15 @@ def save_activity():
 @workflow_blueprint.route('/usage-report', methods=['GET'])
 def usage_report():
     """
-    Get usage reports.
+    Retrieves and returns the usage reports for the 'usage-report' route.
 
-    @return:
+    This route is accessed via a GET request.
+
+    Returns:
+        Response: JSON response containing the usage reports.
+
+    Raises:
+        None
     """
     getargs = request.args
     item_type_usage_report = current_app.config.get(
@@ -2675,7 +2810,17 @@ def usage_report():
 @workflow_blueprint.route('/get-data-init', methods=['GET'])
 @login_required
 def get_data_init():
-    """Init data."""
+    """
+    Retrieves and returns initial data for the 'get-data-init' route.
+
+    This route is accessed via a GET request and requires the user to be logged in.
+
+    Returns:
+        Response: JSON response containing the initial data.
+
+    Raises:
+        None
+    """
     from weko_records_ui.utils import get_roles, get_terms, get_workflows
     init_workflows = get_workflows()
     init_roles = get_roles()
@@ -3103,6 +3248,18 @@ depositactivity_blueprint.add_url_rule(
 @workflow_blueprint.teardown_request
 @depositactivity_blueprint.teardown_request
 def dbsession_clean(exception):
+    """
+    Cleans up the database session after each request.
+
+    Args:
+        exception (Exception): The exception that occurred during the request.
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
     current_app.logger.debug("weko_workflow dbsession_clean: {}".format(exception))
     if exception is None:
         try:

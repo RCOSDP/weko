@@ -844,46 +844,62 @@ def item_path_search_factory(self, search, index_id=None):
             "query": {
                 "bool": {"must": [{"match": {"relation_version_is_last": "true"}}]}
             },
-            "aggs": {
-                "path": {
-                    "terms": {
-                        "field": "path",
-                        "include": "@idxchild",
-                        "size": "@count",
-                    },
-                    "aggs": {
-                        "date_range": {
-                            "filter": {"match": {"publish_status": PublishStatus.PUBLIC.value}},
-                            "aggs": {
-                                "available": {
-                                    "range": {
-                                        "field": "publish_date",
-                                        "ranges": [
-                                            {"from": "now+1d/d"},
-                                            {"to": "now+1d/d"},
-                                        ],
-                                    },
-                                }
-                            },
-                        },
-                        "no_available": {
-                            "filter": {
-                                "bool": {
-                                    "must_not": [{"match": {"publish_status": PublishStatus.PUBLIC.value}}]
-                                }
-                            }
-                        },
-                    },
-                }
+            "aggs": {},
+            "post_filter":{}
+        }
+
+        aggs_template = {
+            "terms": {
+                "field": "path",
+                "include": "@idxchild",
+                "size": "@count",
             },
-            "post_filter": {},
+            "aggs": {
+                "date_range": {
+                    "filter": {"match": {"publish_status": PublishStatus.PUBLIC.value}},
+                    "aggs": {
+                        "available": {
+                            "range": {
+                                "field": "publish_date",
+                                "ranges": [
+                                    {"from": "now+1d/d"},
+                                    {"to": "now+1d/d"},
+                                ],
+                            },
+                        }
+                    },
+                },
+                "no_available": {
+                    "filter": {
+                        "bool": {
+                            "must_not": [{"match": {"publish_status": PublishStatus.PUBLIC.value}}]
+                        }
+                    }
+                },
+            },
         }
 
         q = request.values.get("q") or "0" if index_id is None else index_id
+        activity_id = request.values.get("item_link")
+
+        pid_value = None
+        if activity_id:
+            from weko_workflow.api import WorkActivity
+            from invenio_pidstore.models import PersistentIdentifier
+            from weko_deposit.pidstore import get_record_without_version
+
+            activity = WorkActivity().get_activity_detail(activity_id)
+            current_pid = PersistentIdentifier.get_by_object(
+                pid_type='recid',
+                object_type='rec',
+                object_uuid=activity.item_id)
+            pid_without_ver = get_record_without_version(current_pid)
+            pid_value = pid_without_ver.pid_value
+            query_q["query"]["bool"]["must_not"] = [{"match": {"control_number": pid_value}}]
 
         if q != "0":
             # add item type aggs
-            query_q["aggs"]["path"]["aggs"].update(get_item_type_aggs(search._index[0]))
+            aggs_template["aggs"].update(get_item_type_aggs(search._index[0]))
 
             if q:
                 mut, is_perm_paths = get_permission_filter(q)
@@ -905,7 +921,6 @@ def item_path_search_factory(self, search, index_id=None):
             if q:
                 try:
                     child_idx = Indexes.get_child_list_recursive(q)
-                    child_idx_str = "|".join(child_idx)
                     max_clause_count = current_app.config.get(
                         "OAISERVER_ES_MAX_CLAUSE_COUNT", 1024
                     )
@@ -938,15 +953,25 @@ def item_path_search_factory(self, search, index_id=None):
                                 ]
                             }
                         })
-
-                    query_q = json.dumps(query_q).replace("@idxchild", child_idx_str)
-                    query_q = json.loads(query_q)
+                    delta = 1000
+                    if len(child_idx)<=delta:
+                        aggs = json.dumps(aggs_template).replace("@idxchild","|".join(child_idx))
+                        query_q["aggs"]["path"] = json.loads(aggs)
+                    else:
+                        for i in range(len(child_idx)//delta+1):
+                            to = i*delta+delta
+                            if len(child_idx) < to:
+                                to = len(child_idx)
+                            child_list = child_idx[i*delta:to]
+                            aggs = json.dumps(aggs_template).replace("@idxchild","|".join(child_list))
+                            query_q["aggs"]["path_{}".format(i)] = json.loads(aggs)
                 except BaseException as ex:
                     current_app.logger.error(ex)
                     import traceback
 
                     traceback.print_exc(file=sys.stdout)
-
+            else:
+                query_q["aggs"]["path"] = aggs_template
             count = str(Indexes.get_index_count())
             query_q = json.dumps(query_q).replace("@count", count)
             query_q = json.loads(query_q)

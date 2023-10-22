@@ -78,6 +78,7 @@ from invenio_pidstore import InvenioPIDStore
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from invenio_records import InvenioRecords
 from invenio_records_rest import InvenioRecordsREST
+from weko_redis.redis import RedisConnection
 from invenio_rest import InvenioREST
 from invenio_search import InvenioSearch, RecordsSearch, current_search, current_search_client
 from invenio_stats import InvenioStats
@@ -365,6 +366,15 @@ def esindex(app,db_records):
         search.client.indices.delete(index=app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
         
 
+@pytest.fixture()
+def redis_connect(app):
+    redis_connection = RedisConnection().connection(db=app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    return redis_connection
+
+@pytest.fixture()
+def without_remove_session(app):
+    with patch("weko_items_ui.views.db.session.remove") as mock_remove:
+        yield
 
 @pytest.fixture()
 def users(app, db):
@@ -954,7 +964,7 @@ def db_workflow(app, db, db_itemtype, users):
         db.session.add(flow_action3)
         db.session.add(workflow)
         db.session.add(activity)
-
+    db.session.commit()
     return {
         "flow_define": flow_define,
         "workflow": workflow,
@@ -1008,7 +1018,7 @@ def db_activity(db, db_records, db_itemtype, db_workflow, users):
     with db.session.begin_nested():
         db.session.add(activity)
         db.session.add(rel)
-
+    db.session.commit()
     return {"activity": activity, "recid": recid}
 
 

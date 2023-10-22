@@ -2324,8 +2324,7 @@ class WekoRecord(Record):
                          sele_id=item.reference_type)
             relation_data.append(_item)
 
-        if relation_data:
-            item_link.update(relation_data)
+        item_link.update(relation_data)
 
     def get_file_data(self):
         """Get file data."""

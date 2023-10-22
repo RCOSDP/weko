@@ -1002,7 +1002,7 @@ def get_editing_items_in_index(index_id, recursively=False):
 
     return result
 
-def save_index_trees_to_redis(tree):
+def save_index_trees_to_redis(tree, lang=None):
     """save inde_tree to redis for roles
     
     """
@@ -1012,11 +1012,22 @@ def save_index_trees_to_redis(tree):
         else:
             return str(o)
     redis = __get_redis_store()
+    if lang is None:
+        lang = current_i18n.language
     try:
         v = bytes(json.dumps(tree, default=default), encoding='utf-8')
-        redis.put("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language,v)
+        
+        redis.put("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + lang,v)
     except ConnectionError:
         current_app.logger.error("Fail save index_tree to redis")
+
+def delete_index_trees_from_redis(lang):
+    """delete index_tree from redis
+    """
+    redis = __get_redis_store()
+    key = "index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + lang
+    if redis.redis.exists(key):
+        redis.delete(key)
 
 def str_to_datetime(str_dt, format):
     try:

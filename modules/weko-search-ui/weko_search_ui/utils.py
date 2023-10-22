@@ -1756,13 +1756,14 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
             current_app.logger.warning("Specified IndexID is invalid!")
 
         msg_not_exist = _("The specified {} does not exist in system.")
-        if index_info and len(index_info) == 1:     # index exists by index id
-            if index_name_path and index_name_path not in [
-                index_info[0].name.replace(
-                    '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']),
-                index_info[0].name_en.replace(
-                    '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']),
-            ]:
+        if index_info and len(index_info) == 1:
+            check_list = []
+            check_list.append(index_info[0].name_en.replace(
+                '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
+            if index_info[0].name:
+                check_list.append(index_info[0].name.replace(
+                    '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']))
+            if index_name_path and index_name_path not in check_list:
                 warnings.append(
                     _("Specified {} does not match with existing index.").format(
                         "POS_INDEX"
@@ -1777,9 +1778,10 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
             if index_infos:      # index exists by index name
                 for info in index_infos:
                     index_info = None
-                    if index_name_path == \
-                            info.name.replace(
-                                '-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT']):
+                    if (index_name_path == \
+                        info.name_en.replace('-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT'])) or \
+                        (info.name and index_name_path == \
+                         info.name.replace('-/-', current_app.config['WEKO_ITEMS_UI_INDEX_PATH_SPLIT'])):
                         index_info = info
                     
                     if not index_info:      # index does not exist by index path
@@ -1792,6 +1794,8 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
                             errors.append(msg_not_exist.format("IndexID"))
                         else:
                             temp_res.append(index_info.cid)
+                if temp_res:
+                    errors.clear()
             else:      # index does not exist by index name
                 if index_id:
                     errors.append(msg_not_exist.format("IndexID, POS_INDEX"))
@@ -3969,3 +3973,15 @@ def handle_check_filename_consistence(file_paths, meta_filenames):
             errors.append(msg.format("file_path[{}]".format(idx), meta_filename["id"]))
 
     return errors
+
+def combine_aggs(data, target="path"):
+    aggregations = data.get("aggregations")
+    if aggregations:
+        keys = list(aggregations.keys())
+        new_agg = {"doc_count_error_upper_bound": "0","sum_order_doc_count":"0","buckets":[]}
+        for key in keys:
+            if target in key:
+                bucket = aggregations.pop(key)["buckets"]
+                new_agg["buckets"].extend(bucket)
+        data["aggregations"][target] = new_agg
+    return data

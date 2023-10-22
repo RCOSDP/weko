@@ -420,7 +420,8 @@ class ReportView(BaseView):
                         'aggs_public']['doc_count']
                 }
                 result['private'] = result['total'] - result['open']
-
+            
+            
             current_schedule = AdminSettings.get(
                 name='report_email_schedule_settings',
                 dict_to_object=False)

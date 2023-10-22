@@ -109,6 +109,9 @@ function createRow(id, count, start_time, end_time, status, counter, errmsg, req
 }
 
 function processLogs() {
+  setTimeout(() => {
+    document.location.reload();
+  }, 5000);
   let logs_url = window.location.href.replace('details', 'get_logs')
   $.getJSON(logs_url, function(data) {
     for (i = 0; i < data.length; ++i) { 

@@ -32,6 +32,8 @@ from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_db import db
 
+from weko_admin.models import AdminLangSettings
+
 from .api import Indexes
 from .errors import IndexAddedRESTError, IndexNotFoundRESTError, \
     IndexUpdatedRESTError, InvalidDataRESTError
@@ -243,8 +245,17 @@ class IndexActionResource(ContentNegotiatedMethodView):
             status = 201
             msg = 'Index created successfully.'
 
-            tree = self.record_class.get_index_tree()
-            save_index_trees_to_redis(tree)
+            langs = AdminLangSettings.get_registered_language()
+            if "ja" in [lang["lang_code"] for lang in langs]:
+                tree_ja = self.record_class.get_index_tree(lang="ja")
+            tree = self.record_class.get_index_tree(lang="other_lang")
+            for lang in langs:
+                lang_code = lang["lang_code"]
+                if lang_code == "ja":
+                    save_index_trees_to_redis(tree_ja, lang=lang_code)
+                else:
+                    save_index_trees_to_redis(tree, lang=lang_code)
+                
         return make_response(
             jsonify({'status': status, 'message': msg, 'errors': errors}),
             status)
@@ -267,7 +278,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
             if not data.get('public_state'):
                 errors.append(_('The index cannot be kept private because '
                                 'there are links from items that have a DOI.'))
-            elif not data.get('harvest_public_state'):
+            else: # not data.get('harvest_public_state'):
                 errors.append(_('Index harvests cannot be kept private because'
                                 ' there are links from items that have a DOI.'
                                 ))
@@ -291,8 +302,16 @@ class IndexActionResource(ContentNegotiatedMethodView):
 
             #roles = get_account_role()
             #for role in roles:
-            tree = self.record_class.get_index_tree()
-            save_index_trees_to_redis(tree)
+            langs = AdminLangSettings.get_registered_language()
+            if "ja" in [lang["lang_code"] for lang in langs]:
+                tree_ja = self.record_class.get_index_tree(lang="ja")
+            tree = self.record_class.get_index_tree(lang="other_lang")
+            for lang in langs:
+                lang_code = lang["lang_code"]
+                if lang_code == "ja":
+                    save_index_trees_to_redis(tree_ja, lang=lang_code)
+                else:
+                    save_index_trees_to_redis(tree, lang=lang_code)
 
         return make_response(jsonify(
             {'status': status, 'message': msg, 'errors': errors,
@@ -307,8 +326,16 @@ class IndexActionResource(ContentNegotiatedMethodView):
         action = request.values.get('action', 'all')
         msg, errors = perform_delete_index(index_id, self.record_class, action)
 
-        tree = self.record_class.get_index_tree()
-        save_index_trees_to_redis(tree)
+        langs = AdminLangSettings.get_registered_language()
+        if "ja" in [lang["lang_code"] for lang in langs]:
+            tree_ja = self.record_class.get_index_tree(lang="ja")
+        tree = self.record_class.get_index_tree(lang="other_lang")
+        for lang in langs:
+            lang_code = lang["lang_code"]
+            if lang_code == "ja":
+                save_index_trees_to_redis(tree_ja, lang=lang_code)
+            else:
+                save_index_trees_to_redis(tree, lang=lang_code)
 
         return make_response(jsonify(
             {'status': 200, 'message': msg, 'errors': errors}), 200)
@@ -425,8 +452,15 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
         else:
             status = 201
             msg = _('Index moved successfully.')
-
-            tree = self.record_class.get_index_tree()
-            save_index_trees_to_redis(tree)
+            langs = AdminLangSettings.get_registered_language()
+            if "ja" in [lang["lang_code"] for lang in langs]:
+                tree_ja = self.record_class.get_index_tree(lang="ja")
+            tree = self.record_class.get_index_tree(lang="other_lang")
+            for lang in langs:
+                lang_code = lang["lang_code"]
+                if lang_code == "ja":
+                    save_index_trees_to_redis(tree_ja, lang=lang_code)
+                else:
+                    save_index_trees_to_redis(tree, lang=lang_code)
         return make_response(
             jsonify({'status': status, 'message': msg}), status)

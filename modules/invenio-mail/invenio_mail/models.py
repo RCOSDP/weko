@@ -34,6 +34,7 @@ class MailConfig(db.Model):
     mail_use_ssl = db.Column(db.Boolean(name='use_ssl'), default=False)
     mail_username = db.Column(db.String(255), default='')
     mail_password = db.Column(db.String(255), default='')
+    mail_local_hostname = db.Column(db.String(255), default='')
     mail_default_sender = db.Column(db.String(255), default='')
 
     @classmethod
@@ -57,5 +58,6 @@ class MailConfig(db.Model):
         cfg.mail_use_ssl = new_config['mail_use_ssl']
         cfg.mail_username = new_config['mail_username']
         cfg.mail_password = new_config['mail_password']
+        cfg.mail_local_hostname = new_config['mail_local_hostname']
         cfg.mail_default_sender = new_config['mail_default_sender']
         db.session.commit()

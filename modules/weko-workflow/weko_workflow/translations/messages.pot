@@ -392,6 +392,10 @@ msgstr ""
 msgid "This activity is being locked ({})."
 msgstr ""
 
+#: weko_workflow/templates/weko_workflow/lock_activity.html:27
+msgid "Already have another activity open ({})."
+msgstr ""
+
 #: weko_workflow/templates/weko_workflow/lock_activity.html:43
 msgid "Do you want to unlock this activity?"
 msgstr ""

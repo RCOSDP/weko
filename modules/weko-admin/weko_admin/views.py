@@ -39,6 +39,7 @@ from invenio_db import db
 from sqlalchemy.orm import session
 from weko_accounts.utils import roles_required
 from weko_records.models import SiteLicenseInfo
+from weko_index_tree.utils import delete_index_trees_from_redis
 from werkzeug.local import LocalProxy
 
 from .api import send_site_license_mail
@@ -206,6 +207,9 @@ def save_lang_list():
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg='Header Error')
     data = request.get_json()
+    for lang_code in [lang["lang_code"] for lang in data if not lang["is_registered"]]:
+        delete_index_trees_from_redis(lang_code)
+        
     result = update_admin_lang_setting(data)
 
     return jsonify(msg=result)
