@@ -41,7 +41,7 @@ class ShibbolethUser(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     """ShibbolethUser identifier."""
 
-    shib_eppn = db.Column(db.String(128), unique=True, nullable=False)
+    shib_eppn = db.Column(db.String(2310), unique=True, nullable=False)
     """SHIB_ATTR_EPPN"""
 
     weko_uid = db.Column(db.Integer, db.ForeignKey(
