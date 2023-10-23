@@ -29,7 +29,9 @@ from weko_authors.utils import (
     set_record_status,
     flatten_authors_mapping,
     import_author_to_system,
-    get_count_item_link
+    get_count_item_link,
+    get_authors,
+    get_author_by_pk_id,
 )
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -667,3 +669,99 @@ def test_get_count_item_link(app,mocker):
     record_indexer.client.return_data={"hits":{"total":10}}
     result = get_count_item_link(1)
     assert result == 10
+
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_get_authors -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_get_authors(app):
+    search_param = {}
+    class MockClient():
+        def __init__(self, data):
+            self.data = data
+        def search(self, index=None, doc_type=None, body=None):
+            search_param[index] = body
+            return self.data[index]
+
+    data = {
+        'test-authors': {
+            'hits': {
+                'hits': [
+                    {'_source': {'authorIdInfo': [{'authorId': '1'}]}},
+                    {'_source': {'authorIdInfo': []}},
+                ]
+            }
+        },
+        'test-weko': {'hits': {'total': 1}}
+    }
+    record_indexer = RecordIndexer()
+    record_indexer.client=MockClient(data)
+
+    expected = {
+        'hits': {
+            'hits': [
+                {'_source': {'authorIdInfo': [{'authorId': '1'}]}},
+                {'_source': {'authorIdInfo': []}}
+            ]
+        },
+        'item_cnt': {'aggregations': {'item_count': {'buckets': [{'key': '1', 'doc_count': 1}]}}}
+    }
+    expected_search_key = {'multi_match': {'query': 'test', 'type': 'phrase'}}
+    expected_sort_key = {
+        'id': {'pk_id': {'order': 'asc', 'mode': 'min'}},
+        'name': {'authorNameInfo.fullName.raw': {'order': 'asc', 'mode': 'min'}},
+    }
+
+    with patch('weko_authors.utils.RecordIndexer', return_value=record_indexer):
+        # Default parameter
+        res = get_authors()
+        assert res == expected
+        assert len(search_param['test-authors']['query']['bool']['must']) == 2                      # search_key
+        assert search_param['test-authors']['size'] == 25                                           # size
+        assert 'from' not in search_param['test-authors']                                           # page
+        assert 'search_after' not in search_param['test-authors']                                   # cursor
+        assert search_param['test-authors']['sort'] == expected_sort_key['id']                      # sort_key and sort_order
+
+        # Specify parameters
+        res = get_authors(search_key='test', size=10, page=3, cursor='test_cursor', sort_key='authorNameInfo.fullName', sort_order='asc')
+        assert search_param['test-authors']['query']['bool']['must'][2] == expected_search_key      # search_key
+        assert search_param['test-authors']['size'] == 10                                           # size
+        assert search_param['test-authors']['from'] == 20                                           # page
+        assert 'search_after' not in search_param['test-authors']                                   # cursor (prioritize page)
+        assert search_param['test-authors']['sort'] == expected_sort_key['name']                    # sort_key and sort_order
+        assert res == expected
+
+        res = get_authors(cursor='test_cursor')
+        assert search_param['test-authors']['search_after'] == ['test_cursor']                      # cursor
+
+        res = get_authors(sort_key='authorNameInfo.fullName')
+        assert search_param['test-authors']['sort'] == expected_sort_key['id']                      # sort_key and sort_order
+
+        res = get_authors(sort_order='asc')
+        assert search_param['test-authors']['sort'] == expected_sort_key['id']                      # sort_key and sort_order
+
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_get_author_by_pk_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_get_author_by_pk_id(app):
+    search_param = {}
+    class MockClient():
+        def __init__(self, data):
+            self.data = data
+        def search(self, index=None, doc_type=None, body=None):
+            search_param[index] = body
+            return self.data
+
+    data = {
+        'hits': {
+            'hits': [
+                {'_source': {'authorIdInfo': [{'authorId': '1'}]}},
+            ]
+        }
+    }
+    expected_search_param = {'query': {'bool': {'must': [{'match': {'pk_id': 1}}]}}}
+    record_indexer = RecordIndexer()
+    record_indexer.client = MockClient(data)
+
+    with patch('weko_authors.utils.RecordIndexer', return_value=record_indexer):
+        res = get_author_by_pk_id(1)
+        print(search_param)
+        assert res == data
+        assert search_param['test-authors'] == expected_search_param

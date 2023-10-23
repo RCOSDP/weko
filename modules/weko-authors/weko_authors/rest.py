@@ -24,7 +24,9 @@ import inspect
 import json
 import traceback
 
-from flask import Blueprint, current_app, request, Response
+from flask import Blueprint, current_app, request, Response, Flask
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from invenio_db import db
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_rest import ContentNegotiatedMethodView
@@ -32,8 +34,12 @@ from invenio_rest.errors import SameContentException
 from werkzeug.exceptions import BadRequest, InternalServerError
 from werkzeug.http import generate_etag
 
+from .config import WEKO_AUTHORS_REST_LIMIT_RATE_DEFAULT
 from .errors import VersionNotFoundRESTError, AuthorNotFoundRESTError
 from .scopes import authors_read_scope
+
+
+limiter = Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_AUTHORS_REST_LIMIT_RATE_DEFAULT)
 
 
 def create_blueprint(endpoints):
@@ -62,8 +68,8 @@ def create_blueprint(endpoints):
 
     for endpoint, options in (endpoints or {}).items():
         if endpoint == 'authors':
-            authors = Authors.as_view(
-                Authors.view_name.format(endpoint),
+            authors = AuthorsREST.as_view(
+                AuthorsREST.view_name.format(endpoint),
                 default_media_type=options.get('default_media_type')
             )
             blueprint.add_url_rule(
@@ -72,8 +78,8 @@ def create_blueprint(endpoints):
                 methods=['GET']
             )
         elif endpoint == 'author':
-            author = Author.as_view(
-                Author.view_name.format(endpoint),
+            author = AuthorREST.as_view(
+                AuthorREST.view_name.format(endpoint),
                 default_media_type=options.get('default_media_type')
             )
             blueprint.add_url_rule(
@@ -85,19 +91,20 @@ def create_blueprint(endpoints):
     return blueprint
 
 
-class Authors(ContentNegotiatedMethodView):
+class AuthorsREST(ContentNegotiatedMethodView):
     """Authors Resource."""
     view_name = '{0}'
 
     def __init__(self, *args, **kwargs):
         """Constructor."""
-        super(Authors, self).__init__(
+        super(AuthorsREST, self).__init__(
             *args,
             **kwargs
         )
 
     @require_api_auth()
     @require_oauth_scopes(authors_read_scope.id)
+    @limiter.limit('')
     def get(self, **kwargs):
         """Get authors."""
         version = kwargs.get('version')
@@ -113,9 +120,7 @@ class Authors(ContentNegotiatedMethodView):
         try:
             search_key = request.values.get('search_key', '')
             limit = int(request.values.get('limit') or current_app.config.get('WEKO_AUTHORS_NUM_OF_PAGE'))
-            page = request.values.get('page')
-            if page:
-                page = int(page)
+            page = int(request.values.get('page')) if 'page' in request.values else ''
             cursor = request.values.get('cursor', '')
 
             sort = request.values.get('sort_key')
@@ -182,19 +187,20 @@ class Authors(ContentNegotiatedMethodView):
             raise InternalServerError()
 
 
-class Author(ContentNegotiatedMethodView):
+class AuthorREST(ContentNegotiatedMethodView):
     """Author Resource."""
     view_name = '{0}'
 
     def __init__(self, *args, **kwargs):
         """Constructor."""
-        super(Author, self).__init__(
+        super(AuthorREST, self).__init__(
             *args,
             **kwargs
         )
 
     @require_api_auth()
     @require_oauth_scopes(authors_read_scope.id)
+    @limiter.limit('')
     def get(self, **kwargs):
         """Get author by id."""
         version = kwargs.get('version')
@@ -207,8 +213,8 @@ class Author(ContentNegotiatedMethodView):
     def get_v1(self, **kwargs):
         try:
             author_id = kwargs.get('id')
-            from weko_authors.models import Authors as AuthorsModel
-            author_record = AuthorsModel.query.filter_by(id=author_id).one_or_none()
+            from weko_authors.models import Authors
+            author_record = Authors.query.filter_by(id=author_id).one_or_none()
             if not author_record:
                 raise AuthorNotFoundRESTError
 

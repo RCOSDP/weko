@@ -180,7 +180,13 @@ def get():
     sort_key = data.get('sortKey') or ''
     sort_order = data.get('sortOrder') or ''
 
-    result = get_authors(search_key, size, num, sort_key, sort_order)
+    result = get_authors(
+        search_key=search_key,
+        size=size,
+        page=num,
+        sort_key=sort_key,
+        sort_order=sort_order
+    )
 
     return jsonify(result)
 
