@@ -1,7 +1,7 @@
 GLOB sdist-make: /code/modules/invenio-records-rest/setup.py
 c1 inst-nodeps: /code/modules/invenio-records-rest/.tox/.tmp/package/1/invenio-records-rest-1.4.2.zip
-c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,dcxml==0.1.0,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@d47fafb1558e261f98ca916355346a9ca7b4a68e#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,intervals==0.8.0,invenio-access==1.1.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,invenio-records-rest @ file:///code/modules/invenio-records-rest/.tox/.tmp/package/1/invenio-records-rest-1.4.2.zip,invenio-records-ui==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==4.2.0,pytest-cov==2.9.0,pytest-flask==0.15.1,pytest-invenio==1.2.1,pytest-mock==3.2.0,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,toml==0.10.2,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_records&subdirectory=modules/weko-records,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@89a21fbe67458a8c9fe765be547cd4feb5598557#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
-c1 run-test-pre: PYTHONHASHSEED='2983393272'
+c1 installed: alabaster==0.7.13,alembic==0.9.6,amqp==2.6.0,angular-gettext-babel==0.3,aniso8601==8.0.0,arrow==0.12.1,asn1crypto==0.23.0,atomicwrites==1.4.1,attrs==17.4.0,b2handle==1.1.2,Babel==2.5.1,bagit==1.7.0,beautifulsoup4==4.9.3,bibtexparser==1.0.1,billiard==3.6.3.0,binaryornot==0.4.4,bleach==3.1.0,blinker==1.4,boto3==1.7.84,botocore==1.10.84,cachelib==0.1,cachetools==4.2.4,cchardet==2.1.1,celery==4.4.4,certifi==2017.11.5,cffi==1.11.2,chardet==3.0.4,citeproc-py==0.5.1,citeproc-py-styles==0.1.2,click==6.7,cookiecutter==1.6.0,counter-robots==2018.6,coverage==6.2,cryptography==2.1.4,datacite==1.0.1,DateTime==4.9,dcxml==0.1.0,decorator==4.1.2,defusedxml==0.5.0,dictdiffer==0.7.0,distlib==0.3.6,dnspython==2.2.1,docutils==0.18.1,dojson==1.3.2,elasticsearch==6.1.1,elasticsearch-dsl==6.4.0,elementpath==1.0.6,email-validator==1.0.5,entrypoints==0.2.3,feedgen==0.7.0,filelock==3.4.1,Flask==1.1.0,Flask-Admin==1.5.3,Flask-Alembic==2.0.1,Flask-Assets==0.12,Flask-BabelEx==0.9.4,Flask-Breadcrumbs==0.5.0,Flask-Caching==1.10.1,Flask-CeleryExt==0.3.4,Flask-Collect==1.2.2,Flask-Cors==3.0.3,Flask-DebugToolbar==0.13.1,Flask-IIIF==0.6.1,Flask-KVSession==0.6.2,Flask-Limiter==1.1.0,Flask-Login==0.4.1,Flask-Mail==0.9.1,flask-marshmallow==0.14.0,Flask-Menu==0.6.0,-e git+https://github.com/RCOSDP/flask-oauthlib.git@d47fafb1558e261f98ca916355346a9ca7b4a68e#egg=Flask_OAuthlib,Flask-Plugins==1.6.1,Flask-Principal==0.4.0,Flask-RESTful==0.3.8,Flask-Security==3.0.0,flask-shell-ipython==0.4.1,Flask-Sitemap==0.4.0,Flask-SQLAlchemy==2.3.2,flask-talisman==0.4.1,Flask-WTF==0.14.3,-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf,frozendict==2.3.8,fs==0.5.4,ftfy==4.4.3,future==0.16.0,github3.py==1.1.0,html5lib==1.0.1,idna==2.6,iiif-prezi==0.3.0,imagesize==1.4.1,importlib-metadata==4.8.3,importlib-resources==5.4.0,infinity==1.4,intervals==0.8.0,invenio-access==1.1.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_accounts&subdirectory=modules/invenio-accounts,invenio-admin==1.1.2,invenio-app==1.1.0,invenio-assets==1.0.0,invenio-base==1.0.2,invenio-cache==1.0.0,invenio-celery==1.1.3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_communities&subdirectory=modules/invenio-communities,invenio-config==1.0.0,invenio-csl-rest==1.0.0a1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_db&subdirectory=modules/invenio-db,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_deposit&subdirectory=modules/invenio-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest,invenio-formatter==1.0.0b3,invenio-i18n==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_iiif&subdirectory=modules/invenio-iiif,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_indexer&subdirectory=modules/invenio-indexer,invenio-jsonschemas==1.0.0,invenio-logging==1.0.0b3,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_mail&subdirectory=modules/invenio-mail,invenio-marc21==1.0.0a8,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server,invenio-oauthclient==1.0.0,invenio-pidrelations==1.0.0a4,invenio-pidstore==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_previewer&subdirectory=modules/invenio-previewer,invenio-query-parser==0.6.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_queues&subdirectory=modules/invenio-queues,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_records&subdirectory=modules/invenio-records,invenio-records-files==1.0.0a10,invenio-records-rest @ file:///code/modules/invenio-records-rest/.tox/.tmp/package/1/invenio-records-rest-1.4.2.zip,invenio-records-ui==1.0.0,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver,invenio-rest==1.1.2,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_s3&subdirectory=modules/invenio-s3,-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search,-e git+https://github.com/RCOSDP/invenio-search-ui.git@74bd3b2990ff27b39e01b6b31be9a0b5fda3dd0f#egg=invenio_search_ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=invenio_stats&subdirectory=modules/invenio-stats,invenio-theme==1.0.0b4,ipaddress==1.0.19,ipython==6.2.1,ipython-genutils==0.2.0,itsdangerous==0.24,jedi==0.11.0,Jinja2==2.10.1,jinja2-cli==0.6.0,jinja2-time==0.2.0,jmespath==0.10.0,jsmin==2.2.2,jsonpatch==1.21,jsonpath-ng==1.5.2,jsonpointer==1.14,jsonref==0.1,jsonresolver==0.2.1,jsonschema==2.6.0,jupyter-client==5.2.2,jupyter-core==4.4.0,-e git+https://github.com/RCOSDP/kombu.git@f204fdf078d5e94393c86693f545e2d011f620f5#egg=kombu,limits==1.2.1,lxml==4.1.1,Mako==1.0.7,MarkupSafe==1.1.1,marshmallow==2.20.1,marshmallow-sqlalchemy==0.23.1,maxminddb==1.5.2,maxminddb-geolite2==2017.803,mistune==0.8.3,mock==5.0.2,more-itertools==8.10.0,msgpack==0.6.2,nbconvert==5.3.1,nbformat==4.4.0,netaddr==0.8.0,node-semver==0.1.1,numpy==1.16.1,oauthlib==2.1.0,ordereddict==1.1,packaging==21.3,pandocfilters==1.4.2,parso==0.1.0,passlib==1.7.1,pbr==5.11.1,pexpect==4.3.0,pickleshare==0.7.4,Pillow==5.4.1,platformdirs==2.4.0,pluggy==0.13.1,ply==3.11,poyo==0.4.1,prompt-toolkit==1.0.15,psycopg2==2.7.3.2,ptyprocess==0.5.2,py==1.11.0,pycparser==2.18,Pygments==2.2.0,PyJWT==1.5.3,PyLD==2.0.3,pyparsing==3.1.0,-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2,pyPEG2==2.15.2,pytest==4.2.0,pytest-cov==2.9.0,pytest-flask==0.15.1,pytest-invenio==1.2.1,pytest-mock==3.2.0,python-dateutil==2.6.1,python-editor==1.0.3,python-geoip==1.2,pytz==2017.3,pyzmq==17.0.0,redis==2.10.6,requests==2.18.4,requests-oauthlib==1.1.0,resync==1.0.9,s3fs==0.1.6,s3transfer==0.1.13,selenium==3.141.0,Sickle==0.6.4,simplegeneric==0.8.1,simplejson==3.12.0,simplekv==0.11.2,six==1.16.0,snowballstemmer==2.2.0,soupsieve==2.3.2.post1,speaklater==1.3,Sphinx==1.8.4,sphinxcontrib-serializinghtml==1.1.5,sphinxcontrib-websupport==1.2.4,SQLAlchemy==1.2.19,SQLAlchemy-Continuum==1.3.6,SQLAlchemy-Utils==0.35.0,stevedore==3.5.2,sword3common==0.1.1,testpath==0.3.1,toml==0.10.2,tornado==4.5.3,tox==3.28.0,traitlets==4.3.2,typing_extensions==4.1.1,ua-parser==0.7.3,uritemplate==4.1.1,uritools==2.1.0,urllib3==1.22,uWSGI==2.0.21,uwsgitop==0.11,validators==0.12.0,vine==1.3.0,virtualenv==20.17.1,virtualenv-clone==0.5.7,virtualenvwrapper==4.8.4,Wand==0.6.1,wcwidth==0.1.7,webargs==5.5.2,webassets==0.12.1,webencodings==0.5.1,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_accounts&subdirectory=modules/weko-accounts,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_admin&subdirectory=modules/weko-admin,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_authors&subdirectory=modules/weko-authors,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_deposit&subdirectory=modules/weko-deposit,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_groups&subdirectory=modules/weko-groups,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_handle&subdirectory=modules/weko-handle,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_index_tree&subdirectory=modules/weko-index-tree,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_items_ui&subdirectory=modules/weko-items-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_logging&subdirectory=modules/weko-logging,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_records&subdirectory=modules/weko-records,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_records_ui&subdirectory=modules/weko-records-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_redis&subdirectory=modules/weko-redis,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_search_ui&subdirectory=modules/weko-search-ui,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_sitemap&subdirectory=modules/weko-sitemap,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_swordserver&subdirectory=modules/weko-swordserver,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_theme&subdirectory=modules/weko-theme,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles,-e git+https://mhaya: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@github.com/RCOSDP/weko.git@d5125499ac824e22a845a88c8804c33132cd0aa6#egg=weko_workflow&subdirectory=modules/weko-workflow,Werkzeug==0.15.2,whichcraft==0.4.1,WTForms==2.1,WTForms-Alchemy==0.16.5,WTForms-Components==0.10.3,xmlschema==0.9.30,xmltodict==0.12.0,zipp==3.6.0,zope.interface==5.5.2
+c1 run-test-pre: PYTHONHASHSEED='1145540695'
 c1 run-test: commands[0] | pytest --cov=invenio_records_rest tests -v --cov-branch --cov-report=term --cov-report=xml --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
 ============================= test session starts ==============================
 platform linux -- Python 3.6.15, pytest-4.2.0, py-1.11.0, pluggy-0.13.1 -- /code/modules/invenio-records-rest/.tox/c1/bin/python
@@ -34,19 +34,19 @@ tests/test_marshmallow_loader.py::test_marshmallow_errors PASSED         [ 18%]
 tests/test_marshmallow_loader.py::test_json_pid_checker_loader PASSED    [ 19%]
 tests/test_permissions.py::test_default_permissions FAILED               [ 20%]
 tests/test_pid_resolver.py::test_record_resolution FAILED                [ 20%]
-tests/test_serializer_base.py::test_preprocessor_mixin_record PASSED     [ 21%]
+tests/test_serializer_base.py::test_preprocessor_mixin_record FAILED     [ 21%]
 tests/test_serializer_base.py::test_preprocessor_mixin_searchhit PASSED  [ 22%]
 tests/test_serializer_citeproc.py::test_serialize PASSED                 [ 23%]
 tests/test_serializer_citeproc.py::test_serializer_args PASSED           [ 24%]
 tests/test_serializer_citeproc.py::test_nonexistent_style PASSED         [ 25%]
 tests/test_serializer_citeproc.py::test_serializer_in_request PASSED     [ 26%]
-tests/test_serializer_datacite.py::test_serialize[DataCite31Serializer] FAILED [ 26%]
-tests/test_serializer_datacite.py::test_serialize[DataCite40Serializer] FAILED [ 27%]
-tests/test_serializer_datacite.py::test_serialize[DataCite41Serializer] FAILED [ 28%]
+tests/test_serializer_datacite.py::test_serialize[DataCite31Serializer] PASSED [ 26%]
+tests/test_serializer_datacite.py::test_serialize[DataCite40Serializer] PASSED [ 27%]
+tests/test_serializer_datacite.py::test_serialize[DataCite41Serializer] PASSED [ 28%]
 tests/test_serializer_datacite.py::test_serialize_search[DataCite31Serializer] PASSED [ 29%]
 tests/test_serializer_datacite.py::test_serialize_search[DataCite40Serializer] PASSED [ 30%]
 tests/test_serializer_datacite.py::test_serialize_search[DataCite41Serializer] PASSED [ 31%]
-tests/test_serializer_dc.py::test_serialize FAILED                       [ 32%]
+tests/test_serializer_dc.py::test_serialize PASSED                       [ 32%]
 tests/test_serializer_dc.py::test_serialize_search PASSED                [ 33%]
 tests/test_serializer_json.py::test_serialize PASSED                     [ 33%]
 tests/test_serializer_json.py::test_serialize_search PASSED              [ 34%]
@@ -54,9 +54,9 @@ tests/test_serializer_json.py::test_serialize_pretty PASSED              [ 35%]
 tests/test_serializer_jsonld.py::test_serialize FAILED                   [ 36%]
 tests/test_serializer_jsonld.py::test_serialize_search FAILED            [ 37%]
 tests/test_serializer_jsonld.py::test_transform_jsonld PASSED            [ 38%]
-tests/test_serializer_marshmallow.py::test_transform_record FAILED       [ 39%]
-tests/test_serializer_marshmallow.py::test_transform_search_hit FAILED   [ 40%]
-tests/test_serializer_marshmallow.py::test_transform_record_default_schema FAILED [ 40%]
+tests/test_serializer_marshmallow.py::test_transform_record PASSED       [ 39%]
+tests/test_serializer_marshmallow.py::test_transform_search_hit PASSED   [ 40%]
+tests/test_serializer_marshmallow.py::test_transform_record_default_schema PASSED [ 40%]
 tests/test_serializer_response.py::test_record_responsify PASSED         [ 41%]
 tests/test_serializer_response.py::test_search_responsify FAILED         [ 42%]
 tests/test_sorter.py::test_parse_sort_field PASSED                       [ 43%]
@@ -152,7 +152,7 @@ ERROR: ../invenio-db is not a valid editable requirement. It should either be a 
 ______________ test_get_records_list[test_custom_endpoints_app0] _______________
 
 test_custom_endpoints_app = <Flask 'testapp'>
-indexed_records = [(<PersistentIdentifier recid:1 / rec:65e19037-3959-4f17-832c-fae235bf95f2 (R)>, {'year': 2015, 'stars': 4, 'title': '...0837b1ee-e51d-4b86-a30c-39a032868ff5 (R)>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<PersistentIdentifier recid:1 / rec:6ffd1b92-69cb-4f7c-88cb-6acb58e378ec (R)>, {'year': 2015, 'stars': 4, 'title': '...8ce8cf3c-5daf-4a03-bc63-3e18c093af91 (R)>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 
     @pytest.mark.parametrize('test_custom_endpoints_app', [dict(
         # Disable all endpoints from config. The test will create the endpoint.
@@ -194,7 +194,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 self = <Flask 'testapp'>
-blueprint = <flask.blueprints.Blueprint object at 0x7f16fb6127b8>, options = {}
+blueprint = <flask.blueprints.Blueprint object at 0x7fece602e860>, options = {}
 first_registration = False
 
     @setupmethod
@@ -226,7 +226,7 @@ first_registration = False
                 " fly need unique names."
 >               % (blueprint, self.blueprints[blueprint.name], blueprint.name)
             )
-E           AssertionError: A name collision occurred between blueprints <flask.blueprints.Blueprint object at 0x7f16fb6127b8> and <flask.blueprints.Blueprint object at 0x7f16fe32b048>. Both share the same name "test_invenio_records_rest". Blueprints that are created on the fly need unique names.
+E           AssertionError: A name collision occurred between blueprints <flask.blueprints.Blueprint object at 0x7fece602e860> and <flask.blueprints.Blueprint object at 0x7fed10df8320>. Both share the same name "test_invenio_records_rest". Blueprints that are created on the fly need unique names.
 
 .tox/c1/lib/python3.6/site-packages/flask/app.py:1160: AssertionError
 _________________________ test_default_facets_factory __________________________
@@ -283,8 +283,8 @@ ___________________________ test_default_permissions ___________________________
 app = <Flask 'testapp'>, default_permissions = <Flask 'testapp'>
 test_data = [{'stars': 4, 'title': 'Back to the Future', 'year': 2015}, {'stars': 3, 'title': 'Back to the Past', 'year': 2042}, {...4, 'title': "The Hitchhiker's Guide to the Galaxy", 'year': 1985}, {'stars': 5, 'title': 'Unknown film', 'year': 4242}]
 search_url = '/records/'
-test_records = [(<PersistentIdentifier recid:1 / rec:c62abc2c-c951-47c3-9888-ed17c39e8417 (R)>, {'year': 2015, 'stars': 4, 'title': '...stentIdentifier object at 0x7f1722fd4d30>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
-indexed_records = [(<PersistentIdentifier recid:1 / rec:c62abc2c-c951-47c3-9888-ed17c39e8417 (R)>, {'year': 2015, 'stars': 4, 'title': '...stentIdentifier object at 0x7f1722fd4d30>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+test_records = [(<PersistentIdentifier recid:1 / rec:73f5487a-b1e1-4232-adb1-8bf7b1466623 (R)>, {'year': 2015, 'stars': 4, 'title': '...stentIdentifier object at 0x7fed0d680550>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<PersistentIdentifier recid:1 / rec:73f5487a-b1e1-4232-adb1-8bf7b1466623 (R)>, {'year': 2015, 'stars': 4, 'title': '...stentIdentifier object at 0x7fed0d680550>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 
     def test_default_permissions(app, default_permissions, test_data, search_url,
                                  test_records, indexed_records):
@@ -431,8 +431,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f1728f5a390; PersistentIdentifier>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f172355f748>
+mapper = <Mapper at 0x7fed167a87b8; PersistentIdentifier>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7fed0e2b3a90>
 attribute_names = {'created', 'id', 'object_type', 'object_uuid', 'pid_provider', 'pid_type', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -445,7 +445,7 @@ attribute_names = {'created', 'id', 'object_type', 'object_uuid', 'pid_provider'
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <PersistentIdentifier at 0x7f172355fc50> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <PersistentIdentifier at 0x7fed0e2b3ba8> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 ../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ------------------------------ Captured log call -------------------------------
@@ -456,281 +456,63 @@ Traceback (most recent call last):
   File "/code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/invenio_pidstore/resolver.py", line 63, in resolve
     raise PIDMissingObjectError(self.pid_type, pid_value)
 invenio_pidstore.errors.PIDMissingObjectError: 3
-_____________________ test_serialize[DataCite31Serializer] _____________________
+________________________ test_preprocessor_mixin_record ________________________
 
-self = <sqlalchemy.util._collections.ScopedRegistry object at 0x7f1728f89080>
+app = <Flask 'testapp'>
+db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
+item_type_mapping = None
 
-    def __call__(self):
-        key = self.scopefunc()
-        try:
->           return self.registry[key]
-E           KeyError: 139737561261888
+    def test_preprocessor_mixin_record(app, db,item_type_mapping):
+        """Test preprocessor mixin."""
+        pid, record = create_record({'title': 'test', 'aref': {'$ref': '#/title'}})
+        record.model.created = datetime(2015, 10, 1, 11, 11, 11, 1)
+        db.session.commit()
+    
+        data = PreprocessorMixin().preprocess_record(pid, record)
+        for k in keys:
+            assert k in data
+    
+        assert data['metadata']['title'] == 'test'
+        assert data['metadata']['aref'] == {'$ref': '#/title'}
+        assert data['created'] == '2015-10-01T11:11:11.000001+00:00'
+        assert data['revision'] == 1
+    
+        data = PreprocessorMixin(replace_refs=True).preprocess_record(
+            pid, Record({'title': 'test2', 'aref': {'$ref': '#/title'}}))
+        assert data['created'] is None
+        assert data['updated'] is None
+        assert data['metadata']['aref'] == 'test2'
+    
+        pid, record = create_record({'title': 'test3', 'aref':{'$ref':'#/title'},'item_type_id':1})
+        record.model.created = datetime(2015, 10, 1, 11, 11, 11, 1)
+        db.session.commit()
+>       data = PreprocessorMixin().preprocess_record(pid, record)
 
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1005: KeyError
-
-During handling of the above exception, another exception occurred:
-
-serializer = <class 'invenio_records_rest.serializers.datacite.DataCite31Serializer'>
-
-    @pytest.mark.parametrize('serializer', [DataCite31Serializer,
-                                            DataCite40Serializer,
-                                            DataCite41Serializer])
-    def test_serialize(serializer):
-        pid = PersistentIdentifier(pid_type='recid', pid_value='2')
-        record = Record({'doi': '10.1234/foo'})
-        s = serializer(SimpleSchema)
->       data = s.serialize(pid, record)
-
-../tests/test_serializer_datacite.py:42: 
+../tests/test_serializer_base.py:48: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio_records_rest/serializers/datacite.py:42: in serialize
-    self.transform_record(pid, record, links_factory))
-../invenio_records_rest/serializers/marshmallow.py:35: in transform_record
-    links_factory=links_factory, **kwargs), context)
-../invenio_records_rest/serializers/base.py:206: in preprocess_record
+../invenio_records_rest/serializers/base.py:222: in preprocess_record
     mapping_key_lang = get_mapping(metadata.get('item_type_id'))
-../invenio_records_rest/serializers/base.py:160: in get_mapping
-    mapping = Mapping.get_record(item_type_id)
-../../weko-records/weko_records/api.py:996: in get_record
-    with db.session.no_autoflush:
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/scoping.py:176: in get
-    return getattr(self.registry(), name)
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1007: in __call__
-    return self.registry.setdefault(key, self.createfunc())
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:3181: in __call__
-    return self.class_(**local_kw)
-../.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:141: in __init__
-    self.app = app = db.get_app()
+../invenio_records_rest/serializers/base.py:161: in get_mapping
+    meta_option, item_type_mapping = get_options_and_order_list(item_type_id)
+../../weko-items-ui/weko_items_ui/utils.py:2279: in get_options_and_order_list
+    meta_options = get_options_list(item_type_id, item_type_data)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <SQLAlchemy engine=None>, reference_app = None
+item_type_id = 1, json_item = None
 
-    def get_app(self, reference_app=None):
-        """Helper method that implements the logic to look up an
-        application."""
+    def get_options_list(item_type_id, json_item=None):
+        """Get Options by item type id.
     
-        if reference_app is not None:
-            return reference_app
-    
-        if current_app:
-            return current_app._get_current_object()
-    
-        if self.app is not None:
-            return self.app
-    
-        raise RuntimeError(
->           'No application found. Either work inside a view function or push'
-            ' an application context. See'
-            ' http://flask-sqlalchemy.pocoo.org/contexts/.'
-        )
-E       RuntimeError: No application found. Either work inside a view function or push an application context. See http://flask-sqlalchemy.pocoo.org/contexts/.
+        :param item_type_id:
+        :param json_item:
+        :return: options dict
+        """
+        if json_item is None:
+            json_item = ItemTypes.get_record(item_type_id)
+>       meta_options = json_item.model.render.get('meta_fix')
+E       AttributeError: 'NoneType' object has no attribute 'model'
 
-../.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:912: RuntimeError
-_____________________ test_serialize[DataCite40Serializer] _____________________
-
-self = <sqlalchemy.util._collections.ScopedRegistry object at 0x7f1728f89080>
-
-    def __call__(self):
-        key = self.scopefunc()
-        try:
->           return self.registry[key]
-E           KeyError: 139737561261888
-
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1005: KeyError
-
-During handling of the above exception, another exception occurred:
-
-serializer = <class 'invenio_records_rest.serializers.datacite.DataCite40Serializer'>
-
-    @pytest.mark.parametrize('serializer', [DataCite31Serializer,
-                                            DataCite40Serializer,
-                                            DataCite41Serializer])
-    def test_serialize(serializer):
-        pid = PersistentIdentifier(pid_type='recid', pid_value='2')
-        record = Record({'doi': '10.1234/foo'})
-        s = serializer(SimpleSchema)
->       data = s.serialize(pid, record)
-
-../tests/test_serializer_datacite.py:42: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio_records_rest/serializers/datacite.py:42: in serialize
-    self.transform_record(pid, record, links_factory))
-../invenio_records_rest/serializers/marshmallow.py:35: in transform_record
-    links_factory=links_factory, **kwargs), context)
-../invenio_records_rest/serializers/base.py:206: in preprocess_record
-    mapping_key_lang = get_mapping(metadata.get('item_type_id'))
-../invenio_records_rest/serializers/base.py:160: in get_mapping
-    mapping = Mapping.get_record(item_type_id)
-../../weko-records/weko_records/api.py:996: in get_record
-    with db.session.no_autoflush:
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/scoping.py:176: in get
-    return getattr(self.registry(), name)
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1007: in __call__
-    return self.registry.setdefault(key, self.createfunc())
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:3181: in __call__
-    return self.class_(**local_kw)
-../.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:141: in __init__
-    self.app = app = db.get_app()
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-self = <SQLAlchemy engine=None>, reference_app = None
-
-    def get_app(self, reference_app=None):
-        """Helper method that implements the logic to look up an
-        application."""
-    
-        if reference_app is not None:
-            return reference_app
-    
-        if current_app:
-            return current_app._get_current_object()
-    
-        if self.app is not None:
-            return self.app
-    
-        raise RuntimeError(
->           'No application found. Either work inside a view function or push'
-            ' an application context. See'
-            ' http://flask-sqlalchemy.pocoo.org/contexts/.'
-        )
-E       RuntimeError: No application found. Either work inside a view function or push an application context. See http://flask-sqlalchemy.pocoo.org/contexts/.
-
-../.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:912: RuntimeError
-_____________________ test_serialize[DataCite41Serializer] _____________________
-
-self = <sqlalchemy.util._collections.ScopedRegistry object at 0x7f1728f89080>
-
-    def __call__(self):
-        key = self.scopefunc()
-        try:
->           return self.registry[key]
-E           KeyError: 139737561261888
-
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1005: KeyError
-
-During handling of the above exception, another exception occurred:
-
-serializer = <class 'invenio_records_rest.serializers.datacite.DataCite41Serializer'>
-
-    @pytest.mark.parametrize('serializer', [DataCite31Serializer,
-                                            DataCite40Serializer,
-                                            DataCite41Serializer])
-    def test_serialize(serializer):
-        pid = PersistentIdentifier(pid_type='recid', pid_value='2')
-        record = Record({'doi': '10.1234/foo'})
-        s = serializer(SimpleSchema)
->       data = s.serialize(pid, record)
-
-../tests/test_serializer_datacite.py:42: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio_records_rest/serializers/datacite.py:42: in serialize
-    self.transform_record(pid, record, links_factory))
-../invenio_records_rest/serializers/marshmallow.py:35: in transform_record
-    links_factory=links_factory, **kwargs), context)
-../invenio_records_rest/serializers/base.py:206: in preprocess_record
-    mapping_key_lang = get_mapping(metadata.get('item_type_id'))
-../invenio_records_rest/serializers/base.py:160: in get_mapping
-    mapping = Mapping.get_record(item_type_id)
-../../weko-records/weko_records/api.py:996: in get_record
-    with db.session.no_autoflush:
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/scoping.py:176: in get
-    return getattr(self.registry(), name)
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1007: in __call__
-    return self.registry.setdefault(key, self.createfunc())
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:3181: in __call__
-    return self.class_(**local_kw)
-../.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:141: in __init__
-    self.app = app = db.get_app()
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-self = <SQLAlchemy engine=None>, reference_app = None
-
-    def get_app(self, reference_app=None):
-        """Helper method that implements the logic to look up an
-        application."""
-    
-        if reference_app is not None:
-            return reference_app
-    
-        if current_app:
-            return current_app._get_current_object()
-    
-        if self.app is not None:
-            return self.app
-    
-        raise RuntimeError(
->           'No application found. Either work inside a view function or push'
-            ' an application context. See'
-            ' http://flask-sqlalchemy.pocoo.org/contexts/.'
-        )
-E       RuntimeError: No application found. Either work inside a view function or push an application context. See http://flask-sqlalchemy.pocoo.org/contexts/.
-
-../.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:912: RuntimeError
-________________________________ test_serialize ________________________________
-
-self = <sqlalchemy.util._collections.ScopedRegistry object at 0x7f1728f89080>
-
-    def __call__(self):
-        key = self.scopefunc()
-        try:
->           return self.registry[key]
-E           KeyError: 139737561261888
-
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1005: KeyError
-
-During handling of the above exception, another exception occurred:
-
-    def test_serialize():
-        """Test JSON serialize."""
-        pid = PersistentIdentifier(pid_type='recid', pid_value='2')
-        record = Record({'titles': ['DC test']})
->       data = DublinCoreSerializer(SimpleSchema).serialize(pid, record)
-
-../tests/test_serializer_dc.py:30: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio_records_rest/serializers/dc.py:36: in serialize
-    self.transform_record(pid, record, links_factory))
-../invenio_records_rest/serializers/marshmallow.py:35: in transform_record
-    links_factory=links_factory, **kwargs), context)
-../invenio_records_rest/serializers/base.py:206: in preprocess_record
-    mapping_key_lang = get_mapping(metadata.get('item_type_id'))
-../invenio_records_rest/serializers/base.py:160: in get_mapping
-    mapping = Mapping.get_record(item_type_id)
-../../weko-records/weko_records/api.py:996: in get_record
-    with db.session.no_autoflush:
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/scoping.py:176: in get
-    return getattr(self.registry(), name)
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1007: in __call__
-    return self.registry.setdefault(key, self.createfunc())
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:3181: in __call__
-    return self.class_(**local_kw)
-../.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:141: in __init__
-    self.app = app = db.get_app()
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-self = <SQLAlchemy engine=None>, reference_app = None
-
-    def get_app(self, reference_app=None):
-        """Helper method that implements the logic to look up an
-        application."""
-    
-        if reference_app is not None:
-            return reference_app
-    
-        if current_app:
-            return current_app._get_current_object()
-    
-        if self.app is not None:
-            return self.app
-    
-        raise RuntimeError(
->           'No application found. Either work inside a view function or push'
-            ' an application context. See'
-            ' http://flask-sqlalchemy.pocoo.org/contexts/.'
-        )
-E       RuntimeError: No application found. Either work inside a view function or push an application context. See http://flask-sqlalchemy.pocoo.org/contexts/.
-
-../.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:912: RuntimeError
+../../weko-items-ui/weko_items_ui/utils.py:2261: AttributeError
 ________________________________ test_serialize ________________________________
 
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
@@ -752,7 +534,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     pid, record, links_factory, **kwargs
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <invenio_records_rest.serializers.jsonld.JSONLDSerializer object at 0x7f17237b9cf8>
+self = <invenio_records_rest.serializers.jsonld.JSONLDSerializer object at 0x7fed0dc9f908>
 pid = <PersistentIdentifier recid:2 (None)>
 record = {'title': 'mytitle', 'recid': '2'}, links_factory = None, kwargs = {}
 
@@ -805,7 +587,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     pid, record_hit, links_factory, **kwargs
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <invenio_records_rest.serializers.jsonld.JSONLDSerializer object at 0x7f172356bef0>
+self = <invenio_records_rest.serializers.jsonld.JSONLDSerializer object at 0x7fed0e308c18>
 pid = <PersistentIdentifier recid:1 (None)>
 record_hit = {'_id': '1', '_source': {'recid': '1', 'title': 'title1'}, '_version': 1}
 links_factory = None, kwargs = {}
@@ -826,203 +608,6 @@ links_factory = None, kwargs = {}
 E       NotImplementedError
 
 ../invenio_records_rest/serializers/base.py:104: NotImplementedError
-____________________________ test_transform_record _____________________________
-
-self = <sqlalchemy.util._collections.ScopedRegistry object at 0x7f1728f89080>
-
-    def __call__(self):
-        key = self.scopefunc()
-        try:
->           return self.registry[key]
-E           KeyError: 139737561261888
-
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1005: KeyError
-
-During handling of the above exception, another exception occurred:
-
-    def test_transform_record():
-        """Test marshmallow serializer."""
-        serializer = SimpleMarshmallowSerializer(_TestSchema)
-        data = serializer.transform_record(
-            PersistentIdentifier(pid_type='recid', pid_value='1'),
-            Record({'title': 'test'}),
->           marshmallow_context=dict(author='test2')
-        )
-
-../tests/test_serializer_marshmallow.py:36: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio_records_rest/serializers/marshmallow.py:35: in transform_record
-    links_factory=links_factory, **kwargs), context)
-../invenio_records_rest/serializers/base.py:206: in preprocess_record
-    mapping_key_lang = get_mapping(metadata.get('item_type_id'))
-../invenio_records_rest/serializers/base.py:160: in get_mapping
-    mapping = Mapping.get_record(item_type_id)
-../../weko-records/weko_records/api.py:996: in get_record
-    with db.session.no_autoflush:
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/scoping.py:176: in get
-    return getattr(self.registry(), name)
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1007: in __call__
-    return self.registry.setdefault(key, self.createfunc())
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:3181: in __call__
-    return self.class_(**local_kw)
-../.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:141: in __init__
-    self.app = app = db.get_app()
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-self = <SQLAlchemy engine=None>, reference_app = None
-
-    def get_app(self, reference_app=None):
-        """Helper method that implements the logic to look up an
-        application."""
-    
-        if reference_app is not None:
-            return reference_app
-    
-        if current_app:
-            return current_app._get_current_object()
-    
-        if self.app is not None:
-            return self.app
-    
-        raise RuntimeError(
->           'No application found. Either work inside a view function or push'
-            ' an application context. See'
-            ' http://flask-sqlalchemy.pocoo.org/contexts/.'
-        )
-E       RuntimeError: No application found. Either work inside a view function or push an application context. See http://flask-sqlalchemy.pocoo.org/contexts/.
-
-../.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:912: RuntimeError
-__________________________ test_transform_search_hit ___________________________
-
-self = <sqlalchemy.util._collections.ScopedRegistry object at 0x7f1728f89080>
-
-    def __call__(self):
-        key = self.scopefunc()
-        try:
->           return self.registry[key]
-E           KeyError: 139737561261888
-
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1005: KeyError
-
-During handling of the above exception, another exception occurred:
-
-    def test_transform_search_hit():
-        """Test marshmallow serializer."""
-        serializer = SimpleMarshmallowSerializer(_TestSchema)
-        data = serializer.transform_record(
-            PersistentIdentifier(pid_type='recid', pid_value='1'),
-            Record({'title': 'test'}),
->           marshmallow_context=dict(author='test2')
-        )
-
-../tests/test_serializer_marshmallow.py:47: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio_records_rest/serializers/marshmallow.py:35: in transform_record
-    links_factory=links_factory, **kwargs), context)
-../invenio_records_rest/serializers/base.py:206: in preprocess_record
-    mapping_key_lang = get_mapping(metadata.get('item_type_id'))
-../invenio_records_rest/serializers/base.py:160: in get_mapping
-    mapping = Mapping.get_record(item_type_id)
-../../weko-records/weko_records/api.py:996: in get_record
-    with db.session.no_autoflush:
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/scoping.py:176: in get
-    return getattr(self.registry(), name)
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1007: in __call__
-    return self.registry.setdefault(key, self.createfunc())
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:3181: in __call__
-    return self.class_(**local_kw)
-../.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:141: in __init__
-    self.app = app = db.get_app()
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-self = <SQLAlchemy engine=None>, reference_app = None
-
-    def get_app(self, reference_app=None):
-        """Helper method that implements the logic to look up an
-        application."""
-    
-        if reference_app is not None:
-            return reference_app
-    
-        if current_app:
-            return current_app._get_current_object()
-    
-        if self.app is not None:
-            return self.app
-    
-        raise RuntimeError(
->           'No application found. Either work inside a view function or push'
-            ' an application context. See'
-            ' http://flask-sqlalchemy.pocoo.org/contexts/.'
-        )
-E       RuntimeError: No application found. Either work inside a view function or push an application context. See http://flask-sqlalchemy.pocoo.org/contexts/.
-
-../.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:912: RuntimeError
-_____________________ test_transform_record_default_schema _____________________
-
-self = <sqlalchemy.util._collections.ScopedRegistry object at 0x7f1728f89080>
-
-    def __call__(self):
-        key = self.scopefunc()
-        try:
->           return self.registry[key]
-E           KeyError: 139737561261888
-
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1005: KeyError
-
-During handling of the above exception, another exception occurred:
-
-    def test_transform_record_default_schema():
-        """Test marshmallow serializer without providing a schema."""
-        serializer = SimpleMarshmallowSerializer()
-        data = serializer.transform_record(
-            PersistentIdentifier(pid_type='recid', pid_value='1'),
->           Record({'title': 'test'})
-        )
-
-../tests/test_serializer_marshmallow.py:57: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../invenio_records_rest/serializers/marshmallow.py:35: in transform_record
-    links_factory=links_factory, **kwargs), context)
-../invenio_records_rest/serializers/base.py:206: in preprocess_record
-    mapping_key_lang = get_mapping(metadata.get('item_type_id'))
-../invenio_records_rest/serializers/base.py:160: in get_mapping
-    mapping = Mapping.get_record(item_type_id)
-../../weko-records/weko_records/api.py:996: in get_record
-    with db.session.no_autoflush:
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/scoping.py:176: in get
-    return getattr(self.registry(), name)
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/util/_collections.py:1007: in __call__
-    return self.registry.setdefault(key, self.createfunc())
-../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/session.py:3181: in __call__
-    return self.class_(**local_kw)
-../.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:141: in __init__
-    self.app = app = db.get_app()
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-self = <SQLAlchemy engine=None>, reference_app = None
-
-    def get_app(self, reference_app=None):
-        """Helper method that implements the logic to look up an
-        application."""
-    
-        if reference_app is not None:
-            return reference_app
-    
-        if current_app:
-            return current_app._get_current_object()
-    
-        if self.app is not None:
-            return self.app
-    
-        raise RuntimeError(
->           'No application found. Either work inside a view function or push'
-            ' an application context. See'
-            ' http://flask-sqlalchemy.pocoo.org/contexts/.'
-        )
-E       RuntimeError: No application found. Either work inside a view function or push an application context. See http://flask-sqlalchemy.pocoo.org/contexts/.
-
-../.tox/c1/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:912: RuntimeError
 ____________________________ test_search_responsify ____________________________
 
 app = <Flask 'testapp'>
@@ -1042,7 +627,7 @@ app = <Flask 'testapp'>
 ../tests/test_serializer_response.py:59: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-pid_fetcher = <function test_search_responsify.<locals>.fetcher at 0x7f17235dd840>
+pid_fetcher = <function test_search_responsify.<locals>.fetcher at 0x7fed0d7d2510>
 search_result = ['a', 'a', 'a', 'a', 'a'], code = 200, headers = None
 links = None, item_links_factory = None
 
@@ -1115,7 +700,7 @@ E             ?      +
 ______________________________ test_valid_delete _______________________________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f1722b51a20> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f17233cec18>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0dae7588> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0daccb38>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 
     def test_valid_delete(app, indexed_records):
         """Test VALID record delete request (DELETE .../records/<record_id>)."""
@@ -1195,7 +780,7 @@ E       AttributeError: 'NoneType' object has no attribute 'items'
 _____________________________ test_delete_deleted ______________________________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f17232263c8> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f17238b1f28>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0e1256d8> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0e08aef0>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 
     def test_delete_deleted(app, indexed_records):
         """Test deleting a perviously deleted record."""
@@ -1274,7 +859,7 @@ E       AttributeError: 'NoneType' object has no attribute 'items'
 ______________________ test_delete_with_sqldatabase_error ______________________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f17229566a0> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f17228e6b38>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0d85b3c8> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0dd43f28>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 
     def test_delete_with_sqldatabase_error(app, indexed_records):
         """Test VALID record delete request (GET .../records/<record_id>)."""
@@ -1304,8 +889,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f1728f5a390; PersistentIdentifier>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f1722956f60>
+mapper = <Mapper at 0x7fed167a87b8; PersistentIdentifier>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7fed0d85bfd0>
 attribute_names = {'created', 'id', 'object_type', 'object_uuid', 'pid_provider', 'pid_type', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -1318,7 +903,7 @@ attribute_names = {'created', 'id', 'object_type', 'object_uuid', 'pid_provider'
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <PersistentIdentifier at 0x7f17229566a0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <PersistentIdentifier at 0x7fed0d85b3c8> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 ../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ----------------------------- Captured stderr call -----------------------------
@@ -1328,7 +913,7 @@ Traceback (most recent call last):
     return f(self, pid=pid, record=record, *args, **kwargs)
   File "/code/modules/invenio-records-rest/invenio_records_rest/views.py", line 441, in need_record_permission_decorator
     return f(self, record=record, *args, **kwargs)
-  File "/code/modules/invenio-records-rest/invenio_records_rest/views.py", line 929, in delete
+  File "/code/modules/invenio-records-rest/invenio_records_rest/views.py", line 930, in delete
     rec_pid.delete()
   File "/code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/mock/mock.py", line 1149, in __call__
     return _mock_self._mock_call(*args, **kwargs)
@@ -1468,7 +1053,7 @@ Arguments: (SQLAlchemyError(),)
 ______________________________ test_item_get_etag ______________________________
 
 app = <Flask 'testapp'>
-test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f172269c550> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f17225e0f60>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0d0b3828> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0d0d92b0>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 
     def test_item_get_etag(app, test_records):
         """Test VALID record get request (GET .../records/<record_id>)."""
@@ -1500,8 +1085,8 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     self.manager.deferred_scalar_loader(self, toload)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-mapper = <Mapper at 0x7f1728f5a390; PersistentIdentifier>
-state = <sqlalchemy.orm.state.InstanceState object at 0x7f172268f0f0>
+mapper = <Mapper at 0x7fed167a87b8; PersistentIdentifier>
+state = <sqlalchemy.orm.state.InstanceState object at 0x7fed0d0baa58>
 attribute_names = {'created', 'id', 'object_type', 'object_uuid', 'pid_provider', 'pid_type', ...}
 
     def load_scalar_attributes(mapper, state, attribute_names):
@@ -1514,13 +1099,13 @@ attribute_names = {'created', 'id', 'object_type', 'object_uuid', 'pid_provider'
                 "Instance %s is not bound to a Session; "
 >               "attribute refresh operation cannot proceed" % (state_str(state))
             )
-E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <PersistentIdentifier at 0x7f172269c550> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <PersistentIdentifier at 0x7fed0d0b3828> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: http://sqlalche.me/e/bhk3)
 
 ../.tox/c1/lib/python3.6/site-packages/sqlalchemy/orm/loading.py:913: DetachedInstanceError
 ________________ test_valid_patch[application/json-patch+json] _________________
 
-app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7f17226d69e8>
-test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f17233f1550> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f1722ca9668>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7fed0ce66c18>
+test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0cbfdf60> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0cbbbcf8>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 test_patch = [{'op': 'replace', 'path': '/year', 'value': 1985}]
 content_type = 'application/json-patch+json', search_url = '/records/'
 search_class = <class 'tests.conftest.TestSearch'>
@@ -1620,8 +1205,8 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 ../.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:348: AttributeError
 _________ test_valid_patch[application/json-patch+json;charset=utf-8] __________
 
-app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7f1722f57fd0>
-test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f1722a18fd0> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f17231bb6d8>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7fed0da10160>
+test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0cc2a320> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0cbe6d30>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 test_patch = [{'op': 'replace', 'path': '/year', 'value': 1985}]
 content_type = 'application/json-patch+json;charset=utf-8'
 search_url = '/records/', search_class = <class 'tests.conftest.TestSearch'>
@@ -1723,7 +1308,7 @@ _______________ test_patch_deleted[application/json-patch+json] ________________
 
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
-es = <tests.conftest.MockEs object at 0x7f17226588d0>
+es = <tests.conftest.MockEs object at 0x7fed0dc0c160>
 test_data = [{'stars': 4, 'title': 'Back to the Future', 'year': 2015}, {'stars': 3, 'title': 'Back to the Past', 'year': 2042}, {...4, 'title': "The Hitchhiker's Guide to the Galaxy", 'year': 1985}, {'stars': 5, 'title': 'Unknown film', 'year': 4242}]
 test_patch = [{'op': 'replace', 'path': '/year', 'value': 1985}]
 content_type = 'application/json-patch+json', search_url = '/records/'
@@ -1823,7 +1408,7 @@ ________ test_patch_deleted[application/json-patch+json;charset=utf-8] _________
 
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
-es = <tests.conftest.MockEs object at 0x7f1723701630>
+es = <tests.conftest.MockEs object at 0x7fed0cb9e4a8>
 test_data = [{'stars': 4, 'title': 'Back to the Future', 'year': 2015}, {'stars': 3, 'title': 'Back to the Past', 'year': 2042}, {...4, 'title': "The Hitchhiker's Guide to the Galaxy", 'year': 1985}, {'stars': 5, 'title': 'Unknown film', 'year': 4242}]
 test_patch = [{'op': 'replace', 'path': '/year', 'value': 1985}]
 content_type = 'application/json-patch+json;charset=utf-8'
@@ -1921,8 +1506,8 @@ E       AttributeError: 'NoneType' object has no attribute 'items'
 ../../invenio-records/invenio_records/api.py:218: AttributeError
 _____________________________ test_invalid_patch[] _____________________________
 
-app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7f1722a952b0>
-test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171e2a94e0> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171e2c4e48>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7fed0cc34c50>
+test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0db5b2e8> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0e02acf8>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 test_patch = [{'op': 'replace', 'path': '/year', 'value': 1985}], charset = ''
 search_url = '/records/', search_class = <class 'tests.conftest.TestSearch'>
 
@@ -2014,8 +1599,8 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 ../.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:348: AttributeError
 ______________________ test_invalid_patch[;charset=utf-8] ______________________
 
-app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7f17228f5ac8>
-test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f1722a893c8> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f1723151518>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7fed0cad4b70>
+test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0cddc0b8> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0cde8860>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 test_patch = [{'op': 'replace', 'path': '/year', 'value': 1985}]
 charset = ';charset=utf-8', search_url = '/records/'
 search_class = <class 'tests.conftest.TestSearch'>
@@ -2108,8 +1693,8 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 ../.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:348: AttributeError
 _______________________ test_valid_put[application/json] _______________________
 
-app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7f17234d8080>
-test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171e199f28> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171e13a518>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7fed0da90630>
+test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0e0aabe0> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0db292b0>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 content_type = 'application/json', search_url = '/records/'
 search_class = <class 'tests.conftest.TestSearch'>
 
@@ -2203,8 +1788,8 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 ../.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:348: AttributeError
 ________________ test_valid_put[application/json;charset=utf-8] ________________
 
-app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7f17234b9320>
-test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f1723724978> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f17234697f0>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7fed0c95a588>
+test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0c921470> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0c8f7e48>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 content_type = 'application/json;charset=utf-8', search_url = '/records/'
 search_class = <class 'tests.conftest.TestSearch'>
 
@@ -2298,8 +1883,8 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 ../.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:348: AttributeError
 ____________________ test_valid_put_etag[application/json] _____________________
 
-app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7f17229f3f98>
-test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171df88390> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171df65208>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7fed0c92b2b0>
+test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0c643470> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0c658860>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 content_type = 'application/json', search_url = '/records/'
 search_class = <class 'tests.conftest.TestSearch'>
 
@@ -2398,8 +1983,8 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 ../.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:348: AttributeError
 _____________ test_valid_put_etag[application/json;charset=utf-8] ______________
 
-app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7f171de21d30>
-test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171de748d0> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171de86d30>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7fed0cc78d68>
+test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0db089b0> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0c98d4e0>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 content_type = 'application/json;charset=utf-8', search_url = '/records/'
 search_class = <class 'tests.conftest.TestSearch'>
 
@@ -2500,7 +2085,7 @@ ____________________ test_put_on_deleted[application/json] _____________________
 
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
-es = <tests.conftest.MockEs object at 0x7f171df93208>
+es = <tests.conftest.MockEs object at 0x7fed0d4956d8>
 test_data = [{'stars': 4, 'title': 'Back to the Future', 'year': 2015}, {'stars': 3, 'title': 'Back to the Past', 'year': 2042}, {...4, 'title': "The Hitchhiker's Guide to the Galaxy", 'year': 1985}, {'stars': 5, 'title': 'Unknown film', 'year': 4242}]
 content_type = 'application/json', search_url = '/records/'
 search_class = <class 'tests.conftest.TestSearch'>
@@ -2596,7 +2181,7 @@ _____________ test_put_on_deleted[application/json;charset=utf-8] ______________
 
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
-es = <tests.conftest.MockEs object at 0x7f171e199f28>
+es = <tests.conftest.MockEs object at 0x7fed0d62f780>
 test_data = [{'stars': 4, 'title': 'Back to the Future', 'year': 2015}, {'stars': 3, 'title': 'Back to the Past', 'year': 2042}, {...4, 'title': "The Hitchhiker's Guide to the Galaxy", 'year': 1985}, {'stars': 5, 'title': 'Unknown film', 'year': 4242}]
 content_type = 'application/json;charset=utf-8', search_url = '/records/'
 search_class = <class 'tests.conftest.TestSearch'>
@@ -2690,8 +2275,8 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 ../.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:348: AttributeError
 ______________________________ test_invalid_put[] ______________________________
 
-app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7f172253eeb8>
-test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171dc0d0b8> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171dbecb38>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7fed0cde6240>
+test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0ccd8dd8> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0c66eba8>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 charset = '', search_url = '/records/'
 
     @pytest.mark.parametrize('charset', [
@@ -2784,8 +2369,8 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 ../.tox/c1/lib/python3.6/site-packages/werkzeug/local.py:348: AttributeError
 _______________________ test_invalid_put[;charset=utf-8] _______________________
 
-app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7f171e0f45f8>
-test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171de85828> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171e2aaf60>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+app = <Flask 'testapp'>, es = <tests.conftest.MockEs object at 0x7fed0d616f28>
+test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0c6f96d8> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0c731588>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 charset = ';charset=utf-8', search_url = '/records/'
 
     @pytest.mark.parametrize('charset', [
@@ -2879,7 +2464,7 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 ___________________ test_validation_error[application/json] ____________________
 
 app = <Flask 'testapp'>
-test_records = [(<PersistentIdentifier recid:1 / rec:d4a8f00c-84fd-4e2f-a62c-b0cd7cf94ed9 (R)>, {'year': 1234, 'stars': 4, 'title': '...stentIdentifier object at 0x7f171e3339b0>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+test_records = [(<PersistentIdentifier recid:1 / rec:9fe0bd16-a227-4824-bab9-ed239a95c105 (R)>, {'year': 1234, 'stars': 4, 'title': '...stentIdentifier object at 0x7fed0c5f8710>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 content_type = 'application/json'
 
     @mock.patch('invenio_records.api.Record.validate', _mock_validate_fail)
@@ -2907,8 +2492,8 @@ E             +400
 
 ../tests/test_views_item_put.py:181: AssertionError
 ------------------------------ Captured log call -------------------------------
-views.py                  1045 ERROR    Traceback (most recent call last):
-  File "/code/modules/invenio-records-rest/invenio_records_rest/views.py", line 1042, in put
+views.py                  1046 ERROR    Traceback (most recent call last):
+  File "/code/modules/invenio-records-rest/invenio_records_rest/views.py", line 1043, in put
     record.commit()
   File "/code/modules/invenio-records/invenio_records/api.py", line 281, in commit
     self.validate(**kwargs)
@@ -2918,7 +2503,7 @@ jsonschema.exceptions.ValidationError
 ____________ test_validation_error[application/json;charset=utf-8] _____________
 
 app = <Flask 'testapp'>
-test_records = [(<PersistentIdentifier recid:1 / rec:a2603e4c-3ed8-49f5-9333-39807a4d98c6 (R)>, {'year': 1234, 'stars': 4, 'title': '...stentIdentifier object at 0x7f172244d208>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+test_records = [(<PersistentIdentifier recid:1 / rec:798dfdf8-5170-449a-92a6-3f14cdfbb59b (R)>, {'year': 1234, 'stars': 4, 'title': '...stentIdentifier object at 0x7fed0d543550>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 content_type = 'application/json;charset=utf-8'
 
     @mock.patch('invenio_records.api.Record.validate', _mock_validate_fail)
@@ -2946,8 +2531,8 @@ E             +400
 
 ../tests/test_views_item_put.py:181: AssertionError
 ------------------------------ Captured log call -------------------------------
-views.py                  1045 ERROR    Traceback (most recent call last):
-  File "/code/modules/invenio-records-rest/invenio_records_rest/views.py", line 1042, in put
+views.py                  1046 ERROR    Traceback (most recent call last):
+  File "/code/modules/invenio-records-rest/invenio_records_rest/views.py", line 1043, in put
     record.commit()
   File "/code/modules/invenio-records/invenio_records/api.py", line 281, in commit
     self.validate(**kwargs)
@@ -2958,7 +2543,7 @@ _____________________ test_valid_create[application/json] ______________________
 
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
-es = <tests.conftest.MockEs object at 0x7f1722426b38>
+es = <tests.conftest.MockEs object at 0x7fed0c369320>
 test_data = [{'stars': 4, 'title': 'Back to the Future', 'year': 2015}, {'stars': 3, 'title': 'Back to the Past', 'year': 2042}, {...4, 'title': "The Hitchhiker's Guide to the Galaxy", 'year': 1985}, {'stars': 5, 'title': 'Unknown film', 'year': 4242}]
 search_url = '/records/', search_class = <class 'tests.conftest.TestSearch'>
 content_type = 'application/json'
@@ -3068,7 +2653,7 @@ ______________ test_valid_create[application/json;charset=utf-8] _______________
 
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
-es = <tests.conftest.MockEs object at 0x7f171d8f8588>
+es = <tests.conftest.MockEs object at 0x7fed0c983e10>
 test_data = [{'stars': 4, 'title': 'Back to the Future', 'year': 2015}, {'stars': 3, 'title': 'Back to the Past', 'year': 2042}, {...4, 'title': "The Hitchhiker's Guide to the Galaxy", 'year': 1985}, {'stars': 5, 'title': 'Unknown film', 'year': 4242}]
 search_url = '/records/', search_class = <class 'tests.conftest.TestSearch'>
 content_type = 'application/json;charset=utf-8'
@@ -3178,7 +2763,7 @@ ____________________ test_invalid_create[application/json] _____________________
 
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
-es = <tests.conftest.MockEs object at 0x7f17234868d0>
+es = <tests.conftest.MockEs object at 0x7fed0ce1d860>
 test_data = [{'stars': 4, 'title': 'Back to the Future', 'year': 2015}, {'stars': 3, 'title': 'Back to the Past', 'year': 2042}, {...4, 'title': "The Hitchhiker's Guide to the Galaxy", 'year': 1985}, {'stars': 5, 'title': 'Unknown film', 'year': 4242}]
 search_url = '/records/', content_type = 'application/json'
 
@@ -3269,7 +2854,7 @@ _____________ test_invalid_create[application/json;charset=utf-8] ______________
 
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
-es = <tests.conftest.MockEs object at 0x7f171da7f048>
+es = <tests.conftest.MockEs object at 0x7fed0cdf2630>
 test_data = [{'stars': 4, 'title': 'Back to the Future', 'year': 2015}, {'stars': 3, 'title': 'Back to the Past', 'year': 2042}, {...4, 'title': "The Hitchhiker's Guide to the Galaxy", 'year': 1985}, {'stars': 5, 'title': 'Unknown film', 'year': 4242}]
 search_url = '/records/', content_type = 'application/json;charset=utf-8'
 
@@ -3359,8 +2944,8 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 _________________________ test_json_result_serializer __________________________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171dcf20b8> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171daaf518>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
-test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171dcf20b8> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171daaf518>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0bc316a0> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0bbc9b38>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+test_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0bc316a0> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0bbc9b38>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 search_url = '/records/'
 
     def test_json_result_serializer(app, indexed_records, test_records,
@@ -3436,7 +3021,7 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 ________________________________ test_page_size ________________________________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171d98fba8> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171d9c0f28>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed059839b0> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed059a8be0>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 search_url = '/records/'
 
     def test_page_size(app, indexed_records, search_url):
@@ -3511,7 +3096,7 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 ____________________ test_page_size_without_size_in_request ____________________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171d872780> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171d930748>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed05aa4e48> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0be9a908>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 search_url = '/records/'
 
     def test_page_size_without_size_in_request(
@@ -3586,7 +3171,7 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 _________ test_page_size_without_size_in_request_with_five_as_default __________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171b116f98> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171b24ad68>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed05960160> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0594c6d8>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 search_url = '/records/'
 
     def test_page_size_without_size_in_request_with_five_as_default(
@@ -3664,7 +3249,7 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 _______________________________ test_pagination ________________________________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171b2433c8> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171d91d048>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed05854e80> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0bde04a8>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 search_url = '/records/'
 
     def test_pagination(app, indexed_records, search_url):
@@ -3739,7 +3324,7 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 _______________________________ test_page_links ________________________________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171e1e36a0> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171d488278>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed05798630> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0bd132e8>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 search_url = '/records/'
 
     def test_page_links(app, indexed_records, search_url):
@@ -3814,7 +3399,7 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 __________________________________ test_query __________________________________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171b08be10> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171b04b278>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0c3ca160> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0bf15748>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 search_url = '/records/'
 
     def test_query(app, indexed_records, search_url):
@@ -3889,7 +3474,7 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 __________________________ test_es_query_syntax[app0] __________________________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171b03aa20> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171deed6d8>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed05ba0da0> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed05ae4390>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 search_url = '/records/'
 
     @pytest.mark.parametrize('app', [dict(
@@ -3969,7 +3554,7 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 ______________________ test_elasticsearch_exception[app0] ______________________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f1722453e10> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171e1c1d30>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0c9f41d0> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0c0b5eb8>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 
     @pytest.mark.parametrize('app', [dict(
         endpoint=dict(
@@ -4047,7 +3632,7 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 __________________________________ test_sort ___________________________________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f1722c3c208> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171d862e80>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0dff4b38> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0dff4198>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 search_url = '/records/'
 
     def test_sort(app, indexed_records, search_url):
@@ -4121,7 +3706,7 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 _____________________________ test_invalid_accept ______________________________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171b2acc50> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171b2acd30>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed056412e8> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0c41cb00>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 search_url = '/records/'
 
     def test_invalid_accept(app, indexed_records, search_url):
@@ -4197,7 +3782,7 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 ____________________________ test_aggregations_info ____________________________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171e2baba8> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171b2c9d30>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed05b606a0> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed058e2a20>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 search_url = '/records/'
 
     def test_aggregations_info(app, indexed_records, search_url):
@@ -4272,7 +3857,7 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 _________________________________ test_filters _________________________________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171aecef60> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171ae1ee48>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0cda8e48> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed0d349400>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 search_url = '/records/'
 
     def test_filters(app, indexed_records, search_url):
@@ -4346,7 +3931,7 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 _______________________________ test_query_wrong _______________________________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171acd02b0> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171abeeba8>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0be46da0> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed05a18668>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 search_url = '/records/'
 
     def test_query_wrong(app, indexed_records, search_url):
@@ -4420,7 +4005,7 @@ E       AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 ___________________________ test_dynamic_aggregation ___________________________
 
 app = <Flask 'testapp'>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171b045198> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171b0e24a8>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0545f898> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed05431470>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 search_url = '/records/'
 
     def test_dynamic_aggregation(app, indexed_records, search_url):
@@ -4505,8 +4090,8 @@ ________________________ test_default_serializer[app0] _________________________
 
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
-es = <tests.conftest.MockEs object at 0x7f171ddf8668>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f171d458080> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f171d429898>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+es = <tests.conftest.MockEs object at 0x7fed05431748>
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed032ac128> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed032ac198>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
 
     @pytest.mark.parametrize('app', [dict(
         endpoint=dict(
@@ -4597,10 +4182,10 @@ ___________________________ test_valid_suggest[app0] ___________________________
 
 app = <Flask 'testapp'>
 db = <SQLAlchemy engine=postgresql+psycopg2://invenio:***@postgresql:5432/wekotest>
-es = <tests.conftest.MockEs object at 0x7f171d429748>
-indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7f1718aee320> is not bound to a Session; attribute refr...stentIdentifier object at 0x7f1718b0c6a0>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
-mock_es_execute = <function mock_es_execute.<locals>._dummy_response at 0x7f171b1bdd08>
-mocker = <pytest_mock.plugin.MockFixture object at 0x7f1718ac83c8>
+es = <tests.conftest.MockEs object at 0x7fed0e01f8d0>
+indexed_records = [(<[DetachedInstanceError("Instance <PersistentIdentifier at 0x7fed0543b8d0> is not bound to a Session; attribute refr...stentIdentifier object at 0x7fed033315f8>, {'year': 4242, 'stars': 5, 'title': 'Unknown film', 'control_number': '4'})]
+mock_es_execute = <function mock_es_execute.<locals>._dummy_response at 0x7fed0bf6d268>
+mocker = <pytest_mock.plugin.MockFixture object at 0x7fed0543b588>
 
     @pytest.mark.parametrize('app', [dict(
         endpoint=dict(
@@ -4637,6 +4222,126 @@ E           TypeError: string indices must be integers
 
 ../tests/test_views_suggesters.py:53: TypeError
 =============================== warnings summary ===============================
+.tox/c1/lib/python3.6/site-packages/elementpath/tdop_parser.py:434
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/elementpath/tdop_parser.py:434: DeprecationWarning: invalid escape sequence \s
+    s.replace(r'\ ', '\s+')
+
+.tox/c1/lib/python3.6/site-packages/elementpath/tdop_parser.py:441
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/elementpath/tdop_parser.py:441: DeprecationWarning: invalid escape sequence \s
+    s = '%s\s*%s' % (s[:-4], s[-4:])
+
+.tox/c1/lib/python3.6/site-packages/elementpath/tdop_parser.py:439
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/elementpath/tdop_parser.py:439: DeprecationWarning: invalid escape sequence \s
+    s = '%s\s*%s' % (s[:-2], s[-2:])
+
+.tox/c1/lib/python3.6/site-packages/elementpath/xpath1_parser.py:32
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/elementpath/xpath1_parser.py:32: DeprecationWarning: invalid escape sequence \-
+    XML_NCNAME_PATTERN = u"[{0}][\-.0-9\u00B7\u0300-\u036F\u203F-\u2040{0}]*".format(XML_NAME_CHARACTER)
+
+.tox/c1/lib/python3.6/site-packages/elementpath/xpath1_parser.py:115
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/elementpath/xpath1_parser.py:115: DeprecationWarning: invalid escape sequence \s
+    axis_pattern_template = '\\b%s(?=\s*\\:\\:|\s*\\(\\:.*\\:\\)\s*\\:\\:)'
+
+.tox/c1/lib/python3.6/site-packages/elementpath/xpath1_parser.py:169
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/elementpath/xpath1_parser.py:169: DeprecationWarning: invalid escape sequence \s
+    function_pattern_template = '\\b%s(?=\s*\\(|\s*\\(\\:.*\\:\\)\\()'
+
+.tox/c1/lib/python3.6/site-packages/elementpath/xpath2_parser.py:1045
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/elementpath/xpath2_parser.py:1045: DeprecationWarning: invalid escape sequence \s
+    pattern='\\battribute(?=\s*\\:\\:|\s*\\(\\:.*\\:\\)\s*\\:\\:|\s*\\(|\s*\\(\\:.*\\:\\)\\()')
+
+.tox/c1/lib/python3.6/site-packages/xmlschema/regex.py:39
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/xmlschema/regex.py:39: DeprecationWarning: invalid escape sequence \-
+    u"\-.0-9:A-Z_a-z\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u037D\u037F-\u1FFF\u200C-"
+
+.tox/c1/lib/python3.6/site-packages/xmlschema/codepoints.py:31
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/xmlschema/codepoints.py:31: DeprecationWarning: invalid escape sequence \%
+    return u'\%s' % unicode_chr(cp)
+
+.tox/c1/lib/python3.6/site-packages/xmlschema/codepoints.py:35
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/xmlschema/codepoints.py:35: DeprecationWarning: invalid escape sequence \%
+    start_char = u'\%s' % unicode_chr(cp[0])
+
+.tox/c1/lib/python3.6/site-packages/xmlschema/codepoints.py:40
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/xmlschema/codepoints.py:40: DeprecationWarning: invalid escape sequence \%
+    end_char = u'\%s' % unicode_chr(cp[1])
+
+.tox/c1/lib/python3.6/site-packages/validators/url.py:5
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/validators/url.py:5: DeprecationWarning: invalid escape sequence \.
+    ip_middle_octet = u"(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5]))"
+
+.tox/c1/lib/python3.6/site-packages/validators/url.py:6
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/validators/url.py:6: DeprecationWarning: invalid escape sequence \.
+    ip_last_octet = u"(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))"
+
+.tox/c1/lib/python3.6/site-packages/validators/url.py:13
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/validators/url.py:13: DeprecationWarning: invalid escape sequence \S
+    u"(?:\S+(?::\S*)?@)?"
+
+.tox/c1/lib/python3.6/site-packages/validators/url.py:19
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/validators/url.py:19: DeprecationWarning: invalid escape sequence \.
+    u"(?:(?:169\.254|192\.168)" + ip_middle_octet + ip_last_octet + u")|"
+
+.tox/c1/lib/python3.6/site-packages/validators/url.py:20
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/validators/url.py:20: DeprecationWarning: invalid escape sequence \.
+    u"(?:172\.(?:1[6-9]|2\d|3[0-1])" + ip_middle_octet + ip_last_octet + u"))"
+
+.tox/c1/lib/python3.6/site-packages/validators/url.py:32
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/validators/url.py:32: DeprecationWarning: invalid escape sequence \d
+    u"(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])"
+
+.tox/c1/lib/python3.6/site-packages/validators/url.py:39
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/validators/url.py:39: DeprecationWarning: invalid escape sequence \.
+    u"(?:\.(?:[a-z\u00a1-\uffff0-9]-?)*[a-z\u00a1-\uffff0-9]+)*"
+
+.tox/c1/lib/python3.6/site-packages/validators/url.py:41
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/validators/url.py:41: DeprecationWarning: invalid escape sequence \.
+    u"(?:\.(?:[a-z\u00a1-\uffff]{2,}))"
+
+.tox/c1/lib/python3.6/site-packages/validators/url.py:44
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/validators/url.py:44: DeprecationWarning: invalid escape sequence \d
+    u"(?::\d{2,5})?"
+
+.tox/c1/lib/python3.6/site-packages/validators/url.py:46
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/validators/url.py:46: DeprecationWarning: invalid escape sequence \S
+    u"(?:/\S*)?"
+
+.tox/c1/lib/python3.6/site-packages/validators/url.py:48
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/validators/url.py:48: DeprecationWarning: invalid escape sequence \?
+    u"(?:\?\S*)?"
+
+.tox/c1/lib/python3.6/site-packages/jsonpath_ng/ext/string.py:18
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/jsonpath_ng/ext/string.py:18: DeprecationWarning: invalid escape sequence \(
+    SUB = re.compile("sub\(/(.*)/,\s+(.*)\)")
+
+.tox/c1/lib/python3.6/site-packages/jsonpath_ng/ext/string.py:19
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/jsonpath_ng/ext/string.py:19: DeprecationWarning: invalid escape sequence \(
+    SPLIT = re.compile("split\((.),\s+(\d+),\s+(\d+|-1)\)")
+
+.tox/c1/lib/python3.6/site-packages/jsonpath_ng/ext/string.py:20
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/jsonpath_ng/ext/string.py:20: DeprecationWarning: invalid escape sequence \(
+    STR = re.compile("str\(\)")
+
+.tox/c1/lib/python3.6/site-packages/citeproc/formatter/rst.py:8
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/citeproc/formatter/rst.py:8: DeprecationWarning: invalid escape sequence \*
+    text = text.replace('*', '\*')
+
+.tox/c1/lib/python3.6/site-packages/citeproc/formatter/rst.py:9
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/citeproc/formatter/rst.py:9: DeprecationWarning: invalid escape sequence \`
+    text = text.replace('`', '\`')
+
+.tox/c1/lib/python3.6/site-packages/citeproc/model.py:671
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/citeproc/model.py:671: DeprecationWarning: invalid escape sequence \d
+    m = re.search('\d+', first)
+
+.tox/c1/lib/python3.6/site-packages/citeproc/source/bibtex/bibtex.py:156
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/citeproc/source/bibtex/bibtex.py:156: DeprecationWarning: invalid escape sequence \d
+    RE_DAY = '(?P<day>\d+)'
+
+.tox/c1/lib/python3.6/site-packages/citeproc/source/bibtex/bibtex.py:157
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/citeproc/source/bibtex/bibtex.py:157: DeprecationWarning: invalid escape sequence \w
+    RE_MONTH = '(?P<month>\w+)'
+
 tests/test_custom_endpoints.py::test_get_record[app0]
   /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/pkg_resources/_vendor/packaging/specifiers.py:276: DeprecationWarning: Creating a LegacyVersion has been deprecated and will be removed in the next major release
     DeprecationWarning,
@@ -14628,6 +14333,54 @@ tests/test_views_suggesters.py::test_valid_suggest[app0]
   /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/pkg_resources/_vendor/packaging/version.py:114: DeprecationWarning: Creating a LegacyVersion has been deprecated and will be removed in the next major release
     DeprecationWarning,
 
+tests/test_custom_endpoints.py::test_get_record[app0]
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/b2handle/clientcredentials.py:102: DeprecationWarning: invalid escape sequence \*
+    '''
+
+tests/test_custom_endpoints.py::test_get_record[app0]
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/b2handle/handleexceptions.py:128: DeprecationWarning: invalid escape sequence \s
+    pat = re.compile('>[\s]+<')
+
+tests/test_custom_endpoints.py::test_get_record[app0]
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/past/types/oldstr.py:33: DeprecationWarning: invalid escape sequence \d
+    """
+
+tests/test_custom_endpoints.py::test_get_record[app0]
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/b2handle/handleclient.py:177: DeprecationWarning: invalid escape sequence \*
+    '''
+
+tests/test_custom_endpoints.py::test_get_record[app0]
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/b2handle/handleclient.py:197: DeprecationWarning: invalid escape sequence \*
+    '''
+
+tests/test_custom_endpoints.py::test_get_record[app0]
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/b2handle/handleclient.py:230: DeprecationWarning: invalid escape sequence \*
+    '''
+
+tests/test_custom_endpoints.py::test_get_record[app0]
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/b2handle/handleclient.py:248: DeprecationWarning: invalid escape sequence \*
+    '''
+
+tests/test_custom_endpoints.py::test_get_record[app0]
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/webassets/filter/__init__.py:51: DeprecationWarning: invalid escape sequence \,
+    """
+
+tests/test_custom_endpoints.py::test_get_record[app0]
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/webassets/filter/replace.py:20: DeprecationWarning: invalid escape sequence \s
+    """
+
+tests/test_custom_endpoints.py::test_get_record[app0]
+  /code/modules/invenio-records-rest/.tox/c1/bin/bagit.py:926: DeprecationWarning: invalid escape sequence \c
+    """
+
+tests/test_custom_endpoints.py::test_get_record[app0]
+  /code/modules/invenio-records-rest/.tox/c1/src/pypdf2/PyPDF2/generic.py:348: DeprecationWarning: invalid escape sequence \c
+    b_("c") : b_("\c"),
+
+tests/test_custom_endpoints.py::test_get_record[app0]
+  /code/modules/invenio-records-rest/.tox/c1/lib/python3.6/site-packages/sickle/utils.py:20: DeprecationWarning: invalid escape sequence \{
+    return re.search('(\{.*\})', element.tag).group(1)
+
 tests/test_custom_fields.py::test_load_custom_fields
 tests/test_custom_fields.py::test_load_custom_fields
 tests/test_custom_fields.py::test_load_custom_fields
@@ -14679,7 +14432,7 @@ invenio_records_rest/schemas/fields/sanitizedunicode.py          16      0      
 invenio_records_rest/schemas/fields/trimmedstring.py              7      0      2      0   100%
 invenio_records_rest/schemas/json.py                             43      8     31      5    77%
 invenio_records_rest/serializers/__init__.py                      9      0      0      0   100%
-invenio_records_rest/serializers/base.py                         85      5     36      0    96%
+invenio_records_rest/serializers/base.py                         94     48     42      1    46%
 invenio_records_rest/serializers/citeproc.py                     59      5     12      1    89%
 invenio_records_rest/serializers/datacite.py                     45      0     12      0   100%
 invenio_records_rest/serializers/dc.py                           17      0      4      0   100%
@@ -14687,16 +14440,16 @@ invenio_records_rest/serializers/json.py                         15      0      
 invenio_records_rest/serializers/jsonld.py                       33      8     12      0    69%
 invenio_records_rest/serializers/marshmallow.py                  20      0      2      0   100%
 invenio_records_rest/serializers/response.py                     67     37     22      3    42%
-invenio_records_rest/sorter.py                                   60      5     30      4    88%
+invenio_records_rest/sorter.py                                   62      6     32      5    86%
 invenio_records_rest/utils.py                                    86     16     32      1    84%
 invenio_records_rest/version.py                                   3      0      0      0   100%
-invenio_records_rest/views.py                                   455    180    159     23    56%
+invenio_records_rest/views.py                                   457    182    159     23    56%
 -----------------------------------------------------------------------------------------------
-TOTAL                                                          1447    306    506     45    77%
+TOTAL                                                          1460    352    514     47    73%
 Coverage HTML written to dir htmlcov
 Coverage XML written to file coverage.xml
 
-======= 57 failed, 57 passed, 10006 warnings, 1 error in 336.20 seconds ========
+======= 51 failed, 63 passed, 10048 warnings, 1 error in 336.88 seconds ========
 ERROR: InvocationError for command /code/modules/invenio-records-rest/.tox/c1/bin/pytest --cov=invenio_records_rest tests -v --cov-branch --cov-report=term --cov-report=xml --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp (exited with code 1)
 ___________________________________ summary ____________________________________
 ERROR:   c1: commands failed
