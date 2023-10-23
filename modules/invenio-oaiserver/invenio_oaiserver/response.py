@@ -748,38 +748,40 @@ def combine_record_file_urls(record, object_uuid, meta_prefix):
     mapping_type = metadata_formats[meta_prefix]['serializer'][1]['schema_type']
     item_map = get_mapping(type_mapping,
                            "{}_mapping".format(mapping_type))
-    file_keys = None
+    file_keys_str = None
     if item_map:
         file_props = current_app.config["OAISERVER_FILE_PROPS_MAPPING"]
         if mapping_type in file_props:
-            file_keys = item_map.get(file_props[mapping_type])
+            file_keys_str = item_map.get(file_props[mapping_type])
         else:
-            file_keys = None
+            file_keys_str = None
 
-    if not file_keys:
+    if not file_keys_str:
         return record
     else:
-        file_keys = file_keys.split('.')
+        file_keys = file_keys_str.split(',')
 
-    if len(file_keys) == 3 and record.get(file_keys[0]):
-        attr_mlt = record[file_keys[0]]["attribute_value_mlt"]
-        if isinstance(attr_mlt, list):
-            for attr in attr_mlt:
-                if attr.get('filename'):
-                    if not attr.get(file_keys[1]):
-                        attr[file_keys[1]] = {}
-                    attr[file_keys[1]][file_keys[2]] = create_files_url(
-                        request.url_root,
-                        record.get('recid'),
-                        attr.get('filename'))
-        elif isinstance(attr_mlt, dict) and \
-                attr_mlt.get('filename'):
-            if not attr_mlt.get(file_keys[1]):
-                attr_mlt[file_keys[1]] = {}
-            attr_mlt[file_keys[1]][file_keys[2]] = create_files_url(
-                request.url_root,
-                record.get('recid'),
-                attr_mlt.get('filename'))
+    for file_key in file_keys:
+        key = file_key.split('.')
+        if len(key) == 3 and record.get(key[0]):
+            attr_mlt = record[key[0]]["attribute_value_mlt"]
+            if isinstance(attr_mlt, list):
+                for attr in attr_mlt:
+                    if attr.get('filename'):
+                        if not attr.get(key[1]):
+                            attr[key[1]] = {}
+                        attr[key[1]][key[2]] = create_files_url(
+                            request.url_root,
+                            record.get('recid'),
+                            attr.get('filename'))
+            elif isinstance(attr_mlt, dict) and \
+                    attr_mlt.get('filename'):
+                if not attr_mlt.get(key[1]):
+                    attr_mlt[key[1]] = {}
+                attr_mlt[key[1]][key[2]] = create_files_url(
+                    request.url_root,
+                    record.get('recid'),
+                    attr_mlt.get('filename'))
 
     return record
 

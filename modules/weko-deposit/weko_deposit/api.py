@@ -60,7 +60,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
 from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
-    ItemTypes, Mapping
+    ItemTypes
 from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, remove_weko2_special_character, \
@@ -1919,10 +1919,12 @@ class WekoRecord(Record):
         return ''
 
     @staticmethod
-    def __get_titles_key(item_type_mapping):
+    def __get_titles_key(item_type_mapping, meta_option, hide_list):
         """Get title keys in item type mapping.
 
         :param item_type_mapping: item type mapping.
+        :param meta_option: item type option
+        :param hide_list: hide item list of item type
         :return:
         """
         parent_key = None
@@ -1931,14 +1933,24 @@ class WekoRecord(Record):
         for mapping_key in item_type_mapping:
             property_data = item_type_mapping.get(mapping_key).get(
                 'jpcoar_mapping')
+            prop_hidden = meta_option.get(mapping_key, {}).get('option', {}).get('hidden', False)
             if (
                 isinstance(property_data, dict)
                 and property_data.get('title')
+                and not prop_hidden
             ):
                 title = property_data.get('title')
                 parent_key = mapping_key
                 title_key = title.get("@value")
                 language_key = title.get("@attributes", {}).get("xml:lang")
+                for h in hide_list:
+                    if parent_key in h and language_key in h:
+                        language_key = None
+                    if parent_key in h and title_key in h:
+                        title_key = None
+                        parent_key = None
+                if parent_key and title_key and language_key:
+                    break
         return parent_key, title_key, language_key
 
     @property
@@ -1951,9 +1963,11 @@ class WekoRecord(Record):
             sqlalchemy.exc.OperationalError
             TypeError
         """
-        item_type_mapping = Mapping.get_record(self.get('item_type_id'))
+        from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
+        meta_option, item_type_mapping = get_options_and_order_list(self.get('item_type_id'))
+        hide_list = get_hide_list_by_schema_form(self.get('item_type_id'))
         parent_key, title_key, language_key = self.__get_titles_key(
-            item_type_mapping)
+            item_type_mapping, meta_option, hide_list)
         title_metadata = self.get(parent_key)
         titles = []
         if title_metadata:

@@ -1681,21 +1681,53 @@ def handle_item_title(list_record):
     :return
 
     """
+    from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
+    from weko_records.utils import check_info_in_metadata
+        
     for item in list_record:
         error = None
-        item_type_mapping = Mapping.get_record(item["item_type_id"])
+        meta_option, item_type_mapping = get_options_and_order_list(item["item_type_id"])
+        hide_list = get_hide_list_by_schema_form(item["item_type_id"])
         item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
         # current_app.logger.debug("item_type_mapping: {}".format(item_type_mapping))
         # current_app.logger.debug("item_map: {}".format(item_map))
         title_data, _title_key = get_data_by_property(
             item["metadata"], item_map, "title.@value"
         )
-        if not title_data:
-            error = _("Title is required item.")
-        else:
-            item["item_title"] = title_data[0]
+        title_lang_data, _title_lang_key = get_data_by_property(
+            item["metadata"], item_map, "title.@attributes.xml:lang"
+        )
+        title_val = None
+        lang_key_list = _title_lang_key.split(",")
+        val_key_list = _title_key.split(",")
+        for val_key in val_key_list:
+            val_parent_key = val_key.split(".")[0]
+            val_sub_key = val_key.split(".")[-1]
+            for lang_key in lang_key_list:
+                if val_parent_key == lang_key.split(".")[0]:
+                    prop_hidden = meta_option.get(val_parent_key, {}).get('option', {}).get('hidden', False)
+                    for h in hide_list:
+                        if h.startswith(val_parent_key) and h.endswith(val_sub_key):
+                            prop_hidden = True
+                    if (
+                        title_lang_data is not None
+                        and title_data is not None
+                        and title_lang_data is not None
+                        and len(title_data) > 0
+                        and len(title_lang_data) > 0
+                        and not prop_hidden
+                    ):
+                        title_val = check_info_in_metadata(
+                            lang_key, val_key, title_lang_data[0], item["metadata"]
+                        )
+                        item["item_title"] = title_val
+                if title_val:
+                    break
+            if title_val:
+                break
 
-        if error:
+        if not title_val:
+            error = _("Title is required item.")
             item["errors"] = item["errors"] + [error] if item.get("errors") else [error]
 
 
@@ -3896,20 +3928,21 @@ def get_data_by_property(item_metadata, item_map, mapping_key):
     :param mapping_key: Mapping key.
     :return: Property key and values.
     """
-    key = item_map.get(mapping_key)
+    key_list = item_map.get(mapping_key)
     data = []
-    if not key:
+    if not key_list:
         current_app.logger.error(str(mapping_key) + " jpcoar:mapping " "is not correct")
         return None, None
-    attribute = item_metadata.get(key.split(".")[0])
-    if not attribute:
-        return None, key
-    else:
-        data_result = get_sub_item_value(attribute, key.split(".")[-1])
-        if data_result:
-            for value in data_result:
-                data.append(value)
-    return data, key
+    for key in key_list.split(","):
+        attribute = item_metadata.get(key.split(".")[0])
+        if not attribute:
+            return None, key_list
+        else:
+            data_result = get_sub_item_value(attribute, key.split(".")[-1])
+            if data_result:
+                for value in data_result:
+                    data.append(value)
+    return data, key_list
 
 
 def get_filenames_from_metadata(metadata):

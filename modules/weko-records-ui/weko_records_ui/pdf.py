@@ -39,14 +39,14 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from PyPDF2 import PdfFileReader, PdfFileWriter
 from weko_deposit.api import WekoRecord
 from weko_items_autofill.utils import get_workflow_journal
-from weko_records.api import ItemsMetadata, Mapping
+from weko_records.api import ItemsMetadata
 from weko_records.serializers.feed import WekoFeedGenerator
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import get_value_by_selected_lang
 from weko_workflow.api import WorkActivity
 
 from weko_records_ui.utils import get_record_permalink, \
-    is_show_email_of_creator
+    item_setting_show_email
 
 from .models import PDFCoverPageSettings
 from .utils import get_license_pdf, get_pair_value
@@ -164,6 +164,10 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         oa_policy = waj.get('keywords', '')
 
         return oa_policy
+    
+    from weko_search_ui.utils import get_data_by_property
+    from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
+    from weko_records.utils import selected_value_by_language
 
     file_path = current_app.config['PDF_COVERPAGE_LANG_FILEPATH']
     file_name = current_app.config['PDF_COVERPAGE_LANG_FILENAME']
@@ -172,13 +176,20 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
 
     pid_object = get_pid_object(pid.pid_value)
     item_metadata_json = ItemsMetadata.get_record(pid_object.object_uuid)
+    wekoRecord = WekoRecord.get_record_by_pid(pid.pid_value)
     item_type = ItemsMetadata.get_by_object_id(pid_object.object_uuid)
     item_type_id = item_type.item_type_id
-    type_mapping = Mapping.get_record(item_type_id)
+    meta_options, type_mapping = get_options_and_order_list(item_type_id)
+    hide_list = get_hide_list_by_schema_form(item_type_id)
     item_map = get_mapping(type_mapping, "jpcoar_mapping")
 
-    with open(lang_file_path) as json_datafile:
-        lang_data = json.loads(json_datafile.read())
+    try:
+        with open(lang_file_path) as json_datafile:
+            lang_data = json.loads(json_datafile.read())
+    except FileNotFoundError:
+        lang_file_path = file_path + 'en' + file_name
+        with open(lang_file_path) as json_datafile:
+            lang_data = json.loads(json_datafile.read())
 
     # Initialize Instance
     pdf = FPDF('P', 'mm', 'A4')
@@ -269,53 +280,33 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     fg = WekoFeedGenerator()
     fe = fg.add_entry()
 
+    # get item key of file
     _file = 'file.URI.@value'
     _file_item_id = None
-
     if _file in item_map:
         _file_item_id = item_map[_file].split('.')[0]
         _file_item_id = _file_item_id.replace('fileinfo', 'files')
 
-    _creator = 'creator.creatorName.@value'
-    _creator_item_id = None
-
-    if _creator in item_map:
-        _creator_item_id = item_map[_creator].split('.')[0]
-
+    # get title info
     title_attr_lang = 'title.@attributes.xml:lang'
     title_value = 'title.@value'
-    title_item_id = None
-
-    publisher_attr_lang = 'publisher.@attributes.xml:lang'
-    publisher_value = 'publisher.@value'
-    publisher_item_id = None
-    publisher_lang_id = None
-    publisher_text_id = None
-
-    keyword_attr_lang = 'subject.@attributes.xml:lang'
-    keyword_attr_value = 'subject.@value'
-    keyword_base = None
-    keyword_lang = None
-
-    try:
-        multi_lang_value = {}
-        title_item_id = item_map[title_attr_lang].split('.')[0]
-        title_lang_ids = item_map[title_attr_lang].split('.')[1:]
-        title_text_ids = item_map[title_value].split('.')[1:]
-        title = None
-        titles = item_metadata_json[title_item_id]
-        pair_name_language_title = get_pair_value(title_text_ids,
-                                                  title_lang_ids,
-                                                  titles)
-        for title_name, title_lang in pair_name_language_title:
-            if not title_lang:
-                title_lang == 'None Language'
-            multi_lang_value[title_lang] = title_name
-        title = get_value_by_selected_lang(multi_lang_value, cur_lang)
-        if not title:
-            title = item_metadata_json['title']
-    except (KeyError, IndexError):
-        title = item_metadata_json['title']
+    title = item_metadata_json.get('item_title')
+    if title_value in item_map:
+        # get language
+        title_languages, _title_key = get_data_by_property(
+            wekoRecord, item_map, title_attr_lang)
+        # get value
+        title_values, _title_key1 = get_data_by_property(
+            wekoRecord, item_map, title_value)
+        title = selected_value_by_language(
+            title_languages,
+            title_values,
+            _title_key,
+            _title_key1,
+            cur_lang,
+            wekoRecord,
+            meta_options,
+            hide_list)
 
     # Title settings
     pdf.set_font('IPAexm', '', 20)
@@ -327,10 +318,16 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
 
     try:
         lang_field = item_map['language.@value'].split('.')
-        if item_metadata_json[lang_field[0]][lang_field[1]] == 'eng':
-            item_metadata_json['lang'] = 'English'
-        elif item_metadata_json[lang_field[0]][lang_field[1]] == 'jpn':
-            item_metadata_json['lang'] = 'Japanese'
+        if isinstance(item_metadata_json[lang_field[0]], dict):
+            if item_metadata_json[lang_field[0]][lang_field[1]] == 'eng':
+                item_metadata_json['lang'] = 'English'
+            elif item_metadata_json[lang_field[0]][lang_field[1]] == 'jpn':
+                item_metadata_json['lang'] = 'Japanese'
+        elif isinstance(item_metadata_json[lang_field[0]], list):
+            if item_metadata_json[lang_field[0]][0][lang_field[1]] == 'eng':
+                item_metadata_json['lang'] = 'English'
+            elif item_metadata_json[lang_field[0]][0][lang_field[1]] == 'jpn':
+                item_metadata_json['lang'] = 'Japanese'
     except BaseException:
         pass
 
@@ -339,65 +336,119 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     except (KeyError, IndexError):
         lang = None
 
+    # get publisher info
+    publisher_attr_lang = 'publisher.@attributes.xml:lang'
+    publisher_value = 'publisher.@value'
     try:
         multi_lang_value = {}
-        publisher_item_id = item_map[publisher_attr_lang].split('.')[0]
-        publisher_lang_ids = item_map[publisher_attr_lang].split('.')[1:]
-        publisher_text_ids = item_map[publisher_value].split('.')[1:]
-        publisher = []
-        publishers = item_metadata_json[publisher_item_id]
-        pair_name_language_publisher = get_pair_value(publisher_text_ids,
-                                                      publisher_lang_ids,
-                                                      publishers)
-        for publisher_name, publisher_lang in pair_name_language_publisher:
-            if not publisher_lang:
-                publisher_lang == 'None Language'
-            multi_lang_value[publisher_lang] = publisher_name
-        value = get_value_by_selected_lang(multi_lang_value, cur_lang)
-        if value:
-            publisher.append(value)
+        for i in item_map[publisher_value].split(','):
+            value_key_list = i.split('.')
+            publisher_item_id = value_key_list[0]
+            prop_hidden = meta_options.get(publisher_item_id, {}).get('option', {}).get('hidden', False)
+            for h in hide_list:
+                if h.startswith(publisher_item_id) and h.endswith(value_key_list[-1]):
+                    prop_hidden = True
+            if prop_hidden:
+                continue
+            for j in item_map[publisher_attr_lang].split(','):
+                lang_key_list = j.split('.')
+                if publisher_item_id == lang_key_list[0]:
+                    publisher_lang_ids = lang_key_list[1:]
+                    publisher_text_ids = value_key_list[1:]
+                    publisher = []
+                    publishers = item_metadata_json[publisher_item_id]
+                    pair_name_language_publisher = get_pair_value(publisher_text_ids,
+                                                                  publisher_lang_ids,
+                                                                  publishers)
+                    for publisher_name, publisher_lang in pair_name_language_publisher:
+                        if not publisher_lang:
+                            publisher_lang == 'None Language'
+                        multi_lang_value[publisher_lang] = publisher_name
+                    value = get_value_by_selected_lang(multi_lang_value, cur_lang)
+                    if value:
+                        publisher.append(value)
     except (KeyError, IndexError):
         publisher = []
 
+    # get pub date info
     try:
         pubdate = item_metadata_json.get('pubdate')
     except (KeyError, IndexError):
         pubdate = None
 
+    # get keyword info
+    keyword_attr_lang = 'subject.@attributes.xml:lang'
+    keyword_attr_value = 'subject.@value'
+    keywords_ja = []
+    keywords_en = []
     try:
-        keyword_item_id = item_map[keyword_attr_lang].split('.')[0]
-        keyword_item_langs = item_map[keyword_attr_lang].split('.')[1:]
-        keyword_item_values = item_map[keyword_attr_value].split('.')[1:]
-        keyword_base = item_metadata_json.get(keyword_item_id)
-        keywords_ja = []
-        keywords_en = []
-        pair_name_language_keyword = get_pair_value(keyword_item_values,
-                                                    keyword_item_langs,
-                                                    keyword_base)
-
-        for name, keyword_lang in pair_name_language_keyword:
-            if keyword_lang == 'ja' and name:
-                keywords_ja.append(name)
-            elif keyword_lang == 'en' and name:
-                keywords_en.append(name)
-
+        for i in item_map[keyword_attr_value].split(','):
+            value_key_list = i.split('.')
+            keyword_item_id = value_key_list[0]
+            prop_hidden = meta_options.get(keyword_item_id, {}).get('option', {}).get('hidden', False)
+            for h in hide_list:
+                if h.startswith(keyword_item_id) and h.endswith(value_key_list[-1]):
+                    prop_hidden = True
+            if prop_hidden:
+                continue
+            for j in item_map[keyword_attr_lang].split(','):
+                lang_key_list = j.split('.')
+                if keyword_item_id == lang_key_list[0]:
+                    keyword_item_langs = lang_key_list[1:]
+                    keyword_item_values = value_key_list[1:]
+                    keyword_base = item_metadata_json.get(keyword_item_id)
+                    pair_name_language_keyword = get_pair_value(keyword_item_values,
+                                                                keyword_item_langs,
+                                                                keyword_base)
+                    for name, keyword_lang in pair_name_language_keyword:
+                        if keyword_lang == 'ja' and name:
+                            keywords_ja.append(name)
+                        elif keyword_lang == 'en' and name:
+                            keywords_en.append(name)
     except (KeyError, IndexError):
         keywords_ja = []
         keywords_en = []
 
-    creator_items = item_metadata_json.get(_creator_item_id, [])
-
-    if type(creator_items) is dict:
-        creator_items = [creator_items]
+    # get creator info
+    _creator = 'creator.creatorName.@value'
+    creator_items = []
+    if _creator in item_map:
+        for k in item_map[_creator].split(','):
+            hide_email = False
+            hide_name = False
+            hide_affiliation = False
+            value_key_list = k.split('.')
+            _creator_item_id = value_key_list[0]
+            prop_hidden = meta_options.get(_creator_item_id, {}).get('option', {}).get('hidden', False)
+            for h in hide_list:
+                if h.startswith(_creator_item_id) and 'creatorMails' in h:
+                    hide_email = True
+                elif h.startswith(_creator_item_id) and h.endswith('creatorName'):
+                    hide_name = True
+                elif h.startswith(_creator_item_id) and 'creatorAffiliations' in h and h.endswith('affiliationName'):
+                    hide_affiliation = True
+            if prop_hidden:
+                continue
+            _items_list = item_metadata_json.get(_creator_item_id, [])
+            if isinstance(_items_list, dict):
+                creator_items += [_items_list]
+            elif isinstance(_items_list, list):
+                creator_items += _items_list
+            for creator_item in creator_items:
+                if hide_email and 'creatorMails' in creator_item:
+                    creator_item.pop('creatorMails')
+                if hide_name and 'creatorNames' in creator_item:
+                    creator_item.pop('creatorNames')
+                if hide_affiliation and 'creatorAffiliations' in creator_item:
+                    creator_item.pop('creatorAffiliations')
 
     creator_mail_list = []
     creator_name_list = []
     creator_affiliation_list = []
-    is_show_email = is_show_email_of_creator(item_type_id)
 
     for creator_item in creator_items:
         # Get creator mail
-        if is_show_email:
+        if item_setting_show_email():
             creator_mails = creator_item.get('creatorMails', [])
 
             for creator_mail in creator_mails:

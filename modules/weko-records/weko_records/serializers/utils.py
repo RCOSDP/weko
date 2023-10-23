@@ -62,8 +62,10 @@ def get_mapping(item_type_mapping, mapping_type):
         if mapping_type in maps.keys() and isinstance(maps[mapping_type], dict):
             item_schema = get_schema_key_info(maps[mapping_type], '', {})
             for k, v in item_schema.items():
-                item_schema[k] = item_id + '.' + v if v else item_id
-            schema.update(item_schema)
+                if k in schema:
+                    schema[k] += ',' + item_id + '.' + v if v else ',' + item_id
+                else:
+                    schema[k] = item_id + '.' + v if v else item_id
 
     return schema
 
