@@ -1,84 +1,144 @@
 {# -*- coding: utf-8 -*-
-    #
-    # This file is part of WEKO3.
-    # Copyright (C) 2017 National Institute of Informatics.
-    #
-    # WEKO3 is free software; you can redistribute it
-    # and/or modify it under the terms of the GNU General Public License as
-    # published by the Free Software Foundation; either version 2 of the
-    # License, or (at your option) any later version.
-    #
-    # WEKO3 is distributed in the hope that it will be
-    # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-    # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    # General Public License for more details.
-    #
-    # You should have received a copy of the GNU General Public License
-    # along with WEKO3; if not, write to the
-    # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-    # MA 02111-1307, USA.
-    #}
-    
-    <div class="well" style="text-align:center;">
-        <div class="hide" id="analysis_url">{{analysis_url}}</div>
-        {%- if rights_values -%}
-            <button class="term-condtion-modal btn btn-primary" id="btn_analysis"
-                    data-modal-id="#show_rights_info">
-                {{_('Online Analysis')}}
-            </button>
-        {%- else -%}
-            <button class="next_to_analysis term-condtion-modal btn btn-primary" id="btn_analysis">
-                {{_('Online Analysis')}}
-            </button>
-        {%- endif -%}
-    </div>
-    <div class="modal fade" id="show_rights_info"
-         tabindex="-1" role="dialog"
-         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+<div class="well" style="text-align:center;margin-bottom:0px;">
+    <div class="hide" id="analysis_url">{{analysis_url}}</div>
+
+    <!-- TODO ITEM LINK EVIDENCE START -->
+    <button id="item-link-register-data-btn" type="button" class="btn btn-primary"
+        data-toggle="modal" data-target="#item-link-register-data-modal"
+        style="text-align:center;width:55%;margin-bottom:10px;">
+        データ登録
+    </button>
+    <!--? Modal START -->
+    <div class="modal fade" id="item-link-register-data-modal" tabindex="-1" role="dialog"
+        aria-labelledby="item-link-register-data-modal-label" aria-hidden="true">
+        <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3 class="modal-title"
-                        id="exampleModalLongTitle">{{ _('Terms of Use') }}</h3>
-                    <button type="button" class="close" data-dismiss="modal"
-                            aria-label="Close">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
+                    <!--? Modal TITLE -->
+                    <h1 class="modal-title" id="item-link-register-data-modal-label" style="text-align:left">
+                        <strong>データ登録</strong>
+                    </h1>
+                    <h4 style="text-align:left">
+                        登録方法を選んでください
+                    </h4>
                 </div>
+                
                 <div class="modal-body">
-                    <div class="panel panel-default panel-body"
-                            style="overflow-y: auto; max-height:400px;">
-                        <div class="form-check">
-                            <span class="action-name" style="white-space: pre-wrap;">
-                                {%- if rights_values -%}
-                                    {%- for k, v in rights_values.items() -%}
-                                        <b>{{v['item_title']}}</b><br/>
-                                        {%- for right in v['item_values'] -%}
-                                            <span style="margin-left:10px;">{{right}}</span><br/>
-                                        {%- endfor -%}
-                                        <br/>
-                                    {%- endfor -%}
-                                {%- endif -%}
-                            </span>
-                            <div style="position: relative;">
-                                <input type="checkbox" class="pointer term_of_use_checked"
-                                    id="term_of_use_checked"
-                                    name="term_check">
-                                <label class="form-check-label pointer"
-                                for="term_of_use_checked"
-                                style="position: absolute;top: 1px;left: 20px;">
-                                    {{ _('I have read and agreed to the Terms of Use') }}
-                                </label>
-                            </div>
-                        </div>
+
+                    <div>
+                        {{pid}}
+                        <hr>
+                        {{all_versions}}
+                        <hr>
+                        {{record}}
+                        <hr>
+                        {{community_id}}
+                    </div>
+                    <br>
+
+                    <div class="flex justify-space-between">
+                        <span style="margin-right:1rem;">
+                            <a href="{{ url_for('weko_workflow.new_activity', pid_value=active_versions[0].pid_value) }}">
+                                <button id="item-link-register-new-data-btn" type="button" class="btn btn-light"
+                                style="text-align:center;width:35%;color:black;">
+                                    <h4>新規データ登録</h4>
+                                </button>
+                            </a>
+                        </span>
+                        <span>
+                            <!-- <a href=""> -->
+                            <!-- <a href="#!" id="item-link-register-new-data-btn" data-pid-value="{{ pid.pid_value }}" -->
+                            <a href="#!" id="item-link-register-existing-data-btn" data-pid-value="{{ pid.pid_value }}"
+                            {%- if community -%}data-community="{{ community.id }}" {%- endif -%}>
+                                <button id="item-link-register-existing-data-btn" type="button" class="btn btn-light"
+                                    style="text-align:center;width:35%;color:black;">
+                                    <h4>既存データ登録</h4>
+                                </button>
+                            </a>
+                        </span>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button id="next_to_analysis"
-                            type="button" class="next_to_analysis btn btn-primary disabled"
-                            disabled>{{ _('Next') }}</button>
-                </div>
+                
             </div>
         </div>
     </div>
-    
+    <!--? Modal END -->
+    <!--TODO ITEM LINK EVIDENCE END -->
+
+    {%- if rights_values -%}
+    <button class="term-condtion-modal btn btn-primary" id="btn_analysis" data-modal-id="#show_rights_info"
+        style="text-align:center;width:55%;">
+        {{_('Online Analysis')}}
+    </button>
+    {%- else -%}
+    <button class="next_to_analysis term-condtion-modal btn btn-primary" id="btn_analysis"
+        style="text-align:center;width:55%;">
+        {{_('Online Analysis')}}
+    </button>
+    {%- endif -%}
+</div>
+<div class="modal fade" id="show_rights_info" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="exampleModalLongTitle">{{ _('Terms of Use') }}</h3>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="panel panel-default panel-body" style="overflow-y: auto; max-height:400px;">
+                    <div class="form-check">
+                        <span class="action-name" style="white-space: pre-wrap;">
+                            {%- if rights_values -%}
+                            {%- for k, v in rights_values.items() -%}
+                            <b>{{v['item_title']}}</b><br />
+                            {%- for right in v['item_values'] -%}
+                            <span style="margin-left:10px;">{{right}}</span><br />
+                            {%- endfor -%}
+                            <br />
+                            {%- endfor -%}
+                            {%- endif -%}
+                        </span>
+                        <div style="position: relative;">
+                            <input type="checkbox" class="pointer term_of_use_checked" id="term_of_use_checked"
+                                name="term_check">
+                            <label class="form-check-label pointer" for="term_of_use_checked"
+                                style="position: absolute;top: 1px;left: 20px;">
+                                {{ _('I have read and agreed to the Terms of Use') }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="next_to_analysis" type="button" class="next_to_analysis btn btn-primary disabled"
+                    disabled>{{ _('Next') }}</button>
+            </div>
+        </div>
+    </div>
+</div>

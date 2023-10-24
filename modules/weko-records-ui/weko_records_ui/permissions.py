@@ -305,6 +305,10 @@ def get_permission(record, fjson):
     record_id = record.get('recid')
     file_name = fjson.get('filename')
     list_permission = __get_file_permission(record_id, file_name)
+    print("\n\n")
+    print(record_id)
+    print(file_name)
+    print("\n\n")
     if list_permission:
         permission = list_permission[0]
         if permission.status == 1:
@@ -313,6 +317,12 @@ def get_permission(record, fjson):
             activity_id = permission.usage_application_activity_id
             activity = WorkActivity()
             steps = activity.get_activity_steps(activity_id)
+
+            print("\n\n9999")
+            print(activity_id)
+            print(steps)
+            print("\n\n")
+
             if steps:
                 for step in steps:
                     if step and step['Status'] == 'action_canceled':

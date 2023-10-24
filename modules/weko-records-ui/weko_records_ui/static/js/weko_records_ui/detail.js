@@ -70,6 +70,57 @@ require([
     });
   });
 
+  //TODO NEW FUNCTION
+  $('#item-link-register-existing-data-btn').on('click', function () {
+    let post_uri = "/api/items/prepare_item_link";
+    let pid_val = $(this).data('pid-value');
+    let community = $(this).data('community');
+    let post_data = {
+      pid_value: pid_val
+    };
+    if (community) {
+      post_uri = post_uri + "?community=" + community;
+    }
+
+    // console.log("\n")
+    // console.log("post_uri")
+    // console.log(post_uri)
+    // console.log("\n")
+
+    $.ajax({
+      url: post_uri,
+      method: 'POST',
+      async: true,
+      contentType: 'application/json',
+      data: JSON.stringify(post_data),
+      success: function (res, status) {
+
+        alert(`JSON.stringify(post_data) ~ ${JSON.stringify(post_data)}`)
+        alert(`Object.keys(res) ~ ${Object.keys(res)}`)
+        alert(`res.code ~ ${res.code}`)
+        alert(`res.data ~ ${res.data}`)
+        alert(`res.msg ~ ${res.msg}`)
+        alert(`$(this).data('pid-value'); ~ ${$(this).data('pid-value');}`)
+        
+
+        if (0 == res.code) {
+          let uri = res.data.redirect.replace('api/', '')
+          document.location.href = uri;
+        } else {
+          if ("activity_id" in res) {
+            url = "/workflow/activity/detail/"+res.activity_id;
+            if (community) {
+              url = url + "?community=" + community;
+            }
+            $('[role="alert"]').append('<a href=' + url + '>' + res.activity_id + '</a>')
+          }
+        }
+      },
+      error: function (jqXHE, status) {
+      }
+    });
+  });
+
   $('button#btn_close_alert').on('click', function () {
     $('[role="alert"]').hide();
   });
@@ -101,6 +152,7 @@ require([
     if (typeof communityId !== 'undefined' && communityId !== "") {
       post_uri = post_uri + "?community=" + communityId;
     }
+
     $.ajax({
       url: post_uri,
       method: 'POST',
@@ -148,6 +200,26 @@ require([
     let fileName = $(this).data('filename');
     let itemTitle = $(this).data('itemtitle');
     startWorkflow(workflowId, communityId, recordId, fileName, itemTitle);
+  });
+
+  //* ITEM LINK EVIDENCE NEW DATA BUTTON
+  $('#item-link-register-new-data-btn').on('click', function () {
+    let workflowId = $(this).data('workflow-id');
+    let communityId = $(this).data('community');
+    let recordId = $(this).data('record-id');
+    let fileName = $(this).data('filename');
+    let itemTitle = $(this).data('itemtitle');
+    // startWorkflow(workflowId, communityId, recordId, fileName, itemTitle);
+    // $('.next_to_analysis').on('click', function () {
+    //   let analysis_url = $('#analysis_url').text();
+    //   let permalink_uri = $('#permalink_uri').text();
+    //   //let analysis_version = '/HEAD';
+    //   let analysis_version =  '/' + new Date().getTime().toString(16)  + Math.floor(1000*Math.random()).toString(16);
+    //     analysis_url = analysis_url + encodeURIComponent(permalink_uri) + analysis_version;
+    //     window.open(analysis_url);
+    //     $("#show_rights_info").modal("hide");
+    //   }
+    // );
   });
 
   $('.term_checked').on('click', function () {

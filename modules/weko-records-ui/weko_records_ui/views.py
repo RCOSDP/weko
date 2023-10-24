@@ -639,8 +639,23 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     if file_order >= 0 and files and files[file_order].get('url') and files[file_order]['url'].get('url'):
         file_url = files[file_order]['url']['url']
 
+    #TODO
+    from weko_workflow.models import Action, ActionStatus,FlowDefine,FlowAction,WorkFlow,Activity,ActivityAction
+    # data = get_permission(record, {"filename": filename})
+    # activity_id = permission.usage_application_activity_id
+    # from weko_workflow.api import WorkActivity
+    # activity = WorkActivity()
+    # steps = activity.get_activity_steps(pid.value)
+
+    # print("\n\n")
+    # print(steps)
+    # print("\n\n")
+
+
+    
     return render_template(
         template,
+        # data=data,
         pid=pid,
         pid_versioning=pid_ver,
         active_versions=active_versions,

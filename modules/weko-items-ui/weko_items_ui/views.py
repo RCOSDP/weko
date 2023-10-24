@@ -854,7 +854,6 @@ def prepare_edit_item():
             code=err_code,
             msg=_('Header Error')
         )
-
     post_activity = request.get_json()
     getargs = request.args
     pid_value = post_activity.get('pid_value')
@@ -977,6 +976,182 @@ def prepare_edit_item():
         code=err_code,
         msg=_('An error has occurred.')
     )
+
+
+#TODO
+@blueprint_api.route('/prepare_item_link', methods=['POST'])
+@login_required
+def prepare_item_link():
+    """prepare_item_link.
+
+    Host the api which provide 2 service:
+        Check permission: check if user is owner/admin/shared user
+        Create new activity for editing flow
+    request:
+        header: Content type must be json
+        data:
+            pid_value: pid_value
+    return: The result json:
+        code: status code,
+        msg: meassage result,
+        data: url redirect
+    """
+    err_code = current_app.config.get('WEKO_ITEMS_UI_API_RETURN_CODE_ERROR',
+                                      -1)
+    if request.headers['Content-Type'] != 'application/json':
+        """Check header of request"""
+        return jsonify(
+            code=err_code,
+            msg=_('Header Error')
+        )
+    post_activity = request.get_json()
+    getargs = request.args
+    pid_value = post_activity.get('pid_value')
+    community = getargs.get('community', None)
+
+    if pid_value:
+        record_class = import_string('weko_deposit.api:WekoDeposit')
+        resolver = Resolver(pid_type='recid',
+                            object_type='rec',
+                            getter=record_class.get_record)
+        recid, deposit = resolver.resolve(pid_value)
+        authenticators = [str(deposit.get('owner')),
+                          str(deposit.get('weko_shared_id'))]
+        user_id = str(get_current_user())
+        activity = WorkActivity()
+        latest_pid = PIDVersioning(child=recid).last_child
+
+        #! Check User's Permissions
+        if user_id not in authenticators and not get_user_roles()[0]:
+            return jsonify(
+                code=err_code,
+                msg=_("You are not allowed to edit this item.")
+            )
+
+        #! Check dependency ItemType
+        if not ItemTypes.get_latest():
+            return jsonify(
+                code=err_code,
+                msg=_("You do not even have an ItemType.")
+            )
+
+        item_type_id = deposit.get('item_type_id')
+        item_type = ItemTypes.get_by_id(item_type_id)
+        if not item_type:
+            return jsonify(
+                code=err_code,
+                msg=_("Dependency ItemType not found.")
+            )
+
+        if not deposit:
+            return jsonify(
+                code=err_code,
+                msg=_('Record does not exist.')
+            )
+
+        # Check Record is in import progress
+        if check_an_item_is_locked(pid_value):
+            return jsonify(
+                code=err_code,
+                msg=_('Item cannot be edited because '
+                      'the import is in progress.')
+            )
+
+        #! Check Record is being edit
+        item_uuid = latest_pid.object_uuid
+        post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
+
+        print("\n\n")
+        print(f"item_uuid ~ {item_uuid}")
+        print(f"post_workflow ~ {post_workflow}")
+        
+        post_workflow_2 = activity.get_workflow_activity_by_item_id(
+            recid.object_uuid
+        )
+        workflow = get_workflow_by_item_type_id(
+            item_type.name_id,
+            item_type_id
+        )
+
+        print(f"post_workflow_2 ~ {post_workflow_2}")
+        print(f"workflow ~ {workflow}")
+        print(f"latest_pid ~ {latest_pid}")
+
+        try:
+            rtn = prepare_edit_workflow(post_activity, recid, deposit)
+            print(f"rtn ~ {rtn}")
+        except:
+            print("EXCEPT")
+        
+        print("\n\n")
+
+        if post_workflow:
+            is_begin_edit = check_item_is_being_edit(recid, post_workflow, activity)
+            if is_begin_edit:
+                return jsonify(
+                    code=err_code,
+                    msg=_('This Item is being edited.'),
+                    activity_id=is_begin_edit
+                )
+
+            post_activity['workflow_id'] = post_workflow.workflow_id
+            post_activity['flow_id'] = post_workflow.flow_id
+        else:
+            post_workflow = activity.get_workflow_activity_by_item_id(
+                recid.object_uuid
+            )
+            workflow = get_workflow_by_item_type_id(item_type.name_id,
+                                                    item_type_id)
+            if not workflow:
+                return jsonify(
+                    code=err_code,
+                    msg=_('Workflow setting does not exist.')
+                )
+            post_activity['workflow_id'] = workflow.id
+            post_activity['flow_id'] = workflow.flow_id
+        post_activity['itemtype_id'] = item_type_id
+        post_activity['community'] = community
+        post_activity['post_workflow'] = post_workflow
+
+        try:
+            rtn = prepare_edit_workflow(post_activity, recid, deposit)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error('sqlalchemy error: {}'.format(ex))
+            db.session.rollback()
+            return jsonify(
+                code=err_code,
+                msg=_('An error has occurred.')
+            )
+        except BaseException as ex:
+            current_app.logger.error('Unexpected error: {}'.format(ex))
+            db.session.rollback()
+            return jsonify(
+                code=err_code,
+                msg=_('An error has occurred.')
+            )
+
+        if community:
+            comm = GetCommunity.get_community_by_id(community)
+            url_redirect = url_for('weko_workflow.display_activity',
+                                   activity_id=rtn.activity_id,
+                                   community=comm.id)
+        else:
+            url_redirect = url_for('weko_workflow.display_activity',
+                                   activity_id=rtn.activity_id)
+
+        return jsonify(
+            code=0,
+            msg='success',
+            data=dict(redirect=url_redirect)
+        )
+
+    return jsonify(
+        code=err_code,
+        msg=_('An error has occurred.')
+    )
+
+
 
 
 @blueprint.route('/ranking', methods=['GET'])

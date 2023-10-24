@@ -414,6 +414,13 @@
         <div id="invenio-csl" class="col-sm-3 col-md-3 col-lg-3 col-right">
           <!-- start demo block -->
           {%- include "weko_records_ui/box/stats.html" %}
+
+          <!-- TODO START -->
+          {% if record | check_permission %}
+              {%- include "weko_records_ui/box/analysis.html" %}
+          {% endif %}
+          <!-- TODO END -->
+
           {%- if files | selectattr('is_thumbnail', 'equalto', False)| list | length > 0 -%}
             {% if not record.hide_file %}
               {% if (accessRight == 'open access' or accessRight=='オープンアクセス') and config.WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG %}
