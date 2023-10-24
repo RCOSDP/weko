@@ -24,7 +24,7 @@
           <KeywardRank />
         </div>
       </div>
-      <button id="page-top" class="block lg:hidden w-10 h-10 z-40 fixed right-5 bottom-2.5">
+      <button id="page-top" class="block lg:hidden w-10 h-10 z-40 fixed right-5 bottom-2.5" @click="scrollToTop">
         <img src="/img/btn/btn-gototop_sp.svg" alt="Page Top" />
       </button>
     </main>
@@ -64,6 +64,13 @@ function openCreaterModal() {
   creater.value.openModal();
 }
 
+/**
+ * ページ最上部にスクロール
+ */
+function scrollToTop() {
+  scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 /* ///////////////////////////////////
 // main
 /////////////////////////////////// */
@@ -76,7 +83,7 @@ try {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {
-      'Accept-Language': localStorage.getItem('local') ?? 'ja',
+      'Accept-Language': localStorage.getItem('locale') ?? 'ja',
       Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
     },
     params: { size: '5', sort: '-createdate' },
@@ -106,30 +113,9 @@ try {
 // life cycle
 /////////////////////////////////// */
 
-onBeforeMount(async () => {
-  const query = useRoute().query;
-  const state = String(query.state);
-
-  // アクセストークン取得
-  if (state) {
-    if (sessionStorage.getItem('login:state') === state) {
-      await useFetch('/api/token/create?code=' + String(query.code))
-        .then((response) => {
-          // @ts-ignore
-          localStorage.setItem('token:type', response.data.value.tokenType);
-          // @ts-ignore
-          localStorage.setItem('token:access', response.data.value.accessToken);
-          // @ts-ignore
-          localStorage.setItem('token:refresh', response.data.value.refreshToken);
-          // @ts-ignore
-          localStorage.setItem('token:expires', response.data.value.expires);
-          localStorage.setItem('token:issue', String(Date.now()));
-        })
-        .finally(() => {
-          sessionStorage.removeItem('login:state');
-          useRouter().replace({ query: {} });
-        });
-    }
+onBeforeMount(() => {
+  if (String(useRoute().query.state)) {
+    useRouter().replace({ query: {} });
   }
 });
 

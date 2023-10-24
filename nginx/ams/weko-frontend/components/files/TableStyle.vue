@@ -9,14 +9,15 @@
       {{ file['@id'] }}
     </td>
     <!-- サイズ -->
-    <td>{{ file.size }}</td>
+    <td>{{ file[appConfig.roCrate.file.size] }}</td>
     <!-- DL区分 -->
     <td><span class="dl-tags unlimited">無制限</span></td>
     <!-- ライセンス -->
     <td>
-      <div class="w-[68px] mx-auto">
+      <div v-if="isIcon" class="w-[68px] mx-auto">
         <img :src="licenseImg" class="cursor-pointer" @click="clickLicense" />
       </div>
+      <div v-else>{{ licenseImg }}</div>
     </td>
     <!-- アクション -->
     <td class="w-[190px] text-left">
@@ -45,7 +46,7 @@
     <!-- 格納場所 -->
     <td class="w-[190px] text-left">
       <a class="inline-block max-w-[180px] underline text-miby-link-blue break-all hover:cursor-pointer">
-        {{ file.url }}
+        {{ file[appConfig.roCrate.file.url] }}
       </a>
     </td>
     <!-- DL回数 -->
@@ -80,6 +81,7 @@ const local = String(localStorage.getItem('locale') ?? 'ja');
 const appConfig = useAppConfig();
 const isCeck = ref(false);
 const licenseImg = ref('');
+const isIcon = ref(true);
 let licenseLink = '';
 
 /* ///////////////////////////////////
@@ -94,7 +96,7 @@ function download() {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {
-      'Accept-Language': localStorage.getItem('local') ?? 'ja',
+      'Accept-Language': localStorage.getItem('locale') ?? 'ja',
       Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
     },
     params: {
@@ -123,7 +125,7 @@ function preview() {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {
-      'Accept-Language': localStorage.getItem('local') ?? 'ja',
+      'Accept-Language': localStorage.getItem('locale') ?? 'ja',
       Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
     },
     params: {
@@ -155,62 +157,108 @@ function clickLicense() {
 /////////////////////////////////// */
 
 try {
-  if (props.file.license === appConfig.cc.zero) {
+  if (props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.zero) {
     licenseImg.value = '/img/license/cc-zero.svg';
     licenseLink = local === 'ja' ? appConfig.cc.link.zero_ja : appConfig.cc.link.zero;
-  } else if (props.file.license === appConfig.cc.by_3 || props.file.license === appConfig.cc.by_4) {
+  } else if (
+    props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_3 ||
+    props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_4
+  ) {
     licenseImg.value = '/img/license/by.svg';
     if (local === 'ja') {
-      licenseLink = props.file.license === appConfig.cc.by_3 ? appConfig.cc.link.by_3_ja : appConfig.cc.link.by_4_ja;
+      licenseLink =
+        props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_3
+          ? appConfig.cc.link.by_3_ja
+          : appConfig.cc.link.by_4_ja;
     } else {
-      licenseLink = props.file.license === appConfig.cc.by_3 ? appConfig.cc.link.by_3 : appConfig.cc.link.by_4;
+      licenseLink =
+        props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_3
+          ? appConfig.cc.link.by_3
+          : appConfig.cc.link.by_4;
     }
-  } else if (props.file.license === appConfig.cc.by_sa_3 || props.file.license === appConfig.cc.by_sa_4) {
+  } else if (
+    props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_sa_3 ||
+    props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_sa_4
+  ) {
     licenseImg.value = '/img/license/by-sa.svg';
     if (local === 'ja') {
       licenseLink =
-        props.file.license === appConfig.cc.by_sa_3 ? appConfig.cc.link.by_sa_3_ja : appConfig.cc.link.by_sa_4_ja;
+        props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_sa_3
+          ? appConfig.cc.link.by_sa_3_ja
+          : appConfig.cc.link.by_sa_4_ja;
     } else {
-      licenseLink = props.file.license === appConfig.cc.by_sa_3 ? appConfig.cc.link.by_sa_3 : appConfig.cc.link.by_sa_4;
+      licenseLink =
+        props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_sa_3
+          ? appConfig.cc.link.by_sa_3
+          : appConfig.cc.link.by_sa_4;
     }
-  } else if (props.file.license === appConfig.cc.by_nd_3 || props.file.license === appConfig.cc.by_nd_4) {
+  } else if (
+    props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_nd_3 ||
+    props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_nd_4
+  ) {
     licenseImg.value = '/img/license/by-nd.svg';
     if (local === 'ja') {
       licenseLink =
-        props.file.license === appConfig.cc.by_nd_3 ? appConfig.cc.link.by_nd_3_ja : appConfig.cc.link.by_nd_4_ja;
+        props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_nd_3
+          ? appConfig.cc.link.by_nd_3_ja
+          : appConfig.cc.link.by_nd_4_ja;
     } else {
-      licenseLink = props.file.license === appConfig.cc.by_nd_3 ? appConfig.cc.link.by_nd_3 : appConfig.cc.link.by_nd_4;
+      licenseLink =
+        props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_nd_3
+          ? appConfig.cc.link.by_nd_3
+          : appConfig.cc.link.by_nd_4;
     }
-  } else if (props.file.license === appConfig.cc.by_nc_3 || props.file.license === appConfig.cc.by_nc_4) {
+  } else if (
+    props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_nc_3 ||
+    props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_nc_4
+  ) {
     licenseImg.value = '/img/license/by-nc.svg';
     if (local === 'ja') {
       licenseLink =
-        props.file.license === appConfig.cc.by_nc_3 ? appConfig.cc.link.by_nc_3_ja : appConfig.cc.link.by_nc_4_ja;
+        props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_nc_3
+          ? appConfig.cc.link.by_nc_3_ja
+          : appConfig.cc.link.by_nc_4_ja;
     } else {
-      licenseLink = props.file.license === appConfig.cc.by_nc_3 ? appConfig.cc.link.by_nc_3 : appConfig.cc.link.by_nc_4;
+      licenseLink =
+        props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_nc_3
+          ? appConfig.cc.link.by_nc_3
+          : appConfig.cc.link.by_nc_4;
     }
-  } else if (props.file.license === appConfig.cc.by_nc_sa_3 || props.file.license === appConfig.cc.by_nc_sa_4) {
+  } else if (
+    props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_nc_sa_3 ||
+    props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_nc_sa_4
+  ) {
     licenseImg.value = '/img/license/by-nc-sa.svg';
     if (local === 'ja') {
       licenseLink =
-        props.file.license === appConfig.cc.by_nc_sa_3
+        props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_nc_sa_3
           ? appConfig.cc.link.by_nc_sa_3_ja
           : appConfig.cc.link.by_nc_sa_4_ja;
     } else {
       licenseLink =
-        props.file.license === appConfig.cc.by_nc_sa_3 ? appConfig.cc.link.by_nc_sa_3 : appConfig.cc.link.by_nc_sa_4;
+        props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_nc_sa_3
+          ? appConfig.cc.link.by_nc_sa_3
+          : appConfig.cc.link.by_nc_sa_4;
     }
-  } else if (props.file.license === appConfig.cc.by_nc_nd_3 || props.file.license === appConfig.cc.by_nc_nd_4) {
+  } else if (
+    props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_nc_nd_3 ||
+    props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_nc_nd_4
+  ) {
     licenseImg.value = '/img/license/by-nc-nd.svg';
     if (local === 'ja') {
       licenseLink =
-        props.file.license === appConfig.cc.by_nc_nd_3
+        props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_nc_nd_3
           ? appConfig.cc.link.by_nc_nd_3_ja
           : appConfig.cc.link.by_nc_nd_4_ja;
     } else {
       licenseLink =
-        props.file.license === appConfig.cc.by_nc_nd_3 ? appConfig.cc.link.by_nc_nd_3 : appConfig.cc.link.by_nc_nd_4;
+        props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.by_nc_nd_3
+          ? appConfig.cc.link.by_nc_nd_3
+          : appConfig.cc.link.by_nc_nd_4;
     }
+  } else if (props.file[appConfig.roCrate.file.licenseType] === appConfig.cc.free) {
+    isIcon.value = false;
+    licenseImg.value = props.file[appConfig.roCrate.file.licenseWrite];
   }
 } catch (error) {
   // console.log(error);

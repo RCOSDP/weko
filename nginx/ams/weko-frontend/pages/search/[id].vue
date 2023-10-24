@@ -171,7 +171,7 @@ async function search() {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {
-      'Accept-Language': localStorage.getItem('local') ?? 'ja',
+      'Accept-Language': localStorage.getItem('locale') ?? 'ja',
       Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
     },
     params: {
@@ -210,7 +210,7 @@ async function getParentIndex() {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {
-      'Accept-Language': localStorage.getItem('local') ?? 'ja',
+      'Accept-Language': localStorage.getItem('locale') ?? 'ja',
       Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
     },
     onResponse({ response }) {

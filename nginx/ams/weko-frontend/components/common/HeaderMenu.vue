@@ -37,7 +37,7 @@
         class="block min-[1022px]:hidden h-5 min-[1022px]:h-auto min-[1022px]:border min-[1022px]:py-1 pl-2 pr-2.5 rounded icons icon-in"
         @click="navigateTo('/login')" />
       <button
-        v-if="!isLogin"
+        v-else
         class="block min-[1022px]:hidden h-5 min-[1022px]:h-auto min-[1022px]:border min-[1022px]:py-1 pl-2 pr-2.5 rounded icons icon-out"
         @click="navigateTo('/logout')" />
       <!-- インデックスツリーボタン -->
@@ -133,7 +133,7 @@ try {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {
-      'Accept-Language': localStorage.getItem('local') ?? 'ja',
+      'Accept-Language': localStorage.getItem('locale') ?? 'ja',
       Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
     },
     onResponse({ response }) {
@@ -149,6 +149,33 @@ try {
 /* ///////////////////////////////////
 // life cycle
 /////////////////////////////////// */
+
+onBeforeMount(async () => {
+  const query = useRoute().query;
+  const state = String(query.state);
+
+  // アクセストークン取得
+  if (state) {
+    if (sessionStorage.getItem('login:state') === state) {
+      await useFetch('/api/token/create?code=' + String(query.code))
+        .then((response) => {
+          // @ts-ignore
+          localStorage.setItem('token:type', response.data.value.tokenType);
+          // @ts-ignore
+          localStorage.setItem('token:access', response.data.value.accessToken);
+          // @ts-ignore
+          localStorage.setItem('token:refresh', response.data.value.refreshToken);
+          // @ts-ignore
+          localStorage.setItem('token:expires', response.data.value.expires);
+          localStorage.setItem('token:issue', String(Date.now()));
+          isLogin.value = true;
+        })
+        .finally(() => {
+          sessionStorage.removeItem('login:state');
+        });
+    }
+  }
+});
 
 onMounted(() => {
   // ログイン/ログアウト
