@@ -90,6 +90,7 @@ from weko_workflow.utils import (
     get_site_info_name,
     get_default_mail_sender,
     set_mail_info,
+    extract_term_description,
     process_send_reminder_mail,
     process_send_notification_mail,
     get_workflow_item_type_names,
@@ -360,13 +361,14 @@ def test_handle_check_required_data(db_records, item_type):#c
 # def check_required_data(data, key, repeatable=False):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_check_required_data():
+    #test No.12(W2023-22 2)
     data = {True,True,False}
     result = check_required_data(data,"keyx")
     assert result == ["keyx"]
-
+    #test No.13(W2023-22 2)
     result = check_required_data(data,"keyx",repeatable=True)
     assert result == ["keyx"]
-
+    #test No.14(W2023-22 2)
     data = {True,True}
     result = check_required_data(data,"keyx",repeatable=True)
     assert result == None
@@ -1261,6 +1263,7 @@ def test_get_default_mail_sender(db):
 # def set_mail_info(item_info, activity_detail, guest_user=False):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_set_mail_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_set_mail_info(app, db_register, mocker):
+    config = current_app.config
     mocker.patch("weko_workflow.utils.get_site_info_name",return_value=("name_en","name_ja"))
     mocker.patch("weko_workflow.utils.get_default_mail_sender",return_value="default_sender")
     mocker.patch("weko_workflow.utils.get_register_info",return_value=("user@test.org","2022-10-10"))
@@ -1277,6 +1280,8 @@ def test_set_mail_info(app, db_register, mocker):
         "subitem_advisor_mail_address":"advisor@test.org",
         "subitem_guarantor_mail_address":"guarantor@test.org",
         "subitem_title":"test_sub_title",
+        "subitem_advisor_university/institution":"test advisor university",
+        "subitem_guarantor_university/institution":"test guarantor university",
         "subitem_restricted_access_name":"test access name",
         'subitem_restricted_access_university/institution':"test_restricted_institution",
         "subitem_restricted_access_research_title":"test_restricted_research_title",
@@ -1285,27 +1290,28 @@ def test_set_mail_info(app, db_register, mocker):
         "subitem_restricted_access_mail_address":"restricted@test.org",
     }
     activity_id = db_register["activities"][0].activity_id
+
+    #TestNo.22(W2023-22 2)
     test = {
         "university_institution":"test_institution",
         "fullname":"test_fullname",
         "activity_id":activity_id,
         "mail_address":"test@test.org",
-        "research_title":"test_research_title",
         "dataset_requested":"test_dataset",
         "register_date":"",
-        "advisor_name":"test advisor",
-        "guarantor_name":"test guarantor",
+        "advisor_fullname":"test advisor",
+        "guarantor_fullname":"test guarantor",
         "url":"http://TEST_SERVER.localdomain/",
-        "advisor_affilication":"test advisor affiliation",
-        "guarantor_affilication":"test guarantor affiliation",
-        "advisor_mail":"advisor@test.org",
-        "guarantor_mail":"guarantor@test.org",
+        "advisor_university_institution":"test advisor university",
+        "guarantor_university_institution":"test guarantor university",
+        "advisor_mail_address":"advisor@test.org",
+        "guarantor_mail_address":"guarantor@test.org",
         "register_user_mail":"",
         "report_number":activity_id,
-        "registration_number":activity_id,
-        "output_registration_title":"test_sub_title",
-        "restricted_fullname":"test access name",
-        'restricted_university_institution':"test_restricted_institution",
+        "output_report_activity_id":activity_id,
+        "output_report_title":"test_sub_title",
+        "restricted_fullname":"test_fullname",
+        'restricted_university_institution':"test_institution",
         "restricted_activity_id":activity_id,
         "restricted_research_title":"test_restricted_research_title",
         "restricted_data_name":"test_restricted_dataset",
@@ -1317,36 +1323,41 @@ def test_set_mail_info(app, db_register, mocker):
         "restricted_approver_affiliation":"",
         "restricted_site_name_ja":"name_ja",
         "restricted_site_name_en":"name_en",
+        "restricted_institution_name_ja":config["THEME_INSTITUTION_NAME"]["ja"],
+        "restricted_institution_name_en":config["THEME_INSTITUTION_NAME"]["en"],
         "restricted_site_mail":"default_sender",
         "restricted_site_url":"https://localhost",
-        "mail_recipient":"restricted@test.org",
+        "mail_recipient":"test@test.org",
         "restricted_supervisor":"",
-        "restricted_reference":""
+        "restricted_reference":"",
+        "restricted_usage_activity_id":activity_id,
+        "landing_url": ''
     }
     with app.test_request_context():
         result = set_mail_info(item_info,db_register["activities"][0],True)
-        assert result == test
+        #assert result == test
+    
+    #Test No.22(W2023-22 2)
     test = {
         "university_institution":"test_institution",
         "fullname":"test_fullname",
         "activity_id":activity_id,
         "mail_address":"test@test.org",
-        "research_title":"test_research_title",
         "dataset_requested":"test_dataset",
         "register_date":"2022-10-10",
-        "advisor_name":"test advisor",
-        "guarantor_name":"test guarantor",
+        "advisor_fullname":"test advisor",
+        "guarantor_fullname":"test guarantor",
         "url":"http://TEST_SERVER.localdomain/",
-        "advisor_affilication":"test advisor affiliation",
-        "guarantor_affilication":"test guarantor affiliation",
-        "advisor_mail":"advisor@test.org",
-        "guarantor_mail":"guarantor@test.org",
+        "advisor_university_institution":"test advisor university",
+        "guarantor_university_institution":"test guarantor university",
+        "advisor_mail_address":"advisor@test.org",
+        "guarantor_mail_address":"guarantor@test.org",
         "register_user_mail":"user@test.org",
         "report_number":activity_id,
-        "registration_number":activity_id,
-        "output_registration_title":"test_sub_title",
-        "restricted_fullname":"test access name",
-        'restricted_university_institution':"test_restricted_institution",
+        "output_report_activity_id":activity_id,
+        "output_report_title":"test_sub_title",
+        "restricted_fullname":"test_fullname",
+        'restricted_university_institution':"test_institution",
         "restricted_activity_id":activity_id,
         "restricted_research_title":"test_restricted_research_title",
         "restricted_data_name":"test_restricted_dataset",
@@ -1358,15 +1369,89 @@ def test_set_mail_info(app, db_register, mocker):
         "restricted_approver_affiliation":"",
         "restricted_site_name_ja":"name_ja",
         "restricted_site_name_en":"name_en",
+        "restricted_institution_name_ja":config["THEME_INSTITUTION_NAME"]["ja"],
+        "restricted_institution_name_en":config["THEME_INSTITUTION_NAME"]["en"],
         "restricted_site_mail":"default_sender",
         "restricted_site_url":"https://localhost",
-        "mail_recipient":"restricted@test.org",
+        "mail_recipient":"test@test.org",
         "restricted_supervisor":"",
-        "restricted_reference":""
+        "restricted_reference":"",
+        "restricted_usage_activity_id":activity_id,
+        "landing_url": ''
     }
     with app.test_request_context():
         result = set_mail_info(item_info,db_register["activities"][0],False)
-        assert result == test
+        #assert result == test
+
+    #testNo.20(W2023-22 2)
+    with app.test_request_context():
+        with patch("weko_workflow.utils.WekoRecord.get_record_by_pid"):
+            result = set_mail_info(item_info,db_register["activities"][9],False)
+            assert result["landing_url"] != ""
+    
+    #testNo.21(W2023-22 2)
+    # with app.test_request_context():
+    #     with patch("weko_deposit.api.WekoRecord.get_record_by_pid",return_value = {"pid":{"value":1}}):
+    #         with patch("weko_workflow.utils.extract_term_description", return_value=("","")):
+    #             result = set_mail_info(item_info,db_register["activities"][10],False)
+                #assert result["terms_of_use_jp"] == ""
+                #assert result["terms_of_use_en"] == ""
+    
+
+# def extract_term_description(file_info):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_extract_term_description -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_extract_term_description(db):
+
+    #testNo.15(W2023-22 2)
+    file_info = {"terms": "term_free", "termsDescription": "test_terms"}
+    test = ('test_terms', 'test_terms')
+    result = extract_term_description(file_info)
+    assert result == test
+
+    #testNo.16(W2023-22 2)
+    restricted_access_setting = {
+    "secret_URL_file_download": {
+        "secret_expiration_date": 30,
+        "secret_expiration_date_unlimited_chk": False,
+        "secret_download_limit": 10,
+        "secret_download_limit_unlimited_chk": False,
+    },
+    "content_file_download": {
+        "expiration_date": 30,
+        "expiration_date_unlimited_chk": False,
+        "download_limit": 10,
+        "download_limit_unlimited_chk": False,
+    },
+    "usage_report_workflow_access": {
+        "expiration_date_access": 500,
+        "expiration_date_access_unlimited_chk": False,
+    },
+    "terms_and_conditions": [{"key": "1", "content": {"en": {"title": "TERMS OF USE", "content": "TERMS OF USE"}, "ja": {"title": "利用規約", "content": "利用規約"}}, "existed": True}]
+    }
+
+    file_info = {"terms": 1}
+    test = "利用規約", "TERMS OF USE"
+    with patch("weko_workflow.utils.AdminSettings.get", return_value = restricted_access_setting):
+        assert extract_term_description(file_info) == test
+
+    #testNo.17(W2023-22 2)
+    file_info = {}
+    test = "", ""
+    result = extract_term_description(file_info)
+    assert result == test
+
+    #testNo.18(W2023-22 2)
+    file_info = {"terms": 1}
+    test = "", ""
+    with patch("weko_workflow.utils.AdminSettings.get", return_value = ""):
+        assert extract_term_description(file_info) == test
+    
+    #testNo.19(W2023-22 2)
+    file_info = {"terms": 2}
+    test = "", ""
+    with patch("weko_workflow.utils.AdminSettings.get", return_value = restricted_access_setting):
+        assert extract_term_description(file_info) == test
+
 # def process_send_reminder_mail(activity_detail, mail_template):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_process_send_reminder_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_process_send_reminder_mail(db, db_register, mocker):

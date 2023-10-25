@@ -729,7 +729,7 @@ def test_create_secret_url(app,db,users,records):
     file_name= results[1]["filename"]
     record_id=results[1]["recid"].pid_value
     user_mail = users[0]["email"]
-    
+
     db.session.add(AdminSettings(id=6,name='restricted_access',settings={"secret_URL_file_download": 
             {"secret_enable": True, 
             "secret_download_limit": 1, 
@@ -771,9 +771,10 @@ def test_create_secret_url(app,db,users,records):
 
         #62
         #63
+        #test No.4(W2023-22 2)
         from re import match
-        assert match("^.+record\/" + record_id + "\/file\/secret\/"+file_name+"\?token=.+=$",return_dict["restricted_download_link"])
-        assert return_dict["restricted_download_link"] != ""
+        assert match("^.+record\/" + record_id + "\/file\/secret\/"+file_name+"\?token=.+=$",return_dict["secret_url"])
+        assert return_dict["secret_url"] != ""
         assert return_dict["mail_recipient"] == user_mail
     
 
