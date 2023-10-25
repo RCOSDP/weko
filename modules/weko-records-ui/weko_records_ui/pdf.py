@@ -181,7 +181,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     item_type_id = item_type.item_type_id
     meta_options, type_mapping = get_options_and_order_list(item_type_id)
     hide_list = get_hide_list_by_schema_form(item_type_id)
-    item_map = get_mapping(type_mapping, "jpcoar_mapping")
+    item_map = get_mapping(item_type_id, "jpcoar_mapping")
 
     try:
         with open(lang_file_path) as json_datafile:

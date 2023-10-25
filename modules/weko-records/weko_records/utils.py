@@ -1160,55 +1160,42 @@ async def sort_meta_data_by_options(
         item_type_id = record_hit["_source"].get("item_type_id") or src.get(
             "item_type_id"
         )
-        item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
-        language_dict = {}
-        suffixes = ".@attributes.xml:lang"
-        for key in item_map:
-            if key.find(suffixes) != -1:
-                # get language
-                title_languages, _title_key = get_data_by_property(src, item_map, key)
-                # get value
-                prefix = key.replace(suffixes, "")
-                title_values, _title_key1 = get_data_by_property(
-                    src, item_map, prefix + ".@value"
-                )
-                language_dict.update(
-                    {
-                        prefix: {
-                            "lang": title_languages,
-                            "lang-id": _title_key,
-                            "val": title_values,
-                            "val-id": _title_key1,
-                        }
-                    }
-                )
+        item_map = get_mapping(item_type_id, "jpcoar_mapping")
+        
         # selected title
         from weko_items_ui.utils import get_hide_list_by_schema_form
         solst, meta_options = get_options_and_order_list(item_type_id, item_type_data)
         hide_list = get_hide_list_by_schema_form(item_type_id)
-        title_obj = language_dict.get("title")
-        if title_obj is not None:
-            lang_arr = title_obj.get("lang")
-            val_arr = title_obj.get("val")
-            lang_id = title_obj.get("lang-id")
-            val_id = title_obj.get("val-id")
-            if lang_arr and len(lang_arr) > 0 and lang_arr != "null":
-                result = selected_value_by_language(
-                    lang_arr, val_arr, lang_id, val_id, web_screen_lang, _item_metadata, meta_options, hide_list
-                )
-                if result is not None:
-                    for idx, val in enumerate(record_hit["_source"]["title"]):
-                        if val == result:
-                            arr = []
-                            record_hit["_source"]["title"][idx] = record_hit["_source"][
-                                "title"
-                            ][0]
-                            record_hit["_source"]["title"][0] = result
-                            arr.append(result)
-                            record_hit["_source"]["_comment"] = arr
-                            break
-            elif val_arr and len(val_arr) > 0:
-                record_hit["_source"]["_comment"] = [val_arr[0]]
+        title_value_key = 'title.@value'
+        title_lang_key = 'title.@attributes.xml:lang'
+        title_languages = []
+        title_values = []
+        _title_key_str = ''
+        _title_key1_str = ''
+        if title_value_key in item_map:
+            if title_lang_key in item_map:
+                # get language
+                title_languages, _title_key_str = get_data_by_property(
+                    src, item_map, title_lang_key)
+            # get value
+            title_values, _title_key1_str = get_data_by_property(
+                src, item_map, title_value_key)
+        if title_languages and len(title_languages) > 0:
+            result = selected_value_by_language(
+                title_languages, title_values, _title_key_str, _title_key1_str, web_screen_lang, _item_metadata, meta_options, hide_list
+            )
+            if result is not None:
+                for idx, val in enumerate(record_hit["_source"]["title"]):
+                    if val == result:
+                        arr = []
+                        record_hit["_source"]["title"][idx] = record_hit["_source"]["title"][0]
+                        record_hit["_source"]["title"][0] = result
+                        arr.append(result)
+                        record_hit["_source"]["_comment"] = arr
+                        break
+        elif title_values and len(title_values) > 0:
+            record_hit["_source"]["_comment"] = [title_values[0]]
+            record_hit["_source"]["title"][0] = title_values[0]
 
         if not item_type_id:
             return

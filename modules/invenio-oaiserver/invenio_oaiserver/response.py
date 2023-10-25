@@ -714,13 +714,11 @@ def check_correct_system_props_mapping(object_uuid, system_mapping_config):
 
     Correct mapping mean item map have the 2 field same with config
     """
-    from weko_records.api import ItemsMetadata, Mapping
+    from weko_records.api import ItemsMetadata
     from weko_records.serializers.utils import get_mapping
 
     item_type = ItemsMetadata.get_by_object_id(object_uuid)
-    item_type_id = item_type.item_type_id
-    type_mapping = Mapping.get_record(item_type_id)
-    item_map = get_mapping(type_mapping, "jpcoar_mapping")
+    item_map = get_mapping(item_type.item_type_id, "jpcoar_mapping")
 
     if system_mapping_config:
         for key in system_mapping_config:
@@ -737,16 +735,14 @@ def combine_record_file_urls(record, object_uuid, meta_prefix):
 
     Get file property information by item_mapping and put to metadata.
     """
-    from weko_records.api import ItemsMetadata, Mapping
+    from weko_records.api import ItemsMetadata
     from weko_records.serializers.utils import get_mapping
     from weko_schema_ui.schema import get_oai_metadata_formats
 
     metadata_formats = get_oai_metadata_formats(current_app)
     item_type = ItemsMetadata.get_by_object_id(object_uuid)
-    item_type_id = item_type.item_type_id
-    type_mapping = Mapping.get_record(item_type_id)
     mapping_type = metadata_formats[meta_prefix]['serializer'][1]['schema_type']
-    item_map = get_mapping(type_mapping,
+    item_map = get_mapping(item_type.item_type_id,
                            "{}_mapping".format(mapping_type))
     file_keys_str = None
     if item_map:

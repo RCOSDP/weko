@@ -1297,8 +1297,7 @@ def get_wekoid_record_data(recid, item_type_id):
         if values and values[0] and mapping_key not in ignore_mapping:
             item_map_data_src[mapping_key] = values[0]
     # Get destination mapping info.
-    mapping_des = Mapping.get_record(item_type_id)
-    item_map_des = get_mapping(mapping_des, "jpcoar_mapping")
+    item_map_des = get_mapping(item_type_id, "jpcoar_mapping")
     item_map_data_des = {}
     for mapping_key, item_key_str in item_map_des.items():
         for item_key in item_key_str.split(','):

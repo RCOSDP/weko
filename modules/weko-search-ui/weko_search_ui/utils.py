@@ -1198,7 +1198,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
     def clean_file_metadata(item_type_id, data):
         # clear metadata of file information
         is_cleaned = True
-        item_map = get_mapping(Mapping.get_record(item_type_id), "jpcoar_mapping")
+        item_map = get_mapping(item_type_id, "jpcoar_mapping")
         key = item_map.get("file.URI.@value")
         if key:
             key = key.split(".")[0]
@@ -1688,7 +1688,7 @@ def handle_item_title(list_record):
         error = None
         meta_option, item_type_mapping = get_options_and_order_list(item["item_type_id"])
         hide_list = get_hide_list_by_schema_form(item["item_type_id"])
-        item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
+        item_map = get_mapping(item["item_type_id"], "jpcoar_mapping")
         # current_app.logger.debug("item_type_mapping: {}".format(item_type_mapping))
         # current_app.logger.debug("item_map: {}".format(item_map))
         title_data, _title_key = get_data_by_property(
@@ -2880,9 +2880,8 @@ def handle_fill_system_item(list_record):
         warnings = item.get('warnings') or []
         if item_type_id != item["item_type_id"]:
             item_type_id = item["item_type_id"]
-            record = Mapping.get_record(item_type_id)
             # current_app.logger.debug("record_hoge: {}".format(record))
-            item_map = get_mapping(record, "jpcoar_mapping")
+            item_map = get_mapping(item_type_id, "jpcoar_mapping")
 
         # Resource Type
         resourcetype_key = item_map.get("type.@value")

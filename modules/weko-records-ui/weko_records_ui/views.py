@@ -504,15 +504,18 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     meta_options, item_type_mapping = get_options_and_order_list(
         record.get('item_type_id'))
     hide_list = get_hide_list_by_schema_form(record.get('item_type_id'))
-    item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
+    item_map = get_mapping(record.get('item_type_id'), 'jpcoar_mapping')
 
     # get title info
     title_value_key = 'title.@value'
     title_lang_key = 'title.@attributes.xml:lang'
-    if title_value_key in item_map and title_lang_key in item_map:
-        # get language
-        title_languages, _title_key_str = get_data_by_property(
-            record, item_map, title_lang_key)
+    if title_value_key in item_map:
+        title_languages = []
+        _title_key_str = ''
+        if title_lang_key in item_map:
+            # get language
+            title_languages, _title_key_str = get_data_by_property(
+                record, item_map, title_lang_key)
         # get value
         title_values, _title_key1_str = get_data_by_property(
             record, item_map, title_value_key)
