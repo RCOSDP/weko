@@ -1,80 +1,37 @@
-
 from collections import OrderedDict
+import re
+from flask import current_app
+
 from invenio_db import db
 from invenio_records.models import RecordMetadata
 from weko_records.api import ItemTypes,Mapping
-from weko_records.models import ItemMetadata
+from weko_records.utils import set_timestamp
 from weko_deposit.api import WekoIndexer
 from sqlalchemy.orm.attributes import flag_modified
 from weko_schema_ui.schema import  SchemaTree
 from weko_records.serializers.utils import get_mapping
+from sqlalchemy import types
+from invenio_pidstore.models import PersistentIdentifier
+from weko_search_ui.utils import handle_get_all_id_in_item_type
 
-def handle_get_all_sub_id_and_name(items, root_id=None):
-    ids = []
-    for key in sorted(items.keys()):
-        if key == "iscreator":
-            pass
-        item = items.get(key)
-        if item.get("items") and item.get("items").get("properties"):
-            _ids = handle_get_all_sub_id_and_name(item.get("items").get("properties"))
-            ids += [key+"[]."+_id for _id in _ids]
-        elif item.get("type") == "object" and item.get("properties"):
-            _ids = handle_get_all_sub_id_and_name(item.get("properties"))
-            ids += [str(key)+"."+str(_id) for _id in _ids]
-        elif item.get("format") == "checkboxes":
-            ids.append(str(key) + "[]")
-        else:
-            ids.append(str(key))
-    if root_id:
-        ids = [root_id+"."+_id for _id in ids]
-    
-    return ids
+from weko_records.api import ItemsMetadata
 
-def get_itemtype_fields(itemtype_id):
-    
-    item_type = ItemTypes.get_by_id(id_=itemtype_id, with_deleted=True)
-    item_type = item_type.render
-    meta_system = [key for key in item_type.get("meta_system", {})]
-    schema = (
-        item_type.get("table_row_map", {})
-        .get("schema", {})
-        .get("properties", {})
-    )
-    ids_line=list()
-    for key in [*item_type.get("table_row", [])]:
-        if key in meta_system:
-            continue
-        
-        item = schema.get(key)
-        root_id=key
-        # have not sub item
-        if not (item.get("properties") or item.get("items")):
-            ids_line.append(root_id)
-        else:
-            sub_items = (
-                item.get("properties")
-                if item.get("properties")
-                else item.get("items").get("properties")
-            )
-
-            _ids = handle_get_all_sub_id_and_name(
-                sub_items, root_id
-            )
-            ids_line+=_ids
-    return ids_line
 
 def replace_item(data, paths, _target, _from,_to):
+    result = False
     if paths[0] == _target:
         if _from == data.get(paths[0]):
             data[paths[0]] = _to
+            result = True
     elif len(paths) > 1:
         if "[]" in paths[0]:
             _data = data.get(paths[0].replace("[]",""))
             for _d in _data:
-                replace_item(_d,paths[1:],_target,_from,_to)
+                result |= replace_item(_d,paths[1:],_target,_from,_to)
         else:
             _data = data.get(paths[0])
-            replace_item(_data,paths[1:],_target,_from,_to)
+            result |= replace_item(_data,paths[1:],_target,_from,_to)
+    return result
 
 def get_jpcoar_mapping(item_type_id, data):
     def _get_author_link(author_link, value):
@@ -170,80 +127,102 @@ def get_jpcoar_mapping(item_type_id, data):
         dc.update(dict(author_link=author_link))
     return jrc, dc
 
+def get_item_type_mapping(field):
+    """置換対象となるフィールドを含むパスと、そのパスがマッピングされたesのフィールドのリストを取得"""
+    item_types = ItemTypes.get_all()
+    target_paths = {} # item_type_idと置換対象となるフィールドを含むパスのリスト
+    target_es_field = {} # item_type_idと置換対象のパスがマッピングされたesのフィールドのリスト
+    with current_app.test_request_context(headers=[('Accept-Language','ja')]):
+        for item_type in item_types:
+            paths = handle_get_all_id_in_item_type(item_type.id)
+            paths = [re.sub('\[\d\]','[]',p.replace(".metadata.","")) for p in paths]
+            paths = [p for p in paths if field in p.split(",")[-1]]
+            if len(paths)>0:
+                target_paths[item_type.id]=paths
+                mapping = Mapping.get_record(item_type.id)
+                if mapping:
+                    mapping = mapping.dumps()
+                    mapp = {value:key for key, value in get_mapping(mapping, "jpcoar_mapping").items()}# mappingのkeyとvalueを逆転させてる
+                    paths_replace_arr = [p.replace("[]","") for p in paths]
+                    field_lst = [value.split(".")[0] for key, value in mapp.items() if key in paths_replace_arr]
+                    target_es_field[item_type.id] = field_lst
+    return target_paths, target_es_field
+
+def get_target_record(paths):
+    """置換対象となるアイテムタイプに所属、かつ置換対象のフィールドを持つプロパティを含むレコードの取得"""
+    res=list()
+
+    item_type_ids = list(paths.keys())
+    for item_type_id in item_type_ids:
+        item_metadatas = ItemsMetadata.get_by_item_type_id(item_type_id)
+        root_keys = [p.split(".")[0].replace("[]","") for p in paths[item_type_id]]
+        data = [d for d in item_metadatas if any(key in d.json for key in root_keys)]
+        res+=(data)
+    return res
+
 if __name__ == "__main__":
 
     field="subitem_description_type" # field to replace
     target="isIdenticalTo" # the value to replace
     to="Other" # the value to use for replacement
 
-    try:
-        records = (
-            db.session.query(
-                RecordMetadata
-            ).all()
-        )
-        item_type_props = dict()
-        item_type_mapping=dict()
-        count=0
-        result = {}
-        for r in records:
-            _record = RecordMetadata.query.filter_by(id=r.id).one()
+    paths, target_es_fields = get_item_type_mapping(field)
+    records = get_target_record(paths)
+    indexer = WekoIndexer()
+    count = 0
+    for r in records:
+        try:
+            pid = PersistentIdentifier.query.filter_by(object_uuid=r.id).filter_by(pid_type='recid').one_or_none()
+            _record = RecordMetadata.query.filter_by(id=r.id).one_or_none()
             record = _record.json
-            _item_metadata = ItemMetadata.query.filter_by(id=r.id).one()
-            item_metadata = _item_metadata.json
-            indexer = WekoIndexer()
-            es_data = indexer.get_metadata_by_item_id(r.id).get("_source") # esのデータ
-            item_type_id = record.get("item_type_id")
-            if item_type_id not in item_type_props:
-                item_type_props[item_type_id] = get_itemtype_fields(item_type_id)
-            if item_type_id not in item_type_mapping:
-                mapping = Mapping.get_record(item_type_id).dumps()
-                item_type_mapping[item_type_id] = {value:key for key, value in get_mapping(mapping, "jpcoar_mapping").items()}
-            target_props = [prop for prop in item_type_props[item_type_id] if field in prop.split(".")[-1]]
-            for prop in target_props:
-                paths = prop.split(".")
-                record_ele = record.get(paths[0])
+            item_metadata = r.json
+            es_data = indexer.get_metadata_by_item_id(r.id).get("_source")
+            
+            item_type_id=r.item_type_id
+            target_paths = paths[item_type_id]
+            is_changed = False
+            
+            for path in target_paths:
+                props = path.split(".")
+                root_prop = props[0].replace("[]","")
+                record_ele = record.get(root_prop)
                 if record_ele:
                     attr_lst = record_ele.get("attribute_value_mlt")
-                    for d in attr_lst:
-                        replace_item(d,paths[1:],field,target,to)
-                item_ele = item_metadata.get(paths[0])
+                    for attr in attr_lst:
+                        is_changed |= replace_item(attr,props[1:],field,target,to)
+                item_ele = item_metadata.get(root_prop)
                 if item_ele:
                     if isinstance(item_ele,dict):
-                        replace_item(item_ele,paths[1:],field,target,to)
+                        is_changed |= replace_item(item_ele,props[1:],field,target,to)
                     elif isinstance(item_ele,list):
-                        for d in item_ele:
-                            replace_item(d,paths[1:],field,target,to)
-                es_ele= es_data.get("_item_metadata").get(paths[0])
+                        for e in item_ele:
+                            is_changed |= replace_item(e,props[1:],field,target,to)
+                es_ele= es_data.get("_item_metadata").get(root_prop)
                 if es_ele:
-                    meta_ds = es_ele.get("attribute_value_mlt")
-                    for d in meta_ds:
-                        replace_item(d,paths[1:],field,target,to)
-            # replace es data
-            new_es_data, dc = get_jpcoar_mapping(item_type_id,item_metadata)
-            target_props_replace_arr = [prop.replace("[]","") for prop in target_props]
-            field_lst = [value.split(".")[0] for key, value in item_type_mapping[item_type_id].items() 
-                         if key in target_props_replace_arr]
-            for f in field_lst:
-                if f in es_data and f in new_es_data:
-                    es_data[f] = new_es_data[f]
-            for key,value in dc.items():
-                if key in es_data:
-                    es_data[key] = value
-            indexer.client.update(index=indexer.es_index,doc_type=indexer.es_doc_type,
-                                  id=str(r.id),body={'doc':es_data})
-            # merge
-            flag_modified(_record,'json')
-            db.session.merge(_record)
-            flag_modified(_item_metadata,'json')
-            db.session.merge(_item_metadata)
-            count+=1
-            
-        db.session.commit()
-            
-        print("Update {} items successful".format(count))
-    except:
-        import traceback
-        traceback.print_exc()
-        db.session.rollback()
-        
+                    attr_lst = es_ele.get("attribute_value_mlt")
+                    for attr in attr_lst:
+                        is_changed |= replace_item(attr,props[1:],field,target,to)
+            if is_changed:
+                # merge
+                flag_modified(_record,'json')
+                db.session.merge(_record)
+                flag_modified(r,'json')
+                db.session.merge(r)
+                # update es data
+                new_es_data, dc = get_jpcoar_mapping(item_type_id,item_metadata)
+                for f in target_es_fields[item_type_id]:
+                    if f in es_data and f in new_es_data:
+                        es_data[f] = new_es_data[f]
+                for key,value in dc.items():
+                    if key in es_data:
+                        es_data[key] = value
+                set_timestamp(es_data, _record.created, _record.updated)
+                indexer.client.update(index=indexer.es_index,doc_type=indexer.es_doc_type,
+                                      id=str(r.id),body={'doc':es_data})
+                db.session.commit()
+                print("fixed: {}".format(pid.pid_value))
+                count+=1
+        except:
+            db.session.rollback()
+            print("raise error: {}".format(pid.pid_value if pid is not None else ""))
+    print("fixed {} items.".format(count))
