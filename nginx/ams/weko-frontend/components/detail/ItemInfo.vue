@@ -3,15 +3,13 @@
     <hr class="border-miby-dark-gray" />
     <div class="detail__head">
       <!-- サムネイル -->
-      <div class="detail__head-image h-40 w-32 flex justify-center items-center bg-neutral-600">
+      <div class="detail__head-image h-44 w-32 flex justify-center items-center bg-neutral-300">
         <div
           v-if="loading"
           class="font-bold text-2xl text-white h-full flex justify-center items-center content-center">
           <span class="loading loading-bars loading-l" />
         </div>
-        <div v-else>
-          <img :src="thumbnailPath" alt="Thumbnail" />
-        </div>
+        <img v-else :src="thumbnailPath" alt="Thumbnail" class="object-contain h-44 w-32" />
       </div>
       <div class="detail__head-text">
         <div class="flex flex-wrap mb-1.5 gap-2 md:gap-5 items-center">

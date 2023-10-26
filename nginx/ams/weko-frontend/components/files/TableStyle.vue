@@ -112,7 +112,7 @@ function download() {
       }
     },
     onResponseError({ response }) {
-      emits('error', response.status, 'ダウンロードに失敗しました。');
+      emits('error', response.status, 'message.error.download');
     }
   });
 }
@@ -140,7 +140,7 @@ function preview() {
       }
     },
     onResponseError({ response }) {
-      emits('error', response.status, 'プレビュー表示に失敗しました。');
+      emits('error', response.status, 'message.error.preview');
     }
   });
 }

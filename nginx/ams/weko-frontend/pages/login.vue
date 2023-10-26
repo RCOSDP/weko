@@ -139,8 +139,8 @@ import Alert from '~/components/common/Alert.vue';
 // const and let
 /////////////////////////////////// */
 
-const mRequiredField = useI18n().t('requiredField');
-const mRequiredEmail = useI18n().t('requiredEmail');
+const mRequiredField = useI18n().t('message.alert.requiredField');
+const mRequiredEmail = useI18n().t('message.alert.requiredEmail');
 const email = ref('');
 const password = ref('');
 const reset = ref('');
@@ -148,6 +148,7 @@ const forgetPassFlag = ref(false);
 const visibleAlert = ref(false);
 const alertType = ref('info');
 const alertMessage = ref('');
+const alertCode = ref(0);
 const dirtyEmail = ref(false);
 const dirtyPassword = ref(false);
 const dirtyReset = ref(false);
@@ -160,6 +161,8 @@ const dirtyReset = ref(false);
  * ログイン
  */
 function login() {
+  let statusCode = 0;
+  alertCode.value = 0;
   $fetch(useAppConfig().wekoApi + '/login', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'POST',
@@ -180,7 +183,8 @@ function login() {
       }
     },
     onResponseError({ response }) {
-      if (response.status === 400) {
+      statusCode = response.status;
+      if (statusCode === 400) {
         // ログイン済の場合、認可画面に遷移
         // TODO: ログイン済専用のステータスコードが必要
         // const url = new URL(useAppConfig().wekoOrigin + '/oauth/authorize');
@@ -191,12 +195,22 @@ function login() {
         // url.searchParams.append('state', random);
         // sessionStorage.setItem('login:state', random);
         // window.open(url.href, '_self');
-      } else if (Number(response.status) >= 500 && Number(response.status) < 600) {
-        alertMessage.value =
-          '(Status Code : ' + response.status + ')' + ' サーバエラーが発生しました。管理者に連絡してください。';
+      } else if (statusCode >= 500 && statusCode < 600) {
+        // サーバーエラー
+        alertMessage.value = 'message.error.server';
+        alertCode.value = statusCode;
       } else {
-        alertMessage.value = '(Status Code : ' + response.status + ')' + ' ログインに失敗しました。';
+        // リクエストエラー
+        alertMessage.value = 'message.error.login';
+        alertCode.value = statusCode;
       }
+      alertType.value = 'error';
+      visibleAlert.value = true;
+    }
+  }).catch(() => {
+    if (statusCode === 0) {
+      // fetchエラー
+      alertMessage.value = 'message.error.fetchError';
       alertType.value = 'error';
       visibleAlert.value = true;
     }

@@ -82,6 +82,23 @@
   "createAccount": "Create account",
   "forgetPassword": "Forgot password",
   "sendEmailResetPassword": "Link to reset your password will be sent to the email address.",
-  "requiredField": "This field is required",
-  "requiredEmail": "This field must be a valid email"
+  "message": {
+    "alert": {
+      "requiredField": "This field is required",
+      "requiredEmail": "This field must be a valid email"
+    },
+    "error": {
+      "error": "Error has occurred. Please contact server administrator.",
+      "server": "Server error has occurred. Please contact server administrator.",
+      "auth": "Authentication error has occurred. Authentication status is invalid.",
+      "fetch": "Failed to fetch.",
+      "login": "Failed to login.",
+      "search": "Failed to search items.",
+      "download": "Failed to download.",
+      "preview": "Failed to display preview.",
+      "getIndex": "Failed to get index.",
+      "getLatestItem": "Failed to get latest information.",
+      "getItemDetail": "Failed to get item details."
+    }
+  }
 }

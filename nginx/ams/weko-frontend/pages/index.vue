@@ -31,7 +31,12 @@
     <!-- 著者情報 -->
     <CreaterInfo ref="creater" />
     <!-- アラート -->
-    <Alert v-if="visibleAlert" :type="alertType" :message="alertMessage" @click-close="visibleAlert = !visibleAlert" />
+    <Alert
+      v-if="visibleAlert"
+      :type="alertType"
+      :message="alertMessage"
+      :code="alertCode"
+      @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
 
@@ -52,6 +57,7 @@ const creater = ref();
 const visibleAlert = ref(false);
 const alertType = ref('info');
 const alertMessage = ref('');
+const alertCode = ref(0);
 
 /* ///////////////////////////////////
 // function
@@ -79,6 +85,8 @@ try {
   // 検索条件の初期化
   sessionStorage.removeItem('conditions');
   // 最新情報取得
+  let statusCode = 0;
+  alertCode.value = 0;
   await $fetch(useAppConfig().wekoApi + '/records', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
@@ -93,20 +101,34 @@ try {
       }
     },
     onResponseError({ response }) {
-      if (response.status === 401) {
-        alertMessage.value = '(Status Code : ' + response.status + ')' + ' 認証エラーが発生しました。';
-      } else if (Number(response.status) >= 500 && Number(response.status) < 600) {
-        alertMessage.value =
-          '(Status Code : ' + response.status + ')' + ' サーバエラーが発生しました。管理者に連絡してください。';
+      statusCode = response.status;
+      if (statusCode === 401) {
+        // 認証エラー
+        alertMessage.value = 'message.error.auth';
+      } else if (statusCode >= 500 && statusCode < 600) {
+        // サーバーエラー
+        alertMessage.value = 'message.error.server';
+        alertCode.value = statusCode;
       } else {
-        alertMessage.value = '(Status Code : ' + response.status + ')' + ' 最新情報の取得に失敗しました。';
+        // リクエストエラー
+        alertMessage.value = 'message.error.getLatestItem';
+        alertCode.value = statusCode;
       }
+      alertType.value = 'error';
+      visibleAlert.value = true;
+    }
+  }).catch(() => {
+    if (statusCode === 0) {
+      // fetchエラー
+      alertMessage.value = 'message.error.fetchError';
       alertType.value = 'error';
       visibleAlert.value = true;
     }
   });
 } catch (error) {
-  // console.log(error);
+  alertMessage.value = 'message.error.error';
+  alertType.value = 'error';
+  visibleAlert.value = true;
 }
 
 /* ///////////////////////////////////

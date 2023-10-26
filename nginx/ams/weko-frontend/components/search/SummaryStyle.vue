@@ -1,13 +1,11 @@
 <template>
   <div class="search-rows">
     <!-- サムネイル -->
-    <div class="rows-image w-full flex justify-center items-center bg-neutral-600" style="height: 108px">
+    <div class="rows-image h-28 w-24 flex justify-center items-center bg-neutral-300">
       <div v-if="loading" class="font-bold text-2xl text-white h-full flex justify-center items-center content-center">
         <span class="loading loading-bars loading-l" />
       </div>
-      <div v-else>
-        <img :src="thumbnailPath" alt="Thumbnail" />
-      </div>
+      <img v-else :src="thumbnailPath" alt="Thumbnail" class="object-contain h-28 w-24" />
     </div>
     <div class="rows-detail">
       <div class="flex flex-nowrap mb-1.5 gap-5 items-center">
