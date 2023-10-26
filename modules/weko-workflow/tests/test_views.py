@@ -2638,7 +2638,6 @@ def test_display_activity(client, users, db_register, users_index, status_code, 
     owner_id = 1
     shared_user_ids = []
 
-    workflow_detail.open_restricted = True
 
     mocker.patch('weko_workflow.views.WorkActivity.get_activity_action_role',
                 return_value=(roles, action_users))
@@ -3113,13 +3112,14 @@ def test_display_activity(client, users, db_register, users_index, status_code, 
                                     res = client.post(url, query_string=input)
                                     mock_render_template.assert_called()
     
-    #action_endpoint is approval
-    #test No.1 (W2023-22 3(4))
+    # action_endpoint is approval
+    # test No.1 (W2023-22 3(4))
     url = url_for('weko_workflow.display_activity', activity_id='A-00000001-10001')
     input = {}
     action_endpoint = 'approval'
     json_schema = "test"
     item = item_metadata
+    workflow_detail.open_restricted = True
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
                steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
