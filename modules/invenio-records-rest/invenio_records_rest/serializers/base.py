@@ -156,63 +156,68 @@ class PreprocessorMixin(PreprocessorMixinInterface):
             """Get keys of metadata record by mapping."""
             # Get default mapping key and lang from config (defaults are None).
             from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
+            from weko_records.api import ItemTypes
+
             mapping_dict = RECORDS_REST_DEFAULT_MAPPING_DICT
             # Get mapping of this record.
             meta_option, item_type_mapping = get_options_and_order_list(item_type_id)
+            item_type_list = ItemTypes.get_by_id(item_type_id).render.get('table_row')
             hide_list = get_hide_list_by_schema_form(item_type_id)
-            if not item_type_mapping:
+            if not item_type_mapping or not item_type_list:
                 return mapping_dict
             # Update default mapping key and lang by mapping of this record.
             identifier = 'system_identifier'
-            for k, v in item_type_mapping.items():
-                prop_hidden = meta_option.get(k, {}).get('option', {}).get('hidden', False)
-                if not type(v.get('jpcoar_mapping')) is dict \
-                        or prop_hidden:
-                    continue
-                for k1, v1 in v.get('jpcoar_mapping').items():
-                    skip_flag = False
-                    for h in hide_list:
-                        if h.startswith(k) and \
-                                (('@value' in v1.keys() and 
-                                  h.endswith(v1.get('@value').split('.')[-1])) or \
-                                 ('creatorName' in v1.keys() and 
-                                  h.endswith(v1.get('creatorName', {}).get('@value').split('.')[-1]))):
-                            skip_flag = True
-                    if skip_flag:
+            for k in item_type_list:
+                if k in item_type_mapping:
+                    v = item_type_mapping.get(k)
+                    prop_hidden = meta_option.get(k, {}).get('option', {}).get('hidden', False)
+                    if not type(v.get('jpcoar_mapping')) is dict \
+                            or prop_hidden:
                         continue
-                    for k2, v2 in mapping_dict.items():
-                        if k1 != k2.split(':')[1] or \
-                                not type(v1) is dict or \
-                                mapping_dict[k2]:
+                    for k1, v1 in v.get('jpcoar_mapping').items():
+                        skip_flag = False
+                        for h in hide_list:
+                            if h.startswith(k) and \
+                                    (('@value' in v1.keys() and 
+                                    h.endswith(v1.get('@value').split('.')[-1])) or \
+                                    ('creatorName' in v1.keys() and 
+                                    h.endswith(v1.get('creatorName', {}).get('@value').split('.')[-1]))):
+                                skip_flag = True
+                        if skip_flag:
                             continue
-                        key = identifier if identifier in k else k
-                        key_arr = ['metadata', key, 'attribute_value_mlt', 0]
-                        lang_arr = key_arr.copy()
-                        if k1 == 'creator':
-                            name = v1.get('creatorName')
-                            # Set all key for __lang
-                            attr = name.get('@attributes', {})
-                            xml_lang = attr.get('xml:lang', '').split('.')
-                            lang_arr.extend(get_keys(xml_lang))
-                            # Set all key for key
-                            name_arr = name.get('@value').split('.')
-                            key_arr.extend(get_keys(name_arr))
-                        elif '.' in v1.get('@value', ''):
-                            # Set key for __lang
-                            attr = v1.get('@attributes', {})
-                            xml_lang = attr.get('xml:lang', '').split('.')
-                            lang_arr.extend(get_keys(xml_lang))
-                            # Set all key for key
-                            name_arr = v1.get('@value').split('.')
-                            key_arr.extend(get_keys(name_arr))
-                        else:
-                            # Set key for __lang
-                            attr = v1.get('@attributes', {})
-                            lang_arr.append(attr.get('xml:lang'))
-                            # Set all key for key
-                            key_arr.append(v1.get('@value'))
-                        mapping_dict[k2] = key_arr
-                        mapping_dict['{}__lang'.format(k2)] = lang_arr
+                        for k2, v2 in mapping_dict.items():
+                            if k1 != k2.split(':')[1] or \
+                                    not type(v1) is dict or \
+                                    mapping_dict[k2]:
+                                continue
+                            key = identifier if identifier in k else k
+                            key_arr = ['metadata', key, 'attribute_value_mlt', 0]
+                            lang_arr = key_arr.copy()
+                            if k1 == 'creator':
+                                name = v1.get('creatorName')
+                                # Set all key for __lang
+                                attr = name.get('@attributes', {})
+                                xml_lang = attr.get('xml:lang', '').split('.')
+                                lang_arr.extend(get_keys(xml_lang))
+                                # Set all key for key
+                                name_arr = name.get('@value').split('.')
+                                key_arr.extend(get_keys(name_arr))
+                            elif '.' in v1.get('@value', ''):
+                                # Set key for __lang
+                                attr = v1.get('@attributes', {})
+                                xml_lang = attr.get('xml:lang', '').split('.')
+                                lang_arr.extend(get_keys(xml_lang))
+                                # Set all key for key
+                                name_arr = v1.get('@value').split('.')
+                                key_arr.extend(get_keys(name_arr))
+                            else:
+                                # Set key for __lang
+                                attr = v1.get('@attributes', {})
+                                lang_arr.append(attr.get('xml:lang'))
+                                # Set all key for key
+                                key_arr.append(v1.get('@value'))
+                            mapping_dict[k2] = key_arr
+                            mapping_dict['{}__lang'.format(k2)] = lang_arr
             return mapping_dict
 
         links_factory = links_factory or (lambda x, record=None, **k: dict())

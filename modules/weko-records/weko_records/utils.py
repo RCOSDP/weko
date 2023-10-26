@@ -1788,16 +1788,7 @@ def selected_value_by_language(
                             result = value
 
                     if len(value_array)>len(lang_array): # First title without language code
-                        value0 = value_array[0]
-                        tmp = copy.copy(value_array)
-                        for lang in lang_array:
-                            value = check_info_in_metadata(
-                                lang_key, val_key,  lang, _item_metadata
-                            )
-                            if value and value in tmp:
-                                tmp.remove(value)
-                        if len(tmp)>0 and tmp[0]==value0:
-                            return tmp[0]
+                        result = check_info_in_metadata(lang_key, val_key, None, _item_metadata)
                     
                     if not result and "ja-Latn" in lang_array:  # ja_Latn
                         value = check_info_in_metadata(
@@ -1834,17 +1825,17 @@ def selected_value_by_language(
                             result = None
                     # 1st value when registering without language
                     if not result and len(value_array) > 0:
-                        result = value_array[0]
+                        result = check_info_in_metadata(lang_key, val_key, None, _item_metadata)
             if not result:
                 break
         if not result:
             if (len(value_array) > 0
-                and lang_array is not None
                 and value_array is not None
                 and isinstance(lang_selected, str)
                 and not prop_hidden
             ):
-                result = value_array[0]
+                result = check_info_in_metadata('', val_key, None, _item_metadata)
+        if result:
             break
     return result
 
@@ -1859,8 +1850,7 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
     @return
     """
     if (
-        len(str_key_lang) > 0
-        and (len(str_lang) > 0 or str_lang is None)
+        (str_lang is None or len(str_lang) > 0)
         and len(metadata) > 0
         and str_key_val is not None
         and len(str_key_val) > 0
@@ -1872,13 +1862,13 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
         metadata = (
             metadata.get("_item_metadata") if "_item_metadata" in metadata else metadata
         )
-        if str_key_lang[0] in metadata:
-            obj = metadata.get(str_key_lang[0]).get("attribute_value_mlt")
+        if str_key_val[0] in metadata:
+            obj = metadata.get(str_key_val[0]).get("attribute_value_mlt")
             save = obj
-            for ob in str_key_lang:
+            for ob in str_key_val:
                 if (
-                    ob not in str_key_lang[0]
-                    and ob not in str_key_lang[len(str_key_lang) - 1]
+                    ob not in str_key_val[0]
+                    and ob not in str_key_val[len(str_key_val) - 1]
                 ):
                     for x in save:
                         if x.get(ob):
