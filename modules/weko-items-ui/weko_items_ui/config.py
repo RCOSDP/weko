@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """Configuration for weko-items-ui."""
+from invenio_stats.queries import ESWekoRankingQuery
 
 WEKO_WORKFLOW_BASE_TEMPLATE = 'weko_workflow/base.html'
 """Default base template for the demo page."""
@@ -205,3 +206,54 @@ WEKO_ITEMS_UI_RANKING_DEFAULT_SETTINGS = {
 WEKO_ITEMS_UI_RANKING_BUFFER = 100
 
 WEKO_ITEMS_UI_SEARCH_RANK_KEY_FILTER = ['']
+
+WEKO_ITEMS_UI_RANKING_QUERY = dict(
+    most_view_ranking = dict(
+        query_class = ESWekoRankingQuery,
+        query_config = dict(
+            index='{}-stats-{}',
+            doc_type='{}-day-aggregation',
+            main_fields=['start_date', 'end_date', 'group_field', 'agg_size', 'count_field'],
+            metric_fields=dict(),
+            main_query={
+                "size": 0,
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "range": {
+                                    "timestamp": {
+                                        "gte": "@start_date",
+                                        "lte": "@end_date",
+                                        "time_zone": "@time_zone"
+                                    }
+                                }
+                            }
+                        ],
+                        "must_not": "@must_not"
+                    }
+                },
+                "aggs": {
+                    "my_buckets": {
+                        "terms": {
+                            "size": "@agg_size",
+                            "order": {
+                                "my_sum": "desc"
+                            },
+                            "script":{
+                              "source": "def @group_field = doc['@group_field'].value; return @group_field.contains('.') ? @group_field.substring(0, @group_field.indexOf('.')) : @group_field;"
+                            }
+                        },
+                        "aggs": {
+                            "my_sum": {
+                                "sum": {
+                                    "field": "@count_field"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+    )
+)

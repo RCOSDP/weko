@@ -2,7 +2,7 @@ import csv
 import hashlib
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import StringIO
 from collections import OrderedDict
 from unittest.mock import MagicMock
@@ -10,6 +10,8 @@ import copy
 import tempfile
 from uuid import UUID
 from dictdiffer import diff, patch, swap, revert
+from elasticsearch import exceptions as es_exceptions
+import uuid
 
 import pytest
 from flask_security.utils import login_user
@@ -22,6 +24,7 @@ from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_workflow.api import WorkActivity
 from weko_user_profiles.models import UserProfile
+from weko_admin.models import SessionLifetime,RankingSettings
 from weko_workflow.models import (
     Action,
     ActionStatus,
@@ -67,6 +70,7 @@ from weko_items_ui.utils import (
     get_new_items_by_date,
     get_options_and_order_list,
     get_options_list,
+    WekoQueryRankingHelper,
     get_ranking,
     get_title_in_request,
     get_user_info_by_email,
@@ -7381,7 +7385,7 @@ def test_update_schema_remove_hidden_item(db_itemtype):
         if form.get("items")
         and form["items"][0]["key"].split(".")[1] == "subitem_systemidt_identifier"
     ]
-    print(hidden_items)
+
     assert (
         update_schema_remove_hidden_item(
             item_type.schema, item_type.render, hidden_items
@@ -7751,13 +7755,108 @@ def test_translate_schema_form(db_itemtype):
     _diff = diff(form_element_pre,form_element)
     assert list(_diff)==[]
 
-
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_WekoQueryRankingHelper_get -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_WekoQueryRankingHelper_get(app, users, db_records,esindex,mocker):
+    user = users[2]
+    # add data to record_view
+    view_data = [
+        {"rec_index":0,"count":1,"date":"2023-08-24"}, # recid:1
+        {"rec_index":1,"count":3,"date": "2023-08-23"}, # recid:1.1
+        {"rec_index":6,"count":2,"date": "2023-08-25"}, # recid: 4
+        {"rec_index":4,"count":5,"date": "2023-08-25"}, # recid: 3
+        {"rec_index":0,"count":5,"date": "2022-08-25"} # recid: 1
+    ]
+    for data in view_data:
+        _record=db_records[data["rec_index"]]
+        pid = _record[1]
+        record=_record[4]
+        es_id = uuid.uuid4()
+        body = {
+            "timestamp":datetime.strptime(data["date"],"%Y-%m-%d"),"unique_id":str(es_id),"count":data["count"],"unique_count":data["count"],"country":None,"hostname":"None","remote_attr":"111.111.11.1","record_id":pid.object_uuid,"record_name":record["item_title"],"record_index_names":"test_index","pid_type":pid.pid_type,"pid_value":pid.pid_value,"cur_user_id":user["id"],"site_license_name":"","site_license_flag":False
+        }
+        esindex.index(index="test-stats-record-view",doc_type="record-view-day-aggregation",id=str(es_id),body=body)
+    esindex.indices.flush(index="test-*")
+    
+    result = WekoQueryRankingHelper.get(
+            start_date="2023-08-19",
+            end_date="2023-09-01",
+            agg_size=110,
+            event_type='record-view',
+            group_field='pid_value',
+            count_field='count',
+            ranking_type='most_view_ranking'
+        )
+    assert result == [{'key': '3', 'count': 5}, {'key': '1', 'count': 4}, {'key': '4', 'count': 2}]
+    # raise Exception
+    with patch("weko_items_ui.utils.json.loads",side_effect=Exception("test_error")):
+        result = WekoQueryRankingHelper.get(
+            start_date="2023-08-19",
+            end_date="2023-09-01",
+            agg_size=110,
+            event_type='record-view',
+            group_field='pid_value',
+            count_field='count',
+            ranking_type='most_view_ranking'
+        )
+        assert result == []
+    
+    # raise NotFoundError
+    with patch("invenio_stats.queries.ESWekoRankingQuery.run",side_effect=es_exceptions.NotFoundError(404,"test_error")):
+        result = WekoQueryRankingHelper.get(
+            start_date="2023-08-19",
+            end_date="2023-09-01",
+            agg_size=110,
+            event_type='record-view',
+            group_field='pid_value',
+            count_field='count',
+            ranking_type='most_view_ranking'
+        )
+        assert result == []
+        
 # def get_ranking(settings):
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_ranking -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_ranking(app, db_records, db_ranking):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_ranking -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_ranking(app, users, db_records, db_ranking, esindex,mocker):
+    user = users[2]
+    # add data to record_view
+    today = datetime.today()
+    view_data = [
+        {"rec_index":0,"count":1,"date":today+timedelta(days=-2)}, # recid:1
+        {"rec_index":1,"count":3,"date":today+timedelta(days=-2)}, # recid:1.1
+        {"rec_index":6,"count":2,"date":today+timedelta(days=-2)}, # recid: 4
+        {"rec_index":4,"count":5,"date":today+timedelta(days=-2)}, # recid: 3
+        {"rec_index":0,"count":5,"date":today+timedelta(days=-370)} # recid: 1
+    ]
+    for data in view_data:
+        _record=db_records[data["rec_index"]]
+        pid = _record[1]
+        record=_record[4]
+        es_id = uuid.uuid4()
+        body = {
+            "timestamp":data["date"],"unique_id":str(es_id),"count":data["count"],"unique_count":data["count"],"country":None,"hostname":"None","remote_attr":"111.111.11.1","record_id":pid.object_uuid,"record_name":record["item_title"],"record_index_names":"test_index","pid_type":pid.pid_type,"pid_value":pid.pid_value,"cur_user_id":user["id"],"site_license_name":"","site_license_flag":False
+        }
+        esindex.index(index="test-stats-record-view",doc_type="record-view-day-aggregation",id=str(es_id),body=body)
+    esindex.indices.flush(index="test-*")
+    
+    index_json = [
+        {"children":[],"cid":1,"pid":0,"name":"Index(public_state = True,harvest_public_state = True)","id":"1"},
+        {"children":[],"cid":2,"pid":0,"name":"Index(public_state = True,harvest_public_state = False)","id":"2"},
+        {"children":[],"cid":3,"pid":0,"name":"Index(public_state = False,harvest_public_state = True)","id":"3"},
+        {"children":[],"cid":4,"pid":0,"name":"Index(public_state = False,harvest_public_state = False)","id":"4"}
+    ]
+    mocker.patch("weko_items_ui.utils.Indexes.get_browsing_tree_ignore_more",return_value=index_json)
+    title_mapping = {"item_1617186331708":{"jpcoar_mapping":{"title":{"@value":"subitem_1551255647225","@attributes":{"xml:lang":"subitem_1551255648112"}}}}}
+    mocker.patch("weko_deposit.api.Mapping.get_record",return_value=title_mapping)
     settings = db_ranking['settings']
     with app.test_request_context():
-        assert get_ranking(settings)=={'most_reviewed_items': [], 'most_downloaded_items': [], 'created_most_items_user': [], 'most_searched_keywords': [], 'new_items': []}
+        # get all ranking
+        result = get_ranking(settings)
+        test = {'most_reviewed_items': [{'key': '3', 'rank': 1, 'count': 5, 'title': 'title2', 'url': '../records/3'}, {'key': '1', 'rank': 2, 'count': 4, 'title': 'title', 'url': '../records/1'}, {'key': '4', 'rank': 3, 'count': 2, 'title': 'title2', 'url': '../records/4'}], 'most_downloaded_items': [], 'created_most_items_user': [], 'most_searched_keywords': [], 'new_items': []}
+        assert result == test
+    
+        # get no ranking
+        ranking_settings = RankingSettings(is_show=True,new_item_period=12,statistical_period=365,display_rank=10,rankings={"new_items": False, "most_reviewed_items": False, "most_downloaded_items": False, "most_searched_keywords": False, "created_most_items_user": False})
+        result = get_ranking(ranking_settings)
+        assert result == {}
 
 # def __sanitize_string(s: str):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test___sanitize_string -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
