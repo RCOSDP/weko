@@ -142,7 +142,7 @@ def get_item_type_mapping(field):
                 mapping = Mapping.get_record(item_type.id)
                 if mapping:
                     mapping = mapping.dumps()
-                    mapp = {value:key for key, value in get_mapping(mapping, "jpcoar_mapping").items()}# mappingのkeyとvalueを逆転させてる
+                    mapp = {value:key for key, value in get_mapping(mapping, "jpcoar_mapping").items()}
                     paths_replace_arr = [p.replace("[]","") for p in paths]
                     field_lst = [value.split(".")[0] for key, value in mapp.items() if key in paths_replace_arr]
                     target_es_field[item_type.id] = field_lst
