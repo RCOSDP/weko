@@ -14,7 +14,7 @@ from weko_index_tree.api import Indexes
 from weko_records.api import ItemTypes, SiteLicense,ItemsMetadata
 from weko_user_profiles import UserProfile
 
-from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
+from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS, WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS
 from weko_admin.models import AdminLangSettings, FeedbackMailHistory, FeedbackMailFailed, SiteInfo
 from weko_admin.utils import (
     get_response_json,
@@ -1579,7 +1579,7 @@ def test_get_init_display_index(app,indexes,mocker):
 
 # def get_restricted_access(key: str = None):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_restricted_access -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_get_restricted_access(admin_settings):
+def test_get_restricted_access(app, admin_settings):
 
     #test No.3 (W2023-22 3(5))
     with patch("weko_admin.utils.AdminSettings.get",return_value=None):
@@ -1596,8 +1596,9 @@ def test_get_restricted_access(admin_settings):
     assert result == admin_settings[5].settings["usage_report_workflow_access"]
 
     #test No.1 (W2023-22 3(5))
-    result = get_restricted_access("error_msg")
-    assert result == admin_settings[8].settings["error_msg"]
+    with patch("weko_admin.utils.AdminSettings.get",return_value=admin_settings[8].settings):
+        result = get_restricted_access("error_msg")
+        assert result == admin_settings[5].settings["error_msg"]
 
     #test No.2 (W2023-22 3(5))
     result = get_restricted_access("error_msg")

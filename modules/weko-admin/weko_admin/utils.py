@@ -1724,7 +1724,7 @@ def get_restricted_access(key: Optional[str] = None) -> Optional[dict]:
         restricted_access = current_app.config[
             'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
     if not 'error_msg' in restricted_access:
-            restricted_access['error_msg'] = current_app.config['WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE']
+            restricted_access['error_msg'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE
     if not key:
         return restricted_access
     elif key in restricted_access:
