@@ -5,6 +5,7 @@ from flask import current_app
 
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.models import RecordMetadata
 from weko_authors.models import Authors
 from weko_records.models import ItemMetadata
@@ -21,6 +22,7 @@ def get_author_link(author_id, db_data, value):
     def _compare_author_data(author_data, metadata):
         """Compare author data and metadata familyName, GivenName"""
         flg_gn=False
+        # esとitemに同じfirstname(givenname)が存在しているか判定
         if metadata.get("givenNames"):
             givenName_list_metadata = [d["givenName"] for d in metadata.get("givenNames")]
             firstName_list_author = [d["firstName"] for d in author_data["authorNameInfo"]]
@@ -28,6 +30,7 @@ def get_author_link(author_id, db_data, value):
                 if gn in firstName_list_author:
                     flg_gn=True
                     break
+        # esとitemに同じfamilyNameが存在しているか判定
         flg_fn=False
         if metadata.get("familyNames"):
             familyName_list_metadata = [d["familyName"] for d in metadata.get("familyNames")]
@@ -121,25 +124,22 @@ if __name__=="__main__":
         if id not in duplicate:
             duplicate[id]=[]
         duplicate[id].append({"db":db_data,"es":doc})
-    targets = [id for id,datas in duplicate.items() if len(datas)>1]
+    targets_author_id = [id for id, datas in duplicate.items() if len(datas)>1] # 重複があるauthor_idのリスト
 
     deleted={}
     error={}
-    for target in targets:
+    for target in targets_author_id:
+        print("* pk_id: {}".format(target))
         for data in duplicate[target]:
             db_data = data["db"]
             db_metadata = json.loads(db_data.json)
             es_data = data["es"]
             es_metadata = es_data["_source"]
             delete_flg=False
-            
             # dbとesのデータの差異を判定
-            for key in db_metadata.keys():
-                if key == "id":
-                    continue
-                if es_metadata["authorNameInfo"] != db_metadata["authorNameInfo"]:
-                    delete_flg=True
-                    break
+            if es_metadata["authorNameInfo"] != db_metadata["authorNameInfo"]:
+                delete_flg=True
+            
             if delete_flg:
                 # 削除されるデータがrecords_metadataで使用されているか検証
                 conflict_metadatas=[]
@@ -148,9 +148,10 @@ if __name__=="__main__":
                 if len(records_metadata)>0:
                     for metadata in records_metadata:
                         id = metadata[0]
+                        recid = PersistentIdentifier.get_by_object("recid","rec",id).pid_value
                         data = RecordMetadata.query.filter_by(id=id).one()
                         if check_records_metadata(target, es_metadata, data):
-                            conflict_metadatas.append(id)
+                            conflict_metadatas.append(recid)
                             
                 # 削除されるデータがitem_metadataで使用されているか検証
                 sql_item_metadata = "SELECT id, json->'author_link' FROM item_metadata WHERE json->>'author_link' LIKE '\[%%\"{}\"%%\]';".format(target)
@@ -158,33 +159,16 @@ if __name__=="__main__":
                 if len(records_metadata)>0:
                     for metadata in item_metadata:
                         id = metadata[0]
+                        recid = PersistentIdentifier.get_by_object("recid","rec",id).pid_value
                         data = ItemMetadata.query.filter_by(id=id).one()
                         if check_records_metadata(target, es_metadata, data):
-                            if id not in conflict_metadatas:
-                                conflict_metadatas.append(id)
-                if len(conflict_metadatas) == 0:
-                    indexer.client.delete(
-                        index=authors_index,
-                        doc_type=authors_doc_type,
-                        id=es_data["_id"]
-                    )
-                    if target not in deleted:
-                        deleted[target]=[]
-                    deleted[target].append(es_data["_id"])
-                else:
-                    if target not in error:
-                        error[target]={}
-                    error[target][es_data["_id"]]=conflict_metadatas
-    # ログ出力
-    for target in targets:
-        print("pk_id: {}".format(target))
-        if deleted.get(target):
-            print("* deleted")
-            for d in deleted.get(target):
-                print("{}".format(d))
-        if error.get(target):
-            print("* conflict author_link")
-            for k in error.get(target):
-                conflicts = error[target][k]
-                print("{}: {}".format(k,[str(c) for c in conflicts]))
-                
+                            if recid not in conflict_metadatas:
+                                conflict_metadatas.append(recid)
+
+                indexer.client.delete(
+                    index=authors_index,
+                    doc_type=authors_doc_type,
+                    id=es_data["_id"]
+                )
+                print("- delete: {}".format(es_metadata))
+                print("# conflict: {}".format(conflict_metadatas))
