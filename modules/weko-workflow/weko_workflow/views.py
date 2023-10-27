@@ -413,9 +413,26 @@ def new_activity():
                 text/html
 
     """
+
     workflow = WorkFlow()
     workflows = workflow.get_workflow_list()
     workflows = workflow.get_workflows_by_roles(workflows)
+    workflows_actions = [wf.flow_define.flow_actions for wf in workflows]
+    workflows_actions_names = []
+
+    if request.args.get("item_link_button_clicked") == "1":
+        for wfa in workflows_actions:
+            workflows_actions_names.append([wfa_name.action.action_name for wfa_name in wfa])
+        workflows = list(zip(workflows, workflows_actions_names))
+    
+    else:
+        for wfa in workflows_actions:
+            workflows_actions_names.append([wfa_name.action.action_name for wfa_name in wfa])
+            for item_link in workflows_actions_names:
+                if "Item Link" not in item_link:
+                    item_link.append("Item Link")
+        workflows = list(zip(workflows, workflows_actions_names))
+
     ctx = {'community': None}
     community_id = ""
     if 'community' in request.args:
@@ -438,7 +455,9 @@ def new_activity():
         'weko_workflow/workflow_list.html',
         page=page,
         render_widgets=render_widgets,
-        workflows=workflows, community_id=community_id, **ctx
+        workflows=workflows,
+        community_id=community_id,
+        **ctx
     )
 
 
@@ -738,6 +757,13 @@ def display_activity(activity_id="0"):
                 content:
                     text/html
     """
+
+    print("\n\n DISPLAY ACTIVITY 9999")
+    for x in list(session.keys()):
+        print(x)
+        print(session.get(x))
+        print("\n")
+    print("\n\n")
 
     check_flg = type_null_check(activity_id, str)
     if not check_flg:

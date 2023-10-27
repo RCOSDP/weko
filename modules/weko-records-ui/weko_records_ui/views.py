@@ -651,11 +651,37 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # print(steps)
     # print("\n\n")
 
+    if record.get("_oai", {}).get("id") \
+            and record.get("title") \
+            and isinstance(record.get("title"), list):
+        
+        from flask import session
 
-    
+        if session.get("item_link_record") \
+                and isinstance(session.get("item_link_record"), dict):
+            session["item_link_record"][record["_oai"]["id"]] = {
+                "item_links": "1",
+                "item_title": record["title"][0],
+                "value": "isSupplementTo",
+                "recid": record["recid"],
+            }
+            session["current_user_item_link"] = record["_oai"]["id"]
+
+        else:
+            session["item_link_record"] = {}
+            session["current_user_item_link"] = ""
+            session["item_link_record"][record["_oai"]["id"]] = {
+                "item_links": "1",
+                "item_title": record["title"][0],
+                "value": "isSupplementTo",
+                "recid": record["recid"],
+            }
+            session["current_user_item_link"] = record["_oai"]["id"]
+
     return render_template(
         template,
         # data=data,
+        session=session,
         pid=pid,
         pid_versioning=pid_ver,
         active_versions=active_versions,

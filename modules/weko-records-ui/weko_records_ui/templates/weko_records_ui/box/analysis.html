@@ -55,13 +55,13 @@
                         <hr>
                         {{record}}
                         <hr>
-                        {{community_id}}
+                        {{session}}
                     </div>
                     <br>
 
                     <div class="flex justify-space-between">
                         <span style="margin-right:1rem;">
-                            <a href="{{ url_for('weko_workflow.new_activity', pid_value=active_versions[0].pid_value) }}">
+                            <a href="{{ url_for('weko_workflow.new_activity', item_link_button_clicked=1) }}">
                                 <button id="item-link-register-new-data-btn" type="button" class="btn btn-light"
                                 style="text-align:center;width:35%;color:black;">
                                     <h4>新規データ登録</h4>

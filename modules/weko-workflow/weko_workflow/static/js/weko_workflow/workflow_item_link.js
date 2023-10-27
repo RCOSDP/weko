@@ -415,6 +415,20 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     { id: "Cites", content: "Cites" }
   ];
 
+  // Item link default
+  $rootScope.default_item_link_setup = function(data) {
+    let sub_data = {
+      item_id: 0,
+      item_title: "",
+      sele_id: ""
+    };
+
+    sub_data.sele_id = "isSupplementTo";
+    sub_data.item_id = data.recid;
+    sub_data.item_title = data.item_title;
+    $scope.link_item_list.push(sub_data);
+  };
+
 //   add button
   $rootScope.add_link = function(data, index) {
     let sub_data = {
@@ -427,6 +441,12 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     sub_data.item_id = data.metadata.control_number;
     sub_data.item_title = data.metadata.title[0];
     $scope.link_item_list.push(sub_data);
+    
+    // TODO
+    console.log($scope.link_item_list)
+    console.log(data.metadata.control_number)
+    console.log(data.metadata)
+    console.log(data)
   };
 
 //   add ex_item_link

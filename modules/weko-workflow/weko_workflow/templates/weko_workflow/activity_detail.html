@@ -262,7 +262,10 @@
               {%- if 'item_login' == cur_step or 'item_login_application' == cur_step or 'file_upload' == cur_step %}
                 {% include step_item_login_url %}
               {%- elif 'item_link' == cur_step %}
+
+                <!-- TODO -->
                 {% include "weko_workflow/item_link.html" %}
+                
                 {% include "weko_workflow/modal_quit_confirmation.html" %}
               {%- elif 'oa_policy' == cur_step %}
                 {% include "weko_workflow/oapolicy_search.html" %}
