@@ -21,18 +21,23 @@
 """Module of weko-records-ui utils."""
 
 import base64
+import os
+import datetime
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
-from typing import NoReturn, Tuple
-from urllib.parse import urlparse
+from typing import List, NoReturn, Optional, Tuple
+from urllib.parse import urlparse,quote
 
-from flask import abort, current_app, json, request, url_for
+from flask import abort, current_app, json, request, url_for, Flask
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
 from flask_login import current_user
-from invenio_accounts.models import Role
+from sqlalchemy import desc
+from invenio_accounts.models import Role, User
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -51,24 +56,36 @@ from weko_records.utils import replace_fqdn
 from weko_workflow.api import WorkActivity, WorkFlow
 
 from weko_records_ui.models import InstitutionName
+from weko_workflow.models import Activity
 
-from .models import FileOnetimeDownload, FilePermission
+from .models import FileOnetimeDownload, FilePermission, FileSecretDownload
 from .permissions import check_create_usage_report, \
     check_file_download_permission, check_user_group_permission, \
     is_open_restricted
 
 
+
+
 def check_items_settings(settings=None):
     """Check items setting."""
     if settings is None:
-        settings = AdminSettings.get('items_display_settings')
-    if hasattr(settings, 'item_display_email'):
-        current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
-    if hasattr(settings, 'item_search_author'):
-        current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
-    if hasattr(settings, 'item_display_open_date'):
-        current_app.config['OPEN_DATE_DISPLAY_FLG'] = \
-            settings.item_display_open_date
+        settings = AdminSettings.get('items_display_settings',dict_to_object=False)
+    if settings is not None:
+        if isinstance(settings,dict):
+            if 'items_display_email' in settings:
+                current_app.config['EMAIL_DISPLAY_FLG'] = settings['items_display_email']
+            if 'items_search_author' in settings:    
+                current_app.config['ITEM_SEARCH_FLG'] = settings['items_search_author']
+            if 'item_display_open_date' in settings:    
+                current_app.config['OPEN_DATE_DISPLAY_FLG'] = \
+                settings['item_display_open_date']
+        else:
+            if hasattr(settings,'items_display_email'):
+                current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
+            if hasattr(settings,'items_search_author'):
+                current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
+            if hasattr(settings,'item_display_open_date'):
+                current_app.config['OPEN_DATE_DISPLAY_FLG'] = settings.item_display_open_date
 
 
 def get_record_permalink(record):
@@ -114,9 +131,13 @@ def get_groups_price(record: dict) -> list:
 def get_billing_file_download_permission(groups_price: list) -> dict:
     """Get billing file download permission.
 
-    :param groups_price: The prices of Billing files set in each group
-    :return:Billing file permission dictionary.
-    """
+    Args:
+        groups_price (list): The prices of Billing files set in each group [{'file_name': '003.jpg', 'groups_price': [{'group': '1', 'price': '100'}]}]
+
+    Returns:
+        dict: Billing file permission dictionary.
+    """    
+    # current_app.logger.debug("groups_price:{}".format(groups_price))
     billing_file_permission = dict()
     for data in groups_price:
         file_name = data.get('file_name')
@@ -142,6 +163,8 @@ def get_min_price_billing_file_download(groups_price: list,
     :param billing_file_permission: Billing file permission dictionary.
     :return:Billing file permission dictionary.
     """
+    # current_app.logger.debug("groups_price:{}".format(groups_price))
+    # current_app.logger.debug("billing_file_permission:{}".format(billing_file_permission))
     min_prices = dict()
     for data in groups_price:
         file_name = data.get('file_name')
@@ -237,7 +260,7 @@ def soft_delete(recid):
 
         if draft_pid:
             all_ver.append(draft_pid)
-
+        del_files = {}
         for ver in all_ver:
             depid = PersistentIdentifier.query.filter_by(
                 pid_type='depid', object_uuid=ver.object_uuid).first()
@@ -249,12 +272,19 @@ def soft_delete(recid):
                 dep.indexer.update_path(dep, update_revision=False)
                 FeedbackMailList.delete(ver.object_uuid)
                 dep.remove_feedback_mail()
+                for i in range(len(dep.files)):
+                    if dep.files[i].file.uri not in del_files:
+                        del_files[dep.files[i].file.uri] = dep.files[i].file.storage()
+                        dep.files[i].bucket.location.size -= dep.files[i].file.size
+                    dep.files[i].bucket.deleted = True
                 dep.commit()
             pids = PersistentIdentifier.query.filter_by(
                 object_uuid=ver.object_uuid)
             for p in pids:
                 p.status = PIDStatus.DELETED
             db.session.commit()
+        for file_storage in del_files.values():
+            file_storage.delete()
 
         current_app.logger.info(
             'user({0}) deleted record id({1}).'.format(current_user_id, recid))
@@ -336,6 +366,16 @@ def get_license_pdf(license, item_metadata_json, pdf, file_item_id, footer_w,
     @param item:
     @return:
     """
+
+    # current_app.logger.debug("license:{}".format(license))
+    # current_app.logger.debug("item_metadata_json:{}".format(item_metadata_json))
+    # current_app.logger.debug("pdf:{}".format(pdf))
+    # current_app.logger.debug("file_item_id:{}".format(file_item_id))
+    # current_app.logger.debug("footer_w:{}".format(footer_w))
+    # current_app.logger.debug("footer_h:{}".format(footer_h))
+    # current_app.logger.debug("cc_logo_xposition:{}".format(cc_logo_xposition))
+    # current_app.logger.debug("item:{}".format(item))
+        
     from .views import blueprint
     license_icon_pdf_location = \
         current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION']
@@ -368,6 +408,10 @@ def get_pair_value(name_keys, lang_keys, datas):
     :param datas:
     :return:
     """
+    current_app.logger.debug("name_keys:{}".format(name_keys))
+    current_app.logger.debug("lang_keys:{}".format(lang_keys))
+    current_app.logger.debug("datas:{}".format(datas))
+    
     if len(name_keys) == 1 and len(lang_keys) == 1:
         if isinstance(datas, list):
             for data in datas:
@@ -407,9 +451,17 @@ def hide_item_metadata(record, settings=None, item_type_mapping=None,
             record['item_type_id'], item_type_mapping, item_type_data
         )
         record = hide_by_itemtype(record, list_hidden)
+        
+        hide_email = hide_meta_data_for_role(record)
+        if hide_email:
+            # Hidden owners_ext.email
+            if record.get('_deposit') and \
+                record['_deposit'].get('owners_ext') and record['_deposit']['owners_ext'].get('email'):
+                del record['_deposit']['owners_ext']['email']
 
-        if not current_app.config['EMAIL_DISPLAY_FLG']:
+        if hide_email and not current_app.config['EMAIL_DISPLAY_FLG']:
             record = hide_by_email(record)
+
 
         record = hide_by_file(record)
 
@@ -429,11 +481,16 @@ def hide_item_metadata_email_only(record):
     check_items_settings()
 
     record['weko_creator_id'] = record.get('owner')
+    
+    hide_email = hide_meta_data_for_role(record)
+    if hide_email:
+        # Hidden owners_ext.email
+        if record.get('_deposit') and \
+            record['_deposit'].get('owners_ext') and record['_deposit']['owners_ext'].get('email'):
+            del record['_deposit']['owners_ext']['email']
 
-    if hide_meta_data_for_role(record) and \
-            not current_app.config['EMAIL_DISPLAY_FLG']:
+    if hide_email and not current_app.config['EMAIL_DISPLAY_FLG']:
         record = hide_by_email(record)
-
         return True
 
     record.pop('weko_creator_id')
@@ -470,7 +527,7 @@ def hide_by_email(item_metadata):
 
     # Hidden owners_ext.email
     if item_metadata.get('_deposit') and \
-            item_metadata['_deposit'].get('owners_ext'):
+        item_metadata['_deposit'].get('owners_ext') and item_metadata['_deposit']['owners_ext'].get('email'):
         del item_metadata['_deposit']['owners_ext']['email']
 
     for item in item_metadata:
@@ -557,15 +614,16 @@ def is_show_email_of_creator(item_type_id):
 
     def item_setting_show_email():
         # Display email from setting item admin.
-        settings = AdminSettings.get('items_display_settings')
-        if hasattr(settings, 'item_display_email'):
-            is_display = settings.items_display_email
+        settings = AdminSettings.get('items_display_settings',dict_to_object=False)
+        if settings and 'items_display_email' in settings:
+            is_display = settings['items_display_email']
         else:
             is_display = False
         return is_display
 
     is_hide = item_type_show_email(item_type_id)
     is_display = item_setting_show_email()
+    
     return not is_hide and is_display
 
 
@@ -600,6 +658,10 @@ def replace_license_free(record_metadata, is_change_label=True):
                         attr[_license_note] = attr[_license_free]
                         del attr[_license_free]
 
+def get_data_by_key_array_json(key, array_json, get_key):
+    for item in array_json:
+        if str(item.get('id')) == str(key):
+            return item.get(get_key)
 
 def get_file_info_list(record):
     """File Information of all file in record.
@@ -617,7 +679,10 @@ def get_file_info_list(record):
             size_num = file_size_value.split(' ')[0]
             size_unit = file_size_value.split(' ')[1]
             unit_num = defined_unit.get(size_unit.lower(), 0)
-            file_size_value = float(size_num) * unit_num
+            try:
+                file_size_value = float(size_num) * unit_num
+            except:
+                file_size_value = -1
         return file_size_value
 
     def set_message_for_file(p_file):
@@ -632,20 +697,15 @@ def get_file_info_list(record):
             if date and isinstance(date, list) and date[0]:
                 adt = date[0].get('dateValue')
                 if adt is None:
-                    adt = dt.date.max
-                pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
-                if pdt > dt.today():
+                    adt = datetime.date.max
+                pdt = to_utc(dt.strptime(str(adt), '%Y-%m-%d'))
+                if pdt > dt.utcnow():
                     message = "Download is available from {}/{}/{}."
                     p_file['future_date_message'] = _(message).format(
                         pdt.year, pdt.month, pdt.day)
                     message = "Download / Preview is available from {}/{}/{}."
                     p_file['download_preview_message'] = _(message).format(
                         pdt.year, pdt.month, pdt.day)
-
-    def get_data_by_key_array_json(key, array_json, get_key):
-        for item in array_json:
-            if str(item.get('id')) == str(key):
-                return item.get(get_key)
 
     workflows = get_workflows()
     roles = get_roles()
@@ -669,11 +729,7 @@ def get_file_info_list(record):
                     # Check Opendate is future date.
                     set_message_for_file(f)
                     # Check show preview area.
-                    # If f is uploaded in this system => show 'Preview' area.
-                    # remove port number from url_root
-                    o = urlparse(request.url_root)
-                    base_url = "{}/record/{}/files/{}".format(
-                        o.hostname,
+                    base_url = "/record/{}/files/{}".format(
                         record.get('recid'),
                         f.get("filename")
                     )
@@ -685,8 +741,8 @@ def get_file_info_list(record):
                     if base_url in url:
                         is_display_file_preview = True
 
-                    # current_app.logger.debug("base_url: {0}".format(base_url))
-                    # current_app.logger.debug("url: {0}".format(url))
+                    #current_app.logger.error("base_url: {0}".format(base_url))
+                    #current_app.logger.error("url: {0}".format(url))
                     # current_app.logger.debug(
                     #     "is_display_file_preview: {0}".format(is_display_file_preview))
 
@@ -716,29 +772,19 @@ def get_file_info_list(record):
                                 p['role_id'] = role
                                 p['role'] = get_data_by_key_array_json(
                                     role, roles, 'name')
+                    # add role
+                    role_list = f.get("roles")
+                    if role_list:
+                        for r in role_list:
+                            role = r.get('role')
+                            if role:
+                                r['role_id'] = role
+                                r['role'] = get_data_by_key_array_json(role, roles, 'name')
+
                     f['file_order'] = file_order
                     files.append(f)
                 file_order += 1
     return is_display_file_preview, files
-
-
-def check_and_create_usage_report(record, file_object):
-    """Check and create usage report.
-
-    :param file_object:
-    :param record:
-    :return:
-    """
-    access_role = file_object.get('accessrole', '')
-    if 'open_restricted' in access_role:
-        permission = check_create_usage_report(record, file_object)
-        if permission is not None:
-            from weko_workflow.utils import create_usage_report
-            activity_id = create_usage_report(
-                permission.usage_application_activity_id)
-            if activity_id is not None:
-                FilePermission.update_usage_report_activity_id(permission,
-                                                               activity_id)
 
 
 def create_usage_report_for_user(onetime_download_extra_info: dict):
@@ -747,6 +793,7 @@ def create_usage_report_for_user(onetime_download_extra_info: dict):
     @param onetime_download_extra_info:
     @return:
     """
+    current_app.logger.debug("onetime_download_extra_info:{}".format(onetime_download_extra_info))
     activity_id = onetime_download_extra_info.get(
         'usage_application_activity_id')
     is_guest = onetime_download_extra_info.get('is_guest', False)
@@ -816,6 +863,9 @@ def get_data_usage_application_data(record_metadata, data_result: dict):
         record_metadata (Union[list, dict]):
         data_result (dict):
     """
+    current_app.logger.debug("record_metadata:{}".format(record_metadata))
+    current_app.logger.debug("data_result:{}".format(data_result))
+
     if isinstance(record_metadata, dict):
         for k, v in record_metadata.items():
             if isinstance(v, str) and k.startswith("subitem_") \
@@ -835,6 +885,8 @@ def send_usage_report_mail_for_user(guest_mail: str, temp_url: str):
     @param temp_url:
     @return:
     """
+    current_app.logger.debug("guest_mail:{}".format(guest_mail))
+    current_app.logger.debug("temp_url:{}".format(temp_url))
     # Mail information
     mail_info = {
         'template': current_app.config.get(
@@ -846,13 +898,17 @@ def send_usage_report_mail_for_user(guest_mail: str, temp_url: str):
     return send_mail_url_guest_user(mail_info)
 
 
-def check_and_send_usage_report(extra_info, user_mail):
+def check_and_send_usage_report(extra_info:dict, user_mail:str ,record:dict, file_object:dict):
     """Check and send usage report for user.
-
-    @param extra_info:
-    @param user_mail:
-    @return:
+    Args
+        extra_info:dict
+        user_mail:str
+        record:dict
+        file_object:dict
     """
+    current_app.logger.debug("extra_info:{}".format(extra_info))
+    current_app.logger.debug("user_mail:{}".format(user_mail))
+
     if not extra_info.get('send_usage_report'):
         return
     activity = create_usage_report_for_user(extra_info)
@@ -865,6 +921,12 @@ def check_and_send_usage_report(extra_info, user_mail):
         return _("Failed to send mail.")
     extra_info['send_usage_report'] = False
 
+    activity_id = activity.activity_id
+    user =  User.query.filter_by(email=user_mail).one_or_none()
+    permission = check_create_usage_report(record, file_object , user.id if user else None)
+    if permission is not None and activity_id is not None:
+        FilePermission.update_usage_report_activity_id(permission,activity_id)
+
 
 def generate_one_time_download_url(
     file_name: str, record_id: str, guest_mail: str
@@ -875,7 +937,7 @@ def generate_one_time_download_url(
     :param record_id: File Version ID
     :param guest_mail: guest email
     :return:
-    """
+    """    
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
     download_pattern = current_app.config[
         'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
@@ -900,6 +962,7 @@ def parse_one_time_download_token(token: str) -> Tuple[str, Tuple]:
     @param token:
     @return:
     """
+    # current_app.logger.debug("token:{}".format(token))
     error = _("Token is invalid.")
     if token is None:
         return error, ()
@@ -929,6 +992,13 @@ def validate_onetime_download_token(
     @param token:
     @return:
     """
+    # current_app.logger.debug("onetime_download:{}".format(onetime_download))
+    # current_app.logger.debug("file_name:{}".format(file_name))
+    # current_app.logger.debug("record_id:{}".format(record_id))
+    # current_app.logger.debug("guest_mail:{}".format(guest_mail))
+    # current_app.logger.debug("date:{}".format(date))
+    # current_app.logger.debug("token:{}".format(token))
+
     token_invalid = _("Token is invalid.")
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
     download_pattern = current_app.config[
@@ -993,15 +1063,38 @@ def validate_download_record(record: dict):
 
 
 def get_onetime_download(file_name: str, record_id: str,
-                         user_mail: str):
+                         user_mail: str) -> Optional[FileOnetimeDownload]:
     """Get onetime download count.
 
-    @param file_name:
-    @param record_id:
-    @param user_mail:
-    @return:
+    Args:
+        str:file_name:
+        str:record_id:
+        str:user_mail:
+    Returns: 
+        FileOnetimeDownload or None
     """
     file_downloads = FileOnetimeDownload.find(
+        file_name=file_name, record_id=record_id, user_mail=user_mail
+    )
+    if file_downloads and len(file_downloads) > 0:
+        return file_downloads[0]
+    else:
+        return None
+    
+def get_valid_onetime_download(file_name: str, record_id: str,user_mail: str) -> Optional[FileOnetimeDownload]:
+    """Get file_onetime_download 
+        if expiration_date and download_count is set downloadable
+
+    Args:
+        str:file_name:
+        str:record_id:
+        str:user_mail:
+    Returns: 
+        FileOnetimeDownload or None
+    """
+                
+    file_downloads:List[FileOnetimeDownload] = FileOnetimeDownload \
+    .find_downloadable_only(
         file_name=file_name, record_id=record_id, user_mail=user_mail
     )
     if file_downloads and len(file_downloads) > 0:
@@ -1044,7 +1137,7 @@ def create_onetime_download_url(
     return False
 
 
-def update_onetime_download(**kwargs) -> NoReturn:
+def update_onetime_download(**kwargs) -> Optional[List[FileOnetimeDownload]]:
     """Update onetime download.
 
     @param kwargs:
@@ -1117,7 +1210,7 @@ def display_oaiset_path(record_metadata):
     record_metadata['_oai']['sets'] = index_paths
 
 
-def get_google_scholar_meta(record):
+def get_google_scholar_meta(record, record_tree=None):
     """
     _get_google_scholar_meta [make a google scholar metadata]
 
@@ -1125,6 +1218,7 @@ def get_google_scholar_meta(record):
 
     Args:
         record ([type]): [description]
+        record_tree (etree): Return value of getrecord method
 
     Returns:
         [type]: [description]
@@ -1142,12 +1236,16 @@ def get_google_scholar_meta(record):
 
     if '_oai' not in record and 'id' not in record['_oai']:
         return
-    recstr = etree.tostring(
-        getrecord(
-            identifier=record['_oai'].get('id'),
-            metadataPrefix='jpcoar',
-            verb='getrecord'))
-    et = etree.fromstring(recstr)
+    if record_tree is None:
+        recstr = etree.tostring(
+            getrecord(
+                identifier=record['_oai'].get('id'),
+                metadataPrefix='jpcoar',
+                verb='getrecord'))
+        et = etree.fromstring(recstr)
+    else:
+        et = record_tree
+
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     if mtdata is None:
         return
@@ -1195,7 +1293,7 @@ def get_google_scholar_meta(record):
     for pdf_url in mtdata.findall('jpcoar:file/jpcoar:URI',
                                   namespaces=mtdata.nsmap):
         res.append({'name': 'citation_pdf_url',
-                    'data': pdf_url.text})
+                    'data': quote(pdf_url.text,'/:%')})
 
     res.append({'name': 'citation_dissertation_institution',
                 'data': InstitutionName.get_institution_name()})
@@ -1208,8 +1306,7 @@ def get_google_scholar_meta(record):
     res.append({'name': 'citation_abstract_html_url', 'data': record_url})
     return res
 
-
-def get_google_detaset_meta(record):
+def get_google_detaset_meta(record,record_tree=None):
     """
     _get_google_detaset_meta [summary]
 
@@ -1217,47 +1314,65 @@ def get_google_detaset_meta(record):
 
     Args:
         record ([type]): [description]
+        record_tree (etree): Return value of getrecord method
 
     Returns:
         [type]: [description]
     """
+    from .config import WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE, \
+    WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN, \
+    WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX, \
+    WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE
+
+    current_app.logger.debug("get_google_detaset_meta: {}".format(record.id))
+
     if not current_app.config['WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE']:
         return
 
     if '_oai' not in record and 'id' not in record['_oai']:
         return
-    recstr = etree.tostring(
-        getrecord(
-            identifier=record['_oai'].get('id'),
-            metadataPrefix='jpcoar',
-            verb='getrecord'))
-    et = etree.fromstring(recstr)
+    if record_tree is None:
+        recstr = etree.tostring(
+            getrecord(
+                identifier=record['_oai'].get('id'),
+                metadataPrefix='jpcoar',
+                verb='getrecord'))
+        et = etree.fromstring(recstr)
+    else:
+        et = record_tree
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     if mtdata is None:
         return
 
+    output_resource_types = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE',WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE)
     # Check resource type is 'dataset'
     resource_type_allowed = False
     for resource_type in mtdata.findall('dc:type', namespaces=mtdata.nsmap):
-        if resource_type.text == "dataset":
+        if resource_type.text in output_resource_types:
             resource_type_allowed = True
             break
 
     if not resource_type_allowed:
+        current_app.logger.debug("resource_type_allowed: {}".format(resource_type_allowed))
         return
 
     res_data = {'@context': 'https://schema.org/', '@type': 'Dataset'}
 
     # Required property check
+    min_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN)
+    max_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX)
+    
     for title in mtdata.findall('dc:title', namespaces=mtdata.nsmap):
         res_data['name'] = title.text
     for description in mtdata.findall('datacite:description', namespaces=mtdata.nsmap):
         description_text = description.text
-        if len(description_text) >= 50:
-            if len(description_text) > 5000:
-                description_text = description_text[:5000]
+        if len(description_text) >= min_length:
+            if len(description_text) > max_length:
+                description_text = description_text[:max_length]
             res_data['description'] = description_text
+
     if 'name' not in res_data or 'description' not in res_data:
+        current_app.logger.debug("resource_type_allowed: {}".format(resource_type_allowed))
         return
 
     # includedInDataCatalog
@@ -1395,11 +1510,245 @@ def get_google_detaset_meta(record):
 
         distribution = {'@type': 'DataDownload'}
         if uri is not None and len(uri.text) > 0:
-            distribution['contentUrl'] = uri.text
+            distribution['contentUrl'] = quote(uri.text,'/:%')
         if mime_type is not None and len(mime_type.text) > 0:
             distribution['encodingFormat'] = mime_type.text
         distributions.append(distribution)
     if len(distributions) > 0:
+        adding_bundles = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE',WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE)
+        if adding_bundles is not None:
+            for bundle in adding_bundles:
+                distribution = {'@type': 'DataDownload'}
+                if 'contentUrl' in bundle:
+                    distribution['contentUrl'] = quote(bundle['contentUrl'],'/:%')
+                    if 'encodingFormat' in bundle:
+                        distribution['encodingFormat'] = bundle['encodingFormat']
+                    distributions.append(distribution)
         res_data['distribution'] = distributions
 
+    current_app.logger.debug("res_data: {}".format(json.dumps(res_data, ensure_ascii=False)))
+
     return json.dumps(res_data, ensure_ascii=False)
+
+def create_secret_url(record_id:str ,file_name:str ,user_mail:str ,restricted_fullname='',restricted_data_name='') -> dict:
+    """
+    Save in FileSecretDownload
+    and Generate Secret Download URL.
+    
+    Args:
+        str :record_id:
+        str :file_name:
+        str :user_mail
+        str :restricted_fullname  :embed mail string
+        str :restricted_data_name :embed mail string
+    Return: 
+        dict: created info 
+    """
+    # Save to Database.
+    secret_obj:FileSecretDownload = _create_secret_download_url(
+        file_name, record_id, user_mail)
+    
+    # generate url
+    secret_file_url = _generate_secret_download_url(
+        file_name, record_id, secret_obj.id , secret_obj.created)
+
+    return_dict:dict = {
+        "restricted_download_link":"",
+        "mail_recipient":"",
+        "file_name":file_name,
+        "restricted_expiration_date": "",
+        "restricted_expiration_date_ja": "",
+        "restricted_expiration_date_en": "",
+        "restricted_download_count":"",
+        "restricted_download_count_ja":"",
+        "restricted_download_count_en":"",
+        "restricted_fullname" :restricted_fullname,
+        "restricted_data_name" :restricted_data_name,
+    }
+    return_dict["mail_recipient"] = secret_obj.user_mail
+    return_dict["restricted_download_link"] = secret_file_url
+
+    max_int :int = current_app.config["WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER"]
+    if secret_obj.expiration_date < max_int:
+        expiration_date = timedelta(days=secret_obj.expiration_date)
+        expiration_date = dt.today() + expiration_date
+        expiration_date = expiration_date.strftime("%Y-%m-%d")
+        return_dict['restricted_expiration_date'] = expiration_date
+    else:
+        return_dict["restricted_expiration_date_ja"] = "無制限"
+        return_dict["restricted_expiration_date_en"] = "Unlimited"
+            
+
+    if secret_obj.download_count < max_int :
+        return_dict["restricted_download_count"] = str(secret_obj.download_count)
+    else:
+        return_dict["restricted_download_count_ja"] = "無制限"
+        return_dict["restricted_download_count_en"] = "Unlimited"
+            
+    return return_dict
+
+
+def _generate_secret_download_url(file_name: str, record_id: str, id: str ,created :dt) -> str:
+    """Generate Secret download URL.
+    
+    Args
+        str: file_name: File name
+        str: record_id: File Version ID
+        str: id: FileSecretDownload id
+        datetime :created :FileSecretDownload created
+    
+    Returns
+        str: generated url
+    """    
+    secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
+    download_pattern = current_app.config[
+        'WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN']
+    current_date = created
+    hash_value = download_pattern.format(file_name, record_id, id,
+                                         current_date)
+    secret_token = oracle10.hash(secret_key, hash_value)
+
+    token_pattern = "{} {} {} {}"
+    token = token_pattern.format(record_id, id, current_date,
+                                 secret_token)
+    token_value = base64.b64encode(token.encode()).decode()
+    host_name = request.host_url
+    url = "{}record/{}/file/secret/{}?token={}" \
+        .format(host_name, record_id, file_name, token_value)
+    return url
+
+
+def parse_secret_download_token(token: str) -> Tuple[str, Tuple]:
+    """Parse secret download token.
+
+    Args
+        token:
+    Returns: 
+        str   : error message
+        Tuple : (record_id, id, date, secret_token)
+    """
+    current_app.logger.debug("token:{}".format(token))
+    error = _("Token is invalid.")
+    if token is None:
+        return error, ()
+    try:
+        decode_token = base64.b64decode(token.encode()).decode()
+        param = decode_token.split(" ")
+        if not param or len(param) != 5:
+            return error, ()
+        return "", (param[0], param[1], param[2] + " " + param[3] , param[4]) #record_id, id, current_date(date + time), secret_token
+    except Exception as err:
+        current_app.logger.error(err)
+        return error, ()
+
+
+def validate_secret_download_token(
+    secret_download: FileSecretDownload , file_name: str, record_id: str,
+    id: str, date: str, token: str
+) -> Tuple[bool, str]:
+    """Validate secret download token.
+
+    Args
+        FileSecretDownload:secret_download:
+        str:file_name:
+        str:record_id:
+        str:id:
+        str:date:
+        str:token:
+    Returns 
+        Tuple:
+            bool : is valid 
+            str  : error message
+    """
+    token_invalid = _("Token is invalid.")
+    secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
+    download_pattern = current_app.config[
+        'WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN']
+    hash_value = download_pattern.format(
+        file_name, record_id, id, date)
+    if not oracle10.verify(secret_key, token, hash_value):
+        current_app.logger.info('Validate token error: {}'.format(hash_value))
+        return False, token_invalid
+    try:
+        if not secret_download:
+            return False, token_invalid
+        try:
+            expiration_date = timedelta(secret_download.expiration_date)
+            download_date = secret_download.created.date() + expiration_date
+            current_date = dt.utcnow().date()
+            if current_date > download_date:
+                return False, _(
+                    "The expiration date for download has been exceeded.")
+        except OverflowError:
+            # in case of "Unlimited"
+            current_app.logger.debug('date value out of range:'+
+                                    str(secret_download.expiration_date))
+
+        if secret_download.download_count <= 0:
+            return False, _("The download limit has been exceeded.")
+        return True, ""
+    except Exception as err:
+        current_app.logger.error('Validate secret download token error:')
+        current_app.logger.error(err)
+        return False, token_invalid
+        
+def get_secret_download(file_name: str, record_id: str,
+                        id: str , created :dt ) -> Optional[FileSecretDownload]:
+    """Get secret download count.
+
+    Args :
+        str:file_name
+        str:record_id
+        str:id
+        dt :created
+    @return:
+        FileSecretDownload or None
+    """
+    file_downloads = FileSecretDownload.find(
+        file_name=file_name, record_id=record_id, id=id ,created=created
+    )
+    if file_downloads and len(file_downloads) == 1:
+        return file_downloads[0]
+    else:
+        return None
+
+def _create_secret_download_url(file_name: str, record_id: str, user_mail: str) -> FileSecretDownload:
+    """Create secret download.
+
+    Args:
+        str : file_name:
+        str : record_id:
+        str : user_mail:
+    Returns:
+        FileSecretDownload : inserted record
+    """
+    secret_url_file_download:dict = get_restricted_access('secret_URL_file_download')
+        
+    expiration_date = secret_url_file_download.get("secret_expiration_date")
+    download_limit = secret_url_file_download.get("secret_download_limit")
+
+    file_secret = FileSecretDownload.create(**{
+        "file_name": file_name,
+        "record_id": record_id,
+        "user_mail": user_mail,
+        "expiration_date": expiration_date,
+        "download_count": download_limit,
+    })
+    return file_secret
+    
+
+
+def update_secret_download(**kwargs) -> Optional[List[FileSecretDownload]]:
+    """Update secret download.
+
+    Args
+        kwargs:
+    Returns
+        updated List[FileSecretDownload] or None
+    """
+    return FileSecretDownload.update_download(**kwargs)
+
+
+def create_limmiter():
+    from .config import WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT)

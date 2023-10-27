@@ -20,7 +20,7 @@
 
 """Module for displaying records."""
 
-from .ext import WekoRecordsCitesREST, WekoRecordsUI
+from .ext import WekoRecordsCitesREST, WekoRecordsUI, WekoRecordsREST
 from .version import __version__
 
-__all__ = ('__version__', 'WekoRecordsUI', 'WekoRecordsCitesREST')
+__all__ = ('__version__', 'WekoRecordsUI', 'WekoRecordsCitesREST', 'WekoRecordsREST')

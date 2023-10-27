@@ -196,9 +196,10 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
-                        BibTexFields.JOURNAL, BibTexFields.YEAR]
-        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.JOURNAL, BibTexFields.YEAR,
+                        BibTexFields.VOLUME, BibTexFields.NUMBER,
                         BibTexFields.PAGE_START,
                         BibTexFields.PAGE_END, BibTexFields.MONTH,
                         BibTexFields.NOTE, BibTexFields.KEY]
@@ -212,15 +213,16 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.TITLE, BibTexFields.PUBLISHER,
-                        BibTexFields.YEAR]
-        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+        lst_required = []
+        lst_optional = [BibTexFields.EDITOR,BibTexFields.AUTHOR,
+                        BibTexFields.TITLE, BibTexFields.PUBLISHER,
+                        BibTexFields.YEAR,
+                        BibTexFields.VOLUME, BibTexFields.NUMBER,
                         BibTexFields.MONTH,
                         BibTexFields.EDITION, BibTexFields.SERIES,
                         BibTexFields.ADDRESS,
                         BibTexFields.NOTE, BibTexFields.KEY]
-        lst_required_partial = [[BibTexFields.EDITOR,
-                                 BibTexFields.AUTHOR]]
+        lst_required_partial = []
         return {'required': lst_required, 'optional': lst_optional,
                 'required_partial': lst_required_partial}
 
@@ -230,8 +232,9 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.TITLE]
-        lst_optional = [BibTexFields.AUTHOR, BibTexFields.HOW_PUBLISHER,
+        lst_required = []
+        lst_optional = [BibTexFields.TITLE,
+                        BibTexFields.AUTHOR, BibTexFields.HOW_PUBLISHER,
                         BibTexFields.YEAR, BibTexFields.MONTH,
                         BibTexFields.ADDRESS, BibTexFields.NOTE,
                         BibTexFields.KEY]
@@ -245,9 +248,10 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
-                        BibTexFields.BOOK_TITLE, BibTexFields.YEAR]
-        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.BOOK_TITLE, BibTexFields.YEAR,
+                        BibTexFields.VOLUME, BibTexFields.NUMBER,
                         BibTexFields.PAGE_START,
                         BibTexFields.PAGE_END, BibTexFields.PUBLISHER,
                         BibTexFields.MONTH,
@@ -264,18 +268,18 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.TITLE, BibTexFields.YEAR,
-                        BibTexFields.PUBLISHER]
-        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR,BibTexFields.EDITOR,
+                        BibTexFields.PAGES,BibTexFields.CHAPTER,
+                        BibTexFields.TITLE, BibTexFields.YEAR,
+                        BibTexFields.PUBLISHER,
+                        BibTexFields.VOLUME, BibTexFields.NUMBER,
                         BibTexFields.MONTH,
                         BibTexFields.TYPE, BibTexFields.EDITION,
                         BibTexFields.SERIES,
                         BibTexFields.ADDRESS, BibTexFields.NOTE,
                         BibTexFields.KEY]
-        lst_required_partial = [[BibTexFields.AUTHOR,
-                                 BibTexFields.EDITOR],
-                                [BibTexFields.PAGES,
-                                 BibTexFields.CHAPTER]]
+        lst_required_partial = []
         return {'required': lst_required, 'optional': lst_optional,
                 'required_partial': lst_required_partial}
 
@@ -285,10 +289,11 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.TITLE,
                         BibTexFields.BOOK_TITLE, BibTexFields.YEAR,
-                        BibTexFields.PUBLISHER]
-        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+                        BibTexFields.PUBLISHER,
+                        BibTexFields.VOLUME, BibTexFields.NUMBER,
                         BibTexFields.PAGE_START,
                         BibTexFields.PAGE_END, BibTexFields.MONTH,
                         BibTexFields.TYPE, BibTexFields.EDITOR,
@@ -306,9 +311,10 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
-                        BibTexFields.BOOK_TITLE, BibTexFields.YEAR]
-        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.BOOK_TITLE, BibTexFields.YEAR,
+                        BibTexFields.VOLUME, BibTexFields.NUMBER,
                         BibTexFields.PAGE_START,
                         BibTexFields.PAGE_END, BibTexFields.PUBLISHER,
                         BibTexFields.MONTH, BibTexFields.EDITOR,
@@ -325,8 +331,9 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.TITLE]
-        lst_optional = [BibTexFields.AUTHOR, BibTexFields.YEAR,
+        lst_required = []
+        lst_optional = [BibTexFields.TITLE,
+                        BibTexFields.AUTHOR, BibTexFields.YEAR,
                         BibTexFields.MONTH, BibTexFields.EDITION,
                         BibTexFields.ADDRESS, BibTexFields.NOTE,
                         BibTexFields.ORGANIZATION, BibTexFields.KEY]
@@ -340,9 +347,10 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
-                        BibTexFields.YEAR, BibTexFields.SCHOOL]
-        lst_optional = [BibTexFields.MONTH, BibTexFields.TYPE,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.YEAR, BibTexFields.SCHOOL,
+                        BibTexFields.MONTH, BibTexFields.TYPE,
                         BibTexFields.ADDRESS, BibTexFields.NOTE,
                         BibTexFields.KEY]
         lst_required_partial = []
@@ -355,9 +363,10 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
-                        BibTexFields.YEAR, BibTexFields.SCHOOL]
-        lst_optional = [BibTexFields.MONTH, BibTexFields.TYPE,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.YEAR, BibTexFields.SCHOOL,
+                        BibTexFields.MONTH, BibTexFields.TYPE,
                         BibTexFields.ADDRESS, BibTexFields.NOTE,
                         BibTexFields.KEY]
         lst_required_partial = []
@@ -370,8 +379,9 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.TITLE, BibTexFields.YEAR]
-        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+        lst_required = []
+        lst_optional = [BibTexFields.TITLE, BibTexFields.YEAR,
+                        BibTexFields.VOLUME, BibTexFields.NUMBER,
                         BibTexFields.PUBLISHER, BibTexFields.MONTH,
                         BibTexFields.EDITOR, BibTexFields.SERIES,
                         BibTexFields.ADDRESS, BibTexFields.NOTE,
@@ -386,9 +396,10 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
-                        BibTexFields.YEAR, BibTexFields.INSTITUTION]
-        lst_optional = [BibTexFields.NUMBER, BibTexFields.MONTH,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.YEAR, BibTexFields.INSTITUTION,
+                        BibTexFields.NUMBER, BibTexFields.MONTH,
                         BibTexFields.TYPE, BibTexFields.ADDRESS,
                         BibTexFields.NOTE, BibTexFields.KEY]
         lst_required_partial = []
@@ -401,9 +412,10 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
-                        BibTexFields.NOTE]
-        lst_optional = [BibTexFields.YEAR, BibTexFields.MONTH,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.NOTE,
+                        BibTexFields.YEAR, BibTexFields.MONTH,
                         BibTexFields.KEY]
         lst_required_partial = []
         return {'required': lst_required, 'optional': lst_optional,
@@ -529,62 +541,62 @@ class WekoBibTexSerializer():
 
         def validate_partial_req():
             result = True
-            for par_req in fields.get('required_partial'):
-                partial_valid = False
-                for field in par_req:
-                    # check for pages because pages is represented for start
-                    # and end page
-                    if field == BibTexFields.PAGES:
-                        start_page = root.findall(self.__find_pattern.format(
-                            self.__fields_mapping[BibTexFields.PAGE_START]),
-                            self.__ns)
-                        end_page = root.findall(
-                            self.__find_pattern.format(self.__fields_mapping[BibTexFields.PAGE_END]),
-                            self.__ns)
-                        if len(start_page) > 0 and len(end_page) > 0:
-                            partial_valid = True
-                            break
-                    else:
-                        field_data = root.findall(
-                            self.__find_pattern.format(self.__fields_mapping[field]),
-                            self.__ns)
-                        if len(field_data) > 0:
-                            partial_valid = True
-                            break
-                if not partial_valid:
-                    result = False
-                    lst_invalid_fields.append(par_req[0].value)
-                    lst_invalid_fields.append(par_req[1].value)
+            # for par_req in fields.get('required_partial'):
+            #     partial_valid = False
+            #     for field in par_req:
+            #         # check for pages because pages is represented for start
+            #         # and end page
+            #         if field == BibTexFields.PAGES:
+            #             start_page = root.findall(self.__find_pattern.format(
+            #                 self.__fields_mapping[BibTexFields.PAGE_START]),
+            #                 self.__ns)
+            #             end_page = root.findall(
+            #                 self.__find_pattern.format(self.__fields_mapping[BibTexFields.PAGE_END]),
+            #                 self.__ns)
+            #             if len(start_page) > 0 and len(end_page) > 0:
+            #                 partial_valid = True
+            #                 break
+            #         else:
+            #             field_data = root.findall(
+            #                 self.__find_pattern.format(self.__fields_mapping[field]),
+            #                 self.__ns)
+            #             if len(field_data) > 0:
+            #                 partial_valid = True
+            #                 break
+            #     if not partial_valid:
+            #         result = False
+            #         lst_invalid_fields.append(par_req[0].value)
+            #         lst_invalid_fields.append(par_req[1].value)
             return result
 
         lst_invalid_fields = []
         identifierType_str = 'identifierType'
         required_valid = True
         fields = self.____get_bibtex_type_fields(bibtex_type)
-        for item_required in fields.get('required'):
-            elements = root.findall(
-                self.__find_pattern.format(self.__fields_mapping[item_required]),
-                self.__ns)
-            if len(elements) == 0:
-                required_valid = False
-                lst_invalid_fields.append(item_required.value)
-            elif item_required == BibTexFields.YEAR or \
-                    item_required == BibTexFields.MONTH:
-                date_valid = validate_by_att('dateType', ['issued'])
-                if not date_valid:
-                    lst_invalid_fields.append(item_required.value)
-                    required_valid = False
-            elif item_required == BibTexFields.DOI:
-                doi_valid = validate_by_att(identifierType_str, ['doi'])
-                if not doi_valid:
-                    lst_invalid_fields.append(item_required.value)
-                    required_valid = False
-            elif item_required == BibTexFields.URL:
-                url_valid = validate_by_att(identifierType_str,
-                                            ['doi', 'hdl', 'uri'])
-                if not url_valid:
-                    lst_invalid_fields.append(item_required.value)
-                    required_valid = False
+        # for item_required in fields.get('required'):
+        #     elements = root.findall(
+        #         self.__find_pattern.format(self.__fields_mapping[item_required]),
+        #         self.__ns)
+        #     if len(elements) == 0:
+        #         required_valid = False
+        #         lst_invalid_fields.append(item_required.value)
+        #     elif item_required == BibTexFields.YEAR or \
+        #             item_required == BibTexFields.MONTH:
+        #         date_valid = validate_by_att('dateType', ['issued'])
+        #         if not date_valid:
+        #             lst_invalid_fields.append(item_required.value)
+        #             required_valid = False
+        #     elif item_required == BibTexFields.DOI:
+        #         doi_valid = validate_by_att(identifierType_str, ['doi'])
+        #         if not doi_valid:
+        #             lst_invalid_fields.append(item_required.value)
+        #             required_valid = False
+        #     elif item_required == BibTexFields.URL:
+        #         url_valid = validate_by_att(identifierType_str,
+        #                                     ['doi', 'hdl', 'uri'])
+        #         if not url_valid:
+        #             lst_invalid_fields.append(item_required.value)
+        #             required_valid = False
         partial_req_valid = validate_partial_req()
         return required_valid and partial_req_valid, lst_invalid_fields
 
@@ -597,13 +609,13 @@ class WekoBibTexSerializer():
         all_field_type = self.____get_bibtex_type_fields(bibtex_type)
         all_fields = all_field_type.get(
             'required') + all_field_type.get('optional')
-        partial_req = all_field_type.get('required_partial')
-        for item in partial_req:
-            if BibTexFields.PAGES in item:
-                item.remove(BibTexFields.PAGES)
-                item.extend([BibTexFields.PAGE_START,
-                            BibTexFields.PAGE_END])
-            all_fields.extend(item)
+        # partial_req = all_field_type.get('required_partial')
+        # for item in partial_req:
+        #     if BibTexFields.PAGES in item:
+        #         item.remove(BibTexFields.PAGES)
+        #         item.extend([BibTexFields.PAGE_START,
+        #                     BibTexFields.PAGE_END])
+        #     all_fields.extend(item)
         return all_fields
 
     def __get_bibtex_data(self, root, bibtex_type):

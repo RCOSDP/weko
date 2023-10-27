@@ -53,6 +53,7 @@ const is_withdraw_doi = document.getElementById("is_withdraw_doi").value;
 const item_is_deleted = document.getElementById("item_is_deleted").value;
 const item_is_being_edit = document.getElementById("item_is_being_edit").value;
 
+const file_format = $("#file_format").text() ? $("#file_format").text() : "tsv";
 const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
 const urlTree = window.location.origin + '/api/tree'
 const urlCheck = window.location.origin + '/admin/items/import/check'
@@ -176,6 +177,16 @@ class MainLayout extends React.Component {
     const that = this;
     closeError();
     this.setState({ isChecking: true });
+
+    var  csrf_token=$('#csrf_token').val();
+    $.ajaxSetup({
+      beforeSend: function(xhr, settings) {
+         if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain){
+             xhr.setRequestHeader("X-CSRFToken", csrf_token);
+         }
+      }
+    });
+
     $.ajax({
       url: urlCheck,
       type: 'POST',
@@ -211,8 +222,8 @@ class MainLayout extends React.Component {
 
       if ('list_record' in response) {
         const is_import = response.list_record.filter(item => {
-          return !item.errors || item.errors.length === 0;
-        }).length <= 0;
+          return item.errors && item.errors.length > 0;
+        }).length > 0;
         that.setState(() => {
           return {
             list_record: response.list_record,
@@ -868,9 +879,9 @@ class CheckComponent extends React.Component {
       contentType: "application/json; charset=utf-8",
       success: function (response) {
         const date = moment()
-        const fileName = 'check_' + date.format("YYYY-DD-MM") + '.csv';
+        const fileName = 'check_' + date.format("YYYY-DD-MM") + '.' + file_format;
 
-        const blob = new Blob([response], { type: 'text/csv' });
+        const blob = new Blob([response], { type: 'text/' + file_format });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
           window.navigator.msSaveOrOpenBlob(blob, fileName);
         } else {
@@ -1033,9 +1044,9 @@ class ResultComponent extends React.Component {
       contentType: "application/json; charset=utf-8",
       success: function (response) {
         const date = moment()
-        const fileName = 'List_Download_' + date.format("YYYY-DD-MM") + '.csv';
+        const fileName = 'List_Download_' + date.format("YYYY-DD-MM") + '.' + file_format;
 
-        const blob = new Blob([response], { type: 'text/csv' });
+        const blob = new Blob([response], { type: 'text/' + file_format });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
           window.navigator.msSaveOrOpenBlob(blob, fileName);
         } else {
@@ -1174,7 +1185,7 @@ class ItemTypeComponent extends React.Component {
         }
 
         fileName = decodeURIComponent(fileName.replace(/\+/g, '%20'));
-        const blob = new Blob([response], { type: 'text/csv' });
+        const blob = new Blob([response], { type: 'text/' + file_format });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
           window.navigator.msSaveOrOpenBlob(blob, fileName);
         } else {

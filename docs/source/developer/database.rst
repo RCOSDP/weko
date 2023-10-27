@@ -791,6 +791,66 @@ authors
      - False
      - None
      - 
+authors_affiliation_settings
+-----------------------
+
+.. list-table::
+   :header-rows: 1
+
+   * - Fullname
+     - Name
+     - Type
+     - NOT NULL
+     - PKey
+     - Default
+     - Comment
+   * - id
+     - id
+     - INTEGER
+     - True
+     - True
+     - nextval('authors_affiliation_settings_id_seq'::regclass)
+     - 
+   * - name
+     - name
+     - TEXT
+     - True
+     - False
+     - None
+     - 
+   * - scheme
+     - scheme
+     - TEXT
+     - False
+     - False
+     - None
+     - 
+   * - url
+     - url
+     - TEXT
+     - False
+     - False
+     - None
+     - 
+   * - created
+     - created
+     - TIMESTAMP WITHOUT TIME ZONE
+     - True
+     - False
+     - None
+     - 
+   * - updated
+     - updated
+     - TIMESTAMP WITHOUT TIME ZONE
+     - True
+     - False
+     - None
+     - 
+
+Keys
+^^^^
+
+* UNIQUE KEY: uq_authors_affiliation_settings_scheme (scheme)
 
 authors_prefix_settings
 -----------------------
@@ -7920,9 +7980,9 @@ workflow_activity
      - False
      - None
      - 
-   * - shared_user_id
-     - shared_user_id
-     - INTEGER
+   * - shared_user_ids
+     - shared_user_ids
+     - JSONB
      - False
      - False
      - None

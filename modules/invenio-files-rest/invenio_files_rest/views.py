@@ -1073,3 +1073,16 @@ api_blueprint.add_url_rule(
     '/locations',
     view_func=location_usage_amount,
 )
+
+
+@blueprint.teardown_request
+@admin_blueprint.teardown_request
+@api_blueprint.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("invenio_files_rest dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

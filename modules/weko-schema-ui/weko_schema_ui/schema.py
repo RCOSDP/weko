@@ -26,12 +26,14 @@ from collections import Iterable, OrderedDict
 from functools import partial
 
 import redis
+from redis import sentinel
 import xmlschema
 from flask import abort, current_app, request, url_for
 from lxml import etree
 from lxml.builder import ElementMaker
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemLink, Mapping
+from weko_redis import RedisConnection
 from xmlschema.validators import XsdAnyAttribute, XsdAnyElement, \
     XsdAtomicBuiltin, XsdAtomicRestriction, XsdEnumerationFacet, XsdGroup, \
     XsdPatternsFacet, XsdSingleFacet, XsdUnion
@@ -48,6 +50,9 @@ class SchemaConverter:
             abort(400, "Error creating Schema: Invalid schema file used")
         if not rootname:
             abort(400, "Error creating Schema: Invalid root name used")
+
+        current_app.logger.error("schemafile:{}".format(schemafile))
+        current_app.logger.error("rootname:{}".format(rootname))
 
         self.rootname = rootname
         self.schema, self.namespaces, self.target_namespace = \
@@ -221,7 +226,7 @@ class SchemaTree:
 
         """
         # current_app.logger.debug("record: {0}".format(record))
-        # record: {'links': {}, 'updated': '2021-12-04T11:56:48.821270+00:00', 'created': '2021-12-04T11:56:36.873504+00:00', 'metadata': {'_oai': {'id': 'oai:weko3.example.org:00000003', 'sets': ['1638615863439']}, 'path': ['1638615863439'], 'owner': '1', 'recid': '3', 'title': ['dd'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2021-12-01'}, '_buckets': {'deposit': 'f60ad379-930c-4808-aee9-3454c707c2ed'}, '_deposit': {'id': '3', 'pid': {'type': 'depid', 'value': '3', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'dd', 'author_link': [], 'item_type_id': '15', 'publish_date': '2021-12-01', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'dd', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'json': {'_source': {'_item_metadata': {'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/3', 'subitem_systemidt_identifier_type': 'URI'}]}}}}, 'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/3', 'subitem_systemidt_identifier_type': 'URI'}]}}}
+        # record: {'links': {}, 'updated': '2021-12-04T11:56:48.821270+00:00', 'created': '2021-12-04T11:56:36.873504+00:00', 'metadata': {'_oai': {'id': 'oai:weko3.example.org:00000003', 'sets': ['1638615863439']}, 'path': ['1638615863439'], 'owner': '1', 'recid': '3', 'title': ['dd'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2021-12-01'}, '_buckets': {'deposit': 'f60ad379-930c-4808-aee9-3454c707c2ed'}, '_deposit': {'id': '3', 'pid': {'type': 'depid', 'value': '3', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'dd', 'author_link': [], 'item_type_id': '15', 'publish_date': '2021-12-01', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'dd', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'json': {'_source': {'_item_metadata': {'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/3', 'subitem_systemidt_identifier_type': 'URI'}]}}}}, 'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/3', 'subitem_systemidt_identifier_type': 'URI'}]}}}
         # current_app.logger.debug("schema_name: {0}".format(schema_name))
         # schema_name: jpcoar_mapping
 
@@ -446,21 +451,21 @@ class SchemaTree:
 
                         set_value(va, nv)
 
-        def get_sub_item_value(atr_vm, key, p=None):
-            # current_app.logger.debug("atr_vm:{0}".format(atr_vm))
-            # current_app.logger.debug("key:{0}".format(key))
-            # current_app.logger.debug("p:{0}".format(p))
-            if isinstance(atr_vm, dict):
-                for ke, va in atr_vm.items():
-                    if key == ke:
-                        yield va, id(p)
-                    else:
-                        for z, w in get_sub_item_value(va, key, atr_vm):
-                            yield z, w
-            elif isinstance(atr_vm, list):
-                for n in atr_vm:
-                    for k, x in get_sub_item_value(n, key, atr_vm):
-                        yield k, x
+        # def get_sub_item_value(atr_vm, key, p=None):
+        #     # current_app.logger.debug("atr_vm:{0}".format(atr_vm))
+        #     # current_app.logger.debug("key:{0}".format(key))
+        #     # current_app.logger.debug("p:{0}".format(p))
+        #     if isinstance(atr_vm, dict):
+        #         for ke, va in atr_vm.items():
+        #             if key == ke:
+        #                 yield va, id(p)
+        #             else:
+        #                 for z, w in get_sub_item_value(va, key, atr_vm):
+        #                     yield z, w
+        #     elif isinstance(atr_vm, list):
+        #         for n in atr_vm:
+        #             for k, x in get_sub_item_value(n, key, atr_vm):
+        #                 yield k, x
 
         def get_value_from_content_by_mapping_key(atr_vm, list_key):
             # current_app.logger.debug("atr_vm: {0}".format(atr_vm))
@@ -702,7 +707,7 @@ class SchemaTree:
                 elif atr_name == 'relation':
                     type_item = 'relationType'
                 for k, v in self.item_type_mapping.items():
-                    jpcoar = v.get("jpcoar_mapping")
+                    jpcoar = v.get('jpcoar_mapping')
                     if isinstance(jpcoar, dict) and atr_name in jpcoar.keys():
                         value = jpcoar[atr_name]
                         if self._atr in value.keys():
@@ -772,13 +777,13 @@ class SchemaTree:
                 if key_item_type in atr_vm.keys():
                     item_type = atr_vm[key_item_type]
                     if item_type in list_type:
-                        vlst[0]['stdyDscr'] = get_item_by_type(
-                            vlst[0]['stdyDscr'], item_type)
+                        vlst['stdyDscr'] = get_item_by_type(
+                            vlst['stdyDscr'], item_type)
                     else:
-                        vlst[0]['stdyDscr'] = {}
+                        vlst['stdyDscr'] = {}
                 else:
-                    vlst[0]['stdyDscr'] = {}
-                return vlst[0]['stdyDscr']
+                    vlst['stdyDscr'] = {}
+                return vlst['stdyDscr']
 
             def clean_none_value(dct):
                 # current_app.logger.debug("dct:{0}".format(dct))
@@ -878,7 +883,7 @@ class SchemaTree:
                 attr_of_parent_item = {}
                 for k, v in vlist_item.items():
                     # get attribute of parent Node if any
-                    if self._atr in v:
+                    if v is not None and self._atr in v:
                         attr_of_parent_item = {self._atr: v[self._atr]}
                 # remove None value
                 # for ddi_mapping, we need to keep attribute data
@@ -890,7 +895,7 @@ class SchemaTree:
                         if attr_of_parent_item:
                             v.update(attr_of_parent_item)
 
-                if isinstance(atr_vm, dict) and isinstance(vlist_item, list) \
+                if isinstance(atr_vm, dict) and isinstance(vlist_item, dict) \
                         and 'stdyDscr' in vlist_item.keys():
                     if atr_name == 'Contributor':
                         list_contributor_type = ['Distributor', 'Other',
@@ -926,6 +931,19 @@ class SchemaTree:
                     elif isinstance(v, list):
                         for i in v:
                             remove_hide_data(i, parentkey + "." + k)
+
+        def replace_resource_type_for_jpcoar_v1(atr_vm_item):
+            # current_app.logger.debug('atr_vm_item:{0}'.format(atr_vm_item))
+            # atr_vm_item:{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}
+            if 'resourcetype' in atr_vm_item and \
+                    'resourceuri' in atr_vm_item and \
+                    atr_vm_item['resourcetype'] in current_app.config[
+                        'WEKO_SCHEMA_JPCOAR_V1_RESOURCE_TYPE_REPLACE']:
+                new_type = current_app.config[
+                    'WEKO_SCHEMA_JPCOAR_V1_RESOURCE_TYPE_REPLACE'][atr_vm_item['resourcetype']]
+                atr_vm_item['resourcetype'] = new_type
+                atr_vm_item['resourceuri'] = current_app.config[
+                    'RESOURCE_TYPE_URI'][new_type]
 
         vlst = []
         for key_item_parent, value_item_parent in sorted(self._record.items()):
@@ -969,6 +987,9 @@ class SchemaTree:
                     for atr_vm_item in atr_vm:
                         if self._ignore_list_all:
                             remove_hide_data(atr_vm_item, key_item_parent)
+                        if self._schema_name == current_app.config[
+                                'WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME']:
+                            replace_resource_type_for_jpcoar_v1(atr_vm_item)
                         vlst_child = get_mapping_value(mpdic, atr_vm_item,
                                                        key_item_parent,
                                                        atr_name)
@@ -1398,8 +1419,8 @@ class SchemaTree:
                 _idtf_key = "contributorAffiliationNameIdentifier"
 
             for _item in self._record.values():
-                if isinstance(_item, dict) and _item.get("jpcoar_mapping") \
-                        and _item.get("jpcoar_mapping", {}).get(key):
+                if isinstance(_item, dict) and _item.get(self._schema_name) \
+                        and _item.get(self._schema_name, {}).get(key):
                     if creator_idx >= len(_item.get("attribute_value_mlt", [])):
                         return None
 
@@ -1458,7 +1479,7 @@ class SchemaTree:
                     count_name += _max_len_name
                 else:
                     if _value[jpcoar_affname].get(self._v):
-                        _value[jpcoar_affname][self._v][0] = [[]]
+                        _value[jpcoar_affname][self._v] = [[]]
 
                 len_idtf = _child[jpcoar_nameidt]
                 if len_idtf > 0:
@@ -1686,31 +1707,31 @@ class SchemaTree:
 
         return elst
 
-    def get_node(self, dc, key=None):
-        """
-        Create generator for get node.
+    # def get_node(self, dc, key=None):
+    #     """
+    #     Create generator for get node.
 
-        :param dc:
-        :param key:
-        :return: node
+    #     :param dc:
+    #     :param key:
+    #     :return: node
 
-        """
-        if key:
-            yield key
+    #     """
+    #     if key:
+    #         yield key
 
-        if isinstance(dc, dict):
-            for k, v in dc.items():
-                for x in self.get_node(v, k):
-                    yield x
+    #     if isinstance(dc, dict):
+    #         for k, v in dc.items():
+    #             for x in self.get_node(v, k):
+    #                 yield x
 
     def find_nodes(self, mlst):
         """Find_nodes."""
-        def del_type(nid):
-            if isinstance(nid, dict):
-                if nid.get("type"):
-                    nid.pop("type")
-                for v in nid.values():
-                    del_type(v)
+        # def del_type(nid):
+        #     if isinstance(nid, dict):
+        #         if nid.get("type"):
+        #             nid.pop("type")
+        #         for v in nid.values():
+        #             del_type(v)
 
         def cut_pre(str):
             return str.split(':')[-1] if ':' in str else str
@@ -1814,16 +1835,19 @@ def cache_schema(schema_name, delete=False):
                 dstore['namespaces'] = rec.model.namespaces.copy()
                 dstore['schema'] = json.loads(
                     rec.model.xsd, object_pairs_hook=OrderedDict)
+                
+                # why use clear()?
                 rec.model.namespaces.clear()
                 del rec
+                
                 return dstore
         except BaseException:
             return None
 
     try:
         # schema cached on Redis by schema name
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         cache_key = current_app.config[
             'WEKO_SCHEMA_CACHE_PREFIX'].format(schema_name=schema_name)
         data_str = datastore.get(cache_key)
@@ -1832,7 +1856,7 @@ def cache_schema(schema_name, delete=False):
             object_pairs_hook=OrderedDict)
         if delete:
             datastore.delete(cache_key)
-    except BaseException:
+    except BaseException as ex:
         try:
             schema = get_schema()
             if schema:
@@ -1854,8 +1878,8 @@ def delete_schema_cache(schema_name):
     """
     try:
         # schema cached on Redis by schema name
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         cache_key = current_app.config[
             'WEKO_SCHEMA_CACHE_PREFIX'].format(schema_name=schema_name)
         datastore.delete(cache_key)
@@ -1901,6 +1925,7 @@ def delete_schema(pid):
 def get_oai_metadata_formats(app):
     """Get oai metadata formats."""
     oad = app.config.get('OAISERVER_METADATA_FORMATS', {}).copy()
+    
     if isinstance(oad, dict):
         try:
             obj = WekoSchema.get_all()
@@ -1931,4 +1956,5 @@ def get_oai_metadata_formats(app):
                                 oad[schema_name]['namespace'] = ns
                         if lst.schema_location:
                             oad[schema_name]['schema'] = lst.schema_location
+    
     return oad

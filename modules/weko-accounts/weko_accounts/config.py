@@ -101,3 +101,10 @@ WEKO_ACCOUNTS_LOGIN_LABEL = "Log in to account"
 
 WEKO_ACCOUNTS_REGISTER_LABEL = "Sign up for a %(sitename)s account!"
 """The register label"""
+
+WEKO_ACCOUNTS_REAL_IP = None # X-Real-IP > X-Forwarded-For[0] > remote_addr
+# WEKO_ACCOUNTS_REAL_IP = "remote_add" # remote_addr
+# WEKO_ACCOUNTS_REAL_IP = "x_real_ip" # X-Real-IP > remote_addr
+# WEKO_ACCOUNTS_REAL_IP = "x_forwarded_for" # X-Forwarded-For[first] > remote_addr
+# WEKO_ACCOUNTS_REAL_IP = "x_forwarded_for_rev" # X-Forwarded-For[last] > remote_addr
+

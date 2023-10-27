@@ -249,6 +249,7 @@ setup_libreoffice_ubuntu14 () {
     $sudo apt-get install -y libreoffice
     #$sudo apt-get install -y libreoffice-core --no-install-recommends
     $sudo apt-get install -y fonts-ipafont fonts-ipaexfont # japanese fonts
+    $sudo apt-get install -y supervisor
     set -o errexit
     # sphinxdoc-install-web-libreoffice-ubuntu14-end
 }
@@ -313,13 +314,13 @@ main () {
         cleanup_web_ubuntu14
     elif [ "$os_distribution" = "DEBIAN" ]; then
         # WSL2
-            provision_web_common_ubuntu14
-            provision_web_libpostgresql_ubuntu14
-            setup_npm_and_css_js_filters
-            setup_virtualenvwrapper
-            #setup_nginx_ubuntu14
-            setup_libreoffice_ubuntu14
-            cleanup_web_ubuntu14
+        provision_web_common_ubuntu14
+        provision_web_libpostgresql_ubuntu14
+        setup_npm_and_css_js_filters
+        setup_virtualenvwrapper
+        #setup_nginx_ubuntu14
+        setup_libreoffice_ubuntu14
+        cleanup_web_ubuntu14
     elif [ "$os_distribution" = "CentOS" ]; then
         if [ "$os_release" = "7" ]; then
             provision_web_common_centos7

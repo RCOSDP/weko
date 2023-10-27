@@ -109,29 +109,6 @@ def get_item_id(item_type_id):
     return results
 
 
-def convert_html_escape(text):
-    """Convert escape HTML to character.
-
-    :type text: String
-    """
-    if not isinstance(text, str):
-        return
-    html_escape = {
-        "&amp;": "&",
-        "&quot;": '"',
-        "&apos;": "'",
-        "&gt;": ">",
-        "&lt;": "<",
-    }
-    try:
-        for key, value in html_escape.items():
-            text = text.replace(key, value)
-    except Exception as e:
-        current_app.logger.debug(e)
-
-    return text
-
-
 def _get_title_data(jpcoar_data, key, rtn_title):
     """Get title data.
 
@@ -140,7 +117,7 @@ def _get_title_data(jpcoar_data, key, rtn_title):
     @param rtn_title: title list
     """
     try:
-        if str(key).index('item') is not None:
+        if str(key).find('item') != -1:
             rtn_title['title_parent_key'] = key
             title_value = jpcoar_data['title']
             if '@value' in title_value.keys():
@@ -151,6 +128,9 @@ def _get_title_data(jpcoar_data, key, rtn_title):
                 if 'xml:lang' in title_lang.keys():
                     rtn_title['title_lang_lst_key'] = title_lang[
                         'xml:lang'].split('.')
+        else:
+            #current_app.logger.debug("not contain 'item' in key:{}".format(key))
+            return
     except Exception as e:
         current_app.logger.debug(e)
 
@@ -188,6 +168,7 @@ def get_crossref_record_data(pid, doi, item_type_id):
     """
     result = list()
     api_response = CrossRefOpenURL(pid, doi).get_data()
+    current_app.logger.error("CrossRefOpenURL.get_data():{}".format(api_response))
     if api_response["error"]:
         return result
     api_response['response'] = convert_crossref_xml_data_to_dictionary(
@@ -1147,11 +1128,7 @@ def deepcopy(original_object, new_object):
     import copy
     if isinstance(original_object, dict):
         for k, v in original_object.items():
-            if not isinstance(new_object, (dict, list)):
-                new_object = {}
-                deepcopy(copy.deepcopy(v), new_object[k])
-            else:
-                new_object[k] = copy.deepcopy(v)
+            new_object[k] = copy.deepcopy(v)
     elif isinstance(original_object, list):
         for original_data in original_object:
             if isinstance(original_data, (dict, list)):

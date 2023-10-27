@@ -20,6 +20,7 @@
 
 """Utilities for convert response json."""
 import copy
+import pickle
 import gzip
 import json
 import xml.etree.ElementTree as Et
@@ -29,6 +30,7 @@ from uuid import UUID
 from xml.etree.ElementTree import tostring
 
 import redis
+from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from flask import Markup, Response, abort, current_app, jsonify, request
 from flask_babelex import gettext as _
@@ -46,6 +48,7 @@ from weko_index_tree.api import Indexes
 from weko_records.api import Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_records_ui.utils import get_pair_value
+from weko_redis.redis import RedisConnection
 from weko_search_ui.query import item_search_factory
 from weko_theme import config as theme_config
 
@@ -475,7 +478,7 @@ def convert_data_to_edit_pack(data):
         return None
     result = dict()
     result_settings = dict()
-    settings = copy.deepcopy(data.get('settings'))
+    settings = pickle.loads(pickle.dumps(data.get('settings'), -1))
     convert_popular_data(settings, result)
     result['widget_id'] = data.get('widget_id')
     result['is_enabled'] = data.get('is_enabled')
@@ -750,12 +753,13 @@ def get_rss_data_source(source, keyword):
         return ''
 
 
-def get_elasticsearch_result_by_date(start_date, end_date):
+def get_elasticsearch_result_by_date(start_date, end_date, query_with_publish_status=False):
     """Get data from elastic search.
 
     Arguments:
         start_date {string} -- start date
         end_date {string} -- end date
+        query_with_publish_status {bool} -- Only query public items
 
     Returns:
         dictionary -- elastic search data
@@ -768,7 +772,8 @@ def get_elasticsearch_result_by_date(start_date, end_date):
     result = None
     try:
         search_instance, _qs_kwargs = item_search_factory(
-            None, records_search, start_date, end_date, None, True)
+            None, records_search, start_date, end_date, None,
+            query_with_publish_status, False)
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError:
@@ -821,7 +826,14 @@ def get_widget_design_page_with_main(repository_id):
 
 
 def main_design_has_main_widget(repository_id):
-    """Check if main design has main widget."""
+    """Check if main design has main widget.
+
+    Args:
+        repository_id (_type_): _description_
+
+    Returns:
+        bool: _description_
+    """
     main_design = WidgetDesignSetting.select_by_repository_id(repository_id)
     if main_design:
         settings = json.loads(main_design.get('settings', '[]')) \
@@ -832,7 +844,14 @@ def main_design_has_main_widget(repository_id):
 
 
 def has_main_contents_widget(settings):
-    """Check if settings contains the main contents widget."""
+    """Check if settings contains the main contents widget.
+
+    Args:
+        settings (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """    
     if settings:
         for item in settings:
             if item.get('type') == config.WEKO_GRIDLAYOUT_MAIN_TYPE:
@@ -924,8 +943,8 @@ def delete_widget_cache(repository_id, page_id=None):
     @param page_id: The Page identifier
     @return:
     """
-    cache_store = RedisStore(redis.StrictRedis.from_url(
-        current_app.config['CACHE_REDIS_URL']))
+    redis_connection = RedisConnection()
+    cache_store = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
     if page_id:
         cache_key = ("*" + config.WEKO_GRIDLAYOUT_WIDGET_PAGE_CACHE_KEY
                      + str(repository_id) + "_" + str(page_id) + "_*")

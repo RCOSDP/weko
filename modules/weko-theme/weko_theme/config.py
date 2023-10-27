@@ -140,12 +140,8 @@ WEKO_THEME_ADMIN_MENU = [
                 'order': 1
             },
             {
-                'name': 'Featured Community',
-                'order': 2
-            },
-            {
                 'name': 'Inclusion Request',
-                'order': 3
+                'order': 2
             }
         ]
     },
@@ -486,3 +482,6 @@ WEKO_THEME_ADMIN_MENU = [
 
 WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER = False 
 """インデックスツリー設定"""
+
+DISPLAY_LOGIN = True
+""" Display Login/Sign up menu """

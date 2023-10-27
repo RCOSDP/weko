@@ -20,15 +20,14 @@ import pytest
 from flask import Blueprint, Flask
 from flask_admin import Admin
 from flask_celeryext import FlaskCeleryExt
+from invenio_db import InvenioDB, db
 from six import StringIO
+from sqlalchemy_utils.functions import create_database, database_exists, \
+    drop_database
 
 from invenio_mail import InvenioMail, config
 from invenio_mail.admin import mail_adminview
 from invenio_mail.models import MailConfig
-from invenio_db import InvenioDB, db
-
-from sqlalchemy_utils.functions import create_database, database_exists, \
-    drop_database
 
 
 @pytest.yield_fixture()
@@ -39,8 +38,9 @@ def email_admin_app():
     base_app.config.update(
         SECRET_KEY='SECRET KEY',
         SESSION_TYPE='memcached',
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'sqlite://'),
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            'SQLALCHEMY_DATABASE_URI',
+            'sqlite://'),
     )
     InvenioDB(base_app)
     InvenioMail(base_app)
@@ -67,8 +67,8 @@ def email_task_app(request):
     app = Flask('testapp')
     app.config.update(
         SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite://'
-        ),
+            'SQLALCHEMY_DATABASE_URI',
+            'sqlite://'),
         CELERY_ALWAYS_EAGER=True,
         CELERY_RESULT_BACKEND='cache',
         CELERY_CACHE_BACKEND='memory',

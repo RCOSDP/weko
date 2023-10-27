@@ -21,7 +21,7 @@
 """Record API."""
 
 import urllib.parse
-from copy import deepcopy
+import pickle
 from typing import Union
 
 from elasticsearch.exceptions import NotFoundError
@@ -149,7 +149,7 @@ class RecordBase(dict):
             raises a :class:`jsonschema.exceptions.ValidationError`.
         """
         if '$schema' in self and self['$schema'] is not None:
-            kwargs['cls'] = kwargs.pop('validator', None)
+            kwargs['cls'] = kwargs.pop('validator', None)   
             _records_state.validate(self, self['$schema'], **kwargs)
 
     def replace_refs(self):
@@ -158,7 +158,7 @@ class RecordBase(dict):
 
     def dumps(self, **kwargs):
         """Return pure Python dictionary with record metadata."""
-        return deepcopy(dict(self))
+        return pickle.loads(pickle.dumps(dict(self), -1))
 
 
 class ItemTypeNames(RecordBase):
@@ -376,8 +376,8 @@ class ItemTypes(RecordBase):
         """
         # Get the latest tag of item type by name identifier
         result = cls.get_by_name_id(name_id=result.name_id)
-        old_render = deepcopy(result[0].render)
-        new_render = deepcopy(render)
+        old_render = pickle.loads(pickle.dumps(result[0].render, -1))
+        new_render = pickle.loads(pickle.dumps(render, -1))
 
         updated_name = False
         tag = result[0].tag + 1
@@ -502,7 +502,7 @@ class ItemTypes(RecordBase):
             try:
                 with db.session.begin_nested():
                     for db_record in db_records:
-                        record_json = deepcopy(db_record.json)
+                        record_json = pickle.loads(pickle.dumps(db_record.json, -1))
                         if __del_data(record_json, _delete_list):
                             db_record.json = record_json
                             db.session.merge(db_record)

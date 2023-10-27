@@ -550,7 +550,7 @@ msgid "Your session has timed out. Please login again."
 msgstr ""
 
 msgid "Restricted Access Flag"
-msgstr ""
+msgstr "Usage Application Flag"
 
 msgid "Enable Full"
 msgstr "Enable"
@@ -573,9 +573,16 @@ msgstr ""
 msgid "Registration Destination Index"
 msgstr ""
 
+msgid "Strage Location"
+msgstr ""
+
 #: weko_workflow/templates/weko_workflow/activity_detail.html:266
 msgid "Quit_Approval"
 msgstr "Quit"
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:381
+msgid "The activity is forcibly canceled because the workflow settings have changed and the next step was not found."
+msgstr ""
 
 #: weko_workflow/templates/weko_workflow/item_link.html:153
 msgid "Quit_item"
@@ -593,6 +600,10 @@ msgstr "Quit"
 msgid "Back"
 msgstr "Back"
 
+#: weko_workflow/templates/weko_workflow/item_login_sucess.html:295
+msgid "The activity is forcibly canceled because the workflow settings have changed and the next step was not found."
+msgstr ""
+
 msgid "The specified link has expired."
 msgstr ""
 
@@ -601,6 +612,9 @@ msgstr "Specify Property"
 
 msgid "Specify property"
 msgstr "Specify Property"
+
+msgid "Item registrant"
+msgid "Item registrant"
 
 msgid "Approval Request Notification Email"
 msgstr ""

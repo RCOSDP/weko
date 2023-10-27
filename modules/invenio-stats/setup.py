@@ -130,6 +130,9 @@ setup(
         'invenio_db.models': [
             'invenio_stats = invenio_stats.models',
         ],
+        'invenio_db.alembic': [
+            'invenio_stats = invenio_stats:alembic',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

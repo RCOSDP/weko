@@ -24,11 +24,16 @@ from __future__ import absolute_import, print_function
 import ast
 
 import redis
+from redis import RedisError
 import requests
 from flask import current_app, render_template
 from flask_babelex import lazy_gettext as _
 from invenio_db import db
 from invenio_mail.api import send_mail
+from weko_redis.redis import RedisConnection
+from flask_wtf import FlaskForm
+from wtforms.validators import ValidationError
+from flask_wtf.csrf import validate_csrf,same_origin,CSRFError
 
 from .models import LogAnalysisRestrictedCrawlerList, \
     LogAnalysisRestrictedIpAddress
@@ -63,14 +68,32 @@ def _is_crawler(user_info):
     """
     restricted_agent_lists = LogAnalysisRestrictedCrawlerList.get_all_active()
     for restricted_agent_list in restricted_agent_lists:
-        raw_res = requests.get(restricted_agent_list.list_url).text
-        if not raw_res:
-            continue
-        restrict_list = raw_res.split('\n')
-        restrict_list = [
-            agent for agent in restrict_list if not agent.startswith('#')]
-        if user_info['user_agent'] in restrict_list or \
-           user_info['ip_address'] in restrict_list:
+        empty_list = False            
+        try:
+            redis_connection = RedisConnection()
+            connection = redis_connection.connection(db=current_app.config['CRAWLER_REDIS_DB'], kv = False)
+       
+            restrict_list = connection.smembers(restricted_agent_list.list_url)
+            if len(restrict_list) == 0:
+                current_app.logger.info("Crawler List is expired : " + str(restricted_agent_list.list_url))
+                empty_list = True
+        except RedisError:
+            current_app.logger.info("Crawler List is expired : " + str(restricted_agent_list.list_url))
+            empty_list = True
+
+        if  empty_list:
+            raw_res = requests.get(restricted_agent_list.list_url).text
+            if not raw_res:
+                continue
+            crawler_list = raw_res.split('\n')
+            crawler_list = [agent for agent in crawler_list if not agent.startswith('#')]
+            for restrict_ip in crawler_list:
+                connection.sadd(restricted_agent_list.list_url,restrict_ip)
+            connection.expire(restricted_agent_list.list_url, current_app.config["CRAWLER_REDIS_TTL"])
+            restrict_list = set(crawler_list)
+
+        if (user_info['user_agent']).encode('utf-8') in restrict_list or \
+           (user_info['ip_address']).encode('utf-8') in restrict_list:
             return True
     return False
 
@@ -113,8 +136,9 @@ class TempDirInfo(object):
             key = current_app.config[
                 'WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT']
         cls.key = key
-        cls.redis = redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL'])
+
+        redis_connection = RedisConnection()
+        cls.redis = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'])
 
     def set(cls, temp_path, extra_info=None):
         """Add or update data.
@@ -166,3 +190,31 @@ class TempDirInfo(object):
             path = idx.decode("UTF-8")
             result[path] = ast.literal_eval(val.decode("UTF-8") or '{}')
         return result
+
+
+def validate_csrf_header(request,csrf_header="X-CSRFToken"):
+    """Validate CSRF header
+
+    Args:
+        csrf_header (str, optional): CSRF Token Header. Defaults to "X-CSRFToken".
+
+    Raises:
+        CSRFError: _description_
+        CSRFError: _description_
+        CSRFError: _description_
+    """    
+    try:
+        csrf_token = request.headers.get(csrf_header)
+        validate_csrf(csrf_token)
+    except ValidationError as e:
+        raise CSRFError(e.args[0])
+
+    if request.is_secure:
+        if not request.referrer:
+            raise CSRFError("The referrer header is missing.")
+
+        good_referrer = f"https://{request.host}/"
+
+        if not same_origin(request.referrer, good_referrer):
+            raise CSRFError("The referrer does not match the host.")
+        

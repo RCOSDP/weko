@@ -41,6 +41,7 @@ def check_site_license_permission():
             current_app.logger.debug(lst)
             addresses = lst.get('addresses')
             for adr in addresses:
+                
                 if match_ip_addr(adr, ip_addr):
                     current_user.site_license_flag = True
                     current_user.site_license_name = \

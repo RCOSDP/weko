@@ -29,8 +29,8 @@ def validate_metadata_prefix(value):
     metadata_formats = get_oai_metadata_formats(current_app)
     message = 'The metadataPrefix "{0}" is not supported ' \
               'by this repository.'.format(value)
-    if "jpcoar" in metadata_formats.keys():
-        del metadata_formats["jpcoar"]
+    # if "jpcoar" in metadata_formats.keys():
+    #     del metadata_formats["jpcoar"]
     if value not in metadata_formats:
         raise ValidationError({'cannotDisseminateFormat': [message]},
                               field_names=['metadataPrefix'])

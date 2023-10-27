@@ -20,7 +20,7 @@
 
 """WEKO3 module docstring."""
 
-import copy
+import pickle
 import json
 from collections import namedtuple
 from datetime import datetime
@@ -171,7 +171,7 @@ class WidgetSettingView(ModelView):
 
         list_data = list()
         for widget_item in data:
-            obj = copy.deepcopy(widget_item)
+            obj = pickle.loads(pickle.dumps(widget_item, -1))
             label = WidgetSettingView.get_label_display_to_list(
                 widget_item.widget_id)
             obj.label = label

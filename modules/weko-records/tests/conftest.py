@@ -21,14 +21,24 @@
 """Pytest configuration."""
 
 import os
+import sys
 import shutil
+import uuid
+import json
 import tempfile
+from mock import patch
 
 import pytest
+from elasticsearch_dsl import response, Search
 from flask import Flask
 from flask_babelex import Babel
+from invenio_i18n import InvenioI18N
+from invenio_access import InvenioAccess
+from invenio_access.models import ActionRoles, ActionUsers
 from invenio_accounts import InvenioAccounts
+from invenio_accounts.models import Role, User
 from invenio_accounts.testutils import create_test_user
+from invenio_admin import InvenioAdmin
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_files_rest.models import Location
@@ -41,13 +51,20 @@ from invenio_search import InvenioSearch
 from sqlalchemy_utils.functions import create_database, database_exists
 from weko_deposit import WekoDeposit
 from weko_itemtypes_ui import WekoItemtypesUI
+from weko_index_tree.api import Indexes
 from weko_search_ui import WekoSearchUI
+from weko_records_ui import WekoRecordsUI
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISSION_ROLE_COMMUNITY, EMAIL_DISPLAY_FLG
+from weko_admin.models import AdminSettings
 
 from weko_records import WekoRecords
-from weko_records.api import ItemTypes
+from weko_records.api import ItemTypes, Mapping
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
-from weko_records.models import ItemTypeName
+from weko_records.models import ItemTypeName, SiteLicenseInfo, FeedbackMailList
 
+from tests.helpers import json_data, create_record
+
+sys.path.append(os.path.dirname(__file__))
 
 @pytest.yield_fixture()
 def instance_path():
@@ -74,16 +91,25 @@ def base_app(instance_path):
             'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         TESTING=True,
+        JSONSCHEMAS_HOST='inveniosoftware.org',
+        THEME_SITEURL="https://localhost",
         WEKO_ITEMTYPE_EXCLUDED_KEYS=WEKO_ITEMTYPE_EXCLUDED_KEYS,
         INDEX_IMG='indextree/36466818-image.jpg',
         SEARCH_UI_SEARCH_INDEX='tenant1',
         INDEXER_DEFAULT_DOCTYPE='item-v1.0.0',
         INDEXER_FILE_DOC_TYPE='content',
+        I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
+        WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
+        WEKO_PERMISSION_ROLE_COMMUNITY=WEKO_PERMISSION_ROLE_COMMUNITY,
+        EMAIL_DISPLAY_FLG=EMAIL_DISPLAY_FLG
     )
 
     WekoRecords(app_)
     Babel(app_)
+    InvenioI18N(app_)
     InvenioAccounts(app_)
+    InvenioAccess(app_)
+    InvenioAdmin(app_)
     InvenioDB(app_)
     InvenioJSONSchemas(app_)
     InvenioSearch(app_)
@@ -94,6 +120,7 @@ def base_app(instance_path):
     WekoDeposit(app_)
     WekoItemtypesUI(app_)
     WekoSearchUI(app_)
+    WekoRecordsUI(app_)
 
     return app_
 
@@ -103,6 +130,12 @@ def app(base_app):
     """Flask application fixture."""
     with base_app.app_context():
         yield base_app
+
+
+@pytest.yield_fixture()
+def i18n_app(app):
+    with app.test_request_context(headers=[('Accept-Language','en')]):
+        yield app
 
 
 @pytest.fixture()
@@ -133,27 +166,433 @@ def user():
     """Create a example user."""
     return create_test_user(email='test@test.org')
 
+@pytest.fixture()
+def users(app, db):
+    """Create users."""
+    ds = app.extensions["invenio-accounts"].datastore
+    user_count = User.query.filter_by(email="user@test.org").count()
+    if user_count != 1:
+        user = create_test_user(email="user@test.org")
+        contributor = create_test_user(email="contributor@test.org")
+        comadmin = create_test_user(email="comadmin@test.org")
+        repoadmin = create_test_user(email="repoadmin@test.org")
+        sysadmin = create_test_user(email="sysadmin@test.org")
+        generaluser = create_test_user(email="generaluser@test.org")
+    else:
+        user = User.query.filter_by(email="user@test.org").first()
+        contributor = User.query.filter_by(email="contributor@test.org").first()
+        comadmin = User.query.filter_by(email="comadmin@test.org").first()
+        repoadmin = User.query.filter_by(email="repoadmin@test.org").first()
+        sysadmin = User.query.filter_by(email="sysadmin@test.org").first()
+        generaluser = User.query.filter_by(email="generaluser@test.org")
+
+    role_count = Role.query.filter_by(name="System Administrator").count()
+    if role_count != 1:
+        sysadmin_role = ds.create_role(name="System Administrator")
+        repoadmin_role = ds.create_role(name="Repository Administrator")
+        contributor_role = ds.create_role(name="Contributor")
+        comadmin_role = ds.create_role(name="Community Administrator")
+        general_role = ds.create_role(name="General")
+    else:
+        sysadmin_role = Role.query.filter_by(name="System Administrator").first()
+        repoadmin_role = Role.query.filter_by(name="Repository Administrator").first()
+        contributor_role = Role.query.filter_by(name="Contributor").first()
+        comadmin_role = Role.query.filter_by(name="Community Administrator").first()
+        general_role = Role.query.filter_by(name="General").first()
+
+    # Assign access authorization
+    with db.session.begin_nested():
+        action_users = [
+            ActionUsers(action="superuser-access", user=sysadmin),
+        ]
+        db.session.add_all(action_users)
+        action_roles = [
+            ActionRoles(action="superuser-access", role=sysadmin_role),
+            ActionRoles(action="admin-access", role=repoadmin_role),
+            ActionRoles(action="schema-access", role=repoadmin_role),
+            ActionRoles(action="index-tree-access", role=repoadmin_role),
+            ActionRoles(action="indextree-journal-access", role=repoadmin_role),
+            ActionRoles(action="item-type-access", role=repoadmin_role),
+            ActionRoles(action="item-access", role=repoadmin_role),
+            ActionRoles(action="files-rest-bucket-update", role=repoadmin_role),
+            ActionRoles(action="files-rest-object-delete", role=repoadmin_role),
+            ActionRoles(action="files-rest-object-delete-version", role=repoadmin_role),
+            ActionRoles(action="files-rest-object-read", role=repoadmin_role),
+            ActionRoles(action="search-access", role=repoadmin_role),
+            ActionRoles(action="detail-page-acces", role=repoadmin_role),
+            ActionRoles(action="download-original-pdf-access", role=repoadmin_role),
+            ActionRoles(action="author-access", role=repoadmin_role),
+            ActionRoles(action="items-autofill", role=repoadmin_role),
+            ActionRoles(action="stats-api-access", role=repoadmin_role),
+            ActionRoles(action="read-style-action", role=repoadmin_role),
+            ActionRoles(action="update-style-action", role=repoadmin_role),
+            ActionRoles(action="detail-page-acces", role=repoadmin_role),
+            ActionRoles(action="admin-access", role=comadmin_role),
+            ActionRoles(action="index-tree-access", role=comadmin_role),
+            ActionRoles(action="indextree-journal-access", role=comadmin_role),
+            ActionRoles(action="item-access", role=comadmin_role),
+            ActionRoles(action="files-rest-bucket-update", role=comadmin_role),
+            ActionRoles(action="files-rest-object-delete", role=comadmin_role),
+            ActionRoles(action="files-rest-object-delete-version", role=comadmin_role),
+            ActionRoles(action="files-rest-object-read", role=comadmin_role),
+            ActionRoles(action="search-access", role=comadmin_role),
+            ActionRoles(action="detail-page-acces", role=comadmin_role),
+            ActionRoles(action="download-original-pdf-access", role=comadmin_role),
+            ActionRoles(action="author-access", role=comadmin_role),
+            ActionRoles(action="items-autofill", role=comadmin_role),
+            ActionRoles(action="detail-page-acces", role=comadmin_role),
+            ActionRoles(action="detail-page-acces", role=comadmin_role),
+            ActionRoles(action="item-access", role=contributor_role),
+            ActionRoles(action="files-rest-bucket-update", role=contributor_role),
+            ActionRoles(action="files-rest-object-delete", role=contributor_role),
+            ActionRoles(
+                action="files-rest-object-delete-version", role=contributor_role
+            ),
+            ActionRoles(action="files-rest-object-read", role=contributor_role),
+            ActionRoles(action="search-access", role=contributor_role),
+            ActionRoles(action="detail-page-acces", role=contributor_role),
+            ActionRoles(action="download-original-pdf-access", role=contributor_role),
+            ActionRoles(action="author-access", role=contributor_role),
+            ActionRoles(action="items-autofill", role=contributor_role),
+            ActionRoles(action="detail-page-acces", role=contributor_role),
+            ActionRoles(action="detail-page-acces", role=contributor_role),
+        ]
+        db.session.add_all(action_roles)
+        ds.add_role_to_user(sysadmin, sysadmin_role)
+        ds.add_role_to_user(repoadmin, repoadmin_role)
+        ds.add_role_to_user(contributor, contributor_role)
+        ds.add_role_to_user(comadmin, comadmin_role)
+        ds.add_role_to_user(generaluser, general_role)
+        
+    return [
+        {"email": contributor.email, "id": contributor.id, "obj": contributor},
+        {"email": repoadmin.email, "id": repoadmin.id, "obj": repoadmin},
+        {"email": sysadmin.email, "id": sysadmin.id, "obj": sysadmin},
+        {"email": comadmin.email, "id": comadmin.id, "obj": comadmin},
+        {"email": generaluser.email, "id": generaluser.id, "obj": sysadmin},
+        {"email": user.email, "id": user.id, "obj": user},
+    ]
+
+@pytest.fixture()
+def db_index(app, db):
+    index_metadata = {
+            'id': 1,
+            'parent': 0,
+            'value': 'IndexA',
+        }
+
+    app.config['WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER'] = 5
+    with app.app_context():
+        user = create_test_user('test@example.org')
+        with patch("flask_login.utils._get_user", return_value=user):
+            Indexes.create(0, index_metadata)
+
 
 @pytest.fixture()
 def item_type(app, db):
     _item_type_name = ItemTypeName(name='test')
 
     _render = {
+        'meta_fix': {},
         'meta_list': {},
         'table_row_map': {
             'schema': {
                 'properties': {
-                    'item_1': {}
+                    'item_1': {
+                        'type': 'string',
+                        'title': 'item_1',
+                        'format': 'text'
+                    }
                 }
             }
         },
         'table_row': ['1']
     }
 
+    _schema = {
+        'properties': {
+            'item_1': {
+                'type': 'string',
+                'title': 'item_1',
+                'format': 'text'
+            }
+        }
+    }
+
     return ItemTypes.create(
         name='test',
         item_type_name=_item_type_name,
-        schema={},
+        schema=_schema,
         render=_render,
         tag=1
     )
+
+@pytest.fixture()
+def item_type_mapping(app, db):
+    _mapping = {
+        'item_1': {
+            'jpcoar_mapping': {
+                'item': {
+                    '@value': 'interim'
+                }
+            }
+        }
+    }
+    return Mapping.create(1, _mapping)
+
+@pytest.fixture()
+def item_type2(app, db):
+    _item_type_name = ItemTypeName(name='test2')
+
+    _render = {
+        'meta_fix': {},
+        'meta_list': {},
+        'table_row_map': {
+            'schema': {
+                'properties': {
+                    'item_1': {
+                        'type': 'string',
+                        'title': 'item_1',
+                        'format': 'text'
+                    },
+                    'control_number': {
+                        'type': 'int',
+                        'title': 'control_number',
+                        'format': 'text'
+                    }
+                }
+            }
+        },
+        'table_row': ['1']
+    }
+
+    _schema = {
+        'properties': {
+            'item_1': {
+                'type': 'string',
+                'title': 'item_1',
+                'format': 'text'
+            },
+            'control_number': {
+                'type': 'int',
+                'title': 'control_number',
+                'format': 'text'
+            }
+        }
+    }
+
+    return ItemTypes.create(
+        name='test2',
+        item_type_name=_item_type_name,
+        schema=_schema,
+        render=_render,
+        tag=1
+    )
+
+@pytest.fixture()
+def item_type_mapping2(app, db):
+    _mapping = {
+        'item_1': {
+            'jpcoar_mapping': {
+                'item': {
+                    '@value': 'interim'
+                }
+            }
+        },
+        'control_number': {
+            'jpcoar_mapping': {
+                '@value': 'interim'
+            }
+        }
+    }
+    return Mapping.create(2, _mapping)
+
+@pytest.fixture()
+def item_type3(app, db):
+    _item_type_name = ItemTypeName(name='test3')
+
+    _render = {
+        'meta_fix': {},
+        'meta_list': {},
+        'table_row_map': {
+            'schema': {
+                'properties': {
+                    'pubdate': {
+                        'type': 'string',
+                        'title': 'PubDate',
+                        'format': 'datetime'
+                    }
+                }
+            }
+        },
+        'table_row': ['1']
+    }
+
+    _schema = {
+        'properties': {
+            'pubdate': {
+                'type': 'string',
+                'title': 'PubDate',
+                'format': 'datetime'
+            }
+        }
+    }
+
+    return ItemTypes.create(
+        name='test3',
+        item_type_name=_item_type_name,
+        schema=_schema,
+        render=_render,
+        tag=1
+    )
+
+@pytest.fixture()
+def item_type_mapping3(app, db):
+    _mapping = {
+        "pubdate": {
+            "lom_mapping": "",
+            "lido_mapping": "",
+            "spase_mapping": "",
+            "jpcoar_mapping": {
+                "date": {
+                    "@attributes": {
+                        "dateType": "pubdate"
+                    }
+                }
+            },
+            "junii2_mapping": "",
+            "oai_dc_mapping": "",
+            "display_lang_type": ""
+        }
+    }
+    return Mapping.create(3, _mapping)
+
+@pytest.fixture()
+def mock_execute():
+    def factory(data):
+        if isinstance(data, str):
+            data = json_data(data)
+        dummy = response.Response(Search(), data)
+        return dummy
+    return factory
+
+
+@pytest.fixture()
+def records(db):
+    record_data = json_data("data/test_records.json")
+    item_data = json_data("data/test_items.json")
+    record_num = len(record_data)
+    result = []
+    for d in range(record_num):
+        result.append(create_record(record_data[d], item_data[d]))
+    db.session.commit()
+    yield result
+
+
+@pytest.fixture()
+def admin_settings(app, db):
+    setting = AdminSettings(
+        name="items_display_settings",
+        settings={"items_display_email": True, "items_search_author": "name"}
+    )
+    
+    with db.session.begin_nested():
+        db.session.add(setting)
+
+
+@pytest.fixture()
+def site_license_info(app, db):
+    record = SiteLicenseInfo(
+        organization_id=1,
+        organization_name='test',
+        domain_name='domain',
+        mail_address='nii@nii.co.jp',
+        receive_mail_flag=False)
+    with db.session.begin_nested():
+        db.session.add(record)
+    return record
+
+@pytest.fixture
+def identifiers():
+    identifier = ['oai:weko3.example.org:00000965']
+    return identifiers
+
+@pytest.fixture
+def k_v():
+    k_v = [
+        {
+            'id': 'date_range1',
+            'mapping': [],
+            'contents': '',
+            'inputType': 'dateRange',
+            'input_Type': 'range',
+            'item_value': {
+                '1': {
+                    'path': {'gte': '', 'lte': ''},
+                    'path_type': {'gte': 'json', 'lte': 'json'}
+                }, 
+                '12': {
+                    'path': {
+                        'gte': '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211',
+                        'lte': '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211'
+                    },
+                    'path_type': {'gte': 'json', 'lte': 'json'}
+                }
+            },
+            'mappingFlg': False,
+            'inputVal_to': '',
+            'mappingName': '',
+            'inputVal_from': '',
+            'contents_value': {'en': 'date_EN_1', 'ja': 'date_JA_1'},
+            'useable_status': True,
+            'default_display': True
+        },
+        {
+            "id": "text3",
+            "mapping": [],
+            "contents": "",
+            "inputVal": "",
+            "inputType": "text",
+            "input_Type": "text",
+            "item_value":  {
+                "1": {
+                    "path": "",
+                    "path_type": "json"
+                },
+                "12": {
+                    "path": "$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890",
+                    "path_type": "json"
+                },
+                "20": {
+                    "path": "$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890",
+                    "path_type": "json"
+                }
+            },
+            "mappingFlg": False,
+            "mappingName": "",
+            "contents_value": {"en": "Summary", "ja": "概要"},
+            "useable_status": True,
+            "default_display": True
+        }
+    ]
+    return k_v
+
+@pytest.fixture
+def jsonpath():
+    return [
+        '$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108',
+        '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211',
+        '$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890',
+        '$.item_1551264846237.attribute_value_mlt[1:3].subitem_1551255577890'
+    ]
+
+@pytest.fixture
+def meta():
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "data",
+        "meta00.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+            input_data = json.load(f)
+    return input_data

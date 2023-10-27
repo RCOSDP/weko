@@ -87,6 +87,7 @@
           </div>
         </div>
       </div>
+      {%- if is_sysadmin %}
         <div class="form-group">
           <div class="col-sm-offset-2">
             <label class="col-sm-2 control-label">{{_('Restricted Access Flag')}}</label>
@@ -98,6 +99,7 @@
             </div>
           </div>
         </div>
+      {%- endif %}
         <div class="form-group">
           <div class="col-sm-offset-2">
             <label class="col-sm-2 control-label">{{_('GakuNinRDM Flag')}}</label>
@@ -118,6 +120,21 @@
             {%- if index_list %}
               {%- for index in index_list if index %}
               <option value="{{index['id']}}" {%- if workflow.index_tree_id == index['id'] %} selected {%- endif %}>ID: {{index['id']}}  Name: {{index['index_name']}}</option>
+              {%- endfor %}
+            {%- endif %}
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2">
+          <label class="col-sm-2 control-label" for="txt_location">{{_('Strage Location')}}</label>
+          <div class="col-sm-8">
+            <select class="form-control" id="txt_location">
+              <option value="">{{_('Undesignated')}}</option>
+            {%- if location_list %}
+              {%- for location in location_list if location %}
+              <option value="{{location['id']}}" {%- if workflow.location_id == location['id'] %} selected {%- endif %}>{{location['name']}}</option>
               {%- endfor %}
             {%- endif %}
             </select>

@@ -12,7 +12,7 @@ from __future__ import absolute_import, print_function
 
 from datetime import datetime
 
-from helpers import create_record
+from tests.helpers import create_record
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records import Record
 
@@ -21,7 +21,7 @@ from invenio_records_rest.serializers.base import PreprocessorMixin
 keys = ['pid', 'metadata', 'links', 'revision', 'created', 'updated']
 
 
-def test_preprocessor_mixin_record(app, db):
+def test_preprocessor_mixin_record(app, db,item_type_mapping):
     """Test preprocessor mixin."""
     pid, record = create_record({'title': 'test', 'aref': {'$ref': '#/title'}})
     record.model.created = datetime(2015, 10, 1, 11, 11, 11, 1)
@@ -41,6 +41,15 @@ def test_preprocessor_mixin_record(app, db):
     assert data['created'] is None
     assert data['updated'] is None
     assert data['metadata']['aref'] == 'test2'
+    
+    pid, record = create_record({'title': 'test3', 'aref':{'$ref':'#/title'},'item_type_id':1})
+    record.model.created = datetime(2015, 10, 1, 11, 11, 11, 1)
+    db.session.commit()
+    data = PreprocessorMixin().preprocess_record(pid, record)
+    assert data['metadata']['title'] == 'test3'
+    assert data['created'] == '2015-10-01T11:11:11.000001+00:00'
+    assert data['revision'] == 1
+    assert data['metadata']['aref'] == {'$ref': '#/title'}
 
 
 def test_preprocessor_mixin_searchhit():

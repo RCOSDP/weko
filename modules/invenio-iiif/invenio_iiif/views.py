@@ -22,6 +22,7 @@ from invenio_pidstore.errors import (
 from invenio_pidstore.resolver import Resolver
 from invenio_records.api import Record
 from invenio_records_files.api import Record
+from invenio_db import db
 from werkzeug.routing import BuildError
 from werkzeug.utils import import_string
 
@@ -64,6 +65,16 @@ def create_blueprint(endpoints):
     :returns: Configured blueprint.
     """
     blueprint = Blueprint('invenio_iiif_presentation', __name__, url_prefix='')
+    
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+        current_app.logger.debug("invneio_iiif dbsession_clean: {}".format(exception))
+        if exception is None:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+        db.session.remove()
 
     for endpoint, options in (endpoints or {}).items():
         blueprint.add_url_rule(**create_url_rule(endpoint, **options))

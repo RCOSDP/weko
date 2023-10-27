@@ -12,7 +12,7 @@ from __future__ import absolute_import, print_function
 
 from flask import url_for
 from flask_babelex import gettext as _
-from helpers import login
+from tests.helpers import login
 
 from invenio_oauth2server.models import Client, Token
 

@@ -1,0 +1,312 @@
+{
+    "metainfo": {
+        "pubdate": "2022-08-22",
+        "item_1617186331708": [
+            {
+                "subitem_1551255647225": "rrr",
+                "subitem_1551255648112": "ja"
+            }
+        ],
+        "item_1617186385884": [
+            {}
+        ],
+        "item_1617186419668": [
+            {
+                "creatorAffiliations": [
+                    {
+                        "affiliationNameIdentifiers": [
+                            {}
+                        ],
+                        "affiliationNames": [
+                            {}
+                        ]
+                    }
+                ],
+                "creatorAlternatives": [
+                    {}
+                ],
+                "creatorMails": [
+                    {}
+                ],
+                "creatorNames": [
+                    {}
+                ],
+                "familyNames": [
+                    {}
+                ],
+                "givenNames": [
+                    {}
+                ],
+                "nameIdentifiers": [
+                    {}
+                ]
+            }
+        ],
+        "item_1617186499011": [
+            {}
+        ],
+        "item_1617186609386": [
+            {}
+        ],
+        "item_1617186626617": [
+            {}
+        ],
+        "item_1617186643794": [
+            {}
+        ],
+        "item_1617186660861": [
+            {}
+        ],
+        "item_1617186702042": [
+            {}
+        ],
+        "item_1617186783814": [
+            {}
+        ],
+        "item_1617186859717": [
+            {}
+        ],
+        "item_1617186882738": [
+            {
+                "subitem_geolocation_place": [
+                    {}
+                ]
+            }
+        ],
+        "item_1617186901218": [
+            {
+                "subitem_1522399412622": [
+                    {}
+                ],
+                "subitem_1522399651758": [
+                    {}
+                ]
+            }
+        ],
+        "item_1617186920753": [
+            {}
+        ],
+        "item_1617186941041": [
+            {}
+        ],
+        "item_1617187112279": [
+            {}
+        ],
+        "item_1617187187528": [
+            {
+                "subitem_1599711633003": [
+                    {}
+                ],
+                "subitem_1599711660052": [
+                    {}
+                ],
+                "subitem_1599711758470": [
+                    {}
+                ],
+                "subitem_1599711788485": [
+                    {}
+                ]
+            }
+        ],
+        "item_1617349709064": [
+            {
+                "contributorAffiliations": [
+                    {
+                        "contributorAffiliationNameIdentifiers": [
+                            {}
+                        ],
+                        "contributorAffiliationNames": [
+                            {}
+                        ]
+                    }
+                ],
+                "contributorAlternatives": [
+                    {}
+                ],
+                "contributorMails": [
+                    {}
+                ],
+                "contributorNames": [
+                    {}
+                ],
+                "familyNames": [
+                    {}
+                ],
+                "givenNames": [
+                    {}
+                ],
+                "nameIdentifiers": [
+                    {}
+                ]
+            }
+        ],
+        "item_1617353299429": [
+            {
+                "subitem_1523320863692": [
+                    {}
+                ]
+            }
+        ],
+        "item_1617610673286": [
+            {
+                "nameIdentifiers": [
+                    {}
+                ],
+                "rightHolderNames": [
+                    {}
+                ]
+            }
+        ],
+        "item_1617620223087": [
+            {}
+        ],
+        "item_1617944105607": [
+            {
+                "subitem_1551256015892": [
+                    {}
+                ],
+                "subitem_1551256037922": [
+                    {}
+                ]
+            }
+        ],
+        "item_1661099481373": [
+            {
+                "version_id": "2f2cb1ba-fb91-4768-8035-582bd24c56ed",
+                "filename": "003.jpg",
+                "filesize": [
+                    {
+                        "value": "576 KB"
+                    }
+                ],
+                "format": "image/jpeg",
+                "date": [
+                    {
+                        "dateValue": "2022-08-21",
+                        "dateType": "Available"
+                    }
+                ],
+                "accessrole": "open_access",
+                "url": {
+                    "url": "https://localhost:8443/record/11/files/003.jpg"
+                },
+                "displaytype": "preview",
+                "licensetype": "license_12"
+            }
+        ],
+        "item_1617187056579": {
+            "bibliographic_titles": [
+                {}
+            ]
+        },
+        "item_1661099407610": {
+            "subitem_thumbnail": [
+                {
+                    "thumbnail_label": "001.jpg",
+                    "thumbnail_url": "/api/files/d8699d40-ee1b-41ad-b719-bacd66be791d/001.jpg?versionId=6869d43e-f4e9-423c-a0a1-83fabe9ec4fe"
+                }
+            ]
+        },
+        "item_1617258105262": {
+            "resourcetype": "conference paper",
+            "resourceuri": "http://purl.org/coar/resource_type/c_5794"
+        },
+        "shared_user_ids": []
+    },
+    "files": [
+        {
+            "is_thumbnail": true,
+            "key": "001.jpg",
+            "uri": false,
+            "multipart": false,
+            "progress": 100,
+            "completed": true,
+            "version_id": "6869d43e-f4e9-423c-a0a1-83fabe9ec4fe",
+            "created": "2022-08-21T16:35:50.020286+00:00",
+            "size": 2802530,
+            "tags": {},
+            "mimetype": "image/jpeg",
+            "is_head": true,
+            "updated": "2022-08-21T16:35:50.071792+00:00",
+            "delete_marker": false,
+            "updated_user_id": 1,
+            "is_show": false,
+            "checksum": "sha256:bf407728f9b183ef1e4a0d182273ab026cce12adaf56ac6ba1ecba84bb089d92",
+            "uploaded_owners": {
+                "created_user": {
+                    "user_id": 1,
+                    "username": "",
+                    "displayname": "",
+                    "email": "wekosoftware@nii.ac.jp"
+                },
+                "updated_user": {
+                    "user_id": 1,
+                    "username": "",
+                    "displayname": "",
+                    "email": "wekosoftware@nii.ac.jp"
+                }
+            },
+            "created_user_id": 1,
+            "links": {
+                "self": "https://localhost:8443/api/files/d8699d40-ee1b-41ad-b719-bacd66be791d/001.jpg",
+                "version": "https://localhost:8443/api/files/d8699d40-ee1b-41ad-b719-bacd66be791d/001.jpg?versionId=6869d43e-f4e9-423c-a0a1-83fabe9ec4fe",
+                "uploads": "https://localhost:8443/api/files/d8699d40-ee1b-41ad-b719-bacd66be791d/001.jpg?uploads"
+            },
+            "filename": "001.jpg"
+        },
+        {
+            "key": "003.jpg",
+            "uri": false,
+            "multipart": false,
+            "progress": 100,
+            "completed": true,
+            "version_id": "2f2cb1ba-fb91-4768-8035-582bd24c56ed",
+            "created": "2022-08-21T16:35:59.482874+00:00",
+            "is_thumbnail": false,
+            "size": 589892,
+            "tags": {},
+            "mimetype": "image/jpeg",
+            "is_head": true,
+            "updated": "2022-08-21T16:35:59.503686+00:00",
+            "delete_marker": false,
+            "updated_user_id": 1,
+            "is_show": false,
+            "checksum": "sha256:2451662739c05a2a14e46712801f34059f91b6ea04358a9d3f7c2024f72489d5",
+            "uploaded_owners": {
+                "created_user": {
+                    "user_id": 1,
+                    "username": "",
+                    "displayname": "",
+                    "email": "wekosoftware@nii.ac.jp"
+                },
+                "updated_user": {
+                    "user_id": 1,
+                    "username": "",
+                    "displayname": "",
+                    "email": "wekosoftware@nii.ac.jp"
+                }
+            },
+            "created_user_id": 1,
+            "links": {
+                "self": "https://localhost:8443/api/files/d8699d40-ee1b-41ad-b719-bacd66be791d/003.jpg",
+                "version": "https://localhost:8443/api/files/d8699d40-ee1b-41ad-b719-bacd66be791d/003.jpg?versionId=2f2cb1ba-fb91-4768-8035-582bd24c56ed",
+                "uploads": "https://localhost:8443/api/files/d8699d40-ee1b-41ad-b719-bacd66be791d/003.jpg?uploads"
+            },
+            "filename": "003.jpg"
+        }
+    ],
+    "endpoints": {
+        "initialization": "/api/deposits/items",
+        "bucket": "https://localhost:8443/api/files/d8699d40-ee1b-41ad-b719-bacd66be791d",
+        "discard": "https://localhost:8443/api/deposits/items/11/actions/discard",
+        "edit": "https://localhost:8443/api/deposits/items/11/actions/edit",
+        "files": "https://localhost:8443/api/deposits/items/11/files",
+        "html": "https://localhost:8443/deposit/11",
+        "iframe_tree": "/items/iframe/index/11",
+        "iframe_tree_upgrade": "/items/iframe/index/11.1",
+        "index": "/api/deposits/redirect/11",
+        "publish": "https://localhost:8443/api/deposits/items/11/actions/publish",
+        "r": "/items/index/11",
+        "self": "https://localhost:8443/api/deposits/items/11"
+    }
+}

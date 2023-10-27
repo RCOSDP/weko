@@ -127,6 +127,9 @@ setup(
         'invenio_db.models': [
             'weko_user_profiles = weko_user_profiles.models',
         ],
+        'invenio_db.alembic': [
+            'weko_user_profiles = weko_user_profiles:alembic',
+        ],
         'invenio_i18n.translations': [
             'messages = weko_user_profiles',
         ],

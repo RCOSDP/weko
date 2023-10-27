@@ -90,6 +90,9 @@ setup(
         'invenio_db.models': [
             'weko_indextree_journal = weko_indextree_journal.models',
         ],
+                'invenio_db.alembic': [
+            'weko_indextree_journal = weko_indextree_journal:alembic',
+        ],
         'invenio_access.actions': [
             'indextree_journal_access = '
             'weko_indextree_journal.permissions:action_indextree_journal_access',

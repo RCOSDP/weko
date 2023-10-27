@@ -5,6 +5,14 @@
     $(document).ready(function () {
         const xmlIndexEndpoint = '/weko/sitemaps/sitemapindex.xml';
         const updateSitemapEndpoint = '/admin/sitemap/update_sitemap';
+        var  csrf_token=$('#csrf_token').val();
+        $.ajaxSetup({
+          beforeSend: function(xhr, settings) {
+             if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain){
+                 xhr.setRequestHeader("X-CSRFToken", csrf_token);
+             }
+          }
+        });
         $('#btn-run').on('click', function(){
           $("#btn-run").prop('disabled', true);
           $('#loader_spinner').css('display', 'block');
@@ -23,6 +31,8 @@
               $("#btn-run").prop('disabled', false);
             }
           });
+
+          
         });
     });
 

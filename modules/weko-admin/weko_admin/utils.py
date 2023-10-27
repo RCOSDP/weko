@@ -26,9 +26,10 @@ import os
 import zipfile
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
-from typing import Dict, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
 import redis
+from redis import sentinel
 import requests
 from flask import current_app, request
 from flask_babelex import gettext as __
@@ -48,6 +49,8 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
+from weko_redis.redis import RedisConnection
+
 
 from . import config
 from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
@@ -68,12 +71,11 @@ def get_response_json(result_list, n_lst):
         newlst = []
         for rlst in result_list:
             adr_lst = rlst.get('addresses')
-            if isinstance(adr_lst, list):
-                for alst in adr_lst:
-                    alst['start_ip_address'] = alst['start_ip_address'].split(
-                        '.')
-                    alst['finish_ip_address'] = alst[
-                        'finish_ip_address'].split('.')
+            for alst in adr_lst:
+                alst['start_ip_address'] = alst['start_ip_address'].split(
+                    '.')
+                alst['finish_ip_address'] = alst[
+                    'finish_ip_address'].split('.')
             newlst.append(rlst.dumps())
         result.update(dict(site_license=newlst))
         del result_list
@@ -300,11 +302,9 @@ def get_unit_stats_report(target_id):
 
     list_unit = list()
     for unit in units:
-        try:
-            if target_units.index(unit['id']) is not None:
-                list_unit.append(unit)
-        except Exception:
-            pass
+        if target_units.find(unit['id']) != -1:
+            list_unit.append(unit)
+
     result['unit'] = list_unit
     return result
 
@@ -334,40 +334,42 @@ def get_user_report_data():
 
 
 def package_reports(all_stats, year, month):
-    """Package the .tsv files into one zip file."""
-    tsv_files = []
+    """Package the .csv files into one zip file."""
+    output_files = []
     zip_stream = BytesIO()
     year = str(year)
     month = str(month)
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
     try:  # TODO: Make this into one loop, no need for two
         for stats_type, stats in all_stats.items():
             file_name = current_app.config['WEKO_ADMIN_REPORT_FILE_NAMES'].get(
                 stats_type, '_')
-            file_name = 'logReport_' + file_name + year + '-' + month + '.tsv'
-            tsv_files.append({
+            file_name = 'logReport_' + file_name + year + '-' + month + '.' + file_format
+            output_files.append({
                 'file_name': file_name,
-                'stream': make_stats_tsv(stats, stats_type, year, month)})
+                'stream': make_stats_file(stats, stats_type, year, month)})
 
         # Dynamically create zip from StringIO data into BytesIO
         report_zip = zipfile.ZipFile(zip_stream, 'w')
-        for tsv_file in tsv_files:
-            report_zip.writestr(tsv_file['file_name'],
-                                tsv_file['stream'].getvalue())
+        for f in output_files:
+            report_zip.writestr(f['file_name'],
+                                f['stream'].getvalue().encode('utf-8-sig'))
         report_zip.close()
     except Exception as e:
-        current_app.logger.error('Unexpected error: ', e)
+        current_app.logger.error('Unexpected error: {}'.format(e))
         raise
     return zip_stream
 
 
-def make_stats_tsv(raw_stats, file_type, year, month):
-    """Make TSV report file for stats."""
+def make_stats_file(raw_stats, file_type, year, month):
+    """Make TSV/CSV report file for stats."""
     header_row = current_app.config['WEKO_ADMIN_REPORT_HEADERS'].get(file_type)
     sub_header_row = current_app.config['WEKO_ADMIN_REPORT_SUB_HEADERS'].get(
         file_type)
-    tsv_output = StringIO()
-
-    writer = csv.writer(tsv_output, delimiter='\t',
+    file_output = StringIO()
+    file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+    file_delimiter = '\t' if file_format == 'tsv' else ','
+    writer = csv.writer(file_output, delimiter=file_delimiter,
                         lineterminator="\n")
     writer.writerows([[header_row],
                       [_('Aggregation Month'), year + '-' + month],
@@ -385,38 +387,41 @@ def make_stats_tsv(raw_stats, file_type, year, month):
     # Special cases:
     # Write total for per index views
     if file_type == 'index_access':
+        write_report_file_rows(writer, raw_stats.get(
+            'all'), file_type, raw_stats.get('index_name'))
         writer.writerow([_('Total Detail Views'), raw_stats.get('total')])
+
     elif file_type in ['billing_file_download', 'billing_file_preview']:
-        write_report_tsv_rows(writer, raw_stats.get('all'), file_type,
+        write_report_file_rows(writer, raw_stats.get('all'), file_type,
                               raw_stats.get('all_groups'))  # Pass all groups
     elif file_type == 'site_access':
-        write_report_tsv_rows(writer,
+        write_report_file_rows(writer,
                               raw_stats.get('site_license'),
                               file_type,
                               _('Site license member'))
-        write_report_tsv_rows(writer,
+        write_report_file_rows(writer,
                               raw_stats.get('other'),
                               file_type,
                               _('Other than site license'))
     else:
-        write_report_tsv_rows(writer, raw_stats.get('all'), file_type)
+        write_report_file_rows(writer, raw_stats.get('all'), file_type)
 
     # Write open access stats
     if sub_header_row is not None:
         writer.writerows([[''], [sub_header_row]])
         if 'open_access' in raw_stats:
             writer.writerow(cols)
-            write_report_tsv_rows(writer, raw_stats.get('open_access'))
+            write_report_file_rows(writer, raw_stats.get('open_access'))
         elif 'institution_name' in raw_stats:
             writer.writerows([[_('Institution Name')] + cols])
-            write_report_tsv_rows(writer,
+            write_report_file_rows(writer,
                                   raw_stats.get('institution_name'),
                                   file_type)
-    return tsv_output
+    return file_output
 
 
-def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
-    """Write tsv rows for stats."""
+def write_report_file_rows(writer, records, file_type=None, other_info=None):
+    """Write tsv/csv rows for stats."""
     from weko_items_ui.utils import get_user_information
     if not records:
         return
@@ -486,50 +491,53 @@ def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
                                  record.get('file_preview')])
 
 
-def reset_redis_cache(cache_key, value):
+def reset_redis_cache(cache_key, value, ttl=None):
     """Delete and then reset a cache value to Redis."""
     try:
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         if datastore.redis.exists(cache_key):
             datastore.delete(cache_key)
-        datastore.put(cache_key, value.encode('utf-8'))
+        if ttl is None:
+            datastore.put(cache_key, value.encode('utf-8'))
+        else:
+            datastore.put(cache_key, value.encode('utf-8'),ttl)
     except Exception as e:
-        current_app.logger.error('Could not reset redis value', e)
+        current_app.logger.error('Could not reset redis value: {}'.format(e))
         raise
 
 
 def is_exists_key_in_redis(key):
     """Check key exist in redis."""
     try:
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         return datastore.redis.exists(key)
     except Exception as e:
-        current_app.logger.error('Could get value for ' + key, e)
+        current_app.logger.error('Could get value for ' + key + ": {}".format(e))
     return False
 
 
 def is_exists_key_or_empty_in_redis(key):
     """Check key exist in redis."""
     try:
-        datastore = RedisStore(
-            redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         return datastore.redis.exists(key) and datastore.redis.get(key) != b''
     except Exception as e:
-        current_app.logger.error('Could get value for ' + key, e)
+        current_app.logger.error('Could get value for ' + key + ": {}".format(e))
     return False
 
 
 def get_redis_cache(cache_key):
     """Check and then retrieve the value of a Redis cache key."""
     try:
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         if datastore.redis.exists(cache_key):
             return datastore.get(cache_key).decode('utf-8')
     except Exception as e:
-        current_app.logger.error('Could get value for ' + cache_key, e)
+        current_app.logger.error('Could get value for ' + cache_key + ": {}".format(e))
     return None
 
 
@@ -637,7 +645,7 @@ class StatisticMail:
                     )
                     failed_mail += 1
         except Exception as ex:
-            current_app.logger.error('Error has occurred', ex)
+            current_app.logger.error('Error has occurred: {}'.format(ex))
         end_time = datetime.now()
         FeedbackMailHistory.create(
             session,
@@ -685,7 +693,7 @@ class StatisticMail:
             return int(download_count)
         except Exception as ex:
             current_app.logger.error(
-                'Cannot convert download count to int', ex)
+                'Cannot convert download count to int: {}'.format(ex))
             return 0
 
     @classmethod
@@ -1604,7 +1612,8 @@ def format_site_info_data(site_info):
     result['favicon'] = site_info.get('favicon')
     result['favicon_name'] = site_info.get('favicon_name')
     result['notify'] = notify
-    result['google_tracking_id_user'] = site_info.get('google_tracking_id_user')
+    result['google_tracking_id_user'] = site_info.get(
+        'google_tracking_id_user')
     result['addthis_user_id'] = site_info.get('addthis_user_id')
     result['ogp_image'] = site_info.get('ogp_image')
     result['ogp_image_name'] = site_info.get('ogp_image_name')
@@ -1620,16 +1629,13 @@ def get_site_name_for_current_language(site_name):
     """
     lang_code_english = 'en'
     if site_name:
-        if hasattr(current_i18n, 'language'):
-            for sn in site_name:
-                if sn.get('language') == current_i18n.language:
-                    return sn.get("name")
-            for sn in site_name:
-                if sn.get('language') == lang_code_english:
-                    return sn.get("name")
-            return site_name[0].get("name")
-        else:
-            return site_name[0].get("name")
+        for sn in site_name:
+            if sn.get('language') == current_i18n.language:
+                return sn.get("name")
+        for sn in site_name:
+            if sn.get('language') == lang_code_english:
+                return sn.get("name")
+        return site_name[0].get("name")
     else:
         return ''
 
@@ -1707,13 +1713,13 @@ def get_init_display_index(init_disp_index: str) -> list:
     return init_display_indexes
 
 
-def get_restricted_access(key: str = None):
+def get_restricted_access(key: Optional[str] = None) -> Optional[dict]:
     """Get registered access settings.
 
     :param key:setting key.
     :return:
     """
-    restricted_access = AdminSettings.get('restricted_access', False)
+    restricted_access:dict = AdminSettings.get('restricted_access', False)
     if not restricted_access:
         restricted_access = current_app.config[
             'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
@@ -1729,11 +1735,36 @@ def update_restricted_access(restricted_access: dict):
 
     :param restricted_access:
     """
+    def parse_secret_URL_file_download():
+        if secret_URL_file_download.get('secret_expiration_date_unlimited_chk'):
+            secret_URL_file_download['secret_expiration_date'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
+        if secret_URL_file_download.get('secret_download_limit_unlimited_chk'):
+            secret_URL_file_download['secret_download_limit'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
+
+        secret_URL_file_download['secret_expiration_date'] = int(
+            secret_URL_file_download['secret_expiration_date'])
+        secret_URL_file_download['secret_download_limit'] = int(
+            secret_URL_file_download['secret_download_limit'])
+
+    def validate_secret_URL_file_download():
+        if not secret_URL_file_download.get(
+            'secret_expiration_date_unlimited_chk') and not secret_URL_file_download[
+            'secret_expiration_date'] or not secret_URL_file_download.get(
+            'secret_download_limit_unlimited_chk') and not \
+                secret_URL_file_download['secret_download_limit']:
+            return False
+        if secret_URL_file_download['secret_expiration_date'] and int(
+            secret_URL_file_download['secret_expiration_date']) < 1 or \
+            secret_URL_file_download['secret_download_limit'] and int(
+                secret_URL_file_download['secret_download_limit']) < 1:
+            return False
+        return True
+        
     def parse_content_file_download():
         if content_file_download.get('expiration_date_unlimited_chk'):
-            content_file_download['expiration_date'] = 9999999
+            content_file_download['expiration_date'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
         if content_file_download.get('download_limit_unlimited_chk'):
-            content_file_download['download_limit'] = 9999999
+            content_file_download['download_limit'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
 
         content_file_download['expiration_date'] = int(
             content_file_download['expiration_date'])
@@ -1766,10 +1797,17 @@ def update_restricted_access(restricted_access: dict):
 
     def parse_usage_report_wf_access():
         if usage_report_wf_access.get('expiration_date_access_unlimited_chk'):
-            usage_report_wf_access['expiration_date_access'] = 9999999
+            usage_report_wf_access['expiration_date_access'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
 
         usage_report_wf_access['expiration_date_access'] = int(
             usage_report_wf_access['expiration_date_access'])
+
+    # Secret URL file download.
+    if 'secret_URL_file_download' in restricted_access:
+        secret_URL_file_download = restricted_access['secret_URL_file_download']
+        if not validate_secret_URL_file_download():
+            return False
+        parse_secret_URL_file_download()
 
     # Content file download.
     if 'content_file_download' in restricted_access:
@@ -2041,7 +2079,7 @@ def get_facet_search(id: int = None):
 
 
 def get_item_mapping_list():
-    """Get Item Mapping list.
+    """Get Item Mapping list in Facet search setting.
 
     Returns:
         object:
@@ -2050,7 +2088,7 @@ def get_item_mapping_list():
     def handle_prefix_key(pre_key, key):
         if key == 'properties':
             return pre_key
-        pre_key = pre_key.replace('.fields','')
+        pre_key = pre_key.replace('.fields', '')
         return "{}.{}".format(pre_key, key) if pre_key else key
 
     def get_mapping(pre_key, key, value, mapping_list):

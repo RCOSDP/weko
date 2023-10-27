@@ -291,7 +291,8 @@ const SPECIFIC_INDEX_VALUE = '1';
           initDispIndex = "0";
         }
         const currentTime = new Date().getTime();
-        let url = "/api/admin/search/init_display_index/" + initDispIndex + "?timestamp=" + currentTime;
+        let url = "/api/admin/search/init_display_index/" + initDispIndex;
+
         $.get(url)
           .done(function (data) {
             let jstree = $scope.treeInstance.jstree(true);

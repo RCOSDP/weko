@@ -804,6 +804,8 @@ $(document).ready(function () {
                 } else {
                   if(cur_obj[sub_jpcoar_arr[idx]].hasOwnProperty('@value')) {
                     delete cur_obj[sub_jpcoar_arr[idx]]['@value'];
+                  }else{
+                    cur_obj[sub_jpcoar_arr[idx]]['@value']='interim';
                   }
                 }
               } else {

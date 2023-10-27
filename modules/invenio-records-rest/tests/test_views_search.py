@@ -14,7 +14,7 @@ import re
 
 import pytest
 from flask import url_for
-from helpers import assert_hits_len, get_json, parse_url, to_relative_url
+from tests.helpers import assert_hits_len, get_json, parse_url, to_relative_url
 from mock import patch
 
 

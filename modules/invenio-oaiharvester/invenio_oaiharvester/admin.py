@@ -97,14 +97,24 @@ class HarvestSettingView(ModelView):
     @expose('/run/')
     def run(self):
         """Run harvesting."""
+        user_id = current_user.get_id() if current_user and current_user.is_authenticated else 1
+        user_data = {
+            'ip_address': get_remote_addr(),
+            'user_agent': request.user_agent.string,
+            'user_id': user_id,
+            'session_id': session.get('sid_s')
+        }
+        request_info = {
+            "remote_addr": request.remote_addr,
+            "referrer": request.referrer,
+            "hostname": request.host,
+            "user_id": user_id
+        }
         run_harvesting.apply_async(args=(
             request.args.get('id'),
             datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),
-            {'ip_address': get_remote_addr(),
-             'user_agent': request.user_agent.string,
-             'user_id': (
-                 current_user.get_id() if current_user.is_authenticated else None),
-             'session_id': session.get('sid_s')}),
+            user_data,
+            request_info),
             link=link_success_handler.s(),
             link_error=link_error_handler.s())
         return redirect(url_for('harvestsettings.details_view',

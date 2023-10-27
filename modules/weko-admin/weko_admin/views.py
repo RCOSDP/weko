@@ -32,8 +32,10 @@ from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
 from flask_menu import register_menu
+from flask_wtf import Form,FlaskForm
 from invenio_admin.proxies import current_admin
 from invenio_stats.utils import QueryCommonReportsHelper
+from invenio_db import db
 from sqlalchemy.orm import session
 from weko_accounts.utils import roles_required
 from weko_records.models import SiteLicenseInfo
@@ -79,6 +81,7 @@ def _has_admin_access():
 
 
 @blueprint.route('/session/lifetime/<int:minutes>', methods=['GET'])
+@login_required
 def set_lifetime(minutes):
     """Update session lifetime in db.
 
@@ -96,7 +99,7 @@ def set_lifetime(minutes):
             minutes=db_lifetime.lifetime)
         return jsonify(code=0, msg='Session lifetime was updated.')
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         return abort(400)
 
 
@@ -125,7 +128,8 @@ def lifetime():
         if db_lifetime is None:
             db_lifetime = SessionLifetime(lifetime=30)
 
-        if request.method == 'POST':
+        form = FlaskForm(request.form)
+        if request.method == 'POST' and form.validate():
             # Process forms
             form = request.form.get('submit', None)
             if form == 'lifetime':
@@ -146,13 +150,15 @@ def lifetime():
                           ('180', _('180 mins')),
                           ('360', _('360 mins')),
                           ('720', _('720 mins')),
-                          ('1440', _('1440 mins'))]
+                          ('1440', _('1440 mins'))],
+            form=form
         )
     except ValueError as valueErr:
         current_app.logger.error(
             'Could not convert data to an integer: {0}'.format(valueErr))
+        abort(400)
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         return abort(400)
 
 
@@ -186,6 +192,9 @@ def get_lang_list():
 
 
 @blueprint_api.route('/save_lang', methods=['POST'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def save_lang_list():
     """Save Language List."""
     if request.headers['Content-Type'] != 'application/json':
@@ -267,6 +276,8 @@ def get_curr_api_cert(api_code=''):
 
 
 @blueprint_api.route('/save_api_cert_data', methods=['POST'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM])
 def save_api_cert_data():
     """Save api certification data to database.
 
@@ -307,8 +318,6 @@ def get_init_selection(selection=""):
     try:
         if selection == 'target':
             result = get_initial_stats_report()
-        elif selection == "":
-            raise ValueError("Request URL is incorrectly")
         else:
             result = get_unit_stats_report(selection)
     except Exception as e:
@@ -328,6 +337,9 @@ def get_email_author():
 
 
 @blueprint_api.route('/update_feedback_mail', methods=['POST'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def update_feedback_mail():
     """API allow to save feedback mail setting.
 
@@ -393,7 +405,7 @@ def get_send_mail_history():
         data = request.args
         page = int(data.get('page'))
     except Exception as ex:
-        current_app.logger.debug('Cannot convert parameter', ex)
+        current_app.logger.debug("Cannot convert parameter: {}".format(ex))
         page = 1
     result = FeedbackMail.load_feedback_mail_history(page)
     return jsonify(result)
@@ -414,7 +426,7 @@ def get_failed_mail():
         page = int(data.get('page'))
         history_id = int(data.get('id'))
     except Exception as ex:
-        current_app.logger.debug('Cannot convert parameter', ex)
+        current_app.logger.debug("Cannot convert parameter: {}".format(ex))
         page = 1
         history_id = 1
     result = FeedbackMail.load_feedback_failed_mail(history_id, page)
@@ -422,6 +434,9 @@ def get_failed_mail():
 
 
 @blueprint_api.route('/resend_failed_mail', methods=['POST'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def resend_failed_mail():
     """Resend failed mail.
 
@@ -441,7 +456,7 @@ def resend_failed_mail():
         )
         FeedbackMail.update_history_after_resend(history_id)
     except Exception as ex:
-        current_app.logger.debug('Cannot resend mail', ex)
+        current_app.logger.debug("Cannot resend mail:{}".format(ex))
         result['success'] = False
         result['error'] = 'Request package is invalid'
     return jsonify(result)
@@ -449,6 +464,9 @@ def resend_failed_mail():
 
 @blueprint_api.route('/sitelicensesendmail/send/<start_month>/<end_month>',
                      methods=['POST'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def manual_send_site_license_mail(start_month, end_month):
     """Send site license mail by manual."""
     send_list = SiteLicenseInfo.query.filter_by(receive_mail_flag='T').all()
@@ -485,6 +503,8 @@ def manual_send_site_license_mail(start_month, end_month):
 
 @blueprint_api.route('/update_site_info', methods=['POST'])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def update_site_info():
     """Update site info.
 
@@ -546,7 +566,7 @@ def get_site_info():
     if site_info.ogp_image and site_info.ogp_image_name:
         ts = time.time()
         result['ogp_image'] = request.host_url + \
-            'api/admin/ogp_image?timestamp=' + str(ts)
+            'api/admin/ogp_image'
         result['ogp_image_name'] = site_info.ogp_image_name
     return jsonify(result)
 
@@ -582,7 +602,7 @@ def get_ogp_image():
     from invenio_files_rest.models import FileInstance
 
     site_info = SiteInfo.get()
-    if not site_info and site_info.ogp_image and site_info.ogp_image_name:
+    if not site_info or not( site_info.ogp_image and site_info.ogp_image_name):
         return jsonify({})
     file_instance = FileInstance.get_by_uri(site_info.ogp_image)
     if not file_instance:
@@ -608,6 +628,8 @@ def get_search_init_display_index(selected_index=None):
 
 @blueprint_api.route("/restricted_access/save", methods=['POST'])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def save_restricted_access():
     """Save registered access settings.
 
@@ -627,6 +649,8 @@ def save_restricted_access():
 @blueprint_api.route("/restricted_access/get_usage_report_activities",
                      methods=["GET", "POST"])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def get_usage_report_activities():
     """Get usage report activities.
 
@@ -650,6 +674,8 @@ def get_usage_report_activities():
 
 @blueprint_api.route("/restricted_access/send_mail_reminder", methods=["POST"])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def send_mail_reminder_usage_report():
     """Send email to request user for register usage report.
 
@@ -667,6 +693,8 @@ def send_mail_reminder_usage_report():
 
 @blueprint_api.route("/facet-search/save", methods=['POST'])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def save_facet_search():
     """Save facet search.
 
@@ -700,6 +728,8 @@ def save_facet_search():
 
 @blueprint_api.route("/facet-search/remove", methods=['POST'])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def remove_facet_search():
     """Remove facet search.
 
@@ -721,3 +751,15 @@ def remove_facet_search():
     # Store query facet search in redis.
     store_facet_search_query_in_redis()
     return jsonify(result), 200
+
+
+@blueprint.teardown_request
+@blueprint_api.teardown_request
+def dbsession_clean(exception):
+    current_app.logger.debug("weko_admin dbsession_clean: {}".format(exception))
+    if exception is None:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+    db.session.remove()

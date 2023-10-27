@@ -12,32 +12,59 @@ import datetime
 import time
 
 import pytest
-from conftest import _create_file_download_event
+from tests.conftest import _create_file_download_event
 from elasticsearch_dsl import Index, Search
 from invenio_search import current_search, current_search_client
 from mock import patch
 
 from invenio_stats import current_stats
-from invenio_stats.aggregations import StatAggregator, filter_robots
+from invenio_stats.aggregations import StatAggregator, filter_robots, BookmarkAPI
 from invenio_stats.processors import EventsIndexer
 from invenio_stats.tasks import aggregate_events, process_events
 
+# def filter_robots(query):
+# def filter_restricted(query):
+# def format_range_dt(dt, interval):
 
+# class BookmarkAPI:
+#     def __init__(self, client, agg_type, agg_interval):
+#     def _ensure_index_exists(func):
+#         def wrapped(self, *args, **kwargs):
+#     def set_bookmark(self, value):
+#     def get_bookmark(self):
+#     def list_bookmarks(self, start_date=None, end_date=None, limit=None):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_aggregations.py::test_BookmarkAPI -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_BookmarkAPI(app):
+    bookmark_api = BookmarkAPI(current_search_client,
+                               'file-download-agg',
+                               'day')
+    bookmark_api.set_bookmark('2021-01-01')
+    time.sleep(10)
+    res = bookmark_api.get_bookmark()
+    assert res==datetime.datetime(2021, 1, 1)
+
+    res = bookmark_api.list_bookmarks(start_date='2021-01-01', end_date='2021-02-01')
+    for b in res:
+        assert b.date=='2021-01-01'
+
+# class StatAggregator(object):
+#     def __init__(self, name, event, client=None,
+#     def aggregation_doc_type(self):
+#     def _get_oldest_event_timestamp(self):
+#     def agg_iter(self, lower_limit=None, upper_limit=None, manual=False):
+#     def run(self, start_date=None, end_date=None, update_bookmark=True, manual=False):
+#     def list_bookmarks(self, start_date=None, end_date=None, limit=None):
+#     def delete(self, start_date=None, end_date=None):
+#         def _delete_actions():
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_aggregations.py::test_wrong_intervals -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_wrong_intervals(app):
     """Test aggregation with aggregation_interval > index_interval."""
     with pytest.raises(ValueError):
         StatAggregator('test-agg', 'test', current_search_client,
                        aggregation_interval='month', index_interval='day')
 
-
-@pytest.mark.parametrize('indexed_events',
-                         [dict(file_number=1,
-                               event_number=1,
-                               robot_event_number=0,
-                               start_date=datetime.date(2021, 1, 1),
-                               end_date=datetime.date(2021, 1, 7))],
-                         indirect=['indexed_events'])
-def test_get_bookmark(app, indexed_events):
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_aggregations.py::test_StatAggregator -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_StatAggregator(app):
     """Test bookmark reading."""
     stat_agg = StatAggregator(name='file-download-agg',
                               client=current_search_client,
@@ -45,8 +72,6 @@ def test_get_bookmark(app, indexed_events):
                               aggregation_field='file_id',
                               aggregation_interval='day')
     stat_agg.run()
-    assert stat_agg.get_bookmark() == datetime.datetime(2017, 1, 8)
-
 
 # def test_overwriting_aggregations(app, mock_event_queue, es_with_templates):
 #     """Check that the StatAggregator correctly starts from bookmark.

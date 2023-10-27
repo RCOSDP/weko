@@ -20,5 +20,5 @@
 
 """Configuration for weko-plugins."""
 
-WEKO_PLUGINS_BASE_TEMPLATE = 'weko_plugins/base.html'
+WEKO_PLUGINS_BASE_TEMPLATE = "weko_plugins/base.html"
 """Default base template for the demo page."""

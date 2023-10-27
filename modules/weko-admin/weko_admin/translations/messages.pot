@@ -886,7 +886,7 @@ msgid "Rankings"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:91
-msgid "The Most Viewed Items"
+msgid "Most Viewed Items"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:102
@@ -1126,6 +1126,14 @@ msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:79
 msgid "action_doing"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:80
+msgid "Secret URL Download"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:81
+msgid "SecretURL Enabled"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:48

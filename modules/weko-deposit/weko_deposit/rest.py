@@ -22,8 +22,10 @@
 
 import json
 import sys
+from wsgiref.util import request_uri
 
 import redis
+from redis import sentinel
 from elasticsearch import ElasticsearchException
 from flask import Blueprint, abort, current_app, jsonify, request
 from invenio_db import db
@@ -37,6 +39,7 @@ from invenio_records_rest.views import pass_record
 from invenio_rest import ContentNegotiatedMethodView
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
+from weko_redis.redis import RedisConnection
 
 from .api import WekoDeposit
 
@@ -72,6 +75,16 @@ def create_blueprint(app, endpoints):
         __name__,
         url_prefix='',
     )
+    
+    @blueprint.teardown_request
+    def dbsession_clean(exception):
+        current_app.logger.debug("weko_deposit dbsession_clean: {}".format(exception))
+        if exception is None:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+        db.session.remove()
 
     for endpoint, options in (endpoints or {}).items():
 
@@ -150,7 +163,7 @@ def create_blueprint(app, endpoints):
             view_func=publish,
             methods=['PUT'],
         )
-
+    
     return blueprint
 
 
@@ -233,8 +246,8 @@ class ItemResource(ContentNegotiatedMethodView):
                 pid_value = pid.pid_value if pid else pid_value
 
             # Saving ItemMetadata cached on Redis by pid
-            datastore = RedisStore(redis.StrictRedis.from_url(
-                current_app.config['CACHE_REDIS_URL']))
+            redis_connection = RedisConnection()
+            datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
             cache_key = current_app.config[
                 'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=pid_value)
             ttl_sec = int(current_app.config['WEKO_DEPOSIT_ITEMS_CACHE_TTL'])
@@ -243,12 +256,12 @@ class ItemResource(ContentNegotiatedMethodView):
                 json.dumps(data).encode('utf-8'),
                 ttl_secs=ttl_sec)
         except SQLAlchemyError as ex:
-            current_app.logger.error('sqlalchemy error: ', ex)
+            current_app.logger.error('sqlalchemy error: %s', ex)
             db.session.rollback()
             abort(400, "Failed to register item!")
 
         except ElasticsearchException as ex:
-            current_app.logger.error('elasticsearch error: ', ex)
+            current_app.logger.error('elasticsearch error: %s', ex)
             db.session.rollback()
 
             # elasticseacrh remove
@@ -256,7 +269,7 @@ class ItemResource(ContentNegotiatedMethodView):
 
             abort(400, "Failed to register item!")
         except redis.RedisError as ex:
-            current_app.logger.error('redis error: ', ex)
+            current_app.logger.error('redis error: %s', ex)
             db.session.rollback()
 
             # elasticseacrh remove
@@ -264,7 +277,7 @@ class ItemResource(ContentNegotiatedMethodView):
 
             abort(400, "Failed to register item!")
         except BaseException as ex:
-            current_app.logger.error('Unexpected error: ', ex)
+            current_app.logger.error('Unexpected error: %s', ex)
             db.session.rollback()
             abort(400, "Failed to register item!")
 

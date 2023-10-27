@@ -23,7 +23,7 @@ tests_require = [
     'pytest-cov',
     'pytest-pep8',
     'pytest-invenio',
-    'pytest-mock',
+    'pytest-mock==3.1.0',
     'responses',
 ]
 
@@ -89,6 +89,9 @@ setup(
         ],
         'invenio_db.models': [
             'invenio_mail = invenio_mail.models',
+        ],
+        'invenio_db.alembic': [
+            'invenio_mail = invenio_mail:alembic',
         ],
         'invenio_celery.tasks': [
             'invenio_mail = invenio_mail.tasks',

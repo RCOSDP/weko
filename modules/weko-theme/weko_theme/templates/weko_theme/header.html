@@ -39,7 +39,9 @@
           {% include "weko_theme/header_wysiwyg.html" %}
         {% endif %}
       {%- block navbar_right %}
-        {%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
+	  	{% if config.DISPLAY_LOGIN %}
+        	{%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
+		{% endif %}
       {%- endblock navbar_right %}
       <div class="navbar-form navbar-right navbar-form2">
         {%- if config.I18N_LANGUAGES %}

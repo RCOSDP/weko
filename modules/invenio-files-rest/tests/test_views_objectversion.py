@@ -16,7 +16,7 @@ from flask import url_for
 from fs.opener import opener
 from mock import patch
 from six import BytesIO
-from testutils import BadBytesIO, login_user
+from tests.testutils import BadBytesIO, login_user
 
 from invenio_files_rest.models import FileInstance, ObjectVersion
 from invenio_files_rest.tasks import remove_file_data

@@ -1,0 +1,279 @@
+[
+  {
+    "key":"item_test1_1",
+    "items":[
+      {
+        "key":"item_test1_1[].test_value1",
+        "type":"text",
+        "title":"Test Item1-1",
+        "title_i18n":{"en": "Test Item1-1", "ja":"テストアイテム１"},
+        "title_i18n_temp":{"en": "Test Item1-1", "ja":"テストアイテム１"},
+        "isSpecifyNewline":false
+      },
+      {
+        "key":"item_test1_1[].test_item_lang1",
+        "type":"select",
+        "title":"Language",
+        "titleMap":[
+          {"name":"ja","value":"ja"},
+          {"name":"en","value":"en"}
+        ],
+        "title_i18n": { "en": "Language", "ja": "言語" },
+        "title_i18n_temp": { "en": "Language", "ja": "言語" }
+      }
+    ],
+    "stype":{"add":"btn-success"},
+    "title":"Item Test1-1",
+    "title_i18n":{"en":"Item Test1-1","ja":"テストアイテム１-１"},
+    "isSpecifyNewline":false
+  },
+  {
+    "key":"item_test1_2",
+    "items":[
+      {
+        "key":"item_test1_2[].test_item_lang1",
+        "type":"select",
+        "title":"Language",
+        "titleMap":[
+          {"name":"ja","value":"ja"},
+          {"name":"en","value":"en"}
+        ],
+        "title_i18n": { "en": "Language", "ja": "言語" },
+        "title_i18n_temp": { "en": "Language", "ja": "言語" }
+      }
+    ],
+    "stype":{"add":"btn-success"},
+    "title":"Item Test1-2",
+    "title_i18n":{"en":"Item Test1-2","ja":"テストアイテム１-２"}
+  },
+  {
+    "key":"item_test1_3",
+    "items":[
+      {
+        "key":"item_test1_3[].test_value1",
+        "type":"text",
+        "title":"Test Item1-1",
+        "title_i18n":{"en": "Test Item1-1", "ja":"テストアイテム１"},
+        "title_i18n_temp":{"en": "Test Item1-1", "ja":"テストアイテム１"},
+        "isSpecifyNewline":false
+      }
+    ],
+    "stype":{"add":"btn-success"},
+    "title":"Item Test1-3",
+    "title_i18n":{"en":"Item Test1-3","ja":"テストアイテム１-３"},
+    "isSpecifyNewline":false
+  },
+  {
+    "key":"item_test1_5",
+    "items":[
+      {
+        "key":"item_test1_5[].test_value1",
+        "type":"text",
+        "title":"Test Item1-5",
+        "title_i18n":{"en": "Test Item1-5", "ja":"テストアイテム5"},
+        "title_i18n_temp":{"en": "Test Item1-5", "ja":"テストアイテム5"},
+        "isSpecifyNewline":false
+      },
+      {
+        "key":"item_test1_5[].test_item_lang1",
+        "type":"select",
+        "title":"Language",
+        "titleMap":[
+          {"name":"ja","value":"ja"},
+          {"name":"en","value":"en"}
+        ],
+        "title_i18n": { "en": "Language", "ja": "言語" },
+        "title_i18n_temp": { "en": "Language", "ja": "言語" }
+      }
+    ],
+    "stype":{"add":"btn-success"},
+    "title":"Item Test1-5",
+    "title_i18n":{"en":"Item Test1-5","ja":"テストアイテム１-5"},
+    "isSpecifyNewline":false
+  },
+  {
+    "key":"item_test2_title",
+    "items":[
+      {
+        "key":"item_test2_title[].test_title",
+        "type":"text",
+        "title":"Title",
+        "title_i18n":{"en":"Title","ja":"タイトル"},
+        "titlei_i18n_temp":{"en":"Title","ja":"タイトル"},
+        "isShowList":false
+      },
+      {
+        "key":"item_test2_title[].test_title_lang",
+        "type":"select",
+        "title":"Language",
+        "titleMap":[
+          {"name":"ja","value":"ja"},
+          {"name":"en","value":"en"}
+        ],
+        "title_i18n": { "en": "Language", "ja": "言語" },
+        "title_i18n_temp": { "en": "Language", "ja": "言語" },
+        "isShowList":false
+      }
+    ],
+    "stype":{"add":"btn-success"},
+    "title":"Title",
+    "title_i18n":{"en":"Title","ja":"タイトル"},
+    "isShowList":false
+  },
+  {
+    "key":"item_test3_file",
+    "items":[
+      {
+        "key":"item_test3_file[].url.url",
+        "type":"text",
+        "title":"URI",
+        "title_i18n":{"en":"URI","ja":"URI"},
+        "titlei_i18n_temp":{"en":"URI","ja":"URI"}
+      },
+      {
+        "key":"item_test3_file[].url.label",
+        "type":"text",
+        "title":"Label",
+        "title_i18n":{"en":"Label","ja":"Label"},
+        "titlei_i18n_temp":{"en":"Label","ja":"Label"}
+      },
+      {
+        "key":"item_test3_file[].url.objectType",
+        "type":"select",
+        "title":"ObjectType",
+        "titleMap":[
+          {"name":"txt","value":"txt"},
+          {"name":"csv","value":"csv"}
+        ],
+        "title_i18n":{"en":"ObjectType","ja":"ObjectType"},
+        "titlei_i18n_temp":{"en":"ObjectType","ja":"ObjectType"}
+      }
+    ],
+    "stype":{"add":"btn-success"},
+    "title":"File",
+    "title_i18n":{"en":"File","ja":"ファイル"}
+  },
+  {
+    "key":"item_test4_thumbnail",
+    "items":[
+      {
+        "key":"item_test4_thumbnail[].subitem_thumbnail.thumbnail_labe",
+        "type":"text",
+        "title":"thumbnail_label",
+        "title_i18n":{"en":"Thumbnail Label","ja":"サムネイルラベル"},
+        "title_i18n_temp":{"en":"Thumbnail Label","ja":"サムネイルラベル"}
+      }
+    ],
+    "stype":{"add":"btn-success"},
+    "title":"Thumbnail",
+    "title_i18n":{"en":"Thumbnail","ja":"サムネイル"}
+  },
+  {
+    "key":"item_test4_2_thumbnail",
+    "stype":{"add":"btn-success"},
+    "title":"Thumbnail2",
+    "title_i18n":{"en":"Thumbnail2","ja":"サムネイル2"}
+  },
+  {
+    "key":"item_test5_creator",
+    "items":[
+      {
+        "key":"item_test5_creator[].creatorMails.creatorMail",
+        "type":"text",
+        "title":"creator_mail",
+        "title_i18n":{"en":"Creator Mail","ja":"製作者メール"},
+        "title_i18n_temp":{"en":"Creator Mail","ja":"製作者メール"}
+
+      },
+      {
+        "key":"item_test5_creator[].creatorName",
+        "type":"text",
+        "title":"creator_name",
+        "title_i18n":{"en":"Creator Name","ja":"作成者氏名"},
+        "title_i18n_temp":{"en":"Creator Name","ja":"作成者氏名"},
+        "isShowList":true
+      },
+      {
+        "key":"item_test5_creator[].familyName",
+        "type":"text",
+        "title":"family_name",
+        "title_i18n":{"en":"Creator Name2","ja":"作成者氏名2"},
+        "title_i18n_temp":{"en":"Creator Name2","ja":"作成者氏名2"},
+        "isShowList":true
+      },
+      {
+        "key":"item_test5_creator[].givenName",
+        "type":"text",
+        "title":"given_name",
+        "title_i18n":{"en":"Creator Name3","ja":"作成者氏名3"},
+        "title_i18n_temp":{"en":"Creator Name3","ja":"作成者氏名3"},
+        "isShowList":true,
+        "isSpecifyNewline":true
+      },
+      {
+        "key":"item_test5_creator[].nameIdentifierURI",
+        "type":"text",
+        "title":"name_identifier_URI",
+        "title_i18n":{"en":"Creator Name4","ja":"作成者氏名4"},
+        "title_i18n_temp":{"en":"Creator Name4","ja":"作成者氏名4"},
+        "isShowList":true
+      }
+    ],
+    "stype":{"add":"btn-success"},
+    "title":"Creator",
+    "title_i18n":{"en":"Creator","ja":"製作者"}
+  },
+  {
+    "key":"item_test6_bibliographic",
+    "items":[
+      {
+        "key":"item_test6_bibliographic[].bibliographic_titles",
+        "type":"text",
+        "isShowList":true
+      }
+    ],
+    "stype":{"add":"btn-success"},
+    "title":"bibliographc test",
+    "title_i18n":{"en":"bibliographic","ja":"書誌"},
+    "isShowList":true
+  },
+  {
+    "key":"item_test7_not_option",
+    "type":"test"
+  },
+  {
+    "key":"item_test8_not_mlt",
+    "type":"test"
+  },
+  {
+    "key":"item_test9",
+    "type":"test",
+    "items":[
+      {
+        "key":"item_test9[].item_test9_dict.item_test9_1_value",
+        "type":"text"
+      },
+      {
+        "key":"item_test9[].item_test9_list"
+      }
+    ],
+    "stype":{"add":"btn-success"},
+    "title":"test9",
+    "title_i18n":{"en":"test9","ja":"テスト9"}
+  },
+  {
+    "key":"item_test11",
+    "type":"test",
+    "stype":{"add":"btn-success"},
+    "title":"test11",
+    "title_i18n":{"en":"test11","ja":"テスト11"}
+  },
+  {
+    "key":"item_test12.indot_item",
+    "type":"test",
+    "stype":{"add":"btn-success"},
+    "title":"test12",
+    "title_i18n":{"en":"test12","ja":"テスト12"}
+  }
+]
+

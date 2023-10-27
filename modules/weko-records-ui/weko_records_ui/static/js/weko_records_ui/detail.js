@@ -94,25 +94,32 @@ require([
     if (typeof communityId !== 'undefined' && communityId !== "") {
       post_uri = post_uri + "?community=" + communityId;
     }
+    var deferred = new $.Deferred();
     $.ajax({
       url: post_uri,
       method: 'POST',
       contentType: 'application/json',
       data: JSON.stringify(post_data),
-      success: function (data) {
-        if (0 === data.code) {
-          let activity_url = data.data.redirect.split('/').slice(-1)[0];
-          let activity_id = activity_url.split('?')[0];
-          init_permission(recordId, fileName, activity_id);
-          document.location.href = data.data.redirect;
-        } else {
-          alert(data.msg);
-        }
-      },
-      error: function (jqXHE, status) {
+    }).done(function (data) {
+      if (0 === data.code) {
+        let activity_url = data.data.redirect.split('/').slice(-1)[0];
+        let activity_id = activity_url.split('?')[0];
+        init_permission(recordId, fileName, activity_id);
+        document.location.href = data.data.redirect;
+      } else if(1 === data.code && data.data.is_download){
+        const url = new URL(data.data.redirect , document.location.origin);
+        url.searchParams.append('terms_of_use_only',true);
+        document.location.href = url;
+      } else {
+        alert(data.msg);
       }
-    });
-  }
+    }).fail(function (jqXHE, status) {
+      console.log('fail:{}', jqXHE.message);
+    }).always(function() {
+      deferred.resolve();
+    })
+    return deferred;
+  };
 
   function init_permission(record_id, file_name, activity_id) {
     let init_permission_uri = '/records/permission/';
@@ -203,16 +210,21 @@ require([
       let recordId = $btnStartWorkflow.data('record-id');
       let fileName = $btnStartWorkflow.data('filename');
       let itemTitle =$btnStartWorkflow.data('itemtitle');
-      startWorkflow(workflowId, communityId, recordId, fileName, itemTitle);
+      var deferred = startWorkflow(workflowId, communityId, recordId, fileName, itemTitle);
+      deferred.done(function(){
+        $("#term_and_condtion_modal_" + file_version_id).modal("hide");
+      });
     }
   });
 
   $('.next_to_analysis').on('click', function () {
     let analysis_url = $('#analysis_url').text();
     let permalink_uri = $('#permalink_uri').text();
-    let analysis_version = '/HEAD';
+    //let analysis_version = '/HEAD';
+	let analysis_version =  '/' + new Date().getTime().toString(16)  + Math.floor(1000*Math.random()).toString(16);
     analysis_url = analysis_url + encodeURIComponent(permalink_uri) + analysis_version;
     window.open(analysis_url);
+    $("#show_rights_info").modal("hide");
   });
 
   $(".term-condtion-modal").on("click", function () {
@@ -231,6 +243,28 @@ require([
     if (cite !== '' && cite !== current_cite) {
       current_cite = cite;
       $('#citationResult').html(current_cite);
+    }
+  });
+
+  $('#secret_url')?.on('click', function(){
+    const webelement = $('#secret_url');
+    if (webelement){
+      const url = webelement.attr('url');
+      webelement.prop('disabled' ,true);
+      $.ajax({
+        url: url,
+        method: 'POST',
+        contentType: 'application/json',
+        data: null,
+        success: function (responce) {
+          webelement.prop('disabled',false);
+          alert(responce);
+        },
+        error: function (jqXHE, status ,msg) {
+          webelement.prop('disabled',false);
+          alert(msg);
+        }
+      });
     }
   });
 });

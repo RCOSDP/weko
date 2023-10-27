@@ -1,0 +1,192 @@
+import json
+import pytest
+from mock import patch, MagicMock
+from lxml import etree
+from urllib.error import URLError
+from resync.client_utils import ClientFatalError
+
+from invenio_resourcesyncclient.models import ResyncIndexes
+from invenio_resourcesyncclient.utils import (
+    read_capability,
+    sync_baseline,
+    sync_audit,
+    sync_incremental,
+    single_sync_incremental,
+    set_query_parameter,
+    get_list_records,
+    process_item,
+    process_sync,
+    update_counter,
+    get_from_date_from_url,
+    gen_resync_pid_value
+)
+
+
+#def read_capability(url):
+
+#def sync_baseline(_map, base_url, counter, dryrun=False,
+# .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_utils.py::test_sync_baseline -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
+def test_sync_baseline(app):
+    _map = ['https//test_server']
+    _counter = {
+        'processed_items': 0,
+        'created_items': 0,
+        'updated_items': 0,
+        'deleted_items': 0,
+        'error_items': 0,
+        'list': []
+    }
+    _base_url = 'http://localhost/'
+    _from_date = '2022-10-01'
+    _to_date = '2022-10-02'
+
+    res = sync_baseline(_map, _base_url, _counter, False, _from_date, _to_date)
+    assert res == False
+
+
+#def sync_audit(_map, counter):
+# .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_utils.py::test_sync_audit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
+def test_sync_audit(app):
+    _map = ['https//test_server']
+    _counter = {
+        'processed_items': 0,
+        'created_items': 0,
+        'updated_items': 0,
+        'deleted_items': 0,
+        'error_items': 0,
+        'list': []
+    }
+
+    with pytest.raises(Exception) as e:
+        res = sync_audit(_map, _counter)
+    assert e.type == ClientFatalError
+
+
+#def sync_incremental(_map, counter, base_url, from_date, to_date):
+# .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_utils.py::test_sync_incremental -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
+def test_sync_incremental(app):
+    _map = ['https//localhost']
+    _counter = {
+        'processed_items': 0,
+        'created_items': 0,
+        'updated_items': 0,
+        'deleted_items': 0,
+        'error_items': 0,
+        'list': []
+    }
+    _base_url = 'http://localhost/'
+    _from_date = '2022-10-01'
+    _to_date = '2022-10-02'
+
+    with pytest.raises(Exception) as e:
+        res = sync_incremental(_map, _counter, _base_url, _from_date, _to_date)
+    assert e.type == URLError
+
+
+#def single_sync_incremental(_map, counter, url, from_date, to_date):
+
+
+#def set_query_parameter(url, param_name, param_value):
+# .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_utils.py::test_set_query_parameter -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
+def test_set_query_parameter(app):
+    res = set_query_parameter('http://localhost/test/?a=v1&b=v2', 'c', 'v3')
+    assert res == 'http://localhost/test/?a=v1&b=v2&c=v3'
+
+
+#def get_list_records(resync_id):
+
+
+#def process_item(record, resync, counter):
+# .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_utils.py::test_process_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
+def test_process_item(app, db, esindex, location, test_resync, db_itemtype, db_oaischema):
+    _data = '<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><responseDate>2022-11-14T06:45:01Z</responseDate><request verb="GetRecord" metadataPrefix="jpcoar_1.0" identifier="oai:repository.dl.itc.u-tokyo.ac.jp:00049042">https://repository.dl.itc.u-tokyo.ac.jp/oai</request><GetRecord><record><header><identifier>oai:repository.dl.itc.u-tokyo.ac.jp:00049042</identifier><datestamp>2021-03-01T20:28:59Z</datestamp></header><metadata><jpcoar:jpcoar xmlns:datacite="https://schema.datacite.org/meta/kernel-4/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:jpcoar="https://github.com/JPCOAR/schema/blob/master/1.0/" xmlns:oaire="http://namespace.openaire.eu/schema/oaire/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rioxxterms="http://www.rioxx.net/schema/v2.0/rioxxterms/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="https://github.com/JPCOAR/schema/blob/master/1.0/" xsi:schemaLocation="https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd"><dc:title>Decolonizing One Petition at the Time : A Review of the Practice of Accepting Petitions and Granting Oral Hearings in the Fourth Committee of the UN General Assembly</dc:title><jpcoar:creator><jpcoar:creatorName>Scartozzi, Cesare Marco</jpcoar:creatorName></jpcoar:creator><jpcoar:subject subjectScheme="Other">Decolonization</jpcoar:subject><jpcoar:subject subjectScheme="Other">Fourth Committee</jpcoar:subject><jpcoar:subject subjectScheme="Other">Petitions</jpcoar:subject><jpcoar:subject subjectScheme="Other">Revitalization of the General Assembly</jpcoar:subject><jpcoar:subject subjectScheme="Other">United Nations</jpcoar:subject><dc:publisher>International Association for Political Science Students (IAPSS)</dc:publisher><datacite:date dateType="Issued">2017-10</datacite:date><dc:language>eng</dc:language><dc:type rdf:resource="http://purl.org/coar/resource_type/c_6501">journal article</dc:type><jpcoar:identifier identifierType="HDL">http://hdl.handle.net/2261/00074166</jpcoar:identifier><jpcoar:identifier identifierType="URI">https://repository.dl.itc.u-tokyo.ac.jp/records/49042</jpcoar:identifier><jpcoar:relation><jpcoar:relatedIdentifier identifierType="DOI">info:doi/10.22151/politikon.34.4</jpcoar:relatedIdentifier></jpcoar:relation><jpcoar:sourceTitle>POLITIKON : The IAPSS Journal of Political Science</jpcoar:sourceTitle><jpcoar:volume>34</jpcoar:volume><jpcoar:pageStart>49</jpcoar:pageStart><jpcoar:pageEnd>67</jpcoar:pageEnd><jpcoar:file><jpcoar:URI label="Politikon_vol.-34_49-67.pdf">https://repository.dl.itc.u-tokyo.ac.jp/record/49042/files/Politikon_vol.-34_49-67.pdf</jpcoar:URI><jpcoar:mimeType>application/pdf</jpcoar:mimeType><jpcoar:extent>559.4 kB</jpcoar:extent><datacite:date dateType="Available">2018-02-23</datacite:date></jpcoar:file></jpcoar:jpcoar></metadata></record></GetRecord></OAI-PMH>'
+    _tree = etree.fromstring(_data)
+    _record = _tree.findall('./GetRecord/record', namespaces=_tree.nsmap)[0]
+    _resync = db.session.query(ResyncIndexes).filter_by(id=30).first()
+    _counter = {
+        'processed_items': 0,
+        'created_items': 0,
+        'updated_items': 0,
+        'deleted_items': 0,
+        'error_items': 0,
+        'list': []
+    }
+
+    process_item(_record, _resync, _counter)
+    assert _counter['created_items'] == 1
+
+    process_item(_record, _resync, _counter)
+    assert _counter['updated_items'] == 1
+
+#def process_sync(resync_id, counter):
+# .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_utils.py::test_process_sync -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
+def test_process_sync(app, test_resync):
+    _counter = {
+        'processed_items': 0,
+        'created_items': 0,
+        'updated_items': 0,
+        'deleted_items': 0,
+        'error_items': 0,
+        'list': []
+    }
+
+    with patch('invenio_resourcesyncclient.utils.read_capability', return_value=None):
+        res = process_sync(30, _counter)
+        assert json.loads(res.data) == {'message': 'Bad URL', 'status': 'error'}
+        res = process_sync(40, _counter)
+        assert json.loads(res.data) == {'message': 'exceptions must derive from BaseException', 'status': 'error'}
+        res = process_sync(50, _counter)
+        assert json.loads(res.data) == {'message': 'Bad URL', 'status': 'error'}
+
+    
+    with patch('invenio_resourcesyncclient.utils.read_capability', return_value='test'):
+        res = process_sync(30, _counter)
+        assert json.loads(res.data) == {'message': 'Bad URL', 'status': 'error'}
+        res = process_sync(40, _counter)
+        assert json.loads(res.data) == {'message': 'exceptions must derive from BaseException', 'status': 'error'}
+        res = process_sync(50, _counter)
+        assert json.loads(res.data) == {'message': 'Bad URL', 'status': 'error'}
+
+    with patch('invenio_resourcesyncclient.utils.read_capability', return_value='resourcelist'):
+        with patch('invenio_resourcesyncclient.utils.sync_baseline', return_value=True):
+            res = process_sync(30, _counter)
+            assert json.loads(res.data) == {'success': True}
+            with patch('invenio_resourcesyncclient.utils.sync_audit', return_value=dict(same=0, updated=0, deleted=0, created=0)):
+                res = process_sync(50, _counter)
+                assert json.loads(res.data) == {'message': "unhashable type: 'dict'", 'status': 'error'}
+    
+    with patch('invenio_resourcesyncclient.utils.read_capability', return_value='changelist'):
+        with patch('invenio_resourcesyncclient.utils.sync_incremental', return_value=True):
+            res = process_sync(40, _counter)
+            assert json.loads(res.data) ==  {'message': "unhashable type: 'dict'", 'status': 'error'}
+
+#def update_counter(counter, result):
+# .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_utils.py::test_update_counter -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
+def test_update_counter(app):
+    _counter = {
+        'processed_items': 0,
+        'created_items': 0,
+        'updated_items': 0,
+        'deleted_items': 0,
+        'error_items': 0,
+        'list': []
+    }
+    _result = {
+        'created': [1, 2],
+        'updated': [3, 4],
+        'deleted': [5, 6],
+        'resource': [7, 8, 9]
+    }
+
+    update_counter(_counter, _result)
+    assert _counter == {'created_items': 2, 'deleted_items': 2, 'error_items': 0, 'list': [7, 8, 9], 'processed_items': 0, 'resource_items': 3, 'updated_items': 2}
+
+
+#def get_from_date_from_url(url):
+
+
+#def gen_resync_pid_value(resync, pid):
+# .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_utils.py::test_gen_resync_pid_value -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
+def test_gen_resync_pid_value(app):
+    res = gen_resync_pid_value(None, 'test_pid')
+    assert res == 'test_pid'
