@@ -31,7 +31,7 @@ from invenio_indexer.api import RecordIndexer
 from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsAffiliationSettings, AuthorsPrefixSettings
 from .permissions import author_permission
-from .utils import get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link, get_authors
+from .utils import get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link
 
 blueprint = Blueprint(
     'weko_authors',
@@ -174,13 +174,90 @@ def get():
     data = request.get_json()
 
     search_key = data.get('searchKey') or ''
+    should = [
+        {"bool": {"must": [{"term": {"is_deleted": {"value": "false"}}}]}},
+        {"bool": {"must_not": {"exists": {"field": "is_deleted"}}}}
+    ]
+    match = [{"term": {"gather_flg": 0}}, {"bool": {"should": should}}]
+
+    if search_key:
+        match.append({"multi_match": {"query": search_key, "type": "phrase"}})
+    query = {"bool": {"must": match}}
     size = int(data.get('numOfPage')
                or current_app.config['WEKO_AUTHORS_NUM_OF_PAGE'])
-    num = int(data.get('pageNumber') or 1)
+    num = data.get('pageNumber') or 1
+    offset = (int(num) - 1) * size if int(num) > 1 else 0
+
     sort_key = data.get('sortKey') or ''
     sort_order = data.get('sortOrder') or ''
+    sort = {}
+    if sort_key and sort_order:
+        sort = {sort_key + '.raw': {"order": sort_order, "mode": "min"}}
 
-    result = get_authors(search_key, size, num, sort_key, sort_order)
+    body = {
+        "query": query,
+        "from": offset,
+        "size": size,
+        "sort": sort
+    }
+    indexer = RecordIndexer()
+    result = indexer.client.search(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+        body=body
+    )
+
+    query_item = {
+        "size": 0,
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "match": {
+                            "publish_status": 0
+                        }
+                    },
+                    {
+                        "match": {
+                            "relation_version_is_last": "true"
+                        }
+                    },
+                    {
+                        "bool": {
+                            "should": [
+                                {
+                                    "term": {
+                                        "author_link.raw":
+                                        "@author_id"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    }
+    item_cnt_list = []
+    for es_hit in result['hits']['hits']:
+        author_id_info = es_hit['_source']['authorIdInfo']
+        if author_id_info:
+            author_id = author_id_info[0]['authorId']
+            temp_str = json.dumps(query_item).replace(
+                "@author_id", author_id)
+            result_itemCnt = indexer.client.search(
+                index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
+                body=json.loads(temp_str)
+            )
+            if result_itemCnt \
+                    and result_itemCnt['hits'] \
+                    and result_itemCnt['hits']['total']:
+                item_cnt_list.append(
+                    {'key': author_id,
+                     'doc_count': result_itemCnt['hits']['total']})
+
+    result['item_cnt'] = {'aggregations':
+                          {'item_count': {'buckets': item_cnt_list}}}
 
     return jsonify(result)
 

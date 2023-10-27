@@ -23,7 +23,6 @@
 import base64
 import csv
 import io
-import json
 import sys
 import tempfile
 import traceback
@@ -618,94 +617,3 @@ def get_count_item_link(pk_id):
             and result_itemCnt['hits']['total'] > 0:
         count = result_itemCnt['hits']['total']
     return count
-
-
-def get_authors(search_key='', size=25, num=0, cursor='', sort_key='', sort_order=''):
-    """Get authors from Elasticsearch."""
-    should = [
-        {'bool': {'must': [{'term': {'is_deleted': {'value': 'false'}}}]}},
-        {'bool': {'must_not': {'exists': {'field': 'is_deleted'}}}}
-    ]
-    match = [{'term': {'gather_flg': 0}}, {'bool': {'should': should}}]
-
-    if search_key:
-        match.append({'multi_match': {'query': search_key, 'type': 'phrase'}})
-    query = {'bool': {'must': match}}
-
-    sort = {}
-    if sort_key and sort_order:
-        sort = {sort_key + '.raw': {'order': sort_order, 'mode': 'min'}}
-    else:
-        sort = {'pk_id': {'order': 'asc', 'mode': 'min'}}
-
-    body = {
-        'query': query,
-        'size': size,
-        'sort': sort,
-    }
-    if num:
-        offset = (num - 1) * size if num > 1 else 0
-        body['from'] = offset
-    elif cursor:
-        body['search_after'] = [cursor]
-
-    indexer = RecordIndexer()
-    result = indexer.client.search(
-        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
-        body=body
-    )
-
-    query_must = [
-        {'match': {'publish_status': 0}},
-        {'match': {'relation_version_is_last': 'true'}},
-        {'bool': {'should': [{'term': {'author_link.raw': '@author_id'}}]}}
-    ]
-    query_item = {
-        'size': 0,
-        'query': {'bool': {'must': query_must}}
-    }
-    item_cnt_list = []
-    for es_hit in result['hits']['hits']:
-        author_id_info = es_hit['_source']['authorIdInfo']
-        if author_id_info:
-            author_id = author_id_info[0]['authorId']
-            temp_str = json.dumps(query_item).replace('@author_id', author_id)
-            result_itemCnt = indexer.client.search(
-                index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
-                body=json.loads(temp_str)
-            )
-            if result_itemCnt and result_itemCnt['hits'] and result_itemCnt['hits']['total']:
-                item_cnt_list.append({
-                    'key': author_id,
-                    'doc_count': result_itemCnt['hits']['total']
-                })
-
-    result['item_cnt'] = {
-        'aggregations': {
-            'item_count': {
-                'buckets': item_cnt_list
-            }
-        }
-    }
-
-    return result
-
-
-def get_author_by_pk_id(pk_id):
-    """Get author by pk_id."""
-
-    match = [{'match': {'pk_id': pk_id}}]
-    query = {'bool': {'must': match}}
-    body = {
-        'query': query
-    }
-
-    indexer = RecordIndexer()
-    result = indexer.client.search(
-        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
-        body=body
-    )
-
-    return result

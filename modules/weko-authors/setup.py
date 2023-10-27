@@ -98,7 +98,6 @@ setup(
         ],
         'invenio_base.api_apps': [
             'weko_authors = weko_authors:WekoAuthors',
-            'weko_authors_rest = weko_authors:WekoAuthorsREST',
         ],
         'invenio_base.api_blueprints': [
             'weko_authors = weko_authors.views:blueprint_api',
@@ -131,9 +130,6 @@ setup(
         ],
         'invenio_access.actions': [
             'author_access = weko_authors.permissions:action_author_access',
-        ],
-        'invenio_oauth2server.scopes': [
-            'weko_authors = weko_authors.scopes:authors_read_scope',
         ],
     },
     extras_require=extras_require,

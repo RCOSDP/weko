@@ -20,7 +20,7 @@
 
 """Module of weko-authors."""
 
-from .ext import WekoAuthors, WekoAuthorsREST
+from .ext import WekoAuthors
 from .version import __version__
 
-__all__ = ('__version__', 'WekoAuthors', 'WekoAuthorsREST')
+__all__ = ('__version__', 'WekoAuthors')
