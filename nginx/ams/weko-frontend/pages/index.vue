@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="isRender">
     <!-- 検索フォーム -->
     <SearchForm :displayFlag="true" />
     <main class="max-w-[1024px] mx-auto px-2.5">
@@ -58,6 +58,7 @@ const visibleAlert = ref(false);
 const alertType = ref('info');
 const alertMessage = ref('');
 const alertCode = ref(0);
+const isRender = ref(false);
 
 /* ///////////////////////////////////
 // function
@@ -82,6 +83,33 @@ function scrollToTop() {
 /////////////////////////////////// */
 
 try {
+  const query = useRoute().query;
+  const state = String(query.state);
+
+  // アクセストークン取得
+  if (state) {
+    if (sessionStorage.getItem('login:state') === state) {
+      await useFetch('/api/token/create?code=' + String(query.code))
+        .then((response) => {
+          // @ts-ignore
+          localStorage.setItem('token:type', response.data.value.tokenType);
+          // @ts-ignore
+          localStorage.setItem('token:access', response.data.value.accessToken);
+          // @ts-ignore
+          localStorage.setItem('token:refresh', response.data.value.refreshToken);
+          // @ts-ignore
+          localStorage.setItem('token:expires', response.data.value.expires);
+          localStorage.setItem('token:issue', String(Date.now()));
+        })
+        .finally(() => {
+          sessionStorage.removeItem('login:state');
+          useRouter().replace({ query: {} });
+          location.reload();
+        });
+    }
+  }
+  isRender.value = true;
+
   // 検索条件の初期化
   sessionStorage.removeItem('conditions');
   // 最新情報取得
@@ -135,12 +163,6 @@ try {
 /* ///////////////////////////////////
 // life cycle
 /////////////////////////////////// */
-
-onBeforeMount(() => {
-  if (String(useRoute().query.state)) {
-    useRouter().replace({ query: {} });
-  }
-});
 
 onMounted(() => {
   refreshToken();

@@ -150,33 +150,6 @@ try {
 // life cycle
 /////////////////////////////////// */
 
-onBeforeMount(async () => {
-  const query = useRoute().query;
-  const state = String(query.state);
-
-  // アクセストークン取得
-  if (state) {
-    if (sessionStorage.getItem('login:state') === state) {
-      await useFetch('/api/token/create?code=' + String(query.code))
-        .then((response) => {
-          // @ts-ignore
-          localStorage.setItem('token:type', response.data.value.tokenType);
-          // @ts-ignore
-          localStorage.setItem('token:access', response.data.value.accessToken);
-          // @ts-ignore
-          localStorage.setItem('token:refresh', response.data.value.refreshToken);
-          // @ts-ignore
-          localStorage.setItem('token:expires', response.data.value.expires);
-          localStorage.setItem('token:issue', String(Date.now()));
-          isLogin.value = true;
-        })
-        .finally(() => {
-          sessionStorage.removeItem('login:state');
-        });
-    }
-  }
-});
-
 onMounted(() => {
   // ログイン/ログアウト
   const expires = Number(localStorage.getItem('token:expires'));
