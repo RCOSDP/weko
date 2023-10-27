@@ -31,15 +31,33 @@
                 "lang": "key8_2.subkey8_2.subkey8_2_1"
             },
             "prop9": "key9",
-            "prop10": {
-                "static_value": "value10"
+            "prop10": [
+                {
+                    "value": "key10.subkey10_1.subkey10_1_value",
+                    "lang": "key10.subkey10_1.subkey10_1_lang"
+                },
+                {
+                    "value": "key10.subkey10_2.subkey10_2_1.subkey10_2_1_value",
+                    "lang": "key10.subkey10_2.subkey10_2_1.subkey10_2_1_lang"
+                }
+            ],
+            "prop_static": {
+                "static_value": "value_static"
             },
-            "prop_none": "key_none.subkey_none"
+            "prop_none": "key_none.subkey_none",
+            "prop_none_lang": {
+                "value": "key_none.subkey_none_value",
+                "lang": "key_none.subkey_none_lang"
+            }
         },
         "children": [
             {
                 "depth": 1,
-                "name": "additionalType確認"
+                "name": "name",
+                "name_i18n": {
+                    "en": "name_en",
+                    "ja": "name_ja"
+                }
             },
             {
                 "depth": 10,
@@ -53,7 +71,14 @@
     "file": {
         "map": {
             "fileprop1": "file.filekey1",
-            "fileprop2": "file.filekey2.filekey2_1"
+            "fileprop2": "file.filekey2.filekey2_1",
+            "fileprop3": [
+                "file.filekey3_1",
+                "file.filekey3_2.filekey3_2_1"
+            ],
+            "fileprop_static": {
+                "static_value": "filevalue_static"
+            }
         }
     }
 }

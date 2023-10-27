@@ -96,6 +96,32 @@
     "key9": {
         "subkey9": "value9"
     },
+    "key10": {
+        "subkey10_1": [
+            {
+                "subkey10_1_value": "value10_1_ja",
+                "subkey10_1_lang": "ja"
+            },
+            {
+                "subkey10_1_value": "value10_1_en",
+                "subkey10_1_lang": "en"
+            }
+        ],
+        "subkey10_2": [
+            {
+                "subkey10_2_1": [
+                    {
+                        "subkey10_2_1_value": "value10_2_1_en",
+                        "subkey10_2_1_lang": "en"
+                    },
+                    {
+                        "subkey10_2_1_value": "value10_2_1_ja",
+                        "subkey10_2_1_lang": "ja"
+                    }
+                ]
+            }
+        ]
+    },
     "file": {
         "attribute_name": "File",
         "attribute_type": "file",
@@ -104,19 +130,46 @@
                 "filekey1": "filevalue1_1",
                 "filekey2": {
                     "filekey2_1": "filevalue2_1"
-                }
+                },
+                "filekey3_1": "filevalue3_1_1",
+                "filekey3_2": [
+                    {
+                        "filekey3_2_1": "filevalue3_2_1_1_1"
+                    },
+                    {
+                        "filekey3_2_1": "filevalue3_2_1_1_2"
+                    }
+                ]
             },
             {
                 "filekey1": "filevalue1_2",
                 "filekey2": {
                     "filekey2_1": "filevalue2_2"
-                }
+                },
+                "filekey3_1": "filevalue3_1_2",
+                "filekey3_2": [
+                    {
+                        "filekey3_2_1": "filevalue3_2_1_2_1"
+                    },
+                    {
+                        "filekey3_2_1": "filevalue3_2_1_2_2"
+                    }
+                ]
             },
             {
                 "filekey1": "filevalue1_3",
                 "filekey2": {
                     "filekey2_1": "filevalue2_3"
-                }
+                },
+                "filekey3_1": "filevalue3_1_3",
+                "filekey3_2": [
+                    {
+                        "filekey3_2_1": "filevalue3_2_1_3_1"
+                    },
+                    {
+                        "filekey3_2_1": "filevalue3_2_1_3_2"
+                    }
+                ]
             }
         ]
     }
