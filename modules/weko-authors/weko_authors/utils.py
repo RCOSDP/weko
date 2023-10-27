@@ -620,7 +620,7 @@ def get_count_item_link(pk_id):
     return count
 
 
-def get_authors(search_key='', size=25, page=0, cursor='', sort_key='', sort_order=''):
+def get_authors(search_key='', size=25, num=0, cursor='', sort_key='', sort_order=''):
     """Get authors from Elasticsearch."""
     should = [
         {'bool': {'must': [{'term': {'is_deleted': {'value': 'false'}}}]}},
@@ -643,8 +643,8 @@ def get_authors(search_key='', size=25, page=0, cursor='', sort_key='', sort_ord
         'size': size,
         'sort': sort,
     }
-    if page:
-        offset = (page - 1) * size if page > 1 else 0
+    if num:
+        offset = (num - 1) * size if num > 1 else 0
         body['from'] = offset
     elif cursor:
         body['search_after'] = [cursor]

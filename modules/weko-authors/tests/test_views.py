@@ -367,7 +367,7 @@ def test_get_acl_guest(client):
 def test_get_acl_users(client, users, index, is_permission):
     url = url_for("weko_authors.get")
     login_user_via_session(client=client, email=users[index]['email'])
-    with patch('weko_authors.utils.RecordIndexer', side_effect=MockIndexer):
+    with patch('weko_authors.views.RecordIndexer', side_effect=MockIndexer):
         res = client.post(url, json={})
         assert_role(res, is_permission)
 
@@ -404,7 +404,7 @@ def test_get(client, users):
         ]},
         "item_cnt":{"aggregations":{"item_count":{"buckets":[{"key":"test_id","doc_count":1}]}}}
     }
-    with patch("weko_authors.utils.RecordIndexer",return_value=record_indexer):
+    with patch("weko_authors.views.RecordIndexer",return_value=record_indexer):
         res = client.post(url, json=input)
         assert res.status_code == 200
         assert get_json(res) == test
@@ -425,7 +425,7 @@ def test_get(client, users):
         ]},
         "item_cnt":{"aggregations":{"item_count":{"buckets":[]}}}
     }
-    with patch("weko_authors.utils.RecordIndexer",return_value=record_indexer):
+    with patch("weko_authors.views.RecordIndexer",return_value=record_indexer):
         res = client.post(url, json=input)
         assert res.status_code == 200
         assert get_json(res) == test

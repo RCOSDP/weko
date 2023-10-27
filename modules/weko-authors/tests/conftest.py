@@ -20,11 +20,9 @@
 
 """Pytest configuration."""
 import os,sys
-import copy
 import shutil
 import tempfile
 import json
-from datetime import datetime, timedelta
 from os.path import dirname, join
 
 from elasticsearch import Elasticsearch
@@ -33,8 +31,6 @@ from sqlalchemy import inspect
 import pytest
 from flask import Flask, url_for, Response
 from flask_babelex import Babel
-from flask_menu import Menu
-from flask_oauthlib.provider import OAuth2Provider
 from sqlalchemy_utils.functions import create_database, database_exists
 
 from invenio_access import InvenioAccess
@@ -51,21 +47,15 @@ from invenio_db import InvenioDB, db as db_
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Location, FileInstance
 from invenio_indexer import InvenioIndexer
-from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
-from invenio_oauth2server.models import Client, Token
-from invenio_oauth2server.views import settings_blueprint as oauth2server_settings_blueprint
 from invenio_search import InvenioSearch,RecordsSearch
 from weko_search_ui import WekoSearchUI
 from weko_index_tree.models import Index
 
 from weko_authors.views import blueprint_api
 from weko_authors import WekoAuthors
-from weko_authors.ext import WekoAuthorsREST
 from weko_authors.models import Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings
-from weko_authors.scopes import authors_read_scope
 from weko_theme import WekoTheme
 import weko_authors.mappings.v2
-
 
 sys.path.append(os.path.dirname(__file__))
 
@@ -171,10 +161,8 @@ def base_app(instance_path,search_class):
         CACHE_REDIS_URL='redis://redis:6379/0',
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
-        OAUTH2_CACHE_TYPE='simple',
     )
     Babel(app_)
-    Menu(app_)
     InvenioDB(app_)
     InvenioCache(app_)
     InvenioAccounts(app_)
@@ -183,11 +171,7 @@ def base_app(instance_path,search_class):
     InvenioAssets(app_)
     InvenioIndexer(app_)
     InvenioFilesREST(app_)
-    OAuth2Provider(app_)
-    InvenioOAuth2Server(app_)
-    InvenioOAuth2ServerREST(app_)
-    app_.register_blueprint(oauth2server_settings_blueprint)
-
+    
     search = InvenioSearch(app_, client=MockEs())
     search.register_mappings(search_class.Meta.index, 'mock_module.mapping')
     WekoTheme(app_)
@@ -196,7 +180,6 @@ def base_app(instance_path,search_class):
 
     # app_.register_blueprint(blueprint)
     app_.register_blueprint(blueprint_api, url_prefix='/api/authors')
-    WekoAuthorsREST(app_)
     return app_
 
 
@@ -453,76 +436,3 @@ def file_instance(db):
     )
     db.session.add(file)
     db.session.commit()
-
-
-@pytest.fixture()
-def client_oauth(users):
-    """Create client."""
-    # create resource_owner -> client_1
-    client_ = Client(
-        client_id='client_test_u1c1',
-        client_secret='client_test_u1c1',
-        name='client_test_u1c1',
-        description='',
-        is_confidential=False,
-        user=users[0]['obj'],   # sysadmin
-        _redirect_uris='',
-        _default_scopes='',
-    )
-    with db_.session.begin_nested():
-        db_.session.add(client_)
-    db_.session.commit()
-    return client_
-
-
-@pytest.fixture()
-def oauth_token(client, client_oauth, users):
-    """Create token."""
-    token1_ = Token(
-        client=client_oauth,
-        user=users[0]['obj'],   # sysadmin
-        token_type='u',
-        access_token='dev_access_1',
-        refresh_token='dev_refresh_1',
-        expires=datetime.now() + timedelta(hours=1),
-        is_personal=False,
-        is_internal=True,
-        _scopes=authors_read_scope.id,
-    )
-    token2_ = Token(
-        client=client_oauth,
-        user=users[8]['obj'],   # student
-        token_type='u',
-        access_token='dev_access_2',
-        refresh_token='dev_refresh_2',
-        expires=datetime.now() + timedelta(hours=1),
-        is_personal=False,
-        is_internal=True,
-        _scopes=authors_read_scope.id,
-    )
-    with db_.session.begin_nested():
-        db_.session.add(token1_)
-        db_.session.add(token2_)
-    db_.session.commit()
-    return [token1_, token2_]
-
-
-@pytest.fixture()
-def auth_headers(oauth_token):
-    """Authentication headers (with a valid oauth2 token).
-
-    It uses the token associated with the first user.
-    """
-    header = [('Content-Type', 'application/json'), ('Accept', 'application/json')]
-    return [
-        header,                                     # not login
-        add_oauth2_header(header, oauth_token[0]),  # sysadmin
-        add_oauth2_header(header, oauth_token[1]),  # student
-    ]
-
-
-def add_oauth2_header(header, token):
-    """Create authorization header (with a valid oauth2 token)."""
-    copied_header = copy.deepcopy(header)
-    copied_header.append(('Authorization', f'Bearer {token.access_token}'))
-    return copied_header
