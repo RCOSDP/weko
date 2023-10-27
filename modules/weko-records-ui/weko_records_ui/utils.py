@@ -1601,30 +1601,32 @@ class RoCrateConverter:
             index (int)     : file index
         """
 
-        for property_name, item_type_key in map.items():
+        for rocrate_property, item_property in map.items():
             property_value = None
-            if isinstance(item_type_key, list):
+            if isinstance(item_property, list):
                 property_value = []
-                for key in item_type_key:
+                for key in item_property:
                     key_list = key.split('.')
                     key_list[0] = f'{key_list[0]}[{index}]'
                     key = '.'.join(key_list)
-                    value = self.__get_property(key, metadata)
+                    keys = self.__sprit_property_key(key)
+                    value = self.__get_property_value(keys, 0, metadata)
                     if isinstance(value, list):
                         property_value = property_value + value
                     else:
                         property_value.append(value)
-            elif isinstance(item_type_key, dict):
-                if 'static_value' in item_type_key:
-                    property_value = item_type_key.get('static_value')
+            elif isinstance(item_property, dict):
+                if 'static_value' in item_property:
+                    property_value = item_property.get('static_value')
             else:
-                key_list = item_type_key.split('.')
+                key_list = item_property.split('.')
                 key_list[0] = f'{key_list[0]}[{index}]'
-                item_type_key = '.'.join(key_list)
-                property_value = self.__get_property(item_type_key, metadata)
+                item_property = '.'.join(key_list)
+                keys = self.__sprit_property_key(item_property)
+                property_value = self.__get_property_value(keys, 0, metadata)
 
             if property_value:
-                entity[property_name] = property_value
+                entity[rocrate_property] = property_value
 
     def __add_properties(self, entity, map, metadata):
         """
@@ -1636,52 +1638,68 @@ class RoCrateConverter:
             metadata (dict) : metadata
         """
 
-        for property_name, item_type_key in map.items():
-            property_value = None
-            if isinstance(item_type_key, list):
-                property_value = []
-                for key in item_type_key:
-                    value = self.__get_property(key, metadata)
-                    if isinstance(value, list):
-                        property_value = property_value + value
-                    else:
-                        property_value.append(value)
-            elif isinstance(item_type_key, dict):
-                if 'static_value' in item_type_key:
-                    property_value = item_type_key.get('static_value')
-                else:
-                    values = self.__get_property(item_type_key.get('value'), metadata)
-                    languages = self.__get_property(item_type_key.get('lang'), metadata)
-                    if not values or not languages:
-                        continue
-                    if len(values) != len(languages):
-                        continue
-                    indices = [i for i, x in enumerate(languages) if x == self.lang]
-                    if not indices:
-                        indices = [i for i, x in enumerate(languages) if x == self.DEFAULT_LANG]
-                    if not indices:
-                        indices = [0]
-                    property_value = [x for i, x in enumerate(values) if i in indices]
-            else:
-                property_value = self.__get_property(item_type_key, metadata)
-
+        for rocrate_property, item_property in map.items():
+            property_value = self.__get_property(item_property, metadata)
             if property_value:
-                entity[property_name] = property_value
+                entity[rocrate_property] = property_value
 
-    def __get_property(self, target, metadata):
+    def __get_property(self, item_property, metadata):
         """
-        Get property value.
+        Get property.
 
         Args:
-            target (str)    : string with concatenated keys. (e.g., item_0000000000000.subitem_0000000000001)
+            item_property   : Item property key
             metadata (dict) : metadata
 
         Returns:
             any: property value
         """
 
+        if isinstance(item_property, list):
+            property_value = []
+            for key in item_property:
+                value = self.__get_property(key, metadata)
+                if isinstance(value, list):
+                    property_value = property_value + value
+                else:
+                    property_value.append(value)
+        elif isinstance(item_property, dict):
+            if 'static_value' in item_property:
+                property_value = item_property.get('static_value')
+            else:
+                value_keys = self.__sprit_property_key(item_property.get('value'))
+                values = self.__get_property_value(value_keys, 0, metadata)
+                language_keys = self.__sprit_property_key(item_property.get('lang'))
+                languages = self.__get_property_value(language_keys, 0, metadata)
+                if not values or not languages:
+                    return None
+                if len(values) != len(languages):
+                    return None
+                indices = [i for i, x in enumerate(languages) if x == self.lang]
+                if not indices:
+                    indices = [i for i, x in enumerate(languages) if x == self.DEFAULT_LANG]
+                if not indices:
+                    indices = [0]
+                property_value = [x for i, x in enumerate(values) if i in indices]
+        else:
+            keys = self.__sprit_property_key(item_property)
+            property_value = self.__get_property_value(keys, 0, metadata)
+
+        return property_value
+
+    def __sprit_property_key(self, item_property):
+        """
+        Sprit property key from string to list.
+
+        Args:
+            item_property   : Item property key
+
+        Returns:
+            list: property key list
+        """
+
         keys = []
-        for key in target.split('.'):
+        for key in item_property.split('.'):
             name = None
             index = None
             match_result = self.REGEX.findall(key)  # Check if key has index
@@ -1691,11 +1709,11 @@ class RoCrateConverter:
             else:
                 name = key
             keys.append({
-                "name": name,
-                "index": index,
+                'name': name,
+                'index': index,
             })
 
-        return self.__get_property_value(keys, 0, metadata)
+        return keys
 
     def __get_property_value(self, keys, depth, metadata):
         """
@@ -1734,7 +1752,11 @@ class RoCrateConverter:
         elif isinstance(metadata, list):
             property_value = []
             for metadatum in metadata:
-                property_value.append(self.__get_property_value(keys, depth + 1, metadatum))
+                value = self.__get_property_value(keys, depth + 1, metadatum)
+                if isinstance(value, list):
+                    property_value = property_value + value
+                else:
+                    property_value.append(value)
         else:
             property_value = metadata
 

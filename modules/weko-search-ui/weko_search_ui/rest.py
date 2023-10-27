@@ -22,10 +22,11 @@
 
 import inspect
 import json
+import traceback
 from functools import partial
 
 from flask import Blueprint, current_app, request, url_for, Response
-from flask_babelex import get_locale as get_current_locale
+from flask_babelex import get_locale
 from elasticsearch.exceptions import ElasticsearchException
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -536,8 +537,8 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
         try:
             # Language setting
             language = request.headers.get('Accept-Language')
-            if language == 'ja':
-                get_current_locale().language = language
+            if language:
+                get_locale().language = language
 
             # Generate Search Query Class
             search_obj = self.search_class()
@@ -668,4 +669,5 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             raise InternalServerError()
 
         except Exception:
+            current_app.logger.error(traceback.print_exc())
             raise InternalServerError()

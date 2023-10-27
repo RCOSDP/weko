@@ -1367,21 +1367,34 @@ def test_RoCrateConverter_convert():
     assert rocrate['@graph'][0]['prop7'] == ['value7_1']
     assert 'prop8' not in rocrate['@graph'][0]
     assert 'prop9' not in rocrate['@graph'][0]
-    assert rocrate['@graph'][0]['prop10'] == 'value10'
+    assert rocrate['@graph'][0]['prop10'] == ['value10_1_en', 'value10_2_1_en']
+    assert rocrate['@graph'][0]['prop_static'] == 'value_static'
     assert 'prop_none' not in rocrate['@graph'][0]
+    assert 'prop_none_lang' not in rocrate['@graph'][0]
 
+    assert rocrate['@graph'][5]['name'] == 'name_en'
     assert rocrate['@graph'][5]['additionalType'] == 'tab'
     assert rocrate['@graph'][2]['fileprop1'] == 'filevalue1_1'
     assert rocrate['@graph'][2]['fileprop2'] == 'filevalue2_1'
+    assert rocrate['@graph'][2]['fileprop3'] == ['filevalue3_1_1', 'filevalue3_2_1_1_1', 'filevalue3_2_1_1_2']
+    assert rocrate['@graph'][2]['fileprop_static'] == 'filevalue_static'
     assert rocrate['@graph'][3]['fileprop1'] == 'filevalue1_2'
     assert rocrate['@graph'][3]['fileprop2'] == 'filevalue2_2'
+    assert rocrate['@graph'][3]['fileprop3'] == ['filevalue3_1_2', 'filevalue3_2_1_2_1', 'filevalue3_2_1_2_2']
+    assert rocrate['@graph'][3]['fileprop_static'] == 'filevalue_static'
     assert rocrate['@graph'][4]['fileprop1'] == 'filevalue1_3'
     assert rocrate['@graph'][4]['fileprop2'] == 'filevalue2_3'
+    assert rocrate['@graph'][4]['fileprop3'] == ['filevalue3_1_3', 'filevalue3_2_1_3_1', 'filevalue3_2_1_3_2']
+    assert rocrate['@graph'][4]['fileprop_static'] == 'filevalue_static'
 
     rocrate = converter.convert(record_data, mapping, 'ja')
     assert rocrate['@graph'][0]['prop6'] == ['value6_3']
     assert rocrate['@graph'][0]['prop7'] == ['value7_2']
+    assert rocrate['@graph'][0]['prop10'] == ['value10_1_ja', 'value10_2_1_ja']
+    assert rocrate['@graph'][5]['name'] == 'name_ja'
 
     rocrate = converter.convert(record_data, mapping, 'other')
     assert rocrate['@graph'][0]['prop6'] == ['value6_2']
     assert rocrate['@graph'][0]['prop7'] == ['value7_1']
+    assert rocrate['@graph'][0]['prop10'] == ['value10_1_en', 'value10_2_1_en']
+    assert rocrate['@graph'][5]['name'] == 'name'

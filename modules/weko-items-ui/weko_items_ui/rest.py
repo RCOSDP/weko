@@ -22,6 +22,7 @@
 
 import inspect
 import json
+import traceback
 
 from flask import Blueprint, current_app, request, Response
 from werkzeug.http import generate_etag
@@ -185,11 +186,6 @@ class WekoRanking(ContentNegotiatedMethodView):
         except ValueError:
             raise RequestParameterError()
 
-        except SQLAlchemyError:
-            raise InternalServerError()
-
-        except ElasticsearchException:
-            raise InternalServerError()
-
         except Exception:
+            current_app.logger.error(traceback.print_exc())
             raise InternalServerError()
