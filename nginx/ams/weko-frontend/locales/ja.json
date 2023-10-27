@@ -82,6 +82,23 @@
   "createAccount": "アカウント作成はこちら",
   "forgetPassword": "パスワードを忘れた方はこちら",
   "sendEmailResetPassword": "入力されたメールアドレスに、パスワード再設定用のリンクを送信します。",
-  "requiredField": "必須入力",
-  "requiredEmail": "メールアドレスの形式にしてください"
+  "message": {
+    "alert": {
+      "requiredField": "必須入力",
+      "requiredEmail": "メールアドレスの形式にしてください"
+    },
+    "error": {
+      "error": "エラーが発生しました。管理者に連絡してください。",
+      "server": "サーバエラーが発生しました。管理者に連絡してください。",
+      "auth": "認証エラーが発生しました。認証状態が不正です。",
+      "fetch": "データ取得に失敗しました。",
+      "login": "ログインに失敗しました。",
+      "search": "アイテム検索に失敗しました。",
+      "download": "ダウンロードに失敗しました。",
+      "preview": "プレビュー表示に失敗しました。",
+      "getIndex": "インデックス階層の取得に失敗しました。",
+      "getLatestItem": "最新情報の取得に失敗しました。",
+      "getItemDetail": "アイテム詳細情報の取得に失敗しました。"
+    }
+  }
 }

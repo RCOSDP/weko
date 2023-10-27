@@ -127,7 +127,12 @@
       </div>
     </main>
     <!-- アラート -->
-    <Alert v-if="visibleAlert" :type="alertType" :message="alertMessage" @click-close="visibleAlert = !visibleAlert" />
+    <Alert
+      v-if="visibleAlert"
+      :type="alertType"
+      :message="alertMessage"
+      :code="alertCode"
+      @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
 
@@ -151,6 +156,7 @@ const fileList = ref([]);
 const visibleAlert = ref(false);
 const alertType = ref('info');
 const alertMessage = ref('');
+const alertCode = ref(0);
 let divideFileList: any[] = [];
 
 /* ///////////////////////////////////
@@ -162,12 +168,15 @@ let divideFileList: any[] = [];
  * @param number アイテムID
  */
 async function getFiles(number: string) {
+  let statusCode = 0;
   await $fetch(appConf.wekoApi + '/records/' + number, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     onResponse({ response }) {
       if (response.status === 200) {
-        const itemInfo = getContentById(response._data.rocrate, './');
+        const itemInfo = Object.prototype.hasOwnProperty.call(response._data, 'rocrate')
+          ? getContentById(response._data.rocrate, './')
+          : {};
         itemTitle.value = itemInfo[appConf.roCrate.info.title][0];
         for (const element of itemInfo.mainEntity) {
           // @ts-ignore
@@ -176,14 +185,27 @@ async function getFiles(number: string) {
       }
     },
     onResponseError({ response }) {
-      if (response.status === 401) {
-        alertMessage.value = '(Status Code : ' + response.status + ')' + ' 認証エラーが発生しました。';
-      } else if (Number(response.status) >= 500 && Number(response.status) < 600) {
-        alertMessage.value =
-          '(Status Code : ' + response.status + ')' + ' サーバエラーが発生しました。管理者に連絡してください。';
+      alertCode.value = 0;
+      statusCode = response.status;
+      if (statusCode === 401) {
+        // 認証エラー
+        alertMessage.value = 'message.error.auth';
+      } else if (statusCode >= 500 && statusCode < 600) {
+        // サーバーエラー
+        alertMessage.value = 'message.error.server';
+        alertCode.value = statusCode;
       } else {
-        alertMessage.value = '(Status Code : ' + response.status + ')' + ' アイテム詳細情報の取得に失敗しました。';
+        // リクエストエラー
+        alertMessage.value = 'message.error.getItemDetail';
+        alertCode.value = statusCode;
       }
+      alertType.value = 'error';
+      visibleAlert.value = true;
+    }
+  }).catch(() => {
+    if (statusCode === 0) {
+      // fetchエラー
+      alertMessage.value = 'message.error.fetch';
       alertType.value = 'error';
       visibleAlert.value = true;
     }
@@ -243,8 +265,9 @@ function setPage(value: string) {
  * @param status ステータスコード
  * @param message エラーメッセージ
  */
-function setError(status: string, message: string) {
-  alertMessage.value = '(Status Code : ' + status + ') ' + message;
+function setError(status = 0, message: string) {
+  alertMessage.value = message;
+  alertCode.value = status;
   alertType.value = 'error';
   visibleAlert.value = true;
 }
@@ -257,7 +280,10 @@ try {
   await getFiles(String(query.number));
   divideList(fileList.value);
 } catch (error) {
-  // console.log(error);
+  alertCode.value = 0;
+  alertMessage.value = 'message.error.error';
+  alertType.value = 'error';
+  visibleAlert.value = true;
 }
 
 /* ///////////////////////////////////

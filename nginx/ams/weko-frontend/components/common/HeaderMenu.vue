@@ -37,7 +37,7 @@
         class="block min-[1022px]:hidden h-5 min-[1022px]:h-auto min-[1022px]:border min-[1022px]:py-1 pl-2 pr-2.5 rounded icons icon-in"
         @click="navigateTo('/login')" />
       <button
-        v-if="!isLogin"
+        v-else
         class="block min-[1022px]:hidden h-5 min-[1022px]:h-auto min-[1022px]:border min-[1022px]:py-1 pl-2 pr-2.5 rounded icons icon-out"
         @click="navigateTo('/logout')" />
       <!-- インデックスツリーボタン -->
@@ -133,7 +133,7 @@ try {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {
-      'Accept-Language': localStorage.getItem('local') ?? 'ja',
+      'Accept-Language': localStorage.getItem('locale') ?? 'ja',
       Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
     },
     onResponse({ response }) {

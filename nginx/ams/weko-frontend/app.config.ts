@@ -24,13 +24,30 @@ export default defineAppConfig({
       accessMode: 'accessMode', // アクセス権
       keywords: 'keywords' // キーワード
     },
+    file: {
+      url: 'url',
+      size: 'size',
+      licenseType: 'license',
+      licenseWrite: 'test',
+      format: 'encodingFormat'
+    },
     contents: {
       tab: 'tab',
       section: 'section',
       subsection: 'subsection'
+    },
+    selector: {
+      // 公開区分
+      releaseRange: {
+        public: 'Public',
+        shared: 'Shared',
+        private: 'Private',
+        unshared: 'Unshared'
+      }
     }
   },
   cc: {
+    free: 'license_free',
     zero: 'license_12',
     by_3: 'license_6',
     by_4: 'license_0',

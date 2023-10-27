@@ -3,15 +3,13 @@
     <hr class="border-miby-dark-gray" />
     <div class="detail__head">
       <!-- サムネイル -->
-      <div class="detail__head-image h-40 w-32 flex justify-center items-center bg-neutral-600">
+      <div class="detail__head-image h-44 w-32 flex justify-center items-center bg-neutral-300">
         <div
           v-if="loading"
           class="font-bold text-2xl text-white h-full flex justify-center items-center content-center">
           <span class="loading loading-bars loading-l" />
         </div>
-        <div v-else>
-          <img :src="thumbnailPath" alt="Thumbnail" />
-        </div>
+        <img v-else :src="thumbnailPath" alt="Thumbnail" class="object-contain h-44 w-32" />
       </div>
       <div class="detail__head-text">
         <div class="flex flex-wrap mb-1.5 gap-2 md:gap-5 items-center">
@@ -19,27 +17,27 @@
           <p
             v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.releaseRange)"
             :class="[
-              itemInfo[appConf.roCrate.info.releaseRange][0] === 'Public'
+              itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.public
                 ? 'icons-type icon-published'
-                : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Shared'
+                : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.shared
                 ? 'icons-type icon-group'
-                : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Private'
+                : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.private
                 ? 'icons-type icon-private'
-                : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Unshared'
+                : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.unshared
                 ? 'icons-type icon-limited'
-                : ''
+                : 'icons-type icon-published'
             ]">
             <span>
               {{
-                itemInfo[appConf.roCrate.info.releaseRange][0] === 'Public'
+                itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.public
                   ? $t('openPublic')
-                  : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Shared'
+                  : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.shared
                   ? $t('openGroup')
-                  : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Private'
+                  : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.private
                   ? $t('openPrivate')
-                  : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Unshared'
+                  : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.unshared
                   ? $t('openRestricted')
-                  : itemInfo[appConf.roCrate.info.releaseRange][0]
+                  : 'undefined'
               }}
             </span>
           </p>
@@ -172,7 +170,9 @@ const emits = defineEmits(['clickCreater']);
 /////////////////////////////////// */
 
 const appConf = useAppConfig();
-const itemInfo = getContentById(props.item.rocrate, './');
+const itemInfo = Object.prototype.hasOwnProperty.call(props.item, 'rocrate')
+  ? getContentById(props.item.rocrate, './')
+  : {};
 const thumbnailName = Object.prototype.hasOwnProperty.call(itemInfo, appConf.roCrate.info.thumbnail)
   ? itemInfo[appConf.roCrate.info.thumbnail][0][0]
   : '';
@@ -190,7 +190,7 @@ onMounted(() => {
         timeout: useRuntimeConfig().public.apiTimeout,
         method: 'GET',
         headers: {
-          'Accept-Language': localStorage.getItem('local') ?? 'ja',
+          'Accept-Language': localStorage.getItem('locale') ?? 'ja',
           Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
         },
         params: {

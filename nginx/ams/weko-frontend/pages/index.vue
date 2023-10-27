@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="isRender">
     <!-- 検索フォーム -->
     <SearchForm :displayFlag="true" />
     <main class="max-w-[1024px] mx-auto px-2.5">
@@ -24,14 +24,19 @@
           <KeywardRank />
         </div>
       </div>
-      <button id="page-top" class="block lg:hidden w-10 h-10 z-40 fixed right-5 bottom-2.5">
+      <button id="page-top" class="block lg:hidden w-10 h-10 z-40 fixed right-5 bottom-2.5" @click="scrollToTop">
         <img src="/img/btn/btn-gototop_sp.svg" alt="Page Top" />
       </button>
     </main>
     <!-- 著者情報 -->
     <CreaterInfo ref="creater" />
     <!-- アラート -->
-    <Alert v-if="visibleAlert" :type="alertType" :message="alertMessage" @click-close="visibleAlert = !visibleAlert" />
+    <Alert
+      v-if="visibleAlert"
+      :type="alertType"
+      :message="alertMessage"
+      :code="alertCode"
+      @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
 
@@ -52,6 +57,8 @@ const creater = ref();
 const visibleAlert = ref(false);
 const alertType = ref('info');
 const alertMessage = ref('');
+const alertCode = ref(0);
+const isRender = ref(false);
 
 /* ///////////////////////////////////
 // function
@@ -64,49 +71,18 @@ function openCreaterModal() {
   creater.value.openModal();
 }
 
+/**
+ * ページ最上部にスクロール
+ */
+function scrollToTop() {
+  scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 /* ///////////////////////////////////
 // main
 /////////////////////////////////// */
 
 try {
-  // 検索条件の初期化
-  sessionStorage.removeItem('conditions');
-  // 最新情報取得
-  await $fetch(useAppConfig().wekoApi + '/records', {
-    timeout: useRuntimeConfig().public.apiTimeout,
-    method: 'GET',
-    headers: {
-      'Accept-Language': localStorage.getItem('local') ?? 'ja',
-      Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
-    },
-    params: { size: '5', sort: '-createdate' },
-    onResponse({ response }) {
-      if (response.status === 200) {
-        latestItem = response._data.search_results;
-      }
-    },
-    onResponseError({ response }) {
-      if (response.status === 401) {
-        alertMessage.value = '(Status Code : ' + response.status + ')' + ' 認証エラーが発生しました。';
-      } else if (Number(response.status) >= 500 && Number(response.status) < 600) {
-        alertMessage.value =
-          '(Status Code : ' + response.status + ')' + ' サーバエラーが発生しました。管理者に連絡してください。';
-      } else {
-        alertMessage.value = '(Status Code : ' + response.status + ')' + ' 最新情報の取得に失敗しました。';
-      }
-      alertType.value = 'error';
-      visibleAlert.value = true;
-    }
-  });
-} catch (error) {
-  // console.log(error);
-}
-
-/* ///////////////////////////////////
-// life cycle
-/////////////////////////////////// */
-
-onBeforeMount(async () => {
   const query = useRoute().query;
   const state = String(query.state);
 
@@ -128,10 +104,65 @@ onBeforeMount(async () => {
         .finally(() => {
           sessionStorage.removeItem('login:state');
           useRouter().replace({ query: {} });
+          location.reload();
         });
     }
   }
-});
+  isRender.value = true;
+
+  // 検索条件の初期化
+  sessionStorage.removeItem('conditions');
+  // 最新情報取得
+  let statusCode = 0;
+  await $fetch(useAppConfig().wekoApi + '/records', {
+    timeout: useRuntimeConfig().public.apiTimeout,
+    method: 'GET',
+    headers: {
+      'Accept-Language': localStorage.getItem('locale') ?? 'ja',
+      Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
+    },
+    params: { size: '5', sort: '-createdate' },
+    onResponse({ response }) {
+      if (response.status === 200) {
+        latestItem = response._data.search_results;
+      }
+    },
+    onResponseError({ response }) {
+      alertCode.value = 0;
+      statusCode = response.status;
+      if (statusCode === 401) {
+        // 認証エラー
+        alertMessage.value = 'message.error.auth';
+      } else if (statusCode >= 500 && statusCode < 600) {
+        // サーバーエラー
+        alertMessage.value = 'message.error.server';
+        alertCode.value = statusCode;
+      } else {
+        // リクエストエラー
+        alertMessage.value = 'message.error.getLatestItem';
+        alertCode.value = statusCode;
+      }
+      alertType.value = 'error';
+      visibleAlert.value = true;
+    }
+  }).catch(() => {
+    if (statusCode === 0) {
+      // fetchエラー
+      alertMessage.value = 'message.error.fetch';
+      alertType.value = 'error';
+      visibleAlert.value = true;
+    }
+  });
+} catch (error) {
+  alertCode.value = 0;
+  alertMessage.value = 'message.error.error';
+  alertType.value = 'error';
+  visibleAlert.value = true;
+}
+
+/* ///////////////////////////////////
+// life cycle
+/////////////////////////////////// */
 
 onMounted(() => {
   refreshToken();

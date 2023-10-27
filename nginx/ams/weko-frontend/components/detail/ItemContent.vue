@@ -79,31 +79,33 @@ function setContentsList() {
   sectionList.value = [];
   subSectionList.value = [];
 
-  props.item.rocrate['@graph'].forEach((obj: any) => {
-    if (obj['@type'] === 'Dataset') {
-      if (!Object.prototype.hasOwnProperty.call(obj, 'additionalType')) {
-        return;
-      }
+  if (Object.prototype.hasOwnProperty.call(props.item, 'rocrate')) {
+    props.item.rocrate['@graph'].forEach((obj: any) => {
+      if (obj['@type'] === 'Dataset') {
+        if (!Object.prototype.hasOwnProperty.call(obj, 'additionalType')) {
+          return;
+        }
 
-      if (obj.additionalType === appConf.roCrate.contents.tab) {
-        const tab: IDivision = { id: obj['@id'], name: obj.name, hasPart: obj.hasPart };
-        tabList.value.push(tab);
-      } else if (obj.additionalType === appConf.roCrate.contents.section) {
-        const section: IDivision = { id: obj['@id'], name: obj.name, hasPart: obj.hasPart };
-        sectionList.value.push(section);
-      } else if (obj.additionalType === appConf.roCrate.contents.subsection) {
-        const subSection: ISubSection = {
-          id: obj['@id'],
-          name: obj.name,
-          text: obj.text,
-          material: Object.prototype.hasOwnProperty.call(obj, 'material')
-            ? { type: obj.material, data: props.item[obj.material] }
-            : {}
-        };
-        subSectionList.value.push(subSection);
+        if (obj.additionalType === appConf.roCrate.contents.tab) {
+          const tab: IDivision = { id: obj['@id'], name: obj.name, hasPart: obj.hasPart };
+          tabList.value.push(tab);
+        } else if (obj.additionalType === appConf.roCrate.contents.section) {
+          const section: IDivision = { id: obj['@id'], name: obj.name, hasPart: obj.hasPart };
+          sectionList.value.push(section);
+        } else if (obj.additionalType === appConf.roCrate.contents.subsection) {
+          const subSection: ISubSection = {
+            id: obj['@id'],
+            name: obj.name,
+            text: obj.text,
+            material: Object.prototype.hasOwnProperty.call(obj, 'material')
+              ? { type: obj.material, data: props.item[obj.material] }
+              : {}
+          };
+          subSectionList.value.push(subSection);
+        }
       }
-    }
-  });
+    });
+  }
 
   selectedTab.value = tabList.value[0];
 }
@@ -113,6 +115,10 @@ function setContentsList() {
  * @param tab 選択状態のタブ
  */
 function getSectionsTitle(tab: IDivision) {
+  if (!tab) {
+    return;
+  }
+
   const sectionTitleList: string[] = [];
   tab.hasPart.forEach((sectionTitle: any) => {
     sectionTitleList.push(sectionTitle['@id']);
@@ -133,6 +139,10 @@ function getSectionsTitle(tab: IDivision) {
  * @param tab 選択状態のタブ
  */
 function getSections(tab: IDivision) {
+  if (!tab) {
+    return;
+  }
+
   const sectionTitleList: string[] = [];
   tab.hasPart.forEach((sectionTitle: any) => {
     sectionTitleList.push(sectionTitle['@id']);

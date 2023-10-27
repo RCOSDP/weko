@@ -12,17 +12,19 @@
             </p>
             <p class="text-white leading-[43px] pr-5 ml-auto">
               {{
-                String((Number(conditions.currentPage) - 1) * Number(conditions.perPage) + 1) +
-                ' - ' +
-                String(
-                  (Number(conditions.currentPage) - 1) * Number(conditions.perPage) + Number(conditions.perPage) >
-                    Number(total)
-                    ? Number(total)
-                    : (Number(conditions.currentPage) - 1) * Number(conditions.perPage) + Number(conditions.perPage)
-                ) +
-                ' of ' +
-                total +
-                ' results.'
+                Number(total)
+                  ? String((Number(conditions.currentPage) - 1) * Number(conditions.perPage) + 1)
+                  : Number(total) +
+                    ' - ' +
+                    String(
+                      (Number(conditions.currentPage) - 1) * Number(conditions.perPage) + Number(conditions.perPage) >
+                        Number(total)
+                        ? Number(total)
+                        : (Number(conditions.currentPage) - 1) * Number(conditions.perPage) + Number(conditions.perPage)
+                    ) +
+                    ' of ' +
+                    Number(total) +
+                    ' results.'
               }}
             </p>
           </div>
@@ -94,7 +96,12 @@
     <!-- 著者情報 -->
     <CreaterInfo ref="creater" />
     <!-- アラート -->
-    <Alert v-if="visibleAlert" :type="alertType" :message="alertMessage" @click-close="visibleAlert = !visibleAlert" />
+    <Alert
+      v-if="visibleAlert"
+      :type="alertType"
+      :message="alertMessage"
+      :code="alertCode"
+      @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
 
@@ -132,6 +139,7 @@ const creater = ref();
 const visibleAlert = ref(false);
 const alertType = ref('info');
 const alertMessage = ref('');
+const alertCode = ref(0);
 
 /* ///////////////////////////////////
 // function
@@ -142,11 +150,12 @@ const alertMessage = ref('');
  */
 async function search() {
   setConditions();
+  let statusCode = 0;
   await $fetch(useAppConfig().wekoApi + '/records', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {
-      'Accept-Language': localStorage.getItem('local') ?? 'ja',
+      'Accept-Language': localStorage.getItem('locale') ?? 'ja',
       Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
     },
     params: {
@@ -163,14 +172,27 @@ async function search() {
       }
     },
     onResponseError({ response }) {
-      if (response.status === 401) {
-        alertMessage.value = '(Status Code : ' + response.status + ')' + ' 認証エラーが発生しました。';
-      } else if (Number(response.status) >= 500 && Number(response.status) < 600) {
-        alertMessage.value =
-          '(Status Code : ' + response.status + ')' + ' サーバエラーが発生しました。管理者に連絡してください。';
+      alertCode.value = 0;
+      statusCode = response.status;
+      if (statusCode === 401) {
+        // 認証エラー
+        alertMessage.value = 'message.error.auth';
+      } else if (statusCode >= 500 && statusCode < 600) {
+        // サーバーエラー
+        alertMessage.value = 'message.error.server';
+        alertCode.value = statusCode;
       } else {
-        alertMessage.value = '(Status Code : ' + response.status + ')' + ' アイテムの検索に失敗しました。';
+        // リクエストエラー
+        alertMessage.value = 'message.error.search';
+        alertCode.value = statusCode;
       }
+      alertType.value = 'error';
+      visibleAlert.value = true;
+    }
+  }).catch(() => {
+    if (statusCode === 0) {
+      // fetchエラー
+      alertMessage.value = 'message.error.fetch';
       alertType.value = 'error';
       visibleAlert.value = true;
     }
@@ -291,7 +313,10 @@ function openCreaterModal() {
 try {
   await search();
 } catch (error) {
-  // console.log(error);
+  alertCode.value = 0;
+  alertMessage.value = 'message.error.error';
+  alertType.value = 'error';
+  visibleAlert.value = true;
 }
 
 /* ///////////////////////////////////

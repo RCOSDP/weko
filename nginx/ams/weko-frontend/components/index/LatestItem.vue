@@ -8,27 +8,27 @@
             <p
               v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.releaseRange)"
               :class="[
-                itemInfo[appConf.roCrate.info.releaseRange][0] === 'Public'
+                itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.public
                   ? 'icons-type icon-published'
-                  : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Shared'
+                  : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.shared
                   ? 'icons-type icon-group'
-                  : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Private'
+                  : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.private
                   ? 'icons-type icon-private'
-                  : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Unshared'
+                  : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.unshared
                   ? 'icons-type icon-limited'
-                  : ''
+                  : 'icons-type icon-published'
               ]">
               <span>
                 {{
-                  itemInfo[appConf.roCrate.info.releaseRange][0] === 'Public'
+                  itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.public
                     ? $t('openPublic')
-                    : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Shared'
+                    : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.shared
                     ? $t('openGroup')
-                    : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Private'
+                    : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.private
                     ? $t('openPrivate')
-                    : itemInfo[appConf.roCrate.info.releaseRange][0] === 'Unshared'
+                    : itemInfo[appConf.roCrate.info.releaseRange][0] === appConf.roCrate.selector.releaseRange.unshared
                     ? $t('openRestricted')
-                    : itemInfo[appConf.roCrate.info.releaseRange][0]
+                    : 'undefined'
                 }}
               </span>
             </p>
@@ -144,7 +144,9 @@ const emits = defineEmits(['clickCreater']);
 /////////////////////////////////// */
 
 const appConf = useAppConfig();
-const itemInfo = getContentById(props.item.metadata, './');
+const itemInfo = Object.prototype.hasOwnProperty.call(props.item, 'metadata')
+  ? getContentById(props.item.metadata, './')
+  : {};
 </script>
 
 <style scoped lang="scss">
