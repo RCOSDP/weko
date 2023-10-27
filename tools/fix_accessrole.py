@@ -113,7 +113,7 @@ def fix_es_data(file_items, record, target_files, flg, fixed, errors):
         file_item = metadata.get(key,{})
         files = file_item.get("attribute_value_mlt",[])
         attribute_name = file_item.get("attribute_name","")
-        attribute_type = file_item.get("attribute_name","")
+        attribute_type = file_item.get("attribute_type","")
         if files:
             is_changed = False
             for file_data in files:
