@@ -86,7 +86,6 @@ try {
   sessionStorage.removeItem('conditions');
   // 最新情報取得
   let statusCode = 0;
-  alertCode.value = 0;
   await $fetch(useAppConfig().wekoApi + '/records', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
@@ -101,6 +100,7 @@ try {
       }
     },
     onResponseError({ response }) {
+      alertCode.value = 0;
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
@@ -120,12 +120,13 @@ try {
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetchError';
+      alertMessage.value = 'message.error.fetch';
       alertType.value = 'error';
       visibleAlert.value = true;
     }
   });
 } catch (error) {
+  alertCode.value = 0;
   alertMessage.value = 'message.error.error';
   alertType.value = 'error';
   visibleAlert.value = true;

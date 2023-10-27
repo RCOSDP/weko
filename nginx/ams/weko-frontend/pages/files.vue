@@ -169,13 +169,14 @@ let divideFileList: any[] = [];
  */
 async function getFiles(number: string) {
   let statusCode = 0;
-  alertCode.value = 0;
   await $fetch(appConf.wekoApi + '/records/' + number, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     onResponse({ response }) {
       if (response.status === 200) {
-        const itemInfo = getContentById(response._data.rocrate, './');
+        const itemInfo = Object.prototype.hasOwnProperty.call(response._data, 'rocrate')
+          ? getContentById(response._data.rocrate, './')
+          : {};
         itemTitle.value = itemInfo[appConf.roCrate.info.title][0];
         for (const element of itemInfo.mainEntity) {
           // @ts-ignore
@@ -184,6 +185,7 @@ async function getFiles(number: string) {
       }
     },
     onResponseError({ response }) {
+      alertCode.value = 0;
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
@@ -203,7 +205,7 @@ async function getFiles(number: string) {
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetchError';
+      alertMessage.value = 'message.error.fetch';
       alertType.value = 'error';
       visibleAlert.value = true;
     }
@@ -278,6 +280,7 @@ try {
   await getFiles(String(query.number));
   divideList(fileList.value);
 } catch (error) {
+  alertCode.value = 0;
   alertMessage.value = 'message.error.error';
   alertType.value = 'error';
   visibleAlert.value = true;

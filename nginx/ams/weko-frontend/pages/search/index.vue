@@ -12,17 +12,19 @@
             </p>
             <p class="text-white leading-[43px] pr-5 ml-auto">
               {{
-                String((Number(conditions.currentPage) - 1) * Number(conditions.perPage) + 1) +
-                ' - ' +
-                String(
-                  (Number(conditions.currentPage) - 1) * Number(conditions.perPage) + Number(conditions.perPage) >
-                    Number(total)
-                    ? Number(total)
-                    : (Number(conditions.currentPage) - 1) * Number(conditions.perPage) + Number(conditions.perPage)
-                ) +
-                ' of ' +
-                total +
-                ' results.'
+                Number(total)
+                  ? String((Number(conditions.currentPage) - 1) * Number(conditions.perPage) + 1)
+                  : Number(total) +
+                    ' - ' +
+                    String(
+                      (Number(conditions.currentPage) - 1) * Number(conditions.perPage) + Number(conditions.perPage) >
+                        Number(total)
+                        ? Number(total)
+                        : (Number(conditions.currentPage) - 1) * Number(conditions.perPage) + Number(conditions.perPage)
+                    ) +
+                    ' of ' +
+                    Number(total) +
+                    ' results.'
               }}
             </p>
           </div>
@@ -149,7 +151,6 @@ const alertCode = ref(0);
 async function search() {
   setConditions();
   let statusCode = 0;
-  alertCode.value = 0;
   await $fetch(useAppConfig().wekoApi + '/records', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
@@ -171,6 +172,7 @@ async function search() {
       }
     },
     onResponseError({ response }) {
+      alertCode.value = 0;
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
@@ -190,7 +192,7 @@ async function search() {
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetchError';
+      alertMessage.value = 'message.error.fetch';
       alertType.value = 'error';
       visibleAlert.value = true;
     }
@@ -311,6 +313,7 @@ function openCreaterModal() {
 try {
   await search();
 } catch (error) {
+  alertCode.value = 0;
   alertMessage.value = 'message.error.error';
   alertType.value = 'error';
   visibleAlert.value = true;

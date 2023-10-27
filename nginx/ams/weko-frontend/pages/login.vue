@@ -125,7 +125,12 @@
       </Form>
     </div>
     <!-- アラート -->
-    <Alert v-if="visibleAlert" :type="alertType" :message="alertMessage" @click-close="visibleAlert = !visibleAlert" />
+    <Alert
+      v-if="visibleAlert"
+      :type="alertType"
+      :message="alertMessage"
+      :code="alertCode"
+      @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
 
@@ -162,7 +167,6 @@ const dirtyReset = ref(false);
  */
 function login() {
   let statusCode = 0;
-  alertCode.value = 0;
   $fetch(useAppConfig().wekoApi + '/login', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'POST',
@@ -183,6 +187,7 @@ function login() {
       }
     },
     onResponseError({ response }) {
+      alertCode.value = 0;
       statusCode = response.status;
       if (statusCode === 400) {
         // ログイン済の場合、認可画面に遷移
@@ -210,7 +215,7 @@ function login() {
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetchError';
+      alertMessage.value = 'message.error.fetch';
       alertType.value = 'error';
       visibleAlert.value = true;
     }

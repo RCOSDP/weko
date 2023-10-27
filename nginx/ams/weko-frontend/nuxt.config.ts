@@ -43,10 +43,11 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      clientId: 'i2Xqlq1zaGvvhkTu9N7uyAZHTnMKAePHrFBrpghV',
+      clientId: 'qIx5G7vr9ZF8Fy4171xUSaG5ZVd51FdHCDrl8oM7',
+      redirectURI: 'http://localhost:3000',
       apiTimeout: 10000, // api response timeout (ms)
       tokenRefreshLimit: 600 // refresh access token before time (s)
     },
-    clientSecret: 'w60r5CrI9qXN3vJKKcj4dWxHDV5owbCYqzaxtDUENYmdFKeMd08qJtMbBE0U'
+    clientSecret: 'LLwKok4nIrOs1Kn44IrDWJFIOdiAGGgDHVlbC1QCu4Vc8jQRjuPSXSxJjQw0'
   }
 });

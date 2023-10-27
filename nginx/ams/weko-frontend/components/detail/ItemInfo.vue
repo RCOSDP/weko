@@ -170,7 +170,9 @@ const emits = defineEmits(['clickCreater']);
 /////////////////////////////////// */
 
 const appConf = useAppConfig();
-const itemInfo = getContentById(props.item.rocrate, './');
+const itemInfo = Object.prototype.hasOwnProperty.call(props.item, 'rocrate')
+  ? getContentById(props.item.rocrate, './')
+  : {};
 const thumbnailName = Object.prototype.hasOwnProperty.call(itemInfo, appConf.roCrate.info.thumbnail)
   ? itemInfo[appConf.roCrate.info.thumbnail][0][0]
   : '';

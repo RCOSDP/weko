@@ -140,7 +140,7 @@ const conditions = {
 let beforePage = '';
 let itemTotal = 0;
 let itemDetail = {};
-let indexId = '';
+let indexId = '0';
 const indexes = ref<indexInfo[]>([]);
 let searchResult: number[] = [];
 let prevNumList: number[] = [];
@@ -166,7 +166,6 @@ const alertCode = ref(0);
  */
 async function getDetail(number: string) {
   let statusCode = 0;
-  alertCode.value = 0;
   await $fetch(appConf.wekoApi + '/records/' + number, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
@@ -177,10 +176,13 @@ async function getDetail(number: string) {
     onResponse({ response }) {
       if (response.status === 200) {
         itemDetail = response._data;
-        indexId = getContentById(response._data.rocrate, './')[appConf.roCrate.info.index] ?? '';
+        indexId = Object.prototype.hasOwnProperty.call(response._data, 'rocrate')
+          ? getContentById(response._data.rocrate, './')[appConf.roCrate.info.index] ?? ''
+          : {};
       }
     },
     onResponseError({ response }) {
+      alertCode.value = 0;
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
@@ -200,7 +202,7 @@ async function getDetail(number: string) {
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetchError';
+      alertMessage.value = 'message.error.fetch';
       alertType.value = 'error';
       visibleAlert.value = true;
     }
@@ -217,7 +219,6 @@ async function search(searchPage: string) {
   }
 
   let statusCode = 0;
-  alertCode.value = 0;
   await $fetch(appConf.wekoApi + '/records', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
@@ -247,6 +248,7 @@ async function search(searchPage: string) {
       }
     },
     onResponseError({ response }) {
+      alertCode.value = 0;
       statusCode = response.status;
       switcherFlag.value = false;
       searchResult = [];
@@ -268,7 +270,7 @@ async function search(searchPage: string) {
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetchError';
+      alertMessage.value = 'message.error.fetch';
       alertType.value = 'error';
       visibleAlert.value = true;
     }
@@ -280,7 +282,6 @@ async function search(searchPage: string) {
  */
 async function getParentIndex() {
   let statusCode = 0;
-  alertCode.value = 0;
   await $fetch(appConf.wekoApi + '/tree/index/' + indexId + '/parent', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
@@ -300,6 +301,7 @@ async function getParentIndex() {
       }
     },
     onResponseError({ response }) {
+      alertCode.value = 0;
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
@@ -319,7 +321,7 @@ async function getParentIndex() {
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetchError';
+      alertMessage.value = 'message.error.fetch';
       alertType.value = 'error';
       visibleAlert.value = true;
     }
@@ -568,6 +570,7 @@ try {
   }
   await getParentIndex();
 } catch (error) {
+  alertCode.value = 0;
   alertMessage.value = 'message.error.error';
   alertType.value = 'error';
   visibleAlert.value = true;

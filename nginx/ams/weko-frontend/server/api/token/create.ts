@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   formData.append('client_secret', useRuntimeConfig().clientSecret);
   formData.append('grant_type', 'authorization_code');
   formData.append('code', String(getQuery(event).code));
-  formData.append('redirect_uri', 'http://localhost:3000/');
+  formData.append('redirect_uri', useRuntimeConfig().public.redirectURI);
 
   await $fetch(useAppConfig().wekoOrigin + '/oauth/token', {
     timeout: useRuntimeConfig().public.apiTimeout,

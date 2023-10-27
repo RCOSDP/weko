@@ -144,7 +144,9 @@ const emits = defineEmits(['clickCreater']);
 /////////////////////////////////// */
 
 const appConf = useAppConfig();
-const itemInfo = getContentById(props.item.metadata, './');
+const itemInfo = Object.prototype.hasOwnProperty.call(props.item, 'metadata')
+  ? getContentById(props.item.metadata, './')
+  : {};
 </script>
 
 <style scoped lang="scss">
