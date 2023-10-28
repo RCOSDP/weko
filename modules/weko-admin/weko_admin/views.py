@@ -24,7 +24,7 @@ import calendar
 import json
 import sys
 import time
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from flask import Blueprint, Response, abort, current_app, flash, json, \
     jsonify, render_template, request
@@ -183,6 +183,17 @@ def session_info_offline():
                    _app_lifetime=str(_app.permanent_session_lifetime),
                    current_app_name=current_app.name)
 
+@blueprint_api.route('/get_server_date',methods=['GET'])
+def get_server_date():
+    now = datetime.now()
+    return jsonify(
+        year=now.year,
+        month=now.month,
+        day=now.day,
+        hour=now.hour,
+        minute=now.minute,
+        second=now.second
+    )
 
 @blueprint_api.route('/load_lang', methods=['GET'])
 def get_lang_list():
