@@ -162,8 +162,12 @@ def session_update(app):
     
     @app.teardown_request
     def session_ttl_update(arg):
-        if 'user_id' not in session and 'sid_s' in session:
+        if 'user_id' not in session and hasattr(session, 'sid_s'):
             if request.path == '/ping':
                 _sessionstore.redis.expire(session.sid_s, 1)
             else:
                 _sessionstore.redis.expire(session.sid_s,900)
+        elif request.path.startswith('/admin/items/import/') and hasattr(session, 'sid_s'):
+            _sessionstore.redis.expire(
+                session.sid_s,
+                current_app.config.get('WEKO_ADMIN_IMPORT_PAGE_LIFETIME', 43200))

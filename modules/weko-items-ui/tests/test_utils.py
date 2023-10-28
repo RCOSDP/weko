@@ -353,6 +353,12 @@ def test_parse_ranking_results(app, users):
     res = parse_ranking_results('created_most_items_user', 1, 2, 1)
     assert res == {'rank': 1, 'key': 1, 'count': 2, 'title': 'None', 'url': None}
 
+    res = parse_ranking_results('created_most_items_user', None, 2, -1)
+    assert res == {'key': None, 'title': 'None', 'url': None}
+
+    with pytest.raises(Exception):
+        parse_ranking_results('', None, 2, -1)
+
 
 # def parse_ranking_new_items(result_data):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_parse_ranking_new_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
