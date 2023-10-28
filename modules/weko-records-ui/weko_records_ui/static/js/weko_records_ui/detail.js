@@ -34,6 +34,8 @@ require([
   });
 
   $('a#btn_edit').on('click', function () {
+    $(this).attr("disabled", true);
+    $('[role="msg"]').css('display', 'inline-block');
     let post_uri = "/api/items/prepare_edit_item";
     let pid_val = $(this).data('pid-value');
     let community = $(this).data('community');
@@ -50,6 +52,7 @@ require([
       contentType: 'application/json',
       data: JSON.stringify(post_data),
       success: function (res, status) {
+        $('[role="msg"]').hide();
         if (0 == res.code) {
           let uri = res.data.redirect.replace('api/', '')
           document.location.href = uri;
@@ -66,8 +69,13 @@ require([
         }
       },
       error: function (jqXHE, status) {
+        $('[role="msg"]').hide();
       }
     });
+  });
+
+  $('button#btn_close_msg').on('click', function () {
+    $('[role="msg"]').hide();
   });
 
   $('button#btn_close_alert').on('click', function () {

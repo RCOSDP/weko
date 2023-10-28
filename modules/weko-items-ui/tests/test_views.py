@@ -3,6 +3,7 @@ import json
 from collections import Iterable, OrderedDict
 from datetime import datetime
 from unittest.mock import MagicMock
+from time import sleep
 
 import pytest
 from flask import Flask, json, jsonify, session, url_for, make_response
@@ -20669,6 +20670,7 @@ def test_get_current_login_user_id_acl(
 
 
 # def prepare_edit_item():
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_prepare_edit_item_login -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 @pytest.mark.parametrize(
     "id, status_code",
     [
@@ -20682,7 +20684,7 @@ def test_get_current_login_user_id_acl(
         (7, 200),
     ],
 )
-def test_prepare_edit_item_login(client_api, users, id, status_code):
+def test_prepare_edit_item_login(client_api, users, id, status_code, db_sessionlifetime):
     login_user_via_session(client=client_api, email=users[id]["email"])
     res = client_api.post(
         "/api/items/prepare_edit_item",
@@ -20690,6 +20692,16 @@ def test_prepare_edit_item_login(client_api, users, id, status_code):
         content_type="application/json",
     )
     assert res.status_code == status_code
+
+    if id == 2:
+        res = client_api.post(
+            "/api/items/prepare_edit_item",
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+        assert res.status_code == status_code
+        assert json.loads(res.data)['msg'] == 'This Item is being edited.'
+    sleep(3)
 
 
 def test_prepare_edit_item_guest(client_api, users):
