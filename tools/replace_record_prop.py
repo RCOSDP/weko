@@ -11,7 +11,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from weko_schema_ui.schema import  SchemaTree
 from weko_records.serializers.utils import get_mapping
 from sqlalchemy import types
-from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from weko_search_ui.utils import handle_get_all_id_in_item_type
 
 from weko_records.api import ItemsMetadata
@@ -27,10 +27,10 @@ def replace_item(data, paths, _target, _from,_to):
         if "[]" in paths[0]:
             _data = data.get(paths[0].replace("[]",""))
             for _d in _data:
-                result |= replace_item(_d,paths[1:],_target,_from,_to)
+                result |= replace_item(_d, paths[1:], _target, _from, _to)
         else:
             _data = data.get(paths[0])
-            result |= replace_item(_data,paths[1:],_target,_from,_to)
+            result |= replace_item(_data, paths[1:], _target, _from, _to)
     return result
 
 def get_jpcoar_mapping(data, schema, mapping, changed_path):
@@ -175,7 +175,11 @@ if __name__ == "__main__":
     count = 0
     for r in records:
         try:
-            pid = PersistentIdentifier.query.filter_by(object_uuid=r.id).filter_by(pid_type='recid').one_or_none()
+            pid = PersistentIdentifier.query.filter_by(
+                object_uuid=r.id).filter_by(
+                    pid_type='recid').one_or_none()
+            if pid.status == PIDStatus.DELETED:
+                continue
             _record = RecordMetadata.query.filter_by(id=r.id).one_or_none()
             record = _record.json
             item_metadata = r.json
@@ -187,11 +191,15 @@ if __name__ == "__main__":
             for path in target_paths:
                 props = path.split(".")
                 root_prop = props[0].replace("[]","")
+                
+                # fix record_metadata
                 record_ele = record.get(root_prop)
                 if record_ele:
                     attr_lst = record_ele.get("attribute_value_mlt")
                     for attr in attr_lst:
                         is_changed |= replace_item(attr, props[1:], field, target, to)
+                
+                # fix item_metadata
                 item_ele = item_metadata.get(root_prop)
                 if item_ele:
                     if isinstance(item_ele,dict):
@@ -208,30 +216,31 @@ if __name__ == "__main__":
                 flag_modified(r, 'json')
                 db.session.merge(r)
                 # update es data
-                new_es_data, dc = get_jpcoar_mapping(
-                    item_metadata, 
-                    item_type_scheme_mapping[item_type_id][0],
-                    item_type_scheme_mapping[item_type_id][1],
-                    changed_path)
                 es_data = indexer.client.get(
                     index=indexer.es_index,
                     doc_type=indexer.es_doc_type,
                     id=str(r.id),
                     _source=["_item_metadata"]+target_es_fields[item_type_id]
                 ).get("_source")
-                body = {
-                }
+                
+                new_es_data, dc = get_jpcoar_mapping(
+                    item_metadata, 
+                    item_type_scheme_mapping[item_type_id][0],
+                    item_type_scheme_mapping[item_type_id][1],
+                    changed_path)
+                
+                body = {}
                 for f in target_es_fields[item_type_id]:
                     if f in es_data and f in new_es_data:
                         body[f] = new_es_data[f]
-                for key,value in dc.items():
+                for key, value in dc.items():
                     if key in es_data.get("_item_metadata"):
                         if "_item_metadata" not in body:
                             body["_item_metadata"] = {}
                         body["_item_metadata"][key] = value
                 set_timestamp(body, _record.created, _record.updated)
-                indexer.client.update(index=indexer.es_index,doc_type=indexer.es_doc_type,
-                                      id=str(r.id),body={'doc':body})
+                indexer.client.update(index=indexer.es_index, doc_type=indexer.es_doc_type,
+                                      id=str(r.id), body={'doc':body})
                 db.session.commit()
                 print("fixed: {}".format(pid.pid_value))
                 count+=1
