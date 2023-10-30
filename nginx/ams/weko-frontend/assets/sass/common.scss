@@ -530,6 +530,29 @@
     }
   }
 
+  &-author {
+    .affiliation {
+      &:not(:last-of-type)::after {
+        margin-right: 5px;
+        content: ',';
+      }
+    }
+
+    .tag-link {
+      a {
+        // margin-right: 5px;
+        cursor: pointer;
+        text-decoration-line: underline;
+        text-decoration-color: #333333;
+      }
+
+      &:not(:last-of-type)::after {
+        margin-right: 5px;
+        content: ',';
+      }
+    }
+  }
+
   &-tags {
     color: $miby-black;
     font-size: 10px;

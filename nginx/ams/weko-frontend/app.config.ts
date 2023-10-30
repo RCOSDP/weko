@@ -19,7 +19,8 @@ export default defineAppConfig({
       updateDate: 'datePublished', // 更新日
       title: 'title', // タイトル
       field: 'genre', // 分野
-      author: 'creator', // 作成者（[氏名, 所属]）
+      authorName: 'creatorName', // 作成者氏名
+      authorAffiliation: 'creatorAffiliation', // 作成者所属
       target: 'target', // ヒト/動物/その他
       accessMode: 'accessMode', // アクセス権
       keywords: 'keywords' // キーワード

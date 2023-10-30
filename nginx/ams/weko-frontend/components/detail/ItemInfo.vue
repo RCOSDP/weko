@@ -79,18 +79,27 @@
           <!-- 作成者 -->
           <p class="data-note author">
             {{ $t('creater') + '：' }}
-            <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.author)">
-              <a>
-                {{
-                  itemInfo[appConf.roCrate.info.author][1]
-                    ? `[${itemInfo[appConf.roCrate.info.author][1] ?? 'undefined'}] `
-                    : 'undefined'
-                }}
-              </a>
-              <a class="text-miby-link-blue underline cursor-pointer" @click="emits('clickCreater')">
-                {{ itemInfo[appConf.roCrate.info.author][0] ?? '' }}
-              </a>
+            <span v-if="itemInfo[appConf.roCrate.info.authorAffiliation]" class="data-author mr-1">
+              [
+              <span
+                v-for="affiliation in itemInfo[appConf.roCrate.info.authorAffiliation]"
+                :key="affiliation"
+                class="affiliation">
+                <a @click="emits('clickCreater')">
+                  {{ affiliation }}
+                </a>
+              </span>
+              ]
             </span>
+            <span v-else class="mr-1">[undefined]</span>
+            <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.info.authorName)" class="data-author">
+              <span v-for="name in itemInfo[appConf.roCrate.info.authorName]" :key="name" class="tag-link">
+                <a @click="emits('clickCreater')">
+                  {{ name }}
+                </a>
+              </span>
+            </span>
+            <span v-else>undefined</span>
           </p>
         </div>
         <div class="text-left sm:flex flex-wrap">
