@@ -345,7 +345,7 @@ async function setNumList(type: string) {
       } else {
         prevNumList = [];
       }
-      if (nextPage <= parseInt(String(itemTotal / Number(conditions.perPage)))) {
+      if (nextPage <= Math.ceil(itemTotal / Number(conditions.perPage))) {
         await search(String(nextPage));
         nextNumList = searchResult ?? [];
       } else {

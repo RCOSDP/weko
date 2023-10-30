@@ -9,7 +9,7 @@
             <p class="text-white leading-[43px] pl-5 icons icon-list font-bold">{{ itemTitle }}</p>
             <p class="text-white leading-[43px] pr-5 ml-auto">
               {{
-                String((Number(currentPage) - 1) * Number(perPage) + 1) +
+                (Number(fileList.length) ? String((Number(currentPage) - 1) * Number(perPage) + 1) : 0) +
                 ' - ' +
                 String(
                   (Number(currentPage) - 1) * Number(perPage) + Number(perPage) > Number(fileList.length)
@@ -17,7 +17,7 @@
                     : (Number(currentPage) - 1) * Number(perPage) + Number(perPage)
                 ) +
                 ' of ' +
-                fileList.length +
+                Number(fileList.length) +
                 ' results.'
               }}
             </p>
