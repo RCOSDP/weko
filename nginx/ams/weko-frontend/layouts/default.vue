@@ -1,6 +1,6 @@
 <template>
   <body class="font-notoSans bg-miby-border-gray h-full">
-    <div class="bg-miby-gray h-screen">
+    <div class="bg-miby-gray">
       <HeaderCompo />
       <slot />
       <FooterCompo />
