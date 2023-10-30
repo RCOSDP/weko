@@ -33,7 +33,7 @@ def replace_item(data, paths, _target, _from,_to):
             result |= replace_item(_data,paths[1:],_target,_from,_to)
     return result
 
-def get_jpcoar_mapping(item_type_id, data):
+def get_jpcoar_mapping(data, schema, mapping, changed_path):
     def _get_author_link(author_link, value):
         """Get author link data."""
         if isinstance(value, list):
@@ -55,24 +55,24 @@ def get_jpcoar_mapping(item_type_id, data):
             author_link.append(value["nameIdentifiers"][0]["nameIdentifier"])
     dc = OrderedDict()
     jpcoar = OrderedDict()
-    ojson = ItemTypes.get_record(item_type_id)
-    mjson = Mapping.get_record(item_type_id)
-    mp = mjson.dumps()
-    data.get("$schema")
+    mp = mapping.dumps()
     author_link = []
     item=dict()
     ar=[]
     pubdate = None
+    changed_field = [p.split(".")[0].replace("[]","") for p in changed_path]
     for k, v in data.items():
         if k != "pubdate":
             if k == "$schema" or mp.get(k) is None:
+                continue
+            if k not in changed_field:
                 continue
 
         item.clear()
         try:
             item["attribute_name"] = (
-                ojson["properties"][k]["title"]
-                if ojson["properties"][k].get("title") is not None
+                schema["properties"][k]["title"]
+                if schema["properties"][k].get("title") is not None
                 else k
             )
         except Exception:
@@ -81,10 +81,10 @@ def get_jpcoar_mapping(item_type_id, data):
                 "title": "Publish Date",
                 "format": "datetime",
             }
-            ojson["properties"]["pubdate"] = pub_date_setting
+            schema["properties"]["pubdate"] = pub_date_setting
             item["attribute_name"] = "Publish Date"
         iscreator = False
-        creator = ojson["properties"][k]
+        creator = schema["properties"][k]
         if "object" == creator["type"]:
             creator = creator["properties"]
             if "iscreator" in creator:
@@ -96,7 +96,7 @@ def get_jpcoar_mapping(item_type_id, data):
         if iscreator:
             item["attribute_type"] = "creator"
 
-        item_data = ojson["properties"][k]
+        item_data = schema["properties"][k]
         if "array" == item_data.get("type"):
             properties_data = item_data["items"]["properties"]
             if "filename" in properties_data:
@@ -123,13 +123,14 @@ def get_jpcoar_mapping(item_type_id, data):
             pubdate = v
         jpcoar[k] = item.copy()
     jrc = SchemaTree.get_jpcoar_json(jpcoar)
-    if dc:
+    if dc and author_link:
         dc.update(dict(author_link=author_link))
     return jrc, dc
 
 def get_item_type_mapping(field):
     """置換対象となるフィールドを含むパスと、そのパスがマッピングされたesのフィールドのリストを取得"""
     item_types = ItemTypes.get_all()
+    item_type_scheme_mapping = {} # item_typeのschemaとmapping
     target_paths = {} # item_type_idと置換対象となるフィールドを含むパスのリスト
     target_es_field = {} # item_type_idと置換対象のパスがマッピングされたesのフィールドのリスト
     with current_app.test_request_context(headers=[('Accept-Language','ja')]):
@@ -141,12 +142,13 @@ def get_item_type_mapping(field):
                 target_paths[item_type.id]=paths
                 mapping = Mapping.get_record(item_type.id)
                 if mapping:
-                    mapping = mapping.dumps()
-                    mapp = {value:key for key, value in get_mapping(mapping, "jpcoar_mapping").items()}
+                    _mapping = mapping.dumps()
+                    mapp = {value:key for key, value in get_mapping(_mapping, "jpcoar_mapping").items()}
                     paths_replace_arr = [p.replace("[]","") for p in paths]
                     field_lst = [value.split(".")[0] for key, value in mapp.items() if key in paths_replace_arr]
                     target_es_field[item_type.id] = field_lst
-    return target_paths, target_es_field
+                    item_type_scheme_mapping[item_type.id]=[item_type.schema, mapping]
+    return target_paths, target_es_field, item_type_scheme_mapping
 
 def get_target_record(paths):
     """置換対象となるアイテムタイプに所属、かつ置換対象のフィールドを持つプロパティを含むレコードの取得"""
@@ -164,11 +166,12 @@ if __name__ == "__main__":
 
     field="subitem_description_type" # field to replace
     target="isIdenticalTo" # the value to replace
-    to="Other" # the value to use for replacement
+    to="Others" # the value to use for replacement
 
-    paths, target_es_fields = get_item_type_mapping(field)
+    paths, target_es_fields, item_type_scheme_mapping = get_item_type_mapping(field)
     records = get_target_record(paths)
     indexer = WekoIndexer()
+    indexer.get_es_index()
     count = 0
     for r in records:
         try:
@@ -176,12 +179,11 @@ if __name__ == "__main__":
             _record = RecordMetadata.query.filter_by(id=r.id).one_or_none()
             record = _record.json
             item_metadata = r.json
-            es_data = indexer.get_metadata_by_item_id(r.id).get("_source")
             
             item_type_id=r.item_type_id
             target_paths = paths[item_type_id]
             is_changed = False
-            
+            changed_path = []
             for path in target_paths:
                 props = path.split(".")
                 root_prop = props[0].replace("[]","")
@@ -189,36 +191,47 @@ if __name__ == "__main__":
                 if record_ele:
                     attr_lst = record_ele.get("attribute_value_mlt")
                     for attr in attr_lst:
-                        is_changed |= replace_item(attr,props[1:],field,target,to)
+                        is_changed |= replace_item(attr, props[1:], field, target, to)
                 item_ele = item_metadata.get(root_prop)
                 if item_ele:
                     if isinstance(item_ele,dict):
-                        is_changed |= replace_item(item_ele,props[1:],field,target,to)
+                        is_changed |= replace_item(item_ele, props[1:],field, target,to)
                     elif isinstance(item_ele,list):
                         for e in item_ele:
-                            is_changed |= replace_item(e,props[1:],field,target,to)
-                es_ele= es_data.get("_item_metadata").get(root_prop)
-                if es_ele:
-                    attr_lst = es_ele.get("attribute_value_mlt")
-                    for attr in attr_lst:
-                        is_changed |= replace_item(attr,props[1:],field,target,to)
+                            is_changed |= replace_item(e, props[1:], field, target, to)
+                if is_changed:
+                    changed_path.append(path)
             if is_changed:
                 # merge
-                flag_modified(_record,'json')
+                flag_modified(_record, 'json')
                 db.session.merge(_record)
-                flag_modified(r,'json')
+                flag_modified(r, 'json')
                 db.session.merge(r)
                 # update es data
-                new_es_data, dc = get_jpcoar_mapping(item_type_id,item_metadata)
+                new_es_data, dc = get_jpcoar_mapping(
+                    item_metadata, 
+                    item_type_scheme_mapping[item_type_id][0],
+                    item_type_scheme_mapping[item_type_id][1],
+                    changed_path)
+                es_data = indexer.client.get(
+                    index=indexer.es_index,
+                    doc_type=indexer.es_doc_type,
+                    id=str(r.id),
+                    _source=["_item_metadata"]+target_es_fields[item_type_id]
+                ).get("_source")
+                body = {
+                }
                 for f in target_es_fields[item_type_id]:
                     if f in es_data and f in new_es_data:
-                        es_data[f] = new_es_data[f]
+                        body[f] = new_es_data[f]
                 for key,value in dc.items():
-                    if key in es_data:
-                        es_data[key] = value
-                set_timestamp(es_data, _record.created, _record.updated)
+                    if key in es_data.get("_item_metadata"):
+                        if "_item_metadata" not in body:
+                            body["_item_metadata"] = {}
+                        body["_item_metadata"][key] = value
+                set_timestamp(body, _record.created, _record.updated)
                 indexer.client.update(index=indexer.es_index,doc_type=indexer.es_doc_type,
-                                      id=str(r.id),body={'doc':es_data})
+                                      id=str(r.id),body={'doc':body})
                 db.session.commit()
                 print("fixed: {}".format(pid.pid_value))
                 count+=1
