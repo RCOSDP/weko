@@ -12,19 +12,19 @@
             </p>
             <p class="text-white leading-[43px] pr-5 ml-auto">
               {{
-                Number(total)
+                (Number(total)
                   ? String((Number(conditions.currentPage) - 1) * Number(conditions.perPage) + 1)
-                  : Number(total) +
-                    ' - ' +
-                    String(
-                      (Number(conditions.currentPage) - 1) * Number(conditions.perPage) + Number(conditions.perPage) >
-                        Number(total)
-                        ? Number(total)
-                        : (Number(conditions.currentPage) - 1) * Number(conditions.perPage) + Number(conditions.perPage)
-                    ) +
-                    ' of ' +
-                    Number(total) +
-                    ' results.'
+                  : Number(total)) +
+                ' - ' +
+                String(
+                  (Number(conditions.currentPage) - 1) * Number(conditions.perPage) + Number(conditions.perPage) >
+                    Number(total)
+                    ? Number(total)
+                    : (Number(conditions.currentPage) - 1) * Number(conditions.perPage) + Number(conditions.perPage)
+                ) +
+                ' of ' +
+                Number(total) +
+                ' results.'
               }}
             </p>
           </div>
@@ -192,7 +192,7 @@ async function search() {
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
+      alertMessage.value = 'message.error.fetchError';
       alertType.value = 'error';
       visibleAlert.value = true;
     }

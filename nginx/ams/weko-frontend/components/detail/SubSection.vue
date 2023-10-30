@@ -93,7 +93,10 @@ function convertFlat(json: object, tier = 0) {
       // @ts-ignore
       if (Array.isArray(json[element])) {
         // @ts-ignore
-        convertFlat(json[element][0], tier + 1);
+        for (const val of json[element]) {
+          // @ts-ignore
+          convertFlat(val, tier + 1);
+        }
       } else {
         // @ts-ignore
         convertFlat(json[element], tier + 1);
