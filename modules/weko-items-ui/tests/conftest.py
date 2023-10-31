@@ -106,7 +106,7 @@ from weko_schema_ui.models import OAIServerSchema
 from weko_search_ui import WekoSearchREST, WekoSearchUI
 from weko_search_ui.config import WEKO_SEARCH_REST_ENDPOINTS,RECORDS_REST_SORT_OPTIONS,INDEXER_DEFAULT_DOCTYPE,INDEXER_FILE_DOC_TYPE
 from weko_theme import WekoTheme
-from weko_theme.views import blueprint as weko_theme_blueprint
+# from weko_theme.views import blueprint as weko_theme_blueprint
 from weko_user_profiles.models import UserProfile
 from weko_user_profiles.config import WEKO_USERPROFILES_ROLES,WEKO_USERPROFILES_GENERAL_ROLE
 from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX
