@@ -47,11 +47,14 @@ def test_WekoRanking(app, client, db, db_ranking, ranking_type):
         'display_rank': 10,
         'rankings': {'new_items': True, 'most_reviewed_items': True, 'most_downloaded_items': True, 'most_searched_keywords': True, 'created_most_items_user': True}
     }
-
-    res = client.get(f'/v1/ranking/{ranking_type}')
-    assert res.status_code == 200
-    data = json.loads(res.get_data())
-    assert data['ranking_type'] == ranking_type
+    ranking_result = {
+        ranking_type: []
+    }
+    with patch('weko_items_ui.rest.get_ranking', return_value=ranking_result):
+        res = client.get(f'/v1/ranking/{ranking_type}')
+        assert res.status_code == 200
+        data = json.loads(res.get_data())
+        assert data['ranking_type'] == ranking_type
 
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_rest.py::test_WekoRanking_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -66,28 +69,32 @@ def test_WekoRanking_error(app, client, db, db_ranking):
         'rankings': {'new_items': True, 'most_reviewed_items': True, 'most_downloaded_items': False, 'most_searched_keywords': False, 'created_most_items_user': False}
     }
 
-    res = client.get(url)
-    headers = {}
-    headers['If-None-Match'] = res.headers['Etag']
-    res = client.get(url, headers=headers)
-    assert res.status_code == 304
-
-    res = client.get('/v0/ranking/most_reviewed_items')
-    assert res.status_code == 400
-
-    res = client.get('/v1/ranking/most_reviewed_items?display_rank=typeerror')
-    assert res.status_code == 400
-
-    res = client.get('/v1/ranking/no_ranking')
-    assert res.status_code == 404
-
-    with patch('weko_admin.models.RankingSettings.get', MagicMock(side_effect=SQLAlchemyError())):
+    ranking_result = {
+        'new_items': []
+    }
+    with patch('weko_items_ui.rest.get_ranking', return_value=ranking_result):
         res = client.get(url)
-        assert res.status_code == 500
+        headers = {}
+        headers['If-None-Match'] = res.headers['Etag']
+        res = client.get(url, headers=headers)
+        assert res.status_code == 304
 
-    with patch('weko_admin.models.RankingSettings.get', MagicMock(side_effect=ElasticsearchException())):
-        res = client.get(url)
-        assert res.status_code == 500
+        res = client.get('/v0/ranking/most_reviewed_items')
+        assert res.status_code == 400
 
-    res = client.get('/v1/ranking/most_downloaded_items')
-    assert res.status_code == 403
+        res = client.get('/v1/ranking/most_reviewed_items?display_rank=typeerror')
+        assert res.status_code == 400
+
+        res = client.get('/v1/ranking/no_ranking')
+        assert res.status_code == 404
+
+        with patch('weko_admin.models.RankingSettings.get', MagicMock(side_effect=SQLAlchemyError())):
+            res = client.get(url)
+            assert res.status_code == 500
+
+        with patch('weko_admin.models.RankingSettings.get', MagicMock(side_effect=ElasticsearchException())):
+            res = client.get(url)
+            assert res.status_code == 500
+
+        res = client.get('/v1/ranking/most_downloaded_items')
+        assert res.status_code == 403
