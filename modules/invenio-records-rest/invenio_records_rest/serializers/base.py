@@ -171,7 +171,7 @@ class PreprocessorMixin(PreprocessorMixinInterface):
                 if k in item_type_mapping:
                     v = item_type_mapping.get(k)
                     prop_hidden = meta_option.get(k, {}).get('option', {}).get('hidden', False)
-                    if not type(v.get('jpcoar_mapping')) is dict \
+                    if not v or not isinstance(v.get('jpcoar_mapping'), dict) \
                             or prop_hidden:
                         continue
                     for k1, v1 in v.get('jpcoar_mapping').items():
@@ -187,20 +187,20 @@ class PreprocessorMixin(PreprocessorMixinInterface):
                             continue
                         for k2, v2 in mapping_dict.items():
                             if k1 != k2.split(':')[1] or \
-                                    not type(v1) is dict or \
+                                    not isinstance(v1, dict) or \
                                     mapping_dict[k2]:
                                 continue
                             key = identifier if identifier in k else k
                             key_arr = ['metadata', key, 'attribute_value_mlt', 0]
                             lang_arr = key_arr.copy()
                             if k1 == 'creator':
-                                name = v1.get('creatorName')
+                                name = v1.get('creatorName', {})
                                 # Set all key for __lang
                                 attr = name.get('@attributes', {})
                                 xml_lang = attr.get('xml:lang', '').split('.')
                                 lang_arr.extend(get_keys(xml_lang))
                                 # Set all key for key
-                                name_arr = name.get('@value').split('.')
+                                name_arr = name.get('@value', '').split('.')
                                 key_arr.extend(get_keys(name_arr))
                             elif '.' in v1.get('@value', ''):
                                 # Set key for __lang
@@ -208,14 +208,14 @@ class PreprocessorMixin(PreprocessorMixinInterface):
                                 xml_lang = attr.get('xml:lang', '').split('.')
                                 lang_arr.extend(get_keys(xml_lang))
                                 # Set all key for key
-                                name_arr = v1.get('@value').split('.')
+                                name_arr = v1.get('@value', '').split('.')
                                 key_arr.extend(get_keys(name_arr))
                             else:
                                 # Set key for __lang
                                 attr = v1.get('@attributes', {})
-                                lang_arr.append(attr.get('xml:lang'))
+                                lang_arr.append(attr.get('xml:lang', ''))
                                 # Set all key for key
-                                key_arr.append(v1.get('@value'))
+                                key_arr.append(v1.get('@value', ''))
                             mapping_dict[k2] = key_arr
                             mapping_dict['{}__lang'.format(k2)] = lang_arr
             return mapping_dict
@@ -244,9 +244,9 @@ class PreprocessorMixin(PreprocessorMixinInterface):
         links_factory = links_factory or (lambda x, **k: dict())
         record = dict(
             pid=pid,
-            metadata=record_hit['_source'],
+            metadata=record_hit.get('_source', {}),
             links=links_factory(pid, record_hit=record_hit, **kwargs),
-            revision=record_hit['_version'],
+            revision=record_hit.get('_version', 0),
             created=None,
             updated=None,
         )

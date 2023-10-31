@@ -54,17 +54,18 @@ class OAISchemaSettingView(BaseView):
     def delete(self, pid=None):
         """Delete schema with pid."""
         pid = pid or request.values.get('pid')
-        schema_name = delete_schema(pid)
-        # delete schema cache on redis
-        delete_schema_cache(schema_name)
+        if pid:
+            schema_name = delete_schema(pid)
+            # delete schema cache on redis
+            delete_schema_cache(schema_name)
 
-        schema_name = schema_name.replace("_mapping", "")
-        # for k, v in current_app.config["RECORDS_UI_EXPORT_FORMATS"].items():
-        #     if isinstance(v, dict):
-        #         for v1 in v.values():
-        #             if v.get(schema_name):
-        #                 v.pop(schema_name)
-        #                 break
+            # schema_name = schema_name.replace("_mapping", "")
+            # for k, v in current_app.config["RECORDS_UI_EXPORT_FORMATS"].items():
+            #     if isinstance(v, dict):
+            #         for v1 in v.values():
+            #             if v.get(schema_name):
+            #                 v.pop(schema_name)
+            #                 break
         return redirect(url_for("schemasettings.list"))
 
 

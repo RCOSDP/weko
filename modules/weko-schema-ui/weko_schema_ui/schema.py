@@ -39,6 +39,7 @@ from xmlschema.validators import XsdAnyAttribute, XsdAnyElement, \
     XsdPatternsFacet, XsdSingleFacet, XsdUnion
 
 from .api import WekoSchema
+from .models import OAIServerSchema
 
 
 class SchemaConverter:
@@ -250,10 +251,11 @@ class SchemaTree:
         if self._record and self._item_type_id:
             self._ignore_list_all, self._ignore_list = \
                 self.get_ignore_item_from_option()
-        for schema in schemas:
-            if self._schema_name == schema.schema_name:
-                self._location = schema.schema_location
-                self._target_namespace = schema.target_namespace
+        if isinstance(schemas, list):
+            for schema in schemas:
+                if isinstance(schema, OAIServerSchema) and self._schema_name == schema.schema_name:
+                    self._location = schema.schema_location
+                    self._target_namespace = schema.target_namespace
 
     def get_ignore_item_from_option(self):
         """Get all keys of properties that is enable Hide option in metadata."""
@@ -263,14 +265,16 @@ class SchemaTree:
         from weko_records.utils import get_options_and_order_list
         ignore_list_all, meta_options = \
             get_options_and_order_list(self._item_type_id)
-        for key, val in meta_options.items():
-            hidden = val.get('option').get('hidden')
-            if hidden:
-                ignore_list_parents.append(key)
+        if isinstance(meta_options, dict):
+            for key, val in meta_options.items():
+                hidden = val.get('option', {}).get('hidden', False)
+                if hidden:
+                    ignore_list_parents.append(key)
         for element_info in ignore_list_all:
-            element_info[0] = element_info[0].replace("[]", "")
-            # only get hide option
-            ignore_dict_all[element_info[0]] = element_info[3].get("hide")
+            if len(element_info) >= 4:
+                element_info[0] = element_info[0].replace("[]", "")
+                # only get hide option
+                ignore_dict_all[element_info[0]] = element_info[3].get("hide", False)
         return ignore_dict_all, ignore_list_parents
 
     def get_mapping_data(self):
@@ -294,13 +298,14 @@ class SchemaTree:
                 self._record.pop("_deposit", {})
                 mjson = Mapping.get_record(_id)
                 self.item_type_mapping = mjson
-                mp = mjson.dumps()
-                if mjson:
-                    for k, v in mp.items():
-                        if k in self._record:
-                            self._record[k].update({self._schema_name: v.get(self._schema_name)})
-                        else:
-                            self._record[k] = {self._schema_name: v.get(self._schema_name)}
+                if isinstance(mjson, Mapping):
+                    mp = mjson.dumps()
+                    if isinstance(mp, dict):
+                        for k, v in mp.items():
+                            if k in self._record:
+                                self._record[k].update({self._schema_name: v.get(self._schema_name)})
+                            else:
+                                self._record[k] = {self._schema_name: v.get(self._schema_name)}
                 return _id
 
 
@@ -500,7 +505,7 @@ class SchemaTree:
                             yield list_key[-1][1:], id(list_key[-1])
                     else:
                         for i in atr_vm:
-                            if i.get(key):
+                            if isinstance(i, dict) and i.get(key):
                                 for a, b in get_value_from_content_by_mapping_key(
                                         i.get(key), list_key):
                                     yield a, b
@@ -1445,10 +1450,10 @@ class SchemaTree:
                         return None
 
                     aff_data = _item.get("attribute_value_mlt")[creator_idx]
-                    if not aff_data.get(_item_key):
+                    if not aff_data or not aff_data.get(_item_key, None):
                         return None
 
-                    for _subitem in aff_data.get(_item_key):
+                    for _subitem in aff_data.get(_item_key, []):
                         _len_affname = 0
                         _len_nameidt = 0
                         if _subitem.get(_name_keys):
@@ -1921,14 +1926,16 @@ def schema_list_render(pid=None, **kwargs):
     lst = WekoSchema.get_all()
 
     records = []
-    for r in lst:
-        sc = r.form_data.copy()
-        sc.update(dict(schema_name=r.schema_name))
-        sc.update(dict(pid=str(r.id)))
-        sc.update(dict(dis="disabled" if r.isfixed else None))
-        records.append(sc)
+    if isinstance(lst, list):
+        for r in lst:
+            if isinstance(r, OAIServerSchema):
+                sc = r.form_data.copy()
+                sc.update(dict(schema_name=r.schema_name))
+                sc.update(dict(pid=str(r.id)))
+                sc.update(dict(dis="disabled" if r.isfixed else None))
+                records.append(sc)
 
-    del lst
+        del lst
 
     return records
 
@@ -1957,7 +1964,9 @@ def get_oai_metadata_formats(app):
             if isinstance(obj, list):
                 sel = list(oad.values())[0].get('serializer')
                 for lst in obj:
-                    if lst.schema_name.endswith('_mapping'):
+                    if not isinstance(lst, OAIServerSchema):
+                        continue
+                    if lst.schema_name and lst.schema_name.endswith('_mapping'):
                         schema_name = lst.schema_name[:-8]
                     if not oad.get(schema_name):
                         scm = dict()
