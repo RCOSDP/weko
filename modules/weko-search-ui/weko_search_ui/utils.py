@@ -34,6 +34,7 @@ import zipfile
 from collections import Callable, OrderedDict
 from datetime import datetime
 from functools import partial, reduce, wraps
+import io
 from io import StringIO
 from operator import getitem
 from time import sleep
@@ -1155,12 +1156,29 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
                     file, root_file_id=root_file_id, is_set_size_location=False
                 )
 
+                size = file.seek(0, io.SEEK_END)
+                if size >= pow(1024, 4):
+                    size_str = "{} TB".format(round(size/(pow(1024, 4)), 1))
+                elif size >= pow(1024, 3):
+                    size_str = "{} GB".format(round(size/(pow(1024, 3)), 1))
+                elif size >= pow(1024, 2):
+                    size_str = "{} MB".format(round(size/(pow(1024, 2)), 1))
+                elif size >= 1024:
+                    size_str = "{} KB".format(round(size/1024, 1))
+                else:
+                    size_str = "{} B".format(size)
+                if record.get("filenames") and \
+                        len(record["filenames"]) > idx and \
+                        record["filenames"][idx].get("filename"):
+                    file_size_dict[record["filenames"][idx]["filename"]] = [{'value': size_str}]
+
     def clean_file_contents(delete_all):
         # clean file contents in bucket.
         for file in deposit.files.bucket.objects:
             if not file.is_thumbnail and (delete_all or not file.is_head):
                 file.remove()
 
+    file_size_dict = {}
     file_path = record.get("file_path", []) if allow_upload_file_content else []
     thumbnail_path = record.get("thumbnail_path", [])
     if isinstance(thumbnail_path, str):
@@ -1173,6 +1191,8 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
         upload(thumbnail_path, is_thumbnail=True)
         upload(file_path)
     clean_file_contents(not allow_upload_file_content)
+
+    return file_size_dict
 
 
 def get_file_name(file_path):
@@ -1198,17 +1218,18 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
     def clean_file_metadata(item_type_id, data):
         # clear metadata of file information
         is_cleaned = True
+        file_key = None
         item_map = get_mapping(item_type_id, "jpcoar_mapping")
         key = item_map.get("file.URI.@value")
         if key:
-            key = key.split(".")[0]
-            if not data.get(key):
+            file_key = key.split(".")[0]
+            if not data.get(file_key):
                 deleted_items = data.get("deleted_items") or []
-                deleted_items.append(key)
+                deleted_items.append(file_key)
                 data["deleted_items"] = deleted_items
             else:
                 is_cleaned = False
-        return data, is_cleaned
+        return data, is_cleaned, file_key
 
     def autofill_thumbnail_metadata(item_type_id, data):
         key = get_thumbnail_key(item_type_id)
@@ -1300,13 +1321,18 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                 old_file_list.append(None)
 
     # set delete flag for file metadata if is empty.
-    new_data, is_cleaned = clean_file_metadata(item["item_type_id"], new_data)
+    new_data, is_cleaned, file_key = clean_file_metadata(item["item_type_id"], new_data)
     # progress upload file, replace file contents.
-    up_load_file(item, root_path, deposit, not is_cleaned, old_file_list)
+    file_size_dict = up_load_file(item, root_path, deposit, not is_cleaned, old_file_list)
     new_data = autofill_thumbnail_metadata(item["item_type_id"], new_data)
 
     # check location file
     find_and_update_location_size()
+    if not is_cleaned:
+        for idx, file_info in enumerate(new_data.get(file_key, [])):
+            if file_info.get('filename') in file_size_dict \
+                    and not file_info.get('filesize'):
+                new_data[file_key][idx]['filesize'] = file_size_dict.get(file_info.get('filename'))
 
     # Clean item metadata
     if item["status"] != "new":
