@@ -3316,7 +3316,7 @@ def export_all(root_url, user_id, data):
         name=_run_msg_config,
         user_id=user_id
     )
-    _timezone = current_app.config["STATS_WEKO_DEFAULT_TIMEZONE"]
+    _timezone = str(current_app.config["STATS_WEKO_DEFAULT_TIMEZONE"]())
     _file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
     def _itemtype_name(name):

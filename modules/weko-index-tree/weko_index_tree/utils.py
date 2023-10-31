@@ -266,6 +266,7 @@ def filter_index_list_by_role(index_list):
     """Filter index list by role."""
     def _check(index_data, roles, groups):
         """Check index data by role."""
+        from weko_records_ui.utils import is_future
         can_view = False
         if roles[0]:
             can_view = True
@@ -274,8 +275,7 @@ def filter_index_list_by_role(index_list):
                     or check_groups(groups, index_data.browsing_group):
                 if index_data.public_state \
                         and (index_data.public_date is None
-                             or (isinstance(index_data.public_date, datetime)
-                                 and date.today() >= index_data.public_date.date())):
+                             or not is_future(index_data.public_date)):
                     can_view = True
         return can_view
 
@@ -290,6 +290,7 @@ def filter_index_list_by_role(index_list):
 
 def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
     """Reduce index by."""
+    from weko_records_ui.utils import is_future
     if isinstance(tree, list):
         i = 0
         while i < len(tree):
@@ -315,8 +316,7 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
 
                         if public_state and \
                                 (public_date is None
-                                 or (isinstance(public_date, datetime)
-                                     and date.today() >= public_date.date())):
+                                 or not is_future(public_date)):
                             reduce_index_by_role(children, roles, groups)
                             i += 1
                         else:
@@ -694,6 +694,7 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
             [bool]: True if the user can access index.
 
         """
+        from weko_records_ui.utils import is_future
         can_view = False
         if roles[0]:
             # In case admin role.
@@ -702,8 +703,7 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
             check_user_role = check_roles(roles, index_data.browsing_role) or \
                 check_groups(groups, index_data.browsing_group)
             check_public_date = \
-                isinstance(index_data.public_date, datetime) and \
-                date.today() >= index_data.public_date.date() \
+                not is_future(index_data.public_date) \
                 if index_data.public_date else True
             if check_user_role and check_public_date:
                 can_view = True

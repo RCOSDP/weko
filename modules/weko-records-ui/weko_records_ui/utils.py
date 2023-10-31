@@ -60,7 +60,27 @@ from .permissions import check_create_usage_report, \
     is_open_restricted
 
 
-
+def is_future(date):
+    """Checks if a date is in the future."""
+    res = True
+    if date:
+        try:
+            if isinstance(date, str):
+                pdt = None
+                if len(date) == 10:
+                    pdt = dt.strptime(date, '%Y-%m-%d')
+                else:
+                    if 'T' in date:
+                        pdt = dt.strptime(date[:19], '%Y-%m-%dT%H:%M:%S')
+                    else:
+                        pdt = dt.strptime(date[:19], '%Y-%m-%d %H:%M:%S')
+                if pdt:
+                    res = to_utc(pdt) > dt.utcnow()
+            elif isinstance(date, dt):
+                res = to_utc(date) > dt.utcnow()
+        except Exception as ex:
+            current_app.logger.error(ex)
+    return res
 
 def check_items_settings(settings=None):
     """Check items setting."""
@@ -662,17 +682,17 @@ def get_file_info_list(record):
             p_file['future_date_message'] = _("Restricted Access")
         elif access == "open_date":
             if date and isinstance(date, list) and date[0]:
-                adt = date[0].get('dateValue')
-                if adt is None:
-                    adt = dt.date.max
-                pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
-                if pdt > dt.utcnow():
+                adtv = date[0].get('dateValue')
+                if adtv is None:
+                    adtv = dt.date.max
+                adt = dt.strptime(adtv, '%Y-%m-%d')
+                if is_future(adtv):
                     message = "Download is available from {}/{}/{}."
                     p_file['future_date_message'] = _(message).format(
-                        pdt.year, pdt.month, pdt.day)
+                        adt.year, adt.month, adt.day)
                     message = "Download / Preview is available from {}/{}/{}."
                     p_file['download_preview_message'] = _(message).format(
-                        pdt.year, pdt.month, pdt.day)
+                        adt.year, adt.month, adt.day)
 
     def get_data_by_key_array_json(key, array_json, get_key):
         for item in array_json:
