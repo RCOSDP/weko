@@ -55,7 +55,7 @@ from invenio_pidstore.errors import PIDDoesNotExistError,PIDDeletedError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_rest import ContentNegotiatedMethodView
 from simplekv.memory.redisstore import RedisStore
-from sqlalchemy import types
+from sqlalchemy import types,or_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import cast
 from weko_redis import RedisConnection
@@ -1143,12 +1143,14 @@ def check_authority_action(activity_id='0', action_id=0,
     if current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR']:
         # Check if this activity has contributor equaling to current user
         im = ItemMetadata.query.filter_by(id=activity.item_id) \
-            .filter(
-            cast(ItemMetadata.json['shared_user_id'], types.INT)
-            == int(cur_user)).one_or_none()
+            .filter(or_(
+            cast(ItemMetadata.json['shared_user_id'], types.INT)== int(cur_user),
+            cast(ItemMetadata.json['weko_shared_id'], types.INT)== int(cur_user))).one_or_none()
         if im:
             # There is an ItemMetadata with contributor equaling to current
             # user, allow to access
+            return 0
+        if int(cur_user) == activity.shared_user_id:
             return 0
     # Check current user is action handler of activity
     activity_action_obj = work.get_activity_action_comment(

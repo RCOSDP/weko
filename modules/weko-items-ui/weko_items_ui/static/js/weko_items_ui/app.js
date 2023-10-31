@@ -4293,6 +4293,17 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         sessionStorage.removeItem(key);
       }
 
+      $scope.saveActivityData = function(item_save_uri, currActivityId, enableContributor,enableFeedbackMail,startLoading,sessionValid) {
+        if (!$scope.saveDataJson(item_save_uri, currActivityId, enableContributor,enableFeedbackMail,startLoading,sessionValid)){
+          return;
+        }
+        $scope.genTitleAndPubDate();
+        if (!$scope.saveActivity()){
+          return;
+        }
+        return true
+      }
+
       $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail, startLoading,sessionValid) {
         //When press 'Next' or 'Save' button, setting data for model.
         //This function is called in updataDataJson function.
