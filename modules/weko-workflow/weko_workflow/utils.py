@@ -3374,12 +3374,12 @@ def cancel_expired_usage_reports():
 
 
 def process_send_approval_mails(activity_detail, actions_mail_setting,
-                                next_step_appover_id, file_data):
+                                next_step_approver_id, file_data):
     """Process send mail for approval steps.
 
     :param activity_detail:
     :param actions_mail_setting:
-    :param next_step_appover_id:
+    :param next_step_approver_id:
     :param file_data:
     :return:
     """
@@ -3387,7 +3387,6 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
         'guest_mail') else False
     item_info = get_item_info(activity_detail.item_id)
     mail_info = set_mail_info(item_info, activity_detail, is_guest_user)
-    mail_info['restricted_download_link'] = file_data.get("file_url", '')
     mail_info['restricted_expiration_date'] = file_data.get(
         "expiration_date", '')
     mail_info['restricted_expiration_date_ja'] = file_data.get(
@@ -3397,13 +3396,21 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
 
     # Override guest mail if any
     if is_guest_user:
+        mail_info['restricted_download_link'] = file_data.get("file_url", '')
         mail_info['mail_recipient'] = activity_detail.extra_info.get(
             'guest_mail')
+    else:
+        #Do not send onetimeurl if user logged in
+        mail_info['restricted_download_link'] = ""
 
     if actions_mail_setting["approval"]:
         if actions_mail_setting.get("previous", {}):
-            setting =actions_mail_setting.get("previous")\
-           .get("inform_approval", {})
+            if is_guest_user:
+                setting =actions_mail_setting.get("previous")\
+                .get("inform_approval_for_guest", {})
+            else:
+                setting =actions_mail_setting.get("previous")\
+                .get("inform_approval", {})
             if _check_mail_setting(setting):
                 process_send_mail(mail_info, setting["mail"])
             else:
@@ -3413,11 +3420,15 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
                     process_send_mail(mail_info, setting["mail"])    
 
         if actions_mail_setting.get('next', {}):
-            setting = actions_mail_setting.get("next") \
+            if is_guest_user:
+                setting = actions_mail_setting["next"] \
+                .get("request_approval_for_guest", {})
+            else:
+                setting = actions_mail_setting["next"] \
                 .get("request_approval", {})
             if _check_mail_setting(setting):
                 approval_user = db.session.query(User).filter_by(
-                    id=int(next_step_appover_id)).first()
+                    id=int(next_step_approver_id)).first()
                 if not approval_user:
                     current_app.logger.error("Does not have approval data")
                 else:
@@ -3426,7 +3437,11 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
 
     if actions_mail_setting["reject"]:
         if actions_mail_setting.get("previous", {}):
-            setting = actions_mail_setting.get("previous") \
+            if is_guest_user:
+                setting = actions_mail_setting["previous"] \
+                .get("inform_reject_for_guest", {})
+            else:
+                setting = actions_mail_setting["previous"] \
                 .get("inform_reject", {})
             if _check_mail_setting(setting):
                 process_send_mail(mail_info, setting["mail"])

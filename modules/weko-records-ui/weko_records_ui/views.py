@@ -636,6 +636,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     file_url = ''
     if file_order >= 0 and files and files[file_order].get('url') and files[file_order]['url'].get('url'):
         file_url = files[file_order]['url']['url']
+    
+    mailcheckflag=request.args.get("q")
+
+    onetime_file_url = request.args.get("onetime_file_url")
 
     return render_template(
         template,
@@ -679,6 +683,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
         show_secret_URL=_get_show_secret_url_button(record,filename),
+        mailcheckflag = mailcheckflag,
+        onetime_file_url = onetime_file_url,
         **ctx,
         **kwargs
     )

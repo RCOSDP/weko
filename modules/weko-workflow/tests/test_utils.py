@@ -2443,51 +2443,59 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
     mail_info={
         "restricted_download_link":"",
         "restricted_expiration_date":"",
-        "restricted_expiration_date_en":"",
+        "restricted_expiration_date_ja":"",
         "restricted_expiration_date_en":""
     }
     mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
     activity = db_register["activities"][1]
-    next_step_appover_id = users[2]["id"]
+    guest_activity = db_register["activities"][-1]
+    next_step_approver_id = users[2]["id"]
+    not_next_step_approver_id = 9999
     file_data={
                 "file_url":"test_url",
                 "expiration_date":"",
                 "expiration_date_ja":"無制限",
                 "expiration_date_en":"Unlimited"
             }
-    # approval is True,previous.inform_approval is True
+    guest_file_data={
+                "file_url":"test_url",
+                "expiration_date":"",
+                "expiration_date_ja":"無制限",
+                "expiration_date_en":"Unlimited",
+                "guest_mail":"guest@test.org"
+            }
+    # no1, not guest, approval is True,previous.inform_approval is True
     actions_mail_setting={
-        "previous":{"inform_reject":False,"inform_approval":True,"request_approval":False},
+        "previous":{"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": False},
+                     "inform_approval": {"mail": "0", "send": True}, "request_approval": {"mail": "0", "send": False}, 
+                     "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": True},
+                     "request_approval_for_guest": {"mail": "0", "send": False}},
         "next": {},
         "approval": True,
         "reject": False}
     mail_info={
         "restricted_download_link":"",
         "restricted_expiration_date":"",
-        "restricted_expiration_date_en":"",
+        "restricted_expiration_date_ja":"",
         "restricted_expiration_date_en":""
     }
     mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
     test_mail_info = {
-        "restricted_download_link":"test_url",
+        "restricted_download_link":"",
         "restricted_expiration_date":"",
         "restricted_expiration_date_ja":"無制限",
         "restricted_expiration_date_en":"Unlimited"
     }
     mock_sender = mocker.patch("weko_workflow.utils.process_send_mail")
-    process_send_approval_mails(activity, actions_mail_setting,next_step_appover_id,file_data)
-    mock_sender.assert_called_with(test_mail_info,"email_pattern_approval_done.tpl")
+    process_send_approval_mails(activity, actions_mail_setting,next_step_approver_id,file_data)
+    mock_sender.assert_called_with(test_mail_info,"0")
+
+    # no2, guest, approval is True,previous.inform_approval is True
     
-    # approval is True,next.request_approval is True
-    actions_mail_setting={
-        "previous":{},
-        "next": {"inform_reject":False,"inform_approval":False,"request_approval":True},
-        "approval": True,
-        "reject": False}
     mail_info={
         "restricted_download_link":"",
         "restricted_expiration_date":"",
-        "restricted_expiration_date_en":"",
+        "restricted_expiration_date_ja":"",
         "restricted_expiration_date_en":""
     }
     mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
@@ -2496,37 +2504,48 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
         "restricted_expiration_date":"",
         "restricted_expiration_date_ja":"無制限",
         "restricted_expiration_date_en":"Unlimited",
-        "mail_recipient":users[2]["email"]
+        "mail_recipient":"guest@test.org"
     }
     mock_sender = mocker.patch("weko_workflow.utils.process_send_mail")
-    process_send_approval_mails(activity, actions_mail_setting,next_step_appover_id,file_data)
-    mock_sender.assert_called_with(test_mail_info,"email_pattern_request_approval.tpl")
-    
-    # approval is True,previous.inform_approval is False,next.request_approval is False
+    process_send_approval_mails(guest_activity, actions_mail_setting,next_step_approver_id,guest_file_data)
+    mock_sender.assert_called_with(test_mail_info,"0")
+
+    # no3, not guest, approval is True,next.request_approval is True
     actions_mail_setting={
         "previous":{},
-        "next": {"inform_reject":False,"inform_approval":False,"request_approval":False},
+        "next": {"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": False},
+                 "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": True},
+                   "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False},
+                  "request_approval_for_guest": {"mail": "0", "send": True}},
         "approval": True,
         "reject": False}
     mail_info={
         "restricted_download_link":"",
         "restricted_expiration_date":"",
-        "restricted_expiration_date_en":"",
+        "restricted_expiration_date_ja":"",
         "restricted_expiration_date_en":""
     }
     mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
-    process_send_approval_mails(activity, actions_mail_setting,next_step_appover_id,file_data)
+    test_mail_info = {
+        "restricted_download_link":"",
+        "restricted_expiration_date":"",
+        "restricted_expiration_date_ja":"無制限",
+        "restricted_expiration_date_en":"Unlimited",
+        "mail_recipient":"sysadmin@test.org"}
+    mock_sender = mocker.patch("weko_workflow.utils.process_send_mail")
+    process_send_approval_mails(activity, actions_mail_setting,next_step_approver_id,file_data)
+    mock_sender.assert_called_with(test_mail_info,"0")
 
-    # reject is True, previous.inform_reject is True
-    actions_mail_setting={
-        "previous":{"inform_reject":True,"inform_approval":False,"request_approval":True},
-        "next": {},
-        "approval": False,
-        "reject": True}
+    # no4, approval is True,request_approval is True, but approver is none
+    with patch('weko_workflow.utils.current_app.logger.error') as mock_logger_error:
+        process_send_approval_mails(activity, actions_mail_setting,not_next_step_approver_id,file_data)
+        mock_logger_error.assert_called_with("Does not have approval data")
+
+    # no5, guest, approval is True,next.request_approval is True
     mail_info={
         "restricted_download_link":"",
         "restricted_expiration_date":"",
-        "restricted_expiration_date_en":"",
+        "restricted_expiration_date_ja":"",
         "restricted_expiration_date_en":""
     }
     mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
@@ -2534,26 +2553,133 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
         "restricted_download_link":"test_url",
         "restricted_expiration_date":"",
         "restricted_expiration_date_ja":"無制限",
-        "restricted_expiration_date_en":"Unlimited"
+        "restricted_expiration_date_en":"Unlimited",
+        "mail_recipient":"sysadmin@test.org"
     }
     mock_sender = mocker.patch("weko_workflow.utils.process_send_mail")
-    process_send_approval_mails(activity, actions_mail_setting,next_step_appover_id,file_data)
-    mock_sender.assert_called_with(test_mail_info,"email_pattern_approval_rejected.tpl")
-
-    # reject is True, previous.inform_reject is False
+    process_send_approval_mails(guest_activity, actions_mail_setting,next_step_approver_id,guest_file_data)
+    mock_sender.assert_called_with(test_mail_info,"0")
+    
+    # approval is True,previous.inform_approval is False,next.request_approval is False
     actions_mail_setting={
-        "previous":{"inform_reject":False,"inform_approval":False,"request_approval":False},
+        "previous":{},
+        "next": {"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": False},
+                "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": False},
+                "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False}, 
+                "request_approval_for_guest": {"mail": "0", "send": False}},
+        "approval": True,
+        "reject": False}
+    mail_info={
+        "restricted_download_link":"",
+        "restricted_expiration_date":"",
+         "restricted_expiration_date_ja":"",
+        "restricted_expiration_date_en":""
+    }
+    mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
+    process_send_approval_mails(activity, actions_mail_setting,next_step_approver_id,file_data)
+
+    # no6, approval is True, previous.inform_approval is False,inform_itemreg is True
+    actions_mail_setting={
+        "previous":{"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": True},
+                   "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": False},
+                     "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False}, 
+                     "request_approval_for_guest": {"mail": "0", "send": False}},
+        "next": {},
+        "approval": True,
+        "reject": False}
+    mail_info={
+        "restricted_download_link":"",
+        "restricted_expiration_date":"",
+        "restricted_expiration_date_ja":"",
+        "restricted_expiration_date_en":""
+    }
+    mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
+    test_mail_info={
+        "restricted_download_link":"",
+        "restricted_expiration_date":"",
+        "restricted_expiration_date_ja": "無制限",
+        "restricted_expiration_date_en": "Unlimited"}
+    mock_sender = mocker.patch("weko_workflow.utils.process_send_mail")
+    process_send_approval_mails(activity, actions_mail_setting,next_step_approver_id,file_data)
+    mock_sender.assert_called_with(test_mail_info,"0")
+
+     # approval is True, previous.inform_approval is False, previous is True, inform_itemReg.send is False
+    actions_mail_setting={
+        "previous":{"inform_itemReg": {"mail": "0", "send": False}},
+        "next": {},
+        "approval": True,
+        "reject": False}
+    mail_info={
+        "restricted_download_link":"",
+        "restricted_expiration_date":"",
+        "restricted_expiration_date_ja":"",
+        "restricted_expiration_date_en":""
+    }
+    mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
+    process_send_approval_mails(activity, actions_mail_setting,next_step_approver_id,file_data)
+
+    # no7, not guest, reject is True, previous.inform_reject is True
+    actions_mail_setting={
+        "previous":{"inform_reject": {"mail": "0", "send": True}, "inform_itemReg": {"mail": "0", "send": False}, 
+                    "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": False},
+                    "inform_reject_for_guest": {"mail": "0", "send": True}, "inform_approval_for_guest": {"mail": "0", "send": False},
+                    "request_approval_for_guest": {"mail": "0", "send": False}},
         "next": {},
         "approval": False,
         "reject": True}
     mail_info={
         "restricted_download_link":"",
         "restricted_expiration_date":"",
-        "restricted_expiration_date_en":"",
+        "restricted_expiration_date_ja":"",
         "restricted_expiration_date_en":""
     }
     mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
-    process_send_approval_mails(activity, actions_mail_setting,next_step_appover_id,file_data)
+    test_mail_info = {
+        "restricted_download_link":"",
+        "restricted_expiration_date":"",
+        "restricted_expiration_date_ja":"無制限",
+        "restricted_expiration_date_en":"Unlimited"
+    }
+    mock_sender = mocker.patch("weko_workflow.utils.process_send_mail")
+    process_send_approval_mails(activity, actions_mail_setting,next_step_approver_id,file_data)
+    mock_sender.assert_called_with(test_mail_info,"0")
+
+    # no8, guest, reject is True, previous.inform_reject is True
+    mail_info={
+        "restricted_download_link":"",
+        "restricted_expiration_date":"",
+        "restricted_expiration_date_ja":"",
+        "restricted_expiration_date_en":""
+    }
+    mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
+    test_mail_info = {
+        "restricted_download_link":"test_url",
+        "restricted_expiration_date":"",
+        "restricted_expiration_date_ja":"無制限",
+        "restricted_expiration_date_en":"Unlimited",
+        "mail_recipient":"guest@test.org"
+    }
+    mock_sender = mocker.patch("weko_workflow.utils.process_send_mail")
+    process_send_approval_mails(guest_activity, actions_mail_setting,next_step_approver_id,guest_file_data)
+    mock_sender.assert_called_with(test_mail_info,"0")
+
+    # reject is True, previous.inform_reject is False
+    actions_mail_setting={
+        "previous":{"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": False},
+                    "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": False}, 
+                    "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False},
+                    "request_approval_for_guest": {"mail": "0", "send": False}},
+        "next": {},
+        "approval": False,
+        "reject": True}
+    mail_info={
+    "restricted_download_link":"",
+    "restricted_expiration_date":"",
+    "restricted_expiration_date_en":"",
+    "restricted_expiration_date_en":""
+    }
+    mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
+    process_send_approval_mails(activity, actions_mail_setting,next_step_approver_id,file_data)
 
     # approval is False,reject is False
     actions_mail_setting={
@@ -2568,7 +2694,22 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
         "restricted_expiration_date_en":""
     }
     mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
-    process_send_approval_mails(activity, actions_mail_setting,next_step_appover_id,file_data)
+    process_send_approval_mails(activity, actions_mail_setting,next_step_approver_id,file_data)
+
+    # reject is True, previous is None
+    actions_mail_setting={
+        "previous":{},
+        "next": {},
+        "approval": False,
+        "reject": True}
+    mail_info={
+        "restricted_download_link":"",
+        "restricted_expiration_date":"",
+        "restricted_expiration_date_en":"",
+        "restricted_expiration_date_en":""
+    }
+    mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
+    process_send_approval_mails(activity, actions_mail_setting,next_step_approver_id,file_data)
 
 # def get_usage_data(item_type_id, activity_detail, user_profile=None):
 #     def __build_metadata_for_usage_report(record_data: Union[dict, list],

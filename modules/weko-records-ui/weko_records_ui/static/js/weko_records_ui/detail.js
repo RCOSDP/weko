@@ -278,3 +278,45 @@ require([
       }
   })
 });
+
+})
+$('#close_btn, #modal_close_btn').on('click', function () {
+  document.location.href = location.pathname;
+  })
+$('#mailcheck_download_modal').on('hidden.bs.modal', function () {
+  document.location.href = location.pathname;
+})
+$('#mailaddress_confirm_download').click(function () {
+ let mailaddress = document.getElementById('mail_form').value;
+ let input_error = document.getElementById('input_error_messsge').value;
+ let url_element = document.getElementById('url_element');
+ let onetime_file_url = url_element.dataset.onetime_file_url;
+ const get_uri =  onetime_file_url + '&mailaddress='+ mailaddress + '&isajax=true';
+ let item_detailes_url = location.pathname;
+ if(mailaddress == null || mailaddress == ""){
+   alert(input_error);
+   document.location.href = onetime_file_url;
+ }else{
+    $.ajax({
+      url: get_uri,
+      method: 'GET',
+      async: true,
+      success: function (response) {
+          let link = document.createElement("a");
+          link.download = "";
+          link.href = get_uri;
+          link.click();
+          $('#mailcheck_download_modal').modal('hide');
+          document.location.href = item_detailes_url;
+        },
+      error: function (error) {
+          response_text = error['responseText'];
+          alert(response_text);
+          $('#mailcheck_download_modal').modal('hide');
+          document.location.href = item_detailes_url;
+        }
+      })
+  }
+}
+);
+

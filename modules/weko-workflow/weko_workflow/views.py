@@ -1033,6 +1033,10 @@ def display_activity(activity_id="0"):
     
     form = FlaskForm(request.form)
 
+    approval_preview = False
+    if action_endpoint == 'approval' and current_app.config.get('WEKO_WORKFLOW_APPROVAL_PREVIEW'):
+        approval_preview = workflow_detail.open_restricted
+
     return render_template(
         'weko_workflow/activity_detail.html',
         action_endpoint_key=current_app.config.get(
@@ -1043,6 +1047,7 @@ def display_activity(activity_id="0"):
         allow_multi_thumbnail=allow_multi_thumbnail,
         application_item_type=application_item_type,
         approval_email_key=approval_email_key,
+        approval_preview=approval_preview,
         auto_fill_data_type=data_type,
         auto_fill_title=title,
         community_id=community_id,
