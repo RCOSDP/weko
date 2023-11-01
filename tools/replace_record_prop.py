@@ -1,20 +1,20 @@
 from collections import OrderedDict
 import re
 from flask import current_app
+from elasticsearch.helpers import bulk
 
 from invenio_db import db
 from invenio_records.models import RecordMetadata
 from weko_records.api import ItemTypes,Mapping
 from weko_records.utils import set_timestamp
+from weko_records.models import ItemMetadata
 from weko_deposit.api import WekoIndexer
 from sqlalchemy.orm.attributes import flag_modified
 from weko_schema_ui.schema import  SchemaTree
 from weko_records.serializers.utils import get_mapping
-from sqlalchemy import types
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from weko_search_ui.utils import handle_get_all_id_in_item_type
 
-from weko_records.api import ItemsMetadata
 
 
 def replace_item(data, paths, _target, _from,_to):
@@ -153,10 +153,9 @@ def get_item_type_mapping(field):
 def get_target_record(paths):
     """置換対象となるアイテムタイプに所属、かつ置換対象のフィールドを持つプロパティを含むレコードの取得"""
     res=list()
-
     item_type_ids = list(paths.keys())
     for item_type_id in item_type_ids:
-        item_metadatas = ItemsMetadata.get_by_item_type_id(item_type_id)
+        item_metadatas = ItemMetadata.query.filter_by(item_type_id=item_type_id).all()
         root_keys = [p.split(".")[0].replace("[]","") for p in paths[item_type_id]]
         data = [d for d in item_metadatas if any(key in d.json for key in root_keys)]
         res+=(data)
@@ -166,13 +165,14 @@ if __name__ == "__main__":
 
     field="subitem_description_type" # field to replace
     target="isIdenticalTo" # the value to replace
-    to="Others" # the value to use for replacement
+    to="Other" # the value to use for replacement
 
     paths, target_es_fields, item_type_scheme_mapping = get_item_type_mapping(field)
     records = get_target_record(paths)
     indexer = WekoIndexer()
     indexer.get_es_index()
     count = 0
+    bulk_data = []
     for r in records:
         try:
             pid = PersistentIdentifier.query.filter_by(
@@ -239,12 +239,18 @@ if __name__ == "__main__":
                             body["_item_metadata"] = {}
                         body["_item_metadata"][key] = value
                 set_timestamp(body, _record.created, _record.updated)
-                indexer.client.update(index=indexer.es_index, doc_type=indexer.es_doc_type,
-                                      id=str(r.id), body={'doc':body})
                 db.session.commit()
-                print("fixed: {}".format(pid.pid_value))
+                bulk_data.append({
+                    "_op_type": "update",
+                    "_index": indexer.es_index,
+                    "_type": indexer.es_doc_type,
+                    "_id": pid.object_uuid,
+                    "doc": body
+                })
                 count+=1
         except:
             db.session.rollback()
             print("raise error: {}".format(pid.pid_value if pid is not None else ""))
+    
+    bulk(indexer.client, bulk_data)
     print("fixed {} items.".format(count))
