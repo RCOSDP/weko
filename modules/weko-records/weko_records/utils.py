@@ -1566,7 +1566,10 @@ def get_attribute_value_all_items(
                 else:
                     temp = []
                     for lst in klst:
-                        key = lst[0].split(".")[-1]
+                        keys = lst[0].split(".")
+                        if keys[0].replace('[]', '') != root_key:
+                            continue
+                        key = keys[-1]
                         val = alst.pop(key, {})
                         name = get_name(key, False) or ""
                         hide = lst[3].get("hide") or (
