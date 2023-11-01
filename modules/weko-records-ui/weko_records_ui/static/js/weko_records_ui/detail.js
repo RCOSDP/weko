@@ -267,6 +267,18 @@ require([
       });
     }
   });
+  
+  document.getElementById('print-btn').addEventListener('click', () => {
+    const iframe = document.createElement('iframe');
+    iframe.srcdoc = "<!DOCTYPE html>"
+    document.body.appendChild(iframe);
+    iframe.onload = () => {
+      iframe.contentDocument.body.appendChild(document.getElementById('terms').cloneNode(true));
+      iframe.contentWindow.print();
+      }
+  })
+});
+
 })
 $('#close_btn, #modal_close_btn').on('click', function () {
   document.location.href = location.pathname;
@@ -307,3 +319,4 @@ $('#mailaddress_confirm_download').click(function () {
   }
 }
 );
+

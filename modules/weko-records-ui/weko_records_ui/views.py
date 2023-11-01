@@ -641,7 +641,6 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     onetime_file_url = request.args.get("onetime_file_url")
 
-
     return render_template(
         template,
         pid=pid,
