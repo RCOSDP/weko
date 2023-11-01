@@ -183,7 +183,7 @@ const itemInfo = Object.prototype.hasOwnProperty.call(props.item, 'rocrate')
   ? getContentById(props.item.rocrate, './')
   : {};
 const thumbnailName = Object.prototype.hasOwnProperty.call(itemInfo, appConf.roCrate.info.thumbnail)
-  ? itemInfo[appConf.roCrate.info.thumbnail][0][0]
+  ? itemInfo[appConf.roCrate.info.thumbnail][0]
   : '';
 const loading = ref(true);
 const thumbnailPath = ref('/img/noimage_thumbnail.jpg');
@@ -199,6 +199,8 @@ onMounted(() => {
         timeout: useRuntimeConfig().public.apiTimeout,
         method: 'GET',
         headers: {
+          'Cache-Control': 'no-store',
+          Pragma: 'no-cache',
           'Accept-Language': localStorage.getItem('locale') ?? 'ja',
           Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
         },
