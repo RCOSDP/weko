@@ -279,7 +279,7 @@ def base_app(instance_path):
         WEKO_WORKFLOW_DATE_FORMAT = WEKO_WORKFLOW_DATE_FORMAT,
     )
     #with ESTestServer(timeout=30) as server:
-        #client = Elasticsearch(['localhost:%s'%server.port])
+    client = Elasticsearch(['localhost:9200'])
     InvenioSearch(app_, client=client)
     Babel(app_)
     InvenioAccounts(app_)

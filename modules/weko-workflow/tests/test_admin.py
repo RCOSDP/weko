@@ -74,11 +74,12 @@ class TestFlowSettingView:
             assert res.status_code == 404
         
         #test No.11(W2023-22 2)        
-        login(client=client, email=users[0]['email'])
-        url = '/admin/flowsetting/{}'.format(0)
-        with patch("flask.templating._render", return_value=""):
-            res =  client.get(url)
-            assert res.status_code == 403
+        login(client=client, email=users[users_index]['email'])
+        url = '/admin/flowsetting/{}'.format(flow_define.flow_id)
+        with patch("weko_workflow.admin.FlowSettingView._check_auth",return_value = False):
+            with patch("flask.templating._render", return_value=""):
+                res =  client.get(url)
+                assert res.status_code == 403
 
     # def flow_detail(self, flow_id='0'):
     # def new_flow(self, flow_id='0'):

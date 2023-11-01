@@ -765,7 +765,7 @@ def test_create_secret_url(app,db,users,records):
         assert return_dict["restricted_download_count"] == ""
         assert return_dict["restricted_download_count_ja"] == "無制限"
         assert return_dict["restricted_download_count_en"] == "Unlimited"
-        assert return_dict['restricted_expiration_date'] == (datetime.today() + timedelta(1)).strftime("%Y-%m-%d") 
+        assert return_dict['restricted_expiration_date'] == (datetime.date.today() + timedelta(1)).strftime("%Y-%m-%d") 
         assert return_dict['restricted_expiration_date_ja'] == ""
         assert return_dict['restricted_expiration_date_en'] == ""
 

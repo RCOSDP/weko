@@ -2300,8 +2300,12 @@ def extract_term_description(file_info):
         return '', ''
 
     terms_and_conditions = restricted_access_settings.terms_and_conditions
-    target_term = next(term.get('content', {'en': {}, 'ja': {}}) for term in terms_and_conditions
-                        if term.get('key') == file_info.get('terms') and term.get('existed', False))
+    for term in terms_and_conditions:
+        if term.get('key') == file_info.get('terms') and term.get('existed', False):
+            target_term = term.get('content', {'en': {}, 'ja': {}})
+            break
+        else:
+            return '', ''
     if target_term:
         return target_term.get('ja').get('content'), target_term.get('en').get('content')
     return '', ''

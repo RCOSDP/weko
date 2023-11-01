@@ -341,14 +341,6 @@ def test_handle_check_required_data(db_records, item_type):#c
         assert values == [["title"]]
 
 
-
-
-
-
-
-
-
-
 # def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
@@ -1335,7 +1327,7 @@ def test_set_mail_info(app, db_register, mocker):
     }
     with app.test_request_context():
         result = set_mail_info(item_info,db_register["activities"][0],True)
-        #assert result == test
+        assert result == test
     
     #Test No.22(W2023-22 2)
     test = {
@@ -1381,21 +1373,25 @@ def test_set_mail_info(app, db_register, mocker):
     }
     with app.test_request_context():
         result = set_mail_info(item_info,db_register["activities"][0],False)
-        #assert result == test
+        assert result == test
 
     #testNo.20(W2023-22 2)
     with app.test_request_context():
-        with patch("weko_workflow.utils.WekoRecord.get_record_by_pid"):
-            result = set_mail_info(item_info,db_register["activities"][9],False)
-            assert result["landing_url"] != ""
+        result = set_mail_info(item_info,db_register["activities"][9],False)
+        assert result["landing_url"] != ""
     
     #testNo.21(W2023-22 2)
-    # with app.test_request_context():
-    #     with patch("weko_deposit.api.WekoRecord.get_record_by_pid",return_value = {"pid":{"value":1}}):
-    #         with patch("weko_workflow.utils.extract_term_description", return_value=("","")):
-    #             result = set_mail_info(item_info,db_register["activities"][10],False)
-                #assert result["terms_of_use_jp"] == ""
-                #assert result["terms_of_use_en"] == ""
+    with app.test_request_context():
+        with patch("weko_workflow.utils.WekoRecord.get_file_data", return_value = [{"filename":"aaa.txt"}]):
+            with patch("weko_workflow.utils.extract_term_description", return_value=("","")):
+                result = set_mail_info(item_info,db_register["activities"][10],False)
+                assert result["terms_of_use_jp"] == ""
+                assert result["terms_of_use_en"] == ""
+
+class MockDict():
+    def __init__(self, data):
+        for key in data:
+            setattr(self, key, data[key])
     
 
 # def extract_term_description(file_info):
@@ -1426,12 +1422,31 @@ def test_extract_term_description(db):
         "expiration_date_access": 500,
         "expiration_date_access_unlimited_chk": False,
     },
-    "terms_and_conditions": [{"key": "1", "content": {"en": {"title": "TERMS OF USE", "content": "TERMS OF USE"}, "ja": {"title": "利用規約", "content": "利用規約"}}, "existed": True}]
+    "terms_and_conditions": [{"key": 1, "content": {"en": {"title": "TERMS OF USE", "content": "TERMS OF USE"}, "ja": {"title": "利用規約", "content": "利用規約"}}, "existed": True}]
     }
+
+    restricted_access_setting2 = {
+    "secret_URL_file_download": {
+        "secret_expiration_date": 30,
+        "secret_expiration_date_unlimited_chk": False,
+        "secret_download_limit": 10,
+        "secret_download_limit_unlimited_chk": False,
+    },
+    "content_file_download": {
+        "expiration_date": 30,
+        "expiration_date_unlimited_chk": False,
+        "download_limit": 10,
+        "download_limit_unlimited_chk": False,
+    },
+    "usage_report_workflow_access": {
+        "expiration_date_access": 500,
+        "expiration_date_access_unlimited_chk": False,
+    },}
 
     file_info = {"terms": 1}
     test = "利用規約", "TERMS OF USE"
-    with patch("weko_workflow.utils.AdminSettings.get", return_value = restricted_access_setting):
+    mock_adminsettings = MockDict(restricted_access_setting)
+    with patch("weko_workflow.utils.AdminSettings.get", return_value = mock_adminsettings):
         assert extract_term_description(file_info) == test
 
     #testNo.17(W2023-22 2)
@@ -1449,7 +1464,7 @@ def test_extract_term_description(db):
     #testNo.19(W2023-22 2)
     file_info = {"terms": 2}
     test = "", ""
-    with patch("weko_workflow.utils.AdminSettings.get", return_value = restricted_access_setting):
+    with patch("weko_workflow.utils.AdminSettings.get", return_value = mock_adminsettings):
         assert extract_term_description(file_info) == test
 
 # def process_send_reminder_mail(activity_detail, mail_template):

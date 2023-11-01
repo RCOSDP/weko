@@ -905,7 +905,6 @@ def test_get_uri(app,client,db_sessionlifetime,records):
 def test_create_secret_url_and_send_mail(app,client,db,users,records,db_restricted_access_secret):
     indexer, results = records
     record = results[1]
-    app.config.update(WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID) == 1
 
     # 79
     id = 1 #repoadmin
@@ -914,7 +913,7 @@ def test_create_secret_url_and_send_mail(app,client,db,users,records,db_restrict
                                 ,filename=results[1]["filename"])
     login_user_via_session(client=client, user=users[id]["obj"] ,email=users[id]["email"])
     with patch('weko_records_ui.views._get_show_secret_url_button',return_value = True):
-        with patch('invenio_mail.models.MailTemplateGenres.query.get',return_value ={"??template??"}):
+        with patch('weko_records_ui.views.MailTemplateGenres.query.get',return_value = {"??template??"}):
             #with patch('???secret_mail_templateが存在するとき')
             with patch('weko_records_ui.views.process_send_mail',return_value = True):
                 #with app.test_request_context():
@@ -927,7 +926,7 @@ def test_create_secret_url_and_send_mail(app,client,db,users,records,db_restrict
                     assert res.status_code == 200
         #W2023-22-2 TestNo.5
         with patch('weko_records_ui.views.process_send_mail',return_value = False):
-            with patch('invenio_mail.models.MailTemplateGenres.query.get',return_value ={}):
+            with patch('weko_records_ui.views.MailTemplateGenres.query.get',return_value ={}):
                 with patch("flask.templating._render", return_value=""):
                     res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
                     assert res.status_code == 500
