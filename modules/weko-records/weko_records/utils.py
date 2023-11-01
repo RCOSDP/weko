@@ -1796,9 +1796,8 @@ def selected_value_by_language(
             if val_parent_key == lang_key.split(".")[0]:
                 if (
                     lang_array is not None
-                    and value_array is not None
+                    and (value_array is not None and len(value_array) > 0)
                     and isinstance(lang_selected, str)
-                    and len(value_array) > 0
                     and not prop_hidden
                 ):
                     if len(lang_array) > 0:
@@ -1853,8 +1852,8 @@ def selected_value_by_language(
             if not result:
                 break
         if not result:
-            if (len(value_array) > 0
-                and value_array is not None
+            if (
+                (value_array is not None and len(value_array) > 0)
                 and isinstance(lang_selected, str)
                 and not prop_hidden
             ):
@@ -1898,10 +1897,13 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                         if x.get(ob):
                             save = x.get(ob)
             for s in save:
-                if str_lang is None:
-                    value = s.get(str_key_val[len(str_key_val) - 1]).strip()
+                if s is not None and str_lang is None:
+                    value = s
+                    if isinstance(s,dict):
+                        value = s.get(str_key_val[len(str_key_val) - 1]).strip()
                     if len(value) > 0:
                         return value
+                
                 if (
                     s
                     and isinstance(s, dict)
