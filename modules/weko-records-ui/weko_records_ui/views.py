@@ -64,7 +64,7 @@ from weko_workflow.api import WorkFlow
 
 from weko_records_ui.fd import add_signals_info
 from weko_records_ui.utils import check_items_settings, get_file_info_list
-from weko_workflow.utils import get_item_info, process_send_mail_tpl, set_mail_info 
+from weko_workflow.utils import get_item_info, process_send_mail_tpl, set_mail_info ,is_terms_of_use_only
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
@@ -349,7 +349,7 @@ def get_workflow_detail(workflow_id):
     """
     workflow_detail = WorkFlow().get_workflow_by_id(workflow_id)
     if workflow_detail:
-        return workflow_detail
+        return workflow_detail,is_terms_of_use_only(workflow_id)
     else:
         abort(404)
 
