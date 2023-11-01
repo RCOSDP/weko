@@ -431,11 +431,11 @@ def test_get_usage_workflow(app, users, workflows):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_workflow_detail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_get_workflow_detail(app,workflows):
     wf = workflows['workflow']
-    ret = get_workflow_detail(wf.id)
-    assert isinstance(wf,WorkFlow)
+    ret,isterm = get_workflow_detail(wf.id)
+    assert isinstance(ret,WorkFlow) and isinstance(isterm,bool)
 
     with pytest.raises(NotFound):
-        ret = get_workflow_detail(0)
+        ret,isterm = get_workflow_detail(0)
     
 
 # def default_view_method(pid, record, filename=None, template=None, **kwargs):

@@ -65,7 +65,8 @@ from weko_workflow.api import WorkFlow
 
 from weko_records_ui.fd import add_signals_info
 from weko_records_ui.utils import check_items_settings, get_file_info_list
-from weko_workflow.utils import get_item_info, process_send_mail, process_send_mail_tpl, set_mail_info 
+from weko_workflow.utils import get_item_info, process_send_mail_tpl, set_mail_info ,is_terms_of_use_only, process_send_mail
+
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
@@ -350,7 +351,7 @@ def get_workflow_detail(workflow_id):
     """
     workflow_detail = WorkFlow().get_workflow_by_id(workflow_id)
     if workflow_detail:
-        return workflow_detail
+        return workflow_detail,is_terms_of_use_only(workflow_id)
     else:
         abort(404)
 
@@ -637,6 +638,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     file_url = ''
     if file_order >= 0 and files and files[file_order].get('url') and files[file_order]['url'].get('url'):
         file_url = files[file_order]['url']['url']
+    
+    mailcheckflag=request.args.get("q")
+
+    onetime_file_url = request.args.get("onetime_file_url")
 
     return render_template(
         template,
@@ -680,6 +685,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
         show_secret_URL=_get_show_secret_url_button(record,filename),
+        mailcheckflag = mailcheckflag,
+        onetime_file_url = onetime_file_url,
         **ctx,
         **kwargs
     )
