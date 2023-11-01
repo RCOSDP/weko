@@ -1288,3 +1288,6 @@ WEKO_ADMIN_FACET_SEARCH_SETTING_BUCKET_SIZE = 1000
 
 WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 """Default Cache Temporary Directory Information Key."""
+
+WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT = True
+"""Whether system can edit mail template or not."""

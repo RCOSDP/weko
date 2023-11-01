@@ -87,7 +87,7 @@ from weko_search_ui import WekoSearchUI
 from weko_workflow.models import ActionStatusPolicy, Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory,GuestActivity, WorkflowRole
 from weko_workflow.utils import MappingData
 from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
-from weko_workflow.config import WEKO_WORKFLOW_GAKUNINRDM_DATA,WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR,WEKO_WORKFLOW_REST_ENDPOINTS
+from weko_workflow.config import WEKO_WORKFLOW_GAKUNINRDM_DATA,WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR,WEKO_WORKFLOW_REST_ENDPOINTS,WEKO_WORKFLOW_APPROVAL_PREVIEW
 from weko_workflow.ext import WekoWorkflowREST
 from weko_workflow.scopes import activity_scope
 from weko_theme.config import THEME_INSTITUTION_NAME
@@ -541,7 +541,8 @@ def base_app(instance_path, search_class, cache_config):
             'Repository Administrator',
             'Contributor',
             'Community Administrator'
-        ]
+        ],
+        WEKO_WORKFLOW_APPROVAL_PREVIEW=WEKO_WORKFLOW_APPROVAL_PREVIEW
     )
     
     app_.testing = True
@@ -1225,6 +1226,22 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     action_order=1,
                     extra_info={"guest_mail":"guest@test.org","related_title":"related_guest_activity","usage_record_id":str(db_records[1][2].id),"usage_activity_id":str(uuid.uuid4())}
                     )
+    activity_landing_url = Activity(activity_id='A-00000001-10003',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_ids=[], extra_info={"record_id": 1},
+                    action_order=6)
+    activity_terms_of_use = Activity(activity_id='A-00000001-10004',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_ids=[], extra_info={"record_id": 1, "file_name":"aaa.txt"},
+                    action_order=6)
     with db.session.begin_nested():
         db.session.add(workflow)
         db.session.add(activity)
@@ -1351,7 +1368,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
             'action_feedback_mail1':activity_item4_feedbackmail,
             'action_feedback_mail2':activity_item5_feedbackmail,
             'action_feedback_mail3':activity_item6_feedbackmail,
-            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_item9,activity_item10,activity_guest]}
+            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_item9,activity_item10,activity_guest,activity_landing_url,activity_terms_of_use]}
 
 @pytest.fixture()
 def db_register_1(app, db, db_records, users_1, action_data, item_type):

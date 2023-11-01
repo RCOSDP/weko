@@ -164,6 +164,7 @@ from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
 from tests.helpers import fill_oauth2_headers
 
 
+
 @pytest.yield_fixture()
 def instance_path():
     path = tempfile.mkdtemp()
@@ -277,7 +278,9 @@ def base_app(instance_path):
         WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE=WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,
         WEKO_WORKFLOW_DATE_FORMAT = WEKO_WORKFLOW_DATE_FORMAT,
     )
-    # with ESTestServer(timeout=30) as server:
+    #with ESTestServer(timeout=30) as server:
+    client = Elasticsearch(['localhost:9200'])
+    InvenioSearch(app_, client=client)
     Babel(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
@@ -294,8 +297,7 @@ def base_app(instance_path):
     InvenioPreviewer(app_)
     InvenioRecords(app_)
     InvenioRecordsUI(app_)
-    # client = Elasticsearch(['localhost:%s'%server.port])
-    # InvenioSearch(app_, client=client)
+    
     InvenioSearch(app_)
     InvenioSearchUI(app_)
     InvenioPIDRelations(app_)
