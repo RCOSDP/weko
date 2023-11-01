@@ -26,15 +26,14 @@ import os
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
-from typing import List, NoReturn, Optional, Tuple, Union
+from typing import NoReturn, Optional, Tuple, Union
+from urllib.parse import urljoin
 
-import redis
-from redis import sentinel
 from celery.task.control import inspect
-from flask import current_app, request, session, Flask
+from flask import Flask, current_app, request, session, url_for
+from flask_babelex import gettext as _
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from flask_babelex import gettext as _
 from flask_security import current_user
 from invenio_accounts.models import Role, User, userrole
 from invenio_cache import current_cache
@@ -51,40 +50,38 @@ from invenio_pidstore.resolver import Resolver
 from invenio_records.models import RecordMetadata
 from invenio_records_files.models import RecordsBuckets
 from passlib.handlers.oracle import oracle10
-from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
-from weko_admin.models import Identifier, SiteInfo
+from weko_admin.models import AdminSettings, Identifier, SiteInfo
 from weko_admin.utils import get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_deposit.pidstore import get_record_without_version
 from weko_handle.api import Handle
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
-from weko_records.models import ItemType, ItemMetadata
+from weko_records.models import ItemMetadata, ItemType
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
-from weko_records_ui.models import FilePermission, InstitutionName
+from weko_records_ui.models import FilePermission
 from weko_redis import RedisConnection
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
-from werkzeug.utils import import_string
-from weko_deposit.pidstore import get_record_without_version
-
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST, \
     WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST
+from werkzeug.utils import import_string
 
-
-from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
-    WorkFlow , Flow
+from .api import Flow, GetCommunity, UpdateItem, WorkActivity, \
+    WorkActivityHistory, WorkFlow
 from .config import DOI_VALIDATION_INFO, IDENTIFIER_GRANT_SELECT_DICT, \
     WEKO_SERVER_CNRI_HOST_LINK, WEKO_STR_TRUE
 from .errors import InvalidParameterValueError
-from .models import Action as _Action, Activity
-from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity,FlowAction 
-from .models import WorkFlow as _WorkFlow
+from .models import Action as _Action
+from .models import ActionStatusPolicy, Activity, ActivityStatusPolicy, \
+    FlowAction, GuestActivity
+
 
 def _check_mail_setting(setting):
     """Check setting."""
@@ -746,14 +743,12 @@ def check_required_data(data, key, repeatable=False):
     if not data or not repeatable and len(data) > 1:
         error_list.append(key)
     else:
-        for item in data:
-            if not item:
-                error_list.append(key)
+        error_list = [key for item in data if not item]
 
     if not error_list:
         return None
-    else:
-        return list(set(error_list))
+
+    return list(set(error_list))
 
 
 def get_activity_id_of_record_without_version(pid_object=None):
@@ -2088,15 +2083,18 @@ def replace_characters(data, content):
         '[data_download_date]': 'data_download_date',
         '[usage_report_url]': 'usage_report_url',
         '[restricted_usage_activity_id]': 'restricted_usage_activity_id',
-#        '[restricted_institution_name_ja]':'restricted_institution_name_ja',
-#        '[restricted_institution_name_en]':'restricted_institution_name_en',
-        '[file_name]' : 'file_name',
-        '[restricted_download_count]':'restricted_download_count',
-        '[restricted_download_count_ja]':'restricted_download_count_ja',
-        '[restricted_download_count_en]':'restricted_download_count_en',
+        #        '[restricted_institution_name_ja]':'restricted_institution_name_ja',
+        #        '[restricted_institution_name_en]':'restricted_institution_name_en',
+        '[file_name]': 'file_name',
+        '[restricted_download_count]': 'restricted_download_count',
+        '[restricted_download_count_ja]': 'restricted_download_count_ja',
+        '[restricted_download_count_en]': 'restricted_download_count_en',
+        '[secret_url]': 'secret_url',
+        '[terms_of_use_jp]': 'terms_of_use_jp',
+        '[terms_of_use_en]': 'terms_of_use_en',
+        '[landing_url]': 'landing_url'
     }
-    for key in replace_list:
-        value = replace_list.get(key)
+    for key, value in replace_list.items():
         if data.get(value):
             content = content.replace(key, data.get(value))
         else:
@@ -2153,7 +2151,7 @@ def get_item_info(item_id):
             temp = dict()
             return temp
 
-        for k, v in item.items():
+        for _, v in item.items():
             if isinstance(v, dict):
                 item_info.update(v)
     return item_info
@@ -2212,11 +2210,9 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
     institution_name_ja = current_app.config['THEME_INSTITUTION_NAME']['ja']
     institution_name_en = current_app.config['THEME_INSTITUTION_NAME']['en']
     register_user = register_date = ''
+    activity_id = activity_detail.activity_id if activity_detail else ''
     if not guest_user:
-        register_user, register_date = get_register_info(
-            activity_detail.activity_id)
-    
-    institution_name = InstitutionName.get_institution_name()
+        register_user, register_date = get_register_info(activity_id)
 
     mail_info = dict(
         university_institution=item_info.get('subitem_university/institution'),
@@ -2249,8 +2245,8 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
             'subitem_restricted_access_application_date'),
         restricted_mail_address=item_info.get(
             'subitem_restricted_access_mail_address'),
-#        restricted_institution_name_ja = institution_name,
-#        restricted_institution_name_en = institution_name,
+        #        restricted_institution_name_ja = institution_name,
+        #        restricted_institution_name_en = institution_name,
         restricted_download_link='',
         restricted_expiration_date='',
         restricted_approver_name='',
@@ -2264,9 +2260,55 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         mail_recipient=item_info.get('subitem_mail_address'),
         restricted_supervisor='',
         restricted_reference='',
-        restricted_usage_activity_id=activity_detail.activity_id
+        restricted_usage_activity_id=activity_detail.activity_id,
+        landing_url=''
     )
+
+    if getattr(activity_detail, 'extra_info', '') and activity_detail.extra_info:
+        applying_record_id = activity_detail.extra_info.get('record_id', -1)
+        applying_filename = activity_detail.extra_info.get('file_name', '')
+        record = WekoRecord.get_record_by_pid(applying_record_id)
+        file_info = None
+        if record:
+            mail_info['landing_url'] = urljoin(request.url_root, url_for(
+                'invenio_records_ui.recid', pid_value=record.pid.pid_value))
+            file_info = next((file_data for file_data in record.get_file_data()
+                            if file_data.get('filename') == applying_filename))
+        if file_info:
+            term_description_ja, term_description_en = extract_term_description(file_info)
+            mail_info['terms_of_use_jp'] = term_description_ja
+            mail_info['terms_of_use_en'] = term_description_en
+
     return mail_info
+
+
+def extract_term_description(file_info):
+    """Extract term of use description from record file info.
+
+    :param file_info: file infomation
+    :return: tuple of Terms of Use (ja, en)
+    """
+    terms = file_info.get('terms')
+    if terms == 'term_free':
+        terms_description = file_info.get('termsDescription', '')
+        return terms_description, terms_description
+    elif not terms:
+        return '', ''
+
+    restricted_access_settings = AdminSettings.get('restricted_access')
+    if not restricted_access_settings:
+        return '', ''
+
+    terms_and_conditions = restricted_access_settings.terms_and_conditions
+    for term in terms_and_conditions:
+        if term.get('key') == file_info.get('terms') and term.get('existed', False):
+            target_term = term.get('content', {'en': {}, 'ja': {}})
+            break
+        else:
+            return '', ''
+    if target_term:
+        return target_term.get('ja').get('content'), target_term.get('en').get('content')
+    return '', ''
 
 
 def process_send_reminder_mail(activity_detail, mail_id):
@@ -4144,7 +4186,7 @@ def get_contributors(pid_value, user_id_list_json=None, owner_id=-1):
         if type(user_id_list_json) == list:
             for rec in user_id_list_json:
                 if type(rec) == dict:
-                     userid_list.append(int(rec['user']))
+                    userid_list.append(int(rec['user']))
                 elif type(rec) == int:
                     userid_list.append(rec)
         userid_list.append(int(owner_id))

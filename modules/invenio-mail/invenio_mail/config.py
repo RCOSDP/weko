@@ -130,5 +130,21 @@ INVENIO_MAIL_VARIABLE_HELP = [
     {
         "key": "[output_report_title]",
         "comment": "成果物登録のタイトル"
-    }
+    },
+    {
+        "key": "[terms_of_use_jp]",
+        "comment": "申請対象の利用規約（日本語）",
+    },
+    {
+        "key": "[terms_of_use_en]",
+        "comment": "申請対象の利用規約（英語、自由入力）",
+    },
+    {
+        "key": "[secret_url]",
+        "comment": "非公開、エンバーゴデータ向けシークレットURL",
+    },
+    {
+        "key": "[landing_url]",
+        "comment": "申請対象のランディングページURL",
+    },
 ]
