@@ -622,8 +622,10 @@ def test_make_stats_file(i18n_app):
 
 
 # def create_deposit(item_id):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_create_deposit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_create_deposit(i18n_app, location, indices):
-    assert create_deposit(33)
+    assert create_deposit(None)['recid']=='1'
+    assert create_deposit(33)['recid']=='33'
 
 
 # def clean_thumbnail_file(deposit, root_path, thumbnail_path):
@@ -749,9 +751,10 @@ def test_send_item_created_event_to_es(
 
 
 # def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False): ERROR = TypeError: handle_remove_es_metadata() missing 2 required positional arguments: 'bef_metadata' and 'bef_las...
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_import_items_to_system -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_import_items_to_system(i18n_app, es_item_file_pipeline, es_records):
     # item = dict(db_activity['item'])
-    item = es_records["results"][0]["item"]
+    item = es_records["results"][0]
 
     with patch("weko_search_ui.utils.register_item_metadata", return_value={}):
         with patch("weko_search_ui.utils.register_item_doi", return_value={}):
@@ -760,21 +763,21 @@ def test_import_items_to_system(i18n_app, es_item_file_pipeline, es_records):
                 return_value={},
             ):
                 with patch(
-                    "weko_search_ui.utils.create_deposit", return_value=item["id"]
+                    "weko_search_ui.utils.create_deposit", return_value=item["deposit"]
                 ):
                     with patch(
                         "weko_search_ui.utils.send_item_created_event_to_es",
-                        return_value=item["id"],
+                        return_value=item["item"]["id"],
                     ):
                         with patch(
                             "weko_workflow.utils.get_cache_data", return_value=True
                         ):
-                            assert import_items_to_system(item)
-                            item["status"] = "new"
-                            assert import_items_to_system(item)
+                            assert import_items_to_system(item["item"])
+                            item["item"]["status"] = "new"
+                            assert import_items_to_system(item["item"])
 
                     assert import_items_to_system(
-                        item
+                        item["item"]
                     )  # Will result in error but will cover exception part
 
 

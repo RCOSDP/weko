@@ -55,7 +55,6 @@ from invenio_files_rest.models import FileInstance, Location, ObjectVersion
 from invenio_files_rest.proxies import current_files_rest
 from invenio_files_rest.utils import find_and_update_location_size
 from invenio_i18n.ext import current_i18n
-from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -63,14 +62,6 @@ from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.errors import InvalidQueryRESTError
 from invenio_search import RecordsSearch
-from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
-from invenio_stats.models import StatsEvents
-from invenio_stats.processors import (
-    anonymize_user,
-    flag_restricted,
-    flag_robots,
-    hash_id,
-)
 from jsonschema import Draft4Validator
 from sqlalchemy import func as _func
 from sqlalchemy.exc import SQLAlchemyError
@@ -1095,7 +1086,7 @@ def create_deposit(item_id):
         dep = WekoDeposit.create({}, recid=int(item_id))
     else:
         dep = WekoDeposit.create({})
-    return dep["recid"]
+    return dep
 
 
 def clean_thumbnail_file(deposit, root_path, thumbnail_path):
@@ -1481,49 +1472,14 @@ def create_flow_define():
 
 def send_item_created_event_to_es(item, request_info):
     """Send item_created event to ES."""
-    def _prepare_stored_data(item, request_info):
-        """Prepare stored data."""
-        # TODO: consider to use "weko_deposit.signals.item_created."
-        timestamp = datetime.utcnow().replace(microsecond=0)
-        doc = {
-            "ip_address": request_info.get("remote_addr"),
-            "timestamp": timestamp.isoformat(),
-        }
-        doc = anonymize_user(doc)
-        doc = flag_restricted(doc)
-        doc = flag_robots(doc)
-        item_id = item.get("id") if 'id' in item else item.get("recid", -1)
-        data = {
-            "remote_addr": request_info.get("remote_addr"),
-            "country": doc.get("country"),
-            "record_name": item.get("item_title"),
-            "referrer": request_info.get("referrer"),
-            "is_robot": doc.get("is_robot"),
-            "cur_user_id": request_info.get("user_id"),
-            "is_restricted": doc.get("is_restricted"),
-            "unique_session_id": doc.get("unique_session_id"),
-            "hostname": request_info.get("hostname"),
-            "pid_value": item_id,
-            "unique_id": "item_create_{}".format(item_id),
-            "pid_type": "depid",
-            "timestamp": doc.get("timestamp"),
-            "visitor_id": doc.get("visitor_id"),
-        }
-        return data
-
-    def _push_item_to_elasticsearch(id, index, doc_type, data):
-        """Push item to elasticsearch in order to count report."""
-        indexer = RecordIndexer()
-        indexer.client.index(index=index, doc_type=doc_type, id=id, body=data)
-
-    timestamp = datetime.utcnow().replace(microsecond=0)
-    # Prepare stored data.
-    data = _prepare_stored_data(item, request_info)
-    doc_type = "stats-item-create"
-    index = "{}-events-{}".format(index_prefix, doc_type)
-    id = hash_id(timestamp, data)
-    # Save item to stats events.
-    _push_item_to_elasticsearch(id, index, doc_type, data)
+    with current_app.test_request_context():
+        item_created.send(
+            current_app._get_current_object(),
+            user_id=request_info.get("user_id"),
+            item_id=item.get("pid"),
+            item_title=item.get("item_title"),
+            admin_action=request_info.get("action")
+        )
 
 
 def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
@@ -1538,7 +1494,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
 
     """
 
-    owner = 1
+    owner = -1
     if request_info and 'user_id' in request_info:
         owner = request_info['user_id']
     if not request_info and request:
@@ -1546,7 +1502,8 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
             "remote_addr": request.remote_addr,
             "referrer": request.referrer,
             "hostname": request.host,
-            "user_id": owner
+            "user_id": owner,
+            "action": "IMPORT"
         }
 
     if not item:
@@ -1560,13 +1517,15 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
             root_path = item.get("root_path", "")
             if status == "new":
                 item_id = create_deposit(item.get("id"))
-                item["id"] = item_id
+                item["id"] = item_id["recid"]
+                item["pid"] = item_id.pid
             else:
                 handle_check_item_is_locked(item)
                 # cache ES data for rollback
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type="recid", pid_value=item["id"]
                 ).first()
+                item["pid"] = pid
                 bef_metadata = WekoIndexer().get_metadata_by_item_id(pid.object_uuid)
                 bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
                     PIDVersioning(child=pid).last_child.object_uuid

@@ -324,7 +324,7 @@ def process_item(record, harvesting, counter, request_info):
     if event == ItemEvents.CREATE:
         event_counter('created_items', counter)
         from weko_search_ui.utils import send_item_created_event_to_es
-        send_item_created_event_to_es(dep, request_info)
+        send_item_created_event_to_es({"pid": dep.pid}, request_info)
     elif event == ItemEvents.UPDATE:
         event_counter('updated_items', counter)
     else: #event == ItemEvents.DELETE:
@@ -494,14 +494,15 @@ def check_schedules_and_run():
     user_data = {
             'ip_address': "",
             'user_agent': "",
-            'user_id': "",
+            'user_id': -1,
             'session_id': ""
     }
     request_info = {
             "remote_addr": "",
             "referrer": "",
             "hostname": "",
-            "user_id": ""
+            "user_id": -1,
+            "action": "HARVEST"
     }
     for h in settings:
         if h.schedule_enable is True:

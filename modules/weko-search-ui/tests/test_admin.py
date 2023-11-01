@@ -197,6 +197,7 @@ def test_ItemImportView_download_check(i18n_app, users, client_request_args, db_
         assert test.download_check()
 
 #     def import_items(self) -> jsonify: ~ GOOD
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemImportView_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_ItemImportView_import_items(i18n_app, users, client_request_args, db_records2):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         test = ItemImportView()

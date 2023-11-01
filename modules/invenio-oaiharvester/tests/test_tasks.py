@@ -245,7 +245,7 @@ def test_process_item(app, db, esindex, location, db_itemtype,harvest_setting,db
     assert res == None
     
     ## dep.pid.status == deleted
-    dep_pid = PersistentIdentifier.query.filter_by(pid_type="depid",pid_value=1).one()
+    dep_pid = PersistentIdentifier.query.filter_by(pid_type="depid",pid_value='1').one()
     dep_pid.status = PIDStatus.DELETED
     db.session.merge(dep_pid)
     db.session.commit()
@@ -590,5 +590,5 @@ def test_check_schedules_and_run(app,db,mocker):
     mock_delay.assert_called_once()
     args,kwargs = mock_delay.call_args
     assert args[0] == 1
-    assert args[2] == {'ip_address': "",'user_agent': "",'user_id': "",'session_id': ""}
-    assert args[3] == {"remote_addr": "","referrer": "","hostname": "","user_id": ""}
+    assert args[2] == {'ip_address': "",'user_agent': "",'user_id': -1,'session_id': ""}
+    assert args[3] == {"remote_addr": "","referrer": "","hostname": "","user_id": -1,"action":"HARVEST"}

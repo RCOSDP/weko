@@ -29,13 +29,14 @@ from simplekv.memory.redisstore import RedisStore
 from .api import WorkActivity
 
 
-def upt_activity_item(app, user_id, item_id, item_title):
+def upt_activity_item(app, user_id, item_id, item_title, admin_action=None):
     """Connect to the item_created signal.
 
     :param app:
     :param user_id:
     :param item_id:
-    :param item_title
+    :param item_title:
+    :param action_action
     :return:
     """
     if 'activity_info' in session:

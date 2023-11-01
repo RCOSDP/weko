@@ -254,7 +254,7 @@ class TestHarvestSettingView:
             args, kwargs = mock_run.call_args
             assert kwargs["args"][0] == "1"
             assert kwargs["args"][2] == {"ip_address":"127.0.0.1","user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36","user_id":str(users[0]["obj"].id),"session_id":None}
-            assert kwargs["args"][3] == {"remote_addr":"127.0.0.1","referrer":"http://test.org","hostname":"test_server","user_id":str(users[0]["obj"].id)}
+            assert kwargs["args"][3] == {"remote_addr":"127.0.0.1","referrer":"http://test.org","hostname":"test_server","user_id":str(users[0]["obj"].id),"action":"HARVEST"}
             mock_redirect.assert_called_with("/admin/harvestsettings/details/?id=1")
 
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_admin.py::TestHarvestSettingView::test_pause -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
