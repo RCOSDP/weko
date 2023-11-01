@@ -939,6 +939,7 @@ def prepare_edit_item():
                     activity_id=is_begin_edit
                 )
 
+        if post_workflow:
             post_activity['workflow_id'] = post_workflow.workflow_id
             post_activity['flow_id'] = post_workflow.flow_id
         else:
