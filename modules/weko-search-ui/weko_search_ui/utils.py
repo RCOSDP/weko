@@ -1357,15 +1357,15 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
 
     if not is_gakuninrdm:
         deposit.publish_without_commit()
-        # Create first version
         with current_app.test_request_context(get_url_root()):
-            if item["status"] in ["upgrade", "new"]:
+            if item["status"] in ["upgrade", "new"]:    # Create first version
                 _deposit = deposit.newversion(pid)
                 _deposit.publish_without_commit()
-            else:
+            else:    # Update last version
                 _pid = PIDVersioning(child=pid).last_child
                 _record = WekoDeposit.get_record(_pid.object_uuid)
                 _deposit = WekoDeposit(_record, _record.model)
+                _deposit["path"] = new_data.get("path")
                 _deposit.merge_data_to_record_without_version(
                     pid, keep_version=True, is_import=True
                 )
@@ -1377,6 +1377,19 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False):
                     item_id=_deposit.id, feedback_maillist=feedback_mail_list
                 )
                 _deposit.update_feedback_mail()
+
+            # Update draft version
+            _draft_pid = PersistentIdentifier.query.filter_by(
+                pid_type='recid',
+                pid_value="{}.0".format(item_id)
+            ).one_or_none()
+            if _draft_pid:
+                _draft_record = WekoDeposit.get_record(_draft_pid.object_uuid)
+                _draft_record["path"] = new_data.get("path")
+                _draft_deposit = WekoDeposit(_draft_record, _draft_record.model)
+                _draft_deposit.merge_data_to_record_without_version(
+                    pid, keep_version=True, is_import=True
+                )
 
 
 def update_publish_status(item_id, status):
