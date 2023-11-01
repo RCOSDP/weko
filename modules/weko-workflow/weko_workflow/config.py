@@ -82,32 +82,164 @@ IDENTIFIER_GRANT_SELECT_DICT = {
 }
 """Identifier grant selected enum."""
 
-DOI_VALIDATION_INFO_CROSSREF = {
-    'jpcoar:URI': [['file.URI.@value', None]],
-    'dc:title': [['title.@value', None], ['title.@attributes.xml:lang', None]],
-    'jpcoar:givenName': [['creator.givenName.@value', None]],
+DOI_VALIDATION_INFO = {
+    'jpcoar:URI': [
+        ['file.URI.@value', None]
+    ],
+    'dc:title': [
+        ['title.@value', None],
+        # ['title.@attributes.xml:lang', None]
+    ],
+    'datacite:date': [
+        ['date.@attributes.dateType', None],
+        ['date.@value', None]
+    ],
+    'dc:type': [
+        ['type.@attributes.rdf:resource', None],
+        ['type.@value', None],
+    ],
+    'jpcoar:pageStart': [
+        ['pageStart.@value', None],
+    ],
+    'dcndl:dateGranted': [
+        ['dateGranted.@value', None],
+    ],
+    'jpcoar:degreeGrantor': [
+        ['degreeGrantor.nameIdentifier.@attributes.nameIdentifierScheme', None],
+        ['degreeGrantor.nameIdentifier.@value', None],
+        ['degreeGrantor.degreeGrantorName.@attributes.xml:lang', None],
+        ['degreeGrantor.degreeGrantorName.@value', None],
+    ],
+    'jpcoar:givenName': [
+        ['creator.givenName.@value', None],
+        # ['creator.givenName.@attributes.xml:lang', None]
+    ],
+    'jpcoar:creatorName': [
+        ['creator.creatorName.@value', None],
+        # ['creator.creatorName.@attributes.xml:lang', None]
+    ],
     'jpcoar:sourceIdentifier': [
         ['sourceIdentifier.@value', None],
-        ['sourceIdentifier.@attributes.identifierType', None]],
+        ['sourceIdentifier.@attributes.identifierType', None]
+    ],
     'jpcoar:sourceTitle': [
         ['sourceTitle.@value', None],
-        ['sourceTitle.@attributes.xml:lang', 'en']],
+        ['sourceTitle.@attributes.xml:lang', None]
+    ],
     'dc:publisher': [
         ['publisher.@value', None],
-        ['publisher.@attributes.xml:lang', 'en']],
+        # ['publisher.@attributes.xml:lang', None]
+    ],
+    'jpcoar:publisher_jpcoar': [
+        ['publisher_jpcoar.publisherName.@value', None],
+        # ['publisher_jpcoar.publisherName.@attributes.xml:lang', None],
+    ],
     'datacite:geoLocationPoint': [
         ['geoLocation.geoLocationPoint.pointLatitude.@value', None],
-        ['geoLocation.geoLocationPoint.pointLongitude.@value', None]],
+        ['geoLocation.geoLocationPoint.pointLongitude.@value', None]
+    ],
     'datacite:geoLocationBox': [
         ['geoLocation.geoLocationBox.eastBoundLongitude.@value', None],
         ['geoLocation.geoLocationBox.northBoundLatitude.@value', None],
         ['geoLocation.geoLocationBox.southBoundLatitude.@value', None],
-        ['geoLocation.geoLocationBox.westBoundLongitude.@value', None]],
-    'datacite:geoLocationPlace': [['geoLocation.geoLocationPlace.@value', None]],
-    'jpcoar:mimeType': [['file.mimeType.@value', None]],
-    'datacite:version': [['version.@value', None]],
-    'oaire:version': [['versiontype.@value', None],
-                      ['versiontype.@attributes.rdf:resource', None]]
+        ['geoLocation.geoLocationBox.westBoundLongitude.@value', None]
+    ],
+    'datacite:geoLocationPlace': [
+        ['geoLocation.geoLocationPlace.@value', None]
+    ],
+    'jpcoar:mimeType': [
+        ['file.mimeType.@value', None]
+    ],
+    'datacite:version': [
+        ['version.@value', None]
+    ],
+    'oaire:version': [
+        ['versiontype.@value', None],
+        ['versiontype.@attributes.rdf:resource', None]
+    ]
+}
+DOI_VALIDATION_INFO_CROSSREF = {
+    'jpcoar:URI': [
+        ['file.URI.@value', None]
+    ],
+    'dc:title': [
+        ['title.@value', None],
+        ['title.@attributes.xml:lang', None]
+    ],
+    'datacite:date': [
+        ['date.@attributes.dateType', None],
+        ['date.@value', None]
+    ],
+    'dc:type': [
+        ['type.@attributes.rdf:resource', None],
+        ['type.@value', None],
+    ],
+    'jpcoar:pageStart': [
+        ['pageStart.@value', None],
+    ],
+    'dcndl:dateGranted': [
+        ['dateGranted.@value', None],
+    ],
+    'jpcoar:givenName': [
+        ['creator.givenName.@value', None],
+        ['creator.givenName.@attributes.xml:lang', None]
+    ],
+    'jpcoar:creatorName': [
+        ['creator.creatorName.@value', None],
+        ['creator.creatorName.@attributes.xml:lang', None]
+    ],
+    'jpcoar:sourceIdentifier': [
+        ['sourceIdentifier.@value', None],
+        ['sourceIdentifier.@attributes.identifierType', None]
+    ],
+    'jpcoar:sourceTitle': [
+        ['sourceTitle.@value', None],
+        ['sourceTitle.@attributes.xml:lang', 'en']
+    ],
+    'dc:publisher': [
+        ['publisher.@value', None],
+        ['publisher.@attributes.xml:lang', 'en']
+    ],
+    'jpcoar:publisher_jpcoar': [
+        ['publisher_jpcoar.publisherName.@value', None],
+        ['publisher_jpcoar.publisherName.@attributes.xml:lang', 'en'],
+    ],
+}
+DOI_VALIDATION_INFO_DATACITE = {
+    'jpcoar:URI': [
+        ['file.URI.@value', None]
+    ],
+    'dc:title': [
+        ['title.@value', None],
+        ['title.@attributes.xml:lang', None]
+    ],
+    'datacite:date': [
+        ['date.@attributes.dateType', None],
+        ['date.@value', None]
+    ],
+    'dc:type': [
+        ['type.@attributes.rdf:resource', None],
+        ['type.@value', None],
+    ],
+    'dcndl:dateGranted': [
+        ['dateGranted.@value', None],
+    ],
+    'jpcoar:givenName': [
+        ['creator.givenName.@value', None],
+        ['creator.givenName.@attributes.xml:lang', 'en']
+    ],
+    'jpcoar:creatorName': [
+        ['creator.creatorName.@value', None],
+        ['creator.creatorName.@attributes.xml:lang', 'en']
+    ],
+    'dc:publisher': [
+        ['publisher.@value', None],
+        ['publisher.@attributes.xml:lang', 'en']
+    ],
+    'jpcoar:publisher_jpcoar': [
+        ['publisher_jpcoar.publisherName.@value', None],
+        ['publisher_jpcoar.publisherName.@attributes.xml:lang', 'en'],
+    ],
 }
 """List of DOI validation information."""
 

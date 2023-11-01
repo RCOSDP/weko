@@ -1233,6 +1233,18 @@ def db_records(db, location):
     yield result
 
 @pytest.fixture()
+def db_records_for_doi_validation_test(db, location):
+    record_data = json_data("data/test_records_doi_validation_test.json")
+    item_data = json_data("data/test_items_doi_validation_test.json")
+    record_num = len(record_data)
+    result = []
+    for d in range(record_num):
+        result.append(create_record(record_data[d], item_data[d]))
+        db.session.commit()
+
+    yield result
+
+@pytest.fixture()
 def add_file(db, location):
     def factory(record, contents=b'test example', filename="generic_file.txt"):
         b = Bucket.create()
