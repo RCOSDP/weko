@@ -458,6 +458,14 @@
           <input type="hidden" id="autofill_get_value" name="autofill_get_value" value="{{_('Get')}}">
           <input type="hidden" id="validate_error" name="validate_error"
               value="{{_('The following items is required. Please recheck and input.')}}">
+          <input type="hidden" id="duplicate_input_error" name="duplicate_input_error"
+              value="{{_('The following items cannot have same value. Please recheck and re-input.')}}">
+          <input type="hidden" id="ja_kana_error" name="ja_kana_error"
+              value="{{_('The following items that contains ja-Kana cannot be set without setting ja as well. Please recheck and re-input.')}}">
+          <input type="hidden" id="ja_latn_error" name="ja_latn_error"
+              value="{{_('The following items that contains ja-Latn cannot be set without setting ja as well. Please recheck and re-input.')}}">
+          <input type="hidden" id="date_format_error" name="date_format_error"
+              value="{{_('The following items contains an invalid date format. Please recheck and re-input.')}}">
           <input type="hidden" id="validate_email_register" name="validate_email_register"
               value="{{_('The following email address is not registered in the system. Please recheck and input.')}}">
           <input type="hidden" id="validate_email_map" name="validate_email_map"

@@ -111,6 +111,7 @@ class HarvestSettingView(ModelView):
             "user_id": user_id,
             "action": "HARVEST"
         }
+
         run_harvesting.apply_async(args=(
             request.args.get('id'),
             datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),

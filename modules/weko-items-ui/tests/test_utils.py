@@ -788,6 +788,841 @@ def test_validate_form_input_data(app, db_itemtype):
             assert result == {"error": "exception", "is_valid": False}
 
 
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_validate_form_input_data_2 -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_validate_form_input_data_2(app, db_itemtype_15):
+    result = {"is_valid": True, "error": ""}
+    item_id = 1
+    data = {
+        "item_1617186331708": [
+            {"subitem_1551255647225": "test1", "subitem_1551255648112": "ja"},
+            {"subitem_1551255647225": "test2", "subitem_1551255648112": "ja"},
+        ],
+        "item_1617186419668": [
+            {
+                "creatorAffiliations": [
+                    {
+                        "affiliationNameIdentifiers": [{}],
+                        "affiliationNames": [
+                            {"affiliationName": "test1", "affiliationNameLang": "ja"},
+                            {"affiliationName": "test2", "affiliationNameLang": "en"},
+                        ],
+                    }
+                ],
+                "creatorAlternatives": [{}],
+                "creatorMails": [{}],
+                "creatorNames": [
+                    {"creatorName": "test1", "creatorNameLang": "ja-Kana"},
+                    {"creatorName": "test1", "creatorNameLang": "en"},
+                ],
+                "familyNames": [
+                    {"familyName": "test1", "familyNameLang": "ja-Latn"},
+                    {"familyName": "test2", "familyNameLang": "en"},
+                ],
+                "givenNames": [
+                    {"givenName": "test1", "givenNameLang": "ja"},
+                    {"givenName": "test2", "givenNameLang": "en"},
+                ],
+                "nameIdentifiers": [{}],
+            }
+        ],
+        "item_1617186882738": [{"subitem_geolocation_place": [{}]}],
+        "item_1617186901218": [
+            {
+                "subitem_1522399412622": [
+                    {"subitem_1522399416691": "en", "subitem_1522737543681": "test1"},
+                    {"subitem_1522399416691": "ja", "subitem_1522737543681": "test2"},
+                ],
+                "subitem_1522399651758": [
+                    {"subitem_1522721910626": "ja", "subitem_1522721929892": "test1"},
+                    {"subitem_1522721910626": "en", "subitem_1522721929892": "test2"},
+                ],
+            }
+        ],
+        "item_1617186941041": [
+            {"subitem_1522650068558": "en", "subitem_1522650091861": "test1"},
+            {"subitem_1522650068558": "ja", "subitem_1522650091861": "test2"},
+        ],
+        "item_1617187056579": {"bibliographic_titles": [{}]},
+        "item_1617187112279": [
+            {"subitem_1551256126428": "test1", "subitem_1551256129013": "en"},
+            {"subitem_1551256126428": "test2", "subitem_1551256129013": "ja"},
+        ],
+        "item_1617187187528": [
+            {
+                "subitem_1599711633003": [
+                    {
+                        "subitem_1599711636923": "conference111",
+                        "subitem_1599711645590": "ja",
+                    },
+                    {
+                        "subitem_1599711636923": "conference222",
+                        "subitem_1599711645590": "en",
+                    },
+                ],
+                "subitem_1599711660052": [
+                    {
+                        "subitem_1599711680082": "conference333",
+                        "subitem_1599711686511": "ja",
+                    },
+                    {
+                        "subitem_1599711680082": "conference444",
+                        "subitem_1599711686511": "en",
+                    },
+                ],
+                "subitem_1599711699392": {
+                    "subitem_1599711731891": "9999",
+                    "subitem_1599711745532": "en",
+                },
+                "subitem_1599711758470": [
+                    {
+                        "subitem_1599711769260": "conference555",
+                        "subitem_1599711775943": "en",
+                    },
+                    {
+                        "subitem_1599711769260": "conference666",
+                        "subitem_1599711775943": "ja",
+                    },
+                ],
+                "subitem_1599711788485": [
+                    {
+                        "subitem_1599711798761": "conference777",
+                        "subitem_1599711803382": "ja",
+                    },
+                    {
+                        "subitem_1599711798761": "conference888",
+                        "subitem_1599711803382": "en",
+                    },
+                ],
+            },
+            {
+                "subitem_1599711633003": [{}],
+                "subitem_1599711660052": [{}],
+                "subitem_1599711699392": {
+                    "subitem_1599711731891": "8888",
+                    "subitem_1599711745532": "ja",
+                },
+                "subitem_1599711758470": [
+                    {"subitem_1599711769260": "tets1", "subitem_1599711775943": "en"},
+                    {"subitem_1599711769260": "test2", "subitem_1599711775943": "ja"},
+                ],
+                "subitem_1599711788485": [
+                    {"subitem_1599711798761": "test3", "subitem_1599711803382": "en"},
+                    {"subitem_1599711798761": "test4", "subitem_1599711803382": "ja"},
+                ],
+            },
+        ],
+        "item_1617258105262": {
+            "resourcetype": "conference paper",
+            "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+        },
+        "item_1617349709064": [
+            {
+                "contributorAffiliations": [
+                    {
+                        "contributorAffiliationNameIdentifiers": [{}],
+                        "contributorAffiliationNames": [
+                            {
+                                "contributorAffiliationName": "contributor-affiliation-name-test-2",
+                                "contributorAffiliationNameLang": "ja",
+                            },
+                            {
+                                "contributorAffiliationName": "test1",
+                                "contributorAffiliationNameLang": "en",
+                            },
+                        ],
+                    }
+                ],
+                "contributorAlternatives": [{}],
+                "contributorMails": [{}],
+                "contributorNames": [
+                    {"contributorName": "contributor-name-test-2", "lang": "ja"},
+                    {"contributorName": "test2", "lang": "en"},
+                ],
+                "familyNames": [
+                    {"familyName": "contributor-family-test-2", "familyNameLang": "ja"},
+                    {"familyName": "test1", "familyNameLang": "en"},
+                ],
+                "givenNames": [
+                    {"givenName": "contributor-given-test-2", "givenNameLang": "ja"},
+                    {"givenName": "test1", "givenNameLang": "en"},
+                ],
+                "nameIdentifiers": [{}],
+            }
+        ],
+        "item_1617353299429": [
+            {
+                "subitem_1523320863692": [
+                    {"subitem_1523320867455": "en", "subitem_1523320909613": "test1"},
+                    {"subitem_1523320867455": "ja", "subitem_1523320909613": "test2"},
+                ]
+            }
+        ],
+        "item_1617605131499": [{"date": [{}], "fileDate": [{}], "filesize": [{}]}],
+        "item_1617610673286": [{"nameIdentifiers": [{}], "rightHolderNames": [{}]}],
+        "item_1617944105607": [
+            {
+                "subitem_1551256015892": [{}],
+                "subitem_1551256037922": [
+                    {"subitem_1551256042287": "test1", "subitem_1551256047619": "en"},
+                    {"subitem_1551256042287": "test2", "subitem_1551256047619": "ja"},
+                ],
+            }
+        ],
+        "pubdate": "2023-06-27",
+        "shared_user_id": -1,
+        "$schema": "/items/jsonschema/15",
+    }
+
+    with app.test_request_context():
+        # TITLE TEST
+        result_for_title_use = {"is_valid": True, "error": ""}
+        data_for_title_use = {
+            "item_1617186331708": [
+                {"subitem_1551255647225": "test1", "subitem_1551255648112": "ja"},
+                {"subitem_1551255647225": "test2", "subitem_1551255648112": "en"},
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+            },
+            "pubdate": "2023-06-27",
+            "shared_user_id": -1,
+            "$schema": "/items/jsonschema/15",
+        }
+        validate_form_input_data(result_for_title_use, item_id, data_for_title_use)
+        assert result_for_title_use["is_valid"] == True
+        
+        # TITLE TESTS
+        data_for_title_use_copy = copy.deepcopy(data_for_title_use)
+        data_for_title_use_copy["item_1617186331708"][0]["subitem_1551255648112"] = "en"
+        validate_form_input_data(result_for_title_use, item_id, data_for_title_use_copy)
+        if result_for_title_use["error"]:
+            assert "duplicate" in result_for_title_use["error"]
+            assert "Title" in result_for_title_use["error"] 
+
+        data_for_title_use_copy["item_1617186331708"][0]["subitem_1551255648112"] = "ja-Kana"
+        validate_form_input_data(result_for_title_use, item_id, data_for_title_use_copy)
+        if result_for_title_use["error"]:
+            assert "ja-Kana" in result_for_title_use["error"]
+            assert "Title" in result_for_title_use["error"]
+
+        data_for_title_use_copy["item_1617186331708"][0]["subitem_1551255648112"] = "ja-Latn"
+        validate_form_input_data(result_for_title_use, item_id, data_for_title_use_copy)
+        if result_for_title_use["error"]:
+            assert "ja-Latn" in result_for_title_use["error"]
+            assert "Title" in result_for_title_use["error"]
+
+        # ALTERNATIVE TITLE TEST
+        result_for_alternative_title_use = {"is_valid": True, "error": ""}
+        data_for_alternative_title_use = {
+            "item_1617186331708": [
+                {"subitem_1551255647225": "test1", "subitem_1551255648112": "ja"},
+                {"subitem_1551255647225": "test2", "subitem_1551255648112": "en"},
+            ],
+            "item_1617186385884": [
+                {"subitem_1551255720400": "test1", "subitem_1551255721061": "ja"},
+                {"subitem_1551255720400": "test2", "subitem_1551255721061": "en"},
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+            },
+            "pubdate": "2023-06-27",
+            "shared_user_id": -1,
+            "$schema": "/items/jsonschema/15",
+        }
+        validate_form_input_data(result_for_alternative_title_use, item_id, data_for_alternative_title_use)
+        assert result_for_alternative_title_use["is_valid"] == True
+        
+        data_for_alternative_title_use_copy = copy.deepcopy(data_for_alternative_title_use)
+        data_for_alternative_title_use_copy["item_1617186385884"][0]["subitem_1551255721061"] = "ja-Kana"
+        validate_form_input_data(result_for_alternative_title_use, item_id, data_for_alternative_title_use_copy)
+        if result_for_alternative_title_use["error"]:
+            assert "ja-Kana" in result_for_alternative_title_use["error"]
+            assert "Alternative Title" in result_for_alternative_title_use["error"]
+
+        data_for_alternative_title_use_copy["item_1617186385884"][0]["subitem_1551255721061"] = "ja-Latn"
+        validate_form_input_data(result_for_alternative_title_use, item_id, data_for_alternative_title_use_copy)
+        if result_for_alternative_title_use["error"]:
+            assert "ja-Latn" in result_for_alternative_title_use["error"]
+            assert "Alternative Title" in result_for_alternative_title_use["error"]
+
+        # CREATOR TEST
+        result_for_creator_use = {"is_valid": True, "error": ""}
+        data_for_creator_use = {
+            "item_1617186331708": [
+                {"subitem_1551255647225": "test1", "subitem_1551255648112": "ja"},
+                {"subitem_1551255647225": "test2", "subitem_1551255648112": "en"},
+            ],
+            "item_1617186419668": [
+                {
+                    "creatorAffiliations": [
+                        {
+                            "affiliationNameIdentifiers": [{}],
+                            "affiliationNames": [
+                                {"affiliationName": "test1", "affiliationNameLang": "ja"},
+                                {"affiliationName": "test2", "affiliationNameLang": "en"},
+                            ],
+                        }
+                    ],
+                    "creatorAlternatives": [{}],
+                    "creatorMails": [{}],
+                    "creatorNames": [
+                        {"creatorName": "test1", "creatorNameLang": "ja"},
+                        {"creatorName": "test1", "creatorNameLang": "en"},
+                    ],
+                    "familyNames": [
+                        {"familyName": "test1", "familyNameLang": "ja"},
+                        {"familyName": "test2", "familyNameLang": "en"},
+                    ],
+                    "givenNames": [
+                        {"givenName": "test1", "givenNameLang": "ja"},
+                        {"givenName": "test2", "givenNameLang": "en"},
+                    ],
+                    "nameIdentifiers": [{}],
+                }
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+            },
+            "pubdate": "2023-06-27",
+            "shared_user_id": -1,
+            "$schema": "/items/jsonschema/15",
+        }
+        validate_form_input_data(result_for_creator_use, item_id, data_for_creator_use)
+        assert result_for_creator_use["is_valid"] == True
+        
+        # CREATOR GIVEN NAME TESTS
+        data_for_creator_given_name_use_copy = copy.deepcopy(data_for_creator_use)
+        data_for_creator_given_name_use_copy["item_1617186419668"][0]["givenNames"][0]["givenNameLang"] = "en"
+        validate_form_input_data(result_for_creator_use, item_id, data_for_creator_given_name_use_copy)
+        if result_for_creator_use["error"]:
+            assert "duplicate" in result_for_creator_use["error"]
+            assert "Creator Given Name" in result_for_creator_use["error"]
+
+        data_for_creator_given_name_use_copy["item_1617186419668"][0]["givenNames"][0]["givenNameLang"] = "ja-Kana"
+        validate_form_input_data(result_for_creator_use, item_id, data_for_creator_given_name_use_copy)
+        if result_for_creator_use["error"]:
+            assert "ja-Kana" in result_for_creator_use["error"]
+            assert "Creator Given Name" in result_for_creator_use["error"]
+
+        data_for_creator_given_name_use_copy["item_1617186419668"][0]["givenNames"][0]["givenNameLang"] = "ja-Latn"
+        validate_form_input_data(result_for_creator_use, item_id, data_for_creator_given_name_use_copy)
+        if result_for_creator_use["error"]:
+            assert "ja-Latn" in result_for_creator_use["error"]
+            assert "Creator Given Name" in result_for_creator_use["error"]
+
+        # CREATOR FAMILY NAME TESTS
+        data_for_creator_family_name_use_copy = copy.deepcopy(data_for_creator_use)
+        data_for_creator_family_name_use_copy["item_1617186419668"][0]["familyNames"][0]["familyNameLang"] = "en"
+        validate_form_input_data(result_for_creator_use, item_id, data_for_creator_family_name_use_copy)
+        if result_for_creator_use["error"]:
+            assert "duplicate" in result_for_creator_use["error"]
+            assert "Creator Family Name" in result_for_creator_use["error"]
+
+        data_for_creator_family_name_use_copy["item_1617186419668"][0]["familyNames"][0]["familyNameLang"] = "ja-Kana"
+        validate_form_input_data(result_for_creator_use, item_id, data_for_creator_family_name_use_copy)
+        if result_for_creator_use["error"]:
+            assert "ja-Kana" in result_for_creator_use["error"]
+            assert "Creator Family Name" in result_for_creator_use["error"]
+
+        data_for_creator_family_name_use_copy["item_1617186419668"][0]["familyNames"][0]["familyNameLang"] = "ja-Latn"
+        validate_form_input_data(result_for_creator_use, item_id, data_for_creator_family_name_use_copy)
+        if result_for_creator_use["error"]:
+            assert "ja-Latn" in result_for_creator_use["error"]
+            assert "Creator Family Name" in result_for_creator_use["error"]
+
+         # CREATOR AFFILIATION NAME TESTS
+        data_for_creator_affiliation_name_use_copy = copy.deepcopy(data_for_creator_use)
+        data_for_creator_affiliation_name_use_copy["item_1617186419668"][0]["creatorAffiliations"][0]["affiliationNames"][0]["affiliationNameLang"] = "en"
+        validate_form_input_data(result_for_creator_use, item_id, data_for_creator_affiliation_name_use_copy)
+        if result_for_creator_use["error"]:
+            assert "duplicate" in result_for_creator_use["error"]
+            assert "Creator Affiliation Name" in result_for_creator_use["error"]
+
+         # CREATOR NAME TESTS
+        data_for_creator_name_use_copy = copy.deepcopy(data_for_creator_use)
+        data_for_creator_name_use_copy["item_1617186419668"][0]["creatorNames"][0]["creatorNameLang"] = "en"
+        validate_form_input_data(result_for_creator_use, item_id, data_for_creator_name_use_copy)
+        if result_for_creator_use["error"]:
+            assert "duplicate" in result_for_creator_use["error"]
+            assert "Creator Name" in result_for_creator_use["error"]
+
+        data_for_creator_name_use_copy["item_1617186419668"][0]["creatorNames"][0]["creatorNameLang"] = "ja-Kana"
+        validate_form_input_data(result_for_creator_use, item_id, data_for_creator_name_use_copy)
+        if result_for_creator_use["error"]:
+            assert "ja-Kana" in result_for_creator_use["error"]
+            assert "Creator Name" in result_for_creator_use["error"]
+
+        data_for_creator_name_use_copy["item_1617186419668"][0]["creatorNames"][0]["creatorNameLang"] = "ja-Latn"
+        validate_form_input_data(result_for_creator_use, item_id, data_for_creator_name_use_copy)
+        if result_for_creator_use["error"]:
+            assert "ja-Latn" in result_for_creator_use["error"]
+            assert "Creator Name" in result_for_creator_use["error"]
+
+        # CREATOR ALTERNATIVE NAME TESTS
+        data_for_creator_alternative_name_use_copy = copy.deepcopy(data_for_creator_use)
+        data_for_creator_alternative_name_use_copy["item_1617186419668"][0]["creatorAlternatives"][0]["creatorAlternativeLang"] = "ja-Kana"
+        validate_form_input_data(result_for_creator_use, item_id, data_for_creator_alternative_name_use_copy)
+        if result_for_creator_use["error"]:
+            assert "ja-Kana" in result_for_creator_use["error"]
+            assert "Creator Name" in result_for_creator_use["error"]
+
+        data_for_creator_alternative_name_use_copy["item_1617186419668"][0]["creatorAlternatives"][0]["creatorAlternativeLang"] = "ja-Latn"
+        validate_form_input_data(result_for_creator_use, item_id, data_for_creator_alternative_name_use_copy)
+        if result_for_creator_use["error"]:
+            assert "ja-Latn" in result_for_creator_use["error"]
+            assert "Creator Name" in result_for_creator_use["error"]
+
+        # CONTRIBUTOR TEST
+        result_for_contributor_use = {"is_valid": True, "error": ""}
+        data_for_contributor_use = {
+            "item_1617186331708": [
+                {"subitem_1551255647225": "test1", "subitem_1551255648112": "ja"},
+                {"subitem_1551255647225": "test2", "subitem_1551255648112": "en"},
+            ],
+            "item_1617349709064": [
+                {
+                    "contributorAffiliations": [
+                        {
+                            "contributorAffiliationNameIdentifiers": [{}],
+                            "contributorAffiliationNames": [
+                                {
+                                    "contributorAffiliationName": "test1",
+                                    "contributorAffiliationNameLang": "ja",
+                                },
+                                {
+                                    "contributorAffiliationName": "test2",
+                                    "contributorAffiliationNameLang": "en",
+                                },
+                            ],
+                        }
+                    ],
+                    "contributorAlternatives": [
+                        {"contributorAlternative": "test1", "contributorAlternativeLang": "ja"},
+                        {"contributorAlternative": "test2", "contributorAlternativeLang": "en"},
+                    ],
+                    "contributorMails": [{}],
+                    "contributorNames": [
+                        {"contributorName": "test1", "lang": "ja"},
+                        {"contributorName": "test2", "lang": "en"},
+                    ],
+                    "familyNames": [
+                        {"familyName": "test1", "familyNameLang": "ja"},
+                        {"familyName": "test2", "familyNameLang": "en"},
+                    ],
+                    "givenNames": [
+                        {"givenName": "test1", "givenNameLang": "ja"},
+                        {"givenName": "test2", "givenNameLang": "en"},
+                    ],
+                    "nameIdentifiers": [{}],
+                }
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+            },
+            "pubdate": "2023-06-27",
+            "shared_user_id": -1,
+            "$schema": "/items/jsonschema/15",
+        }
+        validate_form_input_data(result_for_contributor_use, item_id, data_for_contributor_use)
+        assert result_for_contributor_use["is_valid"] == True
+        
+        # CONTRIBUTOR GIVEN NAME TESTS
+        data_for_contributor_given_name_use_copy = copy.deepcopy(data_for_contributor_use)
+        data_for_contributor_given_name_use_copy["item_1617349709064"][0]["givenNames"][0]["givenNameLang"] = "en"
+        validate_form_input_data(result_for_contributor_use, item_id, data_for_contributor_given_name_use_copy)
+        if result_for_contributor_use["error"]:
+            assert "duplicate" in result_for_contributor_use["error"]
+            assert "Contributor Given Name" in result_for_contributor_use["error"]
+
+        data_for_contributor_given_name_use_copy["item_1617349709064"][0]["givenNames"][0]["givenNameLang"] = "ja-Kana"
+        validate_form_input_data(result_for_contributor_use, item_id, data_for_contributor_given_name_use_copy)
+        if result_for_contributor_use["error"]:
+            assert "ja-Kana" in result_for_contributor_use["error"]
+            assert "Contributor Given Name" in result_for_contributor_use["error"]
+
+        data_for_contributor_given_name_use_copy["item_1617349709064"][0]["givenNames"][0]["givenNameLang"] = "ja-Latn"
+        validate_form_input_data(result_for_contributor_use, item_id, data_for_contributor_given_name_use_copy)
+        if result_for_contributor_use["error"]:
+            assert "ja-Latn" in result_for_contributor_use["error"]
+            assert "Contributor Given Name" in result_for_contributor_use["error"]
+
+        # # CONTRIBUTOR FAMILY NAME TESTS
+        data_for_contributor_family_name_use_copy = copy.deepcopy(data_for_contributor_use)
+        data_for_contributor_family_name_use_copy["item_1617349709064"][0]["familyNames"][0]["familyNameLang"] = "en"
+        validate_form_input_data(result_for_contributor_use, item_id, data_for_contributor_family_name_use_copy)
+        if result_for_contributor_use["error"]:
+            assert "duplicate" in result_for_contributor_use["error"]
+            assert "Contributor Family Name" in result_for_contributor_use["error"]
+
+        data_for_contributor_family_name_use_copy["item_1617349709064"][0]["familyNames"][0]["familyNameLang"] = "ja-Kana"
+        validate_form_input_data(result_for_contributor_use, item_id, data_for_contributor_family_name_use_copy)
+        if result_for_contributor_use["error"]:
+            assert "ja-Kana" in result_for_contributor_use["error"]
+            assert "Contributor Family Name" in result_for_contributor_use["error"]
+
+        data_for_contributor_family_name_use_copy["item_1617349709064"][0]["familyNames"][0]["familyNameLang"] = "ja-Latn"
+        validate_form_input_data(result_for_contributor_use, item_id, data_for_contributor_family_name_use_copy)
+        if result_for_contributor_use["error"]:
+            assert "ja-Latn" in result_for_contributor_use["error"]
+            assert "Contributor Family Name" in result_for_contributor_use["error"]
+
+        #  # CONTRIBUTOR AFFILIATION NAME TESTS
+        data_for_contributor_affiliation_name_use_copy = copy.deepcopy(data_for_contributor_use)
+        data_for_contributor_affiliation_name_use_copy["item_1617349709064"][0]["contributorAffiliations"][0]["contributorAffiliationNames"][0]["contributorAffiliationNameLang"] = "en"
+        validate_form_input_data(result_for_contributor_use, item_id, data_for_contributor_affiliation_name_use_copy)
+        if result_for_contributor_use["error"]:
+            assert "duplicate" in result_for_contributor_use["error"]
+            assert "Contributor Affiliation Name" in result_for_contributor_use["error"]
+
+         # CONTRIBUTOR NAME TESTS
+        data_for_contributor_name_use_copy = copy.deepcopy(data_for_contributor_use)
+        data_for_contributor_name_use_copy["item_1617349709064"][0]["contributorNames"][0]["lang"] = "en"
+        validate_form_input_data(result_for_contributor_use, item_id, data_for_contributor_name_use_copy)
+        if result_for_contributor_use["error"]:
+            assert "duplicate" in result_for_contributor_use["error"]
+            assert "Contributor Name" in result_for_contributor_use["error"]
+
+        data_for_contributor_name_use_copy["item_1617349709064"][0]["contributorNames"][0]["lang"] = "ja-Kana"
+        validate_form_input_data(result_for_contributor_use, item_id, data_for_contributor_name_use_copy)
+        if result_for_contributor_use["error"]:
+            assert "ja-Kana" in result_for_contributor_use["error"]
+            assert "Contributor Name" in result_for_contributor_use["error"]
+
+        data_for_contributor_name_use_copy["item_1617349709064"][0]["contributorNames"][0]["lang"] = "ja-Latn"
+        validate_form_input_data(result_for_contributor_use, item_id, data_for_contributor_name_use_copy)
+        if result_for_contributor_use["error"]:
+            assert "ja-Latn" in result_for_contributor_use["error"]
+            assert "Contributor Name" in result_for_contributor_use["error"]
+
+        # CONTRIBUTOR ALTERNATIVE NAME TESTS
+        data_for_contributor_alternative_name_use_copy = copy.deepcopy(data_for_contributor_use)
+        data_for_contributor_alternative_name_use_copy["item_1617349709064"][0]["contributorAlternatives"][0]["contributorAlternativeLang"] = "ja-Kana"
+        validate_form_input_data(result_for_contributor_use, item_id, data_for_contributor_alternative_name_use_copy)
+        if result_for_contributor_use["error"]:
+            assert "ja-Kana" in result_for_contributor_use["error"]
+            assert "Contributor Alternative Name" in result_for_contributor_use["error"]
+
+        data_for_contributor_alternative_name_use_copy["item_1617349709064"][0]["contributorAlternatives"][0]["contributorAlternativeLang"] = "ja-Latn"
+        validate_form_input_data(result_for_contributor_use, item_id, data_for_contributor_alternative_name_use_copy)
+        if result_for_contributor_use["error"]:
+            assert "ja-Latn" in result_for_contributor_use["error"]
+            assert "Contributor Alternative Name" in result_for_contributor_use["error"]
+
+        # RELATION TEST
+        result_for_relation_use = {"is_valid": True, "error": ""}
+        data_for_relation_use = {
+            "item_1617186331708": [
+                {"subitem_1551255647225": "test1", "subitem_1551255648112": "ja"},
+                {"subitem_1551255647225": "test2", "subitem_1551255648112": "en"},
+            ],
+            "item_1617353299429": [
+                {
+                    "subitem_1523320863692": [
+                        {"subitem_1523320867455": "ja", "subitem_1523320909613": "test1"},
+                        {"subitem_1523320867455": "en", "subitem_1523320909613": "test2"},
+                    ]
+                }
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+            },
+            "pubdate": "2023-06-27",
+            "shared_user_id": -1,
+            "$schema": "/items/jsonschema/15",
+        }
+        validate_form_input_data(result_for_relation_use, item_id, data_for_relation_use)
+        assert result_for_relation_use["is_valid"] == True
+        
+        # RELATION RELATED TITLE TEST
+        data_for_related_title_use_copy = copy.deepcopy(data_for_relation_use)
+        data_for_related_title_use_copy["item_1617353299429"][0]["subitem_1523320863692"][0]["subitem_1523320867455"] = "en"
+        validate_form_input_data(result_for_relation_use, item_id, data_for_related_title_use_copy)
+        if result_for_relation_use["error"]:
+            assert "duplicate" in result_for_relation_use["error"]
+            assert "Relation Related Title" in result_for_relation_use["error"]
+
+        # FUNDING REFERENCE TESTS
+        result_for_funding_reference_use = {"is_valid": True, "error": ""}
+        data_for_funding_reference_use = {
+            "item_1617186331708": [
+                {"subitem_1551255647225": "test1", "subitem_1551255648112": "ja"},
+                {"subitem_1551255647225": "test2", "subitem_1551255648112": "en"},
+            ],
+            "item_1617186901218": [
+                {
+                    "subitem_1522399412622": [
+                        {"subitem_1522399416691": "ja", "subitem_1522737543681": "test1"},
+                        {"subitem_1522399416691": "en", "subitem_1522737543681": "test2"},
+                    ],
+                    "subitem_1522399651758": [
+                        {"subitem_1522721910626": "ja", "subitem_1522721929892": "test1"},
+                        {"subitem_1522721910626": "en", "subitem_1522721929892": "test2"},
+                    ],
+                }
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+            },
+            "pubdate": "2023-06-27",
+            "shared_user_id": -1,
+            "$schema": "/items/jsonschema/15",
+        }
+        validate_form_input_data(result_for_funding_reference_use, item_id, data_for_funding_reference_use)
+        assert result_for_funding_reference_use["is_valid"] == True
+        
+        # FUNDING REFERENCE FUNDER NAME TEST
+        data_for_funding_reference_funder_name_use_copy = copy.deepcopy(data_for_funding_reference_use)
+        data_for_funding_reference_funder_name_use_copy["item_1617186901218"][0]["subitem_1522399412622"][0]["subitem_1522399416691"] = "en"
+        validate_form_input_data(result_for_funding_reference_use, item_id, data_for_funding_reference_funder_name_use_copy)
+        if result_for_funding_reference_use["error"]:
+            assert "duplicate" in result_for_funding_reference_use["error"]
+            assert "Funding Reference Funder Name" in result_for_funding_reference_use["error"]
+
+        # FUNDING REFERENCE AWARD TITLE TEST
+        data_for_funding_reference_award_title_use_copy = copy.deepcopy(data_for_funding_reference_use)
+        data_for_funding_reference_award_title_use_copy["item_1617186901218"][0]["subitem_1522399651758"][0]["subitem_1522721910626"] = "en"
+        validate_form_input_data(result_for_funding_reference_use, item_id, data_for_funding_reference_award_title_use_copy)
+        if result_for_funding_reference_use["error"]:
+            assert "duplicate" in result_for_funding_reference_use["error"]
+            assert "Funding Reference Award Title" in result_for_funding_reference_use["error"]
+
+        # SOURCE TITLE TEST
+        result_for_source_title_use = {"is_valid": True, "error": ""}
+        data_for_source_title_use = {
+            "item_1617186331708": [
+                {"subitem_1551255647225": "test1", "subitem_1551255648112": "ja"},
+                {"subitem_1551255647225": "test2", "subitem_1551255648112": "en"},
+            ],
+            "item_1617186941041": [
+                {"subitem_1522650068558": "ja", "subitem_1522650091861": "test1"},
+                {"subitem_1522650068558": "en", "subitem_1522650091861": "test2"},
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+            },
+            "pubdate": "2023-06-27",
+            "shared_user_id": -1,
+            "$schema": "/items/jsonschema/15",
+        }
+        validate_form_input_data(result_for_source_title_use, item_id, data_for_source_title_use)
+        assert result_for_source_title_use["is_valid"] == True
+        
+        data_for_source_title_use_copy = copy.deepcopy(data_for_source_title_use)
+        data_for_source_title_use_copy["item_1617186941041"][0]["subitem_1522650068558"] = "en"
+        validate_form_input_data(result_for_source_title_use, item_id, data_for_source_title_use_copy)
+        if result_for_source_title_use["error"]:
+            assert "duplicate" in result_for_source_title_use["error"]
+            assert "Source Title" in result_for_source_title_use["error"]
+
+        # DEGREE NAME TEST
+        result_for_degree_name_use = {"is_valid": True, "error": ""}
+        data_for_degree_name_use = {
+            "item_1617186331708": [
+                {"subitem_1551255647225": "test1", "subitem_1551255648112": "ja"},
+                {"subitem_1551255647225": "test2", "subitem_1551255648112": "en"},
+            ],
+            "item_1617187112279": [
+                {"subitem_1551256126428": "test1", "subitem_1551256129013": "ja"},
+                {"subitem_1551256126428": "test2", "subitem_1551256129013": "en"},
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+            },
+            "pubdate": "2023-06-27",
+            "shared_user_id": -1,
+            "$schema": "/items/jsonschema/15",
+        }
+        validate_form_input_data(result_for_degree_name_use, item_id, data_for_degree_name_use)
+        assert result_for_degree_name_use["is_valid"] == True
+        
+        data_for_degree_name_use_copy = copy.deepcopy(data_for_degree_name_use)
+        data_for_degree_name_use_copy["item_1617187112279"][0]["subitem_1551256129013"] = "en"
+        validate_form_input_data(result_for_degree_name_use, item_id, data_for_degree_name_use_copy)
+        if result_for_degree_name_use["error"]:
+            assert "duplicate" in result_for_degree_name_use["error"]
+            assert "Degree Name" in result_for_degree_name_use["error"]
+
+        # DEGREE GRANTOR NAME TEST
+        result_for_degree_grantor_use = {"is_valid": True, "error": ""}
+        data_for_degree_grantor_use = {
+            "item_1617186331708": [
+                {"subitem_1551255647225": "test1", "subitem_1551255648112": "ja"},
+                {"subitem_1551255647225": "test2", "subitem_1551255648112": "en"},
+            ],
+            "item_1617944105607": [
+                {
+                    "subitem_1551256015892": [{}],
+                    "subitem_1551256037922": [
+                        {"subitem_1551256042287": "test1", "subitem_1551256047619": "ja"},
+                        {"subitem_1551256042287": "test2", "subitem_1551256047619": "en"},
+                    ],
+                }
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+            },
+            "pubdate": "2023-06-27",
+            "shared_user_id": -1,
+            "$schema": "/items/jsonschema/15",
+        }
+        validate_form_input_data(result_for_degree_grantor_use, item_id, data_for_degree_grantor_use)
+        assert result_for_degree_grantor_use["is_valid"] == True
+        
+        data_for_degree_grantor_name_use_copy = copy.deepcopy(data_for_degree_grantor_use)
+        data_for_degree_grantor_name_use_copy["item_1617944105607"][0]["subitem_1551256037922"][0]["subitem_1551256047619"] = "en"
+        validate_form_input_data(result_for_degree_grantor_use, item_id, data_for_degree_grantor_name_use_copy)
+        if result_for_degree_grantor_use["error"]:
+            assert "duplicate" in result_for_degree_grantor_use["error"]
+            assert "Degree Grantor Name" in result_for_degree_grantor_use["error"]
+
+        # CONFERENCE TEST
+        result_for_conference_use = {"is_valid": True, "error": ""}
+        data_for_conference_use = {
+            "item_1617186331708": [
+                {"subitem_1551255647225": "test1", "subitem_1551255648112": "ja"},
+                {"subitem_1551255647225": "test2", "subitem_1551255648112": "en"},
+            ],
+            "item_1617187187528": [
+                {
+                    "subitem_1599711633003": [
+                        {
+                            "subitem_1599711636923": "conference111",
+                            "subitem_1599711645590": "ja",
+                        },
+                        {
+                            "subitem_1599711636923": "conference222",
+                            "subitem_1599711645590": "en",
+                        },
+                    ],
+                    "subitem_1599711660052": [
+                        {
+                            "subitem_1599711680082": "conference333",
+                            "subitem_1599711686511": "ja",
+                        },
+                        {
+                            "subitem_1599711680082": "conference444",
+                            "subitem_1599711686511": "en",
+                        },
+                    ],
+                    "subitem_1599711699392": {
+                        "subitem_1599711731891": "9999",
+                        "subitem_1599711745532": "ja",
+                    },
+                    "subitem_1599711758470": [
+                        {
+                            "subitem_1599711769260": "conference555",
+                            "subitem_1599711775943": "en",
+                        },
+                        {
+                            "subitem_1599711769260": "conference666",
+                            "subitem_1599711775943": "ja",
+                        },
+                    ],
+                    "subitem_1599711788485": [
+                        {
+                            "subitem_1599711798761": "conference777",
+                            "subitem_1599711803382": "ja",
+                        },
+                        {
+                            "subitem_1599711798761": "conference888",
+                            "subitem_1599711803382": "en",
+                        },
+                    ],
+                },
+                {
+                    "subitem_1599711633003": [{}],
+                    "subitem_1599711660052": [{}],
+                    "subitem_1599711699392": {
+                        "subitem_1599711731891": "8888",
+                        "subitem_1599711745532": "en",
+                    },
+                    "subitem_1599711758470": [
+                        {"subitem_1599711769260": "tets1", "subitem_1599711775943": "ja"},
+                        {"subitem_1599711769260": "test2", "subitem_1599711775943": "en"},
+                    ],
+                    "subitem_1599711788485": [
+                        {"subitem_1599711798761": "test3", "subitem_1599711803382": "en"},
+                        {"subitem_1599711798761": "test4", "subitem_1599711803382": "ja"},
+                    ],
+                },
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+            },
+            "pubdate": "2023-06-27",
+            "shared_user_id": -1,
+            "$schema": "/items/jsonschema/15",
+        }
+        validate_form_input_data(result_for_conference_use, item_id, data_for_conference_use)
+        assert result_for_conference_use["is_valid"] == True
+        
+        # CONFERENCE NAME TESTS
+        data_for_conference_name_use_copy = copy.deepcopy(data_for_conference_use)
+        data_for_conference_name_use_copy["item_1617187187528"][0]["subitem_1599711633003"][0]["subitem_1599711645590"] = "en"
+        validate_form_input_data(result_for_conference_use, item_id, data_for_conference_name_use_copy)
+        if result_for_conference_use["error"]:
+            assert "duplicate" in result_for_conference_use["error"]
+            assert "Conference Name" in result_for_conference_use["error"]
+
+        # CONFERENCE PLACE TESTS
+        data_for_conference_place_use_copy = copy.deepcopy(data_for_conference_use)
+        data_for_conference_place_use_copy["item_1617187187528"][0]["subitem_1599711788485"][0]["subitem_1599711803382"] = "en"
+        validate_form_input_data(result_for_conference_use, item_id, data_for_conference_place_use_copy)
+        if result_for_conference_use["error"]:
+            assert "duplicate" in result_for_conference_use["error"]
+            assert "Conference Place" in result_for_conference_use["error"]
+
+        # CONFERENCE VENUE TESTS
+        data_for_conference_venue_use_copy = copy.deepcopy(data_for_conference_use)
+        data_for_conference_venue_use_copy["item_1617187187528"][0]["subitem_1599711758470"][0]["subitem_1599711775943"] = "en"
+        validate_form_input_data(result_for_conference_use, item_id, data_for_conference_venue_use_copy)
+        if result_for_conference_use["error"]:
+            assert "duplicate" in result_for_conference_use["error"]
+            assert "Conference Venue" in result_for_conference_use["error"]
+
+        # CONFERENCE SPONSOR TESTS
+        data_for_conference_sponsor_use_copy = copy.deepcopy(data_for_conference_use)
+        data_for_conference_sponsor_use_copy["item_1617187187528"][0]["subitem_1599711660052"][0]["subitem_1599711686511"] = "en"
+        validate_form_input_data(result_for_conference_use, item_id, data_for_conference_sponsor_use_copy)
+        if result_for_conference_use["error"]:
+            assert "duplicate" in result_for_conference_use["error"]
+            assert "Conference Sponsor" in result_for_conference_use["error"]
+
+        # CONFERENCE DATE TESTS
+        data_for_conference_date_use_copy = copy.deepcopy(data_for_conference_use)
+        data_for_conference_date_use_copy["item_1617187187528"][0]["subitem_1599711699392"]["subitem_1599711745532"] = "en"
+        validate_form_input_data(result_for_conference_use, item_id, data_for_conference_date_use_copy)
+        if result_for_conference_use["error"]:
+            assert "duplicate" in result_for_conference_use["error"]
+            assert "Conference Date" in result_for_conference_use["error"]
+
+        # For covering all conditions
+        validate_form_input_data(result, item_id, data)
+        assert result["is_valid"] == False
+
+        with patch("invenio_records.api.RecordBase.validate", side_effect=ValidationError("required")):
+            validate_form_input_data(result, item_id, data)
+        
+        with patch("invenio_records.api.RecordBase.validate", side_effect=ValidationError("pattern")):
+            validate_form_input_data(result, item_id, data)
+        
+        with patch("invenio_records.api.RecordBase.validate", side_effect=SchemaError("Schema error")):
+            validate_form_input_data(result, item_id, data)
+
+        with patch("invenio_records.api.RecordBase.validate", side_effect=Exception):
+            validate_form_input_data(result, item_id, data)
+
+
 # def parse_node_str_to_json_schema(node_str: str):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_parse_node_str_to_json_schema -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_parse_node_str_to_json_schema():

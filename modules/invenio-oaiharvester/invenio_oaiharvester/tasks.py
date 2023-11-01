@@ -165,6 +165,8 @@ def process_item(record, harvesting, counter, request_info):
     elif harvesting.metadata_prefix == 'jpcoar' or \
             harvesting.metadata_prefix == 'jpcoar_1.0':
         mapper = JPCOARMapper(xml)
+    elif harvesting.metadata_prefix == 'jpcoar_2.0':
+        mapper = JPCOARMapper(xml)
     elif harvesting.metadata_prefix == 'oai_ddi25' or \
             harvesting.metadata_prefix == 'ddi':
         mapper = DDIMapper(xml)
@@ -373,7 +375,7 @@ def is_harvest_running(id, task_id):
 
 
 @ shared_task
-def run_harvesting(id, start_time, user_data, request_info):
+def run_harvesting(id, start_time, user_data, request_info): 
     """Run harvest."""
     def dump(setting):
         setting_json = {}

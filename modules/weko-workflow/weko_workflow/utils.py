@@ -685,6 +685,60 @@ def validattion_item_property_required(
     if 'publisher' in properties:
         mapping_keys = ['dc:publisher']
         handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+    
+    # check dc:publisher
+    if 'publisher' in properties:
+        mapping_keys = ['dc:publisher']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+
+    # check datacite:date
+    if 'date' in properties:
+        mapping_keys = ['datacite:date']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+    
+    # check dcndl:dateGranted
+    if 'dateGranted' in properties:
+        mapping_keys = ['dcndl:dateGranted']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+
+    # check dc:type
+    if 'type' in properties:
+        mapping_keys = ['dc:type']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+    
+    # check jpcoar:identifier
+    if 'identifier' in properties:
+        mapping_keys = ['jpcoar:identifier']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+
+    # check jpcoar:identifierRegistration
+    if 'identifierRegistration' in properties:
+        mapping_keys = ['jpcoar:identifierRegistration']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+    
+    # check jpcoar:pageStart
+    if 'pageStart' in properties:
+        mapping_keys = ['jpcoar:pageStart']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+    
+    # check jpcoar:degreeGrantor
+    if 'degreeGrantor' in properties:
+        mapping_keys = ['jpcoar:degreeGrantor']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+
+    # check jpcoar:creatorName
+    if 'creatorName' in properties:
+        mapping_keys = ['jpcoar:creatorName']
+        handle_check_required_pattern_and_either(
             mapping_data, mapping_keys, identifier_type, error_list)
 
     if error_list == empty_list:
