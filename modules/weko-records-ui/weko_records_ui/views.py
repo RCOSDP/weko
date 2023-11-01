@@ -48,7 +48,7 @@ from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from weko_accounts.views import _redirect_method
 from weko_admin.models import AdminSettings
-from weko_admin.utils import get_search_setting
+from weko_admin.utils import get_search_setting, get_restricted_access
 from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
@@ -66,7 +66,6 @@ from weko_workflow.api import WorkFlow
 from weko_records_ui.fd import add_signals_info
 from weko_records_ui.utils import check_items_settings, get_file_info_list
 from weko_workflow.utils import get_item_info, process_send_mail_tpl, set_mail_info ,is_terms_of_use_only, process_send_mail
-
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
@@ -641,7 +640,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     
     mailcheckflag=request.args.get("q")
 
+
+    restricted_errorMsg = ''
+    restricted_access = get_restricted_access('error_msg')
+    restricted_errorMsg = restricted_access['content'].get(current_lang, None)['content']
+
     onetime_file_url = request.args.get("onetime_file_url")
+
 
     return render_template(
         template,

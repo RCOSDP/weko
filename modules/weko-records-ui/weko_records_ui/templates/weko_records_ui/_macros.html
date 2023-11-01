@@ -19,8 +19,8 @@
 #}
 
 {% macro check_download_file(record, file, permission, community, url_for_security, is_file_name_url, file_label) %}
-  <input id="non-role-msg" type="hidden"
-         value="{{ _("This data is not available for this user.") }}"/>
+  <input id="non-role-msg" type="hidden>
+         value="{{restricted_errorMsg}}"/>
   {% set is_guest = False %}
   {% if not session['user_id'] %}
     {% set is_guest = True %}

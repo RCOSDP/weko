@@ -8,6 +8,7 @@ const CHECK_INPUT_DOWNLOAD = document.getElementById('check_input_download').val
 const CHECK_INPUT_EXPIRATION_DATE = document.getElementById('check_input_expiration_date').value;
 const EMPTY_DOWNLOAD = document.getElementById('empty_download').value;
 const EMPTY_EXPIRATION_DATE = document.getElementById('empty_expiration_date').value;
+const EMPTY_ERROR_MESSAGE = document.getElementById('empty_error_message').value;
 const USAGE_REPORT_WORKFLOW_ACCESS_LABEL = document.getElementById('usage_report_workflow_access_label').value
 const MAXINT = Number(document.getElementById('maxint').value)
 const MAX_DOWNLOAD_LIMIT = MAXINT;
@@ -404,6 +405,64 @@ function TermsConditions({termList, setTermList, currentTerm, setCurrentTerm}) {
 }
 
 
+function ErrorMsgDetail({errorMsg, setErrorMsg}) {
+  const {en, ja} = errorMsg.content;
+
+  function InputChanged(event, key) {
+    let oldContent;
+    let content;
+
+    oldContent = errorMsg.content[key];
+    oldContent[event.target.name] = event.target.value;
+    content = {...errorMsg.content};
+    setErrorMsg({...errorMsg, content})
+  }
+
+  return (
+    <div>
+      <div className="form-group row margin-top">
+        <label className="col-sm-2 col-form-label text-right">{LABEL_JAPANESE}</label>
+        <div className="col-sm-9">
+          <textarea className="form-control textarea"
+                    name="content"
+                    value={ja.content}
+                    onChange={e => InputChanged(e, "ja")}/>
+        </div>
+      </div>
+      <div className="form-group row margin-top">
+        <label htmlFor="staticEmail"
+               className="col-sm-2 col-form-label text-right">{LABEL_ENGLISH}</label>
+        <div className="col-sm-9">
+          <textarea className="form-control textarea"
+                    name="content"
+                    value={en.content}
+                    onChange={e => InputChanged(e, "en")}/>
+        </div>
+      </div>
+    </div>  
+  )
+}
+
+function ErrorMsgConditions({errorMsg, setErrorMsg}) {
+  return (
+    <div>
+      <div className="panel panel-default">
+        <div className="panel-heading">
+          <h5>
+            <strong>
+              <p>{LABEL_ERROR_MESSAGE}</p>
+            </strong>
+          </h5>
+        </div>
+        <div className="row">
+            <ErrorMsgDetail errorMsg={errorMsg} setErrorMsg={setErrorMsg}/>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
 function RestrictedAccessLayout({
                                   secret_URL_file_download,
                                   content_file_download,
@@ -479,6 +538,12 @@ function RestrictedAccessLayout({
       showErrorMessage(MESSAGE_MISSING_DATA);
       return false;
     }
+     //Validate ErrorMsgConditions
+     errorMessage = validErrorMsgConditions();
+     if(errorMessage){
+       showErrorMessage(errorMessage);
+       return false;
+     } 
 
     let data = {
       secret_URL_file_download:secretURLFileDownload,
@@ -571,6 +636,15 @@ function RestrictedAccessLayout({
       errorMessage = CHECK_INPUT_EXPIRATION_DATE;
     }
 
+    return errorMessage;
+  }
+
+  function validErrorMsgConditions() {
+    let errorMessage;
+
+    if (error_msg.content.en.content == '' || error_msg.content.ja.content == '') {
+      errorMessage = EMPTY_ERROR_MESSAGE;
+    }
     return errorMessage;
   }
 
