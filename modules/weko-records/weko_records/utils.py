@@ -754,6 +754,8 @@ def get_all_items2(nlst, klst):
     :param nlst:
     :param klst:
     :return: alst
+    
+    :note 
     """
     alst = []
 
@@ -765,9 +767,24 @@ def get_all_items2(nlst, klst):
                 else:
                     get_items(v)
         elif isinstance(nlst, list):
-            for lst in nlst:
+            for ix,lst in enumerate(nlst):
                 get_items(lst)
-
+    
+    def get_items2(nlst):
+        ret = []
+        if isinstance(nlst, dict):
+            for k, v in nlst.items():
+                if isinstance(v, str):
+                    ret.append({k: v})
+                else:
+                    tmp = get_items2(v)
+                    ret.append(tmp)
+        elif isinstance(nlst, list):
+            for ix,lst in enumerate(nlst):
+                tmp = get_items2(lst)
+                ret.append(tmp)
+        return ret
+                        
     to_orderdict(nlst, klst, True)
     get_items(nlst)
     return alst
@@ -833,6 +850,7 @@ async def sort_meta_data_by_options(
     :param item_type_mapping:
     :param item_type_data:
     """
+    
     from weko_deposit.api import _FormatSysBibliographicInformation
     from weko_records_ui.permissions import check_file_download_permission
     from weko_records_ui.utils import hide_item_metadata
@@ -874,6 +892,7 @@ async def sort_meta_data_by_options(
                     result.append(",".join(value))
                 else:
                     result[-1] += "," + ",".join(value)
+        
         return result
 
     def data_comment(result, data_result, stt_key, is_specify_newline_array):
@@ -1000,6 +1019,7 @@ async def sort_meta_data_by_options(
                 author_data = get_show_list_author(
                     solst_dict_array, hide_email_flag, author_key, attr_mlt
                 )
+                sub_author_key = s["key"].split(".")[-1]
             elif (
                 bibliographic_key is None
                 and is_show_list
@@ -1037,14 +1057,20 @@ async def sort_meta_data_by_options(
                 data_result, stt_key = get_value_and_lang_by_key(
                     s["key"], solst_dict_array, data_result, stt_key
                 )
+                
                 is_specify_newline_array.append({s["key"]: is_specify_newline})
 
         if len(data_result) > 0:
             result = data_comment(
                 result, data_result, stt_key, is_specify_newline_array
             )
+        
         return result
 
+    def get_creator_comments(creators):
+        current_app.logger.error(creators)
+        
+    
     def get_file_comments(record, files):
         """Check and get file info."""
 
@@ -1232,6 +1258,7 @@ async def sort_meta_data_by_options(
             if not val or not option:
                 continue
             mlt = val.get("attribute_value_mlt", [])
+            
             if mlt:
                 if (
                     val.get("attribute_type", "") == "file"
@@ -1244,21 +1271,32 @@ async def sort_meta_data_by_options(
                 if is_thumbnail and not option.get("hidden") and option.get("showlist"):
                     thumbnail = get_file_thumbnail(mlt)
                     continue
+
+                if (
+                    val.get("attribute_type", "") == "creator"
+                    and not option.get("hidden")
+                    and option.get("showlist")
+                ):
+                    creator_info = get_creator_comments(mlt)
+                    continue
+                
                 mlt = append_parent_key(key, mlt)
                 meta_data = get_all_items2(mlt, solst)
                 for m in meta_data:
                     for s in solst_dict_array:
                         s_key = s.get("key")
-                        if m.get(s_key):
+                        
+                        tmp = m.get(s_key)
+                        if tmp:
                             s["value"] = (
-                                m.get(s_key)
+                                tmp
                                 if not s["value"]
                                 else "{}{} {}".format(
                                     s["value"],
                                     current_app.config.get(
                                         "WEKO_RECORDS_SYSTEM_COMMA", ""
                                     ),
-                                    m.get(s_key),
+                                    tmp,
                                 )
                             )
                             s["parent_option"] = {
@@ -1267,7 +1305,7 @@ async def sort_meta_data_by_options(
                                 "specify_newline": option.get("crtf"),
                                 "hide": option.get("hidden"),
                             }
-                            break
+                            break    
         # Format data to display on item list
         items = get_comment(
             solst_dict_array,
@@ -1886,7 +1924,9 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
             metadata.get("_item_metadata") if "_item_metadata" in metadata else metadata
         )
         if str_key_val[0] in metadata:
-            obj = metadata.get(str_key_val[0]).get("attribute_value_mlt")
+            obj = metadata.get(str_key_val[0])
+            if not isinstance(obj,list):
+                obj = obj.get("attribute_value_mlt")
             save = obj
             for ob in str_key_val:
                 if (
@@ -2080,8 +2120,9 @@ def format_creates(creates, hide_creator_keys):
     @return:
     """
     current_lang = current_i18n.language
-    result_end = {}
+    result_ends = []
     for create in creates:
+        result_end = {}
         # get creator comments
         result_end = get_creator(create, result_end, hide_creator_keys, current_lang)
         # get alternatives comments
@@ -2099,7 +2140,8 @@ def format_creates(creates, hide_creator_keys):
             result_end = get_affiliation(
                 create["creatorAffiliations"], result_end, current_lang, affiliation_key
             )
-    return result_end
+        result_ends.append(result_end)
+    return result_ends
 
 
 def get_creator(create, result_end, hide_creator_keys, current_lang):
